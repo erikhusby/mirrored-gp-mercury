@@ -6,6 +6,7 @@ import org.hibernate.envers.Audited;
 import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.util.Date;
+import java.util.Set;
 
 /**
  * This handles the billing session
@@ -16,6 +17,8 @@ import java.util.Date;
 @Audited
 @Table(name= "BILLING_SESSION", schema = "athena")
 public class BillingSession {
+    public static final String ID_PREFIX = "BS-";
+
     @Id
     @SequenceGenerator(name = "SEQ_BILLING_SESSION", schema = "athena", sequenceName = "SEQ_BILLING_SESSION")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_BILLING_SESSION")
@@ -29,6 +32,9 @@ public class BillingSession {
 
     @Column(name="BILLED_DATE")
     private Date billedDate;
+
+    @OneToMany
+    public Set<BillingLedger> billingLedgerItems;
 
     BillingSession() {}
 
@@ -67,5 +73,17 @@ public class BillingSession {
 
     public void setBilledDate(Date billedDate) {
         this.billedDate = billedDate;
+    }
+
+    public String getBusinessKey() {
+        return ID_PREFIX + billingSessionId;
+    }
+
+    public Set<BillingLedger> getBillingLedgerItems() {
+        return billingLedgerItems;
+    }
+
+    public void setBillingLedgerItems(Set<BillingLedger> billingLedgerItems) {
+        this.billingLedgerItems = billingLedgerItems;
     }
 }

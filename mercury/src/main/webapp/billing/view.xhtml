@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+<body>
+
+    <h:link outcome="/security/login" value="Athena"/>
+    &gt;
+    <h:link outcome="list" value="Research Projects"/>
+    &gt;
+    #{researchProjectDetail.project.title}
+
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="title">View Billing Session</ui:define>
+        <ui:define name="metadata">
+            <f:metadata>
+                <f:viewParam name="session" value="#{billingSessionBean.session}" converter="#{billingSessionConverter}"/>
+            </f:metadata>
+        </ui:define>
+
+        <ui:define name="body">
+
+            <h:form styleClass="form-horizontal form-readonly">
+
+                <!-- Name -->
+                <div class="control-group">
+                    <label class="control-label label-form">ID</label>
+                    <div class="controls">
+                        <div class="form-value">#{billingSessionBean.session.businessKey}</div>
+                    </div>
+                </div>
+
+                <!-- created by -->
+                <div class="control-group">
+                    <label class="control-label label-form">Created By</label>
+                    <div class="controls">
+                        <div class="form-value">#{userListBean.getUserFullName(billingSessionBean.session.createdBy)}</div>
+                    </div>
+                </div>
+
+                <!-- created date -->
+                <div class="control-group">
+                    <label class="control-label label-form">Created Date</label>
+                    <div class="controls">
+                        <h:outputText value="#{billingSessionBean.session.createdDate}" styleClass="form-value" style="display:block">
+                            <f:convertDateTime type="both" timeStyle="short"/>
+                        </h:outputText>
+                    </div>
+                </div>
+
+                <!-- billed date -->
+                <div class="control-group">
+                    <label class="control-label label-form">Billed Date</label>
+                    <div class="controls">
+                        <h:outputText value="#{billingSessionBean.session.billedDate}" styleClass="form-value" style="display:block">
+                            <f:convertDateTime type="both" timeStyle="short"/>
+                        </h:outputText>
+                    </div>
+                </div>
+            </h:form>
+
+            <br/>
+            <br/>
+            For all ledger entries in this billing session, we need to collect the quote and quantity information and display it here.
+        </ui:define>
+    </ui:composition>
+</body>
+</html>

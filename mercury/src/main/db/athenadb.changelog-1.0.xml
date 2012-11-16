@@ -1042,22 +1042,22 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="GPLIM-329-8" author="hrafal">
+    <changeSet id="GPLIM-329-10" author="hrafal">
         <preConditions>
             <not>
                 <sequenceExists sequenceName="SEQ_LEDGER" schemaName="athena"/>
             </not>
         </preConditions>
-        <createSequence sequenceName="SEQ_LEDGER" schemaName="athena" startValue="1" incrementBy="50"/>
+        <createSequence sequenceName="SEQ_LEDGER" schemaName="athena" startValue="1" incrementBy="10"/>
     </changeSet>
 
-    <changeSet id="GPLIM-329-9" author="hrafal">
+    <changeSet id="GPLIM-329-11" author="hrafal">
         <preConditions>
             <not>
                 <sequenceExists sequenceName="SEQ_BILLING_SESSION" schemaName="athena"/>
             </not>
         </preConditions>
-        <createSequence sequenceName="SEQ_BILLING_SESSION" schemaName="athena" startValue="1" incrementBy="50"/>
+        <createSequence sequenceName="SEQ_BILLING_SESSION" schemaName="athena" startValue="1" incrementBy="1"/>
     </changeSet>
 
 </databaseChangeLog>
