@@ -36,7 +36,6 @@ public class ResearchProjectBean implements Serializable {
     /** All research projects, fetched once and stored per-request (as a result of this bean being @RequestScoped). */
     private List<ResearchProject> allResearchProjects;
 
-    private List<ResearchProject> filteredResearchProjects;
 
     /**
      * Returns a list of all research projects. Only actually fetches the list from the database once per request
@@ -109,11 +108,4 @@ public class ResearchProjectBean implements Serializable {
         return BoundaryUtils.buildEnumFilterList(ResearchProject.Status.values());
     }
 
-    public List<ResearchProject> getFilteredResearchProjects() {
-        return filteredResearchProjects;
-    }
-
-    public void setFilteredResearchProjects(List<ResearchProject> filteredResearchProjects) {
-        this.filteredResearchProjects = filteredResearchProjects;
-    }
 }
