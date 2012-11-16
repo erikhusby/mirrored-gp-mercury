@@ -908,7 +908,14 @@
       </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-239-1" author="mcovarr">
+        <addNotNullConstraint columnName="jira_ticket_key" schemaName="athena" tableName="product_order" />
+    </changeSet>
 
+    <changeSet id="GPLIM-239-2" author="mcovarr">
+        <addNotNullConstraint columnName="jira_ticket_key" schemaName="athena" tableName="research_project" />
+    </changeSet>
+    
     <changeSet id="GPLIM-229-1" author="mccrory">
       <sql>
         update product set samples_per_week = null where samples_per_week = 0;
