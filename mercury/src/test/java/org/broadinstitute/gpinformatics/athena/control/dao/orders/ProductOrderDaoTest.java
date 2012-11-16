@@ -66,7 +66,7 @@ public class ProductOrderDaoTest extends ContainerTest {
                     ResearchProjectResourceTest.createDummyResearchProject(testResearchProjectKey);
             researchProjectDao.persist(researchProject);
         }
-        order = createTestProductOrder();
+        order = createTestProductOrder(researchProjectDao, productDao, testProductOrderKey);
         productOrderDao.persist(order);
         productOrderDao.flush();
         productOrderDao.clear();
@@ -82,7 +82,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         utx.rollback();
     }
 
-    public ProductOrder createTestProductOrder() {
+    public static ProductOrder createTestProductOrder(ResearchProjectDao researchProjectDao, ProductDao productDao, String key) {
         // Find a research project in the DB.
         List<ResearchProject> projectsList = researchProjectDao.findAllResearchProjects();
         Assert.assertTrue(projectsList != null && !projectsList.isEmpty());
@@ -105,7 +105,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         for ( ProductOrderSample sample :sampleList ) {
             sample.setSamplePosition(samplePos++);
         }
-        newProductOrder.setJiraTicketKey(testProductOrderKey);
+        newProductOrder.setJiraTicketKey(key);
         return newProductOrder;
     }
 

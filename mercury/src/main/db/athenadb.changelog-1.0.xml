@@ -921,4 +921,143 @@
       </sql>
     </changeSet>
 
+    <!-- Billing Session -->
+    <changeSet id="GPLIM-329-1" author="hrafal">
+        <preConditions>
+            <not>
+                <tableExists tableName="billing_session" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="billing_session" schemaName="athena">
+            <column name="billing_session_id" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="created_date" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="DECIMAL(15,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="billed_date" type="date">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <!-- Billing Ledger -->
+    <changeSet id="GPLIM-329-2" author="hrafal">
+        <preConditions>
+            <not>
+                <tableExists tableName="billing_ledger" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="billing_ledger" schemaName="athena">
+            <column name="ledger_id" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product_order_sample_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price_item_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="billing_session_id" type="int">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-329-3" author="hrafal">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_ledger_order_sample" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_ledger_order_sample" baseTableSchemaName="athena"
+                                 baseTableName="billing_ledger" baseColumnNames="product_order_sample_id"
+                                 referencedTableName="product_order_sample" referencedColumnNames="product_order_sample_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-329-4" author="hrafal">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_ledger_session" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_ledger_session" baseTableSchemaName="athena"
+                                 baseTableName="billing_ledger" baseColumnNames="billing_session_id"
+                                 referencedTableName="billing_session" referencedColumnNames="billing_session_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-329-5" author="hrafal">
+        <preConditions>
+            <not>
+                <indexExists indexName="ix_ledger_order_sample" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createIndex indexName="ix_ledger_order_sample" schemaName="athena" tableName="billing_ledger">
+            <column name="product_order_sample_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-329-6" author="hrafal">
+        <preConditions>
+            <not>
+                <indexExists indexName="ix_ledger_billing_session" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createIndex indexName="ix_ledger_billing_session" schemaName="athena" tableName="billing_ledger">
+            <column name="billing_session_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-329-7" author="hrafal">
+        <preConditions>
+            <not>
+                <tableExists tableName="billing_session_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="billing_session_aud" schemaName="athena">
+            <column name="billing_session_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_date" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="created_by" type="DECIMAL(15,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="billed_date" type="date">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rev" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-329-8" author="hrafal">
+        <preConditions>
+            <not>
+                <sequenceExists sequenceName="SEQ_LEDGER" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_LEDGER" schemaName="athena" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-329-9" author="hrafal">
+        <preConditions>
+            <not>
+                <sequenceExists sequenceName="SEQ_BILLING_SESSION" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_BILLING_SESSION" schemaName="athena" startValue="1" incrementBy="50"/>
+    </changeSet>
+
 </databaseChangeLog>
