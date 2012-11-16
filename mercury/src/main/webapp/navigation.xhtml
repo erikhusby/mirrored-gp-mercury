@@ -29,9 +29,11 @@
                 </security:authorizeBlock>
             </p:submenu>
 
-            <p:submenu label="Search" icon="ui-icon-search">
-                <p:menuitem value="Barcode" outcome="/lookup/search" />
-            </p:submenu>
+            <security:authorizeBlock roles="#{userBean.developerRole}">
+                <p:submenu label="Search" icon="ui-icon-search">
+                    <p:menuitem value="Barcode" outcome="/lookup/search"/>
+                </p:submenu>
+            </security:authorizeBlock>
 
             <security:authorizeBlock roles="#{userBean.developerRole}">
                 <p:submenu label="Admin" icon="ui-icon-gear">
