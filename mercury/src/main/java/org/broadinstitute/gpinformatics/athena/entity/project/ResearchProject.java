@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -468,18 +469,23 @@ public class ResearchProject implements Serializable {
         listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.MERCURY_URL, ""));
 
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
-
         String username = bspUserList.getById(createdBy).getUsername();
-        JiraIssue issue =
-                jiraService.createIssue(
-                        fetchJiraProject().getKeyPrefix(),
-                        username,
-                        fetchJiraIssueType(), title, synopsis, listOfFields);
+
+        JiraIssue issue = jiraService.createIssue(fetchJiraProject().getKeyPrefix(),
+                username, fetchJiraIssueType(), title, synopsis, listOfFields);
 
         // TODO: Only set the JIRA key once everything else has completed successfully, i.e., adding watchers
         jiraTicketKey = issue.getKey();
 
         issue.addWatcher(username);
+
+        // Update ticket with link back into Mercury
+        MercuryConfig mercuryConfig = ServiceAccessUtility.getBean(MercuryConfig.class);
+        CustomField mercuryUrlField = new CustomField(
+                submissionFields.get(RequiredSubmissionFields.MERCURY_URL.getFieldName()),
+                mercuryConfig.getUrl() + "projects/view.xhtml?researchProject=" + jiraTicketKey,
+                CustomField.SingleFieldType.TEXT);
+        issue.updateIssue(Collections.singleton(mercuryUrlField));
     }
 
     public String getOriginalTitle() {
