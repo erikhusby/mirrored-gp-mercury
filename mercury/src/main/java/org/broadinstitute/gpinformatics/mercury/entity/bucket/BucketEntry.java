@@ -34,7 +34,13 @@ public class BucketEntry  {
     public static final Comparator<BucketEntry> byDate = new Comparator<BucketEntry>() {
         @Override
         public int compare ( BucketEntry bucketEntryPrime, BucketEntry bucketEntrySecond ) {
-            return bucketEntryPrime.getCreatedDate().compareTo(bucketEntrySecond.getCreatedDate());
+            int result;
+            result = bucketEntryPrime.getCreatedDate().compareTo(bucketEntrySecond.getCreatedDate());
+
+            if(result == 0)
+                result = bucketEntryPrime.getProductOrderRanking().compareTo(bucketEntrySecond.getProductOrderRanking());
+
+            return result;
         }
     };
 

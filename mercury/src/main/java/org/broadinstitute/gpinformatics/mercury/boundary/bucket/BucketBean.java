@@ -84,7 +84,7 @@ public class BucketBean {
      * @param bucket
      * @param actor
      */
-    public void add ( String productOrder, @Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket, Person actor ) {
+    public void add ( String productOrder, @Nonnull List<LabVessel> entriesToAdd, @Nonnull Bucket bucket, Person actor ) {
 
         for(LabVessel currVessel:entriesToAdd) {
             bucket.addEntry(productOrder, currVessel);
@@ -103,7 +103,7 @@ public class BucketBean {
         for ( String pdo : pdoKeyToVesselMap.keySet () ) {
             try {
                 ServiceAccessUtility.addJiraComment ( pdo, "Vessels: " +
-                        StringUtils.join (pdoKeyToVesselMap.get(pdo),',') +
+                        StringUtils.join ( pdoKeyToVesselMap.get ( pdo ), ',' ) +
                         " added to bucket " + bucket.getBucketDefinitionName () );
             } catch ( IOException ioe ) {
                 logger.log ( Level.WARNING, "error attempting to add a jira comment for adding " +
@@ -216,7 +216,7 @@ public class BucketBean {
 
         logger.log ( Level.INFO, "List of Bucket entries is a size of " + sortedBucketEntries.size () );
 
-        Collections.sort ( sortedBucketEntries, BucketEntry.byDate );
+//        Collections.sort ( sortedBucketEntries, BucketEntry.byDate );
         logger.log ( Level.INFO, "List of SORTED Bucket entries is a size of " + sortedBucketEntries.size () );
 
         Iterator<BucketEntry> bucketEntryIterator = sortedBucketEntries.iterator ();

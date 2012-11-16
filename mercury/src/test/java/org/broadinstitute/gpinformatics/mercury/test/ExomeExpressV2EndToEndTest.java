@@ -73,7 +73,7 @@ public class ExomeExpressV2EndToEndTest {
         Bucket shearingBucket = new Bucket(new WorkflowBucketDef("Shearing"));
         // todo plates vs tubes?
         final Person testActor = new Person ();
-        bucketBean.add(productOrder1.getBusinessKey(), labEvent.getTargetLabVessels(), shearingBucket, testActor );
+        bucketBean.add(productOrder1.getBusinessKey(), new LinkedList<LabVessel>(labEvent.getTargetLabVessels()), shearingBucket, testActor );
         // - Deck calls web service to verify source barcodes?
         // - Deck calls web service to validate next action against workflow and batch
         // Decks (BSP and Sequencing) send messages to Mercury, first message auto-drains bucket
