@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtili
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
@@ -12,29 +12,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
+import javax.persistence.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * The batch of work, as tracked by a person
@@ -209,7 +189,7 @@ public class LabBatch {
         JiraIssue batchTicket =
                 jiraService.createIssue(fetchJiraProject().getKeyPrefix(), reporter,
                         // TODO SGM:  Need a better solution.  Map product to issueType.
-                        CreateIssueRequest.Issuetype.EXOME_EXPRESS,
+                        CreateFields.IssueType.EXOME_EXPRESS,
                         batchName, "", listOfFields);
 
         setJiraTicket(new JiraTicket(batchTicket.getTicketName(), batchTicket.getTicketName()));

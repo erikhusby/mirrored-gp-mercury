@@ -6,19 +6,11 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.*;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldJsonParser;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.*;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
@@ -94,7 +86,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     @Override
-    public JiraIssue createIssue(String projectPrefix, String reporter, CreateFields.Issuetype issueType,
+    public JiraIssue createIssue(String projectPrefix, String reporter, CreateFields.IssueType issueType,
                                            String summary, String description,
                                            Collection<CustomField> customFields) throws IOException {
 
