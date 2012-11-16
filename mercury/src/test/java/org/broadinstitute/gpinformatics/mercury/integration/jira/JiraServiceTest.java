@@ -2,12 +2,14 @@ package org.broadinstitute.gpinformatics.mercury.integration.jira;
 
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.testng.Assert;
@@ -15,9 +17,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
@@ -45,9 +45,9 @@ public class JiraServiceTest {
         try {
 
             Map<String, CustomFieldDefinition> requiredFields=
-                    service.getRequiredFields(new CreateIssueRequest.Fields.Project(
-                            CreateIssueRequest.Fields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix()),
-                                              CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL );
+                    service.getRequiredFields(new CreateFields.Project(
+                            CreateFields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix()),
+                                              CreateFields.IssueType.WHOLE_EXOME_HYBSEL );
 
             Collection<CustomField> customFieldList = new LinkedList<CustomField>();
 
@@ -61,14 +61,14 @@ public class JiraServiceTest {
                     //        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10011","Work Request ID(s)",true),"WR 1 Billion!"));
 
 
-            final JiraIssue jiraIssue =
-                    service.createIssue(CreateIssueRequest.Fields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix(), null,
-                                        CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL,
+            JiraIssue jiraIssue =
+                    service.createIssue(CreateIssueRequest.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix(), null,
+                                        CreateIssueRequest.Issuetype.WHOLE_EXOME_HYBSEL,
                                         "Summary created from Mercury", "Description created from Mercury",
                                         customFieldList);
 
 
-            final String lcsetJiraKey = jiraIssue.getTicketName();
+            String lcsetJiraKey = jiraIssue.getTicketName();
 
             Assert.assertNotNull(lcsetJiraKey);
 
@@ -83,8 +83,8 @@ public class JiraServiceTest {
 
         try {
             Map<String, CustomFieldDefinition> requiredFields =
-                service.getRequiredFields(new CreateIssueRequest.Fields.Project(CreateIssueRequest.Fields.ProjectType.Product_Ordering.getKeyPrefix()),
-                                                              CreateIssueRequest.Fields.Issuetype.PRODUCT_ORDER );
+                service.getRequiredFields(new CreateFields.Project(CreateFields.ProjectType.Product_Ordering.getKeyPrefix()),
+                                                              CreateFields.IssueType.PRODUCT_ORDER );
 
             Assert.assertTrue(requiredFields.keySet().contains(ProductOrder.RequiredSubmissionFields.PRODUCT_FAMILY.getFieldName()));
 
@@ -92,12 +92,12 @@ public class JiraServiceTest {
             customFieldList.add(new CustomField(requiredFields.get(ProductOrder.RequiredSubmissionFields.PRODUCT_FAMILY.getFieldName()),
                                                 "Test Exome Express", CustomField.SingleFieldType.TEXT ));
 
-            final JiraIssue jiraIssue =
-                    service.createIssue(CreateIssueRequest.Fields.ProjectType.Product_Ordering.getKeyPrefix(), "hrafal",
-                                        CreateIssueRequest.Fields.Issuetype.PRODUCT_ORDER,
+            JiraIssue jiraIssue =
+                    service.createIssue(CreateIssueRequest.ProjectType.Product_Ordering.getKeyPrefix(), "hrafal",
+                                        CreateIssueRequest.Issuetype.PRODUCT_ORDER,
                                         "Athena Test case:::  Test new Summary Addition",
                                         "Athena Test Case:  Test description setting",customFieldList);
-            final String pdoJiraKey = jiraIssue.getTicketName();
+            String pdoJiraKey = jiraIssue.getTicketName();
 
             Assert.assertNotNull(pdoJiraKey);
 
@@ -106,6 +106,19 @@ public class JiraServiceTest {
         }
     }
 
+    public void testUpdateTicket() throws IOException {
+        CreateIssueResponse response = service.createIssue(
+                CreateFields.ProjectType.Research_Projects.getKeyPrefix(), "breilly",
+                CreateFields.IssueType.RESEARCH_PROJECT,
+                "JiraServiceTest.testUpdateTicket", "Test issue for update", new ArrayList<CustomField>());
+
+        Map<String, CustomFieldDefinition> allCustomFields = service.getCustomFields();
+
+        CustomField mercuryUrlField = new CustomField(
+                allCustomFields.get(ResearchProject.RequiredSubmissionFields.MERCURY_URL.getFieldName()),
+                "http://www.broadinstitute.org/", CustomField.SingleFieldType.TEXT);
+        service.updateIssue(response.getKey(), Collections.singletonList(mercuryUrlField));
+    }
 
     public void testAddWatcher() {
 
@@ -163,9 +176,9 @@ public class JiraServiceTest {
     public void test_custom_fields() throws IOException {
         setUp();
         Map<String, CustomFieldDefinition> customFields = null;
-        customFields = service.getRequiredFields(new CreateIssueRequest.Fields.Project(
-                CreateIssueRequest.Fields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix()),
-                                                 CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL );
+        customFields = service.getRequiredFields(new CreateFields.Project(
+                CreateFields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix()),
+                                                 CreateFields.IssueType.WHOLE_EXOME_HYBSEL );
         Assert.assertFalse(customFields.isEmpty());
         boolean foundLanesRequestedField = false;
         for (CustomFieldDefinition customField : customFields.values()) {

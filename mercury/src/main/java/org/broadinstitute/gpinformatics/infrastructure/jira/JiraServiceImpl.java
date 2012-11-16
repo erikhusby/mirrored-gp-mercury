@@ -6,6 +6,12 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.*;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -88,7 +94,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     @Override
-    public JiraIssue createIssue(String projectPrefix, String reporter, CreateIssueRequest.Fields.Issuetype issueType,
+    public JiraIssue createIssue(String projectPrefix, String reporter, CreateFields.Issuetype issueType,
                                            String summary, String description,
                                            Collection<CustomField> customFields) throws IOException {
 
@@ -116,6 +122,12 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         return new JiraIssue(key, key, this);
     }
 
+    @Override
+    public void updateIssue(String key, Collection<CustomField> customFields) throws IOException {
+        UpdateIssueRequest request = new UpdateIssueRequest(key, customFields);
+        WebResource webResource = getJerseyClient().resource(request.getUrl(getBaseUrl()));
+        put(webResource, request);
+    }
 
     @Override
     public void addComment(String key, String body) throws IOException {
@@ -184,8 +196,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     @Override
-    public Map<String, CustomFieldDefinition> getRequiredFields(@Nonnull CreateIssueRequest.Fields.Project project,
-                                                                @Nonnull CreateIssueRequest.Fields.Issuetype issueType) throws IOException {
+    public Map<String, CustomFieldDefinition> getRequiredFields(@Nonnull CreateFields.Project project,
+                                                                @Nonnull CreateFields.IssueType issueType) throws IOException {
         if (project == null) {
             throw new NullPointerException("jira project cannot be null");
         }

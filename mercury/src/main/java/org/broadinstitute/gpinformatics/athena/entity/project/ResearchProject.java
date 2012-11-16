@@ -13,7 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtili
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.hibernate.annotations.Index;
@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.*;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -30,7 +31,7 @@ import java.util.*;
 @Entity
 @Audited
 @Table(name = "RESEARCH_PROJECT", schema = "athena")
-public class ResearchProject {
+public class ResearchProject implements Serializable {
 
     public static final boolean IRB_ENGAGED = false;
     public static final boolean IRB_NOT_ENGAGED = true;
@@ -490,12 +491,12 @@ public class ResearchProject {
      * makes it easier for a user of this object to interact with Jira for this entity
      *
      * @return An enum of type
-     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.ProjectType} that
+     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.ProjectType} that
      * represents the Jira Project for Research Projects
      */
     @Transient
-    public CreateIssueRequest.Fields.ProjectType fetchJiraProject() {
-        return CreateIssueRequest.Fields.ProjectType.Research_Projects;
+    public CreateFields.ProjectType fetchJiraProject() {
+        return CreateFields.ProjectType.Research_Projects;
     }
 
     /**
@@ -504,12 +505,12 @@ public class ResearchProject {
      * makes it easier for a user of this object to interact with Jira for this entity
      *
      * @return An enum of type
-     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.Issuetype} that
+     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.IssueType} that
      * represents the Jira Issue Type for Research Projects
      */
     @Transient
-    public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType() {
-        return CreateIssueRequest.Fields.Issuetype.RESEARCH_PROJECT;
+    public CreateFields.IssueType fetchJiraIssueType() {
+        return CreateFields.IssueType.RESEARCH_PROJECT;
     }
 
     /**
