@@ -8,6 +8,10 @@ import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.JoinType;
+import javax.persistence.criteria.Root;
 import java.util.List;
 
 /**
@@ -34,7 +38,17 @@ public class ResearchProjectDao extends GenericDao {
     }
 
     public List<ResearchProject> findAllResearchProjects() {
-        return findAll(ResearchProject.class);
+        CriteriaBuilder cb = getCriteriaBuilder();
+        CriteriaQuery<ResearchProject> cq = cb.createQuery(ResearchProject.class);
+        cq.distinct(true);
+
+        Root<ResearchProject> productOrder = cq.from(ResearchProject.class);
+
+        productOrder.join(ResearchProject_.productOrders, JoinType.LEFT);
+        productOrder.fetch(ResearchProject_.productOrders, JoinType.LEFT);
+
+        return getEntityManager().createQuery(cq).getResultList();
+
     }
 
     public ResearchProject findByJiraTicketKey(String jiraTicketKey) {

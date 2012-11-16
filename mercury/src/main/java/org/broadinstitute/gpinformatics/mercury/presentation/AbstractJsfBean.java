@@ -123,7 +123,7 @@ public abstract class AbstractJsfBean {
      * @param componentId The id of the component
      * @param <T> The correct object
      */
-    public <T> void updateForDuplicates(List<T> objects, String componentId) {
+    public <T> void removeDuplicates(List<T> objects, String componentId) {
 
         // The users ARE THE ACTUAL MEMBERS that back the autocomplete lists
         Set<T> uniqueObjects = new HashSet<T>();

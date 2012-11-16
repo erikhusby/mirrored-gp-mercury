@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira;
 
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.codehaus.jackson.JsonGenerator;
 import org.codehaus.jackson.map.JsonSerializer;
 import org.codehaus.jackson.map.SerializerProvider;
@@ -20,20 +20,16 @@ import java.io.IOException;
  * Note this class does not perform deserialization, nor is there currently a need for that.
  *
  */
-public class JsonLabopsJiraIssueTypeSerializer extends JsonSerializer<CreateIssueRequest.Fields.Issuetype> {
-
+public class JsonLabopsJiraIssueTypeSerializer extends JsonSerializer<CreateFields.IssueType> {
 
     @Override
     /**
      * Replace all underscores in the value with a blank
      */
-    public void serialize(CreateIssueRequest.Fields.Issuetype issueType, JsonGenerator jgen, SerializerProvider provider) throws IOException {
+    public void serialize(CreateFields.IssueType issueType, JsonGenerator jgen, SerializerProvider provider) throws IOException {
         jgen.writeStartObject();
         jgen.writeFieldName("name");
         jgen.writeString(issueType.getJiraName());
         jgen.writeEndObject();
     }
-
-
-
 }
