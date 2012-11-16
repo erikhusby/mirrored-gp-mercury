@@ -24,9 +24,10 @@
                          sortBy="#{order.title}"
                          sortOrder="ascending"
                          var="order"
-                         selection="#{productOrderBean.selectedProductOrders}">
+                         selection="#{productOrderBean.selectedProductOrders}"
+                         selectionMode="multiple">
 
-                <p:column selectionMode="multiple" style="width:18px" />
+                <!--<p:column selectionMode="multiple" style="width:18px" />-->
 
                 <p:column headerText="Name" sortBy="#{order.title}" sortingComparator="caseInsensitiveText">
                     <h:link outcome="view" value="#{order.title}">
