@@ -18,14 +18,15 @@
                 <h:link value="New Product Order" outcome="create" styleClass="pull-right"/>
             </div>
 
-            <p:commandButton value="Generate Billing Tracker" action="#{productOrderBean.downloadLedgerUpdate}" ajax="false"/>
+            <p:commandButton value="Generate Billing Tracker" action="#{productOrderForm.downloadLedgerUpdate}" ajax="false"/>
+            <p:commandButton value="Start Billing Session" action="#{productOrderForm.startBillingSession}" ajax="false"/>
 
-            <p:dataTable value="#{productOrderBean.allProductOrders}"
-                         sortBy="#{order.title}"
-                         sortOrder="ascending"
-                         var="order"
-                         selection="#{productOrderBean.selectedProductOrders}"
-                         selectionMode="multiple">
+            <p:dataTable value="#{productOrderForm.allProductOrders}"
+                     sortBy="#{order.title}"
+                     sortOrder="ascending"
+                     var="order"
+                     selection="#{productOrderBean.selectedProductOrders}"
+                     selectionMode="multiple">
 
                 <!--<p:column selectionMode="multiple" style="width:18px" />-->
 
@@ -54,7 +55,7 @@
                     #{order.researchProject.title}
                 </p:column>
 
-                <p:column headerText="Owner" filterBy="#{order.createdBy}" filterOptions="#{productOrderBean.allProjectOwners}" filterMatchMode="exact">
+                <p:column headerText="Owner" filterBy="#{order.createdBy}" filterOptions="#{productOrderForm.allProjectOwners}" filterMatchMode="exact">
                     #{userListBean.getUserFullName(order.createdBy)}
                 </p:column>
 

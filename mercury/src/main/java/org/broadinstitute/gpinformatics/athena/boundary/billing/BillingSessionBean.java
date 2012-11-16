@@ -17,7 +17,7 @@ public class BillingSessionBean {
 
     /** All sessions that exist so we can display them in the UI **/
     private List<BillingSession> allSessions;
-    private BillingSession session;
+    private BillingSession billingSession;
 
     /**
      * Returns a list of all product orders. Only actually fetches the list from the database once per request
@@ -33,11 +33,11 @@ public class BillingSessionBean {
         return allSessions;
     }
 
-    public BillingSession getSession() {
-        return session;
+    public BillingSession getBillingSession() {
+        return billingSession;
     }
 
-    public void setSession(BillingSession session) {
-        this.session = session;
+    public void setBillingSession(BillingSession billingSession) {
+        this.billingSession = billingSession;
     }
 }

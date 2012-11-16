@@ -15,8 +15,8 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -78,7 +78,18 @@ public class BillingLedgerDaoTest {
     }
 
     public void testFindLedgerEntriesForPDOs() {
-        List<BillingLedger> ledgerEntries = billingLedgerDao.findByOrderList(Collections.singletonList(order));
-        Assert.assertTrue("The specified order should find the test ledger", ledgerEntries.get(0).equals(ledger));
+        ProductOrder[] orders = new ProductOrder[1];
+        orders[0] = order;
+        Set<BillingLedger> ledgerEntries = billingLedgerDao.findByOrderList(orders);
+
+        Assert.assertTrue("The specified order should find the test ledger", ledgerEntries.iterator().next().equals(ledger));
+    }
+
+    public void testFindUnbilledLedgerEntriesForPDOs() {
+        ProductOrder[] orders = new ProductOrder[1];
+        orders[0] = order;
+        Set<BillingLedger> ledgerEntries = billingLedgerDao.findWithoutBillingSessionByOrderList(orders);
+
+        Assert.assertTrue("The specified order should find the test ledger", ledgerEntries.iterator().next().equals(ledger));
     }
 }

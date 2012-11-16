@@ -22,7 +22,7 @@
 
                 <p:column headerText="ID" sortBy="#{billingSession.businessKey}" sortingComparator="caseInsensitiveText">
                     <h:link outcome="view" value="#{billingSession.businessKey}">
-                        <f:param name="session" value="#{billingSession.businessKey}"/>
+                        <f:param name="billingSession" value="#{billingSession.businessKey}"/>
                     </h:link>
                 </p:column>
 

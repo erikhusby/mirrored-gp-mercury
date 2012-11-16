@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.billing;
 
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -17,7 +19,7 @@ import java.util.Set;
 @Audited
 @Table(name= "BILLING_SESSION", schema = "athena")
 public class BillingSession {
-    public static final String ID_PREFIX = "BS-";
+    public static final String ID_PREFIX = "BILL-";
 
     @Id
     @SequenceGenerator(name = "SEQ_BILLING_SESSION", schema = "athena", sequenceName = "SEQ_BILLING_SESSION")
@@ -33,14 +35,15 @@ public class BillingSession {
     @Column(name="BILLED_DATE")
     private Date billedDate;
 
-    @OneToMany
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     public Set<BillingLedger> billingLedgerItems;
 
     BillingSession() {}
 
-    public BillingSession(@Nonnull Long createdBy) {
+    public BillingSession(@Nonnull Long createdBy, Set<BillingLedger> billingLedgerItems) {
         this.createdBy = createdBy;
         this.createdDate = new Date();
+        this.billingLedgerItems = billingLedgerItems;
     }
 
     public Long getBillingSessionId() {
@@ -85,5 +88,25 @@ public class BillingSession {
 
     public void setBillingLedgerItems(Set<BillingLedger> billingLedgerItems) {
         this.billingLedgerItems = billingLedgerItems;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if ( (this == other ) ) {
+            return true;
+        }
+
+        if ( !(other instanceof BillingSession) ) {
+            return false;
+        }
+
+        BillingSession castOther = (BillingSession) other;
+        return new EqualsBuilder()
+                .append(getBusinessKey(), castOther.getBusinessKey()).isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder().append(getBusinessKey()).toHashCode();
     }
 }

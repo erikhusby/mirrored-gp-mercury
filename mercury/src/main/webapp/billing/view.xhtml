@@ -20,7 +20,7 @@
         <ui:define name="title">View Billing Session</ui:define>
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="session" value="#{billingSessionBean.session}" converter="#{billingSessionConverter}"/>
+                <f:viewParam name="billingSession" value="#{billingSessionBean.billingSession}" converter="#{billingSessionConverter}"/>
             </f:metadata>
         </ui:define>
 
@@ -32,7 +32,7 @@
                 <div class="control-group">
                     <label class="control-label label-form">ID</label>
                     <div class="controls">
-                        <div class="form-value">#{billingSessionBean.session.businessKey}</div>
+                        <div class="form-value">#{billingSessionBean.billingSession.businessKey}</div>
                     </div>
                 </div>
 
@@ -40,7 +40,7 @@
                 <div class="control-group">
                     <label class="control-label label-form">Created By</label>
                     <div class="controls">
-                        <div class="form-value">#{userListBean.getUserFullName(billingSessionBean.session.createdBy)}</div>
+                        <div class="form-value">#{userListBean.getUserFullName(billingSessionBean.billingSession.createdBy)}</div>
                     </div>
                 </div>
 
@@ -48,7 +48,7 @@
                 <div class="control-group">
                     <label class="control-label label-form">Created Date</label>
                     <div class="controls">
-                        <h:outputText value="#{billingSessionBean.session.createdDate}" styleClass="form-value" style="display:block">
+                        <h:outputText value="#{billingSessionBean.billingSession.createdDate}" styleClass="form-value" style="display:block">
                             <f:convertDateTime type="both" timeStyle="short"/>
                         </h:outputText>
                     </div>
@@ -58,7 +58,7 @@
                 <div class="control-group">
                     <label class="control-label label-form">Billed Date</label>
                     <div class="controls">
-                        <h:outputText value="#{billingSessionBean.session.billedDate}" styleClass="form-value" style="display:block">
+                        <h:outputText value="#{billingSessionBean.billingSession.billedDate}" styleClass="form-value" style="display:block">
                             <f:convertDateTime type="both" timeStyle="short"/>
                         </h:outputText>
                     </div>
@@ -67,7 +67,7 @@
 
             <br/>
             <br/>
-            For all ledger entries in this billing session, we need to collect the quote and quantity information and display it here.
+            For all ledger entries in this billing billingSession, we need to collect the quote and quantity information and display it here.
         </ui:define>
     </ui:composition>
 </body>

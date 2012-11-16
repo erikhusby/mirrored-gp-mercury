@@ -29,7 +29,7 @@ public class BillingSessionDao extends GenericDao {
             throw new IllegalArgumentException("Business key must start with: " + BillingSession.ID_PREFIX);
         }
 
-        Long sessionId = Long.parseLong(businessKey.substring(3));
+        Long sessionId = Long.parseLong(businessKey.substring(BillingSession.ID_PREFIX.length()));
 
         return findSingle(BillingSession.class, BillingSession_.billingSessionId, sessionId);
     }

@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.billing;
 
+import org.apache.commons.lang.builder.EqualsBuilder;
+import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.hibernate.annotations.Index;
@@ -83,5 +85,30 @@ public class BillingLedger {
 
     public void setBillingSession(BillingSession billingSession) {
         this.billingSession = billingSession;
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if ( (this == other ) ) {
+            return true;
+        }
+
+        if ( !(other instanceof BillingLedger) ) {
+            return false;
+        }
+
+        BillingLedger castOther = (BillingLedger) other;
+        return new EqualsBuilder()
+                .append(productOrderSample, castOther.getProductOrderSample())
+                .append(priceItem, castOther.getPriceItem())
+                .append(billingSession, castOther.getBillingSession()).isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder()
+                .append(productOrderSample)
+                .append(priceItem)
+                .append(billingSession).toHashCode();
     }
 }

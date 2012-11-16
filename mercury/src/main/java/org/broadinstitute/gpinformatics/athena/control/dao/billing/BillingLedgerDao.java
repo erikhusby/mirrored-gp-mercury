@@ -13,8 +13,11 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Root;
+import javax.persistence.criteria.Predicate;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Database interactions involving Billing Ledger
@@ -25,18 +28,35 @@ public class BillingLedgerDao extends GenericDao {
         return findAll(BillingLedger.class);
     }
 
-    public List<BillingLedger> findByOrderList(List<ProductOrder> orders) {
+    private Set<BillingLedger> findByOrderList(ProductOrder[] orders, boolean notInBillingSession) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<BillingLedger> criteriaQuery = criteriaBuilder.createQuery(BillingLedger.class);
 
         Root<BillingLedger> ledgerRoot = criteriaQuery.from(BillingLedger.class);
         Join<BillingLedger, ProductOrderSample> orderSample = ledgerRoot.join(BillingLedger_.productOrderSample);
-        criteriaQuery.where(orderSample.get(ProductOrderSample_.productOrder).in(orders));
+
+        Predicate orderInPredicate = orderSample.get(ProductOrderSample_.productOrder).in(orders);
+
+        Predicate fullPredicate = orderInPredicate;
+        if (notInBillingSession) {
+            Predicate noSessionPredicate = ledgerRoot.get(BillingLedger_.billingSession).isNull();
+            fullPredicate = criteriaBuilder.and(orderInPredicate, noSessionPredicate);
+        }
+
+        criteriaQuery.where(fullPredicate);
 
         try {
-            return getEntityManager().createQuery(criteriaQuery).getResultList();
+            return new HashSet<BillingLedger>(getEntityManager().createQuery(criteriaQuery).getResultList());
         } catch (NoResultException ignored) {
-            return Collections.emptyList();
+            return Collections.emptySet();
         }
+    }
+
+    public Set<BillingLedger> findByOrderList(ProductOrder[] orders) {
+        return findByOrderList(orders, false);
+    }
+
+    public Set<BillingLedger> findWithoutBillingSessionByOrderList(ProductOrder[] orders) {
+        return findByOrderList(orders, true);
     }
 }
