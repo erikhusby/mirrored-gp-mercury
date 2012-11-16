@@ -10,8 +10,9 @@ if [ -d "release" ] ; then
 fi
 mkdir release
 
-git clone ssh://git@stash.broadinstitute.org:7999/PRE/sandbox.git release
-cd release
+git clone ssh://git@stash.broadinstitute.org:7999/GPIN/mercury.git release
+cd release/mercury
+
 #
 # Determine current version numbers
 VERSION=`groovy -e 'print new XmlParser().parse(new File("pom.xml")).version.text()'`
