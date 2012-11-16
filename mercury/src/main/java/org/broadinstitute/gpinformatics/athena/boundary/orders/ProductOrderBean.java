@@ -18,7 +18,6 @@ public class ProductOrderBean {
     @Inject
     private ProductOrderDao productOrderDao;
 
-    private ProductOrder[] selectedProductOrders;
 
     /**
      * Returns a list of SelectItems for all product order statuses, including an "Any" selection.
@@ -47,13 +46,4 @@ public class ProductOrderBean {
     public ProductOrder getProductOrderByKey( @Nonnull String productOrderKey) {
         return productOrderDao.findByBusinessKey(productOrderKey);
     }
-
-    public ProductOrder[] getSelectedProductOrders() {
-        return selectedProductOrders;
-    }
-
-    public void setSelectedProductOrders(ProductOrder[] selectedProductOrders) {
-        this.selectedProductOrders = selectedProductOrders;
-    }
-
 }

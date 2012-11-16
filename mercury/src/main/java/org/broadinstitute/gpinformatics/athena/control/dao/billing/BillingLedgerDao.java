@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
+import javax.annotation.Nonnull;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -28,7 +29,11 @@ public class BillingLedgerDao extends GenericDao {
         return findAll(BillingLedger.class);
     }
 
-    private Set<BillingLedger> findByOrderList(ProductOrder[] orders, boolean notInBillingSession) {
+    private Set<BillingLedger> findByOrderList(@Nonnull ProductOrder[] orders, boolean notInBillingSession) {
+        if (orders.length == 0) {
+            return Collections.emptySet();
+        }
+
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<BillingLedger> criteriaQuery = criteriaBuilder.createQuery(BillingLedger.class);
 
@@ -52,11 +57,11 @@ public class BillingLedgerDao extends GenericDao {
         }
     }
 
-    public Set<BillingLedger> findByOrderList(ProductOrder[] orders) {
+    public Set<BillingLedger> findByOrderList(@Nonnull ProductOrder[] orders) {
         return findByOrderList(orders, false);
     }
 
-    public Set<BillingLedger> findWithoutBillingSessionByOrderList(ProductOrder[] orders) {
+    public Set<BillingLedger> findWithoutBillingSessionByOrderList(@Nonnull ProductOrder[] orders) {
         return findByOrderList(orders, true);
     }
 }

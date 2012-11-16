@@ -398,6 +398,11 @@ public class ProductOrderForm extends AbstractJsfBean {
             return null;
         }
 
+        if ((selectedProductOrders == null) || (selectedProductOrders.length == 0)) {
+            addErrorMessage("Product orders must be selected for a billing session to be started");
+            return null;
+        }
+
         Set<BillingLedger> ledgerItems =
             ledgerDao.findWithoutBillingSessionByOrderList(selectedProductOrders);
         BillingSession session = new BillingSession(userBean.getBspUser().getUserId(), ledgerItems);
