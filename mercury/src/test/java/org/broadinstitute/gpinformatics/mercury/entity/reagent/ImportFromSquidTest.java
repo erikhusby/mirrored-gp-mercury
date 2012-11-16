@@ -12,12 +12,16 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
+import javax.transaction.Status;
+import javax.transaction.UserTransaction;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,11 +30,16 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+
 /**
  * A Test to import molecular indexes and LCSETs from Squid.  This prepares an empty database to accept messages.  This must
  * be in the same package as MolecularIndexingScheme, because it uses package visible methods on that class.
  * Use the following VM options: -Xmx1G -XX:MaxPermSize=128M -Dorg.jboss.remoting-jmx.timeout=1500
  * As of August 2012, the test takes about 20 minutes to run.
+ * This test requires an XA-datasource, or the following in the <system-properties> element in standalone.xml
+ *         <property name="com.arjuna.ats.arjuna.allowMultipleLastResources" value="true"/>
+ * For XA in Postgres, in data/postgresql.conf, set max_prepared_transactions = 10
  */
 public class ImportFromSquidTest extends ContainerTest {
 
@@ -45,6 +54,31 @@ public class ImportFromSquidTest extends ContainerTest {
 
     @Inject
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
+
+    @Inject
+    private UserTransaction utx;
+
+    @BeforeMethod(groups = EXTERNAL_INTEGRATION)
+    public void setUp() throws Exception {
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
+        }
+
+        utx.begin();
+    }
+
+    @AfterMethod(groups = EXTERNAL_INTEGRATION)
+    public void tearDown() throws Exception {
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
+        }
+
+        if(utx.getStatus() == Status.STATUS_ACTIVE) {
+            utx.commit();
+        }
+    }
 
     /**
      * Import index schemes from Squid.
@@ -68,6 +102,7 @@ public class ImportFromSquidTest extends ContainerTest {
         String previousSchemeName = "";
         MolecularIndexingScheme molecularIndexingScheme = null;
         SortedMap<MolecularIndexingScheme.IndexPosition, MolecularIndex> indexesAndPositions = null;
+        Map<String, MolecularIndex> mapSequenceToIndex = new HashMap<String, MolecularIndex>();
         for (Object o : resultList) {
             Object[] columns = (Object[]) o;
             String schemeName = (String) columns[0];
@@ -79,19 +114,21 @@ public class ImportFromSquidTest extends ContainerTest {
                 if(molecularIndexingScheme != null) {
                     molecularIndexingScheme.setIndexPositions(indexesAndPositions);
                     molecularIndexingSchemeDao.persist(molecularIndexingScheme);
-                    // Until fix the mapping problem that causes repeated deletes and inserts on molecular_index_position,
-                    // clear the session to avoid dirty checks (each call to persist is in its own transaction, so it
-                    // flushes immediately)
-                    molecularIndexingSchemeDao.clear();
                 }
                 molecularIndexingScheme = new MolecularIndexingScheme();
                 molecularIndexingScheme.setName(schemeName);
                 indexesAndPositions = new TreeMap<MolecularIndexingScheme.IndexPosition, MolecularIndex>();
             }
-            indexesAndPositions.put(MolecularIndexingScheme.IndexPosition.valueOf(positionHint), new MolecularIndex(sequence));
+            // reuse sequences across schemes, because sequence has a unique constraint
+            MolecularIndex molecularIndex = mapSequenceToIndex.get(sequence);
+            if(molecularIndex == null) {
+                molecularIndex = new MolecularIndex(sequence);
+                mapSequenceToIndex.put(sequence, molecularIndex);
+            }
+            assert indexesAndPositions != null;
+            indexesAndPositions.put(MolecularIndexingScheme.IndexPosition.valueOf(positionHint), molecularIndex);
         }
         molecularIndexingSchemeDao.persist(molecularIndexingScheme);
-        molecularIndexingSchemeDao.clear();
     }
 
     /**
