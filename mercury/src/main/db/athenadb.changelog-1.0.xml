@@ -1043,7 +1043,7 @@
     </changeSet>
 
     <changeSet id="GPLIM-329-10" author="hrafal">
-        <preConditions>
+        <preConditions onFail="MARK_RAN">
             <not>
                 <sequenceExists sequenceName="SEQ_LEDGER" schemaName="athena"/>
             </not>
@@ -1052,12 +1052,50 @@
     </changeSet>
 
     <changeSet id="GPLIM-329-11" author="hrafal">
-        <preConditions>
+        <preConditions onFail="MARK_RAN">
             <not>
                 <sequenceExists sequenceName="SEQ_BILLING_SESSION" schemaName="athena"/>
             </not>
         </preConditions>
         <createSequence sequenceName="SEQ_BILLING_SESSION" schemaName="athena" startValue="1" incrementBy="1"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-329-12" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="billing_ledger_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="billing_ledger_aud" schemaName="athena">
+            <column name="ledger_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_order_sample_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="price_item_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="quantity" type="decimal">
+                <constraints nullable="true"/>
+            </column>
+            <column name="billing_session_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-329-13" author="hrafal">
+        <dropColumn schemaName="athena" tableName="billing_ledger" columnName="quantity"/>
+        <addColumn schemaName="athena" tableName="billing_ledger">
+            <column name="quantity" type="decimal"/>
+        </addColumn>
     </changeSet>
 
 </databaseChangeLog>
