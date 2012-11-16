@@ -12,19 +12,19 @@
     <cc:attribute name="barcode" required="true"/>
 </cc:interface>
 <cc:implementation>
-    <h:outputText value="#{sampleBean.updateVessel(cc.attrs.barcode)}"/>
-    <p:dataTable id="plateSampleResults" value="#{sampleBean.positionNameList}" var="positionName">
+    <h:outputText value="#{sampleListBean.updateVessel(cc.attrs.barcode)}"/>
+    <p:dataTable id="plateSampleResults" value="#{sampleListBean.positionNameList}" var="positionName">
         <f:facet name="header">
-            Sample Information for Container #{sampleBean.barcode}
+            Sample Information for Container #{sampleListBean.barcode}
         </f:facet>
         <p:column
-                rendered="#{sampleBean.vesselContainer != null and !sampleBean.vesselContainer.hasAnonymousVessels()}">
+                rendered="#{sampleListBean.vesselContainer != null and !sampleListBean.vesselContainer.hasAnonymousVessels()}">
             <f:facet name="header">
                 <h:outputText value="Vessel Label"/>
             </f:facet>
         </p:column>
         <p:column
-                rendered="#{sampleBean.vesselContainer != null and !sampleBean.vesselContainer.hasAnonymousVessels()}">
+                rendered="#{sampleListBean.vesselContainer != null and !sampleListBean.vesselContainer.hasAnonymousVessels()}">
             <f:facet name="header">
                 <h:outputText value="Vessel Type"/>
             </f:facet>
@@ -59,15 +59,15 @@
                 <h:outputText value="Container Position"/>
             </f:facet>
         </p:column>
-        <p:subTable value="#{sampleBean.getSampleInstancesAtPosition(positionName)}"
+        <p:subTable value="#{sampleListBean.getSampleInstancesAtPosition(positionName)}"
                     var="sampleInstance">
             <p:column
-                    rendered="#{sampleBean.vesselContainer != null and !sampleBean.vesselContainer.hasAnonymousVessels()}">
-                <h:outputText value="#{sampleBean.getVesselAtPosition(positionName).label}"/>
+                    rendered="#{sampleListBean.vesselContainer != null and !sampleListBean.vesselContainer.hasAnonymousVessels()}">
+                <h:outputText value="#{sampleListBean.getVesselAtPosition(positionName).label}"/>
             </p:column>
             <p:column
-                    rendered="#{sampleBean.vesselContainer != null and !sampleBean.vesselContainer.hasAnonymousVessels()}">
-                <h:outputText value="#{sampleBean.getVesselAtPosition(positionName).type.name}"/>
+                    rendered="#{sampleListBean.vesselContainer != null and !sampleListBean.vesselContainer.hasAnonymousVessels()}">
+                <h:outputText value="#{sampleListBean.getVesselAtPosition(positionName).type.name}"/>
             </p:column>
             <p:column>
                 <h:outputText value="#{sampleInstance.startingSample.sampleKey}"/>
@@ -76,49 +76,49 @@
                 <h:outputText value="#{sampleInstance.startingSample.productOrderKey}"/>
             </p:column>
             <p:column>
-                <h:outputText value="#{sampleBean.indexValueForSample(sampleInstance)}"/>
+                <h:outputText value="#{sampleListBean.indexValueForSample(sampleInstance)}"/>
             </p:column>
             <p:column>
-                <h:outputText value="#{sampleBean.reagentInfoForSample(sampleInstance)}"/>
+                <h:outputText value="#{sampleListBean.reagentInfoForSample(sampleInstance)}"/>
             </p:column>
             <p:column
-                    rendered="#{sampleBean.vesselContainer != null and !sampleBean.vesselContainer.hasAnonymousVessels()}">
-                <ui:repeat value="#{sampleBean.getVesselAtPosition(positionName).containerList}"
+                    rendered="#{sampleListBean.vesselContainer != null and !sampleListBean.vesselContainer.hasAnonymousVessels()}">
+                <ui:repeat value="#{sampleListBean.getVesselAtPosition(positionName).containerList}"
                            var="container">
                     <h:outputText value="#{container.embedder.label}"/>
                     <br/>
                 </ui:repeat>
             </p:column>
-            <p:column rendered="#{sampleBean.vesselContainer == null}">
-                <ui:repeat value="#{sampleBean.vessel.containerList}"
+            <p:column rendered="#{sampleListBean.vesselContainer == null}">
+                <ui:repeat value="#{sampleListBean.vessel.containerList}"
                            var="container">
                     <h:outputText value="#{container.embedder.label}"/>
                     <br/>
                 </ui:repeat>
             </p:column>
             <p:column
-                    rendered="#{sampleBean.vesselContainer != null and sampleBean.vesselContainer.hasAnonymousVessels()}">
-                <h:outputText value="#{sampleBean.vessel.label}"/>
+                    rendered="#{sampleListBean.vesselContainer != null and sampleListBean.vesselContainer.hasAnonymousVessels()}">
+                <h:outputText value="#{sampleListBean.vessel.label}"/>
             </p:column>
             <p:column
-                    rendered="#{sampleBean.vesselContainer != null and !sampleBean.vesselContainer.hasAnonymousVessels()}">
-                <ui:repeat value="#{sampleBean.getVesselAtPosition(positionName).containerList}"
+                    rendered="#{sampleListBean.vesselContainer != null and !sampleListBean.vesselContainer.hasAnonymousVessels()}">
+                <ui:repeat value="#{sampleListBean.getVesselAtPosition(positionName).containerList}"
                            var="container">
                     <h:outputText
-                            value="#{container.getPositionOfVessel(sampleBean.getVesselAtPosition(positionName))}"/>
+                            value="#{container.getPositionOfVessel(sampleListBean.getVesselAtPosition(positionName))}"/>
                     <br/>
                 </ui:repeat>
             </p:column>
-            <p:column rendered="#{sampleBean.vesselContainer == null}">
-                <ui:repeat value="#{sampleBean.vessel.containerList}"
+            <p:column rendered="#{sampleListBean.vesselContainer == null}">
+                <ui:repeat value="#{sampleListBean.vessel.containerList}"
                            var="container">
                     <h:outputText
-                            value="#{container.getPositionOfVessel(sampleBean.getVesselAtPosition(positionName))}"/>
+                            value="#{container.getPositionOfVessel(sampleListBean.getVesselAtPosition(positionName))}"/>
                     <br/>
                 </ui:repeat>
             </p:column>
             <p:column
-                    rendered="#{sampleBean.vesselContainer != null and sampleBean.vesselContainer.hasAnonymousVessels()}">
+                    rendered="#{sampleListBean.vesselContainer != null and sampleListBean.vesselContainer.hasAnonymousVessels()}">
                 <h:outputText value="#{positionName}"/>
             </p:column>
         </p:subTable>

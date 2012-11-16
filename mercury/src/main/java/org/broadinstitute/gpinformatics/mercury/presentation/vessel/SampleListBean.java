@@ -13,14 +13,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
 import javax.inject.Inject;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 @ManagedBean
 @RequestScoped
-public class SampleBean implements Serializable {
+public class SampleListBean {
     @Inject
     private LabVesselDao labVesselDao;
 

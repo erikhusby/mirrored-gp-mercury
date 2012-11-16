@@ -7,7 +7,6 @@ import org.primefaces.event.ToggleEvent;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.inject.Inject;
-import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -15,7 +14,7 @@ import java.util.Map;
 
 @ManagedBean
 @ViewScoped
-public class SearchPlasticBean implements Serializable {
+public class SearchPlasticBean {
     @Inject
     private LabVesselDao labVesselDao;
     private String barcode;

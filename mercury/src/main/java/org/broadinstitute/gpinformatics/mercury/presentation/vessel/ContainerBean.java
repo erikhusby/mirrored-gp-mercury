@@ -9,13 +9,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
 import javax.inject.Inject;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
 @ManagedBean
 @RequestScoped
-public class ContainerBean implements Serializable {
+public class ContainerBean {
     @Inject
     private LabVesselDao labVesselDao;
 
@@ -23,8 +22,6 @@ public class ContainerBean implements Serializable {
     private Integer index = -1;
     private String barcode;
     private List<String> geometry = new ArrayList<String>();
-
-    private boolean showSamples = false;
 
     public String getBarcode() {
         return barcode;

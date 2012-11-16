@@ -13,7 +13,6 @@ import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import java.io.Serializable;
 
 /**
  * Represents Mercury's view of a sample.  Sample information is held in another system (initially Athena),
@@ -22,7 +21,7 @@ import java.io.Serializable;
 @Entity
 @Audited
 @Table(schema = "mercury")
-public class MercurySample implements Serializable {
+public class MercurySample {
 
     @Id
     @SequenceGenerator(name="SEQ_MERCURY_SAMPLE", schema = "mercury", sequenceName="SEQ_MERCURY_SAMPLE")

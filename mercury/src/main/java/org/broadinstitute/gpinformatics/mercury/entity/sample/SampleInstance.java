@@ -5,7 +5,6 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -89,7 +88,7 @@ import java.util.List;
  * a {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel}, in which case they'll
  * have to have different {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState}.
  * */
-public class SampleInstance implements Serializable {
+public class SampleInstance {
 
     public enum GSP_CONTROL_ROLE {
         NEGATIVE,POSITIVE,NONE
