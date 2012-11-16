@@ -42,10 +42,10 @@ public class ResearchProjectDao extends GenericDao {
         CriteriaQuery<ResearchProject> cq = cb.createQuery(ResearchProject.class);
         cq.distinct(true);
 
-        Root<ResearchProject> productOrder = cq.from(ResearchProject.class);
+        Root<ResearchProject> researchProject = cq.from(ResearchProject.class);
 
-        productOrder.join(ResearchProject_.productOrders, JoinType.LEFT);
-        productOrder.fetch(ResearchProject_.productOrders, JoinType.LEFT);
+        researchProject.join(ResearchProject_.productOrders, JoinType.LEFT);
+        researchProject.fetch(ResearchProject_.productOrders, JoinType.LEFT);
 
         return getEntityManager().createQuery(cq).getResultList();
 
