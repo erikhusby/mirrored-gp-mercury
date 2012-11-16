@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import javax.enterprise.context.spi.CreationalContext;
 import javax.enterprise.inject.spi.Bean;
@@ -16,7 +17,7 @@ import javax.naming.NamingException;
  */
 public class ServiceAccessUtility {
 
-    private static final Logger log = Logger.getLogger(ServiceAccessUtility.class);
+    private static final Log log = LogFactory.getLog(ServiceAccessUtility.class);
 
     /**
      * Gets a CDI bean of the given type
