@@ -108,8 +108,8 @@ public class JiraServiceTest {
 
     public void testUpdateTicket() throws IOException {
         CreateIssueResponse response = service.createIssue(
-                CreateFields.ProjectType.Research_Projects.getKeyPrefix(),
-                CreateFields.IssueType.Research_Project,
+                CreateFields.ProjectType.Research_Projects.getKeyPrefix(), "breilly",
+                CreateFields.IssueType.RESEARCH_PROJECT,
                 "JiraServiceTest.testUpdateTicket", "Test issue for update", new ArrayList<CustomField>());
 
         Map<String, CustomFieldDefinition> allCustomFields = service.getCustomFields();

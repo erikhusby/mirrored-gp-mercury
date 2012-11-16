@@ -2,9 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
 
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
-import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-import javax.annotation.Nullable;
 import java.util.Collection;
 
 

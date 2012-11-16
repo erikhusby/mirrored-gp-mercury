@@ -195,7 +195,7 @@ public class ExomeExpressEndToEndTest {
             for (LabBatch labBatch : labBatches) {
                 CreateIssueResponse createResponse = jiraService.createIssue(null, //Project.JIRA_PROJECT_PREFIX,
                         "hrafal",
-                        CreateFields.IssueType.Whole_Exome_HybSel,
+                        CreateFields.IssueType.WHOLE_EXOME_HYBSEL,
                         labBatch.getBatchName(),
                         "Pass " /*+ projectPlan.getPass().getProjectInformation().getPassNumber()*/, allCustomFields);
                 Assert.assertNotNull(createResponse);

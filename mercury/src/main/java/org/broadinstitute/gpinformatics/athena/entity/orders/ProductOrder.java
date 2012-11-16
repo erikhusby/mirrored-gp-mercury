@@ -826,7 +826,7 @@ public class ProductOrder implements Serializable {
      *         represents the Jira Issue Type for Product Orders
      */
     @Transient
-    public CreateFields.Issuetype fetchJiraIssueType() {
+    public CreateFields.IssueType fetchJiraIssueType() {
         return CreateFields.IssueType.PRODUCT_ORDER;
     }
 

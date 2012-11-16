@@ -4,6 +4,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JsonLabopsJiraIssueT
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
+import javax.annotation.Nullable;
+
 /**
  * We use a custom serializer here because custom fields are not
  * instance portable.  In other words, the custom field names in a cloned
@@ -38,6 +40,30 @@ public class CreateFields extends UpdateFields {
         }
     }
 
+    public static class Reporter {
+
+        public Reporter() {
+        }
+
+        public Reporter(String name) {
+            if (name == null) {
+                throw new RuntimeException("name cannot be null");
+            }
+
+            this.name = name;
+        }
+
+        private String name;
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+    }
+
     @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
     public enum ProjectType {
 
@@ -66,9 +92,10 @@ public class CreateFields extends UpdateFields {
     @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
     public enum IssueType {
 
-        Whole_Exome_HybSel("Whole Exome (HybSel)"),
-        Product_Order("Product Order"),
-        Research_Project("Research Project");
+        WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
+        EXOME_EXPRESS("Exome Express"),
+        PRODUCT_ORDER("Product Order"),
+        RESEARCH_PROJECT("Research Project");
 
         private final String jiraName;
 
@@ -94,8 +121,18 @@ public class CreateFields extends UpdateFields {
 
     private IssueType issueType;
 
+    private Reporter reporter;
+
     public Project getProject() {
         return project;
+    }
+
+    public Reporter getReporter() {
+        return reporter;
+    }
+
+    public void setReporter(@Nullable Reporter reporter) {
+        this.reporter = reporter;
     }
 
     public void setSummary(String summary) {
@@ -123,6 +160,7 @@ public class CreateFields extends UpdateFields {
     }
 
     public CreateFields() {
-        this.project = new Project();
+        project = new Project();
+        reporter = new Reporter();
     }
 }

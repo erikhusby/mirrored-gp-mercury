@@ -534,7 +534,7 @@ public class ResearchProject {
      */
     @Transient
     public CreateFields.IssueType fetchJiraIssueType() {
-        return CreateFields.IssueType.Research_Project;
+        return CreateFields.IssueType.RESEARCH_PROJECT;
     }
 
     /**
