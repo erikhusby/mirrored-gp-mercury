@@ -10,10 +10,7 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -92,12 +89,30 @@ public class ProductOrderDao extends GenericDao {
     }
 
     /**
-     * Find all ProductOrders. Not sure if we need this but have put it in here just in case.
+     * Find all ProductOrders, left join fetching the samples and join fetching the product and research project.
+     * We use all of this data to render the product order list and even with our meager test data sets things were
+     * starting to bog down.
      *
      * @return All the orders
      */
     public List<ProductOrder> findAll() {
-        return findAll(ProductOrder.class);
+        CriteriaBuilder cb = getCriteriaBuilder();
+        CriteriaQuery<ProductOrder> cq = cb.createQuery(ProductOrder.class);
+        cq.distinct(true);
+
+        Root<ProductOrder> productOrder = cq.from(ProductOrder.class);
+
+        productOrder.join(ProductOrder_.samples, JoinType.LEFT);
+        productOrder.fetch(ProductOrder_.samples, JoinType.LEFT);
+
+        productOrder.join(ProductOrder_.product);
+        productOrder.fetch(ProductOrder_.product);
+
+        productOrder.join(ProductOrder_.researchProject);
+        productOrder.fetch(ProductOrder_.researchProject);
+
+        return getEntityManager().createQuery(cq).getResultList();
+
     }
 
 

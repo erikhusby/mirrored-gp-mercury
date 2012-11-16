@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
@@ -809,12 +809,12 @@ public class ProductOrder implements Serializable {
      * makes it easier for a user of this object to interact with Jira for this entity.
      *
      * @return An enum of type
-     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.ProjectType} that
+     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.ProjectType} that
      *         represents the Jira Project for Product Orders
      */
     @Transient
-    public CreateIssueRequest.Fields.ProjectType fetchJiraProject() {
-        return CreateIssueRequest.Fields.ProjectType.Product_Ordering;
+    public CreateFields.ProjectType fetchJiraProject() {
+        return CreateFields.ProjectType.Product_Ordering;
     }
 
     /**
@@ -822,12 +822,12 @@ public class ProductOrder implements Serializable {
      * makes it easier for a user of this object to interact with Jira for this entity.
      *
      * @return An enum of type
-     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.Issuetype} that
+     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.IssueType} that
      *         represents the Jira Issue Type for Product Orders
      */
     @Transient
-    public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType() {
-        return CreateIssueRequest.Fields.Issuetype.PRODUCT_ORDER;
+    public CreateFields.IssueType fetchJiraIssueType() {
+        return CreateFields.IssueType.PRODUCT_ORDER;
     }
 
     public String getSampleBillingSummary() {
