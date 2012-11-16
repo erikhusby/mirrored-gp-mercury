@@ -38,6 +38,7 @@ public class MercuryConfiguration {
     // automatically, and maybe something really sneaky to create qualified bean instances of these types to
     // support @TestInstance-style qualifier injection with producer classes.  But not in this version.
     private static final Class[] CONFIG_CLASSES = new Class[]{
+            MercuryConfig.class,
             SquidConfig.class,
             BSPConfig.class,
             PMBridgeConfig.class,

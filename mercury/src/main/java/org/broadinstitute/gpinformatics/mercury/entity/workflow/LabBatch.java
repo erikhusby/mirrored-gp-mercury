@@ -3,9 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -209,7 +208,7 @@ public class LabBatch {
 
         CreateIssueResponse batchTicket =
                 ServiceAccessUtility.createJiraTicket ( fetchJiraProject ().getKeyPrefix (), reporter,
- /* TODO SGM:  Need a better solution.  Map product to issueType*/CreateIssueRequest.Fields.Issuetype.EXOME_EXPRESS,
+ /* TODO SGM:  Need a better solution.  Map product to issueType*/CreateFields.IssueType.EXOME_EXPRESS,
                                                         batchName, "", listOfFields );
 
         this.setJiraTicket ( new JiraTicket ( batchTicket.getTicketName (), batchTicket.getTicketName () ) );
@@ -256,13 +255,13 @@ public class LabBatch {
      * makes it easier for a user of this object to interact with Jira for this entity.
      *
      * @return An enum of type
-     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.ProjectType}
+     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.ProjectType}
      *         that
      *         represents the Jira Project for Product Orders
      */
     @Transient
-    public CreateIssueRequest.Fields.ProjectType fetchJiraProject () {
-        return CreateIssueRequest.Fields.ProjectType.LCSET_PROJECT_PREFIX;
+    public CreateFields.ProjectType fetchJiraProject () {
+        return CreateFields.ProjectType.LCSET_PROJECT_PREFIX;
     }
 
     /**
@@ -270,13 +269,13 @@ public class LabBatch {
      * makes it easier for a user of this object to interact with Jira for this entity.
      *
      * @return An enum of type
-     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.Issuetype}
+     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.IssueType}
      *         that
      *         represents the Jira Issue Type for Product Orders
      */
     @Transient
-    public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType () {
-        return CreateIssueRequest.Fields.Issuetype.WHOLE_EXOME_HYBSEL;
+    public CreateFields.IssueType fetchJiraIssueType () {
+        return CreateFields.IssueType.WHOLE_EXOME_HYBSEL;
     }
 
 

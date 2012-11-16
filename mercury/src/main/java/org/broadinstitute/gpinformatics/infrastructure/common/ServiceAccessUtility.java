@@ -5,10 +5,11 @@ import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
@@ -39,26 +40,41 @@ public class ServiceAccessUtility {
         abstract RESULT_TYPE call(API_CLASS apiInstance);
 
         public RESULT_TYPE apiCall(Type classType) {
-            RESULT_TYPE foundServiceObject = null;
-
-            try {
-                InitialContext initialContext = new InitialContext();
-                try {
-                    BeanManager beanManager = (BeanManager) initialContext.lookup("java:comp/BeanManager");
-                    Bean<?> bean = beanManager.getBeans(classType).iterator().next();
-                    CreationalContext<?> ctx = beanManager.createCreationalContext(bean);
-                    @SuppressWarnings("unchecked")
-                    API_CLASS apiInstance = (API_CLASS) beanManager.getReference(bean, bean.getClass(), ctx);
-                    foundServiceObject = call(apiInstance);
-                } finally {
-                    initialContext.close();
-                }
-            } catch (NamingException e) {
-                throw new RuntimeException(e);
-            }
-
-            return foundServiceObject;
+            API_CLASS apiInstance = ServiceAccessUtility.lookupBean(classType);
+            return call(apiInstance);
         }
+    }
+
+    public static <T> T lookupBean(Type classType) {
+        try {
+            InitialContext initialContext = new InitialContext();
+            try {
+                BeanManager beanManager = (BeanManager) initialContext.lookup("java:comp/BeanManager");
+                Bean<?> bean = beanManager.getBeans(classType).iterator().next();
+                CreationalContext<?> ctx = beanManager.createCreationalContext(bean);
+                @SuppressWarnings("unchecked")
+                T service = (T) beanManager.getReference(bean, bean.getClass(), ctx);
+                return service;
+            } finally {
+                initialContext.close();
+            }
+        } catch (NamingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Returns the base URL, including context path, of this Mercury deployment.
+     *
+     * @return the base Mercury URL
+     */
+    public static String getMercuryUrl() {
+        return (new Caller<String, MercuryConfig>() {
+            @Override
+            String call(MercuryConfig apiInstance) {
+                return apiInstance.getUrl();
+            }
+        }).apiCall(MercuryConfig.class);
     }
 
     /**
@@ -168,7 +184,7 @@ public class ServiceAccessUtility {
      *
      * @param projectPrefix String representing the Jira Project a ticket is to be created.  This is the prefix of all
      *                      tickets created in this project
-     * @param issuetype the Issue Type of the Project the user wishes to create
+     * @param issueType the Issue Type of the Project the user wishes to create
      * @param summary a Brief summary that will go along with the created Issue
      * @param description a Brief description of what the new issue will represent
      * @param customFields a Collection of additional custom fields to be set during the Issue Creation Process
@@ -178,14 +194,14 @@ public class ServiceAccessUtility {
      */
     public static CreateIssueResponse createJiraTicket (
             final String projectPrefix, final String reporter,
-            final CreateIssueRequest.Fields.Issuetype issuetype, final String summary,
+            final CreateFields.IssueType issueType, final String summary,
             final String description, final Collection<CustomField> customFields) throws IOException {
 
         return (new Caller<CreateIssueResponse, JiraService>() {
             @Override
             CreateIssueResponse call(JiraService apiInstance) {
                 try {
-                    return apiInstance.createIssue(projectPrefix, reporter, issuetype, summary, description, customFields);
+                    return apiInstance.createIssue(projectPrefix, reporter, issueType, summary, description, customFields);
                 } catch (IOException e) {
                     throw new RuntimeException(e);
                 }

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control;
 
 import com.sun.jersey.api.client.GenericType;
+import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -72,7 +73,12 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
         logger.warn("POST request: " + baos.toString());
 
 
-        T ret = setJsonMimeTypes(webResource).post(responseGenericType, baos.toString());
+        T ret = null;
+        try {
+            ret = setJsonMimeTypes(webResource).post(responseGenericType, baos.toString());
+        } catch (UniformInterfaceException e) {
+            throw new RuntimeException(e.getResponse().getEntity(String.class), e);
+        }
 
         logger.debug("POST response: " + ret);
 
@@ -95,7 +101,11 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
 
         logger.warn("POST request: " + baos.toString());
 
-        setJsonMimeTypes(webResource).post(baos.toString());
+        try {
+            setJsonMimeTypes(webResource).post(baos.toString());
+        } catch (UniformInterfaceException e) {
+            throw new RuntimeException(e.getResponse().getEntity(String.class), e);
+        }
     }
 
     /**
@@ -112,7 +122,11 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
     protected void put(WebResource webResource, Object requestPojo) throws IOException {
         final ByteArrayOutputStream baos = writeValue(requestPojo);
         logger.warn("PUT request: " + baos.toString());
-        setJsonMimeTypes(webResource).put(baos.toString());
+        try {
+            setJsonMimeTypes(webResource).put(baos.toString());
+        } catch (UniformInterfaceException e) {
+            throw new RuntimeException(e.getResponse().getEntity(String.class), e);
+        }
     }
 
 
@@ -126,7 +140,11 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
      */
     protected <T> T get(WebResource webResource, GenericType<T> genericType) {
 
-        return setJsonMimeTypes(webResource).get(genericType);
+        try {
+            return setJsonMimeTypes(webResource).get(genericType);
+        } catch (UniformInterfaceException e) {
+            throw new RuntimeException(e.getResponse().getEntity(String.class), e);
+        }
     }
 
 }
