@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource;
@@ -11,13 +12,14 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -25,6 +27,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Test messaging for BSP Dried Blood Spot Extraction
@@ -55,7 +58,7 @@ public class DriedBloodSpotDbFreeTest {
         driedBloodSpotEntityBuilder.buildEntities();
 
         LabEventResource labEventResource = new LabEventResource();
-        List<LabEventBean> labEventBeans = labEventResource.buildLabEventBeans(new ArrayList<GenericLabEvent>(labBatch.getLabEvents()));
+        List<LabEventBean> labEventBeans = labEventResource.buildLabEventBeans(new ArrayList<LabEvent>(labBatch.getLabEvents()));
 //        Assert.assertEquals("Wrong number of messages", 10, labEventBeans.size());
     }
 
@@ -67,7 +70,6 @@ public class DriedBloodSpotDbFreeTest {
         private PlateEventType magneticResinJaxb;
         private PlateTransferEventType dbs1stPurificationJaxb;
         private PlateEventType dbsWashBufferJaxb;
-        private PlateTransferEventType dbs2ndPurificationJaxb;
         private PlateEventType dbsElutionBufferJaxb;
         private PlateTransferEventType dbsFinalTransferJaxb;
         private List<String> ftaPaperBarcodes;
@@ -99,6 +101,10 @@ public class DriedBloodSpotDbFreeTest {
 
             // DBSIncubationMix plateEvent
             incubationMixJaxb = bettaLimsMessageFactory.buildPlateEvent("DBSIncubationMix", incubationPlateBarcode);
+            ReagentType reagentType = new ReagentType();
+            reagentType.setKitType("Incubation Mix");
+            reagentType.setBarcode("IncubationMix1234");
+            incubationMixJaxb.getReagent().add(reagentType);
             BettaLIMSMessage bettaLIMSMessage2 = new BettaLIMSMessage();
             bettaLIMSMessage2.getPlateEvent().add(incubationMixJaxb);
             messageList.add(bettaLIMSMessage2);
@@ -133,16 +139,8 @@ public class DriedBloodSpotDbFreeTest {
             messageList.add(bettaLIMSMessage6);
             bettaLimsMessageFactory.advanceTime();
 
-            String secondPurificationBarcode = "DBS2ndPur";
-            // DBS2ndPurification plate -> plate
-            dbs2ndPurificationJaxb = bettaLimsMessageFactory.buildPlateToPlate("DBS2ndPurification", firstPurificationBarcode, secondPurificationBarcode);
-            BettaLIMSMessage bettaLIMSMessage7 = new BettaLIMSMessage();
-            bettaLIMSMessage7.getPlateEvent().add(dbs2ndPurificationJaxb);
-            messageList.add(bettaLIMSMessage7);
-            bettaLimsMessageFactory.advanceTime();
-
             // DBSElutionBuffer plateEvent
-            dbsElutionBufferJaxb = bettaLimsMessageFactory.buildPlateEvent("DBSElutionBuffer", secondPurificationBarcode);
+            dbsElutionBufferJaxb = bettaLimsMessageFactory.buildPlateEvent("DBSElutionBuffer", firstPurificationBarcode);
             BettaLIMSMessage bettaLIMSMessage8 = new BettaLIMSMessage();
             bettaLIMSMessage8.getPlateEvent().add(dbsElutionBufferJaxb);
             messageList.add(bettaLIMSMessage8);
@@ -153,7 +151,7 @@ public class DriedBloodSpotDbFreeTest {
             for(int i = 0; i < ftaPaperBarcodes.size(); i++) {
                 finalTubeBarcodes.add("DBSFinal" + i);
             }
-            dbsFinalTransferJaxb = bettaLimsMessageFactory.buildPlateToRack("DBSFinalTransfer", secondPurificationBarcode, "DBSFinal", finalTubeBarcodes);
+            dbsFinalTransferJaxb = bettaLimsMessageFactory.buildPlateToRack("DBSFinalTransfer", firstPurificationBarcode, "DBSFinal", finalTubeBarcodes);
             BettaLIMSMessage bettaLIMSMessage9 = new BettaLIMSMessage();
             bettaLIMSMessage9.getPlateEvent().add(dbsFinalTransferJaxb);
             messageList.add(bettaLIMSMessage9);
@@ -186,10 +184,6 @@ public class DriedBloodSpotDbFreeTest {
 
         public PlateEventType getDbsWashBufferJaxb() {
             return dbsWashBufferJaxb;
-        }
-
-        public PlateTransferEventType getDbs2ndPurificationJaxb() {
-            return dbs2ndPurificationJaxb;
         }
 
         public PlateEventType getDbsElutionBufferJaxb() {
@@ -247,17 +241,13 @@ public class DriedBloodSpotDbFreeTest {
                     driedBloodSpotJaxbBuilder.getDbs1stPurificationJaxb(), incubationPlate, null);
             StaticPlate firstPurificationPlate = (StaticPlate) firstPurificationEntity.getTargetLabVessels().iterator().next();
             labEventFactory.buildFromBettaLimsPlateEventDbFree(driedBloodSpotJaxbBuilder.getDbsWashBufferJaxb(), firstPurificationPlate);
-
-            LabEvent secondPurificationEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                    driedBloodSpotJaxbBuilder.getDbs2ndPurificationJaxb(), firstPurificationPlate, null);
-            StaticPlate secondPurificationPlate = (StaticPlate) secondPurificationEntity.getTargetLabVessels().iterator().next();
-            labEventFactory.buildFromBettaLimsPlateEventDbFree(driedBloodSpotJaxbBuilder.getDbsElutionBufferJaxb(), secondPurificationPlate);
+            labEventFactory.buildFromBettaLimsPlateEventDbFree(driedBloodSpotJaxbBuilder.getDbsElutionBufferJaxb(), firstPurificationPlate);
 
             HashMap<String, TwoDBarcodedTube> mapBarcodeToTargetTubes = new HashMap<String, TwoDBarcodedTube>();
             labEventFactory.buildFromBettaLimsPlateToRackDbFree(driedBloodSpotJaxbBuilder.getDbsFinalTransferJaxb(),
-                    secondPurificationPlate, mapBarcodeToTargetTubes);
-//            Set<SampleInstance> sampleInstances = mapBarcodeToTargetTubes.values().iterator().next().getSampleInstances();
-//            Assert.assertEquals("Wrong number of sample instances", 1, sampleInstances.size());
+                    firstPurificationPlate, mapBarcodeToTargetTubes);
+            Set<SampleInstance> sampleInstances = mapBarcodeToTargetTubes.values().iterator().next().getSampleInstances();
+            Assert.assertEquals(1, sampleInstances.size(), 1, "Wrong number of sample instances");
         }
     }
 }
