@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import com.cenqua.clover.SamplingPerTestCoverage;
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -789,6 +790,14 @@ public abstract class LabVessel {
     @Override
     public int hashCode () {
         return label != null ? label.hashCode () : 0;
+    }
+
+    public int compareTo(LabVessel other) {
+        CompareToBuilder builder = new CompareToBuilder ();
+
+        builder.append(label, other.getLabel());
+
+        return builder.toComparison();
     }
 
     /**

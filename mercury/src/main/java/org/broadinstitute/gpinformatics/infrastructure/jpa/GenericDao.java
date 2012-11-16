@@ -235,6 +235,17 @@ public class GenericDao {
     }
 
     /**
+     * Looks up an entity by its JPA id.
+     * @param entity the class of the entity to return
+     * @param id the entity's JPA id
+     * @param <ENTITY_TYPE> the name of the entity class
+     * @return a single entity, or null if not found
+     */
+    public <ENTITY_TYPE> ENTITY_TYPE findById(Class<ENTITY_TYPE> entity, Long id) {
+        return getEntityManager().find(entity, (Object)id);
+    }
+
+    /**
      * Returns a list of entities that matches wildcarded string ('% string %') for a specified property.
      * @param entity the class of entity to return
      * @param singularAttribute the metadata field for the property to query

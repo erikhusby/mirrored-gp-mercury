@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
@@ -45,7 +44,7 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
             //
             // Jon is going to look into second level cache to deal with the round-trip-to-DB problem
             products = productDao.findProducts();
-            Collections.sort(products, new ProductComparator());
+            Collections.sort(products);
 
         }
 
@@ -69,7 +68,7 @@ public class ProductListBean extends AbstractJsfBean implements Serializable {
         boolean showPDMProducts = userBean.isPDMUser() || userBean.isDeveloperUser();
         List<Product> products = productDao.findProducts(
                 showPDMProducts ? ProductDao.IncludePDMOnly.YES : ProductDao.IncludePDMOnly.NO);
-        Collections.sort(products, new ProductComparator());
+        Collections.sort(products);
 
         for (Product product : products) {
             String label = product.getProductName().toLowerCase();

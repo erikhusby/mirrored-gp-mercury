@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.presentation.lookup;
+package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -13,9 +13,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@ManagedBean(name = "lookupBean")
+@ManagedBean
 @ViewScoped
-public class LookupBean implements Serializable {
+public class SearchPlasticBean implements Serializable {
     @Inject
     private LabVesselDao labVesselDao;
     private String barcode;

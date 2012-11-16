@@ -1,6 +1,19 @@
 # External system definitions.  These describe the various deployments of external systems with which Mercury might
 # integrate.
 
+app:
+
+    DEV:
+      url:      http://localhost:8080/Mercury/
+
+    TEST:
+      url:      http://seq01.broadinstitute.org:8080/Mercury/
+
+    QA:
+      url:      http://pmbridgedev.broadinstitute.org:8081/Mercury/
+
+    PROD:
+      url:      http://mercury.broadinstitute.org/Mercury/
 
 bsp:
 
@@ -164,6 +177,21 @@ deckMsgs:
         messageStoreDirRoot: /seq/lims/mercury/prod
 
 
+datawhEtl:
+
+    DEV:
+
+        datawhEtlDirRoot: /seq/lims/datawh/dev
+
+    QA:
+
+        datawhEtlDirRoot: /seq/lims/datawh/qa
+
+    PROD:
+
+        datawhEtlDirRoot: /seq/lims/datawh/prod
+
+
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 
 
@@ -172,6 +200,7 @@ mercury:
 
     DEV:
 
+      app:      DEV
       bsp:      DEV
       gap:      DEV
       jira:     TEST
@@ -180,10 +209,12 @@ mercury:
       squid:    DEV
       thrift:   QA
       deckMsgs: DEV
+      datawhEtl: DEV
 
 
     TEST:
 
+      app:      TEST
       bsp:      QA
       gap:      QA
       jira:     TEST
@@ -192,10 +223,11 @@ mercury:
       squid:    TEST
       thrift:   TEST
       deckMsgs: DEV
-
+      datawhEtl: DEV
 
     QA:
 
+      app:      QA
       bsp:      QA
       gap:      QA
       jira:     TEST
@@ -204,10 +236,11 @@ mercury:
       squid:    QA
       thrift:   QA
       deckMsgs: QA
-
+      datawhEtl: QA
 
     PROD:
 
+      app:      PROD
       bsp:      PROD
       gap:      PROD
       jira:     PROD
@@ -216,4 +249,5 @@ mercury:
       squid:    PROD
       thrift:   PROD
       deckMsgs: PROD
+      datawhEtl: PROD
 
