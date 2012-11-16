@@ -56,7 +56,7 @@ public class SectionTransfer extends VesselTransfer {
     }
 
     public VesselContainer getSourceVesselContainer() {
-        return OrmUtil.proxySafeCast(this.sourceVessel, VesselContainerEmbedder.class).getVesselContainer();
+        return this.sourceVessel.getContainerRole();
     }
 
     public void setSourceVesselContainer(VesselContainer sourceVesselContainer) {
@@ -72,7 +72,7 @@ public class SectionTransfer extends VesselTransfer {
     }
 
     public VesselContainer getTargetVesselContainer() {
-        return OrmUtil.proxySafeCast(this.targetVessel, VesselContainerEmbedder.class).getVesselContainer();
+        return this.targetVessel.getContainerRole();
     }
 
     public void setTargetVesselContainer(VesselContainer targetVesselContainer) {

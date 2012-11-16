@@ -264,10 +264,18 @@ public enum LabEventType {
     DBS_FINAL_TRANSFER ("DBSFinalTransfer", false, true,
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
 
+    /**
+     * TODO SGM  the following names are place holders.  They will be re-evaluated as development of
+     */
+    BUCKET_ENTRY("BucketEntry", true, true, Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+    BUCKET_EXIT("BucketExit", true, true, Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
     ;
 
     private final String name;
 
+    /**
+     * TODO The following 4 fields will be re-evaluated to see if they are necessary
+     */
     private final boolean expectedEmptySources;
 
     private final boolean expectedEmptyTargets;

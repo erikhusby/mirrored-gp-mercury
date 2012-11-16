@@ -74,11 +74,11 @@ public class UserLogin extends AbstractJsfBean {
 
             if (!userBean.isValidBspUser()) {
                 logger.error(userBean.getBspStatus() + ": " + username);
-                addErrorMessage(userBean.getBspMessage(), null);
+                addErrorMessage(userBean.getBspMessage());
             }
             if (!userBean.isValidJiraUser()) {
                 logger.error(userBean.getJiraStatus() + ": " + username);
-                addErrorMessage(userBean.getJiraMessage(), null);
+                addErrorMessage(userBean.getJiraMessage());
             }
 
             String previouslyTargetedPage = (String)request.getSession().getAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE);
@@ -96,8 +96,7 @@ public class UserLogin extends AbstractJsfBean {
             }
         } catch (ServletException le) {
             logger.error("ServletException Retrieved: ", le);
-            addErrorMessage("The username and password you entered is incorrect.  Please try again.",
-                    "Authentication error");
+            addErrorMessage("The username and password you entered is incorrect.  Please try again.");
             targetPage = AuthorizationFilter.LOGIN_PAGE;
         }
         return redirect(targetPage);

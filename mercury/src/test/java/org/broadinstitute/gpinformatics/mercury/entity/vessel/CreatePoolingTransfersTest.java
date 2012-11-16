@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.person.PersonDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -107,7 +107,7 @@ public class CreatePoolingTransfersTest extends ContainerTest {
             if(!targetTubeBarcode.equals(previousTargetTubeBarcode)) {
                 previousTargetTubeBarcode = targetTubeBarcode;
                 if(sourceTubeBarcodes != null) {
-                    GenericLabEvent genericLabEvent = new GenericLabEvent(LabEventType.POOLING_TRANSFER,
+                    LabEvent genericLabEvent = new LabEvent(LabEventType.POOLING_TRANSFER,
                             eventDate, eventLocation, 1L, personDAO.findByName(operator));
 
                     TwoDBarcodedTube targetTube = twoDBarcodedTubeDAO.findByBarcode(targetTubeBarcode);

@@ -1,14 +1,12 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
 
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Core entity for Products.
@@ -20,7 +18,7 @@ import java.util.Set;
 @Audited
 @Table(schema = "athena",
         uniqueConstraints = @UniqueConstraint(columnNames = {"partNumber"}))
-public class Product implements Serializable {
+public class Product implements Serializable, Comparable<Product> {
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")
@@ -76,6 +74,16 @@ public class Product implements Serializable {
     private String workflowName;
 
     private boolean pdmOrderableOnly;
+
+    private static final Comparator<Product> PRODUCT_COMPARATOR = new Comparator<Product>() {
+        @Override
+        public int compare(Product product, Product product1) {
+            CompareToBuilder builder = new CompareToBuilder();
+            builder.append(product.getPartNumber(), product1.getPartNumber());
+            return builder.build();
+        }
+    };
+
 
     /**
      * JPA package visible no arg constructor
@@ -315,5 +323,18 @@ public class Product implements Serializable {
 
     public String getBusinessKey() {
         return partNumber;
+    }
+
+    @Override
+    public int compareTo(Product that) {
+        return PRODUCT_COMPARATOR.compare(this, that);
+    }
+
+    @Override
+    public String toString() {
+        return "Product{" +
+                "productName='" + productName + '\'' +
+                ", partNumber='" + partNumber + '\'' +
+                '}';
     }
 }

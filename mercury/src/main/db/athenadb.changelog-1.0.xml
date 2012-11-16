@@ -49,22 +49,6 @@
                 defaultNullValue="0" />
     </changeSet>
 
-    <!-- Since modify type does not work for changing number to boolean in postgres, just
-         doing a specific drop and add for postgres here -->
-    <changeSet id="GPLIM-65-2b" author="hrafal">
-        <preConditions onFail="MARK_RAN">
-            <dbms type="postgresql" />
-            <runningAs username="ATHENA" />
-        </preConditions>
-        <dropColumn schemaName="athena" tableName="research_project" columnName="irb_not_engaged"/>
-        <addColumn schemaName="athena" tableName="research_project">
-            <column name="irb_not_engaged" type="boolean"/>
-        </addColumn>
-        <addNotNullConstraint
-                tableName="research_project"
-                columnName="irb_not_engaged"
-                defaultNullValue="false" />
-    </changeSet>
 
     <changeSet id="GPLIM-65-3" author="hrafal">
         <preConditions onFail="MARK_RAN">
@@ -85,19 +69,6 @@
         </preConditions>
         <addColumn tableName="research_project_aud">
             <column name="irb_not_engaged" type="number(1,0)"/>
-        </addColumn>
-    </changeSet>
-
-    <!-- Since modify type does not work for changing number to boolean in postgres, just
-         doing a specific drop and add for postgres here -->
-    <changeSet id="GPLIM-65-4a" author="hrafal">
-        <preConditions onFail="MARK_RAN">
-            <dbms type="postgresql" />
-            <runningAs username="ATHENA" />
-        </preConditions>
-        <dropColumn schemaName="athena" tableName="research_project_aud" columnName="irb_not_engaged"/>
-        <addColumn schemaName="athena" tableName="research_project_aud">
-            <column name="irb_not_engaged" type="boolean"/>
         </addColumn>
     </changeSet>
 
@@ -713,6 +684,36 @@
                 'CUSTOM_PRODUCTS_TARGETED_SEQUENCING'
             )
         </sql>
+    </changeSet>
+
+    <!-- Since modify type does not work for changing number to boolean in postgres, just
+         doing a specific drop and add for postgres here -->
+    <changeSet id="GPLIM-65-2b" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <dropColumn schemaName="athena" tableName="research_project" columnName="irb_not_engaged"/>
+        <addColumn schemaName="athena" tableName="research_project">
+            <column name="irb_not_engaged" type="boolean"/>
+        </addColumn>
+        <addNotNullConstraint
+                tableName="research_project"
+                columnName="irb_not_engaged"
+                defaultNullValue="false" />
+    </changeSet>
+
+    <!-- Since modify type does not work for changing number to boolean in postgres, just
+         doing a specific drop and add for postgres here -->
+    <changeSet id="GPLIM-65-4a" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="postgresql" />
+            <runningAs username="ATHENA" />
+        </preConditions>
+        <dropColumn schemaName="athena" tableName="research_project_aud" columnName="irb_not_engaged"/>
+        <addColumn schemaName="athena" tableName="research_project_aud">
+            <column name="irb_not_engaged" type="boolean"/>
+        </addColumn>
     </changeSet>
 
     <changeSet id="GPLIM-116_pg.add_not_nullable" author="mcovarr">

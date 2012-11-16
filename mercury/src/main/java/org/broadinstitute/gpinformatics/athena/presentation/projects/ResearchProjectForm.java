@@ -4,7 +4,9 @@ import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectManager;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.athena.entity.project.*;
+import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
+import org.broadinstitute.gpinformatics.athena.entity.project.Irb;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -18,7 +20,6 @@ import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -27,8 +28,6 @@ import java.util.List;
 @Named
 @RequestScoped
 public class ResearchProjectForm extends AbstractJsfBean {
-
-    private static final int IRB_NAME_MAX_LENGTH = 250;
 
     @Inject
     private Log log;
@@ -148,11 +147,11 @@ public class ResearchProjectForm extends AbstractJsfBean {
         try {
             researchProjectManager.createResearchProject(project);
         } catch (Exception e) {
-            addErrorMessage(e.getMessage(), null);
+            addErrorMessage(e.getMessage());
             return null;
         }
 
-        addInfoMessage("The Research Project \"" + project.getTitle() + "\" has been created.", "Research Project");
+        addInfoMessage("The Research Project \"" + project.getTitle() + "\" has been created.");
         return redirect("view");
     }
 
@@ -181,28 +180,12 @@ public class ResearchProjectForm extends AbstractJsfBean {
         try {
             researchProjectManager.updateResearchProject(project);
         } catch (Exception e) {
-            addErrorMessage(e.getMessage(), null);
+            addErrorMessage(e.getMessage());
             return null;
         }
 
-        addInfoMessage("The Research Project \"" + project.getTitle() + "\" has been updated.", "Research Project");
+        addInfoMessage("The Research Project \"" + project.getTitle() + "\" has been updated.");
         return redirect("view");
-    }
-
-    public List<Irb> completeIrbs(String query) {
-        String trimmedQuery = query.trim();
-
-        if (trimmedQuery.isEmpty()) {
-            return Collections.emptyList();
-        }
-
-        List<Irb> irbsForQuery = new ArrayList<Irb>();
-        for (ResearchProjectIRB.IrbType type : ResearchProjectIRB.IrbType.values()) {
-            Irb irb = irbConverter.createIrb(trimmedQuery, type, IRB_NAME_MAX_LENGTH);
-            irbsForQuery.add(irb);
-        }
-
-        return irbsForQuery;
     }
 
     public List<BspUser> getProjectManagers() {
@@ -259,9 +242,5 @@ public class ResearchProjectForm extends AbstractJsfBean {
 
     public void setIrbs(List<Irb> irbs) {
         this.irbs = irbs;
-    }
-
-    public int getIrbMaxLength() {
-        return IRB_NAME_MAX_LENGTH;
     }
 }

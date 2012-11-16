@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.GenericLabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
@@ -11,8 +10,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTr
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
@@ -45,15 +44,15 @@ public class LabEventResource {
     @Produces({MediaType.APPLICATION_XML})
     public LabEventResponseBean transfersByBatchId(@PathParam("batchId")String batchId) {
         LabBatch labBatch = labBatchDAO.findByName(batchId);
-        List<GenericLabEvent> labEventsByTime = new ArrayList<GenericLabEvent>(labBatch.getLabEvents());
+        List<LabEvent> labEventsByTime = new ArrayList<LabEvent>(labBatch.getLabEvents());
         Collections.sort(labEventsByTime, LabEvent.byEventDate);
         List<LabEventBean> labEventBeans = buildLabEventBeans(labEventsByTime);
         return new LabEventResponseBean(labEventBeans);
     }
 
-    public List<LabEventBean> buildLabEventBeans(List<GenericLabEvent> labEvents) {
+    public List<LabEventBean> buildLabEventBeans(List<LabEvent> labEvents) {
         List<LabEventBean> labEventBeans = new ArrayList<LabEventBean>();
-        for (GenericLabEvent labEvent : labEvents) {
+        for (LabEvent labEvent : labEvents) {
             LabEventBean labEventBean = new LabEventBean(
                     labEvent.getLabEventType().getName(),
                     labEvent.getEventLocation(),
@@ -110,11 +109,11 @@ public class LabEventResource {
     }
 
     // todo jmt make this work for sample starters
-    static class StarterCriteria implements VesselContainer.TransferTraverserCriteria {
+    static class StarterCriteria implements TransferTraverserCriteria {
         private LabVessel starter;
 
         @Override
-        public TraversalControl evaluateVessel(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
             if (labVessel != null) {
                 if(labVessel.getTransfersTo().isEmpty()) {
                     for (LabBatch labBatch : labVessel.getLabBatches()) {
@@ -126,6 +125,14 @@ public class LabEventResource {
                 }
             }
             return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselInOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
         }
 
         public LabVessel getStarter() {
@@ -142,8 +149,8 @@ public class LabEventResource {
             type = OrmUtil.proxySafeCast(labVesselEntity, RackOfTubes.class).getRackType().getDisplayName();
         }
         LabVesselBean labVesselBean = new LabVesselBean(labVesselEntity.getLabel(), type);
-        if(OrmUtil.proxySafeIsInstance(labVesselEntity, VesselContainerEmbedder.class)) {
-            VesselContainer vesselContainer = OrmUtil.proxySafeCast(labVesselEntity, VesselContainerEmbedder.class).getVesselContainer();
+        VesselContainer vesselContainer = labVesselEntity.getContainerRole();
+        if(vesselContainer != null) {
             if(OrmUtil.proxySafeIsInstance(labVesselEntity, StaticPlate.class)) {
                 StaticPlate staticPlate = OrmUtil.proxySafeCast(labVesselEntity, StaticPlate.class);
                 Iterator<String> positionNames = staticPlate.getPlateType().getVesselGeometry().getPositionNames();
@@ -171,7 +178,7 @@ public class LabEventResource {
             for (LabVesselPositionBean labVesselPositionBean : labVesselBean.getLabVesselPositionBeans()) {
                 StarterCriteria starterCriteria = new StarterCriteria();
                 vesselContainer.evaluateCriteria(VesselPosition.getByName(labVesselPositionBean.getPosition()), starterCriteria,
-                        VesselContainer.TraversalDirection.Ancestors, null, 0);
+                        TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
                 if (starterCriteria.getStarter() != null) {
                     labVesselPositionBean.getLabVesselBean().setStarter(starterCriteria.getStarter().getLabel());
                 }

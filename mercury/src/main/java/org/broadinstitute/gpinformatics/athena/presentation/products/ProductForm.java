@@ -6,19 +6,15 @@ import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationVali
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
-import org.primefaces.event.SelectEvent;
-import org.primefaces.event.UnselectEvent;
 
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.servlet.http.HttpServletRequest;
 import java.util.*;
 
 /**
@@ -43,11 +39,6 @@ public class ProductForm extends AbstractJsfBean {
     @Inject
     private Log logger;
 
-    /**
-     * Holder of long-running conversation state needed for price items
-     */
-    @Inject
-    private ProductFormConversationData conversationData;
 
     @Inject
     private FacesContext facesContext;
@@ -93,7 +84,6 @@ public class ProductForm extends AbstractJsfBean {
      * data from the product, also initializes the form as appropriate
      */
     public void onPreRenderView() {
-        conversationData.beginConversation(product);
         initForm();
     }
 
@@ -116,9 +106,7 @@ public class ProductForm extends AbstractJsfBean {
      * @return
      */
     public boolean isCreating() {
-        // not using the injected value of FacesContext since that will not be injected on AJAX requests
-        HttpServletRequest request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-        return request.getParameter("product") == null;
+        return product == null || product.getProductId() == null;
     }
 
 
@@ -127,7 +115,7 @@ public class ProductForm extends AbstractJsfBean {
         // issue summary warning at most once
         if (! issuedSummaryMessageForPriceItemsNotOnCurrentPriceList) {
             // detail message not shown for global messages so set to null
-            addErrorMessage(GLOBAL_MESSAGE_PRICE_ITEMS_NOT_ON_PRICE_LIST, null);
+            addErrorMessage(GLOBAL_MESSAGE_PRICE_ITEMS_NOT_ON_PRICE_LIST);
             issuedSummaryMessageForPriceItemsNotOnCurrentPriceList = true;
         }
         // need to keep the summary null for clientMessage or it ends up showing in the global message area
@@ -213,19 +201,29 @@ public class ProductForm extends AbstractJsfBean {
      */
     public List<ProductFamily> getProductFamilies() {
         List<ProductFamily> productFamilies = productFamilyDao.findAll();
-        Collections.sort(productFamilies, ProductFamily.PRODUCT_FAMILY_COMPARATOR);
+        Collections.sort(productFamilies);
 
         return productFamilies;
     }
 
 
     public String save() {
-        if (isCreating()) {
-            return create();
+        // need to calculate 'creating' here, doing it after writing out the entity is too late (we always get 'updating')
+        boolean creating = isCreating();
+
+        try {
+            addAllAddOnsToProduct();
+            addAllPriceItemsToProduct();
+
+            productManager.save(product);
         }
-        else {
-            return edit();
+        catch (Exception e ) {
+            addErrorMessage(e.getMessage());
+            return null;
         }
+
+        addInfoMessage("Product \"" + product.getProductName() + "\" has been " + (creating ? "created." : "updated."));
+        return redirect("view") + addProductParam();
     }
 
 
@@ -233,42 +231,6 @@ public class ProductForm extends AbstractJsfBean {
         return "&product=" + product.getBusinessKey();
     }
 
-
-    public String create() {
-        try {
-            addAllAddOnsToProduct();
-            addAllPriceItemsToProduct();
-
-            productManager.create(product);
-        }
-        catch (Exception e ) {
-            addErrorMessage(e.getMessage(), null);
-            return null;
-        }
-
-        addInfoMessage("Product \"" + product.getProductName() + "\" has been created.", "Product");
-        conversationData.endConversation();
-        return redirect("view") + addProductParam();
-    }
-
-
-    public String edit() {
-        try {
-            addAllAddOnsToProduct();
-            addAllPriceItemsToProduct();
-
-            productManager.edit(product);
-
-        }
-        catch (Exception e ) {
-            addErrorMessage(e.getMessage(), null);
-            return null;
-        }
-
-        addInfoMessage("Product \"" + product.getProductName() + "\" has been updated.", "Product");
-        conversationData.endConversation();
-        return redirect("view") + addProductParam();
-    }
 
     /**
      * Entify all the addons from our JAXB DTOs and add them to the {@link Product} before persisting
@@ -289,7 +251,6 @@ public class ProductForm extends AbstractJsfBean {
         }
     }
 
-
     /**
      * Utility method to grab a persistent/detached JPA entity corresponding to this JAXB DTO if one exists,
      * otherwise return just a transient JPA entity
@@ -308,7 +269,6 @@ public class ProductForm extends AbstractJsfBean {
 
         return entity;
     }
-
 
     /**
      * Entify all the price items from our JAXB DTOs and add them to the {@link Product} before persisting
@@ -358,8 +318,11 @@ public class ProductForm extends AbstractJsfBean {
         if (product == null) {
             return new ArrayList<Product>();
         }
-        ArrayList<Product> addOns = new ArrayList<Product>(product.getAddOns());
-        Collections.sort(addOns, new ProductComparator());
+
+        if (addOns == null) {
+            addOns = new ArrayList<Product>(product.getAddOns());
+            Collections.sort(addOns);
+        }
         return addOns;
     }
 
@@ -369,20 +332,11 @@ public class ProductForm extends AbstractJsfBean {
     }
 
 
-    /**
-     * Pull {@link PriceItem} data from conversation scoped {@link ProductFormConversationData}
-     *
-     * @return
-     */
     public List<PriceItem> getPriceItems() {
         return priceItems;
     }
 
-    /**
-     * NOOP, this is required for the PrimeFaces {@link org.primefaces.component.autocomplete.AutoComplete}, but the
-     * actual setting of {@link PriceItem}s is handled in the ajax event listener only
-     * @param priceItems
-     */
+
     public void setPriceItems(List<PriceItem> priceItems) {
         this.priceItems = priceItems;
     }
@@ -412,78 +366,6 @@ public class ProductForm extends AbstractJsfBean {
             cycleTimeDays =  (cycleTimeSeconds - (cycleTimeSeconds % ONE_DAY_IN_SECONDS)) / ONE_DAY_IN_SECONDS;
         }
         return cycleTimeDays;
-    }
-
-
-    /**
-     * AJAX unselection (removal) handler for {@link PriceItem} for the PrimeFaces
-     * {@link org.primefaces.component.autocomplete.AutoComplete}
-     *
-     * @param unselectEvent
-     */
-    public void onPriceItemUnselect(UnselectEvent unselectEvent) {
-        PriceItem priceItem = (PriceItem) unselectEvent.getObject();
-//        priceItems.remove(priceItem);
-        conversationData.getDefaultPriceItems().remove(priceItem);
-
-        // nuke out the default price item if it was the same price item we just removed
-        if (defaultPriceItem != null && defaultPriceItem.equals(priceItem)) {
-            defaultPriceItem = null;
-        }
-    }
-
-    /**
-     * AJAX selection (addition) handler for default {@link PriceItem} for the PrimeFaces
-     * {@link org.primefaces.component.autocomplete.AutoComplete}
-     *
-     * @param selectEvent
-     */
-
-    public void onPriceItemSelect(SelectEvent selectEvent) {
-//        priceItems.add((PriceItem) selectEvent.getObject());
-        getDefaultPriceItems().add((PriceItem) selectEvent.getObject());
-    }
-
-    /**
-     * AJAX unselection (removal) handler for default {@link PriceItem} for the PrimeFaces
-     * {@link org.primefaces.component.autocomplete.AutoComplete}
-     *
-     * @param ignored
-     */
-    public void onDefaultPriceItemUnselect(UnselectEvent ignored) {
-//        defaultPriceItem = null;
-    }
-
-    /**
-     * AJAX selection (addition) handler for {@link PriceItem} for the PrimeFaces
-     * {@link org.primefaces.component.autocomplete.AutoComplete}
-     *
-     * @param selectEvent
-     */
-    public void onDefaultPriceItemSelect(SelectEvent selectEvent) {
-/*
-        if (conversationData.getDefaultPriceItem() != null) {
-            // ignore
-        }
-        else {
-            conversationData.setDefaultPriceItem((PriceItem) selectEvent.getObject());
-        }
-*/
-    }
-
-
-    public List<PriceItem> getDefaultPriceItems() {
-        return conversationData.getDefaultPriceItems();
-    }
-
-
-    /**
-     * NOOP, this is required for the PrimeFaces {@link org.primefaces.component.autocomplete.AutoComplete}, but the
-     * actual setting of the default {@link PriceItem} is handled in the ajax event listener only
-     * @param defaultPriceItems
-     */
-    public void setDefaultPriceItems(List<PriceItem> defaultPriceItems) {
-        conversationData.setDefaultPriceItems(defaultPriceItems);
     }
 
 

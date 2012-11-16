@@ -365,4 +365,20 @@ public class ServiceAccessUtility {
 
     }
 
+    /**
+     * Provides access to the create Ticket Url method on the JiraService for classes that do not have the ability to
+     * inject the service
+     * @param jiraTicketKey the Unique key of the jira ticket to which the caller wishes to generate the full Browse URL
+     * @return A String representation of the Browse URL for the given jira ticket key
+     */
+    public static String getTicketUrl(final String jiraTicketKey) {
+        return (new Caller<String, JiraService>() {
+
+            @Override
+            String call ( JiraService apiInstance ) {
+                return apiInstance.createTicketUrl(jiraTicketKey);
+            }
+        }).apiCall(JiraService.class);
+    }
+
 }

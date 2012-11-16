@@ -6,6 +6,7 @@ import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
+import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
 import javax.faces.model.SelectItem;
 import javax.inject.Inject;
@@ -21,7 +22,7 @@ import java.util.*;
 // MLC @ApplicationScoped breaks the test, as does @javax.ejb.Singleton.  @javax.inject.Singleton is the CDI version
 // and does appear to work.  Much to learn about CDI still...
 @Singleton
-public class BSPUserList {
+public class BSPUserList extends AbstractCache {
 
     @Inject
     private Log logger;
@@ -43,7 +44,7 @@ public class BSPUserList {
     public List<BspUser> getUsers() {
 
         if (users == null) {
-            refreshUsers();
+            refreshCache();
         }
 
         return users;
@@ -119,18 +120,24 @@ public class BSPUserList {
     // MLC constructor injection appears to be required to get a BSPManagerFactory injected???
     public BSPUserList(BSPManagerFactory bspManagerFactory) {
         this.bspManagerFactory = bspManagerFactory;
-        refreshUsers();
+        refreshCache();
     }
 
-    public synchronized void refreshUsers() {
+    @Override
+    public synchronized void refreshCache() {
         try {
             List<BspUser> rawUsers = bspManagerFactory.createUserManager().getUsers();
+            serverValid = rawUsers != null;
 
-            if (rawUsers == null) {
-                rawUsers = new ArrayList<BspUser>();
-                serverValid = false;
-            } else {
-                serverValid = true;
+            if (!serverValid) {
+                // BSP is down
+                if (users != null) {
+                    // I have the old set of users, which will include QADude, if needed, so just return.
+                    return;
+                } else {
+                    // set raw users empty so that we can add qa dude and copy just that
+                    rawUsers = new ArrayList<BspUser>();
+                }
             }
 
             if (deployment != Deployment.PROD) {

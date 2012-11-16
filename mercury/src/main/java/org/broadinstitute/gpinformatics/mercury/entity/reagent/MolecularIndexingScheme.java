@@ -27,7 +27,7 @@ import java.util.TreeMap;
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
+@Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(name = "uk_mis_name", columnNames = {"name"}))
 @NamedNativeQueries({
         @NamedNativeQuery(
                 name="MolecularIndexingScheme.findSingleIndexScheme",
@@ -149,6 +149,7 @@ public class MolecularIndexingScheme {
      * {@link PositionHint}s associated with Illumina sequencing constructs.
      */
     public enum IlluminaPositionHint implements PositionHint {
+        P3,
         P5,
         P7,
         IS1,
@@ -167,6 +168,7 @@ public class MolecularIndexingScheme {
         public IndexPosition getIndexPosition() {
             // NB, UPDATE THIS SWITCH AND IndexPosition whenever enum values are added or deleted.
             switch (this) {
+                case P3 : return IndexPosition.ILLUMINA_P3;
                 case P5 : return IndexPosition.ILLUMINA_P5;
                 case P7 : return IndexPosition.ILLUMINA_P7;
 			case IS1 : return IndexPosition.ILLUMINA_IS1;
@@ -326,6 +328,7 @@ public class MolecularIndexingScheme {
         ION_B(IonPositionHint.B),
         GSSR_INTRA(GssrPositionHint.INTRA),
         IDENTIFIER_ONLY(IdentifierPositionHint.ONLY),
+        ILLUMINA_P3(IlluminaPositionHint.P3),
         ILLUMINA_P5(IlluminaPositionHint.P5),
         ILLUMINA_P7(IlluminaPositionHint.P7),
         ILLUMINA_IS1(IlluminaPositionHint.IS1),
