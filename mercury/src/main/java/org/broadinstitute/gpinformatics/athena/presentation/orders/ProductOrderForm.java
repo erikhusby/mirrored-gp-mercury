@@ -426,14 +426,13 @@ public class ProductOrderForm extends AbstractJsfBean {
         // If there are locked out orders, then do not allow the session to start
         Set<BillingLedger> lockedOutOrders = ledgerDao.findLockedOutByOrderList(selectedProductOrders);
         if (!lockedOutOrders.isEmpty()) {
-            String[] lockedOutOrderStrings = new String[lockedOutOrders.size()];
-            int i=0;
+            Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());
             for (BillingLedger ledger : lockedOutOrders) {
-                lockedOutOrderStrings[i++] = ledger.getProductOrderSample().getProductOrder().getTitle();
+                lockedOutOrderStrings.add(ledger.getProductOrderSample().getProductOrder().getTitle());
             }
 
-            String lockedOutString = StringUtils.join(lockedOutOrderStrings);
-            addErrorMessage("The following orders are locked out by ative billing sessions: " + lockedOutString);
+            String lockedOutString = StringUtils.join(lockedOutOrderStrings.toArray(), ", ");
+            addErrorMessage("The following orders are locked out by active billing sessions: " + lockedOutString);
             return null;
         }
 
