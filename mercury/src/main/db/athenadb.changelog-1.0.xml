@@ -1098,11 +1098,17 @@
         </createTable>
     </changeSet>
 
-    <changeSet id="GPLIM-329-13" author="hrafal">
+    <changeSet id="GPLIM-329-15" author="hrafal">
         <dropColumn schemaName="athena" tableName="billing_ledger" columnName="quantity"/>
         <addColumn schemaName="athena" tableName="billing_ledger">
-            <column name="quantity" type="decimal"/>
+            <column name="quantity" type="DECIMAL(15,4)"/>
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-329-16" author="hrafal">
+        <dropColumn schemaName="athena" tableName="billing_ledger_aud" columnName="quantity"/>
+        <addColumn schemaName="athena" tableName="billing_ledger_aud">
+            <column name="quantity" type="DECIMAL(15,4)"/>
+        </addColumn>
+    </changeSet>
 </databaseChangeLog>
