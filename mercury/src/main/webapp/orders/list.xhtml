@@ -18,10 +18,16 @@
                 <h:link value="New Product Order" outcome="create" styleClass="pull-right"/>
             </div>
 
-                <p:commandButton value="Generate Billing Tracker" action="#{productOrderForm.downloadBillingTracker}" ajax="false"/>
-                <p:commandButton value="Start Billing Session" action="#{productOrderForm.startBillingSession}" ajax="false"/>
+                <p:commandButton value="New Billing Session" action="#{productOrderForm.startBillingSession}"
+                                 ajax="false" style="margin-bottom:5px;margin-right:15px;"/>
+                <p:commandButton value="Download Billing Tracker" action="#{productOrderForm.downloadBillingTracker}"
+                                 ajax="false" style="margin-bottom:5px;margin-right:8px;"/>
 
-            <p:dataTable value="#{productOrderForm.allProductOrders}"
+                <h:link outcome="uploadTracker" value="Upload Billing Tracker">
+                    <f:param name="productOrder" value="#{order.businessKey}"/>
+                </h:link>
+
+                <p:dataTable value="#{productOrderForm.allProductOrders}"
                      sortBy="#{order.title}"
                      sortOrder="ascending"
                      var="order"

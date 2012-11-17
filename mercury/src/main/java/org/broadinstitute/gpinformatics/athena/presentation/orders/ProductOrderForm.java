@@ -408,12 +408,14 @@ public class ProductOrderForm extends AbstractJsfBean {
             return null;
         }
 
-        Set<BillingLedger> ledgerItems =
-            ledgerDao.findWithoutBillingSessionByOrderList(selectedProductOrders);
-        BillingSession session = new BillingSession(userBean.getBspUser().getUserId(), ledgerItems);
+        BillingSession session = new BillingSession(userBean.getBspUser().getUserId());
         billingSessionDao.persist(session);
 
-        return redirect("/billing/view?billingSession=" + session.getBusinessKey());
+        Set<BillingLedger> ledgerItems =
+                ledgerDao.findWithoutBillingSessionByOrderList(selectedProductOrders);
+        session.setBillingLedgerItems(ledgerItems);
+
+        return redirect("/billing/view") + "&billingSession=" + session.getBusinessKey();
     }
 
 

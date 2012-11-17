@@ -36,14 +36,15 @@ public class BillingSession {
     private Date billedDate;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @JoinTable(name = "BILLING_LEDGER",
+            inverseJoinColumns = @JoinColumn(name = "BILLING_SESSION_ID", referencedColumnName = "BILLING_SESSION_ID"))
     public Set<BillingLedger> billingLedgerItems;
 
     BillingSession() {}
 
-    public BillingSession(@Nonnull Long createdBy, Set<BillingLedger> billingLedgerItems) {
+    public BillingSession(@Nonnull Long createdBy) {
         this.createdBy = createdBy;
         this.createdDate = new Date();
-        this.billingLedgerItems = billingLedgerItems;
     }
 
     public Long getBillingSessionId() {
@@ -87,6 +88,10 @@ public class BillingSession {
     }
 
     public void setBillingLedgerItems(Set<BillingLedger> billingLedgerItems) {
+        for (BillingLedger ledgerItem : billingLedgerItems) {
+            ledgerItem.setBillingSession(this);
+        }
+
         this.billingLedgerItems = billingLedgerItems;
     }
 

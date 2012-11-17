@@ -26,10 +26,12 @@ public class BillingLedger {
 
     @Index(name = "ix_ledger_order_sample")
     @ManyToOne
+    @JoinColumn(name = "PRODUCT_ORDER_SAMPLE_ID")
     private ProductOrderSample productOrderSample;
 
     @Index(name = "ix_ledger_price_item")
     @ManyToOne
+    @JoinColumn(name = "PRICE_ITEM_ID")
     private PriceItem priceItem;
 
     @Column(name = "QUANTITY")
@@ -37,6 +39,7 @@ public class BillingLedger {
 
     @Index(name = "ix_ledger_billing_session")
     @ManyToOne
+    @JoinColumn(name = "BILLING_SESSION_ID")
     private BillingSession billingSession;
 
     BillingLedger() {}

@@ -10,11 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.annotation.Nonnull;
 import javax.persistence.NoResultException;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Join;
-import javax.persistence.criteria.Root;
-import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.*;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -47,7 +43,6 @@ public class BillingLedgerDao extends GenericDao {
             Predicate noSessionPredicate = ledgerRoot.get(BillingLedger_.billingSession).isNull();
             fullPredicate = criteriaBuilder.and(orderInPredicate, noSessionPredicate);
         }
-
         criteriaQuery.where(fullPredicate);
 
         try {
