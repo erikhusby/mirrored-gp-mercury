@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderListModel;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -27,9 +28,13 @@ import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -96,6 +101,9 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     /** Automatically convert known BSP IDs (SM-, SP-) to uppercase. */
     private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
+
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+
 
     /**
      * Returns a list of all product orders. Only actually fetches the list from the database once per request
@@ -388,9 +396,6 @@ public class ProductOrderForm extends AbstractJsfBean {
         this.selectedProductOrders = selectedProductOrders;
     }
 
-    public String downloadLedgerUpdate() {
-        return "got it";
-    }
 
     public String startBillingSession() {
         if ((userBean == null) || (userBean.getBspUser() == null) || (userBean.getBspUser().getUserId() == null)) {
@@ -410,4 +415,65 @@ public class ProductOrderForm extends AbstractJsfBean {
 
         return redirect("/billing/view?billingSession=" + session.getBusinessKey());
     }
+
+
+
+    private OutputStream beginSpreadsheetDownload(FacesContext fc, String filename) {
+
+        HttpServletResponse response = (HttpServletResponse) fc.getExternalContext().getResponse();
+
+        response.reset();
+        response.setContentType("application/vnd.ms-excel");
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+
+        try {
+            return response.getOutputStream();
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    private void finishSpreadsheetDownload(FacesContext fc, OutputStream outputStream) {
+        try {
+            outputStream.flush();
+            outputStream.close();
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        fc.responseComplete();
+
+    }
+
+
+    public String downloadBillingTracker() {
+
+        if (selectedProductOrders == null || selectedProductOrders.length == 0) {
+            addErrorMessage("No Product Orders selected for Billing Tracker download");
+            return null;
+        }
+
+        FacesContext fc = FacesContext.getCurrentInstance();
+        String filename = "BillingTracker-" + DATE_FORMAT.format(Calendar.getInstance().getTime()) + ".xls";
+
+        OutputStream outputStream = beginSpreadsheetDownload(fc, filename);
+
+        // dummy code to plumb in spreadsheet write.  this is not the right format and it's only doing the first PDO!
+        SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(selectedProductOrders[0]);
+        try {
+            sampleLedgerExporter.writeToStream(outputStream);
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        finishSpreadsheetDownload(fc, outputStream);
+
+        return null;
+
+    }
+
 }
