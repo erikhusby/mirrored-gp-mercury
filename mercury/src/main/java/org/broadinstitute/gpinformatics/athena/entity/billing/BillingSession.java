@@ -92,8 +92,6 @@ public class BillingSession {
         for (BillingLedger ledgerItem : newBillingLedgerItems) {
             ledgerItem.setBillingSession(this);
         }
-
-        billingLedgerItems = newBillingLedgerItems;
     }
 
     @Override
