@@ -36,7 +36,7 @@ public class BillingSession {
     @Column(name="BILLED_DATE")
     private Date billedDate;
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.MERGE, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinTable(name = "BILLING_LEDGER",
             inverseJoinColumns = @JoinColumn(name = "BILLING_SESSION_ID", referencedColumnName = "BILLING_SESSION_ID"))
     public Set<BillingLedger> billingLedgerItems = new HashSet<BillingLedger> ();
@@ -93,8 +93,7 @@ public class BillingSession {
             ledgerItem.setBillingSession(this);
         }
 
-        billingLedgerItems.clear();
-        billingLedgerItems.addAll(newBillingLedgerItems);
+        billingLedgerItems = newBillingLedgerItems;
     }
 
     @Override

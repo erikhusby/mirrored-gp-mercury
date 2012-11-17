@@ -1111,4 +1111,10 @@
             <column name="quantity" type="DECIMAL(15,4)"/>
         </addColumn>
     </changeSet>
+
+    <changeSet id="GPLIM-329-17" author="hrafal">
+        <dropPrimaryKey schemaName="athena" tableName="billing_ledger_aud" constraintName="PK_BILLING_LEDGER_AUD"/>
+        <addPrimaryKey constraintName="PK_BILLING_LEDGER_AUD" schemaName="athena" tableName="billing_ledger_aud" columnNames="rev, ledger_id"/>
+    </changeSet>
+
 </databaseChangeLog>

@@ -402,12 +402,9 @@ public class ProductOrderForm extends AbstractJsfBean {
             return null;
         }
 
-        // If there are no items ready for billing, then put up a message
-
         BillingSession session = new BillingSession(userBean.getBspUser().getUserId());
-        billingSessionDao.persist(session);
-
         session.setBillingLedgerItems(ledgerItems);
+        billingSessionDao.persist(session);
 
         return redirect("/billing/view") + "&billingSession=" + session.getBusinessKey();
     }
