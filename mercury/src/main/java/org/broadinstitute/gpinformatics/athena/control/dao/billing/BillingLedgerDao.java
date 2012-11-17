@@ -39,7 +39,7 @@ public class BillingLedgerDao extends GenericDao {
 
         Root<BillingLedger> ledgerRoot = criteriaQuery.from(BillingLedger.class);
         Join<BillingLedger, ProductOrderSample> orderSample = ledgerRoot.join(BillingLedger_.productOrderSample);
-        Join<BillingLedger, BillingSession> billingSession = ledgerRoot.join(BillingLedger_.billingSession);
+        Join<BillingLedger, BillingSession> billingSession = ledgerRoot.join(BillingLedger_.billingSession, JoinType.LEFT);
 
         Predicate orderInPredicate = orderSample.get(ProductOrderSample_.productOrder).in(orders);
 

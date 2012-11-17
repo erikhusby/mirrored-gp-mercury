@@ -8,6 +8,7 @@ import org.hibernate.envers.Audited;
 import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -38,7 +39,7 @@ public class BillingSession {
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinTable(name = "BILLING_LEDGER",
             inverseJoinColumns = @JoinColumn(name = "BILLING_SESSION_ID", referencedColumnName = "BILLING_SESSION_ID"))
-    public Set<BillingLedger> billingLedgerItems;
+    public Set<BillingLedger> billingLedgerItems = new HashSet<BillingLedger> ();
 
     BillingSession() {}
 
@@ -87,12 +88,13 @@ public class BillingSession {
         return billingLedgerItems;
     }
 
-    public void setBillingLedgerItems(Set<BillingLedger> billingLedgerItems) {
-        for (BillingLedger ledgerItem : billingLedgerItems) {
+    public void setBillingLedgerItems(Set<BillingLedger> newBillingLedgerItems) {
+        for (BillingLedger ledgerItem : newBillingLedgerItems) {
             ledgerItem.setBillingSession(this);
         }
 
-        this.billingLedgerItems = billingLedgerItems;
+        billingLedgerItems.clear();
+        billingLedgerItems.addAll(newBillingLedgerItems);
     }
 
     @Override

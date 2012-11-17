@@ -104,7 +104,6 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
-
     /**
      * Returns a list of all product orders. Only actually fetches the list from the database once per request
      * (as a result of this bean being @RequestScoped).
@@ -473,7 +472,6 @@ public class ProductOrderForm extends AbstractJsfBean {
         }
 
         fc.responseComplete();
-
     }
 
     public String downloadBillingTracker() {
@@ -500,7 +498,5 @@ public class ProductOrderForm extends AbstractJsfBean {
         finishSpreadsheetDownload(fc, outputStream);
 
         return null;
-
     }
-
 }
