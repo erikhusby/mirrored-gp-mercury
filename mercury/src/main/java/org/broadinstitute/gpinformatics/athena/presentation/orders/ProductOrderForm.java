@@ -396,8 +396,24 @@ public class ProductOrderForm extends AbstractJsfBean {
         this.selectedProductOrders = selectedProductOrders;
     }
 
-
     public String startBillingSession() {
+
+        Set<BillingLedger> ledgerItems = getUnbilledLedgerItems();
+        if (ledgerItems == null) {
+            return null;
+        }
+
+        // If there are no items ready for billing, then put up a message
+
+        BillingSession session = new BillingSession(userBean.getBspUser().getUserId());
+        billingSessionDao.persist(session);
+
+        session.setBillingLedgerItems(ledgerItems);
+
+        return redirect("/billing/view") + "&billingSession=" + session.getBusinessKey();
+    }
+
+    private Set<BillingLedger> getUnbilledLedgerItems() {
         if ((userBean == null) || (userBean.getBspUser() == null) || (userBean.getBspUser().getUserId() == null)) {
             addErrorMessage("A valid bsp user is needed to start a billing session");
             return null;
@@ -408,17 +424,28 @@ public class ProductOrderForm extends AbstractJsfBean {
             return null;
         }
 
-        BillingSession session = new BillingSession(userBean.getBspUser().getUserId());
-        billingSessionDao.persist(session);
+        // If there are locked out orders, then do not allow the session to start
+        Set<BillingLedger> lockedOutOrders = ledgerDao.findLockedOutByOrderList(selectedProductOrders);
+        if (!lockedOutOrders.isEmpty()) {
+            String[] lockedOutOrderStrings = new String[lockedOutOrders.size()];
+            int i=0;
+            for (BillingLedger ledger : lockedOutOrders) {
+                lockedOutOrderStrings[i++] = ledger.getProductOrderSample().getProductOrder().getTitle();
+            }
 
-        Set<BillingLedger> ledgerItems =
-                ledgerDao.findWithoutBillingSessionByOrderList(selectedProductOrders);
-        session.setBillingLedgerItems(ledgerItems);
+            String lockedOutString = StringUtils.join(lockedOutOrderStrings);
+            addErrorMessage("The following orders are locked out by ative billing sessions: " + lockedOutString);
+            return null;
+        }
 
-        return redirect("/billing/view") + "&billingSession=" + session.getBusinessKey();
+        Set<BillingLedger> ledgerItems = ledgerDao.findWithoutBillingSessionByOrderList(selectedProductOrders);
+        if (ledgerItems.isEmpty()) {
+            addErrorMessage("There is nothing to bill");
+            return null;
+        }
+
+        return ledgerItems;
     }
-
-
 
     private OutputStream beginSpreadsheetDownload(FacesContext fc, String filename) {
 
@@ -436,7 +463,6 @@ public class ProductOrderForm extends AbstractJsfBean {
         }
     }
 
-
     private void finishSpreadsheetDownload(FacesContext fc, OutputStream outputStream) {
         try {
             outputStream.flush();
@@ -449,7 +475,6 @@ public class ProductOrderForm extends AbstractJsfBean {
         fc.responseComplete();
 
     }
-
 
     public String downloadBillingTracker() {
 
