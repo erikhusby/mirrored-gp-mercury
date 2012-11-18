@@ -8,6 +8,7 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.*;
 
 /**
@@ -85,7 +86,7 @@ public class BillingLedger {
         return billingSession;
     }
 
-    public void setBillingSession(BillingSession billingSession) {
+    public void setBillingSession(@Nullable BillingSession billingSession) {
         this.billingSession = billingSession;
     }
 

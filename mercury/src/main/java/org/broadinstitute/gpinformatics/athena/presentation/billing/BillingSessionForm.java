@@ -29,7 +29,7 @@ public class BillingSessionForm extends AbstractJsfBean {
         billingSessionBean.getBillingSession().cancelSession();
         sessionDao.remove(billingSessionBean.getBillingSession());
 
-        return "list?faces-redirect=true";
+        return "sessions?faces-redirect=true&includeViewParams=false";
     }
 
     public String downloadTracker() {

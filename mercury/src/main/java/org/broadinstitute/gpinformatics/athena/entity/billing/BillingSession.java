@@ -41,7 +41,8 @@ public class BillingSession {
     @Column(name="BILLED_DATE")
     private Date billedDate;
 
-    @OneToMany(mappedBy = "billingSession", cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    // Do NOT cascadee removes because we want the ledger items to stay, but just have their billing session removed
+    @OneToMany(mappedBy = "billingSession", cascade = {CascadeType.PERSIST})
     public Set<BillingLedger> billingLedgerItems = new HashSet<BillingLedger> ();
 
     BillingSession() {}
@@ -100,6 +101,10 @@ public class BillingSession {
     }
 
     public void cancelSession() {
+        for (BillingLedger ledgerItem : billingLedgerItems) {
+            ledgerItem.setBillingSession(null);
+        }
+
         billingLedgerItems.clear();
     }
 
