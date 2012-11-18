@@ -43,7 +43,7 @@ public class BillingSession {
 
     // Do NOT cascadee removes because we want the ledger items to stay, but just have their billing session removed
     @OneToMany(mappedBy = "billingSession", cascade = {CascadeType.PERSIST})
-    public Set<BillingLedger> billingLedgerItems = new HashSet<BillingLedger> ();
+    private Set<BillingLedger> billingLedgerItems = new HashSet<BillingLedger> ();
 
     BillingSession() {}
 
