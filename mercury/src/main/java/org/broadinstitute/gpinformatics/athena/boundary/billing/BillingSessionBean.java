@@ -40,4 +40,16 @@ public class BillingSessionBean {
     public void setBillingSession(BillingSession billingSession) {
         this.billingSession = billingSession;
     }
+
+    public String getBill() {
+        return null;  //To change body of created methods use File | Settings | File Templates.
+    }
+
+    public String getCancelSession() {
+        return null;  //To change body of created methods use File | Settings | File Templates.
+    }
+
+    public String getDownloadTracker() {
+        return null;  //To change body of created methods use File | Settings | File Templates.
+    }
 }

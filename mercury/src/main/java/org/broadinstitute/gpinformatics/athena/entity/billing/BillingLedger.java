@@ -39,7 +39,6 @@ public class BillingLedger {
 
     @Index(name = "ix_ledger_billing_session")
     @ManyToOne
-    @JoinColumn(name = "BILLING_SESSION_ID")
     private BillingSession billingSession;
 
     BillingLedger() {}
