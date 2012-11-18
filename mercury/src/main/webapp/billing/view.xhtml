@@ -10,12 +10,6 @@
       xmlns:p="http://primefaces.org/ui">
 <body>
 
-    <h:link outcome="/security/login" value="Athena"/>
-    &gt;
-    <h:link outcome="list" value="Research Projects"/>
-    &gt;
-    #{researchProjectDetail.project.title}
-
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">View Billing Session</ui:define>
         <ui:define name="metadata">
@@ -65,13 +59,13 @@
             </h:form>
 
             <h:form>
-                <p:commandButton value="Bill Work in Broad Quotes" action="#{billingSessionBean.bill}" ajax="false"
+                <p:commandButton value="Bill Work in Broad Quotes" action="#{billingSessionForm.bill}" ajax="false"
                                  style="margin-right:30px;" styleClass="btn"/>
-                <p:commandButton value="Download Tracker" action="#{billingSessionBean.downloadTracker}" ajax="false"
+                <p:commandButton value="Download Tracker" action="#{billingSessionForm.downloadTracker}" ajax="false"
                                  style="margin-right:5px;" styleClass="btn"/>
-                <p:commandButton value="Download Quote Items" action="#{billingSessionBean.cancelSession}" ajax="false"
+                <p:commandButton value="Download Quote Items" action="#{billingSessionForm.downloadQuoteItems}" ajax="false"
                                  style="margin-right:30px;" styleClass="btn"/>
-                <p:commandButton value="Cancel Billing Session" action="#{billingSessionBean.cancelSession}" ajax="false"
+                <p:commandButton value="Cancel Billing Session" action="#{billingSessionForm.cancelSession}" ajax="false"
                                  style="margin-right:15px;" styleClass="btn"/>
             </h:form>
 

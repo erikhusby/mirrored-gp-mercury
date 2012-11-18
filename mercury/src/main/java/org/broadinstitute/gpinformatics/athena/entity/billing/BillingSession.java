@@ -99,6 +99,10 @@ public class BillingSession {
         }
     }
 
+    public void cancelSession() {
+        billingLedgerItems.clear();
+    }
+
     @Override
     public boolean equals(Object other) {
         if ( (this == other ) ) {
