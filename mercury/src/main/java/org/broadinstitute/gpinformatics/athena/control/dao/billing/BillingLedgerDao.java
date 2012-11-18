@@ -83,4 +83,15 @@ public class BillingLedgerDao extends GenericDao {
     public Set<BillingLedger> findBilledByOrderList(ProductOrder[] orders) {
         return findByOrderList(orders, BillingSessionInclusion.SESSION_BILLED);
     }
+
+    public void removeLedgerItemsWithoutBillingSession(ProductOrder[] orders) {
+        Set<BillingLedger> ledgerItems = findWithoutBillingSessionByOrderList(orders);
+
+        // Remove each item from the list and delete it from the ledger
+        while (!ledgerItems.isEmpty()) {
+            BillingLedger item = ledgerItems.iterator().next();
+            ledgerItems.remove(item);
+            remove(item);
+        }
+    }
 }
