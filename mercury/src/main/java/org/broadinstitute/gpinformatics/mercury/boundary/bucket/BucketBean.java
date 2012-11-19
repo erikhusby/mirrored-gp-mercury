@@ -63,7 +63,7 @@ public class BucketBean {
     public BucketEntry add ( @Nonnull LabVessel vessel, @Nonnull String productOrder, @Nonnull Bucket bucket ) {
 
         BucketEntry newEntry = bucket.addEntry ( productOrder, vessel );
-        labEventFactory.createFromBatchItems ( productOrder, vessel, 1L, null, LabEventType.BUCKET_ENTRY,
+        labEventFactory.createFromBatchItems ( productOrder, vessel, 1L, null, LabEventType.SHEARING_BUCKET_ENTRY,
                                                LabEvent.UI_EVENT_LOCATION );
         try {
             ServiceAccessUtility.addJiraComment ( productOrder, vessel.getLabCentricName () +
@@ -100,7 +100,7 @@ public class BucketBean {
         Set<LabEvent> eventList = new HashSet<LabEvent> ();
         eventList.addAll ( labEventFactory.buildFromBatchRequests ( pdoKeyToVesselMap, actor, null,
                                                                     labEventLocation,
-                                                                    LabEventType.BUCKET_EXIT ) );
+                                                                    LabEventType.SHEARING_BUCKET_EXIT ) );
 
         for ( String pdo : pdoKeyToVesselMap.keySet () ) {
             try {
@@ -320,7 +320,7 @@ public class BucketBean {
         Set<LabEvent> eventList = new HashSet<LabEvent> ();
         eventList.addAll ( labEventFactory.buildFromBatchRequests ( pdoKeyToVesselMap, actor, bucketBatch,
                                                                     batchInitiationLocation,
-                                                                    LabEventType.BUCKET_EXIT ) );
+                                                                    LabEventType.SHEARING_BUCKET_EXIT ) );
 
         bucketBatch.addLabEvents ( eventList );
 

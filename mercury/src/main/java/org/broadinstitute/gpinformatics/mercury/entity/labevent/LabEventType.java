@@ -243,8 +243,9 @@ public enum LabEventType {
     /**
      * TODO SGM  the following names are place holders.  They will be re-evaluated as development of
      */
-    BUCKET_ENTRY("BucketEntry", true, true, Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
-    BUCKET_EXIT("BucketExit", true, true, Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+    SHEARING_BUCKET("ShearingBucket", true, true, Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+    SHEARING_BUCKET_ENTRY ("ShearingBucketEntry", true, true, Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+    SHEARING_BUCKET_EXIT ("ShearingBucketExit", true, true, Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
     ;
 
     private final String name;
