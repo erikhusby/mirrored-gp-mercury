@@ -2,14 +2,12 @@ package org.broadinstitute.gpinformatics.mercury.entity;
 
 
 import junit.framework.Assert;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.StandardPOResolver;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDaoTest;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.person.PersonDAO;
@@ -138,7 +136,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
 
         List<BucketEntry> testEntries = new LinkedList<BucketEntry>();
         testEntries.add ( bucketEntry);
-        bucketResource.start ( testEntries, new Person ( "hrafal", "Howard", "Rafal" ) );
+        bucketResource.start ( testEntries, new Person ( "hrafal", "Howard", "Rafal" ), LabEvent.UI_EVENT_LOCATION );
 
         Assert.assertFalse ( tube.getInPlaceEvents ().isEmpty () );
         boolean doesEventHavePDO = false;

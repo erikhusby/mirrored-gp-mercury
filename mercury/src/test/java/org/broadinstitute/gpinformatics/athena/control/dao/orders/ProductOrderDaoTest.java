@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderTest;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -17,7 +18,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -95,16 +96,10 @@ public class ProductOrderDaoTest extends ContainerTest {
         }
 
         // Try to create a Product Order and persist it.
-        List<ProductOrderSample> sampleList = new ArrayList<ProductOrderSample>();
         String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
-        ProductOrder newProductOrder = new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, sampleList, "quoteId",
+        ProductOrder newProductOrder = new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle,
+                ProductOrderTest.createSampleList("MS-1111", "MS-1112"), "quoteId",
                 product, foundResearchProject);
-        sampleList.add(new ProductOrderSample("MS-1111", newProductOrder));
-        sampleList.add(new ProductOrderSample("MS-1112", newProductOrder));
-        int samplePos = 0;
-        for ( ProductOrderSample sample :sampleList ) {
-            sample.setSamplePosition(samplePos++);
-        }
         newProductOrder.setJiraTicketKey(testProductOrderKey);
         return newProductOrder;
     }

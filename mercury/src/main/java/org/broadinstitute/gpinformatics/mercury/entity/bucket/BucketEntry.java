@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
@@ -33,7 +34,13 @@ public class BucketEntry  {
     public static final Comparator<BucketEntry> byDate = new Comparator<BucketEntry>() {
         @Override
         public int compare ( BucketEntry bucketEntryPrime, BucketEntry bucketEntrySecond ) {
-            return bucketEntryPrime.getCreatedDate().compareTo(bucketEntrySecond.getCreatedDate());
+            int result;
+            result = bucketEntryPrime.getCreatedDate().compareTo(bucketEntrySecond.getCreatedDate());
+
+            if(result == 0)
+                result = bucketEntryPrime.getProductOrderRanking().compareTo(bucketEntrySecond.getProductOrderRanking());
+
+            return result;
         }
     };
 
@@ -68,9 +75,15 @@ public class BucketEntry  {
     }
 
     public BucketEntry ( @Nonnull LabVessel labVesselIn, @Nonnull String poBusinessKey, @Nonnull Bucket bucket ) {
+
+        this(labVesselIn, poBusinessKey);
+        bucketExistence = bucket;
+
+    }
+
+    public BucketEntry ( @Nonnull LabVessel labVesselIn, @Nonnull String poBusinessKey) {
         labVessel = labVesselIn;
         this.poBusinessKey = poBusinessKey;
-        bucketExistence = bucket;
 
         createdDate = new Date();
 
@@ -151,5 +164,13 @@ public class BucketEntry  {
         int result = labVessel != null ? labVessel.hashCode () : 0;
         result = 31 * result + ( poBusinessKey != null ? poBusinessKey.hashCode () : 0 );
         return result;
+    }
+
+    public int compareTo (BucketEntry other) {
+        CompareToBuilder builder = new CompareToBuilder ();
+        builder.append(labVessel, other.getLabVessel());
+        builder.append(poBusinessKey, other.getPoBusinessKey());
+
+        return builder.toComparison();
     }
 }

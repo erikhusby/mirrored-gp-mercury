@@ -174,9 +174,10 @@
                             <p:column style="width:100%">
                                 <div>#{priceItem.platformName} | #{priceItem.categoryName} | #{priceItem.name}</div>
                             </p:column>
+                            <p:ajax event="itemSelect" listener="#{productForm.removeDuplicates(productForm.priceItems, 'priceItem')}" update="priceItem, optionalPriceItemsMessage"/>
                         </p:autoComplete>
                         <p:watermark for="priceItem" value="Type text to search for Price Items"/>
-                        <p:message for="priceItem" />
+                        <p:message id="optionalPriceItemsMessage" for="priceItem" />
                     </div>
                 </div>
 
@@ -191,9 +192,10 @@
                                 <div class="ac-dropdown-subtext">Available(now or in the future):#{product.availableNowOrLater ? "Yes" : "No"}</div>
                                 <div class="ac-dropdown-subtext">#{product.productFamily.name}</div>
                             </p:column>
+                            <p:ajax event="itemSelect" listener="#{productForm.removeDuplicates(productForm.addOns, 'addOns')}" update="addOns, addOnsMessage"/>
                         </p:autoComplete>
                         <p:watermark for="addOns" value="Type text to search to search for Add-ons"/>
-                        <p:message for="addOns"/>
+                        <p:message id="addOnsMessage" for="addOns"/>
                     </div>
                 </div>
 

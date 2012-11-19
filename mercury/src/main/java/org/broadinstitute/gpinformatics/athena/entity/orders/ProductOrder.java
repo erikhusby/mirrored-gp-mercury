@@ -9,10 +9,11 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -76,8 +77,10 @@ public class ProductOrder implements Serializable {
     /** Reference to the Jira Ticket created when the order is submitted */
     private String jiraTicketKey;
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
-    @OrderColumn(name="samplePosition", nullable = false)
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @JoinColumn(name = "product_order", nullable = false)
+    @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
+    @AuditJoinTable(name = "product_order_sample_join_aud")
     private List<ProductOrderSample> samples = Collections.emptyList();
 
     @Transient
@@ -297,16 +300,10 @@ public class ProductOrder implements Serializable {
         modifiedBy = createdBy;
         modifiedDate = createdDate;
         this.title = title;
-        this.samples = samples;
+        setSamples(samples);
         this.quoteId = quoteId;
         this.product = product;
         this.researchProject = researchProject;
-        int samplePos = 0;
-        if ( samples != null) {
-            for ( ProductOrderSample sample :samples ) {
-                sample.setSamplePosition(samplePos++);
-            }
-        }
     }
 
     public String getTitle() {
@@ -383,11 +380,9 @@ public class ProductOrder implements Serializable {
 
     public void setSamples(List<ProductOrderSample> samples) {
         this.samples = samples;
-        int samplePos = 0;
-        if ( samples != null) {
-            for ( ProductOrderSample sample :samples ) {
-                sample.setSamplePosition(samplePos);
-                samplePos++;
+        if (samples != null) {
+            for (ProductOrderSample sample : samples) {
+                sample.setProductOrder(this);
             }
         }
         counts.invalidate();
@@ -675,6 +670,10 @@ public class ProductOrder implements Serializable {
         return counts.missingBspMetaDataCount;
     }
 
+    public Long getProductOrderId() {
+        return productOrderId;
+    }
+
     private static void addCustomField(Map<String, CustomFieldDefinition> submissionFields,
                                        List<CustomField> list, RequiredSubmissionFields field, Object value) {
         list.add(new CustomField(submissionFields.get(field.getFieldName()), value, CustomField.SingleFieldType.TEXT));
@@ -809,12 +808,12 @@ public class ProductOrder implements Serializable {
      * makes it easier for a user of this object to interact with Jira for this entity.
      *
      * @return An enum of type
-     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.ProjectType} that
+     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.ProjectType} that
      *         represents the Jira Project for Product Orders
      */
     @Transient
-    public CreateIssueRequest.Fields.ProjectType fetchJiraProject() {
-        return CreateIssueRequest.Fields.ProjectType.Product_Ordering;
+    public CreateFields.ProjectType fetchJiraProject() {
+        return CreateFields.ProjectType.Product_Ordering;
     }
 
     /**
@@ -822,12 +821,12 @@ public class ProductOrder implements Serializable {
      * makes it easier for a user of this object to interact with Jira for this entity.
      *
      * @return An enum of type
-     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueRequest.Fields.Issuetype} that
+     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.IssueType} that
      *         represents the Jira Issue Type for Product Orders
      */
     @Transient
-    public CreateIssueRequest.Fields.Issuetype fetchJiraIssueType() {
-        return CreateIssueRequest.Fields.Issuetype.PRODUCT_ORDER;
+    public CreateFields.IssueType fetchJiraIssueType() {
+        return CreateFields.IssueType.PRODUCT_ORDER;
     }
 
     public String getSampleBillingSummary() {

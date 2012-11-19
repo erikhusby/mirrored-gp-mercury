@@ -134,7 +134,7 @@ public class LabEventTest {
         for(int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
             String barcode = "R" + rackPosition;
             String bspStock = "SM-" + rackPosition;
-            productOrderSamples.add(new ProductOrderSample(bspStock, productOrder));
+            productOrderSamples.add(new ProductOrderSample(bspStock));
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(jiraTicketKey, bspStock));
             mapBarcodeToTube.put(barcode,bspAliquot);

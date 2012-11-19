@@ -43,6 +43,14 @@ public class BillableItem {
         return priceItem;
     }
 
+    public Long getBillableItemId() {
+        return billableItemId;
+    }
+
+    public ProductOrderSample getProductOrderSample() {
+        return productOrderSample;
+    }
+
     public void setPriceItem(final PriceItem priceItem) {
         this.priceItem = priceItem;
     }

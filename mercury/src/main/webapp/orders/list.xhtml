@@ -18,7 +18,6 @@
                 <h:link value="New Product Order" outcome="create" styleClass="pull-right"/>
             </div>
             <p:dataTable value="#{productOrderBean.allProductOrders}"
-                         filteredValue="#{productOrderBean.filteredProductOrders}"
                          sortBy="#{order.title}"
                          sortOrder="ascending"
                          var="order">
