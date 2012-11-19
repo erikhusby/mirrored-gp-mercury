@@ -76,31 +76,36 @@ public class BucketBean {
         return newEntry;
     }
 
-    public void add ( @Nonnull Collection<BucketEntry> entriesToAdd, @Nonnull Bucket bucket, Person actor ) {
+    /**
+     * adds a pre-defined collection of {@link LabVessel}s to a given bucket
+     *
+     * @param productOrder
+     * @param entriesToAdd
+     * @param bucket
+     * @param actor
+     * @param labEventLocation
+     */
+    public void add ( String productOrder, @Nonnull List<LabVessel> entriesToAdd, @Nonnull Bucket bucket, Person actor,
+                      @Nonnull String labEventLocation ) {
 
-        Map<String, List<LabVessel>> pdoKeyToVesselMap = new HashMap<String, List<LabVessel>> ();
-        Set<LabVessel> eventVessels = new HashSet<LabVessel> ();
-
-
-        for ( BucketEntry currEntry : entriesToAdd ) {
-            if ( !pdoKeyToVesselMap.containsKey ( currEntry.getPoBusinessKey () ) ) {
-                pdoKeyToVesselMap.put ( currEntry.getPoBusinessKey (), new LinkedList<LabVessel> () );
-            }
-            pdoKeyToVesselMap.get ( currEntry.getPoBusinessKey () ).add ( currEntry.getLabVessel () );
-            eventVessels.add ( currEntry.getLabVessel () );
-
-            bucket.addEntry(currEntry);
+        for(LabVessel currVessel:entriesToAdd) {
+            bucket.addEntry(productOrder, currVessel);
         }
+
+        Map<String, Collection<LabVessel>> pdoKeyToVesselMap =
+                new HashMap<String, Collection<LabVessel>>();
+
+        pdoKeyToVesselMap.put(productOrder, entriesToAdd);
 
         Set<LabEvent> eventList = new HashSet<LabEvent> ();
         eventList.addAll ( labEventFactory.buildFromBatchRequests ( pdoKeyToVesselMap, actor, null,
-                                                                    LabEvent.UI_EVENT_LOCATION,
+                                                                    labEventLocation,
                                                                     LabEventType.BUCKET_EXIT ) );
 
         for ( String pdo : pdoKeyToVesselMap.keySet () ) {
             try {
                 ServiceAccessUtility.addJiraComment ( pdo, "Vessels: " +
-                        StringUtils.join (pdoKeyToVesselMap.get(pdo),',') +
+                        StringUtils.join ( pdoKeyToVesselMap.get ( pdo ), ',' ) +
                         " added to bucket " + bucket.getBucketDefinitionName () );
             } catch ( IOException ioe ) {
                 logger.log ( Level.WARNING, "error attempting to add a jira comment for adding " +
@@ -213,9 +218,6 @@ public class BucketBean {
 
         logger.log ( Level.INFO, "List of Bucket entries is a size of " + sortedBucketEntries.size () );
 
-        Collections.sort ( sortedBucketEntries, BucketEntry.byDate );
-        logger.log ( Level.INFO, "List of SORTED Bucket entries is a size of " + sortedBucketEntries.size () );
-
         Iterator<BucketEntry> bucketEntryIterator = sortedBucketEntries.iterator ();
 
         for ( int i = 0 ; i < numberOfBatchSamples && bucketEntryIterator.hasNext () ; i++ ) {
@@ -271,7 +273,8 @@ public class BucketBean {
          * Create (if necessary) a new batch
          */
 
-        Map<String, List<LabVessel>> pdoKeyToVesselMap = new HashMap<String, List<LabVessel>> ();
+        Map<String, Collection<LabVessel>> pdoKeyToVesselMap =
+                new HashMap<String, Collection<LabVessel>>();
         Set<LabVessel> batchVessels = new HashSet<LabVessel> ();
 
         List<LabBatch> trackBatches = null;

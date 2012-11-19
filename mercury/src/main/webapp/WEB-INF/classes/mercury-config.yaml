@@ -238,6 +238,21 @@ mercury:
       deckMsgs: QA
       datawhEtl: QA
 
+
+    RC:
+
+      app:      QA
+      bsp:      QA
+      gap:      QA
+      jira:     TEST
+      pmbridge: DEV
+      quote:    QA
+      squid:    QA
+      thrift:   QA
+      deckMsgs: QA
+      datawhEtl: QA
+
+
     PROD:
 
       app:      PROD

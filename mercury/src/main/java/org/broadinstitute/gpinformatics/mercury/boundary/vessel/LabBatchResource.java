@@ -88,6 +88,7 @@ public class LabBatchResource {
             }
             if(tubeBean.getSampleBarcode() != null && tubeBean.getProductOrderKey() != null) {
                 MercurySample mercurySample = mapBarcodeToSample.get(new MercurySample(tubeBean.getProductOrderKey(), tubeBean.getSampleBarcode()));
+                // todo jmt should this update the map?
                 if(mercurySample != null) {
                     twoDBarcodedTube.addSample(mercurySample);
                 }
