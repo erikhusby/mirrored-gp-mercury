@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
+import org.broadinstitute.gpinformatics.mercury.control.reagent.MolecularIndexingSchemeFactory;
 import org.hibernate.annotations.Sort;
 import org.hibernate.annotations.SortType;
 import org.hibernate.envers.Audited;
@@ -148,6 +149,7 @@ public class MolecularIndexingScheme {
     /**
      * {@link PositionHint}s associated with Illumina sequencing constructs.
      */
+/*
     public enum IlluminaPositionHint implements PositionHint {
         P3,
         P5,
@@ -192,9 +194,11 @@ public class MolecularIndexingScheme {
         }
     }
 
-    /**
+    */
+/**
      * {@link PositionHint}s associated with 454 sequencing constructs.
-     */
+     *//*
+
     public enum Four54PositionHint implements PositionHint {
         A,
         B;
@@ -225,9 +229,11 @@ public class MolecularIndexingScheme {
         }
     }
 
-    /**
+    */
+/**
      * {@link PositionHint}s associated with 454 sequencing constructs.
-     */
+     *//*
+
     public enum IonPositionHint implements PositionHint {
         A,
         B;
@@ -313,6 +319,7 @@ public class MolecularIndexingScheme {
             return this.name();
         }
     }
+*/
 
     /**
      * All the positions across all the technologies. These are logically
@@ -321,22 +328,22 @@ public class MolecularIndexingScheme {
      * are database-facing, they're not usable outside of
      * MolecularIndexingScheme. Instead, use a PositionHint implementation.
      */
-    public enum IndexPosition {
-        FOUR54_A(Four54PositionHint.A),
-        FOUR54_B(Four54PositionHint.B),
-        ION_A(IonPositionHint.A),
-        ION_B(IonPositionHint.B),
-        GSSR_INTRA(GssrPositionHint.INTRA),
-        IDENTIFIER_ONLY(IdentifierPositionHint.ONLY),
-        ILLUMINA_P3(IlluminaPositionHint.P3),
-        ILLUMINA_P5(IlluminaPositionHint.P5),
-        ILLUMINA_P7(IlluminaPositionHint.P7),
-        ILLUMINA_IS1(IlluminaPositionHint.IS1),
-        ILLUMINA_IS2(IlluminaPositionHint.IS2),
-        ILLUMINA_IS3(IlluminaPositionHint.IS3),
-        ILLUMINA_IS4(IlluminaPositionHint.IS4),
-        ILLUMINA_IS5(IlluminaPositionHint.IS5),
-        ILLUMINA_IS6(IlluminaPositionHint.IS6);
+    public enum IndexPosition implements PositionHint {
+        FOUR54_A(/*Four54PositionHint.A, */"454", true, "A"),
+        FOUR54_B(/*Four54PositionHint.B, */"454", false, "B"),
+        ION_A(/*IonPositionHint.A, */"Ion", true, "A"),
+        ION_B(/*IonPositionHint.B, */"Ion", false, "B"),
+        GSSR_INTRA(/*GssrPositionHint.INTRA, */"GSSR", true, "INTRA"),
+        IDENTIFIER_ONLY(/*IdentifierPositionHint.ONLY, */"Identifier", true, "ONLY"),
+        ILLUMINA_P3(/*IlluminaPositionHint.P3, */"Illumina", false, "P3"),
+        ILLUMINA_P5(/*IlluminaPositionHint.P5, */"Illumina", false, "P5"),
+        ILLUMINA_P7(/*IlluminaPositionHint.P7, */"Illumina", true, "P7"),
+        ILLUMINA_IS1(/*IlluminaPositionHint.IS1, */"Illumina", false, "IS1"),
+        ILLUMINA_IS2(/*IlluminaPositionHint.IS2, */"Illumina", false, "IS2"),
+        ILLUMINA_IS3(/*IlluminaPositionHint.IS3, */"Illumina", false, "IS3"),
+        ILLUMINA_IS4(/*IlluminaPositionHint.IS4, */"Illumina", false, "IS4"),
+        ILLUMINA_IS5(/*IlluminaPositionHint.IS5, */"Illumina", false, "IS5"),
+        ILLUMINA_IS6(/*IlluminaPositionHint.IS6, */"Illumina", false, "IS6");
 
         /*
            * IMPORTANT NOTE:
@@ -352,14 +359,42 @@ public class MolecularIndexingScheme {
            * index schemes. See the notes at generateName() for more information.
            */
 
-        private final PositionHint positionHint;
+//        private final PositionHint positionHint;
+        private String technology;
+        private boolean isDefault;
+        private String name;
 
-        private IndexPosition(final PositionHint position) {
-            this.positionHint = position;
+        private IndexPosition(/*final PositionHint position, */String technology, boolean aDefault, String name) {
+//            this.positionHint = position;
+            this.technology = technology;
+            isDefault = aDefault;
+            this.name = name;
         }
 
+/*
         private PositionHint getPositionHint() {
             return this.positionHint;
+        }
+*/
+
+        @Override
+        public String getTechnology() {
+            return technology;
+        }
+
+        @Override
+        public IndexPosition getIndexPosition() {
+            return this;
+        }
+
+        @Override
+        public String getName() {
+            return name;
+        }
+
+        @Override
+        public boolean isDefault() {
+            return isDefault;
         }
     }
 
@@ -384,9 +419,9 @@ public class MolecularIndexingScheme {
         }
 
         for (final IndexPosition internalPosition : IndexPosition.values()) {
-            final PositionHint externalPosition = internalPosition.getPositionHint();
-            if (externalPosition.getTechnology().equals(technology) && externalPosition.isDefault()) {
-                return externalPosition;
+//            final PositionHint externalPosition = internalPosition.getPositionHint();
+            if (internalPosition.getTechnology().equals(technology) && internalPosition.isDefault()) {
+                return internalPosition;
             }
         }
 
@@ -469,6 +504,7 @@ public class MolecularIndexingScheme {
         return indexMap;
     }
 
+/*
     void setIndexPositions(final SortedMap<IndexPosition, MolecularIndex> indexesAndPositions) {
         // Dereferencing the IndexPosition into its PositionHint since
         // those values are the ones useful in this code. The corresponding
@@ -479,6 +515,7 @@ public class MolecularIndexingScheme {
                     entry.getValue());
         }
     }
+*/
 
     /**
      * Returns a "pretty" name for this scheme. The name is based on the sequence
