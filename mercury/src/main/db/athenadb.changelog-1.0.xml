@@ -921,4 +921,12 @@
       </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-239-1" author="mcovarr">
+        <addNotNullConstraint columnName="jira_ticket_key" schemaName="athena" tableName="product_order" />
+    </changeSet>
+
+    <changeSet id="GPLIM-239-2" author="mcovarr">
+        <addNotNullConstraint columnName="jira_ticket_key" schemaName="athena" tableName="research_project" />
+    </changeSet>
+
 </databaseChangeLog>

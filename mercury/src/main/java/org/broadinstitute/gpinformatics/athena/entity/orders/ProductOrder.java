@@ -679,6 +679,10 @@ public class ProductOrder implements Serializable {
         return counts.missingBspMetaDataCount;
     }
 
+    public Long getProductOrderId() {
+        return productOrderId;
+    }
+
     /**
      * submitProductOrder encapsulates the set of steps necessary to finalize the submission of a product order.
      * This mainly deals with jira ticket creation.  This method will:
