@@ -62,7 +62,7 @@ public class Bucket {
 
     public Collection<BucketEntry> getBucketEntries () {
 
-        List setList = new ArrayList(bucketEntries);
+        List<BucketEntry> setList = new ArrayList<BucketEntry>(bucketEntries);
         Collections.sort(setList, BucketEntry.byDate);
         return Collections.unmodifiableList ( setList );
     }
@@ -83,6 +83,7 @@ public class Bucket {
      */
     public void addEntry( BucketEntry newEntry ) {
         newEntry.setBucketExistence(this);
+        newEntry.setProductOrderRanking(getBucketEntries().size()+1);
         bucketEntries.add(newEntry);
 
     }
@@ -96,9 +97,7 @@ public class Bucket {
      */
     public BucketEntry addEntry ( String productOrderKey, LabVessel vessel ) {
         BucketEntry newEntry = new BucketEntry(vessel,productOrderKey, this );
-        newEntry.setBucketExistence(this);
-        bucketEntries.add(newEntry);
-
+        addEntry(newEntry);
         return newEntry;
     }
 
