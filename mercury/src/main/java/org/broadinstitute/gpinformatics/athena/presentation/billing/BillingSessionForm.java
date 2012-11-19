@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.presentation.billing;
 
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingSessionBean;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
@@ -27,9 +26,6 @@ public class BillingSessionForm extends AbstractJsfBean {
 
     @Inject
     private BillingSessionDao sessionDao;
-
-    @Inject
-    private BillingLedgerDao ledgerDao;
 
     @Inject
     private QuoteService quoteService;
@@ -64,6 +60,8 @@ public class BillingSessionForm extends AbstractJsfBean {
                 addErrorMessage(ex.getMessage());
             }
         }
+
+        sessionDao.persist(billingSessionBean.getBillingSession());
 
         return null;
     }
