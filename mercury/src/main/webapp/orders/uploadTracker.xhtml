@@ -10,12 +10,70 @@
       xmlns:p="http://primefaces.org/ui">
 <body>
     <ui:composition template="/layout.xhtml">
-        <ui:define name="title">Upload Billing Tracker</ui:define>
+        <ui:define name="title">Upload Billing Tracker.</ui:define>
 
         <ui:define name="body">
+            <p/>
+
             <h:form>
 
-                Upload will be in this space
+                <p:fileUpload id="uploader" fileUploadListener="#{fileUploadController.handleFileUpload}"
+                        allowTypes="/(\.|\/)(xls|xls?x)$/"
+                        mode="advanced"
+                        uploadLabel="Parsing the selected file"
+                        label="Browse for Tracker file."
+                        requiredMessage="A Tracker spreadsheet must be selected"
+                        update="ordersUpdatedFile,ordersUpdatedTable"
+                        auto="true"/>
+
+                <div class="control-group">
+                    <label class="control-label label-form">Previewed File</label>
+                    <div class="controls">
+                        <h:outputText id="ordersUpdatedFile" value="#{fileUploadController.filename}"/>
+                    </div>
+                </div>
+
+                    <!--value="#{fileUploadController.allOrders}"-->
+                    <!--var="order"-->
+                    <!--sortBy="#{order.title}"-->
+                    <!--sortOrder="ascending"-->
+                    <p:dataTable  id="ordersUpdatedTable"
+                            >
+
+                        <p:column headerText="Order Id" sortBy="#{order.id}">
+                        </p:column>
+
+                        <p:column headerText="Order Title">
+                        </p:column>
+
+                        <p:column headerText="Samples Updated">
+                        </p:column>
+
+                        <p:column headerText="Total Charges">
+                        </p:column>
+
+                        <p:column headerText="Total Credits">
+                        </p:column>
+
+                    </p:dataTable>
+
+
+                <p/>
+                <!--<h:outputText id="ordersUpdatedTable" value="#{fileUploadController.filename}"/>-->
+                <p/>
+
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="row-fluid">
+                            <div class="span1">
+                                <p:commandButton value="Upload" action="#{fileUploadController.save}" ajax="false" styleClass="ui-priority-primary"/>
+                            </div>
+                            <div class="span1">
+                                <h:link outcome="list" value="Cancel" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
             </h:form>
         </ui:define>

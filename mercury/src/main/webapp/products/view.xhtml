@@ -29,7 +29,7 @@
 
 
 
-        <h:form id="productForm" styleClass="form-horizontal form-readonly" rendered="#{productView.product != null ? true : false }">
+        <h:form id="productForm" styleClass="form-horizontal form-readonly" rendered="#{productView.product != null}">
 
             <!-- cache to store business key in view state to survive across AJAX requests -->
             <h:inputHidden id="vsBusinessKeyCache" binding="#{productView.vsBusinessKeyCache}" />
