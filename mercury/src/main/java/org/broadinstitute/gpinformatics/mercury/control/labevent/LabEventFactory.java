@@ -901,6 +901,7 @@ public class LabEventFactory {
      *
      *
      *
+     *
      * @param pdoToVessels a Map of lab vessels.  Contains Lists of Lab vessels each indexed by the Product Order
      *                     business key to which they are associated
      * @param actor        representation of the user that submitted the request
@@ -911,7 +912,7 @@ public class LabEventFactory {
      * @param eventType
      * @return A collection of the created events for the submitted lab vessels
      */
-    public Collection<LabEvent> buildFromBatchRequests ( @Nonnull Map<String, List<LabVessel>> pdoToVessels, Person actor,
+    public Collection<LabEvent> buildFromBatchRequests ( @Nonnull Map<String, Collection<LabVessel>> pdoToVessels, Person actor,
                                                          LabBatch batchIn, @Nonnull String eventLocation,
                                                          @Nonnull LabEventType eventType ) {
 
@@ -921,7 +922,7 @@ public class LabEventFactory {
 
         Set<UniqueEvent> uniqueEvents = new HashSet<UniqueEvent>();
 
-        for ( Map.Entry<String, List<LabVessel>> mapEntry : pdoToVessels.entrySet () ) {
+        for ( Map.Entry<String, Collection<LabVessel>> mapEntry : pdoToVessels.entrySet () ) {
             List<LabEvent> events = new LinkedList<LabEvent> ();
             for ( LabVessel currVessel : mapEntry.getValue () ) {
                 LabEvent currEvent = createFromBatchItems ( mapEntry.getKey (), currVessel, workCounter++, actor,
