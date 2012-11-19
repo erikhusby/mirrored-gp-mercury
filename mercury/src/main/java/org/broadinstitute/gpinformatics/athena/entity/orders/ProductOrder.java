@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -77,8 +78,10 @@ public class ProductOrder implements Serializable {
     @Column(name = "JIRA_TICKET_KEY", nullable = false)
     private String jiraTicketKey;
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
-    @OrderColumn(name="samplePosition", nullable = false)
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @JoinColumn(name = "product_order", nullable = false)
+    @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
+    @AuditJoinTable(name = "product_order_sample_join_aud")
     private List<ProductOrderSample> samples = Collections.emptyList();
 
     @Transient
@@ -298,16 +301,10 @@ public class ProductOrder implements Serializable {
         modifiedBy = createdBy;
         modifiedDate = createdDate;
         this.title = title;
-        this.samples = samples;
+        setSamples(samples);
         this.quoteId = quoteId;
         this.product = product;
         this.researchProject = researchProject;
-        int samplePos = 0;
-        if ( samples != null) {
-            for ( ProductOrderSample sample :samples ) {
-                sample.setSamplePosition(samplePos++);
-            }
-        }
     }
 
     public String getTitle() {
@@ -384,11 +381,9 @@ public class ProductOrder implements Serializable {
 
     public void setSamples(List<ProductOrderSample> samples) {
         this.samples = samples;
-        int samplePos = 0;
-        if ( samples != null) {
-            for ( ProductOrderSample sample :samples ) {
-                sample.setSamplePosition(samplePos);
-                samplePos++;
+        if (samples != null) {
+            for (ProductOrderSample sample : samples) {
+                sample.setProductOrder(this);
             }
         }
         counts.invalidate();
