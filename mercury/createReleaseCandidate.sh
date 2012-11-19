@@ -23,10 +23,12 @@ MINOR=`expr $VERSION : '.*\.\([0-9]*\)'`
 
 NEXTMINOR=`expr $MINOR + 1`
 NEXTVERSION="$MAJOR.$NEXTMINOR-SNAPSHOT"
+RCVERSION="$MAJOR.$MINOR-RC"
 RCBRANCH="RC-$MAJOR.$MINOR"
 
 cat <<EOF
 Creating Release Candidate Branch $RCBRANCH
+Setting version to $RCVERSION
 
 Updating master to version $NEXTVERSION
 
@@ -34,6 +36,8 @@ EOF
 
 # Make the RC Branch a remote tracking branch
 git checkout  --track -b $RCBRANCH
+mvn versions:set -DnewVersion=$RCVERSION
+git commit -m "REL-000 Setting RC version to $RCVERSION" pom.xml
 # Create the RCBUILD floating tag (but get rid of previous version first)
 git push origin :RCBUILD
 git tag -a -m "Current RC " --force RCBUILD $RCBRANCH

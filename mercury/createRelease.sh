@@ -22,7 +22,7 @@ MAJOR=`expr $VERSION : '\([0-9]*\)'`
 MINOR=`expr $VERSION : '[0-9]*\.\([0-9]*\)'`
 REV=`expr $VERSION : '[0-9]*\.[0-9]*\(.*\)'`
 REV=${REV#\.}
-REV=${REV%-SNAPSHOT}
+REV=${REV%-RC}
 
 RCBRANCH="RC-$MAJOR.$MINOR"
 git checkout $RCBRANCH
@@ -38,7 +38,7 @@ git push origin --tags
 
 git checkout $RCBRANCH
 
-NEXTRCVERSION="$MAJOR.$MINOR.$REV-SNAPSHOT"
+NEXTRCVERSION="$MAJOR.$MINOR.$REV-RC"
 mvn versions:set -DnewVersion="$NEXTRCVERSION"
 git commit -m "REL-000 Setting RC Version $NEXTRCVERSION" pom.xml
 git push origin :RCBUILD
