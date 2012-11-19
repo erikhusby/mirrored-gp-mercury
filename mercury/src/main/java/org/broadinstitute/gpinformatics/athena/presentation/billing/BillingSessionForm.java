@@ -2,7 +2,9 @@ package org.broadinstitute.gpinformatics.athena.presentation.billing;
 
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingSessionBean;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -13,6 +15,10 @@ import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.util.Date;
 
 /**
  * Form operations for the billing session features
@@ -32,6 +38,9 @@ public class BillingSessionForm extends AbstractJsfBean {
 
     @Inject
     private FacesContext facesContext;
+
+    @Inject
+    private BSPUserList bspUserList;
 
     public String bill() {
         String sessionKey =  billingSessionBean.getBillingSession().getBusinessKey();
@@ -84,7 +93,22 @@ public class BillingSessionForm extends AbstractJsfBean {
         return null;  //To change body of created methods use File | Settings | File Templates.
     }
 
-    public String downloadQuoteItems() {
-        return null;  //To change body of created methods use File | Settings | File Templates.
+    public void downloadQuoteItems() throws IOException {
+        QuoteWorkItemsExporter exporter =
+            new QuoteWorkItemsExporter(
+                billingSessionBean.getBillingSession(), billingSessionBean.getBillingSession().getQuoteImportItems());
+        FacesContext fc = FacesContext.getCurrentInstance();
+        HttpServletResponse response = (HttpServletResponse) fc.getExternalContext().getResponse();
+
+        String fileName = billingSessionBean.getBillingSession().getBusinessKey() + "_" + new Date() + ".xls";
+        response.reset(); // Some JSF component library or some Filter might have set some headers in the buffer beforehand. We want to get rid of them, else it may collide.
+        response.setContentType("application/vnd.ms-excel");
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+
+        OutputStream outputStream = response.getOutputStream();
+
+        exporter.writeToStream(outputStream, bspUserList);
+
+        fc.responseComplete();
     }
 }
