@@ -67,12 +67,11 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         return baseUrl;
     }
 
+    // Temporary container class to get ticket ID (key) from the server.
     private static class JiraIssueData {
-        private String id;
         private String key;
 
         public void setId(String id) {
-            this.id = id;
         }
 
         public void setKey(String key) {
@@ -106,12 +105,12 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         WebResource webResource = getJerseyClient().resource(urlString);
 
         JiraIssueData data = post(webResource, issueRequest, new GenericType<JiraIssueData>() {});
-        return new JiraIssue(data.id, data.key, this);
+        return new JiraIssue(data.key, this);
     }
 
     @Override
     public JiraIssue getIssue(String key) {
-        return new JiraIssue(key, key, this);
+        return new JiraIssue(key, this);
     }
 
     @Override

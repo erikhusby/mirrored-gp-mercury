@@ -189,8 +189,8 @@ public class ExomeExpressEndToEndTest {
                         labBatch.getBatchName(),
                         "Pass " /*+ projectPlan.getPass().getProjectInformation().getPassNumber()*/, allCustomFields);
                 Assert.assertNotNull(jira);
-                Assert.assertNotNull(jira.getTicketName());
-                jiraTicket = new JiraTicket( jira.getTicketName(), jira.getId());
+                Assert.assertNotNull(jira.getKey());
+                jiraTicket = new JiraTicket(jira);
                 labBatch.setJiraTicket(jiraTicket);
                 //labBatch.get
             }

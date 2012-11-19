@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.project;
 
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
@@ -33,22 +34,23 @@ public class JiraTicket {
     private String browserUrl;
 
     @Transient
-    private JiraService jiraService;
+    private final JiraService jiraService;
 
     public JiraTicket() {
         jiraService = ServiceAccessUtility.getBean(JiraService.class);
     }
 
-    public JiraTicket(@Nonnull String ticketName, @Nonnull String ticketId) {
-        if (ticketName == null) {
-            throw new NullPointerException("ticketName cannot be null.");
-        }
+    public JiraTicket(JiraIssue issue) {
+        this(issue.getKey());
+    }
+
+    public JiraTicket(@Nonnull String ticketId) {
+        this();
         if (ticketId == null) {
             throw new NullPointerException("ticketId cannot be null.");
         }
-        jiraService = ServiceAccessUtility.getBean(JiraService.class);
-        this.ticketName = ticketName;
         this.ticketId = ticketId;
+        ticketName = ticketId;
         this.browserUrl = jiraService.createTicketUrl(ticketName);
     }
 

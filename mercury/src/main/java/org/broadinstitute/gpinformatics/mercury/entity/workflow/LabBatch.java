@@ -186,13 +186,13 @@ public class LabBatch {
         listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.PROTOCOL, ""));
         listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.WORK_REQUEST_IDS, ""));
 
-        JiraIssue batchTicket =
+        JiraIssue jiraIssue =
                 jiraService.createIssue(fetchJiraProject().getKeyPrefix(), reporter,
                         // TODO SGM:  Need a better solution.  Map product to issueType.
                         CreateFields.IssueType.EXOME_EXPRESS,
                         batchName, "", listOfFields);
 
-        setJiraTicket(new JiraTicket(batchTicket.getTicketName(), batchTicket.getTicketName()));
+        jiraTicket = new JiraTicket(jiraIssue);
         jiraTicket.setLabBatch(this);
     }
 

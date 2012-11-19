@@ -323,7 +323,7 @@ public class BucketBean {
             if ( null == batchTicket ) {
                 bucketBatch.createJiraTicket ( actor.getLogin () );
             } else {
-                bucketBatch.setJiraTicket ( new JiraTicket ( batchTicket, batchTicket ) );
+                bucketBatch.setJiraTicket ( new JiraTicket ( batchTicket ) );
             }
             for ( String pdo : pdoKeyToVesselMap.keySet () ) {
                 bucketBatch.addJiraLink ( pdo );

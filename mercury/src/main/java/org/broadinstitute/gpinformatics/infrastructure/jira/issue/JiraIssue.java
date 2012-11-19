@@ -11,27 +11,16 @@ import java.io.Serializable;
 import java.util.Collection;
 
 public class JiraIssue implements Serializable {
-    
-    private final String id;
 
     private final String key;
 
     private final JiraService jiraService;
 
-    public JiraIssue(String id, String key, JiraService jiraService) {
-        this.id = id;
+    public JiraIssue(String key, JiraService jiraService) {
         this.key = key;
         this.jiraService = jiraService;
     }
 
-    public String getId() {
-        return id;
-    }
-
-    public String getTicketName() {
-        return key;
-    }
-    
     public String getKey() {
         return key;
     }
@@ -75,6 +64,8 @@ public class JiraIssue implements Serializable {
         addLink(AddIssueLinkRequest.LinkType.Related, targetIssueIn);
     }
 
+    // Workaround for BSP users whose username includes their email address. This is an interim fix until
+    // we can fixup existing usernames.
     private static final String BROADINSTITUTE_ORG = "@broadinstitute.org";
 
     /**
@@ -110,9 +101,8 @@ public class JiraIssue implements Serializable {
 
     @Override
     public String toString() {
-        return "CreateResponse{" +
-                "id='" + id + '\'' +
-                ", key='" + key + '\'' +
+        return "JiraIssue{" +
+                "key='" + key + '\'' +
                 '}';
     }
 }

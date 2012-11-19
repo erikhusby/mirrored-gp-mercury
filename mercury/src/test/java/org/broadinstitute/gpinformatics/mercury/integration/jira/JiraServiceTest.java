@@ -65,7 +65,7 @@ public class JiraServiceTest {
                             customFieldList);
 
 
-            Assert.assertNotNull(jiraIssue.getTicketName());
+            Assert.assertNotNull(jiraIssue.getKey());
 
         } catch (IOException e) {
             Assert.fail(e.getMessage());
@@ -93,7 +93,7 @@ public class JiraServiceTest {
                             "Athena Test case:::  Test new Summary Addition",
                             "Athena Test Case:  Test description setting",customFieldList);
 
-            Assert.assertNotNull(jiraIssue.getTicketName());
+            Assert.assertNotNull(jiraIssue.getKey());
 
         } catch (IOException ioe) {
             Assert.fail(ioe.getMessage());

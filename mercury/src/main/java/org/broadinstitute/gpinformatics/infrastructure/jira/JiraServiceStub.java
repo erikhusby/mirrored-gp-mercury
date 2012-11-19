@@ -31,12 +31,12 @@ public class JiraServiceStub implements JiraService {
 
     @Override
     public JiraIssue createIssue(String projectPrefix, String reporter, CreateFields.IssueType issueType, String summary, String description, Collection<CustomField> customFields) throws IOException {
-        return new JiraIssue("123", projectPrefix + "-123", this);
+        return new JiraIssue(projectPrefix + "-123", this);
     }
 
     @Override
     public JiraIssue getIssue(String key) {
-        return new JiraIssue(key, key, this);
+        return new JiraIssue(key, this);
     }
 
     @Override
