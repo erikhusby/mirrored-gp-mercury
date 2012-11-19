@@ -20,8 +20,7 @@
                 <p:dataTable value="#{researchProjectBean.allResearchProjects}"
                              var="project"
                              sortBy="#{project.title}"
-                             sortOrder="ascending"
-                             filteredValue="#{researchProjectBean.filteredResearchProjects}">
+                             sortOrder="ascending">
 
                     <p:column headerText="Name" sortBy="#{project.title}" sortingComparator="caseInsensitiveText">
                         <h:link outcome="view" value="#{project.title}">
