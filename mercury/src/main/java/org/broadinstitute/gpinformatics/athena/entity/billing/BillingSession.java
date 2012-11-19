@@ -5,15 +5,11 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportInfo;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
-import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This handles the billing session
@@ -97,12 +93,28 @@ public class BillingSession {
         }
     }
 
-    public void cancelSession() {
+    public boolean cancelSession() {
+
+        List<BillingLedger> toRemove = new ArrayList<BillingLedger>();
+
+        boolean allRemoved = true;
         for (BillingLedger ledgerItem : billingLedgerItems) {
-            ledgerItem.setBillingSession(null);
+
+            // If any item is billed then allRemoved is false and we do not want to remove the item
+            // In here we remove the billing session from the ledger item and hold onto the ledger item
+            // to remove from the full list of ledger items.
+            if (ledgerItem.getBilledDate() == null) {
+                ledgerItem.setBillingSession(null);
+                toRemove.add(ledgerItem);
+            } else {
+                allRemoved = false;
+            }
         }
 
-        billingLedgerItems.clear();
+        // Remove all items that do not have billing dates
+        billingLedgerItems.removeAll(toRemove);
+
+        return allRemoved;
     }
 
     @Override

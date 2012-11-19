@@ -67,8 +67,15 @@ public class BillingSessionForm extends AbstractJsfBean {
     }
 
     public String cancelSession() {
-        billingSessionBean.getBillingSession().cancelSession();
-        sessionDao.remove(billingSessionBean.getBillingSession());
+        // Remove all the sessions from the non-billed items
+        boolean allRemoved = billingSessionBean.getBillingSession().cancelSession();
+
+        // If all removed then remove the session, totally. If some are billed, then just persist the updates
+        if (allRemoved) {
+            sessionDao.remove(billingSessionBean.getBillingSession());
+        } else {
+            sessionDao.persist(billingSessionBean.getBillingSession());
+        }
 
         return "sessions?faces-redirect=true&includeViewParams=false";
     }
