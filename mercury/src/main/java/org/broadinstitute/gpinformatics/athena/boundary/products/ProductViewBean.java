@@ -11,8 +11,9 @@ import org.broadinstitute.gpinformatics.infrastructure.jsf.TableData;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.Conversation;
+import javax.enterprise.context.ConversationScoped;
 import javax.enterprise.context.RequestScoped;
-import javax.enterprise.inject.New;
+import javax.enterprise.inject.Produces;
 import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
@@ -33,17 +34,6 @@ public class ProductViewBean extends AbstractJsfBean {
     @Inject
     private Conversation conversation;
 
-    @Inject
-    private TableData addOnData;
-
-    public TableData getAddOnData() {
-        return addOnData;
-    }
-
-    public void setAddOnData(TableData addOnData) {
-        this.addOnData = addOnData;
-    }
-
     /**
      * Model object
      */
@@ -52,6 +42,7 @@ public class ProductViewBean extends AbstractJsfBean {
     /**
      * Cache used to store the business key in view state so it will survive across AJAX sort requests
      */
+/*
     private UIInput vsBusinessKeyCache;
 
     public UIInput getVsBusinessKeyCache() {
@@ -61,7 +52,9 @@ public class ProductViewBean extends AbstractJsfBean {
     public void setVsBusinessKeyCache(UIInput vsBusinessKeyCache) {
         this.vsBusinessKeyCache = vsBusinessKeyCache;
     }
+*/
 
+/*
     private UIInput viewParam;
 
     public UIInput getViewParam() {
@@ -71,28 +64,36 @@ public class ProductViewBean extends AbstractJsfBean {
     public void setViewParam(UIInput viewParam) {
         this.viewParam = viewParam;
     }
+*/
 
     /**
      * Breaking out add-ons to its own field both because it needs to be a List to be fed to DataTable, plus
      * we need to give DataTable the same instance each time during the lifecycle so it can sort it
      */
-    private List<Product> addOns;
+//    private List<Product> addOns;
+
+    @ConversationScoped public static class AddOnTableData extends TableData {}
+    @Inject private AddOnTableData addOnData;
 
     /**
      * Breaking out priceItems to its own field both because it needs to be a List to be fed to DataTable, plus
      * we need to give DataTable the same instance each time during the lifecycle so it can sort it
      */
-    private List<PriceItem> priceItems;
+//    private List<PriceItem> priceItems;
+
+    @ConversationScoped public static class PriceItemTableData extends TableData {}
+    @Inject private PriceItemTableData priceItemData;
 
     @Inject
     private FacesContext facesContext;
 
-    @Inject
-    private ProductConverter productConverter;
+//    @Inject
+//    private ProductConverter productConverter;
 
     public void initView() {
         if (!facesContext.isPostback()) {
             addOnData.setValues(new ArrayList<Product>(product.getAddOns()));
+            priceItemData.setValues(new ArrayList<PriceItem>(product.getPriceItems()));
             if (conversation.isTransient()) {
                 conversation.begin();
             }
@@ -104,6 +105,7 @@ public class ProductViewBean extends AbstractJsfBean {
         return product;
     }
 
+/*
     public void loadProduct() {
         // if the model is not set but we have the business key in our cache binding, run the converter
         // to generate the model.  we expect to be in this case for every ajax request on this page.
@@ -117,11 +119,13 @@ public class ProductViewBean extends AbstractJsfBean {
             vsBusinessKeyCache.setValue(product.getBusinessKey());
         }
     }
+*/
 
     public void setProduct(Product product) {
         this.product = product;
     }
 
+/*
     public List<Product> getAddOns() {
 //        loadProduct();
 
@@ -147,7 +151,7 @@ public class ProductViewBean extends AbstractJsfBean {
 
         return priceItems;
     }
-
+*/
 
     public void onPreRenderView() throws IOException {
 //        loadProduct();
@@ -158,8 +162,9 @@ public class ProductViewBean extends AbstractJsfBean {
         }
     }
 
+    // TODO: use dateTimeConverter instead
     public String getAvailabilityDate() {
-        loadProduct();
+//        loadProduct();
 
         if (product == null || product.getAvailabilityDate() == null) {
             return "";
@@ -170,7 +175,7 @@ public class ProductViewBean extends AbstractJsfBean {
 
 
     public String getDiscontinuedDate() {
-        loadProduct();
+//        loadProduct();
 
         if (product == null || product.getDiscontinuedDate() == null) {
             return "";
@@ -180,22 +185,38 @@ public class ProductViewBean extends AbstractJsfBean {
     }
 
 
+    // TODO: create and use secondsToDaysConverter
     public Integer getExpectedCycleTimeDays() {
-        loadProduct();
+//        loadProduct();
         return ProductForm.convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
     }
     public void setExpectedCycleTimeDays(final Integer expectedCycleTimeDays) {
-        loadProduct();
+//        loadProduct();
         product.setExpectedCycleTimeSeconds(ProductForm.convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
     }
 
     public Integer getGuaranteedCycleTimeDays() {
-        loadProduct();
+//        loadProduct();
         return ProductForm.convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
     }
     public void setGuaranteedCycleTimeDays(final Integer guaranteedCycleTimeDays) {
-        loadProduct();
+//        loadProduct();
         product.setGuaranteedCycleTimeSeconds(ProductForm.convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
     }
 
+    public AddOnTableData getAddOnData() {
+        return addOnData;
+    }
+
+    public void setAddOnData(AddOnTableData addOnData) {
+        this.addOnData = addOnData;
+    }
+
+    public PriceItemTableData getPriceItemData() {
+        return priceItemData;
+    }
+
+    public void setPriceItemData(PriceItemTableData priceItemData) {
+        this.priceItemData = priceItemData;
+    }
 }

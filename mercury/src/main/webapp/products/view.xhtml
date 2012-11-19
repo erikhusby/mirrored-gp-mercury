@@ -28,8 +28,8 @@
     <ui:define name="metadata">
         <f:metadata>
             <!--<f:viewParam name="product" value="#{productView.product}" converter="#{productConverter}"/>-->
-            <!--<f:viewParam name="product" value="#{productView.product}" converter="#{productConverter}" valueChangeListener="#{productConverter.updateModel}"/>-->
-            <f:viewParam name="product" value="#{productView.product}" converter="#{productConverter}" valueChangeListener="#{productConverter.updateModel}" binding="#{productView.viewParam}"/>
+            <f:viewParam name="product" value="#{productView.product}" converter="#{productConverter}" valueChangeListener="#{productConverter.updateModel}"/>
+            <!--<f:viewParam name="product" value="#{productView.product}" converter="#{productConverter}" valueChangeListener="#{productConverter.updateModel}" binding="#{productView.viewParam}"/>-->
             <!--<f:viewParam name="product" value="#{productView.product}" converter="#{productConverter}" binding="#{productView.vsBusinessKeyCache}"/>-->
             <f:event type="preRenderView" listener="#{productView.onPreRenderView}"/>
             <f:event type="preRenderView" listener="#{productView.initView}"/>
@@ -43,7 +43,7 @@
         <o:form id="productForm" styleClass="form-horizontal form-readonly" includeViewParams="true">
 
             <!-- cache to store business key in view state to survive across AJAX requests -->
-            <h:inputHidden id="vsBusinessKeyCache" binding="#{productView.vsBusinessKeyCache}" />
+            <!--<h:inputHidden id="vsBusinessKeyCache" binding="#{productView.vsBusinessKeyCache}" />-->
 
             <h:inputHidden id="productHidden" value="#{productView.product}" converter="#{productConverter}"/>
 
@@ -56,7 +56,6 @@
             </security:authorizeBlock>
 
 
-<!--
             <div class="control-group">
                 <label class="control-label label-form">Part Number</label>
                 <div class="controls">
@@ -155,11 +154,9 @@
                     <div class="form-value">#{productView.product.pdmOrderableOnly ? "Yes" : "No"}</div>
                 </div>
             </div>
--->
 
 
             <p:dataTable value="#{productView.addOnData.values}" var="addOn" >
-                <!--<f:event type="postAddToView" listener="#{productView.loadProduct}"/>-->
                 <f:facet name="header">
                     <h:outputText value="Add-ons" />
                 </f:facet>
@@ -189,7 +186,7 @@
 
             <p/>
 
-            <p:dataTable value="#{productView.priceItems}" var="priceItem" >
+            <p:dataTable value="#{productView.priceItemData.values}" var="priceItem" >
                 <f:facet name="header">
                     <h:outputText value="Optional Price Items" />
                 </f:facet>
