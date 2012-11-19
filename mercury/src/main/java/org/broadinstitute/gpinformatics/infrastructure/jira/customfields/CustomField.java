@@ -5,15 +5,14 @@ import java.util.Map;
 
 public class CustomField {
 
-    @Nonnull
     private final CustomFieldDefinition definition;
 
-    @Nonnull
     private final Object value;
 
     private final SingleFieldType fieldType;
 
-    public CustomField(@Nonnull CustomFieldDefinition definition, @Nonnull Object value, SingleFieldType fieldType) {
+    public CustomField(@Nonnull CustomFieldDefinition definition, @Nonnull Object value,
+                       @Nonnull SingleFieldType fieldType) {
         if (definition == null) {
             throw new NullPointerException("fieldDefinition cannot be null");
         }
@@ -52,7 +51,7 @@ public class CustomField {
     }
 
     @Nonnull
-    public SingleFieldType getFieldType () {
+    public SingleFieldType getFieldType() {
         return fieldType;
     }
 
