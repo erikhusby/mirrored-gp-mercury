@@ -28,7 +28,7 @@ import java.util.Map;
  * Test Exome Express in Mercury
  */
 public class ExomeExpressV2EndToEndTest {
-    @Test(enabled = false)
+    @Test()
     public void test() {
         // Define baits (CATs later)
         // Associate baits with vessels

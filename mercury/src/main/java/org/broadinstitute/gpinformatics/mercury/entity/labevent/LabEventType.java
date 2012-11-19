@@ -25,6 +25,9 @@ public enum LabEventType {
     SHEARING_TRANSFER("ShearingTransfer", false, true,
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
 
+    PLATING_TO_SHEARING_TUBES("PlatingToShearingTubes", false, true,
+            Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
+
     COVARIS_LOADED("CovarisLoaded", false, true,
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
 

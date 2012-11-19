@@ -1,14 +1,23 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Billable;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.InvalidMolecularStateException;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.PartiallyProcessedLabEventCache;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -30,6 +39,19 @@ public class LabEventHandler {
 
     @Inject
     QuoteService quoteService;
+
+    @Inject
+    WorkflowLoader workflowLoader;
+
+    @Inject
+    BucketDao bucketDao;
+
+    @Inject
+    BucketBean bucketBean;
+
+
+    @Inject
+    AthenaClientService athenaClientService;
 
     public LabEventHandler() {}
 
@@ -70,6 +92,20 @@ public class LabEventHandler {
          */       
 
 
+        /*
+            Happens after the message is actually recorded but before the message is processed (?)
+            if the previous step in the workflow is a Bucket, the message will attempt to drain the Bucket
+            (create/update a batch) to move the vessels forward.
+
+              This action should not throw an exception in the bucket batching.  Just at least record the fact that
+              this action happened
+         */
+        ProductWorkflowDefVersion workflowDef =  getWorkflowVersion(labEvent.getProductOrderId());
+        if(workflowDef.isPreviousStepBucket(labEvent.getLabEventType().getName())) {
+            Bucket workingBucket = bucketDao.findByName(workflowDef.getPreviousStep(labEvent.getLabEventType().getName()).getName());
+
+            bucketBean.start(null, labEvent.getAllLabVessels(),workingBucket,labEvent.getEventLocation());
+        }
 
         /*
         LabWorkflowInstance workflow = findWorkflowInstance(labEvent);
@@ -302,6 +338,18 @@ public class LabEventHandler {
 
         alertText.append(message).append("\n");
         alertText.append(event.getLabEventType().getName() + " from " + event.getEventOperator().getLogin() + " sent on " + event.getEventDate());
+    }
+
+    private ProductWorkflowDefVersion getWorkflowVersion(String productOrderKey) {
+        WorkflowConfig workflowConfig = workflowLoader.load();
+
+        ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
+
+
+        ProductWorkflowDef productWorkflowDef =
+                workflowConfig.getWorkflowByName(productOrder.getProduct().getWorkflowName());
+
+        return productWorkflowDef.getEffectiveVersion();
     }
 
 }
