@@ -33,11 +33,6 @@ public class BuildInfoBean {
      * @return string of the deployment
      */
     public String getDeployment() {
-        // TODO this code lies to the layout page about RC deployments since we don't currently have an RC watermarked
-        // Mercury helmet
-        if (deployment == Deployment.RC) {
-            return Deployment.QA.name();
-        }
         return deployment.name();
     }
 }
