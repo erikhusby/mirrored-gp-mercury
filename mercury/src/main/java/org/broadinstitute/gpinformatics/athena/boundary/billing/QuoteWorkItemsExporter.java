@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.util.SpreadSheetWriter;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 
@@ -60,43 +61,6 @@ public class QuoteWorkItemsExporter  {
         preambleStyle = buildPreambleStyle(workbook);
     }
 
-    private class Writer {
-        Row currentRow;
-        Cell currentCell;
-        int rowNum;
-        int cellNum;
-
-        private void nextRow() {
-            currentRow = sheet.createRow(rowNum++);
-            cellNum = 0;
-        }
-
-        private void nextCell() {
-            currentCell = currentRow.createCell(cellNum++);
-        }
-
-        void writePreamble(String preamble) {
-            nextRow();
-            writeCell(preamble, preambleStyle);
-        }
-
-        void writeCell(String value, CellStyle style) {
-            nextCell();
-            currentCell.setCellValue(value);
-            currentCell.setCellStyle(style);
-        }
-
-        void writeCell(String value) {
-            nextCell();
-            currentCell.setCellValue(value);
-        }
-
-        void writeCell(double value) {
-            nextCell();
-            currentCell.setCellValue(value);
-        }
-    }
-
     /**
      * Write out the spreadsheet contents to a stream.  The output is in native excel format.
      *
@@ -105,7 +69,7 @@ public class QuoteWorkItemsExporter  {
      * @throws java.io.IOException if the stream can't be written to
      */
     public void writeToStream(OutputStream out, BSPUserList bspUserList) throws IOException {
-        Writer writer = new Writer();
+        SpreadSheetWriter writer = new SpreadSheetWriter(sheet, preambleStyle);
 
         BspUser user = bspUserList.getById(billingSession.getCreatedBy());
 

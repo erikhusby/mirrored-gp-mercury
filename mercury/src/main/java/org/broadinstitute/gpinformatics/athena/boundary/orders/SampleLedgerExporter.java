@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.broadinstitute.gpinformatics.athena.boundary.util.SpreadSheetWriter;
 import org.broadinstitute.gpinformatics.athena.entity.orders.BillableItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -88,50 +89,13 @@ public class SampleLedgerExporter {
         return sampleStatus;
     }
 
-    private class Writer {
-        Row currentRow;
-        Cell currentCell;
-        int rowNum;
-        int cellNum;
-
-        private void nextRow() {
-            currentRow = sheet.createRow(rowNum++);
-            cellNum = 0;
-        }
-
-        private void nextCell() {
-            currentCell = currentRow.createCell(cellNum++);
-        }
-
-        void writePreamble(String preamble) {
-            nextRow();
-            writeCell(preamble, preambleStyle);
-        }
-
-        void writeCell(String value, CellStyle style) {
-            nextCell();
-            currentCell.setCellValue(value);
-            currentCell.setCellStyle(style);
-        }
-
-        void writeCell(String value) {
-            nextCell();
-            currentCell.setCellValue(value);
-        }
-
-        void writeCell(double value) {
-            nextCell();
-            currentCell.setCellValue(value);
-        }
-    }
-
     /**
      * Write out the spreadsheet contents to a stream.  The output is in native excel format.
      * @param out the stream to write to
      * @throws IOException if the stream can't be written to
      */
     public void writeToStream(OutputStream out) throws IOException {
-        Writer writer = new Writer();
+        SpreadSheetWriter writer = new SpreadSheetWriter(sheet, preambleStyle);
 
         // Write preamble.
         String preambleText = "Order: " + productOrder.getJiraTicketKey() +
