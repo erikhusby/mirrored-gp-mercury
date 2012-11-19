@@ -10,6 +10,7 @@ import org.hibernate.envers.Audited;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.persistence.*;
+import java.util.Date;
 
 /**
  * This handles the billing ledger items for product order samples
@@ -41,6 +42,12 @@ public class BillingLedger {
     @Index(name = "ix_ledger_billing_session")
     @ManyToOne
     private BillingSession billingSession;
+
+    @Column(name = "BILLED_DATE")
+    private Date billedDate;
+
+    @Column(name = "BILLING_MESSAGE")
+    private String billingMessage;
 
     BillingLedger() {}
 
@@ -88,6 +95,22 @@ public class BillingLedger {
 
     public void setBillingSession(@Nullable BillingSession billingSession) {
         this.billingSession = billingSession;
+    }
+
+    public Date getBilledDate() {
+        return billedDate;
+    }
+
+    public void setBilledDate(Date billedDate) {
+        this.billedDate = billedDate;
+    }
+
+    public String getBillingMessage() {
+        return billingMessage;
+    }
+
+    public void setBillingMessage(String billingMessage) {
+        this.billingMessage = billingMessage;
     }
 
     @Override

@@ -85,10 +85,7 @@ public class BillingSession {
         QuoteImportInfo quoteImportInfo = new QuoteImportInfo();
 
         for (BillingLedger ledger : billingLedgerItems) {
-            String quoteId = ledger.getProductOrderSample().getProductOrder().getQuoteId();
-            PriceItem priceItem = ledger.getPriceItem();
-            Double quantity = ledger.getQuantity();
-            quoteImportInfo.addQuantity(quoteId, priceItem, quantity);
+            quoteImportInfo.addQuantity(ledger);
         }
 
         return quoteImportInfo.getQuoteImportItems();
