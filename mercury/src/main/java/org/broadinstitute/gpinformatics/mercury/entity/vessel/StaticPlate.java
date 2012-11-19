@@ -25,12 +25,14 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
 
     public enum PlateType {
         Eppendorf96("Eppendorf96", VesselGeometry.G12x8),
+        Matrix96("Matrix96", VesselGeometry.G12x8),
         CovarisRack("CovarisRack", VesselGeometry.G12x8),
         IndexedAdapterPlate96("IndexedAdapterPlate96", VesselGeometry.G12x8),
         SageCassette("SageCassette", VesselGeometry.SAGE_CASSETTE),
         Fluidigm48_48AccessArrayIFC("Fluidigm48.48AccessArrayIFC", VesselGeometry.FLUIDIGM_48_48),
         FilterPlate96("FilterPlate96", VesselGeometry.G12x8),
-        Eppendorf384("Eppendorf384", VesselGeometry.G24x16);
+        Eppendorf384("Eppendorf384", VesselGeometry.G24x16),
+        NinetySixDeepWell("96DeepWell", VesselGeometry.G12x8);
 
         private String displayName;
         private VesselGeometry vesselGeometry;
@@ -52,7 +54,11 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         }
 
         public static PlateType getByDisplayName(String displayName) {
-            return mapDisplayNameToType.get(displayName);
+            PlateType plateTypeLocal = mapDisplayNameToType.get(displayName);
+            if(plateTypeLocal == null) {
+                throw new RuntimeException("Failed to find plate type " + displayName);
+            }
+            return plateTypeLocal;
         }
 
         public VesselGeometry getVesselGeometry() {
