@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<arquillian xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xmlns="http://jboss.org/schema/arquillian"
+    xsi:schemaLocation="http://jboss.org/schema/arquillian
+    http://jboss.org/schema/arquillian/arquillian_1_0.xsd">
+
+    <extension qualifier="selenium-server">
+       <property name="skip">true</property>
+    </extension>
+
+<!-- for Arquillian-JBossAS7-Managed with the RC profile. -->
+    <container qualifier="jbossas-7-managed" default="true">
+        <configuration>
+            <property name="managementAddress">${jbossRC.managementAddress}</property>
+            <property name="managementPort">${jbossRC.managementPort}</property>
+            <property name="username">${jbossRC.username}</property>
+            <property name="password">${jbossRC.password}</property>
+        </configuration>
+    </container>
+
+</arquillian>

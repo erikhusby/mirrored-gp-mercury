@@ -59,7 +59,7 @@ public class ProductOrderFixupTest extends Arquillian {
         String newQuote = "STC8F2";
         ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraKey);
 
-        Map<String,CustomFieldDefinition> jiraFields = ServiceAccessUtility.getJiraCustomFields();
+        Map<String, CustomFieldDefinition> jiraFields = jiraService.getCustomFields();
         Set<CustomField> customFields = new HashSet<CustomField>();
 
         for (Map.Entry<String, CustomFieldDefinition> stringCustomFieldDefinitionEntry : jiraFields.entrySet()) {
