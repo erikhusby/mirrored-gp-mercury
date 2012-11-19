@@ -9,6 +9,7 @@ public enum Deployment {
     DEV,
     TEST,
     QA,
+    RC,
     PROD,
     STUBBY
 }

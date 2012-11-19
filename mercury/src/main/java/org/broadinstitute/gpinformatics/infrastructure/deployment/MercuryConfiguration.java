@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.deployment;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.gpinformatics.infrastructure.datawh.EtlConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deckmsgs.DeckMessagesConfig;
 import org.broadinstitute.gpinformatics.infrastructure.gap.GAPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
@@ -45,7 +46,8 @@ public class MercuryConfiguration {
             QuoteConfig.class,
             ThriftConfig.class,
             GAPConfig.class,
-            DeckMessagesConfig.class
+            DeckMessagesConfig.class,
+            EtlConfig.class
     };
 
     private static final String MERCURY_CONFIG = "/mercury-config.yaml";
