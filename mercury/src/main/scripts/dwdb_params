@@ -1,5 +1,6 @@
-username: mercurydw
-password: mercurydw_dev
-servername: vmgpinform
+username: 
+password: 
+servername: gpinfoprod
 port: 1521
-sid: gpinfdev
+sid: gpinfprd
+rootDir: /seq/lims/datawh/prod
