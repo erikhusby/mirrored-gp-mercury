@@ -77,7 +77,7 @@ public class BucketBeanTest extends ContainerTest {
             return;
         }
 
-        utx.setTransactionTimeout(60);
+        utx.setTransactionTimeout(300);
         utx.begin();
 
         poBusinessKey1 = "PDO-1";
@@ -213,7 +213,7 @@ public class BucketBeanTest extends ContainerTest {
                                               new TwoDBarcodedTube(twoDBarcode3), new TwoDBarcodedTube(twoDBarcode4)));
 
 
-        resource.add ( poBusinessKey1, bucketCreateBatch, bucket, howieTest );
+        resource.add ( poBusinessKey1, bucketCreateBatch, bucket, howieTest, "Superman" );
 
         bucketDao.flush ();
         bucketDao.clear ();
@@ -325,7 +325,7 @@ public class BucketBeanTest extends ContainerTest {
                                                  new TwoDBarcodedTube(twoDBarcode3),
                                                  new TwoDBarcodedTube(twoDBarcode4)) ) ;
 
-        resource.add ( poBusinessKey1, bucketCreateBatch, bucket, howieTest );
+        resource.add ( poBusinessKey1, bucketCreateBatch, bucket, howieTest, "Superman"  );
 
         bucketDao.flush ();
         bucketDao.clear ();

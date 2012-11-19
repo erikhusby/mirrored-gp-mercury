@@ -83,8 +83,10 @@ public class BucketBean {
      * @param entriesToAdd
      * @param bucket
      * @param actor
+     * @param labEventLocation
      */
-    public void add ( String productOrder, @Nonnull List<LabVessel> entriesToAdd, @Nonnull Bucket bucket, Person actor ) {
+    public void add ( String productOrder, @Nonnull List<LabVessel> entriesToAdd, @Nonnull Bucket bucket, Person actor,
+                      @Nonnull String labEventLocation ) {
 
         for(LabVessel currVessel:entriesToAdd) {
             bucket.addEntry(productOrder, currVessel);
@@ -97,7 +99,7 @@ public class BucketBean {
 
         Set<LabEvent> eventList = new HashSet<LabEvent> ();
         eventList.addAll ( labEventFactory.buildFromBatchRequests ( pdoKeyToVesselMap, actor, null,
-                                                                    LabEvent.UI_EVENT_LOCATION,
+                                                                    labEventLocation,
                                                                     LabEventType.BUCKET_EXIT ) );
 
         for ( String pdo : pdoKeyToVesselMap.keySet () ) {
@@ -215,9 +217,6 @@ public class BucketBean {
         List<BucketEntry> sortedBucketEntries = new LinkedList<BucketEntry> ( workingBucket.getBucketEntries () );
 
         logger.log ( Level.INFO, "List of Bucket entries is a size of " + sortedBucketEntries.size () );
-
-//        Collections.sort ( sortedBucketEntries, BucketEntry.byDate );
-        logger.log ( Level.INFO, "List of SORTED Bucket entries is a size of " + sortedBucketEntries.size () );
 
         Iterator<BucketEntry> bucketEntryIterator = sortedBucketEntries.iterator ();
 
