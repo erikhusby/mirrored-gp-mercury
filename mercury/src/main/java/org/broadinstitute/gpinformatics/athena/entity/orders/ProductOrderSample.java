@@ -133,10 +133,6 @@ public class ProductOrderSample implements Serializable {
         return productOrderSampleId;
     }
 
-    public ProductOrder getProductOrder() {
-        return productOrder;
-    }
-
     public void addBillableItem(BillableItem billableItem) {
         billableItems.add(billableItem);
     }
