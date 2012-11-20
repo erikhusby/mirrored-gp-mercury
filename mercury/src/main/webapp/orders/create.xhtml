@@ -77,6 +77,7 @@
                 <div class="control-group">
                     <p:outputLabel for="product" value="Product" styleClass="control-label"/>
                     <div class="controls">
+                        <!--@elvariable id="product" type="org.broadinstitute.gpinformatics.athena.entity.products.Product"-->
                         <p:autoComplete id="product" value="#{productOrderDetail.productOrder.product}"
                                         completeMethod="#{productList.getProductCompletions}"
                                         forceSelection="true"
@@ -152,15 +153,17 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Place&nbsp;Order" action="#{productOrderForm.save}"
-                                                 ajax="false" styleClass="ui-priority-primary"/>
-                            </div>
-                            <div class="span1">
-                                <h:link outcome="list" value="Cancel"/>
+                                <p:commandButton
+                                        id="placeOrderButton1"
+                                        disabled="#{!userBean.validBspUser || !userBean.validJiraUser}"
+                                        value="Place&nbsp;Order" action="#{productOrderForm.save}"
+                                        ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                         </div>
                     </div>
                 </div>
+                <p:tooltip for="placeOrderButton1" value="Must be logged in to JIRA and BSP to place an order."
+                           rendered="#{!userBean.validBspUser || !userBean.validJiraUser}"/>
 
                 <h:panelGroup id="sampleDisplay">
 
@@ -227,8 +230,13 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Place&nbsp;Order" action="#{productOrderForm.save}"
-                                                 ajax="false" styleClass="ui-priority-primary"/>
+                                <p:commandButton
+                                        disabled="#{!userBean.validBspUser || !userBean.validJiraUser}"
+                                        id="placeOrderButton2"
+                                        value="Place&nbsp;Order" action="#{productOrderForm.save}"
+                                        ajax="false" styleClass="ui-priority-primary"/>
+                                <p:tooltip for="placeOrderButton2" value="Must be logged in to JIRA and BSP to place an order."
+                                           rendered="#{!userBean.validBspUser || !userBean.validJiraUser}"/>
                             </div>
                             <div class="span1">
                                 <h:link outcome="list" value="Cancel"/>
