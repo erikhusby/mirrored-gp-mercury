@@ -56,7 +56,7 @@ public class QuoteWorkItemsExporter extends AbstractSpreadsheetExporter {
         // Write headers.
         getWriter().nextRow();
         for (String header : FIXED_HEADERS) {
-            getWriter().writeCell(header, getHeaderStyle());
+            getWriter().writeCell(header, getFixedHeaderStyle());
         }
 
         for (QuoteImportItem item : quoteItems) {

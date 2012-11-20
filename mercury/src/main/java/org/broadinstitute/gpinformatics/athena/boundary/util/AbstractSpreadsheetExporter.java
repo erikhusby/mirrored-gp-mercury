@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.util;
 
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 
 import javax.faces.context.FacesContext;
@@ -20,7 +21,9 @@ public abstract class AbstractSpreadsheetExporter {
 
     private final Workbook workbook;
 
-    private final CellStyle headerStyle;
+    private final CellStyle fixedHeaderStyle;
+    private final CellStyle priceItemProductHeaderStyle;
+    private final CellStyle billedAmountsHeaderStyle;
     private final CellStyle preambleStyle;
 
     private final SpreadSheetWriter writer = new SpreadSheetWriter();
@@ -29,7 +32,9 @@ public abstract class AbstractSpreadsheetExporter {
         // SXSSFWorkbook is used to support very large spreadsheets.  SXSSF writes 100 rows at a time to a
         // temporary file, which is then copied into the output stream when all spreadsheet data has been written.
         workbook = new SXSSFWorkbook();
-        headerStyle = buildHeaderStyle(workbook);
+        fixedHeaderStyle = buildFixedHeaderStyle(workbook);
+        priceItemProductHeaderStyle = buildPriceItemProductHeaderStyle(workbook);
+        billedAmountsHeaderStyle = buildBilledAmountsHeaderStyle(workbook);
         preambleStyle = buildPreambleStyle(workbook);
     }
 
@@ -37,23 +42,45 @@ public abstract class AbstractSpreadsheetExporter {
         return writer;
     }
 
-    protected CellStyle getHeaderStyle() {
-        return headerStyle;
+    protected CellStyle getFixedHeaderStyle() {
+        return fixedHeaderStyle;
+    }
+
+    protected CellStyle getPriceItemProductHeaderStyle() {
+        return priceItemProductHeaderStyle;
     }
 
     protected Workbook getWorkbook() {
         return workbook;
     }
 
-    protected CellStyle buildHeaderStyle(Workbook wb) {
+
+    protected CellStyle buildHeaderStyle(Workbook wb, IndexedColors indexedColors) {
         CellStyle style = wb.createCellStyle();
-        style.setFillForegroundColor(IndexedColors.LIGHT_CORNFLOWER_BLUE.getIndex());
+        style.setFillForegroundColor(indexedColors.getIndex());
         style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+        style.setAlignment(CellStyle.ALIGN_CENTER);
         Font headerFont = wb.createFont();
         headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
         style.setFont(headerFont);
         return style;
     }
+
+
+    protected CellStyle buildFixedHeaderStyle(Workbook wb) {
+        return buildHeaderStyle(wb, IndexedColors.LIGHT_CORNFLOWER_BLUE);
+    }
+
+
+    protected CellStyle buildPriceItemProductHeaderStyle(Workbook wb) {
+        return buildHeaderStyle(wb, IndexedColors.GREY_25_PERCENT);
+    }
+
+
+    protected CellStyle buildBilledAmountsHeaderStyle(Workbook wb) {
+        return buildHeaderStyle(wb, IndexedColors.LIGHT_YELLOW);
+    }
+
 
     protected CellStyle buildPreambleStyle(Workbook wb) {
         CellStyle style = wb.createCellStyle();
@@ -107,6 +134,18 @@ public abstract class AbstractSpreadsheetExporter {
             currentCell = currentRow.createCell(cellNum++);
         }
 
+        public void nextCell(int colspan) {
+            currentCell = currentRow.createCell(cellNum);
+            currentSheet.addMergedRegion(new CellRangeAddress(
+                    currentRow.getRowNum(),
+                    currentRow.getRowNum(),
+                    cellNum,
+                    cellNum + colspan - 1
+            ));
+            cellNum += colspan;
+        }
+
+
         public void writePreamble(String preamble) {
             nextRow();
             writeCell(preamble, preambleStyle);
@@ -115,6 +154,12 @@ public abstract class AbstractSpreadsheetExporter {
 
         public void writeCell(String value, CellStyle style) {
             nextCell();
+            currentCell.setCellValue(value);
+            currentCell.setCellStyle(style);
+        }
+
+        public void writeCell(String value, int colspan, CellStyle style) {
+            nextCell(colspan);
             currentCell.setCellValue(value);
             currentCell.setCellStyle(style);
         }
