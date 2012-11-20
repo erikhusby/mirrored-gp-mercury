@@ -77,11 +77,17 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
      */
     public void writeToStream(OutputStream out) throws IOException {
 
-        // Go through each product
-        for (Product currentProduct : orderMap.keySet()) {
+        // Order Products by part number so the tabs will have a predictable order.  The orderMap HashMap could have
+        // been made a TreeMap to achieve the same effect
+        List<Product> productsSortedByPartNumber = new ArrayList<Product>(orderMap.keySet());
+        Collections.sort(productsSortedByPartNumber);
 
-            getWriter().setCurrentSheet(
-                getWorkbook().createSheet(currentProduct.getProductName() + " " + currentProduct.getPartNumber()));
+        // Go through each product
+        for (Product currentProduct : productsSortedByPartNumber) {
+
+            // per 2012-11-19 conversation with Alex and Hugh, Excel does not give us enough characters in a tab
+            // name to allow for the product name in all cases, so use just the part number
+            getWriter().setCurrentSheet(getWorkbook().createSheet(currentProduct.getPartNumber()));
 
             List<ProductOrder> productOrders = orderMap.get(currentProduct);
 

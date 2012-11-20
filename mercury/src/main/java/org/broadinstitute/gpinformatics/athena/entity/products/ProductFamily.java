@@ -1,13 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
 
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.Comparator;
 
 
 /**
@@ -38,14 +38,6 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     private String name;
 
 
-    public static final Comparator<ProductFamily> PRODUCT_FAMILY_COMPARATOR = new Comparator<ProductFamily>() {
-        @Override
-        public int compare(ProductFamily productFamily, ProductFamily productFamily1) {
-            return productFamily.getName().compareTo(productFamily1.getName());
-        }
-    };
-
-
     /**
      * JPA package visible constructor
      * @return
@@ -73,9 +65,12 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 
 
     @Override
-    public int compareTo(ProductFamily other) {
-        return PRODUCT_FAMILY_COMPARATOR.compare(this, other);
+    public int compareTo(ProductFamily that) {
+        CompareToBuilder builder = new CompareToBuilder();
+        builder.append(this.getName(), that.getName());
+        return builder.build();
     }
+
 
     @Override
     public boolean equals(Object o) {
