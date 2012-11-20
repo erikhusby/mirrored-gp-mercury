@@ -50,6 +50,10 @@ public abstract class AbstractSpreadsheetExporter {
         return priceItemProductHeaderStyle;
     }
 
+    protected CellStyle getBilledAmountsHeaderStyle() {
+        return billedAmountsHeaderStyle;
+    }
+
     protected Workbook getWorkbook() {
         return workbook;
     }

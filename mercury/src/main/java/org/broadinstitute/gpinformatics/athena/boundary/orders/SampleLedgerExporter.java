@@ -134,6 +134,12 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     }
 
 
+    private void writeBilledHeaders() {
+        getWriter().writeCell("Billed", getBilledAmountsHeaderStyle());
+        getWriter().writeCell("New Quantity", getBilledAmountsHeaderStyle());
+    }
+
+
     /**
      * Write out the spreadsheet contents to a stream.  The output is in native excel format.
      * @param out the stream to write to
@@ -174,7 +180,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
                 getWriter().writeCell(header, getFixedHeaderStyle());
             }
 
-            // Get the ordered price items for the current product
+            // Get the ordered price items for the current product, add the spanning price item + product headers
             List<PriceItem> sortedPriceItems = getPriceItems(currentProduct);
 
             for (PriceItem priceItem : sortedPriceItems) {
@@ -191,6 +197,29 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
                     writePriceItemProductHeader(priceItem, addOn);
                 }
             }
+
+            // secondary header line
+            getWriter().nextRow();
+            // Write blank secondary header line for fixed columns
+            for (String header : FIXED_HEADERS) {
+                getWriter().writeCell("", getFixedHeaderStyle());
+            }
+
+            // primary price item for main product
+            writeBilledHeaders();
+            for (PriceItem priceItem : currentProduct.getPriceItems()) {
+                writeBilledHeaders();
+            }
+
+            for (Product addOn : currentProduct.getAddOns()) {
+                // primary price item for this add-on
+                writeBilledHeaders();
+
+                for (PriceItem priceItem : addOn.getPriceItems()) {
+                    writeBilledHeaders();
+                }
+            }
+
 
             Set<BillingLedger> billingLedgers = getLedgerEntries(productOrders);
 
