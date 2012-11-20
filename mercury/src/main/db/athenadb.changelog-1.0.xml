@@ -1203,4 +1203,17 @@
                                  referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
     </changeSet>
 
+
+    <changeSet id="GPLIM-329-1" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists tableName="billing_ledger" schemaName="athena" columnName="work_complete_date" />
+            </not>
+        </preConditions>
+        <renameColumn schemaName="athena"
+                      tableName="billing_ledger"
+                      oldColumnName="billed_date"
+                      newColumnName="work_complete_date"/>
+    </changeSet>
+
 </databaseChangeLog>

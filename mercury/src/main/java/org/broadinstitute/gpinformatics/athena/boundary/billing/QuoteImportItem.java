@@ -62,8 +62,9 @@ public class QuoteImportItem {
         return quantity;
     }
 
-    public Date getBillToDate() {
-        return billToDate;
+    public Date getWorkCompleteDate() {
+        // Since the quote message will apply to all items, just pull the date off the first item
+        return ledgerItems.get(0).getWorkCompleteDate();
     }
 
     public String getBillingMessage() {
@@ -75,7 +76,7 @@ public class QuoteImportItem {
         Date currentDate = new Date();
 
         for (BillingLedger ledgerItem : ledgerItems) {
-            ledgerItem.setDateWorkCompleted(currentDate);
+            ledgerItem.setWorkCompleteDate(currentDate);
             ledgerItem.setBillingMessage(billedMessage);
         }
     }

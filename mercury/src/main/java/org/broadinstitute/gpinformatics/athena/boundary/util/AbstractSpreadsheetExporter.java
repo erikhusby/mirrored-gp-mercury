@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Wrapper for all exporters so that the writer and exporter can share some members
@@ -126,6 +127,15 @@ public abstract class AbstractSpreadsheetExporter {
         public void writeCell(double value) {
             nextCell();
             currentCell.setCellValue(value);
+        }
+
+
+        public void writeCell(Date value) {
+            nextCell();
+
+            if (value != null) {
+                currentCell.setCellValue(value);
+            }
         }
     }
 }

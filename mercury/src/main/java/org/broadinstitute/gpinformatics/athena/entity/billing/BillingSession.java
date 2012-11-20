@@ -104,7 +104,7 @@ public class BillingSession {
             // If any item is billed then allRemoved is false and we do not want to remove the item
             // In here we remove the billing session from the ledger item and hold onto the ledger item
             // to remove from the full list of ledger items.
-            if (ledgerItem.getDateWorkCompleted() == null) {
+            if (ledgerItem.getWorkCompleteDate() == null) {
                 ledgerItem.setBillingSession(null);
                 toRemove.add(ledgerItem);
             } else {

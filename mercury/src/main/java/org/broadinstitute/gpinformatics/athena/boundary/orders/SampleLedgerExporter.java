@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.orders.BillableItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -34,7 +36,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             "Product Order ID",
             "Product Order Name",
             "Project Manager",
-            "Comments",
+            // "Comments",
             "Date Completed",
             "Quote ID"
     };
@@ -44,10 +46,13 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
     private BSPUserList bspUserList;
 
-    public SampleLedgerExporter(ProductOrder[] productOrders, BSPUserList bspUserList) {
+    private BillingLedgerDao billingLedgerDao;
+
+    public SampleLedgerExporter(ProductOrder[] productOrders, BSPUserList bspUserList, BillingLedgerDao billingLedgerDao) {
         super();
 
         this.bspUserList = bspUserList;
+        this.billingLedgerDao = billingLedgerDao;
 
         for (ProductOrder productOrder : productOrders) {
             if (!orderMap.containsKey(productOrder.getProduct())) {
@@ -65,6 +70,33 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         return bspUserList.getById(id).getUsername();
     }
+
+
+    private Set<BillingLedger> getLedgerEntries(Collection<ProductOrder> productOrders) {
+        if (billingLedgerDao == null) {
+            return null;
+        }
+
+        return billingLedgerDao.findByOrderList(productOrders.toArray(new ProductOrder[0]));
+    }
+
+
+    private Date getWorkCompleteDate(Set<BillingLedger> billingLedgers, ProductOrderSample productOrderSample) {
+        if (billingLedgers == null) {
+            return null;
+        }
+
+        // very simplistic logic that for now rolls up all work complete dates and assumes they are the same across
+        // all price items on the PDO sample
+        for (BillingLedger billingLedger : billingLedgers) {
+            if (billingLedger.getProductOrderSample().equals(productOrderSample) && billingLedger.getWorkCompleteDate() != null) {
+                return billingLedger.getWorkCompleteDate();
+            }
+        }
+
+        return null;
+    }
+
 
     private List<PriceItem> getPriceItems(Product product) {
         // Create a copy of the product's price items list in order to impose an order on it.
@@ -115,6 +147,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             List<ProductOrder> productOrders = orderMap.get(currentProduct);
 
             // Write preamble.
+            // mlc removing preamble as not being consistent with sample spreadsheet on Confluence
+            /*
             String preambleText = "Orders: ";
             for (ProductOrder productOrder : productOrders) {
                 preambleText += productOrder.getJiraTicketKey() + "_" +
@@ -123,6 +157,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             }
 
             getWriter().writePreamble(preambleText);
+            */
 
             // Write headers after placing an extra line
             getWriter().nextRow();
@@ -137,8 +172,11 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
                 getWriter().writeCell(item.getCategory() + " - " + item.getName(), getHeaderStyle());
             }
 
+            Set<BillingLedger> billingLedgers = getLedgerEntries(productOrders);
+
             // Write content.
             for (ProductOrder productOrder : productOrders) {
+
                 for (ProductOrderSample sample : productOrder.getSamples()) {
                     getWriter().nextRow();
                     // sample name
@@ -153,10 +191,14 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
                     getWriter().writeCell(sample.getProductOrder().getTitle());
                     // Project Manager - need to turn this into a user name
                     getWriter().writeCell(getBspUsername(sample.getProductOrder().getCreatedBy()));
-                    // TODO comment - this needs to come from the ledger
-                    getWriter().writeCell("comment from ledger");
-                    // TODO Work completed date
-                    getWriter().writeCell("work completed date from ledger");
+                    // Per 2012-11-20 HipChat discussion with Hugh and Alex we will not try to store comment
+                    // Per 2012-11-20 HipChat discussion with Howie this might be used as a read-only field for
+                    // advisory info.  If someone has time to write this useful info this column can go back in
+                    // getWriter().writeCell("Useful info about the billing history " + sample.getSampleName());
+
+                    // work complete date
+                    getWriter().writeCell(getWorkCompleteDate(billingLedgers, sample));
+
                     // Quote ID
                     getWriter().writeCell(sample.getProductOrder().getQuoteId());
 

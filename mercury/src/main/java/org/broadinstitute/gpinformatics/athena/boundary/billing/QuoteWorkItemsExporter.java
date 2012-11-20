@@ -66,7 +66,7 @@ public class QuoteWorkItemsExporter extends AbstractSpreadsheetExporter {
             getWriter().writeCell(item.getPriceItem().getCategory());
             getWriter().writeCell(item.getPriceItem().getName());
             getWriter().writeCell(item.getQuantity());
-            getWriter().writeCell((item.getBillToDate() == null) ? "" : item.getBillToDate().toString());
+            getWriter().writeCell((item.getWorkCompleteDate() == null) ? "" : item.getWorkCompleteDate().toString());
             getWriter().writeCell(item.getBillingMessage());
         }
 

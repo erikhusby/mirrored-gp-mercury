@@ -453,8 +453,8 @@ public class ProductOrderForm extends AbstractJsfBean {
                 AbstractSpreadsheetExporter.DATE_FORMAT.format(Calendar.getInstance().getTime()) + ".xls";
             OutputStream outputStream = AbstractSpreadsheetExporter.beginSpreadsheetDownload(facesContext, filename);
 
-            // dummy code to plumb in spreadsheet write.  this is not the right format and it's only doing the first PDO!
-            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(selectedProductOrders, bspUserList);
+            SampleLedgerExporter sampleLedgerExporter =
+                    new SampleLedgerExporter(selectedProductOrders, bspUserList, ledgerDao);
             sampleLedgerExporter.writeToStream(outputStream);
 
             facesContext.responseComplete();

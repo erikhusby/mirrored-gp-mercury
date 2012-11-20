@@ -43,9 +43,8 @@ public class BillingLedger {
     @ManyToOne
     private BillingSession billingSession;
 
-    // When we put this column in place, we thought it was the billed date, but that is in session. This is the completed date.
-    @Column(name = "BILLED_DATE")
-    private Date dateWorkCompleted;
+    @Column(name = "WORK_COMPLETE_DATE")
+    private Date workCompleteDate;
 
     @Column(name = "BILLING_MESSAGE")
     private String billingMessage;
@@ -98,12 +97,12 @@ public class BillingLedger {
         this.billingSession = billingSession;
     }
 
-    public Date getDateWorkCompleted() {
-        return dateWorkCompleted;
+    public Date getWorkCompleteDate() {
+        return workCompleteDate;
     }
 
-    public void setDateWorkCompleted(Date billedDate) {
-        this.dateWorkCompleted = billedDate;
+    public void setWorkCompleteDate(Date workCompleteDate) {
+        this.workCompleteDate = workCompleteDate;
     }
 
     public String getBillingMessage() {

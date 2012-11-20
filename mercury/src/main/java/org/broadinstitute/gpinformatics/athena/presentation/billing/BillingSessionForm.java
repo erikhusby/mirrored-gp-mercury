@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -35,6 +36,9 @@ public class BillingSessionForm extends AbstractJsfBean {
 
     @Inject
     private BillingSessionDao sessionDao;
+
+    @Inject
+    private BillingLedgerDao billingLedgerDao;
 
     @Inject
     private QuoteService quoteService;
@@ -103,7 +107,8 @@ public class BillingSessionForm extends AbstractJsfBean {
             ProductOrder[] selectedProductOrders = billingSessionBean.getBillingSession().getProductOrders();
 
             // dummy code to plumb in spreadsheet write.  this is not the right format and it's only doing the first PDO!
-            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(selectedProductOrders, bspUserList);
+            SampleLedgerExporter sampleLedgerExporter =
+                    new SampleLedgerExporter(selectedProductOrders, bspUserList, billingLedgerDao);
             sampleLedgerExporter.writeToStream(outputStream);
 
             facesContext.responseComplete();
