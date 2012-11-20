@@ -1,38 +1,20 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
+import org.jetbrains.annotations.NotNull;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.ManyToOne;
-import javax.persistence.OneToMany;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
+import javax.persistence.*;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * The batch of work, as tracked by a person
@@ -194,25 +176,24 @@ public class LabBatch {
      * Submits the contents of this Lab Batch to Jira to create a new LCSET Ticket
      * @param reporter
      */
-    public void createJiraTicket ( String reporter ) throws IOException {
+    public void createJiraTicket(String reporter) throws IOException {
+        JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
 
-
-        Map<String, CustomFieldDefinition> submissionFields = ServiceAccessUtility.getJiraCustomFields ();
+        Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
         List<CustomField> listOfFields = new ArrayList<CustomField> ();
 
-        listOfFields.add ( new CustomField ( submissionFields.get ( RequiredSubmissionFields.PROTOCOL.getFieldName () ),
-                                             "", CustomField.SingleFieldType.TEXT ) );
-        listOfFields.add ( new CustomField ( submissionFields.get (
-                RequiredSubmissionFields.WORK_REQUEST_IDS.getFieldName () ), "", CustomField.SingleFieldType.TEXT ) );
+        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.PROTOCOL, ""));
+        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.WORK_REQUEST_IDS, ""));
 
-        CreateIssueResponse batchTicket =
-                ServiceAccessUtility.createJiraTicket ( fetchJiraProject ().getKeyPrefix (), reporter,
- /* TODO SGM:  Need a better solution.  Map product to issueType*/CreateFields.IssueType.EXOME_EXPRESS,
-                                                        batchName, "", listOfFields );
+        JiraIssue jiraIssue =
+                jiraService.createIssue(fetchJiraProject().getKeyPrefix(), reporter,
+                        // TODO SGM:  Need a better solution.  Map product to issueType.
+                        CreateFields.IssueType.EXOME_EXPRESS,
+                        batchName, "", listOfFields);
 
-        this.setJiraTicket ( new JiraTicket ( batchTicket.getTicketName (), batchTicket.getTicketName () ) );
-        jiraTicket.setLabBatch ( this );
+        jiraTicket = new JiraTicket(jiraIssue);
+        jiraTicket.setLabBatch(this);
     }
 
     /**
@@ -283,7 +264,7 @@ public class LabBatch {
      * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
      * for Product orders
      */
-    public enum RequiredSubmissionFields {
+    public enum RequiredSubmissionFields implements CustomField.SubmissionField {
         PROTOCOL ( "Protocol", true ),
 
         //Will not have WR ID info in Mercury.  Set to a Blank string
@@ -316,6 +297,7 @@ public class LabBatch {
             customField = customFieldInd;
         }
 
+        @NotNull @Override
         public String getFieldName () {
             return fieldName;
         }

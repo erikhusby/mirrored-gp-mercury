@@ -2,7 +2,7 @@
 #
 # Perform a Production release of Mercury
 #
-# Usage: Release.sh
+# Usage: createRelease.sh
 #
 
 if [ -d "release" ] ; then
@@ -22,11 +22,16 @@ MAJOR=`expr $VERSION : '\([0-9]*\)'`
 MINOR=`expr $VERSION : '[0-9]*\.\([0-9]*\)'`
 REV=`expr $VERSION : '[0-9]*\.[0-9]*\(.*\)'`
 REV=${REV#\.}
-REV=${REV%-SNAPSHOT}
+REV=${REV%-RC}
+if [ "$REV" == "" ]
+then
+    REV="0"
+fi
+REV=`expr $REV + 1`
 
 RCBRANCH="RC-$MAJOR.$MINOR"
 git checkout $RCBRANCH
-PRODVERSION=${VERSION%-SNAPSHOT}
+PRODVERSION=${VERSION%-RC}
 
 git checkout --track -b $PRODVERSION
 mvn versions:set -DnewVersion="$PRODVERSION"
@@ -38,7 +43,7 @@ git push origin --tags
 
 git checkout $RCBRANCH
 
-NEXTRCVERSION="$MAJOR.$MINOR.$REV-SNAPSHOT"
+NEXTRCVERSION="$MAJOR.$MINOR.$REV-RC"
 mvn versions:set -DnewVersion="$NEXTRCVERSION"
 git commit -m "REL-000 Setting RC Version $NEXTRCVERSION" pom.xml
 git push origin :RCBUILD

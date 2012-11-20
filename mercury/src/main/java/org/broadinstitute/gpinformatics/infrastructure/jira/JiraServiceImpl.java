@@ -6,16 +6,11 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.*;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldJsonParser;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.*;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
@@ -72,8 +67,25 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         return baseUrl;
     }
 
+    // Temporary container class to get ticket ID (key) from the server.
+    private static class JiraIssueData {
+        private String key;
+
+        public void setId(String id) {
+        }
+
+        public void setKey(String key) {
+            this.key = key;
+        }
+
+        public void setSelf(String self) {
+        }
+
+        JiraIssueData() { }
+    }
+
     @Override
-    public CreateIssueResponse createIssue(String projectPrefix, String reporter, CreateFields.IssueType issueType,
+    public JiraIssue createIssue(String projectPrefix, String reporter, CreateFields.IssueType issueType,
                                            String summary, String description,
                                            Collection<CustomField> customFields) throws IOException {
 
@@ -92,8 +104,13 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         WebResource webResource = getJerseyClient().resource(urlString);
 
+        JiraIssueData data = post(webResource, issueRequest, new GenericType<JiraIssueData>() {});
+        return new JiraIssue(data.key, this);
+    }
 
-        return post(webResource, issueRequest, new GenericType<CreateIssueResponse>() {});
+    @Override
+    public JiraIssue getIssue(String key) {
+        return new JiraIssue(key, this);
     }
 
     @Override

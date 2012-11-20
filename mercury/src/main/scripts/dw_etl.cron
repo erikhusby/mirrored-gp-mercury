@@ -33,36 +33,15 @@ use Oracle-full-client
 #   and possibly interfering with the file load.
 #
 
-ROOT_DIR=/seq/lims/datawh/dev
-NEW_DIR=${ROOT_DIR}/new
-LOG_DIR=${ROOT_DIR}/log
-ERROR_DIR=${ROOT_DIR}/error
-DONE_DIR=${ROOT_DIR}/done
-CONTROL_DIR=${ROOT_DIR}/control
-LOCKFILE=${NEW_DIR}/.lockfile
+
+#
+# Reads the required params and assigns derived params
+#
+
 DB_PARAMS_FILE=~/dwdb_params
 
-# Checks for required dirs and files.
-for fsobj in $ROOT_DIR $NEW_DIR $LOG_DIR $ERROR_DIR $DONE_DIR $CONTROL_DIR
-do
-  if [ ! -e $fsobj ]; then
-      echo "Cannot find $fsobj"
-      exit 1
-  fi
-done
-
-# Creates a lock file, atomically.  Quits if lock file already exists.
-(set -C; : > ${LOCKFILE}) 2> /dev/null
-if [ $? != "0" ]; then
-   echo "Previous ETL job is still running (${LOCKFILE} exists)"
-   exit 1
-fi
-# Removes lockfile when <ctrl>C termination.
-trap 'rm ${LOCKFILE}' EXIT
-
-# Reads file and validates the db parameters
 if [ ! -f ${DB_PARAMS_FILE} ]; then
-    echo "Cannot find ${DB_PARAMS_FILE}"
+    echo "Cannot find ${DB_PARAMS_FILE}" | tee /dev/stderr
     exit 1
 fi
 USERNAME=`grep -Ei '^username:' ${DB_PARAMS_FILE} | sed -e 's/^username://' | tr -d ' '`
@@ -70,38 +49,85 @@ PASSWORD=`grep -Ei '^password:' ${DB_PARAMS_FILE} | sed -e 's/^password://' | tr
 DB_SERVER=`grep -Ei '^servername:' ${DB_PARAMS_FILE} | sed -e 's/^servername://' | tr -d ' '`
 DB_PORT=`grep -Ei '^port:' ${DB_PARAMS_FILE} | sed -e 's/^port://' | tr -d ' '`
 DB_SID=`grep -Ei '^sid:' ${DB_PARAMS_FILE} | sed -e 's/^sid://' | tr -d ' '`
+ROOT_DIR=`grep -Ei '^rootDir:' ${DB_PARAMS_FILE} | sed -e 's/^rootDir://' | tr -d ' '`
+
+NEW_DIR=${ROOT_DIR}/new
+LOG_DIR=${ROOT_DIR}/log
+ERROR_DIR=${ROOT_DIR}/error
+DONE_DIR=${ROOT_DIR}/done
+CONTROL_DIR=${ROOT_DIR}/control
+LOCKFILE=${NEW_DIR}/.lockfile
+
+
+#
+# Validates existence of required dirs, files, and params
+#
+
+for fsobj in $ROOT_DIR $NEW_DIR $LOG_DIR $ERROR_DIR $DONE_DIR $CONTROL_DIR
+do
+  if [ ! -e $fsobj ]; then
+      echo "Cannot find $fsobj" | tee /dev/stderr
+      exit 1
+  fi
+done
 
 if [ -z "${USERNAME}" ]; then
-    echo "No username in ${DB_PARAMS_FILE}"
+    echo "No username in ${DB_PARAMS_FILE}" | tee /dev/stderr
     exit 1
 fi
 if [ -z "${PASSWORD}" ]; then
-    echo "No password in ${DB_PARAMS_FILE}"
+    echo "No password in ${DB_PARAMS_FILE}" | tee /dev/stderr
     exit 1
 fi
 if [ -z "${DB_SERVER}" ]; then
-    echo "No servername in ${DB_PARAMS_FILE}"
+    echo "No servername in ${DB_PARAMS_FILE}" | tee /dev/stderr
     exit 1
 fi
 if [ -z "${DB_PORT}" ]; then
-    echo "No port in ${DB_PARAMS_FILE}"
+    echo "No port in ${DB_PARAMS_FILE}" | tee /dev/stderr
     exit 1
 fi
 if [ -z "${DB_SID}" ]; then
-    echo "No sid in ${DB_PARAMS_FILE}"
+    echo "No sid in ${DB_PARAMS_FILE}" | tee /dev/stderr
     exit 1
 fi
+if [ -z "${ROOT_DIR}" ]; then
+    echo "No rootDir in ${DB_PARAMS_FILE}" | tee /dev/stderr
+    exit 1
+fi
+
+
+#
+# Mutexes the etl cron job in case one runs longer than the cron period.
+#
+
+# Creates a lock file, atomically.  Quits if lock file already exists.
+(set -C; : > ${LOCKFILE}) 2> /dev/null
+if [ $? != "0" ]; then
+   echo "Previous ETL job is still running (${LOCKFILE} exists)" | tee /dev/stderr
+   exit 1
+fi
+# Removes lockfile on <ctrl>C termination.
+trap 'rm ${LOCKFILE}' EXIT
+
+
+#
+# Quits if there's no work to do
+#
 
 if [ -z "`find ${NEW_DIR}/ -name \*_is_ready`" ]; then
-    echo "No data files to process."
     exit 1
 fi
 
-# Iterates on ready to run etl data file sets, oldest timestamp to newest timestamp.
+
+#
+# Processes etl data file sets one at a time, ordered oldest timestamp to newest timestamp.
+#
+
 find ${NEW_DIR}/ -name \*_is_ready | sort | sed -e 's!.*/!!;s!_is_ready!!' | while read TIMESTAMP
 do
 
-    # Deletes indicator files in case the same etl dat files are re-run.
+    # Deletes existing sqlplus output/log files in case this is a re-run of etl dat files.
     if [ -e ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log ]; then
 	rm ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log
     fi
@@ -110,10 +136,11 @@ do
     fi
 
 
-    # Iterates on the etl dat files having TIMESTAMP
+    # Iterates on the etl dat files having TIMESTAMP.
+    # The processing order of files within one data file set is not important.
+
     find ${NEW_DIR}/ -maxdepth 1 -name ${TIMESTAMP}\*.dat | while read DAT_FILE
     do
-        echo ' '
 	echo "Processing ${DAT_FILE}"
 
 	TABLE_NAME=`echo ${DAT_FILE} | sed -e "s!.*/${TIMESTAMP}_!!" | sed -e 's/.dat//'`
@@ -121,7 +148,7 @@ do
 	CTL_FILE=${CONTROL_DIR}/${TABLE_NAME}.ctl
 	# Control file for the load table must exist.
 	if [ ! -f ${CTL_FILE} ]; then
-	    echo "Cannot find ${CTL_FILE}"
+	    echo "Cannot find ${CTL_FILE}" | tee /dev/stderr
 	    exit 1
 	fi
 
@@ -133,12 +160,10 @@ do
 	sqlldr silent="(HEADER)" control=${CTL_FILE} log=${LOG_FILE} bad=${BAD_FILE} data=${DAT_FILE} discard=${DSC_FILE} direct=true userid="${USERNAME}/${PASSWORD}@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=${DB_SERVER})(PORT=${DB_PORT})))(CONNECT_DATA=(SERVER=DEDICATED)(SID=${DB_SID})))\""
 
 	case $? in
-        1|3) echo ' '
-             echo "SqlLoader had fatal error."
+        1|3) echo "SqlLoader had fatal error loading ${DAT_FILE}" | tee /dev/stderr
              exit 1
 	     ;;
-        2)   echo ' ' 
-             echo "SqlLoader could not load some records. Check files  ${ERROR_DIR}/${TIMESTAMP}_*"
+        2)   echo "SqlLoader could not load some records. See ${ERROR_DIR}/${BAD_FILE}" | tee /dev/stderr
 	     ;;
 	esac
 
@@ -146,19 +171,18 @@ do
 	mv ${DAT_FILE} ${DONE_DIR}
     done
 
-    # If there are any unprocessed dat files having TIMESTAMP, then there must
-    # have been a fatal error. Skip sqlplus and put any done files back to new.
+    # If there are any remaining unprocessed dat files having TIMESTAMP, assume
+    # there was a fatal error. Skips sqlplus and resets any done files back to new.
 
     UNPROCESSED_FILE=`find ${NEW_DIR}/ -maxdepth 1 -name ${TIMESTAMP}\*.dat | head -1`
 
     if [ -n "${UNPROCESSED_FILE}" ]; then
-	echo "Resetting processed files back to new and quitting."
+	echo "Unprocessed files were found.  Resetting processed files back to new and quitting." | tee /dev/stderr
 	mv ${DONE_DIR}/${TIMESTAMP}*.dat ${NEW_DIR}
         exit 1
     fi
 
     # Invokes load_merge stored procedure and waits for it to finish.
-    echo ' '
     echo "Running sqlPlus to merge new data"
     (sqlplus -L -S "${USERNAME}/${PASSWORD}@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=${DB_SERVER})(PORT=${DB_PORT})))(CONNECT_DATA=(SERVER=DEDICATED)(SID=${DB_SID})))\"" | grep -v ${TIMESTAMP}) <<!
 set pagesize 0 heading off feedback off verify off echo off trimspool on serveroutput on linesize 511
@@ -170,14 +194,14 @@ exec merge_import;
 quit;
 !
     if [ ! -e ${NEW_DIR}/${TIMESTAMP}_sqlplus.start ]; then
-        echo "SqlPlus failed to run.  Resetting processed files back to new and quitting."
+        echo "SqlPlus failed to run.  Resetting processed files back to new and quitting." | tee /dev/stderr
 	mv ${DONE_DIR}/${TIMESTAMP}*.dat ${NEW_DIR}
         exit 1
     fi
     rm ${NEW_DIR}/${TIMESTAMP}_sqlplus.start
 
     if [ -s ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log ]; then
-	echo "There were data problems while merging new data.  See ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log"
+	echo "There were data problems while merging new data.  See ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log" | tee /dev/stderr
     else
         # removes the zero-length file
         rm ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log
