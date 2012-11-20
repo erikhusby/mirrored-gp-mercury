@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Billable;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
@@ -102,7 +104,7 @@ public class LabEventHandler {
               This action should not throw an exception in the bucket batching.  Just at least record the fact that
               this action happened
 
-              TODO SGM  Probably need a better way to determine the current workflow version.  Only thing we have to rely on is the Product order.  May have to walk each vessel.
+              TODO SGM  DEFINITELY need a better way to determine the current workflow version.  Only thing we have to rely on is the Product order.  May have to walk each vessel.
          */
         if(null != labEvent.getProductOrderId()) {
             ProductWorkflowDefVersion workflowDef =  getWorkflowVersion(labEvent.getProductOrderId());
@@ -343,8 +345,12 @@ public class LabEventHandler {
         StringBuilder alertText = new StringBuilder();
 
         alertText.append(message).append("\n");
-        //TODO SGM  Use BSp User lookup to get user name.
-        alertText.append(event.getLabEventType().getName() + " from " + event.getEventOperator () + " sent on " + event.getEventDate());
+
+        BSPUserList bspUserList = ServiceAccessUtility.getBean ( BSPUserList.class );
+
+        alertText.append(event.getLabEventType().getName() + " from " +
+                         bspUserList.getById(event.getEventOperator ()).getUsername() +
+                         " sent on " + event.getEventDate());
     }
 
     private ProductWorkflowDefVersion getWorkflowVersion(String productOrderKey) {

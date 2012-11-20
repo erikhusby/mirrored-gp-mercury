@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.person.PersonDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
@@ -96,6 +98,10 @@ public class CreatePoolingTransfersTest extends ContainerTest {
         String previousTargetTubeBarcode = "";
 
         List<String> sourceTubeBarcodes = null;
+
+        BSPUserList bspUserList = ServiceAccessUtility.getBean ( BSPUserList.class );
+
+
         for (Object o : resultList) {
             Object[] columns = (Object[]) o;
             String sourceTubeBarcode = (String) columns[0];
@@ -108,7 +114,7 @@ public class CreatePoolingTransfersTest extends ContainerTest {
                 previousTargetTubeBarcode = targetTubeBarcode;
                 if(sourceTubeBarcodes != null) {
                     LabEvent genericLabEvent = new LabEvent(LabEventType.POOLING_TRANSFER,
-                            eventDate, eventLocation, 1L,  1111L /*TODO SGM convert operator to ID from BSP User service*/);
+                            eventDate, eventLocation, 1L,  bspUserList.getByUsername(operator).getUserId());
 
                     TwoDBarcodedTube targetTube = twoDBarcodedTubeDAO.findByBarcode(targetTubeBarcode);
                     if(targetTube == null) {

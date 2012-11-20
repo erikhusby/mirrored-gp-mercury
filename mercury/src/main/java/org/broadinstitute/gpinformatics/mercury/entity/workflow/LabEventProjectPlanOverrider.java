@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -43,8 +45,12 @@ public class LabEventProjectPlanOverrider {
         }
         else if (possibleBatches.size() == 1) {
             LabBatch batch = possibleBatches.iterator().next();
-            //TODO SGM  Make call to BspUSer to get user after Master Merge
-            batch.getJiraTicket().addComment(labEvent.getEventOperator() + "is processing " + labEvent.getLabEventType().getName() + " at " + labEvent.getEventLocation());
+
+            BSPUserList bspUserList = ServiceAccessUtility.getBean ( BSPUserList.class );
+
+            batch.getJiraTicket().addComment(bspUserList.getById(labEvent.getEventOperator()).getUsername() +
+                                             "is processing " + labEvent.getLabEventType().getName() + " at " +
+                                             labEvent.getEventLocation());
             for (LabVessel vessel : vessels) {
 //                ProjectPlan projectPlanOverride = batch.getProjectPlanOverride(vessel);
 //                if (projectPlanOverride != null) {

@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
@@ -52,12 +54,15 @@ public class LabEventResource {
 
     public List<LabEventBean> buildLabEventBeans(List<LabEvent> labEvents) {
         List<LabEventBean> labEventBeans = new ArrayList<LabEventBean>();
+
+//        BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
+
         for (LabEvent labEvent : labEvents) {
             LabEventBean labEventBean = new LabEventBean(
                     labEvent.getLabEventType().getName(),
                     labEvent.getEventLocation(),
-                    //TODO SGM  use BSPUser to get operator login for this.
-                    labEvent.getEventOperator().toString(),
+                    ""
+                    /*  TODO SGM:  Need to be able to call for user DBFree bspUserList.getById(labEvent.getEventOperator()).getUsername()*/,
                     labEvent.getEventDate());
             labEventBean.setBatchId(labEvent.getLabBatch().getBatchName());
 

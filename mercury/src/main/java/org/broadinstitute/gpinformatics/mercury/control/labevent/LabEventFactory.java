@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BasePlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
@@ -669,9 +671,15 @@ public class LabEventFactory {
         RackOfTubes targetRackOfTubes = buildRack ( mapBarcodeToTargetTubes, plateTransferEvent.getPlate (),
                                                     plateTransferEvent.getPositionMap () );
 
-        labEvent.getSectionTransfers().add(new SectionTransfer(
-                sourceRack.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection ()),
-                targetRackOfTubes.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection ()), labEvent));
+        labEvent.getSectionTransfers().add ( new SectionTransfer ( sourceRack.getContainerRole (),
+                                                                   SBSSection.getBySectionName (
+                                                                           plateTransferEvent.getSourcePlate ()
+                                                                                             .getSection () ),
+                                                                   targetRackOfTubes.getContainerRole (),
+                                                                   SBSSection.getBySectionName (
+                                                                           plateTransferEvent.getPlate ()
+                                                                                             .getSection () ),
+                                                                   labEvent ) );
         return labEvent;
     }
 
@@ -871,9 +879,12 @@ public class LabEventFactory {
             throw new RuntimeException ( "Unexpected event type " + stationEventType.getEventType () );
         }
 
-        //TODO SGM   Perform search of BSP User to get user id.
+//        BSPUserList bspUserList = ServiceAccessUtility.getBean ( BSPUserList.class );
+//
+//        Long operator = bspUserList.getByUsername( stationEventType.getOperator () ).getUserId();
+        //TODO SGM  Need a good way to call to ServiceAccessUtility from here DBFree!!!!!
         Long operator = 1111L;
-//        Long operator = labEventRefDataFetcher.getOperator ( stationEventType.getOperator () );
+
         if ( operator == null ) {
             throw new RuntimeException ( "Failed to find operator " + stationEventType.getOperator () );
         }
@@ -909,7 +920,6 @@ public class LabEventFactory {
      * @param pdoToVessels a Map of lab vessels.  Contains Lists of Lab vessels each indexed by the Product Order
      *                     business key to which they are associated
      * @param actor        representation of the user that submitted the request
-     *                     TODO sgm or jmt: replace with String or ID and use BSPUserList
      * @param batchIn      LabBatch to which the created events will be associate
      *
      * @param eventLocation
@@ -962,8 +972,8 @@ public class LabEventFactory {
                                            @Nonnull Long disambiguator, String actor,
                                            @Nonnull LabEventType eventType, @Nonnull String eventLocation ) {
 
-        //TODO SGM   Perform search of BSP User to get user id.
-        Long operatorInfo = 1111L;//get ID for actor
+        BSPUserList bspUserList = ServiceAccessUtility.getBean ( BSPUserList.class );
+        Long operatorInfo = bspUserList.getByUsername(actor).getUserId();
 
         LabEvent bucketMoveEvent = new LabEvent ( eventType, new Date (), eventLocation, disambiguator, operatorInfo );
 

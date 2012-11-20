@@ -802,4 +802,18 @@ public abstract class LabVessel {
         }
         transferTraverserCriteria.evaluateVesselPostOrder(this, labEvent, hopCount);
     }
+
+    public Collection<String> getNearestProductOrders() {
+        TransferTraverserCriteria.NearestProductOrderCriteria nearestProductOrderCriteria = new TransferTraverserCriteria.NearestProductOrderCriteria();
+
+        evaluateCriteria(nearestProductOrderCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        return nearestProductOrderCriteria.getNearestProductOrders();
+    }
+
+    public Collection<LabBatch> getNearestLabBatches() {
+        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria = new TransferTraverserCriteria.NearestLabBatchFinder();
+        evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        return batchCriteria.getNearestLabBatches();
+    }
+
 }

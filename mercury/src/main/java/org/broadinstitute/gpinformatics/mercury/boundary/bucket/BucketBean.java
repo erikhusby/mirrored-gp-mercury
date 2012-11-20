@@ -99,7 +99,7 @@ public class BucketBean {
         for ( String pdo : pdoKeyToVesselMap.keySet () ) {
             try {
                 jiraService.addComment ( pdo, "Vessels: " +
-                        StringUtils.join (pdoKeyToVesselMap.get(pdo),',') +
+                        StringUtils.join ( pdoKeyToVesselMap.get ( pdo ), ',' ) +
                         " added to bucket " + bucket.getBucketDefinitionName () );
             } catch ( IOException ioe ) {
                 logger.log ( Level.WARNING, "error attempting to add a jira comment for adding " +
@@ -276,9 +276,11 @@ public class BucketBean {
 
             if ( !currEntry.getLabVessel ().getLabBatches ().isEmpty () ) {
 
-                trackBatches = new LinkedList<LabBatch> ();
+                if(trackBatches == null)
+                    trackBatches = new LinkedList<LabBatch> ();
 
-                List<LabBatch> currBatchList = new LinkedList<LabBatch> ( currEntry.getLabVessel ().getLabBatches () );
+                List<LabBatch> currBatchList =
+                        new LinkedList<LabBatch>(currEntry.getLabVessel ().getNearestLabBatches());
 
                 Collections.sort ( currBatchList, LabBatch.byDate );
 
@@ -380,11 +382,10 @@ public class BucketBean {
     private void jiraRemovalUpdate ( @Nonnull BucketEntry bucketEntry, String reason ) {
         try {
 
-            jiraService.addComment ( bucketEntry.getPoBusinessKey (),
-                    bucketEntry.getPoBusinessKey () + ":" +
+            jiraService.addComment ( bucketEntry.getPoBusinessKey (), bucketEntry.getPoBusinessKey () + ":" +
                     bucketEntry.getLabVessel ().getLabCentricName () +
                     " Removed from bucket " + bucketEntry.getBucketExistence ()
-                            .getBucketDefinitionName() + ":: " + reason );
+                                                         .getBucketDefinitionName () + ":: " + reason );
         } catch ( IOException ioe ) {
             logger.log(Level.INFO, "Error attempting to create jira removal comment for " +
                                    bucketEntry.getPoBusinessKey() + " " +
