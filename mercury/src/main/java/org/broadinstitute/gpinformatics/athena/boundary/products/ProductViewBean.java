@@ -1,9 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.athena.entity.products.PriceItemComparator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductComparator;
 import org.broadinstitute.gpinformatics.athena.presentation.products.ProductForm;
 import org.broadinstitute.gpinformatics.infrastructure.jsf.TableData;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
@@ -48,9 +46,9 @@ public class ProductViewBean extends AbstractJsfBean {
     public void initView() {
         if (!facesContext.isPostback()) {
             addOnData.setValues(new ArrayList<Product>(product.getAddOns()));
-            Collections.sort(addOnData.getValues(), new ProductComparator());
+            Collections.sort(addOnData.getValues());
             priceItemData.setValues(new ArrayList<PriceItem>(product.getPriceItems()));
-            Collections.sort(priceItemData.getValues(), new PriceItemComparator());
+            Collections.sort(priceItemData.getValues());
             if (conversation.isTransient()) {
                 conversation.begin();
             }
