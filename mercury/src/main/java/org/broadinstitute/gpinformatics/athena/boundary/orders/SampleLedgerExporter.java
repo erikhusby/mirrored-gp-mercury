@@ -81,7 +81,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         for (Product currentProduct : orderMap.keySet()) {
 
             getWriter().setCurrentSheet(
-                getWorkbook().createSheet(currentProduct.getProductName() + " " + currentProduct.getPartNumber()));
+                getWorkbook().createSheet(currentProduct.getPartNumber()));
 
             List<ProductOrder> productOrders = orderMap.get(currentProduct);
 
