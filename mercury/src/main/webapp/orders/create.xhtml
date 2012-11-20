@@ -20,6 +20,10 @@
             <f:event type="preRenderView" listener="#{productOrderForm.initForm}"/>
         </ui:define>
 
+        <p:outputPanel rendered="#{!userBean.validBspUser || !userBean.validJiraUser}">
+            Because you aren't logged in to the BSP and JIRA servers, you won't be able to create a Product Order.
+        </p:outputPanel>
+
         <ui:define name="body">
             <p:dialog header="Enter Samples" widgetVar="samplesDialog" modal="true" onShow="">
                 <h:form id="sampleDialogForm" prependId="false">
