@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 import com.sun.jersey.api.client.Client;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
@@ -11,7 +12,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -27,8 +27,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
@@ -55,6 +53,7 @@ public class ImportFromSquidTest extends ContainerTest {
     @Inject
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction utx;
 
@@ -101,7 +100,6 @@ public class ImportFromSquidTest extends ContainerTest {
 
         String previousSchemeName = "";
         MolecularIndexingScheme molecularIndexingScheme = null;
-        SortedMap<MolecularIndexingScheme.IndexPosition, MolecularIndex> indexesAndPositions = null;
         Map<String, MolecularIndex> mapSequenceToIndex = new HashMap<String, MolecularIndex>();
         for (Object o : resultList) {
             Object[] columns = (Object[]) o;
@@ -112,12 +110,10 @@ public class ImportFromSquidTest extends ContainerTest {
             if(!schemeName.equals(previousSchemeName)) {
                 previousSchemeName = schemeName;
                 if(molecularIndexingScheme != null) {
-                    molecularIndexingScheme.setIndexPositions(indexesAndPositions);
                     molecularIndexingSchemeDao.persist(molecularIndexingScheme);
                 }
                 molecularIndexingScheme = new MolecularIndexingScheme();
                 molecularIndexingScheme.setName(schemeName);
-                indexesAndPositions = new TreeMap<MolecularIndexingScheme.IndexPosition, MolecularIndex>();
             }
             // reuse sequences across schemes, because sequence has a unique constraint
             MolecularIndex molecularIndex = mapSequenceToIndex.get(sequence);
@@ -125,8 +121,8 @@ public class ImportFromSquidTest extends ContainerTest {
                 molecularIndex = new MolecularIndex(sequence);
                 mapSequenceToIndex.put(sequence, molecularIndex);
             }
-            assert indexesAndPositions != null;
-            indexesAndPositions.put(MolecularIndexingScheme.IndexPosition.valueOf(positionHint), molecularIndex);
+            assert molecularIndexingScheme != null;
+            molecularIndexingScheme.addIndexPosition(MolecularIndexingScheme.IndexPosition.valueOf(positionHint), molecularIndex);
         }
         molecularIndexingSchemeDao.persist(molecularIndexingScheme);
     }
@@ -189,6 +185,7 @@ public class ImportFromSquidTest extends ContainerTest {
             }
             plateWell.addReagent(new MolecularIndexReagent(molecularIndexingScheme));
 
+            assert staticPlate != null;
             staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
         }
         staticPlateDAO.persistAll(plates);
@@ -278,6 +275,7 @@ public class ImportFromSquidTest extends ContainerTest {
                 labBatch = new LabBatchBean(lcSet, workflowName, tubeBeans);
             }
             // todo jmt how to create product order, research project?
+            assert tubeBeans != null;
             tubeBeans.add(new TubeBean(tubeBarcode, sampleBarcode, lcSet));
         }
     }
