@@ -126,6 +126,17 @@
                 </div>
 
                 <div class="control-group">
+                    <p:outputLabel for="numberOfLanes" value="Number of Lanes" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputText id="numberOfLanes"
+                                     disabled="#{!productOrderForm.hasProduct || !productOrderForm.product.productFamily.supportsNumberOfLanes}"
+                                     value="#{productOrderDetail.productOrder.count}" size="50" required="true"/>
+                        <p:watermark for="numberOfLanes" value="Enter Number of Lanes"/>
+                        <p:message for="numberOfLanes"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
                     <p:outputLabel for="comments" value="Comments" styleClass="control-label"/>
                     <div class="controls">
                         <p:inputTextarea id="comments" value="#{productOrderDetail.productOrder.comments}" cols="50" maxlength="2000">

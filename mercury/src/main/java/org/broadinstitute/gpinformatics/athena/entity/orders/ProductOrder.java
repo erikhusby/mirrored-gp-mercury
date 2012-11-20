@@ -80,6 +80,10 @@ public class ProductOrder implements Serializable {
     /** Reference to the Jira Ticket created when the order is submitted */
     private String jiraTicketKey;
 
+    @Column(name = "count")
+    /** counts the number of lanes; the default value is one lane */
+    private int count = 1;
+
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order", nullable = false)
     @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
@@ -115,6 +119,14 @@ public class ProductOrder implements Serializable {
         }
 
         return StringUtils.join(addOnArray, ", ");
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
     }
 
     /**
