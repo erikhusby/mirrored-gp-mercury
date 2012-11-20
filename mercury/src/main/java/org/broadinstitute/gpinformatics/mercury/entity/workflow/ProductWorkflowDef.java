@@ -56,13 +56,13 @@ public class ProductWorkflowDef {
             Set<String> actualEventNames = new HashSet<String>();
             boolean found = false;
 
-            boolean start = labEventNode.getPredecessors().size() == 0;
+            boolean start = labEventNode.getPredecessors().isEmpty();
             Set<String> validPredecessorEventNames = new HashSet<String>();
             for (ProductWorkflowDefVersion.LabEventNode predecessorNode : labEventNode.getPredecessors()) {
                 validPredecessorEventNames.add(predecessorNode.getLabEventType().getName());
                 // todo jmt recurse
                 if(predecessorNode.isOptional()) {
-                    start = predecessorNode.getPredecessors().size() == 0;
+                    start = predecessorNode.getPredecessors().isEmpty();
                     for (ProductWorkflowDefVersion.LabEventNode predPredEventNode : predecessorNode.getPredecessors()) {
                         validPredecessorEventNames.add(predPredEventNode.getLabEventType().getName());
                     }

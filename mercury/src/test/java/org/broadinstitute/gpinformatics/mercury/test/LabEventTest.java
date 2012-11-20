@@ -1106,7 +1106,7 @@ public class LabEventTest {
             messageList.add(bettaLIMSMessage7);
             bettaLimsMessageFactory.advanceTime();
 
-            pondRegRackBarcode = "PondReg" + testPrefix;
+            pondRegRackBarcode = POND_REGISTRATION_TUBE_PREFIX + testPrefix;
             pondRegTubeBarcodes = new ArrayList<String>();
             for (int rackPosition = 1; rackPosition <= numSamples; rackPosition++) {
                 pondRegTubeBarcodes.add(POND_REGISTRATION_TUBE_PREFIX + testPrefix + rackPosition);
@@ -1215,6 +1215,7 @@ public class LabEventTest {
 
             // BaitSetup
             TwoDBarcodedTube baitTube = buildBaitTube(hybridSelectionJaxbBuilder.getBaitTubeBarcode());
+            validateWorkflow("BaitSetup",baitTube);
             LabEvent baitSetupEntity = labEventFactory.buildVesselToSectionDbFree(hybridSelectionJaxbBuilder.getBaitSetupJaxb(),
                     baitTube, null, SBSSection.ALL96.getSectionName());
             labEventHandler.processEvent(baitSetupEntity);
