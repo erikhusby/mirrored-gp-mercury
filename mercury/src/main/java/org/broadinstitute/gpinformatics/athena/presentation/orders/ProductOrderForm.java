@@ -454,7 +454,7 @@ public class ProductOrderForm extends AbstractJsfBean {
             OutputStream outputStream = AbstractSpreadsheetExporter.beginSpreadsheetDownload(facesContext, filename);
 
             // dummy code to plumb in spreadsheet write.  this is not the right format and it's only doing the first PDO!
-            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(selectedProductOrders);
+            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(selectedProductOrders, bspUserList);
             sampleLedgerExporter.writeToStream(outputStream);
 
             facesContext.responseComplete();
