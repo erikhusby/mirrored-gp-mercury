@@ -5,6 +5,7 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportInfo;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -135,5 +136,20 @@ public class BillingSession {
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(getBusinessKey()).toHashCode();
+    }
+
+    /**
+     * @return Get all unique product orders in the billing session
+     */
+    public ProductOrder[] getProductOrders() {
+
+        // Get all unique product Orders across all ledger items
+        Set<ProductOrder> unqiueProductOrders = new HashSet<ProductOrder>();
+        for (BillingLedger billingLedger : billingLedgerItems) {
+            unqiueProductOrders.add(billingLedger.getProductOrderSample().getProductOrder());
+        }
+
+        // return it as an array
+        return unqiueProductOrders.toArray(new ProductOrder[unqiueProductOrders.size()]);
     }
 }

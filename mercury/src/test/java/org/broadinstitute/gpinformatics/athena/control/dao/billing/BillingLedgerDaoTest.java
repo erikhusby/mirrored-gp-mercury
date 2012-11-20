@@ -50,6 +50,8 @@ public class BillingLedgerDaoTest {
             return;
         }
 
+        utx.begin();
+
         order = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao, "DRAFT-" + UUID.randomUUID());
         PriceItem priceItem = priceItemDao.findAll().get(0);
 
@@ -57,8 +59,6 @@ public class BillingLedgerDaoTest {
         ledger = new BillingLedger(order.getSamples().get(0), priceItem, 2);
 
         billingLedgerDao.persist(ledger);
-
-        utx.begin();
     }
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)

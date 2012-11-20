@@ -4,6 +4,7 @@ import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderListModel;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
+import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -28,13 +29,10 @@ import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.text.DateFormat;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -101,8 +99,6 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     /** Automatically convert known BSP IDs (SM-, SP-) to uppercase. */
     private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
-
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
     /**
      * Returns a list of all product orders. Only actually fetches the list from the database once per request
@@ -222,11 +218,11 @@ public class ProductOrderForm extends AbstractJsfBean {
      * Convert the sample names into a list of sample objects, and replace the sample objects in the current product
      * order with the new list.
      */
-    public List<ProductOrderSample> convertTextToOrderSamples(@Nonnull String text) {
+    private static List<ProductOrderSample> convertTextToOrderSamples(@Nonnull String text) {
         List<String> sampleIds = convertTextToList(text);
         List<ProductOrderSample> orderSamples = new ArrayList<ProductOrderSample>(sampleIds.size());
         for (String sampleId : sampleIds) {
-            orderSamples.add(new ProductOrderSample(sampleId, productOrderDetail.getProductOrder()));
+            orderSamples.add(new ProductOrderSample(sampleId));
         }
         return orderSamples;
     }
@@ -397,8 +393,13 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     public String startBillingSession() {
 
-        Set<BillingLedger> ledgerItems = getUnbilledLedgerItems();
+        Set<BillingLedger> ledgerItems = validateOrderSelection("billing session");
         if (ledgerItems == null) {
+            return null;
+        }
+
+        if (ledgerItems.isEmpty()) {
+            addErrorMessage("There is nothing to bill");
             return null;
         }
 
@@ -409,14 +410,14 @@ public class ProductOrderForm extends AbstractJsfBean {
         return redirect("/billing/view") + "&billingSession=" + session.getBusinessKey();
     }
 
-    private Set<BillingLedger> getUnbilledLedgerItems() {
+    private Set<BillingLedger> validateOrderSelection(String validatingFor) {
         if ((userBean == null) || (userBean.getBspUser() == null) || (userBean.getBspUser().getUserId() == null)) {
-            addErrorMessage("A valid bsp user is needed to start a billing session");
+            addErrorMessage("A valid bsp user is needed to start a " + validatingFor);
             return null;
         }
 
         if ((selectedProductOrders == null) || (selectedProductOrders.length == 0)) {
-            addErrorMessage("Product orders must be selected for a billing session to be started");
+            addErrorMessage("Product orders must be selected for a " + validatingFor + " to be started");
             return null;
         }
 
@@ -433,65 +434,33 @@ public class ProductOrderForm extends AbstractJsfBean {
             return null;
         }
 
-        Set<BillingLedger> ledgerItems = ledgerDao.findWithoutBillingSessionByOrderList(selectedProductOrders);
-        if (ledgerItems.isEmpty()) {
-            addErrorMessage("There is nothing to bill");
-            return null;
-        }
-
-        return ledgerItems;
-    }
-
-    private OutputStream beginSpreadsheetDownload(FacesContext fc, String filename) {
-
-        HttpServletResponse response = (HttpServletResponse) fc.getExternalContext().getResponse();
-
-        response.reset();
-        response.setContentType("application/vnd.ms-excel");
-        response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
-
-        try {
-            return response.getOutputStream();
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void finishSpreadsheetDownload(FacesContext fc, OutputStream outputStream) {
-        try {
-            outputStream.flush();
-            outputStream.close();
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-
-        fc.responseComplete();
+        return ledgerDao.findWithoutBillingSessionByOrderList(selectedProductOrders);
     }
 
     public String downloadBillingTracker() {
 
-        if (selectedProductOrders == null || selectedProductOrders.length == 0) {
-            addErrorMessage("No Product Orders selected for Billing Tracker download");
+        // Do order validation
+        Set<BillingLedger> previouslyUpdatedItems = validateOrderSelection("tracker download");
+        if (previouslyUpdatedItems == null) {
             return null;
         }
 
-        FacesContext fc = FacesContext.getCurrentInstance();
-        String filename = "BillingTracker-" + DATE_FORMAT.format(Calendar.getInstance().getTime()) + ".xls";
+        // It doesn't matter if it's empty or not, we allow download
 
-        OutputStream outputStream = beginSpreadsheetDownload(fc, filename);
-
-        // dummy code to plumb in spreadsheet write.  this is not the right format and it's only doing the first PDO!
-        SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(selectedProductOrders[0]);
         try {
-            sampleLedgerExporter.writeToStream(outputStream);
-        }
-        catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+            String filename =
+                "BillingTracker-" +
+                AbstractSpreadsheetExporter.DATE_FORMAT.format(Calendar.getInstance().getTime()) + ".xls";
+            OutputStream outputStream = AbstractSpreadsheetExporter.beginSpreadsheetDownload(facesContext, filename);
 
-        finishSpreadsheetDownload(fc, outputStream);
+            // dummy code to plumb in spreadsheet write.  this is not the right format and it's only doing the first PDO!
+            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(selectedProductOrders);
+            sampleLedgerExporter.writeToStream(outputStream);
+
+            facesContext.responseComplete();
+        } catch (Exception ex) {
+            addErrorMessage("Got an exception trying to download the billing tracker: " + ex.getMessage());
+        }
 
         return null;
     }

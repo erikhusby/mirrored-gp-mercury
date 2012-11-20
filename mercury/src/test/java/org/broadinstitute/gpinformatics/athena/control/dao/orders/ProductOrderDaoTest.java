@@ -47,9 +47,13 @@ public class ProductOrderDaoTest extends ContainerTest {
     private UserTransaction utx;
 
     private final String testResearchProjectKey = "TestResearchProject_" + UUID.randomUUID();
-    private final String testProductOrderKey = "DRAFT-" + UUID.randomUUID();
+    private final static String testProductOrderKeyPrefix = "DRAFT-";
 
     ProductOrder order;
+
+    private static String getTestProductOrderKey() {
+        return testProductOrderKeyPrefix + UUID.randomUUID();
+    }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
@@ -66,7 +70,7 @@ public class ProductOrderDaoTest extends ContainerTest {
                     ResearchProjectResourceTest.createDummyResearchProject(testResearchProjectKey);
             researchProjectDao.persist(researchProject);
         }
-        order = createTestProductOrder(researchProjectDao, productDao, testProductOrderKey);
+        order = createTestProductOrder(researchProjectDao, productDao, getTestProductOrderKey());
         productOrderDao.persist(order);
         productOrderDao.flush();
         productOrderDao.clear();
@@ -99,13 +103,9 @@ public class ProductOrderDaoTest extends ContainerTest {
         String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
         ProductOrder newProductOrder = new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, sampleList, "quoteId",
                 product, foundResearchProject);
-        sampleList.add(new ProductOrderSample("MS-1111", newProductOrder));
-        sampleList.add(new ProductOrderSample("MS-1112", newProductOrder));
-        int samplePos = 0;
-        for ( ProductOrderSample sample :sampleList ) {
-            sample.setSamplePosition(samplePos++);
-        }
-        newProductOrder.setJiraTicketKey(key);
+        sampleList.add(new ProductOrderSample("MS-1111"));
+        sampleList.add(new ProductOrderSample("MS-1112"));
+        newProductOrder.setJiraTicketKey(getTestProductOrderKey());
         return newProductOrder;
     }
 

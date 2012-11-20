@@ -1,8 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 
@@ -18,83 +17,18 @@ import java.util.List;
  * A future version of this class will probably support both export and import, since there will be some common
  * code & data structures.
  */
-public class QuoteWorkItemsExporter  {
+public class QuoteWorkItemsExporter extends AbstractSpreadsheetExporter {
 
     private final List<QuoteImportItem> quoteItems;
     private final BillingSession billingSession;
 
-    private final Workbook workbook;
-    private final Sheet sheet;
-    private final CellStyle headerStyle;
-    private final CellStyle preambleStyle;
-
     private static final String[] FIXED_HEADERS = { "Quote", "Platform", "Category", "Price Item", "Quantity", "Billed Date", "Billing Message"};
 
-    protected CellStyle buildHeaderStyle(Workbook wb) {
-        CellStyle style = wb.createCellStyle();
-        style.setFillForegroundColor(IndexedColors.LIGHT_CORNFLOWER_BLUE.getIndex());
-        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-        Font headerFont = wb.createFont();
-        headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
-        style.setFont(headerFont);
-        return style;
-    }
-
-    protected CellStyle buildPreambleStyle(Workbook wb) {
-        CellStyle style = wb.createCellStyle();
-        Font headerFont = wb.createFont();
-        headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
-        style.setFont(headerFont);
-        return style;
-    }
-
     public QuoteWorkItemsExporter(BillingSession billingSession, List<QuoteImportItem> quoteItems) {
+        super();
+
         this.quoteItems = quoteItems;
         this.billingSession = billingSession;
-
-        // SXSSFWorkbook is used to support very large spreadsheets.  SXSSF writes 100 rows at a time to a
-        // temporary file, which is then copied into the output stream when all spreadsheet data has been written.
-        workbook = new SXSSFWorkbook();
-        sheet = workbook.createSheet();
-        headerStyle = buildHeaderStyle(workbook);
-        preambleStyle = buildPreambleStyle(workbook);
-    }
-
-    private class Writer {
-        Row currentRow;
-        Cell currentCell;
-        int rowNum;
-        int cellNum;
-
-        private void nextRow() {
-            currentRow = sheet.createRow(rowNum++);
-            cellNum = 0;
-        }
-
-        private void nextCell() {
-            currentCell = currentRow.createCell(cellNum++);
-        }
-
-        void writePreamble(String preamble) {
-            nextRow();
-            writeCell(preamble, preambleStyle);
-        }
-
-        void writeCell(String value, CellStyle style) {
-            nextCell();
-            currentCell.setCellValue(value);
-            currentCell.setCellStyle(style);
-        }
-
-        void writeCell(String value) {
-            nextCell();
-            currentCell.setCellValue(value);
-        }
-
-        void writeCell(double value) {
-            nextCell();
-            currentCell.setCellValue(value);
-        }
     }
 
     /**
@@ -105,7 +39,8 @@ public class QuoteWorkItemsExporter  {
      * @throws java.io.IOException if the stream can't be written to
      */
     public void writeToStream(OutputStream out, BSPUserList bspUserList) throws IOException {
-        Writer writer = new Writer();
+
+        getWriter().setCurrentSheet(getWorkbook().createSheet(billingSession.getBusinessKey()));
 
         BspUser user = bspUserList.getById(billingSession.getCreatedBy());
 
@@ -115,26 +50,26 @@ public class QuoteWorkItemsExporter  {
                               ", Create Date: " + billingSession.getCreatedDate() +
                               ", Billed Date: " + billingSession.getBilledDate();
 
-        writer.writePreamble(preambleText);
-        writer.nextRow();
+        getWriter().writePreamble(preambleText);
+        getWriter().nextRow();
 
         // Write headers.
-        writer.nextRow();
+        getWriter().nextRow();
         for (String header : FIXED_HEADERS) {
-            writer.writeCell(header, headerStyle);
+            getWriter().writeCell(header, getHeaderStyle());
         }
 
         for (QuoteImportItem item : quoteItems) {
-            writer.nextRow();
-            writer.writeCell(item.getQuoteId());
-            writer.writeCell(item.getPriceItem().getPlatform());
-            writer.writeCell(item.getPriceItem().getCategory());
-            writer.writeCell(item.getPriceItem().getName());
-            writer.writeCell(item.getQuantity());
-            writer.writeCell((item.getBilledDate() == null) ? "" : item.getBilledDate().toString());
-            writer.writeCell(item.getBillingMessage());
+            getWriter().nextRow();
+            getWriter().writeCell(item.getQuoteId());
+            getWriter().writeCell(item.getPriceItem().getPlatform());
+            getWriter().writeCell(item.getPriceItem().getCategory());
+            getWriter().writeCell(item.getPriceItem().getName());
+            getWriter().writeCell(item.getQuantity());
+            getWriter().writeCell((item.getBilledDate() == null) ? "" : item.getBilledDate().toString());
+            getWriter().writeCell(item.getBillingMessage());
         }
 
-        workbook.write(out);
+        getWorkbook().write(out);
     }
 }

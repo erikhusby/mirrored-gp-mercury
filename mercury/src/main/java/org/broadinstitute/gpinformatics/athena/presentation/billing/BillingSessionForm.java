@@ -3,7 +3,11 @@ package org.broadinstitute.gpinformatics.athena.presentation.billing;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingSessionBean;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
+import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
@@ -15,10 +19,11 @@ import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Form operations for the billing session features
@@ -90,7 +95,25 @@ public class BillingSessionForm extends AbstractJsfBean {
     }
 
     public String downloadTracker() {
-        return null;  //To change body of created methods use File | Settings | File Templates.
+        try {
+            String filename =
+                "BillingTracker-" +
+                AbstractSpreadsheetExporter.DATE_FORMAT.format(Calendar.getInstance().getTime()) + ".xls";
+
+            OutputStream outputStream = AbstractSpreadsheetExporter.beginSpreadsheetDownload(facesContext, filename);
+
+            ProductOrder[] selectedProductOrders = billingSessionBean.getBillingSession().getProductOrders();
+
+            // dummy code to plumb in spreadsheet write.  this is not the right format and it's only doing the first PDO!
+            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(selectedProductOrders);
+            sampleLedgerExporter.writeToStream(outputStream);
+
+            facesContext.responseComplete();
+        } catch (Exception ex) {
+            addErrorMessage("Got an exception trying to download the billing tracker: " + ex.getMessage());
+        }
+
+        return null;
     }
 
     public void downloadQuoteItems() throws IOException {
@@ -98,15 +121,9 @@ public class BillingSessionForm extends AbstractJsfBean {
             new QuoteWorkItemsExporter(
                 billingSessionBean.getBillingSession(), billingSessionBean.getBillingSession().getQuoteImportItems());
         FacesContext fc = FacesContext.getCurrentInstance();
-        HttpServletResponse response = (HttpServletResponse) fc.getExternalContext().getResponse();
 
-        String fileName = billingSessionBean.getBillingSession().getBusinessKey() + "_" + new Date() + ".xls";
-        response.reset(); // Some JSF component library or some Filter might have set some headers in the buffer beforehand. We want to get rid of them, else it may collide.
-        response.setContentType("application/vnd.ms-excel");
-        response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
-
-        OutputStream outputStream = response.getOutputStream();
-
+        String filename = billingSessionBean.getBillingSession().getBusinessKey() + "_" + new Date() + ".xls";
+        OutputStream outputStream = AbstractSpreadsheetExporter.beginSpreadsheetDownload(fc, filename);
         exporter.writeToStream(outputStream, bspUserList);
 
         fc.responseComplete();
