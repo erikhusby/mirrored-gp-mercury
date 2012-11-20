@@ -48,7 +48,7 @@ public class JiraTicketDaoTest extends ContainerTest{
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testFetchByName() {
         String ticketName = "UT-" + UUID.randomUUID();
-        JiraTicket jiraTicket = new JiraTicket( ticketName, ticketName);
+        JiraTicket jiraTicket = new JiraTicket(ticketName);
         jiraTicketDao.persist(jiraTicket);
         jiraTicketDao.flush();
         jiraTicketDao.clear();

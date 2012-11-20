@@ -194,7 +194,7 @@ public class LabEvent {
     }
 
     public void addReagent(Reagent reagent) {
-        throw new RuntimeException("I haven't been written yet.");
+        this.reagents.add(reagent);
     }
 
     /**

@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
 import org.apache.commons.lang.StringUtils;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -17,15 +17,7 @@ import javax.annotation.Nonnull;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,6 +30,9 @@ public class BucketBean {
 
     @Inject
     private BucketEntryDao bucketEntryDao;
+
+    @Inject
+    JiraService jiraService;
 
     private final static Logger logger = Logger.getLogger ( BucketBean.class.getName () );
 
@@ -65,12 +60,12 @@ public class BucketBean {
         labEventFactory.createFromBatchItems ( productOrder, vessel, 1L, null, LabEventType.SHEARING_BUCKET_ENTRY,
                                                LabEvent.UI_EVENT_LOCATION );
         try {
-            ServiceAccessUtility.addJiraComment ( productOrder, vessel.getLabCentricName () +
+            jiraService.addComment ( productOrder, vessel.getLabCentricName () +
                     " added to bucket " + bucket.getBucketDefinitionName () );
         } catch ( IOException ioe ) {
-            logger.log ( Level.INFO, "error attempting to add a jira comment for adding " +
-                    productOrder + ":" + vessel.getLabCentricName () + " to bucket " +
-                    bucket.getBucketDefinitionName (), ioe );
+            logger.log(Level.INFO, "error attempting to add a jira comment for adding " +
+                                   productOrder + ":" + vessel.getLabCentricName() + " to bucket " +
+                                   bucket.getBucketDefinitionName(), ioe);
         }
         return newEntry;
     }
@@ -103,8 +98,8 @@ public class BucketBean {
 
         for ( String pdo : pdoKeyToVesselMap.keySet () ) {
             try {
-                ServiceAccessUtility.addJiraComment ( pdo, "Vessels: " +
-                        StringUtils.join ( pdoKeyToVesselMap.get ( pdo ), ',' ) +
+                jiraService.addComment ( pdo, "Vessels: " +
+                        StringUtils.join (pdoKeyToVesselMap.get(pdo),',') +
                         " added to bucket " + bucket.getBucketDefinitionName () );
             } catch ( IOException ioe ) {
                 logger.log ( Level.WARNING, "error attempting to add a jira comment for adding " +
@@ -319,15 +314,15 @@ public class BucketBean {
             if ( null == batchTicket ) {
                 bucketBatch.createJiraTicket ( actor );
             } else {
-                bucketBatch.setJiraTicket ( new JiraTicket ( batchTicket, batchTicket ) );
+                bucketBatch.setJiraTicket ( new JiraTicket ( batchTicket ) );
             }
             for ( String pdo : pdoKeyToVesselMap.keySet () ) {
                 bucketBatch.addJiraLink ( pdo );
-                ServiceAccessUtility.addJiraComment ( pdo, "New Batch Created: " +
+                jiraService.addComment ( pdo, "New Batch Created: " +
                         bucketBatch.getJiraTicket ().getTicketName () + " " + bucketBatch.getBatchName () );
             }
         } catch ( IOException ioe ) {
-            logger.log ( Level.INFO, "Error attempting to create Lab Batch in Jira" );
+            logger.log(Level.INFO, "Error attempting to create Lab Batch in Jira");
             throw new InformaticsServiceException ( "Error attempting to create Lab Batch in Jira", ioe );
         }
 
@@ -385,15 +380,15 @@ public class BucketBean {
     private void jiraRemovalUpdate ( @Nonnull BucketEntry bucketEntry, String reason ) {
         try {
 
-            ServiceAccessUtility.addJiraComment ( bucketEntry.getPoBusinessKey (),
-                                                  bucketEntry.getPoBusinessKey () + ":" +
-                                                          bucketEntry.getLabVessel ().getLabCentricName () +
-                                                          " Removed from bucket " + bucketEntry.getBucketExistence ()
-                                                                                               .getBucketDefinitionName () + ":: " + reason );
+            jiraService.addComment ( bucketEntry.getPoBusinessKey (),
+                    bucketEntry.getPoBusinessKey () + ":" +
+                    bucketEntry.getLabVessel ().getLabCentricName () +
+                    " Removed from bucket " + bucketEntry.getBucketExistence ()
+                            .getBucketDefinitionName() + ":: " + reason );
         } catch ( IOException ioe ) {
-            logger.log ( Level.INFO, "Error attempting to create jira removal comment for " +
-                    bucketEntry.getPoBusinessKey () + " " +
-                    bucketEntry.getLabVessel ().getLabCentricName (), ioe );
+            logger.log(Level.INFO, "Error attempting to create jira removal comment for " +
+                                   bucketEntry.getPoBusinessKey() + " " +
+                                   bucketEntry.getLabVessel().getLabCentricName(), ioe);
         }
     }
 }

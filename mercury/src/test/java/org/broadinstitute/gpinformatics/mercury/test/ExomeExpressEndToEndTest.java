@@ -1,18 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestOptions;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestResult;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestService;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPPlatingRequestServiceStub;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.ControlWell;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.*;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraCustomFieldsUtil;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProducer;
@@ -49,13 +45,7 @@ import org.testng.annotations.Test;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 
@@ -192,14 +182,14 @@ public class ExomeExpressEndToEndTest {
             allCustomFields.add(protocolCustomField);
 
             for (LabBatch labBatch : labBatches) {
-                CreateIssueResponse createResponse = jiraService.createIssue(null, //Project.JIRA_PROJECT_PREFIX,
+                JiraIssue jira = jiraService.createIssue(null, //Project.JIRA_PROJECT_PREFIX,
                         "hrafal",
                         CreateFields.IssueType.WHOLE_EXOME_HYBSEL,
                         labBatch.getBatchName(),
                         "Pass " /*+ projectPlan.getPass().getProjectInformation().getPassNumber()*/, allCustomFields);
-                Assert.assertNotNull(createResponse);
-                Assert.assertNotNull(createResponse.getTicketName());
-                jiraTicket = new JiraTicket( createResponse.getTicketName(), createResponse.getId());
+                Assert.assertNotNull(jira);
+                Assert.assertNotNull(jira.getKey());
+                jiraTicket = new JiraTicket(jira);
                 labBatch.setJiraTicket(jiraTicket);
                 //labBatch.get
             }

@@ -4,19 +4,22 @@ import org.apache.commons.lang.builder.EqualsBuilder;
 import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
+import org.jetbrains.annotations.NotNull;
 
 import javax.persistence.*;
 import java.io.IOException;
@@ -33,7 +36,6 @@ public class ResearchProject implements Serializable {
 
     public static final boolean IRB_ENGAGED = false;
     public static final boolean IRB_NOT_ENGAGED = true;
-    public static final String BROADINSTITUTE_ORG = "@broadinstitute.org";
 
     public boolean hasJiraTicketKey() {
         return !StringUtils.isBlank(jiraTicketKey);
@@ -422,89 +424,67 @@ public class ResearchProject implements Serializable {
     }
 
     public void submit() throws IOException {
+        if (jiraTicketKey != null) {
+            return;
+        }
+        JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
 
-        if (jiraTicketKey == null) {
-            JiraService jiraService = ServiceAccessUtility.lookupBean(JiraService.class);
+        Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
-            Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
+        List<CustomField> listOfFields = new ArrayList<CustomField>();
 
-            List<CustomField> listOfFields = new ArrayList<CustomField>();
+        if (!sampleCohorts.isEmpty()) {
+            List<String> cohortNames = new ArrayList<String>();
 
-            if(!sampleCohorts.isEmpty()) {
-                List<String> cohortNames = new ArrayList<String>();
-
-                for(ResearchProjectCohort cohort:sampleCohorts) {
-                    cohortNames.add(cohort.getCohortId());
-                }
-
-                listOfFields.add(new CustomField(submissionFields.get(RequiredSubmissionFields.COHORTS.getFieldName()),
-                        ServiceAccessUtility.getCohortsForNames(cohortNames), CustomField.SingleFieldType.TEXT ));
+            for (ResearchProjectCohort cohort : sampleCohorts) {
+                cohortNames.add(cohort.getCohortId());
             }
 
-            if (!projectFunding.isEmpty()) {
-                List<String> fundingSources = new ArrayList<String>();
-                for(ResearchProjectFunding fundingSrc:projectFunding) {
-                    fundingSources.add(fundingSrc.getFundingId());
-                }
+            CohortListBean cohortListBean = ServiceAccessUtility.getBean(CohortListBean.class);
 
-                listOfFields.add(
-                        new CustomField(submissionFields.get(RequiredSubmissionFields.FUNDING_SOURCE.getFieldName()),
-                                        StringUtils.join(fundingSources,','),
-                                        CustomField.SingleFieldType.TEXT ));
-            }
+            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.COHORTS,
+                    cohortListBean.getCohortListString(cohortNames.toArray(new String[cohortNames.size()]))));
+        }
 
-            if (!irbNumbers.isEmpty()) {
-                listOfFields.add(
-                        new CustomField(submissionFields.get(RequiredSubmissionFields.IRB_IACUC_NUMBER.getFieldName()),
-                            StringUtils.join(getIrbNumbers(), ','), CustomField.SingleFieldType.TEXT ));
+        if (!projectFunding.isEmpty()) {
+            List<String> fundingSources = new ArrayList<String>();
+            for (ResearchProjectFunding fundingSrc : projectFunding) {
+                fundingSources.add(fundingSrc.getFundingId());
             }
 
             listOfFields.add(
-                    new CustomField (submissionFields.get(RequiredSubmissionFields.IRB_ENGAGED.getFieldName()),
-                                     irbNotEngaged?"Yes":"No" , CustomField.SingleFieldType.RADIO_BUTTON));
+                    new CustomField(submissionFields, RequiredSubmissionFields.FUNDING_SOURCE,
+                            StringUtils.join(fundingSources, ',')));
+        }
 
+        if (!irbNumbers.isEmpty()) {
             listOfFields.add(
-                    new CustomField(submissionFields.get(RequiredSubmissionFields.MERCURY_URL.getFieldName()),
-                                    "", CustomField.SingleFieldType.TEXT ));
-
-            CreateIssueResponse researchProjectResponse =
-                    jiraService.createIssue(fetchJiraProject().getKeyPrefix(),
-                            ServiceAccessUtility.getBspUserForId(createdBy).getUsername(), fetchJiraIssueType(),
-                            title, synopsis, listOfFields);
-
-            // TODO: Only set the JIRA key once everything else has completed successfully, i.e., adding watchers
-            jiraTicketKey = researchProjectResponse.getKey();
-
-            // Update ticket with link back into Mercury
-            CustomField mercuryUrlField = new CustomField(
-                    submissionFields.get(RequiredSubmissionFields.MERCURY_URL.getFieldName()),
-                    ServiceAccessUtility.getMercuryUrl() + "projects/view.xhtml?researchProject=" + jiraTicketKey,
-                    CustomField.SingleFieldType.TEXT);
-            jiraService.updateIssue(jiraTicketKey, Collections.singleton(mercuryUrlField));
-
-            addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
-        }
-    }
-
-    public void addPublicComment(String comment) throws IOException{
-        ServiceAccessUtility.addJiraComment(jiraTicketKey, comment);
-    }
-
-    public void addWatcher(String personLoginId) throws IOException {
-        try {
-            ServiceAccessUtility.addJiraWatcher(jiraTicketKey, personLoginId);
-        } catch ( Exception e) {
-            if ( StringUtils.isNotBlank( personLoginId) && personLoginId.contains(BROADINSTITUTE_ORG)) {
-                //Retry by stripping off the email suffix.
-                String shortUsername = personLoginId.replace(BROADINSTITUTE_ORG, "");
-                ServiceAccessUtility.addJiraWatcher(jiraTicketKey, shortUsername);
-            }
+                    new CustomField(submissionFields, RequiredSubmissionFields.IRB_IACUC_NUMBER,
+                            StringUtils.join(getIrbNumbers(), ',')));
         }
 
-    }
+        listOfFields.add(
+                new CustomField(submissionFields, RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD, irbNotEngaged));
 
-    public void addLink(String targetIssueKey) throws IOException {
-        ServiceAccessUtility.addJiraPublicLink(AddIssueLinkRequest.LinkType.Related, jiraTicketKey, targetIssueKey);
+        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.MERCURY_URL, ""));
+
+        BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
+        String username = bspUserList.getById(createdBy).getUsername();
+
+        JiraIssue issue = jiraService.createIssue(fetchJiraProject().getKeyPrefix(),
+                username, fetchJiraIssueType(), title, synopsis, listOfFields);
+
+        // TODO: Only set the JIRA key once everything else has completed successfully, i.e., adding watchers
+        jiraTicketKey = issue.getKey();
+
+        issue.addWatcher(username);
+
+        // Update ticket with link back into Mercury
+        MercuryConfig mercuryConfig = ServiceAccessUtility.getBean(MercuryConfig.class);
+        CustomField mercuryUrlField = new CustomField(
+                submissionFields, RequiredSubmissionFields.MERCURY_URL,
+                mercuryConfig.getUrl() + "projects/view.xhtml?researchProject=" + jiraTicketKey);
+        issue.updateIssue(Collections.singleton(mercuryUrlField));
     }
 
     public String getOriginalTitle() {
@@ -542,21 +522,22 @@ public class ResearchProject implements Serializable {
      * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
      * for Research Projects
      */
-    public enum RequiredSubmissionFields {
+    public enum RequiredSubmissionFields implements CustomField.SubmissionField {
 
 //        Sponsoring_Scientist("Sponsoring Scientist"),
         COHORTS("Cohort(s)"),
         FUNDING_SOURCE("Funding Source"),
         IRB_IACUC_NUMBER("IRB/IACUCs"),
-        IRB_ENGAGED("IRB Not Engaged?"),
+        IRB_NOT_ENGAGED_FIELD("IRB Not Engaged?"),
         MERCURY_URL("Mercury URL");
 
-        private String fieldName;
+        private final String fieldName;
 
         private RequiredSubmissionFields(String fieldNameIn) {
             fieldName = fieldNameIn;
         }
 
+        @NotNull @Override
         public String getFieldName() {
             return fieldName;
         }
