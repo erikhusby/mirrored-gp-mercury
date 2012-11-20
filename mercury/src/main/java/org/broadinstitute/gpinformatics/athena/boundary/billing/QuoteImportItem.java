@@ -12,12 +12,38 @@ import java.util.List;
 public class QuoteImportItem {
     private final String quoteId;
     private final PriceItem priceItem;
+    private final Date billToDate;
     private final List<BillingLedger> ledgerItems;
+    private Date startRange;
+    private Date endRange;
 
-    public QuoteImportItem(String quoteId, PriceItem priceItem, List<BillingLedger> ledgerItems) {
+    public QuoteImportItem(
+        String quoteId, PriceItem priceItem, List<BillingLedger> ledgerItems, Date billToDate) {
+
         this.quoteId = quoteId;
         this.priceItem = priceItem;
         this.ledgerItems = ledgerItems;
+        this.billToDate = billToDate;
+
+        for (BillingLedger ledger : ledgerItems) {
+            updateDateRange(ledger.getDateWorkCompleted());
+        }
+    }
+
+    private void updateDateRange(Date completedDate) {
+        if (startRange == null) {
+            startRange = completedDate;
+            endRange = completedDate;
+            return;
+        }
+
+        if (completedDate.before(startRange)) {
+            startRange = completedDate;
+        }
+
+        if (completedDate.after(endRange)) {
+            endRange = completedDate;
+        }
     }
 
     public String getQuoteId() {
@@ -36,9 +62,8 @@ public class QuoteImportItem {
         return quantity;
     }
 
-    public Date getBilledDate() {
-        // Since the quote message will apply to all items, just pull the date off the first item
-        return ledgerItems.get(0).getBilledDate();
+    public Date getBillToDate() {
+        return billToDate;
     }
 
     public String getBillingMessage() {
@@ -50,7 +75,7 @@ public class QuoteImportItem {
         Date currentDate = new Date();
 
         for (BillingLedger ledgerItem : ledgerItems) {
-            ledgerItem.setBilledDate(currentDate);
+            ledgerItem.setDateWorkCompleted(currentDate);
             ledgerItem.setBillingMessage(billedMessage);
         }
     }
@@ -59,5 +84,18 @@ public class QuoteImportItem {
         for (BillingLedger ledgerItem : ledgerItems) {
             ledgerItem.setBillingMessage(errorMessage);
         }
+    }
+
+    public Date getStartRange() {
+        return startRange;
+    }
+
+    public Date getEndRange() {
+        return endRange;
+    }
+
+    public String getNumSamples() {
+        String plural = (ledgerItems.size() == 1) ? "" : "s";
+        return ledgerItems.size() + " Sample" + plural;
     }
 }
