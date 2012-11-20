@@ -26,13 +26,27 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     // Each worksheet is a different product, so distribute the list of orders by product
     private final Map<Product, List<ProductOrder>> orderMap = new HashMap<Product, List<ProductOrder>>();
 
-    private static final String[] FIXED_HEADERS = { "Sample ID", "Billing Status"};
+    private static final String[] FIXED_HEADERS = {
+            "Sample ID",
+            "Collaborator Sample ID",
+            "Product Name",
+            "Product Order ID",
+            "Product Order Name",
+            "Project Manager",
+            "Comments",
+            "Date Completed",
+            "Quote ID"
+    };
 
     /** Count shown when no billing has occurred. */
     private static final String NO_BILL_COUNT = "0";
 
-    public SampleLedgerExporter(ProductOrder[] productOrders) {
+    private BSPUserList bspUserList;
+
+    public SampleLedgerExporter(ProductOrder[] productOrders, BSPUserList bspUserList) {
         super();
+
+        this.bspUserList = bspUserList;
 
         for (ProductOrder productOrder : productOrders) {
             if (!orderMap.containsKey(productOrder.getProduct())) {
@@ -41,6 +55,14 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
             orderMap.get(productOrder.getProduct()).add(productOrder);
         }
+    }
+
+    private String getBspUsername(long id) {
+        if (bspUserList == null) {
+            return "User id " + id;
+        }
+
+        return bspUserList.getById(id).getUsername();
     }
 
     private List<PriceItem> getPriceItems(Product product) {
@@ -77,11 +99,17 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
      */
     public void writeToStream(OutputStream out) throws IOException {
 
-        // Go through each product
-        for (Product currentProduct : orderMap.keySet()) {
+        // Order Products by part number so the tabs will have a predictable order.  The orderMap HashMap could have
+        // been made a TreeMap to achieve the same effect
+        List<Product> productsSortedByPartNumber = new ArrayList<Product>(orderMap.keySet());
+        Collections.sort(productsSortedByPartNumber);
 
-            getWriter().setCurrentSheet(
-                getWorkbook().createSheet(currentProduct.getPartNumber()));
+        // Go through each product
+        for (Product currentProduct : productsSortedByPartNumber) {
+
+            // per 2012-11-19 conversation with Alex and Hugh, Excel does not give us enough characters in a tab
+            // name to allow for the product name in all cases, so use just the part number
+            getWriter().setCurrentSheet(getWorkbook().createSheet(currentProduct.getPartNumber()));
 
             List<ProductOrder> productOrders = orderMap.get(currentProduct);
 
@@ -112,8 +140,27 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             for (ProductOrder productOrder : productOrders) {
                 for (ProductOrderSample sample : productOrder.getSamples()) {
                     getWriter().nextRow();
+                    // sample name
                     getWriter().writeCell(sample.getSampleName());
-                    getWriter().writeCell(sample.getBillingStatus().getDisplayName());
+                    // collaborator sample ID, looks like this is properly initialized
+                    getWriter().writeCell(sample.getBspDTO().getCollaboratorsSampleName());
+                    // product name
+                    getWriter().writeCell(sample.getProductOrder().getProduct().getProductName());
+                    // Product Order ID
+                    getWriter().writeCell(sample.getProductOrder().getBusinessKey());
+                    // Product Order Name (actually this concept is called 'Title' in PDO world)
+                    getWriter().writeCell(sample.getProductOrder().getTitle());
+                    // Project Manager - need to turn this into a user name
+                    getWriter().writeCell(getBspUsername(sample.getProductOrder().getCreatedBy()));
+                    // TODO comment - this needs to come from the ledger
+                    getWriter().writeCell("comment from ledger");
+                    // TODO Work completed date
+                    getWriter().writeCell("work completed date from ledger");
+                    // Quote ID
+                    getWriter().writeCell(sample.getProductOrder().getQuoteId());
+
+                    // per 2012-11-19 meeting not doing this
+                    // getWriter().writeCell(sample.getBillingStatus().getDisplayName());
 
                     Map<PriceItem, BigDecimal> billCounts = getBillCounts(sample);
                     for (PriceItem item : priceItems) {

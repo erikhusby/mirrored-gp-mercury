@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsEx
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
@@ -23,7 +22,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.List;
 
 /**
  * Form operations for the billing session features
@@ -105,7 +103,7 @@ public class BillingSessionForm extends AbstractJsfBean {
             ProductOrder[] selectedProductOrders = billingSessionBean.getBillingSession().getProductOrders();
 
             // dummy code to plumb in spreadsheet write.  this is not the right format and it's only doing the first PDO!
-            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(selectedProductOrders);
+            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(selectedProductOrders, bspUserList);
             sampleLedgerExporter.writeToStream(outputStream);
 
             facesContext.responseComplete();
