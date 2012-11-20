@@ -25,6 +25,7 @@ public abstract class AbstractSpreadsheetExporter {
     private final CellStyle priceItemProductHeaderStyle;
     private final CellStyle billedAmountsHeaderStyle;
     private final CellStyle preambleStyle;
+    private final CellStyle previouslyBilledStyle;
 
     private final SpreadSheetWriter writer = new SpreadSheetWriter();
 
@@ -36,6 +37,7 @@ public abstract class AbstractSpreadsheetExporter {
         priceItemProductHeaderStyle = buildPriceItemProductHeaderStyle(workbook);
         billedAmountsHeaderStyle = buildBilledAmountsHeaderStyle(workbook);
         preambleStyle = buildPreambleStyle(workbook);
+        previouslyBilledStyle = buildPreviouslyBilledStyle(workbook);
     }
 
     protected SpreadSheetWriter getWriter() {
@@ -53,6 +55,12 @@ public abstract class AbstractSpreadsheetExporter {
     protected CellStyle getBilledAmountsHeaderStyle() {
         return billedAmountsHeaderStyle;
     }
+
+
+    protected CellStyle getPreviouslyBilledStyle() {
+        return previouslyBilledStyle;
+    }
+
 
     protected Workbook getWorkbook() {
         return workbook;
@@ -92,6 +100,19 @@ public abstract class AbstractSpreadsheetExporter {
         headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
         style.setFont(headerFont);
         return style;
+    }
+
+    protected CellStyle buildPreviouslyBilledStyle(Workbook wb) {
+        CellStyle style = wb.createCellStyle();
+        style.setFillForegroundColor(IndexedColors.ROSE.getIndex());
+        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
+        style.setAlignment(CellStyle.ALIGN_CENTER);
+        Font headerFont = wb.createFont();
+        headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
+        headerFont.setColor(IndexedColors.RED.getIndex());
+        style.setFont(headerFont);
+        return style;
+
     }
 
     /**
@@ -176,6 +197,12 @@ public abstract class AbstractSpreadsheetExporter {
         public void writeCell(double value) {
             nextCell();
             currentCell.setCellValue(value);
+        }
+
+        public void writeCell(double value, CellStyle cellStyle) {
+            nextCell();
+            currentCell.setCellValue(value);
+            currentCell.setCellStyle(cellStyle);
         }
 
 
