@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -212,10 +211,10 @@ public class DriedBloodSpotDbFreeTest {
             driedBloodSpotJaxbBuilder.buildJaxb();
             LabEventFactory labEventFactory = new LabEventFactory();
             labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
-                @Override
-                public Person getOperator(String userId) {
-                    return new Person(userId);
-                }
+//                @Override
+//                public Person getOperator(String userId) {
+//                    return new Person(userId);
+//                }
 
                 @Override
                 public LabBatch getLabBatch(String labBatchName) {

@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.*;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraCustomFieldsUtil;
@@ -22,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.zims.LibraryBeanFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
@@ -188,7 +190,7 @@ public class ExomeExpressEndToEndTest {
                         labBatch.getBatchName(),
                         "Pass " /*+ projectPlan.getPass().getProjectInformation().getPassNumber()*/, allCustomFields);
                 Assert.assertNotNull(jira);
-                Assert.assertNotNull(jira.getKey());
+                Assert.assertNotNull(jira.getKey ());
                 jiraTicket = new JiraTicket(jira);
                 labBatch.setJiraTicket(jiraTicket);
                 //labBatch.get
@@ -258,7 +260,8 @@ public class ExomeExpressEndToEndTest {
                     return null;
                 }
             });
-            LabEventHandler labEventHandler = new LabEventHandler();
+            LabEventHandler labEventHandler = new LabEventHandler( new WorkflowLoader (),
+                                                                   AthenaClientProducer.stubInstance () );
             BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
             Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<String, TwoDBarcodedTube>();
 

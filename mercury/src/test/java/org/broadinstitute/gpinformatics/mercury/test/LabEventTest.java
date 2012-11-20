@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
@@ -143,7 +144,8 @@ public class LabEventTest {
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-        LabEventHandler labEventHandler = new LabEventHandler();
+        LabEventHandler labEventHandler = new LabEventHandler( new WorkflowLoader (),
+                                                               AthenaClientProducer.stubInstance () );
 
         PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(
                 bettaLimsMessageFactory, labEventFactory, labEventHandler, mapBarcodeToTube).invoke();
@@ -219,7 +221,8 @@ public class LabEventTest {
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-        LabEventHandler labEventHandler = new LabEventHandler();
+        LabEventHandler labEventHandler = new LabEventHandler( new WorkflowLoader (),
+                                                               AthenaClientProducer.stubInstance () );
 
         PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(
                 bettaLimsMessageFactory, labEventFactory, labEventHandler, mapBarcodeToTube).invoke();
@@ -318,7 +321,8 @@ public class LabEventTest {
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-        LabEventHandler labEventHandler = new LabEventHandler();
+        LabEventHandler labEventHandler = new LabEventHandler( new WorkflowLoader (),
+                                                               AthenaClientProducer.stubInstance () );
         BuildIndexPlate buildIndexPlate = new BuildIndexPlate("IndexPlate").invoke();
         FluidigmMessagesBuilder fluidigmMessagesBuilder = new FluidigmMessagesBuilder("", bettaLimsMessageFactory, labEventFactory,
                 labEventHandler, mapBarcodeToTube, buildIndexPlate.getIndexPlate());

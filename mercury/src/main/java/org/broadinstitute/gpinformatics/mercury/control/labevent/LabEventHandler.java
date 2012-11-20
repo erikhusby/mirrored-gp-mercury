@@ -52,7 +52,10 @@ public class LabEventHandler {
     @Inject
     AthenaClientService athenaClientService;
 
-    public LabEventHandler() {}
+    public LabEventHandler ( WorkflowLoader workflowLoader, AthenaClientService clientService ) {
+        this.workflowLoader = workflowLoader;
+        this.athenaClientService = clientService;
+    }
 
     public HANDLER_RESPONSE processEvent(LabEvent labEvent) {
         // random thought, which should go onto confluence doc:
@@ -98,12 +101,16 @@ public class LabEventHandler {
 
               This action should not throw an exception in the bucket batching.  Just at least record the fact that
               this action happened
-         */
-        ProductWorkflowDefVersion workflowDef =  getWorkflowVersion(labEvent.getProductOrderId());
-        if(workflowDef.isPreviousStepBucket(labEvent.getLabEventType().getName())) {
-            Bucket workingBucket = bucketDao.findByName(workflowDef.getPreviousStep(labEvent.getLabEventType().getName()).getName());
 
-            bucketBean.start(null, labEvent.getAllLabVessels(),workingBucket,labEvent.getEventLocation());
+              TODO SGM  Probably need a better way to determine the current workflow version.  Only thing we have to rely on is the Product order.  May have to walk each vessel.
+         */
+        if(null != labEvent.getProductOrderId()) {
+            ProductWorkflowDefVersion workflowDef =  getWorkflowVersion(labEvent.getProductOrderId());
+            if(workflowDef.isPreviousStepBucket(labEvent.getLabEventType().getName())) {
+                Bucket workingBucket = bucketDao.findByName(workflowDef.getPreviousStep(labEvent.getLabEventType().getName()).getName());
+
+                bucketBean.start(null, labEvent.getAllLabVessels(),workingBucket,labEvent.getEventLocation());
+            }
         }
 
         /*
@@ -337,7 +344,7 @@ public class LabEventHandler {
 
         alertText.append(message).append("\n");
         //TODO SGM  Use BSp User lookup to get user name.
-        alertText.append(event.getLabEventType().getName() + " from " + event.getEventOperator() + " sent on " + event.getEventDate());
+        alertText.append(event.getLabEventType().getName() + " from " + event.getEventOperator () + " sent on " + event.getEventDate());
     }
 
     private ProductWorkflowDefVersion getWorkflowVersion(String productOrderKey) {
