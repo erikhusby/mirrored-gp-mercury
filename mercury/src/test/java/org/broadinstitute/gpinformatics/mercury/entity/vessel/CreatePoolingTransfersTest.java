@@ -108,7 +108,7 @@ public class CreatePoolingTransfersTest extends ContainerTest {
                 previousTargetTubeBarcode = targetTubeBarcode;
                 if(sourceTubeBarcodes != null) {
                     LabEvent genericLabEvent = new LabEvent(LabEventType.POOLING_TRANSFER,
-                            eventDate, eventLocation, 1L, personDAO.findByName(operator));
+                            eventDate, eventLocation, 1L,  1111L /*TODO SGM convert operator to ID from BSP User service*/);
 
                     TwoDBarcodedTube targetTube = twoDBarcodedTubeDAO.findByBarcode(targetTubeBarcode);
                     if(targetTube == null) {

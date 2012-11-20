@@ -28,6 +28,9 @@ public class AthenaClientServiceStub implements AthenaClientService {
 
     private static final Long TEST_CREATOR = 1111L;
 
+    public AthenaClientServiceStub () {
+    }
+
     @Override
     public ProductOrder retrieveProductOrderDetails ( String poBusinessKey ) {
 

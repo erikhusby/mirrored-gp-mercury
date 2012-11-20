@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -72,7 +71,7 @@ public class ExomeExpressV2EndToEndTest {
         // todo get from message event name to bucket def
         Bucket shearingBucket = new Bucket(new WorkflowBucketDef("Shearing"));
         // todo plates vs tubes?
-        final Person testActor = new Person ();
+        final String testActor = "hrafal";
         bucketBean.add(productOrder1.getBusinessKey(), new LinkedList<LabVessel>(labEvent.getTargetLabVessels()), shearingBucket, testActor,
                        null );
         // - Deck calls web service to verify source barcodes?

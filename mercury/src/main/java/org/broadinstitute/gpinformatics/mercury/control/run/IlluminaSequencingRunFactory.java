@@ -37,6 +37,7 @@ public class IlluminaSequencingRunFactory {
 
         // todo what about directory path?
         return new IlluminaSequencingRun(illuminaFlowcell, runDirectory.getName(), solexaRunBean.getRunBarcode(),
-                solexaRunBean.getMachineName(), null, false, solexaRunBean.getRunDate());
+                solexaRunBean.getMachineName(), null /*TODO SGM  Add call to BspuserService*/,
+                false, solexaRunBean.getRunDate());
     }
 }

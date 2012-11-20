@@ -43,7 +43,8 @@ public class LabEventProjectPlanOverrider {
         }
         else if (possibleBatches.size() == 1) {
             LabBatch batch = possibleBatches.iterator().next();
-            batch.getJiraTicket().addComment(labEvent.getEventOperator().getLogin() + "is processing " + labEvent.getLabEventType().getName() + " at " + labEvent.getEventLocation());
+            //TODO SGM  Make call to BspUSer to get user after Master Merge
+            batch.getJiraTicket().addComment(labEvent.getEventOperator() + "is processing " + labEvent.getLabEventType().getName() + " at " + labEvent.getEventLocation());
             for (LabVessel vessel : vessels) {
 //                ProjectPlan projectPlanOverride = batch.getProjectPlanOverride(vessel);
 //                if (projectPlanOverride != null) {

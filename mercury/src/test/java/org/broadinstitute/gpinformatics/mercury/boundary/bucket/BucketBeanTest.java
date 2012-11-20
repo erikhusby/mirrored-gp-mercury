@@ -5,13 +5,10 @@ import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.person.PersonDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
@@ -51,16 +48,13 @@ public class BucketBeanTest extends ContainerTest {
     @Inject
     TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
 
-    @Inject
-    PersonDAO personDAO;
-
     private final static Logger logger = Logger.getLogger(BucketBeanTest.class.getName());
 
     @Inject
     private UserTransaction utx;
     private Bucket bucket;
     private String bucketCreationName;
-    private Person howieTest;
+    private String howieTest;
     private String poBusinessKey1;
     private String poBusinessKey2;
     private String poBusinessKey3;
@@ -91,8 +85,7 @@ public class BucketBeanTest extends ContainerTest {
 
         bucketCreationName = "Pico Bucket";
         hrafalUserName = "hrafal";
-        howieTest = new Person ( hrafalUserName, "Howard", "Rafal" );
-        personDAO.persist(howieTest);
+        howieTest = hrafalUserName;
 
         WorkflowBucketDef bucketDef = new WorkflowBucketDef( bucketCreationName );
 
@@ -101,8 +94,6 @@ public class BucketBeanTest extends ContainerTest {
         bucketDao.persist( bucket );
         bucketDao.flush();
         bucketDao.clear();
-
-        howieTest = personDAO.findSingle(Person.class, Person_.username, hrafalUserName );
 
     }
 
@@ -259,8 +250,6 @@ public class BucketBeanTest extends ContainerTest {
         Assert.assertFalse(vessel4.getInPlaceEvents ().isEmpty());
         Assert.assertEquals(1, vessel4.getInPlaceEvents ().size());
 
-        howieTest = personDAO.findSingle(Person.class, Person_.username, hrafalUserName);
-
         resource.start(howieTest,vesselBucketBatch,bucket, LabEvent.UI_EVENT_LOCATION );
 
         testEntry1 = bucketEntryDao.findByVesselAndBucket(vessel1, bucket);
@@ -362,8 +351,6 @@ public class BucketBeanTest extends ContainerTest {
 
         logger.log( Level.INFO, "Before the start method.  The bucket has " + bucket.getBucketEntries ().size () +
                                      " Entries in it" );
-
-        howieTest = personDAO.findSingle ( Person.class, Person_.username, hrafalUserName );
 
         resource.start(howieTest,3,bucket);
 

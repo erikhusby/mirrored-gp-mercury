@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -90,8 +89,8 @@ public class LabEvent {
     private String eventLocation;
 
     // todo jmt this should change to a Long
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    private Person eventOperator;
+//    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private Long eventOperator;
 
     private Date eventDate;
 
@@ -145,7 +144,7 @@ public class LabEvent {
     LabEvent() {
     }
 
-    public LabEvent(LabEventType labEventType, Date eventDate, String eventLocation, Long disambiguator, Person operator) {
+    public LabEvent(LabEventType labEventType, Date eventDate, String eventLocation, Long disambiguator, Long operator) {
         this.labEventType = labEventType;
         this.setEventDate(eventDate);
         this.setEventLocation(eventLocation);
@@ -221,7 +220,7 @@ public class LabEvent {
         return this.eventLocation;
     }
 
-    public Person getEventOperator() {
+    public Long getEventOperator () {
         return this.eventOperator;
     }
 
@@ -283,7 +282,7 @@ public class LabEvent {
         this.eventLocation = eventLocation;
     }
 
-    public void setEventOperator(Person eventOperator) {
+    public void setEventOperator( Long eventOperator) {
         this.eventOperator = eventOperator;
     }
 
@@ -339,7 +338,7 @@ todo jmt adder methods
      * When vessels are placed in a bucket, an association is made
      * between the vessel and the PO that is driving the work.  When
      * vessels are pulled out of a bucket, we record an event.  That
-     * event associates zero or one {@link ProductOrderId product orders}.
+     * event associates zero or one {@link String product orders}.
      *
      * This method is the way to mark the transfer graph such that all
      * downstream nodes are considered to be "for" the product order

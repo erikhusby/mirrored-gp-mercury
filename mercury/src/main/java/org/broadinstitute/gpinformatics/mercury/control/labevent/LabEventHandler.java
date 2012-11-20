@@ -49,7 +49,6 @@ public class LabEventHandler {
     @Inject
     BucketBean bucketBean;
 
-
     @Inject
     AthenaClientService athenaClientService;
 
@@ -337,7 +336,8 @@ public class LabEventHandler {
         StringBuilder alertText = new StringBuilder();
 
         alertText.append(message).append("\n");
-        alertText.append(event.getLabEventType().getName() + " from " + event.getEventOperator().getLogin() + " sent on " + event.getEventDate());
+        //TODO SGM  Use BSp User lookup to get user name.
+        alertText.append(event.getLabEventType().getName() + " from " + event.getEventOperator() + " sent on " + event.getEventDate());
     }
 
     private ProductWorkflowDefVersion getWorkflowVersion(String productOrderKey) {

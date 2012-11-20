@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
@@ -17,7 +16,7 @@ public class IlluminaSequencingRun extends SequencingRun {
                                  String runName,
                                  String runBarcode,
                                  String machineName,
-                                 Person operator,
+                                 Long operator,
                                  boolean isTestRun,
                                  Date runDate) {
         super(runName, runBarcode, machineName, operator, isTestRun, runDate, new HashSet<RunCartridge>(){{add(flowcell);}});

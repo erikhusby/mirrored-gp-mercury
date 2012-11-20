@@ -56,7 +56,8 @@ public class LabEventResource {
             LabEventBean labEventBean = new LabEventBean(
                     labEvent.getLabEventType().getName(),
                     labEvent.getEventLocation(),
-                    labEvent.getEventOperator().getLogin(),
+                    //TODO SGM  use BSPUser to get operator login for this.
+                    labEvent.getEventOperator().toString(),
                     labEvent.getEventDate());
             labEventBean.setBatchId(labEvent.getLabBatch().getBatchName());
 

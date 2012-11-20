@@ -15,7 +15,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
@@ -116,17 +115,17 @@ public class LabEventFactory {
     }
 
     public interface LabEventRefDataFetcher {
-        Person getOperator ( String userId );
+//        Person getOperator ( String userId );
 
         LabBatch getLabBatch ( String labBatchName );
     }
 
     private LabEventRefDataFetcher labEventRefDataFetcher = new LabEventRefDataFetcher () {
-        @Override
-        public Person getOperator ( String userId ) {
-            return personDAO.findByName ( userId );
-        }
-
+//        @Override
+//        public Person getOperator ( String userId ) {
+//            return personDAO.findByName ( userId );
+//        }
+//
         @Override
         public LabBatch getLabBatch ( String labBatchName ) {
             return labBatchDAO.findByName ( labBatchName );
@@ -840,7 +839,10 @@ public class LabEventFactory {
         if ( labEventType == null ) {
             throw new RuntimeException ( "Unexpected event type " + stationEventType.getEventType () );
         }
-        Person operator = labEventRefDataFetcher.getOperator ( stationEventType.getOperator () );
+
+        //TODO SGM   Perform search of BSP User to get user id.
+        Long operator = 1111L;
+//        Long operator = labEventRefDataFetcher.getOperator ( stationEventType.getOperator () );
         if ( operator == null ) {
             throw new RuntimeException ( "Failed to find operator " + stationEventType.getOperator () );
         }
@@ -872,6 +874,7 @@ public class LabEventFactory {
      *
      *
      *
+     *
      * @param pdoToVessels a Map of lab vessels.  Contains Lists of Lab vessels each indexed by the Product Order
      *                     business key to which they are associated
      * @param actor        representation of the user that submitted the request
@@ -882,7 +885,7 @@ public class LabEventFactory {
      * @param eventType
      * @return A collection of the created events for the submitted lab vessels
      */
-    public Collection<LabEvent> buildFromBatchRequests ( @Nonnull Map<String, Collection<LabVessel>> pdoToVessels, Person actor,
+    public Collection<LabEvent> buildFromBatchRequests ( @Nonnull Map<String, Collection<LabVessel>> pdoToVessels, String actor,
                                                          LabBatch batchIn, @Nonnull String eventLocation,
                                                          @Nonnull LabEventType eventType ) {
 
@@ -914,6 +917,8 @@ public class LabEventFactory {
      * Order ID to the event for reference
      *
      *
+     *
+     *
      * @param pdoKey
      * @param batchItem
      * @param disambiguator
@@ -923,10 +928,13 @@ public class LabEventFactory {
      * @return
      */
     public LabEvent createFromBatchItems ( @Nonnull String pdoKey, @Nonnull LabVessel batchItem,
-                                           @Nonnull Long disambiguator, Person actor,
+                                           @Nonnull Long disambiguator, String actor,
                                            @Nonnull LabEventType eventType, @Nonnull String eventLocation ) {
 
-        LabEvent bucketMoveEvent = new LabEvent ( eventType, new Date (), eventLocation, disambiguator, actor );
+        //TODO SGM   Perform search of BSP User to get user id.
+        Long operatorInfo = 1111L;//get ID for actor
+
+        LabEvent bucketMoveEvent = new LabEvent ( eventType, new Date (), eventLocation, disambiguator, operatorInfo );
 
         bucketMoveEvent.setProductOrderId ( pdoKey );
         batchItem.addInPlaceEvent(bucketMoveEvent);

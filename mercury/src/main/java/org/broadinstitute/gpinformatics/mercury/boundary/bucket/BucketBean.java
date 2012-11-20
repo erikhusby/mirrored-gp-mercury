@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -85,7 +84,7 @@ public class BucketBean {
      * @param actor
      * @param labEventLocation
      */
-    public void add ( String productOrder, @Nonnull List<LabVessel> entriesToAdd, @Nonnull Bucket bucket, Person actor,
+    public void add ( String productOrder, @Nonnull List<LabVessel> entriesToAdd, @Nonnull Bucket bucket, String actor,
                       @Nonnull String labEventLocation ) {
 
         for(LabVessel currVessel:entriesToAdd) {
@@ -129,34 +128,31 @@ public class BucketBean {
 
     /**
      * A pared down version of
-     * {@link #start(java.util.Collection , org.broadinstitute.gpinformatics.mercury.entity.person.Person , String)}
+     * {@link #start(java.util.Collection, String, String)}
      * for which an existing Jira Batch does not need to be specified
      *
      * @param actor                   Reference to the user that is requesting the batch.
-     *                                TODO SGM replace this with a LONG representing the users BSPUser reference
      * @param vesselsToBatch
      * @param workingBucket
      * @param batchInitiationLocation
      */
-    public void start ( Person actor, @Nonnull Collection<LabVessel> vesselsToBatch, @Nonnull Bucket workingBucket,
+    public void start ( String actor, @Nonnull Collection<LabVessel> vesselsToBatch, @Nonnull Bucket workingBucket,
                         String batchInitiationLocation ) {
         start ( actor, vesselsToBatch, workingBucket, batchInitiationLocation, null );
     }
 
     /**
-     * A version of {@link #start(java.util.Collection , org.broadinstitute.gpinformatics.mercury.entity.person.Person ,
-     * String)}
+     * A version of {@link #start(java.util.Collection, String, String)}
      * for which just the Vessels needed for a batch are referenced.  This is primarily needed to support batching
      * when initiated from messaging
      *
      * @param actor                   Reference to the user that is requesting the batch.
-     *                                TODO SGM replace this with a LONG representing the users BSPUser reference
      * @param vesselsToBatch
      * @param workingBucket
      * @param batchInitiationLocation
      * @param batchTicket
      */
-    public void start ( Person actor, @Nonnull Collection<LabVessel> vesselsToBatch, @Nonnull Bucket workingBucket,
+    public void start ( String actor, @Nonnull Collection<LabVessel> vesselsToBatch, @Nonnull Bucket workingBucket,
                         String batchInitiationLocation, String batchTicket ) {
 
         Set<BucketEntry> bucketEntrySet = new HashSet<BucketEntry> ();
@@ -182,34 +178,31 @@ public class BucketBean {
 
     /**
      * a pared down version of
-     * {@link #start(org.broadinstitute.gpinformatics.mercury.entity.person.Person , int ,
-     * org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket)}
+     * {@link #start(String , int , org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket)}
      * for which an existing Jira Batch does not need to be specified
      *
      * @param actor                Reference to the user that is requesting the batch.
-     *                             TODO SGM replace this with a LONG representing the users BSPUser reference
      * @param numberOfBatchSamples
      * @param workingBucket
      */
-    public void start ( Person actor, final int numberOfBatchSamples, @Nonnull Bucket workingBucket ) {
+    public void start ( String actor, final int numberOfBatchSamples, @Nonnull Bucket workingBucket ) {
         start ( actor, numberOfBatchSamples, workingBucket, null );
     }
 
 
     /**
      * a version of the
-     * {@link #start(java.util.Collection , org.broadinstitute.gpinformatics.mercury.entity.person.Person , String)}
+     * {@link #start(java.util.Collection, String, String)}
      * method
      * with which a user can simply request a number of samples to pull from a given bucket wiht which to make a batch.
      * The samples removed will be with respect to the order they are found in the bucket
      *
      * @param actor                Reference to the user that is requesting the batch.
-     *                             TODO SGM replace this with a LONG representing the users BSPUser reference
      * @param numberOfBatchSamples
      * @param workingBucket
      * @param batchTicket
      */
-    public void start ( Person actor, final int numberOfBatchSamples, @Nonnull Bucket workingBucket,
+    public void start ( String actor, final int numberOfBatchSamples, @Nonnull Bucket workingBucket,
                         final String batchTicket ) {
 
         Set<BucketEntry> bucketEntrySet = new HashSet<BucketEntry> ();
@@ -243,10 +236,9 @@ public class BucketBean {
      *
      * @param bucketEntries
      * @param actor                   Reference to the user that is requesting the batch.
-     *                                TODO SGM replace this with a LONG representing the users BSPUser reference
      * @param batchInitiationLocation
      */
-    public void start ( @Nonnull Collection<BucketEntry> bucketEntries, Person actor, String batchInitiationLocation ) {
+    public void start ( @Nonnull Collection<BucketEntry> bucketEntries, String actor, String batchInitiationLocation ) {
         start ( bucketEntries, actor, null, batchInitiationLocation );
     }
 
@@ -258,11 +250,10 @@ public class BucketBean {
      *
      * @param bucketEntries
      * @param actor                   Reference to the user that is requesting the batch.
-     *                                TODO SGM replace this with a LONG representing the users BSPUser reference
      * @param batchTicket
      * @param batchInitiationLocation
      */
-    public void start ( @Nonnull Collection<BucketEntry> bucketEntries, Person actor, String batchTicket,
+    public void start ( @Nonnull Collection<BucketEntry> bucketEntries, String actor, String batchTicket,
                         String batchInitiationLocation ) {
         /**
          * Side effect: create a {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent} for each
@@ -326,7 +317,7 @@ public class BucketBean {
 
         try {
             if ( null == batchTicket ) {
-                bucketBatch.createJiraTicket ( actor.getLogin () );
+                bucketBatch.createJiraTicket ( actor );
             } else {
                 bucketBatch.setJiraTicket ( new JiraTicket ( batchTicket, batchTicket ) );
             }
@@ -373,9 +364,8 @@ public class BucketBean {
      * @param bucketEntry
      * @param user
      * @param reason      textual notes on why the thing is
-     *                    being cancelled.
      */
-    public void cancel ( @Nonnull BucketEntry bucketEntry, Person user, String reason ) {
+    public void cancel ( @Nonnull BucketEntry bucketEntry, String user, String reason ) {
 
         List<BucketEntry> singleRemoval = new LinkedList<BucketEntry> ();
         singleRemoval.add ( bucketEntry );

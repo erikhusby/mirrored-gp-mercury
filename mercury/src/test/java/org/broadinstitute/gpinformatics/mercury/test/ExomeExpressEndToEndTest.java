@@ -30,7 +30,6 @@ import org.broadinstitute.gpinformatics.mercury.control.zims.LibraryBeanFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventName;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -259,10 +258,10 @@ public class ExomeExpressEndToEndTest {
             // deck sends message, check workflow
             LabEventFactory labEventFactory = new LabEventFactory();
             labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
-                @Override
-                public Person getOperator(String userId) {
-                    return new Person(userId);
-                }
+//                @Override
+//                public Person getOperator(String userId) {
+//                    return new Person(userId);
+//                }
 
                 @Override
                 public LabBatch getLabBatch(String labBatchName) {

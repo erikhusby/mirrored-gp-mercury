@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -136,7 +135,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
 
         List<BucketEntry> testEntries = new LinkedList<BucketEntry>();
         testEntries.add ( bucketEntry);
-        bucketResource.start ( testEntries, new Person ( "hrafal", "Howard", "Rafal" ), LabEvent.UI_EVENT_LOCATION );
+        bucketResource.start ( testEntries,"hrafal", LabEvent.UI_EVENT_LOCATION );
 
         Assert.assertFalse ( tube.getInPlaceEvents ().isEmpty () );
         boolean doesEventHavePDO = false;
@@ -257,7 +256,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
      * the exome workflow, adding an index along the way.
      * At a point in the event graph after the indexing,
      * create a {@link LabEvent} that sets a different
-     * {@link LabEvent#productOrder}, and then apply some
+     * {@link LabEvent#productOrderId}, and then apply some
      * events and transfers after that.  The branch
      * below this is considered a dev branch.
      *

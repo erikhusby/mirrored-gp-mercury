@@ -279,6 +279,22 @@
         <addUniqueConstraint tableName="molecular_indexing_scheme" columnNames="name"
                              constraintName="uk_mis_name" schemaName="mercury"/>
     </changeSet>
+
+    <changeSet id="GPLIM-362-1" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="FKD13659683B570EF2" schemaName="mercury" />
+        </preConditions>
+        <dropForeignKeyConstraint
+            constraintName="FKD13659683B570EF2" baseTableName="lab_event" />
+    </changeSet>
+    <changeSet id="GPLIM-362-2" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <foreignKeyConstraintExists foreignKeyName="FKB8B4430A746A02ED" schemaName="mercury" />
+        </preConditions>
+        <dropForeignKeyConstraint
+            constraintName="FKB8B4430A746A02ED" baseTableName="sequencing_run" />
+    </changeSet>
+
     <!--
     todo jmt enable these constraints
     <changeSet id="GPLIM-73-9" author="thompson">

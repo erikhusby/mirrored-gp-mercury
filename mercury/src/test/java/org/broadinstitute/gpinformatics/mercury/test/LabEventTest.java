@@ -20,7 +20,6 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
@@ -70,11 +69,11 @@ public class LabEventTest {
     private static Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
 
     private final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher = new LabEventFactory.LabEventRefDataFetcher() {
-        @Override
-        public Person getOperator(String userId) {
-            return new Person(userId);
-        }
-
+//        @Override
+//        public Person getOperator(String userId) {
+//            return new Person(userId);
+//        }
+//
         @Override
         public LabBatch getLabBatch(String labBatchName) {
             return null;

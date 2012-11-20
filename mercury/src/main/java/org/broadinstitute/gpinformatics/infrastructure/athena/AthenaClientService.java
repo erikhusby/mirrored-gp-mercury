@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.infrastructure.athena;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 
+import java.io.Serializable;
+
 /**
  *
  * AthenaClientService provide
@@ -10,7 +12,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
  *         Date: 10/24/12
  *         Time: 4:46 PM
  */
-public interface AthenaClientService {
+public interface AthenaClientService extends Serializable {
 
 
     /**
