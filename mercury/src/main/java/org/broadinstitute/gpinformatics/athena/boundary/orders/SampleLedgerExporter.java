@@ -89,8 +89,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         // very simplistic logic that for now rolls up all work complete dates and assumes they are the same across
         // all price items on the PDO sample
         for (BillingLedger billingLedger : billingLedgers) {
-            if (billingLedger.getProductOrderSample().equals(productOrderSample) && billingLedger.getBilledDate() != null) {
-                return billingLedger.getBilledDate();
+            if (billingLedger.getProductOrderSample().equals(productOrderSample) && billingLedger.getWorkCompleteDate() != null) {
+                return billingLedger.getWorkCompleteDate();
             }
         }
 
