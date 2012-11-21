@@ -5,8 +5,6 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
@@ -122,12 +120,9 @@ public class ProductOrderSample implements Serializable {
     public BSPSampleDTO getBspDTO() {
         if (!hasBspDTOBeenInitialized) {
             if (isInBspFormat()) {
-                BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-                bspDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(getSampleName());
-            } else {
-                bspDTO = BSPSampleDTO.DUMMY;
+                // load BSP DTOs for all PDO samples in our PDO
+                productOrder.loadBspData();
             }
-            hasBspDTOBeenInitialized = true;
         }
         return bspDTO;
     }
