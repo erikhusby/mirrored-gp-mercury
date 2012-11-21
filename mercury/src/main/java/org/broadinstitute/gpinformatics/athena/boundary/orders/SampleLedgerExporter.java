@@ -100,8 +100,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
     private List<PriceItem> getPriceItems(Product product) {
         // Create a copy of the product's price items list in order to impose an order on it.
-        List<PriceItem> priceItems = new ArrayList<PriceItem>(product.getPriceItems());
-        Collections.sort(priceItems, new Comparator<PriceItem>() {
+        List<PriceItem> allPriceItems = new ArrayList<PriceItem>(product.getPriceItems());
+        Collections.sort(allPriceItems, new Comparator<PriceItem>() {
             @Override
             public int compare(PriceItem o1, PriceItem o2) {
                 return new CompareToBuilder().append(o1.getPlatform(), o2.getPlatform())
@@ -110,7 +110,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             }
         });
 
-        return priceItems;
+        // primary price item always goes first
+        allPriceItems.add(0, product.getDefaultPriceItem());
+
+        return allPriceItems;
     }
 
     private static Map<PriceItem, BigDecimal> getBillCounts(ProductOrderSample sample) {
@@ -124,6 +127,18 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
         return sampleStatus;
     }
+
+
+    private void writePriceItemProductHeader(PriceItem priceItem, Product product) {
+        getWriter().writeCell(priceItem.getName() + " [" + product.getPartNumber() + "]", 2, getPriceItemProductHeaderStyle());
+    }
+
+
+    private void writeBilledHeaders() {
+        getWriter().writeCell("Billed", getBilledAmountsHeaderStyle());
+        getWriter().writeCell("New Quantity", getBilledAmountsHeaderStyle());
+    }
+
 
     /**
      * Write out the spreadsheet contents to a stream.  The output is in native excel format.
@@ -162,15 +177,49 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             // Write headers after placing an extra line
             getWriter().nextRow();
             for (String header : FIXED_HEADERS) {
-                getWriter().writeCell(header, getHeaderStyle());
+                getWriter().writeCell(header, getFixedHeaderStyle());
             }
 
-            // Get the ordered price items for the current product
-            List<PriceItem> priceItems = getPriceItems(currentProduct);
+            // Get the ordered price items for the current product, add the spanning price item + product headers
+            List<PriceItem> sortedPriceItems = getPriceItems(currentProduct);
 
-            for (PriceItem item : priceItems) {
-                getWriter().writeCell(item.getCategory() + " - " + item.getName(), getHeaderStyle());
+            for (PriceItem priceItem : sortedPriceItems) {
+                writePriceItemProductHeader(priceItem, currentProduct);
             }
+
+            // Repeat the process for add ons
+            List<Product> sortedAddOns = new ArrayList<Product>(currentProduct.getAddOns());
+            Collections.sort(sortedAddOns);
+
+            for (Product addOn : sortedAddOns) {
+                List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn);
+                for (PriceItem priceItem : sortedAddOnPriceItems) {
+                    writePriceItemProductHeader(priceItem, addOn);
+                }
+            }
+
+            // secondary header line
+            getWriter().nextRow();
+            // Write blank secondary header line for fixed columns
+            for (String header : FIXED_HEADERS) {
+                getWriter().writeCell("", getFixedHeaderStyle());
+            }
+
+            // primary price item for main product
+            writeBilledHeaders();
+            for (PriceItem priceItem : currentProduct.getPriceItems()) {
+                writeBilledHeaders();
+            }
+
+            for (Product addOn : currentProduct.getAddOns()) {
+                // primary price item for this add-on
+                writeBilledHeaders();
+
+                for (PriceItem priceItem : addOn.getPriceItems()) {
+                    writeBilledHeaders();
+                }
+            }
+
 
             Set<BillingLedger> billingLedgers = getLedgerEntries(productOrders);
 
@@ -206,7 +255,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
                     // getWriter().writeCell(sample.getBillingStatus().getDisplayName());
 
                     Map<PriceItem, BigDecimal> billCounts = getBillCounts(sample);
-                    for (PriceItem item : priceItems) {
+                    for (PriceItem item : sortedPriceItems) {
                         BigDecimal count = billCounts.get(item);
                         if (count != null) {
                             getWriter().writeCell(count.doubleValue());
