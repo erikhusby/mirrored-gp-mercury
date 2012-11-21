@@ -266,17 +266,17 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             }
         }
 
-        // secondary header line
-        writeEmptyHeaderRow();
-
-        // tertiary header line
-        writeEmptyHeaderRow();
-
         writeAllCategoryHeaders(currentProduct.getDefaultPriceItem(), currentProduct.getPriceItems(), currentProduct.getAddOns());
         writeAllPriceItemHeaders(currentProduct.getDefaultPriceItem(), currentProduct.getPriceItems(), currentProduct.getAddOns());
     }
 
     private void writeAllPriceItemHeaders(PriceItem defaultPriceItem, Set<PriceItem> priceItems, Set<Product> addOns) {
+
+        // The new row
+        getWriter().nextRow();
+
+        // The empty fixed headers
+        writeEmptyFixedHeaders();
 
         // primary price item for main product
         writePriceItemHeaders(defaultPriceItem);
@@ -296,6 +296,12 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
     private void writeAllCategoryHeaders(PriceItem defaultPriceItem, Set<PriceItem> priceItems, Set<Product> addOns) {
 
+        // The new row
+        getWriter().nextRow();
+
+        // The empty fixed headers
+        writeEmptyFixedHeaders();
+
         // primary price item for main product
         writeCategoryHeaders(defaultPriceItem);
         for (PriceItem priceItem : priceItems) {
@@ -312,7 +318,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
     }
 
-    private void writeEmptyHeaderRow() {
+    private void writeEmptyFixedHeaders() {
         getWriter().nextRow();
         // Write blank secondary header line for fixed columns
         for (String header : FIXED_HEADERS) {
