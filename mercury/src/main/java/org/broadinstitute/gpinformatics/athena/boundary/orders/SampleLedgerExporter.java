@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
@@ -37,7 +38,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             "Project Manager",
             // "Comments",
             "Date Completed",
-            "Quote ID"
+            "Quote ID",
+            "Billing Errors"
     };
 
     private BSPUserList bspUserList;
@@ -173,12 +175,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
             writeHeaders(currentProduct, sortedPriceItems, sortedAddOns);
 
-            Set<BillingLedger> billingLedgers = getLedgerEntries(productOrders);
-
             // Write content.
             for (ProductOrder productOrder : productOrders) {
                 for (ProductOrderSample sample : productOrder.getSamples()) {
-                    writeRow(sortedPriceItems, sortedAddOns, billingLedgers, sample);
+                    writeRow(sortedPriceItems, sortedAddOns, sample);
                 }
             }
         }
@@ -186,7 +186,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWorkbook().write(out);
     }
 
-    private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns, Set<BillingLedger> billingLedgers, ProductOrderSample sample) {
+    private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns, ProductOrderSample sample) {
         getWriter().nextRow();
 
         // sample name
@@ -213,10 +213,13 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         // getWriter().writeCell("Useful info about the billing history " + sample.getSampleName());
 
         // work complete date
-        getWriter().writeCell(getWorkCompleteDate(billingLedgers, sample));
+        getWriter().writeCell(getWorkCompleteDate(sample.getBillableItems(), sample));
 
         // Quote ID
         getWriter().writeCell(sample.getProductOrder().getQuoteId());
+
+        // Any billing messages
+        getWriter().writeCell(getBillingError(sample.getBillableItems()), getErrorMessageStyle());
 
         // per 2012-11-19 meeting not doing this
         // getWriter().writeCell(sample.getBillingStatus().getDisplayName());
@@ -235,6 +238,19 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
                 writeCountsForPriceItems(billCounts, item);
             }
         }
+    }
+
+    private String getBillingError(Set<BillingLedger> billableItems) {
+        Set<String> errors = new HashSet<String>();
+
+        // Collect all unique errors
+        for (BillingLedger ledger : billableItems) {
+            if (!StringUtils.isBlank(ledger.getBillingMessage())) {
+                errors.add(ledger.getBillingMessage());
+            }
+        }
+
+        return StringUtils.join(errors.iterator(), ", ");
     }
 
     private void writeHeaders(Product currentProduct, List<PriceItem> sortedPriceItems, List<Product> sortedAddOns) {

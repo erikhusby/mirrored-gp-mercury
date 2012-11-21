@@ -26,6 +26,7 @@ public abstract class AbstractSpreadsheetExporter {
     private final CellStyle billedAmountsHeaderStyle;
     private final CellStyle preambleStyle;
     private final CellStyle previouslyBilledStyle;
+    private final CellStyle errorMessageStyle;
 
     private final SpreadSheetWriter writer = new SpreadSheetWriter();
 
@@ -38,6 +39,7 @@ public abstract class AbstractSpreadsheetExporter {
         billedAmountsHeaderStyle = buildBilledAmountsHeaderStyle(workbook);
         preambleStyle = buildPreambleStyle(workbook);
         previouslyBilledStyle = buildPreviouslyBilledStyle(workbook);
+        errorMessageStyle = buildErrorMessageStyle(workbook);
     }
 
     protected SpreadSheetWriter getWriter() {
@@ -50,6 +52,10 @@ public abstract class AbstractSpreadsheetExporter {
 
     protected CellStyle getPriceItemProductHeaderStyle() {
         return priceItemProductHeaderStyle;
+    }
+
+    protected CellStyle getErrorMessageStyle() {
+        return errorMessageStyle;
     }
 
     protected CellStyle getBilledAmountsHeaderStyle() {
@@ -100,6 +106,20 @@ public abstract class AbstractSpreadsheetExporter {
         headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
         style.setFont(headerFont);
         return style;
+    }
+
+    protected CellStyle buildErrorMessageStyle(Workbook wb) {
+        CellStyle style = wb.createCellStyle();
+        style.setFillForegroundColor(IndexedColors.RED.getIndex());
+        style.setFillPattern(CellStyle.THICK_FORWARD_DIAG);
+        style.setAlignment(CellStyle.ALIGN_LEFT);
+        style.setWrapText(true);
+        Font headerFont = wb.createFont();
+        headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
+        headerFont.setColor(IndexedColors.RED.getIndex());
+        style.setFont(headerFont);
+        return style;
+
     }
 
     protected CellStyle buildPreviouslyBilledStyle(Workbook wb) {
