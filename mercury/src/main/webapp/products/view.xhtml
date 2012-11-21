@@ -30,7 +30,7 @@
 
 
 
-        <h:form id="productForm" styleClass="form-horizontal form-readonly" rendered="#{productView.product != null ? true : false }">
+        <h:form id="productForm" styleClass="form-horizontal form-readonly" rendered="#{productView.shouldRenderForm()}">
 
             <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.productManagerRole}">
                 <div class="row-fluid" style="margin-bottom: 30px;">

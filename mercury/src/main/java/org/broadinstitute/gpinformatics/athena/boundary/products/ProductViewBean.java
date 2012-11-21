@@ -56,9 +56,11 @@ public class ProductViewBean extends AbstractJsfBean {
     }
 
     public void onPreRenderView() throws IOException {
-        if (product == null) {
-            addErrorMessage("No product with this part number exists.");
-            facesContext.renderResponse();
+        if (!facesContext.isPostback()) {
+            if (product == null) {
+                addErrorMessage("No product with this part number exists.");
+                facesContext.renderResponse();
+            }
         }
     }
 
@@ -75,6 +77,14 @@ public class ProductViewBean extends AbstractJsfBean {
     }
     public void setGuaranteedCycleTimeDays(final Integer guaranteedCycleTimeDays) {
         product.setGuaranteedCycleTimeSeconds(ProductForm.convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
+    }
+
+    public boolean shouldRenderForm() {
+        if (!facesContext.isPostback()) {
+            return product != null;
+        } else {
+            return true;
+        }
     }
 
     public Product getProduct() {
