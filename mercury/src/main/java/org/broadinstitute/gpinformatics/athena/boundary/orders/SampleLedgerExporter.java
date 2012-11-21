@@ -39,9 +39,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             "Quote ID"
     };
 
-    /** Count shown when no billing has occurred. */
-    private static final Double NO_BILL_COUNT = 0.0d;
-
     private BSPUserList bspUserList;
 
     private BillingLedgerDao billingLedgerDao;
@@ -109,28 +106,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         allPriceItems.add(0, product.getDefaultPriceItem());
 
         return allPriceItems;
-    }
-
-    private static Map<PriceItem, LedgerQuantities> getLedgerQuantities(ProductOrderSample sample) {
-        Set<BillingLedger> ledgerItems = sample.getBillableItems();
-        if (ledgerItems.isEmpty()) {
-            return Collections.emptyMap();
-        }
-
-        Map<PriceItem, LedgerQuantities> sampleStatus = new HashMap<PriceItem, LedgerQuantities>();
-        for (BillingLedger item : ledgerItems) {
-            if (!sampleStatus.containsKey(item.getPriceItem())) {
-                sampleStatus.put(item.getPriceItem(), new LedgerQuantities());
-            }
-
-            if (item.getBillingSession() != null) {
-                sampleStatus.get(item.getPriceItem()).addToBilled(item.getQuantity());
-            } else {
-                sampleStatus.get(item.getPriceItem()).addToUploaded(item.getQuantity());
-            }
-        }
-
-        return sampleStatus;
     }
 
     private void writePriceItemProductHeader(PriceItem priceItem, Product product) {
@@ -232,7 +207,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         // per 2012-11-19 meeting not doing this
         // getWriter().writeCell(sample.getBillingStatus().getDisplayName());
 
-        Map<PriceItem, LedgerQuantities> billCounts = getLedgerQuantities(sample);
+        Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = ProductOrderSample.getLedgerQuantities(sample);
 
         // write out for the price item columns
         for (PriceItem item : sortedPriceItems) {
@@ -290,50 +265,16 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
      * @param billCounts All the counts for this PDO sample
      * @param item The price item to look up
      */
-    private void writeCountsForPriceItems(Map<PriceItem, LedgerQuantities> billCounts, PriceItem item) {
-        LedgerQuantities quantities = billCounts.get(item);
+    private void writeCountsForPriceItems(Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts, PriceItem item) {
+        ProductOrderSample.LedgerQuantities quantities = billCounts.get(item);
         if (quantities != null) {
             getWriter().writeCell(quantities.getBilled());
             getWriter().writeCell(quantities.getUploaded());
         } else {
             // write nothing for billed and new
-            getWriter().writeCell(NO_BILL_COUNT);
-            getWriter().writeCell("");
+            getWriter().writeCell(ProductOrderSample.NO_BILL_COUNT);
+            getWriter().writeCell(ProductOrderSample.NO_BILL_COUNT);
         }
     }
 
-    /**
-     * This class holds the billed and uploaded ledger counts for a particular pdo and price item
-     */
-    private static class LedgerQuantities {
-        private Double billed = NO_BILL_COUNT;   // If nothing is billed yet, then the total is still 0.
-        private Double uploaded = null;          // If nothing has been uploaded, we want to just ignore this for upload
-
-        public void addToBilled(Double quantity) {
-            billed += quantity;
-        }
-
-        public void addToUploaded(Double quantity) {
-
-            // Should only be one quantity uploaded at any time
-            if (uploaded != null) {
-                throw new IllegalStateException("Should only have one quantity being uploaded for this price item and PDO Sample");
-            }
-
-            // so, no adding needed
-            uploaded = quantity;
-        }
-
-        public String getBilled() {
-            return billed.toString();
-        }
-
-        public String getUploaded() {
-            if (uploaded == null) {
-                return "";
-            }
-
-            return uploaded.toString();
-        }
-    }
 }
