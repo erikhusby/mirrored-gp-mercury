@@ -28,13 +28,13 @@ public class ProductViewBean extends AbstractJsfBean {
     /**
      * Store add-ons in conversation scope to support p:dataTable sorting.
      */
-    @ConversationScoped public static class AddOnTableData extends TableData {}
+    @ConversationScoped public static class AddOnTableData extends TableData<Product> {}
     @Inject private AddOnTableData addOnData;
 
     /**
      * Store price items in conversation scope to support p:dataTable sorting.
      */
-    @ConversationScoped public static class PriceItemTableData extends TableData {}
+    @ConversationScoped public static class PriceItemTableData extends TableData<PriceItem> {}
     @Inject private PriceItemTableData priceItemData;
 
     @Inject
