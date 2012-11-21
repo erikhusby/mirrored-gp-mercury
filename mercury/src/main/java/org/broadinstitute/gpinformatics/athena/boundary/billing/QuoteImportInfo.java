@@ -45,7 +45,7 @@ public class QuoteImportInfo {
         }
 
         // Get the date bucket for this price item
-        Date bucketDate = getBucketDate(ledger.getDateWorkCompleted());
+        Date bucketDate = getBucketDate(ledger.getWorkCompleteDate());
         if (!quantitiesByQuotePriceItem.get(quoteId).get(priceItem).containsKey(bucketDate)) {
             quantitiesByQuotePriceItem.get(quoteId).get(priceItem).put(bucketDate, new ArrayList<BillingLedger> ());
         }
