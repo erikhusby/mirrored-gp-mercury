@@ -25,7 +25,9 @@ import java.util.EnumSet;
 @Named
 @SessionScoped
 public class UserBean implements Serializable {
-    public static final String SUPPORT_EMAIL = "mercury-support@broadinstitute.org";
+    private static final String SUPPORT_EMAIL = "mercury-support@broadinstitute.org";
+
+    private static final String LOGIN_WARNING = "You need to log into JIRA and BSP before you can {0}.";
 
     @Nullable
     private BspUser bspUser;
@@ -44,6 +46,10 @@ public class UserBean implements Serializable {
     // FIXME: This is a HACK because we can't inject BSPUserList when running in arquillian.
     public void setBspUserList(BSPUserList bspUserList) {
         this.bspUserList = bspUserList;
+    }
+
+    public String warnOperation(String operation) {
+        return MessageFormat.format(LOGIN_WARNING, operation);
     }
 
     public enum ServerStatus {
@@ -153,14 +159,15 @@ public class UserBean implements Serializable {
         }
     }
 
+    public boolean isValidUser() {
+        return isValidBspUser() && isValidJiraUser();
+    }
+
     /**
      * @return CSS class for styling user name 'badge' at top of screen
      */
     public String getBadgeClass() {
-        if (isValidBspUser() && isValidJiraUser()) {
-            return "badge-success";
-        }
-        return "badge-warning";
+        return isValidUser() ? "badge-success" : "badge-warning";
     }
 
     public String getBspStatus() {

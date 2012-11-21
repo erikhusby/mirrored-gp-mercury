@@ -7,7 +7,8 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:p="http://primefaces.org/ui"
-      xmlns:f="http://java.sun.com/jsf/core">
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:pe="http://primefaces.org/ui/extensions">
 <body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">New Product Order</ui:define>
@@ -19,10 +20,6 @@
             </f:metadata>
             <f:event type="preRenderView" listener="#{productOrderForm.initForm}"/>
         </ui:define>
-
-        <p:outputPanel rendered="#{!userBean.validBspUser || !userBean.validJiraUser}">
-            Because you aren't logged in to the BSP and JIRA servers, you won't be able to create a Product Order.
-        </p:outputPanel>
 
         <ui:define name="body">
             <p:dialog header="Enter Samples" widgetVar="samplesDialog" modal="true" onShow="">
@@ -158,16 +155,16 @@
                         <div class="row-fluid">
                             <div class="span1">
                                 <p:commandButton
-                                        id="placeOrderButton1"
-                                        disabled="#{!userBean.validBspUser || !userBean.validJiraUser}"
+                                        disabled="#{!productOrderForm.createEnabled}"
                                         value="Place&nbsp;Order" action="#{productOrderForm.save}"
                                         ajax="false" styleClass="ui-priority-primary"/>
+                            </div>
+                            <div class="span1">
+                                <h:link outcome="list" value="Cancel"/>
                             </div>
                         </div>
                     </div>
                 </div>
-                <p:tooltip for="placeOrderButton1" value="Must be logged in to JIRA and BSP to place an order."
-                           rendered="#{!userBean.validBspUser || !userBean.validJiraUser}"/>
 
                 <h:panelGroup id="sampleDisplay">
 
@@ -235,12 +232,9 @@
                         <div class="row-fluid">
                             <div class="span1">
                                 <p:commandButton
-                                        disabled="#{!userBean.validBspUser || !userBean.validJiraUser}"
-                                        id="placeOrderButton2"
+                                        disabled="#{!productOrderForm.createEnabled}"
                                         value="Place&nbsp;Order" action="#{productOrderForm.save}"
                                         ajax="false" styleClass="ui-priority-primary"/>
-                                <p:tooltip for="placeOrderButton2" value="Must be logged in to JIRA and BSP to place an order."
-                                           rendered="#{!userBean.validBspUser || !userBean.validJiraUser}"/>
                             </div>
                             <div class="span1">
                                 <h:link outcome="list" value="Cancel"/>

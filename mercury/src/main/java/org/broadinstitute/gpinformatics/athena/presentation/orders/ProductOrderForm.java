@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.primefaces.event.SelectEvent;
 
 import javax.annotation.Nonnull;
@@ -49,6 +50,9 @@ public class ProductOrderForm extends AbstractJsfBean {
     @Inject
     private ProductOrderConversationData conversationData;
 
+    @Inject
+    private UserBean userBean;
+
     private List<String> selectedAddOns = new ArrayList<String>();
 
     /**
@@ -70,6 +74,8 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     /** Automatically convert known BSP IDs (SM-, SP-) to uppercase. */
     private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
+
+    public static final String LOGIN_WARNING = "You need to log into JIRA and BSP before you can create an order.";
 
     public UIInput getEditIdsCacheBinding() {
         return editIdsCacheBinding;
@@ -318,5 +324,9 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     public void initForm() {
         conversationData.beginConversation(productOrderDetail.getProductOrder());
+        // Perform our startup validation; post an error if user is not currently logged in.
+        if (!userBean.isValidUser()) {
+            addErrorMessage(userBean.warnOperation("create an order"));
+        }
     }
 }
