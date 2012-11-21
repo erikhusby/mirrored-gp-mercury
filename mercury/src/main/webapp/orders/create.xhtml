@@ -77,6 +77,7 @@
                 <div class="control-group">
                     <p:outputLabel for="product" value="Product" styleClass="control-label"/>
                     <div class="controls">
+                        <!--@elvariable id="product" type="org.broadinstitute.gpinformatics.athena.entity.products.Product"-->
                         <p:autoComplete id="product" value="#{productOrderDetail.productOrder.product}"
                                         completeMethod="#{productList.getProductCompletions}"
                                         forceSelection="true"
@@ -88,7 +89,7 @@
                                         required="true"
                                         scrollHeight="250"
                                         size="50">
-                            <p:ajax event="itemSelect" listener="#{productOrderForm.setupAddOns}" update="perfbyselection"/>
+                            <p:ajax event="itemSelect" listener="#{productOrderForm.setupAddOns}" update="perfbyselection,numberOfLanes"/>
                         </p:autoComplete>
                         <p:watermark for="product" value="Type name to search"/>
                         <p:message for="product"/>

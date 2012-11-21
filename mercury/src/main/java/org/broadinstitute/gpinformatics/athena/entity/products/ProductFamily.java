@@ -8,7 +8,6 @@ import org.hibernate.envers.Audited;
 import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.Comparator;
 
 
 /**
@@ -53,7 +52,7 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
         this.name = name;
     }
 
-    public boolean supportsNumberOfLanes() {
+    public boolean isSupportsNumberOfLanes() {
         return name.equals(SEQUENCE_ONLY_NAME);
     }
 
@@ -67,7 +66,7 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 
     @Override
     public int compareTo(ProductFamily other) {
-        return name.compareTo(other.name);
+        return name.compareTo(other.getName());
     }
 
     @Override
@@ -78,7 +77,7 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 
         ProductFamily that = (ProductFamily) o;
 
-        return new EqualsBuilder().append(name, that.name).isEquals();
+        return new EqualsBuilder().append(name, that.getName()).isEquals();
 
     }
 

@@ -891,9 +891,9 @@ public class ProductOrder implements Serializable {
 
         ProductOrder that = (ProductOrder) o;
 
-        if (researchProject != null ? !researchProject.equals(that.researchProject) : that.researchProject != null)
+        if (researchProject != null ? !researchProject.equals(that.getResearchProject()) : that.getResearchProject() != null)
             return false;
-        if (title != null ? !title.equals(that.title) : that.title != null) return false;
+        if (title != null ? !title.equals(that.getTitle()) : that.getTitle() != null) return false;
 
         return true;
     }
