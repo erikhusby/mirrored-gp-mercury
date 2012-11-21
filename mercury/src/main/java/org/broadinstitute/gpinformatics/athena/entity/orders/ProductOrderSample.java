@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
@@ -44,12 +45,12 @@ public class ProductOrderSample implements Serializable {
     private String sampleComment;
 
     @Index(name = "ix_pos_product_order")
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(insertable = false, updatable = false)
     private ProductOrder productOrder;
 
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "productOrderSample")
-    private Set<BillableItem> billableItems = new HashSet<BillableItem>();
+    @OneToMany(mappedBy = "productOrderSample")
+    private Set<BillingLedger> ledgerItems = new HashSet<BillingLedger>();
 
     @Transient
     private BSPSampleDTO bspDTO = BSPSampleDTO.DUMMY;
@@ -127,16 +128,12 @@ public class ProductOrderSample implements Serializable {
         return bspDTO;
     }
 
-    public Set<BillableItem> getBillableItems() {
-        return billableItems;
+    public Set<BillingLedger> getBillableItems() {
+        return ledgerItems;
     }
 
     public Long getProductOrderSampleId() {
         return productOrderSampleId;
-    }
-
-    public void addBillableItem(BillableItem billableItem) {
-        billableItems.add(billableItem);
     }
 
     public void setBspDTO(@Nonnull BSPSampleDTO bspDTO) {
@@ -170,14 +167,13 @@ public class ProductOrderSample implements Serializable {
 
         ProductOrderSample that = (ProductOrderSample) o;
         return new EqualsBuilder().append(sampleName, that.sampleName).append(billingStatus, that.billingStatus)
-                .append(sampleComment, that.sampleComment).append(billableItems, that.billableItems)
+                .append(sampleComment, that.sampleComment)
                 .append(productOrder, that.productOrder).append(bspDTO, that.bspDTO).build();
     }
 
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(sampleName).append(billingStatus)
-                .append(sampleComment).append(billableItems).append(productOrder)
-                .append(bspDTO).build();
+                .append(sampleComment).append(productOrder).append(bspDTO).build();
     }
 }

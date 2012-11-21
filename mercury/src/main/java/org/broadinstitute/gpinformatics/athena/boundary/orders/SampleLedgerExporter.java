@@ -4,7 +4,6 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
-import org.broadinstitute.gpinformatics.athena.entity.orders.BillableItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -13,7 +12,6 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 
 import java.io.IOException;
 import java.io.OutputStream;
-import java.math.BigDecimal;
 import java.util.*;
 
 /**
@@ -42,7 +40,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     };
 
     /** Count shown when no billing has occurred. */
-    private static final String NO_BILL_COUNT = "0";
+    private static final Double NO_BILL_COUNT = 0.0d;
 
     private BSPUserList bspUserList;
 
@@ -71,15 +69,13 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         return bspUserList.getById(id).getUsername();
     }
 
-
     private Set<BillingLedger> getLedgerEntries(Collection<ProductOrder> productOrders) {
         if (billingLedgerDao == null) {
             return null;
         }
 
-        return billingLedgerDao.findByOrderList(productOrders.toArray(new ProductOrder[0]));
+        return billingLedgerDao.findByOrderList(productOrders.toArray(new ProductOrder[productOrders.size()]));
     }
-
 
     private Date getWorkCompleteDate(Set<BillingLedger> billingLedgers, ProductOrderSample productOrderSample) {
         if (billingLedgers == null) {
@@ -96,7 +92,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         return null;
     }
-
 
     private List<PriceItem> getPriceItems(Product product) {
         // Create a copy of the product's price items list in order to impose an order on it.
@@ -116,29 +111,36 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         return allPriceItems;
     }
 
-    private static Map<PriceItem, BigDecimal> getBillCounts(ProductOrderSample sample) {
-        Set<BillableItem> billableItems = sample.getBillableItems();
-        if (billableItems.isEmpty()) {
+    private static Map<PriceItem, LedgerQuantities> getLedgerQuantities(ProductOrderSample sample) {
+        Set<BillingLedger> ledgerItems = sample.getBillableItems();
+        if (ledgerItems.isEmpty()) {
             return Collections.emptyMap();
         }
-        Map<PriceItem, BigDecimal> sampleStatus = new HashMap<PriceItem, BigDecimal>();
-        for (BillableItem item : billableItems) {
-            sampleStatus.put(item.getPriceItem(), item.getCount());
+
+        Map<PriceItem, LedgerQuantities> sampleStatus = new HashMap<PriceItem, LedgerQuantities>();
+        for (BillingLedger item : ledgerItems) {
+            if (!sampleStatus.containsKey(item.getPriceItem())) {
+                sampleStatus.put(item.getPriceItem(), new LedgerQuantities());
+            }
+
+            if (item.getBillingSession() != null) {
+                sampleStatus.get(item.getPriceItem()).addToBilled(item.getQuantity());
+            } else {
+                sampleStatus.get(item.getPriceItem()).addToUploaded(item.getQuantity());
+            }
         }
+
         return sampleStatus;
     }
-
 
     private void writePriceItemProductHeader(PriceItem priceItem, Product product) {
         getWriter().writeCell(priceItem.getName() + " [" + product.getPartNumber() + "]", 2, getPriceItemProductHeaderStyle());
     }
 
-
-    private void writeBilledHeaders() {
-        getWriter().writeCell("Billed", getBilledAmountsHeaderStyle());
-        getWriter().writeCell("New Quantity", getBilledAmountsHeaderStyle());
+    private void writeBilledHeaders(PriceItem priceItem) {
+        getWriter().writeCell("Billed to " + priceItem.getName(), getBilledAmountsHeaderStyle());
+        getWriter().writeCell("New Quantity " + priceItem.getName(), getBilledAmountsHeaderStyle());
     }
-
 
     /**
      * Write out the spreadsheet contents to a stream.  The output is in native excel format.
@@ -183,90 +185,155 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             // Get the ordered price items for the current product, add the spanning price item + product headers
             List<PriceItem> sortedPriceItems = getPriceItems(currentProduct);
 
-            for (PriceItem priceItem : sortedPriceItems) {
-                writePriceItemProductHeader(priceItem, currentProduct);
-            }
-
-            // Repeat the process for add ons
+            // add on products
             List<Product> sortedAddOns = new ArrayList<Product>(currentProduct.getAddOns());
             Collections.sort(sortedAddOns);
 
-            for (Product addOn : sortedAddOns) {
-                List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn);
-                for (PriceItem priceItem : sortedAddOnPriceItems) {
-                    writePriceItemProductHeader(priceItem, addOn);
-                }
-            }
-
-            // secondary header line
-            getWriter().nextRow();
-            // Write blank secondary header line for fixed columns
-            for (String header : FIXED_HEADERS) {
-                getWriter().writeCell("", getFixedHeaderStyle());
-            }
-
-            // primary price item for main product
-            writeBilledHeaders();
-            for (PriceItem priceItem : currentProduct.getPriceItems()) {
-                writeBilledHeaders();
-            }
-
-            for (Product addOn : currentProduct.getAddOns()) {
-                // primary price item for this add-on
-                writeBilledHeaders();
-
-                for (PriceItem priceItem : addOn.getPriceItems()) {
-                    writeBilledHeaders();
-                }
-            }
-
+            writeHeaders(currentProduct, sortedPriceItems, sortedAddOns);
 
             Set<BillingLedger> billingLedgers = getLedgerEntries(productOrders);
 
             // Write content.
             for (ProductOrder productOrder : productOrders) {
-
                 for (ProductOrderSample sample : productOrder.getSamples()) {
-                    getWriter().nextRow();
-                    // sample name
-                    getWriter().writeCell(sample.getSampleName());
-                    // collaborator sample ID, looks like this is properly initialized
-                    getWriter().writeCell(sample.getBspDTO().getCollaboratorsSampleName());
-                    // product name
-                    getWriter().writeCell(sample.getProductOrder().getProduct().getProductName());
-                    // Product Order ID
-                    getWriter().writeCell(sample.getProductOrder().getBusinessKey());
-                    // Product Order Name (actually this concept is called 'Title' in PDO world)
-                    getWriter().writeCell(sample.getProductOrder().getTitle());
-                    // Project Manager - need to turn this into a user name
-                    getWriter().writeCell(getBspUsername(sample.getProductOrder().getCreatedBy()));
-                    // Per 2012-11-20 HipChat discussion with Hugh and Alex we will not try to store comment
-                    // Per 2012-11-20 HipChat discussion with Howie this might be used as a read-only field for
-                    // advisory info.  If someone has time to write this useful info this column can go back in
-                    // getWriter().writeCell("Useful info about the billing history " + sample.getSampleName());
-
-                    // work complete date
-                    getWriter().writeCell(getWorkCompleteDate(billingLedgers, sample));
-
-                    // Quote ID
-                    getWriter().writeCell(sample.getProductOrder().getQuoteId());
-
-                    // per 2012-11-19 meeting not doing this
-                    // getWriter().writeCell(sample.getBillingStatus().getDisplayName());
-
-                    Map<PriceItem, BigDecimal> billCounts = getBillCounts(sample);
-                    for (PriceItem item : sortedPriceItems) {
-                        BigDecimal count = billCounts.get(item);
-                        if (count != null) {
-                            getWriter().writeCell(count.doubleValue());
-                        } else {
-                            getWriter().writeCell(NO_BILL_COUNT);
-                        }
-                    }
+                    writeRow(sortedPriceItems, sortedAddOns, billingLedgers, sample);
                 }
             }
         }
 
         getWorkbook().write(out);
+    }
+
+    private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns, Set<BillingLedger> billingLedgers, ProductOrderSample sample) {
+        getWriter().nextRow();
+        // sample name
+        getWriter().writeCell(sample.getSampleName());
+        // collaborator sample ID, looks like this is properly initialized
+        getWriter().writeCell(sample.getBspDTO().getCollaboratorsSampleName());
+        // product name
+        getWriter().writeCell(sample.getProductOrder().getProduct().getProductName());
+        // Product Order ID
+        getWriter().writeCell(sample.getProductOrder().getBusinessKey());
+        // Product Order Name (actually this concept is called 'Title' in PDO world)
+        getWriter().writeCell(sample.getProductOrder().getTitle());
+        // Project Manager - need to turn this into a user name
+        getWriter().writeCell(getBspUsername(sample.getProductOrder().getCreatedBy()));
+        // Per 2012-11-20 HipChat discussion with Hugh and Alex we will not try to store comment
+        // Per 2012-11-20 HipChat discussion with Howie this might be used as a read-only field for
+        // advisory info.  If someone has time to write this useful info this column can go back in
+        // getWriter().writeCell("Useful info about the billing history " + sample.getSampleName());
+
+        // work complete date
+        getWriter().writeCell(getWorkCompleteDate(billingLedgers, sample));
+
+        // Quote ID
+        getWriter().writeCell(sample.getProductOrder().getQuoteId());
+
+        // per 2012-11-19 meeting not doing this
+        // getWriter().writeCell(sample.getBillingStatus().getDisplayName());
+
+        Map<PriceItem, LedgerQuantities> billCounts = getLedgerQuantities(sample);
+
+        // write out for the price item columns
+        for (PriceItem item : sortedPriceItems) {
+            writeCountsForPriceItems(billCounts, item);
+        }
+
+        // And for add-ons
+        for (Product addOn : sortedAddOns) {
+            List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn);
+            for (PriceItem item : sortedAddOnPriceItems) {
+                writeCountsForPriceItems(billCounts, item);
+            }
+        }
+    }
+
+    private void writeHeaders(Product currentProduct, List<PriceItem> sortedPriceItems, List<Product> sortedAddOns) {
+        for (PriceItem priceItem : sortedPriceItems) {
+            writePriceItemProductHeader(priceItem, currentProduct);
+        }
+
+        // Repeat the process for add ons
+        for (Product addOn : sortedAddOns) {
+            List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn);
+            for (PriceItem priceItem : sortedAddOnPriceItems) {
+                writePriceItemProductHeader(priceItem, addOn);
+            }
+        }
+
+        // secondary header line
+        getWriter().nextRow();
+        // Write blank secondary header line for fixed columns
+        for (String header : FIXED_HEADERS) {
+            getWriter().writeCell("", getFixedHeaderStyle());
+        }
+
+        // primary price item for main product
+        writeBilledHeaders(currentProduct.getDefaultPriceItem());
+        for (PriceItem priceItem : currentProduct.getPriceItems()) {
+            writeBilledHeaders(priceItem);
+        }
+
+        for (Product addOn : currentProduct.getAddOns()) {
+            // primary price item for this add-on
+            writeBilledHeaders(addOn.getDefaultPriceItem());
+
+            for (PriceItem priceItem : addOn.getPriceItems()) {
+                writeBilledHeaders(priceItem);
+            }
+        }
+    }
+
+    /**
+     * Write out the two count columns for the specified price item.
+     *
+     * @param billCounts All the counts for this PDO sample
+     * @param item The price item to look up
+     */
+    private void writeCountsForPriceItems(Map<PriceItem, LedgerQuantities> billCounts, PriceItem item) {
+        LedgerQuantities quantities = billCounts.get(item);
+        if (quantities != null) {
+            getWriter().writeCell(quantities.getBilled());
+            getWriter().writeCell(quantities.getUploaded());
+        } else {
+            // write nothing for billed and new
+            getWriter().writeCell(NO_BILL_COUNT);
+            getWriter().writeCell("");
+        }
+    }
+
+    /**
+     * This class holds the billed and uploaded ledger counts for a particular pdo and price item
+     */
+    private static class LedgerQuantities {
+        private Double billed = NO_BILL_COUNT;   // If nothing is billed yet, then the total is still 0.
+        private Double uploaded = null;          // If nothing has been uploaded, we want to just ignore this for upload
+
+        public void addToBilled(Double quantity) {
+            billed += quantity;
+        }
+
+        public void addToUploaded(Double quantity) {
+
+            // Should only be one quantity uploaded at any time
+            if (uploaded != null) {
+                throw new IllegalStateException("Should only have one quantity being uploaded for this price item and PDO Sample");
+            }
+
+            // so, no adding needed
+            uploaded = quantity;
+        }
+
+        public String getBilled() {
+            return billed.toString();
+        }
+
+        public String getUploaded() {
+            if (uploaded == null) {
+                return "";
+            }
+
+            return uploaded.toString();
+        }
     }
 }
