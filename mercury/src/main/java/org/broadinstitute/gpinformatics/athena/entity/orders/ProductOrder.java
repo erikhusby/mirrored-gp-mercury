@@ -718,7 +718,7 @@ public class ProductOrder implements Serializable {
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.QUOTE_ID, quoteId));
         }
         listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.SAMPLE_IDS,
-                StringUtils.join(getSampleNames(), ',')));
+                StringUtils.join(getSampleNames(), '\n')));
 
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
 
