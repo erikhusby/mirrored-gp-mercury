@@ -967,4 +967,30 @@
                                  referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
     </changeSet>
 
+    <changeSet id="GPLIM-368" author="pshapiro">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_order" columnName="count" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order">
+            <column name="count" type="number(10,0)"/>
+        </addColumn>
+        <addNotNullConstraint
+                tableName="product_order"
+                columnName="count"
+                defaultNullValue="1" />
+    </changeSet>
+
+    <changeSet id="GPLIM-368-1" author="pshapiro">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_order_aud" columnName="count" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_aud">
+            <column name="count" type="number(10,0)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
