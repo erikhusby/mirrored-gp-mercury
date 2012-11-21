@@ -53,8 +53,12 @@
                     </h:outputLink>
                 </p:column>
 
-                <p:column headerText="Product" sortBy="#{order.product.productName}" sortingComparator="caseInsensitiveText">
+                <p:column headerText="Product" style="width:200px;" sortBy="#{order.product.productName}" sortingComparator="caseInsensitiveText">
                     #{order.product.productName}
+                </p:column>
+
+                <p:column headerText="Product Family" style="width:150px;" sortBy="#{order.product.productFamily.name}" sortingComparator="caseInsensitiveText">
+                    #{order.product.productFamily.name}
                 </p:column>
 
                 <p:column headerText="Status" filterBy="#{order.orderStatus}" filterOptions="#{productOrderBean.allOrderStatuses}" filterMatchMode="exact">

@@ -483,9 +483,8 @@ public class ResearchProject implements Serializable {
         // Update ticket with link back into Mercury
         MercuryConfig mercuryConfig = ServiceAccessUtility.getBean(MercuryConfig.class);
         CustomField mercuryUrlField = new CustomField(
-                submissionFields.get(RequiredSubmissionFields.MERCURY_URL.getFieldName()),
-                mercuryConfig.getUrl() + "projects/view.xhtml?researchProject=" + jiraTicketKey,
-                CustomField.SingleFieldType.TEXT);
+                submissionFields, RequiredSubmissionFields.MERCURY_URL,
+                mercuryConfig.getUrl() + "projects/view.xhtml?researchProject=" + jiraTicketKey);
         issue.updateIssue(Collections.singleton(mercuryUrlField));
     }
 

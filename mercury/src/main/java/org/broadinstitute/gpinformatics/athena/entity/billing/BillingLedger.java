@@ -43,8 +43,8 @@ public class BillingLedger {
     @ManyToOne
     private BillingSession billingSession;
 
-    @Column(name = "BILLED_DATE")
-    private Date billedDate;
+    @Column(name = "WORK_COMPLETE_DATE")
+    private Date workCompleteDate;
 
     @Column(name = "BILLING_MESSAGE")
     private String billingMessage;
@@ -97,12 +97,12 @@ public class BillingLedger {
         this.billingSession = billingSession;
     }
 
-    public Date getBilledDate() {
-        return billedDate;
+    public Date getWorkCompleteDate() {
+        return workCompleteDate;
     }
 
-    public void setBilledDate(Date billedDate) {
-        this.billedDate = billedDate;
+    public void setWorkCompleteDate(Date workCompleteDate) {
+        this.workCompleteDate = workCompleteDate;
     }
 
     public String getBillingMessage() {

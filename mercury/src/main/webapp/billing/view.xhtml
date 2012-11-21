@@ -65,7 +65,7 @@
                     </div>
                 </div>
 
-                <!-- billed date -->
+                <!-- date that these will be billed to -->
                 <div class="control-group">
                     <label class="control-label label-form">Billed Date</label>
                     <div class="controls">
@@ -96,8 +96,20 @@
                 <p:column headerText="Quantity">
                     #{item.quantity}
                 </p:column>
-                <p:column headerText="Billed Date">
-                    #{item.billedDate}
+                <p:column headerText="Work Completed">
+                    <div class="form-value">
+                        #{item.numSamples}<br/>
+                        <h:outputText value="#{item.startRange}">
+                            <f:convertDateTime type="date" dateStyle="short"/>
+                        </h:outputText>
+                        -
+                        <h:outputText value="#{item.endRange}">
+                            <f:convertDateTime type="date" dateStyle="short"/>
+                        </h:outputText>
+                    </div>
+                </p:column>
+                <p:column headerText="Work Complete Date">
+                    #{item.workCompleteDate}
                 </p:column>
                 <p:column headerText="Billing Message" width="650">
                     #{item.billingMessage}
