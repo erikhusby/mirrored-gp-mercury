@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
@@ -58,12 +59,13 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
     }
 
-    private String getBspUsername(long id) {
+    private String getBspFullName(long id) {
         if (bspUserList == null) {
             return "User id " + id;
         }
 
-        return bspUserList.getById(id).getUsername();
+        BspUser user = bspUserList.getById(id);
+        return user.getFirstName() + " " + user.getLastName();
     }
 
     private Set<BillingLedger> getLedgerEntries(Collection<ProductOrder> productOrders) {
@@ -112,9 +114,14 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell(priceItem.getName() + " [" + product.getPartNumber() + "]", 2, getPriceItemProductHeaderStyle());
     }
 
-    private void writeBilledHeaders(PriceItem priceItem) {
-        getWriter().writeCell("Billed to " + priceItem.getName(), getBilledAmountsHeaderStyle());
-        getWriter().writeCell("New Quantity " + priceItem.getName(), getBilledAmountsHeaderStyle());
+    private void writeCategoryHeaders(PriceItem priceItem) {
+        getWriter().writeCell("Billed to " + priceItem.getCategory(), getBilledAmountsHeaderStyle());
+        getWriter().writeCell("New Quantity " + priceItem.getCategory(), getBilledAmountsHeaderStyle());
+    }
+
+    private void writePriceItemHeaders(PriceItem priceItem) {
+        getWriter().writeCell(priceItem.getName(), getBilledAmountsHeaderStyle());
+        getWriter().writeCell(priceItem.getName(), getBilledAmountsHeaderStyle());
     }
 
     /**
@@ -181,18 +188,25 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
     private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns, Set<BillingLedger> billingLedgers, ProductOrderSample sample) {
         getWriter().nextRow();
+
         // sample name
         getWriter().writeCell(sample.getSampleName());
+
         // collaborator sample ID, looks like this is properly initialized
         getWriter().writeCell(sample.getBspDTO().getCollaboratorsSampleName());
+
         // product name
         getWriter().writeCell(sample.getProductOrder().getProduct().getProductName());
+
         // Product Order ID
         getWriter().writeCell(sample.getProductOrder().getBusinessKey());
+
         // Product Order Name (actually this concept is called 'Title' in PDO world)
         getWriter().writeCell(sample.getProductOrder().getTitle());
+
         // Project Manager - need to turn this into a user name
-        getWriter().writeCell(getBspUsername(sample.getProductOrder().getCreatedBy()));
+        getWriter().writeCell(getBspFullName(sample.getProductOrder().getCreatedBy()));
+
         // Per 2012-11-20 HipChat discussion with Hugh and Alex we will not try to store comment
         // Per 2012-11-20 HipChat discussion with Howie this might be used as a read-only field for
         // advisory info.  If someone has time to write this useful info this column can go back in
@@ -237,25 +251,56 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
 
         // secondary header line
+        writeEmptyHeaderRow();
+
+        // tertiary header line
+        writeEmptyHeaderRow();
+
+        writeAllCategoryHeaders(currentProduct.getDefaultPriceItem(), currentProduct.getPriceItems(), currentProduct.getAddOns());
+        writeAllPriceItemHeaders(currentProduct.getDefaultPriceItem(), currentProduct.getPriceItems(), currentProduct.getAddOns());
+    }
+
+    private void writeAllPriceItemHeaders(PriceItem defaultPriceItem, Set<PriceItem> priceItems, Set<Product> addOns) {
+
+        // primary price item for main product
+        writePriceItemHeaders(defaultPriceItem);
+        for (PriceItem priceItem : priceItems) {
+            writePriceItemHeaders(priceItem);
+        }
+
+        for (Product addOn : addOns) {
+            // primary price item for this add-on
+            writePriceItemHeaders(addOn.getDefaultPriceItem());
+
+            for (PriceItem priceItem : addOn.getPriceItems()) {
+                writePriceItemHeaders(priceItem);
+            }
+        }
+    }
+
+    private void writeAllCategoryHeaders(PriceItem defaultPriceItem, Set<PriceItem> priceItems, Set<Product> addOns) {
+
+        // primary price item for main product
+        writeCategoryHeaders(defaultPriceItem);
+        for (PriceItem priceItem : priceItems) {
+            writeCategoryHeaders(priceItem);
+        }
+
+        for (Product addOn : addOns) {
+            // primary price item for this add-on
+            writeCategoryHeaders(addOn.getDefaultPriceItem());
+
+            for (PriceItem priceItem : addOn.getPriceItems()) {
+                writeCategoryHeaders(priceItem);
+            }
+        }
+    }
+
+    private void writeEmptyHeaderRow() {
         getWriter().nextRow();
         // Write blank secondary header line for fixed columns
         for (String header : FIXED_HEADERS) {
-            getWriter().writeCell("", getFixedHeaderStyle());
-        }
-
-        // primary price item for main product
-        writeBilledHeaders(currentProduct.getDefaultPriceItem());
-        for (PriceItem priceItem : currentProduct.getPriceItems()) {
-            writeBilledHeaders(priceItem);
-        }
-
-        for (Product addOn : currentProduct.getAddOns()) {
-            // primary price item for this add-on
-            writeBilledHeaders(addOn.getDefaultPriceItem());
-
-            for (PriceItem priceItem : addOn.getPriceItems()) {
-                writeBilledHeaders(priceItem);
-            }
+            getWriter().writeCell(" ", getFixedHeaderStyle());
         }
     }
 
