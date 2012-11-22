@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.util;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
@@ -7,6 +8,7 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import javax.faces.context.FacesContext;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -136,6 +138,23 @@ public abstract class AbstractSpreadsheetExporter {
     }
 
     /**
+     * This handles the details of sending a stream of data back through the faces context as a download.
+     *
+     * @param inputStream The stream of data
+     * @param filename The name of the file to be sent to the browser
+     *
+     * @throws IOException Any errors
+     */
+    public static void copyForDownload(InputStream inputStream, String filename) throws IOException {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        OutputStream finalOutputStream = AbstractSpreadsheetExporter.beginSpreadsheetDownload(facesContext, filename);
+        IOUtils.copy(inputStream, finalOutputStream);
+
+        // Since this is a transfer, then the response is done and nothing needs to be displayed
+        facesContext.responseComplete();
+    }
+
+    /**
      * Utility function for setting up the excel spreadsheet on the response
      *
      * @param fc The faces context to grab the response from
@@ -144,7 +163,7 @@ public abstract class AbstractSpreadsheetExporter {
      * @return The output stream to grab
      * @throws IOException Any errors
      */
-    public static OutputStream beginSpreadsheetDownload(FacesContext fc, String filename) throws IOException {
+    private static OutputStream beginSpreadsheetDownload(FacesContext fc, String filename) throws IOException {
 
         HttpServletResponse response = (HttpServletResponse) fc.getExternalContext().getResponse();
 

@@ -466,19 +466,13 @@ public class ProductOrderForm extends AbstractJsfBean {
             tempFile = File.createTempFile(filename, "xls");
             outputStream = new FileOutputStream(tempFile);
 
-            // dummy code to plumb in spreadsheet write.  this is not the right format and it's only doing the first PDO!
-            SampleLedgerExporter sampleLedgerExporter =
-                    new SampleLedgerExporter(orders, bspUserList, ledgerDao);
+            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(orders, bspUserList, ledgerDao);
             sampleLedgerExporter.writeToStream(outputStream);
             IOUtils.closeQuietly(outputStream);
-
-            FacesContext facesContext = FacesContext.getCurrentInstance();
-            OutputStream finalOutputStream = AbstractSpreadsheetExporter.beginSpreadsheetDownload(facesContext, filename);
             inputStream = new FileInputStream(tempFile);
-            IOUtils.copy(inputStream, finalOutputStream);
 
-            // Since this is a transfer, then the response is done and nothing needs to be displayed
-            facesContext.responseComplete();
+            // This copies the inputStream as a faces download with the file name specified.
+            AbstractSpreadsheetExporter.copyForDownload(inputStream, filename);
         } catch (Exception ex) {
             String message = "Got an exception trying to download the billing tracker: " + ex.getMessage();
             AbstractJsfBean.addMessage(null, FacesMessage.SEVERITY_ERROR, message, message);

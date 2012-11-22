@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.presentation.billing;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingSessionBean;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
@@ -15,12 +17,12 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.RequestScoped;
+import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.Date;
 
 /**
@@ -100,16 +102,36 @@ public class BillingSessionForm extends AbstractJsfBean {
         return ProductOrderForm.getTrackerForOrders(selectedProductOrders, bspUserList, billingLedgerDao);
     }
 
-    public void downloadQuoteItems() throws IOException {
-        QuoteWorkItemsExporter exporter =
-            new QuoteWorkItemsExporter(
-                billingSessionBean.getBillingSession(), billingSessionBean.getBillingSession().getQuoteImportItems());
-        FacesContext fc = FacesContext.getCurrentInstance();
+    public String downloadQuoteItems() throws IOException {
+        OutputStream outputStream = null;
+        File tempFile = null;
+        InputStream inputStream = null;
 
-        String filename = billingSessionBean.getBillingSession().getBusinessKey() + "_" + new Date() + ".xls";
-        OutputStream outputStream = AbstractSpreadsheetExporter.beginSpreadsheetDownload(fc, filename);
-        exporter.writeToStream(outputStream, bspUserList);
+        try {
+            String filename = billingSessionBean.getBillingSession().getBusinessKey() + "_" + new Date() + ".xls";
 
-        fc.responseComplete();
+            tempFile = File.createTempFile(filename, "xls");
+            outputStream = new FileOutputStream(tempFile);
+
+            QuoteWorkItemsExporter exporter =
+                    new QuoteWorkItemsExporter(
+                            billingSessionBean.getBillingSession(), billingSessionBean.getBillingSession().getQuoteImportItems());
+
+            exporter.writeToStream(outputStream, bspUserList);
+            IOUtils.closeQuietly(outputStream);
+            inputStream = new FileInputStream(tempFile);
+
+            // This copies the inputStream as a faces download with the file name specified.
+            AbstractSpreadsheetExporter.copyForDownload(inputStream, filename);
+        } catch (Exception ex) {
+            String message = "Got an exception trying to download the billing tracker: " + ex.getMessage();
+            AbstractJsfBean.addMessage(null, FacesMessage.SEVERITY_ERROR, message, message);
+        } finally {
+            IOUtils.closeQuietly(outputStream);
+            IOUtils.closeQuietly(inputStream);
+            FileUtils.deleteQuietly(tempFile);
+        }
+
+        return null;
     }
 }
