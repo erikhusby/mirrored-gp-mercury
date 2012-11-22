@@ -81,6 +81,10 @@ public class ProductOrder implements Serializable {
     @Column(name = "JIRA_TICKET_KEY", nullable = false)
     private String jiraTicketKey;
 
+    @Column(name = "count")
+    /** counts the number of lanes; the default value is one lane */
+    private int count = 1;
+
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order", nullable = false)
     @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
@@ -116,6 +120,14 @@ public class ProductOrder implements Serializable {
         }
 
         return StringUtils.join(addOnArray, ", ");
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
     }
 
     /**
@@ -880,9 +892,9 @@ public class ProductOrder implements Serializable {
 
         ProductOrder that = (ProductOrder) o;
 
-        if (researchProject != null ? !researchProject.equals(that.researchProject) : that.researchProject != null)
+        if (researchProject != null ? !researchProject.equals(that.getResearchProject()) : that.getResearchProject() != null)
             return false;
-        if (title != null ? !title.equals(that.title) : that.title != null) return false;
+        if (title != null ? !title.equals(that.getTitle()) : that.getTitle() != null) return false;
 
         return true;
     }
