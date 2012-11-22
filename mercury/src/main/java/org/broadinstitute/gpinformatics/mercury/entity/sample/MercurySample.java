@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;

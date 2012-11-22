@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.experiments;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Created by IntelliJ IDEA.
