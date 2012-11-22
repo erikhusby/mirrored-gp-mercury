@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderListModel;
@@ -24,13 +26,13 @@ import org.primefaces.event.SelectEvent;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.context.RequestScoped;
+import javax.faces.application.FacesMessage;
 import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.*;
@@ -445,21 +447,45 @@ public class ProductOrderForm extends AbstractJsfBean {
             return null;
         }
 
-        // It doesn't matter if it's empty or not, we allow download
+        return getTrackerForOrders(selectedProductOrders, bspUserList, ledgerDao);
+    }
+
+    public static String getTrackerForOrders(
+            ProductOrder[] orders,
+            BSPUserList bspUserList,
+            BillingLedgerDao ledgerDao) {
+
+        OutputStream outputStream = null;
+        File tempFile = null;
+        InputStream inputStream = null;
 
         try {
             String filename =
-                "BillingTracker-" +
-                AbstractSpreadsheetExporter.DATE_FORMAT.format(Calendar.getInstance().getTime()) + ".xls";
-            OutputStream outputStream = AbstractSpreadsheetExporter.beginSpreadsheetDownload(facesContext, filename);
+                    "BillingTracker-" + AbstractSpreadsheetExporter.DATE_FORMAT.format(Calendar.getInstance().getTime());
 
+            tempFile = File.createTempFile(filename, "xls");
+            outputStream = new FileOutputStream(tempFile);
+
+            // dummy code to plumb in spreadsheet write.  this is not the right format and it's only doing the first PDO!
             SampleLedgerExporter sampleLedgerExporter =
-                    new SampleLedgerExporter(selectedProductOrders, bspUserList, ledgerDao);
+                    new SampleLedgerExporter(orders, bspUserList, ledgerDao);
             sampleLedgerExporter.writeToStream(outputStream);
+            IOUtils.closeQuietly(outputStream);
 
+            FacesContext facesContext = FacesContext.getCurrentInstance();
+            OutputStream finalOutputStream = AbstractSpreadsheetExporter.beginSpreadsheetDownload(facesContext, filename);
+            inputStream = new FileInputStream(tempFile);
+            IOUtils.copy(inputStream, finalOutputStream);
+
+            // Since this is a transfer, then the response is done and nothing needs to be displayed
             facesContext.responseComplete();
         } catch (Exception ex) {
-            addErrorMessage("Got an exception trying to download the billing tracker: " + ex.getMessage());
+            String message = "Got an exception trying to download the billing tracker: " + ex.getMessage();
+            AbstractJsfBean.addMessage(null, FacesMessage.SEVERITY_ERROR, message, message);
+        } finally {
+            IOUtils.closeQuietly(outputStream);
+            IOUtils.closeQuietly(inputStream);
+            FileUtils.deleteQuietly(tempFile);
         }
 
         return null;

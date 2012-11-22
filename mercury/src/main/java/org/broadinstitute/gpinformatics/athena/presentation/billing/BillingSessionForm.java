@@ -3,11 +3,11 @@ package org.broadinstitute.gpinformatics.athena.presentation.billing;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingSessionBean;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderForm;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
@@ -21,7 +21,6 @@ import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -97,26 +96,8 @@ public class BillingSessionForm extends AbstractJsfBean {
     }
 
     public String downloadTracker() {
-        try {
-            String filename =
-                "BillingTracker-" +
-                AbstractSpreadsheetExporter.DATE_FORMAT.format(Calendar.getInstance().getTime()) + ".xls";
-
-            OutputStream outputStream = AbstractSpreadsheetExporter.beginSpreadsheetDownload(facesContext, filename);
-
-            ProductOrder[] selectedProductOrders = billingSessionBean.getBillingSession().getProductOrders();
-
-            // dummy code to plumb in spreadsheet write.  this is not the right format and it's only doing the first PDO!
-            SampleLedgerExporter sampleLedgerExporter =
-                    new SampleLedgerExporter(selectedProductOrders, bspUserList, billingLedgerDao);
-            sampleLedgerExporter.writeToStream(outputStream);
-
-            facesContext.responseComplete();
-        } catch (Exception ex) {
-            addErrorMessage("Got an exception trying to download the billing tracker: " + ex.getMessage());
-        }
-
-        return null;
+        ProductOrder[] selectedProductOrders = billingSessionBean.getBillingSession().getProductOrders();
+        return ProductOrderForm.getTrackerForOrders(selectedProductOrders, bspUserList, billingLedgerDao);
     }
 
     public void downloadQuoteItems() throws IOException {

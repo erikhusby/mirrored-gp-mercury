@@ -219,7 +219,14 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell(sample.getProductOrder().getQuoteId());
 
         // Any billing messages
-        getWriter().writeCell(getBillingError(sample.getBillableItems()), getErrorMessageStyle());
+        String billingError = getBillingError(sample.getBillableItems());
+
+        // Only use error style when there is an error in the string
+        if (StringUtils.isBlank(billingError)) {
+            getWriter().writeCell(billingError);
+        } else {
+            getWriter().writeCell(billingError, getErrorMessageStyle());
+        }
 
         // per 2012-11-19 meeting not doing this
         // getWriter().writeCell(sample.getBillingStatus().getDisplayName());
@@ -319,7 +326,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     }
 
     private void writeEmptyFixedHeaders() {
-        getWriter().nextRow();
         // Write blank secondary header line for fixed columns
         for (String header : FIXED_HEADERS) {
             getWriter().writeCell(" ", getFixedHeaderStyle());
