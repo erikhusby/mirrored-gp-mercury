@@ -12,6 +12,7 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.List;
+import java.util.Map;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SampleLedgerImporterTest {
@@ -61,14 +62,17 @@ public class SampleLedgerImporterTest {
             IOUtils.closeQuietly(fis);
         }
 
-//
-//        try {
-//            fis = new FileInputStream(tempFile);
-//            Map<String, Map<String, Map<String, OrderBillSummaryStat>>>  dataMap = sampleLedgerImporter.parseTempFile( tempFile );
-//            Assert.assertNotNull(dataMap);
-//        } finally {
-//            IOUtils.closeQuietly(fis);
-//        }
+
+        try {
+            fis = new FileInputStream(tempFile);
+            Map<String, Map<String, Map<String, OrderBillSummaryStat>>> dataMap = sampleLedgerImporter.parseTempFile( tempFile );
+            Assert.assertNotNull(dataMap);
+            Assert.assertEquals( 4.0 , dataMap.get("P-RNA-0004").get("PDO-23").get("P-RNA-0004").getCharge() );
+            Assert.assertNotNull(dataMap);
+
+        } finally {
+            IOUtils.closeQuietly(fis);
+        }
 
     }
 

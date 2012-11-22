@@ -122,7 +122,7 @@ public class SampleLedgerImporter {
 
             //Get the newQuantity cells value
             Cell newQuantityCell = row.getCell(fixedHeaders.length + productIndex + 1);
-            if (( newQuantityCell != null ) && StringUtils.isNotBlank(newQuantityCell.getStringCellValue())) {
+            if ( newQuantityCell != null ) {
                 newQuantity = newQuantityCell.getNumericCellValue();
 
                 //TODO Get the actual value from the DB for this POS to calculate the delta  !!!!!!!!!
@@ -130,7 +130,7 @@ public class SampleLedgerImporter {
                 String sampleName = row.getCell(SAMPLE_ID_COL_POS).getStringCellValue();
                 //TODO Get the actual value from the DB for this POS to calculate the delta  !!!!!!!!!
 
-                double delta =  valueFromDB - newQuantity;
+                double delta =  newQuantity - valueFromDB;
 
                 if ( delta != 0 ) {
                     OrderBillSummaryStat orderBillSummaryStat = pdoSummaryStatsMap.get(productPartNumber);
