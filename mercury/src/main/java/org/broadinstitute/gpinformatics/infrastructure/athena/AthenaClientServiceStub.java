@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
 import java.util.Collections;
@@ -53,8 +54,9 @@ public class AthenaClientServiceStub implements AthenaClientService {
                 PriceItem.NAME_EXOME_EXPRESS,
                 "testQuoteId");
         Product dummyProduct = createDummyProduct();
-        dummyProduct.addPriceItem(priceItem);
+        dummyProduct.setDefaultPriceItem(priceItem);
         ProductOrderSample sample = new ProductOrderSample("SM-1234");
+        sample.setBspDTO(BSPSampleDTO.DUMMY);
         ProductOrder order = new ProductOrder( TEST_CREATOR, "title",
                 Collections.singletonList(sample), "quote", dummyProduct,
                 createDummyResearchProject());
