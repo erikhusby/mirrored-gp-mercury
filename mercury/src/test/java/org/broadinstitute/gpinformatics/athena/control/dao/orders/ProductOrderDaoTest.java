@@ -70,7 +70,7 @@ public class ProductOrderDaoTest extends ContainerTest {
                     ResearchProjectResourceTest.createDummyResearchProject(testResearchProjectKey);
             researchProjectDao.persist(researchProject);
         }
-        order = createTestProductOrder(researchProjectDao, productDao, getTestProductOrderKey());
+        order = createTestProductOrder(researchProjectDao, productDao);
         productOrderDao.persist(order);
         productOrderDao.flush();
         productOrderDao.clear();
@@ -86,7 +86,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         utx.rollback();
     }
 
-    public static ProductOrder createTestProductOrder(ResearchProjectDao researchProjectDao, ProductDao productDao, String key) {
+    public static ProductOrder createTestProductOrder(ResearchProjectDao researchProjectDao, ProductDao productDao) {
         // Find a research project in the DB.
         List<ResearchProject> projectsList = researchProjectDao.findAllResearchProjects();
         Assert.assertTrue(projectsList != null && !projectsList.isEmpty());
@@ -99,12 +99,16 @@ public class ProductOrderDaoTest extends ContainerTest {
         }
 
         // Try to create a Product Order and persist it.
+
+        // need all the samples in the list before calling this version of the PDO constructor!
         List<ProductOrderSample> sampleList = new ArrayList<ProductOrderSample>();
+        sampleList.add(new ProductOrderSample("MS-1111"));
+        sampleList.add(new ProductOrderSample("MS-1112"));
+
         String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
         ProductOrder newProductOrder = new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, sampleList, "quoteId",
                 product, foundResearchProject);
-        sampleList.add(new ProductOrderSample("MS-1111"));
-        sampleList.add(new ProductOrderSample("MS-1112"));
+
         newProductOrder.setJiraTicketKey(getTestProductOrderKey());
         return newProductOrder;
     }

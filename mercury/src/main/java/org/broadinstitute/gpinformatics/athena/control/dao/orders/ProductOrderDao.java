@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
+import org.broadinstitute.gpinformatics.athena.entity.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -36,6 +37,53 @@ public class ProductOrderDao extends GenericDao {
     public ProductOrder findByBusinessKey(String key) {
         return findSingle(ProductOrder.class, ProductOrder_.jiraTicketKey, key);
     }
+
+
+    /**
+     * Largely taken from {@link GenericDao#findListByList(Class, javax.persistence.metamodel.SingularAttribute, java.util.List)},
+     * this includes join fetches of research projects, products, and samples that would otherwise hamper performance
+     * during tracker spreadsheet generation.
+     *
+     * @param businessKeys
+     *
+     * @return
+     */
+    public List<ProductOrder> findListByBusinessKey(List<String> businessKeys) {
+
+        List<ProductOrder> resultList = new ArrayList<ProductOrder>();
+        if(businessKeys.isEmpty()) {
+            return resultList;
+        }
+
+        CriteriaBuilder cb = getCriteriaBuilder();
+        CriteriaQuery<ProductOrder> cq = cb.createQuery(ProductOrder.class);
+        cq.distinct(true);
+
+        Root<ProductOrder> productOrder = cq.from(ProductOrder.class);
+
+        productOrder.join(ProductOrder_.samples, JoinType.LEFT);
+        productOrder.fetch(ProductOrder_.samples, JoinType.LEFT);
+
+        productOrder.join(ProductOrder_.product);
+        productOrder.fetch(ProductOrder_.product);
+
+        productOrder.join(ProductOrder_.researchProject);
+        productOrder.fetch(ProductOrder_.researchProject);
+
+        // Break the list into chunks of 1000, because of the limit on the number of items in
+        // an Oracle IN clause
+        for(int i = 0; i < businessKeys.size(); i += 1000) {
+            cq.where(productOrder.get(ProductOrder_.jiraTicketKey).in(businessKeys.subList(i, Math.min(businessKeys.size(), i + 1000))));
+            try {
+                resultList.addAll(getEntityManager().createQuery(cq).getResultList());
+            } catch (NoResultException ignored) {
+                return resultList;
+            }
+        }
+
+        return resultList;
+    }
+
 
     /**
      * Find ProductOrders by Research Project
@@ -161,5 +209,23 @@ public class ProductOrderDao extends GenericDao {
         }
 
         return findSingle(ProductOrder.class, ProductOrder_.productOrderId, orderId);
+    }
+
+
+    /**
+     * Pull the business keys out of the {@link ProductOrderListEntry}s and use those to fetch the {@link ProductOrder}s
+     * with {@link org.broadinstitute.gpinformatics.athena.entity.products.Product}, {@link ResearchProject}, and
+     * {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample}s initialized.
+     *
+     * @param productOrderListEntries
+     * @return
+     */
+    public List<ProductOrder> findListByProductOrderListEntries(List<ProductOrderListEntry> productOrderListEntries) {
+        List<String> productOrderBusinessKeys = new ArrayList<String>();
+        for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
+            productOrderBusinessKeys.add(productOrderListEntry.getJiraTicketKey());
+        }
+
+        return findListByBusinessKey(productOrderBusinessKeys);
     }
 }

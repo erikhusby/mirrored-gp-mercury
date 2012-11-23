@@ -17,7 +17,6 @@ import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.List;
 import java.util.Set;
-import java.util.UUID;
 
 /**
  * Tests for the billing ledger (need to set up all the appropriate data so that the different cases can be tested
@@ -52,7 +51,7 @@ public class BillingLedgerDaoTest {
 
         utx.begin();
 
-        order = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao, "DRAFT-" + UUID.randomUUID());
+        order = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao);
         PriceItem priceItem = priceItemDao.findAll().get(0);
 
         // Make sure there is at least one ledger entry

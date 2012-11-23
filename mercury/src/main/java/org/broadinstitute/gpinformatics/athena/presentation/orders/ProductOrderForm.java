@@ -10,7 +10,9 @@ import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheet
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -75,12 +77,15 @@ public class ProductOrderForm extends AbstractJsfBean {
     @Inject
     private BSPUserList bspUserList;
 
+    @Inject
+    private ProductOrderListEntryDao productOrderListEntryDao;
+
     private List<String> selectedAddOns = new ArrayList<String>();
 
     /** All product orders, fetched once and stored per-request (as a result of this bean being @RequestScoped). */
     private ProductOrderListModel allProductOrders;
 
-    private ProductOrder[] selectedProductOrders;
+    private ProductOrderListEntry[] selectedProductOrders;
 
     /**
      * This is required to get the editIdsCache value in the case where we want to skip the process
@@ -110,7 +115,7 @@ public class ProductOrderForm extends AbstractJsfBean {
      */
     public ProductOrderListModel getAllProductOrders() {
         if (allProductOrders == null) {
-            allProductOrders = new ProductOrderListModel(productOrderDao.findAll());
+            allProductOrders = new ProductOrderListModel(productOrderListEntryDao.findProductOrderListEntries());
         }
 
         return allProductOrders;
@@ -123,8 +128,8 @@ public class ProductOrderForm extends AbstractJsfBean {
      */
     public List<SelectItem> getAllProjectOwners() {
         Set<BspUser> owners = new HashSet<BspUser>();
-        for (ProductOrder order : getAllProductOrders()) {
-            Long createdBy = order.getCreatedBy();
+        for (ProductOrderListEntry order : getAllProductOrders()) {
+            Long createdBy = order.getOwnerId();
             if (createdBy != null) {
                 BspUser bspUser = bspUserList.getById(createdBy);
                 if (bspUser != null) {
@@ -385,11 +390,11 @@ public class ProductOrderForm extends AbstractJsfBean {
         conversationData.beginConversation(productOrderDetail.getProductOrder());
     }
 
-    public ProductOrder[] getSelectedProductOrders() {
+    public ProductOrderListEntry[] getSelectedProductOrders() {
         return selectedProductOrders;
     }
 
-    public void setSelectedProductOrders(ProductOrder[] selectedProductOrders) {
+    public void setSelectedProductOrders(ProductOrderListEntry[] selectedProductOrders) {
         this.selectedProductOrders = selectedProductOrders;
     }
 
@@ -412,6 +417,11 @@ public class ProductOrderForm extends AbstractJsfBean {
         return redirect("/billing/view") + "&billingSession=" + session.getBusinessKey();
     }
 
+
+    private ProductOrder [] getSelectedListEntriesAsProductOrders() {
+        return productOrderDao.findListByProductOrderListEntries(Arrays.asList(selectedProductOrders)).toArray(new ProductOrder[0]);
+    }
+
     private Set<BillingLedger> validateOrderSelection(String validatingFor) {
         if ((userBean == null) || (userBean.getBspUser() == null) || (userBean.getBspUser().getUserId() == null)) {
             addErrorMessage("A valid bsp user is needed to start a " + validatingFor);
@@ -424,7 +434,7 @@ public class ProductOrderForm extends AbstractJsfBean {
         }
 
         // If there are locked out orders, then do not allow the session to start
-        Set<BillingLedger> lockedOutOrders = ledgerDao.findLockedOutByOrderList(selectedProductOrders);
+        Set<BillingLedger> lockedOutOrders = ledgerDao.findLockedOutByOrderList(getSelectedListEntriesAsProductOrders());
         if (!lockedOutOrders.isEmpty()) {
             Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());
             for (BillingLedger ledger : lockedOutOrders) {
@@ -436,7 +446,7 @@ public class ProductOrderForm extends AbstractJsfBean {
             return null;
         }
 
-        return ledgerDao.findWithoutBillingSessionByOrderList(selectedProductOrders);
+        return ledgerDao.findWithoutBillingSessionByOrderList(getSelectedListEntriesAsProductOrders());
     }
 
     public String downloadBillingTracker() {
@@ -447,7 +457,7 @@ public class ProductOrderForm extends AbstractJsfBean {
             return null;
         }
 
-        return getTrackerForOrders(selectedProductOrders, bspUserList, ledgerDao);
+        return getTrackerForOrders(getSelectedListEntriesAsProductOrders(), bspUserList, ledgerDao);
     }
 
     public static String getTrackerForOrders(

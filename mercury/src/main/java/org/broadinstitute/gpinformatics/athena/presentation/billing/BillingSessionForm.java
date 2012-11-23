@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsEx
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderForm;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -40,6 +41,9 @@ public class BillingSessionForm extends AbstractJsfBean {
 
     @Inject
     private BillingLedgerDao billingLedgerDao;
+
+    @Inject
+    private ProductOrderDao productOrderDao;
 
     @Inject
     private QuoteService quoteService;
