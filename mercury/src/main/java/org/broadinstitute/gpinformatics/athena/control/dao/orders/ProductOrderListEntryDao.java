@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
-import org.broadinstitute.gpinformatics.athena.entity.ProductOrderListEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger_;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
@@ -31,8 +31,12 @@ public class ProductOrderListEntryDao extends GenericDao {
 
 
     /**
-     * Fetch the count of unbilled ledger entries for the {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder}s referenced by the
-     * {@link org.broadinstitute.gpinformatics.athena.entity.ProductOrderListEntry} DTOs and set those counts into the DTOs.
+     * Second-pass, ledger aware query that merges its results into the first-pass objects passed as an argument.
+     *
+     * Fetch the count of unbilled ledger entries for the
+     * {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder}s referenced by the
+     * {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry} DTOs and set those counts
+     * into the DTOs.
      *
      * @param productOrderListEntries
      */
@@ -47,7 +51,8 @@ public class ProductOrderListEntryDao extends GenericDao {
         }
 
 
-        // build query to pick out eligible DTOs
+        // build query to pick out eligible DTOs.  this only returns values for PDOs with ledger entries in open
+        // billing sessions or with no associated billing session
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<ProductOrderListEntry> cq = cb.createQuery(ProductOrderListEntry.class);
 
@@ -81,6 +86,7 @@ public class ProductOrderListEntryDao extends GenericDao {
 
         List<ProductOrderListEntry> resultList = getEntityManager().createQuery(cq).getResultList();
 
+        // merge these counts into the objects from the first-pass query
         for (ProductOrderListEntry result : resultList) {
             ProductOrderListEntry productOrderListEntry = jiraKeyToProductOrderListEntryMap.get(result.getJiraTicketKey());
             productOrderListEntry.setBillingSessionId(result.getBillingSessionId());
@@ -92,7 +98,7 @@ public class ProductOrderListEntryDao extends GenericDao {
 
 
     /**
-     * no counts
+     * First pass, ledger-unware querying
      *
      * @return
      */
@@ -124,7 +130,8 @@ public class ProductOrderListEntryDao extends GenericDao {
 
 
     /**
-     * Generates reporting object {@link ProductOrderListEntry}s for efficient Product Order list view
+     * Generates reporting object {@link ProductOrderListEntry}s for efficient Product Order list view.  Merges the
+     * results of the first-pass ledger-unaware query with the second-pass ledger aware query.
      *
      * @return
      */

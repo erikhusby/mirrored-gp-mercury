@@ -1,10 +1,11 @@
-package org.broadinstitute.gpinformatics.athena.entity;
-
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import java.io.Serializable;
 import java.util.Date;
 
+/**
+ * Non-entity used for optimizing the performance of the PDO list page.
+ */
 public class ProductOrderListEntry implements Serializable {
 
     private String title;
@@ -28,6 +29,18 @@ public class ProductOrderListEntry implements Serializable {
     private Long unbilledLedgerEntryCount = 0L;
 
 
+    /**
+     * Version of the constructor called by the non-ledger aware first pass query
+     *
+     * @param title
+     * @param jiraTicketKey
+     * @param orderStatus
+     * @param productName
+     * @param productFamilyName
+     * @param researchProjectTitle
+     * @param ownerId
+     * @param updatedDate
+     */
     public ProductOrderListEntry(String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
                                  String productName, String productFamilyName, String researchProjectTitle, Long ownerId, Date updatedDate) {
         this.title = title;
@@ -41,6 +54,14 @@ public class ProductOrderListEntry implements Serializable {
     }
 
 
+    /**
+     * Version of the constructor called by the ledger-aware second pass query.  These objects are essentially merged
+     * into the objects from the first query.
+     *
+     * @param jiraTicketKey
+     * @param billingSessionId
+     * @param unbilledLedgerEntryCount
+     */
     public ProductOrderListEntry(String jiraTicketKey, Long billingSessionId, Long unbilledLedgerEntryCount) {
         this.jiraTicketKey = jiraTicketKey;
         this.billingSessionId = billingSessionId;

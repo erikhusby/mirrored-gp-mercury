@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
-import org.broadinstitute.gpinformatics.athena.entity.ProductOrderListEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.primefaces.model.SelectableDataModel;
 
 import javax.faces.model.ListDataModel;
