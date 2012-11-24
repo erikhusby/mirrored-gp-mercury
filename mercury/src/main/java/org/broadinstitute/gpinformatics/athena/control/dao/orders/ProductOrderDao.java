@@ -61,13 +61,10 @@ public class ProductOrderDao extends GenericDao {
 
         Root<ProductOrder> productOrder = cq.from(ProductOrder.class);
 
-        productOrder.join(ProductOrder_.samples, JoinType.LEFT);
         productOrder.fetch(ProductOrder_.samples, JoinType.LEFT);
 
-        productOrder.join(ProductOrder_.product);
         productOrder.fetch(ProductOrder_.product);
 
-        productOrder.join(ProductOrder_.researchProject);
         productOrder.fetch(ProductOrder_.researchProject);
 
         // Break the list into chunks of 1000, because of the limit on the number of items in
