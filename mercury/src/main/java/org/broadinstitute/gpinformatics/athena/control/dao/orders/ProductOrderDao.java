@@ -137,30 +137,12 @@ public class ProductOrderDao extends GenericDao {
     }
 
     /**
-     * Find all ProductOrders, left join fetching the samples and join fetching the product and research project.
-     * We use all of this data to render the product order list and even with our meager test data sets things were
-     * starting to bog down.
+     * Find all ProductOrders, not initializing any associations
      *
      * @return All the orders
      */
     public List<ProductOrder> findAll() {
-        CriteriaBuilder cb = getCriteriaBuilder();
-        CriteriaQuery<ProductOrder> cq = cb.createQuery(ProductOrder.class);
-        cq.distinct(true);
-
-        Root<ProductOrder> productOrder = cq.from(ProductOrder.class);
-
-        productOrder.join(ProductOrder_.samples, JoinType.LEFT);
-        productOrder.fetch(ProductOrder_.samples, JoinType.LEFT);
-
-        productOrder.join(ProductOrder_.product);
-        productOrder.fetch(ProductOrder_.product);
-
-        productOrder.join(ProductOrder_.researchProject);
-        productOrder.fetch(ProductOrder_.researchProject);
-
-        return getEntityManager().createQuery(cq).getResultList();
-
+        return findAll(ProductOrder.class);
     }
 
 
