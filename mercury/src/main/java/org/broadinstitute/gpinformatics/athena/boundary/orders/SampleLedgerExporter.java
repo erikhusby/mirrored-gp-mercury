@@ -52,6 +52,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         this.bspUserList = bspUserList;
         this.billingLedgerDao = billingLedgerDao;
 
+
         for (ProductOrder productOrder : productOrders) {
             if (!orderMap.containsKey(productOrder.getProduct())) {
                 orderMap.put(productOrder.getProduct(), new ArrayList<ProductOrder>());
@@ -59,6 +60,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
             orderMap.get(productOrder.getProduct()).add(productOrder);
         }
+
     }
 
     private String getBspFullName(long id) {
@@ -219,7 +221,14 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell(sample.getProductOrder().getQuoteId());
 
         // Any billing messages
-        getWriter().writeCell(getBillingError(sample.getBillableItems()), getErrorMessageStyle());
+        String billingError = getBillingError(sample.getBillableItems());
+
+        // Only use error style when there is an error in the string
+        if (StringUtils.isBlank(billingError)) {
+            getWriter().writeCell(billingError);
+        } else {
+            getWriter().writeCell(billingError, getErrorMessageStyle());
+        }
 
         // per 2012-11-19 meeting not doing this
         // getWriter().writeCell(sample.getBillingStatus().getDisplayName());
@@ -266,17 +275,17 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             }
         }
 
-        // secondary header line
-        writeEmptyHeaderRow();
-
-        // tertiary header line
-        writeEmptyHeaderRow();
-
         writeAllCategoryHeaders(currentProduct.getDefaultPriceItem(), currentProduct.getPriceItems(), currentProduct.getAddOns());
         writeAllPriceItemHeaders(currentProduct.getDefaultPriceItem(), currentProduct.getPriceItems(), currentProduct.getAddOns());
     }
 
     private void writeAllPriceItemHeaders(PriceItem defaultPriceItem, Set<PriceItem> priceItems, Set<Product> addOns) {
+
+        // The new row
+        getWriter().nextRow();
+
+        // The empty fixed headers
+        writeEmptyFixedHeaders();
 
         // primary price item for main product
         writePriceItemHeaders(defaultPriceItem);
@@ -296,6 +305,12 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
     private void writeAllCategoryHeaders(PriceItem defaultPriceItem, Set<PriceItem> priceItems, Set<Product> addOns) {
 
+        // The new row
+        getWriter().nextRow();
+
+        // The empty fixed headers
+        writeEmptyFixedHeaders();
+
         // primary price item for main product
         writeCategoryHeaders(defaultPriceItem);
         for (PriceItem priceItem : priceItems) {
@@ -312,8 +327,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
     }
 
-    private void writeEmptyHeaderRow() {
-        getWriter().nextRow();
+    private void writeEmptyFixedHeaders() {
         // Write blank secondary header line for fixed columns
         for (String header : FIXED_HEADERS) {
             getWriter().writeCell(" ", getFixedHeaderStyle());

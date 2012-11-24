@@ -92,6 +92,9 @@ public class BillingSession {
         for (BillingLedger ledgerItem : newBillingLedgerItems) {
             ledgerItem.setBillingSession(this);
         }
+
+        billingLedgerItems.clear();
+        billingLedgerItems.addAll(newBillingLedgerItems);
     }
 
     public boolean cancelSession() {

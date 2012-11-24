@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -719,7 +719,7 @@ public class ProductOrder implements Serializable {
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.QUOTE_ID, quoteId));
         }
         listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.SAMPLE_IDS,
-                StringUtils.join(getSampleNames(), ',')));
+                StringUtils.join(getSampleNames(), '\n')));
 
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
 
