@@ -17,6 +17,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.*;
 
+import static org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao.FetchSpec.*;
+
 /**
  * This class creates a spreadsheet version of a product order's sample billing status, also called the sample
  * billing ledger.  The exported spreadsheet will later be imported after the user has updated the sample
@@ -67,7 +69,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
 
     public SampleLedgerExporter(List<String> pdoBusinessKeys, BSPUserList bspUserList, BillingLedgerDao billingLedgerDao, ProductOrderDao productOrderDao) {
-        this(productOrderDao.findListByBusinessKey(pdoBusinessKeys));
+        this(productOrderDao.findListByBusinessKey(pdoBusinessKeys, Product, ResearchProject, Samples));
 
         this.bspUserList = bspUserList;
         this.billingLedgerDao = billingLedgerDao;
