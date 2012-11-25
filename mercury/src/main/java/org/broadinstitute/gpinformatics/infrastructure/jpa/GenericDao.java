@@ -30,6 +30,17 @@ import java.util.List;
 @RequestScoped
 public class GenericDao {
 
+    /**
+     * Interface for callbacks that want to specify fetches from the specified {@link Root}, make the query distinct,
+     * etc.
+     *
+     * @param <ENTITY_TYPE>
+     */
+    public interface GenericDaoCallback<ENTITY_TYPE> {
+        void callback(CriteriaQuery<ENTITY_TYPE> criteriaQuery, Root<ENTITY_TYPE> root);
+    }
+
+
     @Inject
     private ThreadEntityManager threadEntityManager;
 
@@ -181,11 +192,13 @@ public class GenericDao {
         }
     }
 
+
     /**
      * Returns a list of entities that matches a list of values for a specified property.
      * @param entity the class of entity to return
      * @param singularAttribute the metadata field for the property to query
      * @param values list of values to query
+     * @param genericDaoCallback optional callback to add fetches to the specified {@link Root}
      * @param <VALUE_TYPE> the type of the value in the query, e.g. String
      * @param <METADATA_TYPE> the type on which the property is defined, this can be different from the ENTITY_TYPE if
      *                       there is inheritance
@@ -193,7 +206,8 @@ public class GenericDao {
      * @return list of entities that match the value, or empty list if not found
      */
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListByList(
-            Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, List<VALUE_TYPE> values) {
+            Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, List<VALUE_TYPE> values,
+            GenericDaoCallback<ENTITY_TYPE> genericDaoCallback) {
         List<ENTITY_TYPE> resultList = new ArrayList<ENTITY_TYPE>();
         if(values.isEmpty()) {
             return resultList;
@@ -201,6 +215,10 @@ public class GenericDao {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
+
+        if (genericDaoCallback != null) {
+            genericDaoCallback.callback(criteriaQuery, root);
+        }
 
         // Break the list into chunks of 1000, because of the limit on the number of items in
         // an Oracle IN clause
@@ -213,6 +231,13 @@ public class GenericDao {
             }
         }
         return resultList;
+    }
+
+
+
+    public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListByList(
+            Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, List<VALUE_TYPE> values) {
+        return findListByList(entity, singularAttribute, values, null);
     }
 
     /**

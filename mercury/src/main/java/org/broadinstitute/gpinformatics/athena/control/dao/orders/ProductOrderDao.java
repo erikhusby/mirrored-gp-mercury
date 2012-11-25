@@ -48,10 +48,7 @@ public class ProductOrderDao extends GenericDao {
 
 
     /**
-     * Largely taken from {@link GenericDao#findListByList(Class, javax.persistence.metamodel.SingularAttribute, java.util.List)},
-     * this includes potential join fetches of research projects, products, and samples that would otherwise hamper performance
-     * during tracker spreadsheet generation.  Hopefully we can refactor GenericDao to allow for a callback that lets
-     * subclasses specifying fetching.
+     * Return the {@link ProductOrder}s specified by the {@link List} of business keys, applying optional fetches.
      *
      * @param businessKeys
      * @param fs
@@ -60,48 +57,32 @@ public class ProductOrderDao extends GenericDao {
      */
     public List<ProductOrder> findListByBusinessKey(List<String> businessKeys, FetchSpec... fs) {
 
-        Set<FetchSpec> fetchSpecs = new HashSet<FetchSpec>(Arrays.asList(fs));
+        final Set<FetchSpec> fetchSpecs = new HashSet<FetchSpec>(Arrays.asList(fs));
 
-        List<ProductOrder> resultList = new ArrayList<ProductOrder>();
-        if (businessKeys.isEmpty()) {
-            return resultList;
-        }
+        return findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, businessKeys, new GenericDaoCallback<ProductOrder>() {
+            @Override
+            public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> productOrder) {
 
-        CriteriaBuilder cb = getCriteriaBuilder();
-        CriteriaQuery<ProductOrder> cq = cb.createQuery(ProductOrder.class);
-        cq.distinct(true);
+                if (fetchSpecs.contains(FetchSpec.Samples)) {
+                    // one to many
+                    criteriaQuery.distinct(true);
+                    productOrder.fetch(ProductOrder_.samples, JoinType.LEFT);
+                }
 
-        Root<ProductOrder> productOrder = cq.from(ProductOrder.class);
+                if (fetchSpecs.contains(FetchSpec.Product) || fetchSpecs.contains((FetchSpec.ProductFamily))) {
+                    productOrder.fetch(ProductOrder_.product);
+                }
 
-        if (fetchSpecs.contains(FetchSpec.Samples)) {
-            productOrder.fetch(ProductOrder_.samples, JoinType.LEFT);
-        }
+                if (fetchSpecs.contains(FetchSpec.ProductFamily)) {
+                    Join<ProductOrder,Product> productOrderProductJoin = productOrder.join(ProductOrder_.product);
+                    productOrderProductJoin.fetch(Product_.productFamily);
+                }
 
-        if (fetchSpecs.contains(FetchSpec.Product) || fetchSpecs.contains((FetchSpec.ProductFamily))) {
-            productOrder.fetch(ProductOrder_.product);
-        }
-
-        if (fetchSpecs.contains(FetchSpec.ProductFamily)) {
-            Join<ProductOrder,Product> productOrderProductJoin = productOrder.join(ProductOrder_.product);
-            productOrderProductJoin.fetch(Product_.productFamily);
-        }
-
-        if (fetchSpecs.contains(FetchSpec.ResearchProject)) {
-            productOrder.fetch(ProductOrder_.researchProject);
-        }
-
-        // Break the list into chunks of 1000, because of the limit on the number of items in
-        // an Oracle IN clause
-        for(int i = 0; i < businessKeys.size(); i += 1000) {
-            cq.where(productOrder.get(ProductOrder_.jiraTicketKey).in(businessKeys.subList(i, Math.min(businessKeys.size(), i + 1000))));
-            try {
-                resultList.addAll(getEntityManager().createQuery(cq).getResultList());
-            } catch (NoResultException ignored) {
-                return resultList;
+                if (fetchSpecs.contains(FetchSpec.ResearchProject)) {
+                    productOrder.fetch(ProductOrder_.researchProject);
+                }
             }
-        }
-
-        return resultList;
+        });
     }
 
 
