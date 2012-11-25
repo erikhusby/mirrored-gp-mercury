@@ -5,6 +5,7 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -46,12 +47,14 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
     private BillingLedgerDao billingLedgerDao;
 
-    public SampleLedgerExporter(ProductOrder[] productOrders, BSPUserList bspUserList, BillingLedgerDao billingLedgerDao) {
+
+    public SampleLedgerExporter(ProductOrder... productOrders) {
+        this(Arrays.asList(productOrders));
+    }
+
+
+    public SampleLedgerExporter(List<ProductOrder> productOrders) {
         super();
-
-        this.bspUserList = bspUserList;
-        this.billingLedgerDao = billingLedgerDao;
-
 
         for (ProductOrder productOrder : productOrders) {
             if (!orderMap.containsKey(productOrder.getProduct())) {
@@ -60,8 +63,16 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
             orderMap.get(productOrder.getProduct()).add(productOrder);
         }
-
     }
+
+
+    public SampleLedgerExporter(List<String> pdoBusinessKeys, BSPUserList bspUserList, BillingLedgerDao billingLedgerDao, ProductOrderDao productOrderDao) {
+        this(productOrderDao.findListByBusinessKey(pdoBusinessKeys));
+
+        this.bspUserList = bspUserList;
+        this.billingLedgerDao = billingLedgerDao;
+    }
+
 
     private String getBspFullName(long id) {
         if (bspUserList == null) {

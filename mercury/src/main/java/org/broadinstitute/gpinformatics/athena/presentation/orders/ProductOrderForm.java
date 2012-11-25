@@ -12,10 +12,10 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessio
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
@@ -51,9 +51,6 @@ public class ProductOrderForm extends AbstractJsfBean {
     ProductOrderDetail productOrderDetail;
 
     @Inject
-    ProductOrderDao productOrderDao;
-
-    @Inject
     ProductDao productDao;
 
     @Inject
@@ -79,6 +76,8 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     @Inject
     private ProductOrderListEntryDao productOrderListEntryDao;
+
+    @Inject ProductOrderDao productOrderDao;
 
     private List<String> selectedAddOns = new ArrayList<String>();
 
@@ -418,9 +417,16 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
 
-    private ProductOrder [] getSelectedListEntriesAsProductOrders() {
-        return productOrderDao.findListByProductOrderListEntries(Arrays.asList(selectedProductOrders)).toArray(new ProductOrder[0]);
+    private List<String> getSelectedProductOrderBusinessKeys() {
+
+        List<String> businessKeys = new ArrayList<String>();
+        for (ProductOrderListEntry productOrderListEntry : selectedProductOrders) {
+            businessKeys.add(productOrderListEntry.getBusinessKey());
+        }
+
+        return businessKeys;
     }
+
 
     private Set<BillingLedger> validateOrderSelection(String validatingFor) {
         if ((userBean == null) || (userBean.getBspUser() == null) || (userBean.getBspUser().getUserId() == null)) {
@@ -434,7 +440,7 @@ public class ProductOrderForm extends AbstractJsfBean {
         }
 
         // If there are locked out orders, then do not allow the session to start
-        Set<BillingLedger> lockedOutOrders = ledgerDao.findLockedOutByOrderList(getSelectedListEntriesAsProductOrders());
+        Set<BillingLedger> lockedOutOrders = ledgerDao.findLockedOutByOrderList(getSelectedProductOrderBusinessKeys());
         if (!lockedOutOrders.isEmpty()) {
             Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());
             for (BillingLedger ledger : lockedOutOrders) {
@@ -446,7 +452,7 @@ public class ProductOrderForm extends AbstractJsfBean {
             return null;
         }
 
-        return ledgerDao.findWithoutBillingSessionByOrderList(getSelectedListEntriesAsProductOrders());
+        return ledgerDao.findWithoutBillingSessionByOrderList(getSelectedProductOrderBusinessKeys());
     }
 
     public String downloadBillingTracker() {
@@ -457,13 +463,14 @@ public class ProductOrderForm extends AbstractJsfBean {
             return null;
         }
 
-        return getTrackerForOrders(getSelectedListEntriesAsProductOrders(), bspUserList, ledgerDao);
+        return getTrackerForOrders(getSelectedProductOrderBusinessKeys(), bspUserList, ledgerDao, productOrderDao);
     }
 
     public static String getTrackerForOrders(
-            ProductOrder[] orders,
+            List<String> pdoBusinessKeys,
             BSPUserList bspUserList,
-            BillingLedgerDao ledgerDao) {
+            BillingLedgerDao ledgerDao,
+            ProductOrderDao productOrderDao) {
 
         OutputStream outputStream = null;
         File tempFile = null;
@@ -476,7 +483,7 @@ public class ProductOrderForm extends AbstractJsfBean {
             tempFile = File.createTempFile(filename, "xls");
             outputStream = new FileOutputStream(tempFile);
 
-            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(orders, bspUserList, ledgerDao);
+            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(pdoBusinessKeys, bspUserList, ledgerDao, productOrderDao);
             sampleLedgerExporter.writeToStream(outputStream);
             IOUtils.closeQuietly(outputStream);
             inputStream = new FileInputStream(tempFile);

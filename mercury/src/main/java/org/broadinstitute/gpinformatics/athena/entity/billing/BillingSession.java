@@ -141,6 +141,15 @@ public class BillingSession {
         return new HashCodeBuilder().append(getBusinessKey()).toHashCode();
     }
 
+    public List<String> getProductOrderBusinessKeys() {
+        List<String> ret = new ArrayList<String>();
+        for (ProductOrder productOrder : getProductOrders()) {
+            ret.add(productOrder.getBusinessKey());
+        }
+
+        return ret;
+    }
+
     /**
      * @return Get all unique product orders in the billing session
      */

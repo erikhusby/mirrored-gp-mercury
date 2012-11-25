@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheet
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderForm;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
@@ -25,6 +24,7 @@ import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Form operations for the billing session features
@@ -102,8 +102,8 @@ public class BillingSessionForm extends AbstractJsfBean {
     }
 
     public String downloadTracker() {
-        ProductOrder[] selectedProductOrders = billingSessionBean.getBillingSession().getProductOrders();
-        return ProductOrderForm.getTrackerForOrders(selectedProductOrders, bspUserList, billingLedgerDao);
+        List<String> productOrderBusinessKeys = billingSessionBean.getBillingSession().getProductOrderBusinessKeys();
+        return ProductOrderForm.getTrackerForOrders(productOrderBusinessKeys, bspUserList, billingLedgerDao, productOrderDao);
     }
 
     public String downloadQuoteItems() throws IOException {
