@@ -13,7 +13,6 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -57,13 +56,11 @@ public class AthenaClientServiceStub implements AthenaClientService {
                 "testQuoteId");
         Product dummyProduct = createDummyProduct();
         dummyProduct.addPriceItem(priceItem);
-        ProductOrder order = new ProductOrder( TEST_CREATOR, "title",
-                new ArrayList<ProductOrderSample>(), "quote", dummyProduct,
-                createDummyResearchProject());
-
-        ProductOrderSample sample = new ProductOrderSample("SM-1234", order);
+        ProductOrderSample sample = new ProductOrderSample("SM-1234");
         sample.addBillableItem(new BillableItem(priceItem, new BigDecimal("1")));
-        order.setSamples(Collections.singletonList(sample));
+        ProductOrder order = new ProductOrder( TEST_CREATOR, "title",
+                Collections.singletonList(sample), "quote", dummyProduct,
+                createDummyResearchProject());
 
         order.updateAddOnProducts(Collections.singletonList(createDummyProduct()));
         return order;

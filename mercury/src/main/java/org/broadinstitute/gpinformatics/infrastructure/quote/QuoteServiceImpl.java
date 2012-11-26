@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import com.sun.jersey.api.client.*;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 

@@ -30,7 +30,8 @@ public class AuthorizationListener extends AbstractJsfBean implements PhaseListe
         HttpServletRequest request = (HttpServletRequest)context.getExternalContext().getRequest();
         String pageUri = request.getServletPath();
 
-        boolean authorized = ServiceAccessUtility.isUserAuthorized(pageUri, request);
+        AuthorizationManager authorizationManager = ServiceAccessUtility.getBean(AuthorizationManager.class);
+        boolean authorized = authorizationManager.isUserAuthorized(pageUri, request);
 
         if (!authorized) {
             String errorMessage = request.getRemoteUser() + " doesn't have permission to access the page '" + pageUri + "'";

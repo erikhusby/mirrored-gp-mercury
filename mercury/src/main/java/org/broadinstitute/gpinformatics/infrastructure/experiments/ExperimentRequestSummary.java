@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.experiments;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.common.ChangeEvent;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectId;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;

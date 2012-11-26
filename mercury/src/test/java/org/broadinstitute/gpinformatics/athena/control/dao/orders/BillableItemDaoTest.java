@@ -2,14 +2,13 @@ package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderTest;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -22,8 +21,6 @@ import java.util.UUID;
 @Test(enabled = false)
 public class BillableItemDaoTest  extends ContainerTest {
 
-    @Inject
-    ProductOrderSampleDao productOrderSampleDao;
     @Inject
     ResearchProjectDao researchProjectDao;
     @Inject
@@ -46,14 +43,11 @@ public class BillableItemDaoTest  extends ContainerTest {
         // Try to create a Product Order and persist it.
         String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
         //TODO hmc When there are products in the DB can then persist the Product wit the order.
-        List<ProductOrderSample> sampleList = new ArrayList<ProductOrderSample>();
-        ProductOrder newProductOrder = new ProductOrder(1L, testProductOrderTitle, sampleList, "quoteId", null, firstResearchProjectFound );
-        sampleList.add(new ProductOrderSample("MS-1111", newProductOrder));
-        sampleList.add(new ProductOrderSample("MS-1112", newProductOrder));
+        ProductOrder newProductOrder = new ProductOrder(1L, testProductOrderTitle,
+                ProductOrderTest.createSampleList("MS-1111", "MS-1112"), "quoteId", null, firstResearchProjectFound );
         productOrderDao.persist(newProductOrder);
         productOrderDao.flush();
         productOrderDao.clear();
-
     }
 
     //TODO hmc need to complete this test

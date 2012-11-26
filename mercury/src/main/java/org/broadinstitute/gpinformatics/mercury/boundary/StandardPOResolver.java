@@ -10,6 +10,7 @@ import java.util.*;
  * For product work (as opposed to development work), this
  * is what we use to figure out the POs for a {@link LabVessel}.
  */
+// todo jmt can this be deleted?
 public class StandardPOResolver extends ProductOrderResolver {
 
     @Override

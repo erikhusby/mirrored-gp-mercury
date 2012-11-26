@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -155,11 +155,11 @@ public class ProductOrderForm extends AbstractJsfBean {
      * Convert the sample names into a list of sample objects, and replace the sample objects in the current product
      * order with the new list.
      */
-    public List<ProductOrderSample> convertTextToOrderSamples(@Nonnull String text) {
+    private static List<ProductOrderSample> convertTextToOrderSamples(@Nonnull String text) {
         List<String> sampleIds = convertTextToList(text);
         List<ProductOrderSample> orderSamples = new ArrayList<ProductOrderSample>(sampleIds.size());
         for (String sampleId : sampleIds) {
-            orderSamples.add(new ProductOrderSample(sampleId, productOrderDetail.getProductOrder()));
+            orderSamples.add(new ProductOrderSample(sampleId));
         }
         return orderSamples;
     }

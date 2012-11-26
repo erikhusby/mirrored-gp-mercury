@@ -137,7 +137,7 @@
                     <div class="controls">
                         <p:autoComplete id="fundingSources" value="#{researchProjectForm.fundingSources}"
                             completeMethod="#{fundingListBean.searchFunding}" var="funding" scrollHeight="250"
-                            itemLabel="#{funding.fundingTypeAndName}" itemValue="#{funding}"
+                            itemLabel="#{funding.displayName}" itemValue="#{funding}"
                             converter="#{quoteFundingConverter}" multiple="true">
                             <p:column style="width:100%">
                                 <div class="ac-dropdown-text">#{funding.displayName}</div>

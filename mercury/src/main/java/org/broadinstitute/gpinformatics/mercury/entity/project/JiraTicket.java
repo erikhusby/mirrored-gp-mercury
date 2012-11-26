@@ -3,17 +3,13 @@ package org.broadinstitute.gpinformatics.mercury.entity.project;
 
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.Id;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+import javax.annotation.Nonnull;
+import javax.persistence.*;
 import java.io.IOException;
 
 @Entity
@@ -37,18 +33,25 @@ public class JiraTicket {
      */
     private String browserUrl;
 
-    public JiraTicket() {}
-    
-    public JiraTicket ( String ticketName, String ticketId ) {
-        if (ticketName == null) {
-            throw new NullPointerException("ticketName cannot be null.");
-        }
+    @Transient
+    private final JiraService jiraService;
+
+    public JiraTicket() {
+        jiraService = ServiceAccessUtility.getBean(JiraService.class);
+    }
+
+    public JiraTicket(JiraIssue issue) {
+        this(issue.getKey());
+    }
+
+    public JiraTicket(@Nonnull String ticketId) {
+        this();
         if (ticketId == null) {
             throw new NullPointerException("ticketId cannot be null.");
         }
-        this.ticketName = ticketName;
         this.ticketId = ticketId;
-        this.browserUrl = ServiceAccessUtility.getTicketUrl ( ticketName );
+        ticketName = ticketId;
+        this.browserUrl = jiraService.createTicketUrl(ticketName);
     }
 
     /**
@@ -74,9 +77,8 @@ public class JiraTicket {
      */
     public void addComment(String text) {
         try {
-            ServiceAccessUtility.addJiraComment(ticketName,text);
-        }
-        catch(IOException  e) {
+            jiraService.addComment(ticketName,text);
+        } catch(IOException e) {
             throw new RuntimeException("Could not log message '" + text + "' to jira ticket " + ticketName + ".  Is the jira server okay?",e);
         }
     }
@@ -88,7 +90,7 @@ public class JiraTicket {
      * @throws IOException
      */
     public void addWatcher(String personLoginId) throws IOException {
-        ServiceAccessUtility.addJiraWatcher(ticketName, personLoginId);
+        jiraService.addWatcher(ticketName, personLoginId);
     }
 
     /**
@@ -99,10 +101,9 @@ public class JiraTicket {
      * @throws IOException
      */
     public void addJiraLink (String targetTicketKey) throws IOException {
-
-        ServiceAccessUtility.addJiraPublicLink( AddIssueLinkRequest.LinkType.Related ,ticketName,
-                                                targetTicketKey);
+        jiraService.addLink( AddIssueLinkRequest.LinkType.Related ,ticketName, targetTicketKey);
     }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
