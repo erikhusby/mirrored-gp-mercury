@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
+import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 
 import javax.ejb.Schedule;
 import javax.ejb.Stateless;
@@ -55,7 +56,7 @@ public class ExtractTransform {
     @Inject
     private Deployment deployment;
     @Inject
-    private AuditReaderEtl auditReaderEtl;
+    private AuditReaderDao auditReaderDao;
     @Inject
     private BillableItemEtl billableItemEtl;
     @Inject
@@ -135,7 +136,7 @@ public class ExtractTransform {
             currentRunStartTime = etlDate.getTime();
 
             final long lastRev = readLastEtlRun(dataDir);
-            final long etlRev = auditReaderEtl.currentRevNumber(etlDate);
+            final long etlRev = auditReaderDao.currentRevNumber(etlDate);
             if (lastRev >= etlRev) {
                 logger.debug("Incremental ETL found no changes since rev " + lastRev);
                 return 0;
