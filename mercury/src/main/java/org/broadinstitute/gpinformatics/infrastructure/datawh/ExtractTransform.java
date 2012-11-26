@@ -48,7 +48,8 @@ public class ExtractTransform {
     private static final long MSEC_IN_MINUTE = 60 * 1000;
     private static final Logger logger = Logger.getLogger(ExtractTransform.class);
     private static final Semaphore mutex = new Semaphore(1);
-    private static long currentRunStartTime = 0;  // only useful for logging
+    private static long currentRunStartTime = System.currentTimeMillis();  // only useful for logging
+    private static boolean loggedConfigError = false;
     private EtlConfig etlConfig = null;
 
     @Inject
@@ -93,10 +94,7 @@ public class ExtractTransform {
             etlConfig = (EtlConfig) MercuryConfiguration.getInstance().getConfig(EtlConfig.class, deployment);
             setDatafileDir(etlConfig.getDatawhEtlDirRoot() + DATAFILE_SUBDIR);
         }
-        // Only runs periodic ETL if deployed to production.
-        if (etlConfig.getExternalDeployment() == Deployment.PROD) {
-            incrementalEtl();
-        }
+        incrementalEtl();
     }
 
     /**
@@ -118,10 +116,16 @@ public class ExtractTransform {
             // Bails if target directory is missing.
             String dataDir = getDatafileDir();
             if (null == dataDir || dataDir.length() == 0) {
-                logger.fatal("ETL data file directory is not configured.");
+                if (!loggedConfigError) {
+                    logger.fatal("ETL data file directory is not configured.");
+                    loggedConfigError = true;
+                }
                 return -1;
             } else if (!(new File(dataDir)).exists()) {
-                logger.fatal("ETL data file directory is missing: " + dataDir);
+                if (!loggedConfigError) {
+                    logger.fatal("ETL data file directory is missing: " + dataDir);
+                    loggedConfigError = true;
+                }
                 return -1;
             }
 
