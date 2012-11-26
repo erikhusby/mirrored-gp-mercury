@@ -128,6 +128,10 @@ public class ProductOrderListEntry implements Serializable {
         this.unbilledLedgerEntryCount = unbilledLedgerEntryCount;
     }
 
+    public boolean isEligibleForBilling() {
+        return getUnbilledLedgerEntryCount() > 0;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
