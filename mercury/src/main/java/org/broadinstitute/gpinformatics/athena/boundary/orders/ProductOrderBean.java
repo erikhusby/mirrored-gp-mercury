@@ -78,7 +78,7 @@ public class ProductOrderBean {
             }
         }
 
-        return bspUserList.getSelectItems(owners);
+        return BSPUserList.createSelectItems(owners);
     }
 
     /**
