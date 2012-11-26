@@ -131,9 +131,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell(priceItem.getName() + " [" + product.getPartNumber() + "]", 2, getPriceItemProductHeaderStyle());
     }
 
-    private void writeCategoryHeaders(PriceItem priceItem) {
-        getWriter().writeCell("Billed to " + priceItem.getCategory(), getBilledAmountsHeaderStyle());
-        getWriter().writeCell("New Quantity " + priceItem.getCategory(), getBilledAmountsHeaderStyle());
+    private void writeBillAndNewHeaders() {
+        getWriter().writeCell("Billed", getBilledAmountsHeaderStyle());
+        getWriter().writeCell("New Quantity", getBilledAmountsHeaderStyle());
     }
 
     private void writePriceItemHeaders(PriceItem priceItem) {
@@ -288,11 +288,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             }
         }
 
-        writeAllCategoryHeaders(currentProduct.getDefaultPriceItem(), currentProduct.getPriceItems(), currentProduct.getAddOns());
-        writeAllPriceItemHeaders(currentProduct.getDefaultPriceItem(), currentProduct.getPriceItems(), currentProduct.getAddOns());
+        writeAllBillAndNewHeaders(currentProduct.getPriceItems(), currentProduct.getAddOns());
     }
 
-    private void writeAllPriceItemHeaders(PriceItem defaultPriceItem, Set<PriceItem> priceItems, Set<Product> addOns) {
+    private void writeAllBillAndNewHeaders(Set<PriceItem> priceItems, Set<Product> addOns) {
 
         // The new row
         getWriter().nextRow();
@@ -301,41 +300,17 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         writeEmptyFixedHeaders();
 
         // primary price item for main product
-        writePriceItemHeaders(defaultPriceItem);
+        writeBillAndNewHeaders();
         for (PriceItem priceItem : priceItems) {
-            writePriceItemHeaders(priceItem);
+            writeBillAndNewHeaders();
         }
 
         for (Product addOn : addOns) {
             // primary price item for this add-on
-            writePriceItemHeaders(addOn.getDefaultPriceItem());
+            writeBillAndNewHeaders();
 
             for (PriceItem priceItem : addOn.getPriceItems()) {
-                writePriceItemHeaders(priceItem);
-            }
-        }
-    }
-
-    private void writeAllCategoryHeaders(PriceItem defaultPriceItem, Set<PriceItem> priceItems, Set<Product> addOns) {
-
-        // The new row
-        getWriter().nextRow();
-
-        // The empty fixed headers
-        writeEmptyFixedHeaders();
-
-        // primary price item for main product
-        writeCategoryHeaders(defaultPriceItem);
-        for (PriceItem priceItem : priceItems) {
-            writeCategoryHeaders(priceItem);
-        }
-
-        for (Product addOn : addOns) {
-            // primary price item for this add-on
-            writeCategoryHeaders(addOn.getDefaultPriceItem());
-
-            for (PriceItem priceItem : addOn.getPriceItems()) {
-                writeCategoryHeaders(priceItem);
+                writeBillAndNewHeaders();
             }
         }
     }
