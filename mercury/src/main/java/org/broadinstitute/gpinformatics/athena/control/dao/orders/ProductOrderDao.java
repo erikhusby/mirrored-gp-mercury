@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
@@ -50,26 +49,26 @@ public class ProductOrderDao extends GenericDao {
     /**
      * Return the {@link ProductOrder}s specified by the {@link List} of business keys, applying optional fetches.
      *
-     * @param businessKeys
+     * @param businessKeyList
      * @param fs
      *
      * @return
      */
-    public List<ProductOrder> findListByBusinessKey(List<String> businessKeys, FetchSpec... fs) {
+    public List<ProductOrder> findListByBusinessKeyList(List<String> businessKeyList, FetchSpec... fs) {
 
         final Set<FetchSpec> fetchSpecs = new HashSet<FetchSpec>(Arrays.asList(fs));
 
-        return findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, businessKeys, new GenericDaoCallback<ProductOrder>() {
+        return findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, businessKeyList, new GenericDaoCallback<ProductOrder>() {
             @Override
             public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> productOrder) {
 
                 if (fetchSpecs.contains(FetchSpec.Samples)) {
-                    // one to many
+                    // one to many so set distinct
                     criteriaQuery.distinct(true);
                     productOrder.fetch(ProductOrder_.samples, JoinType.LEFT);
                 }
 
-                if (fetchSpecs.contains(FetchSpec.Product) || fetchSpecs.contains((FetchSpec.ProductFamily))) {
+                if (fetchSpecs.contains(FetchSpec.Product) || fetchSpecs.contains(FetchSpec.ProductFamily)) {
                     productOrder.fetch(ProductOrder_.product);
                 }
 
@@ -195,20 +194,4 @@ public class ProductOrderDao extends GenericDao {
     }
 
 
-    /**
-     * Pull the business keys out of the {@link ProductOrderListEntry}s and use those to fetch the {@link ProductOrder}s
-     * with {@link org.broadinstitute.gpinformatics.athena.entity.products.Product}, {@link ResearchProject}, and
-     * {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample}s initialized.
-     *
-     * @param productOrderListEntries
-     * @return
-     */
-    public List<ProductOrder> findListByProductOrderListEntries(List<ProductOrderListEntry> productOrderListEntries, FetchSpec... fetchSpecs) {
-        List<String> productOrderBusinessKeys = new ArrayList<String>();
-        for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
-            productOrderBusinessKeys.add(productOrderListEntry.getJiraTicketKey());
-        }
-
-        return findListByBusinessKey(productOrderBusinessKeys, fetchSpecs);
-    }
 }

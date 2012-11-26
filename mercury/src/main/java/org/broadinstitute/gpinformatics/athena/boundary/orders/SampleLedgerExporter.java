@@ -69,7 +69,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
 
     public SampleLedgerExporter(List<String> pdoBusinessKeys, BSPUserList bspUserList, BillingLedgerDao billingLedgerDao, ProductOrderDao productOrderDao) {
-        this(productOrderDao.findListByBusinessKey(pdoBusinessKeys, Product, ResearchProject, Samples));
+        this(productOrderDao.findListByBusinessKeyList(pdoBusinessKeys, Product, ResearchProject, Samples));
 
         this.bspUserList = bspUserList;
         this.billingLedgerDao = billingLedgerDao;

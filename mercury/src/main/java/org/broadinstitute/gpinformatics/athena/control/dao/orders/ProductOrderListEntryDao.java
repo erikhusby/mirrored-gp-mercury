@@ -117,7 +117,8 @@ public class ProductOrderListEntryDao extends GenericDao {
                         productProductFamilyJoin.get(ProductFamily_.name),
                         productOrderResearchProjectJoin.get(ResearchProject_.title),
                         productOrderRoot.get(ProductOrder_.createdBy),
-                        productOrderRoot.get(ProductOrder_.createdDate)));
+                        productOrderRoot.get(ProductOrder_.createdDate),
+                        productOrderRoot.get(ProductOrder_.pdoSampleCount)));
 
         return getEntityManager().createQuery(cq).getResultList();
     }
