@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.athena;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.BillableItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
@@ -10,9 +9,9 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
-import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -55,9 +54,8 @@ public class AthenaClientServiceStub implements AthenaClientService {
                 PriceItem.NAME_EXOME_EXPRESS,
                 "testQuoteId");
         Product dummyProduct = createDummyProduct();
-        dummyProduct.addPriceItem(priceItem);
-        ProductOrderSample sample = new ProductOrderSample("SM-1234");
-        sample.addBillableItem(new BillableItem(priceItem, new BigDecimal("1")));
+        dummyProduct.setDefaultPriceItem(priceItem);
+        ProductOrderSample sample = new ProductOrderSample("SM-1234", BSPSampleDTO.DUMMY);
         ProductOrder order = new ProductOrder( TEST_CREATOR, "title",
                 Collections.singletonList(sample), "quote", dummyProduct,
                 createDummyResearchProject());

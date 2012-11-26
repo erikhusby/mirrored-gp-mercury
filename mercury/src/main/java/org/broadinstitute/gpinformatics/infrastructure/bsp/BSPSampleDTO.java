@@ -60,11 +60,13 @@ public class BSPSampleDTO {
 
     private final String containerId;
 
+    private final String sampleId;
+
     /**
      * Use this when no valid DTO is present, to avoid null checks
      */
     public static final BSPSampleDTO DUMMY =
-            new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "");
+            new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "");
 
     // collaborator?
     // species vs organism?
@@ -86,7 +88,7 @@ public class BSPSampleDTO {
                         String patientId, String organism, String collaboratorsSampleName, String collection,
                         String volume, String concentration, String sampleLsid, String collaboratorParticipantId,
                         String materialType, String total, String sampleType, String primaryDisease,
-                        String gender, String stockType, String fingerprint) {
+                        String gender, String stockType, String fingerprint, String sampleId) {
         this.containerId = containerId;
         this.stockSample = stockSample;
         this.rootSample = rootSample;
@@ -110,6 +112,7 @@ public class BSPSampleDTO {
         stockAtExport = null;
         positiveControl = false;
         negativeControl = false;
+        this.sampleId = sampleId;
     }
 
     public double getVolume() {
@@ -235,5 +238,9 @@ public class BSPSampleDTO {
 
     public String getAliquotSample() {
         return aliquotSample;
+    }
+
+    public String getSampleId() {
+        return sampleId;
     }
 }

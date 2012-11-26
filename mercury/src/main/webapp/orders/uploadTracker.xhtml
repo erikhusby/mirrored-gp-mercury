@@ -6,18 +6,18 @@
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:f="http://java.sun.com/jsf/core"
       xmlns:p="http://primefaces.org/ui">
 <body>
     <ui:composition template="/layout.xhtml">
-        <ui:define name="title">Home</ui:define>
+        <ui:define name="title">Upload Billing Tracker</ui:define>
+
         <ui:define name="body">
-            <p>You can manage:</p>
-            <ul>
-                <li><h:link value="Research Projects" outcome="/projects/list"/></li>
-                <li><h:link value="Product Orders" outcome="/orders/list"/></li>
-                <li><h:link value="Products" outcome="/products/list"/> </li>
-                <li><h:link value="Billing Sessions" outcome="/billing/sessions"/> </li>
-            </ul>
+            <h:form>
+
+                Upload will be in this space
+
+            </h:form>
         </ui:define>
     </ui:composition>
 </body>

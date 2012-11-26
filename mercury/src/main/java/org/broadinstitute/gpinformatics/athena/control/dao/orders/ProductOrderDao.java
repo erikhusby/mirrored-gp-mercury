@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
@@ -11,8 +14,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Dao for {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder}s.
@@ -26,6 +28,13 @@ import java.util.List;
 @RequestScoped
 public class ProductOrderDao extends GenericDao {
 
+    public enum FetchSpec {
+        Product,
+        ProductFamily,
+        ResearchProject,
+        Samples
+    }
+
     /**
      * Find the order using the business key (the jira ticket number).
      *
@@ -36,6 +45,46 @@ public class ProductOrderDao extends GenericDao {
     public ProductOrder findByBusinessKey(String key) {
         return findSingle(ProductOrder.class, ProductOrder_.jiraTicketKey, key);
     }
+
+
+    /**
+     * Return the {@link ProductOrder}s specified by the {@link List} of business keys, applying optional fetches.
+     *
+     * @param businessKeys
+     * @param fs
+     *
+     * @return
+     */
+    public List<ProductOrder> findListByBusinessKey(List<String> businessKeys, FetchSpec... fs) {
+
+        final Set<FetchSpec> fetchSpecs = new HashSet<FetchSpec>(Arrays.asList(fs));
+
+        return findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, businessKeys, new GenericDaoCallback<ProductOrder>() {
+            @Override
+            public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> productOrder) {
+
+                if (fetchSpecs.contains(FetchSpec.Samples)) {
+                    // one to many
+                    criteriaQuery.distinct(true);
+                    productOrder.fetch(ProductOrder_.samples, JoinType.LEFT);
+                }
+
+                if (fetchSpecs.contains(FetchSpec.Product) || fetchSpecs.contains((FetchSpec.ProductFamily))) {
+                    productOrder.fetch(ProductOrder_.product);
+                }
+
+                if (fetchSpecs.contains(FetchSpec.ProductFamily)) {
+                    Join<ProductOrder,Product> productOrderProductJoin = productOrder.join(ProductOrder_.product);
+                    productOrderProductJoin.fetch(Product_.productFamily);
+                }
+
+                if (fetchSpecs.contains(FetchSpec.ResearchProject)) {
+                    productOrder.fetch(ProductOrder_.researchProject);
+                }
+            }
+        });
+    }
+
 
     /**
      * Find ProductOrders by Research Project
@@ -89,30 +138,12 @@ public class ProductOrderDao extends GenericDao {
     }
 
     /**
-     * Find all ProductOrders, left join fetching the samples and join fetching the product and research project.
-     * We use all of this data to render the product order list and even with our meager test data sets things were
-     * starting to bog down.
+     * Find all ProductOrders, not initializing any associations
      *
      * @return All the orders
      */
     public List<ProductOrder> findAll() {
-        CriteriaBuilder cb = getCriteriaBuilder();
-        CriteriaQuery<ProductOrder> cq = cb.createQuery(ProductOrder.class);
-        cq.distinct(true);
-
-        Root<ProductOrder> productOrder = cq.from(ProductOrder.class);
-
-        productOrder.join(ProductOrder_.samples, JoinType.LEFT);
-        productOrder.fetch(ProductOrder_.samples, JoinType.LEFT);
-
-        productOrder.join(ProductOrder_.product);
-        productOrder.fetch(ProductOrder_.product);
-
-        productOrder.join(ProductOrder_.researchProject);
-        productOrder.fetch(ProductOrder_.researchProject);
-
-        return getEntityManager().createQuery(cq).getResultList();
-
+        return findAll(ProductOrder.class);
     }
 
 
@@ -161,5 +192,23 @@ public class ProductOrderDao extends GenericDao {
         }
 
         return findSingle(ProductOrder.class, ProductOrder_.productOrderId, orderId);
+    }
+
+
+    /**
+     * Pull the business keys out of the {@link ProductOrderListEntry}s and use those to fetch the {@link ProductOrder}s
+     * with {@link org.broadinstitute.gpinformatics.athena.entity.products.Product}, {@link ResearchProject}, and
+     * {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample}s initialized.
+     *
+     * @param productOrderListEntries
+     * @return
+     */
+    public List<ProductOrder> findListByProductOrderListEntries(List<ProductOrderListEntry> productOrderListEntries, FetchSpec... fetchSpecs) {
+        List<String> productOrderBusinessKeys = new ArrayList<String>();
+        for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
+            productOrderBusinessKeys.add(productOrderListEntry.getJiraTicketKey());
+        }
+
+        return findListByBusinessKey(productOrderBusinessKeys, fetchSpecs);
     }
 }
