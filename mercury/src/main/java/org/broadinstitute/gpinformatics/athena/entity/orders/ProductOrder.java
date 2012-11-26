@@ -15,8 +15,10 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
@@ -84,6 +86,12 @@ public class ProductOrder implements Serializable {
     @Column(name = "count")
     /** counts the number of lanes; the default value is one lane */
     private int count = 1;
+
+    /** Counts the number of rows in the one-to-many table.  Reference this count before fetching the collection, to
+     * avoid an unnecessary database round trip  */
+    @NotAudited
+    @Formula("(select count(*) from athena.product_order_sample pos where pos.product_order = product_order_id)")
+    private Integer pdoSampleCount = 0;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order", nullable = false)
@@ -908,5 +916,9 @@ public class ProductOrder implements Serializable {
 
     public boolean hasJiraTicketKey() {
         return !StringUtils.isBlank(jiraTicketKey);
+    }
+
+    public Integer getPdoSampleCount() {
+        return pdoSampleCount;
     }
 }
