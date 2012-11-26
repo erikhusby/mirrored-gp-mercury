@@ -30,6 +30,12 @@
             </p:submenu>
 
             <security:authorizeBlock roles="#{userBean.developerRole}">
+                <p:submenu label="Search" icon="ui-icon-search">
+                    <p:menuitem value="Barcode" outcome="/search/search_plastic"/>
+                </p:submenu>
+            </security:authorizeBlock>
+
+            <security:authorizeBlock roles="#{userBean.developerRole}">
                 <p:submenu label="Admin" icon="ui-icon-gear">
                     <p:menuitem value="Page Administration" outcome="/administration/page_administration" />
                 </p:submenu>

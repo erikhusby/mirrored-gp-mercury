@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:cc="http://java.sun.com/jsf/composite"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core"
+        >
+
+
+<cc:interface>
+    <cc:attribute name="barcode" required="true"/>
+</cc:interface>
+<cc:implementation>
+    <h:outputStylesheet library="css" name="container.css" target="head"/>
+    <h:outputText value="#{containerBean.updateVessel(cc.attrs.barcode)}"/>
+    <p:panel id="gridPanel">
+        <p:dataGrid id="containerGrid" var="well" columns="#{containerBean.columns}" emptyMessage=""
+                    rows="#{containerBean.columns * containerBean.rows}" value="#{containerBean.geometry}"
+                    styleClass="ui-container" rendered="#{containerBean.geometry.size() > 1}">
+
+            <f:facet name="header">
+                Sample Layout for #{containerBean.barcode}
+            </f:facet>
+            <p:dataTable value="#{containerBean.samplesAtPosition()}" var="sample" emptyMessage="EMPTY">
+                <f:facet name="header">
+                    <h:outputText value="#{containerBean.getRowNumIndex()} " style="font-family: monospace;
+                            vertical-align: super"/>
+                </f:facet>
+                <p:column>
+                    <h:outputText value="#{sample.startingSample.sampleKey}&lt;br/&gt;" escape="false"
+                                  style="font-size: smaller;"/>
+                </p:column>
+            </p:dataTable>
+        </p:dataGrid>
+    </p:panel>
+</cc:implementation>
+</html>
