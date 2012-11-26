@@ -164,8 +164,10 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Place&nbsp;Order" action="#{productOrderForm.save}"
-                                                 ajax="false" styleClass="ui-priority-primary"/>
+                                <p:commandButton
+                                        disabled="#{!userBean.validUser}"
+                                        value="Place&nbsp;Order" action="#{productOrderForm.save}"
+                                        ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                             <div class="span1">
                                 <h:link outcome="list" value="Cancel"/>
@@ -239,8 +241,10 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Place&nbsp;Order" action="#{productOrderForm.save}"
-                                                 ajax="false" styleClass="ui-priority-primary"/>
+                                <p:commandButton
+                                        disabled="#{!userBean.validUser}"
+                                        value="Place&nbsp;Order" action="#{productOrderForm.save}"
+                                        ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                             <div class="span1">
                                 <h:link outcome="list" value="Cancel"/>

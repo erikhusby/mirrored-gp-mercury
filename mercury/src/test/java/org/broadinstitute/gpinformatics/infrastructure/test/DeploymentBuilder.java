@@ -49,10 +49,6 @@ public class DeploymentBuilder {
                 .addAsWebInfResource(new File("src/test/resources/mercury-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsWebInfResource(new File("src/test/resources/squid-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsResource(new File("src/main/resources/META-INF/persistence.xml"), "META-INF/persistence.xml")
-                // TODO PMB
-                // TODO MLC this misses infrastucture and athena
-                // .addPackages(true, "org.broadinstitute.gpinformatics.mercury")
-                // this is yielding weird duplicate definition errors probably due to all our weird duplicate definitions
                 .addPackages(true, "org.broadinstitute.gpinformatics")
                 .addAsWebInfResource(new StringAsset("MERCURY_DEPLOYMENT=" + deployment.name()), "classes/jndi.properties");
         addWebResourcesTo(war, "src/test/resources/testdata");

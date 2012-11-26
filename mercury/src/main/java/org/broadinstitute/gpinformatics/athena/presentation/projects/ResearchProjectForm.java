@@ -89,6 +89,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
                 irbs = makeIrbs(detail.getProject().getIrbNumbers());
             }
         }
+        userBean.checkUserValidForOperation("create a research project", this);
     }
 
     private List<Irb> makeIrbs(String[] irbNumbers) {

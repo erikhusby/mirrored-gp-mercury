@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
-import org.apache.commons.lang.math.RandomUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -18,6 +17,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 @Test(enabled = true)
@@ -63,12 +63,12 @@ public class ProductOrderSampleDaoTest  extends ContainerTest {
         // Find a research project in the DB.
         List<ResearchProject> projectsList = researchProjectDao.findAllResearchProjects();
         Assert.assertTrue(projectsList != null && !projectsList.isEmpty());
-        ResearchProject foundResearchProject = projectsList.get(RandomUtils.nextInt(projectsList.size()));
+        ResearchProject foundResearchProject = projectsList.get(new Random().nextInt(projectsList.size()));
 
         Product product = null;
         List<Product> productsList = productDao.findProducts();
         if (productsList != null && !productsList.isEmpty()) {
-            product = productsList.get(RandomUtils.nextInt(productsList.size()));
+            product = productsList.get(new Random().nextInt(productsList.size()));
         }
 
         // Try to create a Product Order and persist it.

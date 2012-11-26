@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderListModel;
@@ -137,7 +137,7 @@ public class ProductOrderForm extends AbstractJsfBean {
             }
         }
 
-        return bspUserList.getSelectItems(owners);
+        return BSPUserList.createSelectItems(owners);
     }
 
     public UIInput getEditIdsCacheBinding() {
@@ -387,6 +387,7 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     public void initForm() {
         conversationData.beginConversation(productOrderDetail.getProductOrder());
+        userBean.checkUserValidForOperation("create an order", this);
     }
 
     public ProductOrderListEntry[] getSelectedProductOrders() {
