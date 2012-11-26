@@ -94,6 +94,8 @@ public class UserBean implements Serializable {
 
     private final EnumSet<DB.Role> roles = EnumSet.noneOf(DB.Role.class);
 
+    private String loginUserName;
+
     public Collection<DB.Role> getRoles() {
         return ImmutableSet.copyOf(roles);
     }
@@ -112,6 +114,7 @@ public class UserBean implements Serializable {
     }
 
     private void updateBspStatus() {
+        bspUser = bspUserList.getByUsername(loginUserName);
         if (bspUser != null && !bspUserList.isTestUser(bspUser)) {
             bspStatus = ServerStatus.loggedIn;
         } else if (bspUserList.isServerValid()) {
@@ -122,10 +125,10 @@ public class UserBean implements Serializable {
         }
     }
 
-    private void updateJiraStatus(String username) {
+    private void updateJiraStatus() {
         try {
-            if (jiraService.isValidUser(username)) {
-                jiraUsername = username;
+            if (jiraService.isValidUser(loginUserName)) {
+                jiraUsername = loginUserName;
                 jiraStatus = ServerStatus.loggedIn;
             } else {
                 // The user is not a valid JIRA User.  Warn, but allow login.
@@ -144,10 +147,9 @@ public class UserBean implements Serializable {
      * @param request the request used for a successful user login
      */
     public void login(HttpServletRequest request) {
-        String username = request.getUserPrincipal().getName();
-        bspUser = bspUserList.getByUsername(username);
+        loginUserName = request.getUserPrincipal().getName();
         updateBspStatus();
-        updateJiraStatus(username);
+        updateJiraStatus();
         for (DB.Role role : DB.Role.values()) {
             if (request.isUserInRole(role.name)) {
                 roles.add(role);
@@ -161,6 +163,13 @@ public class UserBean implements Serializable {
      * @param jsfBean the JSF bean used to issue the warning.
      */
     public void checkUserValidForOperation(String operation, AbstractJsfBean jsfBean) {
+        // Check and see if the server state has changed to allow the user to log in.
+        if (bspStatus != ServerStatus.loggedIn) {
+            updateBspStatus();
+        }
+        if (jiraStatus != ServerStatus.loggedIn) {
+            updateJiraStatus();
+        }
         if (!isValidUser()) {
             jsfBean.addErrorMessage(MessageFormat.format(LOGIN_WARNING, operation));
         }
