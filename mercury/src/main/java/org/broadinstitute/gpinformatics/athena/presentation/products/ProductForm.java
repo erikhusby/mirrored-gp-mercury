@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
-import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
@@ -40,11 +39,10 @@ public class ProductForm extends AbstractJsfBean {
     @Inject
     private Log logger;
 
+
     @Inject
     private FacesContext facesContext;
 
-    @Inject
-    private UserBean userBean;
 
     /**
      * Transaction support for create / update operations
@@ -80,13 +78,13 @@ public class ProductForm extends AbstractJsfBean {
 
     private List<Product> addOns;
 
+
     /**
      * Hook for the preRenderView event that initiates the long running conversation and sets up conversation scoped
      * data from the product, also initializes the form as appropriate
      */
     public void onPreRenderView() {
         initForm();
-        userBean.checkUserValidForOperation("create a product", this);
     }
 
 
