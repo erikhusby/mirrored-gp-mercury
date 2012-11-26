@@ -54,6 +54,9 @@ public class LabEventHandler {
     @Inject
     AthenaClientService athenaClientService;
 
+    public LabEventHandler () {
+    }
+
     public LabEventHandler ( WorkflowLoader workflowLoader, AthenaClientService clientService ) {
         this.workflowLoader = workflowLoader;
         this.athenaClientService = clientService;

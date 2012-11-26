@@ -2,12 +2,15 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 //import com.jprofiler.api.agent.Controller;
 
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
@@ -70,11 +73,20 @@ public class LabEventTest {
     private static Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
 
     private final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher = new LabEventFactory.LabEventRefDataFetcher() {
-//        @Override
-//        public Person getOperator(String userId) {
-//            return new Person(userId);
-//        }
-//
+
+
+        @Override
+        public BspUser getOperator ( String userId ) {
+
+            return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
+        }
+
+        @Override
+        public BspUser getOperator ( Long bspUserId ) {
+            BspUser testUser =new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
+            return testUser;
+        }
+
         @Override
         public LabBatch getLabBatch(String labBatchName) {
             return null;

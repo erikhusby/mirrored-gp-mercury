@@ -49,15 +49,18 @@ public class BucketBean {
      *
      * TODO SGM Rethink the return.  Doesn't seem to add any value
      *
+     *
      * @param vessel
      * @param productOrder
      *
+     * @param actor
      * @return
      */
-    public BucketEntry add ( @Nonnull LabVessel vessel, @Nonnull String productOrder, @Nonnull Bucket bucket ) {
+    public BucketEntry add ( @Nonnull LabVessel vessel, @Nonnull String productOrder, @Nonnull Bucket bucket,
+                             String actor ) {
 
         BucketEntry newEntry = bucket.addEntry ( productOrder, vessel );
-        labEventFactory.createFromBatchItems ( productOrder, vessel, 1L, null, LabEventType.SHEARING_BUCKET_ENTRY,
+        labEventFactory.createFromBatchItems ( productOrder, vessel, 1L, actor, LabEventType.SHEARING_BUCKET_ENTRY,
                                                LabEvent.UI_EVENT_LOCATION );
         try {
             jiraService.addComment ( productOrder, vessel.getLabCentricName () +

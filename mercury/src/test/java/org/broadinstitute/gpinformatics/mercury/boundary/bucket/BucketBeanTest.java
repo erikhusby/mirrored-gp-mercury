@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
 import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -12,6 +13,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -27,6 +31,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static junit.framework.Assert.assertTrue;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 /**
  * @author Scott Matthews
@@ -64,7 +69,7 @@ public class BucketBeanTest extends ContainerTest {
     private String twoDBarcode4;
     private String hrafalUserName;
 
-    @BeforeMethod (groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod
     public void setUp() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {
@@ -97,7 +102,7 @@ public class BucketBeanTest extends ContainerTest {
 
     }
 
-    @AfterMethod (groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {
@@ -107,7 +112,6 @@ public class BucketBeanTest extends ContainerTest {
         utx.rollback();
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testResource_start_entries () {
 
         bucket = bucketDao.findByName(bucketCreationName);
@@ -115,15 +119,19 @@ public class BucketBeanTest extends ContainerTest {
         Assert.assertNotNull( bucket.getBucketEntries ());
         Assert.assertTrue( bucket.getBucketEntries ().isEmpty());
 
-        BucketEntry testEntry1 = resource.add (new TwoDBarcodedTube ( twoDBarcode1 ), poBusinessKey1, bucket );
+        BucketEntry testEntry1 = resource.add (new TwoDBarcodedTube ( twoDBarcode1 ), poBusinessKey1, bucket,
+                                               howieTest );
 
         Assert.assertEquals(1, bucket.getBucketEntries ().size());
         Assert.assertTrue ( bucket.contains ( testEntry1 ) );
 
 
-        BucketEntry testEntry2 = resource.add (new TwoDBarcodedTube ( twoDBarcode2 ), poBusinessKey1, bucket );
-        BucketEntry testEntry3 = resource.add (new TwoDBarcodedTube ( twoDBarcode3 ), poBusinessKey2, bucket );
-        BucketEntry testEntry4 = resource.add (new TwoDBarcodedTube ( twoDBarcode4 ), poBusinessKey3, bucket );
+        BucketEntry testEntry2 = resource.add (new TwoDBarcodedTube ( twoDBarcode2 ), poBusinessKey1, bucket,
+                                               howieTest );
+        BucketEntry testEntry3 = resource.add (new TwoDBarcodedTube ( twoDBarcode3 ), poBusinessKey2, bucket,
+                                               howieTest );
+        BucketEntry testEntry4 = resource.add (new TwoDBarcodedTube ( twoDBarcode4 ), poBusinessKey3, bucket,
+                                               howieTest );
 
         Assert.assertTrue( bucket.contains ( testEntry2 ));
         Assert.assertTrue( bucket.contains ( testEntry3 ));
@@ -177,7 +185,6 @@ public class BucketBeanTest extends ContainerTest {
     }
 
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testResource_start_vessels () {
 
 
@@ -186,7 +193,8 @@ public class BucketBeanTest extends ContainerTest {
         Assert.assertNotNull(bucket.getBucketEntries());
         Assert.assertTrue(bucket.getBucketEntries().isEmpty());
 
-        BucketEntry testEntry1 = resource.add (new TwoDBarcodedTube ( twoDBarcode1 ), poBusinessKey1, bucket);
+        BucketEntry testEntry1 = resource.add (new TwoDBarcodedTube ( twoDBarcode1 ), poBusinessKey1, bucket,
+                                               howieTest );
 
         Assert.assertEquals(1,bucket.getBucketEntries().size());
         Assert.assertTrue ( bucket.contains ( testEntry1 ) );
@@ -291,7 +299,6 @@ public class BucketBeanTest extends ContainerTest {
     }
 
 
-    @Test( groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testResource_start_vessel_count () {
 
         bucket = bucketDao.findByName(bucketCreationName);
@@ -299,7 +306,8 @@ public class BucketBeanTest extends ContainerTest {
         Assert.assertNotNull(bucket.getBucketEntries());
         Assert.assertTrue(bucket.getBucketEntries().isEmpty());
 
-        BucketEntry testEntry1 = resource.add (new TwoDBarcodedTube ( twoDBarcode1 ), poBusinessKey1, bucket);
+        BucketEntry testEntry1 = resource.add (new TwoDBarcodedTube ( twoDBarcode1 ), poBusinessKey1, bucket,
+                                               howieTest );
 
         Assert.assertEquals(1,bucket.getBucketEntries().size());
         Assert.assertTrue ( bucket.contains ( testEntry1 ) );

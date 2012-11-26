@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.*;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraCustomFieldsUtil;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -250,10 +252,19 @@ public class ExomeExpressEndToEndTest {
             // deck sends message, check workflow
             LabEventFactory labEventFactory = new LabEventFactory();
             labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
-//                @Override
-//                public Person getOperator(String userId) {
-//                    return new Person(userId);
-//                }
+                @Override
+                public BspUser getOperator ( String userId ) {
+
+
+                    return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
+                }
+
+                @Override
+                public BspUser getOperator ( Long bspUserId ) {
+                    BspUser testUser =new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
+                    return testUser;
+                }
+
 
                 @Override
                 public LabBatch getLabBatch(String labBatchName) {

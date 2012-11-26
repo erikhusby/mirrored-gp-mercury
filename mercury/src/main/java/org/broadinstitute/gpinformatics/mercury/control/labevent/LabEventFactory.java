@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BasePlateEventType;
@@ -20,7 +21,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -96,8 +96,7 @@ public class LabEventFactory {
     @Inject
     private StaticPlateDAO staticPlateDAO;
 
-    @Inject
-    private PersonDAO personDAO;
+    private transient BSPUserList bspUserList;
 
     @Inject
     private RackOfTubesDao rackOfTubesDao;
@@ -120,22 +119,36 @@ public class LabEventFactory {
     public LabEventFactory () {
     }
 
-    public LabEventFactory ( PersonDAO personDAO ) {
-        this.personDAO = personDAO;
+    public LabEventFactory ( BSPUserList userList ) {
+        this.bspUserList = userList;
     }
 
     public interface LabEventRefDataFetcher {
-//        Person getOperator ( String userId );
+        BspUser getOperator ( String userId );
+        BspUser getOperator ( Long bspUserId );
 
         LabBatch getLabBatch ( String labBatchName );
     }
 
     private LabEventRefDataFetcher labEventRefDataFetcher = new LabEventRefDataFetcher () {
-//        @Override
-//        public Person getOperator ( String userId ) {
-//            return personDAO.findByName ( userId );
-//        }
-//
+
+        @Override
+        public BspUser getOperator ( String userId ) {
+
+            if(bspUserList == null) {
+                bspUserList= ServiceAccessUtility.getBean ( BSPUserList.class );
+            }
+            return bspUserList.getByUsername ( userId );
+        }
+
+        @Override
+        public BspUser getOperator ( Long bspUserId ) {
+            if(bspUserList == null) {
+                bspUserList= ServiceAccessUtility.getBean ( BSPUserList.class );
+            }
+            return bspUserList.getById(bspUserId);
+        }
+
         @Override
         public LabBatch getLabBatch ( String labBatchName ) {
             return labBatchDAO.findByName ( labBatchName );
@@ -881,9 +894,9 @@ public class LabEventFactory {
 
 //        BSPUserList bspUserList = ServiceAccessUtility.getBean ( BSPUserList.class );
 //
-//        Long operator = bspUserList.getByUsername( stationEventType.getOperator () ).getUserId();
+        Long operator = labEventRefDataFetcher.getOperator( stationEventType.getOperator () ).getUserId();
         //TODO SGM  Need a good way to call to ServiceAccessUtility from here DBFree!!!!!
-        Long operator = 1111L;
+//        Long operator = 1111L;
 
         if ( operator == null ) {
             throw new RuntimeException ( "Failed to find operator " + stationEventType.getOperator () );
@@ -972,8 +985,7 @@ public class LabEventFactory {
                                            @Nonnull Long disambiguator, String actor,
                                            @Nonnull LabEventType eventType, @Nonnull String eventLocation ) {
 
-        BSPUserList bspUserList = ServiceAccessUtility.getBean ( BSPUserList.class );
-        Long operatorInfo = bspUserList.getByUsername(actor).getUserId();
+        Long operatorInfo = labEventRefDataFetcher.getOperator(actor).getUserId();
 
         LabEvent bucketMoveEvent = new LabEvent ( eventType, new Date (), eventLocation, disambiguator, operatorInfo );
 
