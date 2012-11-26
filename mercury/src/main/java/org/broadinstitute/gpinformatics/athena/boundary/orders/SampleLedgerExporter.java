@@ -331,8 +331,20 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     private void writeCountsForPriceItems(Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts, PriceItem item) {
         ProductOrderSample.LedgerQuantities quantities = billCounts.get(item);
         if (quantities != null) {
-            getWriter().writeCell(quantities.getBilled());
-            getWriter().writeCell(quantities.getUploaded());
+
+            // If the entry for billed is 0, then don't highlight it, but show a light yellow for anything with values
+            if (quantities.getBilled().equals("0")) {
+                getWriter().writeCell(quantities.getBilled());
+            } else {
+                getWriter().writeCell(quantities.getBilled(), getBilledAmountsHeaderStyle());
+            }
+
+            // If the entry represents a change, then highlight it with a light yellow
+            if (quantities.getBilled().equals(quantities.getUploaded())) {
+                getWriter().writeCell(quantities.getUploaded());
+            } else {
+                getWriter().writeCell(quantities.getUploaded(), getBilledAmountsHeaderStyle());
+            }
         } else {
             // write nothing for billed and new
             getWriter().writeCell(ProductOrderSample.NO_BILL_COUNT);
