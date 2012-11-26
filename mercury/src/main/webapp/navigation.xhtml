@@ -20,6 +20,8 @@
             <p:submenu label="Orders" icon="ui-icon-cart">
                 <p:menuitem value="List" outcome="/orders/list" />
                 <p:menuitem value="Create" outcome="/orders/create" />
+                <p:separator/>
+                <p:menuitem value="Billing Sessions" outcome="/billing/sessions" />
             </p:submenu>
 
             <p:submenu label="Products" icon="ui-icon-tag">
@@ -28,6 +30,12 @@
                     <p:menuitem value="Create" outcome="/products/create" />
                 </security:authorizeBlock>
             </p:submenu>
+
+            <security:authorizeBlock roles="#{userBean.developerRole}">
+                <p:submenu label="Search" icon="ui-icon-search">
+                    <p:menuitem value="Barcode" outcome="/search/search_plastic"/>
+                </p:submenu>
+            </security:authorizeBlock>
 
             <security:authorizeBlock roles="#{userBean.developerRole}">
                 <p:submenu label="Admin" icon="ui-icon-gear">

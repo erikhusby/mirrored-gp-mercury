@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import com.cenqua.clover.SamplingPerTestCoverage;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -31,13 +32,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -213,6 +208,11 @@ public abstract class LabVessel {
         this.containersCount++;
     }
 
+    //Utility method for getting containers as a list so they can be displayed in a display table column
+    public List<VesselContainer<?>> getContainerList() {
+        return new ArrayList<VesselContainer<?>>(getContainers());
+    }
+
     public Set<VesselContainer<?>> getContainers() {
         Set<VesselContainer<?>> vesselContainers = new HashSet<VesselContainer<?>>();
         if(containersCount != null && containersCount > 0) {
@@ -290,6 +290,9 @@ public abstract class LabVessel {
         // todo jmt vessel to vessel transfers
     }
 
+
+    public abstract VesselGeometry getVesselGeometry();
+
 /*
     public void addNoteToProjects(String message) {
         Collection<Project> ticketsToNotify = new HashSet<Project>();
@@ -345,6 +348,18 @@ public abstract class LabVessel {
         return inPlaceLabEvents;
     }
 
+    public List<LabEvent> getInPlaceEventsList() {
+        return new ArrayList<LabEvent>(getInPlaceEvents());
+    }
+
+    public List<LabEvent> getInPlaceEventsSortedByDate() {
+        Map<Date, LabEvent> sortedTreeMap = new TreeMap<Date, LabEvent>();
+        for(LabEvent event : inPlaceLabEvents){
+            sortedTreeMap.put(event.getEventDate(), event);
+        }
+        return new ArrayList<LabEvent>(sortedTreeMap.values());
+    }
+
     public void addInPlaceEvent(LabEvent labEvent) {
         this.inPlaceLabEvents.add(labEvent);
         labEvent.setInPlaceLabVessel(this);
@@ -353,15 +368,25 @@ public abstract class LabVessel {
     public abstract CONTAINER_TYPE getType();
 
     public enum CONTAINER_TYPE {
-        STATIC_PLATE,
-        PLATE_WELL,
-        RACK_OF_TUBES,
-        TUBE,
-        FLOWCELL,
-        STRIP_TUBE,
-        STRIP_TUBE_WELL,
-        PACBIO_PLATE,
-        ILLUMINA_RUN_CHAMBER
+        STATIC_PLATE("Plate"),
+        PLATE_WELL("Plate Well"),
+        RACK_OF_TUBES("Tube Rack"),
+        TUBE("Tube"),
+        FLOWCELL("Flowcell"),
+        STRIP_TUBE("Strip Tube"),
+        STRIP_TUBE_WELL("Strip Tube Well"),
+        PACBIO_PLATE("PacBio Plate"),
+        ILLUMINA_RUN_CHAMBER("Illumina Run Chamber");
+
+        private String name;
+
+        CONTAINER_TYPE(String name){
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
     }
 
     static class VesselEvent {
@@ -483,6 +508,9 @@ public abstract class LabVessel {
         return traversalResults;
     }
 
+    public List<SampleInstance> getSampleInstancesList() {
+        return new ArrayList<SampleInstance>(getSampleInstances());
+    }
     /**
      * Get the immediate ancestor vessels to this vessel, in the transfer graph
      * @return ancestors and events
@@ -680,6 +708,10 @@ public abstract class LabVessel {
         return labBatches;
     }
 
+    public List<LabBatch> getLabBatchesList(){
+        return new ArrayList<LabBatch>(getLabBatches());
+    }
+
     /**
      * Walk the chain of custody back until it can be
      * walked no further.  What you get are the roots
@@ -716,6 +748,14 @@ public abstract class LabVessel {
         // else walk transfers
         throw new RuntimeException("history traversal for empty samples list not implemented");
 
+    }
+
+    public List<MercurySample> getMercurySamplesList(){
+        List<MercurySample> mercurySamplesList = new ArrayList<MercurySample>();
+        if(!mercurySamples.isEmpty()){
+            mercurySamplesList.addAll(getMercurySamples());
+        }
+        return mercurySamplesList;
     }
 
     /**
@@ -801,5 +841,15 @@ public abstract class LabVessel {
             containerRole.evaluateCriteria(containerRole.getPositionOfVessel(this), transferTraverserCriteria, traversalDirection, null, hopCount);
         }
         transferTraverserCriteria.evaluateVesselPostOrder(this, labEvent, hopCount);
+    }
+
+    public LabEvent getLatestEvent() {
+        LabEvent event = null;
+        List<LabEvent> inPlaceEventsSortedByDate = getInPlaceEventsSortedByDate();
+        int size = inPlaceEventsSortedByDate.size();
+        if (size > 0) {
+            event = inPlaceEventsSortedByDate.get(size - 1);
+        }
+        return event;
     }
 }

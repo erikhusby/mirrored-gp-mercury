@@ -82,6 +82,11 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
     protected StaticPlate() {
     }
 
+    @Override
+    public VesselGeometry getVesselGeometry() {
+        return plateType.getVesselGeometry();
+    }
+
     public PlateType getPlateType() {
         return plateType;
     }

@@ -20,6 +20,7 @@ public class DB implements Serializable {
         PDM("Mercury-ProductManagers"),
         LabUser("Mercury-LabUsers"),
         LabManager("Mercury-LabManagers"),
+        BillingManager("Mercury-BillingManagers"),
         All("All");
 
         public final String name;
