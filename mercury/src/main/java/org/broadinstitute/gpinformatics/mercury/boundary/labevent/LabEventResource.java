@@ -62,7 +62,7 @@ public class LabEventResource {
                     labEvent.getLabEventType().getName(),
                     labEvent.getEventLocation(),
                     ""
-                    /*  TODO SGM:  Need to be able to call for user DBFree bspUserList.getById(labEvent.getEventOperator()).getUsername()*/,
+                    /*  TODO SGM:  pass in LabEventRefDataFetcher for labEventRefDataFetcher.getOperator(labEvent.getEventOperator()).getUsername()*/,
                     labEvent.getEventDate());
             labEventBean.setBatchId(labEvent.getLabBatch().getBatchName());
 

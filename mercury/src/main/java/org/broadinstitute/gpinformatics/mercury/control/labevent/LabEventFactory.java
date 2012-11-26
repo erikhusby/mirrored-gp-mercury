@@ -892,11 +892,7 @@ public class LabEventFactory {
             throw new RuntimeException ( "Unexpected event type " + stationEventType.getEventType () );
         }
 
-//        BSPUserList bspUserList = ServiceAccessUtility.getBean ( BSPUserList.class );
-//
         Long operator = labEventRefDataFetcher.getOperator( stationEventType.getOperator () ).getUserId();
-        //TODO SGM  Need a good way to call to ServiceAccessUtility from here DBFree!!!!!
-//        Long operator = 1111L;
 
         if ( operator == null ) {
             throw new RuntimeException ( "Failed to find operator " + stationEventType.getOperator () );
