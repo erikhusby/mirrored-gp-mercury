@@ -18,14 +18,9 @@ import javax.persistence.MapKeyColumn;
 import javax.persistence.MapKeyEnumerated;
 import javax.persistence.OneToMany;
 import javax.persistence.Transient;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.ArrayList;
 
 /**
  * A vessel that contains other vessels, e.g. a rack of tubes, a plate of wells, or a flowcell of lanes
@@ -123,6 +118,14 @@ public class VesselContainer<T extends LabVessel> {
     public Set<SampleInstance> getSampleInstancesAtPosition(VesselPosition position) {
         LabVessel.TraversalResults traversalResults = traverseAncestors(position);
         return traversalResults.getSampleInstances();
+    }
+    public List<SampleInstance> getSampleInstancesAtPositionList(VesselPosition position) {
+        LabVessel.TraversalResults traversalResults = traverseAncestors(position);
+        Map<String, SampleInstance> sampleInstanceMap = new TreeMap<String, SampleInstance>();
+        for(SampleInstance sample : traversalResults.getSampleInstances()){
+            sampleInstanceMap.put(sample.getStartingSample().getSampleKey(), sample);
+        }
+        return new ArrayList<SampleInstance>(sampleInstanceMap.values());
     }
 
     LabVessel.TraversalResults traverseAncestors(VesselPosition position) {
@@ -379,5 +382,16 @@ public class VesselContainer<T extends LabVessel> {
 
     public List<LabVessel.VesselEvent> getDescendants(LabVessel containee) {
         return getDescendants(getPositionOfVessel(containee));
+    }
+
+    public boolean hasAnonymousVessels() {
+        boolean anonymousVessels = false;
+        LabVessel.CONTAINER_TYPE type = embedder.getType();
+        if (type == LabVessel.CONTAINER_TYPE.STATIC_PLATE
+                || type == LabVessel.CONTAINER_TYPE.FLOWCELL
+                || type == LabVessel.CONTAINER_TYPE.STRIP_TUBE) {
+            anonymousVessels = true;
+        }
+        return anonymousVessels;
     }
 }
