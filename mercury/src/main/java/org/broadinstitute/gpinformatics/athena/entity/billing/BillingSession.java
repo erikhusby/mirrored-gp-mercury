@@ -156,12 +156,12 @@ public class BillingSession {
     public ProductOrder[] getProductOrders() {
 
         // Get all unique product Orders across all ledger items
-        Set<ProductOrder> unqiueProductOrders = new HashSet<ProductOrder>();
+        Set<ProductOrder> uniqueProductOrders = new HashSet<ProductOrder>();
         for (BillingLedger billingLedger : billingLedgerItems) {
-            unqiueProductOrders.add(billingLedger.getProductOrderSample().getProductOrder());
+            uniqueProductOrders.add(billingLedger.getProductOrderSample().getProductOrder());
         }
 
         // return it as an array
-        return unqiueProductOrders.toArray(new ProductOrder[unqiueProductOrders.size()]);
+        return uniqueProductOrders.toArray(new ProductOrder[uniqueProductOrders.size()]);
     }
 }
