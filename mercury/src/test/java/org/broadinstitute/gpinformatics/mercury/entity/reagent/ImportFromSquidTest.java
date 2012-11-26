@@ -1,6 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 import com.sun.jersey.api.client.Client;
+import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
@@ -33,11 +40,13 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EX
 /**
  * A Test to import molecular indexes and LCSETs from Squid.  This prepares an empty database to accept messages.  This must
  * be in the same package as MolecularIndexingScheme, because it uses package visible methods on that class.
- * Use the following VM options: -Xmx1G -XX:MaxPermSize=128M -Dorg.jboss.remoting-jmx.timeout=1500
- * As of August 2012, the test takes about 20 minutes to run.
+ * Use the following VM options: -Xmx1G -XX:MaxPermSize=128M -Dorg.jboss.remoting-jmx.timeout=3000
+ * As of August 2012, the test takes about 35 minutes to run.
  * This test requires an XA-datasource, or the following in the <system-properties> element in standalone.xml
  *         <property name="com.arjuna.ats.arjuna.allowMultipleLastResources" value="true"/>
  * For XA in Postgres, in data/postgresql.conf, set max_prepared_transactions = 10
+ * Increase the arjuna transaction timeout in jboss standalone/configuration/standalone.xml
+ *             <coordinator-environment default-timeout="3000"/>
  */
 public class ImportFromSquidTest extends ContainerTest {
 
@@ -52,6 +61,15 @@ public class ImportFromSquidTest extends ContainerTest {
 
     @Inject
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
+
+    @Inject
+    private ResearchProjectDao researchProjectDao;
+
+    @Inject
+    private ProductDao productDao;
+
+    @Inject
+    private ProductOrderDao productOrderDao;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -198,6 +216,15 @@ public class ImportFromSquidTest extends ContainerTest {
      */
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testCreateLcSets() {
+        Map<String, String> mapWorkflowToPartNum = new HashMap<String, String>();
+        mapWorkflowToPartNum.put("Custom Amplicon", "P-VAL-0002");
+//        ("IGN WGS", "?")
+//        ("Fluidigm Multi", "?")
+        mapWorkflowToPartNum.put("Whole Genome", "P-WG-0002");
+        mapWorkflowToPartNum.put("Exome Express", "P-EX-0002");
+        mapWorkflowToPartNum.put("Hybrid Selection", "P-EX-0001");
+//        ("180SM", "?")
+
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                 "     l.KEY, " +
                 "     lwd.NAME, " +
@@ -246,6 +273,12 @@ public class ImportFromSquidTest extends ContainerTest {
         String previousLcSet = "";
         LabBatchBean labBatch = null;
         List<TubeBean> tubeBeans = null;
+
+        ResearchProject researchProject = new ResearchProject(1701L, "Import from Squid", "Import from Squid", false);
+        researchProject.setJiraTicketKey("RP-ImportFromSquid");
+        researchProjectDao.persist(researchProject);
+        ArrayList<ProductOrderSample> productOrderSamples = null;
+
         for (Object o : resultList) {
             Object[] columns = (Object[]) o;
             String lcSet = (String) columns[0];
@@ -254,6 +287,7 @@ public class ImportFromSquidTest extends ContainerTest {
             String sampleBarcode = (String) columns[3];
             if(!lcSet.equals(previousLcSet)) {
                 previousLcSet = lcSet;
+                String partNumber = mapWorkflowToPartNum.get(workflowName);
                 if(labBatch != null) {
                     System.out.println("About to persist batch " + labBatch.getBatchId());
                     String response = null;
@@ -261,7 +295,7 @@ public class ImportFromSquidTest extends ContainerTest {
                         // Use a web service, rather than just calling persist on a DAO, because a constraint
                         // violation invalidates the EntityManager.  The web service gets a fresh EntityManager for
                         // each request.
-                        response = Client.create().resource("http://localhost:8181/Mercury/rest/labbatch")
+                        response = Client.create().resource("http://localhost:8080/Mercury/rest/labbatch")
                                 .type(MediaType.APPLICATION_XML_TYPE)
                                 .accept(MediaType.APPLICATION_XML)
                                 .entity(labBatch)
@@ -270,13 +304,20 @@ public class ImportFromSquidTest extends ContainerTest {
                         System.out.println(e.getMessage());
                     }
                     System.out.println(response);
+                    if (partNumber != null) {
+                        Product product = productDao.findByBusinessKey(partNumber);
+                        ProductOrder productOrder = new ProductOrder(1701L, lcSet, productOrderSamples, "BSP-123", product, researchProject);
+                        productOrder.setJiraTicketKey(lcSet);
+                        productOrderDao.persist(productOrder);
+                    }
                 }
                 tubeBeans = new ArrayList<TubeBean>();
                 labBatch = new LabBatchBean(lcSet, workflowName, tubeBeans);
+                productOrderSamples = new ArrayList<ProductOrderSample>();
             }
-            // todo jmt how to create product order, research project?
             assert tubeBeans != null;
             tubeBeans.add(new TubeBean(tubeBarcode, sampleBarcode, lcSet));
+            productOrderSamples.add(new ProductOrderSample(sampleBarcode));
         }
     }
 
