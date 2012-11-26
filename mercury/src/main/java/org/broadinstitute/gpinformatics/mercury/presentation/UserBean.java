@@ -220,6 +220,10 @@ public class UserBean implements Serializable {
         return DB.Role.PM.name;
     }
 
+    public String getBillingManagerRole() {
+        return DB.Role.BillingManager.name;
+    }
+
     public String getProductManagerRole() {
         return DB.Role.PDM.name;
     }

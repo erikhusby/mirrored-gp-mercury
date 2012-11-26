@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary;
 
-import clover.org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
 
