@@ -29,7 +29,7 @@ label, input, button, select, textarea { font-size: 12px }
 .ui-autocomplete-multiple-container { width: 480px; overflow: visible }
 
 /* Tighten vertical spacing of Bootstrap horizontal forms. */
-.form-horizontal .control-group { margin-bottom: 12px; }
+.form-horizontal .control-group { margin-bottom: 12px; clear:both; }
 
 /* Right-justify p:dataTable content. E.g.: <h:outputText value="..." styleClass="dataTable-align-right"/> */
 .ui-datatable-data td .align-right { float: right; }
@@ -46,13 +46,13 @@ label.ui-state-error, .ui-widget-content label.ui-state-error { background: whit
 .pass-label { font-style: italic; padding-right: 10px; }
 .pass-data { }
 
-.view-horizontal .control-group { margin-bottom: 20px; *zoom: 1; }
+.view-horizontal .control-group { margin-bottom: 20px; clear:both; *zoom: 1;   }
 .view-horizontal .control-label { float: left; width: 160px; text-align: right; }
 
 /* Note, do not put heights here because it makes fields overlap! use padding if you need better separation **/
 .view-horizontal .controls { padding-left: 3px; padding-right: 3px; border-width: 1px; display: inline-block; margin-left: 15px; padding-bottom: 5px; }
 .view-horizontal .tall-controls { padding-left: 3px; padding-right: 3px; border-width: 1px; display: inline-block; margin-left: 15px; padding-bottom: 5px; }
-.view-horizontal .control-group { margin-bottom: 1px; }
+.view-horizontal .control-group { margin-bottom: 1px; clear:both; }
 
 .form-readonly .control-group { margin-bottom: 0px; }
 .form-value { font-size: 12px; padding: 5px 7px; }
@@ -77,3 +77,7 @@ fieldset .ui-chkbox {margin-left:5px}
 
 .threecolumn {-moz-column-count:3;-webkit-column-count:3;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
 .fourcolumn {-moz-column-count:4;-webkit-column-count:4;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
+
+.ui-icon-check {
+    background-color: #0081C2;
+}

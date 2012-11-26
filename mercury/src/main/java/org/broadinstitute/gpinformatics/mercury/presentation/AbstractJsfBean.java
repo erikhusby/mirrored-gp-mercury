@@ -64,7 +64,7 @@ public abstract class AbstractJsfBean {
      * @param summary The displayed message on the web page
      * @param detail The detailed information of the message
      */
-    private static void addMessage(@Nullable String clientId, FacesMessage.Severity severity, String summary, String detail) {
+    protected static void addMessage(@Nullable String clientId, FacesMessage.Severity severity, String summary, String detail) {
         FacesContext context = FacesContext.getCurrentInstance();
         context.addMessage(clientId, new FacesMessage(severity, summary, detail));
     }

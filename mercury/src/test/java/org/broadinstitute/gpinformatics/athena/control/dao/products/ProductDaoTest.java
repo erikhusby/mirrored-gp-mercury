@@ -35,8 +35,6 @@ public class ProductDaoTest extends ContainerTest {
 
     @Inject
     private UserTransaction utx;
-    private PriceItem priceItem1;
-    private PriceItem priceItem2;
 
 
     public enum DateSpec {
@@ -65,11 +63,9 @@ public class ProductDaoTest extends ContainerTest {
     }
 
 
-    private Product createProduct() {
+    public static Product createProduct(ProductFamilyDao productFamilyDao, PriceItemDao priceItemDao) {
 
-        ProductFamily metagenomicsProductFamily =
-                ProductDaoTest.this.productFamilyDao.find("Metagenomics");
-
+        ProductFamily metagenomicsProductFamily = productFamilyDao.find("Metagenomics");
 
         final int DAYS = 24 * 60 * 60;
 
@@ -91,13 +87,23 @@ public class ProductDaoTest extends ContainerTest {
                 ,
                 false);
 
-        List<PriceItem> priceItems = priceItemDao.findAll();
-        Assert.assertNotNull(priceItems);
-        Assert.assertTrue(priceItems.size() > 0);
-        product.setDefaultPriceItem(priceItems.get(0));
-        product.addPriceItem(priceItems.get(0));
+        // we have some tests that call this method more than once so the price item compound key must be unique
+        // across invocations
+        UUID uuid1 = UUID.randomUUID();
+        PriceItem priceItem1 = new PriceItem (uuid1.toString(), PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Standard Pony-" + uuid1);
+
+        UUID uuid2 = UUID.randomUUID();
+        PriceItem priceItem2 = new PriceItem (uuid2.toString(), PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Pony Express-" + uuid2);
+
+        product.setDefaultPriceItem(priceItem1);
+        product.addPriceItem(priceItem2);
 
         return product;
+    }
+
+
+    private Product createProduct() {
+        return createProduct(productFamilyDao, priceItemDao);
     }
 
 
@@ -126,9 +132,9 @@ public class ProductDaoTest extends ContainerTest {
 
 
 
-        public Product createProduct() {
+        public Product createDatesAndAvailabilityProduct() {
 
-            Product product = ProductDaoTest.this.createProduct();
+            Product product = createProduct();
 
             Date availableDate = null;
             Date discontinuedDate = null;
@@ -179,15 +185,6 @@ public class ProductDaoTest extends ContainerTest {
         }
 
         utx.begin();
-
-        priceItem1 = new PriceItem ("1234", PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Standard Pony");
-        priceItem2 = new PriceItem ("5678", PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Pony Express");
-
-        dao.persist( priceItem1 );
-        dao.persist ( priceItem2 );
-
-        dao.flush();
-        dao.clear();
 
     }
 
@@ -244,7 +241,7 @@ public class ProductDaoTest extends ContainerTest {
     @Test(dataProvider = "availability")
     public void testFindAvailableProducts(DatesAndAvailability datesAndAvailability) {
 
-        Product product = datesAndAvailability.createProduct();
+        Product product = datesAndAvailability.createDatesAndAvailabilityProduct();
         dao.persist(product);
         dao.flush();
 

@@ -15,7 +15,9 @@ public class SampleLedgerExporterTest {
 
     @Test
     void testExport() throws IOException {
-        SampleLedgerExporter exporter = new SampleLedgerExporter( AthenaClientServiceStub.createDummyProductOrder ());
+
+        SampleLedgerExporter exporter =
+                new SampleLedgerExporter(AthenaClientServiceStub.createDummyProductOrder());
 
         File test = File.createTempFile("SampleLedgerExporterTest", ".xls");
         OutputStream outputStream = null;
