@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui" xmlns:security="http://mercury.broadinstitute.org/tags">
+<body>
+
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="title">View Billing Session</ui:define>
+        <ui:define name="metadata">
+            <f:metadata>
+                <f:viewParam name="billingSession" value="#{billingSessionBean.billingSession}" converter="#{billingSessionConverter}"/>
+            </f:metadata>
+        </ui:define>
+
+        <ui:define name="body">
+
+            <h:form>
+
+                <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.billingManagerRole}">
+                    <p:commandButton value="Bill Work in Broad Quotes" action="#{billingSessionForm.bill}" ajax="false"
+                                 style="margin-right:30px;" styleClass="btn"/>
+                </security:authorizeBlock>
+
+                <p:commandButton value="Download Tracker" action="#{billingSessionForm.downloadTracker}" ajax="false"
+                                 style="margin-right:5px;" styleClass="btn"/>
+                <p:commandButton value="Download Quote Items" action="#{billingSessionForm.downloadQuoteItems}" ajax="false"
+                                 style="margin-right:30px;" styleClass="btn"/>
+
+                <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.billingManagerRole}">
+                    <p:commandButton value="Cancel Billing Session" action="#{billingSessionForm.cancelSession}" ajax="false"
+                                 style="margin-right:15px;" styleClass="btn"/>
+                </security:authorizeBlock>
+            </h:form>
+
+            <h:form styleClass="form-horizontal form-readonly">
+                <!-- Name -->
+                <div class="control-group">
+                    <label class="control-label label-form">ID</label>
+                    <div class="controls">
+                        <div class="form-value">#{billingSessionBean.billingSession.businessKey}</div>
+                    </div>
+                </div>
+
+                <!-- created by -->
+                <div class="control-group">
+                    <label class="control-label label-form">Created By</label>
+                    <div class="controls">
+                        <div class="form-value">#{userListBean.getUserFullName(billingSessionBean.billingSession.createdBy)}</div>
+                    </div>
+                </div>
+
+                <!-- created date -->
+                <div class="control-group">
+                    <label class="control-label label-form">Created Date</label>
+                    <div class="controls">
+                        <h:outputText value="#{billingSessionBean.billingSession.createdDate}" styleClass="form-value" style="display:block">
+                            <f:convertDateTime type="both" timeStyle="short"/>
+                        </h:outputText>
+                    </div>
+                </div>
+
+                <!-- date that these will be billed to -->
+                <div class="control-group">
+                    <label class="control-label label-form">Billed Date</label>
+                    <div class="controls">
+                        <h:outputText value="#{billingSessionBean.billingSession.billedDate}" styleClass="form-value" style="display:block">
+                            <f:convertDateTime type="both" timeStyle="short"/>
+                        </h:outputText>
+                    </div>
+                </div>
+            </h:form>
+
+            <p:dataTable id="orderData" value="#{billingSessionBean.billingSession.quoteImportItems}" var="item">
+                <f:facet name="header">
+                    Quote Items
+                </f:facet>
+
+                <p:column headerText="Quote">
+                    #{item.quoteId}
+                </p:column>
+                <p:column headerText="Platform">
+                    #{item.priceItem.platform}
+                </p:column>
+                <p:column headerText="Category">
+                    #{item.priceItem.category}
+                </p:column>
+                <p:column headerText="Price Item">
+                    #{priceListCache.getPriceItemName(item.priceItem.quoteServerId)}
+                </p:column>
+                <p:column headerText="Quantity">
+                    #{item.quantity}
+                </p:column>
+                <p:column headerText="Work Completed">
+                    <div class="form-value">
+                        #{item.numSamples}<br/>
+                        <h:outputText value="#{item.startRange}">
+                            <f:convertDateTime type="date" dateStyle="short"/>
+                        </h:outputText>
+                        -
+                        <h:outputText value="#{item.endRange}">
+                            <f:convertDateTime type="date" dateStyle="short"/>
+                        </h:outputText>
+                    </div>
+                </p:column>
+                <p:column headerText="Work Complete Date">
+                    #{item.workCompleteDate}
+                </p:column>
+                <p:column headerText="Billing Message" width="650">
+                    #{item.billingMessage}
+                </p:column>
+
+            </p:dataTable>
+        </ui:define>
+    </ui:composition>
+</body>
+</html>

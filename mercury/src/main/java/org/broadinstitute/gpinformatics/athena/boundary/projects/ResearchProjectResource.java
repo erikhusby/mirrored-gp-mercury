@@ -75,7 +75,7 @@ public class ResearchProjectResource {
         if ((creatorId != null) && (creatorId > 0)) {
             foundProjects = researchProjectDao.findResearchProjectsByOwner(creatorId);
         } else {
-            foundProjects = researchProjectDao.findAllResearchProjects();
+            foundProjects = researchProjectDao.findAllResearchProjectsWithOrders();
         }
 
         return foundProjects;
@@ -91,6 +91,6 @@ public class ResearchProjectResource {
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
     public List<ResearchProject> findAllResearchProjects() {
-        return researchProjectDao.findAllResearchProjects();
+        return researchProjectDao.findAllResearchProjectsWithOrders();
     }
 }

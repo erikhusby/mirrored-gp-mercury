@@ -3,15 +3,12 @@ package org.broadinstitute.gpinformatics.mercury.integration.jira;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
-import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.*;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -61,16 +58,14 @@ public class JiraServiceTest {
                     //        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10011","Work Request ID(s)",true),"WR 1 Billion!"));
 
 
-            final CreateIssueResponse createIssueResponse =
+            JiraIssue jiraIssue =
                     service.createIssue(CreateFields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix(), null,
-                                        CreateFields.IssueType.WHOLE_EXOME_HYBSEL,
-                                        "Summary created from Mercury", "Description created from Mercury",
-                                        customFieldList);
+                            CreateFields.IssueType.WHOLE_EXOME_HYBSEL,
+                            "Summary created from Mercury", "Description created from Mercury",
+                            customFieldList);
 
 
-            final String lcsetJiraKey = createIssueResponse.getTicketName();
-
-            Assert.assertNotNull(lcsetJiraKey);
+            Assert.assertNotNull(jiraIssue.getKey());
 
         } catch (IOException e) {
             Assert.fail(e.getMessage());
@@ -92,14 +87,13 @@ public class JiraServiceTest {
             customFieldList.add(new CustomField(requiredFields.get(ProductOrder.RequiredSubmissionFields.PRODUCT_FAMILY.getFieldName()),
                                                 "Test Exome Express", CustomField.SingleFieldType.TEXT ));
 
-            final CreateIssueResponse createIssueResponse =
+            JiraIssue jiraIssue =
                     service.createIssue(CreateFields.ProjectType.Product_Ordering.getKeyPrefix(), "hrafal",
-                                        CreateFields.IssueType.PRODUCT_ORDER,
-                                        "Athena Test case:::  Test new Summary Addition",
-                                        "Athena Test Case:  Test description setting",customFieldList);
-            final String pdoJiraKey = createIssueResponse.getTicketName();
+                            CreateFields.IssueType.PRODUCT_ORDER,
+                            "Athena Test case:::  Test new Summary Addition",
+                            "Athena Test Case:  Test description setting",customFieldList);
 
-            Assert.assertNotNull(pdoJiraKey);
+            Assert.assertNotNull(jiraIssue.getKey());
 
         } catch (IOException ioe) {
             Assert.fail(ioe.getMessage());
@@ -107,7 +101,7 @@ public class JiraServiceTest {
     }
 
     public void testUpdateTicket() throws IOException {
-        CreateIssueResponse response = service.createIssue(
+        JiraIssue issue = service.createIssue(
                 CreateFields.ProjectType.Research_Projects.getKeyPrefix(), "breilly",
                 CreateFields.IssueType.RESEARCH_PROJECT,
                 "JiraServiceTest.testUpdateTicket", "Test issue for update", new ArrayList<CustomField>());
@@ -117,7 +111,7 @@ public class JiraServiceTest {
         CustomField mercuryUrlField = new CustomField(
                 allCustomFields.get(ResearchProject.RequiredSubmissionFields.MERCURY_URL.getFieldName()),
                 "http://www.broadinstitute.org/", CustomField.SingleFieldType.TEXT);
-        service.updateIssue(response.getKey(), Collections.singletonList(mercuryUrlField));
+        issue.updateIssue(Collections.singletonList(mercuryUrlField));
     }
 
     public void testAddWatcher() {

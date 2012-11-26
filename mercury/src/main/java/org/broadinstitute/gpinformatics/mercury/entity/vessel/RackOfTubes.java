@@ -70,6 +70,11 @@ public class RackOfTubes extends LabVessel implements VesselContainerEmbedder<Tw
     protected RackOfTubes() {
     }
 
+    @Override
+    public VesselGeometry getVesselGeometry() {
+        return rackType.getVesselGeometry();
+    }
+
     public RackType getRackType() {
         return rackType;
     }

@@ -6,7 +6,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderTest;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -18,7 +17,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,7 +28,7 @@ import java.util.UUID;
  * Date: 10/9/12
  * Time: 3:47 PM
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION,enabled=true)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=true)
 public class ProductOrderDaoTest extends ContainerTest {
 
     public static final String TEST_ORDER_TITLE_PREFIX = "TestProductOrder_";
@@ -48,9 +47,13 @@ public class ProductOrderDaoTest extends ContainerTest {
     private UserTransaction utx;
 
     private final String testResearchProjectKey = "TestResearchProject_" + UUID.randomUUID();
-    private final String testProductOrderKey = "DRAFT-" + UUID.randomUUID();
+    private final static String testProductOrderKeyPrefix = "DRAFT-";
 
     ProductOrder order;
+
+    private static String getTestProductOrderKey() {
+        return testProductOrderKeyPrefix + UUID.randomUUID();
+    }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
@@ -67,7 +70,7 @@ public class ProductOrderDaoTest extends ContainerTest {
                     ResearchProjectResourceTest.createDummyResearchProject(testResearchProjectKey);
             researchProjectDao.persist(researchProject);
         }
-        order = createTestProductOrder();
+        order = createTestProductOrder(researchProjectDao, productDao);
         productOrderDao.persist(order);
         productOrderDao.flush();
         productOrderDao.clear();
@@ -83,7 +86,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         utx.rollback();
     }
 
-    public ProductOrder createTestProductOrder() {
+    public static ProductOrder createTestProductOrder(ResearchProjectDao researchProjectDao, ProductDao productDao) {
         // Find a research project in the DB.
         List<ResearchProject> projectsList = researchProjectDao.findAllResearchProjects();
         Assert.assertTrue(projectsList != null && !projectsList.isEmpty());
@@ -96,11 +99,17 @@ public class ProductOrderDaoTest extends ContainerTest {
         }
 
         // Try to create a Product Order and persist it.
+
+        // need all the samples in the list before calling this version of the PDO constructor!
+        List<ProductOrderSample> sampleList = new ArrayList<ProductOrderSample>();
+        sampleList.add(new ProductOrderSample("MS-1111"));
+        sampleList.add(new ProductOrderSample("MS-1112"));
+
         String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
-        ProductOrder newProductOrder = new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle,
-                ProductOrderTest.createSampleList("MS-1111", "MS-1112"), "quoteId",
+        ProductOrder newProductOrder = new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, sampleList, "quoteId",
                 product, foundResearchProject);
-        newProductOrder.setJiraTicketKey(testProductOrderKey);
+
+        newProductOrder.setJiraTicketKey(getTestProductOrderKey());
         return newProductOrder;
     }
 

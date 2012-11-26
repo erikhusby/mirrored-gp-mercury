@@ -49,8 +49,9 @@
                         </h:outputText>
                     </p:column>
 
-                    <p:column headerText="# of&lt;br&gt;Orders" sortBy="#{project.productOrders.size()}">
-                        <h:outputText value="#{project.productOrders.size()}" styleClass="align-right"/>
+                    <p:column headerText="# of&lt;br&gt;Orders"
+                              sortBy="#{researchProjectBean.researchProjectCounts.get(project.jiraTicketKey)}">
+                        <h:outputText value="#{researchProjectBean.researchProjectCounts.get(project.jiraTicketKey)}" styleClass="align-right"/>
                     </p:column>
 
                 </p:dataTable>

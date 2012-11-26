@@ -75,16 +75,6 @@ public class Product implements Serializable, Comparable<Product> {
 
     private boolean pdmOrderableOnly;
 
-    private static final Comparator<Product> PRODUCT_COMPARATOR = new Comparator<Product>() {
-        @Override
-        public int compare(Product product, Product product1) {
-            CompareToBuilder builder = new CompareToBuilder();
-            builder.append(product.getPartNumber(), product1.getPartNumber());
-            return builder.build();
-        }
-    };
-
-
     /**
      * JPA package visible no arg constructor
      *
@@ -327,7 +317,9 @@ public class Product implements Serializable, Comparable<Product> {
 
     @Override
     public int compareTo(Product that) {
-        return PRODUCT_COMPARATOR.compare(this, that);
+        CompareToBuilder builder = new CompareToBuilder();
+        builder.append(this.getPartNumber(), that.getPartNumber());
+        return builder.build();
     }
 
     @Override

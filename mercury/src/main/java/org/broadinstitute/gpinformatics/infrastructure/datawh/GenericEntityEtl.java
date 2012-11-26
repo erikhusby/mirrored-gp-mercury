@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.log4j.Logger;
+import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.hibernate.envers.RevisionType;
 
@@ -14,7 +15,7 @@ abstract public class GenericEntityEtl {
     Logger logger = Logger.getLogger(this.getClass());
 
     @Inject
-    private AuditReaderEtl auditReaderEtl;
+    private AuditReaderDao auditReaderDao;
 
     /**
      * Specifies the class entity handled by the overriding etl.
@@ -71,7 +72,7 @@ abstract public class GenericEntityEtl {
      */
     public int doEtl(long lastRev, long etlRev, String etlDateStr) {
         // Retrieves the Envers-formatted list of entity changes in the given revision range.
-        List<Object[]> dataChanges = auditReaderEtl.fetchDataChanges(lastRev, etlRev, getEntityClass());
+        List<Object[]> dataChanges = auditReaderDao.fetchDataChanges(lastRev, etlRev, getEntityClass());
 
         // Creates the wrapped Writer to the sqlLoader data file.
         String filename = dataFilename(etlDateStr, getBaseFilename());
