@@ -36,6 +36,8 @@ public class ResearchProjectBean implements Serializable {
     /** All research projects, fetched once and stored per-request (as a result of this bean being @RequestScoped). */
     private List<ResearchProject> allResearchProjects;
 
+    /** On demand counts of orders on the project. Map of business key to count value **/
+    private Map<String, Long> projectOrderCounts;
 
     /**
      * Returns a list of all research projects. Only actually fetches the list from the database once per request
@@ -47,7 +49,16 @@ public class ResearchProjectBean implements Serializable {
         if (allResearchProjects == null) {
             allResearchProjects = researchProjectDao.findAllResearchProjects();
         }
+
         return allResearchProjects;
+    }
+
+    public Map<String, Long> getResearchProjectCounts() {
+        if (projectOrderCounts == null) {
+            projectOrderCounts = researchProjectDao.getProjectOrderCounts() ;
+        }
+
+        return projectOrderCounts;
     }
 
     /**

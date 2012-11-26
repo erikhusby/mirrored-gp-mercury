@@ -1,20 +1,25 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateIssueResponse;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
@@ -75,7 +80,18 @@ public class ProductOrder implements Serializable {
     private String comments;
 
     /** Reference to the Jira Ticket created when the order is submitted */
+    @Column(name = "JIRA_TICKET_KEY", nullable = false)
     private String jiraTicketKey;
+
+    @Column(name = "count")
+    /** counts the number of lanes; the default value is one lane */
+    private int count = 1;
+
+    /** Counts the number of rows in the one-to-many table.  Reference this count before fetching the collection, to
+     * avoid an unnecessary database round trip  */
+    @NotAudited
+    @Formula("(select count(*) from athena.product_order_sample pos where pos.product_order = product_order_id)")
+    private Integer pdoSampleCount = 0;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order", nullable = false)
@@ -112,6 +128,14 @@ public class ProductOrder implements Serializable {
         }
 
         return StringUtils.join(addOnArray, ", ");
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
     }
 
     /**
@@ -325,8 +349,8 @@ public class ProductOrder implements Serializable {
 
     public void updateAddOnProducts(List<Product> addOnList) {
         addOns.clear();
-        for (Product product : addOnList) {
-            addOns.add(new ProductOrderAddOn(product, this));
+        for (Product addOn : addOnList) {
+            addOns.add(new ProductOrderAddOn(addOn, this));
         }
     }
 
@@ -454,7 +478,8 @@ public class ProductOrder implements Serializable {
             return;
         }
 
-        Map<String, BSPSampleDTO> bspSampleMetaData = ServiceAccessUtility.getSampleDtoByNames(uniqueNames);
+        BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
+        Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(uniqueNames);
         for (ProductOrderSample sample : getSamples()) {
             BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getSampleName());
             if (bspSampleDTO == null) {
@@ -674,11 +699,6 @@ public class ProductOrder implements Serializable {
         return productOrderId;
     }
 
-    private static void addCustomField(Map<String, CustomFieldDefinition> submissionFields,
-                                       List<CustomField> list, RequiredSubmissionFields field, Object value) {
-        list.add(new CustomField(submissionFields.get(field.getFieldName()), value, CustomField.SingleFieldType.TEXT));
-    }
-
     /**
      * submitProductOrder encapsulates the set of steps necessary to finalize the submission of a product order.
      * This mainly deals with jira ticket creation.  This method will:
@@ -692,33 +712,36 @@ public class ProductOrder implements Serializable {
      * @throws IOException
      */
     public void submitProductOrder() throws IOException {
-        Map<String, CustomFieldDefinition> submissionFields = ServiceAccessUtility.getJiraCustomFields();
+        JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
+        Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
         List<CustomField> listOfFields = new ArrayList<CustomField>();
 
-        addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.PRODUCT_FAMILY,
-                product.getProductFamily() == null ? "" : product.getProductFamily().getName());
+        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.PRODUCT_FAMILY,
+                product.getProductFamily() == null ? "" : product.getProductFamily().getName()));
 
-        addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.PRODUCT,
-                product.getProductName() == null ? "" : product.getProductName());
+        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.PRODUCT,
+                product.getProductName() == null ? "" : product.getProductName()));
 
         if (quoteId != null && !quoteId.isEmpty()) {
-            addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.QUOTE_ID, quoteId);
+            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.QUOTE_ID, quoteId));
         }
-        addCustomField(submissionFields, listOfFields, RequiredSubmissionFields.SAMPLE_IDS,
-                StringUtils.join(getSampleNames(), ','));
+        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.SAMPLE_IDS,
+                StringUtils.join(getSampleNames(), '\n')));
 
-        CreateIssueResponse issueResponse = ServiceAccessUtility.createJiraTicket(
-                fetchJiraProject().getKeyPrefix(), ServiceAccessUtility.getBspUserForId(createdBy).getUsername(),
+        BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
+
+        JiraIssue issue = jiraService.createIssue(
+                fetchJiraProject().getKeyPrefix(), bspUserList.getById(createdBy).getUsername(),
                 fetchJiraIssueType(), title, comments == null ? "" : comments, listOfFields);
 
-        jiraTicketKey = issueResponse.getKey();
-        addLink(researchProject.getJiraTicketKey());
+        jiraTicketKey = issue.getKey();
+        issue.addLink(researchProject.getJiraTicketKey());
 
-        addWatcher(ServiceAccessUtility.getBspUserForId(createdBy).getUsername());
+        issue.addWatcher(bspUserList.getById(createdBy).getUsername());
 
-        addPublicComment(StringUtils.join(getSampleSummaryComments(), "\n"));
-        addPublicComment(StringUtils.join(getSampleValidationComments(), "\n"));
+        issue.addComment(StringUtils.join(getSampleSummaryComments(), "\n"));
+        issue.addComment(StringUtils.join(getSampleValidationComments(), "\n"));
     }
 
     /**
@@ -736,39 +759,6 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * addPublicComment Allows a user to create a jira comment for this product order
-     *
-     * @param comment comment to set in Jira
-     * @throws IOException
-     */
-    public void addPublicComment(String comment) throws IOException {
-        if (!StringUtils.isBlank(comment)) {
-            ServiceAccessUtility.addJiraComment(jiraTicketKey, comment);
-        }
-    }
-
-    /**
-     * addWatcher allows a user to add a user as a watcher of the Jira ticket associated with this product order
-     *
-     * @param personLoginId Broad User Id
-     * @throws IOException
-     */
-    public void addWatcher(String personLoginId) throws IOException {
-        ServiceAccessUtility.addJiraWatcher(jiraTicketKey, personLoginId);
-    }
-
-    /**
-     * addLink allows a user to link this the jira ticket associated with this product order with another Jira Ticket
-     *
-     * @param targetIssueKey Unique Jira Key of the Jira ticket to which this product order's Jira Ticket will be
-     *                       linked
-     * @throws IOException
-     */
-    public void addLink(String targetIssueKey) throws IOException {
-        ServiceAccessUtility.addJiraPublicLink(AddIssueLinkRequest.LinkType.Related, jiraTicketKey,targetIssueKey);
-    }
-
-    /**
      * closeProductOrder allows a user to set the Jira ticket associated with this product order into a "Billed" state
      *
      * @throws IOException
@@ -777,11 +767,13 @@ public class ProductOrder implements Serializable {
         if (StringUtils.isEmpty(jiraTicketKey)) {
             throw new IllegalStateException("A jira Ticket has not been created.");
         }
-        IssueTransitionResponse transitions = ServiceAccessUtility.getTransitions(jiraTicketKey);
+        JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
+        JiraIssue issue = jiraService.getIssue(jiraTicketKey);
+        IssueTransitionResponse transitions = issue.findAvailableTransitions();
 
         String transitionId = transitions.getTransitionId(TransitionStates.Complete.getStateName());
 
-        ServiceAccessUtility.postTransition(jiraTicketKey, transitionId);
+        issue.postNewTransition(transitionId);
     }
 
     /**
@@ -854,7 +846,7 @@ public class ProductOrder implements Serializable {
      * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
      * for Product orders
      */
-    public enum RequiredSubmissionFields {
+    public enum RequiredSubmissionFields implements CustomField.SubmissionField {
         PRODUCT_FAMILY("Product Family"),
         PRODUCT("Product"),
         QUOTE_ID("Quote ID"),
@@ -867,6 +859,7 @@ public class ProductOrder implements Serializable {
             fieldName = fieldNameIn;
         }
 
+        @NotNull @Override
         public String getFieldName() {
             return fieldName;
         }
@@ -907,9 +900,9 @@ public class ProductOrder implements Serializable {
 
         ProductOrder that = (ProductOrder) o;
 
-        if (researchProject != null ? !researchProject.equals(that.researchProject) : that.researchProject != null)
+        if (researchProject != null ? !researchProject.equals(that.getResearchProject()) : that.getResearchProject() != null)
             return false;
-        if (title != null ? !title.equals(that.title) : that.title != null) return false;
+        if (title != null ? !title.equals(that.getTitle()) : that.getTitle() != null) return false;
 
         return true;
     }
@@ -923,5 +916,9 @@ public class ProductOrder implements Serializable {
 
     public boolean hasJiraTicketKey() {
         return !StringUtils.isBlank(jiraTicketKey);
+    }
+
+    public Integer getPdoSampleCount() {
+        return pdoSampleCount;
     }
 }

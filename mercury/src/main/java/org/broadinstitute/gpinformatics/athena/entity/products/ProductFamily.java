@@ -1,13 +1,14 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
 
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.Comparator;
 
 
 /**
@@ -26,9 +27,8 @@ import java.util.Comparator;
  */
 @Entity
 @Audited
-@Table(schema = "athena", uniqueConstraints = @UniqueConstraint(columnNames = {"name"}))
+@Table(schema = "athena", uniqueConstraints = @UniqueConstraint(columnNames = "name"))
 public class ProductFamily implements Serializable, Comparable<ProductFamily> {
-
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT_FAMILY", schema = "athena", sequenceName = "SEQ_PRODUCT_FAMILY")
@@ -38,30 +38,25 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     private String name;
 
 
-    public static final Comparator<ProductFamily> PRODUCT_FAMILY_COMPARATOR = new Comparator<ProductFamily>() {
-        @Override
-        public int compare(ProductFamily productFamily, ProductFamily productFamily1) {
-            return productFamily.getName().compareTo(productFamily1.getName());
-        }
-    };
-
+    /** Name of the Sequence Only Product Family.  Must be updated if the name is changed in the database! */
+    private static final String SEQUENCE_ONLY_NAME = "Sequence Only";
 
     /**
      * JPA package visible constructor
-     * @return
      */
     ProductFamily() {
     }
 
-
-    public ProductFamily(String name) {
-
-        if ( name == null )
-            throw new NullPointerException( "Null name!" );
-
+    public ProductFamily(@Nonnull String name) {
+        if (name == null) {
+            throw new NullPointerException("Null name!");
+        }
         this.name = name;
     }
 
+    public boolean isSupportsNumberOfLanes() {
+        return name.equals(SEQUENCE_ONLY_NAME);
+    }
 
     public Long getProductFamilyId() {
         return productFamilyId;
@@ -71,11 +66,13 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
         return name;
     }
 
-
     @Override
-    public int compareTo(ProductFamily other) {
-        return PRODUCT_FAMILY_COMPARATOR.compare(this, other);
+    public int compareTo(ProductFamily that) {
+        CompareToBuilder builder = new CompareToBuilder();
+        builder.append(this.getName(), that.getName());
+        return builder.build();
     }
+
 
     @Override
     public boolean equals(Object o) {
@@ -85,12 +82,12 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 
         ProductFamily that = (ProductFamily) o;
 
-        return new EqualsBuilder().append(getName(), that.getName()).isEquals();
+        return new EqualsBuilder().append(name, that.getName()).isEquals();
 
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(getName()).toHashCode();
+        return new HashCodeBuilder().append(name).toHashCode();
     }
 }

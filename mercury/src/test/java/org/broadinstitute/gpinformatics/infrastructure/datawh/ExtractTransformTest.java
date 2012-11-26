@@ -2,11 +2,15 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.*;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.io.File;
@@ -33,7 +37,7 @@ public class ExtractTransformTest extends Arquillian {
     @Inject
     private ExtractTransform extractTransform;
     @Inject
-    private AuditReaderEtl auditReaderEtl;
+    private AuditReaderDao auditReaderDao;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -93,7 +97,7 @@ public class ExtractTransformTest extends Arquillian {
 
     /** Normal ETL.  Picks up the last 2000 (or fewer) audits. */
     public void testNormalEtl() throws Exception {
-        long endRev = auditReaderEtl.currentRevNumber(now);
+        long endRev = auditReaderDao.currentRevNumber(now);
         if (endRev == 0) return;
         long startRev = Math.max(0, endRev - 2000);
         extractTransform.writeLastEtlRun(datafileDir, startRev);

@@ -161,4 +161,14 @@ public class PriceListCache extends AbstractCache implements Serializable {
 
         return null;
     }
+
+    public String getPriceItemName(Long priceItemId) {
+        for (PriceItem priceItem : getPriceList().getPriceItems()) {
+            if (priceItem.getId().equals(priceItemId.toString())) {
+                return priceItem.getName();
+            }
+        }
+
+        return "invalid price item id " + priceItemId;
+    }
 }
