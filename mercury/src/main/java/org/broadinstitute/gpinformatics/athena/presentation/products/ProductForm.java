@@ -86,10 +86,7 @@ public class ProductForm extends AbstractJsfBean {
      */
     public void onPreRenderView() {
         initForm();
-        // Perform our startup validation; post an error if user is not currently logged in.
-        if (!userBean.isValidUser()) {
-            addErrorMessage(userBean.warnOperation("create a product"));
-        }
+        userBean.checkUserValidForOperation("create a product", this);
     }
 
 

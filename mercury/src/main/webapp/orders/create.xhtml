@@ -7,8 +7,7 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:p="http://primefaces.org/ui"
-      xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:pe="http://primefaces.org/ui/extensions">
+      xmlns:f="http://java.sun.com/jsf/core">
 <body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">New Product Order</ui:define>
@@ -166,7 +165,7 @@
                         <div class="row-fluid">
                             <div class="span1">
                                 <p:commandButton
-                                        disabled="#{!productOrderForm.createEnabled}"
+                                        disabled="#{!userBean.validUser}"
                                         value="Place&nbsp;Order" action="#{productOrderForm.save}"
                                         ajax="false" styleClass="ui-priority-primary"/>
                             </div>
@@ -243,7 +242,7 @@
                         <div class="row-fluid">
                             <div class="span1">
                                 <p:commandButton
-                                        disabled="#{!productOrderForm.createEnabled}"
+                                        disabled="#{!userBean.validUser}"
                                         value="Place&nbsp;Order" action="#{productOrderForm.save}"
                                         ajax="false" styleClass="ui-priority-primary"/>
                             </div>

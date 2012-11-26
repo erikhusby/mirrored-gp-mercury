@@ -48,10 +48,6 @@ public class UserBean implements Serializable {
         this.bspUserList = bspUserList;
     }
 
-    public String warnOperation(String operation) {
-        return MessageFormat.format(LOGIN_WARNING, operation);
-    }
-
     public enum ServerStatus {
         down("text-error", "Cannot connect to {0} Server: ''{1}''"),
         loggedIn("text-success", "Logged into {0} as ''{2}''"),
@@ -156,6 +152,17 @@ public class UserBean implements Serializable {
             if (request.isUserInRole(role.name)) {
                 roles.add(role);
             }
+        }
+    }
+
+    /**
+     * Ensure that the user is logged in to BSP and JIRA, if not issue a warning using JSF.
+     * @param operation the operation name, for the warning text.
+     * @param jsfBean the JSF bean used to issue the warning.
+     */
+    public void checkUserValidForOperation(String operation, AbstractJsfBean jsfBean) {
+        if (!isValidUser()) {
+            jsfBean.addErrorMessage(MessageFormat.format(LOGIN_WARNING, operation));
         }
     }
 

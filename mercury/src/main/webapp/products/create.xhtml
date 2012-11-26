@@ -204,7 +204,10 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary"/>
+                                <p:commandButton value="Save"
+                                                 disabled="#{!userBean.validUser}"
+                                                 action="#{productForm.save}" ajax="false"
+                                                 styleClass="ui-priority-primary"/>
                             </div>
                             <div class="offset2">
                                 <h:link outcome="list" value="Cancel" rendered="#{productForm.creating}"/>
