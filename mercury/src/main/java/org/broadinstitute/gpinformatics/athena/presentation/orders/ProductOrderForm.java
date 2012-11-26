@@ -79,9 +79,6 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     @Inject ProductOrderDao productOrderDao;
 
-    @Inject
-    private UserBean userBean;
-
     private List<String> selectedAddOns = new ArrayList<String>();
 
     /** All product orders, fetched once and stored per-request (as a result of this bean being @RequestScoped). */
@@ -140,7 +137,7 @@ public class ProductOrderForm extends AbstractJsfBean {
             }
         }
 
-        return bspUserList.getSelectItems(owners);
+        return BSPUserList.createSelectItems(owners);
     }
 
     public UIInput getEditIdsCacheBinding() {
@@ -504,6 +501,5 @@ public class ProductOrderForm extends AbstractJsfBean {
         }
 
         return null;
-        userBean.checkUserValidForOperation("create an order", this);
     }
 }
