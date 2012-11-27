@@ -37,11 +37,12 @@ public class ProductOrderConversationData implements Serializable {
 
     public void setProduct(Product product) {
         this.product = product;
-        updateAddOns(product);
+        updateAddOns();
     }
 
     /**
-     * Method that initiates the long-running conversation.  Price items are pulled from the {@link org.broadinstitute.gpinformatics.athena.entity.products.Product} parameter.
+     * Method that initiates the long-running conversation.  Price items are pulled from the
+     * {@link org.broadinstitute.gpinformatics.athena.entity.products.Product} parameter.
      *
      * @param order The order that we are using
      */
@@ -54,7 +55,7 @@ public class ProductOrderConversationData implements Serializable {
         }
     }
 
-    private void updateAddOns(Product product) {
+    private void updateAddOns() {
         addOnsForProduct = new ArrayList<String>();
         if (product != null) {
             for (Product addOnProduct : product.getAddOns()) {
@@ -62,5 +63,4 @@ public class ProductOrderConversationData implements Serializable {
             }
         }
     }
-
 }

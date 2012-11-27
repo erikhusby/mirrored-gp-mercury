@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.projects;
 
-import org.apache.commons.lang.math.RandomUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -20,8 +19,6 @@ import java.util.Map;
  */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=true)
 public class ResearchProjectDAOTest extends ContainerTest {
-    public static final String TITLE_PREFIX = "TestResearchProject_";
-    public static final long CREATOR_ID = RandomUtils.nextInt(Integer.MAX_VALUE);
 
     @Inject
     private UserTransaction utx;

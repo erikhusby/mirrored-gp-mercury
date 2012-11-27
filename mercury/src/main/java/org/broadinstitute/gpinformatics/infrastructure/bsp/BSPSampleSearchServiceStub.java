@@ -138,7 +138,8 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
                 BSPSampleDTO.FEMALE_IND,//  GENDER
                 "",//  STOCK_TYPE
                 SM_12CO4_FP,//  FINGERPRINT
-                SM_12CO4_CONTAINER_ID //Container ID
+                SM_12CO4_CONTAINER_ID, //Container ID,
+                SM_12CO4 // Sample ID
 
         });
         addToMap( SM_1P3WY,new String[] {
@@ -159,7 +160,8 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
                 BSPSampleDTO.MALE_IND,//  GENDER
                 BSPSampleDTO.ACTIVE_IND,//  STOCK_TYPE
                 SM_1P3WY_FP,//  FINGERPRINT
-                SM_1P3WY_CONTAINER_ID//CONTAINER ID
+                SM_1P3WY_CONTAINER_ID, //CONTAINER ID
+                SM_1P3WY // Sample ID
 
         });
         addToMap( SM_1P3XN,new String[] {
@@ -181,7 +183,8 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
                 BSPSampleDTO.MALE_IND,//  GENDER
                 BSPSampleDTO.ACTIVE_IND,//  STOCK_TYPE
                 SM_1P3XN_FP,//  FINGERPRINT
-                SM_1P3XN_CONTAINER_ID //CONTAINER ID
+                SM_1P3XN_CONTAINER_ID, //CONTAINER ID
+                SM_1P3XN // Sample ID
         });
         addToMap( SM_12FO4,new String[] {
                   SM_12FO4_PATIENT_ID ,  // patient
@@ -201,7 +204,8 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
                   BSPSampleDTO.MALE_IND,//  GENDER
                   BSPSampleDTO.ACTIVE_IND,//  STOCK_TYPE
                   SM_12FO4_FP,//  FINGERPRINT
-                  SM_12FO4_CONTAINER_ID //CONTAINER ID
+                  SM_12FO4_CONTAINER_ID, //CONTAINER ID
+                  SM_12FO4 // Sample ID
 
         });
         addToMap( SM_12DW4,new String[] {
@@ -222,8 +226,8 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
                   BSPSampleDTO.MALE_IND,//  GENDER
                   BSPSampleDTO.ACTIVE_IND,//  STOCK_TYPE
                   SM_12DW4_FP,//  FINGERPRINT
-                  SM_12DW4_CONTAINER_ID//CONTAINER ID
-
+                  SM_12DW4_CONTAINER_ID, //CONTAINER ID
+                  SM_12DW4 // Sample ID
         });
         addToMap( SM_12MD2,new String[] {
                   SM_12MD2_PATIENT_ID ,  // patient
@@ -243,8 +247,8 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
                   BSPSampleDTO.FEMALE_IND,//  GENDER
                   BSPSampleDTO.ACTIVE_IND,//  STOCK_TYPE
                   SM_12MD2_FP,//  FINGERPRINT
-                  SM_12MD2_CONTAINER_ID//CONTAINER ID
-
+                  SM_12MD2_CONTAINER_ID, //CONTAINER ID
+                  SM_12MD2 // Sample ID
         });
 
     }
