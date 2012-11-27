@@ -46,6 +46,14 @@ public class BaitReagent extends Reagent {
         return targetSet;
     }
 
+    public String getDesignName() {
+        return getReagentName();
+    }
+
+    public String getManufacturerId() {
+        return getLot();
+    }
+
     public void setTargetSet(String targetSet) {
         this.targetSet = targetSet;
     }

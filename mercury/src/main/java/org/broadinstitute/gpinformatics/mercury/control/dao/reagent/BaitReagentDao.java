@@ -21,25 +21,20 @@ import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
 
 /**
- * Created with IntelliJ IDEA.
- * User: dryan
- * Date: 11/27/12
- * Time: 2:25 PM
- * To change this template use File | Settings | File Templates.
+ * Data Access object for BaitReagent
  */
 public class BaitReagentDao extends GenericDao {
-    public BaitReagent findByTargetSetAnd(String targetSet,String designName,String manufacturerId) {
+    public BaitReagent findByBaitReagent(BaitReagent bait) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<BaitReagent> criteriaQuery = criteriaBuilder.createQuery(BaitReagent.class);
         Root<BaitReagent> root = criteriaQuery.from(BaitReagent.class);
-        criteriaQuery.where(criteriaBuilder.equal(root.get(BaitReagent_.targetSet), targetSet));
-        criteriaQuery.where(criteriaBuilder.equal(root.get(BaitReagent_.reagentName), designName));
-        criteriaQuery.where(criteriaBuilder.equal(root.get(BaitReagent_.lot), manufacturerId));
+        criteriaQuery.where(criteriaBuilder.equal(root.get(BaitReagent_.targetSet), bait.getTargetSet()));
+        criteriaQuery.where(criteriaBuilder.equal(root.get(BaitReagent_.reagentName), bait.getDesignName()));
+        criteriaQuery.where(criteriaBuilder.equal(root.get(BaitReagent_.lot), bait.getManufacturerId()));
         try {
             return getEntityManager().createQuery(criteriaQuery).getSingleResult();
         } catch (NoResultException ignored) {
             return null;
         }
-
     }
 }
