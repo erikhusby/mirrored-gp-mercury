@@ -131,9 +131,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell(priceItem.getName() + " [" + product.getPartNumber() + "]", 2, getPriceItemProductHeaderStyle());
     }
 
-    private void writeCategoryHeaders(PriceItem priceItem) {
-        getWriter().writeCell("Billed to " + priceItem.getCategory(), getBilledAmountsHeaderStyle());
-        getWriter().writeCell("New Quantity " + priceItem.getCategory(), getBilledAmountsHeaderStyle());
+    private void writeBillAndNewHeaders() {
+        getWriter().writeCell("Billed", getBilledAmountsHeaderStyle());
+        getWriter().writeCell("New Quantity", getBilledAmountsHeaderStyle());
     }
 
     private void writePriceItemHeaders(PriceItem priceItem) {
@@ -288,11 +288,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             }
         }
 
-        writeAllCategoryHeaders(currentProduct.getDefaultPriceItem(), currentProduct.getPriceItems(), currentProduct.getAddOns());
-        writeAllPriceItemHeaders(currentProduct.getDefaultPriceItem(), currentProduct.getPriceItems(), currentProduct.getAddOns());
+        writeAllBillAndNewHeaders(currentProduct.getPriceItems(), currentProduct.getAddOns());
     }
 
-    private void writeAllPriceItemHeaders(PriceItem defaultPriceItem, Set<PriceItem> priceItems, Set<Product> addOns) {
+    private void writeAllBillAndNewHeaders(Set<PriceItem> priceItems, Set<Product> addOns) {
 
         // The new row
         getWriter().nextRow();
@@ -301,41 +300,17 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         writeEmptyFixedHeaders();
 
         // primary price item for main product
-        writePriceItemHeaders(defaultPriceItem);
+        writeBillAndNewHeaders();
         for (PriceItem priceItem : priceItems) {
-            writePriceItemHeaders(priceItem);
+            writeBillAndNewHeaders();
         }
 
         for (Product addOn : addOns) {
             // primary price item for this add-on
-            writePriceItemHeaders(addOn.getDefaultPriceItem());
+            writeBillAndNewHeaders();
 
             for (PriceItem priceItem : addOn.getPriceItems()) {
-                writePriceItemHeaders(priceItem);
-            }
-        }
-    }
-
-    private void writeAllCategoryHeaders(PriceItem defaultPriceItem, Set<PriceItem> priceItems, Set<Product> addOns) {
-
-        // The new row
-        getWriter().nextRow();
-
-        // The empty fixed headers
-        writeEmptyFixedHeaders();
-
-        // primary price item for main product
-        writeCategoryHeaders(defaultPriceItem);
-        for (PriceItem priceItem : priceItems) {
-            writeCategoryHeaders(priceItem);
-        }
-
-        for (Product addOn : addOns) {
-            // primary price item for this add-on
-            writeCategoryHeaders(addOn.getDefaultPriceItem());
-
-            for (PriceItem priceItem : addOn.getPriceItems()) {
-                writeCategoryHeaders(priceItem);
+                writeBillAndNewHeaders();
             }
         }
     }
@@ -356,8 +331,20 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     private void writeCountsForPriceItems(Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts, PriceItem item) {
         ProductOrderSample.LedgerQuantities quantities = billCounts.get(item);
         if (quantities != null) {
-            getWriter().writeCell(quantities.getBilled());
-            getWriter().writeCell(quantities.getUploaded());
+
+            // If the entry for billed is 0, then don't highlight it, but show a light yellow for anything with values
+            if (quantities.getBilled().equals("0")) {
+                getWriter().writeCell(quantities.getBilled());
+            } else {
+                getWriter().writeCell(quantities.getBilled(), getBilledAmountsHeaderStyle());
+            }
+
+            // If the entry represents a change, then highlight it with a light yellow
+            if (quantities.getBilled().equals(quantities.getUploaded())) {
+                getWriter().writeCell(quantities.getUploaded());
+            } else {
+                getWriter().writeCell(quantities.getUploaded(), getBilledAmountsHeaderStyle());
+            }
         } else {
             // write nothing for billed and new
             getWriter().writeCell(ProductOrderSample.NO_BILL_COUNT);

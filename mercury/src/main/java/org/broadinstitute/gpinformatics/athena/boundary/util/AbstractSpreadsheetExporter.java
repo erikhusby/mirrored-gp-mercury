@@ -113,7 +113,6 @@ public abstract class AbstractSpreadsheetExporter {
     protected CellStyle buildErrorMessageStyle(Workbook wb) {
         CellStyle style = wb.createCellStyle();
         style.setFillForegroundColor(IndexedColors.RED.getIndex());
-        style.setFillPattern(CellStyle.THICK_FORWARD_DIAG);
         style.setAlignment(CellStyle.ALIGN_LEFT);
         style.setWrapText(true);
         Font headerFont = wb.createFont();

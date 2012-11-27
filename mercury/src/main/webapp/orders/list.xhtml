@@ -89,8 +89,8 @@
                     #{order.billingSessionBusinessKey}
                 </p:column>
 
-                <p:column headerText="Eligible for Billing?" >
-                    <p:selectBooleanCheckbox value="#{order.unbilledLedgerEntryCount > 0}" disabled="true" />
+                <p:column headerText="Eligible for Billing" sortBy="#{order.eligibleForBilling}">
+                    <p:graphicImage width="16" height="16" rendered="#{order.eligibleForBilling}" url="/images/check.png"/>
                 </p:column>
 
 

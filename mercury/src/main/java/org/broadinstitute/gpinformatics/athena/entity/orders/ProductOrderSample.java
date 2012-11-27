@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 public class ProductOrderSample implements Serializable {
 
     /** Count shown when no billing has occurred. */
-    public static final Double NO_BILL_COUNT = 0.0d;
+    public static final Double NO_BILL_COUNT = 0d;
 
     @Id
     @SequenceGenerator(name = "SEQ_ORDER_SAMPLE", schema = "athena", sequenceName = "SEQ_ORDER_SAMPLE")
