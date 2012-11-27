@@ -1,8 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.presentation.billing;
 
 import org.apache.commons.io.IOUtils;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerImporter;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerImporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.UploadedFile;
@@ -24,8 +26,11 @@ import java.io.FileInputStream;
 public class TrackerUploadForm  extends AbstractJsfBean {
 
     @Inject
-    private BillingLedgerDao ledgerDao;
-
+    private BillingLedgerDao billingLedgerDao;
+    @Inject
+    private ProductOrderDao productOrderDao;
+    @Inject
+    private ProductOrderSampleDao productOrderSampleDao;
     @Inject
     private FacesContext facesContext;
 
@@ -35,15 +40,17 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         String productPartNumber=null;
 
         UploadedFile file = event.getFile();
-        //TODO following line just for testing
+        //TODO following line just for prototyping
         setFilename(file.getFileName());
 
         FileInputStream fis = null;
 
         try {
-            SampleLedgerImporter importer = new SampleLedgerImporter();
-            fis = (FileInputStream) file.getInputstream() ;
-            productPartNumber = importer.readFromStream ( fis ) ;
+            BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, productOrderSampleDao);
+
+            //TODO This just for initial prototyping.
+            fis = (FileInputStream) file.getInputstream();
+            productPartNumber = importer.readFromStream ( fis );
 
         } catch (Exception e) {
             //TODO correct this
@@ -54,7 +61,7 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         }
 
         // addInfoMessage("Previewing  : " + event.getFile().getFileName() );
-        //TODO following line just for testing
+        //TODO following line just for prototyping
         setFilename( productPartNumber );
     }
 

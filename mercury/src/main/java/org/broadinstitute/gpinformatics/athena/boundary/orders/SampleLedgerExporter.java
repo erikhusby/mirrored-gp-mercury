@@ -96,7 +96,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         return null;
     }
 
-    private List<PriceItem> getPriceItems(Product product) {
+    public static List<PriceItem> getPriceItems(Product product) {
         // Create a copy of the product's price items list in order to impose an order on it.
         List<PriceItem> allPriceItems = new ArrayList<PriceItem>(product.getPriceItems());
         Collections.sort(allPriceItems, new Comparator<PriceItem>() {

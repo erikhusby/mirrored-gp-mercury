@@ -8,16 +8,10 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
  */
 public class OrderBillSummaryStat {
 
-    private String productPartNumber;   // This string member could be droppped but can refactor it out later
     private double charge=0;
     private double credit=0;
 
-    public OrderBillSummaryStat(final String productPartNumber) {
-        this.productPartNumber = productPartNumber;
-    }
-
-    public String getProductPartNumber() {
-        return productPartNumber;
+    public OrderBillSummaryStat() {
     }
 
     public double getCharge() {

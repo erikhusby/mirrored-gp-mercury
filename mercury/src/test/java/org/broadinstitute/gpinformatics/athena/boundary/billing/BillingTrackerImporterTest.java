@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.boundary.orders;
+package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import junit.framework.Assert;
 import org.apache.commons.io.IOUtils;
@@ -12,25 +12,24 @@ import org.testng.annotations.Test;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.List;
-import java.util.Map;
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class SampleLedgerImporterTest {
+public class BillingTrackerImporterTest {
 
-    public static final File BILLING_TRACKER_TEST_FILE = new File("src/test/data/billing/BillingTracker-2012-11-21.xlsx");
+    public static final File BILLING_TRACKER_TEST_FILE = new File("src/test/data/billing/BillingTracker-DBFreeTestData.xlsx");
 
     @Test
     void testImport() throws Exception {
 
         File testFile = BILLING_TRACKER_TEST_FILE;
 
-        SampleLedgerImporter sampleLedgerImporter = new SampleLedgerImporter();
+        BillingTrackerImporter billingTrackerImporter = new BillingTrackerImporter(null, null);
         FileInputStream fis=null;
         File tempFile=null;
 
         try {
             fis = new FileInputStream(testFile);
-            tempFile = sampleLedgerImporter.copyFromStreamToTempFile(fis);
+            tempFile = billingTrackerImporter.copyFromStreamToTempFile(fis);
             Assert.assertNotNull(tempFile);
             Assert.assertNotNull(tempFile.getAbsoluteFile());
 
@@ -42,7 +41,7 @@ public class SampleLedgerImporterTest {
 
 //        try {
 //            fis = new FileInputStream(tempFile);
-//            String productPartNumber = sampleLedgerImporter.readFromStream( fis );
+//            String productPartNumber = billingTrackerImporter.readFromStream( fis );
 //            Assert.assertEquals("P-WG-0009", productPartNumber);
 //        } catch ( Exception e ) {
 //            e.printStackTrace();
@@ -55,55 +54,39 @@ public class SampleLedgerImporterTest {
             Workbook workbook = WorkbookFactory.create(fis);
             Sheet sheet = workbook.getSheetAt(0);
             Row row0 = sheet.getRow(0);
-            List<SampleLedgerImporter.TrackerColumnInfo> trackerHeaderList = sampleLedgerImporter.parseTrackerSheetHeader(row0, "P-RNA-0004");
+            List<BillingTrackerImporter.TrackerColumnInfo> trackerHeaderList = billingTrackerImporter.parseTrackerSheetHeader(row0, "P-RNA-0004");
             Assert.assertNotNull(trackerHeaderList);
             Assert.assertEquals(4, trackerHeaderList.size());
         } finally {
             IOUtils.closeQuietly(fis);
         }
 
-
-        try {
-            fis = new FileInputStream(tempFile);
-            Map<String, Map<String, Map<String, OrderBillSummaryStat>>> dataMap = sampleLedgerImporter.parseTempFile( tempFile );
-            Assert.assertNotNull(dataMap);
-            Assert.assertEquals( 4.0 , dataMap.get("P-RNA-0004").get("PDO-23").get("P-RNA-0004").getCharge() );
-            Assert.assertNotNull(dataMap);
-
-        } finally {
-            IOUtils.closeQuietly(fis);
-        }
-
-    }
-
-
-
-    void parseTrackerSheetHeader() throws Exception {
-
     }
 
     @Test
     void testExtractPartNumberFromHeader() throws Exception {
 
-        SampleLedgerImporter sampleLedgerImporter = new SampleLedgerImporter();
+        BillingTrackerImporter billingTrackerImporter = new BillingTrackerImporter(null, null);
         String headerTest = "DNA Extract from blood, fresh frozen tissue, cell pellet, stool, or saliva [P-ESH-0004]";
-        Assert.assertEquals("P-ESH-0004", sampleLedgerImporter.extractPartNumberFromHeader(headerTest));
+        Assert.assertEquals("P-ESH-0004", billingTrackerImporter.extractBillableRefFromHeader(headerTest).getProductPartNumber());
+        Assert.assertEquals("DNA Extract from blood, fresh frozen tissue, cell pellet, stool, or saliva",
+                billingTrackerImporter.extractBillableRefFromHeader(headerTest).getPriceItemName() );
 
         headerTest = "DNA Extract from blood, fresh frozen tissue, cell pellet, stool, or saliva [ ]";
-        Assert.assertEquals(" ", sampleLedgerImporter.extractPartNumberFromHeader(headerTest));
+        Assert.assertEquals(" ", billingTrackerImporter.extractBillableRefFromHeader(headerTest).getProductPartNumber() );
 
         headerTest = "DNA Extract from blood, fresh frozen tissue, cell pellet, stool, or saliva [P-ESH-[0004]]";
-        Assert.assertEquals("0004]", sampleLedgerImporter.extractPartNumberFromHeader(headerTest));
+        Assert.assertEquals("0004]", billingTrackerImporter.extractBillableRefFromHeader(headerTest).getProductPartNumber() );
 
         headerTest = "DNA Extract from blood, fresh frozen tissue, cell pellet, stool, or saliva []";
         try {
-            sampleLedgerImporter.extractPartNumberFromHeader(headerTest);
+            billingTrackerImporter.extractBillableRefFromHeader(headerTest).getProductPartNumber();
             Assert.fail( "should have thrown on failure to find ppn");
         } catch ( Exception e) {}
 
         headerTest = "DNA Extract from blood, fresh frozen tissue, cell pellet, stool, or saliva ]P-ESH-0004[";
         try {
-            sampleLedgerImporter.extractPartNumberFromHeader(headerTest);
+            billingTrackerImporter.extractBillableRefFromHeader(headerTest).getProductPartNumber();
             Assert.fail( "should have thrown on failure to find ppn");
         } catch ( Exception e) {}
 
