@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
@@ -111,6 +111,7 @@ public class ResearchProject implements Serializable {
     private List<ProductOrder> productOrders = new ArrayList<ProductOrder>();
 
     @Index(name = "ix_rp_jira")
+    @Column(name = "JIRA_TICKET_KEY", nullable = false)
     private String jiraTicketKey;               // Reference to the Jira Ticket associated to this Research Project
 
     @Transient

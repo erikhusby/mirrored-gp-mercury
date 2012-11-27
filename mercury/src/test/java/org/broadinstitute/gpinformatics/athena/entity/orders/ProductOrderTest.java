@@ -1,9 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectTest;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -16,7 +12,10 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Created by IntelliJ IDEA.
@@ -151,10 +150,9 @@ public class ProductOrderTest {
             } else {
                 productOrderSample = new ProductOrderSample(sampleName);
             }
+
             productOrderSample.setSampleComment("athenaComment");
-            for (BillableItem billableItem : billableItems) {
-                productOrderSample.addBillableItem(billableItem);
-            }
+
             productOrderSamples.add(productOrderSample);
         }
         return productOrderSamples;

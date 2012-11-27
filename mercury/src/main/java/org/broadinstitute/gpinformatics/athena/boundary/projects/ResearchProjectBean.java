@@ -6,8 +6,12 @@ import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jsf.TableData;
 
+import javax.enterprise.context.Conversation;
+import javax.enterprise.context.ConversationScoped;
 import javax.enterprise.context.RequestScoped;
+import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -36,6 +40,23 @@ public class ResearchProjectBean implements Serializable {
     /** All research projects, fetched once and stored per-request (as a result of this bean being @RequestScoped). */
     private List<ResearchProject> allResearchProjects;
 
+    /** On demand counts of orders on the project. Map of business key to count value **/
+    private Map<String, Long> projectOrderCounts;
+
+    @ConversationScoped public static class ResearchProjectTableData extends TableData<ResearchProject> {}
+    @Inject ResearchProjectTableData researchProjectData;
+
+    @Inject FacesContext facesContext;
+    @Inject Conversation conversation;
+
+    public void initView() {
+        if (!facesContext.isPostback()) {
+            researchProjectData.setValues(researchProjectDao.findAllResearchProjects());
+            if (conversation.isTransient()) {
+                conversation.begin();
+            }
+        }
+    }
 
     /**
      * Returns a list of all research projects. Only actually fetches the list from the database once per request
@@ -44,10 +65,15 @@ public class ResearchProjectBean implements Serializable {
      * @return list of all research projects
      */
     public List<ResearchProject> getAllResearchProjects() {
-        if (allResearchProjects == null) {
-            allResearchProjects = researchProjectDao.findAllResearchProjects();
+        return researchProjectData.getValues();
+    }
+
+    public Map<String, Long> getResearchProjectCounts() {
+        if (projectOrderCounts == null) {
+            projectOrderCounts = researchProjectDao.getProjectOrderCounts() ;
         }
-        return allResearchProjects;
+
+        return projectOrderCounts;
     }
 
     /**
@@ -67,7 +93,7 @@ public class ResearchProjectBean implements Serializable {
             }
         }
 
-        return bspUserList.getSelectItems(owners);
+        return BSPUserList.createSelectItems(owners);
     }
 
     /**
@@ -108,4 +134,7 @@ public class ResearchProjectBean implements Serializable {
         return BoundaryUtils.buildEnumFilterList(ResearchProject.Status.values());
     }
 
+    public ResearchProjectTableData getResearchProjectData() {
+        return researchProjectData;
+    }
 }

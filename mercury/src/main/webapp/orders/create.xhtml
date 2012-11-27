@@ -77,6 +77,7 @@
                 <div class="control-group">
                     <p:outputLabel for="product" value="Product" styleClass="control-label"/>
                     <div class="controls">
+                        <!--@elvariable id="product" type="org.broadinstitute.gpinformatics.athena.entity.products.Product"-->
                         <p:autoComplete id="product" value="#{productOrderDetail.productOrder.product}"
                                         completeMethod="#{productList.getProductCompletions}"
                                         forceSelection="true"
@@ -88,7 +89,7 @@
                                         required="true"
                                         scrollHeight="250"
                                         size="50">
-                            <p:ajax event="itemSelect" listener="#{productOrderForm.setupAddOns}" update="perfbyselection"/>
+                            <p:ajax event="itemSelect" listener="#{productOrderForm.setupAddOns}" update="perfbyselection,numberOfLanes"/>
                         </p:autoComplete>
                         <p:watermark for="product" value="Type name to search"/>
                         <p:message for="product"/>
@@ -126,6 +127,17 @@
                 </div>
 
                 <div class="control-group">
+                    <p:outputLabel for="numberOfLanes" value="Number of Lanes" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputText id="numberOfLanes"
+                                     disabled="#{!productOrderForm.hasProduct || !productOrderForm.product.productFamily.supportsNumberOfLanes}"
+                                     value="#{productOrderDetail.productOrder.count}" size="50" required="true"/>
+                        <p:watermark for="numberOfLanes" value="Enter Number of Lanes"/>
+                        <p:message for="numberOfLanes"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
                     <p:outputLabel for="comments" value="Comments" styleClass="control-label"/>
                     <div class="controls">
                         <p:inputTextarea id="comments" value="#{productOrderDetail.productOrder.comments}" cols="50" maxlength="2000">
@@ -152,8 +164,10 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Place&nbsp;Order" action="#{productOrderForm.save}"
-                                                 ajax="false" styleClass="ui-priority-primary"/>
+                                <p:commandButton
+                                        disabled="#{!userBean.validUser}"
+                                        value="Place&nbsp;Order" action="#{productOrderForm.save}"
+                                        ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                             <div class="span1">
                                 <h:link outcome="list" value="Cancel"/>
@@ -227,8 +241,10 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Place&nbsp;Order" action="#{productOrderForm.save}"
-                                                 ajax="false" styleClass="ui-priority-primary"/>
+                                <p:commandButton
+                                        disabled="#{!userBean.validUser}"
+                                        value="Place&nbsp;Order" action="#{productOrderForm.save}"
+                                        ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                             <div class="span1">
                                 <h:link outcome="list" value="Cancel"/>

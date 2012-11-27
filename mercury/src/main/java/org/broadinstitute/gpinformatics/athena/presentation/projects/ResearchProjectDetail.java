@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;

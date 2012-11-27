@@ -44,6 +44,7 @@ public class DBFreeBSPSampleTest {
                 (BSPSampleSearchColumn)EasyMock.anyObject(),
                 (BSPSampleSearchColumn)EasyMock.anyObject(),
                 (BSPSampleSearchColumn)EasyMock.anyObject(),
+                (BSPSampleSearchColumn)EasyMock.anyObject(),
                 (BSPSampleSearchColumn)EasyMock.anyObject())
         ).andReturn(resultColumns).atLeastOnce();
 

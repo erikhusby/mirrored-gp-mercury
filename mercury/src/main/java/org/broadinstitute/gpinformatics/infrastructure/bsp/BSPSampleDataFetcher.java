@@ -65,20 +65,7 @@ public class BSPSampleDataFetcher {
 
         for (String[] result : results) {
             BSPSampleDTO bspDTO = toDTO(result);
-            String sampleName = bspDTO.getStockSample();
-
-            if (sampleName != null) {
-                if (sampleNames.contains(sampleName)) {
-                    if (sampleName.equals(bspDTO.getStockSample()) || sampleName.equals(bspDTO.getRootSample())) {
-                        sampleNames.remove(sampleName);
-                        sampleNameToDTO.put(sampleName, bspDTO);
-                    } else {
-                        throw new RuntimeException(
-                                "Can't map bsp sample " + bspDTO.getStockSample() + " any of the " + sampleNames.size()
-                                + " queried samples");
-                    }
-                }
-            }
+            sampleNameToDTO.put(bspDTO.getSampleId(), bspDTO);
         }
         return sampleNameToDTO;
     }
@@ -102,6 +89,7 @@ public class BSPSampleDataFetcher {
         String stockType = null;
         String fingerprint = null;
         String containerId = null;
+        String sampleId = null;
 
         if (bspColumns.length > 0) {
             patientId = bspColumns[0];
@@ -158,11 +146,15 @@ public class BSPSampleDataFetcher {
         if (bspColumns.length > 17) {
             containerId = bspColumns[17];
         }
+
+        if (bspColumns.length > 18) {
+            sampleId = bspColumns[18];
+        }
         /** beware of DBFreeBSPSampleTest: if you add columns here, you'll need to add them to the mock **/
 
         return new BSPSampleDTO(containerId,stockSample,rootSample,null,patientId,organism,collaboratorSampleId,collection,
                                 volume,concentration, sampleLsid, collaboratorParticipantId, materialType, total,
-                                sampleType, primaryDisease,gender, stockType, fingerprint);
+                                sampleType, primaryDisease,gender, stockType, fingerprint, sampleId);
 
     }
 
@@ -185,6 +177,7 @@ public class BSPSampleDataFetcher {
                 BSPSampleSearchColumn.GENDER,
                 BSPSampleSearchColumn.STOCK_TYPE,
                 BSPSampleSearchColumn.FINGERPRINT,
-                BSPSampleSearchColumn.CONTAINER_ID);
+                BSPSampleSearchColumn.CONTAINER_ID,
+                BSPSampleSearchColumn.SAMPLE_ID);
     }
 }

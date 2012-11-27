@@ -1,27 +1,22 @@
-package org.broadinstitute.gpinformatics.infrastructure.datawh;
+package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.BillableItemDao;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import javax.enterprise.context.ApplicationScoped;
 import java.util.Date;
 import java.util.List;
 
 /**
- * Utility methods for data warehouse ETL.
+ * Access to Mercury AuditReader for data warehouse.
  */
-@Stateless
-public class AuditReaderEtl {
+@ApplicationScoped
+public class AuditReaderDao extends GenericDao {
 
-   // An arbitrary dao just to get the entity manager.
-    @Inject
-    private BillableItemDao dao;
-
-    private AuditReader auditReader = null;
+    private static AuditReader auditReader = null;
 
     /**
      * Returns an auditReader, doing one-time init if needed.
@@ -29,7 +24,7 @@ public class AuditReaderEtl {
      */
     private AuditReader getAuditReader() {
         if (auditReader == null) {
-            auditReader = AuditReaderFactory.get(dao.getEntityManager());
+            auditReader = AuditReaderFactory.get(getEntityManager());
         }
         return auditReader;
     }
