@@ -156,7 +156,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
     public void testOneLedgerEntryNoBillingSession() {
 
         BillingLedger billingLedger =
-                new BillingLedger(order.getSamples().iterator().next(), order.getProduct().getDefaultPriceItem(), 2);
+                new BillingLedger(order.getSamples().iterator().next(), order.getProduct().getDefaultPriceItem(), new Date(), 2);
 
         billingLedgerDao.persist(billingLedger);
         billingLedgerDao.flush();
@@ -172,7 +172,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
     public void testOneLedgerEntryWithBillingSession() {
         final BillingLedger billingLedger =
-                new BillingLedger(order.getSamples().iterator().next(), order.getProduct().getDefaultPriceItem(), 2);
+                new BillingLedger(order.getSamples().iterator().next(), order.getProduct().getDefaultPriceItem(), new Date(), 2);
 
         BillingSession billingSession = new BillingSession(1L);
         billingSession.setBillingLedgerItems(new HashSet<BillingLedger>() {{ add(billingLedger); }});

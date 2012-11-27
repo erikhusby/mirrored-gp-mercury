@@ -10,6 +10,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.*;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -37,7 +38,7 @@ public class CreateBillingData extends ContainerTest {
 
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
                 if (productOrderSample.getSampleName().contains("A")) {
-                    billingLedgers.add(new BillingLedger(productOrderSample, productOrder.getProduct().getDefaultPriceItem(), 0.5));
+                    billingLedgers.add(new BillingLedger(productOrderSample, productOrder.getProduct().getDefaultPriceItem(), new Date(), 0.5));
                 }
             }
 
@@ -46,7 +47,7 @@ public class CreateBillingData extends ContainerTest {
 
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
                 if (productOrderSample.getSampleName().contains("B")) {
-                    productOrderDao.persist(new BillingLedger(productOrderSample, productOrder.getProduct().getDefaultPriceItem(), 1.1));
+                    productOrderDao.persist(new BillingLedger(productOrderSample, productOrder.getProduct().getDefaultPriceItem(), new Date(), 1.1));
                 }
             }
 

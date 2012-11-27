@@ -51,10 +51,11 @@ public class BillingLedger {
 
     BillingLedger() {}
 
-    public BillingLedger(@Nonnull ProductOrderSample productOrderSample, @Nonnull PriceItem priceItem, double quantity) {
+    public BillingLedger(@Nonnull ProductOrderSample productOrderSample, @Nonnull PriceItem priceItem, @Nonnull Date workCompleteDate, double quantity) {
         this.productOrderSample = productOrderSample;
         this.priceItem = priceItem;
         this.quantity = quantity;
+        this.workCompleteDate = workCompleteDate;
     }
 
     public Long getLedgerId() {
