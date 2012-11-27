@@ -6,9 +6,9 @@
         <provider>org.hibernate.ejb.HibernatePersistence</provider>
         <jta-data-source>java:jboss/jdbc/mercury_pool</jta-data-source>
         <properties>
-                        <property name="hibernate.dialect" value="org.hibernate.dialect.PostgresPlusDialect"/>
+                        <!--<property name="hibernate.dialect" value="org.hibernate.dialect.PostgresPlusDialect"/>-->
             <!--<property name="hibernate.dialect" value="org.broadinstitute.gpinformatics.infrastructure.jpa.AthenaPostgresPlusDialect"/>-->
-         <!--<property name="hibernate.dialect" value="org.hibernate.dialect.Oracle10gDialect"/>-->
+         <property name="hibernate.dialect" value="org.hibernate.dialect.Oracle10gDialect"/>
             <property name="hibernate.ejb.naming_strategy" value="org.hibernate.cfg.ImprovedNamingStrategy" />
 <!-- this is set to false by default in Glassfish, and true by default in JBoss, so set it explicitly -->
             <property name="hibernate.id.new_generator_mappings" value="true"/>
