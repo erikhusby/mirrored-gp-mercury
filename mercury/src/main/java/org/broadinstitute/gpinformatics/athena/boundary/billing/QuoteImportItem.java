@@ -75,7 +75,6 @@ public class QuoteImportItem {
         Date currentDate = new Date();
 
         for (BillingLedger ledgerItem : ledgerItems) {
-            ledgerItem.setWorkCompleteDate(currentDate);
             ledgerItem.setBillingMessage(billedMessage);
         }
     }
