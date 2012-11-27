@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheet
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderForm;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
@@ -56,7 +57,7 @@ public class BillingSessionForm extends AbstractJsfBean {
 
     public String bill() {
         String sessionKey =  billingSessionBean.getBillingSession().getBusinessKey();
-        for (QuoteImportItem item : billingSessionBean.getBillingSession().getQuoteImportItems()) {
+        for (QuoteImportItem item : billingSessionBean.getBillingSession().getUnBilledQuoteImportItems()) {
 
             Quote quote = new Quote();
             quote.setAlphanumericId(item.getQuoteId());
@@ -73,7 +74,7 @@ public class BillingSessionForm extends AbstractJsfBean {
                 String message = quoteService.registerNewWork(
                     quote, quotePriceItem, item.getQuantity(), pageUrl, "billingSession", sessionKey);
 
-                item.setupBilledInfo("Billed Successfully");
+                item.setupBilledInfo(BillingSession.SUCCESS);
                 addInfoMessage("Sent to quote server " + message);
             } catch (Exception ex) {
                 // Any exceptions in sending to the quote server will just be reported and will continue on to the next one

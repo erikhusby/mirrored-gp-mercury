@@ -22,6 +22,7 @@ import java.util.*;
 @Table(name= "BILLING_SESSION", schema = "athena")
 public class BillingSession {
     public static final String ID_PREFIX = "BILL-";
+    public static final String SUCCESS = "Billed Successfully";
 
     @Id
     @SequenceGenerator(name = "SEQ_BILLING_SESSION", schema = "athena", sequenceName = "SEQ_BILLING_SESSION")
@@ -77,11 +78,24 @@ public class BillingSession {
         return ID_PREFIX + billingSessionId;
     }
 
-    @Transient
+    public List<QuoteImportItem> getUnBilledQuoteImportItems() {
+        return getQuoteImportItems(false);
+    }
+
     public List<QuoteImportItem> getQuoteImportItems() {
+        return getQuoteImportItems(true);
+    }
+
+    private List<QuoteImportItem> getQuoteImportItems(boolean includeUnbilled) {
         QuoteImportInfo quoteImportInfo = new QuoteImportInfo();
 
         for (BillingLedger ledger : billingLedgerItems) {
+
+            // If we are not skipping unbilled then just add quantity, otherwise only include if
+            // the message is null or not equal to success
+            if (includeUnbilled ||
+                (ledger.getBillingMessage() == null) ||
+                !SUCCESS.equals(ledger.getBillingMessage()))
             quoteImportInfo.addQuantity(ledger);
         }
 
@@ -107,7 +121,7 @@ public class BillingSession {
             // If any item is billed then allRemoved is false and we do not want to remove the item
             // In here we remove the billing session from the ledger item and hold onto the ledger item
             // to remove from the full list of ledger items.
-            if (ledgerItem.getWorkCompleteDate() == null) {
+            if (!SUCCESS.equals(ledgerItem.getBillingMessage())) {
                 ledgerItem.setBillingSession(null);
                 toRemove.add(ledgerItem);
             } else {

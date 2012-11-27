@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
@@ -55,7 +56,7 @@ public class BillingLedgerDaoTest {
         PriceItem priceItem = priceItemDao.findAll().get(0);
 
         // Make sure there is at least one ledger entry
-        ledger = new BillingLedger(order.getSamples().get(0), priceItem, 2);
+        ledger = new BillingLedger(order.getSamples().get(0), priceItem, new Date(), 2);
 
         billingLedgerDao.persist(ledger);
     }
