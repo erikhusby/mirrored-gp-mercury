@@ -47,41 +47,53 @@
                 </p:column>
 
                 <p:column headerText="ID" sortBy="#{order.jiraTicketKey}">
-                    <h:outputLink target="JIRA" value="#{jiraLink.browseUrl(order.jiraTicketKey)}"
-                                  class="external" rendered="#{order.hasJiraTicketKey()}" >
+                    <h:outputLink target="JIRA" value="#{jiraLink.browseUrl(order.jiraTicketKey)}" class="external" >
                         <h:outputText value="#{order.jiraTicketKey}" />
                     </h:outputLink>
                 </p:column>
 
-                <p:column headerText="Product" style="width:200px;" sortBy="#{order.product.productName}" sortingComparator="caseInsensitiveText">
-                    #{order.product.productName}
+                    <p:column headerText="Product" sortBy="#{order.productName}">
+                        #{order.productName}
+                    </p:column>
+
+                    <p:column headerText="Product Family" style="width:150px;" sortBy="#{order.productFamilyName}" sortingComparator="caseInsensitiveText">
+                        #{order.productFamilyName}
+                    </p:column>
+
+
+                    <p:column headerText="Status" filterBy="#{order.orderStatus}" filterOptions="#{productOrderBean.allOrderStatuses}" filterMatchMode="exact">
+                        #{order.orderStatus}
+                    </p:column>
+
+
+                    <p:column headerText="Research Project" sortBy="#{order.researchProjectTitle}">
+                        #{order.researchProjectTitle}
+                    </p:column>
+
+
+                <p:column headerText="Owner" filterBy="#{order.ownerId}" filterOptions="#{productOrderForm.allProjectOwners}" filterMatchMode="exact">
+                    #{userListBean.getUserFullName(order.ownerId)}
                 </p:column>
 
-                <p:column headerText="Product Family" style="width:150px;" sortBy="#{order.product.productFamily.name}" sortingComparator="caseInsensitiveText">
-                    #{order.product.productFamily.name}
-                </p:column>
-
-                <p:column headerText="Status" filterBy="#{order.orderStatus}" filterOptions="#{productOrderBean.allOrderStatuses}" filterMatchMode="exact">
-                    #{order.orderStatus}
-                </p:column>
-
-                <p:column headerText="Research Project">
-                    #{order.researchProject.title}
-                </p:column>
-
-                <p:column headerText="Owner" filterBy="#{order.createdBy}" filterOptions="#{productOrderForm.allProjectOwners}" filterMatchMode="exact">
-                    #{userListBean.getUserFullName(order.createdBy)}
-                </p:column>
-
-                <p:column headerText="Updated" sortBy="#{order.modifiedDate}">
-                    <h:outputText value="#{order.modifiedDate}">
+                <p:column headerText="Updated" sortBy="#{order.updatedDate}">
+                    <h:outputText value="#{order.updatedDate}">
                         <f:convertDateTime type="both" timeStyle="short"/>
                     </h:outputText>
                 </p:column>
 
-                <p:column headerText="Samples">
-                    #{order.sampleBillingSummary}
+                <p:column headerText="Sample Count" sortBy="#{order.pdoSampleCount}">
+                    #{order.pdoSampleCount}
                 </p:column>
+
+                <p:column headerText="Billing Session ID">
+                    #{order.billingSessionBusinessKey}
+                </p:column>
+
+                <p:column headerText="Eligible for Billing" sortBy="#{order.eligibleForBilling}">
+                    <p:graphicImage width="16" height="16" rendered="#{order.eligibleForBilling}" url="/images/check.png"/>
+                </p:column>
+
+
             </p:dataTable>
             </h:form>
         </ui:define>

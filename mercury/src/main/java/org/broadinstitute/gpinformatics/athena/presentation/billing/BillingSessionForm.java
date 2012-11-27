@@ -1,13 +1,16 @@
 package org.broadinstitute.gpinformatics.athena.presentation.billing;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingSessionBean;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderForm;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
@@ -15,14 +18,14 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.RequestScoped;
+import javax.faces.application.FacesMessage;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.Calendar;
+import java.io.*;
 import java.util.Date;
+import java.util.List;
 
 /**
  * Form operations for the billing session features
@@ -41,6 +44,9 @@ public class BillingSessionForm extends AbstractJsfBean {
     private BillingLedgerDao billingLedgerDao;
 
     @Inject
+    private ProductOrderDao productOrderDao;
+
+    @Inject
     private QuoteService quoteService;
 
     @Inject
@@ -51,7 +57,7 @@ public class BillingSessionForm extends AbstractJsfBean {
 
     public String bill() {
         String sessionKey =  billingSessionBean.getBillingSession().getBusinessKey();
-        for (QuoteImportItem item : billingSessionBean.getBillingSession().getQuoteImportItems()) {
+        for (QuoteImportItem item : billingSessionBean.getBillingSession().getUnBilledQuoteImportItems()) {
 
             Quote quote = new Quote();
             quote.setAlphanumericId(item.getQuoteId());
@@ -68,7 +74,7 @@ public class BillingSessionForm extends AbstractJsfBean {
                 String message = quoteService.registerNewWork(
                     quote, quotePriceItem, item.getQuantity(), pageUrl, "billingSession", sessionKey);
 
-                item.setupBilledInfo("Billed Successfully");
+                item.setupBilledInfo(BillingSession.SUCCESS);
                 addInfoMessage("Sent to quote server " + message);
             } catch (Exception ex) {
                 // Any exceptions in sending to the quote server will just be reported and will continue on to the next one
@@ -97,38 +103,40 @@ public class BillingSessionForm extends AbstractJsfBean {
     }
 
     public String downloadTracker() {
+        List<String> productOrderBusinessKeys = billingSessionBean.getBillingSession().getProductOrderBusinessKeys();
+        return ProductOrderForm.getTrackerForOrders(productOrderBusinessKeys, bspUserList, billingLedgerDao, productOrderDao);
+    }
+
+    public String downloadQuoteItems() throws IOException {
+        OutputStream outputStream = null;
+        File tempFile = null;
+        InputStream inputStream = null;
+
         try {
-            String filename =
-                "BillingTracker-" +
-                AbstractSpreadsheetExporter.DATE_FORMAT.format(Calendar.getInstance().getTime()) + ".xls";
+            String filename = billingSessionBean.getBillingSession().getBusinessKey() + "_" + new Date() + ".xls";
 
-            OutputStream outputStream = AbstractSpreadsheetExporter.beginSpreadsheetDownload(facesContext, filename);
+            tempFile = File.createTempFile(filename, "xls");
+            outputStream = new FileOutputStream(tempFile);
 
-            ProductOrder[] selectedProductOrders = billingSessionBean.getBillingSession().getProductOrders();
+            QuoteWorkItemsExporter exporter =
+                    new QuoteWorkItemsExporter(
+                            billingSessionBean.getBillingSession(), billingSessionBean.getBillingSession().getQuoteImportItems());
 
-            // dummy code to plumb in spreadsheet write.  this is not the right format and it's only doing the first PDO!
-            SampleLedgerExporter sampleLedgerExporter =
-                    new SampleLedgerExporter(selectedProductOrders, bspUserList, billingLedgerDao);
-            sampleLedgerExporter.writeToStream(outputStream);
+            exporter.writeToStream(outputStream, bspUserList);
+            IOUtils.closeQuietly(outputStream);
+            inputStream = new FileInputStream(tempFile);
 
-            facesContext.responseComplete();
+            // This copies the inputStream as a faces download with the file name specified.
+            AbstractSpreadsheetExporter.copyForDownload(inputStream, filename);
         } catch (Exception ex) {
-            addErrorMessage("Got an exception trying to download the billing tracker: " + ex.getMessage());
+            String message = "Got an exception trying to download the billing tracker: " + ex.getMessage();
+            AbstractJsfBean.addMessage(null, FacesMessage.SEVERITY_ERROR, message, message);
+        } finally {
+            IOUtils.closeQuietly(outputStream);
+            IOUtils.closeQuietly(inputStream);
+            FileUtils.deleteQuietly(tempFile);
         }
 
         return null;
-    }
-
-    public void downloadQuoteItems() throws IOException {
-        QuoteWorkItemsExporter exporter =
-            new QuoteWorkItemsExporter(
-                billingSessionBean.getBillingSession(), billingSessionBean.getBillingSession().getQuoteImportItems());
-        FacesContext fc = FacesContext.getCurrentInstance();
-
-        String filename = billingSessionBean.getBillingSession().getBusinessKey() + "_" + new Date() + ".xls";
-        OutputStream outputStream = AbstractSpreadsheetExporter.beginSpreadsheetDownload(fc, filename);
-        exporter.writeToStream(outputStream, bspUserList);
-
-        fc.responseComplete();
     }
 }

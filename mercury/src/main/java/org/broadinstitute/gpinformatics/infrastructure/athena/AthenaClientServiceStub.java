@@ -55,8 +55,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
                 "testQuoteId");
         Product dummyProduct = createDummyProduct();
         dummyProduct.setDefaultPriceItem(priceItem);
-        ProductOrderSample sample = new ProductOrderSample("SM-1234");
-        sample.setBspDTO(BSPSampleDTO.DUMMY);
+        ProductOrderSample sample = new ProductOrderSample("SM-1234", BSPSampleDTO.DUMMY);
         ProductOrder order = new ProductOrder( TEST_CREATOR, "title",
                 Collections.singletonList(sample), "quote", dummyProduct,
                 createDummyResearchProject());

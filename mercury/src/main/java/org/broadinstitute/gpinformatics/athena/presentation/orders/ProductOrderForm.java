@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderListModel;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
@@ -8,10 +10,12 @@ import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheet
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
@@ -24,13 +28,13 @@ import org.primefaces.event.SelectEvent;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.context.RequestScoped;
+import javax.faces.application.FacesMessage;
 import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
 import javax.faces.model.SelectItem;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 import java.text.MessageFormat;
 import java.text.NumberFormat;
 import java.util.*;
@@ -45,9 +49,6 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     @Inject
     ProductOrderDetail productOrderDetail;
-
-    @Inject
-    ProductOrderDao productOrderDao;
 
     @Inject
     ProductDao productDao;
@@ -73,12 +74,17 @@ public class ProductOrderForm extends AbstractJsfBean {
     @Inject
     private BSPUserList bspUserList;
 
+    @Inject
+    private ProductOrderListEntryDao productOrderListEntryDao;
+
+    @Inject ProductOrderDao productOrderDao;
+
     private List<String> selectedAddOns = new ArrayList<String>();
 
     /** All product orders, fetched once and stored per-request (as a result of this bean being @RequestScoped). */
     private ProductOrderListModel allProductOrders;
 
-    private ProductOrder[] selectedProductOrders;
+    private ProductOrderListEntry[] selectedProductOrders;
 
     /**
      * This is required to get the editIdsCache value in the case where we want to skip the process
@@ -108,7 +114,7 @@ public class ProductOrderForm extends AbstractJsfBean {
      */
     public ProductOrderListModel getAllProductOrders() {
         if (allProductOrders == null) {
-            allProductOrders = new ProductOrderListModel(productOrderDao.findAll());
+            allProductOrders = new ProductOrderListModel(productOrderListEntryDao.findProductOrderListEntries());
         }
 
         return allProductOrders;
@@ -121,8 +127,8 @@ public class ProductOrderForm extends AbstractJsfBean {
      */
     public List<SelectItem> getAllProjectOwners() {
         Set<BspUser> owners = new HashSet<BspUser>();
-        for (ProductOrder order : getAllProductOrders()) {
-            Long createdBy = order.getCreatedBy();
+        for (ProductOrderListEntry order : getAllProductOrders()) {
+            Long createdBy = order.getOwnerId();
             if (createdBy != null) {
                 BspUser bspUser = bspUserList.getById(createdBy);
                 if (bspUser != null) {
@@ -131,7 +137,7 @@ public class ProductOrderForm extends AbstractJsfBean {
             }
         }
 
-        return bspUserList.getSelectItems(owners);
+        return BSPUserList.createSelectItems(owners);
     }
 
     public UIInput getEditIdsCacheBinding() {
@@ -381,13 +387,14 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     public void initForm() {
         conversationData.beginConversation(productOrderDetail.getProductOrder());
+        userBean.checkUserValidForOperation("create an order", this);
     }
 
-    public ProductOrder[] getSelectedProductOrders() {
+    public ProductOrderListEntry[] getSelectedProductOrders() {
         return selectedProductOrders;
     }
 
-    public void setSelectedProductOrders(ProductOrder[] selectedProductOrders) {
+    public void setSelectedProductOrders(ProductOrderListEntry[] selectedProductOrders) {
         this.selectedProductOrders = selectedProductOrders;
     }
 
@@ -410,6 +417,18 @@ public class ProductOrderForm extends AbstractJsfBean {
         return redirect("/billing/view") + "&billingSession=" + session.getBusinessKey();
     }
 
+
+    private List<String> getSelectedProductOrderBusinessKeys() {
+
+        List<String> businessKeys = new ArrayList<String>();
+        for (ProductOrderListEntry productOrderListEntry : selectedProductOrders) {
+            businessKeys.add(productOrderListEntry.getBusinessKey());
+        }
+
+        return businessKeys;
+    }
+
+
     private Set<BillingLedger> validateOrderSelection(String validatingFor) {
         if ((userBean == null) || (userBean.getBspUser() == null) || (userBean.getBspUser().getUserId() == null)) {
             addErrorMessage("A valid bsp user is needed to start a " + validatingFor);
@@ -422,7 +441,7 @@ public class ProductOrderForm extends AbstractJsfBean {
         }
 
         // If there are locked out orders, then do not allow the session to start
-        Set<BillingLedger> lockedOutOrders = ledgerDao.findLockedOutByOrderList(selectedProductOrders);
+        Set<BillingLedger> lockedOutOrders = ledgerDao.findLockedOutByOrderList(getSelectedProductOrderBusinessKeys());
         if (!lockedOutOrders.isEmpty()) {
             Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());
             for (BillingLedger ledger : lockedOutOrders) {
@@ -434,7 +453,7 @@ public class ProductOrderForm extends AbstractJsfBean {
             return null;
         }
 
-        return ledgerDao.findWithoutBillingSessionByOrderList(selectedProductOrders);
+        return ledgerDao.findWithoutBillingSessionByOrderList(getSelectedProductOrderBusinessKeys());
     }
 
     public String downloadBillingTracker() {
@@ -445,21 +464,40 @@ public class ProductOrderForm extends AbstractJsfBean {
             return null;
         }
 
-        // It doesn't matter if it's empty or not, we allow download
+        return getTrackerForOrders(getSelectedProductOrderBusinessKeys(), bspUserList, ledgerDao, productOrderDao);
+    }
+
+    public static String getTrackerForOrders(
+            List<String> pdoBusinessKeys,
+            BSPUserList bspUserList,
+            BillingLedgerDao ledgerDao,
+            ProductOrderDao productOrderDao) {
+
+        OutputStream outputStream = null;
+        File tempFile = null;
+        InputStream inputStream = null;
 
         try {
             String filename =
-                "BillingTracker-" +
-                AbstractSpreadsheetExporter.DATE_FORMAT.format(Calendar.getInstance().getTime()) + ".xls";
-            OutputStream outputStream = AbstractSpreadsheetExporter.beginSpreadsheetDownload(facesContext, filename);
+                    "BillingTracker-" + AbstractSpreadsheetExporter.DATE_FORMAT.format(Calendar.getInstance().getTime());
 
-            SampleLedgerExporter sampleLedgerExporter =
-                    new SampleLedgerExporter(selectedProductOrders, bspUserList, ledgerDao);
+            tempFile = File.createTempFile(filename, "xls");
+            outputStream = new FileOutputStream(tempFile);
+
+            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(pdoBusinessKeys, bspUserList, ledgerDao, productOrderDao);
             sampleLedgerExporter.writeToStream(outputStream);
+            IOUtils.closeQuietly(outputStream);
+            inputStream = new FileInputStream(tempFile);
 
-            facesContext.responseComplete();
+            // This copies the inputStream as a faces download with the file name specified.
+            AbstractSpreadsheetExporter.copyForDownload(inputStream, filename);
         } catch (Exception ex) {
-            addErrorMessage("Got an exception trying to download the billing tracker: " + ex.getMessage());
+            String message = "Got an exception trying to download the billing tracker: " + ex.getMessage();
+            AbstractJsfBean.addMessage(null, FacesMessage.SEVERITY_ERROR, message, message);
+        } finally {
+            IOUtils.closeQuietly(outputStream);
+            IOUtils.closeQuietly(inputStream);
+            FileUtils.deleteQuietly(tempFile);
         }
 
         return null;

@@ -5,6 +5,8 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
@@ -27,7 +29,7 @@ import java.util.regex.Pattern;
 public class ProductOrderSample implements Serializable {
 
     /** Count shown when no billing has occurred. */
-    public static final Double NO_BILL_COUNT = 0.0d;
+    public static final Double NO_BILL_COUNT = 0d;
 
     @Id
     @SequenceGenerator(name = "SEQ_ORDER_SAMPLE", schema = "athena", sequenceName = "SEQ_ORDER_SAMPLE")
@@ -118,11 +120,14 @@ public class ProductOrderSample implements Serializable {
     }
 
     public BSPSampleDTO getBspDTO() {
-        if (!hasBspDTOBeenInitialized) {
+        if ( ! hasBspDTOBeenInitialized) {
             if (isInBspFormat()) {
-                // load BSP DTOs for all PDO samples in our PDO
                 productOrder.loadBspData();
+            } else {
+                // not BSP format, but we still need a semblance of a BSP DTO
+                bspDTO = BSPSampleDTO.DUMMY;
             }
+            hasBspDTOBeenInitialized = true;
         }
         return bspDTO;
     }

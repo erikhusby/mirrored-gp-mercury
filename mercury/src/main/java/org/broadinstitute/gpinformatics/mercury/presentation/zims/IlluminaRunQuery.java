@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.zims;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResource;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZamboniRead;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;

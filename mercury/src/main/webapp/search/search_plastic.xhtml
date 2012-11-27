@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:c="http://java.sun.com/jsf/composite/container"
+      xmlns:s="http://java.sun.com/jsf/composite/sample">
+<h:body>
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="title">
+            Barcode Lookup
+        </ui:define>
+        <ui:define name="body">
+            <h:form id="results">
+                <div class="control-group">
+                    <div class="controls">
+                        <p:inputText id="name" value="#{searchPlasticBean.barcode}" size="50"/>
+                        <p:watermark for="name" value="Enter the barcode to search for"/>
+                        <p:commandButton value="Search" action="#{searchPlasticBean.barcodeSearch}"
+                                         update=":results:searchResultPanel" styleClass="ui-priority-primary"/>
+                    </div>
+                </div>
+                <p:panel id="searchResultPanel">
+                    <p:dataTable id="resultsTable" var="foundVessel" value="#{searchPlasticBean.foundVessels}">
+                        <p:ajax event="rowToggle" listener="#{searchPlasticBean.onRowToggle}"/>
+                        <f:facet name="header">
+                            Barcode Search Results
+                        </f:facet>
+                        <p:column style="width:4%">
+                            <f:facet name="header">
+                                <h:outputText value="Sample Details"/>
+                            </f:facet>
+                            <p:rowToggler rendered="#{searchPlasticBean.vesselSampleSizeMap.get(foundVessel) > 0}"/>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Sample #"/>
+                            </f:facet>
+                            <h:outputText value="#{searchPlasticBean.vesselSampleSizeMap.get(foundVessel)}"/>
+                        </p:column>
+                        <p:column sortBy="#{foundVessel.label}">
+                            <f:facet name="header">
+                                <h:outputText value="Label"/>
+                            </f:facet>
+                            <h:outputText value="#{foundVessel.label}"/>
+                        </p:column>
+                        <p:column sortBy="#{foundVessel.type.name}">
+                            <f:facet name="header">
+                                <h:outputText value="Type"/>
+                            </f:facet>
+                            <h:outputText value="#{foundVessel.type.name}"/>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Lab Batches"/>
+                            </f:facet>
+                            <ui:repeat value="#{foundVessel.labBatchesList}" var="batch">
+                                <h:outputText value="#{batch.batchName}"/>
+                                <br/>
+                            </ui:repeat>
+                        </p:column>
+                        <!-- <p:column>
+                           <f:facet name="header">
+                               <h:outputText value="QC Metrics"/>
+                           </f:facet>
+                           <ui:repeat value="#{searchResult.metrics}" var="metric">
+                               <h:outputText value="#{metric.name} : #{metric.value} #{metric.units}"/>
+                               <br/>
+                           </ui:repeat>
+                       </p:column> -->
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Latest Event"/>
+                            </f:facet>
+                            <h:outputText value="#{foundVessel.latestEvent.labEventType.name}"/>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Event Location"/>
+                            </f:facet>
+                            <h:outputText value="#{foundVessel.latestEvent.eventLocation}"/>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Event User"/>
+                            </f:facet>
+                            <h:outputText value="#{foundVessel.latestEvent.eventOperator.login}"/>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Event Date"/>
+                            </f:facet>
+                            <h:outputText value="#{foundVessel.latestEvent.eventDate}"/>
+                        </p:column>
+                        <p:column sortBy="#{foundVessel.createdOn}">
+                            <f:facet name="header">
+                                <h:outputText value="Creation Date"/>
+                            </f:facet>
+                            <h:outputText value="#{foundVessel.createdOn}"/>
+                        </p:column>
+                        <p:rowExpansion>
+                            <p:outputPanel id="outputContainerPanel">
+                                <p:panel id="platePanel">
+                                    <c:container barcode="#{searchPlasticBean.selectedVessel.label}"/>
+                                </p:panel>
+                                <p:panel id="samplePanel">
+                                    <s:sampleList barcode="#{searchPlasticBean.selectedVessel.label}"/>
+                                </p:panel>
+                            </p:outputPanel>
+                        </p:rowExpansion>
+                    </p:dataTable>
+                </p:panel>
+            </h:form>
+        </ui:define>
+    </ui:composition>
+</h:body>
+</html>

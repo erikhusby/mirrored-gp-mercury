@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.converter;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 

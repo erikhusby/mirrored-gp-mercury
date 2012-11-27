@@ -21,8 +21,7 @@ public class QuoteImportInfo {
      *
      *      Billing Ledger - We keep the whole ledger so we can place any errors on each item AND it has the count
      */
-    private final Map<String, Map<PriceItem, Map<Date, List<BillingLedger>>>> quantitiesByQuotePriceItem =
-            new HashMap<String, Map<PriceItem, Map<Date, List<BillingLedger>>>>();
+    private final Map<String, Map<PriceItem, Map<Date, List<BillingLedger>>>> quantitiesByQuotePriceItem = new HashMap<String, Map<PriceItem, Map<Date, List<BillingLedger>>>>();
 
     /**
      * Take the ledger item and bucket it into the nasty structure we use here.
@@ -84,8 +83,29 @@ public class QuoteImportInfo {
             for (PriceItem priceItem : quotePriceItems.keySet()) {
                 for (Date bucketDate : quotePriceItems.get(priceItem).keySet()) {
                     List<BillingLedger> ledgerItems = quotePriceItems.get(priceItem).get(bucketDate);
-                    quoteItems.add(
-                        new QuoteImportItem(quoteId, priceItem, ledgerItems, bucketDate));
+
+                    // separate the ledger items into debits and credits so that the quote server will not cancel out items
+                    List<BillingLedger> creditLedgerItems = new ArrayList<BillingLedger>();
+                    List<BillingLedger> debitLedgerItems = new ArrayList<BillingLedger>();
+                    for (BillingLedger ledger : ledgerItems) {
+                        if (ledger.getQuantity() < 0) {
+                            creditLedgerItems.add(ledger);
+                        } else {
+                            debitLedgerItems.add(ledger);
+                        }
+                    }
+
+                    // Add the debit items to the list of quote import items
+                    if (debitLedgerItems.size() > 0) {
+                        QuoteImportItem debitItems = new QuoteImportItem(quoteId, priceItem, debitLedgerItems, bucketDate);
+                        quoteItems.add(debitItems);
+                    }
+
+                    // Add the credit items to the list of quote import items
+                    if (creditLedgerItems.size() > 0) {
+                        QuoteImportItem creditItems = new QuoteImportItem(quoteId, priceItem, creditLedgerItems, bucketDate);
+                        quoteItems.add(creditItems);
+                    }
                 }
             }
         }
