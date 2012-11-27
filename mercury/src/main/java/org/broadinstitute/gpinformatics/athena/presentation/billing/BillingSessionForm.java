@@ -72,7 +72,8 @@ public class BillingSessionForm extends AbstractJsfBean {
 
             try {
                 String message = quoteService.registerNewWork(
-                    quote, quotePriceItem, item.getQuantity(), pageUrl, "billingSession", sessionKey);
+                    quote, quotePriceItem, item.getWorkCompleteDate(), item.getQuantity(), pageUrl, "billingSession",
+                    sessionKey);
 
                 item.setupBilledInfo(BillingSession.SUCCESS);
                 addInfoMessage("Sent to quote server " + message);
