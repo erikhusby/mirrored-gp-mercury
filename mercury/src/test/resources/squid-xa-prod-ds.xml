@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<datasources xmlns="http://www.jboss.org/ironjacamar/schema"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xsi:schemaLocation="
+        http://www.jboss.org/ironjacamar/schema
+        http://docs.jboss.org/ironjacamar/schema/datasources_1_0.xsd">
+    <xa-datasource jndi-name="java:jboss/jdbc/squid_pool" pool-name="squid_pool" enabled="true">
+        <xa-datasource-property name="URL">jdbc:oracle:thin:@ora01:1521:seqprod</xa-datasource-property>
+        <xa-datasource-class>oracle.jdbc.xa.client.OracleXADataSource</xa-datasource-class>
+        <driver>com.oracle</driver>
+        <security>
+            <user-name>seq20</user-name>
+            <password>wmlalos!</password>
+        </security>
+    </xa-datasource>
+</datasources>

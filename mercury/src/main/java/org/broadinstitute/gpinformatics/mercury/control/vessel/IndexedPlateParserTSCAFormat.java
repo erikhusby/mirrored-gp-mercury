@@ -97,8 +97,8 @@ public class IndexedPlateParserTSCAFormat extends IndexedPlateParserIDTSpreadshe
 
                 final PlateWellIndexAssociation association =
                         new PlateWellIndexAssociation(plateBarcode, wellName, this.technology);
-                association.addIndex(MolecularIndexingScheme.IlluminaPositionHint.P5, p5MolecularIndex);
-                association.addIndex(MolecularIndexingScheme.IlluminaPositionHint.P7, p7MolecularIndex);
+                association.addIndex(MolecularIndexingScheme.IndexPosition.ILLUMINA_P5, p5MolecularIndex);
+                association.addIndex(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7, p7MolecularIndex);
 
                 plateIndexes.add(association);
             }

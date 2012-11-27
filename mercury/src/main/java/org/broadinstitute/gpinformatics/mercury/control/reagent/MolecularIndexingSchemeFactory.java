@@ -30,9 +30,9 @@ public class MolecularIndexingSchemeFactory {
 
     public static class IndexPositionPair {
         private final String sequence;
-        private final MolecularIndexingScheme.PositionHint position;
+        private final MolecularIndexingScheme.IndexPosition position;
 
-        public IndexPositionPair(MolecularIndexingScheme.PositionHint position, String sequence) {
+        public IndexPositionPair(MolecularIndexingScheme.IndexPosition position, String sequence) {
             this.sequence = sequence;
             this.position = position;
         }
@@ -41,7 +41,7 @@ public class MolecularIndexingSchemeFactory {
             return this.sequence;
         }
 
-        public MolecularIndexingScheme.PositionHint getPositionHint() {
+        public MolecularIndexingScheme.IndexPosition getPositionHint() {
             return this.position;
         }
 
@@ -78,7 +78,7 @@ public class MolecularIndexingSchemeFactory {
         List<IndexPositionPair> pairList = new ArrayList<IndexPositionPair>(); //new IndexPositionPair[scheme.getIndexes().size() + indexPositionPairs.length];
         int index = 0;
 
-        for (Map.Entry<MolecularIndexingScheme.PositionHint, MolecularIndex> entry : scheme.getIndexes().entrySet()) {
+        for (Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex> entry : scheme.getIndexes().entrySet()) {
             pairList.add(new IndexPositionPair(entry.getKey(), entry.getValue().getSequence()));
         }
 
@@ -96,7 +96,7 @@ public class MolecularIndexingSchemeFactory {
      * found.
      */
     public MolecularIndexingScheme findOrCreateIndexingScheme(
-            final MolecularIndexingScheme.PositionHint position,
+            final MolecularIndexingScheme.IndexPosition position,
             final String indexSequence)
     {
         if (position == null) {
@@ -117,7 +117,7 @@ public class MolecularIndexingSchemeFactory {
      */
     public MolecularIndexingScheme findOrCreateIndexingScheme(
             MolecularIndexingScheme baseScheme,
-            MolecularIndexingScheme.PositionHint position,
+            MolecularIndexingScheme.IndexPosition position,
             String indexSequence)
     {
         if (baseScheme == null) {
@@ -153,7 +153,7 @@ public class MolecularIndexingSchemeFactory {
             return foundScheme;
         }
 
-        Map<MolecularIndexingScheme.PositionHint, MolecularIndex> positionIndexMap = new HashMap<MolecularIndexingScheme.PositionHint, MolecularIndex>();
+        Map<MolecularIndexingScheme.IndexPosition, MolecularIndex> positionIndexMap = new HashMap<MolecularIndexingScheme.IndexPosition, MolecularIndex>();
         for (IndexPositionPair pair : indexPositionPairs) {
             MolecularIndex index = this.indexDao.findBySequence(pair.getSequence());
             if (index == null) {
