@@ -475,7 +475,7 @@ public class ResearchProject implements Serializable {
         for (ProjectPerson currPI: findPeopleByType(RoleType.BROAD_PI)) {
             if(null != bspUserList.getById(currPI.getPersonId())) {
                 if(!first) {
-                    piList.append(", ");
+                    piList.append("\n");
                 }
                 piList.append(bspUserList.getById(currPI.getPersonId()).getFirstName())
                       .append(" ")
