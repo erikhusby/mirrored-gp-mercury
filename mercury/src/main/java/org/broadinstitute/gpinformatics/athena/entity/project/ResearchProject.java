@@ -484,7 +484,9 @@ public class ResearchProject implements Serializable {
             }
         }
 
-        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.BROAD_PIS, piList.toString()));
+        if(!piList.toString().isEmpty()) {
+            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.BROAD_PIS, piList.toString()));
+        }
 
 
         String username = bspUserList.getById(createdBy).getUsername();
