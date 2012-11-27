@@ -310,4 +310,48 @@
             <column name="target_set" type="varchar2(255)"/>
         </addColumn>
     </changeSet>
+    <!-- reagent catalog -->
+    <changeSet id="GPLIM-308-3" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="reagent_catalog" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <createTable tableName="reagent_catalog" schemaName="mercury">
+            <column name="reagent_catalog_id" type="number(19,0)">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="reagent_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet id="GPLIM-308-4" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_reagent_catalog_id" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint baseTableName="reagent_catalog" baseTableSchemaName="mercury"
+                                 baseColumnNames="reagent_catalog_id"
+                                 constraintName="fk_reagent_catalog_id"
+                                 referencedTableName="reagent" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="reagent_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-308-5" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="reagent_catalog_aud" schemaName="mercury"/>
+            </not>
+        </preConditions>
+        <createTable tableName="reagent_catalog_aud" schemaName="mercury">
+            <column name="reagent_catalog_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reagent_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>
