@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.billing;
 
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportInfo;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -141,18 +141,27 @@ public class BillingSession {
         return new HashCodeBuilder().append(getBusinessKey()).toHashCode();
     }
 
+    public List<String> getProductOrderBusinessKeys() {
+        List<String> ret = new ArrayList<String>();
+        for (ProductOrder productOrder : getProductOrders()) {
+            ret.add(productOrder.getBusinessKey());
+        }
+
+        return ret;
+    }
+
     /**
      * @return Get all unique product orders in the billing session
      */
     public ProductOrder[] getProductOrders() {
 
         // Get all unique product Orders across all ledger items
-        Set<ProductOrder> unqiueProductOrders = new HashSet<ProductOrder>();
+        Set<ProductOrder> uniqueProductOrders = new HashSet<ProductOrder>();
         for (BillingLedger billingLedger : billingLedgerItems) {
-            unqiueProductOrders.add(billingLedger.getProductOrderSample().getProductOrder());
+            uniqueProductOrders.add(billingLedger.getProductOrderSample().getProductOrder());
         }
 
         // return it as an array
-        return unqiueProductOrders.toArray(new ProductOrder[unqiueProductOrders.size()]);
+        return uniqueProductOrders.toArray(new ProductOrder[uniqueProductOrders.size()]);
     }
 }

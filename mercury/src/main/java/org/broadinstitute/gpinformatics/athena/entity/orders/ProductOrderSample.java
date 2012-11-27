@@ -120,22 +120,14 @@ public class ProductOrderSample implements Serializable {
     }
 
     public BSPSampleDTO getBspDTO() {
-        if (!hasBspDTOBeenInitialized) {
+        if ( ! hasBspDTOBeenInitialized) {
             if (isInBspFormat()) {
-                // load BSP DTOs for all PDO samples in our PDO if we have a PDO
-                if (productOrder != null) {
-                    productOrder.loadBspData();
-                }
-                else {
-                    if (isInBspFormat()) {
-                        BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-                        bspDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(getSampleName());
-                    } else {
-                        bspDTO = BSPSampleDTO.DUMMY;
-                    }
-                    hasBspDTOBeenInitialized = true;
-                }
+                productOrder.loadBspData();
+            } else {
+                // not BSP format, but we still need a semblance of a BSP DTO
+                bspDTO = BSPSampleDTO.DUMMY;
             }
+            hasBspDTOBeenInitialized = true;
         }
         return bspDTO;
     }

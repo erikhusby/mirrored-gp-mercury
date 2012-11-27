@@ -81,6 +81,10 @@
                     </h:outputText>
                 </p:column>
 
+                <p:column headerText="Sample Count" sortBy="#{order.pdoSampleCount}">
+                    #{order.pdoSampleCount}
+                </p:column>
+
                 <p:column headerText="Billing Session ID">
                     #{order.billingSessionBusinessKey}
                 </p:column>

@@ -24,11 +24,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-
 @RequestScoped
 @Stateful
 public class ProductOrderListEntryDao extends GenericDao {
-
 
     /**
      * Second-pass, ledger aware query that merges its results into the first-pass objects passed as an argument.
@@ -38,7 +36,7 @@ public class ProductOrderListEntryDao extends GenericDao {
      * {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry} DTOs and set those counts
      * into the DTOs.
      *
-     * @param productOrderListEntries
+     * @param productOrderListEntries - The entries to look up
      */
     private void fetchUnbilledLedgerEntryCounts(List<ProductOrderListEntry> productOrderListEntries) {
 
@@ -49,7 +47,6 @@ public class ProductOrderListEntryDao extends GenericDao {
         for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
             jiraKeyToProductOrderListEntryMap.put(productOrderListEntry.getJiraTicketKey(), productOrderListEntry);
         }
-
 
         // build query to pick out eligible DTOs.  this only returns values for PDOs with ledger entries in open
         // billing sessions or with no associated billing session
@@ -95,12 +92,10 @@ public class ProductOrderListEntryDao extends GenericDao {
 
     }
 
-
-
     /**
      * First pass, ledger-unware querying
      *
-     * @return
+     * @return The order list
      */
     private List<ProductOrderListEntry> findBaseProductOrderListEntries() {
         CriteriaBuilder cb = getCriteriaBuilder();
@@ -122,18 +117,17 @@ public class ProductOrderListEntryDao extends GenericDao {
                         productProductFamilyJoin.get(ProductFamily_.name),
                         productOrderResearchProjectJoin.get(ResearchProject_.title),
                         productOrderRoot.get(ProductOrder_.createdBy),
-                        productOrderRoot.get(ProductOrder_.createdDate)));
+                        productOrderRoot.get(ProductOrder_.createdDate),
+                        productOrderRoot.get(ProductOrder_.pdoSampleCount)));
 
         return getEntityManager().createQuery(cq).getResultList();
-
     }
-
 
     /**
      * Generates reporting object {@link ProductOrderListEntry}s for efficient Product Order list view.  Merges the
      * results of the first-pass ledger-unaware query with the second-pass ledger aware query.
      *
-     * @return
+     * @return The list of order entries
      */
     public List<ProductOrderListEntry> findProductOrderListEntries() {
 
@@ -143,6 +137,4 @@ public class ProductOrderListEntryDao extends GenericDao {
         return productOrderListEntries;
 
     }
-
-
 }

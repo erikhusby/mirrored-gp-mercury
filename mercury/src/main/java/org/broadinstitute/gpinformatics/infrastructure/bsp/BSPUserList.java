@@ -191,8 +191,13 @@ public class BSPUserList extends AbstractCache {
         return user instanceof QADudeUser;
     }
 
-    public List<SelectItem> getSelectItems(Set<BspUser> users) {
-        List<SelectItem> items = new ArrayList<SelectItem>();
+    /**
+     * Create a list of SelectItems for use in the JSF UI.  The first element in the list is a dummy value, 'Any'.
+     * @param users the list of bsp users
+     * @return the list of select items for the users.
+     */
+    public static List<SelectItem> createSelectItems(Set<BspUser> users) {
+        List<SelectItem> items = new ArrayList<SelectItem>(users.size() + 1);
         items.add(new SelectItem("", "Any"));
         for (BspUser user : users) {
             items.add(new SelectItem(user.getUserId(), user.getFirstName() + " " + user.getLastName()));

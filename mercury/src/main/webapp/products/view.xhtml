@@ -21,18 +21,15 @@
     <ui:define name="title">Details for #{productView.product.partNumber}</ui:define>
     <ui:define name="metadata">
         <f:metadata>
-            <f:viewParam name="product" value="#{productView.product}" converter="#{productConverter}"/>
+            <f:viewParam name="product" value="#{productView.product}" converter="#{productConverter}" valueChangeListener="#{productConverter.updateModel}"/>
             <f:event type="preRenderView" listener="#{productView.onPreRenderView}"/>
+            <f:event type="preRenderView" listener="#{productView.initView}"/>
         </f:metadata>
     </ui:define>
     <ui:define name="body">
 
 
-
-        <h:form id="productForm" styleClass="form-horizontal form-readonly" rendered="#{productView.product != null}">
-
-            <!-- cache to store business key in view state to survive across AJAX requests -->
-            <h:inputHidden id="vsBusinessKeyCache" binding="#{productView.vsBusinessKeyCache}" />
+        <h:form id="productForm" styleClass="form-horizontal form-readonly" rendered="#{productView.shouldRenderForm()}">
 
             <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.productManagerRole}">
                 <div class="row-fluid" style="margin-bottom: 30px;">
@@ -68,14 +65,22 @@
             <div class="control-group">
                 <label class="control-label label-form">Availability Date</label>
                 <div class="controls">
-                    <div class="form-value">#{productView.availabilityDate}</div>
+                    <div class="form-value">
+                        <h:outputText value="#{productView.product.availabilityDate}">
+                            <f:convertDateTime type="date" dateStyle="medium"/>
+                        </h:outputText>
+                    </div>
                 </div>
             </div>
 
             <div class="control-group">
                 <label class="control-label label-form">Discontinued Date</label>
                 <div class="controls">
-                    <div class="form-value">#{productView.discontinuedDate}</div>
+                    <div class="form-value">
+                        <h:outputText value="#{productView.product.discontinuedDate}">
+                            <f:convertDateTime type="date" dateStyle="medium"/>
+                        </h:outputText>
+                    </div>
                 </div>
             </div>
 
@@ -143,7 +148,7 @@
             </div>
 
 
-            <p:dataTable value="#{productView.addOns}" var="addOn" >
+            <p:dataTable value="#{productView.addOnData.values}" var="addOn" >
                 <f:facet name="header">
                     <h:outputText value="Add-ons" />
                 </f:facet>
@@ -173,7 +178,7 @@
 
             <p/>
 
-            <p:dataTable value="#{productView.priceItems}" var="priceItem" >
+            <p:dataTable value="#{productView.priceItemData.values}" var="priceItem" >
                 <f:facet name="header">
                     <h:outputText value="Optional Price Items" />
                 </f:facet>
