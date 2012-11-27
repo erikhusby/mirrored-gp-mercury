@@ -39,7 +39,7 @@ public class PlateWellIndexAssociation {
         return this.positionPairs.size();
     }
 
-    void addIndex(MolecularIndexingScheme.PositionHint hint, String sequence) {
+    void addIndex(MolecularIndexingScheme.IndexPosition hint, String sequence) {
         this.positionPairs.add(new MolecularIndexingSchemeFactory.IndexPositionPair(hint, sequence));
     }
 

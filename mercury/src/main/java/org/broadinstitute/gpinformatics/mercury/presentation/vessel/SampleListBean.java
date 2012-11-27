@@ -77,7 +77,7 @@ public class SampleListBean {
                 MolecularIndexReagent indexReagent = (MolecularIndexReagent) reagent;
                 indexInfo.append(indexReagent.getMolecularIndexingScheme().getName());
                 indexInfo.append(" - ");
-                for (MolecularIndexingScheme.PositionHint hint : indexReagent.getMolecularIndexingScheme().getIndexes().keySet()) {
+                for (MolecularIndexingScheme.IndexPosition hint : indexReagent.getMolecularIndexingScheme().getIndexes().keySet()) {
                     MolecularIndex index = indexReagent.getMolecularIndexingScheme().getIndexes().get(hint);
                     indexInfo.append(index.getSequence());
                     indexInfo.append("\n");

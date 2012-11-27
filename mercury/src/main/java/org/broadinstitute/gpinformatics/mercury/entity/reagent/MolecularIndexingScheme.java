@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
+import org.broadinstitute.gpinformatics.mercury.control.reagent.MolecularIndexingSchemeFactory;
 import org.hibernate.annotations.Sort;
 import org.hibernate.annotations.SortType;
 import org.hibernate.envers.Audited;
@@ -16,13 +17,10 @@ import java.util.TreeMap;
  * Positions are technology-specific: the names used by Illumina, for instance,
  * are not the same (conceptually, physically, or any other way you might see
  * it) as the ones used by 454. This class will make sure that all the component
- * {@link MolecularIndex}es you might add belong to the same technology. When
- * specifying schemes to the {@link MolecularIndexingSchemeFactory}, make sure
- * that all the {@link PositionHint}s are from the same enum and you'll be fine.
+ * {@link MolecularIndex}es you might add belong to the same technology.
  *
- * Do not call the constructor, {@link #addIndexPosition(PositionHint, MolecularIndex)}
- * or {@link #setIndexPositions(java.util.SortedMap)}. Instead, create new schemes and add
- * indexes to existing ones by calling the factory methods on
+ * Do not call the constructor or {@link #addIndexPosition(IndexPosition, MolecularIndex)}.
+ * Instead, create new schemes and add indexes to existing ones by calling the factory methods on
  * {@link MolecularIndexingSchemeFactory}.
  */
 @Entity
@@ -101,280 +99,112 @@ import java.util.TreeMap;
 })
 public class MolecularIndexingScheme {
 
-    /*
-      * Implementation note: The position scheme implemented here has two sides.
-      * One faces the database (IndexPosition) and is not technology specific; the
-      * other faces the outside world and IS technology specific. Dividing the
-      * world up like this allows us to create a more sane and less error-prone
-      * API.
-      *
-      * Also, the order in which the PositionHint enums add their values is
-      * important, since it partially determines the name of the schemes generated
-      * with those positions. It's legal to add new enum values before, after or
-      * between the existing ones; it is illegal, however, to change their relative
-      * ordering.
-      */
-
-    public interface PositionHint {
-
-        /**
-         * Returns the name of the technology appropriate for this position.
-         */
-        public String getTechnology();
-
-        /**
-         * Returns the internal name for the position. This value is generally
-         * not usable beyond the MolecularIndexingScheme code.
-         */
-        public IndexPosition getIndexPosition();
-
-        /**
-         * If the implementing class is an enum, returns a String identical to a
-         * call to PositionHint.name(). Undefined for other implementing types.
-         */
-        // The ugly part: enums, when they implement an interface, don't expose
-        // Enum.name() when all you have is a reference to the interface because
-        // what's implementing it might not be an enum. This hack ensures that
-        // we can get at that value anyway.
-        public String getName();
-
-        /**
-         * Returns true if this PositionHint value should be associated with a
-         * component index when there is only one index in the MolecularIndexingScheme.
-         */
-        public boolean isDefault();
-    }
+    public static final String TECHNOLOGY_454 = "454";
+    public static final String TECHNOLOGY_ION = "Ion";
+    public static final String TECHNOLOGY_GSSR = "GSSR";
+    public static final String TECHNOLOGY_IDENTIFIER = "Identifier";
+    public static final String TECHNOLOGY_ILLUMINA = "Illumina";
 
     /**
-     * {@link PositionHint}s associated with Illumina sequencing constructs.
-     */
-    public enum IlluminaPositionHint implements PositionHint {
-        P3,
-        P5,
-        P7,
-        IS1,
-        IS2,
-        IS3,
-        IS4,
-        IS5,
-        IS6;
-
-        @Override
-        public boolean isDefault() {
-            return this == P7;
-        }
-
-        @Override
-        public IndexPosition getIndexPosition() {
-            // NB, UPDATE THIS SWITCH AND IndexPosition whenever enum values are added or deleted.
-            switch (this) {
-                case P3 : return IndexPosition.ILLUMINA_P3;
-                case P5 : return IndexPosition.ILLUMINA_P5;
-                case P7 : return IndexPosition.ILLUMINA_P7;
-			case IS1 : return IndexPosition.ILLUMINA_IS1;
-			case IS2 : return IndexPosition.ILLUMINA_IS2;
-			case IS3 : return IndexPosition.ILLUMINA_IS3;
-			case IS4 : return IndexPosition.ILLUMINA_IS4;
-			case IS5 : return IndexPosition.ILLUMINA_IS5;
-			case IS6 : return IndexPosition.ILLUMINA_IS6;
-                default : throw new IllegalArgumentException("The IndexPosition for IlluminaPositionHint " + this + " is undefined.");
-            }
-        }
-
-        @Override
-        public String getTechnology() {
-            return "Illumina";
-        }
-
-        @Override
-        public String getName() {
-            return this.name();
-        }
-    }
-
-    /**
-     * {@link PositionHint}s associated with 454 sequencing constructs.
-     */
-    public enum Four54PositionHint implements PositionHint {
-        A,
-        B;
-
-        @Override
-        public boolean isDefault() {
-            return this == A;
-        }
-
-        @Override
-        public IndexPosition getIndexPosition() {
-            // NB, UPDATE THIS SWITCH AND IndexPosition whenever enum values are added or deleted.
-            switch (this) {
-                case A : return IndexPosition.FOUR54_A;
-                case B : return IndexPosition.FOUR54_B;
-                default : throw new IllegalArgumentException("The IndexPosition for Four54PositionHint " + this + " is undefined.");
-            }
-        }
-
-        @Override
-        public String getTechnology() {
-            return "454";
-        }
-
-        @Override
-        public String getName() {
-            return this.name();
-        }
-    }
-
-    /**
-     * {@link PositionHint}s associated with 454 sequencing constructs.
-     */
-    public enum IonPositionHint implements PositionHint {
-        A,
-        B;
-
-        @Override
-        public boolean isDefault() {
-            return this == A;
-        }
-
-        @Override
-        public IndexPosition getIndexPosition() {
-            // NB, UPDATE THIS SWITCH AND IndexPosition whenever enum values are added or deleted.
-            switch (this) {
-                case A : return IndexPosition.ION_A;
-                case B : return IndexPosition.ION_B;
-                default : throw new IllegalArgumentException("The IndexPosition for Ion " + this + " is undefined.");
-            }
-        }
-
-        @Override
-        public String getTechnology() {
-            return "Ion";
-        }
-
-        @Override
-        public String getName() {
-            return this.name();
-        }
-    }
-
-    public enum GssrPositionHint implements PositionHint {
-        INTRA;
-
-        @Override
-        public boolean isDefault() {
-            return this == INTRA;
-        }
-
-        @Override
-        public IndexPosition getIndexPosition() {
-            // NB, UPDATE THIS SWITCH AND IndexPosition whenever enum values are added or deleted.
-            switch (this) {
-                case INTRA : return IndexPosition.GSSR_INTRA;
-                default : throw new IllegalArgumentException("The IndexPosition for GssrPositionHint " + this + " is undefined.");
-            }
-        }
-
-        @Override
-        public String getTechnology() {
-            return "GSSR";
-        }
-
-        @Override
-        public String getName() {
-            return this.name();
-        }
-    }
-
-    public enum IdentifierPositionHint implements PositionHint {
-        ONLY;
-
-        @Override
-        public boolean isDefault() {
-            return this == ONLY;
-        }
-
-        @Override
-        public IndexPosition getIndexPosition() {
-            // NB, UPDATE THIS SWITCH AND IndexPosition whenever enum values are added or deleted.
-            switch (this) {
-                case ONLY : return IndexPosition.IDENTIFIER_ONLY;
-                default : throw new IllegalArgumentException("The IndexPosition for IdentifierPositionHint " + this + " is undefined.");
-            }
-        }
-
-        @Override
-        public String getTechnology() {
-            return "Identifier";
-        }
-
-        @Override
-        public String getName() {
-            return this.name();
-        }
-    }
-
-    /**
-     * All the positions across all the technologies. These are logically
-     * duplicates of the values in the technology-specific enums, but are
-     * database-facing and so have different literal values. Because they
-     * are database-facing, they're not usable outside of
-     * MolecularIndexingScheme. Instead, use a PositionHint implementation.
+     * All the positions across all the technologies.
+     * The order in which the PositionHint enums add their values is
+     * important, since it partially determines the name of the schemes generated
+     * with those positions. It's legal to add new enum values before, after or
+     * between the existing ones; it is illegal, however, to change their relative
+     * ordering.
      */
     public enum IndexPosition {
-        FOUR54_A(Four54PositionHint.A),
-        FOUR54_B(Four54PositionHint.B),
-        ION_A(IonPositionHint.A),
-        ION_B(IonPositionHint.B),
-        GSSR_INTRA(GssrPositionHint.INTRA),
-        IDENTIFIER_ONLY(IdentifierPositionHint.ONLY),
-        ILLUMINA_P3(IlluminaPositionHint.P3),
-        ILLUMINA_P5(IlluminaPositionHint.P5),
-        ILLUMINA_P7(IlluminaPositionHint.P7),
-        ILLUMINA_IS1(IlluminaPositionHint.IS1),
-        ILLUMINA_IS2(IlluminaPositionHint.IS2),
-        ILLUMINA_IS3(IlluminaPositionHint.IS3),
-        ILLUMINA_IS4(IlluminaPositionHint.IS4),
-        ILLUMINA_IS5(IlluminaPositionHint.IS5),
-        ILLUMINA_IS6(IlluminaPositionHint.IS6);
+        FOUR54_A(TECHNOLOGY_454, true, "A"),
+        FOUR54_B(TECHNOLOGY_454, false, "B"),
+        ION_A(TECHNOLOGY_ION, true, "A"),
+        ION_B(TECHNOLOGY_ION, false, "B"),
+        GSSR_INTRA(TECHNOLOGY_GSSR, true, "INTRA"),
+        IDENTIFIER_ONLY(TECHNOLOGY_IDENTIFIER, true, "ONLY"),
+        ILLUMINA_P3(TECHNOLOGY_ILLUMINA, false, "P3"),
+        ILLUMINA_P5(TECHNOLOGY_ILLUMINA, false, "P5"),
+        ILLUMINA_P7(TECHNOLOGY_ILLUMINA, true, "P7"),
+        ILLUMINA_IS1(TECHNOLOGY_ILLUMINA, false, "IS1"),
+        ILLUMINA_IS2(TECHNOLOGY_ILLUMINA, false, "IS2"),
+        ILLUMINA_IS3(TECHNOLOGY_ILLUMINA, false, "IS3"),
+        ILLUMINA_IS4(TECHNOLOGY_ILLUMINA, false, "IS4"),
+        ILLUMINA_IS5(TECHNOLOGY_ILLUMINA, false, "IS5"),
+        ILLUMINA_IS6(TECHNOLOGY_ILLUMINA, false, "IS6");
 
         /*
-           * IMPORTANT NOTE:
-           * Update the values above whenever a value in any of the PositionHint
-           * enums is added. You must also update a switch statement in that
-           * PositionHint enum. Failing to do so means the application is broken.
-           * (This was built this way because you can't refer to one enum from
-           * from the c'tor of another.)
-           *
            * DO NOT REMOVE, CHANGE OR REORDER ENUM VALUES. Or, rather, if you
            * decide you absolutely must change or remove them, you have to update
            * all the values in the database as well, including the names of the
            * index schemes. See the notes at generateName() for more information.
            */
 
-        private final PositionHint positionHint;
+        private String technology;
+        private boolean isDefault;
+        private String position;
 
-        private IndexPosition(final PositionHint position) {
-            this.positionHint = position;
+        private IndexPosition(String technology, boolean aDefault, String position) {
+            this.technology = technology;
+            isDefault = aDefault;
+            this.position = position;
         }
 
-        private PositionHint getPositionHint() {
-            return this.positionHint;
+        /**
+         * Returns the name of the technology appropriate for this position.
+         */
+        public String getTechnology() {
+            return technology;
+        }
+
+        /**
+         * Returns the internal name for the position. This value is generally
+         * not usable beyond the MolecularIndexingScheme code.
+         */
+        public IndexPosition getIndexPosition() {
+            return this;
+        }
+
+        public String getPosition() {
+            return position;
+        }
+
+        /**
+         * Returns true if this PositionHint value should be associated with a
+         * component index when there is only one index in the MolecularIndexingScheme.
+         */
+        public boolean isDefault() {
+            return isDefault;
         }
     }
 
+    @Id
+    @SequenceGenerator(name="seq_molecular_indexing_scheme", schema = "mercury", sequenceName="seq_molecular_indexing_scheme")
+    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_molecular_indexing_scheme")
+    @Column(name = "molecular_indexing_scheme_id")
     private Long molecularIndexingSchemeId;
 
+    @Column(name="name")
     private String name;
 
-    private final SortedMap<PositionHint, MolecularIndex> indexes = new TreeMap<PositionHint, MolecularIndex>();
+    @ManyToMany(cascade = {CascadeType.PERSIST}, fetch= FetchType.LAZY)
+    @JoinTable(
+            schema = "mercury",
+            name="MOLECULAR_INDEX_POSITION",
+            joinColumns=@JoinColumn(name="scheme_id", referencedColumnName = "molecular_indexing_scheme_id"),
+            inverseJoinColumns=@JoinColumn(name="index_id", referencedColumnName = "molecular_index_id")
+    )
+    @MapKeyJoinColumn(table="MOLECULAR_INDEX_POSITION", name="scheme_id")
+    @MapKeyEnumerated(EnumType.STRING)
+    // todo jmt hbm2ddl seems to ignore this, it always uses mapkey
+//    @MapKeyColumn(name="POSITION_HINT")
+    @MapKeyColumn(name="mapkey")
+    @Sort(type= SortType.NATURAL)
+    private SortedMap<IndexPosition, MolecularIndex> indexes = new TreeMap<IndexPosition, MolecularIndex>();
 
     /**
      * Returns the PositionHint that should be associated with an index when there
      * is only one index in the MolecularIndexingScheme. Guaranteed to never be
      * null.
      */
-    public static PositionHint getDefaultPositionHint(final String technology) {
+    public static IndexPosition getDefaultPositionHint(final String technology) {
         if (technology == null) {
             throw new NullPointerException("The technology specified cannot be null.");
         }
@@ -384,9 +214,9 @@ public class MolecularIndexingScheme {
         }
 
         for (final IndexPosition internalPosition : IndexPosition.values()) {
-            final PositionHint externalPosition = internalPosition.getPositionHint();
-            if (externalPosition.getTechnology().equals(technology) && externalPosition.isDefault()) {
-                return externalPosition;
+//            final PositionHint externalPosition = internalPosition.getPositionHint();
+            if (internalPosition.getTechnology().equals(technology) && internalPosition.isDefault()) {
+                return internalPosition;
             }
         }
 
@@ -409,7 +239,7 @@ public class MolecularIndexingScheme {
      * constructors in this class.
      */
     // todo jmt switch this back to package visible
-    public MolecularIndexingScheme(final Map<PositionHint, MolecularIndex> positionIndexMap) {
+    public MolecularIndexingScheme(final Map<IndexPosition, MolecularIndex> positionIndexMap) {
         if (positionIndexMap == null) {
             throw new NullPointerException("The list of index pairs can't be null.");
         }
@@ -418,66 +248,11 @@ public class MolecularIndexingScheme {
             throw new IllegalArgumentException("The list of index pairs didn't contain any elements");
         }
 
-        for (final PositionHint position : positionIndexMap.keySet()) {
+        for (final IndexPosition position : positionIndexMap.keySet()) {
             this.addIndexPosition(position, positionIndexMap.get(position));
         }
 
         this.setName(this.generateName());
-    }
-
-    @Id
-    @SequenceGenerator(name="seq_molecular_indexing_scheme", schema = "mercury", sequenceName="seq_molecular_indexing_scheme")
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_molecular_indexing_scheme")
-    @Column(name = "molecular_indexing_scheme_id")
-    @SuppressWarnings("unused")
-    private Long getMolecularIndexingSchemeId() {
-        return molecularIndexingSchemeId;
-    }
-
-    @SuppressWarnings("unused")
-    private void setMolecularIndexingSchemeId(final Long molecularIndexingSchemeId) {
-        this.molecularIndexingSchemeId = molecularIndexingSchemeId;
-    }
-
-    /**
-     * Returns the indexes that compose this scheme, with their positions. The
-     * positions returned are those appropriate for storing the database, which means
-     * they're not generally usable outside of this class. Same goes for this method.
-     */
-    @ManyToMany(cascade = {CascadeType.PERSIST}, fetch= FetchType.LAZY)
-    @JoinTable(
-            schema = "mercury",
-            name="MOLECULAR_INDEX_POSITION",
-            joinColumns=@JoinColumn(name="scheme_id", referencedColumnName = "molecular_indexing_scheme_id"),
-            inverseJoinColumns=@JoinColumn(name="index_id", referencedColumnName = "molecular_index_id")
-    )
-    @MapKeyJoinColumn(table="MOLECULAR_INDEX_POSITION", name="scheme_id")
-    @MapKeyEnumerated(EnumType.STRING)
-    // todo jmt hbm2ddl seems to ignore this, it always uses mapkey
-//    @MapKeyColumn(name="POSITION_HINT")
-    @MapKeyColumn(name="mapkey")
-    @Sort(type= SortType.NATURAL)
-    // todo jmt this set manipulation seems to confuse Hibernate, it deletes and re-inserts the collection repeatedly
-    SortedMap<IndexPosition, MolecularIndex> getIndexPositions() {
-        final SortedMap<IndexPosition, MolecularIndex> indexMap = new TreeMap<IndexPosition, MolecularIndex>();
-        for (final Map.Entry<PositionHint, MolecularIndex> entry : this.indexes.entrySet()) {
-            // Dereferencing the PositionHint into its IndexPosition
-            // since these are the values stored via Hibernate. The
-            // corresponding setter must do the inverse operation.
-            indexMap.put(entry.getKey().getIndexPosition(), entry.getValue());
-        }
-        return indexMap;
-    }
-
-    void setIndexPositions(final SortedMap<IndexPosition, MolecularIndex> indexesAndPositions) {
-        // Dereferencing the IndexPosition into its PositionHint since
-        // those values are the ones useful in this code. The corresponding
-        // getter must do the inverse operation.
-        for (final Map.Entry<IndexPosition, MolecularIndex> entry : indexesAndPositions.entrySet()) {
-            this.addIndexPosition(
-                    entry.getKey().getPositionHint(),
-                    entry.getValue());
-        }
     }
 
     /**
@@ -488,12 +263,10 @@ public class MolecularIndexingScheme {
      * identical and in identical positions. Guaranteed to never be null or to be
      * non-empty.
      */
-    @Column(name="name")
     public String getName() {
         return this.name;
     }
 
-    @SuppressWarnings("unused")
     protected void setName(final String name) {
         this.name = name;
     }
@@ -505,10 +278,10 @@ public class MolecularIndexingScheme {
       * of the MolecularIndexingScheme. If you need a scheme with additional
       * component indexes, use the factory to get or create one.
       */
-    private void addIndexPosition(final PositionHint position, final MolecularIndex index) {
+    void addIndexPosition(final IndexPosition position, final MolecularIndex index) {
         if (index == null) throw new NullPointerException("The given MolecularIndex cannot be null.");
 
-        for (final PositionHint existingHint : this.getIndexes().keySet()) {
+        for (final IndexPosition existingHint : this.getIndexes().keySet()) {
             if ( ! existingHint.getClass().equals(position.getClass())) {
                 throw new IllegalArgumentException(
                         "Cannot add positions from two different " +
@@ -534,8 +307,7 @@ public class MolecularIndexingScheme {
      * that compose this molecular indexing scheme, keyed by their position.
      * Neither the returned map nor any values within it will be null.
      */
-    @Transient
-    public SortedMap<PositionHint, MolecularIndex> getIndexes() {
+    public SortedMap<IndexPosition, MolecularIndex> getIndexes() {
         return Collections.unmodifiableSortedMap(this.indexes);
     }
 
@@ -544,7 +316,7 @@ public class MolecularIndexingScheme {
      * with the given position exists.
      */
     @Transient
-    public MolecularIndex getIndex(final PositionHint position) {
+    public MolecularIndex getIndex(final IndexPosition position) {
         return this.getIndexes().get(position);
     }
 
@@ -596,9 +368,9 @@ public class MolecularIndexingScheme {
     private String generateName() {
         final StringBuilder builder = new StringBuilder();
         builder.append(this.getIndexes().firstKey().getTechnology());
-        for (final Map.Entry<PositionHint, MolecularIndex> entry : this.getIndexes().entrySet()) {
+        for (final Map.Entry<IndexPosition, MolecularIndex> entry : this.getIndexes().entrySet()) {
             builder.append('_')
-                    .append(entry.getKey())
+                    .append(entry.getKey().getPosition())
                     .append("-")
                     .append(entry.getValue().generateNameFromSequence());
         }
