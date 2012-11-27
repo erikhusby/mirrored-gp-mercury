@@ -89,7 +89,7 @@ public class BillingSessionForm extends AbstractJsfBean {
         return null;
     }
 
-    public String cancelSession() {
+    public String endSession() {
         // Remove all the sessions from the non-billed items
         boolean allRemoved = billingSessionBean.getBillingSession().cancelSession();
 

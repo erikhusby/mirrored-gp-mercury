@@ -19,7 +19,7 @@
             </div>
 
                 <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.billingManagerRole}">
-                    <p:commandButton value="New Billing Session" action="#{productOrderForm.startBillingSession}"
+                    <p:commandButton value="Start Billing Session" action="#{productOrderForm.startBillingSession}"
                                  ajax="false" style="margin-bottom:5px;margin-right:30px;"/>
                 </security:authorizeBlock>
 
