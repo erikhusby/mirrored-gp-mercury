@@ -98,6 +98,7 @@ public abstract class LabVessel {
     @Formula("(select count(*) from lab_vessel_containers where lab_vessel_containers.lab_vessel = lab_vessel_id)")
     private Integer containersCount = 0;
 
+    /** Reagent additions and machine loaded events, i.e. not transfers */
     @OneToMany(mappedBy = "inPlaceLabVessel", cascade = CascadeType.PERSIST)
     private Set<LabEvent> inPlaceLabEvents = new HashSet<LabEvent>();
 
@@ -293,22 +294,6 @@ public abstract class LabVessel {
 
     public abstract VesselGeometry getVesselGeometry();
 
-/*
-    public void addNoteToProjects(String message) {
-        Collection<Project> ticketsToNotify = new HashSet<Project>();
-        for (SampleInstance sampleInstance : getSampleInstances()) {
-            if (sampleInstance.getAllProjectPlans() != null) {
-                for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
-                    ticketsToNotify.add(projectPlan.getProject());
-                }
-            }
-        }
-        for (Project project : ticketsToNotify) {
-            project.addJiraComment(message);
-        }
-    }
-*/
-
     /**
      * When a {@link org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket} is created for a
      * {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel}, let's
@@ -389,6 +374,9 @@ public abstract class LabVessel {
         }
     }
 
+    /**
+     * Returned from getAncestors and getDescendants
+     */
     static class VesselEvent {
         private LabVessel labVessel;
         private VesselContainer vesselContainer;
@@ -420,7 +408,7 @@ public abstract class LabVessel {
     }
 
     /**
-     * Probably a transient that computes the {@link SampleInstance} data
+     * Computes the {@link SampleInstance} data
      * on-the-fly by walking the history and applying the
      * StateChange applied during lab work.
      * @return
@@ -712,6 +700,7 @@ public abstract class LabVessel {
         return new ArrayList<LabBatch>(getLabBatches());
     }
 
+    // todo jmt can the next three methods be deleted?
     /**
      * Walk the chain of custody back until it can be
      * walked no further.  What you get are the roots
@@ -808,6 +797,11 @@ public abstract class LabVessel {
         return null;
     }
 
+    /**
+     * Visits nodes in the transfer graph, and applies criteria.
+     * @param transferTraverserCriteria  object that accumulates results of traversal
+     * @param traversalDirection ancestors or descendants
+     */
     public void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
             TransferTraverserCriteria.TraversalDirection traversalDirection) {
         evaluateCriteria(transferTraverserCriteria, traversalDirection, null, 0);

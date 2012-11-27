@@ -3,6 +3,14 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 //import com.jprofiler.api.agent.Controller;
 
 import com.sun.jersey.api.client.Client;
+import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
@@ -65,6 +73,15 @@ public class BettalimsMessageResourceTest extends Arquillian {
     private IndexedPlateFactory indexedPlateFactory;
 
     @Inject
+    private ProductDao productDao;
+
+    @Inject
+    private ProductFamilyDao productFamilyDao;
+
+    @Inject
+    private ResearchProjectDao researchProjectDao;
+
+    @Inject
     private UserTransaction utx;
 
     private final SimpleDateFormat testPrefixDateFormat = new SimpleDateFormat("MMddHHmmss");
@@ -99,7 +116,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);
 
-        // todo create Product, Research Project, Product Order
+        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
         for(int rackPosition = 1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {
             String barcode = "R" + testPrefix + rackPosition;
@@ -107,10 +124,22 @@ public class BettalimsMessageResourceTest extends Arquillian {
             String bspStock = "SM-" +  testPrefix + rackPosition;
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(null, bspStock));
-            mapBarcodeToTube.put(barcode,bspAliquot);
+            mapBarcodeToTube.put(barcode, bspAliquot);
+            productOrderSamples.add(new ProductOrderSample(bspStock));
 
             twoDBarcodedTubeDAO.persist(bspAliquot);
         }
+        Product exomeExpressProduct = productDao.findByPartNumber("P-EX-0002");
+        if(exomeExpressProduct == null) {
+            exomeExpressProduct = new Product("Exome Express", productFamilyDao.find("Exome"), "Exome Express",
+                    "P-EX-0002", new Date(), null, 1814400, 1814400, 184, null, null, null, true, "Exome Express", false);
+            productDao.persist(exomeExpressProduct);
+            productDao.flush();
+        }
+        ProductOrder productOrder = new ProductOrder(101L, "Messaging Test " + testPrefix, productOrderSamples, "GSP-123",
+                exomeExpressProduct, researchProjectDao.findByBusinessKey("RP-19"));
+        String jiraTicketKey = "PD0-MsgTest";
+        productOrder.setJiraTicketKey(jiraTicketKey);
         twoDBarcodedTubeDAO.flush();
         twoDBarcodedTubeDAO.clear();
 
@@ -192,24 +221,26 @@ public class BettalimsMessageResourceTest extends Arquillian {
         List<String> dayDirectoryNames =  Arrays.asList(inboxDirectory.list());
         Collections.sort(dayDirectoryNames);
         for (String dayDirectoryName : dayDirectoryNames) {
-            File dayDirectory = new File(inboxDirectory, dayDirectoryName);
-            List<String> messageFileNames =  Arrays.asList(dayDirectory.list());
-            Collections.sort(messageFileNames);
-            for (String messageFileName : messageFileNames) {
-                String response = null;
-                try {
-//                    String message = FileUtils.readFileToString(new File(dayDirectory, messageFileName));
-//                    if(message.contains("PreSelectionPool")) {
-                        response = Client.create().resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
-                                .type(MediaType.APPLICATION_XML_TYPE)
-                                .accept(MediaType.APPLICATION_XML)
-                                .entity(new File(dayDirectory, messageFileName))
-                                .post(String.class);
-//                    }
-                } catch (Exception e) {
-                    System.out.println(e.getMessage());
+            if (dayDirectoryName.startsWith("2012")) {
+                File dayDirectory = new File(inboxDirectory, dayDirectoryName);
+                List<String> messageFileNames =  Arrays.asList(dayDirectory.list());
+                Collections.sort(messageFileNames);
+                for (String messageFileName : messageFileNames) {
+                    String response = null;
+                    try {
+    //                    String message = FileUtils.readFileToString(new File(dayDirectory, messageFileName));
+    //                    if(message.contains("PreSelectionPool")) {
+                            response = Client.create().resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
+                                    .type(MediaType.APPLICATION_XML_TYPE)
+                                    .accept(MediaType.APPLICATION_XML)
+                                    .entity(new File(dayDirectory, messageFileName))
+                                    .post(String.class);
+    //                    }
+                    } catch (Exception e) {
+                        System.out.println(e.getMessage());
+                    }
+                    System.out.println(response);
                 }
-                System.out.println(response);
             }
         }
     }

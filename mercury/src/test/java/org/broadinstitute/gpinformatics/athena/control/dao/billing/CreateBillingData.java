@@ -38,7 +38,7 @@ public class CreateBillingData extends ContainerTest {
 
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
                 if (productOrderSample.getSampleName().contains("A")) {
-                    billingLedgers.add(new BillingLedger(productOrderSample, productOrder.getProduct().getDefaultPriceItem(), new Date(), 0.5));
+                    billingLedgers.add(new BillingLedger(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(), new Date(), 0.5));
                 }
             }
 
@@ -47,7 +47,7 @@ public class CreateBillingData extends ContainerTest {
 
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
                 if (productOrderSample.getSampleName().contains("B")) {
-                    productOrderDao.persist(new BillingLedger(productOrderSample, productOrder.getProduct().getDefaultPriceItem(), new Date(), 1.1));
+                    productOrderDao.persist(new BillingLedger(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(), new Date(), 1.1));
                 }
             }
 

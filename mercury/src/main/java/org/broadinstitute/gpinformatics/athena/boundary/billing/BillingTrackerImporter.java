@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
@@ -42,10 +42,10 @@ public class BillingTrackerImporter {
     }
 
     //TODO This was just for initial prototyping.
-    public String readFromStream(FileInputStream fis) throws Exception {
+    public String readFromStream(InputStream inputStream) throws Exception {
 
         Workbook workbook;
-        workbook = WorkbookFactory.create(fis);
+        workbook = WorkbookFactory.create(inputStream);
         int numberOfProducts = workbook.getNumberOfSheets();
         Sheet sheet = workbook.getSheetAt(0);
         String productPartNumberStr = sheet.getSheetName();
@@ -298,7 +298,7 @@ public class BillingTrackerImporter {
         for (int i=0; i< numFixedHeaders; i++) {
             Cell cell = citer.next();
             if ( ( cell == null) ||
-                    StringUtils.isBlank( cell.getStringCellValue()) ||
+                    StringUtils.isBlank(cell.getStringCellValue()) ||
                     ! cell.getStringCellValue().equals( fixedHeaders[i] ) ) {
                 String cellValFound = (cell == null) ? "" : cell.getStringCellValue();
                 throw new RuntimeException( "Tracker Sheet Header mismatch.  Expected : " +

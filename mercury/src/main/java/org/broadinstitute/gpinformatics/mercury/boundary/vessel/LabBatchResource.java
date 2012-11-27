@@ -47,35 +47,12 @@ public class LabBatchResource {
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDAO.findByBarcodes(tubeBarcodes);
         Map<MercurySample, MercurySample> mapSampleToSample = mercurySampleDao.findByMercurySample(mercurySampleKeys);
-        if(labBatchBean.getWorkflowName() == null) {
-            LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample/*, null*/);
-            labBatchDAO.persist(labBatch);
-        } else {
-            // todo jmt how to attach workflow to a batch with no product order?
-//            BasicProjectPlan projectPlan = buildProjectPlan(labBatchBean, mapBarcodeToTube, mapBarcodeToSample);
-//            projectPlanDao.persist(projectPlan);
-        }
+        LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample/*, null*/);
+        labBatchDAO.persist(labBatch);
+        labBatchDAO.flush();
 
-//        projectPlanDao.flush();
         return "Batch persisted";
     }
-
-//    public BasicProjectPlan buildProjectPlan(
-//            LabBatchBean labBatchBean,
-//            Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-//            Map<String, BSPStartingSample> mapBarcodeToSample) {
-//        // todo jmt fix workflow
-//        JiraTicket jiraTicket = new JiraTicket(new JiraServiceStub(), labBatchBean.getBatchId(), labBatchBean.getBatchId());
-//        BasicProject project = new BasicProject(labBatchBean.getBatchId(), jiraTicket);
-//        BasicProjectPlan projectPlan = new BasicProjectPlan(
-//                project,
-//                labBatchBean.getBatchId(),
-//                new WorkflowDescription(labBatchBean.getWorkflowName(), null, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
-//
-//        LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapBarcodeToSample, projectPlan);
-//        jiraTicket.setLabBatch(labBatch);
-//        return projectPlan;
-//    }
 
     public LabBatch buildLabBatch(LabBatchBean labBatchBean, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
             Map<MercurySample, MercurySample> mapBarcodeToSample/*, BasicProjectPlan projectPlan*/) {
@@ -87,11 +64,13 @@ public class LabBatchResource {
                 mapBarcodeToTube.put(tubeBean.getBarcode(), twoDBarcodedTube);
             }
             if(tubeBean.getSampleBarcode() != null && tubeBean.getProductOrderKey() != null) {
-                MercurySample mercurySample = mapBarcodeToSample.get(new MercurySample(tubeBean.getProductOrderKey(), tubeBean.getSampleBarcode()));
-                // todo jmt should this update the map?
-                if(mercurySample != null) {
-                    twoDBarcodedTube.addSample(mercurySample);
+                MercurySample mercurySampleKey = new MercurySample(tubeBean.getProductOrderKey(), tubeBean.getSampleBarcode());
+                MercurySample mercurySample = mapBarcodeToSample.get(mercurySampleKey);
+                if(mercurySample == null) {
+                    mercurySample = mercurySampleKey;
+                    mapBarcodeToSample.put(mercurySampleKey, mercurySample);
                 }
+                twoDBarcodedTube.addSample(mercurySample);
             }
 
 //            if (tubeBean.getSampleBarcode() == null) {

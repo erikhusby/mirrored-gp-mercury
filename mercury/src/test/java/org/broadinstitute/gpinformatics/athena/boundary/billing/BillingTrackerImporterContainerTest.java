@@ -10,9 +10,12 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Map;
@@ -20,20 +23,46 @@ import java.util.Map;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=false)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
 public class BillingTrackerImporterContainerTest  extends Arquillian {
 
     public static final String BILLING_TRACKER_TEST_FILENAME = new String("BillingTracker-ContainerTest.xlsx");
 
     @Inject
     private ProductOrderDao productOrderDao;
+
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
+
+    @Inject
+    private UserTransaction utx;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV);
     }
+
+    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void setUp() throws Exception {
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
+        }
+
+        utx.begin();
+    }
+
+
+    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void tearDown() throws Exception {
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
+        }
+
+        utx.rollback();
+    }
+
 
     @Test
     public void testImport() throws Exception {
