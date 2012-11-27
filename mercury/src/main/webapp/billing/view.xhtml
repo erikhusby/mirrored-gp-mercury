@@ -108,8 +108,10 @@
                         </h:outputText>
                     </div>
                 </p:column>
-                <p:column headerText="Work Complete Date">
-                    #{item.workCompleteDate}
+                <p:column headerText="Work Reported Date">
+                    <h:outputText value="#{item.workCompleteDate}">
+                        <f:convertDateTime type="date" dateStyle="short"/>
+                    </h:outputText>
                 </p:column>
                 <p:column headerText="Billing Message" width="650">
                     #{item.billingMessage}

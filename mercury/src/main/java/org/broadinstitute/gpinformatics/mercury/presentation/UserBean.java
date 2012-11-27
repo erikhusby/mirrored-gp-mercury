@@ -25,7 +25,9 @@ import java.util.EnumSet;
 @Named
 @SessionScoped
 public class UserBean implements Serializable {
-    public static final String SUPPORT_EMAIL = "mercury-support@broadinstitute.org";
+    private static final String SUPPORT_EMAIL = "mercury-support@broadinstitute.org";
+
+    private static final String LOGIN_WARNING = "You need to log into JIRA and BSP before you can {0}.";
 
     @Nullable
     private BspUser bspUser;
@@ -92,6 +94,8 @@ public class UserBean implements Serializable {
 
     private final EnumSet<DB.Role> roles = EnumSet.noneOf(DB.Role.class);
 
+    private String loginUserName;
+
     public Collection<DB.Role> getRoles() {
         return ImmutableSet.copyOf(roles);
     }
@@ -110,6 +114,7 @@ public class UserBean implements Serializable {
     }
 
     private void updateBspStatus() {
+        bspUser = bspUserList.getByUsername(loginUserName);
         if (bspUser != null && !bspUserList.isTestUser(bspUser)) {
             bspStatus = ServerStatus.loggedIn;
         } else if (bspUserList.isServerValid()) {
@@ -120,10 +125,10 @@ public class UserBean implements Serializable {
         }
     }
 
-    private void updateJiraStatus(String username) {
+    private void updateJiraStatus() {
         try {
-            if (jiraService.isValidUser(username)) {
-                jiraUsername = username;
+            if (jiraService.isValidUser(loginUserName)) {
+                jiraUsername = loginUserName;
                 jiraStatus = ServerStatus.loggedIn;
             } else {
                 // The user is not a valid JIRA User.  Warn, but allow login.
@@ -142,10 +147,9 @@ public class UserBean implements Serializable {
      * @param request the request used for a successful user login
      */
     public void login(HttpServletRequest request) {
-        String username = request.getUserPrincipal().getName();
-        bspUser = bspUserList.getByUsername(username);
+        loginUserName = request.getUserPrincipal().getName();
         updateBspStatus();
-        updateJiraStatus(username);
+        updateJiraStatus();
         for (DB.Role role : DB.Role.values()) {
             if (request.isUserInRole(role.name)) {
                 roles.add(role);
@@ -154,13 +158,32 @@ public class UserBean implements Serializable {
     }
 
     /**
+     * Ensure that the user is logged in to BSP and JIRA, if not issue a warning using JSF.
+     * @param operation the operation name, for the warning text.
+     * @param jsfBean the JSF bean used to issue the warning.
+     */
+    public void checkUserValidForOperation(String operation, AbstractJsfBean jsfBean) {
+        // Check and see if the server state has changed to allow the user to log in.
+        if (bspStatus != ServerStatus.loggedIn) {
+            updateBspStatus();
+        }
+        if (jiraStatus != ServerStatus.loggedIn) {
+            updateJiraStatus();
+        }
+        if (!isValidUser()) {
+            jsfBean.addErrorMessage(MessageFormat.format(LOGIN_WARNING, operation));
+        }
+    }
+
+    public boolean isValidUser() {
+        return isValidBspUser() && isValidJiraUser();
+    }
+
+    /**
      * @return CSS class for styling user name 'badge' at top of screen
      */
     public String getBadgeClass() {
-        if (isValidBspUser() && isValidJiraUser()) {
-            return "badge-success";
-        }
-        return "badge-warning";
+        return isValidUser() ? "badge-success" : "badge-warning";
     }
 
     public String getBspStatus() {

@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.billing;
 
-import org.apache.commons.lang.builder.EqualsBuilder;
-import org.apache.commons.lang.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.hibernate.annotations.Index;
@@ -51,10 +51,11 @@ public class BillingLedger {
 
     BillingLedger() {}
 
-    public BillingLedger(@Nonnull ProductOrderSample productOrderSample, @Nonnull PriceItem priceItem, double quantity) {
+    public BillingLedger(@Nonnull ProductOrderSample productOrderSample, @Nonnull PriceItem priceItem, @Nonnull Date workCompleteDate, double quantity) {
         this.productOrderSample = productOrderSample;
         this.priceItem = priceItem;
         this.quantity = quantity;
+        this.workCompleteDate = workCompleteDate;
     }
 
     public Long getLedgerId() {

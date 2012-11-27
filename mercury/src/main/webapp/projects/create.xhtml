@@ -14,7 +14,7 @@
 
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="researchProject" value="#{researchProjectDetail.project}" converter="#{researchProjectConverter}"/>
+                <f:viewParam id="projectParam" name="researchProject" value="#{researchProjectDetail.project}" converter="#{researchProjectConverter}"/>
                 <f:event type="preValidate" listener="#{researchProjectDetail.initEmptyProject}"/>
             </f:metadata>
             <f:event type="preRenderView" listener="#{researchProjectForm.initForm}"/>
@@ -63,7 +63,7 @@
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
                                 <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
                             </p:column>
-                            <p:ajax event="itemSelect" listener="#{researchProjectForm.removeDuplicates(researchProjectForm.projectManagers, 'projectManagers')}" update="projectManagers, pmMessage"/>
+                            <p:ajax event="itemSelect" listener="#{researchProjectForm.removeDuplicates(researchProjectForm.projectManagers, 'projectManagers')}" update="projectManagers pmMessage :projectParam"/>
                         </p:autoComplete>
                         <p:watermark for="projectManagers" value="Type name to search"/>
                         <p:message id="pmMessage" for="projectManagers"/>
@@ -82,7 +82,7 @@
                                 <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
                                 <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
                             </p:column>
-                            <p:ajax event="itemSelect" listener="#{researchProjectForm.removeDuplicates(researchProjectForm.broadPIs, 'broadPIs')}" update="broadPIs, piMessage"/>
+                            <p:ajax event="itemSelect" listener="#{researchProjectForm.removeDuplicates(researchProjectForm.broadPIs, 'broadPIs')}" update="broadPIs piMessage :projectParam"/>
                         </p:autoComplete>
                         <p:watermark for="broadPIs" value="Type name to search"/>
                         <p:message id="piMessage" for="broadPIs"/>
@@ -103,7 +103,7 @@
                             </p:column>
                             <p:ajax event="itemSelect"
                                 listener="#{researchProjectForm.removeDuplicates(researchProjectForm.scientists, 'scientists')}"
-                                update="scientists, scientistMessage"/>
+                                update="scientists scientistMessage :projectParam"/>
                         </p:autoComplete>
                         <p:watermark for="scientists" value="Type name to search"/>
                         <p:message id="scientistMessage" for="scientists"/>
@@ -124,7 +124,7 @@
                             </p:column>
                             <p:ajax event="itemSelect"
                                 listener="#{researchProjectForm.removeDuplicates(researchProjectForm.externalCollaborators, 'externalCollaborators')}"
-                                update="externalCollaborators, externalCollaboratorsMessage"/>
+                                update="externalCollaborators externalCollaboratorsMessage :projectParam"/>
                         </p:autoComplete>
                         <p:watermark for="externalCollaborators" value="Type name to search"/>
                         <p:message id="externalCollaboratorsMessage" for="externalCollaborators"/>
@@ -145,7 +145,7 @@
                             </p:column>
                             <p:ajax event="itemSelect"
                                 listener="#{researchProjectForm.removeDuplicates(researchProjectForm.fundingSources, 'fundingSources')}"
-                                update="fundingSources, fundingSourcesMessage"/>
+                                update="fundingSources fundingSourcesMessage :projectParam"/>
                         </p:autoComplete>
                         <p:watermark for="fundingSources" value="Type text to search"/>
                         <p:message id="fundingSourcesMessage" for="fundingSources"/>
@@ -166,7 +166,7 @@
                             </p:column>
                             <p:ajax event="itemSelect"
                                     listener="#{researchProjectForm.removeDuplicates(researchProjectForm.sampleCohorts, 'sampleCohorts')}"
-                                    update="sampleCohorts, sampleCohortsMessage"/>
+                                    update="sampleCohorts sampleCohortsMessage :projectParam"/>
 
                         </p:autoComplete>
                         <p:watermark for="sampleCohorts" value="Type text to search"/>
@@ -187,7 +187,7 @@
                             </p:column>
                             <p:ajax event="itemSelect"
                                     listener="#{researchProjectForm.removeDuplicates(researchProjectForm.irbs, 'irbs')}"
-                                    update="irbs, irbsMessage"/>
+                                    update="irbs irbsMessage :projectParam"/>
                         </p:autoComplete>
                         <p:watermark for="irbs" value="Type irb name"/>
                         <p:message id="irbsMessage" for="irbs"/>
@@ -212,7 +212,10 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Save" action="#{researchProjectForm.save}" ajax="false" styleClass="ui-priority-primary"/>
+                                <p:commandButton value="Save"
+                                                 disabled="#{!userBean.validUser}"
+                                                 action="#{researchProjectForm.save}"
+                                                 ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                             <div class="span1">
                                 <h:link outcome="list" value="Cancel" rendered="#{researchProjectDetail.project.researchProjectId == null}"/>
