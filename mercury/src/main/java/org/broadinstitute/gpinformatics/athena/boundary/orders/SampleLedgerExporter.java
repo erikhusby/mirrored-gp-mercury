@@ -32,7 +32,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     // Each worksheet is a different product, so distribute the list of orders by product
     private final Map<Product, List<ProductOrder>> orderMap = new HashMap<Product, List<ProductOrder>>();
 
-    private static final String[] FIXED_HEADERS = {
+    public static final String[] FIXED_HEADERS = {
             "Sample ID",
             "Collaborator Sample ID",
             "Product Name",
@@ -110,7 +110,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         return null;
     }
 
-    private List<PriceItem> getPriceItems(Product product) {
+    public static List<PriceItem> getPriceItems(Product product) {
         // Create a copy of the product's price items list in order to impose an order on it.
         List<PriceItem> allPriceItems = new ArrayList<PriceItem>(product.getOptionalPriceItems());
         Collections.sort(allPriceItems, new Comparator<PriceItem>() {
@@ -137,10 +137,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell("New Quantity", getBilledAmountsHeaderStyle());
     }
 
-    private void writePriceItemHeaders(PriceItem priceItem) {
-        getWriter().writeCell(priceItem.getName(), getBilledAmountsHeaderStyle());
-        getWriter().writeCell(priceItem.getName(), getBilledAmountsHeaderStyle());
-    }
 
     /**
      * Write out the spreadsheet contents to a stream.  The output is in native excel format.

@@ -1,9 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.jpa;
 
-import org.hibernate.exception.ConstraintViolationException;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -297,15 +293,4 @@ public class GenericDao {
         }
     }
 
-    public static boolean IsConstraintViolationException(final Exception e) {
-        Throwable currentCause = e;
-        while (currentCause != null) {
-            if (currentCause instanceof ConstraintViolationException) {
-                return true;
-            }
-            currentCause = currentCause.getCause();
-        }
-
-        return false;
-    }
 }
