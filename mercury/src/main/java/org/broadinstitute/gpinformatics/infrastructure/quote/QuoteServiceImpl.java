@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import com.sun.jersey.api.client.*;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
-import org.apache.commons.httpclient.util.DateUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
@@ -12,6 +11,7 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 @Impl
@@ -60,6 +60,8 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     public String registerNewWork(Quote quote, PriceItem priceItem, Date reportedCompletionDate, double numWorkUnits,
                                   String callbackUrl, String callbackParameterName, String callbackParameterValue) {
 
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+
         // see https://iwww.broadinstitute.org/blogs/quote/?page_id=272 for details
         String url = url(Endpoint.REGISTER_WORK);
         MultivaluedMap<String, String> params = new MultivaluedMapImpl();
@@ -70,7 +72,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         params.add("price_item_name", priceItem.getName());
         params.add("quantity", Double.toString(numWorkUnits));
         params.add("complete", Boolean.TRUE.toString());
-        params.add("completion_date", DateUtil.formatDate(reportedCompletionDate));
+        params.add("completion_date", dateFormat.format(reportedCompletionDate));
         params.add("url", callbackUrl);
         params.add("object_type", callbackParameterName);
         params.add("object_value", callbackParameterValue);
