@@ -137,10 +137,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell("New Quantity", getBilledAmountsHeaderStyle());
     }
 
-    private void writePriceItemHeaders(PriceItem priceItem) {
-        getWriter().writeCell(priceItem.getName(), getBilledAmountsHeaderStyle());
-        getWriter().writeCell(priceItem.getName(), getBilledAmountsHeaderStyle());
-    }
 
     /**
      * Write out the spreadsheet contents to a stream.  The output is in native excel format.

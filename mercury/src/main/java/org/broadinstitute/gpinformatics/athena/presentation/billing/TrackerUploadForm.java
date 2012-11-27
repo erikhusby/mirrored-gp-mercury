@@ -14,6 +14,7 @@ import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.FileInputStream;
+import java.io.InputStream;
 
 /**
  * Created by IntelliJ IDEA.
@@ -43,21 +44,21 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         //TODO following line just for prototyping
         setFilename(file.getFileName());
 
-        FileInputStream fis = null;
+        InputStream inputStream = null;
 
         try {
             BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, productOrderSampleDao);
 
             //TODO This just for initial prototyping.
-            fis = (FileInputStream) file.getInputstream();
-            productPartNumber = importer.readFromStream ( fis );
+            inputStream = file.getInputstream();
+            productPartNumber = importer.readFromStream ( inputStream );
 
         } catch (Exception e) {
             //TODO correct this
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             throw new RuntimeException( e );
         } finally {
-            IOUtils.closeQuietly(fis);
+            IOUtils.closeQuietly(inputStream);
         }
 
         // addInfoMessage("Previewing  : " + event.getFile().getFileName() );

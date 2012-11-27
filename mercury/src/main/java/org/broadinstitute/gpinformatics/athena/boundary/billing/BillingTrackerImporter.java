@@ -42,10 +42,10 @@ public class BillingTrackerImporter {
     }
 
     //TODO This was just for initial prototyping.
-    public String readFromStream(FileInputStream fis) throws Exception {
+    public String readFromStream(InputStream inputStream) throws Exception {
 
         Workbook workbook;
-        workbook = WorkbookFactory.create(fis);
+        workbook = WorkbookFactory.create(inputStream);
         int numberOfProducts = workbook.getNumberOfSheets();
         Sheet sheet = workbook.getSheetAt(0);
         String productPartNumberStr = sheet.getSheetName();
