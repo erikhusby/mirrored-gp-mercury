@@ -47,7 +47,7 @@ public class ProductViewBean extends AbstractJsfBean {
         if (!facesContext.isPostback()) {
             addOnData.setValues(new ArrayList<Product>(product.getAddOns()));
             Collections.sort(addOnData.getValues());
-            priceItemData.setValues(new ArrayList<PriceItem>(product.getPriceItems()));
+            priceItemData.setValues(new ArrayList<PriceItem>(product.getOptionalPriceItems()));
             Collections.sort(priceItemData.getValues());
             if (conversation.isTransient()) {
                 conversation.begin();

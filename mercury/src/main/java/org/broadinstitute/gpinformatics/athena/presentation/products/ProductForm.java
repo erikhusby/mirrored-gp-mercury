@@ -143,20 +143,20 @@ public class ProductForm extends AbstractJsfBean {
                 // No form initialization needed for create
             } else {
 
-                if (product.getDefaultPriceItem() != null) {
-                    PriceItem priceItemDto = entityToDto(product.getDefaultPriceItem());
+                if (product.getPrimaryPriceItem() != null) {
+                    PriceItem priceItemDto = entityToDto(product.getPrimaryPriceItem());
 
                     if (! priceListCache.contains(priceItemDto)) {
                         issueMessagesForPriceItemNotOnPriceList("defaultPriceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, true));
                         defaultPriceItem = null;
                     }
                     else {
-                        defaultPriceItem = entityToDto(product.getDefaultPriceItem());
+                        defaultPriceItem = entityToDto(product.getPrimaryPriceItem());
                     }
                 }
-                if (product.getPriceItems() != null) {
+                if (product.getOptionalPriceItems() != null) {
                     priceItems = new ArrayList<PriceItem>();
-                    for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getPriceItems()) {
+                    for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getOptionalPriceItems()) {
 
                         PriceItem priceItemDto = entityToDto(priceItem);
                         if (! priceListCache.contains(priceItemDto)) {
@@ -281,9 +281,9 @@ public class ProductForm extends AbstractJsfBean {
             throw new ApplicationValidationException("Default price item must be entered");
         }
 
-        product.setDefaultPriceItem(findEntity(defaultPriceItem));
+        product.setPrimaryPriceItem(findEntity(defaultPriceItem));
 
-        product.getPriceItems().clear();
+        product.getOptionalPriceItems().clear();
         if (priceItems != null) {
             for (PriceItem priceItem : priceItems) {
                 org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity = findEntity(priceItem);

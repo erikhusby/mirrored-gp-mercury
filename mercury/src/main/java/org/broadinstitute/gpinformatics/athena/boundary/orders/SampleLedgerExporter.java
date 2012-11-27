@@ -111,7 +111,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
     public static List<PriceItem> getPriceItems(Product product) {
         // Create a copy of the product's price items list in order to impose an order on it.
-        List<PriceItem> allPriceItems = new ArrayList<PriceItem>(product.getPriceItems());
+        List<PriceItem> allPriceItems = new ArrayList<PriceItem>(product.getOptionalPriceItems());
         Collections.sort(allPriceItems, new Comparator<PriceItem>() {
             @Override
             public int compare(PriceItem o1, PriceItem o2) {
@@ -122,7 +122,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         });
 
         // primary price item always goes first
-        allPriceItems.add(0, product.getDefaultPriceItem());
+        allPriceItems.add(0, product.getPrimaryPriceItem());
 
         return allPriceItems;
     }
@@ -288,7 +288,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             }
         }
 
-        writeAllBillAndNewHeaders(currentProduct.getPriceItems(), currentProduct.getAddOns());
+        writeAllBillAndNewHeaders(currentProduct.getOptionalPriceItems(), currentProduct.getAddOns());
     }
 
     private void writeAllBillAndNewHeaders(Set<PriceItem> priceItems, Set<Product> addOns) {
@@ -309,7 +309,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             // primary price item for this add-on
             writeBillAndNewHeaders();
 
-            for (PriceItem priceItem : addOn.getPriceItems()) {
+            for (PriceItem priceItem : addOn.getOptionalPriceItems()) {
                 writeBillAndNewHeaders();
             }
         }

@@ -36,12 +36,17 @@ public class BillingLedgerDao extends GenericDao {
      * Version of the method that should work with either {@link ProductOrder} entities xor String ProductOrder
      * business keys (one or the other must be non-null).
      *
-     * @param orders
-     * @param productOrderBusinessKeys
-     * @param inclusion
-     * @return
+     * @param orders The product orders to look up
+     * @param productOrderBusinessKeys The business key
+     * @param inclusion include session or not
+     *
+     * @return The ledger items.
      */
-    private Set<BillingLedger> findByOrderList(@Nullable ProductOrder [] orders, @Nullable List<String> productOrderBusinessKeys, BillingSessionInclusion inclusion) {
+    private Set<BillingLedger> findByOrderList(
+        @Nullable ProductOrder [] orders,
+        @Nullable List<String> productOrderBusinessKeys,
+        BillingSessionInclusion inclusion) {
+
         if (orders == null && productOrderBusinessKeys == null) {
             throw new RuntimeException("Must provide Product Order entities or business keys");
         }
@@ -61,9 +66,8 @@ public class BillingLedgerDao extends GenericDao {
         Join<BillingLedger, ProductOrderSample> orderSample = ledgerRoot.join(BillingLedger_.productOrderSample);
         Join<BillingLedger, BillingSession> billingSession = ledgerRoot.join(BillingLedger_.billingSession, JoinType.LEFT);
 
-        Predicate orderInPredicate;
-
         // choose the appropriate predicate depending on whether we are passed ProductOrder entities or business keys
+        Predicate orderInPredicate;
         if (orders != null) {
             orderInPredicate = orderSample.get(ProductOrderSample_.productOrder).in(orders);
         } else {
@@ -73,15 +77,19 @@ public class BillingLedgerDao extends GenericDao {
 
         Predicate fullPredicate;
         if (inclusion == BillingSessionInclusion.NO_SESSION_STARTED) {
+            // If the session is null, then this is uploaded and no session has started
             Predicate noSession = ledgerRoot.get(BillingLedger_.billingSession).isNull();
             fullPredicate = criteriaBuilder.and(orderInPredicate, noSession);
         } else if (inclusion == BillingSessionInclusion.SESSION_STARTED) {
+            // If there is no billed date, the session is not closed. If there is no session, then it is only uploaded, not started.
             Predicate hasSession = ledgerRoot.get(BillingLedger_.billingSession).isNotNull();
             Predicate notBilled = billingSession.get(BillingSession_.billedDate).isNull();
             fullPredicate = criteriaBuilder.and(orderInPredicate, hasSession, notBilled);
         } else if (inclusion == BillingSessionInclusion.SESSION_BILLED) {
+            // The ledger entry is billed when there is a billing session AND the message is Success. This will include
+            // items that have been billed, but the session has not been closed
             Predicate hasSession = ledgerRoot.get(BillingLedger_.billingSession).isNotNull();
-            Predicate isBilled = billingSession.get(BillingSession_.billedDate).isNotNull();
+            Predicate isBilled = criteriaBuilder.equal(ledgerRoot.get(BillingLedger_.billingMessage), BillingSession.SUCCESS);
             fullPredicate = criteriaBuilder.and(orderInPredicate, hasSession, isBilled);
         } else {
             fullPredicate = orderInPredicate;
@@ -100,8 +108,6 @@ public class BillingLedgerDao extends GenericDao {
     private Set<BillingLedger> findByOrderList(@Nonnull List<String> productOrderBusinessKeys, BillingSessionInclusion inclusion) {
         return findByOrderList(null, productOrderBusinessKeys, inclusion);
     }
-
-
 
     private Set<BillingLedger> findByOrderList(@Nonnull ProductOrder[] orders, BillingSessionInclusion inclusion) {
         return findByOrderList(orders, null, inclusion);
