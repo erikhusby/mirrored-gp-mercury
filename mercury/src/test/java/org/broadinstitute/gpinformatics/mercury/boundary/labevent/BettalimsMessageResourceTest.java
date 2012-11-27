@@ -214,7 +214,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         System.out.println("Test run name " + runName);
     }
 
-    @Test(enabled = true, groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = false, groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testHttp(@ArquillianResource URL baseUrl) {
         File inboxDirectory = new File("C:/Temp/seq/lims/bettalims/production/inbox");
