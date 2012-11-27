@@ -1257,4 +1257,9 @@
     </changeSet>
 
 
+    <changeSet id="GPLIM-329-1.2" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="billing_ledger" columnName="work_complete_date" />
+    </changeSet>
+
+
 </databaseChangeLog>
