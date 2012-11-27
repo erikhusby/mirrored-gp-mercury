@@ -54,7 +54,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
                 PriceItem.NAME_EXOME_EXPRESS,
                 "testQuoteId");
         Product dummyProduct = createDummyProduct();
-        dummyProduct.setDefaultPriceItem(priceItem);
+        dummyProduct.setPrimaryPriceItem(priceItem);
         ProductOrderSample sample = new ProductOrderSample("SM-1234", BSPSampleDTO.DUMMY);
         ProductOrder order = new ProductOrder( TEST_CREATOR, "title",
                 Collections.singletonList(sample), "quote", dummyProduct,

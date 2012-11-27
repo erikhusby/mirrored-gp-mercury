@@ -1262,4 +1262,81 @@
     </changeSet>
 
 
+    <changeSet id="GPLIM-387-1.1" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists schemaName="athena" tableName="product" columnName="primary_price_item" />
+            </not>
+        </preConditions>
+
+        <renameColumn schemaName="athena"
+                      tableName="product"
+                      oldColumnName="default_price_item"
+                      newColumnName="primary_price_item" />
+    </changeSet>
+
+    <changeSet id="GPLIM-387-1.2" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists schemaName="athena" tableName="product_aud" columnName="primary_price_item" />
+            </not>
+        </preConditions>
+
+        <renameColumn schemaName="athena"
+                      tableName="product_aud"
+                      oldColumnName="default_price_item"
+                      newColumnName="primary_price_item" />
+    </changeSet>
+
+    <changeSet id="GPLIM-387-2.1" author="mcovarr">
+        <preConditions>
+            <not>
+                <tableExists schemaName="athena" tableName="product_opt_price_items"/>
+            </not>
+        </preConditions>
+
+        <renameTable schemaName="athena"
+                     oldTableName="product_price_items"
+                     newTableName="product_opt_price_items" />
+    </changeSet>
+
+    <changeSet id="GPLIM-387-2.2" author="mcovarr">
+        <preConditions>
+            <not>
+                <tableExists schemaName="athena" tableName="product_opt_price_items_aud"/>
+            </not>
+        </preConditions>
+
+        <renameTable schemaName="athena"
+                     oldTableName="product_price_items_aud"
+                     newTableName="product_opt_price_items_aud" />
+    </changeSet>
+
+    <changeSet id="GPLIM-397-3.1" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists schemaName="athena" tableName="product_opt_price_items" columnName="optional_price_items" />
+            </not>
+        </preConditions>
+        <renameColumn schemaName="athena"
+                      tableName="product_opt_price_items"
+                      oldColumnName="price_items"
+                      newColumnName="optional_price_items" />
+    </changeSet>
+
+
+
+    <changeSet id="GPLIM-397-3.2" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists schemaName="athena" tableName="product_opt_price_items_aud" columnName="optional_price_items" />
+            </not>
+        </preConditions>
+        <renameColumn schemaName="athena"
+                      tableName="product_opt_price_items_aud"
+                      oldColumnName="price_items"
+                      newColumnName="optional_price_items" />
+    </changeSet>
+
+
 </databaseChangeLog>
