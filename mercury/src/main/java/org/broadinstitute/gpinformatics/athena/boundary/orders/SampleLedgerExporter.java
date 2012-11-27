@@ -42,7 +42,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             // "Comments",
             "Date Completed",
             "Quote ID",
-            "Billing Errors"
+            "Billing Errors",
+            "Sort Column"
     };
 
     private BSPUserList bspUserList;
@@ -192,8 +193,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
             // Write content.
             for (ProductOrder productOrder : productOrders) {
+                int sortOrder = 1;
+
                 for (ProductOrderSample sample : productOrder.getSamples()) {
-                    writeRow(sortedPriceItems, sortedAddOns, sample);
+                    writeRow(sortedPriceItems, sortedAddOns, sample, sortOrder++);
                 }
             }
         }
@@ -201,7 +204,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWorkbook().write(out);
     }
 
-    private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns, ProductOrderSample sample) {
+    private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns, ProductOrderSample sample, int sortOrder) {
         getWriter().nextRow();
 
         // sample name
@@ -242,6 +245,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         } else {
             getWriter().writeCell(billingError, getErrorMessageStyle());
         }
+
+        // sort order to be able to reconstruct the originally sorted sample list
+        getWriter().writeCell(sortOrder);
 
         // per 2012-11-19 meeting not doing this
         // getWriter().writeCell(sample.getBillingStatus().getDisplayName());
