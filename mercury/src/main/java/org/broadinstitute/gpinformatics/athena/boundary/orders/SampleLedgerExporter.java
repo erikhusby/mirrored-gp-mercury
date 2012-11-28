@@ -32,15 +32,19 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     // Each worksheet is a different product, so distribute the list of orders by product
     private final Map<Product, List<ProductOrder>> orderMap = new HashMap<Product, List<ProductOrder>>();
 
+    public final static String SAMPLE_ID_HEADING = "Sample ID";
+    public final static String ORDER_ID_HEADING = "Product Order ID";
+    public final static String DATE_COMPLETE_HEADING = "Date Completed";
+
     public static final String[] FIXED_HEADERS = {
-            "Sample ID",
+            SAMPLE_ID_HEADING,
             "Collaborator Sample ID",
             "Product Name",
-            "Product Order ID",
+            ORDER_ID_HEADING,
             "Product Order Name",
             "Project Manager",
             // "Comments",
-            "Date Completed",
+            DATE_COMPLETE_HEADING,
             "Quote ID",
             "Billing Errors",
             "Sort Column"

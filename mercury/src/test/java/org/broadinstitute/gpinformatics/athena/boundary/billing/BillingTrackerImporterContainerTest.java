@@ -23,7 +23,7 @@ import java.util.Map;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=true)
 public class BillingTrackerImporterContainerTest  extends Arquillian {
 
     public static final String BILLING_TRACKER_TEST_FILENAME = new String("BillingTracker-ContainerTest.xlsx");
