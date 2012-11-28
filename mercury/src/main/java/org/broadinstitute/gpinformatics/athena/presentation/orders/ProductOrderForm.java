@@ -28,6 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.primefaces.event.SelectEvent;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Conversation;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIInput;
@@ -85,7 +86,11 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     private List<String> selectedAddOns = new ArrayList<String>();
 
-    /** All product orders, fetched once and stored per-request (as a result of this bean being @RequestScoped). */
+    @Inject
+    private Conversation conversation;
+
+    /** All product orders, now conversation scoped */
+    @Inject
     private ProductOrderListModel allProductOrders;
 
     private ProductOrderListEntry[] selectedProductOrders;
@@ -110,6 +115,15 @@ public class ProductOrderForm extends AbstractJsfBean {
     /** Automatically convert known BSP IDs (SM-, SP-) to uppercase. */
     private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
 
+    public void initView() {
+        if (!facesContext.isPostback()) {
+            if (conversation.isTransient()) {
+                allProductOrders.setWrappedData(productOrderListEntryDao.findProductOrderListEntries());
+                conversation.begin();
+            }
+        }
+    }
+
     /**
      * Returns a list of all product orders. Only actually fetches the list from the database once per request
      * (as a result of this bean being @RequestScoped).
@@ -117,9 +131,6 @@ public class ProductOrderForm extends AbstractJsfBean {
      * @return list of all product orders
      */
     public ProductOrderListModel getAllProductOrders() {
-        if (allProductOrders == null) {
-            allProductOrders = new ProductOrderListModel(productOrderListEntryDao.findProductOrderListEntries());
-        }
 
         return allProductOrders;
     }

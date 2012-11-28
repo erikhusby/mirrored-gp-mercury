@@ -3,20 +3,21 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.primefaces.model.SelectableDataModel;
 
+import javax.enterprise.context.ConversationScoped;
 import javax.faces.model.ListDataModel;
+import java.io.Serializable;
 import java.util.List;
 
 /**
  *
  */
-public class ProductOrderListModel extends ListDataModel<ProductOrderListEntry> implements SelectableDataModel<ProductOrderListEntry> {
+@ConversationScoped
+public class ProductOrderListModel extends ListDataModel<ProductOrderListEntry> implements SelectableDataModel<ProductOrderListEntry>, Serializable {
 
     public ProductOrderListModel() {
     }
 
-    public ProductOrderListModel(List<ProductOrderListEntry> productOrders) {
-        super(productOrders);
-    }
+    private List<ProductOrderListEntry> filteredValues;
 
     @Override
     public Object getRowKey(ProductOrderListEntry order) {
@@ -32,5 +33,13 @@ public class ProductOrderListModel extends ListDataModel<ProductOrderListEntry> 
         }
 
         return null;
+    }
+
+    public List<ProductOrderListEntry> getFilteredValues() {
+        return filteredValues;
+    }
+
+    public void setFilteredValues(List<ProductOrderListEntry> filteredValues) {
+        this.filteredValues = filteredValues;
     }
 }
