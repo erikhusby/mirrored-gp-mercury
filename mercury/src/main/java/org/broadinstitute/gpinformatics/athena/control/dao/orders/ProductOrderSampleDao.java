@@ -28,4 +28,37 @@ public class ProductOrderSampleDao extends GenericDao {
     public List<ProductOrderSample> findByProductOrder(ProductOrder productOrder) {
         return findList(ProductOrderSample.class, ProductOrderSample_.productOrder, productOrder);
     }
+
+
+//    public ProductOrderSample findByOrderAndName(@Nonnull ProductOrder productOrder, @Nonnull String sampleName) {
+//        if (productOrder == null) {
+//            throw new NullPointerException("Null Product Order.");
+//        }
+//
+//        if (sampleName == null) {
+//            throw new NullPointerException("Null Sample Name.");
+//        }
+//
+//        EntityManager entityManager = getEntityManager();
+//        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+//
+//        CriteriaQuery<ProductOrderSample> criteriaQuery =
+//                criteriaBuilder.createQuery(ProductOrderSample.class);
+//
+//        List<Predicate> predicateList = new ArrayList<Predicate>();
+//
+//        Root<ProductOrderSample> productOrderSampleRoot = criteriaQuery.from(ProductOrderSample.class);
+//        predicateList.add(criteriaBuilder.equal(productOrderSampleRoot.get(ProductOrderSample_.productOrder ), productOrder));
+//        predicateList.add(criteriaBuilder.equal(productOrderSampleRoot.get(ProductOrderSample_.sampleName), sampleName));
+//
+//        Predicate[] predicates = new Predicate[predicateList.size()];
+//        criteriaQuery.where(predicateList.toArray(predicates));
+//
+//        try {
+//            return entityManager.createQuery(criteriaQuery).getSingleResult();
+//        } catch (NoResultException ignored) {
+//            return null;
+//        }
+//    }
+
 }

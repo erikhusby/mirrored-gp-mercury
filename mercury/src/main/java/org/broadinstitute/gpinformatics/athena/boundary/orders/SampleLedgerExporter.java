@@ -32,9 +32,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     // Each worksheet is a different product, so distribute the list of orders by product
     private final Map<Product, List<ProductOrder>> orderMap = new HashMap<Product, List<ProductOrder>>();
 
-    private static final String[] FIXED_HEADERS = {
+    public static final String[] FIXED_HEADERS = {
             "Sample ID",
             "Collaborator Sample ID",
+            "Material Type",
             "Product Name",
             "Product Order ID",
             "Product Order Name",
@@ -42,7 +43,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             // "Comments",
             "Date Completed",
             "Quote ID",
-            "Billing Errors"
+            "Billing Errors",
+            "Sort Column"
     };
 
     private BSPUserList bspUserList;
@@ -109,7 +111,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         return null;
     }
 
-    private List<PriceItem> getPriceItems(Product product) {
+    public static List<PriceItem> getPriceItems(Product product) {
         // Create a copy of the product's price items list in order to impose an order on it.
         List<PriceItem> allPriceItems = new ArrayList<PriceItem>(product.getOptionalPriceItems());
         Collections.sort(allPriceItems, new Comparator<PriceItem>() {
@@ -136,10 +138,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell("New Quantity", getBilledAmountsHeaderStyle());
     }
 
-    private void writePriceItemHeaders(PriceItem priceItem) {
-        getWriter().writeCell(priceItem.getName(), getBilledAmountsHeaderStyle());
-        getWriter().writeCell(priceItem.getName(), getBilledAmountsHeaderStyle());
-    }
 
     /**
      * Write out the spreadsheet contents to a stream.  The output is in native excel format.
@@ -192,8 +190,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
             // Write content.
             for (ProductOrder productOrder : productOrders) {
+                int sortOrder = 1;
+
                 for (ProductOrderSample sample : productOrder.getSamples()) {
-                    writeRow(sortedPriceItems, sortedAddOns, sample);
+                    writeRow(sortedPriceItems, sortedAddOns, sample, sortOrder++);
                 }
             }
         }
@@ -201,7 +201,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWorkbook().write(out);
     }
 
-    private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns, ProductOrderSample sample) {
+    private void writeRow(List<PriceItem> sortedPriceItems, List<Product> sortedAddOns, ProductOrderSample sample, int sortOrder) {
         getWriter().nextRow();
 
         // sample name
@@ -209,6 +209,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         // collaborator sample ID, looks like this is properly initialized
         getWriter().writeCell(sample.getBspDTO().getCollaboratorsSampleName());
+
+        // Material type from BSP (GPLIM-422)
+        getWriter().writeCell(sample.getBspDTO().getMaterialType());
 
         // product name
         getWriter().writeCell(sample.getProductOrder().getProduct().getProductName());
@@ -242,6 +245,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         } else {
             getWriter().writeCell(billingError, getErrorMessageStyle());
         }
+
+        // sort order to be able to reconstruct the originally sorted sample list
+        getWriter().writeCell(sortOrder);
 
         // per 2012-11-19 meeting not doing this
         // getWriter().writeCell(sample.getBillingStatus().getDisplayName());

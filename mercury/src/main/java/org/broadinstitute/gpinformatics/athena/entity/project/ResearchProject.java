@@ -21,6 +21,7 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.io.IOException;
 import java.io.Serializable;
@@ -470,6 +471,25 @@ public class ResearchProject implements Serializable {
         listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.MERCURY_URL, ""));
 
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
+        StringBuilder piList = new StringBuilder();
+        boolean first = true;
+        for (ProjectPerson currPI: findPeopleByType(RoleType.BROAD_PI)) {
+            if(null != bspUserList.getById(currPI.getPersonId())) {
+                if(!first) {
+                    piList.append("\n");
+                }
+                piList.append(bspUserList.getById(currPI.getPersonId()).getFirstName())
+                      .append(" ")
+                      .append(bspUserList.getById(currPI.getPersonId()).getLastName());
+                first = false;
+            }
+        }
+
+        if(!piList.toString().isEmpty()) {
+            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.BROAD_PIS, piList.toString()));
+        }
+
+
         String username = bspUserList.getById(createdBy).getUsername();
 
         JiraIssue issue = jiraService.createIssue(fetchJiraProject().getKeyPrefix(),
@@ -490,6 +510,25 @@ public class ResearchProject implements Serializable {
 
     public String getOriginalTitle() {
         return originalTitle;
+    }
+
+    /**
+     *
+     * Provides the ability to retrieve a filtered list of associated people based on their role type
+     *
+     * @param personType
+     * @return
+     */
+    private Collection<ProjectPerson> findPeopleByType(RoleType personType) {
+        List<ProjectPerson> foundPersonList = new LinkedList<ProjectPerson>();
+
+        for(ProjectPerson currPerson: associatedPeople) {
+            if(currPerson.getRole() == personType) {
+                foundPersonList.add(currPerson);
+            }
+        }
+
+        return foundPersonList;
     }
 
     /**
@@ -530,7 +569,9 @@ public class ResearchProject implements Serializable {
         FUNDING_SOURCE("Funding Source"),
         IRB_IACUC_NUMBER("IRB/IACUCs"),
         IRB_NOT_ENGAGED_FIELD("IRB Not Engaged?"),
-        MERCURY_URL("Mercury URL");
+        MERCURY_URL("Mercury URL"),
+        BROAD_PIS("Broad PI(s)"),
+        ;
 
         private final String fieldName;
 
@@ -538,7 +579,7 @@ public class ResearchProject implements Serializable {
             fieldName = fieldNameIn;
         }
 
-        @NotNull @Override
+        @Nonnull @Override
         public String getFieldName() {
             return fieldName;
         }
