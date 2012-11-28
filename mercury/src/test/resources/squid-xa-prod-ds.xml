@@ -14,7 +14,7 @@
         </security>
         <validation>
             <background-validation>true</background-validation>
-            <background-validation-millis>10</background-validation-millis>
+            <background-validation-millis>60000</background-validation-millis>
             <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
             <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
             <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>

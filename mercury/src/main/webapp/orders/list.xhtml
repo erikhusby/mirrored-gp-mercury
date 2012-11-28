@@ -10,6 +10,9 @@
       xmlns:p="http://primefaces.org/ui" xmlns:security="http://mercury.broadinstitute.org/tags">
 <body>
     <ui:composition template="/layout.xhtml">
+        <ui:define name="metadata">
+            <f:event type="preRenderView" listener="#{productOrderForm.initView}"/>
+        </ui:define>
         <ui:define name="title">Product Orders</ui:define>
 
         <ui:define name="body">
@@ -36,6 +39,7 @@
                      sortBy="#{order.title}"
                      sortOrder="ascending"
                      var="order"
+                     filteredValue="#{productOrderForm.allProductOrders.filteredValues}"
                      selection="#{productOrderForm.selectedProductOrders}">
 
                 <p:column selectionMode="multiple" style="width:18px;" />
@@ -46,7 +50,7 @@
                     </h:link>
                 </p:column>
 
-                <p:column headerText="ID" sortBy="#{order.jiraTicketKey}">
+                <p:column headerText="ID" sortBy="#{order.jiraTicketKey}" sortFunction="#{productOrderForm.businessKeySorter.sort}">
                     <h:outputLink target="JIRA" value="#{jiraLink.browseUrl(order.jiraTicketKey)}" class="external" >
                         <h:outputText value="#{order.jiraTicketKey}" />
                     </h:outputLink>
