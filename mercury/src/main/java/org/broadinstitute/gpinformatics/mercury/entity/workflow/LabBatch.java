@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.io.IOException;
 import java.util.*;
@@ -297,11 +298,9 @@ public class LabBatch {
             customField = customFieldInd;
         }
 
-        @NotNull @Override
+        @Nonnull @Override
         public String getFieldName () {
             return fieldName;
         }
     }
-
-
 }

@@ -400,8 +400,11 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     public void initForm() {
-        conversationData.beginConversation(productOrderDetail.getProductOrder());
-        userBean.checkUserValidForOperation("create an order", this);
+        if (userBean.ensureUserValid()) {
+            conversationData.beginConversation(productOrderDetail.getProductOrder());
+        } else {
+            addErrorMessage(MessageFormat.format(UserBean.LOGIN_WARNING, "create an order"));
+        }
     }
 
     public ProductOrderListEntry[] getSelectedProductOrders() {
