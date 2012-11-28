@@ -158,7 +158,7 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
 
     final DataFormatter dataFormatter = new DataFormatter();
 
-    final String technology = MolecularIndexingScheme.IlluminaPositionHint.P7.getTechnology();
+    final String technology = MolecularIndexingScheme.IndexPosition.ILLUMINA_P7.getTechnology();
 
     @Override
     public List<PlateWellIndexAssociation> parseInputStream(final InputStream inputStream) {

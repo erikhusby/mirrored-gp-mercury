@@ -29,11 +29,7 @@
     <ui:define name="body">
 
 
-
         <h:form id="productForm" styleClass="form-horizontal form-readonly" rendered="#{productView.shouldRenderForm()}">
-
-            <!-- cache to store business key in view state to survive across AJAX requests -->
-            <h:inputHidden id="vsBusinessKeyCache" binding="#{productView.vsBusinessKeyCache}" />
 
             <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.productManagerRole}">
                 <div class="row-fluid" style="margin-bottom: 30px;">
@@ -140,7 +136,7 @@
             <div class="control-group">
                 <label class="control-label label-form">Primary Price Item</label>
                 <div class="controls">
-                    <div class="form-value">#{productView.product.defaultPriceItem.platform}: #{productView.product.defaultPriceItem.category}: #{productView.product.defaultPriceItem.name}</div>
+                    <div class="form-value">#{productView.product.primaryPriceItem.platform}: #{productView.product.primaryPriceItem.category}: #{productView.product.primaryPriceItem.name}</div>
                 </div>
             </div>
 

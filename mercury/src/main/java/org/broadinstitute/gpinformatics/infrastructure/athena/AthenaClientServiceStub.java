@@ -54,7 +54,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
                 PriceItem.NAME_EXOME_EXPRESS,
                 "testQuoteId");
         Product dummyProduct = createDummyProduct();
-        dummyProduct.setDefaultPriceItem(priceItem);
+        dummyProduct.setPrimaryPriceItem(priceItem);
         ProductOrderSample sample = new ProductOrderSample("SM-1234", BSPSampleDTO.DUMMY);
         ProductOrder order = new ProductOrder( TEST_CREATOR, "title",
                 Collections.singletonList(sample), "quote", dummyProduct,
@@ -82,6 +82,8 @@ public class AthenaClientServiceStub implements AthenaClientService {
 
         researchProject.addPerson( RoleType.SCIENTIST, 111L);
         researchProject.addPerson(RoleType.SCIENTIST, 222L);
+        researchProject.addPerson( RoleType.BROAD_PI, 10950L);
+        researchProject.addPerson(RoleType.BROAD_PI, 10951L);
         return researchProject;
     }
 

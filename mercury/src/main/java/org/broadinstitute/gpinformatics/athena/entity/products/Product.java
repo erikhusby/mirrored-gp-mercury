@@ -54,18 +54,16 @@ public class Product implements Serializable, Comparable<Product> {
 
     /**
      * Primary price item for the product. Should NOT also be in the priceItems set.
-     * TODO: rename this field to something like primaryPriceItem
      */
     @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
-    private PriceItem defaultPriceItem;
+    private PriceItem primaryPriceItem;
 
     /**
      * OPTIONAL price items for the product. Should NOT include defaultPriceItem.
-     * TODO: rename this field to something like optionalPriceItems
      */
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    @JoinTable(schema = "athena")
-    private Set<PriceItem> priceItems = new HashSet<PriceItem>();
+    @JoinTable(schema = "athena", name = "PRODUCT_OPT_PRICE_ITEMS")
+    private Set<PriceItem> optionalPriceItems = new HashSet<PriceItem>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "athena")
@@ -171,16 +169,16 @@ public class Product implements Serializable, Comparable<Product> {
         return topLevelProduct;
     }
 
-    public PriceItem getDefaultPriceItem() {
-        return defaultPriceItem;
+    public PriceItem getPrimaryPriceItem() {
+        return primaryPriceItem;
     }
 
-    public void setDefaultPriceItem(PriceItem defaultPriceItem) {
-        this.defaultPriceItem = defaultPriceItem;
+    public void setPrimaryPriceItem(PriceItem defaultPriceItem) {
+        this.primaryPriceItem = defaultPriceItem;
     }
 
-    public Set<PriceItem> getPriceItems() {
-        return priceItems;
+    public Set<PriceItem> getOptionalPriceItems() {
+        return optionalPriceItems;
     }
 
 
@@ -242,7 +240,7 @@ public class Product implements Serializable, Comparable<Product> {
 
     public void addPriceItem(PriceItem priceItem) {
 
-        priceItems.add(priceItem);
+        optionalPriceItems.add(priceItem);
 
     }
 
@@ -287,11 +285,11 @@ public class Product implements Serializable, Comparable<Product> {
     }
 
     public boolean isPriceItemDefault(PriceItem priceItem) {
-        if (defaultPriceItem == priceItem) return true;
+        if (primaryPriceItem == priceItem) return true;
 
-        if (defaultPriceItem == null) return false;
+        if (primaryPriceItem == null) return false;
 
-        return defaultPriceItem.equals(priceItem);
+        return primaryPriceItem.equals(priceItem);
     }
 
     @Override

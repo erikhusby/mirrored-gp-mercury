@@ -18,6 +18,7 @@
                 <f:viewParam name="product" value="#{productOrderDetail.productOrder.product}" converter="#{productConverter}"/>
             </f:metadata>
             <f:event type="preRenderView" listener="#{productOrderForm.initForm}"/>
+            <f:event type="preRenderView" listener="#{researchProjectBean.initView}"/>
         </ui:define>
 
         <ui:define name="body">
@@ -165,7 +166,7 @@
                         <div class="row-fluid">
                             <div class="span1">
                                 <p:commandButton
-                                        disabled="#{!userBean.validUser}"
+
                                         value="Place&nbsp;Order" action="#{productOrderForm.save}"
                                         ajax="false" styleClass="ui-priority-primary"/>
                             </div>
