@@ -124,6 +124,9 @@ public class LibraryBean {
     @JsonProperty("fastTrack")
     private Boolean isFastTrack;
 
+    @JsonProperty
+    private String primaryDisease;
+
     public LibraryBean() {}
 
     public LibraryBean(String library, String project, String initiative, Long workRequest,
@@ -134,7 +137,8 @@ public class LibraryBean {
             String bait, String individual, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
             String weirdness, double preCircularizationDnaSize, Boolean partOfDevExperiment,
             TZDevExperimentData devExperimentData, String gssrBarcode, Collection<String> gssrBarcodes,
-            String gssrSampleType, Short targetLaneCoverage, Boolean doAggregation, Collection<String> customAmpliconSetNames, Boolean fastTrack) {
+            String gssrSampleType, Short targetLaneCoverage, Boolean doAggregation, Collection<String> customAmpliconSetNames, Boolean fastTrack,
+            String primaryDisease) {
         this.library = library;
         this.project = project;
         this.initiative = initiative;
@@ -175,6 +179,7 @@ public class LibraryBean {
         this.doAggregation = doAggregation;
         this.customAmpliconSetNames = customAmpliconSetNames;
         this.isFastTrack = fastTrack;
+        this.primaryDisease = primaryDisease;
     }
 
 
@@ -312,5 +317,9 @@ public class LibraryBean {
 
     public Boolean getFastTrack() {
         return isFastTrack;
+    }
+
+    public String getPrimaryDisease() {
+        return primaryDisease;
     }
 }

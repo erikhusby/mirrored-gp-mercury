@@ -93,13 +93,32 @@ public class IlluminaRunResource implements Serializable {
             for (TZamboniLibrary zamboniLibrary : tZamboniLane.getLibraries()) {
                 String organism = null;
                 BSPSampleDTO bspDTO = lsidToBSPSample.get(zamboniLibrary.getLsid());
+                String primaryDisease = null;
+                String bspSampleType = null;
 
                 if (bspDTO == null) {
                     organism = zamboniLibrary.getOrganism();
+                    // extract more fields from bsp here.
+
+                    // override ZamboniLibrary's sample related fields if there are fields
+                    // for them in BSP so that we avoid using GSSR copies whenever possible
+
+                    // add PDO barcode to ZamboniLibrary in squid, then lookup PDO
+                    // details from an athena service to get name.
+
+                    // test with all bsp data, some bsp samples and some gssr samples
+                    // test with null PDO and real PDOs
+                    // test flowcell query method
+                    // benchmark performance
+
                 }
                 else {
                     organism = bspDTO.getOrganism();
+                    primaryDisease = bspDTO.getPrimaryDisease();
+                    bspSampleType = bspDTO.getSampleType();
                 }
+
+
 
                 LibraryBean libBean = new LibraryBean(zamboniLibrary.getLibrary(),
                         zamboniLibrary.getProject(),
@@ -138,7 +157,8 @@ public class IlluminaRunResource implements Serializable {
                         zamboniLibrary.getTargetLaneCoverage(),
                         zamboniLibrary.aggregate,
                         zamboniLibrary.getCustomAmpliconSetNames(),
-                        zamboniLibrary.isFastTrack());
+                        zamboniLibrary.isFastTrack(),
+                        primaryDisease);
                 libraries.add(libBean);
             }
             //TODO SGM:  pull lane library name from tZamboniLane

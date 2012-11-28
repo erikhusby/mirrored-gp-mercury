@@ -93,7 +93,8 @@ public class LibraryBeanFactory {
                     null/*Short targetLaneCoverage*/,
                     null/*Boolean doAggregation*/,
                     null/*Collection<String> customAmpliconSetNames*/,
-                    false/*Boolean fastTrack*/));
+                    false/*Boolean fastTrack*/,
+                    null));
         }
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(ZimsIlluminaRun.DATE_FORMAT);
         ZimsIlluminaRun zimsIlluminaRun = new ZimsIlluminaRun(illuminaSequencingRun.getRunName(),
