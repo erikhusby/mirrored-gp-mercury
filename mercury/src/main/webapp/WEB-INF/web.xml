@@ -42,6 +42,14 @@
         <url-pattern>*.xhtml</url-pattern>
     </servlet-mapping>
 
+    <servlet>
+        <servlet-name>Tableau Servlet</servlet-name>
+        <servlet-class>org.broadinstitute.gpinformatics.infrastructure.reports.TableauServlet</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>Tableau Servlet</servlet-name>
+        <url-pattern>*.tableau</url-pattern>
+    </servlet-mapping>
 
     <!-- BEGIN for JBoss AS 7 -->
 
