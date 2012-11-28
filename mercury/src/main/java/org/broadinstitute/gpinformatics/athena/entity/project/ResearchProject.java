@@ -21,6 +21,7 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.io.IOException;
 import java.io.Serializable;
@@ -34,7 +35,7 @@ import java.util.*;
 @Table(name = "RESEARCH_PROJECT", schema = "athena")
 public class ResearchProject implements Serializable {
 
-    public static final boolean IRB_ENGAGED     = false;
+    public static final boolean IRB_ENGAGED = false;
     public static final boolean IRB_NOT_ENGAGED = true;
 
     public boolean hasJiraTicketKey() {
@@ -267,6 +268,7 @@ public class ResearchProject implements Serializable {
     }
 
     /**
+     *
      * @return Get the cohortIds. Since the cohort list is defaulted to empty, we know that the cohorts will exist
      */
     public String[] getCohortIds() {
@@ -480,8 +482,9 @@ public class ResearchProject implements Serializable {
                 if (!first) {
                     piList.append("\n");
                 }
-                piList.append(bspUserList.getById(currPI.getPersonId()).getFirstName()).append(" ").append(
-                        bspUserList.getById(currPI.getPersonId()).getLastName());
+                piList.append(bspUserList.getById(currPI.getPersonId()).getFirstName())
+                      .append(" ")
+                      .append(bspUserList.getById(currPI.getPersonId()).getLastName());
                 first = false;
             }
         }
@@ -502,9 +505,9 @@ public class ResearchProject implements Serializable {
 
         // Update ticket with link back into Mercury
         MercuryConfig mercuryConfig = ServiceAccessUtility.getBean(MercuryConfig.class);
-        CustomField mercuryUrlField = new CustomField(submissionFields, RequiredSubmissionFields.MERCURY_URL,
-                                                      mercuryConfig
-                                                              .getUrl() + "projects/view.xhtml?researchProject=" + jiraTicketKey);
+        CustomField mercuryUrlField = new CustomField(
+                submissionFields, RequiredSubmissionFields.MERCURY_URL,
+                mercuryConfig.getUrl() + "projects/view.xhtml?researchProject=" + jiraTicketKey);
         issue.updateIssue(Collections.singleton(mercuryUrlField));
     }
 
@@ -513,6 +516,7 @@ public class ResearchProject implements Serializable {
     }
 
     /**
+     *
      * Provides the ability to retrieve a filtered list of associated people based on their role type
      *
      * @param personType
@@ -577,8 +581,7 @@ public class ResearchProject implements Serializable {
             fieldName = fieldNameIn;
         }
 
-        @NotNull
-        @Override
+        @Nonnull @Override
         public String getFieldName() {
             return fieldName;
         }
