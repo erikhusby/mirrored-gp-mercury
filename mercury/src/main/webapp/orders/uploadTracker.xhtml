@@ -10,6 +10,9 @@
       xmlns:p="http://primefaces.org/ui">
 <body>
 <ui:composition template="/layout.xhtml">
+    <ui:define name="metadata">
+        <f:event type="preRenderView" listener="#{fileUploadController.initView}"/>
+    </ui:define>
     <ui:define name="title">Upload Billing Tracker</ui:define>
 
     <ui:define name="body">
@@ -37,26 +40,27 @@
             <!--<p:panel rendered="#{fileUploadController.uploadPreviewData != null}" >-->
 
             <p:dataTable id="uploadPreviewTable"
-                         value="#{fileUploadController.uploadPreviewData}"
+
+                         value="#{fileUploadController.uploadPreviewTableData.values}"
                          var="previewData">
 
-                <p:column headerText="Order Id"> <!-- sortBy="#{previewData.orderJiraKey}" -->
+                <p:column headerText="Order Id" sortBy="#{previewData.orderJiraKey}">
                     #{previewData.orderJiraKey}
                 </p:column>
 
-                <p:column headerText="Product Part Number"> <!-- sortBy="#{previewData.productPartNumber}" -->
+                <p:column headerText="Product Part Number" sortBy="#{previewData.productPartNumber}" >
                     #{previewData.productPartNumber}
                 </p:column>
 
-                <p:column headerText="Price Item Name"> <!-- sortBy="#{previewData.priceItemName}" -->
+                <p:column headerText="Price Item Name" sortBy="#{previewData.priceItemName}">
                     #{previewData.priceItemName}
                 </p:column>
 
-                <p:column headerText="Total Charges">
+                <p:column headerText="Total Charges" sortBy="#{previewData.totalCharges}">
                     #{previewData.totalCharges}
                 </p:column>
 
-                <p:column headerText="Total Credits">
+                <p:column headerText="Total Credits" sortBy="#{previewData.totalCredits}">
                     #{previewData.totalCredits}
                 </p:column>
 

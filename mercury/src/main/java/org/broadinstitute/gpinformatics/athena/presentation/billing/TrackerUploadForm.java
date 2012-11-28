@@ -7,10 +7,13 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.UploadPreviewDat
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.infrastructure.jsf.TableData;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.UploadedFile;
 
+import javax.enterprise.context.Conversation;
+import javax.enterprise.context.ConversationScoped;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
@@ -41,7 +44,23 @@ public class TrackerUploadForm  extends AbstractJsfBean {
 
     private String filename;
 
-    private List<UploadPreviewData> uploadPreviewData;
+    @ConversationScoped public static class UploadPreviewTableData extends TableData<UploadPreviewData> {}
+    @Inject UploadPreviewTableData uploadPreviewTableData;
+
+    @Inject
+    private FacesContext facesContext;
+
+    @Inject
+    private Conversation conversation;
+
+    public void initView() {
+        if (!facesContext.isPostback()) {
+            if (conversation.isTransient()) {
+                conversation.begin();
+            }
+        }
+    }
+
 
     /**
      * Is there a common location for this logic?
@@ -55,8 +74,6 @@ public class TrackerUploadForm  extends AbstractJsfBean {
 
 
     public void handleFileUpload(FileUploadEvent event) {
-        // null out any previously uploaded data
-        uploadPreviewData = null;
 
         UploadedFile file = event.getFile();
         //TODO following line just for prototyping
@@ -71,7 +88,7 @@ public class TrackerUploadForm  extends AbstractJsfBean {
             inputStream = file.getInputstream();
             Map<String, Map<String,Map<BillableRef,OrderBillSummaryStat>>> productProductOrderPriceItemChargesMap = importer.parseFileForSummaryMap(inputStream);
 
-            uploadPreviewData = new ArrayList<UploadPreviewData>();
+            List<UploadPreviewData> uploadPreviewData = new ArrayList<UploadPreviewData>();
 
             // for the purposes of preview we don't actually care about the product keys in this nested map, only
             // the product orders and price items
@@ -96,6 +113,8 @@ public class TrackerUploadForm  extends AbstractJsfBean {
             }
 
             Collections.sort(uploadPreviewData);
+
+            uploadPreviewTableData.setValues(uploadPreviewData);
 
         } catch (Exception e) {
             //TODO correct this
@@ -134,7 +153,7 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         this.filename = filename;
     }
 
-    public List<UploadPreviewData> getUploadPreviewData() {
-        return uploadPreviewData;
+    public UploadPreviewTableData getUploadPreviewTableData() {
+        return uploadPreviewTableData;
     }
 }
