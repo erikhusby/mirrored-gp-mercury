@@ -458,7 +458,7 @@ public class ProductOrderForm extends AbstractJsfBean {
             String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
             if (duplicatePriceItems != null) {
                 addErrorMessage("The Product " + product.getPartNumber() +
-                                " has duplicate price items: " + StringUtils.join(", ", duplicatePriceItems));
+                                " has duplicate price items: " + StringUtils.join(duplicatePriceItems, ", "));
                 return null;
             }
         }
