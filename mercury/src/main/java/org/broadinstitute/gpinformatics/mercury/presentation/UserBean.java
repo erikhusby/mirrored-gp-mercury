@@ -27,7 +27,7 @@ import java.util.EnumSet;
 public class UserBean implements Serializable {
     private static final String SUPPORT_EMAIL = "mercury-support@broadinstitute.org";
 
-    private static final String LOGIN_WARNING = "You need to log into JIRA and BSP before you can {0}.";
+    public static final String LOGIN_WARNING = "You need to log into JIRA and BSP before you can {0}.";
 
     @Nullable
     private BspUser bspUser;
@@ -158,23 +158,26 @@ public class UserBean implements Serializable {
     }
 
     /**
-     * Ensure that the user is logged in to BSP and JIRA, if not issue a warning using JSF.
-     * @param operation the operation name, for the warning text.
-     * @param jsfBean the JSF bean used to issue the warning.
+     * Ensure that the user is logged in to BSP and JIRA, updating the status if necessary. <p/>
+     * If the user wasn't already logged into BSP, this will try again. Regardless of the user's JIRA login state
+     * it always checks to see if the JIRA server is running. If JIRA isn't running then the user can't continue.
+     * If BSP isn't running, it's OK as long as the user was verified with BSP at some point.
+     *
+     * @return true if user is valid.
      */
-    public void checkUserValidForOperation(String operation, AbstractJsfBean jsfBean) {
+    public boolean ensureUserValid() {
         // Check and see if the server state has changed to allow the user to log in.
         if (bspStatus != ServerStatus.loggedIn) {
             updateBspStatus();
         }
-        if (jiraStatus != ServerStatus.loggedIn) {
-            updateJiraStatus();
-        }
-        if (!isValidUser()) {
-            jsfBean.addErrorMessage(MessageFormat.format(LOGIN_WARNING, operation));
-        }
+        // Always update the JIRA status.
+        updateJiraStatus();
+        return isValidUser();
     }
 
+    /**
+     * @return true if user is valid with BSP and JIRA.
+     */
     public boolean isValidUser() {
         return isValidBspUser() && isValidJiraUser();
     }
