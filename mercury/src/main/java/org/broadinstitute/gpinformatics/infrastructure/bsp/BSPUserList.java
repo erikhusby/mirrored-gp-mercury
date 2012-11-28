@@ -187,7 +187,7 @@ public class BSPUserList extends AbstractCache {
         }
     }
 
-    public boolean isTestUser(BspUser user) {
+    public static boolean isTestUser(BspUser user) {
         return user instanceof QADudeUser;
     }
 

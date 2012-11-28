@@ -445,7 +445,7 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     private Set<BillingLedger> validateOrderSelection(String validatingFor) {
-        if ((userBean == null) || (userBean.getBspUser() == null) || (userBean.getBspUser().getUserId() == null)) {
+        if (!userBean.isValidBspUser()) {
             addErrorMessage("A valid bsp user is needed to start a " + validatingFor);
             return null;
         }
