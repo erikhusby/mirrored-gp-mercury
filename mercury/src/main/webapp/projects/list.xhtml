@@ -10,6 +10,9 @@
       xmlns:p="http://primefaces.org/ui">
 <body>
     <ui:composition template="/layout.xhtml">
+        <ui:define name="metadata">
+            <f:event type="preRenderView" listener="#{researchProjectBean.initView}"/>
+        </ui:define>
         <ui:define name="title">Research Projects</ui:define>
         <ui:define name="body">
             <h:form>
@@ -17,7 +20,7 @@
                     <h:link value="New Research Project" outcome="create" styleClass="pull-right"/>
                 </div>
 
-                <p:dataTable value="#{researchProjectBean.allResearchProjects}"
+                <p:dataTable value="#{researchProjectBean.researchProjectData.values}"
                              var="project"
                              sortBy="#{project.title}"
                              sortOrder="ascending">
@@ -49,8 +52,9 @@
                         </h:outputText>
                     </p:column>
 
-                    <p:column headerText="# of&lt;br&gt;Orders" sortBy="#{project.productOrders.size()}">
-                        <h:outputText value="#{project.productOrders.size()}" styleClass="align-right"/>
+                    <p:column headerText="# of&lt;br&gt;Orders"
+                              sortBy="#{researchProjectBean.researchProjectCounts.get(project.jiraTicketKey)}">
+                        <h:outputText value="#{researchProjectBean.researchProjectCounts.get(project.jiraTicketKey)}" styleClass="align-right"/>
                     </p:column>
 
                 </p:dataTable>

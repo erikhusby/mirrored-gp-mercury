@@ -971,8 +971,8 @@ public class LabEventTest {
 
                 final String sequence = stringBuilder.toString();
                 MolecularIndexReagent molecularIndexReagent = new MolecularIndexReagent(new MolecularIndexingScheme(
-                        new HashMap<MolecularIndexingScheme.PositionHint, MolecularIndex>(){{
-                            put(MolecularIndexingScheme.IlluminaPositionHint.P7, new MolecularIndex(sequence));}}));
+                        new HashMap<MolecularIndexingScheme.IndexPosition, MolecularIndex>(){{
+                            put(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7, new MolecularIndex(sequence));}}));
                 plateWell.addReagent(molecularIndexReagent);
                 indexPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
             }

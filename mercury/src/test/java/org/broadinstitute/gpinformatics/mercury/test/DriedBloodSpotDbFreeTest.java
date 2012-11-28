@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
@@ -60,7 +61,31 @@ public class DriedBloodSpotDbFreeTest {
         driedBloodSpotEntityBuilder.buildEntities();
 
         LabEventResource labEventResource = new LabEventResource();
-        List<LabEventBean> labEventBeans = labEventResource.buildLabEventBeans(new ArrayList<LabEvent>(labBatch.getLabEvents()));
+        List<LabEventBean> labEventBeans =
+                labEventResource.buildLabEventBeans(new ArrayList<LabEvent>(labBatch.getLabEvents()),
+                                                    new LabEventFactory.LabEventRefDataFetcher() {
+                                                       @Override
+                                                       public BspUser getOperator(
+                                                               String userId) {
+                                                           BSPUserList testList = new BSPUserList(
+                                                                   BSPManagerFactoryProducer.stubInstance());
+                                                           return testList.getByUsername(userId);
+                                                       }
+
+                                                       @Override
+                                                       public BspUser getOperator(
+                                                               Long bspUserId) {
+                                                           BSPUserList testList = new BSPUserList(
+                                                                   BSPManagerFactoryProducer.stubInstance());
+                                                           return testList.getById(bspUserId);
+                                                       }
+
+                                                       @Override
+                                                       public LabBatch getLabBatch(
+                                                               String labBatchName) {
+                                                           return null;
+                                                       }
+                                                   });
 //        Assert.assertEquals("Wrong number of messages", 10, labEventBeans.size());
     }
 

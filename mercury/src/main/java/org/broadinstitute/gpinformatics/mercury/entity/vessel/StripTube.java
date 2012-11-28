@@ -23,6 +23,11 @@ public class StripTube extends LabVessel implements VesselContainerEmbedder<Stri
     protected StripTube() {
     }
 
+    @Override
+    public VesselGeometry getVesselGeometry() {
+        return VesselGeometry.STRIP_TUBE;
+    }
+
     public enum Positions {
         ONE("1"),
         TWO("2"),

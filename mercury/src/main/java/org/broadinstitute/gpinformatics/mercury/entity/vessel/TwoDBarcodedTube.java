@@ -32,6 +32,11 @@ public class TwoDBarcodedTube extends LabVessel {
     }
 
     @Override
+    public VesselGeometry getVesselGeometry() {
+        return VesselGeometry.TUBE;
+    }
+
+    @Override
     public CONTAINER_TYPE getType() {
         return CONTAINER_TYPE.TUBE;
     }

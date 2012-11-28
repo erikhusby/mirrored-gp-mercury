@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.products;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductManager;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
@@ -143,20 +144,20 @@ public class ProductForm extends AbstractJsfBean {
                 // No form initialization needed for create
             } else {
 
-                if (product.getDefaultPriceItem() != null) {
-                    PriceItem priceItemDto = entityToDto(product.getDefaultPriceItem());
+                if (product.getPrimaryPriceItem() != null) {
+                    PriceItem priceItemDto = entityToDto(product.getPrimaryPriceItem());
 
                     if (! priceListCache.contains(priceItemDto)) {
                         issueMessagesForPriceItemNotOnPriceList("defaultPriceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, true));
                         defaultPriceItem = null;
                     }
                     else {
-                        defaultPriceItem = entityToDto(product.getDefaultPriceItem());
+                        defaultPriceItem = entityToDto(product.getPrimaryPriceItem());
                     }
                 }
-                if (product.getPriceItems() != null) {
+                if (product.getOptionalPriceItems() != null) {
                     priceItems = new ArrayList<PriceItem>();
-                    for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getPriceItems()) {
+                    for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getOptionalPriceItems()) {
 
                         PriceItem priceItemDto = entityToDto(priceItem);
                         if (! priceListCache.contains(priceItemDto)) {
@@ -208,12 +209,20 @@ public class ProductForm extends AbstractJsfBean {
 
 
     public String save() {
+
         // need to calculate 'creating' here, doing it after writing out the entity is too late (we always get 'updating')
         boolean creating = isCreating();
 
         try {
             addAllAddOnsToProduct();
             addAllPriceItemsToProduct();
+
+            // If there are duplicate price items, send an error message
+            String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
+            if (duplicatePriceItems != null) {
+                addErrorMessage("Cannot save with duplicate price items: " + StringUtils.join(duplicatePriceItems, ", "));
+                return null;
+            }
 
             productManager.save(product);
         }
@@ -281,9 +290,9 @@ public class ProductForm extends AbstractJsfBean {
             throw new ApplicationValidationException("Default price item must be entered");
         }
 
-        product.setDefaultPriceItem(findEntity(defaultPriceItem));
+        product.setPrimaryPriceItem(findEntity(defaultPriceItem));
 
-        product.getPriceItems().clear();
+        product.getOptionalPriceItems().clear();
         if (priceItems != null) {
             for (PriceItem priceItem : priceItems) {
                 org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity = findEntity(priceItem);

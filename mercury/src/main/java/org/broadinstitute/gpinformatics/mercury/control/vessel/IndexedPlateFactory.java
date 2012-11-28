@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
@@ -42,9 +42,9 @@ public class IndexedPlateFactory {
 
     public enum TechnologiesAndParsers {
         FOUR54_SINGLE("454 (Single Index)",
-                new IndexedPlateParserFourColumnFormat(MolecularIndexingScheme.Four54PositionHint.A.getTechnology())),
+                new IndexedPlateParserFourColumnFormat(MolecularIndexingScheme.IndexPosition.FOUR54_A.getTechnology())),
         ION_SINGLE("Ion Torrent (Single Index)",
-                new IndexedPlateParserFourColumnFormat(MolecularIndexingScheme.IonPositionHint.A.getTechnology())),
+                new IndexedPlateParserFourColumnFormat(MolecularIndexingScheme.IndexPosition.ION_A.getTechnology())),
         ILLUMINA_SINGLE("Illumina (Single Index)",
                 new IndexedPlateParserIDTSpreadsheetFormat()),
         ILLUMINA_TSCA("Illumina (TSCA)",

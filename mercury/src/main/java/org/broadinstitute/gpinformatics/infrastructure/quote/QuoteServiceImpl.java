@@ -3,13 +3,16 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import com.sun.jersey.api.client.*;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
-import org.apache.commons.lang.StringUtils;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 @Impl
 public class QuoteServiceImpl extends AbstractJerseyClientService implements QuoteService {
@@ -24,7 +27,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     /**
      * Non CDI constructor, all dependencies must be explicitly initialized!
      *
-     * @param quoteConfig
+     * @param quoteConfig The configuration
      */
     public QuoteServiceImpl(QuoteConfig quoteConfig) {
         this.quoteConfig = quoteConfig;
@@ -54,7 +57,11 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     }
 
     @Override
-    public String registerNewWork(Quote quote, PriceItem priceItem, double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+    public String registerNewWork(Quote quote, PriceItem priceItem, Date reportedCompletionDate, double numWorkUnits,
+                                  String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+
         // see https://iwww.broadinstitute.org/blogs/quote/?page_id=272 for details
         String url = url(Endpoint.REGISTER_WORK);
         MultivaluedMap<String, String> params = new MultivaluedMapImpl();
@@ -65,6 +72,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         params.add("price_item_name", priceItem.getName());
         params.add("quantity", Double.toString(numWorkUnits));
         params.add("complete", Boolean.TRUE.toString());
+        params.add("completion_date", dateFormat.format(reportedCompletionDate));
         params.add("url", callbackUrl);
         params.add("object_type", callbackParameterName);
         params.add("object_value", callbackParameterValue);
@@ -80,14 +88,20 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     /**
      * Package visibility for negative testing
      *
-     * @return
+     * @return The work item id returned (as a string)
      */
-    String registerNewWork(ClientResponse response, Quote quote, PriceItem priceItem, double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+    String registerNewWork(@Nonnull ClientResponse response, Quote quote, PriceItem priceItem,
+                           double numWorkUnits, String callbackUrl, String callbackParameterName,
+                           String callbackParameterValue) {
+
         if (response == null) {
             throwQuoteServerFailureException(quote, priceItem, numWorkUnits);
         } else {
             if (response.getClientResponseStatus() != ClientResponse.Status.OK) {
-                throw new RuntimeException("Quote server returned " + response.getClientResponseStatus() + ".  Registering work for " + numWorkUnits + " of " + priceItem.getName() + " against quote " + quote.getAlphanumericId() + " appears to have failed.");
+                throw new RuntimeException(
+                    "Quote server returned " + response.getClientResponseStatus() +
+                    ".  registering work for " + numWorkUnits + " of " + priceItem.getName() + "" +
+                    " against quote " + quote.getAlphanumericId() + " appears to have failed.");
             }
         }
 
@@ -100,7 +114,9 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
         if (!output.contains(WORK_ITEM_ID)) {
             StringBuilder builder = new StringBuilder();
-            builder.append("Quote server returned the following:\n").append(output).append("\n").append("This is not what Mercury expected, so we're not sure what the status of billing is.  This happened while registering work for " + numWorkUnits + " of " + priceItem.getName() + " against quote " + quote.getAlphanumericId() + ".");
+            builder.append("Quote server returned:\n").append(output).append("\n")
+                   .append(" for ").append(numWorkUnits).append(" of ").append(priceItem.getName())
+                    .append(" against quote ").append(quote.getAlphanumericId());
             throw new RuntimeException(builder.toString());
         } else {
             String[] split = output.split(WORK_ITEM_ID);
@@ -117,7 +133,10 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     }
 
     private void throwQuoteServerFailureException(Quote quote, PriceItem priceItem, double numWorkUnits) {
-        throw new RuntimeException("Quote server did not return the appropriate response.  Registering work for " + numWorkUnits + " of " + priceItem.getName() + " against quote " + quote.getAlphanumericId() + " appears to have failed.");
+        throw new RuntimeException(
+                "Quote server did not return the appropriate response.  Registering work for " + numWorkUnits +
+                " of " + priceItem.getName() + " against quote " + quote.getAlphanumericId() +
+                " appears to have failed.");
     }
 
     @Override
@@ -164,7 +183,8 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
      * Gets all quotes for the sequencing platform.
      * This is a bit slow.
      *
-     * @return
+     * @return The quotes
+     *
      * @throws QuoteServerException
      * @throws QuoteNotFoundException
      */

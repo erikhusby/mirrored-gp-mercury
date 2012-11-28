@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -15,8 +15,10 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
@@ -78,7 +80,18 @@ public class ProductOrder implements Serializable {
     private String comments;
 
     /** Reference to the Jira Ticket created when the order is submitted */
+    @Column(name = "JIRA_TICKET_KEY", nullable = false)
     private String jiraTicketKey;
+
+    @Column(name = "count")
+    /** counts the number of lanes; the default value is one lane */
+    private int count = 1;
+
+    /** Counts the number of rows in the one-to-many table.  Reference this count before fetching the collection, to
+     * avoid an unnecessary database round trip  */
+    @NotAudited
+    @Formula("(select count(*) from athena.product_order_sample pos where pos.product_order = product_order_id)")
+    private Integer pdoSampleCount = 0;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order", nullable = false)
@@ -115,6 +128,14 @@ public class ProductOrder implements Serializable {
         }
 
         return StringUtils.join(addOnArray, ", ");
+    }
+
+    public int getCount() {
+        return count;
+    }
+
+    public void setCount(int count) {
+        this.count = count;
     }
 
     /**
@@ -706,7 +727,7 @@ public class ProductOrder implements Serializable {
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.QUOTE_ID, quoteId));
         }
         listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.SAMPLE_IDS,
-                StringUtils.join(getSampleNames(), ',')));
+                StringUtils.join(getSampleNames(), '\n')));
 
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
 
@@ -838,7 +859,7 @@ public class ProductOrder implements Serializable {
             fieldName = fieldNameIn;
         }
 
-        @NotNull @Override
+        @Nonnull @Override
         public String getFieldName() {
             return fieldName;
         }
@@ -879,9 +900,9 @@ public class ProductOrder implements Serializable {
 
         ProductOrder that = (ProductOrder) o;
 
-        if (researchProject != null ? !researchProject.equals(that.researchProject) : that.researchProject != null)
+        if (researchProject != null ? !researchProject.equals(that.getResearchProject()) : that.getResearchProject() != null)
             return false;
-        if (title != null ? !title.equals(that.title) : that.title != null) return false;
+        if (title != null ? !title.equals(that.getTitle()) : that.getTitle() != null) return false;
 
         return true;
     }
@@ -895,5 +916,9 @@ public class ProductOrder implements Serializable {
 
     public boolean hasJiraTicketKey() {
         return !StringUtils.isBlank(jiraTicketKey);
+    }
+
+    public Integer getPdoSampleCount() {
+        return pdoSampleCount;
     }
 }

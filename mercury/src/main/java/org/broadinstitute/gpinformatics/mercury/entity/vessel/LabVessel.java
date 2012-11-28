@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import com.cenqua.clover.SamplingPerTestCoverage;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -31,13 +32,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.persistence.UniqueConstraint;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -103,6 +98,7 @@ public abstract class LabVessel {
     @Formula("(select count(*) from lab_vessel_containers where lab_vessel_containers.lab_vessel = lab_vessel_id)")
     private Integer containersCount = 0;
 
+    /** Reagent additions and machine loaded events, i.e. not transfers */
     @OneToMany(mappedBy = "inPlaceLabVessel", cascade = CascadeType.PERSIST)
     private Set<LabEvent> inPlaceLabEvents = new HashSet<LabEvent>();
 
@@ -213,6 +209,11 @@ public abstract class LabVessel {
         this.containersCount++;
     }
 
+    //Utility method for getting containers as a list so they can be displayed in a display table column
+    public List<VesselContainer<?>> getContainerList() {
+        return new ArrayList<VesselContainer<?>>(getContainers());
+    }
+
     public Set<VesselContainer<?>> getContainers() {
         Set<VesselContainer<?>> vesselContainers = new HashSet<VesselContainer<?>>();
         if(containersCount != null && containersCount > 0) {
@@ -290,21 +291,8 @@ public abstract class LabVessel {
         // todo jmt vessel to vessel transfers
     }
 
-/*
-    public void addNoteToProjects(String message) {
-        Collection<Project> ticketsToNotify = new HashSet<Project>();
-        for (SampleInstance sampleInstance : getSampleInstances()) {
-            if (sampleInstance.getAllProjectPlans() != null) {
-                for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
-                    ticketsToNotify.add(projectPlan.getProject());
-                }
-            }
-        }
-        for (Project project : ticketsToNotify) {
-            project.addJiraComment(message);
-        }
-    }
-*/
+
+    public abstract VesselGeometry getVesselGeometry();
 
     /**
      * When a {@link org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket} is created for a
@@ -345,6 +333,18 @@ public abstract class LabVessel {
         return inPlaceLabEvents;
     }
 
+    public List<LabEvent> getInPlaceEventsList() {
+        return new ArrayList<LabEvent>(getInPlaceEvents());
+    }
+
+    public List<LabEvent> getInPlaceEventsSortedByDate() {
+        Map<Date, LabEvent> sortedTreeMap = new TreeMap<Date, LabEvent>();
+        for(LabEvent event : inPlaceLabEvents){
+            sortedTreeMap.put(event.getEventDate(), event);
+        }
+        return new ArrayList<LabEvent>(sortedTreeMap.values());
+    }
+
     public void addInPlaceEvent(LabEvent labEvent) {
         this.inPlaceLabEvents.add(labEvent);
         labEvent.setInPlaceLabVessel(this);
@@ -353,17 +353,30 @@ public abstract class LabVessel {
     public abstract CONTAINER_TYPE getType();
 
     public enum CONTAINER_TYPE {
-        STATIC_PLATE,
-        PLATE_WELL,
-        RACK_OF_TUBES,
-        TUBE,
-        FLOWCELL,
-        STRIP_TUBE,
-        STRIP_TUBE_WELL,
-        PACBIO_PLATE,
-        ILLUMINA_RUN_CHAMBER
+        STATIC_PLATE("Plate"),
+        PLATE_WELL("Plate Well"),
+        RACK_OF_TUBES("Tube Rack"),
+        TUBE("Tube"),
+        FLOWCELL("Flowcell"),
+        STRIP_TUBE("Strip Tube"),
+        STRIP_TUBE_WELL("Strip Tube Well"),
+        PACBIO_PLATE("PacBio Plate"),
+        ILLUMINA_RUN_CHAMBER("Illumina Run Chamber");
+
+        private String name;
+
+        CONTAINER_TYPE(String name){
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
     }
 
+    /**
+     * Returned from getAncestors and getDescendants
+     */
     static class VesselEvent {
         private LabVessel labVessel;
         private VesselContainer vesselContainer;
@@ -395,7 +408,7 @@ public abstract class LabVessel {
     }
 
     /**
-     * Probably a transient that computes the {@link SampleInstance} data
+     * Computes the {@link SampleInstance} data
      * on-the-fly by walking the history and applying the
      * StateChange applied during lab work.
      * @return
@@ -483,6 +496,9 @@ public abstract class LabVessel {
         return traversalResults;
     }
 
+    public List<SampleInstance> getSampleInstancesList() {
+        return new ArrayList<SampleInstance>(getSampleInstances());
+    }
     /**
      * Get the immediate ancestor vessels to this vessel, in the transfer graph
      * @return ancestors and events
@@ -680,6 +696,11 @@ public abstract class LabVessel {
         return labBatches;
     }
 
+    public List<LabBatch> getLabBatchesList(){
+        return new ArrayList<LabBatch>(getLabBatches());
+    }
+
+    // todo jmt can the next three methods be deleted?
     /**
      * Walk the chain of custody back until it can be
      * walked no further.  What you get are the roots
@@ -716,6 +737,14 @@ public abstract class LabVessel {
         // else walk transfers
         throw new RuntimeException("history traversal for empty samples list not implemented");
 
+    }
+
+    public List<MercurySample> getMercurySamplesList(){
+        List<MercurySample> mercurySamplesList = new ArrayList<MercurySample>();
+        if(!mercurySamples.isEmpty()){
+            mercurySamplesList.addAll(getMercurySamples());
+        }
+        return mercurySamplesList;
     }
 
     /**
@@ -768,6 +797,11 @@ public abstract class LabVessel {
         return null;
     }
 
+    /**
+     * Visits nodes in the transfer graph, and applies criteria.
+     * @param transferTraverserCriteria  object that accumulates results of traversal
+     * @param traversalDirection ancestors or descendants
+     */
     public void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
             TransferTraverserCriteria.TraversalDirection traversalDirection) {
         evaluateCriteria(transferTraverserCriteria, traversalDirection, null, 0);
@@ -801,6 +835,16 @@ public abstract class LabVessel {
             containerRole.evaluateCriteria(containerRole.getPositionOfVessel(this), transferTraverserCriteria, traversalDirection, null, hopCount);
         }
         transferTraverserCriteria.evaluateVesselPostOrder(this, labEvent, hopCount);
+    }
+
+    public LabEvent getLatestEvent() {
+        LabEvent event = null;
+        List<LabEvent> inPlaceEventsSortedByDate = getInPlaceEventsSortedByDate();
+        int size = inPlaceEventsSortedByDate.size();
+        if (size > 0) {
+            event = inPlaceEventsSortedByDate.get(size - 1);
+        }
+        return event;
     }
 
     public Collection<String> getNearestProductOrders() {

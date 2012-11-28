@@ -55,8 +55,9 @@ public class BSPManagerFactoryProducer {
     @SessionScoped
     public BSPManagerFactory produce(@New BSPManagerFactoryStub stub, @New BSPManagerFactoryImpl impl) {
 
-        if (deployment == Deployment.STUBBY)
+        if (deployment == Deployment.STUBBY) {
             return stub;
+        }
 
         return impl;
 

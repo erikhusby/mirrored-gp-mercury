@@ -19,6 +19,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -71,23 +72,28 @@ public class ResearchProjectForm extends AbstractJsfBean {
     private List<Irb> irbs;
 
     public void initForm() {
-        // Only initialize the form if not a postback. Otherwise, we'll leave the form as the user submitted it.
-        if (!facesContext.isPostback()) {
+        if (userBean.ensureUserValid()) {
+            // Only initialize the form if not a postback. Otherwise, we'll leave the form as the user submitted it.
+            if (!facesContext.isPostback()) {
 
-            // Add current user as a PM only if this is a new research project being created
-            if (isCreating()) {
-                projectManagers = new ArrayList<BspUser>();
-                projectManagers.add(userBean.getBspUser());
-            } else {
-                projectManagers = makeBspUserList(detail.getProject().getProjectManagers());
-                broadPIs = makeBspUserList(detail.getProject().getBroadPIs());
-                scientists = makeBspUserList(detail.getProject().getScientists());
-                externalCollaborators = makeBspUserList(detail.getProject().getExternalCollaborators());
+                // Add current user as a PM only if this is a new research project being created
+                if (isCreating()) {
+                    projectManagers = new ArrayList<BspUser>();
+                    projectManagers.add(userBean.getBspUser());
+                } else {
+                    projectManagers = makeBspUserList(detail.getProject().getProjectManagers());
+                    broadPIs = makeBspUserList(detail.getProject().getBroadPIs());
+                    scientists = makeBspUserList(detail.getProject().getScientists());
+                    externalCollaborators = makeBspUserList(detail.getProject().getExternalCollaborators());
 
-                fundingSources = makeFundingSources(detail.getProject().getFundingIds());
-                sampleCohorts = makeCohortList(detail.getProject().getCohortIds());
-                irbs = makeIrbs(detail.getProject().getIrbNumbers());
+                    fundingSources = makeFundingSources(detail.getProject().getFundingIds());
+                    sampleCohorts = makeCohortList(detail.getProject().getCohortIds());
+                    irbs = makeIrbs(detail.getProject().getIrbNumbers());
+                }
             }
+        } else {
+            addErrorMessage(MessageFormat.format(UserBean.LOGIN_WARNING,
+                    (isCreating() ? "create" : "edit") + " a research project"));
         }
     }
 

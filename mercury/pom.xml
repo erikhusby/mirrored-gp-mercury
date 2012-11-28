@@ -633,6 +633,39 @@
                 </testResources>
             </build>
         </profile>
+
+
+        <profile>
+            <id>HOW</id>
+            <properties>
+                <!--  Oracle Dev database -->
+                <database>oracle</database>
+                <database.delimiterType>row</database.delimiterType>
+
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:@192.168.195.3:1521:gpinfprd</database.url>
+                <mercury.password>guest</mercury.password>
+                <athena.password>guest</athena.password>
+            </properties>
+            <build>
+                <testResources>
+                    <testResource>
+                        <directory>src/test/resources</directory>
+                    </testResource>
+                    <testResource>
+                        <directory>src/test/resources-build</directory>
+                        <filtering>true</filtering>
+                    </testResource>
+                    <testResource>
+                        <directory>src/main/webapp/WEB-INF/classes</directory>
+                        <includes>
+                            <include>mercury-config.yaml</include>
+                        </includes>
+                    </testResource>
+                </testResources>
+	        </build>
+        </profile>
+
         <profile>
             <id>BUILD</id>
             <properties>
@@ -977,6 +1010,18 @@
         </dependency>
 
         <dependency>
+            <groupId>commons-fileupload</groupId>
+            <artifactId>commons-fileupload</artifactId>
+            <version>1.2.2</version>
+        </dependency>
+
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>1.4</version>
+        </dependency>
+
+        <dependency>
             <groupId>net.sourceforge.collections</groupId>
             <artifactId>collections-generic</artifactId>
             <version>4.01</version>
@@ -1066,12 +1111,6 @@
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
             <version>1.2.16</version>
-        </dependency>
-
-        <dependency>
-            <groupId>commons-lang</groupId>
-            <artifactId>commons-lang</artifactId>
-            <version>2.5</version>
         </dependency>
 
         <dependency>

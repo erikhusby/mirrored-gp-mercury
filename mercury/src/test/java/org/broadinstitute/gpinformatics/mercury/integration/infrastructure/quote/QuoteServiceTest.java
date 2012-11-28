@@ -5,6 +5,8 @@ import org.testng.Assert;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
+import java.util.Date;
+
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 public class QuoteServiceTest {
@@ -24,7 +26,9 @@ public class QuoteServiceTest {
         QuoteService service = QuoteServiceProducer.qaInstance();
         Quote fetchedQuote = service.getQuoteFromQuoteServer(quote.getAlphanumericId());
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
-        String workBatchId = service.registerNewWork(quote,priceItem,0.0001,"http://www.MercuryTesting","paramName","paramValue");
+        String workBatchId =
+            service.registerNewWork(quote, priceItem, new Date(), 0.0001,
+                                    "http://www.MercuryTesting","paramName","paramValue");
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
 
         Assert.assertNotNull(workBatchId);

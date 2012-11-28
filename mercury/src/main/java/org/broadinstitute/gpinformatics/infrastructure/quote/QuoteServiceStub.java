@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
+import java.util.Date;
+
 @Stub
 public class QuoteServiceStub implements QuoteService {
 
@@ -49,7 +51,8 @@ public class QuoteServiceStub implements QuoteService {
     }
 
     @Override
-    public String registerNewWork(Quote quote, PriceItem priceItem, double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+    public String registerNewWork(Quote quote, PriceItem priceItem, Date reportedCompletionDate,
+                                  double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue) {
         return Integer.toString(workItemId++);
     }
 
