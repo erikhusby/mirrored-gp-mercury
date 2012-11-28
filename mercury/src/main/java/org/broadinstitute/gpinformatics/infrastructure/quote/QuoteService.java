@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import java.io.Serializable;
+import java.util.Date;
 
 /**
  *
@@ -27,6 +28,7 @@ public interface QuoteService extends Serializable {
 
     public String registerNewWork(Quote quote,
                                   PriceItem priceItem,
+                                  Date reportedCompletionDate,
                                   double numWorkUnits,
                                   String callbackUrl,
                                   String callbackParameterName,

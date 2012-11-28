@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEnt
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
+import org.broadinstitute.gpinformatics.athena.presentation.converter.ProductOrderConverter;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -49,6 +50,9 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     @Inject
     ProductOrderDetail productOrderDetail;
+
+    @Inject
+    ProductOrderConverter orderConverter;
 
     @Inject
     ProductDao productDao;
@@ -280,6 +284,16 @@ public class ProductOrderForm extends AbstractJsfBean {
         return MessageFormat.format("The Product ''{0}'' has no Add-ons.", getProduct().getProductName());
     }
 
+    public Set<Product> getSelectedProducts() {
+        Set<Product> productSet = new HashSet<Product>();
+        for (ProductOrderListEntry productOrder : selectedProductOrders) {
+            ProductOrder order = orderConverter.getAsObject(facesContext, null, productOrder.getBusinessKey());
+            productSet.add(order.getProduct());
+        }
+
+        return productSet;
+    }
+
     /**
      * Class that contains operations specific to the sample list samplesDialog.
      *
@@ -417,7 +431,6 @@ public class ProductOrderForm extends AbstractJsfBean {
         return redirect("/billing/view") + "&billingSession=" + session.getBusinessKey();
     }
 
-
     private List<String> getSelectedProductOrderBusinessKeys() {
 
         List<String> businessKeys = new ArrayList<String>();
@@ -428,7 +441,6 @@ public class ProductOrderForm extends AbstractJsfBean {
         return businessKeys;
     }
 
-
     private Set<BillingLedger> validateOrderSelection(String validatingFor) {
         if ((userBean == null) || (userBean.getBspUser() == null) || (userBean.getBspUser().getUserId() == null)) {
             addErrorMessage("A valid bsp user is needed to start a " + validatingFor);
@@ -438,6 +450,17 @@ public class ProductOrderForm extends AbstractJsfBean {
         if ((selectedProductOrders == null) || (selectedProductOrders.length == 0)) {
             addErrorMessage("Product orders must be selected for a " + validatingFor + " to be started");
             return null;
+        }
+
+        // Go through each products and report invalid duplicate price item names
+        Set<Product> products = getSelectedProducts();
+        for (Product product : products) {
+            String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
+            if (duplicatePriceItems != null) {
+                addErrorMessage("The Product " + product.getPartNumber() +
+                                " has duplicate price items: " + StringUtils.join(duplicatePriceItems, ", "));
+                return null;
+            }
         }
 
         // If there are locked out orders, then do not allow the session to start

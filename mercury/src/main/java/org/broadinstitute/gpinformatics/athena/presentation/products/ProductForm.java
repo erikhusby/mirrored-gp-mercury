@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.products;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductManager;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
@@ -208,12 +209,20 @@ public class ProductForm extends AbstractJsfBean {
 
 
     public String save() {
+
         // need to calculate 'creating' here, doing it after writing out the entity is too late (we always get 'updating')
         boolean creating = isCreating();
 
         try {
             addAllAddOnsToProduct();
             addAllPriceItemsToProduct();
+
+            // If there are duplicate price items, send an error message
+            String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
+            if (duplicatePriceItems != null) {
+                addErrorMessage("Cannot save with duplicate price items: " + StringUtils.join(duplicatePriceItems, ", "));
+                return null;
+            }
 
             productManager.save(product);
         }
