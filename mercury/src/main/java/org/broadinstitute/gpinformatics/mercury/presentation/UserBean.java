@@ -158,18 +158,21 @@ public class UserBean implements Serializable {
     }
 
     /**
-     * Ensure that the user is logged in to BSP and JIRA, if not issue a warning using JSF.
+     * Ensure that the user is logged in to BSP and JIRA, if not issue a warning using JSF. <p/>
+     * If the user wasn't already logged into BSP, this will try again. Regardless of the user's JIRA login state
+     * it always checks to see if the JIRA server is running. If JIRA isn't running then the user can't continue.
+     * If BSP isn't running, it's OK as long as the user was verified with BSP at some point.
      * @param operation the operation name, for the warning text.
      * @param jsfBean the JSF bean used to issue the warning.
+     * @return true if user is valid.
      */
     public void checkUserValidForOperation(String operation, AbstractJsfBean jsfBean) {
         // Check and see if the server state has changed to allow the user to log in.
         if (bspStatus != ServerStatus.loggedIn) {
             updateBspStatus();
         }
-        if (jiraStatus != ServerStatus.loggedIn) {
-            updateJiraStatus();
-        }
+        // Always update the JIRA status.
+        updateJiraStatus();
         if (!isValidUser()) {
             jsfBean.addErrorMessage(MessageFormat.format(LOGIN_WARNING, operation));
         }
