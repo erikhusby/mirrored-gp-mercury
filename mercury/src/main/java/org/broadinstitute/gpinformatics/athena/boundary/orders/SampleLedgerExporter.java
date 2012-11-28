@@ -35,6 +35,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     public static final String[] FIXED_HEADERS = {
             "Sample ID",
             "Collaborator Sample ID",
+            "Material Type",
             "Product Name",
             "Product Order ID",
             "Product Order Name",
@@ -209,6 +210,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         // collaborator sample ID, looks like this is properly initialized
         getWriter().writeCell(sample.getBspDTO().getCollaboratorsSampleName());
+
+        // Material type from BSP (GPLIM-422)
+        getWriter().writeCell(sample.getBspDTO().getMaterialType());
 
         // product name
         getWriter().writeCell(sample.getProductOrder().getProduct().getProductName());
