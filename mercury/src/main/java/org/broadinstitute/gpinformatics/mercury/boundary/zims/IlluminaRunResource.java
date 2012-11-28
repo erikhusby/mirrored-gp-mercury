@@ -158,7 +158,8 @@ public class IlluminaRunResource implements Serializable {
                         zamboniLibrary.aggregate,
                         zamboniLibrary.getCustomAmpliconSetNames(),
                         zamboniLibrary.isFastTrack(),
-                        primaryDisease);
+                        primaryDisease,
+                        bspSampleType);
                 libraries.add(libBean);
             }
             //TODO SGM:  pull lane library name from tZamboniLane

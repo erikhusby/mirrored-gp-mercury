@@ -127,18 +127,21 @@ public class LibraryBean {
     @JsonProperty
     private String primaryDisease;
 
+    @JsonProperty
+    private String sampleType;
+
     public LibraryBean() {}
 
     public LibraryBean(String library, String project, String initiative, Long workRequest,
-            MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize,
-            String analysisType, String referenceSequence, String referenceSequenceVersion, String collaboratorSampleId,
-            String collaborator, String organism, String species, String strain, String sampleLSID, String tissueType,
-            String expectedPlasmid, String aligner, String rrbsSizeRange, String restrictionEnzyme, String cellLine,
-            String bait, String individual, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
-            String weirdness, double preCircularizationDnaSize, Boolean partOfDevExperiment,
-            TZDevExperimentData devExperimentData, String gssrBarcode, Collection<String> gssrBarcodes,
-            String gssrSampleType, Short targetLaneCoverage, Boolean doAggregation, Collection<String> customAmpliconSetNames, Boolean fastTrack,
-            String primaryDisease) {
+                       MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize,
+                       String analysisType, String referenceSequence, String referenceSequenceVersion, String collaboratorSampleId,
+                       String collaborator, String organism, String species, String strain, String sampleLSID, String tissueType,
+                       String expectedPlasmid, String aligner, String rrbsSizeRange, String restrictionEnzyme, String cellLine,
+                       String bait, String individual, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
+                       String weirdness, double preCircularizationDnaSize, Boolean partOfDevExperiment,
+                       TZDevExperimentData devExperimentData, String gssrBarcode, Collection<String> gssrBarcodes,
+                       String gssrSampleType, Short targetLaneCoverage, Boolean doAggregation, Collection<String> customAmpliconSetNames, Boolean fastTrack,
+                       String primaryDisease, String sampleType) {
         this.library = library;
         this.project = project;
         this.initiative = initiative;
@@ -180,6 +183,7 @@ public class LibraryBean {
         this.customAmpliconSetNames = customAmpliconSetNames;
         this.isFastTrack = fastTrack;
         this.primaryDisease = primaryDisease;
+        this.sampleType = sampleType;
     }
 
 
@@ -321,5 +325,9 @@ public class LibraryBean {
 
     public String getPrimaryDisease() {
         return primaryDisease;
+    }
+
+    public String getSampleType() {
+        return sampleType;
     }
 }

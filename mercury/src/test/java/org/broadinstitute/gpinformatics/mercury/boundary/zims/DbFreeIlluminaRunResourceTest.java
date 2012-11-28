@@ -63,6 +63,7 @@ public class DbFreeIlluminaRunResourceTest {
             for (LibraryBean libraryBean : lane.getLibraries()) {
                 Assert.assertEquals(sampleDTO.getOrganism(),libraryBean.getOrganism());
                 Assert.assertEquals(sampleDTO.getPrimaryDisease(),libraryBean.getPrimaryDisease());
+                Assert.assertEquals(sampleDTO.getSampleType(),libraryBean.getSampleType());
             }
         }
 
