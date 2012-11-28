@@ -21,6 +21,7 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 import org.jetbrains.annotations.NotNull;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.io.IOException;
 import java.io.Serializable;
@@ -578,7 +579,7 @@ public class ResearchProject implements Serializable {
             fieldName = fieldNameIn;
         }
 
-        @NotNull @Override
+        @Nonnull @Override
         public String getFieldName() {
             return fieldName;
         }
