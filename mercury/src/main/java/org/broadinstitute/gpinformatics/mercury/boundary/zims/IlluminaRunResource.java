@@ -98,18 +98,20 @@ public class IlluminaRunResource implements Serializable {
 
                 if (bspDTO == null) {
                     organism = zamboniLibrary.getOrganism();
-                    // extract more fields from bsp here.
+                    // todo arz extract more fields from bsp here.
 
-                    // override ZamboniLibrary's sample related fields if there are fields
+                    // todo arz override ZamboniLibrary's sample related fields if there are fields
                     // for them in BSP so that we avoid using GSSR copies whenever possible
 
-                    // add PDO barcode to ZamboniLibrary in squid, then lookup PDO
+                    // todo arz add PDO barcode to ZamboniLibrary in squid, then lookup PDO
                     // details from an athena service to get name.
 
-                    // test with all bsp data, some bsp samples and some gssr samples
+                    // todo arz test with all bsp data, some bsp samples and some gssr samples
                     // test with null PDO and real PDOs
                     // test flowcell query method
                     // benchmark performance
+
+                    // todo arz figure out integration test w/ bsp service, get rid of EverythingYouAskForAndItsHuman mock
 
                 }
                 else {
