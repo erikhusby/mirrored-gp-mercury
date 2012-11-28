@@ -23,47 +23,42 @@ import javax.inject.Inject;
 public class BSPManagerFactoryProducer {
 
     @Inject
-     private Deployment deployment;
+    private Deployment deployment;
 
+    private static BSPManagerFactory testInstance;
 
-     private static BSPManagerFactory testInstance;
+    public static BSPManagerFactory testInstance() {
 
+        if (testInstance == null)
 
-     public static BSPManagerFactory testInstance() {
+            synchronized (BSPManagerFactory.class) {
 
-         if (testInstance == null)
+                if (testInstance == null) {
 
-             synchronized (BSPManagerFactory.class) {
+                    BSPConfig bspConfig = BSPConfigProducer.getConfig(Deployment.TEST);
 
-                 if (testInstance == null) {
+                    testInstance = new BSPManagerFactoryImpl(bspConfig);
+                }
+            }
 
-                     BSPConfig bspConfig = BSPConfigProducer.getConfig ( Deployment.TEST );
+        return testInstance;
 
-                     testInstance = new BSPManagerFactoryImpl (bspConfig);
-                 }
-             }
+    }
 
-         return testInstance;
+    public static BSPManagerFactory stubInstance() {
 
-     }
+        return new BSPManagerFactoryStub();
+    }
 
+    @Produces
+    @Default
+    @SessionScoped
+    public BSPManagerFactory produce(@New BSPManagerFactoryStub stub, @New BSPManagerFactoryImpl impl) {
 
-     public static BSPManagerFactory stubInstance() {
+        if (deployment == Deployment.STUBBY)
+            return stub;
 
-         return new BSPManagerFactoryStub ();
-     }
+        return impl;
 
-
-
-     @Produces
-     @Default
-     @SessionScoped
-     public BSPManagerFactory produce(@New BSPManagerFactoryStub stub, @New BSPManagerFactoryImpl impl) {
-
-         if ( deployment == Deployment.STUBBY )
-             return stub;
-
-         return impl;
-
-     }
+    }
 }

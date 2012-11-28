@@ -88,8 +88,6 @@ public class LabEvent {
 
     private String eventLocation;
 
-    // todo jmt this should change to a Long
-//    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private Long eventOperator;
 
     private Date eventDate;

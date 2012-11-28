@@ -20,51 +20,51 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
     public static final long QA_DUDE_USER_ID = 9382L;
 
     @Override
-    public WorkRequestManager createWorkRequestManager () {
+    public WorkRequestManager createWorkRequestManager() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public ContainerManager createContainerManager () {
+    public ContainerManager createContainerManager() {
         return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public UserManager createUserManager () {
+    public UserManager createUserManager() {
 
-        UserManager mgr = new UserManager () {
+        UserManager mgr = new UserManager() {
             @Override
-            public BspUser get ( String s ) {
+            public BspUser get(String s) {
                 return new BSPUserList.QADudeUser("Test", QA_DUDE_USER_ID);
             }
 
             @Override
-            public List<BspUser> getPrimaryInvestigators () {
-                List<BspUser> testList = new LinkedList<BspUser> ();
-                testList.add(new BSPUserList.QADudeUser("PM", QA_DUDE_USER_ID+1));
-                testList.add(new BSPUserList.QADudeUser("PDM", QA_DUDE_USER_ID+2));
-                testList.add(new BSPUserList.QADudeUser("LU", QA_DUDE_USER_ID+3));
-                testList.add(new BSPUserList.QADudeUser("LM", QA_DUDE_USER_ID+4));
-                return testList;
-            }
-
-            @Override
-            public List<BspUser> getProjectManagers () {
+            public List<BspUser> getPrimaryInvestigators() {
                 List<BspUser> testList = new LinkedList<BspUser>();
-                testList.add(new BSPUserList.QADudeUser("PM", QA_DUDE_USER_ID+1));
+                testList.add(new BSPUserList.QADudeUser("PM", QA_DUDE_USER_ID + 1));
+                testList.add(new BSPUserList.QADudeUser("PDM", QA_DUDE_USER_ID + 2));
+                testList.add(new BSPUserList.QADudeUser("LU", QA_DUDE_USER_ID + 3));
+                testList.add(new BSPUserList.QADudeUser("LM", QA_DUDE_USER_ID + 4));
                 return testList;
             }
 
             @Override
-            public List<BspUser> getUsers () {
+            public List<BspUser> getProjectManagers() {
+                List<BspUser> testList = new LinkedList<BspUser>();
+                testList.add(new BSPUserList.QADudeUser("PM", QA_DUDE_USER_ID + 1));
+                return testList;
+            }
+
+            @Override
+            public List<BspUser> getUsers() {
                 List<BspUser> testList = new LinkedList<BspUser>();
                 testList.add(new BSPUserList.QADudeUser("Test", QA_DUDE_USER_ID));
-                testList.add(new BSPUserList.QADudeUser("PM", QA_DUDE_USER_ID+1));
-                testList.add(new BSPUserList.QADudeUser("PDM", QA_DUDE_USER_ID+2));
-                testList.add(new BSPUserList.QADudeUser("LU", QA_DUDE_USER_ID+3));
-                testList.add(new BSPUserList.QADudeUser("LM", QA_DUDE_USER_ID+4));
+                testList.add(new BSPUserList.QADudeUser("PM", QA_DUDE_USER_ID + 1));
+                testList.add(new BSPUserList.QADudeUser("PDM", QA_DUDE_USER_ID + 2));
+                testList.add(new BSPUserList.QADudeUser("LU", QA_DUDE_USER_ID + 3));
+                testList.add(new BSPUserList.QADudeUser("LM", QA_DUDE_USER_ID + 4));
                 BspUser jwalshUsr = new BspUser();
-                jwalshUsr.setUserId(QA_DUDE_USER_ID+100);
+                jwalshUsr.setUserId(QA_DUDE_USER_ID + 100);
                 jwalshUsr.setUsername("jowalsh");
                 jwalshUsr.setFirstName("John");
                 jwalshUsr.setLastName("Walsh");
@@ -72,7 +72,7 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
                 testList.add(jwalshUsr);
 
                 BspUser hrafalUsr = new BspUser();
-                hrafalUsr.setUserId(QA_DUDE_USER_ID+100);
+                hrafalUsr.setUserId(QA_DUDE_USER_ID + 100);
                 hrafalUsr.setUsername("hrafal");
                 hrafalUsr.setFirstName("Howard");
                 hrafalUsr.setLastName("Rafal");
@@ -84,4 +84,5 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
         };
 
         return mgr;  //To change body of implemented methods use File | Settings | File Templates.
-    }}
+    }
+}
