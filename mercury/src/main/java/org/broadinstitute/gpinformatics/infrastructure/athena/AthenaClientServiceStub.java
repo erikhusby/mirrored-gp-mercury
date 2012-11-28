@@ -82,6 +82,8 @@ public class AthenaClientServiceStub implements AthenaClientService {
 
         researchProject.addPerson( RoleType.SCIENTIST, 111L);
         researchProject.addPerson(RoleType.SCIENTIST, 222L);
+        researchProject.addPerson( RoleType.BROAD_PI, 10950L);
+        researchProject.addPerson(RoleType.BROAD_PI, 10951L);
         return researchProject;
     }
 

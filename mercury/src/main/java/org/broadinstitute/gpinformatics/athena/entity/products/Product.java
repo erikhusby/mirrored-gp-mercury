@@ -327,4 +327,37 @@ public class Product implements Serializable, Comparable<Product> {
                 ", partNumber='" + partNumber + '\'' +
                 '}';
     }
+
+    /**
+     * @return Get all duplicate price item names for any products or add ons on this product. Null if none.
+     */
+    public String[] getDuplicatePriceItemNames() {
+        List<String> duplicates = new ArrayList<String> ();
+        Set<String> priceItemNames = new HashSet<String> ();
+
+        // Add the duplicates for this product
+        addProductDuplicates(duplicates, priceItemNames);
+
+        // Add the duplicates for addOns
+        for (Product addOn : addOns) {
+            addOn.addProductDuplicates(duplicates, priceItemNames);
+        }
+
+        if (duplicates.isEmpty()) {
+            return null;
+        }
+
+        return duplicates.toArray(new String[duplicates.size()]);
+    }
+
+    private void addProductDuplicates(List<String> duplicates, Set<String> priceItemNames) {
+        // No price items yet, so can just add it
+        priceItemNames.add(primaryPriceItem.getName());
+
+        for (PriceItem optionalPriceItem : optionalPriceItems) {
+            if (!priceItemNames.add(optionalPriceItem.getName())) {
+                duplicates.add(optionalPriceItem.getName());
+            }
+        }
+    }
 }

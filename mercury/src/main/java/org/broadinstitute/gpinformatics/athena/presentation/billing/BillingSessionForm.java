@@ -89,7 +89,7 @@ public class BillingSessionForm extends AbstractJsfBean {
         return null;
     }
 
-    public String cancelSession() {
+    public String endSession() {
         // Remove all the sessions from the non-billed items
         boolean allRemoved = billingSessionBean.getBillingSession().cancelSession();
 
@@ -100,6 +100,8 @@ public class BillingSessionForm extends AbstractJsfBean {
             sessionDao.persist(billingSessionBean.getBillingSession());
         }
 
+        // I do not use redirect method because I want includeViewParams to be false. This is because a remove (above)
+        // can make the session Id invalid and we don't want that passed through.
         return "sessions?faces-redirect=true&includeViewParams=false";
     }
 
