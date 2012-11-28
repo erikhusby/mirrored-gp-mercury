@@ -53,16 +53,14 @@ public class BillingTrackerImporter {
 
     }
 
-    public Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> parseFileForSummaryMap(File tempFile) throws IOException {
+    public Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> parseFileForSummaryMap(InputStream inputStream) throws IOException {
 
         Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> trackerSummaryMap =
                 new HashMap<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>>();
 
         Workbook workbook;
-        FileInputStream fis = null;
         try {
-            fis = new FileInputStream(tempFile);
-            workbook = WorkbookFactory.create(fis);
+            workbook = WorkbookFactory.create(inputStream);
             int numberOfSheets = workbook.getNumberOfSheets();
             for (int i=0; i< numberOfSheets;i++) {
 
@@ -79,7 +77,7 @@ public class BillingTrackerImporter {
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
-            IOUtils.closeQuietly(fis);
+            IOUtils.closeQuietly(inputStream);
         }
         return trackerSummaryMap;
 
