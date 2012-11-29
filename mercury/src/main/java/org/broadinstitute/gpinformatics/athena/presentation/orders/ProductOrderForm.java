@@ -516,7 +516,7 @@ public class ProductOrderForm extends AbstractJsfBean {
             inputStream = new FileInputStream(tempFile);
 
             // This copies the inputStream as a faces download with the file name specified.
-            AbstractSpreadsheetExporter.copyForDownload(inputStream, filename);
+            AbstractSpreadsheetExporter.copyForDownload(inputStream, filename + ".xls");
         } catch (Exception ex) {
             String message = "Got an exception trying to download the billing tracker: " + ex.getMessage();
             AbstractJsfBean.addMessage(null, FacesMessage.SEVERITY_ERROR, message, message);

@@ -15,7 +15,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 
-import java.io.FileInputStream;
+import java.io.InputStream;
 import java.util.*;
 
 /**
@@ -42,7 +42,7 @@ public class BillingTrackerManager {
     private final static int SAMPLE_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.SAMPLE_ID_HEADING);
     private final static int PDO_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.ORDER_ID_HEADING);
     private final static int DATE_COMPLETE_COL_POS = headerColumnIndices.get(SampleLedgerExporter.DATE_COMPLETE_HEADING);
-    private final static int numberOfHeaderRows = 3;
+    private final static int numberOfHeaderRows = 2;
 
 
     public BillingTrackerManager(ProductOrderDao productOrderDao, BillingLedgerDao billingLedgerDao) {
@@ -50,7 +50,7 @@ public class BillingTrackerManager {
         this.billingLedgerDao = billingLedgerDao;
     }
 
-    public Map<String, List<ProductOrder>> parseFileForBilling(FileInputStream fis) throws Exception {
+    public Map<String, List<ProductOrder>> parseFileForBilling(InputStream fis) throws Exception {
 
         Map<String, List<ProductOrder>> trackerBillingMap = new HashMap<String, List<ProductOrder>>();
 

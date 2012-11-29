@@ -20,7 +20,7 @@
 
         <h:form>
 
-            <p:fileUpload id="uploader" fileUploadListener="#{fileUploadController.handleFileUpload}"
+            <p:fileUpload id="uploader" fileUploadListener="#{fileUploadController.uploadBillingDirectlyTEMP}"
                           allowTypes="/(\.|\/)(xls|xls?x)$/"
                           mode="advanced"
                           uploadLabel="Parsing the selected file"
@@ -32,7 +32,7 @@
             <div class="control-group">
                 <label class="control-label label-form">Previewed File</label>
                 <div class="controls">
-                    <h:outputText id="ordersUpdatedFile" value="#{fileUploadController.filename}"/>
+                    <h:outputText id="ordersUpdatedFile" value="#{fileUploadController.hasFilename}"/>
                 </div>
             </div>
 
@@ -40,7 +40,6 @@
             <!--<p:panel rendered="#{fileUploadController.uploadPreviewData != null}" >-->
 
             <p:dataTable id="uploadPreviewTable"
-
                          value="#{fileUploadController.uploadPreviewTableData.values}"
                          var="previewData">
 
@@ -75,8 +74,8 @@
                 <div class="controls">
                     <div class="row-fluid">
                         <div class="span1">
-                            <p:commandButton id="uploadButton" value="Upload"  disabled="#{fileUploadController.filename == null}"
-                                             action="#{fileUploadController.uploadTrackingData}" ajax="false" styleClass="ui-priority-primary"/>
+                            <p:commandButton id="uploadButton" value="Upload" disabled="#{!fileUploadController.hasFilename}"
+                                             action="#{fileUploadController.uploadTrackingDataForBilling}" ajax="false" styleClass="ui-priority-primary"/>
                         </div>
                         <div class="span1">
                             <p:commandButton value="Cancel" action="#{fileUploadController.cancelUpload}" ajax="false" styleClass="ui-priority-primary"/>

@@ -33,7 +33,7 @@ public class BillingTrackerImporter {
     }
     private final static int SAMPLE_ID_COL_POS = headerColumnIndices.get("Sample ID");
     private final static int PDO_ID_COL_POS = headerColumnIndices.get("Product Order ID");
-    private final static int numberOfHeaderRows = 3;
+    private final static int numberOfHeaderRows = 2;
 
 
     public BillingTrackerImporter(ProductOrderDao productOrderDao, ProductOrderSampleDao productOrderSampleDao) {
