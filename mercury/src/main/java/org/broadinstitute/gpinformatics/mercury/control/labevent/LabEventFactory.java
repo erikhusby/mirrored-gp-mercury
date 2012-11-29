@@ -134,19 +134,20 @@ public class LabEventFactory {
 
         @Override
         public BspUser getOperator ( String userId ) {
-
+            BSPUserList testList = bspUserList;
             if(bspUserList == null) {
-                bspUserList= ServiceAccessUtility.getBean ( BSPUserList.class );
+                testList= ServiceAccessUtility.getBean ( BSPUserList.class );
             }
-            return bspUserList.getByUsername ( userId );
+            return testList.getByUsername ( userId );
         }
 
         @Override
         public BspUser getOperator ( Long bspUserId ) {
+            BSPUserList testList = bspUserList;
             if(bspUserList == null) {
-                bspUserList= ServiceAccessUtility.getBean ( BSPUserList.class );
+                testList= ServiceAccessUtility.getBean ( BSPUserList.class );
             }
-            return bspUserList.getById(bspUserId);
+            return testList.getById(bspUserId);
         }
 
         @Override
@@ -266,20 +267,21 @@ public class LabEventFactory {
     /**
      * Modify disambiguators of other events in the same message, if necessary, and persist an event
      *
-     * @param uniqueEvents events in a message
-     * @param labEvent     event to be persisted
-     * @param performFlush
+     * @param uniqueEvents    events in a message
+     * @param labEvent        event to be persisted
+     * @param persistEntities
      */
-    private void persistLabEvent ( Set<UniqueEvent> uniqueEvents, LabEvent labEvent, boolean performFlush ) {
+    private void persistLabEvent(Set<UniqueEvent> uniqueEvents, LabEvent labEvent, boolean persistEntities) {
         // The deck-side scripts don't always set the disambiguator correctly, so modify it, to make it unique
         // within this message, if necessary
-        while ( !uniqueEvents.add ( new UniqueEvent ( labEvent.getEventLocation (), labEvent.getEventDate (),
-                                                      labEvent.getDisambiguator () ) ) ) {
-            labEvent.setDisambiguator ( labEvent.getDisambiguator () + 1 );
+        while (!uniqueEvents.add(new UniqueEvent(labEvent.getEventLocation(), labEvent.getEventDate(),
+                                                 labEvent.getDisambiguator()))) {
+            labEvent.setDisambiguator(labEvent.getDisambiguator() + 1);
         }
-        labEventDao.persist ( labEvent );
-        if(performFlush)
-        labEventDao.flush ();
+        if (persistEntities) {
+            labEventDao.persist(labEvent);
+            labEventDao.flush();
+        }
     }
 
     /**
@@ -687,11 +689,11 @@ public class LabEventFactory {
         labEvent.getSectionTransfers().add ( new SectionTransfer ( sourceRack.getContainerRole (),
                                                                    SBSSection.getBySectionName (
                                                                            plateTransferEvent.getSourcePlate ()
-                                                                                             .getSection () ),
+                                                                                             .getSection() ),
                                                                    targetRackOfTubes.getContainerRole (),
                                                                    SBSSection.getBySectionName (
                                                                            plateTransferEvent.getPlate ()
-                                                                                             .getSection () ),
+                                                                                             .getSection() ),
                                                                    labEvent ) );
         return labEvent;
     }
@@ -922,41 +924,37 @@ public class LabEventFactory {
      * Based on a collection of {@link LabVessel}s to be processed, this method will generate the appropriate event
      * to associate with each Vessel
      *
-     *
-     *
-     *
-     *
-     * @param pdoToVessels a Map of lab vessels.  Contains Lists of Lab vessels each indexed by the Product Order
-     *                     business key to which they are associated
-     * @param actor        representation of the user that submitted the request
-     * @param batchIn      LabBatch to which the created events will be associate
-     *
+     * @param pdoToVessels  a Map of lab vessels.  Contains Lists of Lab vessels each indexed by the Product Order
+     *                      business key to which they are associated
+     * @param operator         representation of the user that submitted the request
+     * @param batchIn       LabBatch to which the created events will be associate
      * @param eventLocation
      * @param eventType
+     *
      * @return A collection of the created events for the submitted lab vessels
      */
-    public Collection<LabEvent> buildFromBatchRequests ( @Nonnull Map<String, Collection<LabVessel>> pdoToVessels, String actor,
-                                                         LabBatch batchIn, @Nonnull String eventLocation,
-                                                         @Nonnull LabEventType eventType ) {
+    public Collection<LabEvent> buildFromBatchRequests(@Nonnull Map<String, Collection<LabVessel>> pdoToVessels,
+                                                       String operator, LabBatch batchIn, @Nonnull String eventLocation,
+                                                       @Nonnull LabEventType eventType) {
 
         long workCounter = 1L;
 
-        List<LabEvent> fullEventList = new LinkedList<LabEvent> ();
+        List<LabEvent> fullEventList = new LinkedList<LabEvent>();
 
         Set<UniqueEvent> uniqueEvents = new HashSet<UniqueEvent>();
 
-        for ( Map.Entry<String, Collection<LabVessel>> mapEntry : pdoToVessels.entrySet () ) {
-            List<LabEvent> events = new LinkedList<LabEvent> ();
-            for ( LabVessel currVessel : mapEntry.getValue () ) {
-                LabEvent currEvent = createFromBatchItems ( mapEntry.getKey (), currVessel, workCounter++, actor,
-                                                            eventType, eventLocation );
-                if(null != batchIn)
-                    currEvent.setLabBatch ( batchIn );
+        for (Map.Entry<String, Collection<LabVessel>> mapEntry : pdoToVessels.entrySet()) {
+            List<LabEvent> events = new LinkedList<LabEvent>();
+            for (LabVessel currVessel : mapEntry.getValue()) {
+                LabEvent currEvent = createFromBatchItems(mapEntry.getKey(), currVessel, workCounter++, operator,
+                                                          eventType, eventLocation);
+                if (null != batchIn)
+                    currEvent.setLabBatch(batchIn);
 
-                persistLabEvent(uniqueEvents, currEvent, false );
-                events.add ( currEvent );
+                persistLabEvent(uniqueEvents, currEvent, false);
+                events.add(currEvent);
             }
-            fullEventList.addAll ( events );
+            fullEventList.addAll(events);
         }
         return fullEventList;
     }
@@ -972,16 +970,16 @@ public class LabEventFactory {
      * @param pdoKey
      * @param batchItem
      * @param disambiguator
-     * @param actor
+     * @param operator
      * @param eventType
      * @param eventLocation
      * @return
      */
     public LabEvent createFromBatchItems ( @Nonnull String pdoKey, @Nonnull LabVessel batchItem,
-                                           @Nonnull Long disambiguator, String actor,
+                                           @Nonnull Long disambiguator, String operator,
                                            @Nonnull LabEventType eventType, @Nonnull String eventLocation ) {
 
-        Long operatorInfo = labEventRefDataFetcher.getOperator(actor).getUserId();
+        Long operatorInfo = labEventRefDataFetcher.getOperator(operator).getUserId();
 
         LabEvent bucketMoveEvent = new LabEvent ( eventType, new Date (), eventLocation, disambiguator, operatorInfo );
 

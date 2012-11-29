@@ -29,7 +29,7 @@ public class BSPManagerFactoryProducer {
 
     public static BSPManagerFactory testInstance() {
 
-        if (testInstance == null)
+        if (testInstance == null) {
 
             synchronized (BSPManagerFactory.class) {
 
@@ -40,6 +40,7 @@ public class BSPManagerFactoryProducer {
                     testInstance = new BSPManagerFactoryImpl(bspConfig);
                 }
             }
+        }
 
         return testInstance;
 

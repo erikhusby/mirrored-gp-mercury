@@ -176,8 +176,11 @@ public class LabBatch {
     /**
      * Submits the contents of this Lab Batch to Jira to create a new LCSET Ticket
      * @param reporter
+     * @param batchSubType
+     * @param projectPrefix
      */
-    public void createJiraTicket(String reporter) throws IOException {
+    public void createJiraTicket(String reporter, @Nonnull CreateFields.IssueType batchSubType,
+                                 @Nonnull String projectPrefix) throws IOException {
         JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
 
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
@@ -188,10 +191,8 @@ public class LabBatch {
         listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.WORK_REQUEST_IDS, ""));
 
         JiraIssue jiraIssue =
-                jiraService.createIssue(fetchJiraProject().getKeyPrefix(), reporter,
-                        // TODO SGM:  Need a better solution.  Map product to issueType.
-                        CreateFields.IssueType.EXOME_EXPRESS,
-                        batchName, "", listOfFields);
+                jiraService.createIssue(projectPrefix, reporter, batchSubType,
+                                        batchName, "", listOfFields);
 
         jiraTicket = new JiraTicket(jiraIssue);
         jiraTicket.setLabBatch(this);

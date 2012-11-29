@@ -81,8 +81,7 @@ public class LabEventResource {
             LabEventBean labEventBean = new LabEventBean(
                     labEvent.getLabEventType().getName(),
                     labEvent.getEventLocation(),
-                    dataFetcherHelper.getOperator(labEvent.getEventOperator()).getUsername()
-                    /* TODO SGM:  pass in LabEventRefDataFetcher for labEventRefDataFetcher.getOperator(labEvent.getEventOperator()).getUsername()*/,
+                    dataFetcherHelper.getOperator(labEvent.getEventOperator()).getUsername(),
                     labEvent.getEventDate());
             labEventBean.setBatchId(labEvent.getLabBatch().getBatchName());
 

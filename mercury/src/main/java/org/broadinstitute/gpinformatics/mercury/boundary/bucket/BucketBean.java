@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -34,13 +37,14 @@ public class BucketBean {
     @Inject
     JiraService jiraService;
 
-    private final static Logger logger = Logger.getLogger ( BucketBean.class.getName () );
+    private final static Log logger = LogFactory.getLog(BucketBean.class);
 
     public BucketBean () {
     }
 
-    public BucketBean ( LabEventFactory labEventFactoryIn ) {
+    public BucketBean(LabEventFactory labEventFactoryIn, JiraService testjiraService) {
         this.labEventFactory = labEventFactoryIn;
+        jiraService = testjiraService;
     }
 
     /**
@@ -53,22 +57,22 @@ public class BucketBean {
      * @param vessel
      * @param productOrder
      *
-     * @param actor
+     * @param operator
      * @return
      */
     public BucketEntry add ( @Nonnull LabVessel vessel, @Nonnull String productOrder, @Nonnull Bucket bucket,
-                             String actor ) {
+                             String operator ) {
 
         BucketEntry newEntry = bucket.addEntry ( productOrder, vessel );
-        labEventFactory.createFromBatchItems ( productOrder, vessel, 1L, actor, LabEventType.SHEARING_BUCKET_ENTRY,
+        labEventFactory.createFromBatchItems ( productOrder, vessel, 1L, operator, LabEventType.SHEARING_BUCKET_ENTRY,
                                                LabEvent.UI_EVENT_LOCATION );
         try {
             jiraService.addComment ( productOrder, vessel.getLabCentricName () +
                     " added to bucket " + bucket.getBucketDefinitionName () );
         } catch ( IOException ioe ) {
-            logger.log(Level.INFO, "error attempting to add a jira comment for adding " +
-                                   productOrder + ":" + vessel.getLabCentricName() + " to bucket " +
-                                   bucket.getBucketDefinitionName(), ioe);
+            logger.error("error attempting to add a jira comment for adding " +
+                                 productOrder + ":" + vessel.getLabCentricName() + " to bucket " +
+                                 bucket.getBucketDefinitionName(), ioe);
         }
         return newEntry;
     }
@@ -79,10 +83,10 @@ public class BucketBean {
      * @param productOrder
      * @param entriesToAdd
      * @param bucket
-     * @param actor
+     * @param operator
      * @param labEventLocation
      */
-    public void add ( String productOrder, @Nonnull List<LabVessel> entriesToAdd, @Nonnull Bucket bucket, String actor,
+    public void add ( String productOrder, @Nonnull List<LabVessel> entriesToAdd, @Nonnull Bucket bucket, String operator,
                       @Nonnull String labEventLocation ) {
 
         for(LabVessel currVessel:entriesToAdd) {
@@ -95,7 +99,7 @@ public class BucketBean {
         pdoKeyToVesselMap.put(productOrder, entriesToAdd);
 
         Set<LabEvent> eventList = new HashSet<LabEvent> ();
-        eventList.addAll ( labEventFactory.buildFromBatchRequests ( pdoKeyToVesselMap, actor, null,
+        eventList.addAll ( labEventFactory.buildFromBatchRequests ( pdoKeyToVesselMap, operator, null,
                                                                     labEventLocation,
                                                                     LabEventType.SHEARING_BUCKET_EXIT ) );
 
@@ -105,9 +109,9 @@ public class BucketBean {
                         StringUtils.join ( pdoKeyToVesselMap.get ( pdo ), ',' ) +
                         " added to bucket " + bucket.getBucketDefinitionName () );
             } catch ( IOException ioe ) {
-                logger.log ( Level.WARNING, "error attempting to add a jira comment for adding " +
-                        pdo + ":" + StringUtils.join (pdoKeyToVesselMap.get(pdo),',') + " to bucket " +
-                bucket.getBucketDefinitionName (), ioe );
+                logger.error("error attempting to add a jira comment for adding " +
+                                     pdo + ":" + StringUtils.join(pdoKeyToVesselMap.get(pdo), ',') + " to bucket " +
+                                     bucket.getBucketDefinitionName(), ioe);
             }
         }
 
@@ -129,14 +133,14 @@ public class BucketBean {
      * {@link #start(java.util.Collection, String, String)}
      * for which an existing Jira Batch does not need to be specified
      *
-     * @param actor                   Reference to the user that is requesting the batch.
+     * @param operator                   Reference to the user that is requesting the batch.
      * @param vesselsToBatch
      * @param workingBucket
      * @param batchInitiationLocation
      */
-    public void start ( String actor, @Nonnull Collection<LabVessel> vesselsToBatch, @Nonnull Bucket workingBucket,
+    public void start ( String operator, @Nonnull Collection<LabVessel> vesselsToBatch, @Nonnull Bucket workingBucket,
                         String batchInitiationLocation ) {
-        start ( actor, vesselsToBatch, workingBucket, batchInitiationLocation, null );
+        start ( operator, vesselsToBatch, workingBucket, batchInitiationLocation, null );
     }
 
     /**
@@ -144,13 +148,13 @@ public class BucketBean {
      * for which just the Vessels needed for a batch are referenced.  This is primarily needed to support batching
      * when initiated from messaging
      *
-     * @param actor                   Reference to the user that is requesting the batch.
+     * @param operator                   Reference to the user that is requesting the batch.
      * @param vesselsToBatch
      * @param workingBucket
      * @param batchInitiationLocation
      * @param batchTicket
      */
-    public void start ( String actor, @Nonnull Collection<LabVessel> vesselsToBatch, @Nonnull Bucket workingBucket,
+    public void start ( String operator, @Nonnull Collection<LabVessel> vesselsToBatch, @Nonnull Bucket workingBucket,
                         String batchInitiationLocation, String batchTicket ) {
 
         Set<BucketEntry> bucketEntrySet = new HashSet<BucketEntry> ();
@@ -161,17 +165,16 @@ public class BucketBean {
                 throw new InformaticsServiceException (
                         "Attempting to pull a vessel from a bucket when it does not exist in that bucket" );
             }
-            logger.log ( Level.INFO,
-                         "Adding entry " + foundEntry.getBucketEntryId () + " for vessel " + foundEntry.getLabVessel ()
-                                                                                                       .getLabCentricName () +
-                                 " and PDO " + foundEntry.getPoBusinessKey () + " to be popped from bucket." );
+            logger.info("Adding entry " + foundEntry.getBucketEntryId() + " for vessel " + foundEntry.getLabVessel()
+                                                                                                     .getLabCentricName() +
+                                " and PDO " + foundEntry.getPoBusinessKey() + " to be popped from bucket.");
             bucketEntrySet.add ( foundEntry );
 
             // TODO SGM add logic to retrive the containing vessel
             //            LabVessel container = workingVessel.getContainingVessel();
         }
 
-        start ( bucketEntrySet, actor, batchTicket, batchInitiationLocation );
+        start ( bucketEntrySet, operator, batchTicket, batchInitiationLocation );
     }
 
     /**
@@ -179,12 +182,12 @@ public class BucketBean {
      * {@link #start(String , int , org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket)}
      * for which an existing Jira Batch does not need to be specified
      *
-     * @param actor                Reference to the user that is requesting the batch.
+     * @param operator                Reference to the user that is requesting the batch.
      * @param numberOfBatchSamples
      * @param workingBucket
      */
-    public void start ( String actor, final int numberOfBatchSamples, @Nonnull Bucket workingBucket ) {
-        start ( actor, numberOfBatchSamples, workingBucket, null );
+    public void start ( String operator, final int numberOfBatchSamples, @Nonnull Bucket workingBucket ) {
+        start ( operator, numberOfBatchSamples, workingBucket, null );
     }
 
 
@@ -195,34 +198,33 @@ public class BucketBean {
      * with which a user can simply request a number of samples to pull from a given bucket wiht which to make a batch.
      * The samples removed will be with respect to the order they are found in the bucket
      *
-     * @param actor                Reference to the user that is requesting the batch.
+     * @param operator                Reference to the user that is requesting the batch.
      * @param numberOfBatchSamples
      * @param workingBucket
      * @param batchTicket
      */
-    public void start ( String actor, final int numberOfBatchSamples, @Nonnull Bucket workingBucket,
+    public void start ( String operator, final int numberOfBatchSamples, @Nonnull Bucket workingBucket,
                         final String batchTicket ) {
 
         Set<BucketEntry> bucketEntrySet = new HashSet<BucketEntry> ();
 
         List<BucketEntry> sortedBucketEntries = new LinkedList<BucketEntry> ( workingBucket.getBucketEntries () );
 
-        logger.log ( Level.INFO, "List of Bucket entries is a size of " + sortedBucketEntries.size () );
+        logger.info("List of Bucket entries is a size of " + sortedBucketEntries.size());
 
         Iterator<BucketEntry> bucketEntryIterator = sortedBucketEntries.iterator ();
 
         for ( int i = 0 ; i < numberOfBatchSamples && bucketEntryIterator.hasNext () ; i++ ) {
             BucketEntry currEntry = bucketEntryIterator.next ();
-            logger.log ( Level.INFO,
-                         "Adding entry " + currEntry.getBucketEntryId () + " for vessel " + currEntry.getLabVessel ()
-                                                                                                     .getLabCentricName () +
-                                 " and PDO " + currEntry.getPoBusinessKey () + " to be popped from bucket." );
+            logger.info("Adding entry " + currEntry.getBucketEntryId() + " for vessel " + currEntry.getLabVessel()
+                                                                                                   .getLabCentricName() +
+                                " and PDO " + currEntry.getPoBusinessKey() + " to be popped from bucket.");
 
             bucketEntrySet.add ( currEntry );
         }
 
-        logger.log ( Level.INFO, "Bucket Entry set to pop from bucket is a size of " + bucketEntrySet.size () );
-        start ( bucketEntrySet, actor, batchTicket, LabEvent.UI_EVENT_LOCATION );
+        logger.info("Bucket Entry set to pop from bucket is a size of " + bucketEntrySet.size());
+        start ( bucketEntrySet, operator, batchTicket, LabEvent.UI_EVENT_LOCATION );
 
     }
 
@@ -233,11 +235,11 @@ public class BucketBean {
      * can also make this gesture when it processes a message.
      *
      * @param bucketEntries
-     * @param actor                   Reference to the user that is requesting the batch.
+     * @param operator                   Reference to the user that is requesting the batch.
      * @param batchInitiationLocation
      */
-    public void start ( @Nonnull Collection<BucketEntry> bucketEntries, String actor, String batchInitiationLocation ) {
-        start ( bucketEntries, actor, null, batchInitiationLocation );
+    public void start ( @Nonnull Collection<BucketEntry> bucketEntries, String operator, String batchInitiationLocation ) {
+        start ( bucketEntries, operator, null, batchInitiationLocation );
     }
 
     /**
@@ -247,11 +249,11 @@ public class BucketBean {
      * can also make this gesture when it processes a message.
      *
      * @param bucketEntries
-     * @param actor                   Reference to the user that is requesting the batch.
+     * @param operator                   Reference to the user that is requesting the batch.
      * @param batchTicket
      * @param batchInitiationLocation
      */
-    public void start ( @Nonnull Collection<BucketEntry> bucketEntries, String actor, String batchTicket,
+    public void start ( @Nonnull Collection<BucketEntry> bucketEntries, String operator, String batchTicket,
                         String batchInitiationLocation ) {
         /**
          * Side effect: create a {@link org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent} for each
@@ -309,7 +311,7 @@ public class BucketBean {
         }
 
         Set<LabEvent> eventList = new HashSet<LabEvent> ();
-        eventList.addAll ( labEventFactory.buildFromBatchRequests ( pdoKeyToVesselMap, actor, bucketBatch,
+        eventList.addAll ( labEventFactory.buildFromBatchRequests ( pdoKeyToVesselMap, operator, bucketBatch,
                                                                     batchInitiationLocation,
                                                                     LabEventType.SHEARING_BUCKET_EXIT ) );
 
@@ -317,7 +319,8 @@ public class BucketBean {
 
         try {
             if ( null == batchTicket ) {
-                bucketBatch.createJiraTicket ( actor );
+                bucketBatch.createJiraTicket ( operator, CreateFields.IssueType.EXOME_EXPRESS,
+                                               CreateFields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix());
             } else {
                 bucketBatch.setJiraTicket ( new JiraTicket ( batchTicket ) );
             }
@@ -327,11 +330,11 @@ public class BucketBean {
                         bucketBatch.getJiraTicket ().getTicketName () + " " + bucketBatch.getBatchName () );
             }
         } catch ( IOException ioe ) {
-            logger.log(Level.INFO, "Error attempting to create Lab Batch in Jira");
+            logger.error("Error attempting to create Lab Batch in Jira");
             throw new InformaticsServiceException ( "Error attempting to create Lab Batch in Jira", ioe );
         }
 
-        logger.log ( Level.INFO, "Size of entries to remove is " + bucketEntries.size () );
+        logger.info("Size of entries to remove is " + bucketEntries.size());
         removeEntries ( bucketEntries );
     }
 
@@ -342,10 +345,9 @@ public class BucketBean {
      */
     private void removeEntries ( @Nonnull Collection<BucketEntry> bucketEntries ) {
         for ( BucketEntry currEntry : bucketEntries ) {
-            logger.log ( Level.INFO,
-                         "Adding entry " + currEntry.getBucketEntryId () + " for vessel " + currEntry.getLabVessel ()
-                                                                                                     .getLabCentricName () +
-                                 " and PDO " + currEntry.getPoBusinessKey () + " to be popped from bucket." );
+            logger.info("Adding entry " + currEntry.getBucketEntryId() + " for vessel " + currEntry.getLabVessel()
+                                                                                                   .getLabCentricName() +
+                                " and PDO " + currEntry.getPoBusinessKey() + " to be popped from bucket.");
 
             currEntry.getBucketExistence ().removeEntry ( currEntry );
             bucketEntryDao.remove ( currEntry );
@@ -362,10 +364,10 @@ public class BucketBean {
      * it from the bucket.
      *
      * @param bucketEntry
-     * @param user
+     * @param operator
      * @param reason      textual notes on why the thing is
      */
-    public void cancel ( @Nonnull BucketEntry bucketEntry, String user, String reason ) {
+    public void cancel ( @Nonnull BucketEntry bucketEntry, String operator, String reason ) {
 
         List<BucketEntry> singleRemoval = new LinkedList<BucketEntry> ();
         singleRemoval.add ( bucketEntry );
@@ -388,11 +390,11 @@ public class BucketBean {
             jiraService.addComment ( bucketEntry.getPoBusinessKey (), bucketEntry.getPoBusinessKey () + ":" +
                     bucketEntry.getLabVessel ().getLabCentricName () +
                     " Removed from bucket " + bucketEntry.getBucketExistence ()
-                                                         .getBucketDefinitionName () + ":: " + reason );
+                                                         .getBucketDefinitionName() + ":: " + reason );
         } catch ( IOException ioe ) {
-            logger.log(Level.INFO, "Error attempting to create jira removal comment for " +
-                                   bucketEntry.getPoBusinessKey() + " " +
-                                   bucketEntry.getLabVessel().getLabCentricName(), ioe);
+            logger.error("Error attempting to create jira removal comment for " +
+                                 bucketEntry.getPoBusinessKey() + " " +
+                                 bucketEntry.getLabVessel().getLabCentricName(), ioe);
         }
     }
 }

@@ -1,15 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
-import org.broadinstitute.bsp.client.container.ContainerManager;
-import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.bsp.client.users.UserManager;
-import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -35,7 +30,7 @@ import java.util.Map;
  * Test Exome Express in Mercury
  */
 public class ExomeExpressV2EndToEndTest {
-    @Test(enabled = false)
+    @Test()
     public void test() {
         // Define baits (CATs later)
         // Associate baits with vessels
@@ -73,7 +68,7 @@ public class ExomeExpressV2EndToEndTest {
         LabEvent labEvent = labEventFactory.buildFromBettaLimsPlateToRackDbFree(plateTransferEventType,
                 new StaticPlate("NormPlate", StaticPlate.PlateType.Eppendorf96), mapBarcodeToTargetTubes);
         // Bucket for Shearing - enters from workflow?
-        BucketBean bucketBean = new BucketBean(labEventFactory);
+        BucketBean bucketBean = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance());
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig = workflowLoader.load();
         ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(productOrder1.getProduct().getWorkflowName());
