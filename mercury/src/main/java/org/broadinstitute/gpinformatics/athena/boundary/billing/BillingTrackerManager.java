@@ -433,8 +433,8 @@ public class BillingTrackerManager {
                     primaryProductPartNumber + "> in the first row and cell position " +  primaryProductHeaderCell.getColumnIndex() );
         }
 
-        //Derive the list of TrackerColumnInfo objects
-        int totalProductsHeaders = columnHeaders.size() - numFixedHeaders;
+        //Derive the list of TrackerColumnInfo objects skip the error column
+        int totalProductsHeaders = columnHeaders.size() - numFixedHeaders - 1;
 
         result = new ArrayList<TrackerColumnInfo>();
         int mergedCellAddOn = 0;
