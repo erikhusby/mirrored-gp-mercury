@@ -73,6 +73,11 @@ public class TrackerUploadForm  extends AbstractJsfBean {
 
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss-");
 
+    public boolean isUploadAvailable() {
+        boolean expr = getHasFilename() && !FacesContext.getCurrentInstance().getMessages().hasNext();
+        logger.info("isUploadAvailable? " + expr);
+        return expr;
+    }
 
     public void initView() {
         if (!facesContext.isPostback() && conversation.isTransient()) {
@@ -127,8 +132,8 @@ public class TrackerUploadForm  extends AbstractJsfBean {
                         String partNumber = value.getKey().getProductPartNumber();
                         String priceItem = value.getKey().getPriceItemName();
 
-                        Double charges = value.getValue().getCharge();
-                        Double credits = value.getValue().getCredit();
+                        double charges = value.getValue().getCharge();
+                        double credits = value.getValue().getCredit();
 
                         uploadPreviewData.add(new UploadPreviewData(pdoKey, partNumber, priceItem, credits, charges));
                     }
@@ -241,7 +246,6 @@ public class TrackerUploadForm  extends AbstractJsfBean {
                 e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
             addErrorMessage(e.getMessage());
-            throw new RuntimeException( e );
         } finally {
             IOUtils.closeQuietly(inputStream);
         }
@@ -279,6 +283,10 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         //return to the orders pages
        return redirect("/orders/list");
 
+    }
+
+    public String getFilename() {
+        return conversationData.getFilename();
     }
 
     public boolean getHasFilename() {

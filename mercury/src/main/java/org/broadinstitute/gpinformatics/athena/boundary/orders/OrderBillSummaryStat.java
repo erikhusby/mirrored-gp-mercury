@@ -8,24 +8,20 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
  */
 public class OrderBillSummaryStat {
 
-    private double charge=0;
-    private double credit=0;
-
-    public OrderBillSummaryStat() {
-    }
+    private double charge;
+    private double credit;
 
     public double getCharge() {
         return charge;
     }
     public void addCharge(double charge) {
-        this.charge = this.charge + charge;
+        this.charge += charge;
     }
 
     public double getCredit() {
         return credit;
     }
     public void addCredit(double credit) {
-        this.credit =  this.credit + credit;
+        this.credit += credit;
     }
-
 }

@@ -223,15 +223,11 @@ public class BillingTrackerManager {
                                            List<TrackerColumnInfo> trackerColumnInfos,
                                            Map<TrackerColumnInfo, PriceItem> priceItemMap ) {
 
-        Date workCompleteDate = null;
+        // Get the date complete cell for changes
         Cell workCompleteDateCell = row.getCell(DATE_COMPLETE_COL_POS);
-
-        if ( isNonNullDateCell( workCompleteDateCell ) ) {
+        Date workCompleteDate = null;
+        if ( isNonNullDateCell(workCompleteDateCell) ) {
             workCompleteDate = workCompleteDateCell.getDateCellValue() ;
-        } else {
-            throwRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " +  (row.getRowNum() + 1 ) +
-                    " of spreadsheet "  + product.getPartNumber() +
-                    " has an invalid Date Completed value. Please correct and try again.");
         }
 
         for (int billingRefIndex=0; billingRefIndex < trackerColumnInfos.size();billingRefIndex++) {
@@ -256,14 +252,22 @@ public class BillingTrackerManager {
                 newQuantity = newQuantityCell.getNumericCellValue();
                 if ( newQuantity > 0  ) {
                     PriceItem priceItem = priceItemMap.get( trackerColumnInfo );
-                    BillingLedger billingLedger = new BillingLedger(productOrderSample, priceItem,
-                            workCompleteDate, newQuantity);
-                    productOrderSample.getBillableItems().add(billingLedger);
-                    productOrderSample.setBillingStatus(BillingStatus.EligibleForBilling);
-                    logger.debug("Added BillingLedger item for sample " + productOrderSample.getSampleName() +
-                            " to PDO " + productOrderSample.getProductOrder().getBusinessKey() +
-                               " for PriceItemName[PPN]: " + billableRef.getPriceItemName() + "[" +
-                               billableRef.getProductPartNumber() +"] - Quantity:" + newQuantity );
+
+                    // Only need to check date existence when cell is changed here for ledger
+                    if (workCompleteDate == null) {
+                        throwRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " +  (row.getRowNum() + 1 ) +
+                                " of spreadsheet "  + product.getPartNumber() +
+                                " has an invalid Date Completed value. Please correct and try again.");
+                    } else {
+                        BillingLedger billingLedger = new BillingLedger(productOrderSample, priceItem,
+                                workCompleteDate, newQuantity);
+                        productOrderSample.getBillableItems().add(billingLedger);
+                        productOrderSample.setBillingStatus(BillingStatus.EligibleForBilling);
+                        logger.debug("Added BillingLedger item for sample " + productOrderSample.getSampleName() +
+                                " to PDO " + productOrderSample.getProductOrder().getBusinessKey() +
+                                   " for PriceItemName[PPN]: " + billableRef.getPriceItemName() + "[" +
+                                   billableRef.getProductPartNumber() +"] - Quantity:" + newQuantity );
+                    }
                 } else {
                     logger.debug("Skipping BillingLedger item for sample " + productOrderSample.getSampleName() +
                             " to PDO " + productOrderSample.getProductOrder().getBusinessKey() +
