@@ -33,7 +33,7 @@ public class BillingTrackerImporter {
     }
     private final static int SAMPLE_ID_COL_POS = headerColumnIndices.get("Sample ID");
     private final static int PDO_ID_COL_POS = headerColumnIndices.get("Product Order ID");
-    private final static int numberOfHeaderRows = 3;
+    private final static int numberOfHeaderRows = 2;
 
 
     public BillingTrackerImporter(ProductOrderDao productOrderDao, ProductOrderSampleDao productOrderSampleDao) {
@@ -53,16 +53,14 @@ public class BillingTrackerImporter {
 
     }
 
-    public Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> parseFileForSummaryMap(File tempFile) throws IOException {
+    public Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> parseFileForSummaryMap(InputStream inputStream) throws IOException {
 
         Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> trackerSummaryMap =
                 new HashMap<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>>();
 
         Workbook workbook;
-        FileInputStream fis = null;
         try {
-            fis = new FileInputStream(tempFile);
-            workbook = WorkbookFactory.create(fis);
+            workbook = WorkbookFactory.create(inputStream);
             int numberOfSheets = workbook.getNumberOfSheets();
             for (int i=0; i< numberOfSheets;i++) {
 
@@ -79,7 +77,7 @@ public class BillingTrackerImporter {
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
-            IOUtils.closeQuietly(fis);
+            IOUtils.closeQuietly(inputStream);
         }
         return trackerSummaryMap;
 
@@ -328,8 +326,8 @@ public class BillingTrackerImporter {
                     primaryProductPartNumber + "> in the first row and cell position " +  primaryProductHeaderCell.getColumnIndex() );
         }
 
-        //Derive the list of TrackerColumnInfo objects
-        int totalProductsHeaders = columnHeaders.size() - numFixedHeaders;
+        //Derive the list of TrackerColumnInfo objects, and skip the billing errors
+        int totalProductsHeaders = columnHeaders.size() - numFixedHeaders - 1;
 
         result = new ArrayList<TrackerColumnInfo>();
         int mergedCellAddOn = 0;

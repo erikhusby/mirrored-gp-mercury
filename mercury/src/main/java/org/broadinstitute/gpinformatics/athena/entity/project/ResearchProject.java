@@ -61,8 +61,9 @@ public class ResearchProject implements Serializable {
     }
 
     @Id
-    @SequenceGenerator(name="seq_research_project_index", schema = "athena", sequenceName="seq_research_project_index")
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="seq_research_project_index")
+    @SequenceGenerator(name = "seq_research_project_index", schema = "athena",
+                       sequenceName = "seq_research_project_index")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "seq_research_project_index")
     private Long researchProjectId;
 
     @Column(name = "STATUS", nullable = false)
@@ -93,17 +94,21 @@ public class ResearchProject implements Serializable {
     private boolean irbNotEngaged = IRB_ENGAGED;
 
     // People related to the project
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+               orphanRemoval = true)
     private final Set<ProjectPerson> associatedPeople = new HashSet<ProjectPerson>();
 
     // Information about externally managed items
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+               orphanRemoval = true)
     private final Set<ResearchProjectCohort> sampleCohorts = new HashSet<ResearchProjectCohort>();
 
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+               orphanRemoval = true)
     private final Set<ResearchProjectFunding> projectFunding = new HashSet<ResearchProjectFunding>();
 
-    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(mappedBy = "researchProject", cascade = {CascadeType.PERSIST, CascadeType.REMOVE},
+               orphanRemoval = true)
     private final Set<ResearchProjectIRB> irbNumbers = new HashSet<ResearchProjectIRB>();
 
     private String irbNotes;
@@ -138,9 +143,9 @@ public class ResearchProject implements Serializable {
     /**
      * The full constructor for fields that are not settable.
      *
-     * @param creator The user creating the project
-     * @param title The title (name) of the project
-     * @param synopsis A description of the project
+     * @param creator       The user creating the project
+     * @param title         The title (name) of the project
+     * @param synopsis      A description of the project
      * @param irbNotEngaged Is this project set up for NO IRB?
      */
     public ResearchProject(Long creator, String title, String synopsis, boolean irbNotEngaged) {
@@ -246,7 +251,7 @@ public class ResearchProject implements Serializable {
      *                        Research Project is associated
      */
     public void setJiraTicketKey(String jiraTicketKeyIn) {
-        if(jiraTicketKeyIn == null) {
+        if (jiraTicketKeyIn == null) {
             throw new NullPointerException("Jira Ticket Key cannot be null");
         }
         this.jiraTicketKey = jiraTicketKeyIn;
@@ -276,11 +281,11 @@ public class ResearchProject implements Serializable {
         return cohorts;
     }
 
-    public void addCohort(ResearchProjectCohort sampleCohort ) {
+    public void addCohort(ResearchProjectCohort sampleCohort) {
         sampleCohorts.add(sampleCohort);
     }
 
-    public void removeCohort(ResearchProjectCohort sampleCohort ){
+    public void removeCohort(ResearchProjectCohort sampleCohort) {
         sampleCohorts.remove(sampleCohort);
     }
 
@@ -307,7 +312,7 @@ public class ResearchProject implements Serializable {
     }
 
     public void clearPeople() {
-        associatedPeople.clear ();
+        associatedPeople.clear();
     }
 
     public void addPeople(RoleType role, List<BspUser> people) {
@@ -321,7 +326,7 @@ public class ResearchProject implements Serializable {
     /**
      * This addPerson should only be used for tests (until we mock up BSP Users better there.
      *
-     * @param role The role of the person to add
+     * @param role     The role of the person to add
      * @param personId The user id for the person
      */
     public void addPerson(RoleType role, long personId) {
@@ -329,7 +334,7 @@ public class ResearchProject implements Serializable {
     }
 
     public Long[] getPeople(RoleType role) {
-        List<Long> people = new ArrayList<Long> ();
+        List<Long> people = new ArrayList<Long>();
 
         if (associatedPeople != null) {
             for (ProjectPerson projectPerson : associatedPeople) {
@@ -355,7 +360,7 @@ public class ResearchProject implements Serializable {
     }
 
     public Long[] getExternalCollaborators() {
-        return getPeople ( RoleType.EXTERNAL );
+        return getPeople(RoleType.EXTERNAL);
     }
 
     public void populateFunding(Collection<Funding> fundingSet) {
@@ -379,7 +384,7 @@ public class ResearchProject implements Serializable {
     public void populateCohorts(Collection<Cohort> cohorts) {
         sampleCohorts.clear();
         if ((cohorts != null) && !cohorts.isEmpty()) {
-            for (Cohort cohort: cohorts) {
+            for (Cohort cohort : cohorts) {
                 sampleCohorts.add(new ResearchProjectCohort(this, cohort.getCohortId()));
             }
         }
@@ -390,7 +395,7 @@ public class ResearchProject implements Serializable {
         if (projectFunding != null) {
             String[] fundingIds = new String[projectFunding.size()];
 
-            int i=0;
+            int i = 0;
             for (ResearchProjectFunding fundingItem : projectFunding) {
                 fundingIds[i++] = fundingItem.getFundingId();
             }
@@ -445,7 +450,8 @@ public class ResearchProject implements Serializable {
             CohortListBean cohortListBean = ServiceAccessUtility.getBean(CohortListBean.class);
 
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.COHORTS,
-                    cohortListBean.getCohortListString(cohortNames.toArray(new String[cohortNames.size()]))));
+                                             cohortListBean.getCohortListString(cohortNames.toArray(
+                                                     new String[cohortNames.size()]))));
         }
 
         if (!projectFunding.isEmpty()) {
@@ -454,28 +460,26 @@ public class ResearchProject implements Serializable {
                 fundingSources.add(fundingSrc.getFundingId());
             }
 
-            listOfFields.add(
-                    new CustomField(submissionFields, RequiredSubmissionFields.FUNDING_SOURCE,
-                            StringUtils.join(fundingSources, ',')));
+            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.FUNDING_SOURCE,
+                                             StringUtils.join(fundingSources, ',')));
         }
 
         if (!irbNumbers.isEmpty()) {
-            listOfFields.add(
-                    new CustomField(submissionFields, RequiredSubmissionFields.IRB_IACUC_NUMBER,
-                            StringUtils.join(getIrbNumbers(), ',')));
+            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.IRB_IACUC_NUMBER,
+                                             StringUtils.join(getIrbNumbers(), ',')));
         }
 
-        listOfFields.add(
-                new CustomField(submissionFields, RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD, irbNotEngaged));
+        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD,
+                                         irbNotEngaged));
 
         listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.MERCURY_URL, ""));
 
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
         StringBuilder piList = new StringBuilder();
         boolean first = true;
-        for (ProjectPerson currPI: findPeopleByType(RoleType.BROAD_PI)) {
-            if(null != bspUserList.getById(currPI.getPersonId())) {
-                if(!first) {
+        for (ProjectPerson currPI : findPeopleByType(RoleType.BROAD_PI)) {
+            if (null != bspUserList.getById(currPI.getPersonId())) {
+                if (!first) {
                     piList.append("\n");
                 }
                 piList.append(bspUserList.getById(currPI.getPersonId()).getFirstName())
@@ -485,15 +489,14 @@ public class ResearchProject implements Serializable {
             }
         }
 
-        if(!piList.toString().isEmpty()) {
+        if (!piList.toString().isEmpty()) {
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.BROAD_PIS, piList.toString()));
         }
 
-
         String username = bspUserList.getById(createdBy).getUsername();
 
-        JiraIssue issue = jiraService.createIssue(fetchJiraProject().getKeyPrefix(),
-                username, fetchJiraIssueType(), title, synopsis, listOfFields);
+        JiraIssue issue = jiraService.createIssue(fetchJiraProject().getKeyPrefix(), username, fetchJiraIssueType(),
+                                                  title, synopsis, listOfFields);
 
         // TODO: Only set the JIRA key once everything else has completed successfully, i.e., adding watchers
         jiraTicketKey = issue.getKey();
@@ -517,13 +520,14 @@ public class ResearchProject implements Serializable {
      * Provides the ability to retrieve a filtered list of associated people based on their role type
      *
      * @param personType
+     *
      * @return
      */
     private Collection<ProjectPerson> findPeopleByType(RoleType personType) {
-        List<ProjectPerson> foundPersonList = new LinkedList<ProjectPerson>();
+        List<ProjectPerson> foundPersonList = new ArrayList<ProjectPerson>(associatedPeople.size());
 
-        for(ProjectPerson currPerson: associatedPeople) {
-            if(currPerson.getRole() == personType) {
+        for (ProjectPerson currPerson : associatedPeople) {
+            if (currPerson.getRole() == personType) {
                 foundPersonList.add(currPerson);
             }
         }
@@ -536,8 +540,8 @@ public class ResearchProject implements Serializable {
      * makes it easier for a user of this object to interact with Jira for this entity
      *
      * @return An enum of type
-     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.ProjectType} that
-     * represents the Jira Project for Research Projects
+     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.ProjectType} that
+     *         represents the Jira Project for Research Projects
      */
     @Transient
     public CreateFields.ProjectType fetchJiraProject() {
@@ -545,13 +549,12 @@ public class ResearchProject implements Serializable {
     }
 
     /**
-     *
      * fetchJiraIssueType is a helper method that binds a specific Jira Issue Type to a ResearchProject entity.  This
      * makes it easier for a user of this object to interact with Jira for this entity
      *
      * @return An enum of type
-     * {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.IssueType} that
-     * represents the Jira Issue Type for Research Projects
+     *         {@link org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields.IssueType} that
+     *         represents the Jira Issue Type for Research Projects
      */
     @Transient
     public CreateFields.IssueType fetchJiraIssueType() {
@@ -564,14 +567,13 @@ public class ResearchProject implements Serializable {
      */
     public enum RequiredSubmissionFields implements CustomField.SubmissionField {
 
-//        Sponsoring_Scientist("Sponsoring Scientist"),
+        //        Sponsoring_Scientist("Sponsoring Scientist"),
         COHORTS("Cohort(s)"),
         FUNDING_SOURCE("Funding Source"),
         IRB_IACUC_NUMBER("IRB/IACUCs"),
         IRB_NOT_ENGAGED_FIELD("IRB Not Engaged?"),
         MERCURY_URL("Mercury URL"),
-        BROAD_PIS("Broad PI(s)"),
-        ;
+        BROAD_PIS("Broad PI(s)"),;
 
         private final String fieldName;
 
@@ -587,11 +589,11 @@ public class ResearchProject implements Serializable {
 
     @Override
     public boolean equals(Object other) {
-        if ( (this == other ) ) {
+        if ((this == other)) {
             return true;
         }
 
-        if ( !(other instanceof ResearchProject) ) {
+        if (!(other instanceof ResearchProject)) {
             return false;
         }
 

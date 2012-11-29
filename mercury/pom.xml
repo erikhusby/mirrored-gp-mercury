@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <version>1.11-SNAPSHOT</version>
+    <version>1.12-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -187,6 +187,8 @@
         <mercury.password>mercury_local</mercury.password>
         <athena.password>athena_local</athena.password>
         <database.delimiterType>normal</database.delimiterType>
+
+        <mercury.rc.ip>must be specified.</mercury.rc.ip>
 
     </properties>
 
@@ -704,7 +706,8 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@mercuryrc.cloud.broad:1521:gpinfprd</database.url>
+                <!--<database.url>jdbc:oracle:thin:@mercuryrc.cloud.broad:1521:gpinfprd</database.url>-->
+                <database.url>jdbc:oracle:thin:@${mercury.rc.ip}:1521:gpinfprd</database.url>
                 <mercury.password>guest</mercury.password>
                 <athena.password>guest</athena.password>
             </properties>
@@ -712,6 +715,7 @@
                 <testResources>
                     <testResource>
                         <directory>src/test/resources</directory>
+                        <filtering>true</filtering>
                     </testResource>
                     <testResource>
                         <directory>src/test/resources-rc</directory>
@@ -1013,12 +1017,6 @@
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
             <version>1.2.2</version>
-        </dependency>
-
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>1.4</version>
         </dependency>
 
         <dependency>

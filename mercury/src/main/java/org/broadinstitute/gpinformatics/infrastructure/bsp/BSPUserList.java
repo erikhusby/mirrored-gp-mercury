@@ -187,7 +187,7 @@ public class BSPUserList extends AbstractCache {
         }
     }
 
-    public boolean isTestUser(BspUser user) {
+    public static boolean isTestUser(BspUser user) {
         return user instanceof QADudeUser;
     }
 
@@ -197,11 +197,23 @@ public class BSPUserList extends AbstractCache {
      * @return the list of select items for the users.
      */
     public static List<SelectItem> createSelectItems(Set<BspUser> users) {
-        List<SelectItem> items = new ArrayList<SelectItem>(users.size() + 1);
+
+        // order the users by last name so the SelectItem generator below will create items in a predictable order
+        // per GPLIM-401
+        List<BspUser> bspUserList = new ArrayList<BspUser>(users);
+        Collections.sort(bspUserList, new Comparator<BspUser>() {
+            @Override
+            public int compare(BspUser bspUser, BspUser bspUser1) {
+                return bspUser.getLastName().compareTo(bspUser1.getLastName());
+            }
+        });
+
+        List<SelectItem> items = new ArrayList<SelectItem>(bspUserList.size() + 1);
         items.add(new SelectItem("", "Any"));
-        for (BspUser user : users) {
+        for (BspUser user : bspUserList) {
             items.add(new SelectItem(user.getUserId(), user.getFirstName() + " " + user.getLastName()));
         }
+
         return items;
     }
 }

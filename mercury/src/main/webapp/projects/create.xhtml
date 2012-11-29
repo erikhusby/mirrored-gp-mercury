@@ -7,7 +7,8 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:p="http://primefaces.org/ui"
-      xmlns:f="http://java.sun.com/jsf/core">
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:b="http://mercury.broadinstitute.org/ui">
 <body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">#{researchProjectDetail.project.researchProjectId == null ? 'New' : 'Edit'} Research Project</ui:define>
@@ -212,7 +213,7 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Save"
+                                <b:commandButton value="Save"
                                                  disabled="#{!userBean.validUser}"
                                                  action="#{researchProjectForm.save}"
                                                  ajax="false" styleClass="ui-priority-primary"/>

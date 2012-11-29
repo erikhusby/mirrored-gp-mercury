@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jsf.TableData;
+import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.Conversation;
 import javax.enterprise.context.ConversationScoped;
@@ -27,7 +28,7 @@ import java.util.*;
 @RequestScoped
 //@ViewAccessScoped
 //@ConversationScoped
-public class ResearchProjectBean implements Serializable {
+public class ResearchProjectBean extends AbstractJsfBean implements Serializable {
     @Inject
     private ResearchProjectDao researchProjectDao;
 

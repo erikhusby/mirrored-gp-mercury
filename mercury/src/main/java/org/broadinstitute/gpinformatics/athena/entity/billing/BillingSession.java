@@ -25,7 +25,7 @@ public class BillingSession {
     public static final String SUCCESS = "Billed Successfully";
 
     @Id
-    @SequenceGenerator(name = "SEQ_BILLING_SESSION", schema = "athena", sequenceName = "SEQ_BILLING_SESSION")
+    @SequenceGenerator(name = "SEQ_BILLING_SESSION", schema = "athena", sequenceName = "SEQ_BILLING_SESSION", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_BILLING_SESSION")
     @Column(name = "BILLING_SESSION_ID")
     private Long billingSessionId;
