@@ -188,6 +188,8 @@
         <athena.password>athena_local</athena.password>
         <database.delimiterType>normal</database.delimiterType>
 
+        <mercury.rc.ip>must be specified.</mercury.rc.ip>
+
     </properties>
 
     <profiles>
@@ -704,7 +706,8 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@mercuryrc.cloud.broad:1521:gpinfprd</database.url>
+                <!--<database.url>jdbc:oracle:thin:@mercuryrc.cloud.broad:1521:gpinfprd</database.url>-->
+                <database.url>jdbc:oracle:thin:@${mercury.rc.ip}:1521:gpinfprd</database.url>
                 <mercury.password>guest</mercury.password>
                 <athena.password>guest</athena.password>
             </properties>
