@@ -29,6 +29,13 @@
                 <h:link value="Edit Project" outcome="create?includeViewParams=true" styleClass="pull-right"/>
             </div>
 
+            <div class="row">
+                <h:outputLink styleClass="pull-right"
+                              value="https://tableau.broadinstitute.org/views/PMBPASSSampleDashboard/PMBridgeSamplesDashboard?Research%20Project=#{researchProjectDetail.project.title}">
+                PASS Report
+                </h:outputLink>
+            </div>
+
             <!-- Name -->
             <h:form styleClass="form-horizontal form-readonly">
                 <div class="control-group">
