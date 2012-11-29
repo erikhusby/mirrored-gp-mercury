@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
+import org.broadinstitute.gpinformatics.infrastructure.common.BusinessKeySorter;
 
 import javax.annotation.Nullable;
 import javax.faces.application.FacesMessage;
@@ -15,6 +16,9 @@ import java.util.Set;
  * purposely not made serializable so that the implementing classes can choose to do so if they require it.
  */
 public abstract class AbstractJsfBean {
+
+    private static final BusinessKeySorter businessKeySorter = new BusinessKeySorter();
+
     public String redirect(String result) {
         return result + "?faces-redirect=true&includeViewParams=true";
     }
@@ -155,5 +159,9 @@ public abstract class AbstractJsfBean {
             String message = name + " was already in the list";
             addInfoMessage(componentId, "Duplicate item removed.", message);
         }
+    }
+
+    public BusinessKeySorter getBusinessKeySorter() {
+        return businessKeySorter;
     }
 }
