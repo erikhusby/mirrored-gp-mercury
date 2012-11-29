@@ -8,8 +8,11 @@ import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A ReagentDesign is the name of magical
@@ -31,6 +34,9 @@ public class ReagentDesign {
     private String reagentDesign;
     private String targetSetName;
     private String manufacturersName;
+
+    @OneToMany(mappedBy = "reagentDesign")
+    private Set<BaitReagent> baitReagents = new HashSet<BaitReagent>();
 
     /** For JPA */
     ReagentDesign() {
@@ -76,5 +82,14 @@ public class ReagentDesign {
 
     public void setManufacturersName(String manufacturersName) {
         this.manufacturersName = manufacturersName;
+    }
+
+    public Set<BaitReagent> getBaitReagents() {
+        return baitReagents;
+    }
+
+    public void addBaitReagent(BaitReagent baitReagent) {
+        this.baitReagents.add(baitReagent);
+//        baitReagent.setReagentDesign(this);
     }
 }

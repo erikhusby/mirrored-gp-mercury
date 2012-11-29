@@ -14,6 +14,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 /**
@@ -24,8 +26,12 @@ import javax.persistence.Table;
 @Entity
 @Audited
 @Table(schema = "mercury")
+// todo jmt rename to DesignedReagent
 public class BaitReagent extends Reagent {
     private String targetSet;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    private ReagentDesign reagentDesign;
 
     /**
      * Construct a BaitDesign
@@ -34,12 +40,13 @@ public class BaitReagent extends Reagent {
      * @param targetSet      Example: Cancer_2K
      * @param manufacturerId 123465
      */
-    public BaitReagent(String designName, String targetSet, String manufacturerId) {
-        super(designName, manufacturerId);
-        this.targetSet = targetSet;
+    public BaitReagent(ReagentDesign reagentDesign) {
+        // todo jmt what to pass to super?
+        super(null, null);
+        this.reagentDesign = reagentDesign;
     }
 
-    protected BaitReagent() {
+    BaitReagent() {
     }
 
     public String getTargetSet() {
@@ -48,6 +55,10 @@ public class BaitReagent extends Reagent {
 
     public void setTargetSet(String targetSet) {
         this.targetSet = targetSet;
+    }
+
+    public ReagentDesign getReagentDesign() {
+        return reagentDesign;
     }
 }
 

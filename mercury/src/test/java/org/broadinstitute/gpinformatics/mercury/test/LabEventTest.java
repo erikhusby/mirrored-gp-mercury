@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.BaitReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -1295,7 +1296,10 @@ public class LabEventTest {
 
     public static TwoDBarcodedTube buildBaitTube(String tubeBarcode) {
         TwoDBarcodedTube baitTube = new TwoDBarcodedTube(tubeBarcode);
-        baitTube.addReagent(new BaitReagent("cancer_2000gene_shift170_undercovered", "Cancer_2K", "1234abc"));
+        ReagentDesign baitDesign = new ReagentDesign("cancer_2000gene_shift170_undercovered", ReagentDesign.REAGENT_TYPE.BAIT);
+        baitDesign.setTargetSetName("Cancer_2K");
+        baitDesign.setManufacturersName("1234abc");
+        baitTube.addReagent(new BaitReagent(baitDesign));
         return baitTube;
     }
 
