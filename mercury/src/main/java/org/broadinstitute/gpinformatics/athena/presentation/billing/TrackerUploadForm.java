@@ -126,8 +126,8 @@ public class TrackerUploadForm  extends AbstractJsfBean {
                         String partNumber = value.getKey().getProductPartNumber();
                         String priceItem = value.getKey().getPriceItemName();
 
-                        Double charges = value.getValue().getCharge();
-                        Double credits = value.getValue().getCredit();
+                        double charges = value.getValue().getCharge();
+                        double credits = value.getValue().getCredit();
 
                         uploadPreviewData.add(new UploadPreviewData(pdoKey, partNumber, priceItem, charges, credits));
                     }
