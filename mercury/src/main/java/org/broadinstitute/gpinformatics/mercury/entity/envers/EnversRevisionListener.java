@@ -20,7 +20,7 @@ public class EnversRevisionListener implements RevisionListener {
     public void newRevision(Object revisionEntity) {
         RevInfo revInfo = (RevInfo) revisionEntity;
         UserBean userBean = ServiceAccessUtility.getBean(UserBean.class);
-        if (userBean != null) {
+        if (userBean != null && userBean.getBspUser() != null) {
             revInfo.setUsername(userBean.getBspUser().getUsername());
         }
     }
