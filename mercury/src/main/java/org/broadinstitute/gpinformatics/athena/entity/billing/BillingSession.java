@@ -118,7 +118,6 @@ public class BillingSession {
     }
 
     public RemoveStatus cancelSession() {
-RemoveStatus cancelSession() {
 
         List<BillingLedger> toRemove = new ArrayList<BillingLedger>();
 
