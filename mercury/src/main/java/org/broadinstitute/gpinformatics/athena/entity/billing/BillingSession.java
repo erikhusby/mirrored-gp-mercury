@@ -24,6 +24,12 @@ public class BillingSession {
     public static final String ID_PREFIX = "BILL-";
     public static final String SUCCESS = "Billed Successfully";
 
+    public enum RemoveStatus {
+        AllRemoved,
+        SomeRemoved,
+        NoneRemoved
+    }
+
     @Id
     @SequenceGenerator(name = "SEQ_BILLING_SESSION", schema = "athena", sequenceName = "SEQ_BILLING_SESSION", allocationSize = 1)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_BILLING_SESSION")
@@ -111,11 +117,11 @@ public class BillingSession {
         billingLedgerItems.addAll(newBillingLedgerItems);
     }
 
-    public boolean cancelSession() {
+    public RemoveStatus cancelSession() {
 
         List<BillingLedger> toRemove = new ArrayList<BillingLedger>();
 
-        boolean allRemoved = true;
+        RemoveStatus status = RemoveStatus.NoneRemoved;
         for (BillingLedger ledgerItem : billingLedgerItems) {
 
             // If any item is billed then allRemoved is false and we do not want to remove the item
@@ -124,15 +130,26 @@ public class BillingSession {
             if (!SUCCESS.equals(ledgerItem.getBillingMessage())) {
                 ledgerItem.setBillingSession(null);
                 toRemove.add(ledgerItem);
+
+                // If it is SomeRemoved, then there is some success, so only set all removed if this is the first
+                // item or if it was previously all removed anyway.
+                if (status != RemoveStatus.SomeRemoved) {
+                    status = RemoveStatus.AllRemoved;
+                }
             } else {
-                allRemoved = false;
+                // If this IS none removed, then success indicates we are still none removed. Otherwise the
+                // state is all or some, which either way, with a success means Some!
+                if (status != RemoveStatus.NoneRemoved) {
+                    status = RemoveStatus.SomeRemoved;
+                }
             }
         }
 
         // Remove all items that do not have billing dates
         billingLedgerItems.removeAll(toRemove);
 
-        return allRemoved;
+
+        return status;
     }
 
     @Override
