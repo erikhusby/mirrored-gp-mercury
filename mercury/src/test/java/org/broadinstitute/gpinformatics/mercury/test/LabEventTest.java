@@ -87,10 +87,15 @@ public class LabEventTest {
     public static class ListTransfersFromStart implements TransferTraverserCriteria {
         private int hopCount = -1;
         private final List<String> labEventNames = new ArrayList<String>();
+        /** Avoid infinite loops */
+        private Set<LabEvent> visitedLabEvents = new HashSet<LabEvent>();
 
         @Override
         public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
             if (labEvent != null) {
+                if(!visitedLabEvents.add(labEvent)) {
+                    return TraversalControl.StopTraversing;
+                }
                 if(hopCount > this.hopCount) {
                     this.hopCount = hopCount;
                     labEventNames.add(labEvent.getLabEventType().getName() + " into " +
