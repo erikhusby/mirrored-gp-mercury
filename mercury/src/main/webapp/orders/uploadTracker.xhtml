@@ -8,68 +8,71 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:p="http://primefaces.org/ui">
-<body>
-<ui:composition template="/layout.xhtml">
-    <ui:define name="metadata">
-        <f:event type="preRenderView" listener="#{fileUploadController.initView}"/>
-    </ui:define>
-    <ui:define name="title">Upload Billing Tracker</ui:define>
+    <body>
+        <ui:composition template="/layout.xhtml">
+            <ui:define name="metadata">
+                <f:event type="preRenderView" listener="#{fileUploadController.initView}"/>
+            </ui:define>
+            <ui:define name="title">Upload Billing Tracker</ui:define>
 
-    <ui:define name="body">
-        <p/>
+            <ui:define name="body">
+                <p/>
 
-        <h:form>
+                <h:form>
 
-            <p:fileUpload id="uploader" fileUploadListener="#{fileUploadController.handleFileUploadForPreview}"
-                          allowTypes="/(\.|\/)(xls|xls?x)$/"
-                          mode="advanced"
-                          uploadLabel="Parsing the selected file"
-                          label="Browse for Tracker file."
-                          requiredMessage="A Tracker spreadsheet must be selected"
-                          update="uploadPreviewTable,uploadButton"
-                          auto="true"/>
+                    <p:fileUpload id="uploader" fileUploadListener="#{fileUploadController.handleFileUploadForPreview}"
+                                  allowTypes="/(\.|\/)(xls|xls?x)$/"
+                                  mode="advanced"
+                                  uploadLabel="Parsing the selected file"
+                                  label="Browse for Tracker file."
+                                  requiredMessage="A Tracker spreadsheet must be selected"
+                                  update="previewPanel"
+                                  auto="true"/>
 
-            <!-- render the preview table and upload buttons conditioned on successful generation of preview data -->
-            <!--<p:panel rendered="#{fileUploadController.uploadPreviewData != null}" >-->
+                    <h:panelGroup id="previewPanel" style="margin-top: 15px;">
+                        <p:panel header="This is a preview of your file, if it looks good click Upload" rendered="#{fileUploadController.uploadAvailable}">
 
-                <div style="margin-top: 15px;" class="control-group">
-                    <div class="controls">
-                        <p:commandButton id="uploadButton" value="Upload" disabled="#{!fileUploadController.hasFilename}"
-                                                 action="#{fileUploadController.uploadTrackingDataForBilling}" ajax="false" styleClass="ui-priority-primary"/>
-                        <h:link style="margin-left: 15px;" outcome="list" value="Cancel"/>
-                    </div>
-                </div>
+                            <div class="control-group">
+                                <div class="controls">
+                                    <p:commandButton id="uploadButton" value="Upload"
+                                                             action="#{fileUploadController.uploadTrackingDataForBilling}" ajax="false" styleClass="ui-priority-primary"/>
 
-                <p:dataTable id="uploadPreviewTable"
-                             value="#{fileUploadController.uploadPreviewTableData.values}"
-                             var="previewData">
+                                    <p:commandButton style="margin-left: 15px;" id="cancelButton" value="Cancel"
+                                                     action="#{fileUploadController.cancelUpload()}" ajax="false" styleClass="ui-priority-primary"/>
+                                </div>
+                            </div>
 
-                    <p:column headerText="Order Id" sortBy="#{previewData.orderJiraKey}">
-                        #{previewData.orderJiraKey}
-                    </p:column>
+                            <p:dataTable id="uploadPreviewTable"
+                                         value="#{fileUploadController.uploadPreviewTableData.values}"
+                                         var="previewData">
 
-                    <p:column headerText="Product Part Number" sortBy="#{previewData.productPartNumber}" >
-                        #{previewData.productPartNumber}
-                    </p:column>
+                                <p:column headerText="Order Id" sortBy="#{previewData.orderJiraKey}">
+                                    #{previewData.orderJiraKey}
+                                </p:column>
 
-                    <p:column headerText="Price Item Name" sortBy="#{previewData.priceItemName}">
-                        #{previewData.priceItemName}
-                    </p:column>
+                                <p:column headerText="Product Part Number" sortBy="#{previewData.productPartNumber}" >
+                                    #{previewData.productPartNumber}
+                                </p:column>
 
-                    <p:column headerText="Total Charges" sortBy="#{previewData.totalCharges}">
-                        #{previewData.totalCharges}
-                    </p:column>
+                                <p:column headerText="Price Item Name" sortBy="#{previewData.priceItemName}">
+                                    #{previewData.priceItemName}
+                                </p:column>
 
-                    <p:column headerText="Total Credits" sortBy="#{previewData.totalCredits}">
-                        #{previewData.totalCredits}
-                    </p:column>
+                                <p:column headerText="Total Charges" sortBy="#{previewData.totalCharges}">
+                                    #{previewData.totalCharges}
+                                </p:column>
 
-                </p:dataTable>
+                                <p:column headerText="Total Credits" sortBy="#{previewData.totalCredits}">
+                                    #{previewData.totalCredits}
+                                </p:column>
 
-            <!--</p:panel>-->
+                            </p:dataTable>
 
-        </h:form>
-    </ui:define>
-</ui:composition>
-</body>
+                        </p:panel>
+                    </h:panelGroup>
+
+                </h:form>
+            </ui:define>
+        </ui:composition>
+    </body>
 </html>
