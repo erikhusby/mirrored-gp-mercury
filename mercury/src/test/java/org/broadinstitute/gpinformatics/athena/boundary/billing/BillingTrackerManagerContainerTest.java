@@ -6,7 +6,6 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.orders.BillingStatus;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -38,9 +37,10 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
     private Log logger = LogFactory.getLog(BillingTrackerManagerContainerTest.class);
 
     @Inject
-    private BillingLedgerDao billingLedgerDao;
+    BillingTrackerManager billingTrackerManager;
+
     @Inject
-    private ProductOrderDao productOrderDao;
+    BillingLedgerDao billingLedgerDao;
 
     @Inject
     private UserTransaction utx;
@@ -77,7 +77,7 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
 
         FileInputStream fis=null;
         File tempFile=null;
-        BillingTrackerManager  billingTrackerManager = new BillingTrackerManager(productOrderDao, billingLedgerDao);
+//        BillingTrackerManager  billingTrackerManager = new BillingTrackerManager(productOrderDao, billingLedgerDao);
 
         // Create a copy of the deployed test data file
         try {
@@ -123,8 +123,6 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
                 Assert.assertEquals(expBillingLedger.getQuantity(), billingLedger.getQuantity() );
                 i++;
             }
-
-
         } catch ( Exception e ) {
             e.printStackTrace();
             Assert.fail( e.getMessage() );

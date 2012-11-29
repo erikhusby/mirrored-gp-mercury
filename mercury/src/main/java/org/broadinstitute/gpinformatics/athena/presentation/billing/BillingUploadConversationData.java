@@ -24,11 +24,11 @@ public class BillingUploadConversationData implements Serializable {
     }
 
 
-    public void beginConversation( ) {
-        if (conversation.isTransient()) {
-            conversation.begin();
-//            setFilename( null );
-        }
-    }
+//    public void beginConversation( ) {
+//        if (conversation.isTransient()) {
+//            conversation.begin();
+////            setFilename( null );
+//        }
+//    }
 
 }

@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.billing;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillableRef;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerImporter;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerManager;
@@ -16,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.UploadedFile;
 
+import javax.enterprise.context.Conversation;
 import javax.enterprise.context.ConversationScoped;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
@@ -27,8 +29,6 @@ import javax.transaction.UserTransaction;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -58,28 +58,34 @@ public class TrackerUploadForm  extends AbstractJsfBean {
     private BillingUploadConversationData conversationData;
 
     @Inject
+    private Conversation conversation;
+
+    @Inject
+    private Log logger;
+
+    @Inject
+    BillingTrackerManager billingTrackerManager;
+
+    @Inject
     private FacesContext facesContext;
 
     @Inject
     private UserTransaction utx;
-
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss-");
 
     public boolean isUploadAvailable() {
         return getHasFilename() && !FacesContext.getCurrentInstance().getMessages().hasNext();
     }
 
     public void initView() {
-        if (!facesContext.isPostback()) {
-//            conversation.begin();
-            conversationData.beginConversation();
+        if (!facesContext.isPostback() && conversation.isTransient()) {
+            conversation.begin();
         }
     }
 
     /**
      * Is there a common location for this logic?
      *
-     * @return
+     * @return The user
      */
     private String getUsername() {
         return ((HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest()).
@@ -88,17 +94,14 @@ public class TrackerUploadForm  extends AbstractJsfBean {
 
 
     public void handleFileUploadForPreview(FileUploadEvent event) {
-        String fileType = null;
         UploadedFile file = event.getFile();
 
-        // Check the fileType
-        if (( file != null ) && "application/vnd.ms-excel".equalsIgnoreCase( file.getContentType())) {
+        if (file != null) {
             InputStream inputStream = null;
 
             previewUploadedFile(file, inputStream);
-
         } else {
-            addErrorMessage("Cannot upload this type of file (" + fileType + " ). Must be Excel." );
+            addErrorMessage("No file received!");
         }
     }
 
@@ -126,10 +129,10 @@ public class TrackerUploadForm  extends AbstractJsfBean {
                         String partNumber = value.getKey().getProductPartNumber();
                         String priceItem = value.getKey().getPriceItemName();
 
-                        Double charges = value.getValue().getCharge();
-                        Double credits = value.getValue().getCredit();
+                        double charges = value.getValue().getCharge();
+                        double credits = value.getValue().getCredit();
 
-                        uploadPreviewData.add(new UploadPreviewData(pdoKey, partNumber, priceItem, charges, credits));
+                        uploadPreviewData.add(new UploadPreviewData(pdoKey, partNumber, priceItem, credits, charges));
                     }
                 }
             }
@@ -159,44 +162,45 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         }
     }
 
-    /*
-     * The following method is in temporarily until we can get conversation scope working.  !!!!!
-     */
-    public void uploadBillingDirectlyTEMP(FileUploadEvent event) {
-
-        UploadedFile file = event.getFile();
-
-        // Check the fileType
-        if (( file != null ) && "application/vnd.ms-excel".equalsIgnoreCase( file.getContentType())) {
-            InputStream fis=null;
-            File tempFile = null;
-            try {
-                BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, productOrderSampleDao);
-                fis = file.getInputstream();
-                tempFile = importer.copyFromStreamToTempFile(fis);
-            } catch ( Exception e ) {
-                e.printStackTrace();
-                throw new RuntimeException( e );
-            } finally {
-                IOUtils.closeQuietly(fis);
-            }
-
-            processBillingOnTempFile(tempFile);
-
-        } else {
-          addInfoMessage("Could not Upload. Filename is blank." );
-        }
-    }
+//    /*
+//     * The following method is in temporarily until we can get conversation scope working.  !!!!!
+//     */
+//    public void uploadBillingDirectlyTEMP(FileUploadEvent event) {
+//
+//        UploadedFile file = event.getFile();
+//
+//        // Check the fileType
+//        if (( file != null ) && "application/vnd.ms-excel".equalsIgnoreCase( file.getContentType())) {
+//            InputStream fis=null;
+//            File tempFile = null;
+//            try {
+//                BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, productOrderSampleDao);
+//                fis = file.getInputstream();
+//                tempFile = importer.copyFromStreamToTempFile(fis);
+//            } catch ( Exception e ) {
+//                e.printStackTrace();
+//                throw new RuntimeException( e );
+//            } finally {
+//                IOUtils.closeQuietly(fis);
+//            }
+//
+//            processBillingOnTempFile(tempFile);
+//
+//        } else {
+//          addInfoMessage("Could not Upload. Filename is blank." );
+//        }
+//    }
 
     public String uploadTrackingDataForBilling() {
 
         String tempFilename = conversationData.getFilename();
-        File tempFile = null;
+        String username = getUsername();
 
         if ( StringUtils.isNotBlank( tempFilename ) ) {
-            tempFile = new File( tempFilename );
-
+            logger.info( "Billing Start: About to process billing for user " + username + " for file " + tempFilename );
+            File tempFile = new File( tempFilename );
             processBillingOnTempFile(tempFile);
+            logger.info( "Billing Complete: Completed billing for " + username + " for file " + tempFilename );
 
         } else {
           addInfoMessage("Could not Upload. Filename is blank." );
@@ -211,11 +215,7 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         try {
             inputStream =  new FileInputStream(tempFile);
 
-            utx.begin();
-
-            BillingTrackerManager manager = new BillingTrackerManager(productOrderDao, billingLedgerDao);
-
-            Map<String, List<ProductOrder>> billedProductOrdersMapByPartNumber = manager.parseFileForBilling(inputStream);
+            Map<String, List<ProductOrder>> billedProductOrdersMapByPartNumber = billingTrackerManager.parseFileForBilling(inputStream);
 
             int numberOfProducts = 0;
             List<String> orderIdsUpdated = new ArrayList<String>();
@@ -224,8 +224,6 @@ public class TrackerUploadForm  extends AbstractJsfBean {
                 orderIdsUpdated = extractOrderIdsFromMap(billedProductOrdersMapByPartNumber);
             }
 
-            utx.commit();
-
             // Set filename to null to disable the upload button and prevent re-billing.
             conversationData.setFilename( null );
 
@@ -233,11 +231,6 @@ public class TrackerUploadForm  extends AbstractJsfBean {
                     numberOfProducts + " primary product(s)." );
 
         } catch (Exception e) {
-            try {
-                utx.rollback();
-            } catch (SystemException e1) {
-                e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            }
             addErrorMessage(e.getMessage());
         } finally {
             IOUtils.closeQuietly(inputStream);
@@ -263,13 +256,15 @@ public class TrackerUploadForm  extends AbstractJsfBean {
                 }
             }
         }
+
         return orderIdsUpdated;
     }
-
 
     public String cancelUpload() {
 
         conversationData.setFilename( null );
+        uploadPreviewTableData.setValues( null );
+        conversation.end();
 
         //return to the orders pages
        return redirect("/orders/list");

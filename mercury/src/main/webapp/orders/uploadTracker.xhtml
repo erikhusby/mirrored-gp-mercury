@@ -20,60 +20,56 @@
 
         <h:form>
 
-            <p:fileUpload id="uploader" fileUploadListener="#{fileUploadController.uploadBillingDirectlyTEMP}"
+            <p:fileUpload id="uploader" fileUploadListener="#{fileUploadController.handleFileUploadForPreview}"
                           allowTypes="/(\.|\/)(xls|xls?x)$/"
                           mode="advanced"
                           uploadLabel="Parsing the selected file"
                           label="Browse for Tracker file."
                           requiredMessage="A Tracker spreadsheet must be selected"
+                                  update="previewPanel"
                           auto="true"/>
 
+            <h:panelGroup id="previewPanel" style="margin-top: 15px;">
+                <p:panel header="This is a preview of your file, if it looks good click Upload" rendered="#{fileUploadController.uploadAvailable}">
 
-            <p:panel header="Preview of file: #{fileUploadController.filename}"
-                     rendered="#{fileUploadController.uploadAvailable}">
+                    <div class="control-group">
+                        <div class="controls">
+                            <p:commandButton id="uploadButton" value="Upload"
+                                         action="#{fileUploadController.uploadTrackingDataForBilling}" ajax="false" styleClass="ui-priority-primary"/>
 
-                <div class="control-group">
-                    <div class="controls">
-                        <div class="row-fluid">
-                            <div class="span1">
-                                <p:commandButton id="uploadButton" value="Upload"
-                                                 action="#{fileUploadController.uploadBillingDirectlyTEMP}" ajax="false" styleClass="ui-priority-primary"/>
-                            </div>
-                            <div class="span1">
-                                <h:link outcome="list" value="Cancel"/>
-                            </div>
+                            <p:commandButton style="margin-left: 15px;" id="cancelButton" value="Cancel"
+                                             action="#{fileUploadController.cancelUpload()}" ajax="false" styleClass="ui-priority-primary"/>
                         </div>
                     </div>
-                </div>
 
-                <p:dataTable id="uploadPreviewTable"
+                    <p:dataTable id="uploadPreviewTable"
                              value="#{fileUploadController.uploadPreviewTableData.values}"
                              var="previewData">
 
-                    <p:column headerText="Order Id" sortBy="#{previewData.orderJiraKey}">
-                        #{previewData.orderJiraKey}
-                    </p:column>
+                        <p:column headerText="Order Id" sortBy="#{previewData.orderJiraKey}">
+                            #{previewData.orderJiraKey}
+                        </p:column>
 
-                    <p:column headerText="Product Part Number" sortBy="#{previewData.productPartNumber}" >
-                        #{previewData.productPartNumber}
-                    </p:column>
+                        <p:column headerText="Product Part Number" sortBy="#{previewData.productPartNumber}" >
+                            #{previewData.productPartNumber}
+                        </p:column>
 
-                    <p:column headerText="Price Item Name" sortBy="#{previewData.priceItemName}">
-                        #{previewData.priceItemName}
-                    </p:column>
+                        <p:column headerText="Price Item Name" sortBy="#{previewData.priceItemName}">
+                            #{previewData.priceItemName}
+                        </p:column>
 
-                    <p:column headerText="Total Charges" sortBy="#{previewData.totalCharges}">
-                        #{previewData.totalCharges}
-                    </p:column>
+                        <p:column headerText="Total Charges" sortBy="#{previewData.totalCharges}">
+                            #{previewData.totalCharges}
+                        </p:column>
 
-                    <p:column headerText="Total Credits" sortBy="#{previewData.totalCredits}">
-                        #{previewData.totalCredits}
-                    </p:column>
+                        <p:column headerText="Total Credits" sortBy="#{previewData.totalCredits}">
+                            #{previewData.totalCredits}
+                        </p:column>
 
-                </p:dataTable>
+                    </p:dataTable>
 
-            </p:panel>
-
+                </p:panel>
+            </h:panelGroup>
         </h:form>
     </ui:define>
 </ui:composition>

@@ -70,7 +70,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         params.add("platform_name", priceItem.getPlatformName());
         params.add("category_name", priceItem.getCategoryName());
         params.add("price_item_name", priceItem.getName());
-        params.add("quantity", Double.toString(numWorkUnits));
+        params.add("quantity", String.valueOf(numWorkUnits));
         params.add("complete", Boolean.TRUE.toString());
         params.add("completion_date", dateFormat.format(reportedCompletionDate));
         params.add("url", callbackUrl);
