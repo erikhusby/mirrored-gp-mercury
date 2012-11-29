@@ -859,7 +859,7 @@ public class ProductOrder implements Serializable {
             fieldName = fieldNameIn;
         }
 
-        @NotNull @Override
+        @Nonnull @Override
         public String getFieldName() {
             return fieldName;
         }

@@ -45,40 +45,14 @@ public class RegistrationJaxbConverter {
 
             for(Reagent sampleReagent:currSample.getReagents()) {
                 if(sampleReagent instanceof MolecularIndexReagent) {
-                    for(Map.Entry<MolecularIndexingScheme.PositionHint,MolecularIndex> currScheme:((MolecularIndexReagent) sampleReagent).getMolecularIndexingScheme().getIndexes().entrySet()) {
-                        LibraryMolecularIndex newIndex = new LibraryMolecularIndex();
-                        newIndex.setMolecularBarcode(currScheme.getValue().getSequence());
-                        if(currScheme.getKey() instanceof MolecularIndexingScheme.IlluminaPositionHint) {
-                            switch ((MolecularIndexingScheme.IlluminaPositionHint) currScheme.getKey()) {
-                                case P5:
-                                    newIndex.setPositionHint(IndexPosition.ILLUMINA_P_5);
-                                    break;
-                                case P7:
-                                    newIndex.setPositionHint(IndexPosition.ILLUMINA_P_7);
-                                    break;
-                                case IS1:
-                                    newIndex.setPositionHint(IndexPosition.ILLUMINA_IS_1);
-                                    break;
-                                case IS2:
-                                    newIndex.setPositionHint(IndexPosition.ILLUMINA_IS_2);
-                                    break;
-                                case IS3:
-                                    newIndex.setPositionHint(IndexPosition.ILLUMINA_IS_3);
-                                    break;
-                                case IS4:
-                                    newIndex.setPositionHint(IndexPosition.ILLUMINA_IS_4);
-                                    break;
-                                case IS5:
-                                    newIndex.setPositionHint(IndexPosition.ILLUMINA_IS_5);
-                                    break;
-                                case IS6:
-                                    newIndex.setPositionHint(IndexPosition.ILLUMINA_IS_6);
-                                    break;
-                            }
-                        } else {
+                    for(Map.Entry<MolecularIndexingScheme.IndexPosition,MolecularIndex> currScheme:((MolecularIndexReagent) sampleReagent).getMolecularIndexingScheme().getIndexes().entrySet()) {
+                        if(!currScheme.getKey().getTechnology().equals(MolecularIndexingScheme.TECHNOLOGY_ILLUMINA)) {
                             throw new RuntimeException("Illumina is the only Scheme technology allowed now for Exome");
                         }
-
+                        LibraryMolecularIndex newIndex = new LibraryMolecularIndex();
+                        newIndex.setMolecularBarcode(currScheme.getValue().getSequence());
+                        IndexPosition indexPosition = IndexPosition.fromValue(currScheme.getKey().getIndexPosition().name());
+                            newIndex.setPositionHint(indexPosition);
                         sampleInstance.getMolecularIndexes().add(newIndex);
                     }
                     break;

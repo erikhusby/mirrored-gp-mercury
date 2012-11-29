@@ -9,10 +9,17 @@
         <driver>com.oracle</driver>
         <!--<connection-url>jdbc:postgresql://localhost/postgres</connection-url>-->
         <!--<driver>org.postgresql</driver>-->
-    <security>
+        <security>
             <user-name>mercury</user-name>
             <password>mercury_dev</password>
-             <!--<password>mercury_local</password>-->
+            <!--<password>mercury_local</password>-->
         </security>
+        <validation>
+            <background-validation>true</background-validation>
+            <background-validation-millis>60000</background-validation-millis>
+            <valid-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleValidConnectionChecker"/>
+            <stale-connection-checker class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleStaleConnectionChecker"/>
+            <exception-sorter class-name="org.jboss.jca.adapters.jdbc.extensions.oracle.OracleExceptionSorter"/>
+        </validation>
     </datasource>
 </datasources>

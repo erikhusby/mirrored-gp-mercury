@@ -62,8 +62,8 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
         // need to initialize the price items here as we will be exercising their hashCode methods when we create
         // BillingLedger entities in some of our tests
-        order.getProduct().getDefaultPriceItem().hashCode();
-        for (PriceItem priceItem : order.getProduct().getPriceItems()) {
+        order.getProduct().getPrimaryPriceItem().hashCode();
+        for (PriceItem priceItem : order.getProduct().getOptionalPriceItems()) {
             priceItem.hashCode();
         }
         productOrderDao.persist(order);
@@ -156,7 +156,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
     public void testOneLedgerEntryNoBillingSession() {
 
         BillingLedger billingLedger =
-                new BillingLedger(order.getSamples().iterator().next(), order.getProduct().getDefaultPriceItem(), new Date(), 2);
+                new BillingLedger(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(), new Date(), 2);
 
         billingLedgerDao.persist(billingLedger);
         billingLedgerDao.flush();
@@ -172,7 +172,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
     public void testOneLedgerEntryWithBillingSession() {
         final BillingLedger billingLedger =
-                new BillingLedger(order.getSamples().iterator().next(), order.getProduct().getDefaultPriceItem(), new Date(), 2);
+                new BillingLedger(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(), new Date(), 2);
 
         BillingSession billingSession = new BillingSession(1L);
         billingSession.setBillingLedgerItems(new HashSet<BillingLedger>() {{ add(billingLedger); }});

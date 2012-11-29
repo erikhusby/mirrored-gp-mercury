@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.mercury.entity.DB;
 
-import javax.annotation.Nullable;
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -22,14 +21,14 @@ import java.util.EnumSet;
 /**
  * @author breilly
  */
+// FIXME: properly support serialization; need to add readResolve() method that calls ensureUserValid().
 @Named
 @SessionScoped
 public class UserBean implements Serializable {
     private static final String SUPPORT_EMAIL = "mercury-support@broadinstitute.org";
 
-    private static final String LOGIN_WARNING = "You need to log into JIRA and BSP before you can {0}.";
+    public static final String LOGIN_WARNING = "You need to log into JIRA and BSP before you can {0}.";
 
-    @Nullable
     private BspUser bspUser;
 
     @Inject
@@ -42,6 +41,15 @@ public class UserBean implements Serializable {
 
     @Inject
     private JiraService jiraService;
+
+    private static final BspUser UNKNOWN = new BspUser() {{
+        setUserId(-1L);
+        setUsername("");
+    }};
+
+    private boolean isTestUser() {
+        return BSPUserList.isTestUser(bspUser);
+    }
 
     // FIXME: This is a HACK because we can't inject BSPUserList when running in arquillian.
     public void setBspUserList(BSPUserList bspUserList) {
@@ -100,13 +108,12 @@ public class UserBean implements Serializable {
         return ImmutableSet.copyOf(roles);
     }
 
-    @Nullable
     public BspUser getBspUser() {
         return bspUser;
     }
 
     public void logout() {
-        bspUser = null;
+        bspUser = UNKNOWN;
         jiraUsername = "";
         roles.clear();
         bspStatus = ServerStatus.notLoggedIn;
@@ -114,8 +121,10 @@ public class UserBean implements Serializable {
     }
 
     private void updateBspStatus() {
-        bspUser = bspUserList.getByUsername(loginUserName);
-        if (bspUser != null && !bspUserList.isTestUser(bspUser)) {
+        BspUser user = bspUserList.getByUsername(loginUserName);
+        bspUser = UNKNOWN;
+        if (user != null) {
+            bspUser = user;
             bspStatus = ServerStatus.loggedIn;
         } else if (bspUserList.isServerValid()) {
             bspStatus = ServerStatus.notLoggedIn;
@@ -127,7 +136,7 @@ public class UserBean implements Serializable {
 
     private void updateJiraStatus() {
         try {
-            if (jiraService.isValidUser(loginUserName)) {
+            if (isTestUser() || jiraService.isValidUser(loginUserName)) {
                 jiraUsername = loginUserName;
                 jiraStatus = ServerStatus.loggedIn;
             } else {
@@ -158,23 +167,26 @@ public class UserBean implements Serializable {
     }
 
     /**
-     * Ensure that the user is logged in to BSP and JIRA, if not issue a warning using JSF.
-     * @param operation the operation name, for the warning text.
-     * @param jsfBean the JSF bean used to issue the warning.
+     * Ensure that the user is logged in to BSP and JIRA, updating the status if necessary. <p/>
+     * If the user wasn't already logged into BSP, this will try again. Regardless of the user's JIRA login state
+     * it always checks to see if the JIRA server is running. If JIRA isn't running then the user can't continue.
+     * If BSP isn't running, it's OK as long as the user was verified with BSP at some point.
+     *
+     * @return true if user is valid.
      */
-    public void checkUserValidForOperation(String operation, AbstractJsfBean jsfBean) {
+    public boolean ensureUserValid() {
         // Check and see if the server state has changed to allow the user to log in.
         if (bspStatus != ServerStatus.loggedIn) {
             updateBspStatus();
         }
-        if (jiraStatus != ServerStatus.loggedIn) {
-            updateJiraStatus();
-        }
-        if (!isValidUser()) {
-            jsfBean.addErrorMessage(MessageFormat.format(LOGIN_WARNING, operation));
-        }
+        // Always update the JIRA status.
+        updateJiraStatus();
+        return isValidUser();
     }
 
+    /**
+     * @return true if user is valid with BSP and JIRA.
+     */
     public boolean isValidUser() {
         return isValidBspUser() && isValidJiraUser();
     }
@@ -187,13 +199,11 @@ public class UserBean implements Serializable {
     }
 
     public String getBspStatus() {
-        String username = bspUser == null ? "" : bspUser.getUsername();
-        return bspStatus.formatStatus("BSP", bspConfig.getHost(), username);
+        return bspStatus.formatStatus("BSP", bspConfig.getHost(), bspUser.getUsername());
     }
 
     public String getBspMessage() {
-        String username = bspUser == null ? "" : bspUser.getUsername();
-        return bspStatus.formatMessage("BSP", bspConfig.getHost(), username);
+        return bspStatus.formatMessage("BSP", bspConfig.getHost(), bspUser.getUsername());
     }
 
     public String getBspStatusClass() {

@@ -95,7 +95,7 @@ public class ProductDaoTest extends ContainerTest {
         UUID uuid2 = UUID.randomUUID();
         PriceItem priceItem2 = new PriceItem (uuid2.toString(), PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Pony Express-" + uuid2);
 
-        product.setDefaultPriceItem(priceItem1);
+        product.setPrimaryPriceItem(priceItem1);
         product.addPriceItem(priceItem2);
 
         return product;

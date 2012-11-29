@@ -7,17 +7,19 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:p="http://primefaces.org/ui"
-      xmlns:f="http://java.sun.com/jsf/core">
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:b="http://mercury.broadinstitute.org/ui">
 <body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">New Product Order</ui:define>
 
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="researchProject" value="#{productOrderDetail.productOrder.researchProject}" converter="#{researchProjectConverter}"/>
+                <f:viewParam name="researchProject" value="#{researchProjectDetail.project}" converter="#{researchProjectConverter}"/>
                 <f:viewParam name="product" value="#{productOrderDetail.productOrder.product}" converter="#{productConverter}"/>
             </f:metadata>
             <f:event type="preRenderView" listener="#{productOrderForm.initForm}"/>
+            <f:event type="preRenderView" listener="#{researchProjectBean.initView}"/>
         </ui:define>
 
         <ui:define name="body">
@@ -163,8 +165,8 @@
                 <div class="control-group">
                     <div class="controls">
                         <div class="row-fluid">
-                            <div class="span1">
-                                <p:commandButton
+                            <div class="span2">
+                                <b:commandButton
                                         disabled="#{!userBean.validUser}"
                                         value="Place&nbsp;Order" action="#{productOrderForm.save}"
                                         ajax="false" styleClass="ui-priority-primary"/>
@@ -240,8 +242,8 @@
                 <div class="control-group">
                     <div class="controls">
                         <div class="row-fluid">
-                            <div class="span1">
-                                <p:commandButton
+                            <div class="span2">
+                                <b:commandButton
                                         disabled="#{!userBean.validUser}"
                                         value="Place&nbsp;Order" action="#{productOrderForm.save}"
                                         ajax="false" styleClass="ui-priority-primary"/>

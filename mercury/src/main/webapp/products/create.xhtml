@@ -7,14 +7,15 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:p="http://primefaces.org/ui"
-      xmlns:f="http://java.sun.com/jsf/core">
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:b="http://mercury.broadinstitute.org/ui">
 <body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">#{productForm.creating ? 'Create Product' : 'Edit Product Detail'} </ui:define>
 
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="product" value="#{productForm.product}" converter="#{productConverter}" valueChangeListener="#{productConverter.updateModel}">
+                <f:viewParam id="productParam" name="product" value="#{productForm.product}" converter="#{productConverter}" valueChangeListener="#{productConverter.updateModel}">
                     <f:event type="preValidate" listener="#{productForm.initEmptyProduct}"/>
                 </f:viewParam>
             </f:metadata>
@@ -174,7 +175,7 @@
                             <p:column style="width:100%">
                                 <div>#{priceItem.platformName} | #{priceItem.categoryName} | #{priceItem.name}</div>
                             </p:column>
-                            <p:ajax event="itemSelect" listener="#{productForm.removeDuplicates(productForm.priceItems, 'priceItem')}" update="priceItem, optionalPriceItemsMessage"/>
+                            <p:ajax event="itemSelect" listener="#{productForm.removeDuplicates(productForm.priceItems, 'priceItem')}" update="priceItem optionalPriceItemsMessage :productParam"/>
                         </p:autoComplete>
                         <p:watermark for="priceItem" value="Type text to search for Price Items"/>
                         <p:message id="optionalPriceItemsMessage" for="priceItem" />
@@ -192,7 +193,7 @@
                                 <div class="ac-dropdown-subtext">Available(now or in the future):#{product.availableNowOrLater ? "Yes" : "No"}</div>
                                 <div class="ac-dropdown-subtext">#{product.productFamily.name}</div>
                             </p:column>
-                            <p:ajax event="itemSelect" listener="#{productForm.removeDuplicates(productForm.addOns, 'addOns')}" update="addOns, addOnsMessage"/>
+                            <p:ajax event="itemSelect" listener="#{productForm.removeDuplicates(productForm.addOns, 'addOns')}" update="addOns addOnsMessage :productParam"/>
                         </p:autoComplete>
                         <p:watermark for="addOns" value="Type text to search to search for Add-ons"/>
                         <p:message id="addOnsMessage" for="addOns"/>
@@ -204,7 +205,7 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary"/>
+                                <b:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                             <div class="offset2">
                                 <h:link outcome="list" value="Cancel" rendered="#{productForm.creating}"/>
