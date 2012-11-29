@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.presentation.billing;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillableRef;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerImporter;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerManager;
@@ -57,14 +56,14 @@ public class TrackerUploadForm  extends AbstractJsfBean {
     public static class UploadPreviewTableData extends TableData<UploadPreviewData> {}
     @Inject UploadPreviewTableData uploadPreviewTableData;
 
-    @ConversationScoped
     @Inject
     private BillingUploadConversationData conversationData;
 
     @Inject
     private Conversation conversation;
 
-    private Log logger = LogFactory.getLog(TrackerUploadForm.class);
+    @Inject
+    private Log logger;
 
     @Inject
     private FacesContext facesContext;
@@ -76,7 +75,7 @@ public class TrackerUploadForm  extends AbstractJsfBean {
 
 
     public void initView() {
-        if (!facesContext.isPostback()) {
+        if (!facesContext.isPostback() && conversation.isTransient()) {
             conversation.begin();
         }
     }
@@ -93,13 +92,15 @@ public class TrackerUploadForm  extends AbstractJsfBean {
 
 
     public void handleFileUploadForPreview(FileUploadEvent event) {
-        String fileType = null;
         UploadedFile file = event.getFile();
 
+        if (file != null) {
             InputStream inputStream = null;
 
             previewUploadedFile(file, inputStream);
-
+        } else {
+            addErrorMessage("No file received!");
+        }
     }
 
     private void previewUploadedFile(UploadedFile file, InputStream inputStream) {
@@ -129,7 +130,7 @@ public class TrackerUploadForm  extends AbstractJsfBean {
                         Double charges = value.getValue().getCharge();
                         Double credits = value.getValue().getCredit();
 
-                        uploadPreviewData.add(new UploadPreviewData(pdoKey, partNumber, priceItem, charges, credits));
+                        uploadPreviewData.add(new UploadPreviewData(pdoKey, partNumber, priceItem, credits, charges));
                     }
                 }
             }
