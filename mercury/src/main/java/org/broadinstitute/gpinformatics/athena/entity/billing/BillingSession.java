@@ -118,6 +118,7 @@ public class BillingSession {
     }
 
     public RemoveStatus cancelSession() {
+RemoveStatus cancelSession() {
 
         List<BillingLedger> toRemove = new ArrayList<BillingLedger>();
 
@@ -137,6 +138,9 @@ public class BillingSession {
                     status = RemoveStatus.AllRemoved;
                 }
             } else {
+                // clear out the OK message
+                ledgerItem.setBillingMessage(null);
+
                 // If this IS none removed, then success indicates we are still none removed. Otherwise the
                 // state is all or some, which either way, with a success means Some!
                 if (status != RemoveStatus.NoneRemoved) {
@@ -147,7 +151,6 @@ public class BillingSession {
 
         // Remove all items that do not have billing dates
         billingLedgerItems.removeAll(toRemove);
-
 
         return status;
     }
