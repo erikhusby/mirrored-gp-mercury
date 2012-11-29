@@ -20,7 +20,7 @@
 
         <h:form>
 
-            <p:fileUpload id="uploader" fileUploadListener="#{fileUploadController.uploadBillingDirectlyTEMP}"
+            <p:fileUpload id="uploader" fileUploadListener="#{fileUploadController.handleFileUploadForPreview}"
                           allowTypes="/(\.|\/)(xls|xls?x)$/"
                           mode="advanced"
                           uploadLabel="Parsing the selected file"

@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.UploadedFile;
 
+import javax.enterprise.context.Conversation;
 import javax.enterprise.context.ConversationScoped;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
@@ -54,8 +55,12 @@ public class TrackerUploadForm  extends AbstractJsfBean {
     public static class UploadPreviewTableData extends TableData<UploadPreviewData> {}
     @Inject UploadPreviewTableData uploadPreviewTableData;
 
+    @ConversationScoped
     @Inject
     private BillingUploadConversationData conversationData;
+
+    @Inject
+    private Conversation conversation;
 
     @Inject
     private FacesContext facesContext;
@@ -68,8 +73,7 @@ public class TrackerUploadForm  extends AbstractJsfBean {
 
     public void initView() {
         if (!facesContext.isPostback()) {
-//            conversation.begin();
-            conversationData.beginConversation();
+            conversation.begin();
         }
     }
 
@@ -156,34 +160,34 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         }
     }
 
-    /*
-     * The following method is in temporarily until we can get conversation scope working.  !!!!!
-     */
-    public void uploadBillingDirectlyTEMP(FileUploadEvent event) {
-
-        UploadedFile file = event.getFile();
-
-        // Check the fileType
-        if (( file != null ) && "application/vnd.ms-excel".equalsIgnoreCase( file.getContentType())) {
-            InputStream fis=null;
-            File tempFile = null;
-            try {
-                BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, productOrderSampleDao);
-                fis = file.getInputstream();
-                tempFile = importer.copyFromStreamToTempFile(fis);
-            } catch ( Exception e ) {
-                e.printStackTrace();
-                throw new RuntimeException( e );
-            } finally {
-                IOUtils.closeQuietly(fis);
-            }
-
-            processBillingOnTempFile(tempFile);
-
-        } else {
-          addInfoMessage("Could not Upload. Filename is blank." );
-        }
-    }
+//    /*
+//     * The following method is in temporarily until we can get conversation scope working.  !!!!!
+//     */
+//    public void uploadBillingDirectlyTEMP(FileUploadEvent event) {
+//
+//        UploadedFile file = event.getFile();
+//
+//        // Check the fileType
+//        if (( file != null ) && "application/vnd.ms-excel".equalsIgnoreCase( file.getContentType())) {
+//            InputStream fis=null;
+//            File tempFile = null;
+//            try {
+//                BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, productOrderSampleDao);
+//                fis = file.getInputstream();
+//                tempFile = importer.copyFromStreamToTempFile(fis);
+//            } catch ( Exception e ) {
+//                e.printStackTrace();
+//                throw new RuntimeException( e );
+//            } finally {
+//                IOUtils.closeQuietly(fis);
+//            }
+//
+//            processBillingOnTempFile(tempFile);
+//
+//        } else {
+//          addInfoMessage("Could not Upload. Filename is blank." );
+//        }
+//    }
 
     public String uploadTrackingDataForBilling() {
 
