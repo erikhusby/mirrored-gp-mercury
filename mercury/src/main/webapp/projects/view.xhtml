@@ -30,11 +30,13 @@
             </div>
 
             <div class="row">
-                <h:outputLink styleClass="pull-right"
-                              value="https://tableau.broadinstitute.org/views/PMBPASSSampleDashboard/PMBridgeSamplesDashboard?Research%20Project=#{researchProjectDetail.project.title}">
-                PASS Report
-                </h:outputLink>
+                <div class="form-value" style="float:right">
+                    <h:outputLink target="passReport" value="#{tableauLink.passReportUrl(researchProjectDetail.project.title)}" class="external">
+                        <h:outputText value="PASS Report"/>
+                    </h:outputLink>
+                </div>
             </div>
+
 
             <!-- Name -->
             <h:form styleClass="form-horizontal form-readonly">
@@ -146,6 +148,9 @@
                         <div class="form-value">#{researchProjectDetail.project.irbNotes}</div>
                     </div>
                 </div>
+
+
+
             </h:form>
 
             <br/>

@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.pmbridge.PMBridgeConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
+import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftConfig;
 import org.yaml.snakeyaml.Yaml;
 
@@ -47,7 +48,8 @@ public class MercuryConfiguration {
             ThriftConfig.class,
             GAPConfig.class,
             DeckMessagesConfig.class,
-            EtlConfig.class
+            EtlConfig.class,
+            TableauConfig.class
     };
 
     private static final String MERCURY_CONFIG = "/mercury-config.yaml";

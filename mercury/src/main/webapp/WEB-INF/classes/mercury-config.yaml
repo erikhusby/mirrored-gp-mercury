@@ -83,8 +83,6 @@ jira:
       urlBase:      https://labopsjira.broadinstitute.org
 
 
-
-
 pmbridge:
 
     DEV:
@@ -192,6 +190,14 @@ datawhEtl:
         datawhEtlDirRoot: /seq/lims/datawh/prod
 
 
+tableau:
+
+    PROD:
+
+        urlBase: https://tableau.broadinstitute.org/views
+
+
+
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 
 
@@ -210,6 +216,7 @@ mercury:
       thrift:   QA
       deckMsgs: DEV
       datawhEtl: DEV
+      tableau:  PROD
 
 
     TEST:
@@ -224,6 +231,7 @@ mercury:
       thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
+      tableau:  PROD
 
     QA:
 
@@ -237,7 +245,7 @@ mercury:
       thrift:   QA
       deckMsgs: QA
       datawhEtl: QA
-
+      tableau:  PROD
 
     RC:
 
@@ -251,7 +259,7 @@ mercury:
       thrift:   QA
       deckMsgs: QA
       datawhEtl: QA
-
+      tableau:  PROD
 
     PROD:
 
@@ -265,4 +273,4 @@ mercury:
       thrift:   PROD
       deckMsgs: PROD
       datawhEtl: PROD
-
+      tableau:  PROD
