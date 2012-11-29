@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.ss.usermodel.*;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
@@ -15,18 +14,27 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
 import java.io.InputStream;
 import java.util.*;
 
 /**
  *
  */
+@Stateful
+@RequestScoped
 public class BillingTrackerManager {
 
-    private Log logger = LogFactory.getLog(BillingTrackerManager.class);
+//    private Log logger = LogFactory.getLog(BillingTrackerManager.class);
+    @Inject
+    private Log logger;
 
+    @Inject
+    BillingLedgerDao billingLedgerDao;
 
-    private BillingLedgerDao billingLedgerDao;
+    @Inject
     private ProductOrderDao productOrderDao;
 
 
@@ -44,11 +52,6 @@ public class BillingTrackerManager {
     private final static int DATE_COMPLETE_COL_POS = headerColumnIndices.get(SampleLedgerExporter.DATE_COMPLETE_HEADING);
     private final static int numberOfHeaderRows = 2;
 
-
-    public BillingTrackerManager(ProductOrderDao productOrderDao, BillingLedgerDao billingLedgerDao) {
-        this.productOrderDao = productOrderDao;
-        this.billingLedgerDao = billingLedgerDao;
-    }
 
     public Map<String, List<ProductOrder>> parseFileForBilling(InputStream fis) throws Exception {
 
@@ -291,6 +294,7 @@ public class BillingTrackerManager {
             if ( numberOfLedgerItems > 0 ) {
                 productOrderDao.persist(productOrder);
                 productOrderDao.flush();
+
                 logger.info("Persisted " + numberOfLedgerItems + " BillingLedger records for Product Order <" +
                         productOrder.getTitle() + "> with PDO Id: " + productOrder.getBusinessKey());
             }
