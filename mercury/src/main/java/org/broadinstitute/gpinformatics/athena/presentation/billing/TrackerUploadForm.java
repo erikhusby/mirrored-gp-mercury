@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.athena.presentation.billing;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillableRef;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerImporter;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerManager;
@@ -62,6 +64,8 @@ public class TrackerUploadForm  extends AbstractJsfBean {
     @Inject
     private Conversation conversation;
 
+    private Log logger = LogFactory.getLog(TrackerUploadForm.class);
+
     @Inject
     private FacesContext facesContext;
 
@@ -92,15 +96,10 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         String fileType = null;
         UploadedFile file = event.getFile();
 
-        // Check the fileType
-        if (( file != null ) && "application/vnd.ms-excel".equalsIgnoreCase( file.getContentType())) {
             InputStream inputStream = null;
 
             previewUploadedFile(file, inputStream);
 
-        } else {
-            addErrorMessage("Cannot upload this type of file (" + fileType + " ). Must be Excel." );
-        }
     }
 
     private void previewUploadedFile(UploadedFile file, InputStream inputStream) {
@@ -192,12 +191,13 @@ public class TrackerUploadForm  extends AbstractJsfBean {
     public String uploadTrackingDataForBilling() {
 
         String tempFilename = conversationData.getFilename();
-        File tempFile = null;
+        String username = getUsername();
 
         if ( StringUtils.isNotBlank( tempFilename ) ) {
-            tempFile = new File( tempFilename );
-
+            logger.info( "Billing Start: About to process billing for user " + username + " for file " + tempFilename );
+            File tempFile = new File( tempFilename );
             processBillingOnTempFile(tempFile);
+            logger.info( "Billing Complete: Completed billing for " + username + " for file " + tempFilename );
 
         } else {
           addInfoMessage("Could not Upload. Filename is blank." );
@@ -272,6 +272,8 @@ public class TrackerUploadForm  extends AbstractJsfBean {
     public String cancelUpload() {
 
         conversationData.setFilename( null );
+        uploadPreviewTableData.setValues( null );
+        conversation.end();
 
         //return to the orders pages
        return redirect("/orders/list");
