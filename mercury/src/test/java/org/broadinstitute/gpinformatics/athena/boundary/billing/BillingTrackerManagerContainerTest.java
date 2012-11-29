@@ -5,6 +5,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.orders.BillingStatus;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -35,9 +36,11 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
 
     private Log logger = LogFactory.getLog(BillingTrackerManagerContainerTest.class);
 
-
     @Inject
     BillingTrackerManager billingTrackerManager;
+
+    @Inject
+    BillingLedgerDao billingLedgerDao;
 
     @Inject
     private UserTransaction utx;
@@ -94,7 +97,7 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
             Assert.assertEquals(1, rnaProductOrders.size());
             String rnaOrderId = "PDO-23";
             ProductOrder productOrder = rnaProductOrders.get(0);
-            Set<BillingLedger> ledgerSet = billingTrackerManager.billingLedgerDao.findByOrderList(new ProductOrder[]{productOrder});
+            Set<BillingLedger> ledgerSet = billingLedgerDao.findByOrderList(new ProductOrder[]{productOrder});
             // should be 11 records in the set
             Assert.assertEquals(11, ledgerSet.size());
             BillingLedger[] ledgerArray = ledgerSet.toArray(new BillingLedger[0]);

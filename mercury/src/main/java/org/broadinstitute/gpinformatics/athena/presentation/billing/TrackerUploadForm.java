@@ -167,34 +167,6 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         }
     }
 
-//    /*
-//     * The following method is in temporarily until we can get conversation scope working.  !!!!!
-//     */
-//    public void uploadBillingDirectlyTEMP(FileUploadEvent event) {
-//
-//        UploadedFile file = event.getFile();
-//
-//        // Check the fileType
-//        if (( file != null ) && "application/vnd.ms-excel".equalsIgnoreCase( file.getContentType())) {
-//            InputStream fis=null;
-//            File tempFile = null;
-//            try {
-//                BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, productOrderSampleDao);
-//                fis = file.getInputstream();
-//                tempFile = importer.copyFromStreamToTempFile(fis);
-//            } catch ( Exception e ) {
-//                e.printStackTrace();
-//                throw new RuntimeException( e );
-//            } finally {
-//                IOUtils.closeQuietly(fis);
-//            }
-//
-//            processBillingOnTempFile(tempFile);
-//
-//        } else {
-//          addInfoMessage("Could not Upload. Filename is blank." );
-//        }
-//    }
 
     public String uploadTrackingDataForBilling() {
 
