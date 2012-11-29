@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.person.PersonDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -27,8 +26,6 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EX
  * Imports from Squid the pooling transfers that were done in the user interface, before this transfer was messaged.
  */
 public class CreatePoolingTransfersTest extends ContainerTest {
-    @Inject
-    private PersonDAO personDAO;
 
     @Inject
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;

@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.experiments;
 
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import java.util.Collection;
 
@@ -20,9 +19,9 @@ public interface ExperimentRequest {
 
     ExperimentRequestSummary getExperimentRequestSummary();
 
-    Collection<Person> getPlatformProjectManagers();
+    Collection<String> getPlatformProjectManagers();
 
-    Collection<Person> getProgramProjectManagers();
+    Collection<String> getProgramProjectManagers();
 
     ExperimentId getRemoteId();
 

@@ -76,7 +76,7 @@ public class BucketBeanTest extends ContainerTest {
             return;
         }
 
-        utx.setTransactionTimeout(300);
+//        utx.setTransactionTimeout(300);
         utx.begin();
 
         poBusinessKey1 = "PDO-1";
