@@ -24,7 +24,6 @@ import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
-import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.io.File;
 import java.io.FileInputStream;
@@ -64,6 +63,9 @@ public class TrackerUploadForm  extends AbstractJsfBean {
 
     @Inject
     private Log logger;
+
+    @Inject
+    BillingTrackerManager billingTrackerManager;
 
     @Inject
     private FacesContext facesContext;
@@ -218,11 +220,7 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         try {
             inputStream =  new FileInputStream(tempFile);
 
-            utx.begin();
-
-            BillingTrackerManager manager = new BillingTrackerManager(productOrderDao, billingLedgerDao);
-
-            Map<String, List<ProductOrder>> billedProductOrdersMapByPartNumber = manager.parseFileForBilling(inputStream);
+            Map<String, List<ProductOrder>> billedProductOrdersMapByPartNumber = billingTrackerManager.parseFileForBilling(inputStream);
 
             int numberOfProducts = 0;
             List<String> orderIdsUpdated = new ArrayList<String>();
@@ -231,8 +229,6 @@ public class TrackerUploadForm  extends AbstractJsfBean {
                 orderIdsUpdated = extractOrderIdsFromMap(billedProductOrdersMapByPartNumber);
             }
 
-            utx.commit();
-
             // Set filename to null to disable the upload button and prevent re-billing.
             conversationData.setFilename( null );
 
@@ -240,11 +236,6 @@ public class TrackerUploadForm  extends AbstractJsfBean {
                     numberOfProducts + " primary product(s)." );
 
         } catch (Exception e) {
-            try {
-                utx.rollback();
-            } catch (SystemException e1) {
-                e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
-            }
             addErrorMessage(e.getMessage());
         } finally {
             IOUtils.closeQuietly(inputStream);
@@ -272,7 +263,6 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         }
         return orderIdsUpdated;
     }
-
 
     public String cancelUpload() {
 
