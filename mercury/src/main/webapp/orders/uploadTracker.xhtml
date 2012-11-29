@@ -32,50 +32,39 @@
             <!-- render the preview table and upload buttons conditioned on successful generation of preview data -->
             <!--<p:panel rendered="#{fileUploadController.uploadPreviewData != null}" >-->
 
-            <p:dataTable id="uploadPreviewTable"
-                         value="#{fileUploadController.uploadPreviewTableData.values}"
-                         var="previewData">
-
-                <p:column headerText="Order Id" sortBy="#{previewData.orderJiraKey}">
-                    #{previewData.orderJiraKey}
-                </p:column>
-
-                <p:column headerText="Product Part Number" sortBy="#{previewData.productPartNumber}" >
-                    #{previewData.productPartNumber}
-                </p:column>
-
-                <p:column headerText="Price Item Name" sortBy="#{previewData.priceItemName}">
-                    #{previewData.priceItemName}
-                </p:column>
-
-                <p:column headerText="Total Charges" sortBy="#{previewData.totalCharges}">
-                    #{previewData.totalCharges}
-                </p:column>
-
-                <p:column headerText="Total Credits" sortBy="#{previewData.totalCredits}">
-                    #{previewData.totalCredits}
-                </p:column>
-
-            </p:dataTable>
-
-
-            <p/>
-            <!--<h:outputText id="uploadPreviewTable" value="#{fileUploadController.filename}"/>-->
-            <p/>
-
-            <div class="control-group">
-                <div class="controls">
-                    <div class="row-fluid">
-                        <div class="span1">
-                            <p:commandButton id="uploadButton" value="Upload" disabled="#{!fileUploadController.hasFilename}"
-                                             action="#{fileUploadController.uploadTrackingDataForBilling}" ajax="false" styleClass="ui-priority-primary"/>
-                        </div>
-                        <div class="span1">
-                            <p:commandButton value="Cancel" action="#{fileUploadController.cancelUpload}" ajax="false" styleClass="ui-priority-primary"/>
-                        </div>
+                <div style="margin-top: 15px;" class="control-group">
+                    <div class="controls">
+                        <p:commandButton id="uploadButton" value="Upload" disabled="#{!fileUploadController.hasFilename}"
+                                                 action="#{fileUploadController.uploadTrackingDataForBilling}" ajax="false" styleClass="ui-priority-primary"/>
+                        <h:link style="margin-left: 15px;" outcome="list" value="Cancel"/>
                     </div>
                 </div>
-            </div>
+
+                <p:dataTable id="uploadPreviewTable"
+                             value="#{fileUploadController.uploadPreviewTableData.values}"
+                             var="previewData">
+
+                    <p:column headerText="Order Id" sortBy="#{previewData.orderJiraKey}">
+                        #{previewData.orderJiraKey}
+                    </p:column>
+
+                    <p:column headerText="Product Part Number" sortBy="#{previewData.productPartNumber}" >
+                        #{previewData.productPartNumber}
+                    </p:column>
+
+                    <p:column headerText="Price Item Name" sortBy="#{previewData.priceItemName}">
+                        #{previewData.priceItemName}
+                    </p:column>
+
+                    <p:column headerText="Total Charges" sortBy="#{previewData.totalCharges}">
+                        #{previewData.totalCharges}
+                    </p:column>
+
+                    <p:column headerText="Total Credits" sortBy="#{previewData.totalCredits}">
+                        #{previewData.totalCredits}
+                    </p:column>
+
+                </p:dataTable>
 
             <!--</p:panel>-->
 

@@ -22,7 +22,7 @@ import java.util.Date;
 @Table(name= "BILLING_LEDGER", schema = "athena")
 public class BillingLedger {
     @Id
-    @SequenceGenerator(name = "SEQ_LEDGER", schema = "athena", sequenceName = "SEQ_LEDGER")
+    @SequenceGenerator(name = "SEQ_LEDGER", schema = "athena", sequenceName = "SEQ_LEDGER", allocationSize = 10)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LEDGER")
     private Long ledgerId;
 
