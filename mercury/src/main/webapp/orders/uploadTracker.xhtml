@@ -9,16 +9,67 @@
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:p="http://primefaces.org/ui">
 <body>
-    <ui:composition template="/layout.xhtml">
-        <ui:define name="title">Upload Billing Tracker</ui:define>
+<ui:composition template="/layout.xhtml">
+    <ui:define name="metadata">
+        <f:event type="preRenderView" listener="#{fileUploadController.initView}"/>
+    </ui:define>
+    <ui:define name="title">Upload Billing Tracker</ui:define>
 
-        <ui:define name="body">
-            <h:form>
+    <ui:define name="body">
+        <p/>
 
-                Upload will be in this space
+        <h:form>
 
-            </h:form>
-        </ui:define>
-    </ui:composition>
+            <p:fileUpload id="uploader" fileUploadListener="#{fileUploadController.handleFileUploadForPreview}"
+                          allowTypes="/(\.|\/)(xls|xls?x)$/"
+                          mode="advanced"
+                          uploadLabel="Parsing the selected file"
+                          label="Browse for Tracker file."
+                          requiredMessage="A Tracker spreadsheet must be selected"
+                          update="uploadPreviewTable,uploadButton"
+                          auto="true"/>
+
+            <!-- render the preview table and upload buttons conditioned on successful generation of preview data -->
+            <!--<p:panel rendered="#{fileUploadController.uploadPreviewData != null}" >-->
+
+                <div style="margin-top: 15px;" class="control-group">
+                    <div class="controls">
+                        <p:commandButton id="uploadButton" value="Upload" disabled="#{!fileUploadController.hasFilename}"
+                                                 action="#{fileUploadController.uploadTrackingDataForBilling}" ajax="false" styleClass="ui-priority-primary"/>
+                        <h:link style="margin-left: 15px;" outcome="list" value="Cancel"/>
+                    </div>
+                </div>
+
+                <p:dataTable id="uploadPreviewTable"
+                             value="#{fileUploadController.uploadPreviewTableData.values}"
+                             var="previewData">
+
+                    <p:column headerText="Order Id" sortBy="#{previewData.orderJiraKey}">
+                        #{previewData.orderJiraKey}
+                    </p:column>
+
+                    <p:column headerText="Product Part Number" sortBy="#{previewData.productPartNumber}" >
+                        #{previewData.productPartNumber}
+                    </p:column>
+
+                    <p:column headerText="Price Item Name" sortBy="#{previewData.priceItemName}">
+                        #{previewData.priceItemName}
+                    </p:column>
+
+                    <p:column headerText="Total Charges" sortBy="#{previewData.totalCharges}">
+                        #{previewData.totalCharges}
+                    </p:column>
+
+                    <p:column headerText="Total Credits" sortBy="#{previewData.totalCredits}">
+                        #{previewData.totalCredits}
+                    </p:column>
+
+                </p:dataTable>
+
+            <!--</p:panel>-->
+
+        </h:form>
+    </ui:define>
+</ui:composition>
 </body>
 </html>

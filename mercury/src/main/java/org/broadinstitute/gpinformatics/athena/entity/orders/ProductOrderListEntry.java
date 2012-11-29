@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+
 import java.io.Serializable;
 import java.util.Date;
 
@@ -113,7 +115,7 @@ public class ProductOrderListEntry implements Serializable {
         if (billingSessionId == null) {
             return null;
         }
-        return "BILL-" + billingSessionId;
+        return BillingSession.ID_PREFIX + billingSessionId;
     }
 
     public Integer getPdoSampleCount() {

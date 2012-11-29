@@ -11,6 +11,8 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 @Impl
 public class QuoteServiceImpl extends AbstractJerseyClientService implements QuoteService {
@@ -55,7 +57,11 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     }
 
     @Override
-    public String registerNewWork(Quote quote, PriceItem priceItem, double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+    public String registerNewWork(Quote quote, PriceItem priceItem, Date reportedCompletionDate, double numWorkUnits,
+                                  String callbackUrl, String callbackParameterName, String callbackParameterValue) {
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+
         // see https://iwww.broadinstitute.org/blogs/quote/?page_id=272 for details
         String url = url(Endpoint.REGISTER_WORK);
         MultivaluedMap<String, String> params = new MultivaluedMapImpl();
@@ -64,8 +70,9 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         params.add("platform_name", priceItem.getPlatformName());
         params.add("category_name", priceItem.getCategoryName());
         params.add("price_item_name", priceItem.getName());
-        params.add("quantity", Double.toString(numWorkUnits));
+        params.add("quantity", String.valueOf(numWorkUnits));
         params.add("complete", Boolean.TRUE.toString());
+        params.add("completion_date", dateFormat.format(reportedCompletionDate));
         params.add("url", callbackUrl);
         params.add("object_type", callbackParameterName);
         params.add("object_value", callbackParameterValue);

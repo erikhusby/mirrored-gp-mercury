@@ -26,9 +26,11 @@ public abstract class AbstractSpreadsheetExporter {
     private final CellStyle fixedHeaderStyle;
     private final CellStyle priceItemProductHeaderStyle;
     private final CellStyle billedAmountsHeaderStyle;
+    private final CellStyle billedAmountStyle;
     private final CellStyle preambleStyle;
     private final CellStyle previouslyBilledStyle;
     private final CellStyle errorMessageStyle;
+    private final CellStyle dateStyle;
 
     private final SpreadSheetWriter writer = new SpreadSheetWriter();
 
@@ -39,9 +41,11 @@ public abstract class AbstractSpreadsheetExporter {
         fixedHeaderStyle = buildFixedHeaderStyle(workbook);
         priceItemProductHeaderStyle = buildPriceItemProductHeaderStyle(workbook);
         billedAmountsHeaderStyle = buildBilledAmountsHeaderStyle(workbook);
+        billedAmountStyle = buildBilledAmountStyle(workbook);
         preambleStyle = buildPreambleStyle(workbook);
         previouslyBilledStyle = buildPreviouslyBilledStyle(workbook);
         errorMessageStyle = buildErrorMessageStyle(workbook);
+        dateStyle = buildDateStyle(workbook);
     }
 
     protected SpreadSheetWriter getWriter() {
@@ -56,6 +60,10 @@ public abstract class AbstractSpreadsheetExporter {
         return priceItemProductHeaderStyle;
     }
 
+    protected CellStyle getDateStyle() {
+        return dateStyle;
+    }
+
     protected CellStyle getErrorMessageStyle() {
         return errorMessageStyle;
     }
@@ -64,6 +72,9 @@ public abstract class AbstractSpreadsheetExporter {
         return billedAmountsHeaderStyle;
     }
 
+    protected CellStyle getBilledAmountStyle() {
+        return billedAmountStyle;
+    }
 
     protected CellStyle getPreviouslyBilledStyle() {
         return previouslyBilledStyle;
@@ -86,27 +97,34 @@ public abstract class AbstractSpreadsheetExporter {
         return style;
     }
 
-
     protected CellStyle buildFixedHeaderStyle(Workbook wb) {
         return buildHeaderStyle(wb, IndexedColors.LIGHT_CORNFLOWER_BLUE);
     }
-
 
     protected CellStyle buildPriceItemProductHeaderStyle(Workbook wb) {
         return buildHeaderStyle(wb, IndexedColors.GREY_25_PERCENT);
     }
 
-
     protected CellStyle buildBilledAmountsHeaderStyle(Workbook wb) {
         return buildHeaderStyle(wb, IndexedColors.LIGHT_YELLOW);
     }
 
+    protected CellStyle buildBilledAmountStyle(Workbook wb) {
+        return buildHeaderStyle(wb, IndexedColors.TAN);
+    }
 
     protected CellStyle buildPreambleStyle(Workbook wb) {
         CellStyle style = wb.createCellStyle();
         Font headerFont = wb.createFont();
         headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
         style.setFont(headerFont);
+        return style;
+    }
+
+    protected CellStyle buildDateStyle(Workbook wb) {
+        CellStyle style = wb.createCellStyle();
+        CreationHelper createHelper = wb.getCreationHelper();
+        style.setDataFormat(createHelper.createDataFormat().getFormat("m/d/yy"));
         return style;
     }
 
@@ -183,6 +201,10 @@ public abstract class AbstractSpreadsheetExporter {
         public SpreadSheetWriter() {
         }
 
+        public Sheet getCurrentSheet() {
+            return currentSheet;
+        }
+
         public void setCurrentSheet(Sheet currentSheet) {
             this.currentSheet = currentSheet;
             rowNum = 0;
@@ -244,12 +266,12 @@ public abstract class AbstractSpreadsheetExporter {
         }
 
 
-        public void writeCell(Date value) {
+        public void writeCell(Date value, CellStyle cellStyle) {
             nextCell();
-
             if (value != null) {
                 currentCell.setCellValue(value);
             }
+            currentCell.setCellStyle(cellStyle);
         }
     }
 }
