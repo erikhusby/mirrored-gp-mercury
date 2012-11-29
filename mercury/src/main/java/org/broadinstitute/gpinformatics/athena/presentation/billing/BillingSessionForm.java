@@ -91,12 +91,18 @@ public class BillingSessionForm extends AbstractJsfBean {
 
     public String endSession() {
         // Remove all the sessions from the non-billed items
-        boolean allRemoved = billingSessionBean.getBillingSession().cancelSession();
+        BillingSession.RemoveStatus removeStatus = billingSessionBean.getBillingSession().cancelSession();
 
-        // If all removed then remove the session, totally. If some are billed, then just persist the updates
-        if (allRemoved) {
+        if (removeStatus == BillingSession.RemoveStatus.AllRemoved) {
+            // If all removed then remove the session, totally.
             sessionDao.remove(billingSessionBean.getBillingSession());
         } else {
+            // If none removed then we have billed successfully, so set the billing session's billed date
+            if (removeStatus == BillingSession.RemoveStatus.NoneRemoved) {
+                billingSessionBean.getBillingSession().setBilledDate(new Date());
+            }
+
+            // If some or allare billed, then just persist the updates
             sessionDao.persist(billingSessionBean.getBillingSession());
         }
 
