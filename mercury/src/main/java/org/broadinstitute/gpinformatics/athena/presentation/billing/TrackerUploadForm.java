@@ -65,6 +65,9 @@ public class TrackerUploadForm  extends AbstractJsfBean {
 
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss-");
 
+    public boolean isUploadAvailable() {
+        return getHasFilename() && !FacesContext.getCurrentInstance().getMessages().hasNext();
+    }
 
     public void initView() {
         if (!facesContext.isPostback()) {
@@ -236,7 +239,6 @@ public class TrackerUploadForm  extends AbstractJsfBean {
                 e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
             }
             addErrorMessage(e.getMessage());
-            throw new RuntimeException( e );
         } finally {
             IOUtils.closeQuietly(inputStream);
         }
@@ -272,6 +274,10 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         //return to the orders pages
        return redirect("/orders/list");
 
+    }
+
+    public String getFilename() {
+        return conversationData.getFilename();
     }
 
     public boolean getHasFilename() {

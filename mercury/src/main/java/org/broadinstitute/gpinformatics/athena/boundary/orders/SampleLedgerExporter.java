@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
@@ -51,6 +52,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             "Sort Column"
     };
 
+    private int billingErrorIndex = 9;
+
     private BSPUserList bspUserList;
 
     private BillingLedgerDao billingLedgerDao;
@@ -59,7 +62,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     public SampleLedgerExporter(ProductOrder... productOrders) {
         this(Arrays.asList(productOrders));
     }
-
 
     public SampleLedgerExporter(List<ProductOrder> productOrders) {
         super();
@@ -73,14 +75,12 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
     }
 
-
     public SampleLedgerExporter(List<String> pdoBusinessKeys, BSPUserList bspUserList, BillingLedgerDao billingLedgerDao, ProductOrderDao productOrderDao) {
         this(productOrderDao.findListByBusinessKeyList(pdoBusinessKeys, Product, ResearchProject, Samples));
 
         this.bspUserList = bspUserList;
         this.billingLedgerDao = billingLedgerDao;
     }
-
 
     private String getBspFullName(long id) {
         if (bspUserList == null) {
@@ -142,7 +142,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell("New Quantity", getBilledAmountsHeaderStyle());
     }
 
-
     /**
      * Write out the spreadsheet contents to a stream.  The output is in native excel format.
      * @param out the stream to write to
@@ -160,7 +159,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
             // per 2012-11-19 conversation with Alex and Hugh, Excel does not give us enough characters in a tab
             // name to allow for the product name in all cases, so use just the part number
-            getWriter().setCurrentSheet(getWorkbook().createSheet(currentProduct.getPartNumber()));
+            Sheet sheet = getWorkbook().createSheet(currentProduct.getPartNumber());
+            getWriter().setCurrentSheet(sheet);
+            sheet.setColumnWidth(billingErrorIndex, 9600);
 
             List<ProductOrder> productOrders = orderMap.get(currentProduct);
 
@@ -341,19 +342,18 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     private void writeCountsForPriceItems(Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts, PriceItem item) {
         ProductOrderSample.LedgerQuantities quantities = billCounts.get(item);
         if (quantities != null) {
-
             // If the entry for billed is 0, then don't highlight it, but show a light yellow for anything with values
-            if (quantities.getBilled().equals("0")) {
+            if (quantities.getBilled() == 0.0) {
                 getWriter().writeCell(quantities.getBilled());
             } else {
-                getWriter().writeCell(quantities.getBilled(), getBilledAmountsHeaderStyle());
+                getWriter().writeCell(quantities.getBilled(), getBilledAmountStyle());
             }
 
             // If the entry represents a change, then highlight it with a light yellow
-            if (quantities.getBilled().equals(quantities.getUploaded())) {
+            if (quantities.getBilled() == quantities.getUploaded()) {
                 getWriter().writeCell(quantities.getUploaded());
             } else {
-                getWriter().writeCell(quantities.getUploaded(), getBilledAmountsHeaderStyle());
+                getWriter().writeCell(quantities.getUploaded(), getBilledAmountStyle());
             }
         } else {
             // write nothing for billed and new
