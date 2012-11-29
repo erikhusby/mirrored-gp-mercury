@@ -125,12 +125,16 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     /**
-     * Returns a list of all product orders. Only actually fetches the list from the database once per request
-     * (as a result of this bean being @RequestScoped).
+     * Returns a list of all product orders.
      *
      * @return list of all product orders
      */
     public ProductOrderListModel getAllProductOrders() {
+        // we may be landing in this page for the first time with a long-running conversation started from another
+        // page, so make sure we've loaded the list of PDOs
+        if (allProductOrders.getRowCount() < 0) {
+            allProductOrders.setWrappedData(productOrderListEntryDao.findProductOrderListEntries());
+        }
 
         return allProductOrders;
     }

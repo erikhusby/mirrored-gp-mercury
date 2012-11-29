@@ -26,15 +26,8 @@
                           uploadLabel="Parsing the selected file"
                           label="Browse for Tracker file."
                           requiredMessage="A Tracker spreadsheet must be selected"
-                          update="ordersUpdatedFile,uploadPreviewTable,uploadButton"
+                          update="uploadPreviewTable,uploadButton"
                           auto="true"/>
-
-            <div class="control-group">
-                <label class="control-label label-form">Previewed File</label>
-                <div class="controls">
-                    <h:outputText id="ordersUpdatedFile" value="#{fileUploadController.hasFilename}"/>
-                </div>
-            </div>
 
             <!-- render the preview table and upload buttons conditioned on successful generation of preview data -->
             <!--<p:panel rendered="#{fileUploadController.uploadPreviewData != null}" >-->

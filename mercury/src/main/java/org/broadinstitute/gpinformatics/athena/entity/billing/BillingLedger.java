@@ -82,11 +82,11 @@ public class BillingLedger {
         this.priceItem = priceItem;
     }
 
-    public Double getQuantity() {
+    public double getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(Double quantity) {
+    public void setQuantity(double quantity) {
         this.quantity = quantity;
     }
 

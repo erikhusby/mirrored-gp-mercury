@@ -41,14 +41,14 @@ public class IndexedPlateParserIDTSpreadsheetFormat implements IndexedPlateParse
 
             switch (cell.getCellType()) {
                 case Cell.CELL_TYPE_NUMERIC :
-                    final double value = cell.getNumericCellValue();
+                    double value = cell.getNumericCellValue();
                     if (value % 1 == 0) {
                         // getNumericCellValue() returns a primitive double. If it's not
                         // actually a double -- i.e., if it could be represented as an
                         // int -- return just the integer part.
-                        return Long.toString((long) value);
+                        return String.valueOf((long) value);
                     } else {
-                        return Double.toString(value);
+                        return String.valueOf(value);
                     }
 
                 case Cell.CELL_TYPE_STRING :

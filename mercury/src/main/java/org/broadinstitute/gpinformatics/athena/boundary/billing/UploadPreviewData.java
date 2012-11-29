@@ -8,22 +8,22 @@ import org.broadinstitute.gpinformatics.infrastructure.common.BusinessKeyCompara
  */
 public class UploadPreviewData implements Comparable<UploadPreviewData> {
 
-    private String orderJiraKey;
+    private final String orderJiraKey;
 
-    private String productPartNumber;
+    private final String productPartNumber;
 
     // we actually don't have title in the spreadsheet, but the upload handler could use a dao to look it up
     private String title;
 
-    private String priceItemName;
+    private final String priceItemName;
 
-    private Double totalCredits;
+    private final double totalCredits;
 
-    private Double totalCharges;
+    private final double totalCharges;
 
     private static final BusinessKeyComparator businessKeyComparator = new BusinessKeyComparator();
 
-    public UploadPreviewData(String orderJiraKey, String productPartNumber, String priceItemName, Double totalCredits, Double totalCharges) {
+    public UploadPreviewData(String orderJiraKey, String productPartNumber, String priceItemName, double totalCredits, double totalCharges) {
         this.orderJiraKey = orderJiraKey;
         this.productPartNumber = productPartNumber;
         this.priceItemName = priceItemName;
@@ -43,11 +43,11 @@ public class UploadPreviewData implements Comparable<UploadPreviewData> {
         return priceItemName;
     }
 
-    public Double getTotalCredits() {
+    public double getTotalCredits() {
         return totalCredits;
     }
 
-    public Double getTotalCharges() {
+    public double getTotalCharges() {
         return totalCharges;
     }
 
