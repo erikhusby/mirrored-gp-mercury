@@ -31,7 +31,7 @@ public class ReagentDesignForm extends AbstractJsfBean {
     @Inject
     private Log log;
 
-    @Inject
+//    @Inject
     private ReagentDesign reagent;
 
     @Inject
