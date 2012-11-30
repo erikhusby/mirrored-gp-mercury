@@ -19,23 +19,17 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
-import javax.transaction.Status;
-import javax.transaction.UserTransaction;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
  * A Test to import molecular indexes and LCSETs from Squid.  This prepares an empty database to accept messages.  This must
@@ -71,6 +65,7 @@ public class ImportFromSquidTest extends ContainerTest {
     @Inject
     private ProductOrderDao productOrderDao;
 
+/*
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction utx;
@@ -96,6 +91,7 @@ public class ImportFromSquidTest extends ContainerTest {
             utx.commit();
         }
     }
+*/
 
     /**
      * Import index schemes from Squid.
@@ -275,7 +271,8 @@ public class ImportFromSquidTest extends ContainerTest {
         List<TubeBean> tubeBeans = null;
 
         ResearchProject researchProject = new ResearchProject(1701L, "Import from Squid", "Import from Squid", false);
-        researchProject.setJiraTicketKey("RP-ImportFromSquid");
+        String jiraTicketKey = "RP-ImportFromSquid";
+        researchProject.setJiraTicketKey(jiraTicketKey);
         researchProjectDao.persist(researchProject);
         ArrayList<ProductOrderSample> productOrderSamples = null;
 
@@ -306,9 +303,11 @@ public class ImportFromSquidTest extends ContainerTest {
                     System.out.println(response);
                     if (partNumber != null) {
                         Product product = productDao.findByBusinessKey(partNumber);
+                        researchProject = researchProjectDao.findByBusinessKey(jiraTicketKey);
                         ProductOrder productOrder = new ProductOrder(1701L, lcSet, productOrderSamples, "BSP-123", product, researchProject);
                         productOrder.setJiraTicketKey(lcSet);
                         productOrderDao.persist(productOrder);
+                        productOrderDao.flush();
                     }
                 }
                 tubeBeans = new ArrayList<TubeBean>();
@@ -326,16 +325,43 @@ public class ImportFromSquidTest extends ContainerTest {
      */
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testCreateBaits() {
-        Query nativeQuery = entityManager.createNativeQuery("SELECT " +
-                "    DISTINCT r.barcode " +
+        Query nativeQuery = entityManager.createNativeQuery("SELECT distinct " +
+                "    r.barcode, " +
+                "    hbd.design_name " +
                 "FROM " +
                 "    recep_plate_transfer_event rpte " +
                 "    INNER JOIN receptacle r " +
-                "        ON   r.receptacle_id = rpte.receptacle_id ");
+                "        ON   r.receptacle_id = rpte.receptacle_id " +
+                "    INNER JOIN seq_content sc " +
+                "        ON   sc.receptacle_id = r.receptacle_id " +
+                "    INNER JOIN seq_content_type sct " +
+                "        ON   sct.seq_content_type_id = sc.seq_content_type_id " +
+                "    INNER JOIN seq_content_descr_set scds " +
+                "        ON   scds.seq_content_id = sc.seq_content_id " +
+                "    INNER JOIN seq_content_descr scd " +
+                "        ON   scd.seq_content_descr_id = scds.seq_content_descr_id " +
+                "    INNER JOIN next_generation_library_descr ngld " +
+                "        ON   ngld.library_descr_id = scd.seq_content_descr_id " +
+                "    INNER JOIN lc_sample ls " +
+                "        ON   ls.lc_sample_id = ngld.sample_id " +
+                "    INNER JOIN lc_sample_data_set lsds " +
+                "        ON   lsds.lc_sample_id = ls.lc_sample_id " +
+                "    INNER JOIN lc_sample_data lsd " +
+                "        ON   lsd.lc_sample_data_id = lsds.lc_sample_data_id " +
+                "    INNER JOIN lc_sample_data_type lsdt " +
+                "        ON   lsdt.lc_sample_data_type_id = lsd.lc_sample_data_type_id " +
+                "    INNER JOIN lc_sample_pool_oligo_data lspod " +
+                "        ON   lspod.lc_sample_data_id = lsd.lc_sample_data_id " +
+                "    INNER JOIN hybsel_bait_design hbd " +
+                "        ON   hbd.hybsel_bait_design_id = lspod.hybsel_bait_design_id ");
         List<?> resultList = nativeQuery.getResultList();
         for (Object o : resultList) {
-            String barcode = (String) o;
-            twoDBarcodedTubeDAO.persist(new TwoDBarcodedTube(barcode));
+            Object[] columns = (Object[]) o;
+            String barcode = (String) columns[0];
+            String designName = (String) columns[1];
+            TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(barcode);
+            twoDBarcodedTube.addReagent(new BaitReagent(new ReagentDesign(designName, ReagentDesign.REAGENT_TYPE.BAIT)));
+            twoDBarcodedTubeDAO.persist(twoDBarcodedTube);
         }
         twoDBarcodedTubeDAO.clear();
     }

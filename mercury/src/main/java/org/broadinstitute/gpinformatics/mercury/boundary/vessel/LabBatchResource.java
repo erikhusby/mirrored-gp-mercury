@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -63,6 +64,7 @@ public class LabBatchResource {
                 twoDBarcodedTube = new TwoDBarcodedTube(tubeBean.getBarcode());
                 mapBarcodeToTube.put(tubeBean.getBarcode(), twoDBarcodedTube);
             }
+
             if(tubeBean.getSampleBarcode() != null && tubeBean.getProductOrderKey() != null) {
                 MercurySample mercurySampleKey = new MercurySample(tubeBean.getProductOrderKey(), tubeBean.getSampleBarcode());
                 MercurySample mercurySample = mapBarcodeToSample.get(mercurySampleKey);
@@ -72,27 +74,12 @@ public class LabBatchResource {
                 }
                 twoDBarcodedTube.addSample(mercurySample);
             }
-
-//            if (tubeBean.getSampleBarcode() == null) {
-                starters.add(twoDBarcodedTube);
-//            } else {
-//                BSPStartingSample bspStartingSample = mapBarcodeToSample.get(tubeBean.getSampleBarcode());
-//                if(bspStartingSample == null) {
-//                    bspStartingSample = new BSPStartingSample(tubeBean.getSampleBarcode() + ".aliquot"/*, projectPlan*/);
-//                    mapBarcodeToSample.put(tubeBean.getSampleBarcode(), bspStartingSample);
-//                }
-//
-//                starters.add(bspStartingSample);
-//                projectPlan.addStarter(bspStartingSample);
-//                projectPlan.addAliquotForStarter(bspStartingSample, twoDBarcodedTube);
-//            }
+            starters.add(twoDBarcodedTube);
         }
-        LabBatch labBatch;
-//        if(projectPlan == null) {
-            labBatch = new LabBatch(labBatchBean.getBatchId(), starters);
-//        } else {
-//            labBatch = new LabBatch(projectPlan, labBatchBean.getBatchId(), starters);
-//        }
+        LabBatch labBatch = new LabBatch(labBatchBean.getBatchId(), starters);
+        JiraTicket jiraTicket = new JiraTicket(labBatch.getBatchName());
+        labBatch.setJiraTicket(jiraTicket);
+        jiraTicket.setLabBatch(labBatch);
         return labBatch;
     }
 }

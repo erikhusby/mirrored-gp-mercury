@@ -812,29 +812,28 @@ public abstract class LabVessel {
         transferTraverserCriteria.evaluateVesselPreOrder(this, labEvent, hopCount);
         if(traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
             for (VesselEvent vesselEvent : getAncestors()) {
-                LabVessel labVessel = vesselEvent.getLabVessel();
-                if(labVessel == null) {
-                    vesselEvent.getVesselContainer().evaluateCriteria(vesselEvent.getVesselContainer().getPositionOfVessel(this),
-                            transferTraverserCriteria, traversalDirection, null, hopCount);
-                } else {
-                    labVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection,
-                            vesselEvent.getLabEvent(), hopCount + 1);
-                }
+                evaluateVesselEvent(transferTraverserCriteria, traversalDirection, hopCount, vesselEvent);
             }
         } else if(traversalDirection == TransferTraverserCriteria.TraversalDirection.Descendants) {
-            getDescendants();
-            for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
-                vesselToVesselTransfer.getTargetLabVessel().evaluateCriteria(transferTraverserCriteria, traversalDirection,
-                        vesselToVesselTransfer.getLabEvent(), hopCount + 1);
+            for (VesselEvent vesselEvent : getDescendants()) {
+                evaluateVesselEvent(transferTraverserCriteria, traversalDirection, hopCount, vesselEvent);
             }
         } else {
             throw new RuntimeException("Unknown direction " + traversalDirection.name());
         }
-        for (LabVessel container : containers) {
-            VesselContainer containerRole = container.getContainerRole();
-            containerRole.evaluateCriteria(containerRole.getPositionOfVessel(this), transferTraverserCriteria, traversalDirection, null, hopCount);
-        }
         transferTraverserCriteria.evaluateVesselPostOrder(this, labEvent, hopCount);
+    }
+
+    private void evaluateVesselEvent(TransferTraverserCriteria transferTraverserCriteria,
+            TransferTraverserCriteria.TraversalDirection traversalDirection, int hopCount, VesselEvent vesselEvent) {
+        LabVessel labVessel = vesselEvent.getLabVessel();
+        if(labVessel == null) {
+            vesselEvent.getVesselContainer().evaluateCriteria(vesselEvent.getPosition(),
+                    transferTraverserCriteria, traversalDirection, vesselEvent.getLabEvent(), hopCount);
+        } else {
+            labVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection,
+                    vesselEvent.getLabEvent(), hopCount + 1);
+        }
     }
 
     public LabEvent getLatestEvent() {
