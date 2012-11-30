@@ -160,7 +160,8 @@ public class BucketBean {
         Set<BucketEntry> bucketEntrySet = new HashSet<BucketEntry> ();
 
         for ( LabVessel workingVessel : vesselsToBatch ) {
-            BucketEntry foundEntry = bucketEntryDao.findByVesselAndBucket ( workingVessel, workingBucket );
+
+            BucketEntry foundEntry = workingBucket.findEntry( workingVessel);
             if ( null == foundEntry ) {
                 throw new InformaticsServiceException (
                         "Attempting to pull a vessel from a bucket when it does not exist in that bucket" );
@@ -319,6 +320,8 @@ public class BucketBean {
 
         try {
             if ( null == batchTicket ) {
+
+                //TODO SGM make a Create Jira Ticket method in BatchBean
                 bucketBatch.createJiraTicket ( operator, CreateFields.IssueType.EXOME_EXPRESS,
                                                CreateFields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix());
             } else {

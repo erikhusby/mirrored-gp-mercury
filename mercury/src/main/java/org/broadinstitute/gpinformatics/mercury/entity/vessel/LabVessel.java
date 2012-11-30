@@ -646,7 +646,7 @@ public abstract class LabVessel {
         return Collections.unmodifiableSet(bucketEntries);
     }
 
-    /**
+    /* *
      * In the context of the given WorkflowDescription, are there any
      * events for this vessel which are annotated as WorkflowAnnotation#SINGLE_SAMPLE_LIBRARY?
      * @param workflowDescription
