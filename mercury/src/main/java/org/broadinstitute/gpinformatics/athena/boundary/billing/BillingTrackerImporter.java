@@ -31,8 +31,9 @@ public class BillingTrackerImporter {
             headerColumnIndices.put(fixedHeaders[i], i);
         }
     }
-    private final static int SAMPLE_ID_COL_POS = headerColumnIndices.get("Sample ID");
-    private final static int PDO_ID_COL_POS = headerColumnIndices.get("Product Order ID");
+    private final static int SAMPLE_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.SAMPLE_ID_HEADING);
+    private final static int PDO_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.ORDER_ID_HEADING);
+    private final static int SORT_COLUMN_COL_POS = headerColumnIndices.get( SampleLedgerExporter.SORT_COLUMN_HEADING);
     private final static int numberOfHeaderRows = 2;
 
 
@@ -41,17 +42,6 @@ public class BillingTrackerImporter {
         this.productOrderSampleDao = productOrderSampleDao;
     }
 
-    //TODO This was just for initial prototyping.
-    public String readFromStream(InputStream inputStream) throws Exception {
-
-        Workbook workbook;
-        workbook = WorkbookFactory.create(inputStream);
-        int numberOfProducts = workbook.getNumberOfSheets();
-        Sheet sheet = workbook.getSheetAt(0);
-        String productPartNumberStr = sheet.getSheetName();
-        return productPartNumberStr;
-
-    }
 
     public Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> parseFileForSummaryMap(InputStream inputStream) throws IOException {
 
@@ -61,6 +51,9 @@ public class BillingTrackerImporter {
         Workbook workbook;
         try {
             workbook = WorkbookFactory.create(inputStream);
+
+            checkSampleOrdering ( workbook );
+
             int numberOfSheets = workbook.getNumberOfSheets();
             for (int i=0; i< numberOfSheets;i++) {
 
@@ -83,6 +76,51 @@ public class BillingTrackerImporter {
 
     }
 
+    boolean checkSampleOrdering(Workbook workbook) {
+        boolean result = false;
+        Cell sortCell = null;
+        int expectedSortColValue =1;
+
+        int numberOfSheets = workbook.getNumberOfSheets();
+        for (int i=0; i< numberOfSheets;i++) {
+
+            Sheet sheet = workbook.getSheetAt(i);
+            String productPartNumberStr = sheet.getSheetName();
+
+            for (Iterator<Row> rit = sheet.rowIterator(); rit.hasNext(); ) {
+                Row row = rit.next();
+                if ( row.getRowNum() == 0 ) {
+                    row = skipHeaderRows(rit, row);
+                }
+
+                sortCell = row.getCell(SORT_COLUMN_COL_POS);
+                String currentSampleName = row.getCell(SAMPLE_ID_COL_POS).getStringCellValue();
+
+                if ( sortCell == null ) {
+                    //Break out of this loop since there is no PDO for this row. Assuming at the end of the valued rows.
+                    break;
+                }
+                double sortCellVal = sortCell.getNumericCellValue();
+                if ( ! ("" + sortCellVal).equals( "" + expectedSortColValue )) {
+                    throw new RuntimeException("Sample " + currentSampleName + " on row " +  (row.getRowNum() + 1 ) +
+                            " of spreadsheet tab "  + productPartNumberStr + " is not in the expected position. Please re-order the spreadsheet by the " +
+                            SampleLedgerExporter.SORT_COLUMN_HEADING + " column heading." );
+                }
+                expectedSortColValue++;
+            }
+
+            if ( sortCell == null ) {
+                //Break out of this loop since there is no PDO for this row. Assuming at the end of the valued rows.
+                break;
+            }
+        }
+
+
+        throw new IllegalStateException("Not Yet Implemented");
+        //return result;
+
+    }
+
     Map<String, Map<BillableRef, OrderBillSummaryStat>> parseSheetForSummaryMap(Sheet sheet, List<TrackerColumnInfo> trackerColumnInfos) {
         ProductOrder productOrder = null;
         Product product = null;
@@ -93,9 +131,10 @@ public class BillingTrackerImporter {
         int maxNumberOfProductsInSheet = trackerColumnInfos.size();
         String currentPdoId = "";
 
-
         // A map (by PDO) of maps ( by PPN) of OrderBillSummaryStat objects
         Map<String, Map<BillableRef, OrderBillSummaryStat>> sheetSummaryMap = new HashMap<String, Map<BillableRef, OrderBillSummaryStat>>();
+
+        int sampleIndexInOrder=0;
 
         for (Iterator<Row> rit = sheet.rowIterator(); rit.hasNext(); ) {
             Row row = rit.next();
@@ -104,7 +143,13 @@ public class BillingTrackerImporter {
                 row = skipHeaderRows(rit, row);
             }
 
-            String rowPdoIdStr = row.getCell(PDO_ID_COL_POS).getStringCellValue();
+            Cell pdoCell = row.getCell(PDO_ID_COL_POS);
+            if ( pdoCell == null ) {
+                //Break out of this loop since there is no PDO for this row. Assuming at the end of the valued rows.
+                break;
+            }
+
+            String rowPdoIdStr = pdoCell.getStringCellValue();
             String currentSampleName = row.getCell(SAMPLE_ID_COL_POS).getStringCellValue();
             Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap  = sheetSummaryMap.get(rowPdoIdStr);
 
@@ -113,6 +158,7 @@ public class BillingTrackerImporter {
                 pdoSummaryStatsMap = new HashMap<BillableRef, OrderBillSummaryStat>(maxNumberOfProductsInSheet);
                 sheetSummaryMap.put(rowPdoIdStr, pdoSummaryStatsMap);
                 currentPdoId = rowPdoIdStr;
+                sampleIndexInOrder=0;
 
                 // Find the order in the DB
                 productOrder = productOrderDao.findByBusinessKey(currentPdoId);
@@ -129,15 +175,14 @@ public class BillingTrackerImporter {
             }
 
             //TODO hmc We are assuming ( for now ) that the order is the same in the spreadsheet as returned in the productOrder !
-            int sampleNumber =  row.getRowNum() - numberOfHeaderRows;
-            if ( sampleNumber >= samples.size() ) {
+            if ( sampleIndexInOrder >= samples.size() ) {
                 throw new RuntimeException("Sample " + currentSampleName + " on row " +  (row.getRowNum() + 1 ) +
                         " of spreadsheet "  + primaryProductPartNumber +
                         " is not in the expected position. The Order <" + productOrder.getTitle() + " (Id: " + currentPdoId +
                         ")> has only " + samples.size() + " samples." );
             }
 
-            productOrderSample = samples.get(row.getRowNum() - numberOfHeaderRows );
+            productOrderSample = samples.get(sampleIndexInOrder );
             if (! productOrderSample.getSampleName().equals( currentSampleName ) ) {
                 throw new RuntimeException("Sample " + currentSampleName + " on row " +  (row.getRowNum() + 1 ) +
                         " of spreadsheet "  + primaryProductPartNumber +
@@ -146,6 +191,7 @@ public class BillingTrackerImporter {
 
             pdoSummaryStatsMap = parseRowForSummaryMap(row, productOrderSample, product, pdoSummaryStatsMap, trackerColumnInfos);
             sheetSummaryMap.put(rowPdoIdStr, pdoSummaryStatsMap);
+            sampleIndexInOrder++;
 
         }
 
