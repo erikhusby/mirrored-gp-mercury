@@ -21,7 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRu
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.BaitReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
@@ -1299,7 +1299,7 @@ public class LabEventTest {
         ReagentDesign baitDesign = new ReagentDesign("cancer_2000gene_shift170_undercovered", ReagentDesign.REAGENT_TYPE.BAIT);
         baitDesign.setTargetSetName("Cancer_2K");
         baitDesign.setManufacturersName("1234abc");
-        baitTube.addReagent(new BaitReagent(baitDesign));
+        baitTube.addReagent(new DesignedReagent(baitDesign));
         return baitTube;
     }
 

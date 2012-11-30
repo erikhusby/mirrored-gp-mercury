@@ -36,7 +36,7 @@ public class ReagentDesign {
     private String manufacturersName;
 
     @OneToMany(mappedBy = "reagentDesign")
-    private Set<BaitReagent> baitReagents = new HashSet<BaitReagent>();
+    private Set<DesignedReagent> designedReagents = new HashSet<DesignedReagent>();
 
     /** For JPA */
     ReagentDesign() {
@@ -93,12 +93,12 @@ public class ReagentDesign {
         this.manufacturersName = manufacturersName;
     }
 
-    public Set<BaitReagent> getBaitReagents() {
-        return baitReagents;
+    public Set<DesignedReagent> getDesignedReagents() {
+        return designedReagents;
     }
 
-    public void addBaitReagent(BaitReagent baitReagent) {
-        this.baitReagents.add(baitReagent);
-//        baitReagent.setReagentDesign(this);
+    public void addDesignedReagent(DesignedReagent designedReagent) {
+        this.designedReagents.add(designedReagent);
+//        designedReagent.setReagentDesign(this);
     }
 }

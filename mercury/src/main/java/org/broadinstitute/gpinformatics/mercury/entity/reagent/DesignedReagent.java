@@ -28,22 +28,22 @@ import javax.persistence.Table;
 @Audited
 @Table(schema = "mercury")
 // todo jmt rename to DesignedReagent
-public class BaitReagent extends Reagent {
+public class DesignedReagent extends Reagent {
 
     // In production code, the reagentDesign will always exist first, so there's no need for cascade, but in tests
-    // BaitReagent and ReagentDesign are created at the same time.
+    // DesignedReagent and ReagentDesign are created at the same time.
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private ReagentDesign reagentDesign;
 
-    public BaitReagent(ReagentDesign reagentDesign) {
+    public DesignedReagent(ReagentDesign reagentDesign) {
         // todo jmt what to pass to super?
         super(null, null);
         this.reagentDesign = reagentDesign;
-        reagentDesign.addBaitReagent(this);
+        reagentDesign.addDesignedReagent(this);
     }
 
     /** For JPA */
-    BaitReagent() {
+    DesignedReagent() {
     }
 
     public ReagentDesign getReagentDesign() {

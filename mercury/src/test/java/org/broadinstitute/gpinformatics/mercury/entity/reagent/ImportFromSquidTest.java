@@ -360,7 +360,7 @@ public class ImportFromSquidTest extends ContainerTest {
             String barcode = (String) columns[0];
             String designName = (String) columns[1];
             TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(barcode);
-            twoDBarcodedTube.addReagent(new BaitReagent(new ReagentDesign(designName, ReagentDesign.REAGENT_TYPE.BAIT)));
+            twoDBarcodedTube.addReagent(new DesignedReagent(new ReagentDesign(designName, ReagentDesign.REAGENT_TYPE.BAIT)));
             twoDBarcodedTubeDAO.persist(twoDBarcodedTube);
         }
         twoDBarcodedTubeDAO.clear();
