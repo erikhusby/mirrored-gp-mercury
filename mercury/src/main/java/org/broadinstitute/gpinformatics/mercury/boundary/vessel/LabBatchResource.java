@@ -49,12 +49,23 @@ public class LabBatchResource {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDAO.findByBarcodes(tubeBarcodes);
         Map<MercurySample, MercurySample> mapSampleToSample = mercurySampleDao.findByMercurySample(mercurySampleKeys);
         LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample/*, null*/);
+
+        JiraTicket jiraTicket = new JiraTicket(labBatch.getBatchName());
+        labBatch.setJiraTicket(jiraTicket);
+        jiraTicket.setLabBatch(labBatch);
         labBatchDAO.persist(labBatch);
         labBatchDAO.flush();
 
         return "Batch persisted";
     }
 
+    /**
+     * DAO-free method to build a LabBatch entity
+     * @param labBatchBean JAXB
+     * @param mapBarcodeToTube from database
+     * @param mapBarcodeToSample from database
+     * @return entity
+     */
     public LabBatch buildLabBatch(LabBatchBean labBatchBean, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
             Map<MercurySample, MercurySample> mapBarcodeToSample/*, BasicProjectPlan projectPlan*/) {
         Set<LabVessel> starters = new HashSet<LabVessel>();
@@ -77,9 +88,6 @@ public class LabBatchResource {
             starters.add(twoDBarcodedTube);
         }
         LabBatch labBatch = new LabBatch(labBatchBean.getBatchId(), starters);
-        JiraTicket jiraTicket = new JiraTicket(labBatch.getBatchName());
-        labBatch.setJiraTicket(jiraTicket);
-        jiraTicket.setLabBatch(labBatch);
         return labBatch;
     }
 }
