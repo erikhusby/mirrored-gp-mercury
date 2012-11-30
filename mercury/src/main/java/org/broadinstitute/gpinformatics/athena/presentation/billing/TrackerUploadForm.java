@@ -90,13 +90,12 @@ public class TrackerUploadForm  extends AbstractJsfBean {
     /**
      * Is there a common location for this logic?
      *
-     * @return
+     * @return The username string
      */
     private String getUsername() {
         return ((HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest()).
                 getUserPrincipal().getName();
     }
-
 
     public void handleFileUploadForPreview(FileUploadEvent event) {
         UploadedFile file = event.getFile();
@@ -116,7 +115,8 @@ public class TrackerUploadForm  extends AbstractJsfBean {
 
             BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, productOrderSampleDao);
 
-            Map<String, Map<String,Map<BillableRef,OrderBillSummaryStat>>> productProductOrderPriceItemChargesMap = importer.parseFileForSummaryMap(inputStream);
+            Map<String, Map<String,Map<BillableRef, OrderBillSummaryStat>>> productProductOrderPriceItemChargesMap =
+                    importer.parseFileForSummaryMap(inputStream);
 
             List<UploadPreviewData> uploadPreviewData = new ArrayList<UploadPreviewData>();
 
@@ -167,7 +167,6 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         }
     }
 
-
     public String uploadTrackingDataForBilling() {
 
         String tempFilename = conversationData.getFilename();
@@ -184,7 +183,6 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         }
 
         return null;
-
     }
 
     private void processBillingOnTempFile(File tempFile) {
@@ -214,7 +212,6 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         }
     }
 
-
     private List<String> extractOrderIdsFromMap(Map<String, List<ProductOrder>> billedProductOrdersMapByPartNumber ) {
         List<String> orderIdsUpdated = new ArrayList<String>();
 
@@ -233,6 +230,7 @@ public class TrackerUploadForm  extends AbstractJsfBean {
                 }
             }
         }
+
         return orderIdsUpdated;
     }
 
