@@ -205,7 +205,7 @@ public class BillingTrackerImporter {
 
         for (int productIndex=0; productIndex < trackerColumnInfos.size();productIndex++) {
             double newQuantity;
-            double billedQuantity;
+            double previouslyBilledQuantity = 0;
             BillableRef billableRef = trackerColumnInfos.get(productIndex).getBillableRef();
 
             // There are two cells per product header cell, so we need to account for this.
@@ -214,8 +214,8 @@ public class BillingTrackerImporter {
             //Get the AlreadyBilled cell
             Cell billedCell = row.getCell(currentBilledPosition);
             if (isNonNullNumericCell(billedCell)) {
-                billedQuantity = billedCell.getNumericCellValue();
-                //TODO hmc need the AlreadyBilled validation check here.
+                previouslyBilledQuantity = billedCell.getNumericCellValue();
+                //TODO hmc need the AlreadyBilled validation check here per GPLIM-451.
                 //Check billedQuantity parsed against that which is already billed for this POS and PriceItem - should match
                 //TODO Sum the already billed amount for this sample
             }
@@ -225,11 +225,9 @@ public class BillingTrackerImporter {
             if ( isNonNullNumericCell(newQuantityCell)) {
                 newQuantity = newQuantityCell.getNumericCellValue();
 
-                //TODO Sum the newQuantity amount for this sample
-                double valueFromDB = 0;
                 //TODO Get the actual value from the DB for this POS to calculate the delta  !!!!!!!!!
 
-                double delta =  newQuantity - valueFromDB;
+                double delta = newQuantity - previouslyBilledQuantity;
 
                 if ( delta != 0 ) {
                     OrderBillSummaryStat orderBillSummaryStat = pdoSummaryStatsMap.get(billableRef);
