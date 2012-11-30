@@ -5,7 +5,6 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -48,15 +47,13 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             // "Comments",
             DATE_COMPLETE_HEADING,
             "Quote ID",
-            "Billing Errors",
             "Sort Column"
     };
 
-    private int billingErrorIndex = 9;
+    private static final int VALUE_WIDTH = 259 * 10;
+    private static final int ERRORS_WIDTH = 259 * 100;
 
     private BSPUserList bspUserList;
-
-    private BillingLedgerDao billingLedgerDao;
 
 
     public SampleLedgerExporter(ProductOrder... productOrders) {
@@ -75,11 +72,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
     }
 
-    public SampleLedgerExporter(List<String> pdoBusinessKeys, BSPUserList bspUserList, BillingLedgerDao billingLedgerDao, ProductOrderDao productOrderDao) {
+    public SampleLedgerExporter(List<String> pdoBusinessKeys, BSPUserList bspUserList, ProductOrderDao productOrderDao) {
         this(productOrderDao.findListByBusinessKeyList(pdoBusinessKeys, Product, ResearchProject, Samples));
 
         this.bspUserList = bspUserList;
-        this.billingLedgerDao = billingLedgerDao;
     }
 
     private String getBspFullName(long id) {
@@ -89,14 +85,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         BspUser user = bspUserList.getById(id);
         return user.getFirstName() + " " + user.getLastName();
-    }
-
-    private Set<BillingLedger> getLedgerEntries(Collection<ProductOrder> productOrders) {
-        if (billingLedgerDao == null) {
-            return null;
-        }
-
-        return billingLedgerDao.findByOrderList(productOrders.toArray(new ProductOrder[productOrders.size()]));
     }
 
     private Date getWorkCompleteDate(Set<BillingLedger> billingLedgers, ProductOrderSample productOrderSample) {
@@ -137,9 +125,15 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell(priceItem.getName() + " [" + product.getPartNumber() + "]", 2, getPriceItemProductHeaderStyle());
     }
 
-    private void writeBillAndNewHeaders() {
+    private int writeBillAndNewHeaders(int currentIndex) {
+        Sheet sheet = getWriter().getCurrentSheet();
+        sheet.setColumnWidth(currentIndex, VALUE_WIDTH);
+        sheet.setColumnWidth(currentIndex + 1, VALUE_WIDTH);
+
         getWriter().writeCell("Billed", getBilledAmountsHeaderStyle());
         getWriter().writeCell("New Quantity", getBilledAmountsHeaderStyle());
+
+        return currentIndex + 2;
     }
 
     /**
@@ -161,7 +155,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             // name to allow for the product name in all cases, so use just the part number
             Sheet sheet = getWorkbook().createSheet(currentProduct.getPartNumber());
             getWriter().setCurrentSheet(sheet);
-            sheet.setColumnWidth(billingErrorIndex, 9600);
 
             List<ProductOrder> productOrders = orderMap.get(currentProduct);
 
@@ -194,9 +187,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             writeHeaders(currentProduct, sortedPriceItems, sortedAddOns);
 
             // Write content.
+            int sortOrder = 1;
             for (ProductOrder productOrder : productOrders) {
-                int sortOrder = 1;
-
                 for (ProductOrderSample sample : productOrder.getSamples()) {
                     writeRow(sortedPriceItems, sortedAddOns, sample, sortOrder++);
                 }
@@ -236,20 +228,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         // getWriter().writeCell("Useful info about the billing history " + sample.getSampleName());
 
         // work complete date
-        getWriter().writeCell(getWorkCompleteDate(sample.getBillableItems(), sample));
+        getWriter().writeCell(getWorkCompleteDate(sample.getBillableItems(), sample), getDateStyle());
 
         // Quote ID
         getWriter().writeCell(sample.getProductOrder().getQuoteId());
-
-        // Any billing messages
-        String billingError = getBillingError(sample.getBillableItems());
-
-        // Only use error style when there is an error in the string
-        if (StringUtils.isBlank(billingError)) {
-            getWriter().writeCell(billingError);
-        } else {
-            getWriter().writeCell(billingError, getErrorMessageStyle());
-        }
 
         // sort order to be able to reconstruct the originally sorted sample list
         getWriter().writeCell(sortOrder);
@@ -271,6 +253,17 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
                 writeCountsForPriceItems(billCounts, item);
             }
         }
+
+        // Any billing messages
+        String billingError = getBillingError(sample.getBillableItems());
+
+        // Only use error style when there is an error in the string
+        if (StringUtils.isBlank(billingError)) {
+            getWriter().writeCell(billingError);
+        } else {
+            getWriter().writeCell(billingError, getErrorMessageStyle());
+        }
+
     }
 
     private String getBillingError(Set<BillingLedger> billableItems) {
@@ -287,8 +280,11 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     }
 
     private void writeHeaders(Product currentProduct, List<PriceItem> sortedPriceItems, List<Product> sortedAddOns) {
+        int currentIndex = FIXED_HEADERS.length;
+
         for (PriceItem priceItem : sortedPriceItems) {
             writePriceItemProductHeader(priceItem, currentProduct);
+            currentIndex += 2;
         }
 
         // Repeat the process for add ons
@@ -296,8 +292,13 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn);
             for (PriceItem priceItem : sortedAddOnPriceItems) {
                 writePriceItemProductHeader(priceItem, addOn);
+                currentIndex += 2;
             }
         }
+
+        Sheet sheet = getWriter().getCurrentSheet();
+        sheet.setColumnWidth(currentIndex, ERRORS_WIDTH);
+        getWriter().writeCell("Billing Errors", getFixedHeaderStyle());
 
         writeAllBillAndNewHeaders(currentProduct.getOptionalPriceItems(), currentProduct.getAddOns());
     }
@@ -311,25 +312,26 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         writeEmptyFixedHeaders();
 
         // primary price item for main product
-        writeBillAndNewHeaders();
+        int currentIndex = FIXED_HEADERS.length;
+        currentIndex = writeBillAndNewHeaders(currentIndex);
         for (PriceItem priceItem : priceItems) {
-            writeBillAndNewHeaders();
+            currentIndex = writeBillAndNewHeaders(currentIndex);
         }
 
         for (Product addOn : addOns) {
             // primary price item for this add-on
-            writeBillAndNewHeaders();
+            currentIndex = writeBillAndNewHeaders(currentIndex);
 
             for (PriceItem priceItem : addOn.getOptionalPriceItems()) {
-                writeBillAndNewHeaders();
+                currentIndex = writeBillAndNewHeaders(currentIndex);
             }
         }
     }
 
     private void writeEmptyFixedHeaders() {
-        // Write blank secondary header line for fixed columns
+        // Write blank secondary header line for fixed columns, with default styling
         for (String header : FIXED_HEADERS) {
-            getWriter().writeCell(" ", getFixedHeaderStyle());
+            getWriter().writeCell(" ");
         }
     }
 

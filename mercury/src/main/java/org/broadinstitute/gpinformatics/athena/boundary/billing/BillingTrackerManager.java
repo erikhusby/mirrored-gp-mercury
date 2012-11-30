@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.ss.usermodel.*;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
@@ -15,18 +14,27 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
+import javax.inject.Inject;
 import java.io.InputStream;
 import java.util.*;
 
 /**
  *
  */
+@Stateful
+@RequestScoped
 public class BillingTrackerManager {
 
-    private Log logger = LogFactory.getLog(BillingTrackerManager.class);
+//    private Log logger = LogFactory.getLog(BillingTrackerManager.class);
+    @Inject
+    private Log logger;
 
+    @Inject
+    BillingLedgerDao billingLedgerDao;
 
-    private BillingLedgerDao billingLedgerDao;
+    @Inject
     private ProductOrderDao productOrderDao;
 
 
@@ -44,11 +52,6 @@ public class BillingTrackerManager {
     private final static int DATE_COMPLETE_COL_POS = headerColumnIndices.get(SampleLedgerExporter.DATE_COMPLETE_HEADING);
     private final static int numberOfHeaderRows = 2;
 
-
-    public BillingTrackerManager(ProductOrderDao productOrderDao, BillingLedgerDao billingLedgerDao) {
-        this.productOrderDao = productOrderDao;
-        this.billingLedgerDao = billingLedgerDao;
-    }
 
     public Map<String, List<ProductOrder>> parseFileForBilling(InputStream fis) throws Exception {
 
@@ -232,7 +235,6 @@ public class BillingTrackerManager {
 
         for (int billingRefIndex=0; billingRefIndex < trackerColumnInfos.size();billingRefIndex++) {
             double newQuantity;
-            double billedQuantity;
             TrackerColumnInfo trackerColumnInfo = trackerColumnInfos.get(billingRefIndex);
             BillableRef billableRef = trackerColumnInfos.get(billingRefIndex).getBillableRef();
 
@@ -241,9 +243,9 @@ public class BillingTrackerManager {
 
             //Get the AlreadyBilled cell
             Cell billedCell = row.getCell(currentBilledPosition);
+            Double billedQuantity = null;
             if (isNonNullNumericCell(billedCell)) {
                 billedQuantity = billedCell.getNumericCellValue();
-                //TODO Do the validation check here ( same code as goes into BillingTrackerImporter )
             }
 
             //Get the newQuantity cell value and add it onto the productOrderSample
@@ -258,15 +260,23 @@ public class BillingTrackerManager {
                         throwRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " +  (row.getRowNum() + 1 ) +
                                 " of spreadsheet "  + product.getPartNumber() +
                                 " has an invalid Date Completed value. Please correct and try again.");
+                    } else if (billedQuantity == null) {
+                        throwRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " +  (row.getRowNum() + 1 ) +
+                                " of spreadsheet "  + product.getPartNumber() +
+                                " has a blank billed date. Please redownload the tracker to populate this.");
                     } else {
-                        BillingLedger billingLedger = new BillingLedger(productOrderSample, priceItem,
-                                workCompleteDate, newQuantity);
-                        productOrderSample.getBillableItems().add(billingLedger);
-                        productOrderSample.setBillingStatus(BillingStatus.EligibleForBilling);
-                        logger.debug("Added BillingLedger item for sample " + productOrderSample.getSampleName() +
-                                " to PDO " + productOrderSample.getProductOrder().getBusinessKey() +
-                                   " for PriceItemName[PPN]: " + billableRef.getPriceItemName() + "[" +
-                                   billableRef.getProductPartNumber() +"] - Quantity:" + newQuantity );
+                        double delta = newQuantity - billedQuantity;
+
+                        if (delta != 0) {
+                            BillingLedger billingLedger =
+                                new BillingLedger(productOrderSample, priceItem, workCompleteDate, delta);
+                            productOrderSample.getBillableItems().add(billingLedger);
+                            productOrderSample.setBillingStatus(BillingStatus.EligibleForBilling);
+                            logger.debug("Added BillingLedger item for sample " + productOrderSample.getSampleName() +
+                                    " to PDO " + productOrderSample.getProductOrder().getBusinessKey() +
+                                       " for PriceItemName[PPN]: " + billableRef.getPriceItemName() + "[" +
+                                       billableRef.getProductPartNumber() +"] - Quantity:" + delta );
+                        }
                     }
                 } else {
                     logger.debug("Skipping BillingLedger item for sample " + productOrderSample.getSampleName() +
@@ -295,6 +305,7 @@ public class BillingTrackerManager {
             if ( numberOfLedgerItems > 0 ) {
                 productOrderDao.persist(productOrder);
                 productOrderDao.flush();
+
                 logger.info("Persisted " + numberOfLedgerItems + " BillingLedger records for Product Order <" +
                         productOrder.getTitle() + "> with PDO Id: " + productOrder.getBusinessKey());
             }
@@ -433,8 +444,8 @@ public class BillingTrackerManager {
                     primaryProductPartNumber + "> in the first row and cell position " +  primaryProductHeaderCell.getColumnIndex() );
         }
 
-        //Derive the list of TrackerColumnInfo objects
-        int totalProductsHeaders = columnHeaders.size() - numFixedHeaders;
+        //Derive the list of TrackerColumnInfo objects skip the error column
+        int totalProductsHeaders = columnHeaders.size() - numFixedHeaders - 1;
 
         result = new ArrayList<TrackerColumnInfo>();
         int mergedCellAddOn = 0;

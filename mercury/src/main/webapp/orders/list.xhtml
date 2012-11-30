@@ -42,21 +42,21 @@
                      filteredValue="#{productOrderForm.allProductOrders.filteredValues}"
                      selection="#{productOrderForm.selectedProductOrders}">
 
-                <p:column selectionMode="multiple" style="width:18px;" />
+                    <p:column selectionMode="multiple" style="width:18px;" />
 
-                <p:column headerText="Name" sortBy="#{order.title}" sortingComparator="caseInsensitiveText">
-                    <h:link outcome="view" value="#{order.title}">
-                        <f:param name="productOrder" value="#{order.businessKey}"/>
-                    </h:link>
-                </p:column>
+                    <p:column headerText="Name" sortBy="#{order.title}" sortingComparator="caseInsensitiveText">
+                        <h:link outcome="view" value="#{order.title}">
+                            <f:param name="productOrder" value="#{order.businessKey}"/>
+                        </h:link>
+                    </p:column>
 
-                <p:column headerText="ID" sortBy="#{order.jiraTicketKey}" sortFunction="#{productOrderForm.businessKeySorter.sort}">
-                    <h:outputLink target="JIRA" value="#{jiraLink.browseUrl(order.jiraTicketKey)}" class="external" >
-                        <h:outputText value="#{order.jiraTicketKey}" />
-                    </h:outputLink>
-                </p:column>
+                    <p:column headerText="ID" width="75" sortBy="#{order.jiraTicketKey}" sortFunction="#{productOrderForm.businessKeySorter.sort}">
+                        <h:outputLink target="JIRA" value="#{jiraLink.browseUrl(order.jiraTicketKey)}" class="external" >
+                            <h:outputText value="#{order.jiraTicketKey}" />
+                        </h:outputLink>
+                    </p:column>
 
-                    <p:column headerText="Product" sortBy="#{order.productName}">
+                    <p:column headerText="Product" width="180" sortBy="#{order.productName}">
                         #{order.productName}
                     </p:column>
 
@@ -64,41 +64,36 @@
                         #{order.productFamilyName}
                     </p:column>
 
-
                     <p:column headerText="Status" filterBy="#{order.orderStatus}" filterOptions="#{productOrderBean.allOrderStatuses}" filterMatchMode="exact">
                         #{order.orderStatus}
                     </p:column>
 
-
-                    <p:column headerText="Research Project" sortBy="#{order.researchProjectTitle}">
+                    <p:column headerText="Research Project" width="120" sortBy="#{order.researchProjectTitle}">
                         #{order.researchProjectTitle}
                     </p:column>
 
+                    <p:column headerText="Owner" filterBy="#{order.ownerId}" filterOptions="#{productOrderForm.allProjectOwners}" filterMatchMode="exact">
+                        #{userListBean.getUserFullName(order.ownerId)}
+                    </p:column>
 
-                <p:column headerText="Owner" filterBy="#{order.ownerId}" filterOptions="#{productOrderForm.allProjectOwners}" filterMatchMode="exact">
-                    #{userListBean.getUserFullName(order.ownerId)}
-                </p:column>
+                    <p:column headerText="Updated" width="80" sortBy="#{order.updatedDate}">
+                        <h:outputText value="#{order.updatedDate}">
+                            <f:convertDateTime type="date" timeStyle="short"/>
+                        </h:outputText>
+                    </p:column>
 
-                <p:column headerText="Updated" sortBy="#{order.updatedDate}">
-                    <h:outputText value="#{order.updatedDate}">
-                        <f:convertDateTime type="both" timeStyle="short"/>
-                    </h:outputText>
-                </p:column>
+                    <p:column headerText="Sample Count" sortBy="#{order.pdoSampleCount}">
+                        #{order.pdoSampleCount}
+                    </p:column>
 
-                <p:column headerText="Sample Count" sortBy="#{order.pdoSampleCount}">
-                    #{order.pdoSampleCount}
-                </p:column>
+                    <p:column headerText="Billing Session ID" sortBy="#{order.billingSessionBusinessKey}">
+                        #{order.billingSessionBusinessKey}
+                    </p:column>
 
-                <p:column headerText="Billing Session ID" sortBy="#{order.billingSessionBusinessKey}">
-                    #{order.billingSessionBusinessKey}
-                </p:column>
-
-                <p:column headerText="Eligible for Billing" sortBy="#{order.eligibleForBilling}">
-                    <p:graphicImage width="16" height="16" rendered="#{order.eligibleForBilling}" url="/images/check.png"/>
-                </p:column>
-
-
-            </p:dataTable>
+                    <p:column headerText="Eligible for Billing" sortBy="#{order.eligibleForBilling}">
+                        <p:graphicImage width="16" height="16" rendered="#{order.eligibleForBilling}" url="/images/check.png"/>
+                    </p:column>
+                </p:dataTable>
             </h:form>
         </ui:define>
     </ui:composition>

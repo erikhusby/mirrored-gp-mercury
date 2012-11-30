@@ -30,6 +30,7 @@ public abstract class AbstractSpreadsheetExporter {
     private final CellStyle preambleStyle;
     private final CellStyle previouslyBilledStyle;
     private final CellStyle errorMessageStyle;
+    private final CellStyle dateStyle;
 
     private final SpreadSheetWriter writer = new SpreadSheetWriter();
 
@@ -44,6 +45,7 @@ public abstract class AbstractSpreadsheetExporter {
         preambleStyle = buildPreambleStyle(workbook);
         previouslyBilledStyle = buildPreviouslyBilledStyle(workbook);
         errorMessageStyle = buildErrorMessageStyle(workbook);
+        dateStyle = buildDateStyle(workbook);
     }
 
     protected SpreadSheetWriter getWriter() {
@@ -56,6 +58,10 @@ public abstract class AbstractSpreadsheetExporter {
 
     protected CellStyle getPriceItemProductHeaderStyle() {
         return priceItemProductHeaderStyle;
+    }
+
+    protected CellStyle getDateStyle() {
+        return dateStyle;
     }
 
     protected CellStyle getErrorMessageStyle() {
@@ -112,6 +118,13 @@ public abstract class AbstractSpreadsheetExporter {
         Font headerFont = wb.createFont();
         headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
         style.setFont(headerFont);
+        return style;
+    }
+
+    protected CellStyle buildDateStyle(Workbook wb) {
+        CellStyle style = wb.createCellStyle();
+        CreationHelper createHelper = wb.getCreationHelper();
+        style.setDataFormat(createHelper.createDataFormat().getFormat("m/d/yy"));
         return style;
     }
 
@@ -188,6 +201,10 @@ public abstract class AbstractSpreadsheetExporter {
         public SpreadSheetWriter() {
         }
 
+        public Sheet getCurrentSheet() {
+            return currentSheet;
+        }
+
         public void setCurrentSheet(Sheet currentSheet) {
             this.currentSheet = currentSheet;
             rowNum = 0;
@@ -249,12 +266,12 @@ public abstract class AbstractSpreadsheetExporter {
         }
 
 
-        public void writeCell(Date value) {
+        public void writeCell(Date value, CellStyle cellStyle) {
             nextCell();
-
             if (value != null) {
                 currentCell.setCellValue(value);
             }
+            currentCell.setCellStyle(cellStyle);
         }
     }
 }
