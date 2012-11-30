@@ -7,7 +7,6 @@ package org.broadinstitute.gpinformatics.mercury.presentation.login;
  */
 
 import org.apache.commons.logging.Log;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.entity.DB;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -35,9 +34,6 @@ public class UserLogin extends AbstractJsfBean {
 
     @Inject
     private UserBean userBean;
-
-    @Inject
-    private BSPUserList bspUserList;
 
     @Inject
     private FacesContext facesContext;
@@ -68,8 +64,6 @@ public class UserLogin extends AbstractJsfBean {
             request.login(username, password);
             UserRole role = UserRole.fromRequest(request);
             targetPage = role.landingPage;
-            // HACK needed by Arquillian, see FIXME in UserBean.
-            userBean.setBspUserList(bspUserList);
             userBean.login(request);
 
             if (!userBean.isValidBspUser()) {

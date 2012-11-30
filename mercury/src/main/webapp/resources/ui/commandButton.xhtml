@@ -13,8 +13,8 @@
 
 <cc:interface>
     <cc:attribute name="value"/>
-    <cc:attribute name="action" targets="#{cc.id}_button"/>
-    <cc:attribute name="actionListener" targets="#{cc.id}_button"/>
+    <cc:attribute name="action" method-signature="java.lang.Object action()" targets="#{cc.id}_button"/>
+    <cc:attribute name="actionListener" method-signature="void action()" targets="#{cc.id}_button"/>
     <cc:attribute name="immediate" type="java.lang.Boolean"/>
     <cc:attribute name="type"/>
     <cc:attribute name="ajax" type="java.lang.Boolean"/>

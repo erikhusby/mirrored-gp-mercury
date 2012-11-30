@@ -24,7 +24,7 @@
 
                 <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.billingManagerRole}">
                     <p:commandButton value="Bill Work in Broad Quotes" action="#{billingSessionForm.bill}" ajax="false"
-                                 style="margin-right:30px;" styleClass="btn"/>
+                                 style="margin-right:30px;" styleClass="btn" rendered="#{billingSessionBean.billingSession.billedDate == null}"/>
                 </security:authorizeBlock>
 
                 <p:commandButton value="Download Tracker" action="#{billingSessionForm.downloadTracker}" ajax="false"
@@ -113,7 +113,7 @@
                         <f:convertDateTime type="date" dateStyle="short"/>
                     </h:outputText>
                 </p:column>
-                <p:column headerText="Billing Message" width="650">
+                <p:column headerText="Billing Message" width="650" rendered="#{billingSessionBean.billingSession.billedDate == null}">
                     #{item.billingMessage}
                 </p:column>
 

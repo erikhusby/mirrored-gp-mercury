@@ -15,7 +15,7 @@
 
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam name="researchProject" value="#{researchProjectDetail.project}" converter="#{researchProjectConverter}"/>
+                <f:viewParam name="researchProject" value="#{productOrderDetail.productOrder.researchProject}" converter="#{researchProjectConverter}"/>
                 <f:viewParam name="product" value="#{productOrderDetail.productOrder.product}" converter="#{productConverter}"/>
             </f:metadata>
             <f:event type="preRenderView" listener="#{productOrderForm.initForm}"/>
@@ -91,7 +91,7 @@
                                         required="true"
                                         scrollHeight="250"
                                         size="50">
-                            <p:ajax event="itemSelect" listener="#{productOrderForm.setupAddOns}" update="perfbyselection,numberOfLanes"/>
+                            <p:ajax event="itemSelect" listener="#{productOrderForm.setupAddOns}" update="perfbyselection,numberOfLanesPanel"/>
                         </p:autoComplete>
                         <p:watermark for="product" value="Type name to search"/>
                         <p:message for="product"/>
@@ -128,16 +128,19 @@
                     </div>
                 </div>
 
-                <div class="control-group">
-                    <p:outputLabel for="numberOfLanes" value="Number of Lanes" styleClass="control-label"/>
-                    <div class="controls">
-                        <p:inputText id="numberOfLanes"
-                                     disabled="#{!productOrderForm.hasProduct || !productOrderForm.product.productFamily.supportsNumberOfLanes}"
-                                     value="#{productOrderDetail.productOrder.count}" size="50" required="true"/>
-                        <p:watermark for="numberOfLanes" value="Enter Number of Lanes"/>
-                        <p:message for="numberOfLanes"/>
-                    </div>
-                </div>
+                <p:outputPanel id="numberOfLanesPanel">
+                    <p:outputPanel rendered="#{productOrderForm.hasProduct and productOrderForm.product.productFamily.supportsNumberOfLanes}">
+                        <div class="control-group">
+                            <p:outputLabel for="numberOfLanes" value="Number of Lanes" styleClass="control-label"/>
+                            <div class="controls">
+                                <p:inputText id="numberOfLanes"
+                                             value="#{productOrderDetail.productOrder.count}" size="50" required="true"/>
+                                <p:watermark for="numberOfLanes" value="Enter Number of Lanes"/>
+                                <p:message for="numberOfLanes"/>
+                            </div>
+                        </div>
+                    </p:outputPanel>
+                </p:outputPanel>
 
                 <div class="control-group">
                     <p:outputLabel for="comments" value="Comments" styleClass="control-label"/>
