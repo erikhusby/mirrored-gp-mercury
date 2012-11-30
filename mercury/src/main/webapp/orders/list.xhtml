@@ -87,7 +87,9 @@
                     </p:column>
 
                     <p:column headerText="Billing Session ID" sortBy="#{order.billingSessionBusinessKey}">
-                        #{order.billingSessionBusinessKey}
+                        <h:link outcome="/billing/view" value="#{order.billingSessionBusinessKey}" rendered="#{order.billingSessionBusinessKey != null}">
+                            <f:param name="billingSession" value="#{order.billingSessionBusinessKey}"/>
+                        </h:link>
                     </p:column>
 
                     <p:column headerText="Eligible for Billing" sortBy="#{order.eligibleForBilling}">
