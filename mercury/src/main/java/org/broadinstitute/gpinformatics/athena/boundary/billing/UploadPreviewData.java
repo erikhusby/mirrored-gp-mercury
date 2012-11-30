@@ -17,18 +17,18 @@ public class UploadPreviewData implements Comparable<UploadPreviewData> {
 
     private final String priceItemName;
 
-    private final double totalCredits;
+    private final double totalNewCredits;
 
-    private final double totalCharges;
+    private final double totalNewCharges;
 
     private static final BusinessKeyComparator businessKeyComparator = new BusinessKeyComparator();
 
-    public UploadPreviewData(String orderJiraKey, String productPartNumber, String priceItemName, double totalCredits, double totalCharges) {
+    public UploadPreviewData(String orderJiraKey, String productPartNumber, String priceItemName, double totalNewCharges, double totalNewCredits) {
         this.orderJiraKey = orderJiraKey;
         this.productPartNumber = productPartNumber;
         this.priceItemName = priceItemName;
-        this.totalCredits = totalCredits;
-        this.totalCharges = totalCharges;
+        this.totalNewCredits = totalNewCredits;
+        this.totalNewCharges = totalNewCharges;
     }
 
     public String getOrderJiraKey() {
@@ -43,12 +43,12 @@ public class UploadPreviewData implements Comparable<UploadPreviewData> {
         return priceItemName;
     }
 
-    public double getTotalCredits() {
-        return totalCredits;
+    public double getTotalNewCredits() {
+        return totalNewCredits;
     }
 
-    public double getTotalCharges() {
-        return totalCharges;
+    public double getTotalNewCharges() {
+        return totalNewCharges;
     }
 
     @Override
