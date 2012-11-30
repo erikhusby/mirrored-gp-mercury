@@ -1,17 +1,24 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -33,6 +40,12 @@ public class LabBatchResource {
 
     @Inject
     private LabBatchDAO labBatchDAO;
+
+    @Inject
+    JiraService jiraService;
+
+
+
 
     @POST
     public String createLabBatch(LabBatchBean labBatchBean) {
@@ -94,5 +107,18 @@ public class LabBatchResource {
 //            labBatch = new LabBatch(projectPlan, labBatchBean.getBatchId(), starters);
 //        }
         return labBatch;
+    }
+
+    public void createJiraTicket(@Nonnull LabBatch batch, @Nonnull String reporter, @Nonnull CreateFields.IssueType batchSubType,
+                                 @Nonnull String projectPrefix) throws IOException {
+
+        Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
+
+        JiraIssue jiraIssue = jiraService.createIssue(projectPrefix, reporter, batchSubType, batch.getBatchName(), "",
+                                                      batch.retrieveCustomFields(submissionFields));
+
+        JiraTicket jiraTicket = new JiraTicket(jiraIssue);
+        batch.setJiraTicket(jiraTicket);
+
     }
 }
