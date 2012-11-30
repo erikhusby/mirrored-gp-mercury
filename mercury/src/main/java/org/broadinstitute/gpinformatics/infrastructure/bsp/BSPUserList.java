@@ -8,10 +8,12 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
+import javax.annotation.PostConstruct;
+import javax.enterprise.context.ApplicationScoped;
 import javax.faces.model.SelectItem;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.inject.Singleton;
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -19,16 +21,17 @@ import java.util.*;
  * future, we may want to rebuild the list regularly to account for changes to the user database.
  */
 @Named
-// MLC @ApplicationScoped breaks the test, as does @javax.ejb.Singleton.  @javax.inject.Singleton is the CDI version
-// and does appear to work.  Much to learn about CDI still...
-@Singleton
-public class BSPUserList extends AbstractCache {
+@ApplicationScoped
+public class BSPUserList extends AbstractCache implements Serializable {
 
     @Inject
     private Log logger;
 
     @Inject
     private Deployment deployment;
+
+    @Inject
+    private BSPManagerFactory bspManagerFactory;
 
     private List<BspUser> users;
 
@@ -114,12 +117,8 @@ public class BSPUserList extends AbstractCache {
                 user.getEmail().contains(lowerQuery);
     }
 
-    private BSPManagerFactory bspManagerFactory;
-
-    @Inject
-    // MLC constructor injection appears to be required to get a BSPManagerFactory injected???
-    public BSPUserList(BSPManagerFactory bspManagerFactory) {
-        this.bspManagerFactory = bspManagerFactory;
+    @PostConstruct
+    private void postConstruct() {
         refreshCache();
     }
 
