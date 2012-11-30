@@ -9,7 +9,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.project;
 public class ReagentDesign {
     
     private String reagentDesign;
-
+// cusgom amplicon tube
     public enum REAGENT_TYPE {
         BAIT,CAT
     }
