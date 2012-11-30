@@ -29,7 +29,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ProductOrderContainerTest extends Arquillian {
 
-    private static final Long TEST_CREATOR = 10950L;
+    private static final long TEST_CREATOR = 10950;
 
     @Inject
     private BSPUserList userList;
