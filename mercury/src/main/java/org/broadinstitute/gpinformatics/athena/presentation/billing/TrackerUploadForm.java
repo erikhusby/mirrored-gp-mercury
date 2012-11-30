@@ -106,6 +106,7 @@ public class TrackerUploadForm  extends AbstractJsfBean {
     }
 
     private void previewUploadedFile(UploadedFile file, InputStream inputStream) {
+        int counter=0;
         try {
             inputStream = file.getInputstream();
 
@@ -134,12 +135,17 @@ public class TrackerUploadForm  extends AbstractJsfBean {
                         double credits = value.getValue().getCredit();
 
                         uploadPreviewData.add(new UploadPreviewData(pdoKey, partNumber, priceItem, credits, charges));
+                        counter++;
                     }
                 }
             }
 
             Collections.sort(uploadPreviewData);
             uploadPreviewTableData.setValues(uploadPreviewData);
+
+            if (counter == 0) {
+                addInfoMessage("No updated billing data found when previewing the file." );
+            }
 
         } catch (Exception e) {
             e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
@@ -148,18 +154,20 @@ public class TrackerUploadForm  extends AbstractJsfBean {
             IOUtils.closeQuietly(inputStream);
         }
 
-        InputStream fis=null;
-        try {
-            BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, productOrderSampleDao);
-            fis = file.getInputstream();
-            File tempFile = importer.copyFromStreamToTempFile(fis);
-            //Keep the filename in conversation scope
-            conversationData.setFilename( tempFile.getAbsolutePath() );
-        } catch ( Exception e ) {
-            e.printStackTrace();
-            throw new RuntimeException( e );
-        } finally {
-            IOUtils.closeQuietly(fis);
+        if ( counter > 0 ) {
+            InputStream fis=null;
+            try {
+                BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, productOrderSampleDao);
+                fis = file.getInputstream();
+                File tempFile = importer.copyFromStreamToTempFile(fis);
+                //Keep the filename in conversation scope
+                conversationData.setFilename( tempFile.getAbsolutePath() );
+            } catch ( Exception e ) {
+                e.printStackTrace();
+                throw new RuntimeException( e );
+            } finally {
+                IOUtils.closeQuietly(fis);
+            }
         }
     }
 
