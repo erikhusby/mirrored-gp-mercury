@@ -36,6 +36,9 @@ public class CreatePoolingTransfersTest extends ContainerTest {
     @PersistenceContext(unitName = "squid_pu")
     private EntityManager entityManager;
 
+    @Inject
+    BSPUserList bspUserList;
+
     @Test(enabled = false, groups = EXTERNAL_INTEGRATION)
     public void testImport() throws ParseException {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
@@ -96,7 +99,7 @@ public class CreatePoolingTransfersTest extends ContainerTest {
 
         List<String> sourceTubeBarcodes = null;
 
-        BSPUserList bspUserList = ServiceAccessUtility.getBean ( BSPUserList.class );
+//        BSPUserList bspUserList = ServiceAccessUtility.getBean ( BSPUserList.class );
 
 
         for (Object o : resultList) {
