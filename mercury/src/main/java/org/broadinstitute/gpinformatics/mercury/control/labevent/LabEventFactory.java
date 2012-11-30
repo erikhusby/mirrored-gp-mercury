@@ -828,6 +828,9 @@ public class LabEventFactory {
                                                  TwoDBarcodedTube sourceTube, StaticPlate targetPlate,
                                                  String targetSection ) {
         LabEvent labEvent = constructReferenceData ( receptaclePlateTransferEvent, labEventRefDataFetcher );
+        if(sourceTube == null) {
+            throw new RuntimeException("Source tube not found for " + receptaclePlateTransferEvent.getSourceReceptacle().getBarcode());
+        }
         if ( targetPlate == null ) {
             targetPlate = new StaticPlate ( receptaclePlateTransferEvent.getDestinationPlate ().getBarcode (),
                                             StaticPlate.PlateType.getByDisplayName (

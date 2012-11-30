@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.hibernate.annotations.Index;
@@ -216,9 +217,11 @@ public class ProductOrderSample implements Serializable {
                 sampleStatus.put(item.getPriceItem(), new LedgerQuantities());
             }
 
-            if (item.getBillingSession() != null) {
+            if ((item.getBillingSession() != null) && (item.getBillingSession().getBilledDate() != null) ||
+                ((item.getBillingMessage() != null) && item.getBillingMessage().equals(BillingSession.SUCCESS))) {
                 sampleStatus.get(item.getPriceItem()).addToBilled(item.getQuantity());
             } else {
+                // The item is not part of a completed billed session, so
                 sampleStatus.get(item.getPriceItem()).addToUploaded(item.getQuantity());
             }
         }

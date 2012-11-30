@@ -13,7 +13,10 @@ package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 import org.hibernate.envers.Audited;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.FetchType;
+import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 
 /**
@@ -24,38 +27,27 @@ import javax.persistence.Table;
 @Entity
 @Audited
 @Table(schema = "mercury")
-public class BaitReagent extends Reagent {
-    private String targetSet;
+// todo jmt rename to DesignedReagent
+public class DesignedReagent extends Reagent {
 
-    /**
-     * Construct a BaitDesign
-     *
-     * @param designName     Example: cancer_2000gene_shift170_undercovered
-     * @param targetSet      Example: Cancer_2K
-     * @param manufacturerId 123465
-     */
-    public BaitReagent(String designName, String targetSet, String manufacturerId) {
-        super(designName, manufacturerId);
-        this.targetSet = targetSet;
+    // In production code, the reagentDesign will always exist first, so there's no need for cascade, but in tests
+    // DesignedReagent and ReagentDesign are created at the same time.
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private ReagentDesign reagentDesign;
+
+    public DesignedReagent(ReagentDesign reagentDesign) {
+        // todo jmt what to pass to super?
+        super(null, null);
+        this.reagentDesign = reagentDesign;
+        reagentDesign.addDesignedReagent(this);
     }
 
-    protected BaitReagent() {
+    /** For JPA */
+    DesignedReagent() {
     }
 
-    public String getTargetSet() {
-        return targetSet;
-    }
-
-    public String getDesignName() {
-        return getReagentName();
-    }
-
-    public String getManufacturerId() {
-        return getLot();
-    }
-
-    public void setTargetSet(String targetSet) {
-        this.targetSet = targetSet;
+    public ReagentDesign getReagentDesign() {
+        return reagentDesign;
     }
 }
 

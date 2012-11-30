@@ -17,6 +17,7 @@ public class MolecularIndexReagent extends Reagent {
     private MolecularIndexingScheme molecularIndexingScheme;
 
     public MolecularIndexReagent(MolecularIndexingScheme molecularIndexingScheme) {
+        // todo jmt what to pass to super?
         super(null, null);
         this.molecularIndexingScheme = molecularIndexingScheme;
     }
