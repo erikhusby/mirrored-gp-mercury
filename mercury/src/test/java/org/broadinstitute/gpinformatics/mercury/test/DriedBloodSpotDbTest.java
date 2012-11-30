@@ -2,10 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.filter.LoggingFilter;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -13,7 +11,6 @@ import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
-import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;

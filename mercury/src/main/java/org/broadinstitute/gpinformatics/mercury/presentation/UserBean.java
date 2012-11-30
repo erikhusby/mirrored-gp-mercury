@@ -37,6 +37,7 @@ public class UserBean implements Serializable {
     @Inject
     JiraConfig jiraConfig;
 
+    @Inject
     private BSPUserList bspUserList;
 
     @Inject
@@ -49,11 +50,6 @@ public class UserBean implements Serializable {
 
     private boolean isTestUser() {
         return BSPUserList.isTestUser(bspUser);
-    }
-
-    // FIXME: This is a HACK because we can't inject BSPUserList when running in arquillian.
-    public void setBspUserList(BSPUserList bspUserList) {
-        this.bspUserList = bspUserList;
     }
 
     public enum ServerStatus {
