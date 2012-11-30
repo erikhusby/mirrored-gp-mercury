@@ -24,12 +24,11 @@ import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
+import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /**
@@ -73,12 +72,8 @@ public class TrackerUploadForm  extends AbstractJsfBean {
     @Inject
     private UserTransaction utx;
 
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss-");
-
     public boolean isUploadAvailable() {
-        boolean expr = getHasFilename() && !FacesContext.getCurrentInstance().getMessages().hasNext();
-        logger.info("isUploadAvailable? " + expr);
-        return expr;
+        return getHasFilename() && !FacesContext.getCurrentInstance().getMessages().hasNext();
     }
 
     public void initView() {
@@ -90,7 +85,7 @@ public class TrackerUploadForm  extends AbstractJsfBean {
     /**
      * Is there a common location for this logic?
      *
-     * @return
+     * @return The user
      */
     private String getUsername() {
         return ((HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest()).
@@ -167,6 +162,34 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         }
     }
 
+//    /*
+//     * The following method is in temporarily until we can get conversation scope working.  !!!!!
+//     */
+//    public void uploadBillingDirectlyTEMP(FileUploadEvent event) {
+//
+//        UploadedFile file = event.getFile();
+//
+//        // Check the fileType
+//        if (( file != null ) && "application/vnd.ms-excel".equalsIgnoreCase( file.getContentType())) {
+//            InputStream fis=null;
+//            File tempFile = null;
+//            try {
+//                BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, productOrderSampleDao);
+//                fis = file.getInputstream();
+//                tempFile = importer.copyFromStreamToTempFile(fis);
+//            } catch ( Exception e ) {
+//                e.printStackTrace();
+//                throw new RuntimeException( e );
+//            } finally {
+//                IOUtils.closeQuietly(fis);
+//            }
+//
+//            processBillingOnTempFile(tempFile);
+//
+//        } else {
+//          addInfoMessage("Could not Upload. Filename is blank." );
+//        }
+//    }
 
     public String uploadTrackingDataForBilling() {
 
@@ -233,6 +256,7 @@ public class TrackerUploadForm  extends AbstractJsfBean {
                 }
             }
         }
+
         return orderIdsUpdated;
     }
 
