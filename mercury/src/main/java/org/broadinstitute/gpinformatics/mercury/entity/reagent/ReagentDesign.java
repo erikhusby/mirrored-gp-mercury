@@ -48,7 +48,12 @@ public class ReagentDesign {
 
     @Enumerated(EnumType.STRING)
     private REAGENT_TYPE reagent_type;
-    
+
+    /**
+     *
+     * @param designName     Example: cancer_2000gene_shift170_undercovered
+     * @param reagentType
+     */
     public ReagentDesign(String designName, REAGENT_TYPE reagentType) {
         if (designName == null) {
              throw new NullPointerException("designName cannot be null."); 
@@ -72,6 +77,10 @@ public class ReagentDesign {
         return targetSetName;
     }
 
+    /**
+     *
+     * @param targetSetName      Example: Cancer_2K
+     */
     public void setTargetSetName(String targetSetName) {
         this.targetSetName = targetSetName;
     }
