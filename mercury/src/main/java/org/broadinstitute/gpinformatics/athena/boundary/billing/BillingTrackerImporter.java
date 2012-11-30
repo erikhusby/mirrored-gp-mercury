@@ -31,8 +31,9 @@ public class BillingTrackerImporter {
             headerColumnIndices.put(fixedHeaders[i], i);
         }
     }
-    private final static int SAMPLE_ID_COL_POS = headerColumnIndices.get("Sample ID");
-    private final static int PDO_ID_COL_POS = headerColumnIndices.get("Product Order ID");
+    private final static int SAMPLE_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.SAMPLE_ID_HEADING);
+    private final static int PDO_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.ORDER_ID_HEADING);
+    private final static int SORT_COLUMN_COL_POS = headerColumnIndices.get( SampleLedgerExporter.SORT_COLUMN_HEADING);
     private final static int numberOfHeaderRows = 2;
 
 
@@ -41,17 +42,6 @@ public class BillingTrackerImporter {
         this.productOrderSampleDao = productOrderSampleDao;
     }
 
-    //TODO This was just for initial prototyping.
-    public String readFromStream(InputStream inputStream) throws Exception {
-
-        Workbook workbook;
-        workbook = WorkbookFactory.create(inputStream);
-        int numberOfProducts = workbook.getNumberOfSheets();
-        Sheet sheet = workbook.getSheetAt(0);
-        String productPartNumberStr = sheet.getSheetName();
-        return productPartNumberStr;
-
-    }
 
     public Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> parseFileForSummaryMap(InputStream inputStream) throws IOException {
 
@@ -61,6 +51,9 @@ public class BillingTrackerImporter {
         Workbook workbook;
         try {
             workbook = WorkbookFactory.create(inputStream);
+
+            checkSampleOrdering ( workbook );
+
             int numberOfSheets = workbook.getNumberOfSheets();
             for (int i=0; i< numberOfSheets;i++) {
 
@@ -80,6 +73,51 @@ public class BillingTrackerImporter {
             IOUtils.closeQuietly(inputStream);
         }
         return trackerSummaryMap;
+
+    }
+
+    boolean checkSampleOrdering(Workbook workbook) {
+        boolean result = false;
+        Cell sortCell = null;
+        int expectedSortColValue =1;
+
+        int numberOfSheets = workbook.getNumberOfSheets();
+        for (int i=0; i< numberOfSheets;i++) {
+
+            Sheet sheet = workbook.getSheetAt(i);
+            String productPartNumberStr = sheet.getSheetName();
+
+            for (Iterator<Row> rit = sheet.rowIterator(); rit.hasNext(); ) {
+                Row row = rit.next();
+                if ( row.getRowNum() == 0 ) {
+                    row = skipHeaderRows(rit, row);
+                }
+
+                sortCell = row.getCell(SORT_COLUMN_COL_POS);
+                String currentSampleName = row.getCell(SAMPLE_ID_COL_POS).getStringCellValue();
+
+                if ( sortCell == null ) {
+                    //Break out of this loop since there is no PDO for this row. Assuming at the end of the valued rows.
+                    break;
+                }
+                double sortCellVal = sortCell.getNumericCellValue();
+                if ( ! ("" + sortCellVal).equals( "" + expectedSortColValue )) {
+                    throw new RuntimeException("Sample " + currentSampleName + " on row " +  (row.getRowNum() + 1 ) +
+                            " of spreadsheet tab "  + productPartNumberStr + " is not in the expected position. Please re-order the spreadsheet by the " +
+                            SampleLedgerExporter.SORT_COLUMN_HEADING + " column heading." );
+                }
+                expectedSortColValue++;
+            }
+
+            if ( sortCell == null ) {
+                //Break out of this loop since there is no PDO for this row. Assuming at the end of the valued rows.
+                break;
+            }
+        }
+
+
+        throw new IllegalStateException("Not Yet Implemented");
+        //return result;
 
     }
 
