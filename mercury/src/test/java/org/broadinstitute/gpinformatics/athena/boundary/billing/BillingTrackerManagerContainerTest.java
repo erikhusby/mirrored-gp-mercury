@@ -120,7 +120,9 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
                 Assert.assertEquals(expBillingLedger.getProductOrderSample().getSampleName(), billingLedger.getProductOrderSample().getSampleName() );
                 Assert.assertEquals(expBillingLedger.getProductOrderSample().getBillingStatus(), billingLedger.getProductOrderSample().getBillingStatus() );
                 Assert.assertEquals(expBillingLedger.getPriceItem().getName(), billingLedger.getPriceItem().getName() );
-                Assert.assertEquals(expBillingLedger.getQuantity(), billingLedger.getQuantity() );
+                Assert.assertEquals("Quantity check for " + billingLedger.getProductOrderSample().getSampleName() + " priceItem "  +
+                        billingLedger.getPriceItem().getName() + " failed",
+                        expBillingLedger.getQuantity(), billingLedger.getQuantity() );
                 i++;
             }
         } catch ( Exception e ) {
@@ -150,7 +152,7 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
             expList.add( billingLedgerExp );
         }
         {
-            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3KBZD", "RNA Extract from FFPE", 0.5);
+            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3KBZD", "RNA Extract from FFPE", -1.5);
             expList.add( billingLedgerExp );
         }
         //SM-3KBZE
@@ -159,7 +161,7 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
             expList.add( billingLedgerExp );
         }
         {
-            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3KBZE", "RNA Extract from FFPE", 0.5);
+            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3KBZE", "RNA Extract from FFPE", -1.5);
             expList.add( billingLedgerExp );
         }
         {
@@ -172,11 +174,11 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
             expList.add( billingLedgerExp );
         }
         {
-            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3MPJX", "RNA Extract from FFPE", 0.5);
+            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3MPJX", "RNA Extract from FFPE", -1.5);
             expList.add( billingLedgerExp );
         }
         {
-            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3MPJX", "Strand Specific RNA-Seq (high coverage-50M paired reads)", 2);
+            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3MPJX", "Strand Specific RNA-Seq (high coverage-50M paired reads)", 1);
             expList.add( billingLedgerExp );
         }
         //SM-3MPJY
@@ -185,7 +187,7 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
             expList.add( billingLedgerExp );
         }
         {
-            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3MPJY", "RNA Extract from FFPE", 0.5);
+            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3MPJY", "RNA Extract from FFPE", -1.5);
             expList.add( billingLedgerExp );
         }
         {
