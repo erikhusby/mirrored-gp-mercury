@@ -118,8 +118,6 @@ public class LabEventTest {
      */
     @Test(groups = {DATABASE_FREE})
     public void testHybridSelection() {
-//        Controller.startCPURecording(true);
-
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123",
                 new Product("Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000,
@@ -187,8 +185,6 @@ public class LabEventTest {
 
         Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().iterator().next(), qtpEntityBuilder.getIlluminaFlowcell(),
                 "Wrong flowcell");
-
-//        Controller.stopCPURecording();
     }
 
     /**
