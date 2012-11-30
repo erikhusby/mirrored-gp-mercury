@@ -78,10 +78,10 @@ public class BillingTrackerImporter {
 
     void checkSampleOrdering(Workbook workbook) {
         Cell sortCell = null;
-        double expectedSortColValue =1;
 
         int numberOfSheets = workbook.getNumberOfSheets();
         for (int i=0; i< numberOfSheets;i++) {
+            double expectedSortColValue=1;
 
             Sheet sheet = workbook.getSheetAt(i);
             String productPartNumberStr = sheet.getSheetName();
