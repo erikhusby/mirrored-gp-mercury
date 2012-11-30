@@ -217,7 +217,7 @@ public class ProductOrderSample implements Serializable {
                 sampleStatus.put(item.getPriceItem(), new LedgerQuantities());
             }
 
-            if ((item.getBillingSession().getBilledDate() != null) ||
+            if ((item.getBillingSession() != null) && (item.getBillingSession().getBilledDate() != null) ||
                 ((item.getBillingMessage() != null) && item.getBillingMessage().equals(BillingSession.SUCCESS))) {
                 sampleStatus.get(item.getPriceItem()).addToBilled(item.getQuantity());
             } else {
