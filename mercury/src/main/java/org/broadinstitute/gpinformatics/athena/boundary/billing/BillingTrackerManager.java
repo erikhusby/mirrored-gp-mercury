@@ -235,7 +235,6 @@ public class BillingTrackerManager {
 
         for (int billingRefIndex=0; billingRefIndex < trackerColumnInfos.size();billingRefIndex++) {
             double newQuantity;
-            double billedQuantity;
             TrackerColumnInfo trackerColumnInfo = trackerColumnInfos.get(billingRefIndex);
             BillableRef billableRef = trackerColumnInfos.get(billingRefIndex).getBillableRef();
 
@@ -244,9 +243,9 @@ public class BillingTrackerManager {
 
             //Get the AlreadyBilled cell
             Cell billedCell = row.getCell(currentBilledPosition);
+            Double billedQuantity = null;
             if (isNonNullNumericCell(billedCell)) {
                 billedQuantity = billedCell.getNumericCellValue();
-                //TODO Do the validation check here ( same code as goes into BillingTrackerImporter )
             }
 
             //Get the newQuantity cell value and add it onto the productOrderSample
@@ -261,15 +260,23 @@ public class BillingTrackerManager {
                         throwRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " +  (row.getRowNum() + 1 ) +
                                 " of spreadsheet "  + product.getPartNumber() +
                                 " has an invalid Date Completed value. Please correct and try again.");
+                    } else if (billedQuantity == null) {
+                        throwRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " +  (row.getRowNum() + 1 ) +
+                                " of spreadsheet "  + product.getPartNumber() +
+                                " has a blank billed date. Please redownload the tracker to populate this.");
                     } else {
-                        BillingLedger billingLedger = new BillingLedger(productOrderSample, priceItem,
-                                workCompleteDate, newQuantity);
-                        productOrderSample.getBillableItems().add(billingLedger);
-                        productOrderSample.setBillingStatus(BillingStatus.EligibleForBilling);
-                        logger.debug("Added BillingLedger item for sample " + productOrderSample.getSampleName() +
-                                " to PDO " + productOrderSample.getProductOrder().getBusinessKey() +
-                                   " for PriceItemName[PPN]: " + billableRef.getPriceItemName() + "[" +
-                                   billableRef.getProductPartNumber() +"] - Quantity:" + newQuantity );
+                        double delta = newQuantity - billedQuantity;
+
+                        if (delta != 0) {
+                            BillingLedger billingLedger =
+                                new BillingLedger(productOrderSample, priceItem, workCompleteDate, delta);
+                            productOrderSample.getBillableItems().add(billingLedger);
+                            productOrderSample.setBillingStatus(BillingStatus.EligibleForBilling);
+                            logger.debug("Added BillingLedger item for sample " + productOrderSample.getSampleName() +
+                                    " to PDO " + productOrderSample.getProductOrder().getBusinessKey() +
+                                       " for PriceItemName[PPN]: " + billableRef.getPriceItemName() + "[" +
+                                       billableRef.getProductPartNumber() +"] - Quantity:" + delta );
+                        }
                     }
                 } else {
                     logger.debug("Skipping BillingLedger item for sample " + productOrderSample.getSampleName() +

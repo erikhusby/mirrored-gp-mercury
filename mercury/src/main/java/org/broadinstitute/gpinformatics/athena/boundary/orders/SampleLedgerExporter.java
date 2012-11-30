@@ -5,7 +5,6 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -56,8 +55,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
     private BSPUserList bspUserList;
 
-    private BillingLedgerDao billingLedgerDao;
-
 
     public SampleLedgerExporter(ProductOrder... productOrders) {
         this(Arrays.asList(productOrders));
@@ -75,11 +72,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
     }
 
-    public SampleLedgerExporter(List<String> pdoBusinessKeys, BSPUserList bspUserList, BillingLedgerDao billingLedgerDao, ProductOrderDao productOrderDao) {
+    public SampleLedgerExporter(List<String> pdoBusinessKeys, BSPUserList bspUserList, ProductOrderDao productOrderDao) {
         this(productOrderDao.findListByBusinessKeyList(pdoBusinessKeys, Product, ResearchProject, Samples));
 
         this.bspUserList = bspUserList;
-        this.billingLedgerDao = billingLedgerDao;
     }
 
     private String getBspFullName(long id) {
@@ -89,14 +85,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         BspUser user = bspUserList.getById(id);
         return user.getFirstName() + " " + user.getLastName();
-    }
-
-    private Set<BillingLedger> getLedgerEntries(Collection<ProductOrder> productOrders) {
-        if (billingLedgerDao == null) {
-            return null;
-        }
-
-        return billingLedgerDao.findByOrderList(productOrders.toArray(new ProductOrder[productOrders.size()]));
     }
 
     private Date getWorkCompleteDate(Set<BillingLedger> billingLedgers, ProductOrderSample productOrderSample) {

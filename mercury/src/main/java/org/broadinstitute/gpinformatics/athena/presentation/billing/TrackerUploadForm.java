@@ -85,7 +85,7 @@ public class TrackerUploadForm  extends AbstractJsfBean {
     /**
      * Is there a common location for this logic?
      *
-     * @return The user
+     * @return The username string
      */
     private String getUsername() {
         return ((HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest()).
@@ -111,7 +111,8 @@ public class TrackerUploadForm  extends AbstractJsfBean {
 
             BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, productOrderSampleDao);
 
-            Map<String, Map<String,Map<BillableRef,OrderBillSummaryStat>>> productProductOrderPriceItemChargesMap = importer.parseFileForSummaryMap(inputStream);
+            Map<String, Map<String,Map<BillableRef, OrderBillSummaryStat>>> productProductOrderPriceItemChargesMap =
+                    importer.parseFileForSummaryMap(inputStream);
 
             List<UploadPreviewData> uploadPreviewData = new ArrayList<UploadPreviewData>();
 
@@ -162,34 +163,6 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         }
     }
 
-//    /*
-//     * The following method is in temporarily until we can get conversation scope working.  !!!!!
-//     */
-//    public void uploadBillingDirectlyTEMP(FileUploadEvent event) {
-//
-//        UploadedFile file = event.getFile();
-//
-//        // Check the fileType
-//        if (( file != null ) && "application/vnd.ms-excel".equalsIgnoreCase( file.getContentType())) {
-//            InputStream fis=null;
-//            File tempFile = null;
-//            try {
-//                BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, productOrderSampleDao);
-//                fis = file.getInputstream();
-//                tempFile = importer.copyFromStreamToTempFile(fis);
-//            } catch ( Exception e ) {
-//                e.printStackTrace();
-//                throw new RuntimeException( e );
-//            } finally {
-//                IOUtils.closeQuietly(fis);
-//            }
-//
-//            processBillingOnTempFile(tempFile);
-//
-//        } else {
-//          addInfoMessage("Could not Upload. Filename is blank." );
-//        }
-//    }
 
     public String uploadTrackingDataForBilling() {
 
