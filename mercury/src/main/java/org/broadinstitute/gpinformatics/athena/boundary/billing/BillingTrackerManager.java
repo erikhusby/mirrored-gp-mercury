@@ -126,7 +126,12 @@ public class BillingTrackerManager {
                 row = skipHeaderRows(rit, row);
             }
 
-            String rowPdoIdStr = row.getCell(PDO_ID_COL_POS).getStringCellValue();
+            Cell pdoCell = row.getCell(PDO_ID_COL_POS);
+            if ( pdoCell == null ) {
+                //Break out of this loop since there is no PDO for this row. Assuming at the end of the valued rows.
+                break;
+            }
+            String rowPdoIdStr = pdoCell.getStringCellValue();
             if (! result.contains(rowPdoIdStr)) {
                 result.add(rowPdoIdStr);
             }
@@ -145,6 +150,7 @@ public class BillingTrackerManager {
         String currentPdoId = "";
 
         List<ProductOrder> sheetBillingMap = new ArrayList<ProductOrder>();
+        int sampleIndexInOrder=0;
 
         // Iterate over each row in this tab of the spreadsheet.
         for (Iterator<Row> rit = sheet.rowIterator(); rit.hasNext(); ) {
@@ -152,6 +158,12 @@ public class BillingTrackerManager {
 
             if ( row.getRowNum() == 0 ) {
                 row = skipHeaderRows(rit, row);
+            }
+
+            Cell pdoCell = row.getCell(PDO_ID_COL_POS);
+            if ( pdoCell == null ) {
+                //Break out of this loop since there is no PDO for this row. Assuming at the end of the valued rows.
+                break;
             }
 
             String rowPdoIdStr = row.getCell(PDO_ID_COL_POS).getStringCellValue();
@@ -168,6 +180,8 @@ public class BillingTrackerManager {
 
                 //Switch to the next orderId
                 currentPdoId = rowPdoIdStr;
+
+                sampleIndexInOrder=0;
 
                 // Find the order in the DB
                 productOrder = productOrderDao.findByBusinessKey(currentPdoId);
@@ -193,15 +207,14 @@ public class BillingTrackerManager {
             }
 
             //TODO hmc We are assuming ( for now ) that the order is the same in the spreadsheet as returned in the productOrder !
-            int sampleNumber =  row.getRowNum() - numberOfHeaderRows;
-            if ( sampleNumber >= samples.size() ) {
+            if ( sampleIndexInOrder >= samples.size() ) {
                 throwRuntimeException("Sample " + currentSampleName + " on row " +  (row.getRowNum() + 1 ) +
                         " of spreadsheet "  + primaryProductPartNumber +
                         " is not in the expected position. The Order <" + productOrder.getTitle() + " (Id: " + currentPdoId +
                         ")> has only " + samples.size() + " samples." );
             }
 
-            productOrderSample = samples.get(row.getRowNum() - numberOfHeaderRows );
+            productOrderSample = samples.get( sampleIndexInOrder );
             if (! productOrderSample.getSampleName().equals( currentSampleName ) ) {
                 throwRuntimeException("Sample " + currentSampleName + " on row " +  (row.getRowNum() + 1 ) +
                         " of spreadsheet "  + primaryProductPartNumber +
@@ -210,6 +223,8 @@ public class BillingTrackerManager {
 
             // Create a list of BillingLedger objs for this ProductOrderSample that is part of the current PDO.
             parseSampleRowForBilling(row, productOrderSample, product, trackerColumnInfos, priceItemMap);
+
+            sampleIndexInOrder++;
 
         }
 
