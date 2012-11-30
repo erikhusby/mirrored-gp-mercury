@@ -4,13 +4,21 @@
              xsi:schemaLocation="
         http://www.jboss.org/ironjacamar/schema
         http://docs.jboss.org/ironjacamar/schema/datasources_1_0.xsd">
-    <xa-datasource jndi-name="java:jboss/jdbc/squid_pool" pool-name="squid_pool" enabled="true">
-        <xa-datasource-property name="URL">jdbc:oracle:thin:@ora01:1521:seqprod</xa-datasource-property>
+    <xa-datasource jndi-name="java:jboss/jdbc/mercury_pool" pool-name="mercury_pool" enabled="true">
+        <xa-datasource-property name="URL">jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</xa-datasource-property>
         <xa-datasource-class>oracle.jdbc.xa.client.OracleXADataSource</xa-datasource-class>
         <driver>com.oracle</driver>
+        <!-- For XA in Postgres, in data/postgresql.conf, set max_prepared_transactions = 10 and restart Postgres -->
+<!--
+        <xa-datasource-property name="ServerName">localhost</xa-datasource-property>
+        <xa-datasource-property name="DatabaseName">postgres</xa-datasource-property>
+        <xa-datasource-class>org.postgresql.xa.PGXADataSource</xa-datasource-class>
+        <driver>org.postgresql</driver>
+-->
         <security>
-            <user-name>seq20</user-name>
-            <password>wmlalos!</password>
+            <user-name>mercury</user-name>
+            <password>mercury_dev</password>
+            <!--<password>mercury_local</password>-->
         </security>
         <validation>
             <background-validation>true</background-validation>

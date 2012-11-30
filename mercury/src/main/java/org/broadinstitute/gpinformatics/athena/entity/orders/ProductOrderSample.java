@@ -3,10 +3,9 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
@@ -29,7 +28,7 @@ import java.util.regex.Pattern;
 public class ProductOrderSample implements Serializable {
 
     /** Count shown when no billing has occurred. */
-    public static final Double NO_BILL_COUNT = 0d;
+    public static final double NO_BILL_COUNT = 0.0d;
 
     @Id
     @SequenceGenerator(name = "SEQ_ORDER_SAMPLE", schema = "athena", sequenceName = "SEQ_ORDER_SAMPLE")
@@ -185,34 +184,24 @@ public class ProductOrderSample implements Serializable {
      * This class holds the billed and uploaded ledger counts for a particular pdo and price item
      */
     public static class LedgerQuantities {
-        private Double billed = NO_BILL_COUNT;   // If nothing is billed yet, then the total is still 0.
-        private Double uploaded = null;          // If nothing has been uploaded, we want to just ignore this for upload
+        private double billed = NO_BILL_COUNT;   // If nothing is billed yet, then the total is still 0.
+        private double uploaded = NO_BILL_COUNT;          // If nothing has been uploaded, we want to just ignore this for upload
 
-        public void addToBilled(Double quantity) {
+        public void addToBilled(double quantity) {
             billed += quantity;
         }
 
-        public void addToUploaded(Double quantity) {
-
-            // Should only be one quantity uploaded at any time
-            if (uploaded != null) {
-                throw new IllegalStateException("Should only have one quantity being uploaded for this price item and PDO Sample");
-            }
-
-            // so, no adding needed
+        public void addToUploaded(double quantity) {
+            // Should only be one quantity uploaded at any time so, no adding needed
             uploaded = quantity;
         }
 
-        public String getBilled() {
-            return billed.toString();
+        public double getBilled() {
+            return billed;
         }
 
-        public String getUploaded() {
-            if (uploaded == null) {
-                return getBilled();
-            }
-
-            return getBilled() + uploaded.toString();
+        public double getUploaded() {
+            return billed + uploaded;
         }
     }
 
@@ -228,9 +217,11 @@ public class ProductOrderSample implements Serializable {
                 sampleStatus.put(item.getPriceItem(), new LedgerQuantities());
             }
 
-            if (item.getBillingSession() != null) {
+            if ((item.getBillingSession().getBilledDate() != null) ||
+                ((item.getBillingMessage() != null) && item.getBillingMessage().equals(BillingSession.SUCCESS))) {
                 sampleStatus.get(item.getPriceItem()).addToBilled(item.getQuantity());
             } else {
+                // The item is not part of a completed billed session, so
                 sampleStatus.get(item.getPriceItem()).addToUploaded(item.getQuantity());
             }
         }

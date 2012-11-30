@@ -7,7 +7,8 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:p="http://primefaces.org/ui"
-      xmlns:f="http://java.sun.com/jsf/core">
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:b="http://mercury.broadinstitute.org/ui">
 <body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">New Product Order</ui:define>
@@ -90,7 +91,7 @@
                                         required="true"
                                         scrollHeight="250"
                                         size="50">
-                            <p:ajax event="itemSelect" listener="#{productOrderForm.setupAddOns}" update="perfbyselection,numberOfLanes"/>
+                            <p:ajax event="itemSelect" listener="#{productOrderForm.setupAddOns}" update="perfbyselection,numberOfLanesPanel"/>
                         </p:autoComplete>
                         <p:watermark for="product" value="Type name to search"/>
                         <p:message for="product"/>
@@ -127,16 +128,19 @@
                     </div>
                 </div>
 
-                <div class="control-group">
-                    <p:outputLabel for="numberOfLanes" value="Number of Lanes" styleClass="control-label"/>
-                    <div class="controls">
-                        <p:inputText id="numberOfLanes"
-                                     disabled="#{!productOrderForm.hasProduct || !productOrderForm.product.productFamily.supportsNumberOfLanes}"
-                                     value="#{productOrderDetail.productOrder.count}" size="50" required="true"/>
-                        <p:watermark for="numberOfLanes" value="Enter Number of Lanes"/>
-                        <p:message for="numberOfLanes"/>
-                    </div>
-                </div>
+                <p:outputPanel id="numberOfLanesPanel">
+                    <p:outputPanel rendered="#{productOrderForm.hasProduct and productOrderForm.product.productFamily.supportsNumberOfLanes}">
+                        <div class="control-group">
+                            <p:outputLabel for="numberOfLanes" value="Number of Lanes" styleClass="control-label"/>
+                            <div class="controls">
+                                <p:inputText id="numberOfLanes"
+                                             value="#{productOrderDetail.productOrder.count}" size="50" required="true"/>
+                                <p:watermark for="numberOfLanes" value="Enter Number of Lanes"/>
+                                <p:message for="numberOfLanes"/>
+                            </div>
+                        </div>
+                    </p:outputPanel>
+                </p:outputPanel>
 
                 <div class="control-group">
                     <p:outputLabel for="comments" value="Comments" styleClass="control-label"/>
@@ -164,9 +168,9 @@
                 <div class="control-group">
                     <div class="controls">
                         <div class="row-fluid">
-                            <div class="span1">
-                                <p:commandButton
-
+                            <div class="span2">
+                                <b:commandButton
+                                        disabled="#{!userBean.validUser}"
                                         value="Place&nbsp;Order" action="#{productOrderForm.save}"
                                         ajax="false" styleClass="ui-priority-primary"/>
                             </div>
@@ -241,8 +245,8 @@
                 <div class="control-group">
                     <div class="controls">
                         <div class="row-fluid">
-                            <div class="span1">
-                                <p:commandButton
+                            <div class="span2">
+                                <b:commandButton
                                         disabled="#{!userBean.validUser}"
                                         value="Place&nbsp;Order" action="#{productOrderForm.save}"
                                         ajax="false" styleClass="ui-priority-primary"/>

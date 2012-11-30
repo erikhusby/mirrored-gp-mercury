@@ -61,12 +61,23 @@ public class LabBatchResource {
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDAO.findByBarcodes(tubeBarcodes);
         Map<MercurySample, MercurySample> mapSampleToSample = mercurySampleDao.findByMercurySample(mercurySampleKeys);
         LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample/*, null*/);
+
+        JiraTicket jiraTicket = new JiraTicket(labBatch.getBatchName());
+        labBatch.setJiraTicket(jiraTicket);
+        jiraTicket.setLabBatch(labBatch);
         labBatchDAO.persist(labBatch);
         labBatchDAO.flush();
 
         return "Batch persisted";
     }
 
+    /**
+     * DAO-free method to build a LabBatch entity
+     * @param labBatchBean JAXB
+     * @param mapBarcodeToTube from database
+     * @param mapBarcodeToSample from database
+     * @return entity
+     */
     public LabBatch buildLabBatch(LabBatchBean labBatchBean, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
             Map<MercurySample, MercurySample> mapBarcodeToSample/*, BasicProjectPlan projectPlan*/) {
         Set<LabVessel> starters = new HashSet<LabVessel>();
@@ -76,6 +87,7 @@ public class LabBatchResource {
                 twoDBarcodedTube = new TwoDBarcodedTube(tubeBean.getBarcode());
                 mapBarcodeToTube.put(tubeBean.getBarcode(), twoDBarcodedTube);
             }
+
             if(tubeBean.getSampleBarcode() != null && tubeBean.getProductOrderKey() != null) {
                 MercurySample mercurySampleKey = new MercurySample(tubeBean.getProductOrderKey(), tubeBean.getSampleBarcode());
                 MercurySample mercurySample = mapBarcodeToSample.get(mercurySampleKey);
@@ -85,27 +97,9 @@ public class LabBatchResource {
                 }
                 twoDBarcodedTube.addSample(mercurySample);
             }
-
-//            if (tubeBean.getSampleBarcode() == null) {
-                starters.add(twoDBarcodedTube);
-//            } else {
-//                BSPStartingSample bspStartingSample = mapBarcodeToSample.get(tubeBean.getSampleBarcode());
-//                if(bspStartingSample == null) {
-//                    bspStartingSample = new BSPStartingSample(tubeBean.getSampleBarcode() + ".aliquot"/*, projectPlan*/);
-//                    mapBarcodeToSample.put(tubeBean.getSampleBarcode(), bspStartingSample);
-//                }
-//
-//                starters.add(bspStartingSample);
-//                projectPlan.addStarter(bspStartingSample);
-//                projectPlan.addAliquotForStarter(bspStartingSample, twoDBarcodedTube);
-//            }
+            starters.add(twoDBarcodedTube);
         }
-        LabBatch labBatch;
-//        if(projectPlan == null) {
-            labBatch = new LabBatch(labBatchBean.getBatchId(), starters);
-//        } else {
-//            labBatch = new LabBatch(projectPlan, labBatchBean.getBatchId(), starters);
-//        }
+        LabBatch labBatch = new LabBatch(labBatchBean.getBatchId(), starters);
         return labBatch;
     }
 

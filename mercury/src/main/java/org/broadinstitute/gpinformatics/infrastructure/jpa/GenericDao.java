@@ -157,11 +157,13 @@ public class GenericDao {
     public <ENTITY_TYPE> List<ENTITY_TYPE> findAll(Class<ENTITY_TYPE> entity, int first, int max) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
-        TypedQuery<ENTITY_TYPE> typedQuery = getEntityManager().createQuery(criteriaQuery);
+        Root<ENTITY_TYPE> from = criteriaQuery.from(entity);
+        CriteriaQuery<ENTITY_TYPE> select = criteriaQuery.select(from);
+        TypedQuery<ENTITY_TYPE> typedQuery = getEntityManager().createQuery(select);
         typedQuery.setFirstResult(first);
         typedQuery.setMaxResults(max);
         try {
-            return getEntityManager().createQuery(criteriaQuery).getResultList();
+            return typedQuery.getResultList();
         } catch (NoResultException ignored) {
             return Collections.emptyList();
         }

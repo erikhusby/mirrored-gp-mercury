@@ -28,6 +28,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.primefaces.event.SelectEvent;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Conversation;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIInput;
@@ -85,7 +86,11 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     private List<String> selectedAddOns = new ArrayList<String>();
 
-    /** All product orders, fetched once and stored per-request (as a result of this bean being @RequestScoped). */
+    @Inject
+    private Conversation conversation;
+
+    /** All product orders, now conversation scoped */
+    @Inject
     private ProductOrderListModel allProductOrders;
 
     private ProductOrderListEntry[] selectedProductOrders;
@@ -110,15 +115,25 @@ public class ProductOrderForm extends AbstractJsfBean {
     /** Automatically convert known BSP IDs (SM-, SP-) to uppercase. */
     private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
 
+    public void initView() {
+        if (!facesContext.isPostback()) {
+            if (conversation.isTransient()) {
+                allProductOrders.setWrappedData(productOrderListEntryDao.findProductOrderListEntries());
+                conversation.begin();
+            }
+        }
+    }
+
     /**
-     * Returns a list of all product orders. Only actually fetches the list from the database once per request
-     * (as a result of this bean being @RequestScoped).
+     * Returns a list of all product orders.
      *
      * @return list of all product orders
      */
     public ProductOrderListModel getAllProductOrders() {
-        if (allProductOrders == null) {
-            allProductOrders = new ProductOrderListModel(productOrderListEntryDao.findProductOrderListEntries());
+        // we may be landing in this page for the first time with a long-running conversation started from another
+        // page, so make sure we've loaded the list of PDOs
+        if (allProductOrders.getRowCount() < 0) {
+            allProductOrders.setWrappedData(productOrderListEntryDao.findProductOrderListEntries());
         }
 
         return allProductOrders;
@@ -445,7 +460,7 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     private Set<BillingLedger> validateOrderSelection(String validatingFor) {
-        if ((userBean == null) || (userBean.getBspUser() == null) || (userBean.getBspUser().getUserId() == null)) {
+        if (!userBean.isValidBspUser()) {
             addErrorMessage("A valid bsp user is needed to start a " + validatingFor);
             return null;
         }
@@ -510,13 +525,13 @@ public class ProductOrderForm extends AbstractJsfBean {
             tempFile = File.createTempFile(filename, "xls");
             outputStream = new FileOutputStream(tempFile);
 
-            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(pdoBusinessKeys, bspUserList, ledgerDao, productOrderDao);
+            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(pdoBusinessKeys, bspUserList, productOrderDao);
             sampleLedgerExporter.writeToStream(outputStream);
             IOUtils.closeQuietly(outputStream);
             inputStream = new FileInputStream(tempFile);
 
             // This copies the inputStream as a faces download with the file name specified.
-            AbstractSpreadsheetExporter.copyForDownload(inputStream, filename);
+            AbstractSpreadsheetExporter.copyForDownload(inputStream, filename + ".xls");
         } catch (Exception ex) {
             String message = "Got an exception trying to download the billing tracker: " + ex.getMessage();
             AbstractJsfBean.addMessage(null, FacesMessage.SEVERITY_ERROR, message, message);

@@ -7,7 +7,8 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:p="http://primefaces.org/ui"
-      xmlns:f="http://java.sun.com/jsf/core">
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:b="http://mercury.broadinstitute.org/ui">
 <body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">#{productForm.creating ? 'Create Product' : 'Edit Product Detail'} </ui:define>
@@ -204,7 +205,7 @@
                     <div class="controls">
                         <div class="row-fluid">
                             <div class="span1">
-                                <p:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary"/>
+                                <b:commandButton value="Save" action="#{productForm.save}" ajax="false" styleClass="ui-priority-primary"/>
                             </div>
                             <div class="offset2">
                                 <h:link outcome="list" value="Cancel" rendered="#{productForm.creating}"/>

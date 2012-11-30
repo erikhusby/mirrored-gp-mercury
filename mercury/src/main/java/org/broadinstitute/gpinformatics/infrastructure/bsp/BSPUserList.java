@@ -8,10 +8,12 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
+import javax.annotation.PostConstruct;
+import javax.enterprise.context.ApplicationScoped;
 import javax.faces.model.SelectItem;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.inject.Singleton;
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -19,16 +21,16 @@ import java.util.*;
  * future, we may want to rebuild the list regularly to account for changes to the user database.
  */
 @Named
-// MLC @ApplicationScoped breaks the test, as does @javax.ejb.Singleton.  @javax.inject.Singleton is the CDI version
-// and does appear to work.  Much to learn about CDI still...
-@Singleton
-public class BSPUserList extends AbstractCache {
+@ApplicationScoped
+public class BSPUserList extends AbstractCache implements Serializable {
 
     @Inject
     private Log logger;
 
     @Inject
     private Deployment deployment;
+
+    private BSPManagerFactory bspManagerFactory;
 
     private List<BspUser> users;
 
@@ -114,7 +116,8 @@ public class BSPUserList extends AbstractCache {
                 user.getEmail().contains(lowerQuery);
     }
 
-    private BSPManagerFactory bspManagerFactory;
+    public BSPUserList() {
+    }
 
     @Inject
     // MLC constructor injection appears to be required to get a BSPManagerFactory injected???
@@ -122,6 +125,11 @@ public class BSPUserList extends AbstractCache {
         this.bspManagerFactory = bspManagerFactory;
         refreshCache();
     }
+
+//    @PostConstruct
+//    private void postConstruct() {
+//        refreshCache();
+//    }
 
     @Override
     public synchronized void refreshCache() {
@@ -187,7 +195,7 @@ public class BSPUserList extends AbstractCache {
         }
     }
 
-    public boolean isTestUser(BspUser user) {
+    public static boolean isTestUser(BspUser user) {
         return user instanceof QADudeUser;
     }
 
@@ -197,11 +205,23 @@ public class BSPUserList extends AbstractCache {
      * @return the list of select items for the users.
      */
     public static List<SelectItem> createSelectItems(Set<BspUser> users) {
-        List<SelectItem> items = new ArrayList<SelectItem>(users.size() + 1);
+
+        // order the users by last name so the SelectItem generator below will create items in a predictable order
+        // per GPLIM-401
+        List<BspUser> bspUserList = new ArrayList<BspUser>(users);
+        Collections.sort(bspUserList, new Comparator<BspUser>() {
+            @Override
+            public int compare(BspUser bspUser, BspUser bspUser1) {
+                return bspUser.getLastName().compareTo(bspUser1.getLastName());
+            }
+        });
+
+        List<SelectItem> items = new ArrayList<SelectItem>(bspUserList.size() + 1);
         items.add(new SelectItem("", "Any"));
-        for (BspUser user : users) {
+        for (BspUser user : bspUserList) {
             items.add(new SelectItem(user.getUserId(), user.getFirstName() + " " + user.getLastName()));
         }
+
         return items;
     }
 }
