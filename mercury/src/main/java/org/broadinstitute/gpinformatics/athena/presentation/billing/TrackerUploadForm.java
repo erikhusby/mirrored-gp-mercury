@@ -138,7 +138,7 @@ public class TrackerUploadForm  extends AbstractJsfBean {
                         double charges = value.getValue().getCharge();
                         double credits = value.getValue().getCredit();
 
-                        uploadPreviewData.add(new UploadPreviewData(pdoKey, partNumber, priceItem, credits, charges));
+                        uploadPreviewData.add(new UploadPreviewData(pdoKey, partNumber, priceItem, charges, credits));
                         counter++;
                     }
                 }
