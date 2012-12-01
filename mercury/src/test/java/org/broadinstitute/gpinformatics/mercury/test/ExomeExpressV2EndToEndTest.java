@@ -30,7 +30,7 @@ import java.util.Map;
  * Test Exome Express in Mercury
  */
 public class ExomeExpressV2EndToEndTest {
-    @Test(enabled = false)
+    @Test
     public void test() {
         // Define baits (CATs later)
         // Associate baits with vessels
@@ -83,7 +83,7 @@ public class ExomeExpressV2EndToEndTest {
         // - Deck calls web service to validate next action against workflow and batch
         // Decks (BSP and Sequencing) send messages to Mercury, first message auto-drains bucket
 
-        bucketBean.start(testActor,
+        bucketBean.startDBFree(testActor,
                          new LinkedList<LabVessel> ()/* TODO SGM Need to define Vessels from test message*/,
                          shearingBucket,"");
 

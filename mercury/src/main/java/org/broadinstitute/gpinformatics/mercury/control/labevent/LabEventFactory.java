@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDA
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StripTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -926,16 +927,15 @@ public class LabEventFactory {
      * Based on a collection of {@link LabVessel}s to be processed, this method will generate the appropriate event
      * to associate with each Vessel
      *
-     * @param pdoToVessels  a Map of lab vessels.  Contains Lists of Lab vessels each indexed by the Product Order
-     *                      business key to which they are associated
-     * @param operator         representation of the user that submitted the request
-     * @param batchIn       LabBatch to which the created events will be associate
+     * @param entryCollection
+     * @param operator        representation of the user that submitted the request
+     * @param batchIn         LabBatch to which the created events will be associate
      * @param eventLocation
      * @param eventType
      *
      * @return A collection of the created events for the submitted lab vessels
      */
-    public Collection<LabEvent> buildFromBatchRequests(@Nonnull Map<String, Collection<LabVessel>> pdoToVessels,
+    public Collection<LabEvent> buildFromBatchRequests(@Nonnull Collection<BucketEntry> entryCollection,
                                                        String operator, LabBatch batchIn, @Nonnull String eventLocation,
                                                        @Nonnull LabEventType eventType) {
 
@@ -945,17 +945,18 @@ public class LabEventFactory {
 
         Set<UniqueEvent> uniqueEvents = new HashSet<UniqueEvent>();
 
-        for (Map.Entry<String, Collection<LabVessel>> mapEntry : pdoToVessels.entrySet()) {
+        //        for (Map.Entry<String, Collection<LabVessel>> mapEntry : entryCollection.entrySet()) {
+        for (BucketEntry mapEntry : entryCollection) {
             List<LabEvent> events = new LinkedList<LabEvent>();
-            for (LabVessel currVessel : mapEntry.getValue()) {
-                LabEvent currEvent = createFromBatchItems(mapEntry.getKey(), currVessel, workCounter++, operator,
-                                                          eventType, eventLocation);
-                if (null != batchIn)
-                    currEvent.setLabBatch(batchIn);
+            //            for (LabVessel currVessel : mapEntry.getLabVessel()) {
+            LabEvent currEvent = createFromBatchItems(mapEntry.getPoBusinessKey(), mapEntry.getLabVessel(),
+                                                      workCounter++, operator, eventType, eventLocation);
+            if (null != batchIn)
+                currEvent.setLabBatch(batchIn);
 
-                persistLabEvent(uniqueEvents, currEvent, false);
-                events.add(currEvent);
-            }
+            persistLabEvent(uniqueEvents, currEvent, false);
+            events.add(currEvent);
+            //            }
             fullEventList.addAll(events);
         }
         return fullEventList;
