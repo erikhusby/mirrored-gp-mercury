@@ -15,10 +15,6 @@ import javax.enterprise.context.RequestScoped;
 public class RackOfTubesDao extends GenericDao {
 
     public RackOfTubes findByDigest(String digest) {
-        return findSingle(RackOfTubes.class, RackOfTubes_.digest, digest);
-    }
-
-    public RackOfTubes getByLabel(String rackLabel) {
-        return findSingle(RackOfTubes.class, RackOfTubes_.label, rackLabel);
+        return findSingle(RackOfTubes.class, RackOfTubes_.label, digest);
     }
 }

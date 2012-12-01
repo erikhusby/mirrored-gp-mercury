@@ -23,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes2;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
@@ -329,8 +330,7 @@ public class LabEventFactory {
             positionBarcodeList.add ( new AbstractMap.SimpleEntry<VesselPosition, String> ( VesselPosition.getByName (
                     receptacleType.getPosition () ), receptacleType.getBarcode () ) );
         }
-        String digest = RackOfTubes.makeDigest ( positionBarcodeList );
-        return rackOfTubesDao.findByDigest ( digest );
+        return rackOfTubesDao.findByDigest (RackOfTubes.makeDigest ( positionBarcodeList ));
     }
 
     /**
@@ -635,18 +635,19 @@ public class LabEventFactory {
      */
     private RackOfTubes buildRack ( Map<String, TwoDBarcodedTube> mapBarcodeToTubes, PlateType plate,
                                     PositionMapType positionMap ) {
-        // todo jmt fix label
-        RackOfTubes rackOfTubes = new RackOfTubes ( plate.getBarcode () + "_" + Long.toString (
-                System.currentTimeMillis () ), RackOfTubes.RackType.Matrix96 );
+        Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<VesselPosition, TwoDBarcodedTube>();
         for ( ReceptacleType receptacleType : positionMap.getReceptacle () ) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTubes.get ( receptacleType.getBarcode () );
             if ( twoDBarcodedTube == null ) {
                 twoDBarcodedTube = new TwoDBarcodedTube ( receptacleType.getBarcode () );
                 mapBarcodeToTubes.put ( receptacleType.getBarcode (), twoDBarcodedTube );
             }
-            rackOfTubes.getContainerRole().addContainedVessel(twoDBarcodedTube, VesselPosition.getByName(receptacleType.getPosition()));
+            mapPositionToTube.put(
+                    VesselPosition.getByName(receptacleType.getPosition()), twoDBarcodedTube);
         }
-        rackOfTubes.makeDigest ();
+        RackOfTubes rackOfTubes = new RackOfTubes (mapPositionToTube, RackOfTubes2.RackType.Matrix96 );
+        RackOfTubes2 rackOfTubes2 = new RackOfTubes2(plate.getBarcode (), RackOfTubes2.RackType.Matrix96);
+        rackOfTubes.addRackOfTubes(rackOfTubes2);
         return rackOfTubes;
     }
 
