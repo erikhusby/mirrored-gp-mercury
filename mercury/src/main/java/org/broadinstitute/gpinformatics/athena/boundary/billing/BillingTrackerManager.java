@@ -460,7 +460,7 @@ public class BillingTrackerManager {
         }
 
         //Derive the list of TrackerColumnInfo objects skip the error column
-        int totalProductsHeaders = columnHeaders.size() - numFixedHeaders - 1;
+        int totalProductsHeaders = columnHeaders.size() - numFixedHeaders - 2;
 
         result = new ArrayList<TrackerColumnInfo>();
         int mergedCellAddOn = 0;
