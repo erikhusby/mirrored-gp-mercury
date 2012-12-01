@@ -42,11 +42,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             "Collaborator Sample ID",
             "Material Type",
             "Product Name",
-            "Comments",
             ORDER_ID_HEADING,
             "Product Order Name",
             "Project Manager",
-            // "Comments",
             DATE_COMPLETE_HEADING,
             "Quote ID",
             SORT_COLUMN_HEADING
@@ -258,7 +256,15 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
 
         // write the comments
-        getWriter().writeCell(sample.getProductOrder().getComments());
+        String theComment = "";
+        if (!StringUtils.isBlank(sample.getProductOrder().getComments())) {
+            theComment += sample.getProductOrder().getComments();
+        }
+
+        if (!StringUtils.isBlank(sample.getSampleComment())) {
+            theComment += "--" + sample.getSampleComment();
+        }
+        getWriter().writeCell(theComment);
 
         // Any billing messages
         String billingError = getBillingError(sample.getBillableItems());
@@ -303,10 +309,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
 
         Sheet sheet = getWriter().getCurrentSheet();
-        sheet.setColumnWidth(currentIndex++, ERRORS_WIDTH);
-        getWriter().writeCell("Billing Errors", getFixedHeaderStyle());
-        sheet.setColumnWidth(currentIndex, ERRORS_WIDTH);
+        sheet.setColumnWidth(currentIndex++, COMMENTS_WIDTH);
         getWriter().writeCell("Comments", getFixedHeaderStyle());
+        sheet.setColumnWidth(currentIndex, ERRORS_WIDTH);
+        getWriter().writeCell("Billing Errors", getFixedHeaderStyle());
 
         writeAllBillAndNewHeaders(currentProduct.getOptionalPriceItems(), currentProduct.getAddOns());
     }
