@@ -157,12 +157,12 @@ public class VesselContainer<T extends LabVessel> {
                 vesselAtPosition, labEvent, hopCount);
         if(vesselAtPosition != null) {
             // handle re-arrays of tubes - look in any other racks that the tube has been in
-            if (this.getEmbedder() instanceof RackOfTubes) {
-                RackOfTubes thisRackOfTubes = (RackOfTubes) this.getEmbedder();
+            if (this.getEmbedder() instanceof TubeFormation) {
+                TubeFormation thisTubeFormation = (TubeFormation) this.getEmbedder();
                 for (VesselContainer vesselContainer : vesselAtPosition.getContainers()) {
-                    if(OrmUtil.proxySafeIsInstance(vesselContainer.getEmbedder(), RackOfTubes.class)) {
-                        RackOfTubes otherRackOfTubes = OrmUtil.proxySafeCast(vesselContainer.getEmbedder(), RackOfTubes.class);
-                        if(!otherRackOfTubes.getDigest().equals(thisRackOfTubes.getDigest())) {
+                    if(OrmUtil.proxySafeIsInstance(vesselContainer.getEmbedder(), TubeFormation.class)) {
+                        TubeFormation otherTubeFormation = OrmUtil.proxySafeCast(vesselContainer.getEmbedder(), TubeFormation.class);
+                        if(!otherTubeFormation.getDigest().equals(thisTubeFormation.getDigest())) {
                             if(traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
                                 vesselContainer.traverseAncestors(vesselContainer.getPositionOfVessel(vesselAtPosition),
                                         transferTraverserCriteria, traversalDirection, hopCount);
@@ -271,7 +271,7 @@ public class VesselContainer<T extends LabVessel> {
     /**
      * If this is a plate, this method could return
      * the {@link PlateWell wells}.  If this thing
-     * is a {@link RackOfTubes}, this method could
+     * is a {@link TubeFormation}, this method could
      * return the {@link TwoDBarcodedTube} tubes in
      * the rack.
      * @return contained vessels

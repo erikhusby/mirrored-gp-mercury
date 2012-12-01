@@ -9,7 +9,6 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -23,12 +22,13 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * A rack of tubes
+ * A set of tubes in a particular combination of positions, typically held in a RackOfTubes.  This entity is different
+ * from RackOfTubes, because racks can be reused to hold different sets of tubes.
  */
 @Entity
 @Audited
 @Table(schema = "mercury")
-public class RackOfTubes extends LabVessel implements VesselContainerEmbedder<TwoDBarcodedTube> {
+public class TubeFormation extends LabVessel implements VesselContainerEmbedder<TwoDBarcodedTube> {
 
     @ManyToMany(cascade = CascadeType.PERSIST)
     private Set<RackOfTubes2> rackOfTubes2s = new HashSet<RackOfTubes2>();
@@ -39,10 +39,10 @@ public class RackOfTubes extends LabVessel implements VesselContainerEmbedder<Tw
     @Embedded
     private VesselContainer<TwoDBarcodedTube> vesselContainer = new VesselContainer<TwoDBarcodedTube>(this);
 
-    RackOfTubes() {
+    TubeFormation() {
     }
 
-    public RackOfTubes(Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube, RackOfTubes2.RackType rackType) {
+    public TubeFormation(Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube, RackOfTubes2.RackType rackType) {
         super(makeDigest(mapPositionToTube));
         this.rackType = rackType;
         for (Map.Entry<VesselPosition, TwoDBarcodedTube> vesselPositionTwoDBarcodedTubeEntry : mapPositionToTube.entrySet()) {
