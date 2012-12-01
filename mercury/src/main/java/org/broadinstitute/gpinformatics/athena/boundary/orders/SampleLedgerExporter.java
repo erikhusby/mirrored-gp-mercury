@@ -132,7 +132,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         sheet.setColumnWidth(currentIndex + 1, VALUE_WIDTH);
 
         getWriter().writeCell("Billed", getBilledAmountsHeaderStyle());
-        getWriter().writeCell("New Quantity", getBilledAmountsHeaderStyle());
+        getWriter().writeCell("Update Quantity To", getBilledAmountsHeaderStyle());
 
         return currentIndex + 2;
     }

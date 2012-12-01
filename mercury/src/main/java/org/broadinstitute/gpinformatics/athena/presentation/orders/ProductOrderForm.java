@@ -29,6 +29,7 @@ import org.primefaces.event.SelectEvent;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.context.Conversation;
+import javax.enterprise.context.ConversationScoped;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIInput;
@@ -91,6 +92,7 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     /** All product orders, now conversation scoped */
     @Inject
+    @ConversationScoped
     private ProductOrderListModel allProductOrders;
 
     private ProductOrderListEntry[] selectedProductOrders;
@@ -130,12 +132,6 @@ public class ProductOrderForm extends AbstractJsfBean {
      * @return list of all product orders
      */
     public ProductOrderListModel getAllProductOrders() {
-        // we may be landing in this page for the first time with a long-running conversation started from another
-        // page, so make sure we've loaded the list of PDOs
-        if (allProductOrders.getRowCount() < 0) {
-            allProductOrders.setWrappedData(productOrderListEntryDao.findProductOrderListEntries());
-        }
-
         return allProductOrders;
     }
 

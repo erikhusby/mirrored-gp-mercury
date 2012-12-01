@@ -56,6 +56,9 @@ public class BillingSessionForm extends AbstractJsfBean {
     private BSPUserList bspUserList;
 
     public String bill() {
+
+        boolean errorsInBilling = false;
+
         String sessionKey =  billingSessionBean.getBillingSession().getBusinessKey();
         for (QuoteImportItem item : billingSessionBean.getBillingSession().getUnBilledQuoteImportItems()) {
 
@@ -81,11 +84,16 @@ public class BillingSessionForm extends AbstractJsfBean {
                 // Any exceptions in sending to the quote server will just be reported and will continue on to the next one
                 item.setupBillError(ex.getMessage());
                 addErrorMessage(ex.getMessage());
+                errorsInBilling = true;
             }
         }
 
-        sessionDao.persist(billingSessionBean.getBillingSession());
+        // If there were no errors in billing, then end the session, which will add the billed date and remove all sessions from the ledger
+        if (!errorsInBilling) {
+            return endSession();
+        }
 
+        sessionDao.persist(billingSessionBean.getBillingSession());
         return null;
     }
 
