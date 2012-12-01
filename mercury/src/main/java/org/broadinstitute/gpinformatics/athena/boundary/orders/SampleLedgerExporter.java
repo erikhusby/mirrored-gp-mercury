@@ -42,6 +42,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             "Collaborator Sample ID",
             "Material Type",
             "Product Name",
+            "Comments",
             ORDER_ID_HEADING,
             "Product Order Name",
             "Project Manager",
@@ -51,8 +52,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             SORT_COLUMN_HEADING
     };
 
-    private static final int VALUE_WIDTH = 259 * 10;
+    private static final int VALUE_WIDTH = 259 * 25;
     private static final int ERRORS_WIDTH = 259 * 100;
+    private static final int COMMENTS_WIDTH = 259 * 60;
 
     private BSPUserList bspUserList;
 
@@ -255,6 +257,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             }
         }
 
+        // write the comments
+        getWriter().writeCell(sample.getProductOrder().getComments());
+
         // Any billing messages
         String billingError = getBillingError(sample.getBillableItems());
 
@@ -298,8 +303,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
 
         Sheet sheet = getWriter().getCurrentSheet();
-        sheet.setColumnWidth(currentIndex, ERRORS_WIDTH);
+        sheet.setColumnWidth(currentIndex++, ERRORS_WIDTH);
         getWriter().writeCell("Billing Errors", getFixedHeaderStyle());
+        sheet.setColumnWidth(currentIndex, ERRORS_WIDTH);
+        getWriter().writeCell("Comments", getFixedHeaderStyle());
 
         writeAllBillAndNewHeaders(currentProduct.getOptionalPriceItems(), currentProduct.getAddOns());
     }

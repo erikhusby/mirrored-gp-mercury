@@ -372,8 +372,8 @@ public class BillingTrackerImporter {
                     primaryProductPartNumber + "> in the first row and cell position " +  primaryProductHeaderCell.getColumnIndex() );
         }
 
-        //Derive the list of TrackerColumnInfo objects, and skip the billing errors
-        int totalProductsHeaders = columnHeaders.size() - numFixedHeaders - 1;
+        //Derive the list of TrackerColumnInfo objects, and skip the comments and billing errors at the end
+        int totalProductsHeaders = columnHeaders.size() - numFixedHeaders - 2;
 
         result = new ArrayList<TrackerColumnInfo>();
         int mergedCellAddOn = 0;
