@@ -56,7 +56,9 @@
                         </h:outputLink>
                     </p:column>
 
-                    <p:column headerText="Product" width="180" sortBy="#{order.productName}">
+                    <p:column headerText="Product" width="180" filterBy="#{order.productName}"
+                              sortBy="#{order.productName}" sortingComparator="caseInsensitiveText"
+                              filterOptions="#{productOrderBean.allProductNames}" filterMatchMode="exact">
                         #{order.productName}
                     </p:column>
 

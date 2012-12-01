@@ -102,7 +102,7 @@ public class BillingLedger {
         return workCompleteDate;
     }
 
-    public void setWorkCompleteDate(Date workCompleteDate) {
+    public void setWorkCompleteDate(@Nullable Date workCompleteDate) {
         this.workCompleteDate = workCompleteDate;
     }
 
@@ -110,7 +110,7 @@ public class BillingLedger {
         return billingMessage;
     }
 
-    public void setBillingMessage(String billingMessage) {
+    public void setBillingMessage(@Nullable String billingMessage) {
         this.billingMessage = billingMessage;
     }
 
