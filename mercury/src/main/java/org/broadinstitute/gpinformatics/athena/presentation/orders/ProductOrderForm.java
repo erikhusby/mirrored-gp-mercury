@@ -29,7 +29,6 @@ import org.primefaces.event.SelectEvent;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.context.Conversation;
-import javax.enterprise.context.ConversationScoped;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIInput;
@@ -92,7 +91,6 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     /** All product orders, now conversation scoped */
     @Inject
-    @ConversationScoped
     private ProductOrderListModel allProductOrders;
 
     private ProductOrderListEntry[] selectedProductOrders;
