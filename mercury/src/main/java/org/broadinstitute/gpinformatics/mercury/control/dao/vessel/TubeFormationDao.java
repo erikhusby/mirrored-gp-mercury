@@ -8,11 +8,11 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 
 /**
- * Data Access Object for racks of tubes
+ * Data Access Object for tube formations
  */
 @Stateful
 @RequestScoped
-public class RackOfTubesDao extends GenericDao {
+public class TubeFormationDao extends GenericDao {
 
     public TubeFormation findByDigest(String digest) {
         return findSingle(TubeFormation.class, RackOfTubes_.label, digest);
