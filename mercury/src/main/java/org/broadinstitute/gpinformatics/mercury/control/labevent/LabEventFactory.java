@@ -23,7 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes2;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
@@ -645,9 +645,9 @@ public class LabEventFactory {
             mapPositionToTube.put(
                     VesselPosition.getByName(receptacleType.getPosition()), twoDBarcodedTube);
         }
-        TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes2.RackType.Matrix96 );
-        RackOfTubes2 rackOfTubes2 = new RackOfTubes2(plate.getBarcode (), RackOfTubes2.RackType.Matrix96);
-        tubeFormation.addRackOfTubes(rackOfTubes2);
+        TubeFormation tubeFormation = new TubeFormation(mapPositionToTube, RackOfTubes.RackType.Matrix96 );
+        RackOfTubes rackOfTubes = new RackOfTubes(plate.getBarcode (), RackOfTubes.RackType.Matrix96);
+        tubeFormation.addRackOfTubes(rackOfTubes);
         return tubeFormation;
     }
 

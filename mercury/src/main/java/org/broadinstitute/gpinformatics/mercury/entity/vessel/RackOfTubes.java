@@ -12,9 +12,13 @@ import javax.persistence.Enumerated;
  */
 @Entity
 @Audited
-public class RackOfTubes2 extends LabVessel{
+public class RackOfTubes extends LabVessel{
+
+    /** For JPA */
+    RackOfTubes() {
+    }
+
     // todo jmt create interface implemented by this and PlateType, to get display name and geometry.
-    // Rack
     public enum RackType {
         Matrix96("Matrix96", VesselGeometry.G12x8);
 
@@ -35,11 +39,10 @@ public class RackOfTubes2 extends LabVessel{
         }
     }
 
-    // rack
     @Enumerated(EnumType.STRING)
     private RackType rackType;
 
-    public RackOfTubes2(String label, RackType rackType) {
+    public RackOfTubes(String label, RackType rackType) {
         super(label);
         this.rackType = rackType;
     }

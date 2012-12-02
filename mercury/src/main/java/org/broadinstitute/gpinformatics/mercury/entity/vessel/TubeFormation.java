@@ -31,10 +31,10 @@ import java.util.Set;
 public class TubeFormation extends LabVessel implements VesselContainerEmbedder<TwoDBarcodedTube> {
 
     @ManyToMany(cascade = CascadeType.PERSIST)
-    private Set<RackOfTubes2> rackOfTubes2s = new HashSet<RackOfTubes2>();
+    private Set<RackOfTubes> racksOfTubes = new HashSet<RackOfTubes>();
 
     @Enumerated(EnumType.STRING)
-    private RackOfTubes2.RackType rackType;
+    private RackOfTubes.RackType rackType;
 
     @Embedded
     private VesselContainer<TwoDBarcodedTube> vesselContainer = new VesselContainer<TwoDBarcodedTube>(this);
@@ -42,7 +42,7 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
     TubeFormation() {
     }
 
-    public TubeFormation(Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube, RackOfTubes2.RackType rackType) {
+    public TubeFormation(Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube, RackOfTubes.RackType rackType) {
         super(makeDigest(mapPositionToTube));
         this.rackType = rackType;
         for (Map.Entry<VesselPosition, TwoDBarcodedTube> vesselPositionTwoDBarcodedTubeEntry : mapPositionToTube.entrySet()) {
@@ -65,7 +65,7 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
         return rackType.getVesselGeometry();
     }
 
-    public RackOfTubes2.RackType getRackType() {
+    public RackOfTubes.RackType getRackType() {
         return rackType;
     }
 
@@ -118,11 +118,11 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
         return getLabel();
     }
 
-    public void addRackOfTubes(RackOfTubes2 rackOfTubes) {
-        rackOfTubes2s.add(rackOfTubes);
+    public void addRackOfTubes(RackOfTubes rackOfTubes) {
+        racksOfTubes.add(rackOfTubes);
     }
 
-    public Set<RackOfTubes2> getRackOfTubes2s() {
-        return rackOfTubes2s;
+    public Set<RackOfTubes> getRacksOfTubes() {
+        return racksOfTubes;
     }
 }
