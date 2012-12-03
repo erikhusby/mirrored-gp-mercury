@@ -12,7 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -171,7 +171,7 @@ public class LabEventResource {
         if(type.equals(LabVessel.CONTAINER_TYPE.STATIC_PLATE.name())) {
             type = OrmUtil.proxySafeCast(labVesselEntity, StaticPlate.class).getPlateType().getDisplayName();
         } else if(type.equals(LabVessel.CONTAINER_TYPE.RACK_OF_TUBES.name())) {
-            type = OrmUtil.proxySafeCast(labVesselEntity, RackOfTubes.class).getRackType().getDisplayName();
+            type = OrmUtil.proxySafeCast(labVesselEntity, TubeFormation.class).getRackType().getDisplayName();
         }
         LabVesselBean labVesselBean = new LabVesselBean(labVesselEntity.getLabel(), type);
         VesselContainer vesselContainer = labVesselEntity.getContainerRole();
@@ -184,9 +184,9 @@ public class LabEventResource {
                     labVesselBean.getLabVesselPositionBeans().add(new LabVesselPositionBean(
                             positionName, new LabVesselBean(null, LabVessel.CONTAINER_TYPE.PLATE_WELL.name())));
                 }
-            } else if(OrmUtil.proxySafeIsInstance(labVesselEntity, RackOfTubes.class)) {
-                RackOfTubes rackOfTubes = OrmUtil.proxySafeCast(labVesselEntity, RackOfTubes.class);
-                Iterator<String> positionNames = rackOfTubes.getRackType().getVesselGeometry().getPositionNames();
+            } else if(OrmUtil.proxySafeIsInstance(labVesselEntity, TubeFormation.class)) {
+                TubeFormation tubeFormation = OrmUtil.proxySafeCast(labVesselEntity, TubeFormation.class);
+                Iterator<String> positionNames = tubeFormation.getRackType().getVesselGeometry().getPositionNames();
                 while (positionNames.hasNext()) {
                     String positionName  =  positionNames.next();
                     LabVessel labVessel = (LabVessel) vesselContainer.getMapPositionToVessel().get(VesselPosition.getByName(positionName));

@@ -376,6 +376,40 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-73-16" author="thompson">
+        <createTable tableName="lab_vessel_racks_of_tubes" schemaName="mercury">
+            <column name="lab_vessel" type="number(19,0)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="racks_of_tubes" type="number(19,0)">
+                <constraints primaryKey="true"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="lab_vessel_racks_of_tubes" baseColumnNames="racks_of_tubes"
+                                 constraintName="fk_lvrt_rack_of_tubes" referencedTableName="lab_vessel"
+                                 referencedColumnNames="lab_vessel_id"/>
+        <addForeignKeyConstraint baseTableName="lab_vessel_racks_of_tubes" baseColumnNames="lab_vessel"
+                                 constraintName="fk_lvrt_lab_vessel" referencedTableName="lab_vessel"
+                                 referencedColumnNames="lab_vessel_id"/>
+    </changeSet>
+    <changeSet id="GPLIM-73-17" author="thompson">
+        <createTable tableName="lab_vessel_racks_of_tubes_aud" schemaName="mercury">
+            <column name="rev" type="number(19,0)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="lab_vessel" type="number(19,0)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="racks_of_tubes" type="number(19,0)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="lab_vessel_racks_of_tubes_aud" baseColumnNames="rev"
+                                 constraintName="fk_lvrta_rev_info" referencedTableName="rev_info"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
     <changeSet id="GPLIM-378-1" author="scottmat">
         <preConditions>
             <tableExists tableName="person" schemaName="mercury" />
@@ -389,6 +423,5 @@
         </preConditions>
         <dropTable tableName="person_aud" schemaName="mercury" />
     </changeSet>
-
 
 </databaseChangeLog>

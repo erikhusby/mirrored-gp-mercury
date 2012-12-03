@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
@@ -65,8 +66,9 @@ public class ExomeExpressV2EndToEndTest {
         PlateTransferEventType plateTransferEventType = bettaLimsMessageFactory.buildPlateToRack("PlatingToShearingTubes",
                 "NormPlate", "CovarisRack", shearingTubeBarcodes);
         Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes = new HashMap<String, TwoDBarcodedTube>();
+        RackOfTubes targetRackOfTubes = null;
         LabEvent labEvent = labEventFactory.buildFromBettaLimsPlateToRackDbFree(plateTransferEventType,
-                new StaticPlate("NormPlate", StaticPlate.PlateType.Eppendorf96), mapBarcodeToTargetTubes);
+                new StaticPlate("NormPlate", StaticPlate.PlateType.Eppendorf96), mapBarcodeToTargetTubes, targetRackOfTubes);
         // Bucket for Shearing - enters from workflow?
         BucketBean bucketBean = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance());
         WorkflowLoader workflowLoader = new WorkflowLoader();

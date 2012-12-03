@@ -55,8 +55,8 @@ public class SampleListBean {
         if (barcode != null && this.vessel == null) {
             this.vessel = labVesselDao.findByIdentifier(barcode);
             this.barcode = barcode;
-            if (OrmUtil.proxySafeIsInstance(vessel, RackOfTubes.class)) {
-                vesselContainer = ((RackOfTubes) vessel).getContainerRole();
+            if (OrmUtil.proxySafeIsInstance(vessel, TubeFormation.class)) {
+                vesselContainer = ((TubeFormation) vessel).getContainerRole();
             }
             if (OrmUtil.proxySafeIsInstance(vessel, StaticPlate.class)) {
                 vesselContainer = ((StaticPlate) vessel).getContainerRole();

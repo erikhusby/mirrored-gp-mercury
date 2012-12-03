@@ -282,7 +282,7 @@ public class DriedBloodSpotDbFreeTest {
 
             HashMap<String, TwoDBarcodedTube> mapBarcodeToTargetTubes = new HashMap<String, TwoDBarcodedTube>();
             labEventFactory.buildFromBettaLimsPlateToRackDbFree(driedBloodSpotJaxbBuilder.getDbsFinalTransferJaxb(),
-                    firstPurificationPlate, mapBarcodeToTargetTubes);
+                    firstPurificationPlate, mapBarcodeToTargetTubes, null);
             Set<SampleInstance> sampleInstances = mapBarcodeToTargetTubes.values().iterator().next().getSampleInstances();
             Assert.assertEquals(1, sampleInstances.size(), 1, "Wrong number of sample instances");
         }

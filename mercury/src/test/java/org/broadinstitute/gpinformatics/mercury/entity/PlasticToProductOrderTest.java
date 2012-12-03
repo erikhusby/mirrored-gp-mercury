@@ -58,7 +58,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
     TwoDBarcodedTubeDAO tubeDAO;
 
     @Inject
-    RackOfTubesDao rackDAO;
+    TubeFormationDao rackDAO;
 
     @Inject
     StaticPlateDAO plateDAO;
@@ -197,7 +197,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
 
 
         LabEvent rackToPlateTransfer = eventFactory.buildFromBettaLimsRackToPlateDbFree ( plateXfer, barcodeToTubeMap,
-                                                                                          null );
+                                                                                          null, null );
 
         BucketEntry bucketEntry = bucketResource.add(tube, PRODUCT_ORDER_KEY, bucket, "hrafal" );
 
