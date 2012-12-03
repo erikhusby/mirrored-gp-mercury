@@ -15,9 +15,6 @@
             <p:submenu label="Projects" outcome="/projects/list" icon="ui-icon-home">
                 <p:menuitem value="List" outcome="/projects/list" />
                 <p:menuitem value="Create" outcome="/projects/create" />
-                <security:authorizeBlock roles="#{userBean.labManagerRole}">
-                        <p:menuitem value="Register Reagent" outcome="/reagent/create" />
-                </security:authorizeBlock>
             </p:submenu>
 
             <p:submenu label="Orders" icon="ui-icon-cart">
@@ -45,6 +42,14 @@
                     <p:menuitem value="Page Administration" outcome="/administration/page_administration" />
                 </p:submenu>
             </security:authorizeBlock>
+
+            <security:authorizeBlock roles="#{userBean.labManagerRole}">
+                <p:submenu label="Reagents" icon="ui-icon-gear">
+                    <p:menuitem value="List" outcome="/reagent/list" />
+                    <p:menuitem value="Create" outcome="/reagent/create" />
+                </p:submenu>
+            </security:authorizeBlock>
+
         </p:menubar>
 
 

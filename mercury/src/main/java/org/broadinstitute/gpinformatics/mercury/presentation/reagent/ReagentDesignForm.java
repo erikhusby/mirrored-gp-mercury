@@ -57,8 +57,12 @@ public class ReagentDesignForm extends AbstractJsfBean {
         return reagentDesignTableData.getValues();
     }
 
-    @ConversationScoped public static class ReagentDesignTableData extends TableData<ReagentDesign> { }
-    @Inject ReagentDesignForm.ReagentDesignTableData reagentDesignTableData;
+    @ConversationScoped
+    public static class ReagentDesignTableData extends TableData<ReagentDesign> {
+    }
+
+    @Inject
+    ReagentDesignForm.ReagentDesignTableData reagentDesignTableData;
 
     public void initView() {
         if (!facesContext.isPostback()) {
@@ -68,7 +72,6 @@ public class ReagentDesignForm extends AbstractJsfBean {
             }
         }
     }
-
 
 
     public String create() {
@@ -93,20 +96,21 @@ public class ReagentDesignForm extends AbstractJsfBean {
     }
 
     public String edit() {
-//        ResearchProject project = detail.getProject();
-//        addCollections(project);
-
-//        project.recordModification(userBean.getBspUser().getUserId());
-
+        String updatedOrCreated = "updated";
+        if (reagentDesign.getReagentDesignId() == null) {
+            updatedOrCreated = "created";
+        }
         try {
-            //          researchProjectManager.updateResearchProject(project);
+            reagentDesignDao.persist(reagentDesign);
         } catch (Exception e) {
+            log.error(e);
             addErrorMessage(e.getMessage());
             return null;
         }
-
-//        addInfoMessage("The Research Project \"" + project.getTitle() + "\" has been updated.");
-        return redirect("view");
+        final String infoMessage = String.format("The Research Design \"%s\" has been %s.",
+                reagentDesign.getDesignName(), updatedOrCreated);
+        addInfoMessage(infoMessage);
+        return redirect("list");
     }
 
     public ReagentDesignTableData getReagentDesignTableData() {

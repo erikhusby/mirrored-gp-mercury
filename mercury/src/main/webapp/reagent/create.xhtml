@@ -1,14 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!--
-  ~ The Broad Institute
-  ~ SOFTWARE COPYRIGHT NOTICE AGREEMENT
-  ~ This software and its documentation are copyright 2012 by the
-  ~ Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
-  ~
-  ~ This software is supplied without any warranty or guaranteed support
-  ~ whatsoever. Neither the Broad Institute nor MIT can be responsible for its
-  ~ use, misuse, or functionality.
-  -->
 
 <!DOCTYPE html
         PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
@@ -22,203 +12,62 @@
       xmlns:b="http://mercury.broadinstitute.org/ui">
 <body>
     <ui:composition template="/layout.xhtml">
-        <ui:define name="title">#{reagentDesign.reagentDesignId == null ? 'New' : 'Edit'} Reagent Design</ui:define>
+        <ui:define name="title">#{reagentDesignForm.reagentDesign.reagentDesignId == null ? 'New' : 'Edit'} Reagent Design</ui:define>
 
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam id="projectParam" name="researchProject" value="#{researchProjectDetail.project}" converter="#{researchProjectConverter}"/>
-                <f:event type="preValidate" listener="#{researchProjectDetail.initEmptyProject}"/>
+                <f:event type="preRenderView" listener="#{reagentDesignForm.initView}"/>
+                <f:viewParam id="projectParam" name="reagentDesign" value="#{reagentDesignForm.reagentDesign}" converter="#{reagentDesignConverter}"/>
+                <!--<f:event type="preValidate" listener="#{reagentDesignForm.initEmptyProject}"/>-->
             </f:metadata>
-            <f:event type="preRenderView" listener="#{researchProjectForm.initForm}"/>
+            <f:event type="preRenderView" listener="#{reagentDesignForm.initView}"/>
         </ui:define>
 
         <ui:define name="body">
             <h:form id="form" prependId="false" styleClass="form-horizontal">
 
-                <!-- Name -->
+                <!-- reagentDesign -->
                 <div class="control-group">
-                    <p:outputLabel for="name" value="Name" styleClass="control-label"/>
+                    <p:outputLabel for="designName" value="Name" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="name"
-                                     value="#{researchProjectDetail.project.title}" size="50" required="true"
-                                     maxlength="4000">
-                            <f:validateLength maximum="4000"/>
+                        <p:inputText id="designName"
+                                     value="#{reagentDesignForm.reagentDesign.designName}" size="50" required="true"
+                                     maxlength="255">
+                            <f:validateLength maximum="255"/>
                         </p:inputText>
-                        <p:watermark for="name" value="Enter the name of the research project"/>
-                        <p:message for="name"/>
+                        <p:watermark for="designName" value="Enter the name of the reagent."/>
+                        <p:message for="designName"/>
                     </div>
                 </div>
 
-                <!-- Synopsis -->
+                <!-- Target Set -->
                 <div class="control-group">
-                    <p:outputLabel for="synopsis" value="Synopsis" styleClass="control-label"/>
+                    <p:outputLabel for="targetSetName" value="Target Set" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputTextarea id="synopsis" value="#{researchProjectDetail.project.synopsis}" cols="100" maxlength="4000" rows="5" required="true" counter="counter" counterTemplate="{0} characters remaining">
-                            <f:validateLength maximum="4000"/>
-                        </p:inputTextarea>
-                        <p:watermark for="synopsis" value="Enter scientific background of the research project in this space"/>
-                        <p:message for="synopsis"/>
-                        <h:outputText id="counter"/>
-                    </div>
-                </div>
-
-                <!-- Project Managers -->
-                <div class="control-group">
-                    <p:outputLabel for="projectManagers" value="Project Managers" styleClass="control-label"/>
-                    <div class="controls">
-                        <p:autoComplete id="projectManagers" value="#{researchProjectForm.projectManagers}"
-                            completeMethod="#{userListBean.searchUser}" converter="#{bspUserConverter}"
-                            multiple="true" required="true"
-                            var="user" itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}"
-                            requiredMessage="There must be at least one project manager." scrollHeight="250">
-                            <p:column style="width:100%">
-                                <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
-                                <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
-                            </p:column>
-                            <p:ajax event="itemSelect" listener="#{researchProjectForm.removeDuplicates(researchProjectForm.projectManagers, 'projectManagers')}" update="projectManagers pmMessage :projectParam"/>
-                        </p:autoComplete>
-                        <p:watermark for="projectManagers" value="Type name to search"/>
-                        <p:message id="pmMessage" for="projectManagers"/>
-                    </div>
-                </div>
-
-                <!-- Broad PIs -->
-                <div class="control-group">
-                    <p:outputLabel for="broadPIs" value="Broad PIs" styleClass="control-label"/>
-                    <div class="controls">
-                        <p:autoComplete id="broadPIs" value="#{researchProjectForm.broadPIs}"
-                            completeMethod="#{userListBean.searchUser}" var="user" scrollHeight="250"
-                            itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}"
-                            converter="#{bspUserConverter}" multiple="true">
-                            <p:column style="width:100%">
-                                <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
-                                <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
-                            </p:column>
-                            <p:ajax event="itemSelect" listener="#{researchProjectForm.removeDuplicates(researchProjectForm.broadPIs, 'broadPIs')}" update="broadPIs piMessage :projectParam"/>
-                        </p:autoComplete>
-                        <p:watermark for="broadPIs" value="Type name to search"/>
-                        <p:message id="piMessage" for="broadPIs"/>
-                    </div>
-                </div>
-
-                <!-- Scientists -->
-                <div class="control-group">
-                    <p:outputLabel for="scientists" value="Scientists" styleClass="control-label"/>
-                    <div class="controls">
-                        <p:autoComplete id="scientists" value="#{researchProjectForm.scientists}"
-                            completeMethod="#{userListBean.searchUser}" var="user" scrollHeight="250"
-                            itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}"
-                            converter="#{bspUserConverter}" multiple="true">
-                            <p:column style="width:100%">
-                                <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
-                                <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
-                            </p:column>
-                            <p:ajax event="itemSelect"
-                                listener="#{researchProjectForm.removeDuplicates(researchProjectForm.scientists, 'scientists')}"
-                                update="scientists scientistMessage :projectParam"/>
-                        </p:autoComplete>
-                        <p:watermark for="scientists" value="Type name to search"/>
-                        <p:message id="scientistMessage" for="scientists"/>
-                    </div>
-                </div>
-
-                <!-- External Collaborators -->
-                <div class="control-group">
-                    <p:outputLabel for="externalCollaborators" value="External Collaborators" styleClass="control-label"/>
-                    <div class="controls">
-                        <p:autoComplete id="externalCollaborators" value="#{researchProjectForm.externalCollaborators}"
-                            completeMethod="#{userListBean.searchUser}" var="user" scrollHeight="250"
-                            itemLabel="#{user.firstName} #{user.lastName}" itemValue="#{user}"
-                            converter="#{bspUserConverter}" multiple="true">
-                            <p:column style="width:100%">
-                                <div class="ac-dropdown-text">#{user.firstName} #{user.lastName}</div>
-                                <div class="ac-dropdown-subtext">(#{user.username} #{user.email})</div>
-                            </p:column>
-                            <p:ajax event="itemSelect"
-                                listener="#{researchProjectForm.removeDuplicates(researchProjectForm.externalCollaborators, 'externalCollaborators')}"
-                                update="externalCollaborators externalCollaboratorsMessage :projectParam"/>
-                        </p:autoComplete>
-                        <p:watermark for="externalCollaborators" value="Type name to search"/>
-                        <p:message id="externalCollaboratorsMessage" for="externalCollaborators"/>
-                    </div>
-                </div>
-
-                <!-- Funding Sources -->
-                <div class="control-group">
-                    <p:outputLabel for="fundingSources" value="Funding Sources" styleClass="control-label"/>
-                    <div class="controls">
-                        <p:autoComplete id="fundingSources" value="#{researchProjectForm.fundingSources}"
-                            completeMethod="#{fundingListBean.searchFunding}" var="funding" scrollHeight="250"
-                            itemLabel="#{funding.displayName}" itemValue="#{funding}"
-                            converter="#{quoteFundingConverter}" multiple="true">
-                            <p:column style="width:100%">
-                                <div class="ac-dropdown-text">#{funding.displayName}</div>
-                                <div class="ac-dropdown-subtext">#{funding.matchDescription}:</div>
-                            </p:column>
-                            <p:ajax event="itemSelect"
-                                listener="#{researchProjectForm.removeDuplicates(researchProjectForm.fundingSources, 'fundingSources')}"
-                                update="fundingSources fundingSourcesMessage :projectParam"/>
-                        </p:autoComplete>
-                        <p:watermark for="fundingSources" value="Type text to search"/>
-                        <p:message id="fundingSourcesMessage" for="fundingSources"/>
-                    </div>
-                </div>
-
-                <!-- Sample Cohorts -->
-                <div class="control-group">
-                    <p:outputLabel for="sampleCohorts" value="Sample Cohorts" styleClass="control-label"/>
-                    <div class="controls">
-                        <p:autoComplete id="sampleCohorts" value="#{researchProjectForm.sampleCohorts}"
-                            completeMethod="#{cohortListBean.searchActiveCohort}" var="cohort" scrollHeight="250"
-                            itemLabel="#{cohort.cohortId}: #{cohort.name}" itemValue="#{cohort}"
-                            converter="#{bspCohortConverter}" multiple="true">
-                            <p:column style="width:100%">
-                                <div class="ac-dropdown-text">#{cohort.displayName}</div>
-                                <div class="ac-dropdown-subtext">#{cohort.group}: #{cohort.category}</div>
-                            </p:column>
-                            <p:ajax event="itemSelect"
-                                    listener="#{researchProjectForm.removeDuplicates(researchProjectForm.sampleCohorts, 'sampleCohorts')}"
-                                    update="sampleCohorts sampleCohortsMessage :projectParam"/>
-
-                        </p:autoComplete>
-                        <p:watermark for="sampleCohorts" value="Type text to search"/>
-                        <p:message id="sampleCohortsMessage" for="sampleCohorts"/>
-                    </div>
-                </div>
-
-                <!-- IRB/IACUC Numbers, IRB Not Engaged -->
-                <div class="control-group">
-                    <p:outputLabel for="irbs" value="IRB/IACUC Numbers" styleClass="control-label"/>
-                    <div class="controls">
-                        <p:autoComplete id="irbs" value="#{researchProjectForm.irbs}"
-                            completeMethod="#{irbConverter.completeIrbs}" var="irb" scrollHeight="250"
-                            itemLabel="#{irb.name}: #{irb.irbType.displayName}" itemValue="#{irb}"
-                            converter="#{irbConverter}" multiple="true" maxlength="#{irbConverter.irbMaxLength}">
-                            <p:column style="width:100%">
-                                <div class="ac-dropdown-text">#{irb.displayName}</div>
-                            </p:column>
-                            <p:ajax event="itemSelect"
-                                    listener="#{researchProjectForm.removeDuplicates(researchProjectForm.irbs, 'irbs')}"
-                                    update="irbs irbsMessage :projectParam"/>
-                        </p:autoComplete>
-                        <p:watermark for="irbs" value="Type irb name"/>
-                        <p:message id="irbsMessage" for="irbs"/>
-                        <p>
-                            <p:selectBooleanCheckbox id="irbEngaged" value="#{researchProjectDetail.project.irbNotEngaged}"/> <p:outputLabel for="irbEngaged" value="IRB Not Engaged" style="display: inline-block"/>
-                        </p>
-                    </div>
-                </div>
-
-                <!-- IRB Notes -->
-                <div class="control-group">
-                    <p:outputLabel for="irbNotes" value="IRB Notes" styleClass="control-label"/>
-                    <div class="controls">
-                        <p:inputText id="irbNotes" value="#{researchProjectDetail.project.irbNotes}" size="50" maxlength="250">
-                            <f:validateLength maximum="250"/>
+                        <p:inputText id="targetSetName"
+                                     value="#{reagentDesignForm.reagentDesign.targetSetName}" size="50" required="true"
+                                     maxlength="255">
+                            <f:validateLength maximum="255"/>
                         </p:inputText>
-                        <p:watermark for="irbNotes" value="Enter notes about the above IRBs"/>
+                        <p:watermark for="targetSetName" value="Enter the name of the target set."/>
+                        <p:message for="targetSetName"/>
                     </div>
                 </div>
+
+                <!-- manufacturersName Set -->
+                <div class="control-group">
+                    <p:outputLabel for="manufacturersName" value="Manufacturers Name" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputText id="manufacturersName"
+                                     value="#{reagentDesignForm.reagentDesign.manufacturersName}" size="50" required="true"
+                                     maxlength="255">
+                            <f:validateLength maximum="255"/>
+                        </p:inputText>
+                        <p:watermark for="manufacturersName" value="Enter the name of the manufacturer."/>
+                        <p:message for="manufacturersName"/>
+                    </div>
+                </div>
+
 
                 <div class="control-group">
                     <div class="controls">
@@ -226,15 +75,13 @@
                             <div class="span1">
                                 <b:commandButton value="Save"
                                                  disabled="#{!userBean.validUser}"
-                                                 action="#{researchProjectForm.save}"
+                                                 action="#{reagentDesignForm.edit}"
                                                  ajax="false" styleClass="ui-priority-primary"/>
                             </div>
-                            <div class="span1">
-                                <h:link outcome="list" value="Cancel" rendered="#{researchProjectDetail.project.researchProjectId == null}"/>
-                                <h:link outcome="view" value="Cancel" rendered="#{researchProjectDetail.project.researchProjectId != null}">
-                                    <f:param name="researchProject" value="#{researchProjectDetail.project.businessKey}"/>
-                                </h:link>
-                            </div>
+                            <!--<div class="span1">-->
+                                <!--<h:link outcome="list" value="Cancel" rendered="#{reagentDesignForm.project.researchProjectId == null}"/>-->
+                                <!---->
+                            <!--</div>-->
                         </div>
                     </div>
                 </div>

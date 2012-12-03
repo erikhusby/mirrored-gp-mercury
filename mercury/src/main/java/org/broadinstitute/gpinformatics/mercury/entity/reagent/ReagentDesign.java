@@ -101,4 +101,8 @@ public class ReagentDesign {
         this.designedReagents.add(designedReagent);
 //        designedReagent.setReagentDesign(this);
     }
+
+    public Long getReagentDesignId() {
+        return reagentDesignId;
+    }
 }
