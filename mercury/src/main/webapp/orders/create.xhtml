@@ -108,8 +108,8 @@
                                           value="#{productOrderForm.hasProduct and productOrderForm.addOns.isEmpty() ?
                             productOrderForm.noAddOnsString() : ''}"/>
                             <p:selectManyCheckbox
-                                    id="selectedAddOns" value="#{productOrderForm.selectedAddOns}" layout="pageDirection">
-                                <f:selectItems value="#{productOrderForm.addOns}"/>
+                                    id="selectedAddOns" value="#{productOrderForm.selectedAddOnPartNumbers}" layout="pageDirection">
+                                <f:selectItems value="#{productOrderForm.addOns}" var="addOn" itemLabel="#{addOn.productName}" itemValue="#{addOn.partNumber}"/>
                             </p:selectManyCheckbox>
                         </h:panelGroup>
                     </div>
