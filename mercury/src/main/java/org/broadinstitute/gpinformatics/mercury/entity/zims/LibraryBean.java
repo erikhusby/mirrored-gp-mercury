@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.ArrayList;
@@ -130,6 +132,21 @@ public class LibraryBean {
     @JsonProperty
     private String sampleType;
 
+    @JsonProperty
+    private String lcSet;
+
+    @JsonProperty
+    private String productOrderTitle;
+
+    @JsonProperty
+    private String productOrderKey;
+
+    @JsonProperty
+    private String mercuryProjectTitle;
+
+    @JsonProperty
+    private String mercuryProjectKey;
+
     public LibraryBean() {}
 
     public LibraryBean(String library, String project, String initiative, Long workRequest,
@@ -141,7 +158,7 @@ public class LibraryBean {
                        String weirdness, double preCircularizationDnaSize, Boolean partOfDevExperiment,
                        TZDevExperimentData devExperimentData, String gssrBarcode, Collection<String> gssrBarcodes,
                        String gssrSampleType, Short targetLaneCoverage, Boolean doAggregation, Collection<String> customAmpliconSetNames, Boolean fastTrack,
-                       String primaryDisease, String sampleType) {
+                       String primaryDisease, String sampleType, ProductOrder productOrder, String lcSet) {
         this.library = library;
         this.project = project;
         this.initiative = initiative;
@@ -184,6 +201,16 @@ public class LibraryBean {
         this.isFastTrack = fastTrack;
         this.primaryDisease = primaryDisease;
         this.sampleType = sampleType;
+        if (productOrder != null) {
+            this.productOrderKey = productOrder.getBusinessKey();
+            this.productOrderTitle = productOrder.getTitle();
+            ResearchProject mercuryProject = productOrder.getResearchProject();
+            if (mercuryProject != null) {
+                this.mercuryProjectKey = mercuryProject.getBusinessKey();
+                this.mercuryProjectTitle = mercuryProject.getTitle();
+            }
+        }
+        this.lcSet = lcSet;
     }
 
 
@@ -329,5 +356,25 @@ public class LibraryBean {
 
     public String getSampleType() {
         return sampleType;
+    }
+
+    public String getProductOrderKey() {
+        return productOrderKey;
+    }
+
+    public String getProductOrderTitle() {
+        return productOrderTitle;
+    }
+
+    public String getLcSet() {
+        return lcSet;
+    }
+
+    public String getMercuryProjectKey()  {
+        return mercuryProjectKey;
+    }
+
+    public String getMercuryProjectTitle() {
+        return mercuryProjectTitle;
     }
 }

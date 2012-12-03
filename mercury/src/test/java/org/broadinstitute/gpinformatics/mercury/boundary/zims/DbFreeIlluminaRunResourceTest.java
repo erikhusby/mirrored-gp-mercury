@@ -4,7 +4,13 @@ import edu.mit.broad.prodinfo.thrift.lims.TZamboniLane;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import junit.framework.Assert;
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.bsp.EverythingYouAskForYouGetAndItsHuman;
+import org.broadinstitute.gpinformatics.mercury.control.zims.SquidThriftLibraryConverter;
+import org.broadinstitute.gpinformatics.mercury.control.zims.ThriftLibraryConverter;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
@@ -37,7 +43,7 @@ public class DbFreeIlluminaRunResourceTest {
         ZimsIlluminaRun runBean = new IlluminaRunResource(
                 new MockThriftService(),
                 new BSPSampleDataFetcher(new BSPSampleSearchServiceStub())
-        ).getRun(thriftRun,new HashMap<String, BSPSampleDTO>());
+        ).getRun(thriftRun,new HashMap<String, BSPSampleDTO>(),new SquidThriftLibraryConverter());
         IlluminaRunResourceTest.doAssertions(thriftRun,runBean);
     }
 
@@ -57,7 +63,7 @@ public class DbFreeIlluminaRunResourceTest {
             }
         }
         IlluminaRunResource runResource = new IlluminaRunResource(new MockThriftService(),sampleDataFetcher);
-        ZimsIlluminaRun runBean = runResource.getRun(thriftRun, lsidToSampleDTO);
+        ZimsIlluminaRun runBean = runResource.getRun(thriftRun, lsidToSampleDTO, new SquidThriftLibraryConverter());
 
         for (ZimsIlluminaChamber lane : runBean.getLanes()) {
             for (LibraryBean libraryBean : lane.getLibraries()) {
@@ -69,4 +75,19 @@ public class DbFreeIlluminaRunResourceTest {
 
 
     }
+
+    @Test(groups = DATABASE_FREE)
+    public void test_mercury_fields() throws Exception {
+        TZamboniRun thriftRun = ThriftFileAccessor.deserializeRun();
+        ResearchProject project = new ResearchProject(1L,"RP title","rp synopsis",false);
+        ProductOrder pdo = new ProductOrder(new BspUser(),project);
+
+
+        ZimsIlluminaRun runBean = new IlluminaRunResource(
+                new MockThriftService(),
+                new BSPSampleDataFetcher(new BSPSampleSearchServiceStub())
+        ).getRun(thriftRun,new HashMap<String, BSPSampleDTO>(),new SquidThriftLibraryConverter());
+        IlluminaRunResourceTest.doAssertions(thriftRun,runBean);
+    }
+
 }
