@@ -72,7 +72,10 @@
                     <div class="control-group">
                         <span class="control-label label-form">Product</span>
                         <span class="controls">
-                            #{productOrderDetail.productOrder.product.productName}
+                            <h:link outcome="/products/view">
+                                <f:param name="product"  value="#{productOrderDetail.productOrder.product.partNumber}"/>
+                                <h:outputText value="#{productOrderDetail.productOrder.product.productName}"/>
+                            </h:link>
                         </span>
                     </div>
 
