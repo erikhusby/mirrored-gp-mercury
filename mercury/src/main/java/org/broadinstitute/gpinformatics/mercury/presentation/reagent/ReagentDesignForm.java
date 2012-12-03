@@ -12,14 +12,18 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.reagent;
 
 import org.apache.commons.logging.Log;
-import org.broadinstitute.gpinformatics.mercury.entity.project.ReagentDesign;
+import org.broadinstitute.gpinformatics.infrastructure.jsf.TableData;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
-import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
+import javax.enterprise.context.Conversation;
+import javax.enterprise.context.ConversationScoped;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.List;
 
 /**
  * @author breilly
@@ -27,52 +31,45 @@ import javax.inject.Named;
 @Named
 @RequestScoped
 public class ReagentDesignForm extends AbstractJsfBean {
-
     @Inject
     private Log log;
 
-//    @Inject
-    private ReagentDesign reagent;
+    @Inject
+    private ReagentDesignDao reagentDesignDao;
 
     @Inject
     private FacesContext facesContext;
 
     @Inject
-    private UserBean userBean;
+    Conversation conversation;
 
-    public void initForm() {
-        if (userBean.ensureUserValid()) {
-            // Only initialize the form if not a postback. Otherwise, we'll leave the form as the user submitted it.
-            if (!facesContext.isPostback()) {
+    private ReagentDesign reagentDesign;
 
-                // Add current user as a PM only if this is a new research project being created
-//                if (isCreating()) {
-//                    projectManagers = new ArrayList<BspUser>();
-//                    projectManagers.add(userBean.getBspUser());
-//                } else {
-//                    projectManagers = makeBspUserList(detail.getProject().getProjectManagers());
-//                    broadPIs = makeBspUserList(detail.getProject().getBroadPIs());
-//                    scientists = makeBspUserList(detail.getProject().getScientists());
-//                    externalCollaborators = makeBspUserList(detail.getProject().getExternalCollaborators());
-//
-//                    fundingSources = makeFundingSources(detail.getProject().getFundingIds());
-//                    sampleCohorts = makeCohortList(detail.getProject().getCohortIds());
-//                    irbs = makeIrbs(detail.getProject().getIrbNumbers());
-//                }
+    public ReagentDesign getReagentDesign() {
+        return reagentDesign;
+    }
+
+    public void setReagentDesign(ReagentDesign reagentDesign) {
+        this.reagentDesign = reagentDesign;
+    }
+
+    public List<ReagentDesign> getAllReagentDesigns() {
+        return reagentDesignTableData.getValues();
+    }
+
+    @ConversationScoped public static class ReagentDesignTableData extends TableData<ReagentDesign> { }
+    @Inject ReagentDesignForm.ReagentDesignTableData reagentDesignTableData;
+
+    public void initView() {
+        if (!facesContext.isPostback()) {
+            reagentDesignTableData.setValues(reagentDesignDao.findAll());
+            if (conversation.isTransient()) {
+                conversation.begin();
             }
-        } else {
-//            addErrorMessage(MessageFormat.format(UserBean.LOGIN_WARNING,
-//                    (isCreating() ? "create" : "edit") + " a research project"));
         }
     }
 
-    public String save() {
-//        if (reagent.get()) {
-//            return create();
-//        } else {
-            return edit();
-//        }
-    }
+
 
     public String create() {
 
@@ -87,6 +84,14 @@ public class ReagentDesignForm extends AbstractJsfBean {
         return redirect("view");
     }
 
+    public Conversation getConversation() {
+        return conversation;
+    }
+
+    public FacesContext getFacesContext() {
+        return facesContext;
+    }
+
     public String edit() {
 //        ResearchProject project = detail.getProject();
 //        addCollections(project);
@@ -94,7 +99,7 @@ public class ReagentDesignForm extends AbstractJsfBean {
 //        project.recordModification(userBean.getBspUser().getUserId());
 
         try {
-  //          researchProjectManager.updateResearchProject(project);
+            //          researchProjectManager.updateResearchProject(project);
         } catch (Exception e) {
             addErrorMessage(e.getMessage());
             return null;
@@ -102,5 +107,9 @@ public class ReagentDesignForm extends AbstractJsfBean {
 
 //        addInfoMessage("The Research Project \"" + project.getTitle() + "\" has been updated.");
         return redirect("view");
+    }
+
+    public ReagentDesignTableData getReagentDesignTableData() {
+        return reagentDesignTableData;
     }
 }
