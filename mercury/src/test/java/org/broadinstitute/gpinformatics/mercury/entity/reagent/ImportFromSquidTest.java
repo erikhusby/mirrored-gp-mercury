@@ -307,7 +307,7 @@ public class ImportFromSquidTest extends ContainerTest {
                         ProductOrder productOrder = new ProductOrder(1701L, lcSet, productOrderSamples, "BSP-123", product, researchProject);
                         productOrder.setJiraTicketKey(lcSet);
                         productOrderDao.persist(productOrder);
-                        productOrderDao.flush();
+                        productOrderDao.clear();
                     }
                 }
                 tubeBeans = new ArrayList<TubeBean>();
