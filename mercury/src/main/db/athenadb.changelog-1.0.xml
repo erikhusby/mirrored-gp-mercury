@@ -1350,4 +1350,9 @@
         </addColumn>
     </changeSet>
 
+
+    <changeSet id="GPLIM-435" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="billing_ledger" columnName="quantity" />
+    </changeSet>
+
 </databaseChangeLog>
