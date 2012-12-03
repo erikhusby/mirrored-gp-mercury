@@ -65,13 +65,13 @@
                         <p:autoComplete id="researchProject" value="#{productOrderDetail.productOrder.researchProject}"
                                         completeMethod="#{researchProjectBean.getProjectCompletions}"
                                         forceSelection="true"
-                                        var="project" itemLabel="#{project.title}" itemValue="#{project}"
+                                        var="project" itemLabel="#{researchProjectBean.getResearchProjectLabel(project)}" itemValue="#{project}"
                                         converter="#{researchProjectConverter}"
                                         dropdown="true"
                                         required="true"
                                         scrollHeight="250"
                                         size="50"/>
-                        <p:watermark for="researchProject" value="Type name to search"/>
+                        <p:watermark for="researchProject" value="Type name or RP # to search"/>
                         <p:message for="researchProject"/>
                     </div>
                 </div>
