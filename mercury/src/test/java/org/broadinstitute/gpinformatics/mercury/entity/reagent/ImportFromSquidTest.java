@@ -353,14 +353,70 @@ public class ImportFromSquidTest extends ContainerTest {
                 "    INNER JOIN lc_sample_pool_oligo_data lspod " +
                 "        ON   lspod.lc_sample_data_id = lsd.lc_sample_data_id " +
                 "    INNER JOIN hybsel_bait_design hbd " +
-                "        ON   hbd.hybsel_bait_design_id = lspod.hybsel_bait_design_id ");
+                "        ON   hbd.hybsel_bait_design_id = lspod.hybsel_bait_design_id " +
+                "ORDER BY " +
+                "        hbd.design_name ");
         List<?> resultList = nativeQuery.getResultList();
+        String previousDesignName = "";
+        ReagentDesign reagentDesign = null;
         for (Object o : resultList) {
             Object[] columns = (Object[]) o;
             String barcode = (String) columns[0];
             String designName = (String) columns[1];
+            if(!previousDesignName.equals(designName)) {
+                reagentDesign = new ReagentDesign(designName, ReagentDesign.REAGENT_TYPE.BAIT);
+                previousDesignName = designName;
+            }
             TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(barcode);
-            twoDBarcodedTube.addReagent(new DesignedReagent(new ReagentDesign(designName, ReagentDesign.REAGENT_TYPE.BAIT)));
+            twoDBarcodedTube.addReagent(new DesignedReagent(reagentDesign));
+            twoDBarcodedTubeDAO.persist(twoDBarcodedTube);
+        }
+        twoDBarcodedTubeDAO.clear();
+    }
+
+    /**
+     * To prepare for sending past production BettaLIMS messages into Mercury, this method creates Custom Amplicon Tubes.
+     */
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void testCreateCats() {
+        Query nativeQuery = entityManager.createNativeQuery("SELECT " +
+                "     DISTINCT  " +
+                "     cas.design_name, " +
+                "     cas.vendor_design_name, " +
+                "     r.barcode " +
+                "FROM " +
+                "     custom_amplicon_set cas " +
+                "     INNER JOIN ngld_custom_amplicon_set ncas " +
+                "          ON   ncas.custom_amplicon_set_id = cas.custom_amplicon_set_id " +
+                "     INNER JOIN next_generation_library_descr ngld " +
+                "          ON   ngld.library_descr_id = ncas.library_descr_id " +
+                "     INNER JOIN seq_content_descr scd " +
+                "          ON   scd.seq_content_descr_id = ngld.library_descr_id " +
+                "     INNER JOIN seq_content_descr_set scds " +
+                "          ON   scds.seq_content_descr_id = scd.seq_content_descr_id " +
+                "     INNER JOIN seq_content sc " +
+                "          ON   sc.seq_content_id = scds.seq_content_id " +
+                "     INNER JOIN receptacle r " +
+                "          ON   r.receptacle_id = sc.receptacle_id " +
+                "     INNER JOIN recep_plate_transfer_event rpte " +
+                "          ON   rpte.receptacle_id = r.receptacle_id " +
+                "     ORDER BY " +
+                "          cas.design_name ");
+        List<?> resultList = nativeQuery.getResultList();
+        String previousDesignName = "";
+        ReagentDesign reagentDesign = null;
+        for (Object o : resultList) {
+            Object[] columns = (Object[]) o;
+            String designName = (String) columns[0];
+            String vendorDesignName = (String) columns[1];
+            String barcode = (String) columns[2];
+            if(!previousDesignName.equals(designName)) {
+                reagentDesign = new ReagentDesign(designName, ReagentDesign.REAGENT_TYPE.CAT);
+                reagentDesign.setManufacturersName(vendorDesignName);
+                previousDesignName = designName;
+            }
+            TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(barcode);
+            twoDBarcodedTube.addReagent(new DesignedReagent(reagentDesign));
             twoDBarcodedTubeDAO.persist(twoDBarcodedTube);
         }
         twoDBarcodedTubeDAO.clear();
