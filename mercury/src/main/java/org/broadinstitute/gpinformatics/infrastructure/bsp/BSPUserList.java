@@ -30,7 +30,6 @@ public class BSPUserList extends AbstractCache implements Serializable {
     @Inject
     private Deployment deployment;
 
-    @Inject
     private BSPManagerFactory bspManagerFactory;
 
     private List<BspUser> users;
@@ -111,16 +110,34 @@ public class BSPUserList extends AbstractCache implements Serializable {
     }
 
     private static boolean anyFieldMatches(String lowerQuery, BspUser user) {
-        return user.getFirstName().toLowerCase().contains(lowerQuery) ||
-            user.getLastName().toLowerCase().contains(lowerQuery) ||
-            user.getUsername().contains(lowerQuery) ||
-                user.getEmail().contains(lowerQuery);
+        return safeToLowerCase(user.getFirstName()).contains(lowerQuery) ||
+               safeToLowerCase(user.getLastName()).contains(lowerQuery) ||
+               safeToLowerCase(user.getUsername()).contains(lowerQuery) ||
+               safeToLowerCase(user.getEmail()).contains(lowerQuery);
     }
 
-    @PostConstruct
-    private void postConstruct() {
+    private static String safeToLowerCase(String s) {
+        if (s == null) {
+            return "";
+        } else {
+            return s.toLowerCase();
+        }
+    }
+
+    public BSPUserList() {
+    }
+
+    @Inject
+    // MLC constructor injection appears to be required to get a BSPManagerFactory injected???
+    public BSPUserList(BSPManagerFactory bspManagerFactory) {
+        this.bspManagerFactory = bspManagerFactory;
         refreshCache();
     }
+
+//    @PostConstruct
+//    private void postConstruct() {
+//        refreshCache();
+//    }
 
     @Override
     public synchronized void refreshCache() {

@@ -1,14 +1,24 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
-
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Billable;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.InvalidMolecularStateException;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.PartiallyProcessedLabEventCache;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -20,7 +30,6 @@ public class LabEventHandler {
         ERROR /* further refine to "out of order", "bad molecular envelope", critical, warning, etc. */
     }
 
-
     PartiallyProcessedLabEventCache unanchored;
 
     PartiallyProcessedLabEventCache invalidMolecularState;
@@ -31,7 +40,25 @@ public class LabEventHandler {
     @Inject
     QuoteService quoteService;
 
-    public LabEventHandler() {}
+    @Inject
+    WorkflowLoader workflowLoader;
+
+    @Inject
+    BucketDao bucketDao;
+
+    @Inject
+    BucketBean bucketBean;
+
+    @Inject
+    AthenaClientService athenaClientService;
+
+    public LabEventHandler() {
+    }
+
+    public LabEventHandler(WorkflowLoader workflowLoader, AthenaClientService clientService) {
+        this.workflowLoader = workflowLoader;
+        this.athenaClientService = clientService;
+    }
 
     public HANDLER_RESPONSE processEvent(LabEvent labEvent) {
         // random thought, which should go onto confluence doc:
@@ -67,9 +94,27 @@ public class LabEventHandler {
         we have to break it up.
 
 
-         */       
+         */
 
+        /*
+           Happens after the message is actually recorded but before the message is processed (?)
+           if the previous step in the workflow is a Bucket, the message will attempt to drain the Bucket
+           (create/update a batch) to move the vessels forward.
 
+             This action should not throw an exception in the bucket batching.  Just at least record the fact that
+             this action happened
+
+             TODO SGM  DEFINITELY need a better way to determine the current workflow version.  Only thing we have to rely on is the Product order.  May have to walk each vessel.
+        */
+        if (null != labEvent.getProductOrderId()) {
+            ProductWorkflowDefVersion workflowDef = getWorkflowVersion(labEvent.getProductOrderId());
+            if (workflowDef.isPreviousStepBucket(labEvent.getLabEventType().getName())) {
+                Bucket workingBucket = bucketDao.findByName(workflowDef.getPreviousStep(
+                        labEvent.getLabEventType().getName()).getName());
+
+                bucketBean.start(null, labEvent.getAllLabVessels(), workingBucket, labEvent.getEventLocation());
+            }
+        }
 
         /*
         LabWorkflowInstance workflow = findWorkflowInstance(labEvent);
@@ -86,12 +131,12 @@ public class LabEventHandler {
         }
         */
 
-
         // todo arz fix this by using LabBatch instead.  maybe strip out this denormalization entirely,
         // and leave the override processing for on-the-fly work in VesselContainer
         //processProjectPlanOverrides(labEvent, workflow);
 
-        JiraCommentUtil.postUpdate(labEvent.getLabEventType().getName() + " Event Applied",null,labEvent.getAllLabVessels());
+        JiraCommentUtil.postUpdate(labEvent.getLabEventType().getName() + " Event Applied", null,
+                                   labEvent.getAllLabVessels());
         try {
             labEvent.applyMolecularStateChanges();
             enqueueForPostProcessing(labEvent);
@@ -101,9 +146,7 @@ public class LabEventHandler {
             // and the billing transaction isolated properly: http://docs.jboss.org/weld/reference/1.1.0.Final/en-US/html/events.html#d0e4075
             // only bill if the persistence succeeds on the mercury side.
 
-
-        }
-        catch(InvalidMolecularStateException e) {
+        } catch (InvalidMolecularStateException e) {
             return HANDLER_RESPONSE.ERROR;
         }
         return HANDLER_RESPONSE.OK;
@@ -180,10 +223,11 @@ public class LabEventHandler {
      * event, notify each project, taking care to only post a single
      * message for the entire event, instead of spamming them
      * with a jira ticket comment per aliquot.
+     *
      * @param event
      */
     public void notifyCheckpoints(LabEvent event) {
-//        Map<Project,Collection<StartingSample>> samplesForProject = new HashMap<Project,Collection<StartingSample>>();
+        //        Map<Project,Collection<StartingSample>> samplesForProject = new HashMap<Project,Collection<StartingSample>>();
         for (LabVessel container : event.getAllLabVessels()) {
             for (SampleInstance sampleInstance: container.getSampleInstances()) {
 //                for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
@@ -203,7 +247,7 @@ public class LabEventHandler {
 //            entry.getKey().addJiraComment(message);
 //        }
     }
-    
+
     // todo thread for doing Stalker.stalk() for all active projects, LabVessels?
     // todo or make a separate "Lost" stalker?
 
@@ -211,39 +255,38 @@ public class LabEventHandler {
      * Queue this event up for various post processing,
      * like notifing project stalkers and adding the
      * status to each sample
+     *
      * @param labEvent
      */
     private void enqueueForPostProcessing(LabEvent labEvent) {
-        
+
     }
-    
-    
 
     /**
      * Probably farm this out to a thread queue
+     *
      * @param event
      */
     private void updateSampleStatus(LabEvent event) {
-        for (LabVessel target: event.getTargetLabVessels()) {
-            for (SampleInstance sampleInstance: target.getSampleInstances()) {
-//                sampleInstance.getStartingSample().logNote(new StatusNote(event.getEventName()));
+        for (LabVessel target : event.getTargetLabVessels()) {
+            for (SampleInstance sampleInstance : target.getSampleInstances()) {
+                //                sampleInstance.getStartingSample().logNote(new StatusNote(event.getEventName()));
             }
         }
     }
 
-
-
     /**
      * Call this as part of a sweeper thread that runs
      * every 5-10 minutes.
+     *
      * @param labEvent
      */
     private void retryInvalidMolecularState(LabEvent labEvent) {
-        for (LabEvent partiallyProcessedEvent: invalidMolecularState.findRelatedEvents(labEvent)) {
+        for (LabEvent partiallyProcessedEvent : invalidMolecularState.findRelatedEvents(labEvent)) {
             processEvent(partiallyProcessedEvent);
         }
     }
-    
+
     /**
      * When we receive a lab event which references an
      * "unknown" LabVessel (typically we expect the source
@@ -265,6 +308,7 @@ public class LabEventHandler {
      *
      * Probably want this method called from a thread queue
      * that runs every 5-10 minutes or so.
+     *
      * @param labEvent
      */
     private void retryUnanchoredCache(LabEvent labEvent) {
@@ -272,7 +316,7 @@ public class LabEventHandler {
         // as every event that is processed as the potential to
         // pull back a pile of partially processed events and
         // reprocess them.
-        for (LabEvent partiallyProcessedEvent: unanchored.findRelatedEvents(labEvent)) {
+        for (LabEvent partiallyProcessedEvent : unanchored.findRelatedEvents(labEvent)) {
             processEvent(partiallyProcessedEvent);
 
             /*
@@ -294,14 +338,31 @@ public class LabEventHandler {
 
     /**
      * Sends an alert message to the lab somehow.  Email list?
+     *
      * @param message
      * @param event
      */
-    private void sendAlertToLab(String message,LabEvent event) {
+    private void sendAlertToLab(String message, LabEvent event) {
         StringBuilder alertText = new StringBuilder();
 
         alertText.append(message).append("\n");
-        alertText.append(event.getLabEventType().getName() + " from " + event.getEventOperator().getLogin() + " sent on " + event.getEventDate());
+
+        BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
+
+        alertText.append(event.getLabEventType().getName() + " from " +
+                                 bspUserList.getById(event.getEventOperator()).getUsername() +
+                                 " sent on " + event.getEventDate());
+    }
+
+    private ProductWorkflowDefVersion getWorkflowVersion(String productOrderKey) {
+        WorkflowConfig workflowConfig = workflowLoader.load();
+
+        ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
+
+        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
+                productOrder.getProduct().getWorkflowName());
+
+        return productWorkflowDef.getEffectiveVersion();
     }
 
 }

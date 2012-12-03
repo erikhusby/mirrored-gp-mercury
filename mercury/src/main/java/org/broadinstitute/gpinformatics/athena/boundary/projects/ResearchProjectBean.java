@@ -105,6 +105,12 @@ public class ResearchProjectBean extends AbstractJsfBean implements Serializable
     // FIXME: refactor for common cases
     public List<ResearchProject> getProjectCompletions(String search) {
         List<ResearchProject> list = new ArrayList<ResearchProject>(getAllResearchProjects());
+        Collections.sort(list, new Comparator<ResearchProject>() {
+            @Override
+            public int compare(ResearchProject project1, ResearchProject project2) {
+                return project1.getTitle().compareTo(project2.getTitle());
+            }
+        });
         String[] searchStrings = search.toLowerCase().split("\\s");
 
         Iterator<ResearchProject> iterator = list.iterator();
@@ -113,7 +119,7 @@ public class ResearchProjectBean extends AbstractJsfBean implements Serializable
             if (project.getTitle() != null) {
                 String label = project.getTitle().toLowerCase();
                 for (String s : searchStrings) {
-                    if (!label.contains(s)) {
+                    if (!(label.contains(s) || project.getJiraTicketKey().toLowerCase().contains(s))) {
                         iterator.remove();
                         break;
                     }
@@ -124,6 +130,14 @@ public class ResearchProjectBean extends AbstractJsfBean implements Serializable
         }
 
         return list;
+    }
+
+    public String getResearchProjectLabel(ResearchProject project) {
+        if (project == null) {
+            return null;
+        } else {
+            return project.getTitle() + " (" + project.getJiraTicketKey() + ")";
+        }
     }
 
     /**

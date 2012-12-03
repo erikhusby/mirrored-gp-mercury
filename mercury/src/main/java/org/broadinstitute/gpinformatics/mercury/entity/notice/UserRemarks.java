@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.notice;
 
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import javax.persistence.Embeddable;
 import java.util.Collection;
@@ -31,35 +30,35 @@ public class UserRemarks {
         WHATEVER
     }
 
-    public void setUserStatus(Person user,String status){
+    public void setUserStatus( Long user,String status){
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    public void getUserStatus(Person user){
+    public void getUserStatus( Long user){
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    public void addUserNote(Person user,String note){
+    public void addUserNote( Long user,String note){
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    public Collection<String> getUserNotes(Person user){
+    public Collection<String> getUserNotes( Long user){
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    public boolean isUserFlagged(Person user){
+    public boolean isUserFlagged( Long user){
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    public void setUserFlag(Person user,boolean isFlagged){
+    public void setUserFlag( Long user,boolean isFlagged){
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    public INTERESTINGNESS getUserInterestLevel(Person user){
+    public INTERESTINGNESS getUserInterestLevel( Long user){
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    public void setUserInterestLevel(Person user,INTERESTINGNESS interestLevel){
+    public void setUserInterestLevel( Long user,INTERESTINGNESS interestLevel){
         throw new RuntimeException("I haven't been written yet.");
     }
 
@@ -70,19 +69,19 @@ public class UserRemarks {
     /**
      * Kind of an "unread" flag
      */
-    public void hasUserUpdate(Person user){
+    public void hasUserUpdate( Long user){
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    public void setUserUpdate(Person user,boolean isNew){
+    public void setUserUpdate( Long user,boolean isNew){
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    public Date getUserCheckbackDate(Person user){
+    public Date getUserCheckbackDate( Long user){
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    public void setUserCheckbackDate(Person user,Date targetDate){
+    public void setUserCheckbackDate( Long user,Date targetDate){
         throw new RuntimeException("I haven't been written yet.");
     }
 
@@ -95,17 +94,18 @@ public class UserRemarks {
      * @param user
      * @param category
      */
-    public void setUserCategory(Person user,String category){
+    public void setUserCategory( Long user,String category){
         throw new RuntimeException("I haven't been written yet.");
     }
 
     /**
      * Gets the category in which this thing should
      * appear for the given user
+     *
      * @param user
      * @return
      */
-    public String getUserCategory(Person user){
+    public String getUserCategory( Long user){
         throw new RuntimeException("I haven't been written yet.");
     }
 }

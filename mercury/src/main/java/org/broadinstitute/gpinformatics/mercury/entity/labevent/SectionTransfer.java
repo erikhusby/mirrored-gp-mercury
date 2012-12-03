@@ -114,7 +114,7 @@ public class SectionTransfer extends VesselTransfer {
 /*
         LabVessel sourceVessel = this.getSourceVesselContainer().getEmbedder();
         // todo jmt, rather than checking for incoming transfers, check for other position maps?
-        if(Hibernate.getClass(this.getSourceVesselContainer().getEmbedder()).equals(RackOfTubes.class) && !sourceVessel.getTransfersTo().isEmpty() ||
+        if(Hibernate.getClass(this.getSourceVesselContainer().getEmbedder()).equals(TubeFormation.class) && !sourceVessel.getTransfersTo().isEmpty() ||
                 this.sourceSection != this.targetSection) {
             List<VesselPosition> positions = this.sourceSection.getWells();
             for (int wellIndex = 0; wellIndex < positions.size(); wellIndex++) {

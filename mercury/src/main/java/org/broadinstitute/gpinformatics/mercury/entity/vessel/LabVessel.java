@@ -356,6 +356,7 @@ public abstract class LabVessel {
         STATIC_PLATE("Plate"),
         PLATE_WELL("Plate Well"),
         RACK_OF_TUBES("Tube Rack"),
+        TUBE_FORMAITON("Tube Formation"),
         TUBE("Tube"),
         FLOWCELL("Flowcell"),
         STRIP_TUBE("Strip Tube"),
@@ -646,7 +647,7 @@ public abstract class LabVessel {
         return Collections.unmodifiableSet(bucketEntries);
     }
 
-    /**
+    /* *
      * In the context of the given WorkflowDescription, are there any
      * events for this vessel which are annotated as WorkflowAnnotation#SINGLE_SAMPLE_LIBRARY?
      * @param workflowDescription
@@ -812,29 +813,28 @@ public abstract class LabVessel {
         transferTraverserCriteria.evaluateVesselPreOrder(this, labEvent, hopCount);
         if(traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
             for (VesselEvent vesselEvent : getAncestors()) {
-                LabVessel labVessel = vesselEvent.getLabVessel();
-                if(labVessel == null) {
-                    vesselEvent.getVesselContainer().evaluateCriteria(vesselEvent.getVesselContainer().getPositionOfVessel(this),
-                            transferTraverserCriteria, traversalDirection, null, hopCount);
-                } else {
-                    labVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection,
-                            vesselEvent.getLabEvent(), hopCount + 1);
-                }
+                evaluateVesselEvent(transferTraverserCriteria, traversalDirection, hopCount, vesselEvent);
             }
         } else if(traversalDirection == TransferTraverserCriteria.TraversalDirection.Descendants) {
-            getDescendants();
-            for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
-                vesselToVesselTransfer.getTargetLabVessel().evaluateCriteria(transferTraverserCriteria, traversalDirection,
-                        vesselToVesselTransfer.getLabEvent(), hopCount + 1);
+            for (VesselEvent vesselEvent : getDescendants()) {
+                evaluateVesselEvent(transferTraverserCriteria, traversalDirection, hopCount, vesselEvent);
             }
         } else {
             throw new RuntimeException("Unknown direction " + traversalDirection.name());
         }
-        for (LabVessel container : containers) {
-            VesselContainer containerRole = container.getContainerRole();
-            containerRole.evaluateCriteria(containerRole.getPositionOfVessel(this), transferTraverserCriteria, traversalDirection, null, hopCount);
-        }
         transferTraverserCriteria.evaluateVesselPostOrder(this, labEvent, hopCount);
+    }
+
+    private void evaluateVesselEvent(TransferTraverserCriteria transferTraverserCriteria,
+            TransferTraverserCriteria.TraversalDirection traversalDirection, int hopCount, VesselEvent vesselEvent) {
+        LabVessel labVessel = vesselEvent.getLabVessel();
+        if(labVessel == null) {
+            vesselEvent.getVesselContainer().evaluateCriteria(vesselEvent.getPosition(),
+                    transferTraverserCriteria, traversalDirection, vesselEvent.getLabEvent(), hopCount);
+        } else {
+            labVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection,
+                    vesselEvent.getLabEvent(), hopCount + 1);
+        }
     }
 
     public LabEvent getLatestEvent() {
@@ -846,4 +846,18 @@ public abstract class LabVessel {
         }
         return event;
     }
+
+    public Collection<String> getNearestProductOrders() {
+        TransferTraverserCriteria.NearestProductOrderCriteria nearestProductOrderCriteria = new TransferTraverserCriteria.NearestProductOrderCriteria();
+
+        evaluateCriteria(nearestProductOrderCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        return nearestProductOrderCriteria.getNearestProductOrders();
+    }
+
+    public Collection<LabBatch> getNearestLabBatches() {
+        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria = new TransferTraverserCriteria.NearestLabBatchFinder();
+        evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        return batchCriteria.getNearestLabBatches();
+    }
+
 }

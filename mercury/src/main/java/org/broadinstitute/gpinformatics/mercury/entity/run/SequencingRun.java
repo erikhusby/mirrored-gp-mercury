@@ -1,16 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
-import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinTable;
-import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
@@ -34,8 +31,8 @@ public class SequencingRun {
 
     private String machineName;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    private Person operator;
+    //    @ManyToOne(fetch = FetchType.LAZY)
+    private Long operator;
 
     private Boolean testRun;
 
@@ -46,8 +43,8 @@ public class SequencingRun {
     @JoinTable(schema = "mercury", name = "seq_run_run_cartridges")
     private Set<RunCartridge> runCartridges = new HashSet<RunCartridge>();
 
-    public SequencingRun(String runName, String runBarcode, String machineName, Person operator, Boolean testRun,
-            Date runDate, Set<RunCartridge> runCartridges) {
+    public SequencingRun(String runName, String runBarcode, String machineName, Long operator, Boolean testRun,
+                         Date runDate, Set<RunCartridge> runCartridges) {
         this.runName = runName;
         this.runBarcode = runBarcode;
         this.machineName = machineName;
@@ -84,11 +81,11 @@ public class SequencingRun {
         this.machineName = machineName;
     }
 
-    public Person getOperator() {
+    public Long getOperator() {
         return operator;
     }
 
-    public void setOperator(Person operator) {
+    public void setOperator(Long operator) {
         this.operator = operator;
     }
 
@@ -97,6 +94,7 @@ public class SequencingRun {
      * and billing.  We know which runs are test
      * runs, and we wish to exclude them from
      * activities like billing or aggregation.
+     *
      * @return
      */
     public boolean isTestRun() {
@@ -105,6 +103,7 @@ public class SequencingRun {
 
     /**
      * Flowcell, PTP, Ion chip, 384 well plate for pacbio/sanger,etc.
+     *
      * @return
      */
     public Iterable<RunCartridge> getSampleCartridge() {

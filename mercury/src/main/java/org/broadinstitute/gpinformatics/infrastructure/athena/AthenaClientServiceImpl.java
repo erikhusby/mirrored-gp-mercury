@@ -12,6 +12,9 @@ public class AthenaClientServiceImpl implements AthenaClientService {
     @Inject
     ProductOrderBean productOrderBean;
 
+    public AthenaClientServiceImpl () {
+    }
+
     @Override
     public ProductOrder retrieveProductOrderDetails ( String poBusinessKey ) {
         return productOrderBean.getProductOrderByKey(poBusinessKey);

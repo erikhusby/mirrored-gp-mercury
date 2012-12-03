@@ -1,6 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.*;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraCustomFieldsUtil;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -22,18 +25,18 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.zims.LibraryBeanFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventName;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -189,7 +192,7 @@ public class ExomeExpressEndToEndTest {
                         labBatch.getBatchName(),
                         "Pass " /*+ projectPlan.getPass().getProjectInformation().getPassNumber()*/, allCustomFields);
                 Assert.assertNotNull(jira);
-                Assert.assertNotNull(jira.getKey());
+                Assert.assertNotNull(jira.getKey ());
                 jiraTicket = new JiraTicket(jira);
                 labBatch.setJiraTicket(jiraTicket);
                 //labBatch.get
@@ -250,16 +253,26 @@ public class ExomeExpressEndToEndTest {
             LabEventFactory labEventFactory = new LabEventFactory();
             labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
                 @Override
-                public Person getOperator(String userId) {
-                    return new Person(userId);
+                public BspUser getOperator ( String userId ) {
+
+
+                    return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
                 }
+
+                @Override
+                public BspUser getOperator ( Long bspUserId ) {
+                    BspUser testUser =new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
+                    return testUser;
+                }
+
 
                 @Override
                 public LabBatch getLabBatch(String labBatchName) {
                     return null;
                 }
             });
-            LabEventHandler labEventHandler = new LabEventHandler();
+            LabEventHandler labEventHandler = new LabEventHandler( new WorkflowLoader (),
+                                                                   AthenaClientProducer.stubInstance () );
             BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
             Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<String, TwoDBarcodedTube>();
 
@@ -272,7 +285,7 @@ public class ExomeExpressEndToEndTest {
                     mapBarcodeToTube);//.invoke();
 
             LabEventTest.ShearingEntityBuilder shearingEntityBuilder = new LabEventTest.ShearingEntityBuilder(
-                    mapBarcodeToTube, preFlightEntityBuilder.getRackOfTubes(), bettaLimsMessageFactory, labEventFactory,
+                    mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(), bettaLimsMessageFactory, labEventFactory,
                     labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
 
             LabEventTest.LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LabEventTest.LibraryConstructionEntityBuilder(
@@ -285,7 +298,7 @@ public class ExomeExpressEndToEndTest {
                     libraryConstructionEntityBuilder.getPondRegRack(), libraryConstructionEntityBuilder.getPondRegRackBarcode(),
                     libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
 
-            RackOfTubes pondRack = libraryConstructionEntityBuilder.getPondRegRack();
+            TubeFormation pondRack = libraryConstructionEntityBuilder.getPondRegRack();
             Assert.assertEquals(pondRack.getSampleInstances().size(), 2);
 
             // make sure that the pond sample instances contain the starters from the project plan.
@@ -325,7 +338,7 @@ public class ExomeExpressEndToEndTest {
                     hybridSelectionEntityBuilder.getNormCatchBarcodes(), hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes());
             qtpEntityBuilder.invoke();
 
-            RackOfTubes poolingResult = qtpEntityBuilder.getDenatureRack();
+            TubeFormation poolingResult = qtpEntityBuilder.getDenatureRack();
 
             // LC metrics - upload page?
             // LabVessel.addMetric?
