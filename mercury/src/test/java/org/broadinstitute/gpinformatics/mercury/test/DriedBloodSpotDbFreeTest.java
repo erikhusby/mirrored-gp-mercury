@@ -1,5 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
@@ -13,7 +17,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -58,7 +61,31 @@ public class DriedBloodSpotDbFreeTest {
         driedBloodSpotEntityBuilder.buildEntities();
 
         LabEventResource labEventResource = new LabEventResource();
-        List<LabEventBean> labEventBeans = labEventResource.buildLabEventBeans(new ArrayList<LabEvent>(labBatch.getLabEvents()));
+        List<LabEventBean> labEventBeans =
+                labEventResource.buildLabEventBeans(new ArrayList<LabEvent>(labBatch.getLabEvents()),
+                                                    new LabEventFactory.LabEventRefDataFetcher() {
+                                                       @Override
+                                                       public BspUser getOperator(
+                                                               String userId) {
+                                                           BSPUserList testList = new BSPUserList(
+                                                                   BSPManagerFactoryProducer.stubInstance());
+                                                           return testList.getByUsername(userId);
+                                                       }
+
+                                                       @Override
+                                                       public BspUser getOperator(
+                                                               Long bspUserId) {
+                                                           BSPUserList testList = new BSPUserList(
+                                                                   BSPManagerFactoryProducer.stubInstance());
+                                                           return testList.getById(bspUserId);
+                                                       }
+
+                                                       @Override
+                                                       public LabBatch getLabBatch(
+                                                               String labBatchName) {
+                                                           return null;
+                                                       }
+                                                   });
 //        Assert.assertEquals("Wrong number of messages", 10, labEventBeans.size());
     }
 
@@ -212,10 +239,20 @@ public class DriedBloodSpotDbFreeTest {
             driedBloodSpotJaxbBuilder.buildJaxb();
             LabEventFactory labEventFactory = new LabEventFactory();
             labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
+
                 @Override
-                public Person getOperator(String userId) {
-                    return new Person(userId);
+                public BspUser getOperator ( String userId ) {
+
+
+                    return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
                 }
+
+                @Override
+                public BspUser getOperator ( Long bspUserId ) {
+                    BspUser testUser =new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
+                    return testUser;
+                }
+
 
                 @Override
                 public LabBatch getLabBatch(String labBatchName) {

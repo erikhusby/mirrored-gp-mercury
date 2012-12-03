@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -112,5 +113,36 @@ public class Bucket {
 
     public Long getBucketId () {
         return bucketId;
+    }
+
+    public BucketEntry findEntry(@Nonnull LabVessel entryVessel) {
+
+        List<BucketEntry> foundEntries = new LinkedList<BucketEntry>();
+
+        for(BucketEntry currEntry: bucketEntries) {
+            if(currEntry.getLabVessel().equals(entryVessel)) {
+                foundEntries.add(currEntry);
+            }
+        }
+
+        if(foundEntries.size() > 1) {
+            throw new IllegalStateException("There are more than one entry in the bucket for the given vessel " + entryVessel.getLabel());
+        }
+
+        return foundEntries.get(0);
+
+    }
+
+    public BucketEntry findEntry(@Nonnull LabVessel entryVessel, @Nonnull String productOrderKey) {
+        BucketEntry foundEntry = null;
+        for(BucketEntry currentEntry: bucketEntries) {
+            if(currentEntry.getLabVessel().equals(entryVessel) &&
+                    currentEntry.getPoBusinessKey().equals(productOrderKey)) {
+                foundEntry = currentEntry;
+                break;
+            }
+        }
+
+        return foundEntry;
     }
 }

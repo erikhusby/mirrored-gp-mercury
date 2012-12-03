@@ -646,7 +646,7 @@ public abstract class LabVessel {
         return Collections.unmodifiableSet(bucketEntries);
     }
 
-    /**
+    /* *
      * In the context of the given WorkflowDescription, are there any
      * events for this vessel which are annotated as WorkflowAnnotation#SINGLE_SAMPLE_LIBRARY?
      * @param workflowDescription
@@ -845,4 +845,18 @@ public abstract class LabVessel {
         }
         return event;
     }
+
+    public Collection<String> getNearestProductOrders() {
+        TransferTraverserCriteria.NearestProductOrderCriteria nearestProductOrderCriteria = new TransferTraverserCriteria.NearestProductOrderCriteria();
+
+        evaluateCriteria(nearestProductOrderCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        return nearestProductOrderCriteria.getNearestProductOrders();
+    }
+
+    public Collection<LabBatch> getNearestLabBatches() {
+        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria = new TransferTraverserCriteria.NearestLabBatchFinder();
+        evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+        return batchCriteria.getNearestLabBatches();
+    }
+
 }

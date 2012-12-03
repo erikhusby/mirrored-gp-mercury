@@ -11,6 +11,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -110,6 +112,49 @@ public interface TransferTraverserCriteria {
 
         public Map<MercurySample,Collection<LabVessel>> getSingleSampleLibraries() {
             return singleSampleLibrariesForInstance;
+        }
+    }
+
+    class NearestProductOrderCriteria implements TransferTraverserCriteria {
+
+        private final Map<Integer, Collection<String>> productOrdersAtHopCount = new HashMap<Integer, Collection<String>>();
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder ( LabVessel labVessel, LabEvent labEvent, int hopCount ) {
+            if (labVessel != null) {
+                for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
+                    MercurySample startingSample = sampleInstance.getStartingSample();
+
+                    if(!productOrdersAtHopCount.containsKey(hopCount) ) {
+                        productOrdersAtHopCount.put(hopCount, new HashSet<String>());
+                    }
+
+                    productOrdersAtHopCount.get(hopCount).add(startingSample.getProductOrderKey());
+                }
+            }
+            return TraversalControl.ContinueTraversing;
+
+        }
+
+        @Override
+        public void evaluateVesselInOrder ( LabVessel labVessel, LabEvent labEvent, int hopCount ) {
+
+        }
+
+        @Override
+        public void evaluateVesselPostOrder ( LabVessel labVessel, LabEvent labEvent, int hopCount ) {
+
+        }
+
+        public Collection<String> getNearestProductOrders() {
+            int nearest = Integer.MAX_VALUE;
+            for (Map.Entry<Integer, Collection<String>> posForHopCount : productOrdersAtHopCount.entrySet()) {
+                if (posForHopCount.getKey() < nearest) {
+                    nearest = posForHopCount.getKey();
+                }
+            }
+            return productOrdersAtHopCount.get(nearest);
+
         }
     }
 }

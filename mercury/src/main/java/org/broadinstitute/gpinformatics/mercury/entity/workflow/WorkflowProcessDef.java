@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * A lab process, or team, e.g. QTP
@@ -18,7 +20,11 @@ public class WorkflowProcessDef {
     @XmlID
     private String name;
     private List<WorkflowProcessDefVersion> workflowProcessDefVersions = new ArrayList<WorkflowProcessDefVersion>();
+    private transient Map<String, WorkflowProcessDefVersion> processDefVersionsByVersion =
+            new HashMap<String, WorkflowProcessDefVersion>();
     private transient List<WorkflowProcessDefVersion> processVersionsDescEffDate;
+
+    private transient ProductWorkflowDefVersion productWorkflowDef;
 
     /** For JAXB */
     @SuppressWarnings("UnusedDeclaration")
@@ -35,6 +41,7 @@ public class WorkflowProcessDef {
 
     public void addWorkflowProcessDefVersion(WorkflowProcessDefVersion workflowProcessDefVersion) {
         this.workflowProcessDefVersions.add(workflowProcessDefVersion);
+        this.processDefVersionsByVersion.put ( workflowProcessDefVersion.getVersion (), workflowProcessDefVersion );
     }
 
     public WorkflowProcessDefVersion getEffectiveVersion() {
@@ -57,5 +64,17 @@ public class WorkflowProcessDef {
         }
         assert effectiveProcessDef != null;
         return effectiveProcessDef;
+    }
+
+    public WorkflowProcessDefVersion getByVersion(String version) {
+        return processDefVersionsByVersion.get(version);
+    }
+
+    public ProductWorkflowDefVersion getProductWorkflowDef () {
+        return productWorkflowDef;
+    }
+
+    public void setProductWorkflowDef ( ProductWorkflowDefVersion productWorkflowDef ) {
+        this.productWorkflowDef = productWorkflowDef;
     }
 }

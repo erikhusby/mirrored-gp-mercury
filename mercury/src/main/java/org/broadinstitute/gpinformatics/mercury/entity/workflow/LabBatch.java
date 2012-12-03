@@ -137,6 +137,7 @@ public class LabBatch {
 
     public void setJiraTicket ( JiraTicket jiraTicket ) {
         this.jiraTicket = jiraTicket;
+        jiraTicket.setLabBatch(this);
     }
 
     public JiraTicket getJiraTicket () {
@@ -176,25 +177,31 @@ public class LabBatch {
     /**
      * Submits the contents of this Lab Batch to Jira to create a new LCSET Ticket
      * @param reporter
+     * @param batchSubType
+     * @param projectPrefix
      */
-    public void createJiraTicket(String reporter) throws IOException {
+    public void createJiraTicket(String reporter, @Nonnull CreateFields.IssueType batchSubType,
+                                 @Nonnull String projectPrefix) throws IOException {
         JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
 
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
-        List<CustomField> listOfFields = new ArrayList<CustomField> ();
-
-        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.PROTOCOL, ""));
-        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.WORK_REQUEST_IDS, ""));
+        List<CustomField> listOfFields = retrieveCustomFields(submissionFields);
 
         JiraIssue jiraIssue =
-                jiraService.createIssue(fetchJiraProject().getKeyPrefix(), reporter,
-                        // TODO SGM:  Need a better solution.  Map product to issueType.
-                        CreateFields.IssueType.EXOME_EXPRESS,
-                        batchName, "", listOfFields);
+                jiraService.createIssue(projectPrefix, reporter, batchSubType,
+                                        batchName, "", listOfFields);
 
         jiraTicket = new JiraTicket(jiraIssue);
         jiraTicket.setLabBatch(this);
+    }
+
+    public List<CustomField> retrieveCustomFields(Map<String, CustomFieldDefinition> submissionFields) {
+        List<CustomField> listOfFields = new ArrayList<CustomField>();
+
+        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.PROTOCOL, ""));
+        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.WORK_REQUEST_IDS, ""));
+        return listOfFields;
     }
 
     /**

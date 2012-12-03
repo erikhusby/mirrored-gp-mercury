@@ -184,8 +184,8 @@ public class ProductOrderSample implements Serializable {
      * This class holds the billed and uploaded ledger counts for a particular pdo and price item
      */
     public static class LedgerQuantities {
-        private double billed = NO_BILL_COUNT;   // If nothing is billed yet, then the total is still 0.
-        private double uploaded = NO_BILL_COUNT;          // If nothing has been uploaded, we want to just ignore this for upload
+        private double billed = NO_BILL_COUNT;    // If nothing is billed yet, then the total is still 0.
+        private double uploaded = NO_BILL_COUNT;  // If nothing has been uploaded, we want to just ignore this for upload
 
         public void addToBilled(double quantity) {
             billed += quantity;
@@ -217,11 +217,11 @@ public class ProductOrderSample implements Serializable {
                 sampleStatus.put(item.getPriceItem(), new LedgerQuantities());
             }
 
-            if ((item.getBillingSession().getBilledDate() != null) ||
+            if ((item.getBillingSession() != null) && (item.getBillingSession().getBilledDate() != null) ||
                 ((item.getBillingMessage() != null) && item.getBillingMessage().equals(BillingSession.SUCCESS))) {
                 sampleStatus.get(item.getPriceItem()).addToBilled(item.getQuantity());
             } else {
-                // The item is not part of a completed billed session, so
+                // The item is not part of a completed billed session or successfully billed item from an active session
                 sampleStatus.get(item.getPriceItem()).addToUploaded(item.getQuantity());
             }
         }

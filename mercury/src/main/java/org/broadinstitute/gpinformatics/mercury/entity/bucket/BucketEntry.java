@@ -44,6 +44,19 @@ public class BucketEntry  {
         }
     };
 
+    public static final Comparator<BucketEntry> byPdo = new Comparator<BucketEntry>() {
+        @Override
+        public int compare ( BucketEntry bucketEntryPrime, BucketEntry bucketEntrySecond ) {
+            int result;
+            result = bucketEntryPrime.getPoBusinessKey().compareTo(bucketEntrySecond.getPoBusinessKey());
+
+            if(result == 0)
+                result = bucketEntryPrime.getLabVessel().compareTo(bucketEntrySecond.getLabVessel());
+
+            return result;
+        }
+    };
+
     @SequenceGenerator (name = "SEQ_BUCKET_ENTRY", schema = "mercury",  sequenceName = "SEQ_BUCKET_ENTRY")
     @GeneratedValue (strategy = GenerationType.SEQUENCE, generator = "SEQ_BUCKET_ENTRY")
     @Id

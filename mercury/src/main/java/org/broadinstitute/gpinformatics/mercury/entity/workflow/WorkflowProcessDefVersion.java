@@ -6,7 +6,9 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Represents a specific version of a workflow process definition
@@ -20,6 +22,7 @@ public class WorkflowProcessDefVersion {
      * to allow the automation to be rolled out, but this could be addressed in Mercury by versioning.)
      * Treating steps as lists would simplify visualization and editing. */
     private List<WorkflowStepDef> workflowStepDefs = new ArrayList<WorkflowStepDef>();
+    private Map<String, WorkflowStepDef> workflowStepsByName = new HashMap<String, WorkflowStepDef>();
 
     /** For JAXB */
     WorkflowProcessDefVersion() {
@@ -32,6 +35,8 @@ public class WorkflowProcessDefVersion {
 
     public void addStep(WorkflowStepDef workflowStepDef) {
         workflowStepDefs.add(workflowStepDef);
+        workflowStepsByName.put(workflowStepDef.getName(), workflowStepDef);
+        workflowStepDef.setProcessDefVersion(this);
     }
 
     public List<WorkflowStepDef> getWorkflowStepDefs() {

@@ -130,12 +130,6 @@ public class ProductOrderForm extends AbstractJsfBean {
      * @return list of all product orders
      */
     public ProductOrderListModel getAllProductOrders() {
-        // we may be landing in this page for the first time with a long-running conversation started from another
-        // page, so make sure we've loaded the list of PDOs
-        if (allProductOrders.getRowCount() < 0) {
-            allProductOrders.setWrappedData(productOrderListEntryDao.findProductOrderListEntries());
-        }
-
         return allProductOrders;
     }
 

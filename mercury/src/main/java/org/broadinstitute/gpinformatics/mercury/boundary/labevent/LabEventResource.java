@@ -1,6 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -46,17 +50,38 @@ public class LabEventResource {
         LabBatch labBatch = labBatchDAO.findByName(batchId);
         List<LabEvent> labEventsByTime = new ArrayList<LabEvent>(labBatch.getLabEvents());
         Collections.sort(labEventsByTime, LabEvent.byEventDate);
-        List<LabEventBean> labEventBeans = buildLabEventBeans(labEventsByTime);
+        List<LabEventBean> labEventBeans = buildLabEventBeans(labEventsByTime, new LabEventFactory.LabEventRefDataFetcher() {
+            @Override
+            public BspUser getOperator(String userId) {
+                BSPUserList list = ServiceAccessUtility.getBean(BSPUserList.class);
+                return list.getByUsername(userId);
+            }
+
+            @Override
+            public BspUser getOperator(Long bspUserId) {
+                BSPUserList list = ServiceAccessUtility.getBean(BSPUserList.class);
+                return list.getById(bspUserId);
+            }
+
+            @Override
+            public LabBatch getLabBatch(String labBatchName) {
+                return null;
+            }
+        });
         return new LabEventResponseBean(labEventBeans);
     }
 
-    public List<LabEventBean> buildLabEventBeans(List<LabEvent> labEvents) {
+    public List<LabEventBean> buildLabEventBeans(List<LabEvent> labEvents,
+                                                 LabEventFactory.LabEventRefDataFetcher dataFetcherHelper) {
         List<LabEventBean> labEventBeans = new ArrayList<LabEventBean>();
+
+//        BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
+
         for (LabEvent labEvent : labEvents) {
             LabEventBean labEventBean = new LabEventBean(
                     labEvent.getLabEventType().getName(),
                     labEvent.getEventLocation(),
-                    labEvent.getEventOperator().getLogin(),
+                    dataFetcherHelper.getOperator(labEvent.getEventOperator()).getUsername(),
                     labEvent.getEventDate());
             labEventBean.setBatchId(labEvent.getLabBatch().getBatchName());
 

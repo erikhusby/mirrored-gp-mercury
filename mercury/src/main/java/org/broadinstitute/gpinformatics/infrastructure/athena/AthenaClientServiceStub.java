@@ -67,7 +67,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
     public static Product createDummyProduct() {
         return new Product("productName", new ProductFamily("ProductFamily"), "description",
             "partNumber", new Date(), new Date(), 12345678, 123456, 100, 96, "inputRequirements", "deliverables",
-            true, "workflowName", false);
+            true, "Exome Express", false);
     }
 
 

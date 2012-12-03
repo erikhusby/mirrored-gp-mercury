@@ -30,7 +30,6 @@ public class BSPUserList extends AbstractCache implements Serializable {
     @Inject
     private Deployment deployment;
 
-    @Inject
     private BSPManagerFactory bspManagerFactory;
 
     private List<BspUser> users;
@@ -117,10 +116,20 @@ public class BSPUserList extends AbstractCache implements Serializable {
                 user.getEmail().contains(lowerQuery);
     }
 
-    @PostConstruct
-    private void postConstruct() {
+    public BSPUserList() {
+    }
+
+    @Inject
+    // MLC constructor injection appears to be required to get a BSPManagerFactory injected???
+    public BSPUserList(BSPManagerFactory bspManagerFactory) {
+        this.bspManagerFactory = bspManagerFactory;
         refreshCache();
     }
+
+//    @PostConstruct
+//    private void postConstruct() {
+//        refreshCache();
+//    }
 
     @Override
     public synchronized void refreshCache() {

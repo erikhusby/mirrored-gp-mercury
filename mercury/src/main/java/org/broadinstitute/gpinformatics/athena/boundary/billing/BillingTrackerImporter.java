@@ -76,13 +76,12 @@ public class BillingTrackerImporter {
 
     }
 
-    boolean checkSampleOrdering(Workbook workbook) {
-        boolean result = false;
+    void checkSampleOrdering(Workbook workbook) {
         Cell sortCell = null;
-        int expectedSortColValue =1;
 
         int numberOfSheets = workbook.getNumberOfSheets();
         for (int i=0; i< numberOfSheets;i++) {
+            double expectedSortColValue=1;
 
             Sheet sheet = workbook.getSheetAt(i);
             String productPartNumberStr = sheet.getSheetName();
@@ -94,30 +93,33 @@ public class BillingTrackerImporter {
                 }
 
                 sortCell = row.getCell(SORT_COLUMN_COL_POS);
-                String currentSampleName = row.getCell(SAMPLE_ID_COL_POS).getStringCellValue();
-
                 if ( sortCell == null ) {
-                    //Break out of this loop since there is no PDO for this row. Assuming at the end of the valued rows.
+                    //Break out of this loop since there is no sort num value for this row. Assuming at the end of the valued rows.
                     break;
                 }
+
+                if (! isNonNullNumericCell( sortCell )) {
+                    throw new RuntimeException("Row " +  (row.getRowNum() + 1 ) +
+                            " of spreadsheet tab "  + productPartNumberStr + " has a non-numeric value is the " +
+                            SampleLedgerExporter.SORT_COLUMN_HEADING + " cell. Please correct and ensure the spreadsheet is ordered by the " +
+                            SampleLedgerExporter.SORT_COLUMN_HEADING + " column heading." );
+                }
                 double sortCellVal = sortCell.getNumericCellValue();
+
+                String currentSampleName = row.getCell(SAMPLE_ID_COL_POS).getStringCellValue();
                 if ( ! ("" + sortCellVal).equals( "" + expectedSortColValue )) {
                     throw new RuntimeException("Sample " + currentSampleName + " on row " +  (row.getRowNum() + 1 ) +
                             " of spreadsheet tab "  + productPartNumberStr + " is not in the expected position. Please re-order the spreadsheet by the " +
                             SampleLedgerExporter.SORT_COLUMN_HEADING + " column heading." );
                 }
-                expectedSortColValue++;
+                expectedSortColValue=expectedSortColValue+1;
             }
 
             if ( sortCell == null ) {
-                //Break out of this loop since there is no PDO for this row. Assuming at the end of the valued rows.
+                //Break out of this loop since there is no sort num value for this row. Assuming at the end of the valued rows.
                 break;
             }
         }
-
-
-        throw new IllegalStateException("Not Yet Implemented");
-        //return result;
 
     }
 
@@ -370,8 +372,8 @@ public class BillingTrackerImporter {
                     primaryProductPartNumber + "> in the first row and cell position " +  primaryProductHeaderCell.getColumnIndex() );
         }
 
-        //Derive the list of TrackerColumnInfo objects, and skip the billing errors
-        int totalProductsHeaders = columnHeaders.size() - numFixedHeaders - 1;
+        //Derive the list of TrackerColumnInfo objects, and skip the comments and billing errors at the end
+        int totalProductsHeaders = columnHeaders.size() - numFixedHeaders - 2;
 
         result = new ArrayList<TrackerColumnInfo>();
         int mergedCellAddOn = 0;

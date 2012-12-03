@@ -2,20 +2,19 @@ package org.broadinstitute.gpinformatics.athena.entity.common;
 
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import java.util.Date;
 
 public class ChangeEvent {
     public final Date date;
-    public final Person person;
+    public final String person;
 
-    public ChangeEvent(Person person) {
+    public ChangeEvent(String person) {
         this.person = person;
         this.date = new Date();
     }
 
-    public ChangeEvent(Date date, Person person) {
+    public ChangeEvent(Date date, String person) {
         this.date = date;
         this.person = person;
     }
@@ -25,7 +24,7 @@ public class ChangeEvent {
         return date;
     }
 
-    public Person getPerson() {
+    public String getPerson() {
         return person;
     }
 
@@ -35,7 +34,7 @@ public class ChangeEvent {
         if ( !(other instanceof ChangeEvent) ) return false;
         ChangeEvent castOther = (ChangeEvent) other;
         return new EqualsBuilder().append(date, castOther.date)
-                                  .append(person.getLogin(), castOther.person.getLogin()).isEquals();
+                                  .append(person, castOther.person).isEquals();
     }
 
     /**
@@ -44,7 +43,7 @@ public class ChangeEvent {
      */
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(date).append(person.getLogin()).toHashCode();
+        return new HashCodeBuilder().append(date).append(person).toHashCode();
     }
 
     @Override

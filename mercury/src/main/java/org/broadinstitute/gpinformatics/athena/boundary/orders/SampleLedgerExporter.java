@@ -45,14 +45,14 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             ORDER_ID_HEADING,
             "Product Order Name",
             "Project Manager",
-            // "Comments",
             DATE_COMPLETE_HEADING,
             "Quote ID",
             SORT_COLUMN_HEADING
     };
 
-    private static final int VALUE_WIDTH = 259 * 10;
+    private static final int VALUE_WIDTH = 259 * 25;
     private static final int ERRORS_WIDTH = 259 * 100;
+    private static final int COMMENTS_WIDTH = 259 * 60;
 
     private BSPUserList bspUserList;
 
@@ -132,7 +132,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         sheet.setColumnWidth(currentIndex + 1, VALUE_WIDTH);
 
         getWriter().writeCell("Billed", getBilledAmountsHeaderStyle());
-        getWriter().writeCell("New Quantity", getBilledAmountsHeaderStyle());
+        getWriter().writeCell("Update Quantity To", getBilledAmountsHeaderStyle());
 
         return currentIndex + 2;
     }
@@ -255,6 +255,17 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             }
         }
 
+        // write the comments
+        String theComment = "";
+        if (!StringUtils.isBlank(sample.getProductOrder().getComments())) {
+            theComment += sample.getProductOrder().getComments();
+        }
+
+        if (!StringUtils.isBlank(sample.getSampleComment())) {
+            theComment += "--" + sample.getSampleComment();
+        }
+        getWriter().writeCell(theComment);
+
         // Any billing messages
         String billingError = getBillingError(sample.getBillableItems());
 
@@ -298,6 +309,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
 
         Sheet sheet = getWriter().getCurrentSheet();
+        sheet.setColumnWidth(currentIndex++, COMMENTS_WIDTH);
+        getWriter().writeCell("Comments", getFixedHeaderStyle());
         sheet.setColumnWidth(currentIndex, ERRORS_WIDTH);
         getWriter().writeCell("Billing Errors", getFixedHeaderStyle());
 
