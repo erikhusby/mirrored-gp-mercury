@@ -356,6 +356,7 @@ public abstract class LabVessel {
         STATIC_PLATE("Plate"),
         PLATE_WELL("Plate Well"),
         RACK_OF_TUBES("Tube Rack"),
+        TUBE_FORMAITON("Tube Formation"),
         TUBE("Tube"),
         FLOWCELL("Flowcell"),
         STRIP_TUBE("Strip Tube"),

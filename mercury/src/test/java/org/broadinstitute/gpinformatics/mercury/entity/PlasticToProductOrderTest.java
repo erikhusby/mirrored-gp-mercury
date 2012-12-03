@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.entity;
 
 import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.StandardPOResolver;
@@ -11,8 +10,8 @@ import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -24,8 +23,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -40,34 +37,33 @@ import java.util.Map;
 import java.util.Set;
 
 import static junit.framework.Assert.*;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 @Test(groups = {TestGroups.EXTERNAL_INTEGRATION})
 public class PlasticToProductOrderTest extends ContainerTest {
 
     @Inject
-    BucketDao bucketDao;
+    private BucketDao bucketDao;
 
     @Inject
-    BucketEntryDao bucketEntryDao;
+    private BucketEntryDao bucketEntryDao;
 
     @Inject
-    BucketBean bucketResource;
+    private BucketBean bucketResource;
 
     @Inject
-    TwoDBarcodedTubeDAO tubeDAO;
+    private TwoDBarcodedTubeDAO tubeDAO;
 
     @Inject
-    RackOfTubesDao rackDAO;
+    private TubeFormationDao rackDAO;
 
     @Inject
-    StaticPlateDAO plateDAO;
+    private StaticPlateDAO plateDAO;
 
     @Inject
-    LabEventDao labEventDao;
+    private LabEventDao labEventDao;
 
     @Inject
-    LabEventFactory eventFactory;
+    private LabEventFactory eventFactory;
 
     @Inject
     private UserTransaction utx;
@@ -197,7 +193,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
 
 
         LabEvent rackToPlateTransfer = eventFactory.buildFromBettaLimsRackToPlateDbFree ( plateXfer, barcodeToTubeMap,
-                                                                                          null );
+                                                                                          null, null );
 
         BucketEntry bucketEntry = bucketResource.add(tube, PRODUCT_ORDER_KEY, bucket, "hrafal" );
 
