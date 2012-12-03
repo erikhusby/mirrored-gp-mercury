@@ -109,14 +109,14 @@
 
                     <br/>
 
-                    <p:dataTable style="width:1310px;"
+                    <p:dataTable style="width:1640px;"
                                  id="sampleData"
                                  value="#{productOrderDetail.productOrder.samples}"
                                  filteredValue="#{productOrderFilterBean.filteredSamples}"
                                  var="sample"
                                  scrollable="true"
                                  scrollHeight="650"
-                                 scrollWidth="1327">
+                                 scrollWidth="1657">
                         <f:event type="preRenderComponent" listener="#{productOrderDetail.load}"/>
                         <f:facet name="header">
                             Samples<br/>
@@ -133,6 +133,18 @@
                         </p:column>
                         <p:column headerText="Participant ID" width="150">
                             #{sample.bspDTO.patientId}
+                        </p:column>
+                        <p:column headerText="Volume" width="70">
+                            #{sample.bspDTO.volume} uL
+                        </p:column>
+                        <p:column headerText="Concentration" width="100">
+                            #{sample.bspDTO.concentration} ng/uL
+                        </p:column>
+                        <p:column headerText="Yield Amount" width="100">
+                            #{sample.bspDTO.concentration * sample.bspDTO.volume / 1000} ug
+                        </p:column>
+                        <p:column headerText="FP Status" width="60">
+                            #{sample.bspDTO.hasFingerprint ? "Yes" : "No"}
                         </p:column>
                         <p:column headerText="Status" width="100">
                             #{sample.billingStatus.displayName}
