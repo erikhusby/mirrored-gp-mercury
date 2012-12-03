@@ -58,10 +58,14 @@
                     <div class="control-group">
                         <span class="control-label label-form">Research Project</span>
                         <span class="controls">
-                        <h:link outcome="/projects/view">
-                            <f:param name="researchProject"  value="#{productOrderDetail.productOrder.researchProject.jiraTicketKey}"/>
-                            #{productOrderDetail.productOrder.researchProject.title}
-                        </h:link>
+                            <h:link outcome="/projects/view">
+                                <f:param name="researchProject"  value="#{productOrderDetail.productOrder.researchProject.jiraTicketKey}"/>
+                                <h:outputText value="#{productOrderDetail.productOrder.researchProject.title}"/>
+                            </h:link>
+                            (<h:outputLink target="JIRA" styleClass="external"
+                                          value="#{jiraLink.browseUrl(productOrderDetail.productOrder.researchProject.jiraTicketKey)}">
+                                <h:outputText value="#{productOrderDetail.productOrder.researchProject.jiraTicketKey}"/>
+                            </h:outputLink>)
                         </span>
                     </div>
 
