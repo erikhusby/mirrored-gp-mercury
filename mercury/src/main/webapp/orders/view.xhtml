@@ -141,7 +141,7 @@
                             #{sample.bspDTO.concentration} ng/uL
                         </p:column>
                         <p:column headerText="Yield Amount" width="100">
-                            #{sample.bspDTO.concentration * sample.bspDTO.volume / 1000} ug
+                            #{sample.bspDTO.total} ug
                         </p:column>
                         <p:column headerText="FP Status" width="60">
                             #{sample.bspDTO.hasFingerprint ? "Yes" : "No"}
