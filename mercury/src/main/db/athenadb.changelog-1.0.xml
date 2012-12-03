@@ -1355,4 +1355,99 @@
         <addNotNullConstraint schemaName="athena" tableName="billing_ledger" columnName="quantity" />
     </changeSet>
 
+
+    <changeSet id="GPLIM-253.1" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="product_order" columnName="title" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-253.2" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="product_order" columnName="quote_id" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-253.3" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="product_order" columnName="order_status" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-253.4" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="product_order" columnName="product" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-253.5" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="product_order" columnName="research_project" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-253.6" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="product_order" columnName="created_by" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-253.7" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="product_order_sample" columnName="sample_name" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-253.7.1" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="product_order_sample" columnName="product_order" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-253.8" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="research_project" columnName="created_by" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-253.9" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="research_project" columnName="created_date" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-253.10" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="research_project" columnName="title" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-253.11" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="research_project" columnName="synopsis" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-253.12" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="research_project_cohort" columnName="cohort_id" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-253.13" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="research_project_cohort" columnName="research_project" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-253.14" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="research_project_funding" columnName="funding_id" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-253.15" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="research_project_funding" columnName="research_project" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-253.16" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="research_projectirb" columnName="irb" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-253.17" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="research_projectirb" columnName="irb_type" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-253.18" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="research_projectirb" columnName="research_project" />
+    </changeSet>
+
 </databaseChangeLog>
