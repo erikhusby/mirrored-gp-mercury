@@ -149,7 +149,6 @@ CREATE INDEX product_order_sample_idx1 ON product_order_sample(product_order_id)
 
 CREATE TABLE product_order_sample_status (
   product_order_sample_id NUMERIC(19) NOT NULL,
-  product_order_id NUMERIC(19),
   status_date DATE NOT NULL,
   billing_status VARCHAR2(40) NOT NULL,
   etl_date DATE NOT NULL,
@@ -322,7 +321,6 @@ CREATE TABLE im_product_order_sample_stat (
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL,
   product_order_sample_id NUMERIC(19) NOT NULL,
-  product_order_id NUMERIC(19),
   status_date DATE,
   billing_status VARCHAR2(40)
 );
