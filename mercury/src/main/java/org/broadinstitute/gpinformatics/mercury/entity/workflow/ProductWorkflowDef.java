@@ -9,8 +9,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -27,6 +29,8 @@ public class ProductWorkflowDef {
 
     /** Transient list of versions, in descending order of effective date */
     private transient ArrayList<ProductWorkflowDefVersion> workflowVersionsDescEffDate;
+    private transient Map<String, ProductWorkflowDefVersion> productDefVersionsByVersion =
+        new HashMap<String, ProductWorkflowDefVersion>();
 
     public ProductWorkflowDef(String name) {
         this.name = name;
@@ -43,6 +47,7 @@ public class ProductWorkflowDef {
 
     public void addProductWorkflowDefVersion(ProductWorkflowDefVersion productWorkflowDefVersion) {
         this.productWorkflowDefVersions.add(productWorkflowDefVersion);
+        this.productDefVersionsByVersion.put ( productWorkflowDefVersion.getVersion (), productWorkflowDefVersion );
     }
 
     public List<String> validate(LabVessel labVessel, String nextEventTypeName) {
@@ -129,4 +134,10 @@ public class ProductWorkflowDef {
         assert mostRecentEffWorkflowVersion != null;
         return mostRecentEffWorkflowVersion;
     }
+
+    public ProductWorkflowDefVersion getByVersion(String version) {
+        return productDefVersionsByVersion.get(version);
+    }
+
+
 }

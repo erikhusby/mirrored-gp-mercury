@@ -19,7 +19,7 @@ import java.util.Date;
  */
 public abstract class AbstractSpreadsheetExporter {
 
-    public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
+    public static final DateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd-HH:mm:ss");
 
     private final Workbook workbook;
 

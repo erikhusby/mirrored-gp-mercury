@@ -17,8 +17,8 @@
             <f:metadata>
                 <f:viewParam name="researchProject" value="#{productOrderDetail.productOrder.researchProject}" converter="#{researchProjectConverter}"/>
                 <f:viewParam name="product" value="#{productOrderDetail.productOrder.product}" converter="#{productConverter}"/>
+                <f:event type="preRenderView" listener="#{productOrderForm.initForm}"/>
             </f:metadata>
-            <f:event type="preRenderView" listener="#{productOrderForm.initForm}"/>
             <f:event type="preRenderView" listener="#{researchProjectBean.initView}"/>
         </ui:define>
 

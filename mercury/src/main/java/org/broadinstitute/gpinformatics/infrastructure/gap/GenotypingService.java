@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.gap;
 
 import org.broadinstitute.gpinformatics.infrastructure.UserNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.experiments.ExperimentRequestSummary;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import java.util.List;
 
@@ -16,7 +15,7 @@ public interface GenotypingService {
 
 
     // Get a list of experiment request summaries
-    public List<ExperimentRequestSummary> getRequestSummariesByCreator(final Person creator) throws UserNotFoundException;
+    public List<ExperimentRequestSummary> getRequestSummariesByCreator(final String creator) throws UserNotFoundException;
 
     // Get all supported platforms and products
     public Platforms getPlatforms();

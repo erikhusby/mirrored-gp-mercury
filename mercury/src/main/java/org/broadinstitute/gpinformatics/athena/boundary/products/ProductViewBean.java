@@ -44,7 +44,7 @@ public class ProductViewBean extends AbstractJsfBean {
     private Conversation conversation;
 
     public void initView() {
-        if (!facesContext.isPostback()) {
+        if (!facesContext.isPostback() && shouldRenderForm()) {
             addOnData.setValues(new ArrayList<Product>(product.getAddOns()));
             Collections.sort(addOnData.getValues());
             priceItemData.setValues(new ArrayList<PriceItem>(product.getOptionalPriceItems()));
@@ -56,11 +56,9 @@ public class ProductViewBean extends AbstractJsfBean {
     }
 
     public void onPreRenderView() throws IOException {
-        if (!facesContext.isPostback()) {
-            if (product == null) {
+        if (! shouldRenderForm()) {
                 addErrorMessage("No product with this part number exists.");
                 facesContext.renderResponse();
-            }
         }
     }
 

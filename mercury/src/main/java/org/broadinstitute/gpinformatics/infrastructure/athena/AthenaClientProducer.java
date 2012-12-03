@@ -2,7 +2,10 @@ package org.broadinstitute.gpinformatics.infrastructure.athena;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
+import javax.enterprise.context.SessionScoped;
+import javax.enterprise.inject.Default;
 import javax.enterprise.inject.New;
+import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 
 /**
@@ -15,6 +18,9 @@ public class AthenaClientProducer {
     @Inject
     private Deployment deployment;
 
+    @Produces
+    @Default
+    @SessionScoped
     public AthenaClientService produce(@New AthenaClientServiceStub stub, @New AthenaClientServiceImpl impl) {
 
         if(deployment == Deployment.STUBBY)

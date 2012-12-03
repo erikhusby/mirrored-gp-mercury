@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
 import javax.xml.bind.annotation.XmlAccessType;
@@ -23,6 +26,7 @@ public class ProductWorkflowDefVersion {
     // When serializing, we want to refer to WorkflowConfig.workflowProcessDefs, not make copies of them
     @XmlIDREF
     private List<WorkflowProcessDef> workflowProcessDefs = new ArrayList<WorkflowProcessDef>();
+    private transient Map<String, WorkflowProcessDef> processDefsByName = new HashMap<String, WorkflowProcessDef>();
 
     private List<String> entryPointsUsed = new ArrayList<String>();
     private transient Map<String, LabEventNode> mapNameToLabEvent;
@@ -50,12 +54,18 @@ public class ProductWorkflowDefVersion {
         return workflowProcessDefs;
     }
 
+    public WorkflowProcessDef getProcessDefsByName (String processDefName) {
+        return processDefsByName.get(processDefName);
+    }
+
     public List<String> getEntryPointsUsed() {
         return entryPointsUsed;
     }
 
     public void addWorkflowProcessDef(WorkflowProcessDef workflowProcessDef) {
         this.workflowProcessDefs.add(workflowProcessDef);
+        this.processDefsByName.put ( workflowProcessDef.getName (), workflowProcessDef );
+        workflowProcessDef.setProductWorkflowDef(this);
     }
 
     public void addEntryPointUsed(String entryPoint) {
@@ -75,14 +85,17 @@ public class ProductWorkflowDefVersion {
     }
 
     static class LabEventNode {
-        private LabEventType labEventType;
-        private boolean optional;
+        private final LabEventType labEventType;
+        private final boolean optional;
         private List<LabEventNode> predecessors = new ArrayList<LabEventNode>();
         private List<LabEventNode> successors = new ArrayList<LabEventNode>();
 
-        LabEventNode(LabEventType labEventType, boolean optional) {
+        private final WorkflowStepDef referencedStep;
+
+        LabEventNode ( LabEventType labEventType, boolean optional, WorkflowStepDef stepDef ) {
             this.labEventType = labEventType;
             this.optional = optional;
+            this.referencedStep = stepDef;
         }
 
         public LabEventType getLabEventType() {
@@ -108,6 +121,10 @@ public class ProductWorkflowDefVersion {
         public boolean isOptional() {
             return optional;
         }
+
+        public WorkflowStepDef getReferencedStep () {
+            return referencedStep;
+        }
     }
 
     public void buildLabEventGraph() {
@@ -117,7 +134,7 @@ public class ProductWorkflowDefVersion {
             for (WorkflowStepDef workflowStepDef : effectiveProcessDef.getWorkflowStepDefs()) {
                 for (LabEventType labEventType : workflowStepDef.getLabEventTypes()) {
                     // todo jmt optional should probably be on the message, not the step
-                    LabEventNode labEventNode = new LabEventNode(labEventType, workflowStepDef.isOptional());
+                    LabEventNode labEventNode = new LabEventNode(labEventType, workflowStepDef.isOptional(), workflowStepDef );
                     mapNameToLabEvent.put(labEventType.getName(), labEventNode);
                     if(rootLabEventNode == null) {
                         rootLabEventNode = labEventNode;
@@ -138,5 +155,46 @@ public class ProductWorkflowDefVersion {
             buildLabEventGraph();
         }
         return mapNameToLabEvent.get(eventTypeName);
+    }
+
+    /**
+     * Based on the name of an event type, determine if the known previous workflow step is a bucket
+     * @param eventTypeName Event name associated with workflow process step
+     * @return true if the step before the one associated with with the given event name is defined as a bucket by the
+     * workflow
+     */
+    public boolean isPreviousStepBucket(String eventTypeName) {
+        WorkflowStepDef previousStep = getPreviousStep(eventTypeName);
+
+        return OrmUtil.proxySafeIsInstance ( previousStep, WorkflowBucketDef.class );
+    }
+
+    /**
+     * Based on an event type name which is associated with a particular workflow process step, this method will return
+     * the configured workflow step which is defined as the given event types' predecessor
+     * @param eventTypeName Event name associated with workflow process step
+     * @return an instance of a {@link WorkflowStepDef} that is associated with the step that is defined as the given
+     * event types' predecessor
+     */
+    public WorkflowStepDef getPreviousStep(String eventTypeName) {
+        return findStepByEventType(eventTypeName).getPredecessors().get(0).getReferencedStep();
+    }
+
+    @Override
+    public boolean equals ( Object o ) {
+        if ( this == o )
+            return true;
+        if ( !( o instanceof ProductWorkflowDefVersion ) )
+            return false;
+
+        ProductWorkflowDefVersion that = ( ProductWorkflowDefVersion ) o;
+
+        return new EqualsBuilder().append(effectiveDate, that.effectiveDate).append(version, that.version).isEquals();
+    }
+
+    @Override
+    public int hashCode () {
+
+        return new HashCodeBuilder().append(version).append(effectiveDate).toHashCode();
     }
 }

@@ -1,11 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BasePlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.person.PersonDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
@@ -13,12 +15,12 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDA
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StripTubeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.GenericReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -94,8 +96,7 @@ public class LabEventFactory {
     @Inject
     private StaticPlateDAO staticPlateDAO;
 
-    @Inject
-    private PersonDAO personDAO;
+    private transient BSPUserList bspUserList;
 
     @Inject
     private RackOfTubesDao rackOfTubesDao;
@@ -118,20 +119,35 @@ public class LabEventFactory {
     public LabEventFactory () {
     }
 
-    public LabEventFactory ( PersonDAO personDAO ) {
-        this.personDAO = personDAO;
+    public LabEventFactory ( BSPUserList userList ) {
+        this.bspUserList = userList;
     }
 
     public interface LabEventRefDataFetcher {
-        Person getOperator ( String userId );
+        BspUser getOperator ( String userId );
+        BspUser getOperator ( Long bspUserId );
 
         LabBatch getLabBatch ( String labBatchName );
     }
 
     private LabEventRefDataFetcher labEventRefDataFetcher = new LabEventRefDataFetcher () {
+
         @Override
-        public Person getOperator ( String userId ) {
-            return personDAO.findByName ( userId );
+        public BspUser getOperator ( String userId ) {
+            BSPUserList testList = bspUserList;
+            if(bspUserList == null) {
+                testList= ServiceAccessUtility.getBean ( BSPUserList.class );
+            }
+            return testList.getByUsername ( userId );
+        }
+
+        @Override
+        public BspUser getOperator ( Long bspUserId ) {
+            BSPUserList testList = bspUserList;
+            if(bspUserList == null) {
+                testList= ServiceAccessUtility.getBean ( BSPUserList.class );
+            }
+            return testList.getById(bspUserId);
         }
 
         @Override
@@ -251,20 +267,21 @@ public class LabEventFactory {
     /**
      * Modify disambiguators of other events in the same message, if necessary, and persist an event
      *
-     * @param uniqueEvents events in a message
-     * @param labEvent     event to be persisted
-     * @param performFlush
+     * @param uniqueEvents    events in a message
+     * @param labEvent        event to be persisted
+     * @param persistEntities
      */
-    private void persistLabEvent ( Set<UniqueEvent> uniqueEvents, LabEvent labEvent, boolean performFlush ) {
+    private void persistLabEvent(Set<UniqueEvent> uniqueEvents, LabEvent labEvent, boolean persistEntities) {
         // The deck-side scripts don't always set the disambiguator correctly, so modify it, to make it unique
         // within this message, if necessary
-        while ( !uniqueEvents.add ( new UniqueEvent ( labEvent.getEventLocation (), labEvent.getEventDate (),
-                                                      labEvent.getDisambiguator () ) ) ) {
-            labEvent.setDisambiguator ( labEvent.getDisambiguator () + 1 );
+        while (!uniqueEvents.add(new UniqueEvent(labEvent.getEventLocation(), labEvent.getEventDate(),
+                                                 labEvent.getDisambiguator()))) {
+            labEvent.setDisambiguator(labEvent.getDisambiguator() + 1);
         }
-        labEventDao.persist ( labEvent );
-        if(performFlush)
-        labEventDao.flush ();
+        if (persistEntities) {
+            labEventDao.persist(labEvent);
+            labEventDao.flush();
+        }
     }
 
     /**
@@ -669,9 +686,15 @@ public class LabEventFactory {
         RackOfTubes targetRackOfTubes = buildRack ( mapBarcodeToTargetTubes, plateTransferEvent.getPlate (),
                                                     plateTransferEvent.getPositionMap () );
 
-        labEvent.getSectionTransfers().add(new SectionTransfer(
-                sourceRack.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection ()),
-                targetRackOfTubes.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection ()), labEvent));
+        labEvent.getSectionTransfers().add ( new SectionTransfer ( sourceRack.getContainerRole (),
+                                                                   SBSSection.getBySectionName (
+                                                                           plateTransferEvent.getSourcePlate ()
+                                                                                             .getSection() ),
+                                                                   targetRackOfTubes.getContainerRole (),
+                                                                   SBSSection.getBySectionName (
+                                                                           plateTransferEvent.getPlate ()
+                                                                                             .getSection() ),
+                                                                   labEvent ) );
         return labEvent;
     }
 
@@ -873,7 +896,9 @@ public class LabEventFactory {
         if ( labEventType == null ) {
             throw new RuntimeException ( "Unexpected event type " + stationEventType.getEventType () );
         }
-        Person operator = labEventRefDataFetcher.getOperator ( stationEventType.getOperator () );
+
+        Long operator = labEventRefDataFetcher.getOperator( stationEventType.getOperator () ).getUserId();
+
         if ( operator == null ) {
             throw new RuntimeException ( "Failed to find operator " + stationEventType.getOperator () );
         }
@@ -902,41 +927,37 @@ public class LabEventFactory {
      * Based on a collection of {@link LabVessel}s to be processed, this method will generate the appropriate event
      * to associate with each Vessel
      *
-     *
-     *
-     *
-     * @param pdoToVessels a Map of lab vessels.  Contains Lists of Lab vessels each indexed by the Product Order
-     *                     business key to which they are associated
-     * @param actor        representation of the user that submitted the request
-     *                     TODO sgm or jmt: replace with String or ID and use BSPUserList
-     * @param batchIn      LabBatch to which the created events will be associate
-     *
+     * @param entryCollection
+     * @param operator        representation of the user that submitted the request
+     * @param batchIn         LabBatch to which the created events will be associate
      * @param eventLocation
      * @param eventType
+     *
      * @return A collection of the created events for the submitted lab vessels
      */
-    public Collection<LabEvent> buildFromBatchRequests ( @Nonnull Map<String, Collection<LabVessel>> pdoToVessels, Person actor,
-                                                         LabBatch batchIn, @Nonnull String eventLocation,
-                                                         @Nonnull LabEventType eventType ) {
+    public Collection<LabEvent> buildFromBatchRequests(@Nonnull Collection<BucketEntry> entryCollection,
+                                                       String operator, LabBatch batchIn, @Nonnull String eventLocation,
+                                                       @Nonnull LabEventType eventType) {
 
         long workCounter = 1L;
 
-        List<LabEvent> fullEventList = new LinkedList<LabEvent> ();
+        List<LabEvent> fullEventList = new LinkedList<LabEvent>();
 
         Set<UniqueEvent> uniqueEvents = new HashSet<UniqueEvent>();
 
-        for ( Map.Entry<String, Collection<LabVessel>> mapEntry : pdoToVessels.entrySet () ) {
-            List<LabEvent> events = new LinkedList<LabEvent> ();
-            for ( LabVessel currVessel : mapEntry.getValue () ) {
-                LabEvent currEvent = createFromBatchItems ( mapEntry.getKey (), currVessel, workCounter++, actor,
-                                                            eventType, eventLocation );
-                if(null != batchIn)
-                    currEvent.setLabBatch ( batchIn );
+        //        for (Map.Entry<String, Collection<LabVessel>> mapEntry : entryCollection.entrySet()) {
+        for (BucketEntry mapEntry : entryCollection) {
+            List<LabEvent> events = new LinkedList<LabEvent>();
+            //            for (LabVessel currVessel : mapEntry.getLabVessel()) {
+            LabEvent currEvent = createFromBatchItems(mapEntry.getPoBusinessKey(), mapEntry.getLabVessel(),
+                                                      workCounter++, operator, eventType, eventLocation);
+            if (null != batchIn)
+                currEvent.setLabBatch(batchIn);
 
-                persistLabEvent(uniqueEvents, currEvent, false );
-                events.add ( currEvent );
-            }
-            fullEventList.addAll ( events );
+            persistLabEvent(uniqueEvents, currEvent, false);
+            events.add(currEvent);
+            //            }
+            fullEventList.addAll(events);
         }
         return fullEventList;
     }
@@ -947,19 +968,23 @@ public class LabEventFactory {
      * Order ID to the event for reference
      *
      *
+     *
+     *
      * @param pdoKey
      * @param batchItem
      * @param disambiguator
-     * @param actor
+     * @param operator
      * @param eventType
      * @param eventLocation
      * @return
      */
     public LabEvent createFromBatchItems ( @Nonnull String pdoKey, @Nonnull LabVessel batchItem,
-                                           @Nonnull Long disambiguator, Person actor,
+                                           @Nonnull Long disambiguator, String operator,
                                            @Nonnull LabEventType eventType, @Nonnull String eventLocation ) {
 
-        LabEvent bucketMoveEvent = new LabEvent ( eventType, new Date (), eventLocation, disambiguator, actor );
+        Long operatorInfo = labEventRefDataFetcher.getOperator(operator).getUserId();
+
+        LabEvent bucketMoveEvent = new LabEvent ( eventType, new Date (), eventLocation, disambiguator, operatorInfo );
 
         bucketMoveEvent.setProductOrderId ( pdoKey );
         batchItem.addInPlaceEvent(bucketMoveEvent);

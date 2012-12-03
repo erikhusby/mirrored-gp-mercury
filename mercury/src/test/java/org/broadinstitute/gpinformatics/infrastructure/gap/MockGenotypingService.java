@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.gap;
 
 import org.broadinstitute.gpinformatics.infrastructure.experiments.ExperimentRequestSummary;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import javax.enterprise.inject.Alternative;
 import java.util.List;
@@ -20,7 +19,7 @@ public class MockGenotypingService implements GenotypingService {
     }
 
     @Override
-    public List<ExperimentRequestSummary> getRequestSummariesByCreator(final Person creator) {
+    public List<ExperimentRequestSummary> getRequestSummariesByCreator(final String creator) {
         //TODO
         throw new IllegalStateException("Not Yet Implemented");
         //return null;  //To change body of implemented methods use File | Settings | File Templates.

@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.experiments;
 
 import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectId;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import java.util.Date;
 
@@ -19,7 +18,7 @@ public class ExperimentRequestSummaryTest {
 
     public void setUp() throws Exception {
         experimentRequestSummary = new ExperimentRequestSummary(
-                "An Experiment Title", new Person("athena"), new Date(), ExperimentType.WholeGenomeSequencing);
+                "An Experiment Title", "athena", new Date(), ExperimentType.WholeGenomeSequencing);
         experimentRequestSummary.setResearchProjectId(new ResearchProjectId("testResearchProject"));
     }
 
@@ -34,7 +33,7 @@ public class ExperimentRequestSummaryTest {
     public void testCreation() throws Exception {
         Assert.assertNotNull(experimentRequestSummary.getCreation());
         Assert.assertNotNull(experimentRequestSummary.getCreation().date);
-        Assert.assertEquals(experimentRequestSummary.getCreation().person.getLogin(), "athena");
+        Assert.assertEquals(experimentRequestSummary.getCreation().person, "athena");
     }
 
     public void testGetRemoteId() throws Exception {
