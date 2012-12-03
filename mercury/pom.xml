@@ -676,9 +676,9 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.21:1521:gpinfprd</database.url>
-                <mercury.password>guest</mercury.password>
-                <athena.password>guest</athena.password>
+                <database.url>jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</database.url>
+                <mercury.password>mercury_dev</mercury.password>
+                <athena.password>athena_dev</athena.password>
             </properties>
             <build>
                 <testResources>

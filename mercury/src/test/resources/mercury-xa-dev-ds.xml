@@ -5,7 +5,7 @@
         http://www.jboss.org/ironjacamar/schema
         http://docs.jboss.org/ironjacamar/schema/datasources_1_0.xsd">
     <xa-datasource jndi-name="java:jboss/jdbc/mercury_pool" pool-name="mercury_pool" enabled="true">
-        <xa-datasource-property name="URL">jdbc:oracle:thin:@192.168.195.21:1521:gpinfprd</xa-datasource-property>
+        <xa-datasource-property name="URL">jdbc:oracle:thin:@vmgpinform:1521:gpinfdev</xa-datasource-property>
         <xa-datasource-class>oracle.jdbc.xa.client.OracleXADataSource</xa-datasource-class>
         <driver>com.oracle</driver>
         <!-- For XA in Postgres, in data/postgresql.conf, set max_prepared_transactions = 10 and restart Postgres -->
@@ -17,7 +17,7 @@
 -->
         <security>
             <user-name>mercury</user-name>
-            <password>guest</password>
+            <password>mercury_dev</password>
             <!--<password>mercury_local</password>-->
         </security>
         <validation>
