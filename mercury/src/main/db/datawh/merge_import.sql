@@ -582,7 +582,6 @@ END LOOP;
 FOR new IN im_po_sample_stat_cur LOOP
   BEGIN
     UPDATE product_order_sample_status SET
-      product_order_id = new.product_order_id,
       billing_status = new.billing_status,
       etl_date = new.etl_date
     WHERE product_order_sample_id = new.product_order_sample_id
@@ -590,14 +589,12 @@ FOR new IN im_po_sample_stat_cur LOOP
 
     INSERT INTO product_order_sample_status (
       product_order_sample_id,
-      product_order_id,
       status_date,
       billing_status,
       etl_date
     )
     SELECT
       new.product_order_sample_id,
-      new.product_order_id,
       new.status_date,
       new.billing_status,
       new.etl_date
