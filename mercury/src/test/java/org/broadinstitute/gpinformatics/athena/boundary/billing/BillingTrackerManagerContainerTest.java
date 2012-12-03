@@ -98,8 +98,8 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
             String rnaOrderId = "PDO-23";
             ProductOrder productOrder = rnaProductOrders.get(0);
             Set<BillingLedger> ledgerSet = billingLedgerDao.findByOrderList(new ProductOrder[]{productOrder});
-            // should be 11 records in the set
-            Assert.assertEquals(11, ledgerSet.size());
+            // There should be ledger entries
+            Assert.assertFalse(ledgerSet.isEmpty());
             BillingLedger[] ledgerArray = ledgerSet.toArray(new BillingLedger[0]);
             List<BillingLedger> ledgerList = Arrays.asList( ledgerArray );
             Collections.sort(ledgerList, new Comparator<BillingLedger>() {
