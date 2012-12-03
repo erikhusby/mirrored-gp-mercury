@@ -137,8 +137,7 @@ public class BillingSession {
                     status = RemoveStatus.AllRemoved;
                 }
             } else {
-                // clear out the OK message and the complete date when items are billed
-                ledgerItem.setWorkCompleteDate(null);
+                // clear out the OK message when items are billed
                 ledgerItem.setBillingMessage(null);
 
                 // If this IS none removed, then success indicates we are still none removed. Otherwise the
