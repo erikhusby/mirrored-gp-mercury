@@ -110,10 +110,18 @@ public class BSPUserList extends AbstractCache implements Serializable {
     }
 
     private static boolean anyFieldMatches(String lowerQuery, BspUser user) {
-        return user.getFirstName().toLowerCase().contains(lowerQuery) ||
-            user.getLastName().toLowerCase().contains(lowerQuery) ||
-            user.getUsername().contains(lowerQuery) ||
-                user.getEmail().contains(lowerQuery);
+        return safeToLowerCase(user.getFirstName()).contains(lowerQuery) ||
+               safeToLowerCase(user.getLastName()).contains(lowerQuery) ||
+               safeToLowerCase(user.getUsername()).contains(lowerQuery) ||
+               safeToLowerCase(user.getEmail()).contains(lowerQuery);
+    }
+
+    private static String safeToLowerCase(String s) {
+        if (s == null) {
+            return "";
+        } else {
+            return s.toLowerCase();
+        }
     }
 
     public BSPUserList() {
