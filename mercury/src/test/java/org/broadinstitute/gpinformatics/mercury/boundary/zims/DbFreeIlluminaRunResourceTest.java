@@ -76,18 +76,4 @@ public class DbFreeIlluminaRunResourceTest {
 
     }
 
-    @Test(groups = DATABASE_FREE)
-    public void test_mercury_fields() throws Exception {
-        TZamboniRun thriftRun = ThriftFileAccessor.deserializeRun();
-        ResearchProject project = new ResearchProject(1L,"RP title","rp synopsis",false);
-        ProductOrder pdo = new ProductOrder(new BspUser(),project);
-
-
-        ZimsIlluminaRun runBean = new IlluminaRunResource(
-                new MockThriftService(),
-                new BSPSampleDataFetcher(new BSPSampleSearchServiceStub())
-        ).getRun(thriftRun,new HashMap<String, BSPSampleDTO>(),new SquidThriftLibraryConverter());
-        IlluminaRunResourceTest.doAssertions(thriftRun,runBean);
-    }
-
 }

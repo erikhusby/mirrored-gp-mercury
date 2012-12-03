@@ -53,27 +53,27 @@ public class ProductOrderFixupTest extends Arquillian {
      * Change quote for a PDO, see http://prodinfojira.broadinstitute.org:8080/jira/browse/GPLIM-365
      * @throws Exception
      */
-    @Test(enabled = false)
+    @Test(enabled = true)
     public void change_quote_for_pdo() throws Exception {
-        String jiraKey = "PDO-58";
-        String newQuote = "STC8F2";
-        ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraKey);
+        String[] pdos = new String[] {
+                "PDO-8",
+                "PDO-23",
+                "PDO-35" ,
+                "PDO-42"  ,
+                "PDO-57"   ,
+                "PDO-60"    ,
+                "PDO-74"
+        };
 
-        Map<String, CustomFieldDefinition> jiraFields = jiraService.getCustomFields();
-        Set<CustomField> customFields = new HashSet<CustomField>();
+        String newQuote = "GP85N";
 
-        for (Map.Entry<String, CustomFieldDefinition> stringCustomFieldDefinitionEntry : jiraFields.entrySet()) {
-            System.out.println(stringCustomFieldDefinitionEntry.getKey());
-            if (stringCustomFieldDefinitionEntry.getKey().equals("Quote ID")) {
-                CustomField quoteCustomField = new CustomField(stringCustomFieldDefinitionEntry.getValue(),newQuote, CustomField.SingleFieldType.TEXT);
-                customFields.add(quoteCustomField);
-            }
+        for (String jiraKey : pdos) {
+            ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraKey);
+            productOrder.setQuoteId(newQuote);
+            // The entity is already persistent, this call to persist is solely to begin and end a transaction, so the
+            // change gets flushed.  This is an artifact of the test environment.
+            productOrderDao.persist(productOrder);
         }
 
-        jiraService.updateIssue(jiraKey,customFields);
-        productOrder.setQuoteId(newQuote);
-        // The entity is already persistent, this call to persist is solely to begin and end a transaction, so the
-        // change gets flushed.  This is an artifact of the test environment.
-        productOrderDao.persist(productOrder);
     }
 }

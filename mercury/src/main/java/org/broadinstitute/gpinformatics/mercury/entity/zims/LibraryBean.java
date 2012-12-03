@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.zims;
 import edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme;
 import edu.mit.broad.prodinfo.thrift.lims.TZDevExperimentData;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.codehaus.jackson.annotate.JsonProperty;
 
@@ -147,6 +149,12 @@ public class LibraryBean {
     @JsonProperty
     private String mercuryProjectKey;
 
+    @JsonProperty
+    private String mercuryProduct;
+
+    @JsonProperty
+    private String mercuryProductFamily;
+
     public LibraryBean() {}
 
     public LibraryBean(String library, String project, String initiative, Long workRequest,
@@ -208,6 +216,14 @@ public class LibraryBean {
             if (mercuryProject != null) {
                 this.mercuryProjectKey = mercuryProject.getBusinessKey();
                 this.mercuryProjectTitle = mercuryProject.getTitle();
+            }
+            Product product = productOrder.getProduct();
+            if (product != null) {
+                mercuryProduct = product.getProductName();
+                ProductFamily family = product.getProductFamily();
+                if (family != null) {
+                    mercuryProductFamily = family.getName();
+                }
             }
         }
         this.lcSet = lcSet;
@@ -376,5 +392,13 @@ public class LibraryBean {
 
     public String getMercuryProjectTitle() {
         return mercuryProjectTitle;
+    }
+
+    public String getMercuryProduct() {
+        return mercuryProduct;
+    }
+
+    public String getMercuryProductFamily() {
+        return mercuryProductFamily;
     }
 }

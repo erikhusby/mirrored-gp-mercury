@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 
 import edu.mit.broad.prodinfo.thrift.lims.*;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
@@ -41,7 +42,7 @@ public class IlluminaRunResource implements Serializable {
     ThriftService thriftService;
 
     @Inject
-    GenericDao genericDao;
+    ProductOrderDao genericDao;
 
     public IlluminaRunResource() {
     }
@@ -102,7 +103,12 @@ public class IlluminaRunResource implements Serializable {
             final List<LibraryBean> libraries = new ArrayList<LibraryBean>(96);
             for (TZamboniLibrary zamboniLibrary : tZamboniLane.getLibraries()) {
                 BSPSampleDTO bspDTO = lsidToBSPSample.get(zamboniLibrary.getLsid());
-                ProductOrder pdo = null;//genericDao.findSingle(ProductOrder.class,ProductOrder_.jiraTicketKey,zamboniLibrary.getPdoKey());
+                ProductOrder pdo = null;
+                /*
+                if (zamboniLibrary.getPdoKey() != null) {
+                    pdo = genericDao.findSingle(ProductOrder.class,ProductOrder_.jiraTicketKey,zamboniLibrary.getPdoKey());
+                }
+                */
                 libraries.add(thriftLibConverter.convertLibrary(zamboniLibrary,bspDTO,pdo));
             }
             //TODO SGM:  pull lane library name from tZamboniLane
