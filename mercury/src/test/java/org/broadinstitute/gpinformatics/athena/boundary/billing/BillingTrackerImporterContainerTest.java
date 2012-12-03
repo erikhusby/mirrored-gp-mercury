@@ -96,7 +96,8 @@ public class BillingTrackerImporterContainerTest  extends Arquillian {
             String rnaPriceItemName = "Strand Specific RNA-Seq (high coverage-50M paired reads)";
             BillableRef rnaBillableRef = new BillableRef(rnaProductName, rnaPriceItemName);
             OrderBillSummaryStat rnaPrimaryProductStatData = rnaBillingOrderDataByBillableRef.get(rnaBillableRef);
-            Assert.assertEquals(4.0, rnaPrimaryProductStatData.getCharge());
+            Assert.assertEquals(3.0, rnaPrimaryProductStatData.getCharge());
+            Assert.assertEquals(0.0, rnaPrimaryProductStatData.getCredit());
 
             // First AddOn data
             String rnaAddonName = "P-ESH-0004";
@@ -104,13 +105,15 @@ public class BillingTrackerImporterContainerTest  extends Arquillian {
             BillableRef rnaAddonBillableRef = new BillableRef(rnaAddonName, rnaAddonPriceItemName);
             OrderBillSummaryStat rnaAddonStatData = rnaBillingOrderDataByBillableRef.get(rnaAddonBillableRef);
             Assert.assertEquals(4.0, rnaAddonStatData.getCharge());
+            Assert.assertEquals(0.0, rnaAddonStatData.getCredit());
 
             // Second AddOn data
             String rnaSecondAddonName = "P-ESH-0008";
             String rnaSecondAddonPriceItemName = "RNA Extract from FFPE";
             BillableRef rnaSecondAddonBillableRef = new BillableRef(rnaSecondAddonName, rnaSecondAddonPriceItemName);
             OrderBillSummaryStat rnaSecondAddonStatData = rnaBillingOrderDataByBillableRef.get(rnaSecondAddonBillableRef);
-            Assert.assertEquals(2.0, rnaSecondAddonStatData.getCharge());
+            Assert.assertEquals(0.0, rnaSecondAddonStatData.getCharge());
+            Assert.assertEquals(-6.0, rnaSecondAddonStatData.getCredit());
 
 
 //        // Check the ExomeExpress Data
