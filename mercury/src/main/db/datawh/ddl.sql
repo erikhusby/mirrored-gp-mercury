@@ -44,7 +44,7 @@ CREATE TABLE price_item (
 
 CREATE TABLE research_project (
   research_project_id NUMERIC(19) PRIMARY KEY NOT NULL,
-  current_status VARCHAR2(19) NOT NULL,
+  current_status VARCHAR2(40) NOT NULL,
   created_date DATE NOT NULL,
   title VARCHAR2(255) NOT NULL,
   irb_not_engaged CHAR(1) CHECK (irb_not_engaged IN ('T','F')),
@@ -55,7 +55,7 @@ CREATE TABLE research_project (
 CREATE TABLE research_project_status (
   research_project_id NUMERIC(19) NOT NULL,
   status_date DATE NOT NULL,
-  status VARCHAR2(19) NOT NULL,
+  status VARCHAR2(40) NOT NULL,
   etl_date DATE NOT NULL,
   CONSTRAINT fk_rp_status_rpid FOREIGN KEY (research_project_id)
     REFERENCES research_project(research_project_id),
@@ -109,7 +109,7 @@ CREATE TABLE product_order (
   product_order_id NUMERIC(19) PRIMARY KEY NOT NULL,
   research_project_id NUMERIC(19) NOT NULL,
   product_id NUMERIC(19) NOT NULL,
-  status VARCHAR2(19) NOT NULL,
+  status VARCHAR2(40) NOT NULL,
   created_date DATE NOT NULL,
   modified_date DATE,
   title VARCHAR2(255),
@@ -128,7 +128,7 @@ CREATE INDEX product_order_idx2 ON product_order(product_id);
 CREATE TABLE product_order_status (
   product_order_id NUMERIC(19) NOT NULL,
   status_date DATE NOT NULL,
-  status VARCHAR2(19) NOT NULL,
+  status VARCHAR2(40) NOT NULL,
   etl_date DATE NOT NULL,
   CONSTRAINT fk_po_status_poid FOREIGN KEY (product_order_id)
     REFERENCES product_order(product_order_id),
@@ -139,7 +139,7 @@ CREATE TABLE product_order_sample (
   product_order_sample_id NUMERIC(19) PRIMARY KEY NOT NULL,
   product_order_id NUMERIC(19) NOT NULL,
   sample_name VARCHAR2(255),
-  billing_status VARCHAR2(19) NOT NULL,
+  billing_status VARCHAR2(40) NOT NULL,
   etl_date DATE NOT NULL,
   CONSTRAINT fk_pos_poid FOREIGN KEY (product_order_id)
     REFERENCES product_order(product_order_id)
@@ -151,7 +151,7 @@ CREATE TABLE product_order_sample_status (
   product_order_sample_id NUMERIC(19) NOT NULL,
   product_order_id NUMERIC(19),
   status_date DATE NOT NULL,
-  billing_status VARCHAR2(19) NOT NULL,
+  billing_status VARCHAR2(40) NOT NULL,
   etl_date DATE NOT NULL,
   CONSTRAINT fk_po_sample_b_s_po_sid FOREIGN KEY (product_order_sample_id)
     REFERENCES product_order_sample(product_order_sample_id),
@@ -237,7 +237,7 @@ CREATE TABLE im_research_project (
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL,
   research_project_id NUMERIC(19) NOT NULL,
-  current_status VARCHAR2(19),
+  current_status VARCHAR2(40),
   created_date DATE,
   title VARCHAR2(255),
   irb_not_engaged CHAR(1) CHECK (irb_not_engaged IN ('T','F')),
@@ -250,7 +250,7 @@ CREATE TABLE im_research_project_status (
   is_delete CHAR(1) NOT NULL,
   research_project_id NUMERIC(19) NOT NULL,
   status_date DATE,
-  status VARCHAR2(19)
+  status VARCHAR2(40)
 );
 
 CREATE TABLE im_research_project_person (
@@ -300,7 +300,7 @@ CREATE TABLE im_product_order (
   product_order_id NUMERIC(19) NOT NULL,
   research_project_id NUMERIC(19),
   product_id NUMERIC(19),
-  status VARCHAR2(19),
+  status VARCHAR2(40),
   created_date DATE,
   modified_date DATE,
   title VARCHAR2(255),
@@ -308,13 +308,13 @@ CREATE TABLE im_product_order (
   jira_ticket_key VARCHAR2(255)
 );
 
-CREATE TABLE im_product_order_status (
+CREATE TABLE im_product_order_status 
   line_number NUMERIC(9) NOT NULL,
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL,
   product_order_id NUMERIC(19) NOT NULL,
   status_date DATE,
-  status VARCHAR2(19)
+  status VARCHAR2(40)
 );
 
 CREATE TABLE im_product_order_sample_stat (
@@ -324,7 +324,7 @@ CREATE TABLE im_product_order_sample_stat (
   product_order_sample_id NUMERIC(19) NOT NULL,
   product_order_id NUMERIC(19),
   status_date DATE,
-  billing_status VARCHAR2(19)
+  billing_status VARCHAR2(40)
 );
 
 
@@ -335,7 +335,7 @@ CREATE TABLE im_product_order_sample (
   product_order_sample_id NUMERIC(19) NOT NULL,
   product_order_id NUMERIC(19),
   sample_name VARCHAR2(255),
-  billing_status VARCHAR2(19)
+  billing_status VARCHAR2(40)
 );
 
 CREATE TABLE im_product_order_add_on (
