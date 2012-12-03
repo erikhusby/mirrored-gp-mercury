@@ -333,13 +333,9 @@ public abstract class LabVessel {
         return inPlaceLabEvents;
     }
 
-    public List<LabEvent> getInPlaceEventsList() {
-        return new ArrayList<LabEvent>(getInPlaceEvents());
-    }
-
-    public List<LabEvent> getInPlaceEventsSortedByDate() {
+    private List<LabEvent> getAllEventsSortedByDate() {
         Map<Date, LabEvent> sortedTreeMap = new TreeMap<Date, LabEvent>();
-        for(LabEvent event : inPlaceLabEvents){
+        for (LabEvent event : getEvents()) {
             sortedTreeMap.put(event.getEventDate(), event);
         }
         return new ArrayList<LabEvent>(sortedTreeMap.values());
@@ -839,10 +835,11 @@ public abstract class LabVessel {
 
     public LabEvent getLatestEvent() {
         LabEvent event = null;
-        List<LabEvent> inPlaceEventsSortedByDate = getInPlaceEventsSortedByDate();
-        int size = inPlaceEventsSortedByDate.size();
+        List<LabEvent> eventsList = getAllEventsSortedByDate();
+
+        int size = eventsList.size();
         if (size > 0) {
-            event = inPlaceEventsSortedByDate.get(size - 1);
+            event = eventsList.get(size - 1);
         }
         return event;
     }
