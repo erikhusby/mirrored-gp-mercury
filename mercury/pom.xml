@@ -1297,6 +1297,13 @@
             <version>2.0.3</version>
             <scope>test</scope>
         </dependency>
+
+        <dependency>
+            <groupId>com.jgraph</groupId>
+            <artifactId>jgraphx</artifactId>
+            <version>1.4.0.9</version>
+            <type>jar</type>
+        </dependency>
     </dependencies>
 
     <build>
