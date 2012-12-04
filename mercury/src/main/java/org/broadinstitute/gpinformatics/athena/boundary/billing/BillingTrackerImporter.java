@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.poi.ss.usermodel.*;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
@@ -18,6 +20,7 @@ import java.util.*;
  */
 public class BillingTrackerImporter {
 
+    private static final Log logger = LogFactory.getLog(BillingTrackerImporter.class);
     private ProductOrderDao productOrderDao;
 
     private final static String[] fixedHeaders = SampleLedgerExporter.FIXED_HEADERS;
@@ -284,6 +287,11 @@ public class BillingTrackerImporter {
         String[] fixedHeaders = SampleLedgerExporter.FIXED_HEADERS;
         int numFixedHeaders = fixedHeaders.length;
 
+        //Just throw this exception.
+        if (row0 == null ) {
+            throw new RuntimeException( "Tracker Sheet Header mismatch.  Blank header row in tab " +  primaryProductPartNumber ) ;
+        }
+
         // Check row0 header names. Should match what we write.
         Iterator<Cell> citer = row0.cellIterator();
         for (int i=0; i< numFixedHeaders; i++) {
@@ -374,10 +382,9 @@ public class BillingTrackerImporter {
             while ((read = is.read(bytes)) != -1) {
                 out.write(bytes, 0, read);
             }
-
-            System.out.println("New file created!");
+            logger.info("Created temp file : " + tempFile.getAbsolutePath());
         } catch (IOException e) {
-            System.out.println(e.getMessage());
+            logger.error(e);
         } finally {
             out.flush();
             out.close();
