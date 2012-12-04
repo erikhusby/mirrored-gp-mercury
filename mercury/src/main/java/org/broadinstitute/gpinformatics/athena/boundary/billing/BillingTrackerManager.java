@@ -459,7 +459,7 @@ public class BillingTrackerManager {
                     primaryProductPartNumber + "> in the first row and cell position " +  primaryProductHeaderCell.getColumnIndex() );
         }
 
-        //Derive the list of TrackerColumnInfo objects skip the error column
+        //Derive the list of TrackerColumnInfo objects skip the Comments and Billing Error columns
         int totalProductsHeaders = columnHeaders.size() - numFixedHeaders - 2;
 
         result = new ArrayList<TrackerColumnInfo>();
