@@ -102,7 +102,7 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
 
     @Override
     public CONTAINER_TYPE getType() {
-        return CONTAINER_TYPE.RACK_OF_TUBES;
+        return CONTAINER_TYPE.TUBE_FORMATION;
     }
 
     @Override
@@ -124,5 +124,15 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
 
     public Set<RackOfTubes> getRacksOfTubes() {
         return racksOfTubes;
+    }
+
+    @Override
+    public String getLabCentricName() {
+        StringBuilder builder = new StringBuilder();
+        for (RackOfTubes rack : racksOfTubes) {
+            builder.append(rack.getLabel());
+            builder.append(" ");
+        }
+        return builder.toString();
     }
 }
