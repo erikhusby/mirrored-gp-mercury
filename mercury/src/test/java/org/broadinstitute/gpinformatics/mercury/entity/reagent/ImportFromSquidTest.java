@@ -421,4 +421,45 @@ public class ImportFromSquidTest extends ContainerTest {
         }
         twoDBarcodedTubeDAO.clear();
     }
+    /*
+SELECT
+	lqr.run_name,
+	lqr.run_date,
+	lqt.quant_type_name,
+	lq.quant_value,
+	NULL,
+	r.barcode
+FROM
+	library_quant_run lqr
+	INNER JOIN library_quant_type lqt
+		ON   lqt.quant_type_id = lqr.quant_type_id
+	INNER JOIN library_quant lq
+		ON   lq.quant_run_id = lqr.run_id
+	INNER JOIN receptacle r
+		ON   r.receptacle_id = lq.receptacle_id
+WHERE
+	lq.is_archived = 'N'
+UNION ALL
+SELECT
+	qr.run_name,
+	qr.run_date,
+	'QPCR',
+	qrl.concentration,
+	qrl.status,
+	r.barcode
+FROM
+	qpcr_run qr
+	INNER JOIN qpcr_run_library qrl
+		ON   qrl.qpcr_run_id = qr.qpcr_run_id
+	INNER JOIN seq_content sc
+		ON   sc.seq_content_id = qrl.seq_content_id
+	INNER JOIN seq_content_descr_set scds
+		ON   scds.seq_content_id = sc.seq_content_id
+	INNER JOIN seq_content sc2
+		ON   sc2.seq_content_id = scds.seq_content_id
+	INNER JOIN receptacle r
+		ON   r.receptacle_id = sc2.receptacle_id
+
+		493,677 rows
+     */
 }
