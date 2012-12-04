@@ -185,7 +185,16 @@ public class GenericDao {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
-        criteriaQuery.where(criteriaBuilder.equal(root.get(singularAttribute), value));
+
+        Predicate predicate;
+        if (value == null) {
+            predicate = criteriaBuilder.isNull(root.get(singularAttribute));
+        }
+        else {
+            predicate = criteriaBuilder.equal(root.get(singularAttribute), value);
+        }
+        criteriaQuery.where(predicate);
+
         try {
             return getEntityManager().createQuery(criteriaQuery).getSingleResult();
         } catch (NoResultException ignored) {

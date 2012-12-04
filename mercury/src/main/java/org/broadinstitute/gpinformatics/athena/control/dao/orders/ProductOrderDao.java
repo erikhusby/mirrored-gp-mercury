@@ -47,6 +47,18 @@ public class ProductOrderDao extends GenericDao {
 
 
     /**
+     * Find the order using the unique title
+     *
+     * @param title
+     *
+     * @return
+     */
+    public ProductOrder findByTitle(String title) {
+        return findSingle(ProductOrder.class, ProductOrder_.title, title);
+    }
+
+
+    /**
      * Return the {@link ProductOrder}s specified by the {@link List} of business keys, applying optional fetches.
      *
      * @param businessKeyList
