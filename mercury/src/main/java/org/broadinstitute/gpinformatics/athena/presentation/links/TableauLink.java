@@ -18,7 +18,11 @@ public class TableauLink {
     @Inject
     private TableauConfig tableauConfig;
 
-    public String passReportUrl(String projectTitle) {
+     public String tableauAuth() {
+        return tableauConfig.getTableauAuth();
+     }
+
+   public String passReportUrl(String projectTitle) {
         return tableauConfig.getUrlBase() + PASS_REPORT + projectTitle;
     }
 }

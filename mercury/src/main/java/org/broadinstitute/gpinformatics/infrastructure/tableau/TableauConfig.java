@@ -9,6 +9,7 @@ import java.io.Serializable;
 public class TableauConfig extends AbstractConfig implements Serializable {
 
     private String urlBase;
+    private String tableauAuth;
 
     public TableauConfig() {}
 
@@ -20,4 +21,11 @@ public class TableauConfig extends AbstractConfig implements Serializable {
         urlBase = urlBaseIn;
     }
 
+    public String getTableauAuth() {
+        return tableauAuth;
+    }
+
+    public void setTableauAuth(String s) {
+        tableauAuth = s;
+    }
 }

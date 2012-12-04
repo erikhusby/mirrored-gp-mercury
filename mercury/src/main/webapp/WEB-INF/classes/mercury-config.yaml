@@ -195,7 +195,7 @@ tableau:
     PROD:
 
         urlBase: https://tableau.broadinstitute.org/views
-
+        tableauAuth: dGFibGVhdS10ZXN0OmFrem50WjAy
 
 
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.

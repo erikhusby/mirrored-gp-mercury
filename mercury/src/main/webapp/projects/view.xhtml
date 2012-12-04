@@ -8,6 +8,8 @@
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:p="http://primefaces.org/ui">
+<head>
+</head>
 <body>
 
     <h:link outcome="/security/login" value="Athena"/>
@@ -24,6 +26,29 @@
             </f:metadata>
         </ui:define>
         <ui:define name="body">
+
+            <h:form>
+                <script type="text/javascript">
+                    tableauUrl = "#{tableauLink.passReportUrl(researchProjectDetail.project.title)}";
+
+                    $.ajax({
+                        url:tableauUrl,
+                        method:'GET',
+                        beforeSend:function (req) {
+                            req.setRequestHeader('Authorization', "Basic " + "#{tableauLink.tableauAuth()}");
+                        },
+                        error:function (xhr, ajaxOptions, thrownError) {
+                            if (xhr) {
+                                $('#tableauReport').html('<iframe src="' + tableauUrl + '"  width="500" height="500"></iframe>');
+                            } else {
+                                alert('login error, status: ' + xhr.status + ', error: ' + thrownError + ', response: ' + xhr.responseText);
+                            }
+                        }
+                    });
+                </script>
+
+                <div id='tableauReport' style="float:right"></div>
+            </h:form>
 
             <div class="row">
                 <h:link value="Edit Project" outcome="create?includeViewParams=true" styleClass="pull-right"/>
