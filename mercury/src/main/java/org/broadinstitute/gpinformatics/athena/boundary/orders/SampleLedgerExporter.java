@@ -340,6 +340,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
                 currentIndex = writeBillAndNewHeaders(currentIndex);
             }
         }
+
+        // GPLIM-491 freeze the first two rows so sort doesn't disturb them
+        getWriter().getCurrentSheet().createFreezePane(0, 2);
     }
 
     private void writeEmptyFixedHeaders() {
