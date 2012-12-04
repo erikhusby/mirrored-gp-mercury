@@ -26,7 +26,7 @@ import javax.inject.Named;
 import java.util.List;
 
 /**
- * @author breilly
+ * @author dryan
  */
 @Named
 @RequestScoped
@@ -45,18 +45,6 @@ public class ReagentDesignForm extends AbstractJsfBean {
 
     private ReagentDesign reagentDesign;
 
-    public ReagentDesign getReagentDesign() {
-        return reagentDesign;
-    }
-
-    public void setReagentDesign(ReagentDesign reagentDesign) {
-        this.reagentDesign = reagentDesign;
-    }
-
-    public List<ReagentDesign> getAllReagentDesigns() {
-        return reagentDesignTableData.getValues();
-    }
-
     @ConversationScoped
     public static class ReagentDesignTableData extends TableData<ReagentDesign> {
     }
@@ -71,28 +59,6 @@ public class ReagentDesignForm extends AbstractJsfBean {
                 conversation.begin();
             }
         }
-    }
-
-
-    public String create() {
-
-        try {
-//            researchProjectManager.createResearchProject(project);
-        } catch (Exception e) {
-            addErrorMessage(e.getMessage());
-            return null;
-        }
-
-//        addInfoMessage("The Research Project \"" + project.getTitle() + "\" has been created.");
-        return redirect("view");
-    }
-
-    public Conversation getConversation() {
-        return conversation;
-    }
-
-    public FacesContext getFacesContext() {
-        return facesContext;
     }
 
     public String edit() {
@@ -113,7 +79,30 @@ public class ReagentDesignForm extends AbstractJsfBean {
         return redirect("list");
     }
 
+    public Conversation getConversation() {
+        return conversation;
+    }
+
+    public FacesContext getFacesContext() {
+        return facesContext;
+    }
+
     public ReagentDesignTableData getReagentDesignTableData() {
         return reagentDesignTableData;
+    }
+
+    public List<ReagentDesign> getAllReagentDesigns() {
+        return reagentDesignTableData.getValues();
+    }
+
+    public ReagentDesign getReagentDesign() {
+        if (reagentDesign==null){
+            reagentDesign = new ReagentDesign("", ReagentDesign.REAGENT_TYPE.BAIT);
+        }
+        return reagentDesign;
+    }
+
+    public void setReagentDesign(ReagentDesign reagentDesign) {
+        this.reagentDesign = reagentDesign;
     }
 }

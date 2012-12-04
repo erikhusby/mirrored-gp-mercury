@@ -40,9 +40,9 @@
             <security:authorizeBlock roles="#{userBean.developerRole}">
                 <p:submenu label="Admin" icon="ui-icon-gear">
                     <p:menuitem value="Page Administration" outcome="/administration/page_administration" />
-                    <p:submenu label="Reagents" icon="ui-icon-gear">
+                    <p:submenu label="Reagents">
                         <p:menuitem value="List" outcome="/reagent/list" />
-                        <p:menuitem value="Create" outcome="/reagent/create" />
+                        <p:menuitem value="Create" outcome="/reagent/edit" />
                     </p:submenu>
                 </p:submenu>
             </security:authorizeBlock>

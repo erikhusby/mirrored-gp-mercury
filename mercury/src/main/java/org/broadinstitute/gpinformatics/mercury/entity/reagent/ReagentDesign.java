@@ -73,6 +73,10 @@ public class ReagentDesign {
         return reagentDesign;
     }
 
+    public void setDesignName(String designName) {
+        this.reagentDesign = designName;
+    }
+
     public String getTargetSetName() {
         return targetSetName;
     }

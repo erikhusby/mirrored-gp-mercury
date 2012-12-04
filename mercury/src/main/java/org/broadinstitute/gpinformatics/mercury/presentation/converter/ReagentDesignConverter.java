@@ -21,7 +21,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 /**
- * JSF converter for Product instances.
+ * JSF converter for ReagentDesign instances.
  */
 @Named
 public class ReagentDesignConverter extends AbstractConverter {
@@ -41,7 +41,10 @@ public class ReagentDesignConverter extends AbstractConverter {
     public String getAsString(FacesContext context, UIComponent component, Object object) {
         // check for null because the converter might be passed null during an AJAX request
         if (object != null) {
-            return ((ReagentDesign) object).getReagentDesignId().toString();
+            ReagentDesign reagent = (ReagentDesign) object;
+            if (reagent.getReagentDesignId() != null) {
+                return reagent.getReagentDesignId().toString();
+            }
         }
         return "";
     }
