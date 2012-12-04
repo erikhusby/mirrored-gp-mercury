@@ -112,9 +112,9 @@ todo jmt fix this
 
         NamespaceFilter(String namespaceUri, boolean addNamespace) {
             if (addNamespace) {
-                this.usedNamespaceUri = namespaceUri;
+                usedNamespaceUri = namespaceUri;
             } else {
-                this.usedNamespaceUri = "";
+                usedNamespaceUri = "";
             }
             this.addNamespace = addNamespace;
         }
@@ -129,30 +129,30 @@ todo jmt fix this
 
         @Override
         public void startElement(String uri, String localName, String qName, Attributes atts) throws SAXException {
-            super.startElement(this.usedNamespaceUri, localName, qName, atts);
+            super.startElement(usedNamespaceUri, localName, qName, atts);
         }
 
         @Override
         public void endElement(String uri, String localName, String qName) throws SAXException {
-            super.endElement(this.usedNamespaceUri, localName, qName);
+            super.endElement(usedNamespaceUri, localName, qName);
         }
 
         @Override
         public void startPrefixMapping(String prefix, String uri) throws SAXException {
             if (addNamespace) {
-                this.startControlledPrefixMapping();
+                startControlledPrefixMapping();
             } else {
                 //Remove the namespace, i.e. don't call startPrefixMapping for parent!
             }
         }
 
         private void startControlledPrefixMapping() throws SAXException {
-            if (this.addNamespace && !this.addedNamespace) {
+            if (addNamespace && !addedNamespace) {
                 //We should add namespace since it is set and has not yet been done.
-                super.startPrefixMapping("", this.usedNamespaceUri);
+                super.startPrefixMapping("", usedNamespaceUri);
 
                 //Make sure we dont do it twice
-                this.addedNamespace = true;
+                addedNamespace = true;
             }
         }
     }
