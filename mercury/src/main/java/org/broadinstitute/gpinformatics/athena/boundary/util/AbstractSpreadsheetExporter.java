@@ -198,15 +198,8 @@ public abstract class AbstractSpreadsheetExporter {
         private int cellNum;
         private Sheet currentSheet;
 
-        public SpreadSheetWriter() {
-        }
-
-        public Sheet getCurrentSheet() {
-            return currentSheet;
-        }
-
-        public void setCurrentSheet(Sheet currentSheet) {
-            this.currentSheet = currentSheet;
+        public void createSheet(String sheetName) {
+            currentSheet = workbook.createSheet(sheetName);
             rowNum = 0;
         }
 
@@ -230,6 +223,13 @@ public abstract class AbstractSpreadsheetExporter {
             cellNum += colspan;
         }
 
+        public void setColumnWidth(int columnWidth) {
+            currentSheet.setColumnWidth(currentCell.getColumnIndex(), columnWidth);
+        }
+
+        public void createFreezePane(int colSplit, int rowSplit) {
+            currentSheet.createFreezePane(colSplit, rowSplit);
+        }
 
         public void writePreamble(String preamble) {
             nextRow();
@@ -264,7 +264,6 @@ public abstract class AbstractSpreadsheetExporter {
             currentCell.setCellValue(value);
             currentCell.setCellStyle(cellStyle);
         }
-
 
         public void writeCell(Date value, CellStyle cellStyle) {
             nextCell();
