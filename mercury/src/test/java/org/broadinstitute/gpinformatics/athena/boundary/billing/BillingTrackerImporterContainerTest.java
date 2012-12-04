@@ -2,9 +2,9 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import junit.framework.Assert;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -31,10 +31,10 @@ public class BillingTrackerImporterContainerTest  extends Arquillian {
     private ProductOrderDao productOrderDao;
 
     @Inject
-    private ProductOrderSampleDao productOrderSampleDao;
+    private UserTransaction utx;
 
     @Inject
-    private UserTransaction utx;
+    private Log logger;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -67,7 +67,7 @@ public class BillingTrackerImporterContainerTest  extends Arquillian {
     public void testImport() throws Exception {
 
         InputStream inputStream = null;
-        BillingTrackerImporter billingTrackerImporter = new BillingTrackerImporter(productOrderDao, productOrderSampleDao);
+        BillingTrackerImporter billingTrackerImporter = new BillingTrackerImporter(productOrderDao);
 
         try {
             inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(BILLING_TRACKER_TEST_FILENAME);
@@ -116,7 +116,7 @@ public class BillingTrackerImporterContainerTest  extends Arquillian {
             Assert.assertEquals(-6.0, rnaSecondAddonStatData.getCredit());
 
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error(e);
             return;
         } finally {
             IOUtils.closeQuietly(inputStream);
