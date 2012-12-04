@@ -15,11 +15,15 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign_;
 
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import java.util.List;
 
 /**
  * Data Access for DesignedReagents
  */
+@Stateful
+@RequestScoped
 public class ReagentDesignDao extends GenericDao {
 
     public List<ReagentDesign> findAll() {
