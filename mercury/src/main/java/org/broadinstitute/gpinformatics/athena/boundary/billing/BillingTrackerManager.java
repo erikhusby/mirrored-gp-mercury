@@ -49,7 +49,7 @@ public class BillingTrackerManager {
 
     private final static int SAMPLE_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.SAMPLE_ID_HEADING);
     private final static int PDO_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.ORDER_ID_HEADING);
-    private final static int DATE_COMPLETE_COL_POS = headerColumnIndices.get(SampleLedgerExporter.DATE_COMPLETE_HEADING);
+    private final static int DATE_COMPLETE_COL_POS = headerColumnIndices.get(SampleLedgerExporter.WORK_COMPLETE_DATE_HEADING);
     private final static int numberOfHeaderRows = 2;
 
 
@@ -459,7 +459,7 @@ public class BillingTrackerManager {
                     primaryProductPartNumber + "> in the first row and cell position " +  primaryProductHeaderCell.getColumnIndex() );
         }
 
-        //Derive the list of TrackerColumnInfo objects skip the error column
+        //Derive the list of TrackerColumnInfo objects skip the Comments and Billing Error columns
         int totalProductsHeaders = columnHeaders.size() - numFixedHeaders - 2;
 
         result = new ArrayList<TrackerColumnInfo>();

@@ -109,6 +109,22 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
 
             List<BillingLedger> expectedBillingLedgerList = createExpectedBillingLedgerList1();
 
+            if ( expectedBillingLedgerList.size() != ledgerList.size() ) {
+                // Dumping the found ledger Items to log file before failing.
+                StringBuilder stringBuilder = new StringBuilder();
+                for ( BillingLedger expBillingLedger : expectedBillingLedgerList ) {
+                    for ( BillingLedger actBillingLedger : ledgerList ) {
+                        if ( actBillingLedger.getProductOrderSample().getSampleName().equals( expBillingLedger.getProductOrderSample().getSampleName()) &&
+                                actBillingLedger.getPriceItem().getName().equals( expBillingLedger.getPriceItem().getName())  ) {
+                            logger.debug( "Found ledger item for " + expBillingLedger.getProductOrderSample().getSampleName() +
+                                    " and " + expBillingLedger.getPriceItem().getName() + " quantity " +  + expBillingLedger.getQuantity() );
+                            break;
+                        }
+                    }
+                }
+                Assert.fail( "The number of expected ledger items is different than the number of actual ledger items");
+            }
+
             int i = 0;
             for ( BillingLedger billingLedger : ledgerList ) {
                 BillingLedger expBillingLedger = expectedBillingLedgerList.get(i);

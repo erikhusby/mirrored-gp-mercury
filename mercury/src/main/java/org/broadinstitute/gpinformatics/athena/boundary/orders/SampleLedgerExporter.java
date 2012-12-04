@@ -34,7 +34,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
     public final static String SAMPLE_ID_HEADING = "Sample ID";
     public final static String ORDER_ID_HEADING = "Product Order ID";
-    public final static String DATE_COMPLETE_HEADING = "Date Completed";
+    public final static String WORK_COMPLETE_DATE_HEADING = "Date Completed";
     public final static String SORT_COLUMN_HEADING = "Sort Column";
 
     public static final String[] FIXED_HEADERS = {
@@ -45,7 +45,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             ORDER_ID_HEADING,
             "Product Order Name",
             "Project Manager",
-            DATE_COMPLETE_HEADING,
+            WORK_COMPLETE_DATE_HEADING,
             "Quote ID",
             SORT_COLUMN_HEADING
     };
