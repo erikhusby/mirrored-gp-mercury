@@ -7,6 +7,7 @@ import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.apache.commons.logging.Log;
 import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 
 import javax.inject.Inject;
@@ -57,6 +58,30 @@ public class LiveThriftService implements ThriftService {
             public List<LibraryData> call(LIMQueries.Client client) {
                 try {
                     return client.fetchLibraryDetailsByTubeBarcode(tubeBarcodes, includeWorkRequestDetails);
+                } catch (TTransportException e) {
+                    String type;
+                    switch (e.getType()) {
+                        case TTransportException.ALREADY_OPEN:
+                            type = "already open";
+                            break;
+                        case TTransportException.END_OF_FILE:
+                            type = "end of file";
+                            break;
+                        case TTransportException.NOT_OPEN:
+                            type = "not open";
+                            break;
+                        case TTransportException.TIMED_OUT:
+                            type = "timed out";
+                            break;
+                        case TTransportException.UNKNOWN:
+                            type = "unknown";
+                            break;
+                        default:
+                            type = "unexpected error type";
+                    }
+                    String message = "Thrift error: " + type + ": " + e.getMessage();
+                    log.error(message, e);
+                    throw new RuntimeException(message, e);
                 } catch (TException e) {
                     String message = "Thrift error: " + e.getMessage();
                     log.error(message, e);
