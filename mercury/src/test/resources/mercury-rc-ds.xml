@@ -7,7 +7,7 @@
     <datasource jndi-name="java:jboss/jdbc/mercury_pool" pool-name="mercury_pool" enabled="true">
         <!--<connection-url>jdbc:oracle:thin:@mercuryrc.cloud.broad:1521:gpinfprd</connection-url>-->
 <!--        <connection-url>jdbc:oracle:thin:@${mercury.rc.ip}:1521:gpinfprd</connection-url> -->
-        <connection-url>jdbc:oracle:thin:@192.168.195.19:1521:gpinfprd</connection-url>
+        <connection-url>jdbc:oracle:thin:@192.168.195.15:1521:gpinfprd</connection-url>
 
         <driver>com.oracle</driver>
         <security>
