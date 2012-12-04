@@ -8,9 +8,8 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
@@ -81,6 +80,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
     @Inject
     private ResearchProjectDao researchProjectDao;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction utx;
 
@@ -133,6 +133,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         if(exomeExpressProduct == null) {
             exomeExpressProduct = new Product("Exome Express", productFamilyDao.find("Exome"), "Exome Express",
                     "P-EX-0002", new Date(), null, 1814400, 1814400, 184, null, null, null, true, "Exome Express", false);
+            exomeExpressProduct.setPrimaryPriceItem(new PriceItem("1234", PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Standard Pony"));
             productDao.persist(exomeExpressProduct);
             productDao.flush();
         }
@@ -253,7 +254,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
             response = Client.create().resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
                     .type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
-                    .entity(new File("c:/Temp/sequel/messages/inbox/20120727/20120727_202842113.xml"))
+                    .entity(new File("c:/Temp/seq/lims/bettalims/production/inbox/20120103/20120103_101119570_localhost_9998_ws.xml"))
                     .post(String.class);
         } catch (Exception e) {
             System.out.println(e.getMessage());

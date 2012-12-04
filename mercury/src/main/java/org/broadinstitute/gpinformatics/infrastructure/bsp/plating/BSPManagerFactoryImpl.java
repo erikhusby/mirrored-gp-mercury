@@ -13,6 +13,7 @@ import javax.inject.Inject;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 
+@Impl
 public class BSPManagerFactoryImpl implements BSPManagerFactory {
 
     @Inject
@@ -35,6 +36,13 @@ public class BSPManagerFactoryImpl implements BSPManagerFactory {
         } catch (InvocationTargetException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public BSPManagerFactoryImpl () {
+    }
+
+    public BSPManagerFactoryImpl (BSPConfig configParams) {
+        this.params = configParams;
     }
 
     public WorkRequestManager createWorkRequestManager() {

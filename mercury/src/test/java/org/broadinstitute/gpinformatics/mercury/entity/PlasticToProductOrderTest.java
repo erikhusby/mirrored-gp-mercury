@@ -10,16 +10,14 @@ import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.person.PersonDAO;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -44,25 +42,28 @@ import static junit.framework.Assert.*;
 public class PlasticToProductOrderTest extends ContainerTest {
 
     @Inject
-    BucketDao bucketDao;
+    private BucketDao bucketDao;
 
     @Inject
-    BucketEntryDao bucketEntryDao;
+    private BucketEntryDao bucketEntryDao;
 
     @Inject
-    BucketBean bucketResource;
+    private BucketBean bucketResource;
 
     @Inject
-    TwoDBarcodedTubeDAO tubeDAO;
+    private TwoDBarcodedTubeDAO tubeDAO;
 
     @Inject
-    RackOfTubesDao rackDAO;
+    private TubeFormationDao rackDAO;
 
     @Inject
-    StaticPlateDAO plateDAO;
+    private StaticPlateDAO plateDAO;
 
     @Inject
-    LabEventDao labEventDao;
+    private LabEventDao labEventDao;
+
+    @Inject
+    private LabEventFactory eventFactory;
 
     @Inject
     private UserTransaction utx;
@@ -107,7 +108,74 @@ public class PlasticToProductOrderTest extends ContainerTest {
         bucket = bucketDao.findByName(BUCKET_REFERENCE_NAME);
 
         BettaLimsMessageFactory messageFactory = new BettaLimsMessageFactory();
-        LabEventFactory eventFactory = new LabEventFactory(new PersonDAO());
+//        LabEventFactory eventFactory = new LabEventFactory(new BSPUserList(new BSPManagerFactory () {
+//                    @Override
+//                    public WorkRequestManager createWorkRequestManager () {
+//                        return null;  //To change body of implemented methods use File | Settings | File Templates.
+//                    }
+//
+//                    @Override
+//                    public ContainerManager createContainerManager () {
+//                        return null;  //To change body of implemented methods use File | Settings | File Templates.
+//                    }
+//
+//                    @Override
+//                    public UserManager createUserManager () {
+//
+//                        UserManager mgr = new UserManager () {
+//                            @Override
+//                            public BspUser get ( String s ) {
+//                                return new BSPUserList.QADudeUser("Test", LabEventTest.QA_DUDE_USER_ID);
+//                            }
+//
+//                            @Override
+//                            public List<BspUser> getPrimaryInvestigators () {
+//                                List<BspUser> testList = new LinkedList<BspUser>();
+//                                testList.add(new BSPUserList.QADudeUser("PM", LabEventTest.QA_DUDE_USER_ID+1));
+//                                testList.add(new BSPUserList.QADudeUser("PDM", LabEventTest.QA_DUDE_USER_ID+2));
+//                                testList.add(new BSPUserList.QADudeUser("LU", LabEventTest.QA_DUDE_USER_ID+3));
+//                                testList.add(new BSPUserList.QADudeUser("LM", LabEventTest.QA_DUDE_USER_ID+4));
+//                                return testList;
+//                            }
+//
+//                            @Override
+//                            public List<BspUser> getProjectManagers () {
+//                                List<BspUser> testList = new LinkedList<BspUser>();
+//                                testList.add(new BSPUserList.QADudeUser("PM", LabEventTest.QA_DUDE_USER_ID+1));
+//                                return testList;
+//                            }
+//
+//                            @Override
+//                            public List<BspUser> getUsers () {
+//                                List<BspUser> testList = new LinkedList<BspUser>();
+//                                testList.add(new BSPUserList.QADudeUser("Test", LabEventTest.QA_DUDE_USER_ID));
+//                                testList.add(new BSPUserList.QADudeUser("PM", LabEventTest.QA_DUDE_USER_ID+1));
+//                                testList.add(new BSPUserList.QADudeUser("PDM", LabEventTest.QA_DUDE_USER_ID+2));
+//                                testList.add(new BSPUserList.QADudeUser("LU", LabEventTest.QA_DUDE_USER_ID+3));
+//                                testList.add(new BSPUserList.QADudeUser("LM", LabEventTest.QA_DUDE_USER_ID+4));
+//                                BspUser jwalshUsr = new BspUser();
+//                                jwalshUsr.setUserId(LabEventTest.QA_DUDE_USER_ID+100);
+//                                jwalshUsr.setUsername("jowalsh");
+//                                jwalshUsr.setFirstName("John");
+//                                jwalshUsr.setLastName("Walsh");
+//                                jwalshUsr.setEmail("jowaslh@broadinstitute.com");
+//                                testList.add(jwalshUsr);
+//
+//                                BspUser hrafalUsr = new BspUser();
+//                                hrafalUsr.setUserId(LabEventTest.QA_DUDE_USER_ID+100);
+//                                hrafalUsr.setUsername("hrafal");
+//                                hrafalUsr.setFirstName("Howard");
+//                                hrafalUsr.setLastName("Rafal");
+//                                hrafalUsr.setEmail("hrafal@broadinstitute.com");
+//                                testList.add(hrafalUsr);
+//
+//                                return testList;
+//                            }
+//                        };
+//
+//                        return mgr;  //To change body of implemented methods use File | Settings | File Templates.
+//                    }
+//                }));
 
         Set<MercurySample> rootSamples = new HashSet<MercurySample>();
         rootSamples.add(new MercurySample(PRODUCT_ORDER_KEY, "TCGA123")); //StubSampleMetadata("TCGA123","Human",null));
@@ -125,9 +193,9 @@ public class PlasticToProductOrderTest extends ContainerTest {
 
 
         LabEvent rackToPlateTransfer = eventFactory.buildFromBettaLimsRackToPlateDbFree ( plateXfer, barcodeToTubeMap,
-                                                                                          null );
+                                                                                          null, null );
 
-        BucketEntry bucketEntry = bucketResource.add(tube, PRODUCT_ORDER_KEY, bucket );
+        BucketEntry bucketEntry = bucketResource.add(tube, PRODUCT_ORDER_KEY, bucket, "hrafal" );
 
         assertTrue ( bucket.contains ( bucketEntry ) );
 
@@ -136,7 +204,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
 
         List<BucketEntry> testEntries = new LinkedList<BucketEntry>();
         testEntries.add ( bucketEntry);
-        bucketResource.start ( testEntries, new Person ( "hrafal", "Howard", "Rafal" ), LabEvent.UI_EVENT_LOCATION );
+        bucketResource.start ( testEntries,"hrafal", LabEvent.UI_EVENT_LOCATION );
 
         Assert.assertFalse ( tube.getInPlaceEvents ().isEmpty () );
         boolean doesEventHavePDO = false;
@@ -257,7 +325,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
      * the exome workflow, adding an index along the way.
      * At a point in the event graph after the indexing,
      * create a {@link LabEvent} that sets a different
-     * {@link LabEvent#productOrder}, and then apply some
+     * {@link LabEvent#productOrderId}, and then apply some
      * events and transfers after that.  The branch
      * below this is considered a dev branch.
      *

@@ -31,8 +31,9 @@ public class BillingTrackerImporter {
             headerColumnIndices.put(fixedHeaders[i], i);
         }
     }
-    private final static int SAMPLE_ID_COL_POS = headerColumnIndices.get("Sample ID");
-    private final static int PDO_ID_COL_POS = headerColumnIndices.get("Product Order ID");
+    private final static int SAMPLE_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.SAMPLE_ID_HEADING);
+    private final static int PDO_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.ORDER_ID_HEADING);
+    private final static int SORT_COLUMN_COL_POS = headerColumnIndices.get( SampleLedgerExporter.SORT_COLUMN_HEADING);
     private final static int numberOfHeaderRows = 2;
 
 
@@ -41,17 +42,6 @@ public class BillingTrackerImporter {
         this.productOrderSampleDao = productOrderSampleDao;
     }
 
-    //TODO This was just for initial prototyping.
-    public String readFromStream(InputStream inputStream) throws Exception {
-
-        Workbook workbook;
-        workbook = WorkbookFactory.create(inputStream);
-        int numberOfProducts = workbook.getNumberOfSheets();
-        Sheet sheet = workbook.getSheetAt(0);
-        String productPartNumberStr = sheet.getSheetName();
-        return productPartNumberStr;
-
-    }
 
     public Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> parseFileForSummaryMap(InputStream inputStream) throws IOException {
 
@@ -61,6 +51,9 @@ public class BillingTrackerImporter {
         Workbook workbook;
         try {
             workbook = WorkbookFactory.create(inputStream);
+
+            checkSampleOrdering ( workbook );
+
             int numberOfSheets = workbook.getNumberOfSheets();
             for (int i=0; i< numberOfSheets;i++) {
 
@@ -80,6 +73,53 @@ public class BillingTrackerImporter {
             IOUtils.closeQuietly(inputStream);
         }
         return trackerSummaryMap;
+
+    }
+
+    void checkSampleOrdering(Workbook workbook) {
+        Cell sortCell = null;
+
+        int numberOfSheets = workbook.getNumberOfSheets();
+        for (int i=0; i< numberOfSheets;i++) {
+            double expectedSortColValue=1;
+
+            Sheet sheet = workbook.getSheetAt(i);
+            String productPartNumberStr = sheet.getSheetName();
+
+            for (Iterator<Row> rit = sheet.rowIterator(); rit.hasNext(); ) {
+                Row row = rit.next();
+                if ( row.getRowNum() == 0 ) {
+                    row = skipHeaderRows(rit, row);
+                }
+
+                sortCell = row.getCell(SORT_COLUMN_COL_POS);
+                if ( sortCell == null ) {
+                    //Break out of this loop since there is no sort num value for this row. Assuming at the end of the valued rows.
+                    break;
+                }
+
+                if (! isNonNullNumericCell( sortCell )) {
+                    throw new RuntimeException("Row " +  (row.getRowNum() + 1 ) +
+                            " of spreadsheet tab "  + productPartNumberStr + " has a non-numeric value is the " +
+                            SampleLedgerExporter.SORT_COLUMN_HEADING + " cell. Please correct and ensure the spreadsheet is ordered by the " +
+                            SampleLedgerExporter.SORT_COLUMN_HEADING + " column heading." );
+                }
+                double sortCellVal = sortCell.getNumericCellValue();
+
+                String currentSampleName = row.getCell(SAMPLE_ID_COL_POS).getStringCellValue();
+                if ( ! ("" + sortCellVal).equals( "" + expectedSortColValue )) {
+                    throw new RuntimeException("Sample " + currentSampleName + " on row " +  (row.getRowNum() + 1 ) +
+                            " of spreadsheet tab "  + productPartNumberStr + " is not in the expected position. Please re-order the spreadsheet by the " +
+                            SampleLedgerExporter.SORT_COLUMN_HEADING + " column heading." );
+                }
+                expectedSortColValue=expectedSortColValue+1;
+            }
+
+            if ( sortCell == null ) {
+                //Break out of this loop since there is no sort num value for this row. Assuming at the end of the valued rows.
+                break;
+            }
+        }
 
     }
 
@@ -167,7 +207,7 @@ public class BillingTrackerImporter {
 
         for (int productIndex=0; productIndex < trackerColumnInfos.size();productIndex++) {
             double newQuantity;
-            double billedQuantity;
+            double previouslyBilledQuantity = 0;
             BillableRef billableRef = trackerColumnInfos.get(productIndex).getBillableRef();
 
             // There are two cells per product header cell, so we need to account for this.
@@ -176,8 +216,8 @@ public class BillingTrackerImporter {
             //Get the AlreadyBilled cell
             Cell billedCell = row.getCell(currentBilledPosition);
             if (isNonNullNumericCell(billedCell)) {
-                billedQuantity = billedCell.getNumericCellValue();
-                //TODO hmc need the AlreadyBilled validation check here.
+                previouslyBilledQuantity = billedCell.getNumericCellValue();
+                //TODO hmc need the AlreadyBilled validation check here per GPLIM-451.
                 //Check billedQuantity parsed against that which is already billed for this POS and PriceItem - should match
                 //TODO Sum the already billed amount for this sample
             }
@@ -187,11 +227,9 @@ public class BillingTrackerImporter {
             if ( isNonNullNumericCell(newQuantityCell)) {
                 newQuantity = newQuantityCell.getNumericCellValue();
 
-                //TODO Sum the newQuantity amount for this sample
-                double valueFromDB = 0;
                 //TODO Get the actual value from the DB for this POS to calculate the delta  !!!!!!!!!
 
-                double delta =  newQuantity - valueFromDB;
+                double delta = newQuantity - previouslyBilledQuantity;
 
                 if ( delta != 0 ) {
                     OrderBillSummaryStat orderBillSummaryStat = pdoSummaryStatsMap.get(billableRef);
@@ -334,8 +372,8 @@ public class BillingTrackerImporter {
                     primaryProductPartNumber + "> in the first row and cell position " +  primaryProductHeaderCell.getColumnIndex() );
         }
 
-        //Derive the list of TrackerColumnInfo objects, and skip the billing errors
-        int totalProductsHeaders = columnHeaders.size() - numFixedHeaders - 1;
+        //Derive the list of TrackerColumnInfo objects, and skip the comments and billing errors at the end
+        int totalProductsHeaders = columnHeaders.size() - numFixedHeaders - 2;
 
         result = new ArrayList<TrackerColumnInfo>();
         int mergedCellAddOn = 0;

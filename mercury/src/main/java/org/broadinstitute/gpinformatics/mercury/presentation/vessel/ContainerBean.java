@@ -85,8 +85,8 @@ public class ContainerBean {
             String rowName = vessel.getVesselGeometry().getRowNames()[getRowNumFromIndex()];
             VesselPosition position = VesselPosition.getByName(rowName + columnName);
             VesselContainer<?> vesselContainer = null;
-            if (OrmUtil.proxySafeIsInstance(vessel, RackOfTubes.class)) {
-                vesselContainer = ((RackOfTubes) vessel).getContainerRole();
+            if (OrmUtil.proxySafeIsInstance(vessel, TubeFormation.class)) {
+                vesselContainer = ((TubeFormation) vessel).getContainerRole();
             }
             if (OrmUtil.proxySafeIsInstance(vessel, StaticPlate.class)) {
                 vesselContainer = ((StaticPlate) vessel).getContainerRole();

@@ -1,6 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -8,7 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -46,17 +50,38 @@ public class LabEventResource {
         LabBatch labBatch = labBatchDAO.findByName(batchId);
         List<LabEvent> labEventsByTime = new ArrayList<LabEvent>(labBatch.getLabEvents());
         Collections.sort(labEventsByTime, LabEvent.byEventDate);
-        List<LabEventBean> labEventBeans = buildLabEventBeans(labEventsByTime);
+        List<LabEventBean> labEventBeans = buildLabEventBeans(labEventsByTime, new LabEventFactory.LabEventRefDataFetcher() {
+            @Override
+            public BspUser getOperator(String userId) {
+                BSPUserList list = ServiceAccessUtility.getBean(BSPUserList.class);
+                return list.getByUsername(userId);
+            }
+
+            @Override
+            public BspUser getOperator(Long bspUserId) {
+                BSPUserList list = ServiceAccessUtility.getBean(BSPUserList.class);
+                return list.getById(bspUserId);
+            }
+
+            @Override
+            public LabBatch getLabBatch(String labBatchName) {
+                return null;
+            }
+        });
         return new LabEventResponseBean(labEventBeans);
     }
 
-    public List<LabEventBean> buildLabEventBeans(List<LabEvent> labEvents) {
+    public List<LabEventBean> buildLabEventBeans(List<LabEvent> labEvents,
+                                                 LabEventFactory.LabEventRefDataFetcher dataFetcherHelper) {
         List<LabEventBean> labEventBeans = new ArrayList<LabEventBean>();
+
+//        BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
+
         for (LabEvent labEvent : labEvents) {
             LabEventBean labEventBean = new LabEventBean(
                     labEvent.getLabEventType().getName(),
                     labEvent.getEventLocation(),
-                    labEvent.getEventOperator().getLogin(),
+                    dataFetcherHelper.getOperator(labEvent.getEventOperator()).getUsername(),
                     labEvent.getEventDate());
             labEventBean.setBatchId(labEvent.getLabBatch().getBatchName());
 
@@ -146,7 +171,7 @@ public class LabEventResource {
         if(type.equals(LabVessel.CONTAINER_TYPE.STATIC_PLATE.name())) {
             type = OrmUtil.proxySafeCast(labVesselEntity, StaticPlate.class).getPlateType().getDisplayName();
         } else if(type.equals(LabVessel.CONTAINER_TYPE.RACK_OF_TUBES.name())) {
-            type = OrmUtil.proxySafeCast(labVesselEntity, RackOfTubes.class).getRackType().getDisplayName();
+            type = OrmUtil.proxySafeCast(labVesselEntity, TubeFormation.class).getRackType().getDisplayName();
         }
         LabVesselBean labVesselBean = new LabVesselBean(labVesselEntity.getLabel(), type);
         VesselContainer vesselContainer = labVesselEntity.getContainerRole();
@@ -159,9 +184,9 @@ public class LabEventResource {
                     labVesselBean.getLabVesselPositionBeans().add(new LabVesselPositionBean(
                             positionName, new LabVesselBean(null, LabVessel.CONTAINER_TYPE.PLATE_WELL.name())));
                 }
-            } else if(OrmUtil.proxySafeIsInstance(labVesselEntity, RackOfTubes.class)) {
-                RackOfTubes rackOfTubes = OrmUtil.proxySafeCast(labVesselEntity, RackOfTubes.class);
-                Iterator<String> positionNames = rackOfTubes.getRackType().getVesselGeometry().getPositionNames();
+            } else if(OrmUtil.proxySafeIsInstance(labVesselEntity, TubeFormation.class)) {
+                TubeFormation tubeFormation = OrmUtil.proxySafeCast(labVesselEntity, TubeFormation.class);
+                Iterator<String> positionNames = tubeFormation.getRackType().getVesselGeometry().getPositionNames();
                 while (positionNames.hasNext()) {
                     String positionName  =  positionNames.next();
                     LabVessel labVessel = (LabVessel) vesselContainer.getMapPositionToVessel().get(VesselPosition.getByName(positionName));

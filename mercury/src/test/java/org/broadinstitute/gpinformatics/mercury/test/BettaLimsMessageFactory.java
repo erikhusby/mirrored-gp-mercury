@@ -306,7 +306,7 @@ public class BettaLimsMessageFactory {
         gregorianCalendar.setTimeInMillis(time);
         plateTransferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar));
         plateTransferEvent.setDisambiguator(1L);
-        plateTransferEvent.setOperator("jowalsh");
+        plateTransferEvent.setOperator("hrafal");
         plateTransferEvent.setStation("ZAN");
     }
 

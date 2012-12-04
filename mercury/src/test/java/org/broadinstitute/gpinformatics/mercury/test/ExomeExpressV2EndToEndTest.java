@@ -2,14 +2,17 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
@@ -28,7 +31,7 @@ import java.util.Map;
  * Test Exome Express in Mercury
  */
 public class ExomeExpressV2EndToEndTest {
-    @Test(enabled = false)
+    @Test
     public void test() {
         // Define baits (CATs later)
         // Associate baits with vessels
@@ -56,15 +59,18 @@ public class ExomeExpressV2EndToEndTest {
         // BSP registers batch in Mercury
         // BSP Manual messaging for extractions, various batches
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
-        LabEventFactory labEventFactory = new LabEventFactory();
+        BSPUserList testUserList = new BSPUserList( BSPManagerFactoryProducer.stubInstance());
+
+        LabEventFactory labEventFactory = new LabEventFactory( testUserList);
         List<String> shearingTubeBarcodes = Arrays.asList("SH1", "SH2", "SH3");
         PlateTransferEventType plateTransferEventType = bettaLimsMessageFactory.buildPlateToRack("PlatingToShearingTubes",
                 "NormPlate", "CovarisRack", shearingTubeBarcodes);
         Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes = new HashMap<String, TwoDBarcodedTube>();
+        RackOfTubes targetRackOfTubes = null;
         LabEvent labEvent = labEventFactory.buildFromBettaLimsPlateToRackDbFree(plateTransferEventType,
-                new StaticPlate("NormPlate", StaticPlate.PlateType.Eppendorf96), mapBarcodeToTargetTubes);
+                new StaticPlate("NormPlate", StaticPlate.PlateType.Eppendorf96), mapBarcodeToTargetTubes, targetRackOfTubes);
         // Bucket for Shearing - enters from workflow?
-        BucketBean bucketBean = new BucketBean();
+        BucketBean bucketBean = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance());
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig = workflowLoader.load();
         ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(productOrder1.getProduct().getWorkflowName());
@@ -72,14 +78,14 @@ public class ExomeExpressV2EndToEndTest {
         // todo get from message event name to bucket def
         Bucket shearingBucket = new Bucket(new WorkflowBucketDef("Shearing"));
         // todo plates vs tubes?
-        final Person testActor = new Person ();
+        final String testActor = "hrafal";
         bucketBean.add(productOrder1.getBusinessKey(), new LinkedList<LabVessel>(labEvent.getTargetLabVessels()), shearingBucket, testActor,
                        null );
         // - Deck calls web service to verify source barcodes?
         // - Deck calls web service to validate next action against workflow and batch
         // Decks (BSP and Sequencing) send messages to Mercury, first message auto-drains bucket
 
-        bucketBean.start(testActor,
+        bucketBean.startDBFree(testActor,
                          new LinkedList<LabVessel> ()/* TODO SGM Need to define Vessels from test message*/,
                          shearingBucket,"");
 

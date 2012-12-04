@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.infrastructure.experiments;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.common.ChangeEvent;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectId;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import java.util.Date;
 
@@ -26,12 +25,12 @@ public class ExperimentRequestSummary {
     private String status = DRAFT_STATUS;
     private ExperimentType experimentType;
 
-    public ExperimentRequestSummary(final String title, Person creator, Date createdDate, ExperimentType experimentType) {
-        if (creator == null || StringUtils.isBlank(creator.getLogin())) {
+    public ExperimentRequestSummary(final String title, String creator, Date createdDate, ExperimentType experimentType) {
+        if (StringUtils.isBlank(creator)) {
             throw BLANK_CREATOR_EXCEPTION;
         }
         if (createdDate == null) {
-            throw new IllegalArgumentException("Creator date must not be null for creator " + creator.getLogin() );
+            throw new IllegalArgumentException("Creator date must not be null for creator " + creator );
         }
         if ( StringUtils.isBlank( title) ){
             throw new IllegalArgumentException("Experimnet title must not be blank." );
