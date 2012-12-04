@@ -36,7 +36,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -290,7 +290,7 @@ public class ExomeExpressEndToEndTest {
                     bettaLimsMessageFactory, labEventFactory, labEventHandler, mapBarcodeToTube);//.invoke();
 
             LabEventTest.ShearingEntityBuilder shearingEntityBuilder = new LabEventTest.ShearingEntityBuilder(
-                    mapBarcodeToTube, preFlightEntityBuilder.getRackOfTubes(), bettaLimsMessageFactory, labEventFactory,
+                    mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(), bettaLimsMessageFactory, labEventFactory,
                     labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
 
             LabEventTest.LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
@@ -310,7 +310,7 @@ public class ExomeExpressEndToEndTest {
                                                                   libraryConstructionEntityBuilder
                                                                           .getPondRegTubeBarcodes()).invoke();
 
-            RackOfTubes pondRack = libraryConstructionEntityBuilder.getPondRegRack();
+            TubeFormation pondRack = libraryConstructionEntityBuilder.getPondRegRack();
             Assert.assertEquals(pondRack.getSampleInstances().size(), 2);
 
             // make sure that the pond sample instances contain the starters from the project plan.
@@ -357,7 +357,7 @@ public class ExomeExpressEndToEndTest {
                                                                                                        .getMapBarcodeToNormCatchTubes());
             qtpEntityBuilder.invoke();
 
-            RackOfTubes poolingResult = qtpEntityBuilder.getDenatureRack();
+            TubeFormation poolingResult = qtpEntityBuilder.getDenatureRack();
 
             // LC metrics - upload page?
             // LabVessel.addMetric?

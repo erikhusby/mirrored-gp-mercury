@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
@@ -16,9 +15,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -39,8 +36,6 @@ import javax.xml.transform.sax.SAXSource;
 import java.io.StringReader;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -131,30 +126,20 @@ todo jmt fix this
         for (LabEvent labEvent : labEvents) {
             labEventHandler.processEvent(labEvent);
 
-            Map<Bucket, Collection<LabVessel>> bucketVessels = new HashMap<Bucket, Collection<LabVessel>>();
-
-            for (LabVessel currVessel : labEvent.getAllLabVessels()) {
-
-                Collection<String> productOrders = currVessel.getNearestProductOrders();
-
-                ProductWorkflowDefVersion workflowDef = getWorkflowVersion(productOrders.iterator().next());
-                if (workflowDef.isPreviousStepBucket(labEvent.getLabEventType().getName())) {
-                    Bucket workingBucket = bucketDao.findByName(workflowDef.getPreviousStep(
-                            labEvent.getLabEventType().getName()).getName());
-
-                    if (!bucketVessels.containsKey(workingBucket)) {
-                        bucketVessels.put(workingBucket, new LinkedList<LabVessel>());
-                        if(bucketVessels.keySet().size() >1) {
-                            throw new IllegalStateException("Samples are coming from multiple Buckets");
-                        }
-                    }
-                    bucketVessels.get(workingBucket).add(currVessel);
-                }
-            }
+            Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels = labEventHandler.itemizeBucketItems(labEvent);
 
             if(bucketVessels.keySet().size() ==1) {
-                bucketBean.start(bspUserList.getById(labEvent.getEventOperator()).getUsername(), labEvent.getAllLabVessels(),
-                                 bucketVessels.keySet().iterator().next(), labEvent.getEventLocation());
+
+                WorkflowStepDef workingBucketIdentifier = bucketVessels.keySet().iterator().next();
+                Bucket workingBucket = bucketDao.findByName(workingBucketIdentifier.getName());
+                if(workingBucket == null) {
+                    workingBucket = new Bucket(workingBucketIdentifier);
+                }
+
+                bucketBean.start(bspUserList.getById(labEvent.getEventOperator()).getUsername(),
+                                 labEvent.getAllLabVessels(),
+                                 workingBucket,
+                                 labEvent.getEventLocation());
             }
         }
 
@@ -213,18 +198,6 @@ todo jmt fix this
                 this.addedNamespace = true;
             }
         }
-    }
-
-
-    private ProductWorkflowDefVersion getWorkflowVersion(String productOrderKey) {
-        WorkflowConfig workflowConfig = workflowLoader.load();
-
-        ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
-
-        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
-                productOrder.getProduct().getWorkflowName());
-
-        return productWorkflowDef.getEffectiveVersion();
     }
 
 }

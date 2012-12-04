@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionT
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
@@ -168,12 +169,20 @@ public class LabEventResource {
     private LabVesselBean buildLabVesselBean(LabVessel labVesselEntity) {
         // todo jmt need to hide on-the-fly creation of plate wells
         String type = labVesselEntity.getType().name();
-        if(type.equals(LabVessel.CONTAINER_TYPE.STATIC_PLATE.name())) {
+        if(labVesselEntity.getType() == LabVessel.CONTAINER_TYPE.STATIC_PLATE) {
             type = OrmUtil.proxySafeCast(labVesselEntity, StaticPlate.class).getPlateType().getDisplayName();
-        } else if(type.equals(LabVessel.CONTAINER_TYPE.RACK_OF_TUBES.name())) {
+        } else if(labVesselEntity.getType() == LabVessel.CONTAINER_TYPE.RACK_OF_TUBES) {
             type = OrmUtil.proxySafeCast(labVesselEntity, RackOfTubes.class).getRackType().getDisplayName();
+        } else if(labVesselEntity.getType() == LabVessel.CONTAINER_TYPE.TUBE_FORMATION) {
+            type = OrmUtil.proxySafeCast(labVesselEntity, TubeFormation.class).getRackType().getDisplayName();
         }
-        LabVesselBean labVesselBean = new LabVesselBean(labVesselEntity.getLabel(), type);
+        String label;
+        if(labVesselEntity.getType() == LabVessel.CONTAINER_TYPE.TUBE_FORMATION) {
+            label = OrmUtil.proxySafeCast(labVesselEntity, TubeFormation.class).getRacksOfTubes().iterator().next().getLabel();
+        } else {
+            label = labVesselEntity.getLabel();
+        }
+        LabVesselBean labVesselBean = new LabVesselBean(label, type);
         VesselContainer vesselContainer = labVesselEntity.getContainerRole();
         if(vesselContainer != null) {
             if(OrmUtil.proxySafeIsInstance(labVesselEntity, StaticPlate.class)) {
@@ -184,9 +193,9 @@ public class LabEventResource {
                     labVesselBean.getLabVesselPositionBeans().add(new LabVesselPositionBean(
                             positionName, new LabVesselBean(null, LabVessel.CONTAINER_TYPE.PLATE_WELL.name())));
                 }
-            } else if(OrmUtil.proxySafeIsInstance(labVesselEntity, RackOfTubes.class)) {
-                RackOfTubes rackOfTubes = OrmUtil.proxySafeCast(labVesselEntity, RackOfTubes.class);
-                Iterator<String> positionNames = rackOfTubes.getRackType().getVesselGeometry().getPositionNames();
+            } else if(OrmUtil.proxySafeIsInstance(labVesselEntity, TubeFormation.class)) {
+                TubeFormation tubeFormation = OrmUtil.proxySafeCast(labVesselEntity, TubeFormation.class);
+                Iterator<String> positionNames = tubeFormation.getRackType().getVesselGeometry().getPositionNames();
                 while (positionNames.hasNext()) {
                     String positionName  =  positionNames.next();
                     LabVessel labVessel = (LabVessel) vesselContainer.getMapPositionToVessel().get(VesselPosition.getByName(positionName));

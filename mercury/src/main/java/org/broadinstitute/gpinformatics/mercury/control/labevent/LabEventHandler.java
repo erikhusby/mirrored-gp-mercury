@@ -1,9 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Billable;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.InvalidMolecularStateException;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -11,11 +15,20 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.PartiallyProcess
 import org.broadinstitute.gpinformatics.mercury.entity.sample.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.Map;
 
 public class LabEventHandler {
+
 
     public enum HANDLER_RESPONSE {
         OK,
@@ -40,6 +53,8 @@ public class LabEventHandler {
 
     @Inject
     private BSPUserList bspUserList;
+
+    private static final Log LOG = LogFactory.getLog(LabEventHandler.class);
 
     public LabEventHandler() {
     }
@@ -332,6 +347,45 @@ public class LabEventHandler {
                                  " sent on " + event.getEventDate());
     }
 
+    public ProductWorkflowDefVersion getWorkflowVersion(String productOrderKey) {
+        WorkflowConfig workflowConfig = workflowLoader.load();
+
+        ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
+
+        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
+                productOrder.getProduct().getWorkflowName());
+
+        return productWorkflowDef.getEffectiveVersion();
+    }
+
+    public Map<WorkflowStepDef, Collection<LabVessel>> itemizeBucketItems(LabEvent labEvent) {
+        Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels = new HashMap<WorkflowStepDef, Collection<LabVessel>>();
+
+        for (LabVessel currVessel : labEvent.getAllLabVessels()) {
+
+            Collection<String> productOrders = currVessel.getNearestProductOrders();
+
+            ProductWorkflowDefVersion workflowDef = getWorkflowVersion(productOrders.iterator().next());
+            if (workflowDef.isPreviousStepBucket(labEvent.getLabEventType().getName())) {
+                WorkflowStepDef workingBucketName = /*bucketDao.findByName(*/workflowDef.getPreviousStep(
+                        labEvent.getLabEventType().getName())/*)*/;
+                if(workingBucketName == null) {
+                    workingBucketName = workflowDef.getPreviousStep(
+                                                labEvent.getLabEventType().getName());
+                }
+
+                if (!bucketVessels.containsKey(workingBucketName)) {
+                    bucketVessels.put(workingBucketName, new LinkedList<LabVessel>());
+                    if(bucketVessels.keySet().size() >1) {
+                        LOG.warn("Samples are coming from multiple Buckets");
+//                        throw new IllegalStateException("Samples are coming from multiple Buckets");
+                    }
+                }
+                bucketVessels.get(workingBucketName).add(currVessel);
+            }
+        }
+        return bucketVessels;
+    }
 
 
 }

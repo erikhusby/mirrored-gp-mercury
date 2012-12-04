@@ -22,7 +22,6 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.io.File;
 import java.io.FileInputStream;
 import java.util.*;
 
@@ -76,8 +75,6 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
     public void testImport() throws Exception {
 
         FileInputStream fis=null;
-        File tempFile=null;
-//        BillingTrackerManager  billingTrackerManager = new BillingTrackerManager(productOrderDao, billingLedgerDao);
 
         // Create a copy of the deployed test data file
         try {
@@ -95,11 +92,10 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
 
             // There should be one Order for the RNA product data
             Assert.assertEquals(1, rnaProductOrders.size());
-            String rnaOrderId = "PDO-23";
             ProductOrder productOrder = rnaProductOrders.get(0);
             Set<BillingLedger> ledgerSet = billingLedgerDao.findByOrderList(new ProductOrder[]{productOrder});
-            // should be 11 records in the set
-            Assert.assertEquals(11, ledgerSet.size());
+            // There should be ledger entries
+            Assert.assertFalse(ledgerSet.isEmpty());
             BillingLedger[] ledgerArray = ledgerSet.toArray(new BillingLedger[0]);
             List<BillingLedger> ledgerList = Arrays.asList( ledgerArray );
             Collections.sort(ledgerList, new Comparator<BillingLedger>() {
@@ -112,6 +108,22 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
             });
 
             List<BillingLedger> expectedBillingLedgerList = createExpectedBillingLedgerList1();
+
+            if ( expectedBillingLedgerList.size() != ledgerList.size() ) {
+                // Dumping the found ledger Items to log file before failing.
+                StringBuilder stringBuilder = new StringBuilder();
+                for ( BillingLedger expBillingLedger : expectedBillingLedgerList ) {
+                    for ( BillingLedger actBillingLedger : ledgerList ) {
+                        if ( actBillingLedger.getProductOrderSample().getSampleName().equals( expBillingLedger.getProductOrderSample().getSampleName()) &&
+                                actBillingLedger.getPriceItem().getName().equals( expBillingLedger.getPriceItem().getName())  ) {
+                            logger.debug( "Found ledger item for " + expBillingLedger.getProductOrderSample().getSampleName() +
+                                    " and " + expBillingLedger.getPriceItem().getName() + " quantity " +  + expBillingLedger.getQuantity() );
+                            break;
+                        }
+                    }
+                }
+                Assert.fail( "The number of expected ledger items is different than the number of actual ledger items");
+            }
 
             int i = 0;
             for ( BillingLedger billingLedger : ledgerList ) {
@@ -126,7 +138,7 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
                 i++;
             }
         } catch ( Exception e ) {
-            e.printStackTrace();
+            logger.error(e);
             Assert.fail( e.getMessage() );
         } finally {
             IOUtils.closeQuietly(fis);

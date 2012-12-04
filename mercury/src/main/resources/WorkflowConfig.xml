@@ -91,6 +91,7 @@
                 <entryPoint>true</entryPoint>
                 <reEntryPoint>true</reEntryPoint>
             </workflowStepDefs>
+<!--
             <workflowStepDefs>
                 <name>Plating to Shearing Tubes</name>
                 <labEventTypes>PLATING_TO_SHEARING_TUBES</labEventTypes>
@@ -98,6 +99,7 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
+-->
             <workflowStepDefs>
                 <name>Covaris Loaded</name>
                 <labEventTypes>COVARIS_LOADED</labEventTypes>

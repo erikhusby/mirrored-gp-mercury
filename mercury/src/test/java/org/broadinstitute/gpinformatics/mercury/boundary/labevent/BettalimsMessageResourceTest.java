@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
@@ -137,8 +138,13 @@ public class BettalimsMessageResourceTest extends Arquillian {
             productDao.persist(exomeExpressProduct);
             productDao.flush();
         }
+        ResearchProject researchProject = researchProjectDao.findByBusinessKey("RP-19");
+        if(researchProject == null) {
+            researchProject = new ResearchProject(101L, "SIGMA Sarcoma", "SIGMA Sarcoma", false);
+            researchProjectDao.persist(researchProject);
+        }
         ProductOrder productOrder = new ProductOrder(101L, "Messaging Test " + testPrefix, productOrderSamples, "GSP-123",
-                exomeExpressProduct, researchProjectDao.findByBusinessKey("RP-19"));
+                exomeExpressProduct, researchProject);
         String jiraTicketKey = "PD0-MsgTest";
         productOrder.setJiraTicketKey(jiraTicketKey);
         twoDBarcodedTubeDAO.flush();
