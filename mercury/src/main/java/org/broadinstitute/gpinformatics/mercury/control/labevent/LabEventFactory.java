@@ -96,7 +96,8 @@ public class LabEventFactory {
     @Inject
     private StaticPlateDAO staticPlateDAO;
 
-    private transient BSPUserList bspUserList;
+    @Inject
+    private BSPUserList bspUserList;
 
     @Inject
     private RackOfTubesDao rackOfTubesDao;

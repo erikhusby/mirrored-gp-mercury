@@ -2,12 +2,23 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -26,8 +37,12 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.sax.SAXSource;
 import java.io.StringReader;
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Allows BettaLIMS messages to be submitted through JAX-RS
@@ -46,6 +61,22 @@ public class BettalimsMessageResource {
 
     @Inject
     private WsMessageStore wsMessageStore;
+
+    @Inject
+    BucketDao bucketDao;
+
+    @Inject
+    BucketBean bucketBean;
+
+    @Inject
+    BSPUserList bspUserList;
+
+    @Inject
+    WorkflowLoader workflowLoader;
+
+    @Inject
+    AthenaClientService athenaClientService;
+
 
     /**
      * Accepts a message from (typically) a liquid handling deck
@@ -99,7 +130,34 @@ todo jmt fix this
         List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
         for (LabEvent labEvent : labEvents) {
             labEventHandler.processEvent(labEvent);
+
+            Map<Bucket, Collection<LabVessel>> bucketVessels = new HashMap<Bucket, Collection<LabVessel>>();
+
+            for (LabVessel currVessel : labEvent.getAllLabVessels()) {
+
+                Collection<String> productOrders = currVessel.getNearestProductOrders();
+
+                ProductWorkflowDefVersion workflowDef = getWorkflowVersion(productOrders.iterator().next());
+                if (workflowDef.isPreviousStepBucket(labEvent.getLabEventType().getName())) {
+                    Bucket workingBucket = bucketDao.findByName(workflowDef.getPreviousStep(
+                            labEvent.getLabEventType().getName()).getName());
+
+                    if (!bucketVessels.containsKey(workingBucket)) {
+                        bucketVessels.put(workingBucket, new LinkedList<LabVessel>());
+                        if(bucketVessels.keySet().size() >1) {
+                            throw new IllegalStateException("Samples are coming from multiple Buckets");
+                        }
+                    }
+                    bucketVessels.get(workingBucket).add(currVessel);
+                }
+            }
+
+            if(bucketVessels.keySet().size() ==1) {
+                bucketBean.start(bspUserList.getById(labEvent.getEventOperator()).getUsername(), labEvent.getAllLabVessels(),
+                                 bucketVessels.keySet().iterator().next(), labEvent.getEventLocation());
+            }
         }
+
     }
 
     /** Allows documents that don't include a namespace */
@@ -156,4 +214,17 @@ todo jmt fix this
             }
         }
     }
+
+
+    private ProductWorkflowDefVersion getWorkflowVersion(String productOrderKey) {
+        WorkflowConfig workflowConfig = workflowLoader.load();
+
+        ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
+
+        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
+                productOrder.getProduct().getWorkflowName());
+
+        return productWorkflowDef.getEffectiveVersion();
+    }
+
 }

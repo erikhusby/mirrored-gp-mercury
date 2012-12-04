@@ -1,24 +1,16 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Billable;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.InvalidMolecularStateException;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.PartiallyProcessedLabEventCache;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -44,13 +36,10 @@ public class LabEventHandler {
     WorkflowLoader workflowLoader;
 
     @Inject
-    BucketDao bucketDao;
-
-    @Inject
-    BucketBean bucketBean;
-
-    @Inject
     AthenaClientService athenaClientService;
+
+    @Inject
+    private BSPUserList bspUserList;
 
     public LabEventHandler() {
     }
@@ -104,17 +93,8 @@ public class LabEventHandler {
              This action should not throw an exception in the bucket batching.  Just at least record the fact that
              this action happened
 
-             TODO SGM  DEFINITELY need a better way to determine the current workflow version.  Only thing we have to rely on is the Product order.  May have to walk each vessel.
         */
-        if (null != labEvent.getProductOrderId()) {
-            ProductWorkflowDefVersion workflowDef = getWorkflowVersion(labEvent.getProductOrderId());
-            if (workflowDef.isPreviousStepBucket(labEvent.getLabEventType().getName())) {
-                Bucket workingBucket = bucketDao.findByName(workflowDef.getPreviousStep(
-                        labEvent.getLabEventType().getName()).getName());
 
-                bucketBean.start(null, labEvent.getAllLabVessels(), workingBucket, labEvent.getEventLocation());
-            }
-        }
 
         /*
         LabWorkflowInstance workflow = findWorkflowInstance(labEvent);
@@ -168,26 +148,26 @@ public class LabEventHandler {
      * @param labEvent
      * @param workflow
      */
-//    private void processProjectPlanOverrides(LabEvent labEvent,
-//                                             WorkflowDescription workflow) {
-//        if (workflow != null) {
-//            for (LabVessel labVessel : labEvent.getAllLabVessels()) {
-//                if (OrmUtil.proxySafeIsInstance(labVessel, VesselContainerEmbedder.class)) {
-//                    Collection<LabVessel> containedVessels = OrmUtil.proxySafeCast(labVessel, VesselContainerEmbedder.class).
-//                            getContainerRole().getContainedVessels();
-//                    if (containedVessels.isEmpty()) {
-//                        processProjectPlanOverrides(labEvent,labVessel,workflow);
-//                    }
-//                    else {
-//                        for (LabVessel vessel : containedVessels) {
-//                            processProjectPlanOverrides(labEvent,vessel,workflow);
-//                        }
-//                    }
-//                }
-//
-//            }
-//        }
-//    }
+    //    private void processProjectPlanOverrides(LabEvent labEvent,
+    //                                             WorkflowDescription workflow) {
+    //        if (workflow != null) {
+    //            for (LabVessel labVessel : labEvent.getAllLabVessels()) {
+    //                if (OrmUtil.proxySafeIsInstance(labVessel, VesselContainerEmbedder.class)) {
+    //                    Collection<LabVessel> containedVessels = OrmUtil.proxySafeCast(labVessel, VesselContainerEmbedder.class).
+    //                            getContainerRole().getContainedVessels();
+    //                    if (containedVessels.isEmpty()) {
+    //                        processProjectPlanOverrides(labEvent,labVessel,workflow);
+    //                    }
+    //                    else {
+    //                        for (LabVessel vessel : containedVessels) {
+    //                            processProjectPlanOverrides(labEvent,vessel,workflow);
+    //                        }
+    //                    }
+    //                }
+    //
+    //            }
+    //        }
+    //    }
 
     /**
      * {@link #processProjectPlanOverrides(org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent, org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel, org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription)}
@@ -195,28 +175,28 @@ public class LabEventHandler {
      * @param vessel
      * @param workflow
      */
-//    private void processProjectPlanOverrides(LabEvent labEvent,
-//                                             LabVessel vessel,
-//                                             WorkflowDescription workflow) {
-//        for (LabWorkQueue labWorkQueue : workQueueDAO.getPendingQueues(vessel, workflow)) {
-//            Collection<WorkQueueEntry> workQueueEntries = labWorkQueue.getEntriesForWorkflow(workflow,vessel);
-//            if (workQueueEntries.size() == 1) {
-//                // not ambiguous: single entry
-//                WorkQueueEntry workQueueEntry = workQueueEntries.iterator().next();
-////                if (workQueueEntry.getProjectPlanOverride() != null) {
-////                    labEvent.setProjectPlanOverride(workQueueEntry.getProjectPlanOverride());
-////                }
-//                workQueueEntry.dequeue();
-//            }
-//            else if (workQueueEntries.size() > 1) {
-//                // todo ambiguous: how do we narrow down the exact queue that this
-//                // vessel was placed in?
-//                throw new RuntimeException("Mercury doesn't know which of "  + workQueueEntries.size() + " work queue entries to pull from.");
-//            }
-//            /** else this vessel wasn't place in a {@link org.broadinstitute.gpinformatics.mercury.entity.queue.LabWorkQueue} */
-//        }
-//
-//    }
+    //    private void processProjectPlanOverrides(LabEvent labEvent,
+    //                                             LabVessel vessel,
+    //                                             WorkflowDescription workflow) {
+    //        for (LabWorkQueue labWorkQueue : workQueueDAO.getPendingQueues(vessel, workflow)) {
+    //            Collection<WorkQueueEntry> workQueueEntries = labWorkQueue.getEntriesForWorkflow(workflow,vessel);
+    //            if (workQueueEntries.size() == 1) {
+    //                // not ambiguous: single entry
+    //                WorkQueueEntry workQueueEntry = workQueueEntries.iterator().next();
+    ////                if (workQueueEntry.getProjectPlanOverride() != null) {
+    ////                    labEvent.setProjectPlanOverride(workQueueEntry.getProjectPlanOverride());
+    ////                }
+    //                workQueueEntry.dequeue();
+    //            }
+    //            else if (workQueueEntries.size() > 1) {
+    //                // todo ambiguous: how do we narrow down the exact queue that this
+    //                // vessel was placed in?
+    //                throw new RuntimeException("Mercury doesn't know which of "  + workQueueEntries.size() + " work queue entries to pull from.");
+    //            }
+    //            /** else this vessel wasn't place in a {@link org.broadinstitute.gpinformatics.mercury.entity.queue.LabWorkQueue} */
+    //        }
+    //
+    //    }
 
     /**
      * If a relevant project considers this event a checkpointable
@@ -229,23 +209,23 @@ public class LabEventHandler {
     public void notifyCheckpoints(LabEvent event) {
         //        Map<Project,Collection<StartingSample>> samplesForProject = new HashMap<Project,Collection<StartingSample>>();
         for (LabVessel container : event.getAllLabVessels()) {
-            for (SampleInstance sampleInstance: container.getSampleInstances()) {
-//                for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
-//                    Project p = projectPlan.getProject();
-//                    if (!samplesForProject.containsKey(p)) {
-//                        samplesForProject.put(p,new HashSet<StartingSample>());
-//                    }
-//                    if (p.getCheckpointableEvents().contains(event.getEventName())) {
-//                        samplesForProject.get(p).add(sampleInstance.getStartingSample());
-//                    }
-//                }
+            for (SampleInstance sampleInstance : container.getSampleInstances()) {
+                //                for (ProjectPlan projectPlan : sampleInstance.getAllProjectPlans()) {
+                //                    Project p = projectPlan.getProject();
+                //                    if (!samplesForProject.containsKey(p)) {
+                //                        samplesForProject.put(p,new HashSet<StartingSample>());
+                //                    }
+                //                    if (p.getCheckpointableEvents().contains(event.getEventName())) {
+                //                        samplesForProject.get(p).add(sampleInstance.getStartingSample());
+                //                    }
+                //                }
 
             }
         }
-//        for (Map.Entry<Project, Collection<StartingSample>> entry : samplesForProject.entrySet()) {
-//            String message = entry.getValue().size() + " aliquots for " + entry.getKey().getProjectName() + " have been processed through the " + event.getEventName() + " event";
-//            entry.getKey().addJiraComment(message);
-//        }
+        //        for (Map.Entry<Project, Collection<StartingSample>> entry : samplesForProject.entrySet()) {
+        //            String message = entry.getValue().size() + " aliquots for " + entry.getKey().getProjectName() + " have been processed through the " + event.getEventName() + " event";
+        //            entry.getKey().addJiraComment(message);
+        //        }
     }
 
     // todo thread for doing Stalker.stalk() for all active projects, LabVessels?
@@ -347,22 +327,11 @@ public class LabEventHandler {
 
         alertText.append(message).append("\n");
 
-        BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
-
         alertText.append(event.getLabEventType().getName() + " from " +
                                  bspUserList.getById(event.getEventOperator()).getUsername() +
                                  " sent on " + event.getEventDate());
     }
 
-    private ProductWorkflowDefVersion getWorkflowVersion(String productOrderKey) {
-        WorkflowConfig workflowConfig = workflowLoader.load();
 
-        ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
-
-        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
-                productOrder.getProduct().getWorkflowName());
-
-        return productWorkflowDef.getEffectiveVersion();
-    }
 
 }

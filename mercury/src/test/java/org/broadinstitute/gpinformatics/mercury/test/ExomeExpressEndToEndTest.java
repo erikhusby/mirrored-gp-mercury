@@ -59,11 +59,12 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
 @SuppressWarnings("OverlyCoupledClass")
 public class ExomeExpressEndToEndTest {
 
-    private LibraryRegistrationSOAPService registrationSOAPService = LibraryRegistrationSOAPServiceProducer.stubInstance();
+    private LibraryRegistrationSOAPService registrationSOAPService =
+            LibraryRegistrationSOAPServiceProducer.stubInstance();
 
-//    private PMBridgeService pmBridgeService = PMBridgeServiceProducer.stubInstance();
+    //    private PMBridgeService pmBridgeService = PMBridgeServiceProducer.stubInstance();
 
-//    private PassService passService = PassServiceProducer.stubInstance();
+    //    private PassService passService = PassServiceProducer.stubInstance();
 
     // if this bombs because of a jira refresh, just switch it to JiraServiceProducer.stubInstance();
     // for integration test fun where we post things back to a real jira, try JiraServiceProducer.testInstance();
@@ -74,111 +75,112 @@ public class ExomeExpressEndToEndTest {
     /*
         Temporarily adding from ProjectPlanFromPassTest to move test case content along.
      */
-    private static final long BAIT_ID = 5L;
+    private static final long   BAIT_ID          = 5L;
     private static final String BAIT_DESIGN_NAME = "interesting genes";
 
     private final String BILLING_QUOTE = "DNA375";
 
-
     @Test(groups = {DATABASE_FREE}, enabled = false)
     public void testAll() throws Exception {
 
-//        DirectedPass directedPass = null; //PassTestDataProducer.produceDirectedPass();
+        //        DirectedPass directedPass = null; //PassTestDataProducer.produceDirectedPass();
 
         // unconditionally forward all PASSes to Squid for storage
-//        passService.storePass(directedPass);
+        //        passService.storePass(directedPass);
 
         // if this is an EE pass take it through the Mercury process:
         if (true /* R3_725 directedPass.isExomeExpress() */) {
             // PASS with quote IDs, price items (need PMBridge 2 for price items)
-
 
             // factory or something to convert from JAX-WS DTOs to entities (or refer to Squid PASS)
             // Check volume and concentration?  Or expose web services to allow PMBridge to check
             // labBatch
             // Project
 
-//            ResearchProject researchProject = null;
-//            if (directedPass.getResearchProject() != null)
-//                researchProject = pmBridgeService.getResearchProjectByID(directedPass.getResearchProject());
-
+            //            ResearchProject researchProject = null;
+            //            if (directedPass.getResearchProject() != null)
+            //                researchProject = pmBridgeService.getResearchProjectByID(directedPass.getResearchProject());
 
             //TODO SGM: change this to PassBackedProjectPlan
             //TODO MLC: tie in ResearchProject above
-//            BasicProject project = new BasicProject("ExomeExpressProject1", new JiraTicket());
-//            String runName = "theRun";
+            //            BasicProject project = new BasicProject("ExomeExpressProject1", new JiraTicket());
+            //            String runName = "theRun";
 
             //SGM:  This "Lane Number" is most likely not needed.  Retrieving Number of lanes from the Project Plan Details
-//            String laneNumber = "3";
+            //            String laneNumber = "3";
 
             // BasicProjectPlan
             HashMap<LabEventName, PriceItem> billableEvents = new HashMap<LabEventName, PriceItem>();
 
-//            BasicProjectPlan projectPlan = new BasicProjectPlan(
-//                    project,
-//                    "ExomeExpressPlan1",
-//                    new WorkflowDescription("HybridSelection", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
+            //            BasicProjectPlan projectPlan = new BasicProjectPlan(
+            //                    project,
+            //                    "ExomeExpressPlan1",
+            //                    new WorkflowDescription("HybridSelection", billableEvents, CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel));
 
             /*
                 Temporarily adding from ProjectPlanFromPassTest to move test case content along.
              */
 
             BSPSampleDataFetcher bspDataFetcher = new BSPSampleDataFetcher(new EverythingYouAskForYouGetAndItsHuman());
-//            BaitSetListResult baitsCache = new BaitSetListResult();
-//            BaitSet baitSet = new BaitSet();
-//            baitSet.setDesignName(BAIT_DESIGN_NAME);
-//            baitSet.setId(BAIT_ID);
-//            baitsCache.getBaitSetList().add(baitSet);
+            //            BaitSetListResult baitsCache = new BaitSetListResult();
+            //            BaitSet baitSet = new BaitSet();
+            //            baitSet.setDesignName(BAIT_DESIGN_NAME);
+            //            baitSet.setId(BAIT_ID);
+            //            baitsCache.getBaitSetList().add(baitSet);
 
             // todo when R3_725 comes out, revert to looking this up via the pass
-            PriceItem priceItem = new PriceItem("Illumina Sequencing", "1", "Illumina HiSeq Run 44 Base", "15", "Bananas", "DNA Sequencing");
-//            WorkflowDescription workflowDescription = new WorkflowDescription("HybridSelection", priceItem,
-//                    CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
+            PriceItem priceItem = new PriceItem("Illumina Sequencing", "1", "Illumina HiSeq Run 44 Base", "15",
+                                                "Bananas", "DNA Sequencing");
+            //            WorkflowDescription workflowDescription = new WorkflowDescription("HybridSelection", priceItem,
+            //                    CreateIssueRequest.Fields.Issuetype.Whole_Exome_HybSel);
 
-//            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass, bspDataFetcher, baitsCache, priceItem);
+            //            PassBackedProjectPlan projectPlan = new PassBackedProjectPlan(directedPass, bspDataFetcher, baitsCache, priceItem);
             //projectPlan.getWorkflowDescription().initFromFile("HybridSelectionV2.xml");
-//            projectPlan.getWorkflowDescription().initFromFile("HybridSelectionVisualParadigm.xml");
+            //            projectPlan.getWorkflowDescription().initFromFile("HybridSelectionVisualParadigm.xml");
 
-//            Collection<WorkflowAnnotation> workflowAnnotations = projectPlan.getWorkflowDescription().getAnnotations("PondRegistration");
+            //            Collection<WorkflowAnnotation> workflowAnnotations = projectPlan.getWorkflowDescription().getAnnotations("PondRegistration");
 
             boolean hasSeqLibAnnotation = false;
-//            for (WorkflowAnnotation workflowAnnotation : workflowAnnotations) {
-//                if (workflowAnnotation instanceof SequencingLibraryAnnotation) {
-//                    hasSeqLibAnnotation = true;
-//                }
-//            }
-//            Assert.assertTrue(hasSeqLibAnnotation);
+            //            for (WorkflowAnnotation workflowAnnotation : workflowAnnotations) {
+            //                if (workflowAnnotation instanceof SequencingLibraryAnnotation) {
+            //                    hasSeqLibAnnotation = true;
+            //                }
+            //            }
+            //            Assert.assertTrue(hasSeqLibAnnotation);
 
-//            Assert.assertEquals(workflowAnnotations.size(), 1);
+            //            Assert.assertEquals(workflowAnnotations.size(), 1);
 
             // create batches for the pass.  todo add more samples to the pass.
             Collection<LabBatch> labBatches = null;//PassBatchUtil.createBatches(projectPlan, 2, "TESTBatch");
-//            Assert.assertFalse(labBatches.isEmpty());
-//            Assert.assertEquals(labBatches.size(), 1);
+            //            Assert.assertFalse(labBatches.isEmpty());
+            //            Assert.assertEquals(labBatches.size(), 1);
 
             LabBatch testLabBatch = labBatches.iterator().next();
-            int STARTER_COUNT = testLabBatch.getStartingLabVessels().size(); //This probably will be labBatch size eventually
+            int STARTER_COUNT =
+                    testLabBatch.getStartingLabVessels().size(); //This probably will be labBatch size eventually
 
             // create the jira ticket for each batch.
             JiraTicket jiraTicket = null;
 
             // grab the jira custom field definitions
-            final Map<String, CustomFieldDefinition> requiredFieldsMap = JiraCustomFieldsUtil.getRequiredLcSetFieldDefinitions(jiraService);
+            final Map<String, CustomFieldDefinition> requiredFieldsMap =
+                    JiraCustomFieldsUtil.getRequiredLcSetFieldDefinitions(jiraService);
             Assert.assertFalse(requiredFieldsMap.isEmpty());
             Assert.assertEquals(requiredFieldsMap.size(), 9);
 
-
-            final CustomField workRequestCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.WORK_REQUEST_IDS), "Work Request One Billion!",
-                                                                       CustomField.SingleFieldType.TEXT );
+            final CustomField workRequestCustomField = new CustomField(requiredFieldsMap.get(
+                    JiraCustomFieldsUtil.WORK_REQUEST_IDS), "Work Request One Billion!",
+                                                                       CustomField.SingleFieldType.TEXT);
             // kludge: expect stock samples to have a different field name (like "BSP STOCKS") when this goes live.  until then, we'll call it GSSR.
             final StringBuilder stockSamplesBuilder = new StringBuilder();
             for (LabVessel starter : testLabBatch.getStartingLabVessels()) {
                 stockSamplesBuilder.append(" ").append(starter.getLabel());
             }
-            final CustomField stockSamplesCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.GSSR_IDS), stockSamplesBuilder.toString(),
-                                                                        CustomField.SingleFieldType.TEXT );
-            final CustomField protocolCustomField = new CustomField(requiredFieldsMap.get(JiraCustomFieldsUtil.PROTOCOL), "Protocol to take over the world",
-                                                                    CustomField.SingleFieldType.TEXT );
+            final CustomField stockSamplesCustomField = new CustomField(requiredFieldsMap.get(
+                    JiraCustomFieldsUtil.GSSR_IDS), stockSamplesBuilder.toString(), CustomField.SingleFieldType.TEXT);
+            final CustomField protocolCustomField = new CustomField(requiredFieldsMap.get(
+                    JiraCustomFieldsUtil.PROTOCOL), "Protocol to take over the world",
+                                                                    CustomField.SingleFieldType.TEXT);
 
             final Collection<CustomField> allCustomFields = new HashSet<CustomField>();
             allCustomFields.add(workRequestCustomField);
@@ -187,12 +189,12 @@ public class ExomeExpressEndToEndTest {
 
             for (LabBatch labBatch : labBatches) {
                 JiraIssue jira = jiraService.createIssue(null, //Project.JIRA_PROJECT_PREFIX,
-                        "hrafal",
-                        CreateFields.IssueType.WHOLE_EXOME_HYBSEL,
-                        labBatch.getBatchName(),
-                        "Pass " /*+ projectPlan.getPass().getProjectInformation().getPassNumber()*/, allCustomFields);
+                                                         "hrafal", CreateFields.IssueType.WHOLE_EXOME_HYBSEL,
+                                                         labBatch.getBatchName(), "Pass "
+                                                         /*+ projectPlan.getPass().getProjectInformation().getPassNumber()*/,
+                                                         allCustomFields);
                 Assert.assertNotNull(jira);
-                Assert.assertNotNull(jira.getKey ());
+                Assert.assertNotNull(jira.getKey());
                 jiraTicket = new JiraTicket(jira);
                 labBatch.setJiraTicket(jiraTicket);
                 //labBatch.get
@@ -203,43 +205,48 @@ public class ExomeExpressEndToEndTest {
             //TODO .. if so BSPPlating should be by each LabBatch . LabBatch.getStarters() should be the group to do BSPPlating ??
             //Plating request to BSP
             //From projectPlan .. build BSPPlatingRequest objects
-//            Collection<Starter> starterStocks = testLabBatch.getStarters();
+            //            Collection<Starter> starterStocks = testLabBatch.getStarters();
             //List<StartingSample> startingSamples = new ArrayList<StartingSample>();
             Map<MercurySample, AliquotParameters> starterMap = new HashMap<MercurySample, AliquotParameters>();
-//            for (Starter stock : starterStocks) {
-//                starterMap.put((StartingSample) stock, new AliquotParameters(/*projectPlan, */1.9f, 1.6f));
-//            }
+            //            for (Starter stock : starterStocks) {
+            //                starterMap.put((StartingSample) stock, new AliquotParameters(/*projectPlan, */1.9f, 1.6f));
+            //            }
 
             BSPSampleFactory bspSampleFactory = new BSPSampleFactory();
             List<BSPPlatingRequest> bspRequests = bspSampleFactory.buildBSPPlatingRequests(starterMap);
-//            projectPlan.getPendingPlatingRequests().addAll(bspRequests);
+            //            projectPlan.getPendingPlatingRequests().addAll(bspRequests);
             Assert.assertNotNull(bspRequests);
-//            Assert.assertEquals(bspRequests.size(), starterStocks.size(), "Plating Requests returned doesn't match the Starter count");
+            //            Assert.assertEquals(bspRequests.size(), starterStocks.size(), "Plating Requests returned doesn't match the Starter count");
 
             //add the controls ??
             List<ControlWell> controls = new ArrayList<ControlWell>();
             BSPPlatingRequestService bspPlatingService = new BSPPlatingRequestServiceStub();
             BSPPlatingRequestOptions options = bspPlatingService.getBSPPlatingRequestDefaultOptions();
-            BSPPlatingRequestResult platingResult = bspPlatingService.issueBSPPlatingRequest(options, bspRequests, controls, "sampath",
-                    "EE-BSP-PLATING-1", "BSP Plating Exome Express Test", "Solexa", "EE-TEST-1");
+            BSPPlatingRequestResult platingResult = bspPlatingService.issueBSPPlatingRequest(options, bspRequests,
+                                                                                             controls, "sampath",
+                                                                                             "EE-BSP-PLATING-1",
+                                                                                             "BSP Plating Exome Express Test",
+                                                                                             "Solexa", "EE-TEST-1");
             Assert.assertNotNull(platingResult); //just Stub any way
             BSPPlatingReceipt platingReceipt = bspSampleFactory.buildPlatingReceipt(bspRequests, platingResult);
             Assert.assertNotNull(platingReceipt);
-            Assert.assertEquals(platingReceipt.getPlatingRequests().size(), bspRequests.size() , "BSP Plating Requests in receipt & passed requests count does not match");
+            Assert.assertEquals(platingReceipt.getPlatingRequests().size(), bspRequests.size(),
+                                "BSP Plating Requests in receipt & passed requests count does not match");
 
-            Assert.assertEquals(platingReceipt.getPlatingRequests().size() , STARTER_COUNT, "Started with " + STARTER_COUNT + " samples. BSP Plating requests should be " + STARTER_COUNT);
+            Assert.assertEquals(platingReceipt.getPlatingRequests().size(), STARTER_COUNT,
+                                "Started with " + STARTER_COUNT + " samples. BSP Plating requests should be " + STARTER_COUNT);
             //Test BSP Plating EXPORT
             BSPSampleExportTest.runBSPExportTest(platingReceipt, testLabBatch);
             //new GSSRSampleKitRequest();
 
             //bspPlatingReceipt.getPlatingRequests().iterator().next().
-//            Collection<Starter> starters = projectPlan.getStarters();
+            //            Collection<Starter> starters = projectPlan.getStarters();
             Map<String, LabVessel> stockSampleAliquotMap = new HashMap<String, LabVessel>();
-//            for (Starter starter : starters) {
-//                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
-//                Assert.assertNotNull(aliquot);
-//                stockSampleAliquotMap.put(starter.getLabel(), aliquot);
-//            }
+            //            for (Starter starter : starters) {
+            //                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
+            //                Assert.assertNotNull(aliquot);
+            //                stockSampleAliquotMap.put(starter.getLabel(), aliquot);
+            //            }
 
             // factory to convert to entities
             // Receive plastic through kiosk
@@ -253,89 +260,101 @@ public class ExomeExpressEndToEndTest {
             LabEventFactory labEventFactory = new LabEventFactory();
             labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
                 @Override
-                public BspUser getOperator ( String userId ) {
-
+                public BspUser getOperator(String userId) {
 
                     return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
                 }
 
                 @Override
-                public BspUser getOperator ( Long bspUserId ) {
-                    BspUser testUser =new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
+                public BspUser getOperator(Long bspUserId) {
+                    BspUser testUser = new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
                     return testUser;
                 }
-
 
                 @Override
                 public LabBatch getLabBatch(String labBatchName) {
                     return null;
                 }
             });
-            LabEventHandler labEventHandler = new LabEventHandler( new WorkflowLoader (),
-                                                                   AthenaClientProducer.stubInstance () );
+            LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(),
+                                                                  AthenaClientProducer.stubInstance());
             BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
             Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<String, TwoDBarcodedTube>();
 
             for (Map.Entry<String, LabVessel> stockToAliquotEntry : stockSampleAliquotMap.entrySet()) {
-                mapBarcodeToTube.put(stockToAliquotEntry.getValue().getLabel(), (TwoDBarcodedTube) stockToAliquotEntry.getValue());
+                mapBarcodeToTube.put(stockToAliquotEntry.getValue().getLabel(),
+                                     (TwoDBarcodedTube) stockToAliquotEntry.getValue());
             }
 
             LabEventTest.PreFlightEntityBuilder preFlightEntityBuilder = new LabEventTest.PreFlightEntityBuilder(
-                    bettaLimsMessageFactory, labEventFactory, labEventHandler,
-                    mapBarcodeToTube);//.invoke();
+                    bettaLimsMessageFactory, labEventFactory, labEventHandler, mapBarcodeToTube);//.invoke();
 
             LabEventTest.ShearingEntityBuilder shearingEntityBuilder = new LabEventTest.ShearingEntityBuilder(
                     mapBarcodeToTube, preFlightEntityBuilder.getRackOfTubes(), bettaLimsMessageFactory, labEventFactory,
                     labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
 
-            LabEventTest.LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LabEventTest.LibraryConstructionEntityBuilder(
-                    bettaLimsMessageFactory, labEventFactory, labEventHandler,
-                    shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
-                    shearingEntityBuilder.getShearingPlate(), mapBarcodeToTube.size()).invoke();
+            LabEventTest.LibraryConstructionEntityBuilder libraryConstructionEntityBuilder =
+                    new LabEventTest.LibraryConstructionEntityBuilder(bettaLimsMessageFactory, labEventFactory,
+                                                                      labEventHandler,
+                                                                      shearingEntityBuilder.getShearingCleanupPlate(),
+                                                                      shearingEntityBuilder.getShearCleanPlateBarcode(),
+                                                                      shearingEntityBuilder.getShearingPlate(),
+                                                                      mapBarcodeToTube.size()).invoke();
 
-            LabEventTest.HybridSelectionEntityBuilder hybridSelectionEntityBuilder = new LabEventTest.HybridSelectionEntityBuilder(
-                    bettaLimsMessageFactory, labEventFactory, labEventHandler,
-                    libraryConstructionEntityBuilder.getPondRegRack(), libraryConstructionEntityBuilder.getPondRegRackBarcode(),
-                    libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
+            LabEventTest.HybridSelectionEntityBuilder hybridSelectionEntityBuilder =
+                    new LabEventTest.HybridSelectionEntityBuilder(bettaLimsMessageFactory, labEventFactory,
+                                                                  labEventHandler,
+                                                                  libraryConstructionEntityBuilder.getPondRegRack(),
+                                                                  libraryConstructionEntityBuilder
+                                                                          .getPondRegRackBarcode(),
+                                                                  libraryConstructionEntityBuilder
+                                                                          .getPondRegTubeBarcodes()).invoke();
 
             RackOfTubes pondRack = libraryConstructionEntityBuilder.getPondRegRack();
             Assert.assertEquals(pondRack.getSampleInstances().size(), 2);
 
             // make sure that the pond sample instances contain the starters from the project plan.
-//            for (Starter starter : projectPlan.getStarters()) {
-//                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
-//                for (SampleInstance aliquotSampleInstance : aliquot.getSampleInstances()) {
-//                    boolean foundIt = false;
-//                    for (SampleInstance pondSampleInstance : pondRack.getSampleInstances()) {
-//                        if (aliquotSampleInstance.getStartingSample().equals(pondSampleInstance.getStartingSample())) {
-//                            foundIt = true;
-//                            System.out.println("Pond has " + pondSampleInstance.getStartingSample().getLabel());
-//                        }
-//                    }
-//                    Assert.assertTrue(foundIt);
-//                }
-//            }
+            //            for (Starter starter : projectPlan.getStarters()) {
+            //                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
+            //                for (SampleInstance aliquotSampleInstance : aliquot.getSampleInstances()) {
+            //                    boolean foundIt = false;
+            //                    for (SampleInstance pondSampleInstance : pondRack.getSampleInstances()) {
+            //                        if (aliquotSampleInstance.getStartingSample().equals(pondSampleInstance.getStartingSample())) {
+            //                            foundIt = true;
+            //                            System.out.println("Pond has " + pondSampleInstance.getStartingSample().getLabel());
+            //                        }
+            //                    }
+            //                    Assert.assertTrue(foundIt);
+            //                }
+            //            }
 
             // make sure that the pond sample instances contain the starters from the project plan.
-//            for (Starter starter : projectPlan.getStarters()) {
-//                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
-//                for (SampleInstance aliquotSampleInstance : aliquot.getSampleInstances()) {
-//                    boolean foundIt = false;
-//                    for (SampleInstance pondSampleInstance : hybridSelectionEntityBuilder.getNormCatchRack().getSampleInstances()) {
-//                        if (aliquotSampleInstance.getStartingSample().equals(pondSampleInstance.getStartingSample())) {
-//                            foundIt = true;
-//                            System.out.println("Norm has " + pondSampleInstance.getStartingSample().getLabel());
-//                        }
-//                    }
-//                    Assert.assertTrue(foundIt);
-//                }
-//
-//            }
+            //            for (Starter starter : projectPlan.getStarters()) {
+            //                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
+            //                for (SampleInstance aliquotSampleInstance : aliquot.getSampleInstances()) {
+            //                    boolean foundIt = false;
+            //                    for (SampleInstance pondSampleInstance : hybridSelectionEntityBuilder.getNormCatchRack().getSampleInstances()) {
+            //                        if (aliquotSampleInstance.getStartingSample().equals(pondSampleInstance.getStartingSample())) {
+            //                            foundIt = true;
+            //                            System.out.println("Norm has " + pondSampleInstance.getStartingSample().getLabel());
+            //                        }
+            //                    }
+            //                    Assert.assertTrue(foundIt);
+            //                }
+            //
+            //            }
 
-            LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(
-                    bettaLimsMessageFactory, labEventFactory, labEventHandler,
-                    hybridSelectionEntityBuilder.getNormCatchRack(), hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
-                    hybridSelectionEntityBuilder.getNormCatchBarcodes(), hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes());
+            LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(bettaLimsMessageFactory,
+                                                                                               labEventFactory,
+                                                                                               labEventHandler,
+                                                                                               hybridSelectionEntityBuilder
+                                                                                                       .getNormCatchRack(),
+                                                                                               hybridSelectionEntityBuilder
+                                                                                                       .getNormCatchRackBarcode(),
+                                                                                               hybridSelectionEntityBuilder
+                                                                                                       .getNormCatchBarcodes(),
+                                                                                               hybridSelectionEntityBuilder
+                                                                                                       .getMapBarcodeToNormCatchTubes());
             qtpEntityBuilder.invoke();
 
             RackOfTubes poolingResult = qtpEntityBuilder.getDenatureRack();
@@ -345,69 +364,69 @@ public class ExomeExpressEndToEndTest {
             // Post "work done" to Quote Server
             // MockQuoteService.registerNewWork
 
-
             final TwoDBarcodedTube currEntry = poolingResult.getContainerRole().getVesselAtPosition(VesselPosition.A01);
 
             final SequelLibrary registerLibrary = RegistrationJaxbConverter.squidify(currEntry/*, projectPlan*/);
 
-//            final Collection<Starter> startersFromProjectPlan = projectPlan.getStarters();
+            //            final Collection<Starter> startersFromProjectPlan = projectPlan.getStarters();
 
             int numStartersFromSampleInstances = 0;
             final Collection<String> aliquotsFromProjectPlan = new HashSet<String>();
-//            for (Starter starter : projectPlan.getStarters()) {
-//                final LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
-//                for (SampleInstance sampleInstance : aliquot.getSampleInstances()) {
-//                    aliquotsFromProjectPlan.add(sampleInstance.getStartingSample().getLabel());
-//                }
-//            }
+            //            for (Starter starter : projectPlan.getStarters()) {
+            //                final LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
+            //                for (SampleInstance sampleInstance : aliquot.getSampleInstances()) {
+            //                    aliquotsFromProjectPlan.add(sampleInstance.getStartingSample().getLabel());
+            //                }
+            //            }
             for (SampleInstance sampleInstance : currEntry.getSampleInstances()) {
                 Assert.assertTrue(aliquotsFromProjectPlan.contains(sampleInstance.getStartingSample().getSampleKey()));
                 numStartersFromSampleInstances++;
-//                Assert.assertEquals(projectPlan, sampleInstance.getSingleProjectPlan());
+                //                Assert.assertEquals(projectPlan, sampleInstance.getSingleProjectPlan());
             }
 
-//            Assert.assertEquals(startersFromProjectPlan.size(), numStartersFromSampleInstances);
+            //            Assert.assertEquals(startersFromProjectPlan.size(), numStartersFromSampleInstances);
 
             // todo arz fix semantics: is it "single sample ancestor" or "sequencing library"?
-            Map<MercurySample, Collection<LabVessel>> singleSampleAncestors = poolingResult.getContainerRole().getSingleSampleAncestors(VesselPosition.A01);
+            Map<MercurySample, Collection<LabVessel>> singleSampleAncestors =
+                    poolingResult.getContainerRole().getSingleSampleAncestors(VesselPosition.A01);
 
-//            for (Starter starter : projectPlan.getStarters()) {
-//                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
-//                Assert.assertNotNull(aliquot);
-//
-//                Assert.assertEquals(aliquot.getSampleInstances().size(), 1);
-//
-//                for (SampleInstance aliquotSampleInstance : aliquot.getSampleInstances()) {
-//                    StartingSample aliquotStartingSample = aliquotSampleInstance.getStartingSample();
-//                    Collection<LabVessel> sequencingLibs = singleSampleAncestors.get(aliquotStartingSample);
-//                    Assert.assertEquals(sequencingLibs.size(), 1);
-//                    Assert.assertTrue(sequencingLibs.iterator().next().getLabel().startsWith(LabEventTest.POND_REGISTRATION_TUBE_PREFIX));
-//                }
-//            }
+            //            for (Starter starter : projectPlan.getStarters()) {
+            //                LabVessel aliquot = projectPlan.getAliquotForStarter(starter);
+            //                Assert.assertNotNull(aliquot);
+            //
+            //                Assert.assertEquals(aliquot.getSampleInstances().size(), 1);
+            //
+            //                for (SampleInstance aliquotSampleInstance : aliquot.getSampleInstances()) {
+            //                    StartingSample aliquotStartingSample = aliquotSampleInstance.getStartingSample();
+            //                    Collection<LabVessel> sequencingLibs = singleSampleAncestors.get(aliquotStartingSample);
+            //                    Assert.assertEquals(sequencingLibs.size(), 1);
+            //                    Assert.assertTrue(sequencingLibs.iterator().next().getLabel().startsWith(LabEventTest.POND_REGISTRATION_TUBE_PREFIX));
+            //                }
+            //            }
             Assert.assertEquals(singleSampleAncestors.size(), 2);
 
-            Collection<LabBatch> nearestBatches = poolingResult.getContainerRole().getNearestLabBatches(VesselPosition.A01);
+            Collection<LabBatch> nearestBatches = poolingResult.getContainerRole().getNearestLabBatches(
+                    VesselPosition.A01);
             Assert.assertEquals(nearestBatches.size(), 1);
             LabBatch labBatch = nearestBatches.iterator().next();
 
             Assert.assertEquals(labBatch.getJiraTicket(), jiraTicket);
 
-//            Quote quoteDTO = projectPlan.getQuoteDTO(quoteService);
+            //            Quote quoteDTO = projectPlan.getQuoteDTO(quoteService);
 
-//            Assert.assertNotNull(quoteDTO);
+            //            Assert.assertNotNull(quoteDTO);
 
-//            R3_725
-//            Assert.assertEquals(projectPlan.getWorkflowDescription().getPriceItem().getName(),directedPass.getFundingInformation().getGspPriceItem().getName());
+            //            R3_725
+            //            Assert.assertEquals(projectPlan.getWorkflowDescription().getPriceItem().getName(),directedPass.getFundingInformation().getGspPriceItem().getName());
 
-//            for (Starter starter : labBatch.getStarters()) {
-//                ProjectPlan batchPlan = labBatch.getProjectPlan();
-//                Assert.assertEquals(projectPlan, batchPlan);
-//                batchPlan.doBilling(starter, labBatch, quoteService);
-//            }
+            //            for (Starter starter : labBatch.getStarters()) {
+            //                ProjectPlan batchPlan = labBatch.getProjectPlan();
+            //                Assert.assertEquals(projectPlan, batchPlan);
+            //                batchPlan.doBilling(starter, labBatch, quoteService);
+            //            }
 
             // todo add call to quote server to get all work done during the time period and verify
             // that our work was included: https://iwww.broadinstitute.org/blogs/quote/?page_id=210
-
 
             registrationSOAPService.registerSequeLLibrary(registerLibrary);
 
@@ -419,21 +438,23 @@ public class ExomeExpressEndToEndTest {
             IlluminaSequencingRunFactory illuminaSequencingRunFactory = new IlluminaSequencingRunFactory();
             IlluminaSequencingRun illuminaSequencingRun;
             try {
-                illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(
-                        new SolexaRunBean(qtpEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode(), "Run1", new Date(), "SL-HAL",
-                                File.createTempFile("RunDir", ".txt").getAbsolutePath(), null), qtpEntityBuilder.getIlluminaFlowcell());
+                illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
+                        qtpEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode(), "Run1", new Date(), "SL-HAL",
+                        File.createTempFile("RunDir", ".txt").getAbsolutePath(), null), qtpEntityBuilder
+                        .getIlluminaFlowcell());
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            Assert.assertNotNull(illuminaSequencingRun.getSampleCartridge().iterator().next(), "No registered flowcell");
+            Assert.assertNotNull(illuminaSequencingRun.getSampleCartridge().iterator().next(),
+                                 "No registered flowcell");
 
             // We're container-free, so we have to populate the BSPSampleDTO ourselves
-//            for (Starter starter : projectPlan.getStarters()) {
-//                BSPSampleAuthorityTwoDTube aliquot = (BSPSampleAuthorityTwoDTube) projectPlan.getAliquotForStarter(starter);
-//                BSPStartingSample bspStartingSample = (BSPStartingSample) aliquot.getAliquot();
-//                bspStartingSample.setBspDTO(new BSPSampleDTO("1", "", "", "", "", "", "", "", "", "", "lsid:" + bspStartingSample.getSampleName(),
-//                        "", "", "","", "", "", "",""));
-//            }
+            //            for (Starter starter : projectPlan.getStarters()) {
+            //                BSPSampleAuthorityTwoDTube aliquot = (BSPSampleAuthorityTwoDTube) projectPlan.getAliquotForStarter(starter);
+            //                BSPStartingSample bspStartingSample = (BSPStartingSample) aliquot.getAliquot();
+            //                bspStartingSample.setBspDTO(new BSPSampleDTO("1", "", "", "", "", "", "", "", "", "", "lsid:" + bspStartingSample.getSampleName(),
+            //                        "", "", "","", "", "", "",""));
+            //            }
 
             // ZIMS
             LibraryBeanFactory libraryBeanFactory = new LibraryBeanFactory();
@@ -451,18 +472,18 @@ public class ExomeExpressEndToEndTest {
                     Collection<LibraryBean> libraries = zimsLane.getLibraries();
                     Assert.assertFalse(libraries.isEmpty());
                     for (LibraryBean library : libraries) {
-//                        Assert.assertEquals(library.getProject(), directedPass.getResearchProject());
+                        //                        Assert.assertEquals(library.getProject(), directedPass.getResearchProject());
                         // todo how to get from pass bait set id to bait name?
-//                        Assert.assertEquals(library.getBaitSetName(),directedPass.getBaitSetID());
+                        //                        Assert.assertEquals(library.getBaitSetName(),directedPass.getBaitSetID());
                         // todo how to get from pass organism id to organism name?
-//                        Assert.assertEquals(library.getOrganism(), directedPass.getProjectInformation().getOrganismID());
-//                        for (Sample sample : directedPass.getSampleDetailsInformation().getSample()) {
-//                            // todo probably wrong, not sure whether the sample id is lsid or stock id
-//                            if (library.getLsid().equals("lsid:" + sample.getBspSampleID())) {
-//                                foundSample = true;
-//                            }
-//                        }
-//                        Assert.assertTrue(foundSample);
+                        //                        Assert.assertEquals(library.getOrganism(), directedPass.getProjectInformation().getOrganismID());
+                        //                        for (Sample sample : directedPass.getSampleDetailsInformation().getSample()) {
+                        //                            // todo probably wrong, not sure whether the sample id is lsid or stock id
+                        //                            if (library.getLsid().equals("lsid:" + sample.getBspSampleID())) {
+                        //                                foundSample = true;
+                        //                            }
+                        //                        }
+                        //                        Assert.assertTrue(foundSample);
 
                         // todo single sample ancestor comparison
                     }
