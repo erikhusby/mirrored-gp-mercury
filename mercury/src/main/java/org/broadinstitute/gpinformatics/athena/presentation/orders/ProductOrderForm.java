@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderListModel;
@@ -84,7 +85,9 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     @Inject ProductOrderDao productOrderDao;
 
-    private List<String> selectedAddOns = new ArrayList<String>();
+    private List<String> selectedAddOnPartNumbers = new ArrayList<String>();
+
+    @Inject private Log logger;
 
     @Inject
     private Conversation conversation;
@@ -246,28 +249,20 @@ public class ProductOrderForm extends AbstractJsfBean {
         return orderSamples;
     }
 
-    public List<String> getSelectedAddOns() {
-        return selectedAddOns;
+    public List<String> getSelectedAddOnPartNumbers() {
+        return selectedAddOnPartNumbers;
     }
 
-    public void setSelectedAddOns(@Nonnull List<String> selectedAddOns) {
-        this.selectedAddOns = selectedAddOns;
+    public void setSelectedAddOnPartNumbers(@Nonnull List<String> selectedAddOnPartNumbers) {
+        this.selectedAddOnPartNumbers = selectedAddOnPartNumbers;
     }
 
     public boolean getHasProduct() {
         return conversationData.getProduct() != null;
     }
 
-    public List<String> getAddOns() {
-        return conversationData.getAddOnsForProduct();
-    }
-
     public Product getProduct() {
         return conversationData.getProduct();
-    }
-
-    public void setAddOns(@Nonnull List<String> addOns) {
-        conversationData.setAddOnsForProduct(addOns);
     }
 
     /**
@@ -375,37 +370,51 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     // FIXME: handle db store errors, JIRA server errors.
     public String save() throws IOException {
-        ProductOrder order = productOrderDetail.getProductOrder();
-        order.setSamples(convertTextToOrderSamples(getEditIdsCache()));
 
-        // Validations.
-        if (order.getSamples().isEmpty()) {
-            // FIXME: instead of doing this here, it can be done as a validator on the hidden editIDsCache field.
-            String message = "You must add at least one sample before placing an order.";
-            addErrorMessage(message);
+        try {
+
+            ProductOrder order = productOrderDetail.getProductOrder();
+
+            if (productOrderDao.findByTitle(order.getTitle()) != null) {
+                addErrorMessage("Product order with this title already exists, please choose a different title");
+                return null;
+            }
+
+            order.setSamples(convertTextToOrderSamples(getEditIdsCache()));
+
+            // Validations.
+            if (order.getSamples().isEmpty()) {
+                // FIXME: instead of doing this here, it can be done as a validator on the hidden editIDsCache field.
+                String message = "You must add at least one sample before placing an order.";
+                addErrorMessage(message);
+                return null;
+            }
+
+            order.updateAddOnProducts(getSelectedAddOnProducts());
+
+            // DRAFT orders not yet supported; force state of new PDOs to Submitted.
+            order.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+            String action = order.isInDB() ? "modified" : "created";
+            order.submitProductOrder();
+            productOrderDao.persist(order);
+
+            addInfoMessage(
+                    MessageFormat.format("Product Order ''{0}'' ({1}) has been {2}.",
+                            order.getTitle(), order.getJiraTicketKey(), action));
+            return redirect("view");
+        } catch (Exception e) {
+            logger.error(e);
+            addErrorMessage("Error saving Product Order: " + e.getMessage());
             return null;
         }
-
-        order.updateAddOnProducts(getSelectedAddOnProducts());
-
-        // DRAFT orders not yet supported; force state of new PDOs to Submitted.
-        order.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-        String action = order.isInDB() ? "modified" : "created";
-        order.submitProductOrder();
-        productOrderDao.persist(order);
-
-        addInfoMessage(
-            MessageFormat.format("Product Order ''{0}'' ({1}) has been {2}.",
-            order.getTitle(), order.getJiraTicketKey(), action));
-        return redirect("view");
     }
 
     private List<Product> getSelectedAddOnProducts() {
-        if (getSelectedAddOns().isEmpty()) {
-            return new ArrayList<Product> ();
+        if (getSelectedAddOnPartNumbers().isEmpty()) {
+            return new ArrayList<Product>();
         }
 
-        return productDao.findListByList(Product.class, Product_.productName, getSelectedAddOns());
+        return productDao.findListByList(Product.class, Product_.partNumber, getSelectedAddOnPartNumbers());
     }
 
     public void initForm() {
@@ -537,4 +546,21 @@ public class ProductOrderForm extends AbstractJsfBean {
 
         return null;
     }
+
+
+    /**
+     * Add-ons Listified for JSF
+     *
+     * @return
+     */
+    public List<Product> getAddOns() {
+        if (conversationData.getProduct() == null) {
+            return new ArrayList<Product>();
+        }
+
+        List<Product> listAddons = new ArrayList<Product>(conversationData.getProduct().getAddOns());
+        Collections.sort(listAddons);
+        return listAddons;
+    }
+
 }

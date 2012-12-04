@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.primefaces.event.ToggleEvent;
@@ -17,6 +19,8 @@ import java.util.Map;
 public class SearchPlasticBean {
     @Inject
     private LabVesselDao labVesselDao;
+    @Inject
+    private BSPUserList bspUserList;
     private String barcode;
     private LabVessel selectedVessel;
     private List<LabVessel> foundVessels;
@@ -66,5 +70,14 @@ public class SearchPlasticBean {
 
     public void onRowToggle(ToggleEvent event) {
         selectedVessel = labVesselDao.findByIdentifier(((LabVessel) event.getData()).getLabel());
+    }
+
+    public String getUserNameById(Long id){
+        BspUser user = bspUserList.getById(id);
+        String username = "";
+        if(user != null){
+            username = bspUserList.getById(id).getUsername();
+        }
+        return username;
     }
 }

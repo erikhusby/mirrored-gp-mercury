@@ -22,7 +22,6 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.io.File;
 import java.io.FileInputStream;
 import java.util.*;
 
@@ -76,8 +75,6 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
     public void testImport() throws Exception {
 
         FileInputStream fis=null;
-        File tempFile=null;
-//        BillingTrackerManager  billingTrackerManager = new BillingTrackerManager(productOrderDao, billingLedgerDao);
 
         // Create a copy of the deployed test data file
         try {
@@ -95,7 +92,6 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
 
             // There should be one Order for the RNA product data
             Assert.assertEquals(1, rnaProductOrders.size());
-            String rnaOrderId = "PDO-23";
             ProductOrder productOrder = rnaProductOrders.get(0);
             Set<BillingLedger> ledgerSet = billingLedgerDao.findByOrderList(new ProductOrder[]{productOrder});
             // There should be ledger entries
@@ -126,7 +122,7 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
                 i++;
             }
         } catch ( Exception e ) {
-            e.printStackTrace();
+            logger.error(e);
             Assert.fail( e.getMessage() );
         } finally {
             IOUtils.closeQuietly(fis);
