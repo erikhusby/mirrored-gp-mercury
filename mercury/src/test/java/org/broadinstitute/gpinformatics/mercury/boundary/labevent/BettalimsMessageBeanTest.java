@@ -5,31 +5,33 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
-import org.hornetq.jms.client.HornetQJMSConnectionFactory;
+import org.hornetq.api.core.TransportConfiguration;
+import org.hornetq.api.jms.HornetQJMSClient;
+import org.hornetq.api.jms.JMSFactoryType;
+import org.hornetq.core.remoting.impl.netty.NettyConnectorFactory;
+import org.hornetq.core.remoting.impl.netty.TransportConstants;
+import org.hornetq.jms.client.HornetQConnectionFactory;
 import org.testng.annotations.Test;
-import sun.rmi.transport.TransportConstants;
 
 import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
 import javax.jms.DeliveryMode;
 import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.naming.NamingException;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
 import java.io.StringWriter;
 import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Test JMS
  */
 public class BettalimsMessageBeanTest extends ContainerTest {
+
     @Test
     public void testJms() {
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
@@ -48,62 +50,46 @@ public class BettalimsMessageBeanTest extends ContainerTest {
         }
     }
 
-    private void sendJmsMessage(String message) {
-        Context jndiContext = null;
+    private static void sendJmsMessage(String message) {
         Connection connection = null;
         Session session = null;
         try{
-//            jndiContext = new InitialContext();
-//            ConnectionFactory connectionFactory = (ConnectionFactory) jndiContext.lookup("jms/ConnectionFactory");
-//            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://node115:61616");
-            HashMap<String, Object> connectionParams = new HashMap<String, Object>();
+            Map<String, Object> connectionParams = new HashMap<String, Object>();
+            connectionParams.put(TransportConstants.PORT_PROP_NAME, 5445);
+            connectionParams.put(TransportConstants.HOST_PROP_NAME, "seqlims");
+            TransportConfiguration transportConfiguration = new TransportConfiguration(
+                    NettyConnectorFactory.class.getName(), connectionParams);
+            HornetQConnectionFactory connectionFactory = HornetQJMSClient.createConnectionFactoryWithoutHA(
+                    JMSFactoryType.CF, transportConfiguration);
 
-            connectionParams.put(TransportConstants.HOST_PROP_NAME, "localhost");
-            connectionParams.put(TransportConstants.PORT_PROP_NAME, "5445");
-
-            new HornetQJMSConnectionFactory(false, );
-
-            ServerLocator locator =
-                    HornetQClient.createServerLocatorWithoutHA(new TransportConfiguration(
-                            NettyConnectorFactory.class.getName(), connectionParams));
-            // Create a Connection
             connection = connectionFactory.createConnection();
             connection.start();
 
-            // Create a Session
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-
-            // Create the destination (Topic or Queue)
-            Destination destination = session.createQueue("broad.queue.bettalims.thompson");
-
-            // Create a MessageProducer from the Session to the Topic or Queue
+            Destination destination = session.createQueue("broad.queue.mercury.bettalims.production");
             MessageProducer producer = session.createProducer(destination);
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
-            TextMessage textMessage = session.createTextMessage(message);
 
-            // Tell the producer to send the message
+            TextMessage textMessage = session.createTextMessage(message);
             System.out.println("Sent message: " + textMessage.hashCode() + " : " + Thread.currentThread().getName());
             producer.send(textMessage);
 
-            // Clean up
-
-        } catch (NamingException e) {
-            throw new RuntimeException(e);
         } catch (JMSException e) {
             throw new RuntimeException(e);
         } finally {
             try {
-                if (jndiContext != null) {
-                    jndiContext.close();
-                }
                 if (session != null) {
                     session.close();
                 }
                 if (connection != null) {
                     connection.close();
                 }
-            } catch (NamingException e) {
-                // do nothing
+                // Give the message bean time to process the message before the container shuts down
+                try {
+                    Thread.sleep(5000L);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
             } catch (JMSException e) {
                 // do nothing
             }

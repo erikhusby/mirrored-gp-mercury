@@ -1270,8 +1270,15 @@
 
         <dependency>
             <groupId>org.hornetq</groupId>
+            <artifactId>hornetq-core-client</artifactId>
+            <version>2.2.7.Final</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hornetq</groupId>
             <artifactId>hornetq-jms-client</artifactId>
             <version>2.2.7.Final</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 

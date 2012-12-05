@@ -10,9 +10,10 @@ import javax.jms.TextMessage;
 /**
  * A Message Driven Bean to receive JMS messages from liquid handling decks
  */
+@SuppressWarnings("UnusedDeclaration")
 @MessageDriven(name = "BettalimsMessageBean", activationConfig = {
         @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/mercuryBettalims"),
+        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/broad.queue.mercury.bettalims.production"),
         @ActivationConfigProperty(propertyName = "connectorClassName", propertyValue ="org.hornetq.core.remoting.impl.netty.NettyConnectorFactory"),
         @ActivationConfigProperty(propertyName = "connectionParameters", propertyValue = "host=vseqlims;port=5445")})
 public class BettalimsMessageBean implements MessageListener {
@@ -30,10 +31,10 @@ public class BettalimsMessageBean implements MessageListener {
     public void onMessage(Message message) {
         // The deck side code is written in JavaScript, so it sends text messages, rather than object messages.
         if (message instanceof TextMessage) {
+            //noinspection OverlyBroadCatchBlock
             try {
                 String text = ((TextMessage) message).getText();
-                // todo jmt refactor called method to isolate stuff that's common to JAX-RS and JMS, and void ResourceException in JMS
-                bettalimsMessageResource.processMessage(text);
+                bettalimsMessageResource.storeAndProcess(text);
             } catch (Exception e) {
                 // todo jmt email LIMS oddities
             }

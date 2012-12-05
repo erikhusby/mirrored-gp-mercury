@@ -54,6 +54,30 @@ public class BettalimsMessageResource {
     @POST
     @Consumes({MediaType.APPLICATION_XML})
     public Response processMessage(String message) {
+        try {
+            storeAndProcess(message);
+        } catch (Exception e) {
+            /*
+            todo jmt fix this
+                        if(e.getMessage().contains(LabWorkflowBatchException.MESSAGE)) {
+                            throw new ResourceException(e.getMessage(), Response.Status.CREATED);
+                        } else {
+            */
+            throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            /*
+                        }
+            */
+        }
+        // The VWorks client seems to prefer 200 to 204
+        return Response.status(Response.Status.OK).entity("Message persisted").type(MediaType.TEXT_PLAIN_TYPE).build();
+    }
+
+    /**
+     * Shared between JAX-RS and JMS
+     * @param message from deck
+     * @throws Exception
+     */
+    public void storeAndProcess(String message) throws Exception {
         Date now = new Date();
         //noinspection OverlyBroadCatchBlock
         try {
@@ -80,21 +104,14 @@ public class BettalimsMessageResource {
         } catch (Exception e) {
             wsMessageStore.recordError(message, now, e);
             LOG.error("Failed to process run", e);
-/*
-todo jmt fix this
-            if(e.getMessage().contains(LabWorkflowBatchException.MESSAGE)) {
-                throw new ResourceException(e.getMessage(), Response.Status.CREATED);
-            } else {
-*/
-                throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-/*
-            }
-*/
+            throw e;
         }
-        // The VWorks client seems to prefer 200 to 204
-        return Response.status(Response.Status.OK).entity("Message persisted").type(MediaType.TEXT_PLAIN_TYPE).build();
     }
 
+    /**
+     * Process JAXB message bean after it is converted from string
+     * @param message JAXB
+     */
     public void processMessage(BettaLIMSMessage message) {
         List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
         for (LabEvent labEvent : labEvents) {
