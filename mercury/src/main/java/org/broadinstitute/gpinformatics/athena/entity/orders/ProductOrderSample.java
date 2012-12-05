@@ -131,7 +131,7 @@ public class ProductOrderSample implements Serializable {
         return bspDTO;
     }
 
-    public Set<BillingLedger> getBillableItems() {
+    public Set<BillingLedger> getLedgerItems() {
         return ledgerItems;
     }
 
@@ -180,6 +180,36 @@ public class ProductOrderSample implements Serializable {
                 .append(sampleComment).append(productOrder).append(bspDTO).build();
     }
 
+    public Set<BillingLedger> getBillableLedgerItems() {
+        Set<BillingLedger> billableLedgerItems = new HashSet<BillingLedger>();
+
+        if (getLedgerItems() != null) {
+            for ( BillingLedger billingLedger : getLedgerItems() ) {
+                // Only count the null-Billing Session ledgerItems.
+                if (billingLedger.getBillingSession() == null) {
+                    billableLedgerItems.add(billingLedger);
+                }
+            }
+        }
+
+        return billableLedgerItems;
+    }
+
+    public String getUnbilledLedgerItemMessages() {
+        StringBuilder builder = new StringBuilder();
+
+        if (getLedgerItems() != null) {
+            for (BillingLedger billingLedger : getLedgerItems() ) {
+                // If there is a message that is not success, add the message to the end
+                if ((billingLedger.getBillingMessage() != null) && !BillingSession.SUCCESS.equals(billingLedger.getBillingMessage())) {
+                    builder.append(billingLedger.getBillingMessage()).append("\n");
+                }
+            }
+        }
+
+        return builder.toString();
+    }
+
     /**
      * This class holds the billed and uploaded ledger counts for a particular pdo and price item
      */
@@ -206,7 +236,7 @@ public class ProductOrderSample implements Serializable {
     }
 
     public static Map<PriceItem, LedgerQuantities> getLedgerQuantities(ProductOrderSample sample) {
-        Set<BillingLedger> ledgerItems = sample.getBillableItems();
+        Set<BillingLedger> ledgerItems = sample.getLedgerItems();
         if (ledgerItems.isEmpty()) {
             return Collections.emptyMap();
         }
