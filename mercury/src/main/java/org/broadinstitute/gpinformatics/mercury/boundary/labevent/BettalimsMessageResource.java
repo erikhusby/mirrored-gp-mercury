@@ -126,6 +126,9 @@ todo jmt fix this
         for (LabEvent labEvent : labEvents) {
             labEventHandler.processEvent(labEvent);
 
+/*
+//          TODO SGM  Commenting to revisit after GPLIM-517
+
             Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels = labEventHandler.itemizeBucketItems(labEvent);
 
             if(bucketVessels.keySet().size() ==1) {
@@ -141,6 +144,7 @@ todo jmt fix this
                                  workingBucket,
                                  labEvent.getEventLocation());
             }
+*/
         }
 
     }
