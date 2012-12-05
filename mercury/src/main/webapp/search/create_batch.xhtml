@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Created by IntelliJ IDEA.
+  User: scottmat
+  Date: 12/5/12
+  Time: 2:04 PM
+-->
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:c="http://java.sun.com/jsf/composite/container"
+      xmlns:s="http://java.sun.com/jsf/composite/sample"
+      xmlns:bui="http://mercury.broadinstitute.org/ui">
+
+<h:head>
+    <title>Simple JSF Facelets page</title>
+</h:head>
+
+<h:body>
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="title">Create Batch</ui:define>
+        <ui:define name="body">
+            <h:form id="batchForm">
+                <div class="control-group">
+                    <div class="controls">
+                        <p:inputText id="barcode" value="#{batchFromPlasticBean.barcode}" size="50"/>
+                        <p:watermark value="Enter the list of barcodes from which to create a batch" for="barcode"/>
+                        <p:commandButton value="Search" action="#{batchFromPlasticBean.barcodeSearch}"
+                                           update=":batchForm:searchResultPanel" styleClass="ui-priority-primary"/>
+                    </div>
+                </div>
+                <p:panel id="searchResultPanel">
+                    <p:dataTable id="batchFormTable" var="foundVessel" value="#{batchFromPlasticBean.foundVessels}" rowKey="#{foundVessel.label}"
+                            selection="#{batchFromPlasticBean.selectedVessels}" selectionMode="multiple">
+                        <p:ajax event="rowToggle" listener="#{batchFromPlasticBean.onRowToggle}"/>
+                        <f:facet name="header">
+                            Barcode Search Results
+                        </f:facet>
+                        <p:column style="width:4%">
+                            <f:facet name="header">
+                                <h:outputText value="Sample Details"/>
+                            </f:facet>
+                            <p:rowToggler rendered="#{batchFromPlasticBean.vesselSampleSizeMap.get(foundVessel) > 0}"/>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Sample #"/>
+                            </f:facet>
+                            <h:outputText value="#{batchFromPlasticBean.vesselSampleSizeMap.get(foundVessel)}"/>
+                        </p:column>
+                        <p:column sortBy="#{foundVessel.label}">
+                            <f:facet name="header">
+                                <h:outputText value="Label"/>
+                            </f:facet>
+                            <h:outputText value="#{foundVessel.label}"/>
+                        </p:column>
+                        <p:column sortBy="#{foundVessel.type.name}">
+                            <f:facet name="header">
+                                <h:outputText value="Type"/>
+                            </f:facet>
+                            <h:outputText value="#{foundVessel.type.name}"/>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Lab Batches"/>
+                            </f:facet>
+                            <ui:repeat value="#{foundVessel.labBatchesList}" var="batch">
+                                <h:outputText value="#{batch.batchName}"/>
+                                <br/>
+                            </ui:repeat>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Latest Event"/>
+                            </f:facet>
+                            <h:outputText value="#{foundVessel.latestEvent.labEventType.name}"/>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Event Location"/>
+                            </f:facet>
+                            <h:outputText value="#{foundVessel.latestEvent.eventLocation}"/>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Event User"/>
+                            </f:facet>
+                            <h:outputText
+                                    value="#{batchFromPlasticBean.getUserNameById(foundVessel.latestEvent.eventOperator)}"/>
+                        </p:column>
+                        <p:column>
+                            <f:facet name="header">
+                                <h:outputText value="Event Date"/>
+                            </f:facet>
+                            <h:outputText value="#{foundVessel.latestEvent.eventDate}"/>
+                        </p:column>
+                        <p:column sortBy="#{foundVessel.createdOn}">
+                            <f:facet name="header">
+                                <h:outputText value="Creation Date"/>
+                            </f:facet>
+                            <h:outputText value="#{foundVessel.createdOn}"/>
+                        </p:column>
+                        <p:rowExpansion>
+                            <p:outputPanel id="outputContainerPanel">
+                                <p:panel id="platePanel">
+                                    <c:container barcode="#{batchFromPlasticBean.selectedVessel.label}"/>
+                                </p:panel>
+                                <p:panel id="samplePanel">
+                                    <s:sampleList barcode="#{batchFromPlasticBean.selectedVessel.label}"/>
+                                </p:panel>
+                            </p:outputPanel>
+                        </p:rowExpansion>
+                        <f:facet name="footer">
+
+                            <p:inputText id="jiraKey" value="#{batchFromPlasticBean.jiraKey}"/>
+                            <p:watermark value="Enter a Jira Key for an existing Batch" for="jiraKey"/>
+
+                            <p:commandButton value="Create Batch" action="#{batchFromPlasticBean.createBatch}"
+                                               styleClass="ui-priority-primary"/>
+
+                        </f:facet>
+                    </p:dataTable>
+                </p:panel>
+            </h:form>
+        </ui:define>
+    </ui:composition>
+
+</h:body>
+
+</html>
