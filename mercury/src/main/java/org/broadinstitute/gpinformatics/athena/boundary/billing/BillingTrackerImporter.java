@@ -23,14 +23,9 @@ public class BillingTrackerImporter {
     private static final Log logger = LogFactory.getLog(BillingTrackerImporter.class);
     private ProductOrderDao productOrderDao;
 
-    private static final String[] fixedHeaders = SampleLedgerExporter.FIXED_HEADERS;
-
-    private final static int numberOfHeaderRows = 2;
-
     public BillingTrackerImporter(ProductOrderDao productOrderDao) {
         this.productOrderDao = productOrderDao;
     }
-
 
     public Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> parseFileForSummaryMap(
             InputStream inputStream) throws IOException {
@@ -265,20 +260,22 @@ public class BillingTrackerImporter {
 
     private Row skipHeaderRows(Iterator<Row> rit,  Row row) {
         Row newRow=row;
+
         // skip the 3 header rows
-        for (int i = 0; i < numberOfHeaderRows; i++) {
+        for (int i = 0; i < BillingTrackerUtils.NUM_HEADER_ROWS; i++) {
             newRow = rit.next();
         }
+
         return newRow;
     }
 
 
     List<TrackerColumnInfo> parseTrackerSheetHeader(Row headerRow, String primaryProductPartNumber) {
-        int numFixedHeaders = fixedHeaders.length;
+        int numFixedHeaders = BillingTrackerUtils.fixedHeaders.length;
 
         // Check header names. Should match what we write.
         Iterator<Cell> cells = headerRow.cellIterator();
-        for (String fixedHeader : fixedHeaders) {
+        for (String fixedHeader : BillingTrackerUtils.fixedHeaders) {
             Cell cell = cells.next();
             if ((cell == null)
                 || StringUtils.isBlank(cell.getStringCellValue())
@@ -387,10 +384,6 @@ public class BillingTrackerImporter {
 
         public BillableRef getBillableRef() {
             return billableRef;
-        }
-
-        public int getColumnIndex() {
-            return columnIndex;
         }
 
         @Override

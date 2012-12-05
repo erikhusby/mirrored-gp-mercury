@@ -29,6 +29,9 @@ public class BillingTrackerUtils {
             headerColumnIndices.put(fixedHeaders[i], i);
         }
     }
+
+    final static int NUM_HEADER_ROWS = 2;
+
     final static int SAMPLE_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.SAMPLE_ID_HEADING);
     final static int PDO_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.ORDER_ID_HEADING);
     final static int SORT_COLUMN_COL_POS = headerColumnIndices.get( SampleLedgerExporter.SORT_COLUMN_HEADING);
