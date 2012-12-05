@@ -374,6 +374,8 @@ public class BucketBean {
          */
         if (allHaveBatch && trackBatches != null && trackBatches.size() == 1) {
             bucketBatch = trackBatches.get(0);
+
+            //TODO SGM  Still have to set vessels to the Batch if it exists
         } else {
             bucketBatch = new LabBatch(/*TODO SGM Pull ProductOrder details to get title */ " ", batchVessels);
         }
