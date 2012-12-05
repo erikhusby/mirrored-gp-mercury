@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
-import org.jboss.arquillian.testng.Arquillian;
 import org.testng.annotations.Test;
 
 /**

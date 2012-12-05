@@ -7,7 +7,8 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:p="http://primefaces.org/ui"
-      xmlns:f="http://java.sun.com/jsf/core">
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:b="http://mercury.broadinstitute.org/ui">
 <body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">New Product Order</ui:define>
@@ -16,8 +17,8 @@
             <f:metadata>
                 <f:viewParam name="researchProject" value="#{productOrderDetail.productOrder.researchProject}" converter="#{researchProjectConverter}"/>
                 <f:viewParam name="product" value="#{productOrderDetail.productOrder.product}" converter="#{productConverter}"/>
+                <f:event type="preRenderView" listener="#{productOrderForm.initForm}"/>
             </f:metadata>
-            <f:event type="preRenderView" listener="#{productOrderForm.initForm}"/>
             <f:event type="preRenderView" listener="#{researchProjectBean.initView}"/>
         </ui:define>
 
@@ -64,13 +65,13 @@
                         <p:autoComplete id="researchProject" value="#{productOrderDetail.productOrder.researchProject}"
                                         completeMethod="#{researchProjectBean.getProjectCompletions}"
                                         forceSelection="true"
-                                        var="project" itemLabel="#{project.title}" itemValue="#{project}"
+                                        var="project" itemLabel="#{researchProjectBean.getResearchProjectLabel(project)}" itemValue="#{project}"
                                         converter="#{researchProjectConverter}"
                                         dropdown="true"
                                         required="true"
                                         scrollHeight="250"
                                         size="50"/>
-                        <p:watermark for="researchProject" value="Type name to search"/>
+                        <p:watermark for="researchProject" value="Type name or RP # to search"/>
                         <p:message for="researchProject"/>
                     </div>
                 </div>
@@ -90,7 +91,7 @@
                                         required="true"
                                         scrollHeight="250"
                                         size="50">
-                            <p:ajax event="itemSelect" listener="#{productOrderForm.setupAddOns}" update="perfbyselection,numberOfLanes"/>
+                            <p:ajax event="itemSelect" listener="#{productOrderForm.setupAddOns}" update="perfbyselection,numberOfLanesPanel"/>
                         </p:autoComplete>
                         <p:watermark for="product" value="Type name to search"/>
                         <p:message for="product"/>
@@ -107,8 +108,8 @@
                                           value="#{productOrderForm.hasProduct and productOrderForm.addOns.isEmpty() ?
                             productOrderForm.noAddOnsString() : ''}"/>
                             <p:selectManyCheckbox
-                                    id="selectedAddOns" value="#{productOrderForm.selectedAddOns}" layout="pageDirection">
-                                <f:selectItems value="#{productOrderForm.addOns}"/>
+                                    id="selectedAddOns" value="#{productOrderForm.selectedAddOnPartNumbers}" layout="pageDirection">
+                                <f:selectItems value="#{productOrderForm.addOns}" var="addOn" itemLabel="#{addOn.productName}" itemValue="#{addOn.partNumber}"/>
                             </p:selectManyCheckbox>
                         </h:panelGroup>
                     </div>
@@ -127,16 +128,19 @@
                     </div>
                 </div>
 
-                <div class="control-group">
-                    <p:outputLabel for="numberOfLanes" value="Number of Lanes" styleClass="control-label"/>
-                    <div class="controls">
-                        <p:inputText id="numberOfLanes"
-                                     disabled="#{!productOrderForm.hasProduct || !productOrderForm.product.productFamily.supportsNumberOfLanes}"
-                                     value="#{productOrderDetail.productOrder.count}" size="50" required="true"/>
-                        <p:watermark for="numberOfLanes" value="Enter Number of Lanes"/>
-                        <p:message for="numberOfLanes"/>
-                    </div>
-                </div>
+                <p:outputPanel id="numberOfLanesPanel">
+                    <p:outputPanel rendered="#{productOrderForm.hasProduct and productOrderForm.product.productFamily.supportsNumberOfLanes}">
+                        <div class="control-group">
+                            <p:outputLabel for="numberOfLanes" value="Number of Lanes" styleClass="control-label"/>
+                            <div class="controls">
+                                <p:inputText id="numberOfLanes"
+                                             value="#{productOrderDetail.productOrder.count}" size="50" required="true"/>
+                                <p:watermark for="numberOfLanes" value="Enter Number of Lanes"/>
+                                <p:message for="numberOfLanes"/>
+                            </div>
+                        </div>
+                    </p:outputPanel>
+                </p:outputPanel>
 
                 <div class="control-group">
                     <p:outputLabel for="comments" value="Comments" styleClass="control-label"/>
@@ -164,9 +168,9 @@
                 <div class="control-group">
                     <div class="controls">
                         <div class="row-fluid">
-                            <div class="span1">
-                                <p:commandButton
-
+                            <div class="span2">
+                                <b:commandButton
+                                        disabled="#{!userBean.validUser}"
                                         value="Place&nbsp;Order" action="#{productOrderForm.save}"
                                         ajax="false" styleClass="ui-priority-primary"/>
                             </div>
@@ -241,8 +245,8 @@
                 <div class="control-group">
                     <div class="controls">
                         <div class="row-fluid">
-                            <div class="span1">
-                                <p:commandButton
+                            <div class="span2">
+                                <b:commandButton
                                         disabled="#{!userBean.validUser}"
                                         value="Place&nbsp;Order" action="#{productOrderForm.save}"
                                         ajax="false" styleClass="ui-priority-primary"/>

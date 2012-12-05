@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jsf.TableData;
+import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.enterprise.context.Conversation;
 import javax.enterprise.context.ConversationScoped;
@@ -27,7 +28,7 @@ import java.util.*;
 @RequestScoped
 //@ViewAccessScoped
 //@ConversationScoped
-public class ResearchProjectBean implements Serializable {
+public class ResearchProjectBean extends AbstractJsfBean implements Serializable {
     @Inject
     private ResearchProjectDao researchProjectDao;
 
@@ -104,6 +105,12 @@ public class ResearchProjectBean implements Serializable {
     // FIXME: refactor for common cases
     public List<ResearchProject> getProjectCompletions(String search) {
         List<ResearchProject> list = new ArrayList<ResearchProject>(getAllResearchProjects());
+        Collections.sort(list, new Comparator<ResearchProject>() {
+            @Override
+            public int compare(ResearchProject project1, ResearchProject project2) {
+                return project1.getTitle().compareTo(project2.getTitle());
+            }
+        });
         String[] searchStrings = search.toLowerCase().split("\\s");
 
         Iterator<ResearchProject> iterator = list.iterator();
@@ -112,7 +119,7 @@ public class ResearchProjectBean implements Serializable {
             if (project.getTitle() != null) {
                 String label = project.getTitle().toLowerCase();
                 for (String s : searchStrings) {
-                    if (!label.contains(s)) {
+                    if (!(label.contains(s) || project.getJiraTicketKey().toLowerCase().contains(s))) {
                         iterator.remove();
                         break;
                     }
@@ -123,6 +130,14 @@ public class ResearchProjectBean implements Serializable {
         }
 
         return list;
+    }
+
+    public String getResearchProjectLabel(ResearchProject project) {
+        if (project == null) {
+            return null;
+        } else {
+            return project.getTitle() + " (" + project.getJiraTicketKey() + ")";
+        }
     }
 
     /**

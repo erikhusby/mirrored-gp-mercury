@@ -31,7 +31,6 @@ public class QuoteImportInfo {
     public void addQuantity(BillingLedger ledger) {
         String quoteId = ledger.getProductOrderSample().getProductOrder().getQuoteId();
         PriceItem priceItem = ledger.getPriceItem();
-        Double quantity = ledger.getQuantity();
 
         // If we have not seen the quote yet, create the map entry for it
         if (!quantitiesByQuotePriceItem.containsKey(quoteId)) {

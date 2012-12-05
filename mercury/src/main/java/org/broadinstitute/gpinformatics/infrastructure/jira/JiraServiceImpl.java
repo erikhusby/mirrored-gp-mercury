@@ -256,14 +256,16 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         String jsonResponse = getJerseyClient().resource(urlString).
                 queryParam("username", username).
-                queryParam("maxResults", "1").get(String.class);
+                queryParam("maxResults", "1000").get(String.class);
         try {
             @SuppressWarnings("unchecked")
             List<Map<String, String>> response = new ObjectMapper().readValue(jsonResponse, List.class);
-            if (!response.isEmpty()) {
-                String foundName = response.get(0).get("name");
+            for (Map<String, String> properties : response) {
+                String foundName = properties.get("name");
                 // JIRA usernames are not case sensitive.
-                return foundName.equalsIgnoreCase(username);
+                if (foundName.equalsIgnoreCase(username)) {
+                    return true;
+                }
             }
             return false;
         } catch (IOException e) {

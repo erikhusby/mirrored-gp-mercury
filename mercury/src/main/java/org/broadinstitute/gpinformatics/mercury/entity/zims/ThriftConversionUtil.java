@@ -5,18 +5,16 @@ public class ThriftConversionUtil {
     public static Integer zeroAsNull(int number) {
         if (number == 0) {
             return null;
-        }
-        else {
-            return new Integer(number);
+        } else {
+            return number;
         }
     }
 
     public static Double zeroAsNull(double number) {
         if (number == 0) {
             return null;
-        }
-        else {
-            return new Double(number);
+        } else {
+            return number;
         }
     }
 }

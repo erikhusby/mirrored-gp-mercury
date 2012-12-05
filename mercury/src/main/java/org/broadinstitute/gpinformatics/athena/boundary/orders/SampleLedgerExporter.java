@@ -2,9 +2,9 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -32,30 +32,34 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     // Each worksheet is a different product, so distribute the list of orders by product
     private final Map<Product, List<ProductOrder>> orderMap = new HashMap<Product, List<ProductOrder>>();
 
+    public final static String SAMPLE_ID_HEADING = "Sample ID";
+    public final static String ORDER_ID_HEADING = "Product Order ID";
+    public final static String WORK_COMPLETE_DATE_HEADING = "Date Completed";
+    public final static String SORT_COLUMN_HEADING = "Sort Column";
+
     public static final String[] FIXED_HEADERS = {
-            "Sample ID",
+            SAMPLE_ID_HEADING,
             "Collaborator Sample ID",
             "Material Type",
             "Product Name",
-            "Product Order ID",
+            ORDER_ID_HEADING,
             "Product Order Name",
             "Project Manager",
-            // "Comments",
-            "Date Completed",
+            WORK_COMPLETE_DATE_HEADING,
             "Quote ID",
-            "Billing Errors",
-            "Sort Column"
+            SORT_COLUMN_HEADING
     };
 
-    private BSPUserList bspUserList;
+    private static final int VALUE_WIDTH = 259 * 25;
+    private static final int ERRORS_WIDTH = 259 * 100;
+    private static final int COMMENTS_WIDTH = 259 * 60;
 
-    private BillingLedgerDao billingLedgerDao;
+    private BSPUserList bspUserList;
 
 
     public SampleLedgerExporter(ProductOrder... productOrders) {
         this(Arrays.asList(productOrders));
     }
-
 
     public SampleLedgerExporter(List<ProductOrder> productOrders) {
         super();
@@ -69,14 +73,11 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
     }
 
-
-    public SampleLedgerExporter(List<String> pdoBusinessKeys, BSPUserList bspUserList, BillingLedgerDao billingLedgerDao, ProductOrderDao productOrderDao) {
+    public SampleLedgerExporter(List<String> pdoBusinessKeys, BSPUserList bspUserList, ProductOrderDao productOrderDao) {
         this(productOrderDao.findListByBusinessKeyList(pdoBusinessKeys, Product, ResearchProject, Samples));
 
         this.bspUserList = bspUserList;
-        this.billingLedgerDao = billingLedgerDao;
     }
-
 
     private String getBspFullName(long id) {
         if (bspUserList == null) {
@@ -85,14 +86,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         BspUser user = bspUserList.getById(id);
         return user.getFirstName() + " " + user.getLastName();
-    }
-
-    private Set<BillingLedger> getLedgerEntries(Collection<ProductOrder> productOrders) {
-        if (billingLedgerDao == null) {
-            return null;
-        }
-
-        return billingLedgerDao.findByOrderList(productOrders.toArray(new ProductOrder[productOrders.size()]));
     }
 
     private Date getWorkCompleteDate(Set<BillingLedger> billingLedgers, ProductOrderSample productOrderSample) {
@@ -133,11 +126,16 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell(priceItem.getName() + " [" + product.getPartNumber() + "]", 2, getPriceItemProductHeaderStyle());
     }
 
-    private void writeBillAndNewHeaders() {
-        getWriter().writeCell("Billed", getBilledAmountsHeaderStyle());
-        getWriter().writeCell("New Quantity", getBilledAmountsHeaderStyle());
-    }
+    private int writeBillAndNewHeaders(int currentIndex) {
+        Sheet sheet = getWriter().getCurrentSheet();
+        sheet.setColumnWidth(currentIndex, VALUE_WIDTH);
+        sheet.setColumnWidth(currentIndex + 1, VALUE_WIDTH);
 
+        getWriter().writeCell("Billed", getBilledAmountsHeaderStyle());
+        getWriter().writeCell("Update Quantity To", getBilledAmountsHeaderStyle());
+
+        return currentIndex + 2;
+    }
 
     /**
      * Write out the spreadsheet contents to a stream.  The output is in native excel format.
@@ -156,7 +154,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
             // per 2012-11-19 conversation with Alex and Hugh, Excel does not give us enough characters in a tab
             // name to allow for the product name in all cases, so use just the part number
-            getWriter().setCurrentSheet(getWorkbook().createSheet(currentProduct.getPartNumber()));
+            Sheet sheet = getWorkbook().createSheet(currentProduct.getPartNumber());
+            getWriter().setCurrentSheet(sheet);
 
             List<ProductOrder> productOrders = orderMap.get(currentProduct);
 
@@ -189,9 +188,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             writeHeaders(currentProduct, sortedPriceItems, sortedAddOns);
 
             // Write content.
+            int sortOrder = 1;
             for (ProductOrder productOrder : productOrders) {
-                int sortOrder = 1;
-
                 for (ProductOrderSample sample : productOrder.getSamples()) {
                     writeRow(sortedPriceItems, sortedAddOns, sample, sortOrder++);
                 }
@@ -230,21 +228,11 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         // advisory info.  If someone has time to write this useful info this column can go back in
         // getWriter().writeCell("Useful info about the billing history " + sample.getSampleName());
 
-        // work complete date
-        getWriter().writeCell(getWorkCompleteDate(sample.getBillableItems(), sample));
+        // work complete date is the date of any ledger items that are ready to be billed
+        getWriter().writeCell(getWorkCompleteDate(sample.getBillableLedgerItems(), sample), getDateStyle());
 
         // Quote ID
         getWriter().writeCell(sample.getProductOrder().getQuoteId());
-
-        // Any billing messages
-        String billingError = getBillingError(sample.getBillableItems());
-
-        // Only use error style when there is an error in the string
-        if (StringUtils.isBlank(billingError)) {
-            getWriter().writeCell(billingError);
-        } else {
-            getWriter().writeCell(billingError, getErrorMessageStyle());
-        }
 
         // sort order to be able to reconstruct the originally sorted sample list
         getWriter().writeCell(sortOrder);
@@ -266,24 +254,36 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
                 writeCountsForPriceItems(billCounts, item);
             }
         }
-    }
 
-    private String getBillingError(Set<BillingLedger> billableItems) {
-        Set<String> errors = new HashSet<String>();
-
-        // Collect all unique errors
-        for (BillingLedger ledger : billableItems) {
-            if (!StringUtils.isBlank(ledger.getBillingMessage())) {
-                errors.add(ledger.getBillingMessage());
-            }
+        // write the comments
+        String theComment = "";
+        if (!StringUtils.isBlank(sample.getProductOrder().getComments())) {
+            theComment += sample.getProductOrder().getComments();
         }
 
-        return StringUtils.join(errors.iterator(), ", ");
+        if (!StringUtils.isBlank(sample.getSampleComment())) {
+            theComment += "--" + sample.getSampleComment();
+        }
+        getWriter().writeCell(theComment);
+
+        // Any messages for items that are not billed yet
+        String billingError = sample.getUnbilledLedgerItemMessages();
+
+        // Only use error style when there is an error in the string
+        if (StringUtils.isBlank(billingError)) {
+            getWriter().writeCell(billingError);
+        } else {
+            getWriter().writeCell(billingError, getErrorMessageStyle());
+        }
+
     }
 
     private void writeHeaders(Product currentProduct, List<PriceItem> sortedPriceItems, List<Product> sortedAddOns) {
+        int currentIndex = FIXED_HEADERS.length;
+
         for (PriceItem priceItem : sortedPriceItems) {
             writePriceItemProductHeader(priceItem, currentProduct);
+            currentIndex += 2;
         }
 
         // Repeat the process for add ons
@@ -291,8 +291,15 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn);
             for (PriceItem priceItem : sortedAddOnPriceItems) {
                 writePriceItemProductHeader(priceItem, addOn);
+                currentIndex += 2;
             }
         }
+
+        Sheet sheet = getWriter().getCurrentSheet();
+        sheet.setColumnWidth(currentIndex++, COMMENTS_WIDTH);
+        getWriter().writeCell("Comments", getFixedHeaderStyle());
+        sheet.setColumnWidth(currentIndex, ERRORS_WIDTH);
+        getWriter().writeCell("Billing Errors", getFixedHeaderStyle());
 
         writeAllBillAndNewHeaders(currentProduct.getOptionalPriceItems(), currentProduct.getAddOns());
     }
@@ -306,25 +313,29 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         writeEmptyFixedHeaders();
 
         // primary price item for main product
-        writeBillAndNewHeaders();
+        int currentIndex = FIXED_HEADERS.length;
+        currentIndex = writeBillAndNewHeaders(currentIndex);
         for (PriceItem priceItem : priceItems) {
-            writeBillAndNewHeaders();
+            currentIndex = writeBillAndNewHeaders(currentIndex);
         }
 
         for (Product addOn : addOns) {
             // primary price item for this add-on
-            writeBillAndNewHeaders();
+            currentIndex = writeBillAndNewHeaders(currentIndex);
 
             for (PriceItem priceItem : addOn.getOptionalPriceItems()) {
-                writeBillAndNewHeaders();
+                currentIndex = writeBillAndNewHeaders(currentIndex);
             }
         }
+
+        // GPLIM-491 freeze the first two rows so sort doesn't disturb them
+        getWriter().getCurrentSheet().createFreezePane(0, 2);
     }
 
     private void writeEmptyFixedHeaders() {
-        // Write blank secondary header line for fixed columns
+        // Write blank secondary header line for fixed columns, with default styling
         for (String header : FIXED_HEADERS) {
-            getWriter().writeCell(" ", getFixedHeaderStyle());
+            getWriter().writeCell(" ");
         }
     }
 
@@ -337,19 +348,18 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     private void writeCountsForPriceItems(Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts, PriceItem item) {
         ProductOrderSample.LedgerQuantities quantities = billCounts.get(item);
         if (quantities != null) {
-
             // If the entry for billed is 0, then don't highlight it, but show a light yellow for anything with values
-            if (quantities.getBilled().equals("0")) {
+            if (quantities.getBilled() == 0.0) {
                 getWriter().writeCell(quantities.getBilled());
             } else {
-                getWriter().writeCell(quantities.getBilled(), getBilledAmountsHeaderStyle());
+                getWriter().writeCell(quantities.getBilled(), getBilledAmountStyle());
             }
 
             // If the entry represents a change, then highlight it with a light yellow
-            if (quantities.getBilled().equals(quantities.getUploaded())) {
+            if (quantities.getBilled() == quantities.getUploaded()) {
                 getWriter().writeCell(quantities.getUploaded());
             } else {
-                getWriter().writeCell(quantities.getUploaded(), getBilledAmountsHeaderStyle());
+                getWriter().writeCell(quantities.getUploaded(), getBilledAmountStyle());
             }
         } else {
             // write nothing for billed and new

@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import junit.framework.Assert;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -18,12 +20,14 @@ public class BillingTrackerImporterTest {
 
     public static final File BILLING_TRACKER_TEST_FILE = new File("src/test/data/billing/BillingTracker-DBFreeTestData.xlsx");
 
+    private static final Log logger = LogFactory.getLog(BillingTrackerImporterTest.class);
+
     @Test
     void testImport() throws Exception {
 
         File testFile = BILLING_TRACKER_TEST_FILE;
 
-        BillingTrackerImporter billingTrackerImporter = new BillingTrackerImporter(null, null);
+        BillingTrackerImporter billingTrackerImporter = new BillingTrackerImporter(null);
         FileInputStream fis=null;
         File tempFile=null;
 
@@ -34,7 +38,7 @@ public class BillingTrackerImporterTest {
             Assert.assertNotNull(tempFile.getAbsoluteFile());
 
         } catch ( Exception e ) {
-            e.printStackTrace();
+            logger.error(e);
         } finally {
             IOUtils.closeQuietly(fis);
         }
@@ -66,7 +70,7 @@ public class BillingTrackerImporterTest {
     @Test
     void testExtractPartNumberFromHeader() throws Exception {
 
-        BillingTrackerImporter billingTrackerImporter = new BillingTrackerImporter(null, null);
+        BillingTrackerImporter billingTrackerImporter = new BillingTrackerImporter(null);
         String headerTest = "DNA Extract from blood, fresh frozen tissue, cell pellet, stool, or saliva [P-ESH-0004]";
         Assert.assertEquals("P-ESH-0004", billingTrackerImporter.extractBillableRefFromHeader(headerTest).getProductPartNumber());
         Assert.assertEquals("DNA Extract from blood, fresh frozen tissue, cell pellet, stool, or saliva",

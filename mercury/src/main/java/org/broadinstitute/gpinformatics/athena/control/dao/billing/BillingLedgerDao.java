@@ -144,6 +144,7 @@ public class BillingLedgerDao extends GenericDao {
         while (!ledgerItems.isEmpty()) {
             BillingLedger item = ledgerItems.iterator().next();
             ledgerItems.remove(item);
+//            item.getProductOrderSample().getLedgerItems().remove( item );
             remove(item);
         }
     }

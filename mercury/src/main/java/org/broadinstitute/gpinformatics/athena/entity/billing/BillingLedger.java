@@ -22,7 +22,7 @@ import java.util.Date;
 @Table(name= "BILLING_LEDGER", schema = "athena")
 public class BillingLedger {
     @Id
-    @SequenceGenerator(name = "SEQ_LEDGER", schema = "athena", sequenceName = "SEQ_LEDGER")
+    @SequenceGenerator(name = "SEQ_LEDGER", schema = "athena", sequenceName = "SEQ_LEDGER", allocationSize = 10)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LEDGER")
     private Long ledgerId;
 
@@ -82,11 +82,11 @@ public class BillingLedger {
         this.priceItem = priceItem;
     }
 
-    public Double getQuantity() {
+    public double getQuantity() {
         return quantity;
     }
 
-    public void setQuantity(Double quantity) {
+    public void setQuantity(double quantity) {
         this.quantity = quantity;
     }
 
@@ -102,7 +102,7 @@ public class BillingLedger {
         return workCompleteDate;
     }
 
-    public void setWorkCompleteDate(Date workCompleteDate) {
+    public void setWorkCompleteDate(@Nullable Date workCompleteDate) {
         this.workCompleteDate = workCompleteDate;
     }
 
@@ -110,7 +110,7 @@ public class BillingLedger {
         return billingMessage;
     }
 
-    public void setBillingMessage(String billingMessage) {
+    public void setBillingMessage(@Nullable String billingMessage) {
         this.billingMessage = billingMessage;
     }
 

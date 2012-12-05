@@ -54,8 +54,8 @@ public class QuoteImportItem {
         return priceItem;
     }
 
-    public Double getQuantity() {
-        double quantity = 0d;
+    public double getQuantity() {
+        double quantity = 0;
         for (BillingLedger ledgerItem : ledgerItems) {
             quantity += ledgerItem.getQuantity();
         }

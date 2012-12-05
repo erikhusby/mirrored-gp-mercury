@@ -102,6 +102,8 @@ public class WorkflowStepDef {
     /** The type of output, e.g. enriched */
     private OutputType outputType;
 
+    private transient WorkflowProcessDefVersion processDefVersion;
+
     public WorkflowStepDef(String name) {
         this.name = name;
     }
@@ -145,5 +147,13 @@ public class WorkflowStepDef {
 
     public Integer getExpectedCycleTimeMinutes() {
         return expectedCycleTimeMinutes;
+    }
+
+    public WorkflowProcessDefVersion getProcessDefVersion () {
+        return processDefVersion;
+    }
+
+    public void setProcessDefVersion ( WorkflowProcessDefVersion processDefVersion ) {
+        this.processDefVersion = processDefVersion;
     }
 }

@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderListModel;
@@ -28,6 +29,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.primefaces.event.SelectEvent;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.context.Conversation;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.application.FacesMessage;
 import javax.faces.component.UIInput;
@@ -83,9 +85,15 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     @Inject ProductOrderDao productOrderDao;
 
-    private List<String> selectedAddOns = new ArrayList<String>();
+    private List<String> selectedAddOnPartNumbers = new ArrayList<String>();
 
-    /** All product orders, fetched once and stored per-request (as a result of this bean being @RequestScoped). */
+    @Inject private Log logger;
+
+    @Inject
+    private Conversation conversation;
+
+    /** All product orders, now conversation scoped */
+    @Inject
     private ProductOrderListModel allProductOrders;
 
     private ProductOrderListEntry[] selectedProductOrders;
@@ -110,17 +118,21 @@ public class ProductOrderForm extends AbstractJsfBean {
     /** Automatically convert known BSP IDs (SM-, SP-) to uppercase. */
     private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
 
+    public void initView() {
+        if (!facesContext.isPostback()) {
+            if (conversation.isTransient()) {
+                allProductOrders.setWrappedData(productOrderListEntryDao.findProductOrderListEntries());
+                conversation.begin();
+            }
+        }
+    }
+
     /**
-     * Returns a list of all product orders. Only actually fetches the list from the database once per request
-     * (as a result of this bean being @RequestScoped).
+     * Returns a list of all product orders.
      *
      * @return list of all product orders
      */
     public ProductOrderListModel getAllProductOrders() {
-        if (allProductOrders == null) {
-            allProductOrders = new ProductOrderListModel(productOrderListEntryDao.findProductOrderListEntries());
-        }
-
         return allProductOrders;
     }
 
@@ -237,28 +249,20 @@ public class ProductOrderForm extends AbstractJsfBean {
         return orderSamples;
     }
 
-    public List<String> getSelectedAddOns() {
-        return selectedAddOns;
+    public List<String> getSelectedAddOnPartNumbers() {
+        return selectedAddOnPartNumbers;
     }
 
-    public void setSelectedAddOns(@Nonnull List<String> selectedAddOns) {
-        this.selectedAddOns = selectedAddOns;
+    public void setSelectedAddOnPartNumbers(@Nonnull List<String> selectedAddOnPartNumbers) {
+        this.selectedAddOnPartNumbers = selectedAddOnPartNumbers;
     }
 
     public boolean getHasProduct() {
         return conversationData.getProduct() != null;
     }
 
-    public List<String> getAddOns() {
-        return conversationData.getAddOnsForProduct();
-    }
-
     public Product getProduct() {
         return conversationData.getProduct();
-    }
-
-    public void setAddOns(@Nonnull List<String> addOns) {
-        conversationData.setAddOnsForProduct(addOns);
     }
 
     /**
@@ -366,37 +370,51 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     // FIXME: handle db store errors, JIRA server errors.
     public String save() throws IOException {
-        ProductOrder order = productOrderDetail.getProductOrder();
-        order.setSamples(convertTextToOrderSamples(getEditIdsCache()));
 
-        // Validations.
-        if (order.getSamples().isEmpty()) {
-            // FIXME: instead of doing this here, it can be done as a validator on the hidden editIDsCache field.
-            String message = "You must add at least one sample before placing an order.";
-            addErrorMessage(message);
+        try {
+
+            ProductOrder order = productOrderDetail.getProductOrder();
+
+            if (productOrderDao.findByTitle(order.getTitle()) != null) {
+                addErrorMessage("Product order with this title already exists, please choose a different title");
+                return null;
+            }
+
+            order.setSamples(convertTextToOrderSamples(getEditIdsCache()));
+
+            // Validations.
+            if (order.getSamples().isEmpty()) {
+                // FIXME: instead of doing this here, it can be done as a validator on the hidden editIDsCache field.
+                String message = "You must add at least one sample before placing an order.";
+                addErrorMessage(message);
+                return null;
+            }
+
+            order.updateAddOnProducts(getSelectedAddOnProducts());
+
+            // DRAFT orders not yet supported; force state of new PDOs to Submitted.
+            order.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+            String action = order.isInDB() ? "modified" : "created";
+            order.submitProductOrder();
+            productOrderDao.persist(order);
+
+            addInfoMessage(
+                    MessageFormat.format("Product Order ''{0}'' ({1}) has been {2}.",
+                            order.getTitle(), order.getJiraTicketKey(), action));
+            return redirect("view");
+        } catch (Exception e) {
+            logger.error(e);
+            addErrorMessage("Error saving Product Order: " + e.getMessage());
             return null;
         }
-
-        order.updateAddOnProducts(getSelectedAddOnProducts());
-
-        // DRAFT orders not yet supported; force state of new PDOs to Submitted.
-        order.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-        String action = order.isInDB() ? "modified" : "created";
-        order.submitProductOrder();
-        productOrderDao.persist(order);
-
-        addInfoMessage(
-            MessageFormat.format("Product Order ''{0}'' ({1}) has been {2}.",
-            order.getTitle(), order.getJiraTicketKey(), action));
-        return redirect("view");
     }
 
     private List<Product> getSelectedAddOnProducts() {
-        if (getSelectedAddOns().isEmpty()) {
-            return new ArrayList<Product> ();
+        if (getSelectedAddOnPartNumbers().isEmpty()) {
+            return new ArrayList<Product>();
         }
 
-        return productDao.findListByList(Product.class, Product_.productName, getSelectedAddOns());
+        return productDao.findListByList(Product.class, Product_.partNumber, getSelectedAddOnPartNumbers());
     }
 
     public void initForm() {
@@ -445,7 +463,7 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     private Set<BillingLedger> validateOrderSelection(String validatingFor) {
-        if ((userBean == null) || (userBean.getBspUser() == null) || (userBean.getBspUser().getUserId() == null)) {
+        if (!userBean.isValidBspUser()) {
             addErrorMessage("A valid bsp user is needed to start a " + validatingFor);
             return null;
         }
@@ -510,13 +528,13 @@ public class ProductOrderForm extends AbstractJsfBean {
             tempFile = File.createTempFile(filename, "xls");
             outputStream = new FileOutputStream(tempFile);
 
-            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(pdoBusinessKeys, bspUserList, ledgerDao, productOrderDao);
+            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(pdoBusinessKeys, bspUserList, productOrderDao);
             sampleLedgerExporter.writeToStream(outputStream);
             IOUtils.closeQuietly(outputStream);
             inputStream = new FileInputStream(tempFile);
 
             // This copies the inputStream as a faces download with the file name specified.
-            AbstractSpreadsheetExporter.copyForDownload(inputStream, filename);
+            AbstractSpreadsheetExporter.copyForDownload(inputStream, filename + ".xls");
         } catch (Exception ex) {
             String message = "Got an exception trying to download the billing tracker: " + ex.getMessage();
             AbstractJsfBean.addMessage(null, FacesMessage.SEVERITY_ERROR, message, message);
@@ -528,4 +546,21 @@ public class ProductOrderForm extends AbstractJsfBean {
 
         return null;
     }
+
+
+    /**
+     * Add-ons Listified for JSF
+     *
+     * @return
+     */
+    public List<Product> getAddOns() {
+        if (conversationData.getProduct() == null) {
+            return new ArrayList<Product>();
+        }
+
+        List<Product> listAddons = new ArrayList<Product>(conversationData.getProduct().getAddOns());
+        Collections.sort(listAddons);
+        return listAddons;
+    }
+
 }

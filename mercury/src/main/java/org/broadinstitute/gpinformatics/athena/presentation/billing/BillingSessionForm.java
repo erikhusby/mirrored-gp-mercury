@@ -56,6 +56,9 @@ public class BillingSessionForm extends AbstractJsfBean {
     private BSPUserList bspUserList;
 
     public String bill() {
+
+        boolean errorsInBilling = false;
+
         String sessionKey =  billingSessionBean.getBillingSession().getBusinessKey();
         for (QuoteImportItem item : billingSessionBean.getBillingSession().getUnBilledQuoteImportItems()) {
 
@@ -68,7 +71,7 @@ public class BillingSessionForm extends AbstractJsfBean {
             quotePriceItem.setPlatformName(item.getPriceItem().getPlatform());
 
             HttpServletRequest request = (HttpServletRequest) facesContext.getExternalContext().getRequest();
-            String pageUrl = request.getRequestURL().toString() + "/billing/view";
+            String pageUrl = request.getRequestURL().toString();
 
             try {
                 String message = quoteService.registerNewWork(
@@ -81,22 +84,31 @@ public class BillingSessionForm extends AbstractJsfBean {
                 // Any exceptions in sending to the quote server will just be reported and will continue on to the next one
                 item.setupBillError(ex.getMessage());
                 addErrorMessage(ex.getMessage());
+                errorsInBilling = true;
             }
         }
 
-        sessionDao.persist(billingSessionBean.getBillingSession());
+        // If there were no errors in billing, then end the session, which will add the billed date and remove all sessions from the ledger
+        if (!errorsInBilling) {
+            return endSession();
+        }
 
+        sessionDao.persist(billingSessionBean.getBillingSession());
         return null;
     }
 
     public String endSession() {
         // Remove all the sessions from the non-billed items
-        boolean allRemoved = billingSessionBean.getBillingSession().cancelSession();
+        BillingSession.RemoveStatus removeStatus = billingSessionBean.getBillingSession().cancelSession();
 
-        // If all removed then remove the session, totally. If some are billed, then just persist the updates
-        if (allRemoved) {
+        if (removeStatus == BillingSession.RemoveStatus.AllRemoved) {
+            // If all removed then remove the session, totally.
             sessionDao.remove(billingSessionBean.getBillingSession());
         } else {
+            // Anything that has been billed will be attached to this session and those are now ALL billed
+            billingSessionBean.getBillingSession().setBilledDate(new Date());
+
+            // If some or allare billed, then just persist the updates
             sessionDao.persist(billingSessionBean.getBillingSession());
         }
 
@@ -104,7 +116,7 @@ public class BillingSessionForm extends AbstractJsfBean {
         // can make the session Id invalid and we don't want that passed through.
         return "sessions?faces-redirect=true&includeViewParams=false";
     }
-
+    
     public String downloadTracker() {
         List<String> productOrderBusinessKeys = billingSessionBean.getBillingSession().getProductOrderBusinessKeys();
         return ProductOrderForm.getTrackerForOrders(productOrderBusinessKeys, bspUserList, billingLedgerDao, productOrderDao);

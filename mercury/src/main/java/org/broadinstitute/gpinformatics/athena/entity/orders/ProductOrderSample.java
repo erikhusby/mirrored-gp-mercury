@@ -3,10 +3,9 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
-import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
@@ -29,7 +28,7 @@ import java.util.regex.Pattern;
 public class ProductOrderSample implements Serializable {
 
     /** Count shown when no billing has occurred. */
-    public static final Double NO_BILL_COUNT = 0d;
+    public static final double NO_BILL_COUNT = 0.0d;
 
     @Id
     @SequenceGenerator(name = "SEQ_ORDER_SAMPLE", schema = "athena", sequenceName = "SEQ_ORDER_SAMPLE")
@@ -132,7 +131,7 @@ public class ProductOrderSample implements Serializable {
         return bspDTO;
     }
 
-    public Set<BillingLedger> getBillableItems() {
+    public Set<BillingLedger> getLedgerItems() {
         return ledgerItems;
     }
 
@@ -181,43 +180,63 @@ public class ProductOrderSample implements Serializable {
                 .append(sampleComment).append(productOrder).append(bspDTO).build();
     }
 
+    public Set<BillingLedger> getBillableLedgerItems() {
+        Set<BillingLedger> billableLedgerItems = new HashSet<BillingLedger>();
+
+        if (getLedgerItems() != null) {
+            for ( BillingLedger billingLedger : getLedgerItems() ) {
+                // Only count the null-Billing Session ledgerItems.
+                if (billingLedger.getBillingSession() == null) {
+                    billableLedgerItems.add(billingLedger);
+                }
+            }
+        }
+
+        return billableLedgerItems;
+    }
+
+    public String getUnbilledLedgerItemMessages() {
+        StringBuilder builder = new StringBuilder();
+
+        if (getLedgerItems() != null) {
+            for (BillingLedger billingLedger : getLedgerItems() ) {
+                // If there is a message that is not success, add the message to the end
+                if ((billingLedger.getBillingMessage() != null) && !BillingSession.SUCCESS.equals(billingLedger.getBillingMessage())) {
+                    builder.append(billingLedger.getBillingMessage()).append("\n");
+                }
+            }
+        }
+
+        return builder.toString();
+    }
+
     /**
      * This class holds the billed and uploaded ledger counts for a particular pdo and price item
      */
     public static class LedgerQuantities {
-        private Double billed = NO_BILL_COUNT;   // If nothing is billed yet, then the total is still 0.
-        private Double uploaded = null;          // If nothing has been uploaded, we want to just ignore this for upload
+        private double billed = NO_BILL_COUNT;    // If nothing is billed yet, then the total is still 0.
+        private double uploaded = NO_BILL_COUNT;  // If nothing has been uploaded, we want to just ignore this for upload
 
-        public void addToBilled(Double quantity) {
+        public void addToBilled(double quantity) {
             billed += quantity;
         }
 
-        public void addToUploaded(Double quantity) {
-
-            // Should only be one quantity uploaded at any time
-            if (uploaded != null) {
-                throw new IllegalStateException("Should only have one quantity being uploaded for this price item and PDO Sample");
-            }
-
-            // so, no adding needed
+        public void addToUploaded(double quantity) {
+            // Should only be one quantity uploaded at any time so, no adding needed
             uploaded = quantity;
         }
 
-        public String getBilled() {
-            return billed.toString();
+        public double getBilled() {
+            return billed;
         }
 
-        public String getUploaded() {
-            if (uploaded == null) {
-                return getBilled();
-            }
-
-            return getBilled() + uploaded.toString();
+        public double getUploaded() {
+            return billed + uploaded;
         }
     }
 
     public static Map<PriceItem, LedgerQuantities> getLedgerQuantities(ProductOrderSample sample) {
-        Set<BillingLedger> ledgerItems = sample.getBillableItems();
+        Set<BillingLedger> ledgerItems = sample.getLedgerItems();
         if (ledgerItems.isEmpty()) {
             return Collections.emptyMap();
         }
@@ -228,9 +247,11 @@ public class ProductOrderSample implements Serializable {
                 sampleStatus.put(item.getPriceItem(), new LedgerQuantities());
             }
 
-            if (item.getBillingSession() != null) {
+            if ((item.getBillingSession() != null) && (item.getBillingSession().getBilledDate() != null) ||
+                ((item.getBillingMessage() != null) && item.getBillingMessage().equals(BillingSession.SUCCESS))) {
                 sampleStatus.get(item.getPriceItem()).addToBilled(item.getQuantity());
             } else {
+                // The item is not part of a completed billed session or successfully billed item from an active session
                 sampleStatus.get(item.getPriceItem()).addToUploaded(item.getQuantity());
             }
         }

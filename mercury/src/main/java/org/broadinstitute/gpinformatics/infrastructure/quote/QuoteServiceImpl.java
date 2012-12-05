@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 import com.sun.jersey.api.client.*;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.core.util.MultivaluedMapImpl;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
@@ -47,13 +48,10 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
             this.suffixUrl = suffixUrl;
         }
 
-        public String getSuffixUrl() {
-            return suffixUrl;
-        }
     }
 
     private String url(Endpoint endpoint) {
-        return quoteConfig.getUrl() + endpoint.getSuffixUrl();
+        return quoteConfig.getUrl() + endpoint.suffixUrl;
     }
 
     @Override
@@ -70,7 +68,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         params.add("platform_name", priceItem.getPlatformName());
         params.add("category_name", priceItem.getCategoryName());
         params.add("price_item_name", priceItem.getName());
-        params.add("quantity", Double.toString(numWorkUnits));
+        params.add("quantity", String.valueOf(numWorkUnits));
         params.add("complete", Boolean.TRUE.toString());
         params.add("completion_date", dateFormat.format(reportedCompletionDate));
         params.add("url", callbackUrl);
@@ -95,45 +93,43 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
                            String callbackParameterValue) {
 
         if (response == null) {
-            throwQuoteServerFailureException(quote, priceItem, numWorkUnits);
-        } else {
-            if (response.getClientResponseStatus() != ClientResponse.Status.OK) {
-                throw new RuntimeException(
-                    "Quote server returned " + response.getClientResponseStatus() +
-                    ".  registering work for " + numWorkUnits + " of " + priceItem.getName() + "" +
-                    " against quote " + quote.getAlphanumericId() + " appears to have failed.");
-            }
+            throw newQuoteServerFailureException(quote, priceItem, numWorkUnits);
+        }
+        if (response.getClientResponseStatus() != ClientResponse.Status.OK) {
+            throw new RuntimeException(
+                    "Quote server returned " + response.getClientResponseStatus() + ".  registering work for "
+                    + numWorkUnits + " of " + priceItem.getName() + " against quote " + quote.getAlphanumericId()
+                    + " appears to have failed.");
         }
 
         String output = response.getEntity(String.class);
-        String workItemId = null;
+        String workItemId;
 
         if (output == null) {
-            throwQuoteServerFailureException(quote, priceItem, numWorkUnits);
+            throw newQuoteServerFailureException(quote, priceItem, numWorkUnits);
         }
 
         if (!output.contains(WORK_ITEM_ID)) {
             StringBuilder builder = new StringBuilder();
             builder.append("Quote server returned:\n").append(output).append("\n")
-                   .append(" for ").append(numWorkUnits).append(" of ").append(priceItem.getName())
+                    .append(" for ").append(numWorkUnits).append(" of ").append(priceItem.getName())
                     .append(" against quote ").append(quote.getAlphanumericId());
             throw new RuntimeException(builder.toString());
-        } else {
-            String[] split = output.split(WORK_ITEM_ID);
-            if (split.length != 2) {
-                throwQuoteServerFailureException(quote, priceItem, numWorkUnits);
-            } else {
-                workItemId = split[1].trim();
-                if (workItemId.isEmpty() || workItemId == null) {
-                    throwQuoteServerFailureException(quote, priceItem, numWorkUnits);
-                }
-            }
+        }
+        String[] split = output.split(WORK_ITEM_ID);
+        if (split.length != 2) {
+            throw newQuoteServerFailureException(quote, priceItem, numWorkUnits);
+        }
+        workItemId = split[1].trim();
+        if (workItemId.isEmpty()) {
+            throw newQuoteServerFailureException(quote, priceItem, numWorkUnits);
         }
         return workItemId;
     }
 
-    private void throwQuoteServerFailureException(Quote quote, PriceItem priceItem, double numWorkUnits) {
-        throw new RuntimeException(
+    private static RuntimeException newQuoteServerFailureException(Quote quote, PriceItem priceItem,
+                                                                   double numWorkUnits) {
+        return new RuntimeException(
                 "Quote server did not return the appropriate response.  Registering work for " + numWorkUnits +
                 " of " + priceItem.getName() + " against quote " + quote.getAlphanumericId() +
                 " appears to have failed.");
@@ -159,14 +155,14 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
      */
     @Override
     public Quote getQuoteFromQuoteServer(String id) throws QuoteServerException, QuoteNotFoundException {
-        return this.getSingleQuoteById(id, url(Endpoint.SINGLE_QUOTE));
+        return getSingleQuoteById(id, url(Endpoint.SINGLE_QUOTE));
     }
 
     @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
         String url = url(Endpoint.ALL_PRICE_ITEMS);
         WebResource resource = getJerseyClient().resource(url);
-        PriceList prices = null;
+        PriceList prices;
 
         try {
             prices = resource.accept(MediaType.APPLICATION_XML).get(PriceList.class);
@@ -194,7 +190,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
         WebResource resource = getJerseyClient().resource(url);
 
-        Quotes quotes = null;
+        Quotes quotes;
         try {
             quotes = resource.accept(MediaType.APPLICATION_XML).get(Quotes.class);
         } catch (UniformInterfaceException e) {
@@ -207,13 +203,13 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     }
 
     @Override
-    public Quote getQuoteByNumericId(final String numericId) throws QuoteServerException, QuoteNotFoundException {
-        return this.getSingleQuoteById(numericId, url(Endpoint.SINGLE_NUMERIC_QUOTE));
+    public Quote getQuoteByNumericId(String numericId) throws QuoteServerException, QuoteNotFoundException {
+        return getSingleQuoteById(numericId, url(Endpoint.SINGLE_NUMERIC_QUOTE));
     }
 
     @Override
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException {
-        return this.getSingleQuoteById(alphaId, url(Endpoint.SINGLE_QUOTE));
+        return getSingleQuoteById(alphaId, url(Endpoint.SINGLE_QUOTE));
     }
 
     /*
@@ -225,7 +221,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
     * @throws QuoteNotFoundException
     * @throws QuoteServerException
     */
-    private Quote getSingleQuoteById(final String id, String url) throws QuoteNotFoundException, QuoteServerException {
+    private Quote getSingleQuoteById(String id, String url) throws QuoteNotFoundException, QuoteServerException {
         Quote quote;
         if (StringUtils.isEmpty(id)) {
             return (null);
@@ -235,7 +231,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
         try {
             Quotes quotes = resource.accept(MediaType.APPLICATION_XML).get(Quotes.class);
-            if (quotes.getQuotes() != null && quotes.getQuotes().size() > 0) {
+            if (CollectionUtils.isEmpty(quotes.getQuotes())) {
                 quote = quotes.getQuotes().get(0);
             } else {
                 throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);

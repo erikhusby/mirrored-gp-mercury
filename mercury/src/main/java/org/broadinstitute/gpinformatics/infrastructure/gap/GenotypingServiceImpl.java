@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
-import org.broadinstitute.gpinformatics.mercury.entity.person.Person;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
@@ -114,12 +113,12 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
 
 
     @Override
-    public List<ExperimentRequestSummary> getRequestSummariesByCreator(final Person user) throws UserNotFoundException {
+    public List<ExperimentRequestSummary> getRequestSummariesByCreator(final String user) throws UserNotFoundException {
 
         List<ExperimentRequestSummary> experimentRequestSummaries = new ArrayList<ExperimentRequestSummary>();
 
         ExperimentPlan requiredExperimentPlan = new ExperimentPlan();
-        requiredExperimentPlan.setProgramPm(user.getLogin());
+        requiredExperimentPlan.setProgramPm(user);
         Response response = retrieveExperimentByUser(user, requiredExperimentPlan);
 
         if (response != null) {
@@ -132,7 +131,7 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
 //                    experimentRequestSummary.setCreation(new ChangeEvent(expPlan.getDateCreated(),
 //                            new Person(expPlan.getCreatedBy(), RoleType.PROGRAM_PM)));
                     experimentRequestSummary.setModification(new ChangeEvent(expPlan.getProjectStartDate(),
-                            new Person(expPlan.getUpdatedBy())));
+                            expPlan.getUpdatedBy()));
 
                     String status = expPlan.getPlanningStatus();
                     experimentRequestSummary.setStatus(status);
@@ -146,7 +145,7 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
         return experimentRequestSummaries;
     }
 
-    private Response retrieveExperimentByUser(final Person user, final ExperimentPlan requiredExperimentPlan) throws
+    private Response retrieveExperimentByUser(final String user, final ExperimentPlan requiredExperimentPlan) throws
             UserNotFoundException {
         final Response response;
 
@@ -169,18 +168,18 @@ public class GenotypingServiceImpl extends AbstractJerseyClientService implement
                     logger.info(errMsg + " at " + baseUrl);
                     throw new UserNotFoundException(errMsg);
                 } else {
-                    errMsg = "Exception occurred trying to retrieve experimentRequests from GAP for user " + user.getLogin();
+                    errMsg = "Exception occurred trying to retrieve experimentRequests from GAP for user " + user;
                     logger.error(errMsg + " at " + baseUrl, e);
                     throw new RuntimeException(errMsg);
                 }
             } catch (ClientHandlerException e) {
-                String errMsg = "Could not communicate with GAP server for user " + user.getLogin();
+                String errMsg = "Could not communicate with GAP server for user " + user;
                 logger.error(errMsg + " at " + baseUrl, e);
                 throw new RuntimeException(errMsg);
             }
         }
         catch (UnsupportedEncodingException exp) {
-            throw new RuntimeException("Problem retrieving Gap Experiments from GAP for user : " + user.getLogin(), exp);
+            throw new RuntimeException("Problem retrieving Gap Experiments from GAP for user : " + user, exp);
         }
         return response;
     }

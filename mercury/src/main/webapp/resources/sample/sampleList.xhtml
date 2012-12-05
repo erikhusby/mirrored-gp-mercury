@@ -85,14 +85,14 @@
                     rendered="#{sampleListBean.vesselContainer != null and !sampleListBean.vesselContainer.hasAnonymousVessels()}">
                 <ui:repeat value="#{sampleListBean.getVesselAtPosition(positionName).containerList}"
                            var="container">
-                    <h:outputText value="#{container.embedder.label}"/>
+                    <h:outputText value="#{container.embedder.labCentricName}"/>
                     <br/>
                 </ui:repeat>
             </p:column>
             <p:column rendered="#{sampleListBean.vesselContainer == null}">
                 <ui:repeat value="#{sampleListBean.vessel.containerList}"
                            var="container">
-                    <h:outputText value="#{container.embedder.label}"/>
+                    <h:outputText value="#{container.embedder.labCentricName}"/>
                     <br/>
                 </ui:repeat>
             </p:column>

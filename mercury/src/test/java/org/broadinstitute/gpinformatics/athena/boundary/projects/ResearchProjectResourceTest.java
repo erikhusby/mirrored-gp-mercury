@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
@@ -16,30 +15,22 @@ import javax.inject.Inject;
 import java.util.List;
 import java.util.UUID;
 
-import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB.IrbType.*;
+import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB.IrbType.BROAD;
+import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB.IrbType.FARBER;
 
-/**
- *
- */
 public class ResearchProjectResourceTest extends ContainerTest {
 
-    private static final Long TEST_CREATOR = 10L;
-    // This is a test number, useful for populating the DB
-    // private static final Long TEST_CREATOR = 10524L;
+    private static final long TEST_CREATOR = 10;
 
-    private static final Long TestScientist1 = 14567L;
-    private static final Long TestScientist2 = 11908L;
+    private static final long TEST_SCIENTIST_1 = 14567;
+    private static final long TEST_SCIENTIST_2 = 11908;
 
     @Inject
     ResearchProjectResource researchProjectResource;
 
     @Inject
-    private ResearchProjectDao researchProjectDao;
-
-    @Inject
     private ResearchProjectManager researchProjectManager;
 
-    private Long testResearchProjectId;
     private String testTitle;
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -50,8 +41,6 @@ public class ResearchProjectResourceTest extends ContainerTest {
             ResearchProject researchProject = createDummyResearchProject(testTitle);
 
             researchProjectManager.createResearchProject(researchProject);
-
-            testResearchProjectId = researchProject.getResearchProjectId();
         }
     }
 
@@ -68,8 +57,8 @@ public class ResearchProjectResourceTest extends ContainerTest {
         researchProject.addIrbNumber(
             new ResearchProjectIRB(researchProject, BROAD, "irb456_" + UUID.randomUUID()));
 
-        researchProject.addPerson(RoleType.SCIENTIST, TestScientist1);
-        researchProject.addPerson(RoleType.SCIENTIST, TestScientist2);
+        researchProject.addPerson(RoleType.SCIENTIST, TEST_SCIENTIST_1);
+        researchProject.addPerson(RoleType.SCIENTIST, TEST_SCIENTIST_2);
 
         return researchProject;
     }

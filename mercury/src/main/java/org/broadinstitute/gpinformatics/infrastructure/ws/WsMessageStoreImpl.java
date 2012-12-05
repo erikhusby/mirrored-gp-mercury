@@ -1,5 +1,9 @@
-package org.broadinstitute.gpinformatics.mercury.control.labevent;
+package org.broadinstitute.gpinformatics.infrastructure.ws;
 
+import org.broadinstitute.gpinformatics.infrastructure.deckmsgs.DeckMessagesConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
+
+import javax.inject.Inject;
 import javax.xml.bind.UnmarshalException;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -12,7 +16,11 @@ import java.util.Date;
  * Handles server-side storage of the text of messages from liquid handling decks.  If the database persistence fails,
  * we must have the text of the message, so we can troubleshoot and resubmit.
  */
-public class MessageStore {
+@Impl
+public class WsMessageStoreImpl implements WsMessageStore {
+
+    @Inject
+    private DeckMessagesConfig deckMessagesConfig;
 
     /** Name of the inbox directory.  There will be one directory per day below this, each containing message files. */
     public static final String INBOX_DIR = "inbox";
@@ -23,17 +31,18 @@ public class MessageStore {
     /** Name of the ignore error directory, where messages with ignored exceptions are stored */
     public static final String IGNORE_DIR = "ignore";
 
-    /** directory below which to store inbox, error etc. */
-    private final String directoryRoot;
-
     /** One inbox directory per day */
     private final SimpleDateFormat directoryFormat = new SimpleDateFormat("yyyyMMdd");
 
     /** Part of the file name.  Millisecond resolution should be enough to avoid collisions, BettaLIMS has worked like this for years */
     private final SimpleDateFormat fileFormat = new SimpleDateFormat("yyyyMMdd_HHmmssSSS");
 
-    public MessageStore(String directoryRoot) {
-        this.directoryRoot = directoryRoot;
+    /** For CDI */
+    WsMessageStoreImpl() {
+    }
+
+    public WsMessageStoreImpl(DeckMessagesConfig deckMessagesConfig) {
+        this.deckMessagesConfig = deckMessagesConfig;
     }
 
     /**
@@ -41,13 +50,14 @@ public class MessageStore {
      * @param message text of the message
      * @param receivedDate when the message was received
      */
+    @Override
     public void store(String message, Date receivedDate) {
         String directoryTime;
         // SimpleDateFormat is not thread-safe
         synchronized (directoryFormat) {
             directoryTime = directoryFormat.format(receivedDate);
         }
-        String directoryName = directoryRoot + File.separator + INBOX_DIR + File.separator + directoryTime;
+        String directoryName = deckMessagesConfig.getMessageStoreDirRoot() + File.separator + INBOX_DIR + File.separator + directoryTime;
         File directory = new File(directoryName);
         if(!directory.exists()) {
             if(!directory.mkdirs()) {
@@ -83,6 +93,7 @@ public class MessageStore {
      * @param receivedDate when the message was received
      * @param exception the exception to log
      */
+    @Override
     public void recordError(String message, Date receivedDate, Exception exception) {
         String directoryName;
         if(exception instanceof UnmarshalException || message.contains("DetectorPlateLoaded")) {
@@ -91,7 +102,7 @@ public class MessageStore {
         } else {
             directoryName = ERROR_DIR;
         }
-        File errorDirectory = new File(directoryRoot, directoryName);
+        File errorDirectory = new File(deckMessagesConfig.getMessageStoreDirRoot(), directoryName);
         if(!errorDirectory.exists()) {
             if(!errorDirectory.mkdirs()) {
                 // mkdirs can fail if two threads attempt it simultaneously, so try again
