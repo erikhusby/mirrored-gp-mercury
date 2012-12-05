@@ -27,7 +27,6 @@ import javax.persistence.Table;
 @Entity
 @Audited
 @Table(schema = "mercury")
-// todo jmt rename to DesignedReagent
 public class DesignedReagent extends Reagent {
 
     // In production code, the reagentDesign will always exist first, so there's no need for cascade, but in tests
