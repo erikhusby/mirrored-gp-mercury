@@ -8,6 +8,7 @@ import com.mxgraph.view.mxGraph;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.swing.*;
 import java.awt.*;
@@ -34,6 +35,7 @@ public class TransferVisualizerFrame extends JFrame {
     private mxICell clickedCell;
     private JLabel status = new JLabel(" ");
     private JFrame statusFrame = new JFrame();
+    private mxGraphComponent graphComponent;
 
     public TransferVisualizerFrame() throws HeadlessException {
         this.setTitle("Transfer Visualizer");
@@ -44,7 +46,7 @@ public class TransferVisualizerFrame extends JFrame {
         statusFrame.pack();
 
         // mxGraphComponent requires an mxGraph, so create a dummy one; TransferVisualizerClient will create its own.
-        final mxGraphComponent graphComponent = new mxGraphComponent(new mxGraph());
+        graphComponent = new mxGraphComponent(new mxGraph());
         graphComponent.setPreferredSize(new Dimension(800, 800));
         graphComponent.setVerticalPageCount(1);
         graphComponent.setHorizontalPageCount(1);
@@ -123,23 +125,14 @@ public class TransferVisualizerFrame extends JFrame {
                         protected void done() {
                             try {
                                 Graph graph = get();
-                                if(graph.getMessage() == null) {
-                                    transferVisualizerClient.renderAndLayoutGraph(graph);
-                                } else {
-                                    JOptionPane.showMessageDialog(TransferVisualizerFrame.this, graph.getMessage());
-                                }
+                                renderGraph(graph);
                             } catch (InterruptedException e1) {
                                 JOptionPane.showMessageDialog(TransferVisualizerFrame.this, e1);
                             } catch (ExecutionException e1) {
                                 JOptionPane.showMessageDialog(TransferVisualizerFrame.this, e1);
                             } finally {
                                 statusFrame.setVisible(false);
-                                mxGraph = transferVisualizerClient.getMxGraph();
-                                graphComponent.setGraph(transferVisualizerClient.getMxGraph());
-                                graphComponent.refresh();
-                                if(transferVisualizerClient.getHighlightVertex() != null) {
-                                    graphComponent.scrollCellToVisible(transferVisualizerClient.getHighlightVertex(), true);
-                                }
+                                refreshGraph();
                             }
                         }
                     };
@@ -298,6 +291,30 @@ public class TransferVisualizerFrame extends JFrame {
             plateBarcodeTF.setText(receptacleBarcode);
             searchButton.doClick();
         }
+    }
+
+    private void renderGraph(Graph graph) {
+        if(graph.getMessage() == null) {
+            transferVisualizerClient.renderAndLayoutGraph(graph);
+        } else {
+            JOptionPane.showMessageDialog(this, graph.getMessage());
+        }
+    }
+
+    private void refreshGraph() {
+        mxGraph = transferVisualizerClient.getMxGraph();
+        graphComponent.setGraph(transferVisualizerClient.getMxGraph());
+        graphComponent.refresh();
+        if(transferVisualizerClient.getHighlightVertex() != null) {
+            graphComponent.scrollCellToVisible(transferVisualizerClient.getHighlightVertex(), true);
+        }
+    }
+
+    public void renderVessel(LabVessel labVessel) {
+        transferVisualizerClient = new TransferVisualizerClient(labVessel.getLabel(), new ArrayList<TransferVisualizer.AlternativeId>());
+        Graph graph = transferVisualizerClient.fetchGraph(labVessel);
+        renderGraph(graph);
+        refreshGraph();
     }
 
     public static void main(String[] args) {

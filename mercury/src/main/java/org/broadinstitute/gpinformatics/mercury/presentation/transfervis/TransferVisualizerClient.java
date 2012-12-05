@@ -9,7 +9,10 @@ import com.mxgraph.view.mxGraph;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Edge;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Vertex;
+import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
 import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
@@ -598,6 +601,13 @@ public class TransferVisualizerClient {
             default:
                 throw new RuntimeException("Unknown searchType " + searchType);
         }
+        return graph;
+    }
+
+    public Graph fetchGraph(LabVessel labVessel) {
+        TransferEntityGrapher transferEntityGrapher = new TransferEntityGrapher();
+        Graph graph = new Graph();
+        transferEntityGrapher.startWithTube((TwoDBarcodedTube) labVessel, graph, new ArrayList<TransferVisualizer.AlternativeId>());
         return graph;
     }
 

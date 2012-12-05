@@ -46,6 +46,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -208,6 +209,13 @@ public class LabEventTest {
         Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().iterator().next(), qtpEntityBuilder.getIlluminaFlowcell(),
                 "Wrong flowcell");
 
+//        TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
+//        transferVisualizerFrame.renderVessel(stringTwoDBarcodedTubeEntry.getValue());
+//        try {
+//            Thread.sleep(500000L);
+//        } catch (InterruptedException e) {
+//            throw new RuntimeException(e);
+//        }
 //        Controller.stopCPURecording();
     }
 
