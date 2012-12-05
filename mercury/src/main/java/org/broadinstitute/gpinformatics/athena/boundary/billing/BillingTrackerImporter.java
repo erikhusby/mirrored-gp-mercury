@@ -24,18 +24,8 @@ public class BillingTrackerImporter {
     private ProductOrderDao productOrderDao;
 
     private static final String[] fixedHeaders = SampleLedgerExporter.FIXED_HEADERS;
-    private static final Map<String,Integer> headerColumnIndices = new HashMap<String, Integer>();
-    static {
-        for (int i = 0; i < fixedHeaders.length; i++) {
-            headerColumnIndices.put(fixedHeaders[i], i);
-        }
-    }
-    private final static int SAMPLE_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.SAMPLE_ID_HEADING);
-    private final static int PDO_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.ORDER_ID_HEADING);
-    private final static int SORT_COLUMN_COL_POS = headerColumnIndices.get( SampleLedgerExporter.SORT_COLUMN_HEADING);
-    private final static int WORK_COMPLETE_DATE_COL_POS = headerColumnIndices.get( SampleLedgerExporter.WORK_COMPLETE_DATE_HEADING);
-    private final static int numberOfHeaderRows = 2;
 
+    private final static int numberOfHeaderRows = 2;
 
     public BillingTrackerImporter(ProductOrderDao productOrderDao) {
         this.productOrderDao = productOrderDao;
@@ -73,8 +63,8 @@ public class BillingTrackerImporter {
         } finally {
             IOUtils.closeQuietly(inputStream);
         }
-        return trackerSummaryMap;
 
+        return trackerSummaryMap;
     }
 
     void checkSampleOrdering(Workbook workbook) {
@@ -94,7 +84,7 @@ public class BillingTrackerImporter {
                     row = skipHeaderRows(rows, row);
                 }
 
-                sortCell = row.getCell(SORT_COLUMN_COL_POS);
+                sortCell = row.getCell(BillingTrackerUtils.SORT_COLUMN_COL_POS);
                 if (sortCell == null) {
                     // Break out of this loop since there is no sort num value for this row.
                     // Assuming at the end of the valued rows.
@@ -111,7 +101,7 @@ public class BillingTrackerImporter {
                 }
                 double sortCellVal = sortCell.getNumericCellValue();
 
-                String currentSampleName = row.getCell(SAMPLE_ID_COL_POS).getStringCellValue();
+                String currentSampleName = row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS).getStringCellValue();
                 if (!(String.valueOf(sortCellVal)).equals(String.valueOf(expectedSortColValue))) {
                     throw new RuntimeException("Sample " + currentSampleName + " on row " + (row.getRowNum() + 1) +
                                                " of spreadsheet tab " + productPartNumberStr
@@ -152,7 +142,7 @@ public class BillingTrackerImporter {
                 row = skipHeaderRows(rows, row);
             }
 
-            Cell pdoCell = row.getCell(PDO_ID_COL_POS);
+            Cell pdoCell = row.getCell(BillingTrackerUtils.PDO_ID_COL_POS);
             if (pdoCell == null) {
                 // Break out of this loop since there is no PDO for this row. Assuming at the end of the valued rows.
                 break;
@@ -375,9 +365,9 @@ public class BillingTrackerImporter {
         try {
             IOUtils.copy(is, out);
 
-            log.info("New file created!");
+            logger.info("New file created!");
         } catch (IOException e) {
-            log.error(e);
+            logger.error(e);
         } finally {
             IOUtils.closeQuietly(out);
         }
