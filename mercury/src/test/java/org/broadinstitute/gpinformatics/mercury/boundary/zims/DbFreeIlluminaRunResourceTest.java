@@ -44,7 +44,7 @@ public class DbFreeIlluminaRunResourceTest {
                 new MockThriftService(),
                 new BSPSampleDataFetcher(new BSPSampleSearchServiceStub())
         ).getRun(thriftRun,new HashMap<String, BSPSampleDTO>(),new SquidThriftLibraryConverter());
-        IlluminaRunResourceTest.doAssertions(thriftRun,runBean);
+        IlluminaRunResourceTest.doAssertions(thriftRun,runBean,null);
     }
 
     @Test(groups = DATABASE_FREE)

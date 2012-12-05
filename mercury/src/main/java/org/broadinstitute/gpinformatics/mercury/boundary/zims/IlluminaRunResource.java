@@ -42,7 +42,7 @@ public class IlluminaRunResource implements Serializable {
     ThriftService thriftService;
 
     @Inject
-    ProductOrderDao genericDao;
+    ProductOrderDao pdoDao;
 
     public IlluminaRunResource() {
     }
@@ -104,11 +104,9 @@ public class IlluminaRunResource implements Serializable {
             for (TZamboniLibrary zamboniLibrary : tZamboniLane.getLibraries()) {
                 BSPSampleDTO bspDTO = lsidToBSPSample.get(zamboniLibrary.getLsid());
                 ProductOrder pdo = null;
-                /*
                 if (zamboniLibrary.getPdoKey() != null) {
-                    pdo = genericDao.findSingle(ProductOrder.class,ProductOrder_.jiraTicketKey,zamboniLibrary.getPdoKey());
+                    pdo = pdoDao.findSingle(ProductOrder.class,ProductOrder_.jiraTicketKey,zamboniLibrary.getPdoKey());
                 }
-                */
                 libraries.add(thriftLibConverter.convertLibrary(zamboniLibrary,bspDTO,pdo));
             }
             //TODO SGM:  pull lane library name from tZamboniLane
