@@ -53,7 +53,7 @@ public class RackOfTubes extends LabVessel{
         return rackType;
     }
 
-            @Override
+    @Override
     public VesselGeometry getVesselGeometry() {
         return rackType.getVesselGeometry();
     }
