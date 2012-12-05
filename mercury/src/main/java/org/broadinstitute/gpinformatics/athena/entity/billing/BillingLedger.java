@@ -93,11 +93,21 @@ public class BillingLedger {
     }
 
     /**
-     * A ledger item is billed if either its message is the success status.
+     * A ledger item is billed if either its message is the success status or the session has been billed. The
+     * isBillingSessionBilled method is probably not needed, since all should be success, but I don't want to
+     * have to fix the db if some do not have success (HBR)
+     *
      * @return true if item was billed
      */
     public boolean isBilled() {
-        return billingMessage != null && billingMessage.equals(BillingSession.SUCCESS);
+        return isBillingSessionBilled() || (billingMessage != null && billingMessage.equals(BillingSession.SUCCESS));
+    }
+
+    /**
+     * @return If the billing session is billed, then this item is part of a fully, and successfully billed session.
+     */
+    private boolean isBillingSessionBilled() {
+        return (billingSession != null) && (billingSession.getBilledDate() != null);
     }
 
     public void removeFromSession() {
