@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
-import junit.framework.Assert;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -18,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResourc
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.testng.annotations.Test;
+import static org.testng.Assert.*;
 
 import java.util.HashMap;
 
@@ -36,27 +36,31 @@ public class DbFreeSquidThriftLibraryConverterTest {
 
         SquidThriftLibraryConverter converter = new SquidThriftLibraryConverter();
         TZamboniLibrary zamboniLibrary = thriftRun.getLanes().iterator().next().getLibraries().iterator().next();
+        zamboniLibrary.setLcset("LCSET-123");
+
         LibraryBean lib = converter.convertLibrary(zamboniLibrary, null, pdo);
-        Assert.assertEquals(pdo.getBusinessKey(),lib.getProductOrderKey());
-        Assert.assertEquals(pdo.getTitle(),lib.getProductOrderTitle());
-        Assert.assertEquals(pdo.getResearchProject().getBusinessKey(),lib.getMercuryProjectKey());
-        Assert.assertEquals(pdo.getResearchProject().getTitle(),lib.getMercuryProjectTitle());
+        assertEquals(pdo.getBusinessKey(),lib.getProductOrderKey());
+        assertEquals(pdo.getTitle(),lib.getProductOrderTitle());
+        assertEquals(pdo.getResearchProject().getBusinessKey(),lib.getMercuryProjectKey());
+        assertEquals(pdo.getResearchProject().getTitle(),lib.getMercuryProjectTitle());
 
         lib = converter.convertLibrary(zamboniLibrary, null, null);
-        Assert.assertNull(lib.getProductOrderKey());
-        Assert.assertNull(lib.getProductOrderTitle());
-        Assert.assertNull(lib.getMercuryProjectKey());
-        Assert.assertNull(lib.getMercuryProjectTitle());
+        assertNull(lib.getProductOrderKey());
+        assertNull(lib.getProductOrderTitle());
+        assertNull(lib.getMercuryProjectKey());
+        assertNull(lib.getMercuryProjectTitle());
 
         pdo.setResearchProject(null);
         lib = converter.convertLibrary(zamboniLibrary, null, pdo);
-        Assert.assertEquals(pdo.getBusinessKey(),lib.getProductOrderKey());
-        Assert.assertEquals(pdo.getTitle(),lib.getProductOrderTitle());
-        Assert.assertNull(lib.getMercuryProjectKey());
-        Assert.assertNull(lib.getMercuryProjectTitle());
+        assertEquals(pdo.getBusinessKey(),lib.getProductOrderKey());
+        assertEquals(pdo.getTitle(),lib.getProductOrderTitle());
+        assertNull(lib.getMercuryProjectKey());
+        assertNull(lib.getMercuryProjectTitle());
 
-        Assert.assertEquals("Mashed Potatoes",lib.getMercuryProduct());
-        Assert.assertEquals("Mashed Things",lib.getMercuryProductFamily());
+        assertEquals("Mashed Potatoes",lib.getMercuryProduct());
+        assertEquals("Mashed Things",lib.getMercuryProductFamily());
+
+        assertEquals(lib.getLcSet(),zamboniLibrary.getLcset());
     }
 
 }

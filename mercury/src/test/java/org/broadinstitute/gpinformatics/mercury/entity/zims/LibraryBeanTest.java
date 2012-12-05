@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.zims;
 
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.testng.annotations.Test;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
@@ -29,6 +31,25 @@ public class LibraryBeanTest {
         // new up sans bsp DTO to confirm gssr fields work
         libraryBean = new LibraryBean(gssrLsid,null);
         assertEquals(libraryBean.getLsid(),gssrLsid);
+    }
 
+    /**
+     * Verifies fields fetched from bsp
+     * are accessible as {@link LibraryBean} fields
+     */
+    @Test(groups = DATABASE_FREE)
+    public void test_bsp_fields() {
+        BSPSampleSearchServiceStub bspSampleSearchServiceStub = new BSPSampleSearchServiceStub();
+        BSPSampleDTO sampleDTO = new BSPSampleDataFetcher(bspSampleSearchServiceStub).fetchSingleSampleFromBSP(BSPSampleSearchServiceStub.SM_12CO4);
+
+        LibraryBean libraryBean = new LibraryBean(null,sampleDTO);
+
+        assertEquals(libraryBean.getBSpGender(),sampleDTO.getGender());
+        assertEquals(libraryBean.getLsid(),sampleDTO.getSampleLsid());
+        assertEquals(libraryBean.getBspCollection(),sampleDTO.getCollection());
+        assertEquals(libraryBean.getBspRootSample(),sampleDTO.getRootSample());
+        assertEquals(libraryBean.getBspSpecies(),sampleDTO.getOrganism());
+        assertEquals(libraryBean.getBspSampleId(),sampleDTO.getSampleId());
+        assertEquals(libraryBean.getBspCollaboratorName(),sampleDTO.getCollaboratorName());
     }
 }

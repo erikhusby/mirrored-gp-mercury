@@ -174,6 +174,9 @@ public class LibraryBean {
     @JsonProperty
     private String bspCollaboratorSampleId;
 
+    @JsonProperty
+    private String bspCollaboratorName;
+
     public LibraryBean() {}
 
     /**
@@ -309,18 +312,17 @@ public class LibraryBean {
 
     private final void initBSPFields(BSPSampleDTO bspSampleDTO) {
         if (bspSampleDTO != null) {
-            bspSpecies = bspSampleDTO.getOrganism();
-            bspPrimaryDisease = bspSampleDTO.getPrimaryDisease();
-            bspSampleType = bspSampleDTO.getSampleType();
-            bspRootSample = bspSampleDTO.getRootSample();
-            sampleLSID = bspSampleDTO.getSampleLsid();
-            bspSampleId = bspSampleDTO.getSampleId();
-            bspGender = bspSampleDTO.getGender();
-           // todo arz pop/ethnicity,
-            bspCollection = bspSampleDTO.getCollection();
-            bspCollaboratorSampleId = bspSampleDTO.getCollaboratorsSampleName();
-            // todo arz bsp WS to get collaborator
-            //collaborator = bspSampleDTO.getC
+            this.bspSpecies = bspSampleDTO.getOrganism();
+            this.bspPrimaryDisease = bspSampleDTO.getPrimaryDisease();
+            this.bspSampleType = bspSampleDTO.getSampleType();
+            this.bspRootSample = bspSampleDTO.getRootSample();
+            this.sampleLSID = bspSampleDTO.getSampleLsid();
+            this.bspSampleId = bspSampleDTO.getSampleId();
+            this.bspGender = bspSampleDTO.getGender();
+            // todo arz pop/ethnicity,
+            this.bspCollection = bspSampleDTO.getCollection();
+            this.bspCollaboratorSampleId = bspSampleDTO.getCollaboratorsSampleName();
+            this.bspCollaboratorName = bspSampleDTO.getCollaboratorName();
         }
     }
 
@@ -515,6 +517,10 @@ public class LibraryBean {
 
     public String getBspSpecies() {
         return bspSpecies;
+    }
+
+    public String getBspCollaboratorName() {
+        return bspCollaboratorName;
     }
 
 }
