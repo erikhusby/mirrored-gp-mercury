@@ -49,4 +49,14 @@ public class MercurySampleDao extends GenericDao {
         return mapSampleToSample;
     }
 
+    /**
+     * Find MercurySamples by their sample keys.
+     *
+     * @param sampleKeys list of sample key strings to search for.
+     * @return list of mercury samples from sample key lookup
+     */
+    public List<MercurySample> findBySampleKeys(List<String> sampleKeys) {
+        return findListByList(MercurySample.class, MercurySample_.sampleKey, sampleKeys);
+    }
+
 }

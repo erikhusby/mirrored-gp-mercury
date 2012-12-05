@@ -1,10 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.primefaces.event.ToggleEvent;
 
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
@@ -21,10 +24,21 @@ public class SearchPlasticBean {
     private LabVesselDao labVesselDao;
     @Inject
     private BSPUserList bspUserList;
-    private String barcode;
+    @Inject
+    private MercurySampleDao mercurySampleDao;
+    @Inject
+    private ProductOrderDao productOrderDao;
+
+    private String searchKey;
     private LabVessel selectedVessel;
     private List<LabVessel> foundVessels;
+    private List<MercurySample> foundSamples;
+    private List<ProductOrder> foundPDOs;
+    private Boolean showPlateLayout = false;
+    private Boolean showSampleList = false;
+
     private Map<LabVessel, Integer> vesselSampleSizeMap = new HashMap<LabVessel, Integer>();
+    private String activeTab;
 
     public Map<LabVessel, Integer> getVesselSampleSizeMap() {
         return vesselSampleSizeMap;
@@ -38,14 +52,29 @@ public class SearchPlasticBean {
         this.foundVessels = foundVessels;
     }
 
-    public String getBarcode() {
-        return barcode;
+    public List<MercurySample> getFoundSamples() {
+        return foundSamples;
     }
 
-    public void setBarcode(String barcode) {
-        this.barcode = barcode;
+    public void setFoundSamples(List<MercurySample> foundSamples) {
+        this.foundSamples = foundSamples;
     }
 
+    public List<ProductOrder> getFoundPDOs() {
+        return foundPDOs;
+    }
+
+    public void setFoundPDOs(List<ProductOrder> foundPDOs) {
+        this.foundPDOs = foundPDOs;
+    }
+
+    public String getSearchKey() {
+        return searchKey;
+    }
+
+    public void setSearchKey(String searchKey) {
+        this.searchKey = searchKey;
+    }
 
     public LabVessel getSelectedVessel() {
         return selectedVessel;
@@ -55,29 +84,70 @@ public class SearchPlasticBean {
         this.selectedVessel = selectedVessel;
     }
 
-    public void barcodeSearch(String barcode) {
-        this.barcode = barcode;
-        barcodeSearch();
+    public Boolean getShowPlateLayout() {
+        return showPlateLayout;
     }
 
-    public void barcodeSearch() {
-        List<String> barcodeList = Arrays.asList(barcode.trim().split(","));
-        foundVessels = labVesselDao.findByListIdentifiers(barcodeList);
+    public void setShowPlateLayout(Boolean showPlateLayout) {
+        this.showPlateLayout = showPlateLayout;
+    }
+
+    public Boolean getShowSampleList() {
+        return showSampleList;
+    }
+
+    public void setShowSampleList(Boolean showSampleList) {
+        this.showSampleList = showSampleList;
+    }
+
+    public void listSearch(String barcode) {
+        this.searchKey = barcode;
+        listSearch();
+    }
+
+    public void listSearch() {
+        List<String> searchList = cleanInputString();
+        foundVessels = labVesselDao.findByListIdentifiers(searchList);
+        foundSamples = mercurySampleDao.findBySampleKeys(searchList);
+        foundPDOs = productOrderDao.findListByBusinessKeyList(searchList);
         for (LabVessel foundVessel : foundVessels) {
             vesselSampleSizeMap.put(foundVessel, foundVessel.getSampleInstances().size());
         }
     }
 
-    public void onRowToggle(ToggleEvent event) {
-        selectedVessel = labVesselDao.findByIdentifier(((LabVessel) event.getData()).getLabel());
+    private List<String> cleanInputString() {
+        String[] keys = searchKey.split(",");
+        int index = 0;
+        for (String key : keys) {
+            keys[index++] = key.trim();
+        }
+        return Arrays.asList(keys);
     }
 
-    public String getUserNameById(Long id){
+    public void togglePlateLayout(LabVessel vessel) {
+        selectedVessel = vessel;
+        showPlateLayout = !showPlateLayout;
+    }
+
+    public void toggleSampleList(LabVessel vessel) {
+        selectedVessel = vessel;
+        showSampleList = !showSampleList;
+    }
+
+    public String getUserNameById(Long id) {
         BspUser user = bspUserList.getById(id);
         String username = "";
-        if(user != null){
+        if (user != null) {
             username = bspUserList.getById(id).getUsername();
         }
         return username;
+    }
+
+    public String getOpenCloseValue(Boolean shown) {
+        String value = "Open";
+        if (shown) {
+            value = "Close";
+        }
+        return value;
     }
 }
