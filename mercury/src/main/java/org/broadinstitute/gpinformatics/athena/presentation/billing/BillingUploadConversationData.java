@@ -23,12 +23,17 @@ public class BillingUploadConversationData implements Serializable {
         this.filename = filename;
     }
 
+    /**
+     * Begin a long-running conversation if one is not already in progress
+     */
+    public void beginConversation() {
+        if (conversation.isTransient()) {
+            conversation.begin();
+        }
+    }
 
-//    public void beginConversation( ) {
-//        if (conversation.isTransient()) {
-//            conversation.begin();
-////            setFilename( null );
-//        }
-//    }
+    public void endConversation() {
+        conversation.end();
+    }
 
 }

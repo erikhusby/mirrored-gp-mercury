@@ -49,7 +49,7 @@ public class BillingTrackerManager {
 
     private final static int SAMPLE_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.SAMPLE_ID_HEADING);
     private final static int PDO_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.ORDER_ID_HEADING);
-    private final static int DATE_COMPLETE_COL_POS = headerColumnIndices.get(SampleLedgerExporter.DATE_COMPLETE_HEADING);
+    private final static int DATE_COMPLETE_COL_POS = headerColumnIndices.get(SampleLedgerExporter.WORK_COMPLETE_DATE_HEADING);
     private final static int numberOfHeaderRows = 2;
 
 
@@ -285,7 +285,7 @@ public class BillingTrackerManager {
                         if (delta != 0) {
                             BillingLedger billingLedger =
                                 new BillingLedger(productOrderSample, priceItem, workCompleteDate, delta);
-                            productOrderSample.getBillableItems().add(billingLedger);
+                            productOrderSample.getLedgerItems().add(billingLedger);
                             productOrderSample.setBillingStatus(BillingStatus.EligibleForBilling);
                             logger.debug("Added BillingLedger item for sample " + productOrderSample.getSampleName() +
                                     " to PDO " + productOrderSample.getProductOrder().getBusinessKey() +
@@ -304,29 +304,26 @@ public class BillingTrackerManager {
     }
 
     private void persistProductOrder(ProductOrder productOrder) {
-        int numberOfLedgerItems = 0;
+
+        Set<BillingLedger> billableLedgerItems = new HashSet<BillingLedger>();
+
         try {
             for (ProductOrderSample productOrderSample : productOrder.getSamples() ) {
-                if ( productOrderSample.getBillableItems() != null ) {
-                    for ( BillingLedger billingLedger : productOrderSample.getBillableItems() ) {
-                        // Only count the null-Billing Session ledgerItems.
-                        if ( billingLedger.getBillingSession() == null) {
-                            numberOfLedgerItems ++;
-                        }
-                    }
-                }
+                billableLedgerItems.addAll(productOrderSample.getBillableLedgerItems());
             }
+
             // No need to persist if there are no ledger Items for this order.
-            if ( numberOfLedgerItems > 0 ) {
+            if (!billableLedgerItems.isEmpty()) {
                 productOrderDao.persist(productOrder);
                 productOrderDao.flush();
 
-                logger.info("Persisted " + numberOfLedgerItems + " BillingLedger records for Product Order <" +
+                logger.info("Persisted " + billableLedgerItems.size() + " BillingLedger records for Product Order <" +
                         productOrder.getTitle() + "> with PDO Id: " + productOrder.getBusinessKey());
             }
         } catch (RuntimeException e) {
-            logger.error("Exception when persisting " + numberOfLedgerItems +" BillingLedger items for Product Oder <" +
-                    productOrder.getTitle() + "> with PDO Id: " + productOrder.getBusinessKey() , e);
+            logger.error("Exception when persisting " + billableLedgerItems.size() +
+                    " BillingLedger items for Product Order <" + productOrder.getTitle() +
+                    "> with PDO Id: " + productOrder.getBusinessKey() , e);
             throw e;
         }
     }
@@ -459,7 +456,7 @@ public class BillingTrackerManager {
                     primaryProductPartNumber + "> in the first row and cell position " +  primaryProductHeaderCell.getColumnIndex() );
         }
 
-        //Derive the list of TrackerColumnInfo objects skip the error column
+        //Derive the list of TrackerColumnInfo objects skip the Comments and Billing Error columns
         int totalProductsHeaders = columnHeaders.size() - numFixedHeaders - 2;
 
         result = new ArrayList<TrackerColumnInfo>();

@@ -63,7 +63,7 @@ public class ProductOrderTest {
 
         //TODO hmc Under construction
         Assert.assertEquals(productOrder.getSamples().size(), 6);
-        Assert.assertTrue(productOrder.getSamples().get(0).getBillableItems().size() == 1);
+        Assert.assertTrue(productOrder.getSamples().get(0).getLedgerItems().size() == 1);
 
          **/
 

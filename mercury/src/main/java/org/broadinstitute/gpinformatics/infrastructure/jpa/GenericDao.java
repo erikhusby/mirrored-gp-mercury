@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.jpa;
 
+import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -28,6 +29,8 @@ import java.util.List;
 @TransactionAttribute(TransactionAttributeType.SUPPORTS)
 @RequestScoped
 public class GenericDao {
+
+    public static final int IN_CLAUSE_LIMIT = 1000;
 
     /**
      * Interface for callbacks that want to specify fetches from the specified {@link Root}, make the query distinct,
@@ -217,7 +220,7 @@ public class GenericDao {
      */
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListByList(
             Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, List<VALUE_TYPE> values,
-            GenericDaoCallback<ENTITY_TYPE> genericDaoCallback) {
+            @Nullable GenericDaoCallback<ENTITY_TYPE> genericDaoCallback) {
         List<ENTITY_TYPE> resultList = new ArrayList<ENTITY_TYPE>();
         if(values.isEmpty()) {
             return resultList;
@@ -230,10 +233,10 @@ public class GenericDao {
             genericDaoCallback.callback(criteriaQuery, root);
         }
 
-        // Break the list into chunks of 1000, because of the limit on the number of items in
+        // Break the list into chunks, because of the limit on the number of items in
         // an Oracle IN clause
-        for(int i = 0; i < values.size(); i += 1000) {
-            criteriaQuery.where(root.get(singularAttribute).in(values.subList(i, Math.min(values.size(), i + 1000))));
+        for (int i = 0; i < values.size(); i += IN_CLAUSE_LIMIT) {
+            criteriaQuery.where(root.get(singularAttribute).in(values.subList(i, Math.min(values.size(), i + IN_CLAUSE_LIMIT))));
             try {
                 resultList.addAll(getEntityManager().createQuery(criteriaQuery).getResultList());
             } catch (NoResultException ignored) {
@@ -294,8 +297,8 @@ public class GenericDao {
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
         criteriaQuery.select(root);
-        Predicate valuePredicate = criteriaBuilder.like(root.get(singularAttribute).as(String.class), "%" +
-                value + "%");
+        Predicate valuePredicate =
+                criteriaBuilder.like(root.get(singularAttribute).as(String.class), "%" + value + "%");
         criteriaQuery.where(valuePredicate);
         try {
             return getEntityManager().createQuery(criteriaQuery).getResultList();
