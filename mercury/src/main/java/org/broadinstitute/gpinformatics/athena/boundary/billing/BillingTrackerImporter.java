@@ -1,9 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.poi.ss.usermodel.*;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
@@ -16,32 +13,16 @@ import java.io.*;
 import java.util.*;
 
 /**
- *
+ * 
  */
 public class BillingTrackerImporter {
 
     private static final Log logger = LogFactory.getLog(BillingTrackerImporter.class);
     private ProductOrderDao productOrderDao;
 
-    private final static String[] fixedHeaders = SampleLedgerExporter.FIXED_HEADERS;
-    private final static Map<String,Integer> headerColumnIndices = new HashMap<String, Integer>();
-
-    static {
-        for (int i=0; i< fixedHeaders.length; i++) {
-            headerColumnIndices.put(fixedHeaders[i], i);
-        }
-    }
-    private final static int SAMPLE_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.SAMPLE_ID_HEADING);
-    private final static int PDO_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.ORDER_ID_HEADING);
-    private final static int SORT_COLUMN_COL_POS = headerColumnIndices.get( SampleLedgerExporter.SORT_COLUMN_HEADING);
-    private final static int WORK_COMPLETE_DATE_COL_POS = headerColumnIndices.get( SampleLedgerExporter.WORK_COMPLETE_DATE_HEADING);
-    private final static int numberOfHeaderRows = 2;
-
-
     public BillingTrackerImporter(ProductOrderDao productOrderDao) {
         this.productOrderDao = productOrderDao;
     }
-
 
     public Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> parseFileForSummaryMap(InputStream inputStream) throws IOException {
 
@@ -60,7 +41,7 @@ public class BillingTrackerImporter {
                 Sheet sheet = workbook.getSheetAt(i);
                 String productPartNumberStr = sheet.getSheetName();
 
-                List<TrackerColumnInfo> trackerHeaderList = parseTrackerSheetHeader(sheet.getRow(0), productPartNumberStr);
+                List<TrackerColumnInfo> trackerHeaderList = BillingTrackerUtils.parseTrackerSheetHeader(sheet.getRow(0), productPartNumberStr);
 
                 //Get a map (by PDOId) of a map of OrderBillSummaryStat objects (by BillablRef) for this sheet.
                 Map<String, Map<BillableRef, OrderBillSummaryStat>> sheetSummaryMap = parseSheetForSummaryMap(sheet, trackerHeaderList);
@@ -89,16 +70,16 @@ public class BillingTrackerImporter {
             for (Iterator<Row> rit = sheet.rowIterator(); rit.hasNext(); ) {
                 Row row = rit.next();
                 if ( row.getRowNum() == 0 ) {
-                    row = skipHeaderRows(rit, row);
+                    row = BillingTrackerUtils.skipHeaderRows(rit, row);
                 }
 
-                sortCell = row.getCell(SORT_COLUMN_COL_POS);
+                sortCell = row.getCell(BillingTrackerUtils.SORT_COLUMN_COL_POS);
                 if ( sortCell == null ) {
                     //Break out of this loop since there is no sort num value for this row. Assuming at the end of the valued rows.
                     break;
                 }
 
-                if (! isNonNullNumericCell( sortCell )) {
+                if (! BillingTrackerUtils.isNonNullNumericCell( sortCell )) {
                     throw new RuntimeException("Row " +  (row.getRowNum() + 1 ) +
                             " of spreadsheet tab "  + productPartNumberStr + " has a non-numeric value is the " +
                             SampleLedgerExporter.SORT_COLUMN_HEADING + " cell. Please correct and ensure the spreadsheet is ordered by the " +
@@ -106,7 +87,7 @@ public class BillingTrackerImporter {
                 }
                 double sortCellVal = sortCell.getNumericCellValue();
 
-                String currentSampleName = row.getCell(SAMPLE_ID_COL_POS).getStringCellValue();
+                String currentSampleName = row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS).getStringCellValue();
                 if ( ! ("" + sortCellVal).equals( "" + expectedSortColValue )) {
                     throw new RuntimeException("Sample " + currentSampleName + " on row " +  (row.getRowNum() + 1 ) +
                             " of spreadsheet tab "  + productPartNumberStr + " is not in the expected position. Please re-order the spreadsheet by the " +
@@ -142,17 +123,17 @@ public class BillingTrackerImporter {
             Row row = rit.next();
 
             if ( row.getRowNum() == 0 ) {
-                row = skipHeaderRows(rit, row);
+                row = BillingTrackerUtils.skipHeaderRows(rit, row);
             }
 
-            Cell pdoCell = row.getCell(PDO_ID_COL_POS);
+            Cell pdoCell = row.getCell(BillingTrackerUtils.PDO_ID_COL_POS);
             if ( pdoCell == null ) {
                 //Break out of this loop since there is no PDO for this row. Assuming at the end of the valued rows.
                 break;
             }
 
             String rowPdoIdStr = pdoCell.getStringCellValue();
-            String currentSampleName = row.getCell(SAMPLE_ID_COL_POS).getStringCellValue();
+            String currentSampleName = row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS).getStringCellValue();
             Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap  = sheetSummaryMap.get(rowPdoIdStr);
 
             // For a newly found PdoId create a new map for it and add it to the sheet summary map
@@ -209,11 +190,11 @@ public class BillingTrackerImporter {
             BillableRef billableRef = trackerColumnInfos.get(priceItemIndex).getBillableRef();
 
             // There are two cells per product header cell, so we need to account for this.
-            int currentBilledPosition = fixedHeaders.length + (priceItemIndex * 2);
+            int currentBilledPosition = BillingTrackerUtils.fixedHeaders.length + (priceItemIndex * 2);
 
             // Get the AlreadyBilled cell
             Cell billedCell = row.getCell(currentBilledPosition);
-            if (isNonNullNumericCell(billedCell)) {
+            if (BillingTrackerUtils.isNonNullNumericCell(billedCell)) {
                 previouslyBilledQuantity = billedCell.getNumericCellValue();
                 //TODO hmc need the AlreadyBilled validation check here per GPLIM-451.
                 //Check billedQuantity parsed against that which is already billed for this POS and PriceItem - should match
@@ -222,13 +203,13 @@ public class BillingTrackerImporter {
 
             // Get the newQuantity cell value
             Cell newQuantityCell = row.getCell(currentBilledPosition + 1);
-            if ( isNonNullNumericCell(newQuantityCell)) {
+            if ( BillingTrackerUtils.isNonNullNumericCell(newQuantityCell)) {
                 newQuantity = newQuantityCell.getNumericCellValue();
 
                 if (newQuantity < 0) {
                     throw new RuntimeException(
                             String.format("Found negative new quantity '%f' for sample %s in %s, price item '%s', in Product sheet %s",
-                                newQuantity, row.getCell(SAMPLE_ID_COL_POS), row.getCell(PDO_ID_COL_POS),
+                                newQuantity, row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
                                 billableRef.getPriceItemName(), product.getPartNumber()));
                 }
 
@@ -238,10 +219,10 @@ public class BillingTrackerImporter {
 
                 if ( delta != 0 ) {
 
-                    Cell cell = row.getCell(WORK_COMPLETE_DATE_COL_POS);
+                    Cell cell = row.getCell(BillingTrackerUtils.WORK_COMPLETE_DATE_COL_POS);
                     if (cell == null || cell.getDateCellValue() == null) {
                         throw new RuntimeException(String.format("Found empty %s value for updated sample %s in %s, price item '%s', in Product sheet %s",
-                                SampleLedgerExporter.WORK_COMPLETE_DATE_HEADING, row.getCell(SAMPLE_ID_COL_POS), row.getCell(PDO_ID_COL_POS),
+                                SampleLedgerExporter.WORK_COMPLETE_DATE_HEADING, row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
                                 billableRef.getPriceItemName(), product.getPartNumber()));
                     }
 
@@ -261,110 +242,6 @@ public class BillingTrackerImporter {
             }
         } // end of for each product loop
         return pdoSummaryStatsMap;
-    }
-
-
-
-    private boolean isNonNullNumericCell(Cell cell) {
-        return (cell != null ) && ( Cell.CELL_TYPE_NUMERIC == cell.getCellType());
-    }
-
-
-    private Row skipHeaderRows(Iterator<Row> rit,  Row row) {
-        Row newRow=row;
-        // skip the 3 header rows
-        for (int i=0; i< numberOfHeaderRows; i++) {
-            newRow = rit.next();
-        }
-        return newRow;
-    }
-
-
-    List<TrackerColumnInfo> parseTrackerSheetHeader(Row row0, String primaryProductPartNumber) {
-
-        List<TrackerColumnInfo> result = null;
-
-        String[] fixedHeaders = SampleLedgerExporter.FIXED_HEADERS;
-        int numFixedHeaders = fixedHeaders.length;
-
-        //Just throw this exception.
-        if (row0 == null ) {
-            throw new RuntimeException( "Tracker Sheet Header mismatch.  Blank header row in tab " +  primaryProductPartNumber ) ;
-        }
-
-        // Check row0 header names. Should match what we write.
-        Iterator<Cell> citer = row0.cellIterator();
-        for (int i=0; i< numFixedHeaders; i++) {
-            Cell cell = citer.next();
-            if ( ( cell == null) ||
-                    StringUtils.isBlank(cell.getStringCellValue()) ||
-                    ! cell.getStringCellValue().equals( fixedHeaders[i] ) ) {
-                String cellValFound = (cell == null) ? "" : cell.getStringCellValue();
-                throw new RuntimeException( "Tracker Sheet Header mismatch.  Expected : " +
-                        fixedHeaders[i]  + " but found " + cellValFound );
-            }
-        }
-
-        List<String> columnHeaders = new ArrayList<String>();
-        for (Iterator<Cell> cit = row0.cellIterator(); cit.hasNext(); ) {
-            Cell cell = cit.next();
-            if ( (cell != null) &&  StringUtils.isNotBlank( cell.getStringCellValue()))  {
-                columnHeaders.add(cell.getStringCellValue());
-            }
-        }
-
-        //Check for minimum columns.
-        if ( columnHeaders.size() < (numFixedHeaders + 1) ) {
-            throw new RuntimeException( "Tracker Sheet Header mismatch.  Expected at least <" +
-                    (numFixedHeaders + 1 ) + "> non-null header columns but found only " +  columnHeaders.size()
-                    + " in tab " +  primaryProductPartNumber ) ;
-        }
-
-        // Check for primary product part number in row0.
-        Cell primaryProductHeaderCell = row0.getCell( numFixedHeaders );
-        if (! primaryProductHeaderCell.getStringCellValue().contains( primaryProductPartNumber) ) {
-            throw new RuntimeException( "Tracker Sheet Header mismatch.  Expected Primary Product PartNumber <" +
-                    primaryProductPartNumber + "> in the first row and cell position " +  primaryProductHeaderCell.getColumnIndex() );
-        }
-
-        //Derive the list of TrackerColumnInfo objects, and skip the comments and billing errors at the end
-        int totalProductsHeaders = columnHeaders.size() - numFixedHeaders - 2;
-
-        result = new ArrayList<TrackerColumnInfo>();
-        int mergedCellAddOn = 0;
-        for (int i=0; i< totalProductsHeaders; i++) {
-            Cell cell = row0.getCell( i+numFixedHeaders+mergedCellAddOn );
-            if (StringUtils.isNotBlank( cell.getStringCellValue())) {
-                BillableRef billableRef = extractBillableRefFromHeader(cell.getStringCellValue()) ;
-                TrackerColumnInfo columnInfo  = new TrackerColumnInfo(billableRef, i+numFixedHeaders );
-                result.add( columnInfo );
-                mergedCellAddOn++;
-            }
-        }
-
-        return result;
-    }
-
-    BillableRef extractBillableRefFromHeader(String cellValueStr) {
-        String productPartNumber = "";
-        String priceItemName = "";
-
-        if ( StringUtils.isBlank(cellValueStr)) {
-            throw new NullPointerException("Header name cannot be blank");
-        }
-
-        int endPos = cellValueStr.lastIndexOf("]");
-        int startPos = cellValueStr.lastIndexOf("[", endPos);
-        if ((endPos < 0 ) || ( startPos < 0 ) || ! (startPos+1 < endPos)) {
-            throw new RuntimeException( "Tracker Sheet Header Format Error.  Could not find product partNumber in column header. Column header contained: <" +
-                    cellValueStr + ">");
-        }
-        productPartNumber = cellValueStr.substring(startPos+1, endPos);
-        // Substring from char position 0 to position before separating space char.
-        priceItemName = cellValueStr.substring(0, startPos-1);
-        BillableRef billableRef = new BillableRef(productPartNumber, priceItemName);
-
-        return billableRef;
     }
 
 
@@ -394,41 +271,4 @@ public class BillingTrackerImporter {
     }
 
 
-    class TrackerColumnInfo {
-        private final BillableRef billableRef;
-        private final int columnIndex;
-
-        private TrackerColumnInfo(final BillableRef billableRef, final int columnIndex) {
-            this.billableRef = billableRef;
-            this.columnIndex = columnIndex;
-        }
-
-        public BillableRef getBillableRef() {
-            return billableRef;
-        }
-
-        public int getColumnIndex() {
-            return columnIndex;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (!(o instanceof TrackerColumnInfo)) return false;
-
-            final TrackerColumnInfo that = (TrackerColumnInfo) o;
-
-            if (columnIndex != that.columnIndex) return false;
-            if (!billableRef.equals(that.billableRef)) return false;
-
-            return true;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = billableRef.hashCode();
-            result = 31 * result + columnIndex;
-            return result;
-        }
-    }
 }
