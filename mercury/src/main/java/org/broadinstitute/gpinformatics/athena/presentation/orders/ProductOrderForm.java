@@ -445,8 +445,7 @@ public class ProductOrderForm extends AbstractJsfBean {
             return null;
         }
 
-        BillingSession session = new BillingSession(userBean.getBspUser().getUserId());
-        session.setBillingLedgerItems(ledgerItems);
+        BillingSession session = new BillingSession(userBean.getBspUser().getUserId(), ledgerItems);
         billingSessionDao.persist(session);
 
         return redirect("/billing/view") + "&billingSession=" + session.getBusinessKey();
