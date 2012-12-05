@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.codehaus.jackson.annotate.JsonProperty;
 
 import java.util.ArrayList;
@@ -129,12 +130,6 @@ public class LibraryBean {
     private Boolean isFastTrack;
 
     @JsonProperty
-    private String primaryDisease;
-
-    @JsonProperty
-    private String sampleType;
-
-    @JsonProperty
     private String lcSet;
 
     @JsonProperty
@@ -155,8 +150,90 @@ public class LibraryBean {
     @JsonProperty
     private String mercuryProductFamily;
 
+    @JsonProperty
+    private String bspSpecies;
+
+    @JsonProperty
+    private String bspRootSample;
+
+    @JsonProperty
+    private String bspSampleId;
+
+    @JsonProperty
+    private String bspGender;
+
+    @JsonProperty
+    private String bspCollection;
+
+    @JsonProperty
+    private String bspPrimaryDisease;
+
+    @JsonProperty
+    private String bspSampleType;
+
+    @JsonProperty
+    private String bspCollaboratorSampleId;
+
     public LibraryBean() {}
 
+    /**
+     * Test-only
+     * @param gssrLsid
+     * @param bspSampleDTO
+     */
+    public LibraryBean(String gssrLsid,
+                       BSPSampleDTO bspSampleDTO) {
+        this.sampleLSID = gssrLsid;
+        initBSPFields(bspSampleDTO);
+    }
+
+    /**
+     * Sample-ish fields here are supplied for GSSR.
+     * @param library
+     * @param project
+     * @param initiative
+     * @param workRequest
+     * @param indexingScheme
+     * @param hasIndexingRead
+     * @param expectedInsertSize
+     * @param analysisType
+     * @param referenceSequence
+     * @param referenceSequenceVersion
+     * @param collaboratorSampleId
+     * @param collaborator
+     * @param organism
+     * @param species
+     * @param strain
+     * @param sampleLSID
+     * @param tissueType
+     * @param expectedPlasmid
+     * @param aligner
+     * @param rrbsSizeRange
+     * @param restrictionEnzyme
+     * @param cellLine
+     * @param bait
+     * @param individual
+     * @param labMeasuredInsertSize
+     * @param positiveControl
+     * @param negativeControl
+     * @param weirdness
+     * @param preCircularizationDnaSize
+     * @param partOfDevExperiment
+     * @param devExperimentData
+     * @param gssrBarcode
+     * @param gssrBarcodes
+     * @param gssrSampleType
+     * @param targetLaneCoverage
+     * @param doAggregation
+     * @param customAmpliconSetNames
+     * @param fastTrack
+     * @param productOrder
+     * @param lcSet
+     * @param bspSampleDTO trumps all other sample-related fields.  Other sample
+     *                     related fields (such as inidividual, organism, etc.) are here
+     *                     for GSSR samples.  If bspSampleDTO is non-null, all sample
+     *                     related attributes will be fetched via the BSP DTO.
+     */
     public LibraryBean(String library, String project, String initiative, Long workRequest,
                        MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize,
                        String analysisType, String referenceSequence, String referenceSequenceVersion, String collaboratorSampleId,
@@ -166,7 +243,7 @@ public class LibraryBean {
                        String weirdness, double preCircularizationDnaSize, Boolean partOfDevExperiment,
                        TZDevExperimentData devExperimentData, String gssrBarcode, Collection<String> gssrBarcodes,
                        String gssrSampleType, Short targetLaneCoverage, Boolean doAggregation, Collection<String> customAmpliconSetNames, Boolean fastTrack,
-                       String primaryDisease, String sampleType, ProductOrder productOrder, String lcSet) {
+                       ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO) {
         this.library = library;
         this.project = project;
         this.initiative = initiative;
@@ -207,8 +284,6 @@ public class LibraryBean {
         this.doAggregation = doAggregation;
         this.customAmpliconSetNames = customAmpliconSetNames;
         this.isFastTrack = fastTrack;
-        this.primaryDisease = primaryDisease;
-        this.sampleType = sampleType;
         if (productOrder != null) {
             this.productOrderKey = productOrder.getBusinessKey();
             this.productOrderTitle = productOrder.getTitle();
@@ -227,6 +302,26 @@ public class LibraryBean {
             }
         }
         this.lcSet = lcSet;
+        if (bspSampleDTO != null) {
+            initBSPFields(bspSampleDTO);
+        }
+    }
+
+    private final void initBSPFields(BSPSampleDTO bspSampleDTO) {
+        if (bspSampleDTO != null) {
+            bspSpecies = bspSampleDTO.getOrganism();
+            bspPrimaryDisease = bspSampleDTO.getPrimaryDisease();
+            bspSampleType = bspSampleDTO.getSampleType();
+            bspRootSample = bspSampleDTO.getRootSample();
+            sampleLSID = bspSampleDTO.getSampleLsid();
+            bspSampleId = bspSampleDTO.getSampleId();
+            bspGender = bspSampleDTO.getGender();
+           // todo arz pop/ethnicity,
+            bspCollection = bspSampleDTO.getCollection();
+            bspCollaboratorSampleId = bspSampleDTO.getCollaboratorsSampleName();
+            // todo arz bsp WS to get collaborator
+            //collaborator = bspSampleDTO.getC
+        }
     }
 
 
@@ -367,11 +462,11 @@ public class LibraryBean {
     }
 
     public String getPrimaryDisease() {
-        return primaryDisease;
+        return bspPrimaryDisease;
     }
 
     public String getSampleType() {
-        return sampleType;
+        return bspSampleType;
     }
 
     public String getProductOrderKey() {
@@ -401,4 +496,25 @@ public class LibraryBean {
     public String getMercuryProductFamily() {
         return mercuryProductFamily;
     }
+
+    public String getBspRootSample() {
+        return bspRootSample;
+    }
+
+    public String getBSpGender() {
+        return bspGender;
+    }
+
+    public String getBspSampleId() {
+        return bspSampleId;
+    }
+
+    public String getBspCollection() {
+        return bspCollection;
+    }
+
+    public String getBspSpecies() {
+        return bspSpecies;
+    }
+
 }

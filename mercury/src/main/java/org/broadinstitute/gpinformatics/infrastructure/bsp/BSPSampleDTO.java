@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import com.google.common.base.FinalizablePhantomReference;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -16,57 +17,59 @@ public class BSPSampleDTO {
     public static final String ACTIVE_IND = "Active Stock";
 
 
-    private final String patientId;
+    private String patientId;
 
-    private final String stockSample;
+    private String stockSample;
 
-    private final String rootSample;
+    private String rootSample;
 
-    private final String aliquotSample;
+    private String aliquotSample;
 
-    private final String collaboratorsSampleName;
+    private String collaboratorsSampleName;
 
-    private final String collection;
+    private String collection;
 
-    private final double volume;
+    private double volume;
 
-    private final double concentration;
+    private double concentration;
 
-    private final String organism;
+    private String organism;
 
-    private final String stockAtExport;
+    private String stockAtExport;
 
-    private final Boolean positiveControl;
+    private Boolean positiveControl;
 
-    private final Boolean negativeControl;
+    private Boolean negativeControl;
 
-    private final String sampleLsid;
+    private String sampleLsid;
 
-    private final String collaboratorParticipantId;
+    private String collaboratorParticipantId;
 
-    private final String materialType;
+    private String materialType;
 
-    private final double total;
+    private double total;
 
-    private final String sampleType;
+    private String sampleType;
 
-    private final String primaryDisease;
+    private String primaryDisease;
 
-    private final String gender;
+    private String gender;
 
-    private final String stockType;
+    private String stockType;
 
-    private final String fingerprint;
+    private String fingerprint;
 
-    private final String containerId;
+    private String containerId;
 
-    private final String sampleId;
+    private String sampleId;
+
+    private String collaboratorName;
 
     /**
      * Use this when no valid DTO is present, to avoid null checks
      */
     public static final BSPSampleDTO DUMMY =
-            new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "");
+            new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "","");
 
     // collaborator?
     // species vs organism?
@@ -88,7 +91,7 @@ public class BSPSampleDTO {
                         String patientId, String organism, String collaboratorsSampleName, String collection,
                         String volume, String concentration, String sampleLsid, String collaboratorParticipantId,
                         String materialType, String total, String sampleType, String primaryDisease,
-                        String gender, String stockType, String fingerprint, String sampleId) {
+                        String gender, String stockType, String fingerprint, String sampleId,String collaboratorName) {
         this.containerId = containerId;
         this.stockSample = stockSample;
         this.rootSample = rootSample;
@@ -113,6 +116,18 @@ public class BSPSampleDTO {
         positiveControl = false;
         negativeControl = false;
         this.sampleId = sampleId;
+        this.collaboratorName = collaboratorName;
+    }
+
+    /**
+     * Test only
+     * @param primaryDisease
+     * @param lsid
+     */
+    public BSPSampleDTO(String primaryDisease,
+                        String lsid) {
+        this.primaryDisease = primaryDisease;
+        this.sampleLsid = lsid;
     }
 
     public double getVolume() {
@@ -242,5 +257,9 @@ public class BSPSampleDTO {
 
     public String getSampleId() {
         return sampleId;
+    }
+
+    public String getCollaboratorName() {
+        return collaboratorName;
     }
 }

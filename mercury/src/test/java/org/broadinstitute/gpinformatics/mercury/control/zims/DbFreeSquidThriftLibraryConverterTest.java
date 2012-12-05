@@ -58,4 +58,5 @@ public class DbFreeSquidThriftLibraryConverterTest {
         Assert.assertEquals("Mashed Potatoes",lib.getMercuryProduct());
         Assert.assertEquals("Mashed Things",lib.getMercuryProductFamily());
     }
+
 }
