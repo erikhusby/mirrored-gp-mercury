@@ -13,7 +13,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.reagent;
 
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.infrastructure.jsf.TableData;
-import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.boundary.reagent.ReagentDesignManager;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
@@ -35,7 +35,7 @@ public class ReagentDesignForm extends AbstractJsfBean {
     private Log log;
 
     @Inject
-    private ReagentDesignDao reagentDesignDao;
+    private ReagentDesignManager reagentDesignManager;
 
     @Inject
     private FacesContext facesContext;
@@ -54,7 +54,7 @@ public class ReagentDesignForm extends AbstractJsfBean {
 
     public void initView() {
         if (!facesContext.isPostback()) {
-            reagentDesignTableData.setValues(reagentDesignDao.findAll());
+            reagentDesignTableData.setValues(reagentDesignManager.findAll());
             if (conversation.isTransient()) {
                 conversation.begin();
             }
@@ -67,7 +67,7 @@ public class ReagentDesignForm extends AbstractJsfBean {
             updatedOrCreated = "created";
         }
         try {
-            reagentDesignDao.persist(reagentDesign);
+            reagentDesignManager.saveOrEditReagentDesign(reagentDesign);
         } catch (Exception e) {
             log.error(e);
             addErrorMessage(e.getMessage());
@@ -96,7 +96,7 @@ public class ReagentDesignForm extends AbstractJsfBean {
     }
 
     public ReagentDesign getReagentDesign() {
-        if (reagentDesign==null){
+        if (reagentDesign == null) {
             reagentDesign = new ReagentDesign("", ReagentDesign.REAGENT_TYPE.BAIT);
         }
         return reagentDesign;

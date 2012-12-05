@@ -25,9 +25,9 @@
                          sortBy="#{reagentDesignForm.reagentDesign.designName}"
                          sortOrder="ascending">
 
-                <p:column headerText="Reagent Design" sortBy="#{reagentDesign.designName}"
+                <p:column headerText="Design Name" sortBy="#{reagentDesign.designName}"
                           sortingComparator="caseInsensitiveText">
-                    <h:link outcome="create" value="#{reagentDesign.designName}">
+                    <h:link outcome="edit" value="#{reagentDesign.designName}">
                         <f:param name="reagentDesign" value="#{reagentDesign.reagentDesignId}"/>
                     </h:link>
                 </p:column>
@@ -35,8 +35,6 @@
                           sortingComparator="caseInsensitiveText">#{reagentDesign.targetSetName}</p:column>
                 <p:column headerText="Manufacturer" sortBy="#{reagentDesign.manufacturersName}"
                           sortingComparator="caseInsensitiveText">#{reagentDesign.manufacturersName}</p:column>
-                <p:column headerText="Reagent Type" sortBy="#{reagentDesign.reagentType}"
-                          sortingComparator="caseInsensitiveText">#{reagentDesign.reagentType}</p:column>
             </p:dataTable>
         </h:form>
     </ui:define>
