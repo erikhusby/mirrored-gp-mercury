@@ -467,7 +467,7 @@ public class LibraryBean {
         return bspPrimaryDisease;
     }
 
-    public String getSampleType() {
+    public String getBspSampleType() {
         return bspSampleType;
     }
 
@@ -521,6 +521,10 @@ public class LibraryBean {
 
     public String getBspCollaboratorName() {
         return bspCollaboratorName;
+    }
+
+    public String getBspCollaboratorSampleId() {
+        return bspCollaboratorSampleId;
     }
 
 }

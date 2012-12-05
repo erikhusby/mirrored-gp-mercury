@@ -28,10 +28,7 @@ import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 import static org.testng.Assert.*;
@@ -63,12 +60,26 @@ public class IlluminaRunResourceTest extends Arquillian {
     // PDO key applied to everything in the run
     public static final String PDO_KEY = "PDO-36";
 
-    public static final String PDO_COMPARISON_ERROR_MESSAGE = "check run " + RUN_NAME + " in QA squid to make sure WRs are linked to " + PDO_KEY;
+    /**
+     * Hack alert: we rely on fabricated squid data for this test.
+     * If QA squid has been updated, you may need to run this:
+     *
+         update work_request_material_descr wrmd set wrmd.product_order_name = 'PDO-36'
+         where
+         wrmd.work_request_material_id in
+         (select wrm.work_request_material_id from work_request_material wrm where wrm.work_request_id = 29225)
+     */
+    public static final String PDO_COMPARISON_ERROR_MESSAGE = "check run " + RUN_NAME + " in serialized .thrift file to make sure WRs are linked to " + PDO_KEY;
+
+    private Map<Long,ProductOrder> wrIdToPDO = new HashMap<Long, ProductOrder>();
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(TEST);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(EverythingYouAskForYouGetAndItsHuman.class,
+                MockThriftService.class)
+                .addAsResource(ThriftFileAccessor.RUN_FILE);
     }
+
 
     /**
      * Does a test of {@link #RUN_NAME} {@link #CHAMBER}
@@ -77,8 +88,11 @@ public class IlluminaRunResourceTest extends Arquillian {
     @Test
     public void test_zims_in_container() throws Exception {
         // todo arz update the run in QA squid to link all WRS to the PDO
+        wrIdToPDO.put(29225L,pdoDao.findByBusinessKey(PDO_KEY));
+
         ZimsIlluminaRun runBean = runLaneResource.getRun(RUN_NAME);
-        doAssertions(zamboniRun,runBean,pdoDao.findByBusinessKey(PDO_KEY));
+
+        doAssertions(zamboniRun,runBean,wrIdToPDO);
     }
     
     /**
@@ -109,11 +123,24 @@ public class IlluminaRunResourceTest extends Arquillian {
 
         assertNotNull(run);
         assertEquals(run.getName(),RUN_NAME);
-        doAssertions(zamboniRun,run,pdoDao.findByBusinessKey(PDO_KEY));
+        doAssertions(zamboniRun,run,wrIdToPDO);
+
+        System.out.println(rawJson);
+        for (ZimsIlluminaChamber zimsIlluminaChamber : run.getLanes()) {
+            for (LibraryBean libraryBean : zimsIlluminaChamber.getLibraries()) {
+                if (libraryBean.getLsid() != null) {
+                    if (libraryBean.getLsid().contains("bsp")) {
+                        assertNotNull(libraryBean.getBspRootSample());
+                        assertNotNull(libraryBean.getBspCollection());
+                        assertNotNull(libraryBean.getBspSampleId());
+                    }
+                }
+            }
+        }
 
     }
     
-    public static void doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean,ProductOrder pdo) {
+    public static void doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean,Map<Long,ProductOrder> wrIdToPDO) {
         assertEquals(runBean.getLanes().size(),thriftRun.getLanes().size());
         assertEquals(runBean.getFlowcellBarcode(),thriftRun.getFlowcellBarcode());
         assertEquals(runBean.getSequencer(),thriftRun.getSequencer());
@@ -133,7 +160,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         boolean hasDevAliquotData = false;
         for (TZamboniLane thriftLane : thriftRun.getLanes()) {
             ZimsIlluminaChamber lane = getLane(Short.toString(thriftLane.getLaneNumber()),runBean);
-            doAssertions(thriftLane, lane,pdo);
+            doAssertions(thriftLane, lane,wrIdToPDO);
 
             for (TZamboniLane zamboniLane : thriftRun.getLanes()) {
                 for (TZamboniLibrary thriftLib : zamboniLane.getLibraries()) {
@@ -200,7 +227,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         }
     }
     
-    private static void doAssertions(TZamboniLane zLane,ZimsIlluminaChamber laneBean,ProductOrder pdo) {
+    private static void doAssertions(TZamboniLane zLane,ZimsIlluminaChamber laneBean,Map<Long,ProductOrder> wrIdToPDO) {
         assertEquals(laneBean.getName(),Short.toString(zLane.getLaneNumber()));
         assertEquals(laneBean.getPrimer(),zLane.getPrimer());
         assertEquals(laneBean.getLibraries().size(), zLane.getLibraries().size());
@@ -210,7 +237,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         assertEquals(laneBean.getSequencedLibrary(), zLane.getSequencedLibraryName());
 
         for (TZamboniLibrary thriftLib : zLane.getLibraries()) {
-            doAssertions(thriftLib,laneBean.getLibraries(),pdo);
+            doAssertions(thriftLib,laneBean.getLibraries(),wrIdToPDO.get(thriftLib.getWorkRequestId()));
         }
     }
     
@@ -269,6 +296,8 @@ public class IlluminaRunResourceTest extends Arquillian {
                         // todo arz other fields
                         assertEquals(libBean.getProductOrderTitle(),pdo.getTitle(),PDO_COMPARISON_ERROR_MESSAGE);
                         assertEquals(libBean.getMercuryProjectKey(),pdo.getResearchProject().getBusinessKey(),PDO_COMPARISON_ERROR_MESSAGE);
+                        assertEquals(libBean.getProductOrderKey(),pdo.getBusinessKey(),PDO_COMPARISON_ERROR_MESSAGE);
+                        assertEquals(libBean.getMercuryProjectTitle(),pdo.getTitle(),PDO_COMPARISON_ERROR_MESSAGE);
                     }
                     else {
                         throw new RuntimeException("No PDO passed in; I can't compare.");
@@ -278,7 +307,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         }
         
         assertTrue(foundIt);
-        assertTrue(foundPDO);
+        assertTrue(foundPDO || pdo == null);
     }
 
     private static void checkEquality(DevExperimentDataBean devExperimentBean,TZDevExperimentData thriftExperimentData) {
@@ -327,8 +356,11 @@ public class IlluminaRunResourceTest extends Arquillian {
         return null;
     }
 
-   // @Override/
-    //@Test
+    @BeforeClass
+    private void getZamboniRun() throws Exception {
+        zamboniRun = new MockThriftService().fetchRun(RUN_NAME);
+    }
+
     public List<LibraryData> fetchLibraryDetailsByLibraryName(List<String> libraryNames) {
         List<LibraryData> libraryDataList = new ArrayList<LibraryData>();
         for (String libraryName : libraryNames) {

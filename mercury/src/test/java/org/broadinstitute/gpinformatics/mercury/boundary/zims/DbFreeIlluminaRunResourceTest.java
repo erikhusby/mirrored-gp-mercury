@@ -4,13 +4,7 @@ import edu.mit.broad.prodinfo.thrift.lims.TZamboniLane;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import junit.framework.Assert;
-import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
-import org.broadinstitute.gpinformatics.mercury.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.gpinformatics.mercury.control.zims.SquidThriftLibraryConverter;
-import org.broadinstitute.gpinformatics.mercury.control.zims.ThriftLibraryConverter;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
@@ -21,9 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
@@ -69,7 +61,7 @@ public class DbFreeIlluminaRunResourceTest {
             for (LibraryBean libraryBean : lane.getLibraries()) {
                 Assert.assertEquals(sampleDTO.getOrganism(),libraryBean.getBspSpecies());
                 Assert.assertEquals(sampleDTO.getPrimaryDisease(),libraryBean.getPrimaryDisease());
-                Assert.assertEquals(sampleDTO.getSampleType(),libraryBean.getSampleType());
+                Assert.assertEquals(sampleDTO.getSampleType(),libraryBean.getBspSampleType());
             }
         }
 
