@@ -52,7 +52,7 @@ public class QuoteImportInfo {
         quantitiesByQuotePriceItem.get(quoteId).get(priceItem).get(bucketDate).add(ledger);
     }
 
-    private Date getBucketDate(Date billedDate) {
+    private static Date getBucketDate(Date billedDate) {
         Calendar cal = new GregorianCalendar();
         cal.setTime(billedDate);
         int day = cal.get(Calendar.DAY_OF_MONTH);
@@ -95,13 +95,13 @@ public class QuoteImportInfo {
                     }
 
                     // Add the debit items to the list of quote import items
-                    if (debitLedgerItems.size() > 0) {
+                    if (!debitLedgerItems.isEmpty()) {
                         QuoteImportItem debitItems = new QuoteImportItem(quoteId, priceItem, debitLedgerItems, bucketDate);
                         quoteItems.add(debitItems);
                     }
 
                     // Add the credit items to the list of quote import items
-                    if (creditLedgerItems.size() > 0) {
+                    if (!creditLedgerItems.isEmpty()) {
                         QuoteImportItem creditItems = new QuoteImportItem(quoteId, priceItem, creditLedgerItems, bucketDate);
                         quoteItems.add(creditItems);
                     }

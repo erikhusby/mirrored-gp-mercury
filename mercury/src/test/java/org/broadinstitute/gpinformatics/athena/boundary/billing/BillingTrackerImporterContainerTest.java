@@ -113,8 +113,7 @@ public class BillingTrackerImporterContainerTest  extends Arquillian {
             Assert.assertEquals(-6.0, rnaSecondAddonStatData.getCredit());
 
         } catch (Exception e) {
-            logger.error(e);
-            return;
+            e.printStackTrace();
         } finally {
             IOUtils.closeQuietly(inputStream);
         }
