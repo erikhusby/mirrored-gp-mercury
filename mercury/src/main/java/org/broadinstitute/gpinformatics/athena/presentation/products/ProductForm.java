@@ -47,6 +47,8 @@ public class ProductForm extends AbstractJsfBean {
     @Inject
     private FacesContext facesContext;
 
+    @Inject
+    private ProductCreateEditConversationData conversationData;
 
     /**
      * Transaction support for create / update operations
@@ -144,8 +146,11 @@ public class ProductForm extends AbstractJsfBean {
     private void initForm() {
         if (!facesContext.isPostback()) {
             if (isCreating()) {
-                // No form initialization needed for create
+                // No form initialization needed for create, but do set the conversation data product to null
+                conversationData.beginConversation(null);
             } else {
+
+                conversationData.beginConversation(product);
 
                 if (product.getPrimaryPriceItem() != null) {
                     PriceItem priceItemDto = entityToDto(product.getPrimaryPriceItem());
@@ -235,6 +240,7 @@ public class ProductForm extends AbstractJsfBean {
         }
 
         addInfoMessage("Product \"" + product.getProductName() + "\" has been " + (creating ? "created." : "updated."));
+        conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
 
@@ -463,7 +469,7 @@ public class ProductForm extends AbstractJsfBean {
 
 
     public List<Product> searchProductsForAddonsInProductEdit(String searchText) {
-        return productSearcher.searchProductsForAddonsInProductEdit(product, searchText);
+        return productSearcher.searchProductsForAddonsInProductEdit(conversationData.getProduct(), searchText);
     }
 
 }
