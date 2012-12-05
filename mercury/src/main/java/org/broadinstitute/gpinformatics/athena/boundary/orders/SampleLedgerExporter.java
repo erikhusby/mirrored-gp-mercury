@@ -221,8 +221,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         // advisory info.  If someone has time to write this useful info this column can go back in
         // getWriter().writeCell("Useful info about the billing history " + sample.getSampleName());
 
-        // work complete date
-        getWriter().writeCell(getWorkCompleteDate(sample.getBillableItems(), sample), getDateStyle());
+        // work complete date is the date of any ledger items that are ready to be billed
+        getWriter().writeCell(getWorkCompleteDate(sample.getBillableLedgerItems(), sample), getDateStyle());
 
         // Quote ID
         getWriter().writeCell(sample.getProductOrder().getQuoteId());

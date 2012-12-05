@@ -200,7 +200,7 @@ public class ProductOrderSample implements Serializable {
         if (getLedgerItems() != null) {
             for (BillingLedger billingLedger : getLedgerItems() ) {
                 // If there is a message that is not success, add the message to the end
-                if ((billingLedger.getBillingMessage() != null) && !BillingSession.SUCCESS.equals(billingLedger.getBillingMessage())) {
+                if ((billingLedger.getBillingMessage() != null) && billingLedger.isBilled()) {
                     builder.append(billingLedger.getBillingMessage()).append("\n");
                 }
             }
