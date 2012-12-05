@@ -83,7 +83,7 @@ public class BettalimsMessageResource {
 /*
 todo jmt fix this
             if(e.getMessage().contains(LabWorkflowBatchException.MESSAGE)) {
-                throw new ResourceException(e.getMessage(), 201);
+                throw new ResourceException(e.getMessage(), Response.Status.CREATED);
             } else {
 */
                 throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);

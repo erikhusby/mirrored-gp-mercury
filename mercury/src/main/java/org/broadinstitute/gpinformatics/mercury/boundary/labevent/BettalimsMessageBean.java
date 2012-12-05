@@ -1,14 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
-import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
-
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
 import javax.inject.Inject;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.TextMessage;
-import java.util.Date;
 
 /**
  * A Message Driven Bean to receive JMS messages from liquid handling decks
@@ -24,7 +21,7 @@ public class BettalimsMessageBean implements MessageListener {
 //    private MessageDrivenContext messageDrivenContext;
 
     @Inject
-    private WsMessageStore wsMessageStore;
+    private BettalimsMessageResource bettalimsMessageResource;
 
     public BettalimsMessageBean() {
     }
@@ -35,11 +32,13 @@ public class BettalimsMessageBean implements MessageListener {
         if (message instanceof TextMessage) {
             try {
                 String text = ((TextMessage) message).getText();
-                wsMessageStore.store(text, new Date());
+                // todo jmt refactor called method to isolate stuff that's common to JAX-RS and JMS, and void ResourceException in JMS
+                bettalimsMessageResource.processMessage(text);
             } catch (Exception e) {
                 // todo jmt email LIMS oddities
             }
         } else {
+            // todo jmt email LIMS oddities
             throw new RuntimeException("Expected TextMessage, received " + message.getClass().getName());
         }
     }
