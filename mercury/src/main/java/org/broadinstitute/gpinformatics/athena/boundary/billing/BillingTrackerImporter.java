@@ -6,10 +6,8 @@ import org.apache.poi.ss.usermodel.*;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 
 import java.io.*;
@@ -21,7 +19,6 @@ import java.util.*;
 public class BillingTrackerImporter {
 
     private ProductOrderDao productOrderDao;
-    private ProductOrderSampleDao productOrderSampleDao;
 
     private final static String[] fixedHeaders = SampleLedgerExporter.FIXED_HEADERS;
     private final static Map<String,Integer> headerColumnIndices = new HashMap<String, Integer>();
@@ -34,12 +31,12 @@ public class BillingTrackerImporter {
     private final static int SAMPLE_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.SAMPLE_ID_HEADING);
     private final static int PDO_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.ORDER_ID_HEADING);
     private final static int SORT_COLUMN_COL_POS = headerColumnIndices.get( SampleLedgerExporter.SORT_COLUMN_HEADING);
+    private final static int WORK_COMPLETE_DATE_COL_POS = headerColumnIndices.get( SampleLedgerExporter.WORK_COMPLETE_DATE_HEADING);
     private final static int numberOfHeaderRows = 2;
 
 
-    public BillingTrackerImporter(ProductOrderDao productOrderDao, ProductOrderSampleDao productOrderSampleDao) {
+    public BillingTrackerImporter(ProductOrderDao productOrderDao) {
         this.productOrderDao = productOrderDao;
-        this.productOrderSampleDao = productOrderSampleDao;
     }
 
 
@@ -170,10 +167,8 @@ public class BillingTrackerImporter {
                 }
 
                 product = productOrder.getProduct();
-                samples  = productOrder.getSamples();
+                samples = productOrder.getSamples();
 
-                // Find the target priceItems for the data that was parsed from the header.
-                Map<TrackerColumnInfo, PriceItem> priceItemMap = createPriceItemMapForSheet(trackerColumnInfos, product);
             }
 
             //TODO hmc We are assuming ( for now ) that the order is the same in the spreadsheet as returned in the productOrder !
@@ -191,7 +186,7 @@ public class BillingTrackerImporter {
                         " is in different position than expected. Expected value from Order is " + productOrderSample.getSampleName());
             }
 
-            pdoSummaryStatsMap = parseRowForSummaryMap(row, productOrderSample, product, pdoSummaryStatsMap, trackerColumnInfos);
+            pdoSummaryStatsMap = parseRowForSummaryMap(row, pdoSummaryStatsMap, trackerColumnInfos, product);
             sheetSummaryMap.put(rowPdoIdStr, pdoSummaryStatsMap);
             sampleIndexInOrder++;
 
@@ -201,19 +196,19 @@ public class BillingTrackerImporter {
     }
 
     private Map<BillableRef, OrderBillSummaryStat> parseRowForSummaryMap(
-            Row row, ProductOrderSample productOrderSample, Product product, Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap,
-            List<TrackerColumnInfo> trackerColumnInfos) {
+            Row row, Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap,
+            List<TrackerColumnInfo> trackerColumnInfos, Product product) {
 
 
-        for (int productIndex=0; productIndex < trackerColumnInfos.size();productIndex++) {
+        for (int priceItemIndex = 0; priceItemIndex < trackerColumnInfos.size(); priceItemIndex++) {
             double newQuantity;
             double previouslyBilledQuantity = 0;
-            BillableRef billableRef = trackerColumnInfos.get(productIndex).getBillableRef();
+            BillableRef billableRef = trackerColumnInfos.get(priceItemIndex).getBillableRef();
 
             // There are two cells per product header cell, so we need to account for this.
-            int currentBilledPosition = fixedHeaders.length + (productIndex*2);
+            int currentBilledPosition = fixedHeaders.length + (priceItemIndex * 2);
 
-            //Get the AlreadyBilled cell
+            // Get the AlreadyBilled cell
             Cell billedCell = row.getCell(currentBilledPosition);
             if (isNonNullNumericCell(billedCell)) {
                 previouslyBilledQuantity = billedCell.getNumericCellValue();
@@ -222,16 +217,31 @@ public class BillingTrackerImporter {
                 //TODO Sum the already billed amount for this sample
             }
 
-            //Get the newQuantity cell value
+            // Get the newQuantity cell value
             Cell newQuantityCell = row.getCell(currentBilledPosition + 1);
             if ( isNonNullNumericCell(newQuantityCell)) {
                 newQuantity = newQuantityCell.getNumericCellValue();
+
+                if (newQuantity < 0) {
+                    throw new RuntimeException(
+                            String.format("Found negative new quantity '%f' for sample %s in %s, price item '%s', in Product sheet %s",
+                                newQuantity, row.getCell(SAMPLE_ID_COL_POS), row.getCell(PDO_ID_COL_POS),
+                                billableRef.getPriceItemName(), product.getPartNumber()));
+                }
 
                 //TODO Get the actual value from the DB for this POS to calculate the delta  !!!!!!!!!
 
                 double delta = newQuantity - previouslyBilledQuantity;
 
                 if ( delta != 0 ) {
+
+                    Cell cell = row.getCell(WORK_COMPLETE_DATE_COL_POS);
+                    if (cell == null || cell.getDateCellValue() == null) {
+                        throw new RuntimeException(String.format("Found empty %s value for updated sample %s in %s, price item '%s', in Product sheet %s",
+                                SampleLedgerExporter.WORK_COMPLETE_DATE_HEADING, row.getCell(SAMPLE_ID_COL_POS), row.getCell(PDO_ID_COL_POS),
+                                billableRef.getPriceItemName(), product.getPartNumber()));
+                    }
+
                     OrderBillSummaryStat orderBillSummaryStat = pdoSummaryStatsMap.get(billableRef);
                     if ( orderBillSummaryStat == null ) {
                         // create a new stat obj and add it to the map
@@ -250,76 +260,12 @@ public class BillingTrackerImporter {
         return pdoSummaryStatsMap;
     }
 
-    private Map<TrackerColumnInfo,PriceItem> createPriceItemMapForSheet(
-            List<TrackerColumnInfo> trackerColumnInfos, Product product) {
-        Map<TrackerColumnInfo,PriceItem> resultMap = new HashMap<TrackerColumnInfo, PriceItem>();
 
-        List<PriceItem> productPriceItems = SampleLedgerExporter.getPriceItems( product );
-        Set<Product> productAddons = product.getAddOns();
-
-        for ( TrackerColumnInfo trackerColumnInfo : trackerColumnInfos ) {
-
-            PriceItem targetPriceItem  = findPriceItemForTrackerColumnInfo ( trackerColumnInfo, product,
-                    productPriceItems, productAddons );
-
-            resultMap.put(trackerColumnInfo, targetPriceItem);
-        }
-
-        return resultMap;
-    }
-
-    private PriceItem findPriceItemForTrackerColumnInfo (
-            TrackerColumnInfo trackerColumnInfo, Product product, List<PriceItem> productPriceItems,
-            Set<Product> productAddons ) {
-
-        PriceItem targetPriceItem = null;
-        String parsedProductPartnumber = trackerColumnInfo.getBillableRef().getProductPartNumber();
-        String parsedPriceItemName = trackerColumnInfo.getBillableRef().getPriceItemName();
-
-        if ( product.getPartNumber().equals( parsedProductPartnumber ) ) {
-            //This is the primary product.
-            targetPriceItem = findTargetPriceItem(productPriceItems, parsedPriceItemName);
-            if ( targetPriceItem == null) {
-                throw new RuntimeException( "Cannot find PriceItem for Product part number  : " +
-                        parsedProductPartnumber + " and PriceItem name : " + parsedPriceItemName );
-            }
-            return targetPriceItem;
-        }
-
-        // The parsedProductPartnumber must be for an Addon
-        for ( Product productAddon : productAddons ) {
-            if ( productAddon.getPartNumber().equals( parsedProductPartnumber ) ) {
-                targetPriceItem = findTargetPriceItem( SampleLedgerExporter.getPriceItems( productAddon ), parsedPriceItemName);
-                if ( targetPriceItem == null) {
-                    throw new RuntimeException( "Cannot find PriceItem for Product Addon part number  : " +
-                            parsedProductPartnumber + " and PriceItem name : " + parsedPriceItemName );
-                }
-                return targetPriceItem;
-            }
-        }
-        if ( targetPriceItem == null ) {
-            throw new RuntimeException( "Cannot find a Product matching the spreadsheet product part number  : " +
-                    trackerColumnInfo.getBillableRef().getProductPartNumber() + " and PriceItem name : " +
-                    trackerColumnInfo.getBillableRef().getPriceItemName() );
-        }
-        return targetPriceItem;
-    }
-
-    private PriceItem findTargetPriceItem(List<PriceItem> productPriceItems, String parsedPriceItemName) {
-        PriceItem targetPriceItem = null;
-        //Find the matching PriceItem that's ref-ed in the BillableRef
-        for ( PriceItem priceItem : productPriceItems ) {
-            if ( priceItem.getName().equals( parsedPriceItemName )  ) {
-                targetPriceItem = priceItem;
-                break;
-            }
-        }
-        return targetPriceItem;
-    }
 
     private boolean isNonNullNumericCell(Cell cell) {
         return (cell != null ) && ( Cell.CELL_TYPE_NUMERIC == cell.getCellType());
     }
+
 
     private Row skipHeaderRows(Iterator<Row> rit,  Row row) {
         Row newRow=row;
@@ -329,6 +275,7 @@ public class BillingTrackerImporter {
         }
         return newRow;
     }
+
 
     List<TrackerColumnInfo> parseTrackerSheetHeader(Row row0, String primaryProductPartNumber) {
 

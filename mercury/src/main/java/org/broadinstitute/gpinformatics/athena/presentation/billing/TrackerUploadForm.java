@@ -8,24 +8,19 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerIm
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerManager;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.UploadPreviewData;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jsf.TableData;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.primefaces.event.FileUploadEvent;
 import org.primefaces.model.UploadedFile;
 
-import javax.enterprise.context.Conversation;
 import javax.enterprise.context.ConversationScoped;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
-import javax.transaction.SystemException;
-import javax.transaction.UserTransaction;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -44,21 +39,12 @@ public class TrackerUploadForm  extends AbstractJsfBean {
     @Inject
     private ProductOrderDao productOrderDao;
 
-    @Inject
-    private ProductOrderSampleDao productOrderSampleDao;
-
-    @Inject
-    private BillingLedgerDao billingLedgerDao;
-
     @ConversationScoped
     public static class UploadPreviewTableData extends TableData<UploadPreviewData> {}
     @Inject UploadPreviewTableData uploadPreviewTableData;
 
     @Inject
     private BillingUploadConversationData conversationData;
-
-    @Inject
-    private Conversation conversation;
 
     @Inject
     private Log logger;
@@ -69,16 +55,15 @@ public class TrackerUploadForm  extends AbstractJsfBean {
     @Inject
     private FacesContext facesContext;
 
-    @Inject
-    private UserTransaction utx;
 
     public boolean isUploadAvailable() {
         return getHasFilename() && !FacesContext.getCurrentInstance().getMessages().hasNext();
     }
 
     public void initView() {
-        if (!facesContext.isPostback() && conversation.isTransient()) {
-            conversation.begin();
+        if (! facesContext.isPostback()) {
+            // the conversation data will consider the transience of the conversation before starting a new one
+            conversationData.beginConversation();
         }
     }
 
@@ -110,7 +95,7 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         try {
             inputStream = file.getInputstream();
 
-            BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, productOrderSampleDao);
+            BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao);
 
             Map<String, Map<String,Map<BillableRef, OrderBillSummaryStat>>> productProductOrderPriceItemChargesMap =
                     importer.parseFileForSummaryMap(inputStream);
@@ -148,7 +133,7 @@ public class TrackerUploadForm  extends AbstractJsfBean {
             }
 
         } catch (Exception e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            logger.error(e);
             throw new RuntimeException( e );
         } finally {
             IOUtils.closeQuietly(inputStream);
@@ -157,13 +142,13 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         if ( counter > 0 ) {
             InputStream fis=null;
             try {
-                BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, productOrderSampleDao);
+                BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao);
                 fis = file.getInputstream();
                 File tempFile = importer.copyFromStreamToTempFile(fis);
                 //Keep the filename in conversation scope
                 conversationData.setFilename( tempFile.getAbsolutePath() );
             } catch ( Exception e ) {
-                e.printStackTrace();
+                logger.error(e);
                 throw new RuntimeException( e );
             } finally {
                 IOUtils.closeQuietly(fis);
@@ -245,15 +230,11 @@ public class TrackerUploadForm  extends AbstractJsfBean {
 
         conversationData.setFilename( null );
         uploadPreviewTableData.setValues( null );
-        conversation.end();
+        conversationData.endConversation();
 
         //return to the orders pages
        return redirect("/orders/list");
 
-    }
-
-    public String getFilename() {
-        return conversationData.getFilename();
     }
 
     public boolean getHasFilename() {
