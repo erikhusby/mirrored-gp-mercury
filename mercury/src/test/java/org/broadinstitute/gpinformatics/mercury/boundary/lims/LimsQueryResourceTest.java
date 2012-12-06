@@ -76,6 +76,15 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
+    public void testFetchMaterialTypesForTubeBarcodes(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchMaterialTypesForTubeBarcodes");
+
+        String result1 = get(addQueryParam(resource, "q", Arrays.asList("0099443960", "406164")));
+        assertThat(result1, equalTo("[\"454 Material-Diluted ssDNA Library\",\"454 Beads-Recovered Sequencing Beads\"]"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
     public void testFindFlowcellDesignationByTaskName(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByTaskName").queryParam("taskName", "14A_03.19.2012");
         String result = get(resource);

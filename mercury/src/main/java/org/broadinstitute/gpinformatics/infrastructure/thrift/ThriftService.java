@@ -24,6 +24,8 @@ public interface ThriftService extends Serializable {
 
     boolean doesSquidRecognizeAllLibraries(List<String> barcodes);
 
+    public List<String> fetchMaterialTypesForTubeBarcodes(List<String> tubeBarcodes);
+
     public FlowcellDesignation findFlowcellDesignationByTaskName(final String taskName);
 
     public FlowcellDesignation findFlowcellDesignationByFlowcellBarcode(final String flowcellBarcode);

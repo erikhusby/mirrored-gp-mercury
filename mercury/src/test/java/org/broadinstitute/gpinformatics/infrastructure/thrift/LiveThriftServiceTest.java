@@ -15,6 +15,7 @@ import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
@@ -85,6 +86,29 @@ public class LiveThriftServiceTest {
 
         boolean result2 = thriftService.doesSquidRecognizeAllLibraries(Arrays.asList("0099443960", "406164", "unknown_barcode"));
         assertThat(result2, is(false));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchMaterialTypesForTubeBarcodes() throws Exception {
+        List<String> result = thriftService.fetchMaterialTypesForTubeBarcodes(Arrays.asList("0099443960", "406164"));
+        assertThat(result.size(), equalTo(2));
+        assertThat(result.get(0), equalTo("454 Material-Diluted ssDNA Library"));
+        assertThat(result.get(1), equalTo("454 Beads-Recovered Sequencing Beads"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchMaterialTypesForTubeBarcodesNotFound() throws Exception {
+        List<String> result = thriftService.fetchMaterialTypesForTubeBarcodes(Arrays.asList("unknown_barcode"));
+        assertThat(result.size(), equalTo(0));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchMaterialTypesForTubeBarcodesMixed() throws Exception {
+        List<String> result = thriftService.fetchMaterialTypesForTubeBarcodes(Arrays.asList("0099443960", "unknown_barcode", "406164"));
+        // TODO: should an error be raised here because not all tubes were found and, therefore, the index values of the query and response don't line up?
+        assertThat(result.size(), equalTo(2));
+        assertThat(result.get(0), equalTo("454 Material-Diluted ssDNA Library"));
+        assertThat(result.get(1), equalTo("454 Beads-Recovered Sequencing Beads"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION)

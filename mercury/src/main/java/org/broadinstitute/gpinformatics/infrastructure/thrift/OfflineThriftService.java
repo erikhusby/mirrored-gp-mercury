@@ -32,6 +32,11 @@ public class OfflineThriftService implements ThriftService {
     }
 
     @Override
+    public List<String> fetchMaterialTypesForTubeBarcodes(List<String> tubeBarcodes) {
+        return null;
+    }
+
+    @Override
     public FlowcellDesignation findFlowcellDesignationByTaskName(String taskName) {
         return null;
     }

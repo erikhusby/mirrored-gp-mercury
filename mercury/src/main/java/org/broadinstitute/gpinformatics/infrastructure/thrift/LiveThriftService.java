@@ -108,6 +108,22 @@ public class LiveThriftService implements ThriftService {
     }
 
     @Override
+    public List<String> fetchMaterialTypesForTubeBarcodes(final List<String> tubeBarcodes) {
+        return thriftConnection.call(new ThriftConnection.Call<List<String>>() {
+            @Override
+            public List<String> call(LIMQueries.Client client) {
+                try {
+                    return client.fetchMaterialTypesForTubeBarcodes(tubeBarcodes);
+                } catch (TException e) {
+                    String message = "Thrift error: " + e.getMessage();
+                    log.error(message, e);
+                    throw new RuntimeException(message, e);
+                }
+            }
+        });
+    }
+
+    @Override
     public FlowcellDesignation findFlowcellDesignationByTaskName(final String taskName) {
         return thriftConnection.call(new ThriftConnection.Call<FlowcellDesignation>() {
             @Override
