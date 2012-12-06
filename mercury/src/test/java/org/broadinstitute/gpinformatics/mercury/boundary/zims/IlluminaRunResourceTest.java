@@ -8,6 +8,8 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.*;
 import org.broadinstitute.gpinformatics.mercury.bsp.EverythingYouAskForYouGetAndItsHuman;
@@ -124,6 +126,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         boolean foundBspSample = false;
         boolean foundLcSet = false;
         boolean foundPdo = false;
+        boolean foundTumor = false;
         for (ZimsIlluminaChamber zimsIlluminaChamber : run.getLanes()) {
             for (LibraryBean libraryBean : zimsIlluminaChamber.getLibraries()) {
                 if (libraryBean.getLsid() != null) {
@@ -132,6 +135,10 @@ public class IlluminaRunResourceTest extends Arquillian {
                         assertNotNull(libraryBean.getBspRootSample());
                         assertNotNull(libraryBean.getBspCollection());
                         assertNotNull(libraryBean.getBspSampleId());
+                    }
+                    if ("broadinstitute.org:bsp.prod.sample:12MD2".equals(libraryBean.getLsid())) {
+                        foundTumor = true;
+                        assertEquals(libraryBean.getBspSampleType(), BSPSampleDTO.TUMOR_IND);
                     }
                     if (libraryBean.getLcSet() != null) {
                         foundLcSet = true;
@@ -145,6 +152,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         assertTrue(foundBspSample);
         assertTrue(foundLcSet);
         assertTrue(foundPdo);
+        assertTrue(foundTumor);
     }
     
     public static void doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean,Map<Long,ProductOrder> wrIdToPDO) {

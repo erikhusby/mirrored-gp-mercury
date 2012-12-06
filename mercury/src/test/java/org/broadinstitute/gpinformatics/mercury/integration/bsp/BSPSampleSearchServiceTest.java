@@ -30,7 +30,7 @@ public class BSPSampleSearchServiceTest {
 
         TEST_SAMPLE_ID = "SM-12MD2";
         sampleIDs = new String [] {TEST_SAMPLE_ID};
-        data = service.runSampleSearch(Arrays.asList(sampleIDs),BSPSampleSearchColumn.SAMPLE_TYPE);
+        data = service.runSampleSearch(Arrays.asList(sampleIDs),BSPSampleSearchColumn.SAMPLE_TYPE,BSPSampleSearchColumn.LSID);
         Assert.assertEquals(BSPSampleDTO.TUMOR_IND,data.get(0)[0]);
 
     }
