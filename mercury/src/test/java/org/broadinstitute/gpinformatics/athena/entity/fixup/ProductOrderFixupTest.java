@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -14,6 +15,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -32,13 +34,13 @@ public class ProductOrderFixupTest extends Arquillian {
     @Inject
     JiraService jiraService;
 
-    @Deployment
+    @Deployment //@OverProtocol("Servlet 3.0")
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(PROD, "prod");
     }
 
     /**
-     * Fixed up data per JIRA ticket.
+     * Fixed up data per JIRA ticketN.
      */
     @Test(enabled = false)
     public void fixupGplim123() {
@@ -76,4 +78,24 @@ public class ProductOrderFixupTest extends Arquillian {
         // change gets flushed.  This is an artifact of the test environment.
         productOrderDao.persist(productOrder);
     }
+
+
+    /**
+     * Clear the External Plating Addon from PDO-10
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void clear_addons_for_pdo() throws Exception {
+        String jiraKey = "PDO-10";
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraKey);
+
+        productOrder.setComments("");
+        productOrder.updateAddOnProducts(new ArrayList<Product>());
+
+        // The entity is already persistent, this call to persist is solely to begin and end a transaction, so the
+        // change gets flushed.  This is an artifact of the test environment.
+        productOrderDao.persist(productOrder);
+    }
+
 }
