@@ -47,7 +47,6 @@ public class BillingTrackerImporterContainerTest  extends Arquillian {
         if (utx == null) {
             return;
         }
-
         utx.begin();
     }
 
@@ -58,7 +57,6 @@ public class BillingTrackerImporterContainerTest  extends Arquillian {
         if (utx == null) {
             return;
         }
-
         utx.rollback();
     }
 
@@ -71,7 +69,6 @@ public class BillingTrackerImporterContainerTest  extends Arquillian {
 
         try {
             inputStream = Thread.currentThread().getContextClassLoader().getResourceAsStream(BILLING_TRACKER_TEST_FILENAME);
-
 
             Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> billingDataSummaryMapByPartNumber = billingTrackerImporter.parseFileForSummaryMap(inputStream);
             Assert.assertNotNull(billingDataSummaryMapByPartNumber);
@@ -116,8 +113,7 @@ public class BillingTrackerImporterContainerTest  extends Arquillian {
             Assert.assertEquals(-6.0, rnaSecondAddonStatData.getCredit());
 
         } catch (Exception e) {
-            logger.error(e);
-            return;
+            e.printStackTrace();
         } finally {
             IOUtils.closeQuietly(inputStream);
         }

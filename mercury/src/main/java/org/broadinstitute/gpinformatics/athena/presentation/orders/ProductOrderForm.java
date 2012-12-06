@@ -6,6 +6,7 @@ import org.apache.commons.logging.Log;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderListModel;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderManager;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
@@ -19,7 +20,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.ProductOrderConverter;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
@@ -96,6 +96,9 @@ public class ProductOrderForm extends AbstractJsfBean {
     @Inject
     private ProductOrderListModel allProductOrders;
 
+    @Inject
+    private ProductOrderManager productOrderManager;
+
     private ProductOrderListEntry[] selectedProductOrders;
 
     /**
@@ -125,6 +128,18 @@ public class ProductOrderForm extends AbstractJsfBean {
                 conversation.begin();
             }
         }
+    }
+
+    /**
+     * Convenience method to differentiate between create and edit use cases
+     * @return
+     */
+    public boolean isCreating() {
+        if (productOrderDetail == null) {
+            return true;
+        }
+
+        return productOrderDetail.getProductOrder() == null || ! productOrderDetail.getProductOrder().isInDB();
     }
 
     /**
@@ -373,48 +388,26 @@ public class ProductOrderForm extends AbstractJsfBean {
 
         try {
 
-            ProductOrder order = productOrderDetail.getProductOrder();
+            ProductOrder productOrder = productOrderDetail.getProductOrder();
 
-            if (productOrderDao.findByTitle(order.getTitle()) != null) {
-                addErrorMessage("Product order with this title already exists, please choose a different title");
-                return null;
+            if (isCreating()) {
+                productOrderManager.save(productOrder, convertTextToList(getEditIdsCache()), getSelectedAddOnPartNumbers());
             }
-
-            order.setSamples(convertTextToOrderSamples(getEditIdsCache()));
-
-            // Validations.
-            if (order.getSamples().isEmpty()) {
-                // FIXME: instead of doing this here, it can be done as a validator on the hidden editIDsCache field.
-                String message = "You must add at least one sample before placing an order.";
-                addErrorMessage(message);
-                return null;
+            else {
+                // if we're going to allow abandoning samples we'll need to modify the signature of this method
+                productOrderManager.update(productOrder);
             }
-
-            order.updateAddOnProducts(getSelectedAddOnProducts());
-
-            // DRAFT orders not yet supported; force state of new PDOs to Submitted.
-            order.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-            String action = order.isInDB() ? "modified" : "created";
-            order.submitProductOrder();
-            productOrderDao.persist(order);
 
             addInfoMessage(
                     MessageFormat.format("Product Order ''{0}'' ({1}) has been {2}.",
-                            order.getTitle(), order.getJiraTicketKey(), action));
+                            productOrder.getTitle(), productOrder.getJiraTicketKey(), isCreating() ? "created" : "updated"));
+            conversationData.endConversation();
             return redirect("view");
         } catch (Exception e) {
             logger.error(e);
             addErrorMessage("Error saving Product Order: " + e.getMessage());
             return null;
         }
-    }
-
-    private List<Product> getSelectedAddOnProducts() {
-        if (getSelectedAddOnPartNumbers().isEmpty()) {
-            return new ArrayList<Product>();
-        }
-
-        return productDao.findListByList(Product.class, Product_.partNumber, getSelectedAddOnPartNumbers());
     }
 
     public void initForm() {
@@ -445,8 +438,7 @@ public class ProductOrderForm extends AbstractJsfBean {
             return null;
         }
 
-        BillingSession session = new BillingSession(userBean.getBspUser().getUserId());
-        session.setBillingLedgerItems(ledgerItems);
+        BillingSession session = new BillingSession(userBean.getBspUser().getUserId(), ledgerItems);
         billingSessionDao.persist(session);
 
         return redirect("/billing/view") + "&billingSession=" + session.getBusinessKey();

@@ -15,7 +15,7 @@ import java.util.Date;
  */
 public class ChangeEventTest extends TestCase {
 
-
+    @Override
     protected void setUp() throws java.lang.Exception {
 
     }

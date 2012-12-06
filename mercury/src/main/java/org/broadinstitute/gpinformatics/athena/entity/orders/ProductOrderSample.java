@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.hibernate.annotations.Index;
@@ -28,7 +27,7 @@ import java.util.regex.Pattern;
 public class ProductOrderSample implements Serializable {
 
     /** Count shown when no billing has occurred. */
-    public static final double NO_BILL_COUNT = 0.0d;
+    public static final double NO_BILL_COUNT = 0;
 
     @Id
     @SequenceGenerator(name = "SEQ_ORDER_SAMPLE", schema = "athena", sequenceName = "SEQ_ORDER_SAMPLE")
@@ -119,7 +118,7 @@ public class ProductOrderSample implements Serializable {
     }
 
     public BSPSampleDTO getBspDTO() {
-        if ( ! hasBspDTOBeenInitialized) {
+        if (!hasBspDTOBeenInitialized) {
             if (isInBspFormat()) {
                 productOrder.loadBspData();
             } else {
@@ -131,7 +130,7 @@ public class ProductOrderSample implements Serializable {
         return bspDTO;
     }
 
-    public Set<BillingLedger> getBillableItems() {
+    public Set<BillingLedger> getLedgerItems() {
         return ledgerItems;
     }
 
@@ -180,6 +179,36 @@ public class ProductOrderSample implements Serializable {
                 .append(sampleComment).append(productOrder).append(bspDTO).build();
     }
 
+    public Set<BillingLedger> getBillableLedgerItems() {
+        Set<BillingLedger> billableLedgerItems = new HashSet<BillingLedger>();
+
+        if (getLedgerItems() != null) {
+            for ( BillingLedger billingLedger : getLedgerItems() ) {
+                // Only count the null-Billing Session ledgerItems.
+                if (billingLedger.getBillingSession() == null) {
+                    billableLedgerItems.add(billingLedger);
+                }
+            }
+        }
+
+        return billableLedgerItems;
+    }
+
+    public String getUnbilledLedgerItemMessages() {
+        StringBuilder builder = new StringBuilder();
+
+        if (getLedgerItems() != null) {
+            for (BillingLedger billingLedger : getLedgerItems() ) {
+                // If there is a message that is not success, add the message to the end
+                if ((billingLedger.getBillingMessage() != null) && billingLedger.isBilled()) {
+                    builder.append(billingLedger.getBillingMessage()).append("\n");
+                }
+            }
+        }
+
+        return builder.toString();
+    }
+
     /**
      * This class holds the billed and uploaded ledger counts for a particular pdo and price item
      */
@@ -206,7 +235,7 @@ public class ProductOrderSample implements Serializable {
     }
 
     public static Map<PriceItem, LedgerQuantities> getLedgerQuantities(ProductOrderSample sample) {
-        Set<BillingLedger> ledgerItems = sample.getBillableItems();
+        Set<BillingLedger> ledgerItems = sample.getLedgerItems();
         if (ledgerItems.isEmpty()) {
             return Collections.emptyMap();
         }
@@ -217,11 +246,11 @@ public class ProductOrderSample implements Serializable {
                 sampleStatus.put(item.getPriceItem(), new LedgerQuantities());
             }
 
-            if ((item.getBillingSession() != null) && (item.getBillingSession().getBilledDate() != null) ||
-                ((item.getBillingMessage() != null) && item.getBillingMessage().equals(BillingSession.SUCCESS))) {
+            if (item.isBilled()) {
                 sampleStatus.get(item.getPriceItem()).addToBilled(item.getQuantity());
             } else {
-                // The item is not part of a completed billed session or successfully billed item from an active session
+                // The item is not part of a completed billed session or successfully billed item
+                // from an active session.
                 sampleStatus.get(item.getPriceItem()).addToUploaded(item.getQuantity());
             }
         }

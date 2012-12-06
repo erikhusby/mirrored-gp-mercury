@@ -93,7 +93,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         ResearchProject foundResearchProject = projectsList.get(new Random().nextInt(projectsList.size()));
 
         Product product = null;
-        List<Product> productsList = productDao.findProducts();
+        List<Product> productsList = productDao.findTopLevelProductsForProductOrder();
         if (productsList != null && !productsList.isEmpty()) {
             product = productsList.get(new Random().nextInt(productsList.size()));
         }

@@ -69,13 +69,16 @@ public class ProductDaoTest extends ContainerTest {
 
         final int DAYS = 24 * 60 * 60;
 
+        final Calendar yesterday = Calendar.getInstance();
+        yesterday.add(Calendar.DATE, -1);
+
         Product product = new Product(
                 "Test Data",                               // product name
                 metagenomicsProductFamily,                 // product family
                 "test data ",                              // description
                 "PN-ProductDaoTest-" + UUID.randomUUID(),  // part number
-                Calendar.getInstance().getTime(),          // availability date
-                Calendar.getInstance().getTime(),          // discontinued date
+                yesterday.getTime(),                       // availability date
+                null,                                      // discontinued date
                 3 * DAYS,                                  // expected cycle time
                 4 * DAYS,                                  // guaranteed cycle time
                 192,                                       // samples per week
@@ -212,7 +215,8 @@ public class ProductDaoTest extends ContainerTest {
         dao.persist(notTopLevelProduct);
         dao.flush();
 
-        final List<Product> products = dao.findProducts(ProductDao.TopLevelOnly.YES);
+        final List<Product> products =
+                dao.findProducts(ProductDao.Availability.CURRENT_OR_FUTURE, ProductDao.TopLevelOnly.YES, ProductDao.IncludePDMOnly.NO);
         Assert.assertNotNull(products);
 
         // make sure our top level is in there and our not top level is not
@@ -245,7 +249,7 @@ public class ProductDaoTest extends ContainerTest {
         dao.persist(product);
         dao.flush();
 
-        List<Product> products = dao.findProducts(ProductDao.AvailableOnly.YES);
+        List<Product> products = dao.findProducts(ProductDao.Availability.CURRENT, ProductDao.TopLevelOnly.NO, ProductDao.IncludePDMOnly.NO);
         // filter out non test data
         CollectionUtils.filter(products, new Predicate<Product>() {
             @Override
@@ -277,7 +281,8 @@ public class ProductDaoTest extends ContainerTest {
         dao.persist(notPDMOnlyProduct);
         dao.flush();
 
-        final List<Product> products = dao.findProducts(ProductDao.IncludePDMOnly.NO);
+        final List<Product> products =
+                dao.findProducts(ProductDao.Availability.CURRENT_OR_FUTURE, ProductDao.TopLevelOnly.NO, ProductDao.IncludePDMOnly.NO);
         Assert.assertNotNull(products);
 
         // make sure our top level is in there and our not top level is not

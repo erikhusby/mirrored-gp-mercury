@@ -11,17 +11,19 @@ public class OrderBillSummaryStat {
     private double charge;
     private double credit;
 
+    public void applyDelta(double delta) {
+        if (delta < 0) {
+            credit += delta;
+        } else {
+            charge += delta;
+        }
+    }
+
     public double getCharge() {
         return charge;
-    }
-    public void addCharge(double charge) {
-        this.charge += charge;
     }
 
     public double getCredit() {
         return credit;
-    }
-    public void addCredit(double credit) {
-        this.credit += credit;
     }
 }

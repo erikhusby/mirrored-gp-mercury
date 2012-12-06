@@ -185,7 +185,7 @@
                 <div class="control-group">
                     <p:outputLabel for="addOns" value="Add-ons" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="addOns" value="#{productForm.addOns}" completeMethod="#{productList.searchProduct}"
+                        <p:autoComplete id="addOns" value="#{productForm.addOns}" completeMethod="#{productForm.searchProductsForAddonsInProductEdit}"
                                         var="product" itemLabel="#{productForm.addOnLabel(product)}" itemValue="#{product}"
                                         converter="#{productConverter}" multiple="true" scrollHeight="250">
                             <p:column style="width:100%">
