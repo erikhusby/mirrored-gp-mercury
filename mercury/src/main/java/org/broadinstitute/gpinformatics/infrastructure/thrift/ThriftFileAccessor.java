@@ -36,6 +36,7 @@ public class ThriftFileAccessor {
         try {
             TZamboniRun updateRun = deserializeRun();
             // change it
+            /*
             for (TZamboniLane zamboniLane : updateRun.getLanes()) {
                 for (TZamboniLibrary zamboniLibrary : zamboniLane.getLibraries()) {
                     if (zamboniLibrary.getWorkRequestId() == 29225) {
@@ -46,6 +47,7 @@ public class ThriftFileAccessor {
                 }
             }
             ThriftFileAccessor.serializeRun(updateRun,ThriftFileAccessor.RUN_FILE);
+            */
         }
         catch(Throwable t) {
             t.printStackTrace();
