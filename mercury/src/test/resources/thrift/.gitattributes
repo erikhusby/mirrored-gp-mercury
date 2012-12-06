@@ -1,1 +1,1 @@
-*.thrift binary
+*.thrift -crlf -diff -merge
