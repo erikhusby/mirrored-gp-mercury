@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.fixup;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -14,6 +15,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
@@ -41,7 +43,7 @@ public class ProductOrderFixupTest extends Arquillian {
     }
 
     /**
-     * Fixed up data per JIRA ticket.
+     * Fixed up data per JIRA ticketN.
      */
     @Test(enabled = false)
     public void fixupGplim123() {
@@ -98,4 +100,24 @@ public class ProductOrderFixupTest extends Arquillian {
         log.info("Changed Quote ID on product order " + productOrder.getJiraTicketKey() + " from " + productOrder.getQuoteId() + " to " +
                 newQuoteStr );
     }
+
+
+    /**
+     * Clear the External Plating Addon from PDO-10
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void clear_addons_for_pdo() throws Exception {
+        String jiraKey = "PDO-10";
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraKey);
+
+        productOrder.setComments("");
+        productOrder.updateAddOnProducts(new ArrayList<Product>());
+
+        // The entity is already persistent, this call to persist is solely to begin and end a transaction, so the
+        // change gets flushed.  This is an artifact of the test environment.
+        productOrderDao.persist(productOrder);
+    }
+
 }

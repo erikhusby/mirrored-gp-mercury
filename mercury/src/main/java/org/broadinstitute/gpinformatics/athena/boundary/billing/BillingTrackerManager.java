@@ -43,15 +43,15 @@ public class BillingTrackerManager {
 
         //TODO could use this map later on during parsing.
         Map<String, List<String>> productOrderIdMap = getUnlockedProductOrderIdsFromWorkbook(workbook);
-        for ( String ppnSheetName : productOrderIdMap.keySet() ) {
-            List<String> productOrderIds = productOrderIdMap.get( ppnSheetName );
-            for ( String productOrderId : productOrderIds ) {
-                logger.info( "BILLING: About to update ledger for productOrder " + productOrderId + " for ProductPartNumber " + ppnSheetName );
+        for (String ppnSheetName : productOrderIdMap.keySet()) {
+            List<String> productOrderIds = productOrderIdMap.get(ppnSheetName);
+            for (String productOrderId : productOrderIds) {
+                logger.info("BILLING: About to update ledger for productOrder " + productOrderId + " for ProductPartNumber " + ppnSheetName);
             }
         }
 
         int numberOfSheets = workbook.getNumberOfSheets();
-        for (int i=0; i< numberOfSheets;i++) {
+        for (int i = 0; i < numberOfSheets; i++) {
 
             Sheet sheet = workbook.getSheetAt(i);
             String productPartNumberStr = sheet.getSheetName();
@@ -72,7 +72,7 @@ public class BillingTrackerManager {
         Map<String, List<String>> result = new HashMap<String, List<String>>();
 
         int numberOfSheets = workbook.getNumberOfSheets();
-        for (int i=0; i< numberOfSheets;i++) {
+        for (int i = 0; i < numberOfSheets; i++) {
 
             Sheet sheet = workbook.getSheetAt(i);
             String productPartNumberStr = sheet.getSheetName();
@@ -81,18 +81,18 @@ public class BillingTrackerManager {
             List<TrackerColumnInfo> trackerHeaderList = BillingTrackerUtils.parseTrackerSheetHeader(sheet.getRow(0), productPartNumberStr);
 
             //Get a list of Product OrderIds for this sheet.
-            List<String> sheetOrderIdMap = extractOrderIdsFromSheet( sheet );
+            List<String> sheetOrderIdMap = extractOrderIdsFromSheet(sheet);
 
-            for ( String pdoIdStr : sheetOrderIdMap ) {
+            for (String pdoIdStr : sheetOrderIdMap) {
                 // Check if this PDO has any locked Ledger rows
                 Set<BillingLedger> lockedBillingLedgerSet = billingLedgerDao.findLockedOutByOrderList(
-                        Collections.singletonList(pdoIdStr) );
-                if ( lockedBillingLedgerSet.size() > 0 ) {
-                    BillingTrackerUtils.throwRuntimeException("Product Order " + pdoIdStr + " of sheet " + productPartNumberStr +
+                        Collections.singletonList(pdoIdStr));
+                if (lockedBillingLedgerSet.size() > 0) {
+                    throw BillingTrackerUtils.getRuntimeException("Product Order " + pdoIdStr + " of sheet " + productPartNumberStr +
                             " is locked out and has " + lockedBillingLedgerSet.size() + " rows that are locked in the DB.");
                 }
             }
-            result.put(productPartNumberStr, sheetOrderIdMap );
+            result.put(productPartNumberStr, sheetOrderIdMap);
 
         }
 
@@ -104,17 +104,17 @@ public class BillingTrackerManager {
 
         for (Iterator<Row> rit = sheet.rowIterator(); rit.hasNext(); ) {
             Row row = rit.next();
-            if ( row.getRowNum() == 0 ) {
+            if (row.getRowNum() == 0) {
                 row = BillingTrackerUtils.skipHeaderRows(rit, row);
             }
 
             Cell pdoCell = row.getCell(BillingTrackerUtils.PDO_ID_COL_POS);
-            if ( pdoCell == null ) {
+            if (pdoCell == null) {
                 //Break out of this loop since there is no PDO for this row. Assuming at the end of the valued rows.
                 break;
             }
             String rowPdoIdStr = pdoCell.getStringCellValue();
-            if (! result.contains(rowPdoIdStr)) {
+            if (!result.contains(rowPdoIdStr)) {
                 result.add(rowPdoIdStr);
             }
         }
@@ -132,18 +132,18 @@ public class BillingTrackerManager {
         String currentPdoId = "";
 
         List<ProductOrder> sheetBillingMap = new ArrayList<ProductOrder>();
-        int sampleIndexInOrder=0;
+        int sampleIndexInOrder = 0;
 
         // Iterate over each row in this tab of the spreadsheet.
         for (Iterator<Row> rit = sheet.rowIterator(); rit.hasNext(); ) {
             Row row = rit.next();
 
-            if ( row.getRowNum() == 0 ) {
+            if (row.getRowNum() == 0) {
                 row = BillingTrackerUtils.skipHeaderRows(rit, row);
             }
 
             Cell pdoCell = row.getCell(BillingTrackerUtils.PDO_ID_COL_POS);
-            if ( pdoCell == null ) {
+            if (pdoCell == null) {
                 //Break out of this loop since there is no PDO for this row. Assuming at the end of the valued rows.
                 break;
             }
@@ -152,10 +152,10 @@ public class BillingTrackerManager {
             String currentSampleName = row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS).getStringCellValue();
 
             // For a newly found PdoId create a new map for it and add it to the sheet summary map
-            if (! currentPdoId.equalsIgnoreCase( rowPdoIdStr ) ) {
+            if (!currentPdoId.equalsIgnoreCase(rowPdoIdStr)) {
 
                 //Persist any BillingLedger Items captured for the previous productOrder (if not blank) before changing to the next PDO
-                if ( StringUtils.isNotBlank( currentPdoId ) ) {
+                if (StringUtils.isNotBlank(currentPdoId)) {
                     persistProductOrder(productOrder);
                     sheetBillingMap.add(productOrder);
                 }
@@ -163,43 +163,43 @@ public class BillingTrackerManager {
                 //Switch to the next orderId
                 currentPdoId = rowPdoIdStr;
 
-                sampleIndexInOrder=0;
+                sampleIndexInOrder = 0;
 
                 // Find the order in the DB
                 productOrder = productOrderDao.findByBusinessKey(currentPdoId);
-                if ( productOrder == null ) {
-                    BillingTrackerUtils.throwRuntimeException("Product Order " + currentPdoId + " on row " +  (row.getRowNum() + 1 ) +
-                            " of sheet "  + primaryProductPartNumber + " is not found in the database.");
+                if (productOrder == null) {
+                    throw BillingTrackerUtils.getRuntimeException("Product Order " + currentPdoId + " on row " + (row.getRowNum() + 1) +
+                            " of sheet " + primaryProductPartNumber + " is not found in the database.");
                 }
 
                 product = productOrder.getProduct();
-                samples  = productOrder.getSamples();
+                samples = productOrder.getSamples();
 
                 // Find the target priceItems for the data that was parsed from the header, happens one per sheet parse.
                 // create a map (by trackerColumnInfo) of PriceItems
-                if ( priceItemMap == null ) {
+                if (priceItemMap == null) {
                     priceItemMap = BillingTrackerUtils.createPriceItemMapForSheet(trackerColumnInfos, product);
                 }
 
                 //Remove any pending billable Items from the ledger for all samples in this PDO
                 ProductOrder[] productOrderArray = new ProductOrder[]{productOrder};
-                billingLedgerDao.removeLedgerItemsWithoutBillingSession( productOrderArray );
+                billingLedgerDao.removeLedgerItemsWithoutBillingSession(productOrderArray);
                 billingLedgerDao.flush();
 
             }
 
             //TODO hmc We are assuming ( for now ) that the order is the same in the spreadsheet as returned in the productOrder !
-            if ( sampleIndexInOrder >= samples.size() ) {
-                BillingTrackerUtils.throwRuntimeException("Sample " + currentSampleName + " on row " +  (row.getRowNum() + 1 ) +
-                        " of spreadsheet "  + primaryProductPartNumber +
+            if (sampleIndexInOrder >= samples.size()) {
+                throw BillingTrackerUtils.getRuntimeException("Sample " + currentSampleName + " on row " + (row.getRowNum() + 1) +
+                        " of spreadsheet " + primaryProductPartNumber +
                         " is not in the expected position. The Order <" + productOrder.getTitle() + " (Id: " + currentPdoId +
-                        ")> has only " + samples.size() + " samples." );
+                        ")> has only " + samples.size() + " samples.");
             }
 
-            productOrderSample = samples.get( sampleIndexInOrder );
-            if (! productOrderSample.getSampleName().equals( currentSampleName ) ) {
-                BillingTrackerUtils.throwRuntimeException("Sample " + currentSampleName + " on row " +  (row.getRowNum() + 1 ) +
-                        " of spreadsheet "  + primaryProductPartNumber +
+            productOrderSample = samples.get(sampleIndexInOrder);
+            if (!productOrderSample.getSampleName().equals(currentSampleName)) {
+                throw BillingTrackerUtils.getRuntimeException("Sample " + currentSampleName + " on row " + (row.getRowNum() + 1) +
+                        " of spreadsheet " + primaryProductPartNumber +
                         " is in different position than expected. Expected value from Order is " + productOrderSample.getSampleName());
             }
 
@@ -211,7 +211,7 @@ public class BillingTrackerManager {
         }
 
         //Persist any BillingLedger Items captured for the last productOrder (if not blank) before finishing the sheet
-        if ( StringUtils.isNotBlank( currentPdoId ) ) {
+        if (StringUtils.isNotBlank(currentPdoId)) {
             persistProductOrder(productOrder);
             sheetBillingMap.add(productOrder);
         }
@@ -219,24 +219,24 @@ public class BillingTrackerManager {
         return sheetBillingMap;
     }
 
-    private void parseSampleRowForBilling( Row row, ProductOrderSample productOrderSample, Product product,
-                                           List<TrackerColumnInfo> trackerColumnInfos,
-                                           Map<TrackerColumnInfo, PriceItem> priceItemMap ) {
+    private void parseSampleRowForBilling(Row row, ProductOrderSample productOrderSample, Product product,
+                                          List<TrackerColumnInfo> trackerColumnInfos,
+                                          Map<TrackerColumnInfo, PriceItem> priceItemMap) {
 
         // Get the date complete cell for changes
         Cell workCompleteDateCell = row.getCell(BillingTrackerUtils.WORK_COMPLETE_DATE_COL_POS);
         Date workCompleteDate = null;
-        if ( isNonNullDateCell(workCompleteDateCell) ) {
-            workCompleteDate = workCompleteDateCell.getDateCellValue() ;
+        if (isNonNullDateCell(workCompleteDateCell)) {
+            workCompleteDate = workCompleteDateCell.getDateCellValue();
         }
 
-        for (int billingRefIndex=0; billingRefIndex < trackerColumnInfos.size();billingRefIndex++) {
+        for (int billingRefIndex = 0; billingRefIndex < trackerColumnInfos.size(); billingRefIndex++) {
             double newQuantity;
             TrackerColumnInfo trackerColumnInfo = trackerColumnInfos.get(billingRefIndex);
             BillableRef billableRef = trackerColumnInfos.get(billingRefIndex).getBillableRef();
 
             // There are two cells per product header cell, so we need to account for this.
-            int currentBilledPosition = BillingTrackerUtils.fixedHeaders.length + (billingRefIndex*2);
+            int currentBilledPosition = BillingTrackerUtils.fixedHeaders.length + (billingRefIndex * 2);
 
             //Get the AlreadyBilled cell
             Cell billedCell = row.getCell(currentBilledPosition);
@@ -247,39 +247,39 @@ public class BillingTrackerManager {
 
             //Get the newQuantity cell value and add it onto the productOrderSample
             Cell newQuantityCell = row.getCell(currentBilledPosition + 1);
-            if ( BillingTrackerUtils.isNonNullNumericCell(newQuantityCell)) {
+            if (BillingTrackerUtils.isNonNullNumericCell(newQuantityCell)) {
                 newQuantity = newQuantityCell.getNumericCellValue();
-                if ( newQuantity > 0  ) {
-                    PriceItem priceItem = priceItemMap.get( trackerColumnInfo );
+                if (newQuantity > 0) {
+                    PriceItem priceItem = priceItemMap.get(trackerColumnInfo);
 
                     // Only need to check date existence when cell is changed here for ledger
                     if (workCompleteDate == null) {
-                        BillingTrackerUtils.throwRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " +  (row.getRowNum() + 1 ) +
-                                " of spreadsheet "  + product.getPartNumber() +
+                        throw BillingTrackerUtils.getRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " + (row.getRowNum() + 1) +
+                                " of spreadsheet " + product.getPartNumber() +
                                 " has an invalid Date Completed value. Please correct and try again.");
                     } else if (billedQuantity == null) {
-                        BillingTrackerUtils.throwRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " +  (row.getRowNum() + 1 ) +
-                                " of spreadsheet "  + product.getPartNumber() +
+                        throw BillingTrackerUtils.getRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " + (row.getRowNum() + 1) +
+                                " of spreadsheet " + product.getPartNumber() +
                                 " has a blank billed date. Please redownload the tracker to populate this.");
                     } else {
                         double delta = newQuantity - billedQuantity;
 
                         if (delta != 0) {
                             BillingLedger billingLedger =
-                                new BillingLedger(productOrderSample, priceItem, workCompleteDate, delta);
+                                    new BillingLedger(productOrderSample, priceItem, workCompleteDate, delta);
                             productOrderSample.getLedgerItems().add(billingLedger);
                             productOrderSample.setBillingStatus(BillingStatus.EligibleForBilling);
                             logger.debug("Added BillingLedger item for sample " + productOrderSample.getSampleName() +
                                     " to PDO " + productOrderSample.getProductOrder().getBusinessKey() +
-                                       " for PriceItemName[PPN]: " + billableRef.getPriceItemName() + "[" +
-                                       billableRef.getProductPartNumber() +"] - Quantity:" + delta );
+                                    " for PriceItemName[PPN]: " + billableRef.getPriceItemName() + "[" +
+                                    billableRef.getProductPartNumber() + "] - Quantity:" + delta);
                         }
                     }
                 } else {
                     logger.debug("Skipping BillingLedger item for sample " + productOrderSample.getSampleName() +
                             " to PDO " + productOrderSample.getProductOrder().getBusinessKey() +
-                               " for PriceItemName[PPN]: " + billableRef.getPriceItemName() + "[" +
-                               billableRef.getProductPartNumber() +"] - quantity:" + newQuantity);
+                            " for PriceItemName[PPN]: " + billableRef.getPriceItemName() + "[" +
+                            billableRef.getProductPartNumber() + "] - quantity:" + newQuantity);
                 }
             }
         } // end of for each productIndex loop
@@ -290,7 +290,7 @@ public class BillingTrackerManager {
         Set<BillingLedger> billableLedgerItems = new HashSet<BillingLedger>();
 
         try {
-            for (ProductOrderSample productOrderSample : productOrder.getSamples() ) {
+            for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
                 billableLedgerItems.addAll(productOrderSample.getBillableLedgerItems());
             }
 
@@ -305,13 +305,13 @@ public class BillingTrackerManager {
         } catch (RuntimeException e) {
             logger.error("Exception when persisting " + billableLedgerItems.size() +
                     " BillingLedger items for Product Order <" + productOrder.getTitle() +
-                    "> with PDO Id: " + productOrder.getBusinessKey() , e);
+                    "> with PDO Id: " + productOrder.getBusinessKey(), e);
             throw e;
         }
     }
 
     private boolean isNonNullDateCell(Cell cell) {
-        return  ( (cell != null ) && ( HSSFDateUtil.isCellDateFormatted(cell)) );
+        return ((cell != null) && (HSSFDateUtil.isCellDateFormatted(cell)));
     }
 
 }
