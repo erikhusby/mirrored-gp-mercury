@@ -129,6 +129,11 @@ public class ProductDao extends GenericDao implements Serializable {
     }
 
 
+    public List<Product> findByPartNumbers(List<String> partNumbers) {
+        return findListByList(Product.class, Product_.partNumber, partNumbers);
+    }
+
+
     /**
      * Products suitable for use as top-level products in a product order.
      *
