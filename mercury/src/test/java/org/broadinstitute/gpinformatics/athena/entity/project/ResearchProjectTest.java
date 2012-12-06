@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
@@ -7,6 +8,8 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.util.Collections;
 
 
 /**
@@ -51,6 +54,20 @@ public class ResearchProjectTest {
         Assert.assertEquals(researchProject.fetchJiraIssueType(), CreateFields.IssueType.RESEARCH_PROJECT );
 
         Assert.assertEquals(researchProject.fetchJiraProject(), CreateFields.ProjectType.Research_Projects);
+
+        Assert.assertTrue(researchProject.getProjectManagers().length > 0);
+        Assert.assertTrue(researchProject.getBroadPIs().length > 0);
+        Assert.assertTrue(researchProject.getScientists().length > 0);
+        Assert.assertTrue(researchProject.getExternalCollaborators().length == 0);
+
+        Assert.assertTrue(researchProject.getStatus() == ResearchProject.Status.Open);
+
+        researchProject.clearPeople();
+        researchProject.addPeople(RoleType.PM, Collections.singletonList(new BspUser()));
+        Assert.assertTrue(researchProject.getProjectManagers().length == 1);
+        Assert.assertTrue(researchProject.getBroadPIs().length == 0);
+
+        Assert.assertEquals(researchProject, researchProject);
 
         try {
             researchProject.setJiraTicketKey(null);
