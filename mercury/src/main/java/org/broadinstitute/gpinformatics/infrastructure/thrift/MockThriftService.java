@@ -87,5 +87,10 @@ public class MockThriftService implements ThriftService {
         return  null;
     }
 
+    @Override
+    public List<String> fetchUnfulfilledDesignations() {
+        return null;
+    }
+
 
 }

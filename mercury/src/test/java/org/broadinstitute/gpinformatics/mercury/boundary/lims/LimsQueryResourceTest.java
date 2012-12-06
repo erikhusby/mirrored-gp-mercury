@@ -231,4 +231,13 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught), equalTo("Tube or quant not found for barcode: 000001859062, quant type: Catch Pico"));
     }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchUnfulfilledDesignations(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchUnfulfilledDesignations");
+        String result = get(resource);
+        // This is about all we can do because the result is going to change over time
+        assertThat(result, notNullValue());
+    }
 }

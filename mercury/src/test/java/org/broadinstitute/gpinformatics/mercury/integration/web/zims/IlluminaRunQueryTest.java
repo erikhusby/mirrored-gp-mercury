@@ -189,5 +189,10 @@ public class IlluminaRunQueryTest extends Arquillian {
 
             return libraryDataList;
         }
+
+        @Override
+        public List<String> fetchUnfulfilledDesignations() {
+            return null;
+        }
     }
 }

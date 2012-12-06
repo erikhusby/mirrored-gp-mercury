@@ -245,6 +245,13 @@ public class LiveThriftServiceTest {
         verifyAll();
     }
 
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchUnfulfilledDesignations() {
+        List<String> result = thriftService.fetchUnfulfilledDesignations();
+        // This is about all we can do because the result is going to change over time
+        assertThat(result, notNullValue());
+    }
+
     private IExpectationSetters<Object> expectThriftCall() {
         IExpectationSetters<Object> expect;
         expect = expect(mockThriftConnection.call(isA(ThriftConnection.Call.class))).andDelegateTo(new ThriftConnection(new ThriftConfig("none", 0)) {

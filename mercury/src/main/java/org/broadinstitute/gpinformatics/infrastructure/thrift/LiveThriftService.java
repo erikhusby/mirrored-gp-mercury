@@ -258,6 +258,21 @@ public class LiveThriftService implements ThriftService {
         });
     }
 
+    @Override
+    public List<String> fetchUnfulfilledDesignations() {
+        List<String> result = thriftConnection.call(new ThriftConnection.Call<List<String>>() {
+            @Override
+            public List<String> call(LIMQueries.Client client) {
+                try {
+                    return client.fetchUnfulfilledDesignations();
+                } catch (TException e) {
+                    throw handleThriftException(e);
+                }
+            }
+        });
+        return result;
+    }
+
     private RuntimeException handleThriftException(TException e) {
         String message = "Thrift error: " + e.getMessage();
         log.error(message, e);

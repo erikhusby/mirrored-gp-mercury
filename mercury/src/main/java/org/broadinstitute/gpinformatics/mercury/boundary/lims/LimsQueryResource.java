@@ -147,7 +147,12 @@ public class LimsQueryResource {
         return libraryDataTypeList;
     }
 
-    // TODO round 2: list<string> fetchUnfulfilledDesignations()
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/fetchUnfulfilledDesignations")
+    public List<String> fetchUnfulfilledDesignations() {
+        return thriftService.fetchUnfulfilledDesignations();
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
