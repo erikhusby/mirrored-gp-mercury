@@ -1,21 +1,43 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.vessel;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.NoResultException;
+import javax.persistence.criteria.*;
+import java.util.ArrayList;
 import java.util.List;
 
 @Stateful
 @RequestScoped
 public class LabVesselDao extends GenericDao {
+
     public LabVessel findByIdentifier(String barcode) {
         return findSingle(LabVessel.class, LabVessel_.label, barcode);
     }
 
     public List<LabVessel> findByListIdentifiers(List<String> barcodes) {
         return findListByList(LabVessel.class, LabVessel_.label, barcodes);
+    }
+
+    public List<LabVessel> findBySampleKey(String sampleKey) {
+        List<LabVessel> resultList = new ArrayList<LabVessel>();
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<LabVessel> criteriaQuery = criteriaBuilder.createQuery(LabVessel.class);
+        Root<LabVessel> root = criteriaQuery.from(LabVessel.class);
+        Join<LabVessel, MercurySample> labVessels = root.join(LabVessel_.mercurySamples);
+        Predicate predicate = criteriaBuilder.equal(labVessels.get(MercurySample_.sampleKey), sampleKey);
+        criteriaQuery.where(predicate);
+        try {
+            resultList.addAll(getEntityManager().createQuery(criteriaQuery).getResultList());
+        } catch (NoResultException ignored) {
+            return resultList;
+        }
+        return resultList;
     }
 }

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:cc="http://java.sun.com/jsf/composite"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core" xmlns:ui="http://java.sun.com/jsf/facelets"
+        >
+
+<cc:interface>
+    <cc:attribute name="barcode" required="true"/>
+</cc:interface>
+<cc:implementation>
+    <h:outputText value="#{vesselSampleListBean.updateVessel(cc.attrs.barcode)}"/>
+    <p:dataTable id="plateSampleResults" value="#{vesselSampleListBean.positionNameList}" var="positionName">
+        <f:facet name="header">
+            Sample Information for Container #{vesselSampleListBean.barcode}
+        </f:facet>
+        <p:column
+                rendered="#{vesselSampleListBean.vesselContainer != null and !vesselSampleListBean.vesselContainer.hasAnonymousVessels()}">
+            <f:facet name="header">
+                <h:outputText value="Vessel Label"/>
+            </f:facet>
+        </p:column>
+        <p:column
+                rendered="#{vesselSampleListBean.vesselContainer != null and !vesselSampleListBean.vesselContainer.hasAnonymousVessels()}">
+            <f:facet name="header">
+                <h:outputText value="Vessel Type"/>
+            </f:facet>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Sample Name"/>
+            </f:facet>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="PDOs"/>
+            </f:facet>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Index Information"/>
+            </f:facet>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Reagent Information"/>
+            </f:facet>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Contained In"/>
+            </f:facet>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Container Position"/>
+            </f:facet>
+        </p:column>
+        <p:subTable value="#{vesselSampleListBean.getSampleInstancesAtPosition(positionName)}"
+                    var="sampleInstance">
+            <p:column
+                    rendered="#{vesselSampleListBean.vesselContainer != null and !vesselSampleListBean.vesselContainer.hasAnonymousVessels()}">
+                <h:outputText value="#{vesselSampleListBean.getVesselAtPosition(positionName).label}"/>
+            </p:column>
+            <p:column
+                    rendered="#{vesselSampleListBean.vesselContainer != null and !vesselSampleListBean.vesselContainer.hasAnonymousVessels()}">
+                <h:outputText value="#{vesselSampleListBean.getVesselAtPosition(positionName).type.name}"/>
+            </p:column>
+            <p:column>
+                <h:outputText value="#{sampleInstance.startingSample.sampleKey}"/>
+            </p:column>
+            <p:column>
+                <h:outputText value="#{sampleInstance.startingSample.productOrderKey}"/>
+            </p:column>
+            <p:column>
+                <h:outputText value="#{vesselSampleListBean.indexValueForSample(sampleInstance)}"/>
+            </p:column>
+            <p:column>
+                <h:outputText value="#{vesselSampleListBean.reagentInfoForSample(sampleInstance)}"/>
+            </p:column>
+            <p:column
+                    rendered="#{vesselSampleListBean.vesselContainer != null and !vesselSampleListBean.vesselContainer.hasAnonymousVessels()}">
+                <ui:repeat value="#{vesselSampleListBean.getVesselAtPosition(positionName).containerList}"
+                           var="container">
+                    <h:outputText value="#{container.embedder.labCentricName}"/>
+                    <br/>
+                </ui:repeat>
+            </p:column>
+            <p:column rendered="#{vesselSampleListBean.vesselContainer == null}">
+                <ui:repeat value="#{vesselSampleListBean.vessel.containerList}"
+                           var="container">
+                    <h:outputText value="#{container.embedder.labCentricName}"/>
+                    <br/>
+                </ui:repeat>
+            </p:column>
+            <p:column
+                    rendered="#{vesselSampleListBean.vesselContainer != null and vesselSampleListBean.vesselContainer.hasAnonymousVessels()}">
+                <h:outputText value="#{vesselSampleListBean.vessel.label}"/>
+            </p:column>
+            <p:column
+                    rendered="#{vesselSampleListBean.vesselContainer != null and !vesselSampleListBean.vesselContainer.hasAnonymousVessels()}">
+                <ui:repeat value="#{vesselSampleListBean.getVesselAtPosition(positionName).containerList}"
+                           var="container">
+                    <h:outputText
+                            value="#{container.getPositionOfVessel(vesselSampleListBean.getVesselAtPosition(positionName))}"/>
+                    <br/>
+                </ui:repeat>
+            </p:column>
+            <p:column rendered="#{vesselSampleListBean.vesselContainer == null}">
+                <ui:repeat value="#{vesselSampleListBean.vessel.containerList}"
+                           var="container">
+                    <h:outputText
+                            value="#{container.getPositionOfVessel(vesselSampleListBean.getVesselAtPosition(positionName))}"/>
+                    <br/>
+                </ui:repeat>
+            </p:column>
+            <p:column
+                    rendered="#{vesselSampleListBean.vesselContainer != null and vesselSampleListBean.vesselContainer.hasAnonymousVessels()}">
+                <h:outputText value="#{positionName}"/>
+            </p:column>
+        </p:subTable>
+    </p:dataTable>
+</cc:implementation>
+</html>

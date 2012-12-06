@@ -6,12 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.NoResultException;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +20,7 @@ public class MercurySampleDao extends GenericDao {
 
     /**
      * Finds MercurySamples that correspond to a list.
+     *
      * @param mercurySamples list of keys to search for.  The entity is currently its own key.
      * @return map from input to found, or null if not found, in same order as input list
      */
@@ -41,7 +37,7 @@ public class MercurySampleDao extends GenericDao {
         for (MercurySample mercurySample : resultList) {
             // We're fetching by sample key only, so we could get samples in multiple product orders, hence
             // check that the fetched entity matches one of the inputs
-            if(mapSampleToSample.containsKey(mercurySample)) {
+            if (mapSampleToSample.containsKey(mercurySample)) {
                 mapSampleToSample.put(mercurySample, mercurySample);
             }
         }
@@ -57,6 +53,10 @@ public class MercurySampleDao extends GenericDao {
      */
     public List<MercurySample> findBySampleKeys(List<String> sampleKeys) {
         return findListByList(MercurySample.class, MercurySample_.sampleKey, sampleKeys);
+    }
+
+    public MercurySample findBySampleKey(String sampleKey) {
+        return findSingle(MercurySample.class, MercurySample_.sampleKey, sampleKey);
     }
 
 }

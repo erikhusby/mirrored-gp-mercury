@@ -19,7 +19,7 @@ import java.util.List;
 
 @ManagedBean
 @RequestScoped
-public class SampleListBean {
+public class VesselSampleListBean {
     @Inject
     private LabVesselDao labVesselDao;
 

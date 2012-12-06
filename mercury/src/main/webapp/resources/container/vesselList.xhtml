@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:cc="http://java.sun.com/jsf/composite"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets">
+<cc:interface>
+    <cc:attribute name="vessels" required="true"/>
+</cc:interface>
+<cc:implementation xmlns:c="http://java.sun.com/jsf/composite/container"
+                   xmlns:s="http://java.sun.com/jsf/composite/sample">
+    <h:outputText value="#{vesselListBean.updateVessels(cc.attrs.vessels)}"/>
+    <p:dataTable id="vesselResultsTable" var="foundVessel" value="#{vesselListBean.foundVessels}">
+        <f:facet name="header">
+            Vessel List
+        </f:facet>
+        <p:column style="width:4%">
+            <f:facet name="header">
+                <h:outputText value="Plate View"/>
+            </f:facet>
+            <p:commandButton
+                    value="#{vesselListBean.getOpenCloseValue(vesselListBean.showPlateLayout)}"
+                    actionListener="#{vesselListBean.togglePlateLayout(foundVessel)}"
+                    update=":#{cc.clientId}:vesselOutput, @this" title="View the plate layout/"/>
+        </p:column>
+        <p:column style="width:4%">
+            <f:facet name="header">
+                <h:outputText value="Sample List"/>
+            </f:facet>
+            <p:commandButton
+                    value="#{vesselListBean.getOpenCloseValue(vesselListBean.showSampleList)}"
+                    actionListener="#{vesselListBean.toggleSampleList(foundVessel)}"
+                    update=":#{cc.clientId}:vesselOutput, @this" title="View the sample list."/>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Sample #"/>
+            </f:facet>
+            <h:outputText value="#{foundVessel.sampleInstancesList.size()}"
+                          rendered="#{foundVessel.sampleInstancesList.size() > 0}"/>
+        </p:column>
+        <p:column sortBy="#{foundVessel.label}">
+            <f:facet name="header">
+                <h:outputText value="Label"/>
+            </f:facet>
+            <h:outputText value="#{foundVessel.label}"/>
+
+        </p:column>
+        <p:column sortBy="#{foundVessel.type.name}">
+            <f:facet name="header">
+                <h:outputText value="Type"/>
+            </f:facet>
+            <h:outputText value="#{foundVessel.type.name}"/>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Lab Batches"/>
+            </f:facet>
+            <ui:repeat value="#{foundVessel.labBatchesList}" var="batch">
+                <h:outputText value="#{batch.batchName}"/>
+                <br/>
+            </ui:repeat>
+        </p:column>
+        <!-- <p:column>
+          <f:facet name="header">
+              <h:outputText value="QC Metrics"/>
+          </f:facet>
+          <ui:repeat value="#{searchResult.metrics}" var="metric">
+              <h:outputText value="#{metric.name} : #{metric.value} #{metric.units}"/>
+              <br/>
+          </ui:repeat>
+       </p:column> -->
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Latest Event"/>
+            </f:facet>
+            <h:outputText value="#{foundVessel.latestEvent.labEventType.name}"/>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Event Location"/>
+            </f:facet>
+            <h:outputText value="#{foundVessel.latestEvent.eventLocation}"/>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Event User"/>
+            </f:facet>
+            <h:outputText
+                    value="#{vesselListBean.getUserNameById(foundVessel.latestEvent.eventOperator)}"/>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Event Date"/>
+            </f:facet>
+            <h:outputText value="#{foundVessel.latestEvent.eventDate}"/>
+        </p:column>
+        <p:column sortBy="#{foundVessel.createdOn}">
+            <f:facet name="header">
+                <h:outputText value="Creation Date"/>
+            </f:facet>
+            <h:outputText value="#{foundVessel.createdOn}"/>
+        </p:column>
+    </p:dataTable>
+    <p:outputPanel id="vesselOutput">
+        <p:panel id="platePanel" rendered="#{vesselListBean.showPlateLayout}">
+            <c:container barcode="#{vesselListBean.selectedVessel.label}"/>
+        </p:panel>
+        <p:panel id="samplePanel" rendered="#{vesselListBean.showSampleList}">
+            <s:vesselSampleList barcode="#{vesselListBean.selectedVessel.label}"/>
+        </p:panel>
+    </p:outputPanel>
+</cc:implementation>
+</html>

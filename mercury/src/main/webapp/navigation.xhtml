@@ -13,45 +13,44 @@
     <h:form>
         <p:menubar style="padding:0px;" autoDisplay="false">
             <p:submenu label="Projects" outcome="/projects/list" icon="ui-icon-home">
-                <p:menuitem value="List" outcome="/projects/list" />
-                <p:menuitem value="Create" outcome="/projects/create" />
+                <p:menuitem value="List" outcome="/projects/list"/>
+                <p:menuitem value="Create" outcome="/projects/create"/>
             </p:submenu>
 
             <p:submenu label="Orders" icon="ui-icon-cart">
-                <p:menuitem value="List" outcome="/orders/list" />
-                <p:menuitem value="Create" outcome="/orders/create" />
+                <p:menuitem value="List" outcome="/orders/list"/>
+                <p:menuitem value="Create" outcome="/orders/create"/>
                 <p:separator/>
-                <p:menuitem value="Billing Sessions" outcome="/billing/sessions" />
+                <p:menuitem value="Billing Sessions" outcome="/billing/sessions"/>
             </p:submenu>
 
             <p:submenu label="Products" icon="ui-icon-tag">
-                <p:menuitem value="List" outcome="/products/list" />
+                <p:menuitem value="List" outcome="/products/list"/>
                 <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.productManagerRole}">
-                    <p:menuitem value="Create" outcome="/products/create" />
+                    <p:menuitem value="Create" outcome="/products/create"/>
                 </security:authorizeBlock>
             </p:submenu>
 
             <security:authorizeBlock roles="#{userBean.developerRole}">
                 <p:submenu label="Search" icon="ui-icon-search">
-                    <p:menuitem value="Barcode" outcome="/search/search_plastic"/>
+                    <p:menuitem value="Barcode" outcome="/search/search"/>
                 </p:submenu>
             </security:authorizeBlock>
 
             <security:authorizeBlock roles="#{userBean.developerRole}">
                 <p:submenu label="Admin" icon="ui-icon-gear">
-                    <p:menuitem value="Page Administration" outcome="/administration/page_administration" />
+                    <p:menuitem value="Page Administration" outcome="/administration/page_administration"/>
                 </p:submenu>
             </security:authorizeBlock>
         </p:menubar>
 
 
-
     </h:form>
 
-<!--
-    <p:menuitem value="Illumina Run Query" outcome="/zims/illuminaRunQuery" />
-    <p:menuitem value="PASS Dashboard" outcome="/pass/dashboard" />
--->
+    <!--
+        <p:menuitem value="Illumina Run Query" outcome="/zims/illuminaRunQuery" />
+        <p:menuitem value="PASS Dashboard" outcome="/pass/dashboard" />
+    -->
 </ui:composition>
 </body>
 </html>
