@@ -10,7 +10,8 @@
       xmlns:p="http://primefaces.org/ui"
       xmlns:c="http://java.sun.com/jsf/composite/container"
       xmlns:s="http://java.sun.com/jsf/composite/sample"
-      xmlns:pdo="http://java.sun.com/jsf/composite/orders">
+      xmlns:pdo="http://java.sun.com/jsf/composite/orders"
+      xmlns:b="http://java.sun.com/jsf/composite/batch">
 <h:body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">
@@ -39,6 +40,10 @@
                         <p:tab id="pdoTab" title="Found PDOs (#{searchBean.foundPDOs.size()})"
                                rendered="#{searchBean.foundPDOs != null and searchBean.foundPDOs.size() > 0}">
                             <pdo:pdoList pdos="#{searchBean.foundPDOs}"/>
+                        </p:tab>
+                        <p:tab id="batchTab" title="Found Batches(#{searchBean.foundBatches.size()})"
+                               rendered="#{searchBean.foundBatches != null and searchBean.foundBatches.size() > 0}">
+                            <b:batchList batches="#{searchBean.foundBatches}"/>
                         </p:tab>
                     </p:tabView>
                 </p:outputPanel>

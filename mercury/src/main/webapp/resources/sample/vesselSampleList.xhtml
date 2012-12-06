@@ -15,7 +15,7 @@
     <h:outputText value="#{vesselSampleListBean.updateVessel(cc.attrs.barcode)}"/>
     <p:dataTable id="plateSampleResults" value="#{vesselSampleListBean.positionNameList}" var="positionName">
         <f:facet name="header">
-            Sample Information for Container #{vesselSampleListBean.barcode}
+            Sample Details for Container #{vesselSampleListBean.barcode}
         </f:facet>
         <p:column
                 rendered="#{vesselSampleListBean.vesselContainer != null and !vesselSampleListBean.vesselContainer.hasAnonymousVessels()}">

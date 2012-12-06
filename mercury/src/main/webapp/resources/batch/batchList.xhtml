@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:cc="http://java.sun.com/jsf/composite"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core"
+        >
+
+<cc:interface>
+    <cc:attribute name="batches" required="true"/>
+</cc:interface>
+<cc:implementation>
+    <h:outputText value="#{batchListBean.updateBatches(cc.attrs.batches)}"/>
+    <p:dataTable id="batchResultsTable" var="foundBatch" value="#{batchListBean.batches}">
+        <f:facet name="header">
+            Batch Details
+        </f:facet>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Batch Name"/>
+            </f:facet>
+            <h:outputText value="#{foundBatch.batchName}"/>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Jira Ticket Name"/>
+            </f:facet>
+            <h:link value="#{foundBatch.jiraTicket.ticketName}" target="#{foundBatch.jiraTicket.browserUrl}"/>
+        </p:column>
+
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Create Date"/>
+            </f:facet>
+            <h:outputText value="#{foundBatch.createdOn}"/>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Latest Event"/>
+            </f:facet>
+            <h:outputText value="#{batchListBean.getLatestEvent(foundBatch).labEventType.name}"/>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Event Location"/>
+            </f:facet>
+            <h:outputText value="#{batchListBean.getLatestEvent(foundBatch).eventLocation}"/>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Event User"/>
+            </f:facet>
+            <h:outputText
+                    value="#{vesselListBean.getUserNameById(batchListBean.getLatestEvent(foundBatch).eventOperator)}"/>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Event Date"/>
+            </f:facet>
+            <h:outputText value="#{batchListBean.getLatestEvent(foundBatch).eventDate}"/>
+        </p:column>
+    </p:dataTable>
+</cc:implementation>
+</html>

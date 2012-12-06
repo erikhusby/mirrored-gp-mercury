@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
@@ -12,7 +11,6 @@ import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 @ManagedBean
 @ViewScoped
@@ -42,11 +40,9 @@ public class PlasticHistoryBean implements Serializable {
         List<LabVessel> vessels = labVesselDao.findBySampleKey(sample.getSampleKey());
         List<LabVessel> targetVessels = new ArrayList<LabVessel>();
         for (LabVessel vessel : vessels) {
-            Set<LabEvent> events = vessel.getTransfersFrom();
-            for (LabEvent event : events) {
-                targetVessels.addAll(event.getTargetLabVessels());
-            }
+            targetVessels.addAll(vessel.getDescendantVessels());
         }
+
         return targetVessels;
     }
 }

@@ -4,8 +4,10 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
@@ -24,12 +26,14 @@ public class SearchBean implements Serializable {
     @Inject
     private ProductOrderDao productOrderDao;
 
+    @Inject
+    private LabBatchDAO labBatchDAO;
+
     private String searchKey;
-    private MercurySample selectedSample;
     private List<LabVessel> foundVessels;
     private List<MercurySample> foundSamples;
     private List<ProductOrder> foundPDOs;
-    private Boolean showPlasticView = false;
+    private List<LabBatch> foundBatches;
 
 
     public List<LabVessel> getFoundVessels() {
@@ -64,20 +68,12 @@ public class SearchBean implements Serializable {
         this.searchKey = searchKey;
     }
 
-    public MercurySample getSelectedSample() {
-        return selectedSample;
+    public List<LabBatch> getFoundBatches() {
+        return foundBatches;
     }
 
-    public void setSelectedSample(MercurySample selectedSample) {
-        this.selectedSample = selectedSample;
-    }
-
-    public Boolean getShowPlasticView() {
-        return showPlasticView;
-    }
-
-    public void setShowPlasticView(Boolean showPlasticView) {
-        this.showPlasticView = showPlasticView;
+    public void setFoundBatches(List<LabBatch> foundBatches) {
+        this.foundBatches = foundBatches;
     }
 
     public void listSearch(String barcode) {
@@ -90,6 +86,7 @@ public class SearchBean implements Serializable {
         foundVessels = labVesselDao.findByListIdentifiers(searchList);
         foundSamples = mercurySampleDao.findBySampleKeys(searchList);
         //   foundPDOs = productOrderDao.findListByBusinessKeyList(searchList);
+        foundBatches = labBatchDAO.findByListIdentifier(searchList);
     }
 
     private List<String> cleanInputString() {
