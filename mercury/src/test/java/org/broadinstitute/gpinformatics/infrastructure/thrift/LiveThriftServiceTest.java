@@ -180,6 +180,33 @@ public class LiveThriftServiceTest {
         verify(mockLog);
     }
 
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFindImmediatePlateParentsNoResult() {
+        List<String> result = thriftService.findImmediatePlateParents("000000703408");
+        assertThat(result.size(), equalTo(0));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFindImmediatePlateParentsPlateResult() {
+        List<String> result = thriftService.findImmediatePlateParents("000009873173");
+        assertThat(result.size(), equalTo(1));
+        assertThat(result.get(0), equalTo("000009891873"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFindImmediatePlateParentsMultiplePlateResult() {
+        List<String> result = thriftService.findImmediatePlateParents("000001383666");
+        assertThat(result.size(), equalTo(2));
+        assertThat(result.get(0), equalTo("000000010208"));
+        assertThat(result.get(1), equalTo("000002458823"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFindImmediatePlateParentsUnknownPlate() {
+        List<String> result = thriftService.findImmediatePlateParents("unknown_barcode");
+        assertThat(result.size(), equalTo(0));
+    }
+
     @Test(groups = DATABASE_FREE)
     public void testFetchParentRackContentsForPlate() throws Exception {
         expectThriftCall();

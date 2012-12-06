@@ -83,9 +83,7 @@ public class LiveThriftService implements ThriftService {
                     log.error(message, e);
                     throw new RuntimeException(message, e);
                 } catch (TException e) {
-                    String message = "Thrift error: " + e.getMessage();
-                    log.error(message, e);
-                    throw new RuntimeException(message, e);
+                    throw handleThriftException(e);
                 }
             }
         });
@@ -99,9 +97,7 @@ public class LiveThriftService implements ThriftService {
                 try {
                     return client.doesSquidRecognizeAllLibraries(barcodes);
                 } catch (TException e) {
-                    String message = "Thrift error: " + e.getMessage();
-                    log.error(message, e);
-                    throw new RuntimeException(message, e);
+                    throw handleThriftException(e);
                 }
             }
         });
@@ -115,9 +111,7 @@ public class LiveThriftService implements ThriftService {
                 try {
                     return client.fetchMaterialTypesForTubeBarcodes(tubeBarcodes);
                 } catch (TException e) {
-                    String message = "Thrift error: " + e.getMessage();
-                    log.error(message, e);
-                    throw new RuntimeException(message, e);
+                    throw handleThriftException(e);
                 }
             }
         });
@@ -170,6 +164,20 @@ public class LiveThriftService implements ThriftService {
                 } catch (TException e) {
                     log.error("Thrift error. Probably couldn't find designation for reagent block barcode '" + reagentBlockBarcode + "': " + e.getMessage(), e);
                     throw new RuntimeException("Designation not found for flowcell barcode: " + reagentBlockBarcode);
+                }
+            }
+        });
+    }
+
+    @Override
+    public List<String> findImmediatePlateParents(final String plateBarcode) {
+        return thriftConnection.call(new ThriftConnection.Call<List<String>>() {
+            @Override
+            public List<String> call(LIMQueries.Client client) {
+                try {
+                    return client.findImmediatePlateParents(plateBarcode);
+                } catch (TException e) {
+                    throw handleThriftException(e);
                 }
             }
         });
@@ -250,4 +258,9 @@ public class LiveThriftService implements ThriftService {
         });
     }
 
+    private RuntimeException handleThriftException(TException e) {
+        String message = "Thrift error: " + e.getMessage();
+        log.error(message, e);
+        return new RuntimeException(message, e);
+    }
 }

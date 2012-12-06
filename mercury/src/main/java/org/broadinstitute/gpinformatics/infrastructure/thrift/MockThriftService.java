@@ -58,6 +58,11 @@ public class MockThriftService implements ThriftService {
     }
 
     @Override
+    public List<String> findImmediatePlateParents(String plateBarcode) {
+        return null;
+    }
+
+    @Override
     public String fetchUserIdForBadgeId(String badgeId) {
         return null;
     }

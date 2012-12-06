@@ -78,7 +78,6 @@ public class LimsQueryResource {
         return doesSquidRecognizeAllTubes; // || doesSequelRecognizeAllTubes;
     }
 
-    // TODO round 2: list<string> fetchMaterialTypesForTubeBarcodes(1:list<string> tubeBarcodes)
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchMaterialTypesForTubeBarcodes")
@@ -116,7 +115,12 @@ public class LimsQueryResource {
 
     // TODO round 3: bool checkReceptaclesInTask(1:list<string> tubeBarcodes, 2:string taskName) throws(1:NotFoundException details)
 
-    // TODO round 2: list<string> findImmediatePlateParents(1:string plateBarcode)
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/findImmediatePlateParents")
+    public List<String> findImmediatePlateParents(@QueryParam("plateBarcode") String plateBarcode) {
+        return thriftService.findImmediatePlateParents(plateBarcode);
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)

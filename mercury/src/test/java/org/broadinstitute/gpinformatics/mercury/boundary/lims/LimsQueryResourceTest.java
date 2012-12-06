@@ -128,6 +128,14 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
+    public void testFindImmediatePlateParents(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "findImmediatePlateParents").queryParam("plateBarcode", "000001383666");
+        String result = get(resource);
+        assertThat(result, equalTo("[\"000000010208\",\"000002458823\"]"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
     public void testFetchUserIdForBadgeId(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "fetchUserIdForBadgeId").queryParam("badgeId", "8f03f000f7ff12e0");
         String result = get(resource);

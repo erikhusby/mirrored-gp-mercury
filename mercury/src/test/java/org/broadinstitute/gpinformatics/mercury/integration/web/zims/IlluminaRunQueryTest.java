@@ -152,6 +152,11 @@ public class IlluminaRunQueryTest extends Arquillian {
         }
 
         @Override
+        public List<String> findImmediatePlateParents(String plateBarcode) {
+            return null;
+        }
+
+        @Override
         public String fetchUserIdForBadgeId(String badgeId) {
             return null;
         }
