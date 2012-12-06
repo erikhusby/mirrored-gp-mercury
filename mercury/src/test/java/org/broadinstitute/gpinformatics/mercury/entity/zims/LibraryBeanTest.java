@@ -25,7 +25,7 @@ public class LibraryBeanTest {
         // send in some GSSR sample attributes in addition to bsp DTO to verify GSSR override
         LibraryBean libraryBean = new LibraryBean(gssrLsid,bspDto);
 
-        assertEquals(libraryBean.getPrimaryDisease(),bspDto.getPrimaryDisease());
+        assertEquals(libraryBean.getBspPrimaryDisease(),bspDto.getPrimaryDisease());
         assertEquals(libraryBean.getLsid(),bspDto.getSampleLsid());
 
         // new up sans bsp DTO to confirm gssr fields work

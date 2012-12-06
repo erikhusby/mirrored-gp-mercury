@@ -132,14 +132,15 @@ public class IlluminaRunResource implements Serializable {
 
     /**
      * Fetches all BSP data for the run in one shot,
-     * returning a Map from the sample LSID to the
+     * returning a Map from the {@link org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO#getSampleLsid()} to the
      * {@link BSPSampleDTO}.
      * @param run
      * @return
      */
     private Map<String,BSPSampleDTO> fetchAllBSPDataAtOnce(TZamboniRun run) {
-        final Set<String> sampleLsids = new HashSet<String>();
-        final Set<String> sampleNames = new HashSet<String>();
+        Set<String> sampleLsids = new HashSet<String>();
+        Set<String> sampleNames = new HashSet<String>();
+        Map<String,BSPSampleDTO> lsidToBspDto = new HashMap<String, BSPSampleDTO>();
         Map<String,BSPSampleDTO> sampleToBspDto = new HashMap<String, BSPSampleDTO>();
         for (TZamboniLane zamboniLane : run.getLanes()) {
             for (TZamboniLibrary zamboniLibrary : zamboniLane.getLibraries()) {
@@ -159,7 +160,13 @@ public class IlluminaRunResource implements Serializable {
         if (!sampleNames.isEmpty()) {
             sampleToBspDto = bspDataFetcher.fetchSamplesFromBSP(sampleNames);
         }
-        return sampleToBspDto;
+        for (BSPSampleDTO bspSampleDTO : sampleToBspDto.values()) {
+            if (bspSampleDTO.getSampleLsid() != null) {
+                lsidToBspDto.put(bspSampleDTO.getSampleLsid(),bspSampleDTO);
+            }
+        }
+
+        return lsidToBspDto;
     }
 
     /**

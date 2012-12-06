@@ -153,7 +153,7 @@ public class LibraryBean {
     @JsonProperty
     private String bspSpecies;
 
-    @JsonProperty
+    @JsonProperty("bspRootSample")
     private String bspRootSample;
 
     @JsonProperty
@@ -463,7 +463,7 @@ public class LibraryBean {
         return isFastTrack;
     }
 
-    public String getPrimaryDisease() {
+    public String getBspPrimaryDisease() {
         return bspPrimaryDisease;
     }
 

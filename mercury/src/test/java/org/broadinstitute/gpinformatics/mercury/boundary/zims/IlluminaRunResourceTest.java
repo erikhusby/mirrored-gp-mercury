@@ -43,8 +43,6 @@ public class IlluminaRunResourceTest extends Arquillian {
     @Inject
     ProductOrderDao pdoDao;
 
-    @Inject ThriftService thriftService;
-
     private TZamboniRun zamboniRun;
 
     public static final String RUN_NAME = "120320_SL-HBN_0159_AFCC0GHCACXX"; // has bsp samples
@@ -75,9 +73,7 @@ public class IlluminaRunResourceTest extends Arquillian {
 
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWarWithAlternatives(EverythingYouAskForYouGetAndItsHuman.class,
-                MockThriftService.class)
-                .addAsResource(ThriftFileAccessor.RUN_FILE);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(TEST,MockThriftService.class).addAsResource(ThriftFileAccessor.RUN_FILE);
     }
 
 
@@ -123,11 +119,11 @@ public class IlluminaRunResourceTest extends Arquillian {
 
         assertNotNull(run);
         assertEquals(run.getName(),RUN_NAME);
-        doAssertions(zamboniRun,run,wrIdToPDO);
 
-        System.out.println(rawJson);
-
+        doAssertions(zamboniRun,run,new HashMap<Long,ProductOrder>());
         boolean foundBspSample = false;
+        boolean foundLcSet = false;
+        boolean foundPdo = false;
         for (ZimsIlluminaChamber zimsIlluminaChamber : run.getLanes()) {
             for (LibraryBean libraryBean : zimsIlluminaChamber.getLibraries()) {
                 if (libraryBean.getLsid() != null) {
@@ -137,10 +133,18 @@ public class IlluminaRunResourceTest extends Arquillian {
                         assertNotNull(libraryBean.getBspCollection());
                         assertNotNull(libraryBean.getBspSampleId());
                     }
+                    if (libraryBean.getLcSet() != null) {
+                        foundLcSet = true;
+                    }
+                    if (libraryBean.getProductOrderTitle() != null) {
+                        foundPdo = true;
+                    }
                 }
             }
         }
         assertTrue(foundBspSample);
+        assertTrue(foundLcSet);
+        assertTrue(foundPdo);
     }
     
     public static void doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean,Map<Long,ProductOrder> wrIdToPDO) {
@@ -302,9 +306,6 @@ public class IlluminaRunResourceTest extends Arquillian {
                         assertEquals(libBean.getMercuryProjectKey(),pdo.getResearchProject().getBusinessKey(),PDO_COMPARISON_ERROR_MESSAGE);
                         assertEquals(libBean.getProductOrderKey(),pdo.getBusinessKey(),PDO_COMPARISON_ERROR_MESSAGE);
                         assertEquals(libBean.getMercuryProjectTitle(),pdo.getResearchProject().getTitle(),PDO_COMPARISON_ERROR_MESSAGE);
-                    }
-                    else {
-                        throw new RuntimeException("No PDO passed in; I can't compare.");
                     }
                 }
                 if (zLib.getLcset() != null) {

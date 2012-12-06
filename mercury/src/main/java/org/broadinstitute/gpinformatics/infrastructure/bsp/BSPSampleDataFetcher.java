@@ -93,67 +93,64 @@ public class BSPSampleDataFetcher {
         String collaboratorName = null;
 
         if (bspColumns.length > 0) {
-            patientId = bspColumns[0];
+            patientId = getIfNotNullAndNotEmpty(bspColumns[0]);
         }
         if (bspColumns.length > 1) {
-            rootSample = bspColumns[1];
+            rootSample = getIfNotNullAndNotEmpty(bspColumns[1]);
         }
         if (bspColumns.length > 2) {
-            stockSample = bspColumns[2];
+            stockSample = getIfNotNullAndNotEmpty(bspColumns[2]);
         }
         if (bspColumns.length > 3) {
-            collaboratorSampleId = bspColumns[3];
+            collaboratorSampleId = getIfNotNullAndNotEmpty(bspColumns[3]);
         }
         if (bspColumns.length > 4) {
-            collection = bspColumns[4];
+            collection = getIfNotNullAndNotEmpty(bspColumns[4]);
         }
         if (bspColumns.length > 5) {
-            volume = bspColumns[5];
+            volume = getIfNotNullAndNotEmpty(bspColumns[5]);
         }
         if (bspColumns.length > 6) {
-            concentration = bspColumns[6];
+            concentration = getIfNotNullAndNotEmpty(bspColumns[6]);
         }
         if (bspColumns.length > 7) {
-            organism = bspColumns[7];
+            organism = getIfNotNullAndNotEmpty(bspColumns[7]);
         }
         if (bspColumns.length > 8) {
-            sampleLsid = bspColumns[8];
+            sampleLsid = getIfNotNullAndNotEmpty(bspColumns[8]);
         }
         if (bspColumns.length > 9) {
-            collaboratorParticipantId = bspColumns[9];
+            collaboratorParticipantId = getIfNotNullAndNotEmpty(bspColumns[9]);
         }
         if (bspColumns.length > 10) {
-            materialType = bspColumns[10];
+            materialType = getIfNotNullAndNotEmpty(bspColumns[10]);
         }
         if (bspColumns.length > 11) {
-            total = bspColumns[11];
+            total = getIfNotNullAndNotEmpty(bspColumns[11]);
         }
         if (bspColumns.length > 12) {
-            sampleType = bspColumns[12];
+            sampleType = getIfNotNullAndNotEmpty(bspColumns[12]);
         }
         if (bspColumns.length > 13) {
-            primaryDisease = bspColumns[13];
+            primaryDisease = getIfNotNullAndNotEmpty(bspColumns[13]);
         }
         if (bspColumns.length > 14) {
-            gender = bspColumns[14];
+            gender = getIfNotNullAndNotEmpty(bspColumns[14]);
         }
         if (bspColumns.length > 15) {
-            stockType = bspColumns[15];
+            stockType = getIfNotNullAndNotEmpty(bspColumns[15]);
         }
         if (bspColumns.length > 16) {
-            fingerprint = bspColumns[16];
+            fingerprint = getIfNotNullAndNotEmpty(bspColumns[16]);
         }
-
         if (bspColumns.length > 17) {
-            containerId = bspColumns[17];
+            containerId = getIfNotNullAndNotEmpty(bspColumns[17]);
         }
-
         if (bspColumns.length > 18) {
-            sampleId = bspColumns[18];
+            sampleId = getIfNotNullAndNotEmpty(bspColumns[18]);
         }
-
         if (bspColumns.length > 19) {
-            collaboratorName = bspColumns[19];
+            collaboratorName = getIfNotNullAndNotEmpty(bspColumns[19]);
         }
         /** beware of DBFreeBSPSampleTest: if you add columns here, you'll need to add them to the mock **/
 
@@ -161,6 +158,15 @@ public class BSPSampleDataFetcher {
                                 volume,concentration, sampleLsid, collaboratorParticipantId, materialType, total,
                                 sampleType, primaryDisease,gender, stockType, fingerprint, sampleId,collaboratorName);
 
+    }
+
+    private static String getIfNotNullAndNotEmpty(String value) {
+        if (value != null) {
+            if (value.trim().length() > 0) {
+                return value.trim();
+            }
+        }
+        return null;
     }
 
     private List<String[]> getBSPResponse(Collection<String> sampleNames) {

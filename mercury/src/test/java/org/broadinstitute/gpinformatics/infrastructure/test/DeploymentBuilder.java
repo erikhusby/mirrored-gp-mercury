@@ -80,6 +80,13 @@ public class DeploymentBuilder {
         return war;
     }
 
+    private static WebArchive buildMercuryWar(String beansXml,Deployment deployment) {
+        WebArchive war = ShrinkWrap.create(WebArchive.class, MERCURY_WAR)
+                .addAsWebInfResource(new StringAsset(beansXml), "beans.xml")
+                .merge(buildMercuryWar(deployment));
+        return war;
+    }
+
     public static WebArchive buildMercuryWarWithAlternatives(String... alternatives) {
         StringBuilder sb = new StringBuilder();
         sb.append("<beans>\n")
@@ -91,6 +98,8 @@ public class DeploymentBuilder {
                 .append("</beans>");
         return buildMercuryWar(sb.toString());
     }
+
+
 
     public static WebArchive buildMercuryWarWithAlternatives(Class... alternatives) {
         StringBuilder sb = new StringBuilder();
@@ -106,6 +115,23 @@ public class DeploymentBuilder {
         sb.append("  </alternatives>\n")
                 .append("</beans>");
         return buildMercuryWar(sb.toString());
+    }
+
+    public static WebArchive buildMercuryWarWithAlternatives(Deployment deployment,
+                                                             Class... alternatives) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("<beans>\n")
+                .append("  <alternatives>\n");
+        for (Class alternative : alternatives) {
+            if (alternative.isAnnotation()) {
+                sb.append("    <stereotype>").append(alternative.getName()).append("</stereotype>\n");
+            } else {
+                sb.append("    <class>").append(alternative.getName()).append("</class>\n");
+            }
+        }
+        sb.append("  </alternatives>\n")
+                .append("</beans>");
+        return buildMercuryWar(sb.toString(),deployment);
     }
 
     private static JavaArchive addTestHelpers(JavaArchive archive) {
