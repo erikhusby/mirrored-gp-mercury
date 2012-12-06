@@ -53,7 +53,7 @@ public class ProductOrderFixupTest extends Arquillian {
      * Change quote for a PDO, see http://prodinfojira.broadinstitute.org:8080/jira/browse/GPLIM-365
      * @throws Exception
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void change_quote_for_pdo() throws Exception {
         String[] pdos = new String[] {
                 "PDO-8",

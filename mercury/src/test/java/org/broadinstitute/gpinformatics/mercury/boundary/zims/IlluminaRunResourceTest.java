@@ -244,6 +244,7 @@ public class IlluminaRunResourceTest extends Arquillian {
     private static void doAssertions(TZamboniLibrary zLib,Collection<LibraryBean> libBeans,ProductOrder pdo) {
         boolean foundIt = false;
         boolean foundPDO = false;
+        boolean foundLcSet = false;
 
         for (LibraryBean libBean : libBeans) {
             assertNotNull(libBean.getLibrary());
@@ -297,15 +298,23 @@ public class IlluminaRunResourceTest extends Arquillian {
                         assertEquals(libBean.getProductOrderTitle(),pdo.getTitle(),PDO_COMPARISON_ERROR_MESSAGE);
                         assertEquals(libBean.getMercuryProjectKey(),pdo.getResearchProject().getBusinessKey(),PDO_COMPARISON_ERROR_MESSAGE);
                         assertEquals(libBean.getProductOrderKey(),pdo.getBusinessKey(),PDO_COMPARISON_ERROR_MESSAGE);
-                        assertEquals(libBean.getMercuryProjectTitle(),pdo.getTitle(),PDO_COMPARISON_ERROR_MESSAGE);
+                        assertEquals(libBean.getMercuryProjectTitle(),pdo.getResearchProject().getTitle(),PDO_COMPARISON_ERROR_MESSAGE);
                     }
                     else {
                         throw new RuntimeException("No PDO passed in; I can't compare.");
                     }
                 }
+                if (zLib.getLcset() != null) {
+                    foundLcSet = true;
+                    assertEquals(libBean.getLcSet(),zLib.getLcset());
+                }
+                if (libBean.getLcSet() != null && zLib.getLcset() == null) {
+                    fail("bean has lcset " + libBean.getLcSet() + ", but thrift library has no lc set.");
+                }
             }
         }
-        
+
+        assertTrue((foundLcSet && zLib.getLcset() != null)  || (zLib.getLcset() == null));
         assertTrue(foundIt);
         assertTrue(foundPDO || pdo == null);
     }
