@@ -126,10 +126,13 @@ public class IlluminaRunResourceTest extends Arquillian {
         doAssertions(zamboniRun,run,wrIdToPDO);
 
         System.out.println(rawJson);
+
+        boolean foundBspSample = false;
         for (ZimsIlluminaChamber zimsIlluminaChamber : run.getLanes()) {
             for (LibraryBean libraryBean : zimsIlluminaChamber.getLibraries()) {
                 if (libraryBean.getLsid() != null) {
                     if (libraryBean.getLsid().contains("bsp")) {
+                        foundBspSample = true;
                         assertNotNull(libraryBean.getBspRootSample());
                         assertNotNull(libraryBean.getBspCollection());
                         assertNotNull(libraryBean.getBspSampleId());
@@ -137,7 +140,7 @@ public class IlluminaRunResourceTest extends Arquillian {
                 }
             }
         }
-
+        assertTrue(foundBspSample);
     }
     
     public static void doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean,Map<Long,ProductOrder> wrIdToPDO) {
