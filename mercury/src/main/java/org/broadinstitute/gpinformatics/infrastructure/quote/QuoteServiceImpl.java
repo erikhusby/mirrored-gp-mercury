@@ -231,7 +231,7 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
 
         try {
             Quotes quotes = resource.accept(MediaType.APPLICATION_XML).get(Quotes.class);
-            if (CollectionUtils.isEmpty(quotes.getQuotes())) {
+            if (! CollectionUtils.isEmpty(quotes.getQuotes())) {
                 quote = quotes.getQuotes().get(0);
             } else {
                 throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);
