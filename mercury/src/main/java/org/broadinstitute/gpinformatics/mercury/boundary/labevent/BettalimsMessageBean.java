@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.inject.Inject;
 import javax.jms.Message;
 import javax.jms.MessageListener;
@@ -27,6 +29,12 @@ public class BettalimsMessageBean implements MessageListener {
     public BettalimsMessageBean() {
     }
 
+    /**
+     * Transaction is NOT_SUPPORTED because we don't want re-delivery in case of failure.  We store all messages
+     * on the file system, and email in case of failure, so the recipient of the email can resubmit messages manually.
+     * @param message JMS message from deck
+     */
+    @TransactionAttribute(value= TransactionAttributeType.NOT_SUPPORTED)
     @Override
     public void onMessage(Message message) {
         // The deck side code is written in JavaScript, so it sends text messages, rather than object messages.
@@ -40,7 +48,7 @@ public class BettalimsMessageBean implements MessageListener {
             }
         } else {
             // todo jmt email LIMS oddities
-            throw new RuntimeException("Expected TextMessage, received " + message.getClass().getName());
+            //"Expected TextMessage, received " + message.getClass().getName()
         }
     }
 }

@@ -16,6 +16,8 @@ import org.xml.sax.helpers.XMLFilterImpl;
 import org.xml.sax.helpers.XMLReaderFactory;
 
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -73,10 +75,12 @@ public class BettalimsMessageResource {
     }
 
     /**
-     * Shared between JAX-RS and JMS
+     * Shared between JAX-RS and JMS.
+     * Transaction is REQUIRED because this method is called by an MDB with transaction NOT_SUPPORTED.
      * @param message from deck
      * @throws Exception
      */
+    @TransactionAttribute(value= TransactionAttributeType.REQUIRED)
     public void storeAndProcess(String message) throws Exception {
         Date now = new Date();
         //noinspection OverlyBroadCatchBlock
