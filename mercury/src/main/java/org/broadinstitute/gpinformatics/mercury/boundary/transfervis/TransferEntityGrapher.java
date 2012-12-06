@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.transfervis;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.mercury.boundary.graph.Edge;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Vertex;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
@@ -10,8 +9,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedT
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTubeWell;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 
@@ -21,17 +19,12 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
-import java.util.Set;
 
 /**
  * From one of various starting entities (plate, tube etc.), traverse transfers breadth-first, create a graph of
@@ -182,7 +175,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
             Queue<Vessel> vesselQueue = new LinkedList<Vessel>();
 
             for (VesselContainer vesselContainer : receptacle.getContainers()) {
-                vesselQueue.add(new RackVessel(vesselContainer));
+                vesselQueue.add(new RackVessel((TubeFormation) vesselContainer.getEmbedder()));
             }
             vesselQueue.add(new ReceptacleVessel(receptacle));
             processQueue(vesselQueue, graph, alternativeIds);
@@ -508,39 +501,45 @@ public class TransferEntityGrapher implements TransferVisualizer {
 
     private class RackVessel extends Vessel {
 
-        private VesselContainer wellMap;
+        private TubeFormation tubeFormation;
 
-        private RackVessel(VesselContainer wellMap) {
-            this.wellMap = wellMap;
+        private RackVessel(TubeFormation tubeFormation) {
+            this.tubeFormation = tubeFormation;
         }
 
         @Override
         boolean render(Graph graph, List<AlternativeId> alternativeIds) {
 //            System.out.println("Rendering rack " + wellMap.getPlate().getBarcode());
             boolean newVertex = false;
-//            Plate rack = wellMap.getPlate();
-//            Vertex rackVertex = graph.getMapIdToVertex().get(Long.toString(wellMap.getId()));
+//            Plate rack = tubeFormation.getPlate();
+//            Vertex rackVertex = graph.getMapIdToVertex().get(tubeFormation.getLabel());
 //            if (rackVertex == null) {
 //                newVertex = true;
 //                // Create a child vertex for each tube, and position it correctly within the rack
 //                int maxRowNumber = 0;
 //                int maxColumnNumber = 0;
-//                for (WellMapEntry wellMapEntry : wellMap.getWellMapEntries().values()) {
+//                for (Map.Entry<VesselPosition, TwoDBarcodedTube> vesselPositionTwoDBarcodedTubeEntry :
+//                        tubeFormation.getContainerRole().getMapPositionToVessel().entrySet()) {
+//                    vesselPositionTwoDBarcodedTubeEntry.getKey();
+//                    tubeFormation.getRackType().getVesselGeometry().
+//                }
+//
+//                for (WellMapEntry wellMapEntry : tubeFormation.getWellMapEntries().values()) {
 //                    maxRowNumber = Math.max((int) wellMapEntry.getWellDescription().getRowNumber(), maxRowNumber);
 //                    maxColumnNumber = Math.max((int) wellMapEntry.getWellDescription().getColumnNumber(), maxColumnNumber);
 //                }
-//                rackVertex = new Vertex(Long.toString(wellMap.getId()), IdType.WELL_MAP_ID_TYPE.toString(),
+//                rackVertex = new Vertex(Long.toString(tubeFormation.getId()), IdType.WELL_MAP_ID_TYPE.toString(),
 //                        new StringBuilder().append(rack.getPlatePhysicalType().getName()).append(" : ").append(rack.getBarcode()).toString(),
 //                        maxRowNumber, maxColumnNumber);
-//                for (WellMapEntry wellMapEntry : wellMap.getWellMapEntries().values()) {
+//                for (WellMapEntry wellMapEntry : tubeFormation.getWellMapEntries().values()) {
 //                    Receptacle receptacle = wellMapEntry.getReceptacle();
 //                    String barcode = receptacle.getBarcode();
-//                    Vertex tubeVertex = new Vertex(new StringBuilder().append(barcode).append("|").append(wellMap.getId()).toString(),
+//                    Vertex tubeVertex = new Vertex(new StringBuilder().append(barcode).append("|").append(tubeFormation.getId()).toString(),
 //                            IdType.TUBE_IN_RACK_ID_TYPE.toString(), barcode);
 //                    tubeVertex.setParentVertex(rackVertex);
 //
 //                    tubeVertex.setAlternativeIds(getAlternativeIds(receptacle, alternativeIds));
-//                    addLibraryTypeToDetails(receptacle, tubeVertex);
+////                    addLibraryTypeToDetails(receptacle, tubeVertex);
 //                    rackVertex.getChildVertices()[(int) wellMapEntry.getWellDescription().getRowNumber() - 1][(int) wellMapEntry.getWellDescription().getColumnNumber() - 1] =
 //                            tubeVertex;
 //                    // map as child|parent and as child, the latter for tube to tube transfers
