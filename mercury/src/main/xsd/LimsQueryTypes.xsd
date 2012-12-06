@@ -45,6 +45,13 @@
         </xsd:sequence>
     </xsd:complexType>
 
+    <xsd:complexType name="wellAndSourceTubeType">
+        <xsd:sequence>
+            <xsd:element name="wellName" type="xsd:string"/>
+            <xsd:element name="tubeBarcode" type="xsd:string"/>
+        </xsd:sequence>
+    </xsd:complexType>
+
     <xsd:complexType name="poolGroupType">
         <xsd:sequence>
             <xsd:element name="name" type="xsd:string"/>
