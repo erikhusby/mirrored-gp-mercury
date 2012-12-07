@@ -81,16 +81,12 @@ public enum LabEventType {
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
     GS_WASH_2 ("GSWash2", true, true,
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
-    // no longer used, needed to import past messages
     GS_WASH_3 ("GSWash3", true, true,
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
-    // no longer used, needed to import past messages
     GS_WASH_4 ("GSWash4", true, true,
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
-    // no longer used, needed to import past messages
     GS_WASH_5 ("GSWash5", true, true,
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
-    // no longer used, needed to import past messages
     GS_WASH_6 ("GSWash6", true, true,
             Strandedness.DOUBLE_STRANDED, NucleicAcid.DNA),
     CATCH_ENRICHMENT_SETUP ("CatchEnrichmentSetup", true, true,
