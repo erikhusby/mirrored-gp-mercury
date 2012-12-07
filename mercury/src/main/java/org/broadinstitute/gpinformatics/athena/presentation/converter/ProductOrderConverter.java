@@ -5,8 +5,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
-import javax.faces.convert.Converter;
-import javax.faces.convert.FacesConverter;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -16,7 +14,7 @@ import javax.inject.Named;
  * @author Michael Dinsmore
  */
 @Named
-public class ProductOrderConverter implements Converter {
+public class ProductOrderConverter extends AbstractConverter {
     @Inject
     private ProductOrderDao productOrderDao;
 

@@ -25,7 +25,7 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 /**
- * Class for creating a product order, or editing a draft product order.
+ * Class for creating a product order
  */
 @Named
 @RequestScoped
@@ -74,6 +74,14 @@ public class ProductOrderForm extends AbstractJsfBean {
     /** Automatically convert known BSP IDs (SM-, SP-) to uppercase. */
     private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
 
+
+    public void initForm() {
+        if (userBean.ensureUserValid()) {
+            conversationData.beginConversation(productOrderDetail.getProductOrder());
+        } else {
+            addErrorMessage(MessageFormat.format(UserBean.LOGIN_WARNING, "create an order"));
+        }
+    }
 
     /**
      * Convenience method to differentiate between create and edit use cases
@@ -316,14 +324,6 @@ public class ProductOrderForm extends AbstractJsfBean {
             logger.error(e);
             addErrorMessage("Error saving Product Order: " + e.getMessage());
             return null;
-        }
-    }
-
-    public void initForm() {
-        if (userBean.ensureUserValid()) {
-            conversationData.beginConversation(productOrderDetail.getProductOrder());
-        } else {
-            addErrorMessage(MessageFormat.format(UserBean.LOGIN_WARNING, "create an order"));
         }
     }
 

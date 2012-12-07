@@ -23,7 +23,6 @@
         <f:metadata>
             <f:viewParam name="product" value="#{productView.product}" converter="#{productConverter}" valueChangeListener="#{productConverter.updateModel}"/>
             <f:event type="preRenderView" listener="#{productView.onPreRenderView}"/>
-            <f:event type="preRenderView" listener="#{productView.initView}"/>
         </f:metadata>
     </ui:define>
     <ui:define name="body">
@@ -178,7 +177,7 @@
 
             <p/>
 
-            <p:dataTable value="#{productView.priceItemData.values}" var="priceItem" >
+            <p:dataTable value="#{productView.optionalPriceItemData.values}" var="priceItem" >
                 <f:facet name="header">
                     <h:outputText value="Optional Price Items" />
                 </f:facet>
