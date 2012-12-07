@@ -6,7 +6,9 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource;
+import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -34,6 +36,12 @@ public class BucketBean {
 
     @Inject
     LabBatchResource batchResource;
+
+    @Inject
+    LabBatchEjb batchEjb;
+
+    @Inject
+    JiraTicketDao jiraTicketDao;
 
     private final static Log logger = LogFactory.getLog(BucketBean.class);
 
@@ -175,8 +183,7 @@ public class BucketBean {
         Set<BucketEntry> bucketEntrySet = buildBatchListByVessels(vesselsToBatch, workingBucket);
 
         LabBatch bucketBatch = startDBFree(bucketEntrySet, operator, batchInitiationLocation);
-        labBatchToJira(bucketEntrySet, operator, batchTicket, bucketBatch);
-
+        batchEjb.batchToJira(operator, batchTicket, bucketBatch);
     }
 
     public Set<BucketEntry> buildBatchListByVessels(Collection<LabVessel> vesselsToBatch, Bucket workingBucket) {
@@ -247,7 +254,7 @@ public class BucketBean {
         Set<BucketEntry> bucketEntrySet = buildBatchListBySize(numberOfBatchSamples, workingBucket);
         bucketBatch = startDBFree(bucketEntrySet, operator, LabEvent.UI_EVENT_LOCATION);
 
-        labBatchToJira(bucketEntrySet, operator, batchTicket, bucketBatch);
+        batchEjb.batchToJira(operator, batchTicket, bucketBatch);
     }
 
     public Set<BucketEntry> buildBatchListBySize(int numberOfBatchSamples, Bucket workingBucket) {
@@ -310,33 +317,11 @@ public class BucketBean {
          */
         LabBatch bucketBatch = startDBFree(bucketEntries, operator, batchInitiationLocation);
 
-        labBatchToJira(bucketEntries, operator, batchTicket, bucketBatch);
+        batchEjb.batchToJira(operator, batchTicket, bucketBatch);
 
     }
 
-    private void labBatchToJira(Collection<BucketEntry> bucketEntries, String operator, String batchTicket,
-                                LabBatch bucketBatch) {
-        try {
-            if (null == batchTicket) {
-
-                batchResource.createJiraTicket(bucketBatch, operator, CreateFields.IssueType.EXOME_EXPRESS
-                                               /*TODO SGM Determine from project*/,
-                                               CreateFields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix()
-                                               /*TODO SGM determine from batch config in Bucket*/);
-            } else {
-                bucketBatch.setJiraTicket(new JiraTicket(batchTicket));
-            }
-            for (String pdo : extractProductOrderSet(bucketEntries)) {
-                bucketBatch.addJiraLink(pdo);
-                jiraService.addComment(pdo, "New Batch Created: " +
-                        bucketBatch.getJiraTicket().getTicketName() + " " + bucketBatch.getBatchName());
-            }
-        } catch (IOException ioe) {
-            logger.error("Error attempting to create Lab Batch in Jira");
-            throw new InformaticsServiceException("Error attempting to create Lab Batch in Jira", ioe);
-        }
-    }
-
+    //TODO SGM  Move to a bucket factory class
     private LabBatch startDBFree(Collection<BucketEntry> bucketEntries, String operator,
                                  String batchInitiationLocation) {
         LabBatch bucketBatch;
@@ -349,13 +334,13 @@ public class BucketBean {
         for (BucketEntry currEntry : bucketEntries) {
             batchVessels.add(currEntry.getLabVessel());
 
-            if (!currEntry.getLabVessel().getLabBatches().isEmpty()) {
+            Collection<LabBatch> nearestBatches = currEntry.getLabVessel().getNearestLabBatches() ;
+            if (nearestBatches !=null ) {
 
                 if (trackBatches == null)
                     trackBatches = new LinkedList<LabBatch>();
 
-                List<LabBatch> currBatchList = new LinkedList<LabBatch>(
-                        currEntry.getLabVessel().getNearestLabBatches());
+                List<LabBatch> currBatchList = new LinkedList<LabBatch>(nearestBatches);
 
                 Collections.sort(currBatchList, LabBatch.byDate);
 
@@ -374,10 +359,10 @@ public class BucketBean {
          */
         if (allHaveBatch && trackBatches != null && trackBatches.size() == 1) {
             bucketBatch = trackBatches.get(0);
-
-            //TODO SGM  Still have to set vessels to the Batch if it exists
         } else {
-            bucketBatch = new LabBatch(/*TODO SGM Pull ProductOrder details to get title */ " ", batchVessels);
+            bucketBatch = new LabBatch(LabBatch.generateBatchName(CreateFields.IssueType.EXOME_EXPRESS.getJiraName(),
+                                                                  LabVessel.extractPdoList(batchVessels)),
+                                       batchVessels);
         }
 
         Set<LabEvent> eventList = new HashSet<LabEvent>();
@@ -396,6 +381,7 @@ public class BucketBean {
      *
      * @param bucketEntries collection of bucket entries to be removed from the buckets in which they exist
      */
+    //TODO SGM  Move to a bucket factory class
     private void removeEntries(@Nonnull Collection<BucketEntry> bucketEntries) {
         for (BucketEntry currEntry : bucketEntries) {
             logger.info("Adding entry " + currEntry.getBucketEntryId() + " for vessel " + currEntry.getLabVessel()
@@ -470,30 +456,6 @@ public class BucketBean {
         }
 
         return labVessels;
-    }
-
-    private class StartTransition {
-        Collection<BucketEntry> entries;
-        LabBatch                batch;
-
-        private StartTransition() {
-        }
-
-        public void setEntries(Collection<BucketEntry> entries) {
-            this.entries = entries;
-        }
-
-        public void setBatch(LabBatch batch) {
-            this.batch = batch;
-        }
-
-        public Collection<BucketEntry> getEntries() {
-            return entries;
-        }
-
-        public LabBatch getBatch() {
-            return batch;
-        }
     }
 
 }

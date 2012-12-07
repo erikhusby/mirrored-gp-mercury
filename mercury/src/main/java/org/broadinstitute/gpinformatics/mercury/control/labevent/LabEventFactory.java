@@ -98,6 +98,7 @@ public class LabEventFactory {
     @Inject
     private StaticPlateDAO staticPlateDAO;
 
+    //TODO SGM  remove inject here
     @Inject
     private BSPUserList bspUserList;
 
@@ -122,9 +123,11 @@ public class LabEventFactory {
     @Inject
     private GenericReagentDao genericReagentDao;
 
+    //TODO SGM Remove default constructor
     public LabEventFactory () {
     }
 
+    //TODO SGM Make inject constructor.  Replace test cases with this and a BSPUserList initialized with test people.
     public LabEventFactory ( BSPUserList userList ) {
         this.bspUserList = userList;
     }

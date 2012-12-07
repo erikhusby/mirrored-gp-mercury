@@ -34,24 +34,20 @@ public class JiraTicket {
     private String browserUrl;
 
     @Transient
-    private final JiraService jiraService;
+    private JiraService jiraService;
 
-    public JiraTicket() {
-        jiraService = ServiceAccessUtility.getBean(JiraService.class);
+    JiraTicket() {
     }
 
-    public JiraTicket(JiraIssue issue) {
-        this(issue.getKey());
-    }
-
-    public JiraTicket(@Nonnull String ticketId) {
+    public JiraTicket(@Nonnull JiraService jiraService, @Nonnull String ticketId) {
         this();
         if (ticketId == null) {
             throw new NullPointerException("ticketId cannot be null.");
         }
         this.ticketId = ticketId;
-        ticketName = ticketId;
-        this.browserUrl = jiraService.createTicketUrl(ticketName);
+        this.ticketName = ticketId;
+        this.jiraService = jiraService;
+        this.browserUrl = this.jiraService.createTicketUrl(ticketName);
     }
 
     /**
@@ -66,7 +62,11 @@ public class JiraTicket {
     public String getTicketName() {
         return ticketName;
     }
-    
+
+    public String getTicketId() {
+        return ticketId;
+    }
+
     /**
      * Because we're going to be calling this inline all over the
      * place, in performance-sensitive sections of code like
