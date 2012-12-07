@@ -59,10 +59,10 @@ public class BillingLedgerTest {
                 priceItemName2, 1, date1);
         Assert.assertNotEquals(billingLedger1, billingLedger2);
 
-        // change the quantity
+        // change the quantity, should equate since quantity is not used for comparison
         billingLedger2 = BillingLedgerTest.createOneBillingLedger("SM-3KBZD",
                 priceItemName1, 2, date1);
-        Assert.assertNotEquals(billingLedger1, billingLedger2);
+        Assert.assertEquals(billingLedger1, billingLedger2);
 
     }
 

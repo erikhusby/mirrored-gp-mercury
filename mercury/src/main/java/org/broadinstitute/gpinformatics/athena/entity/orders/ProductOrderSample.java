@@ -111,6 +111,14 @@ public class ProductOrderSample implements Serializable {
         return isInBspFormat() && !hasBspDTOBeenInitialized;
     }
 
+    public int getSamplePosition() {
+        return samplePosition;
+    }
+
+    public void setSamplePosition(int samplePosition) {
+        this.samplePosition = samplePosition;
+    }
+
     /**
      * @return true if sample is a loaded BSP sample but BSP didn't have any data for it.
      */
