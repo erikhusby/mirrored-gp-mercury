@@ -52,20 +52,19 @@ public class VesselSampleListBean {
     }
 
     public void updateVessel(String barcode) {
-        if (barcode != null && this.vessel == null) {
+        if (barcode != null) {
             this.vessel = labVesselDao.findByIdentifier(barcode);
             this.barcode = barcode;
             if (OrmUtil.proxySafeIsInstance(vessel, TubeFormation.class)) {
                 vesselContainer = ((TubeFormation) vessel).getContainerRole();
-            }
-            if (OrmUtil.proxySafeIsInstance(vessel, StaticPlate.class)) {
+            } else if (OrmUtil.proxySafeIsInstance(vessel, StaticPlate.class)) {
                 vesselContainer = ((StaticPlate) vessel).getContainerRole();
-            }
-            if (OrmUtil.proxySafeIsInstance(vessel, StripTube.class)) {
+            } else if (OrmUtil.proxySafeIsInstance(vessel, StripTube.class)) {
                 vesselContainer = ((StripTube) vessel).getContainerRole();
-            }
-            if (OrmUtil.proxySafeIsInstance(vessel, IlluminaFlowcell.class)) {
+            } else if (OrmUtil.proxySafeIsInstance(vessel, IlluminaFlowcell.class)) {
                 vesselContainer = ((IlluminaFlowcell) vessel).getContainerRole();
+            } else {
+                vesselContainer = null;
             }
         }
     }

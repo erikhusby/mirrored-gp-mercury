@@ -12,8 +12,7 @@
     <cc:attribute name="batches" required="true"/>
 </cc:interface>
 <cc:implementation xmlns:c="http://java.sun.com/jsf/composite/container">
-    <h:outputText value="#{batchListBean.updateBatches(cc.attrs.batches)}"/>
-    <p:dataTable id="batchResultsTable" var="foundBatch" value="#{batchListBean.batches}">
+    <p:dataTable id="batchResultsTable" var="foundBatch" value="#{cc.attrs.batches}">
         <f:facet name="header">
             Batch Details
         </f:facet>
@@ -22,9 +21,13 @@
                 <h:outputText value="Vessel Details"/>
             </f:facet>
             <p:commandButton
-                    value="#{batchListBean.getOpenCloseValue(batchListBean.showVesselView)}"
-                    actionListener="#{batchListBean.toggleVesselView(foundBatch)}"
-                    update=":#{cc.clientId}:vesselOutputPanel,@this" title="View the vessel list/"/>
+                    value=""
+                    actionListener="#{batchListBean.setSelectedBatch(foundBatch)}"
+                    update=":#{cc.clientId}:vesselOutputPanel,@this" title="View the vessel list.">
+                <p:effect event="click" type="fade" for=":#{cc.clientId}:vesselPanel">
+                    <f:param name="mode" value="'toggle'"/>
+                </p:effect>
+            </p:commandButton>
         </p:column>
         <p:column>
             <f:facet name="header">
@@ -36,8 +39,8 @@
             <f:facet name="header">
                 <h:outputText value="Jira Ticket Name"/>
             </f:facet>
-            <h:outputLink value="#{foundBatch.jiraTicket.browserUrl}">
-                <h:outputText value="#{foundBatch.jiraTicket.ticketName}"/>
+            <h:outputLink value="#{batchListBean.safeLoad(foundBatch, 'jiraTicket').jiraTicket.browserUrl}">
+                <h:outputText value="#{batchListBean.safeLoad(foundBatch, 'jiraTicket').jiraTicket.ticketName}"/>
             </h:outputLink>
         </p:column>
         <p:column>
@@ -56,32 +59,38 @@
             <f:facet name="header">
                 <h:outputText value="Latest Event"/>
             </f:facet>
-            <h:outputText value="#{batchListBean.getLatestEvent(foundBatch).labEventType.name}"/>
+            <h:outputText
+                    value="#{batchListBean.getLatestEvent(batchListBean.safeLoad(foundBatch, 'labEvents')).labEventType.name}"/>
         </p:column>
         <p:column>
             <f:facet name="header">
                 <h:outputText value="Event Location"/>
             </f:facet>
-            <h:outputText value="#{batchListBean.getLatestEvent(foundBatch).eventLocation}"/>
+            <h:outputText
+                    value="#{batchListBean.getLatestEvent(batchListBean.safeLoad(foundBatch, 'labEvents')).eventLocation}"/>
         </p:column>
         <p:column>
             <f:facet name="header">
                 <h:outputText value="Event User"/>
             </f:facet>
             <h:outputText
-                    value="#{vesselListBean.getUserNameById(batchListBean.getLatestEvent(foundBatch).eventOperator)}"/>
+                    value="#{vesselListBean.getUserNameById(batchListBean.getLatestEvent(batchListBean.safeLoad(foundBatch, 'labEvents')).eventOperator)}"/>
         </p:column>
         <p:column>
             <f:facet name="header">
                 <h:outputText value="Event Date"/>
             </f:facet>
-            <h:outputText value="#{batchListBean.getLatestEvent(foundBatch).eventDate}"/>
+            <h:outputText
+                    value="#{batchListBean.getLatestEvent(batchListBean.safeLoad(foundBatch, 'labEvents')).eventDate}"/>
         </p:column>
     </p:dataTable>
-    <p:outputPanel id="vesselOutputPanel">
-        <p:panel id="vesselPanel" rendered="#{batchListBean.showVesselView}">
+    <p:panel id="vesselPanel">
+        <p:effect event="load" type="fade" speed="1">
+            <f:param name="mode" value="'hide'"/>
+        </p:effect>
+        <p:outputPanel id="vesselOutputPanel">
             <c:vesselList vessels="#{batchListBean.selectedBatch.startingLabVesselsList}" expandable="false"/>
-        </p:panel>
-    </p:outputPanel>
+        </p:outputPanel>
+    </p:panel>
 </cc:implementation>
 </html>

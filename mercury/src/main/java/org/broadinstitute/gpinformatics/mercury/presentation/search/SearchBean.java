@@ -85,7 +85,7 @@ public class SearchBean implements Serializable {
         List<String> searchList = cleanInputString();
         foundVessels = labVesselDao.findByListIdentifiers(searchList);
         foundSamples = mercurySampleDao.findBySampleKeys(searchList);
-        //   foundPDOs = productOrderDao.findListByBusinessKeyList(searchList);
+        foundPDOs = productOrderDao.findListByBusinessKeyList(searchList);
         foundBatches = labBatchDAO.findByListIdentifier(searchList);
     }
 

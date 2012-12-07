@@ -20,7 +20,7 @@ public class PlasticHistoryBean implements Serializable {
     @Inject
     private LabVesselDao labVesselDao;
 
-    private MercurySample sample;
+    private MercurySample selectedSample;
 
     private String barcode;
 
@@ -33,16 +33,19 @@ public class PlasticHistoryBean implements Serializable {
     }
 
     public void updateSample(String barcode) {
-        sample = mercurySampleDao.findBySampleKey(barcode);
+        selectedSample = mercurySampleDao.findBySampleKey(barcode);
     }
 
     public List<LabVessel> getPlasticHistory() {
-        List<LabVessel> vessels = labVesselDao.findBySampleKey(sample.getSampleKey());
         List<LabVessel> targetVessels = new ArrayList<LabVessel>();
-        for (LabVessel vessel : vessels) {
-            targetVessels.addAll(vessel.getDescendantVessels());
-        }
+        if (selectedSample != null) {
+            List<LabVessel> vessels = labVesselDao.findBySampleKey(selectedSample.getSampleKey());
 
+            for (LabVessel vessel : vessels) {
+                targetVessels.addAll(vessel.getDescendantVessels());
+            }
+
+        }
         return targetVessels;
     }
 }

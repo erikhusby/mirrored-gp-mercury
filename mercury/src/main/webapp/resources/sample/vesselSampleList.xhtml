@@ -13,7 +13,8 @@
 </cc:interface>
 <cc:implementation>
     <h:outputText value="#{vesselSampleListBean.updateVessel(cc.attrs.barcode)}"/>
-    <p:dataTable id="plateSampleResults" value="#{vesselSampleListBean.positionNameList}" var="positionName">
+    <p:dataTable id="plateSampleResults" value="#{vesselSampleListBean.positionNameList}" var="positionName"
+                 emptyMessage="">
         <f:facet name="header">
             Sample Details for Container #{vesselSampleListBean.barcode}
         </f:facet>

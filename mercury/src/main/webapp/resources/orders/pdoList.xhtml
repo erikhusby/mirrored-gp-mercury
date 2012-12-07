@@ -12,8 +12,7 @@
     <cc:attribute name="pdos" required="true"/>
 </cc:interface>
 <cc:implementation>
-    <h:outputText value="#{productOrderListBean.updatePDOs(cc.attrs.pdos)}"/>
-    <p:dataTable id="pdoResultsTable" var="foundPDO" value="#{productOrderListBean.pdos}">
+    <p:dataTable id="pdoResultsTable" var="foundPDO" value="#{cc.attrs.pdos}">
         <f:facet name="header">
             PDO Details
         </f:facet>
@@ -33,13 +32,13 @@
             <f:facet name="header">
                 <h:outputText value="Product"/>
             </f:facet>
-            <h:outputText value="#{foundPDO.product.businessKey}"/>
+            <h:outputText value="#{foundPDO.product.productName}"/>
         </p:column>
         <p:column>
             <f:facet name="header">
                 <h:outputText value="Total Samples"/>
             </f:facet>
-            <h:outputText value="#{foundPDO.totalSampleCount}"/>
+            <h:outputText value="#{productOrderListBean.safeLoad(foundPDO, 'samples').totalSampleCount}"/>
         </p:column>
         <p:column>
             <f:facet name="header">

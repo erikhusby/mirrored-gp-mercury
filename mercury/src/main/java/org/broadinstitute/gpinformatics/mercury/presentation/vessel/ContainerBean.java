@@ -32,7 +32,7 @@ public class ContainerBean {
     }
 
     public void updateVessel(String barcode) {
-        if (barcode != null && this.vessel == null) {
+        if (barcode != null) {
             this.vessel = labVesselDao.findByIdentifier(barcode);
             this.barcode = barcode;
         }

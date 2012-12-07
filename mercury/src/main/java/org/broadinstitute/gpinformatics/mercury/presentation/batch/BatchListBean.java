@@ -15,40 +15,14 @@ import java.util.*;
 public class BatchListBean implements Serializable {
     @Inject
     private LabBatchDAO labBatchDAO;
-    private List<LabBatch> batches;
     private LabBatch selectedBatch;
-    private Boolean showVesselView = false;
 
     public LabBatch getSelectedBatch() {
-        selectedBatch = labBatchDAO.findByName(selectedBatch.getBatchName());
         return selectedBatch;
     }
 
     public void setSelectedBatch(LabBatch selectedBatch) {
-        this.selectedBatch = selectedBatch;
-    }
-
-    public void updateBatches(List<LabBatch> batches) {
-        this.batches = new ArrayList<LabBatch>();
-        for (LabBatch batch : batches) {
-            this.batches.add(labBatchDAO.findByName(batch.getBatchName()));
-        }
-    }
-
-    public List<LabBatch> getBatches() {
-        return batches;
-    }
-
-    public void setBatches(List<LabBatch> batches) {
-        this.batches = batches;
-    }
-
-    public Boolean getShowVesselView() {
-        return showVesselView;
-    }
-
-    public void setShowVesselView(Boolean showVesselView) {
-        this.showVesselView = showVesselView;
+        this.selectedBatch = labBatchDAO.findByName(selectedBatch.getBatchName());
     }
 
     public LabEvent getLatestEvent(LabBatch batch) {
@@ -64,16 +38,10 @@ public class BatchListBean implements Serializable {
         return lastEvent;
     }
 
-    public void toggleVesselView(LabBatch batch) {
-        selectedBatch = batch;
-        showVesselView = !showVesselView;
-    }
-
-    public String getOpenCloseValue(Boolean shown) {
-        String value = "Open";
-        if (shown) {
-            value = "Close";
+    public LabBatch safeLoad(LabBatch batch, String property) {
+        if (!labBatchDAO.getEntityManager().getEntityManagerFactory().getPersistenceUnitUtil().isLoaded(batch, property)) {
+            batch = labBatchDAO.findByName(batch.getBatchName());
         }
-        return value;
+        return batch;
     }
 }

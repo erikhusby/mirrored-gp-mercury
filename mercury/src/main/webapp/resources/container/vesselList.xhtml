@@ -13,8 +13,7 @@
 </cc:interface>
 <cc:implementation xmlns:c="http://java.sun.com/jsf/composite/container"
                    xmlns:s="http://java.sun.com/jsf/composite/sample">
-    <h:outputText value="#{vesselListBean.updateVessels(cc.attrs.vessels)}"/>
-    <p:dataTable id="vesselResultsTable" var="foundVessel" value="#{vesselListBean.foundVessels}">
+    <p:dataTable id="vesselResultsTable" var="foundVessel" value="#{cc.attrs.vessels}" emptyMessage="">
         <f:facet name="header">
             Vessel List
         </f:facet>
@@ -23,18 +22,26 @@
                 <h:outputText value="Plate View"/>
             </f:facet>
             <p:commandButton
-                    value="#{vesselListBean.getOpenCloseValue(vesselListBean.showPlateLayout)}"
-                    actionListener="#{vesselListBean.togglePlateLayout(foundVessel)}"
-                    update=":#{cc.clientId}:vesselOutput, @this" title="View the plate layout/"/>
+                    value=""
+                    actionListener="#{vesselListBean.setSelectedVessel(foundVessel)}"
+                    update=":#{cc.clientId}:plateResults, @this" title="View the plate layout.">
+                <p:effect event="click" type="fade" for=":#{cc.clientId}:platePanel">
+                    <f:param name="mode" value="'toggle'"/>
+                </p:effect>
+            </p:commandButton>
         </p:column>
         <p:column style="width:4%" rendered="${cc.attrs.expandable == true}">
             <f:facet name="header">
                 <h:outputText value="Sample List"/>
             </f:facet>
             <p:commandButton
-                    value="#{vesselListBean.getOpenCloseValue(vesselListBean.showSampleList)}"
-                    actionListener="#{vesselListBean.toggleSampleList(foundVessel)}"
-                    update=":#{cc.clientId}:vesselOutput, @this" title="View the sample list."/>
+                    value=""
+                    actionListener="#{vesselListBean.setSelectedVessel(foundVessel)}"
+                    update=":#{cc.clientId}:sampleResults, @this" title="View the sample list.">
+                <p:effect event="click" type="fade" for=":#{cc.clientId}:samplePanel">
+                    <f:param name="mode" value="'toggle'"/>
+                </p:effect>
+            </p:commandButton>
         </p:column>
         <p:column>
             <f:facet name="header">
@@ -48,7 +55,6 @@
                 <h:outputText value="Label"/>
             </f:facet>
             <h:outputText value="#{foundVessel.label}"/>
-
         </p:column>
         <p:column sortBy="#{foundVessel.type.name}">
             <f:facet name="header">
@@ -106,13 +112,21 @@
             <h:outputText value="#{foundVessel.createdOn}"/>
         </p:column>
     </p:dataTable>
-    <p:outputPanel id="vesselOutput">
-        <p:panel id="platePanel" rendered="#{vesselListBean.showPlateLayout}">
+    <p:panel id="platePanel">
+        <p:effect event="load" type="fade" speed="1">
+            <f:param name="mode" value="'hide'"/>
+        </p:effect>
+        <p:outputPanel id="plateResults">
             <c:container barcode="#{vesselListBean.selectedVessel.label}"/>
-        </p:panel>
-        <p:panel id="samplePanel" rendered="#{vesselListBean.showSampleList}">
+        </p:outputPanel>
+    </p:panel>
+    <p:panel id="samplePanel">
+        <p:effect event="load" type="fade" speed="1">
+            <f:param name="mode" value="'hide'"/>
+        </p:effect>
+        <p:outputPanel id="sampleResults">
             <s:vesselSampleList barcode="#{vesselListBean.selectedVessel.label}"/>
-        </p:panel>
-    </p:outputPanel>
+        </p:outputPanel>
+    </p:panel>
 </cc:implementation>
 </html>

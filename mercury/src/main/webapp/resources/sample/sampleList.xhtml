@@ -12,8 +12,7 @@
     <cc:attribute name="samples" required="true"/>
 </cc:interface>
 <cc:implementation xmlns:s="http://java.sun.com/jsf/composite/sample">
-    <h:outputText value="#{sampleListBean.updateSamples(cc.attrs.samples)}"/>
-    <p:dataTable id="plateSampleResults" value="#{sampleListBean.sampleList}" var="sample">
+    <p:dataTable id="plateSampleResults" value="#{cc.attrs.samples}" var="sample">
         <f:facet name="header">
             Sample Details
         </f:facet>
@@ -22,9 +21,13 @@
                 <h:outputText value="Plastic View"/>
             </f:facet>
             <p:commandButton
-                    value="#{sampleListBean.getOpenCloseValue(sampleListBean.showPlasticView)}"
-                    actionListener="#{sampleListBean.togglePlasticView(sample)}"
-                    update=":#{cc.clientId}:plasticOutputPanel,@this" title="View the plate layout/"/>
+                    value=""
+                    actionListener="#{sampleListBean.setSelectedSample(sample)}"
+                    update=":#{cc.clientId}:plasticResults,@this" title="View the plastic history.">
+                <p:effect event="click" type="fade" for=":#{cc.clientId}:plasticPanel">
+                    <f:param name="mode" value="'toggle'"/>
+                </p:effect>
+            </p:commandButton>
         </p:column>
         <p:column>
             <f:facet name="header">
@@ -45,10 +48,15 @@
             <h:outputText value="#{sample.bspSampleDTO.collaboratorParticipantId}"/>
         </p:column>
     </p:dataTable>
-    <p:outputPanel id="plasticOutputPanel">
-        <p:panel id="plasticPanel" rendered="#{sampleListBean.showPlasticView}">
+
+    <p:panel id="plasticPanel">
+        <p:effect event="load" type="fade" speed="1">
+            <f:param name="mode" value="'hide'"/>
+        </p:effect>
+        <p:outputPanel id="plasticResults">
             <s:plasticHistory barcode="#{sampleListBean.selectedSample.sampleKey}"/>
-        </p:panel>
-    </p:outputPanel>
+        </p:outputPanel>
+    </p:panel>
+
 </cc:implementation>
 </html>
