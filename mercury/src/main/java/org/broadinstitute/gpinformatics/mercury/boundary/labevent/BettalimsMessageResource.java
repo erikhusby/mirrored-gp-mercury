@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConnector;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
@@ -12,10 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -36,13 +34,12 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.sax.SAXSource;
 import java.io.StringReader;
-import java.util.Collection;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Allows BettaLIMS messages to be submitted through JAX-RS
+ * Allows BettaLIMS messages to be submitted through JAX-RS.  In this context, BettaLIMS refers to the message format,
+ * defined by bettalims.xsd.  There is a BettaLIMS server that is part of the Squid suite of applications.
  */
 @Path("/bettalimsmessage")
 @Stateless // todo jmt should this be stateful?  It has stateful DAOs injected.
@@ -60,19 +57,22 @@ public class BettalimsMessageResource {
     private WsMessageStore wsMessageStore;
 
     @Inject
-    BucketDao bucketDao;
+    private BucketDao bucketDao;
 
     @Inject
-    BucketBean bucketBean;
+    private BucketBean bucketBean;
 
     @Inject
-    BSPUserList bspUserList;
+    private BSPUserList bspUserList;
 
     @Inject
-    WorkflowLoader workflowLoader;
+    private WorkflowLoader workflowLoader;
 
     @Inject
-    AthenaClientService athenaClientService;
+    private AthenaClientService athenaClientService;
+
+    @Inject
+    private BettalimsConnector bettalimsConnector;
 
 
     /**
@@ -130,7 +130,38 @@ public class BettalimsMessageResource {
             //Create a SAXSource specifying the filter
             SAXSource source = new SAXSource(inFilter, is);
 
-            processMessage((BettaLIMSMessage) unmarshaller.unmarshal(source));
+            BettaLIMSMessage bettaLIMSMessage = (BettaLIMSMessage) unmarshaller.unmarshal(source);
+
+            // todo jmt attempt JAX-RS, fall back to JMS, or send unavailable to client?
+            boolean processInMercury = false;
+            BettalimsConnector.BettalimsResponse bettalimsResponse = bettalimsConnector.sendMessage(message);
+            if(bettalimsResponse.getCode() == 500) {
+                LOG.error("Error response from Bettalims " + bettalimsResponse.getCode() + " " + bettalimsResponse.getMessage());
+                if(bettalimsResponse.getMessage().contains("Missing source receptacle for barcode") ||
+                        bettalimsResponse.getMessage().contains("Source plate doesn't exist") ||
+                        bettalimsResponse.getMessage().contains("No strip tube found with barcode") ||
+                        bettalimsResponse.getMessage().contains("Plate not found") ||
+                        bettalimsResponse.getMessage().contains("No appropriate message handlers found") ||
+                        bettalimsResponse.getMessage().contains("Source tube has not been registered") ||
+                        bettalimsResponse.getMessage().contains("is not in the database")) {
+                    processInMercury = true;
+                }
+            }
+            // results of grep -h Exception `ls 2012*` | sort | less
+            // Missing source receptacle for barcode R12071515141
+            // Source plate doesn't exist 000003542852
+            // No strip tube found with barcode: 123456789012
+            // Plate not found
+            // No appropriate message handlers found. Either the handler isn't configured or the event type/class does not exist in the database.
+            // Can't find source plate info?
+            // Source tube has not been registered
+            // Barcode 000000012708 not found
+            // Machine not found
+            // Source receptacle 0120759474 is not in the database
+            // Program not found
+            if (processInMercury) {
+                processMessage(bettaLIMSMessage);
+            }
         } catch (Exception e) {
             wsMessageStore.recordError(message, now, e);
             LOG.error("Failed to process run", e);

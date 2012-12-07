@@ -44,6 +44,7 @@ import java.util.Map;
  */
 public class ImportFromSquidTest extends ContainerTest {
 
+    public static final String TEST_MERCURY_URL = "http://localhost:8080/Mercury";
     @PersistenceContext(unitName = "squid_pu")
     private EntityManager entityManager;
 
@@ -292,7 +293,7 @@ public class ImportFromSquidTest extends ContainerTest {
                         // Use a web service, rather than just calling persist on a DAO, because a constraint
                         // violation invalidates the EntityManager.  The web service gets a fresh EntityManager for
                         // each request.
-                        response = Client.create().resource("http://localhost:8080/Mercury/rest/labbatch")
+                        response = Client.create().resource(TEST_MERCURY_URL + "/rest/labbatch")
                                 .type(MediaType.APPLICATION_XML_TYPE)
                                 .accept(MediaType.APPLICATION_XML)
                                 .entity(labBatch)

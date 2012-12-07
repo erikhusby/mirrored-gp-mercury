@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -34,6 +35,11 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.HeuristicMixedException;
+import javax.transaction.HeuristicRollbackException;
+import javax.transaction.NotSupportedException;
+import javax.transaction.RollbackException;
+import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
@@ -93,7 +99,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
     }
 
     @BeforeMethod(groups = EXTERNAL_INTEGRATION)
-    public void setUp() throws Exception {
+    public void setUp() throws SystemException, NotSupportedException {
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {
             return;
@@ -103,7 +109,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
     }
 
     @AfterMethod(groups = EXTERNAL_INTEGRATION)
-    public void tearDown() throws Exception {
+    public void tearDown() throws SystemException, RollbackException, HeuristicRollbackException, HeuristicMixedException {
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {
             return;
@@ -113,7 +119,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
     }
 
     @Test(enabled = true, groups = EXTERNAL_INTEGRATION)
-    public void testProcessMessage() {
+    public void testProcessMessage() throws SystemException, RollbackException, HeuristicRollbackException, HeuristicMixedException {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);
 
@@ -149,23 +155,20 @@ public class BettalimsMessageResourceTest extends Arquillian {
         productOrder.setJiraTicketKey(jiraTicketKey);
         twoDBarcodedTubeDAO.flush();
         twoDBarcodedTubeDAO.clear();
+        utx.commit();
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
 
         LabEventTest.PreFlightJaxbBuilder preFlightJaxbBuilder = new LabEventTest.PreFlightJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 new ArrayList<String>(mapBarcodeToTube.keySet())).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : preFlightJaxbBuilder.getMessageList()) {
-            bettalimsMessageResource.processMessage(bettaLIMSMessage);
-            twoDBarcodedTubeDAO.flush();
-            twoDBarcodedTubeDAO.clear();
+            sendMessage(bettaLIMSMessage);
         }
 
         LabEventTest.ShearingJaxbBuilder shearingJaxbBuilder = new LabEventTest.ShearingJaxbBuilder(bettaLimsMessageFactory,
                 new ArrayList<String>(mapBarcodeToTube.keySet()), testPrefix, preFlightJaxbBuilder.getRackBarcode()).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : shearingJaxbBuilder.getMessageList()) {
-            bettalimsMessageResource.processMessage(bettaLIMSMessage);
-            twoDBarcodedTubeDAO.flush();
-            twoDBarcodedTubeDAO.clear();
+            sendMessage(bettaLIMSMessage);
         }
 
         Map<String,StaticPlate> mapBarcodeToPlate = indexedPlateFactory.parseStream(
@@ -177,14 +180,13 @@ public class BettalimsMessageResourceTest extends Arquillian {
             staticPlateDAO.flush();
             staticPlateDAO.clear();
         }
+        utx.commit();
         LabEventTest.LibraryConstructionJaxbBuilder libraryConstructionJaxbBuilder = new LabEventTest.LibraryConstructionJaxbBuilder(
                 bettaLimsMessageFactory, testPrefix, shearingJaxbBuilder.getShearCleanPlateBarcode(), indexPlate.getLabel(),
                 LabEventTest.NUM_POSITIONS_IN_RACK).invoke();
 
         for (BettaLIMSMessage bettaLIMSMessage : libraryConstructionJaxbBuilder.getMessageList()) {
-            bettalimsMessageResource.processMessage(bettaLIMSMessage);
-            twoDBarcodedTubeDAO.flush();
-            twoDBarcodedTubeDAO.clear();
+            sendMessage(bettaLIMSMessage);
         }
 
         LabEventTest.HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = new LabEventTest.HybridSelectionJaxbBuilder(bettaLimsMessageFactory,
@@ -194,17 +196,13 @@ public class BettalimsMessageResourceTest extends Arquillian {
         twoDBarcodedTubeDAO.flush();
         twoDBarcodedTubeDAO.clear();
         for (BettaLIMSMessage bettaLIMSMessage : hybridSelectionJaxbBuilder.getMessageList()) {
-            bettalimsMessageResource.processMessage(bettaLIMSMessage);
-            twoDBarcodedTubeDAO.flush();
-            twoDBarcodedTubeDAO.clear();
+            sendMessage(bettaLIMSMessage);
         }
 
         LabEventTest.QtpJaxbBuilder qtpJaxbBuilder = new LabEventTest.QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 hybridSelectionJaxbBuilder.getNormCatchBarcodes(), hybridSelectionJaxbBuilder.getNormCatchRackBarcode()).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
-            bettalimsMessageResource.processMessage(bettaLIMSMessage);
-            twoDBarcodedTubeDAO.flush();
-            twoDBarcodedTubeDAO.clear();
+            sendMessage(bettaLIMSMessage);
         }
 //        Controller.stopCPURecording();
         TwoDBarcodedTube pooltube = twoDBarcodedTubeDAO.findByBarcode(qtpJaxbBuilder.getPoolTubeBarcode());
@@ -219,6 +217,17 @@ public class BettalimsMessageResourceTest extends Arquillian {
             throw new RuntimeException(e);
         }
         System.out.println("Test run name " + runName);
+    }
+
+    private void sendMessage(BettaLIMSMessage bettaLIMSMessage) {
+//        bettalimsMessageResource.processMessage(bettaLIMSMessage);
+//        twoDBarcodedTubeDAO.flush();
+//        twoDBarcodedTubeDAO.clear();
+        String response = Client.create().resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/bettalimsmessage")
+                .type(MediaType.APPLICATION_XML_TYPE)
+                .accept(MediaType.APPLICATION_XML)
+                .entity(bettaLIMSMessage)
+                .post(String.class);
     }
 
     @Test(enabled = false, groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
