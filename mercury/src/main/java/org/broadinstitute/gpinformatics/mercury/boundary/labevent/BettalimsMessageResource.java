@@ -2,12 +2,20 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -28,8 +36,10 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.sax.SAXSource;
 import java.io.StringReader;
+import java.util.Collection;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Allows BettaLIMS messages to be submitted through JAX-RS
@@ -48,6 +58,22 @@ public class BettalimsMessageResource {
 
     @Inject
     private WsMessageStore wsMessageStore;
+
+    @Inject
+    BucketDao bucketDao;
+
+    @Inject
+    BucketBean bucketBean;
+
+    @Inject
+    BSPUserList bspUserList;
+
+    @Inject
+    WorkflowLoader workflowLoader;
+
+    @Inject
+    AthenaClientService athenaClientService;
+
 
     /**
      * Accepts a message from (typically) a liquid handling deck
@@ -120,7 +146,28 @@ public class BettalimsMessageResource {
         List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
         for (LabEvent labEvent : labEvents) {
             labEventHandler.processEvent(labEvent);
+
+/*
+//          TODO SGM  Commenting to revisit after GPLIM-517
+
+            Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels = labEventHandler.itemizeBucketItems(labEvent);
+
+            if(bucketVessels.keySet().size() ==1) {
+
+                WorkflowStepDef workingBucketIdentifier = bucketVessels.keySet().iterator().next();
+                Bucket workingBucket = bucketDao.findByName(workingBucketIdentifier.getName());
+                if(workingBucket == null) {
+                    workingBucket = new Bucket(workingBucketIdentifier);
+                }
+
+                bucketBean.start(bspUserList.getById(labEvent.getEventOperator()).getUsername(),
+                                 labEvent.getAllLabVessels(),
+                                 workingBucket,
+                                 labEvent.getEventLocation());
+            }
+*/
         }
+
     }
 
     /** Allows documents that don't include a namespace */
@@ -177,4 +224,5 @@ public class BettalimsMessageResource {
             }
         }
     }
+
 }

@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -15,7 +15,6 @@ import javax.persistence.OneToMany;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
-import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -53,7 +52,7 @@ public class Bucket {
         this.bucketDefinitionName = bucketDefinitionIn;
     }
 
-    public Bucket(@Nonnull WorkflowBucketDef bucketDef ) {
+    public Bucket(@Nonnull WorkflowStepDef bucketDef ) {
         this(bucketDef.getName());
     }
 

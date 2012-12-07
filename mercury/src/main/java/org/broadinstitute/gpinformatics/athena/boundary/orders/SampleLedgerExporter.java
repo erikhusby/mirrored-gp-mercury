@@ -228,8 +228,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         // advisory info.  If someone has time to write this useful info this column can go back in
         // getWriter().writeCell("Useful info about the billing history " + sample.getSampleName());
 
-        // work complete date
-        getWriter().writeCell(getWorkCompleteDate(sample.getBillableItems(), sample), getDateStyle());
+        // work complete date is the date of any ledger items that are ready to be billed
+        getWriter().writeCell(getWorkCompleteDate(sample.getBillableLedgerItems(), sample), getDateStyle());
 
         // Quote ID
         getWriter().writeCell(sample.getProductOrder().getQuoteId());
@@ -266,8 +266,8 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
         getWriter().writeCell(theComment);
 
-        // Any billing messages
-        String billingError = getBillingError(sample.getBillableItems());
+        // Any messages for items that are not billed yet
+        String billingError = sample.getUnbilledLedgerItemMessages();
 
         // Only use error style when there is an error in the string
         if (StringUtils.isBlank(billingError)) {
@@ -276,19 +276,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             getWriter().writeCell(billingError, getErrorMessageStyle());
         }
 
-    }
-
-    private String getBillingError(Set<BillingLedger> billableItems) {
-        Set<String> errors = new HashSet<String>();
-
-        // Collect all unique errors
-        for (BillingLedger ledger : billableItems) {
-            if (!StringUtils.isBlank(ledger.getBillingMessage())) {
-                errors.add(ledger.getBillingMessage());
-            }
-        }
-
-        return StringUtils.join(errors.iterator(), ", ");
     }
 
     private void writeHeaders(Product currentProduct, List<PriceItem> sortedPriceItems, List<Product> sortedAddOns) {
@@ -340,6 +327,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
                 currentIndex = writeBillAndNewHeaders(currentIndex);
             }
         }
+
+        // GPLIM-491 freeze the first two rows so sort doesn't disturb them
+        getWriter().getCurrentSheet().createFreezePane(0, 2);
     }
 
     private void writeEmptyFixedHeaders() {

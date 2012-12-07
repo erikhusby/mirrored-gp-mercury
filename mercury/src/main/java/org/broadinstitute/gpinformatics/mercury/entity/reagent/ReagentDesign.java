@@ -47,7 +47,7 @@ public class ReagentDesign {
     }
 
     @Enumerated(EnumType.STRING)
-    private REAGENT_TYPE reagent_type;
+    private REAGENT_TYPE reagentType;
 
     /**
      *
@@ -62,15 +62,19 @@ public class ReagentDesign {
              throw new NullPointerException("reagentType cannot be null.");
         }
         this.reagentDesign = designName;
-        this.reagent_type = reagentType;
+        this.reagentType = reagentType;
     }
 
     public REAGENT_TYPE getReagentType() {
-        return reagent_type;
+        return reagentType;
     }
 
     public String getDesignName() {
         return reagentDesign;
+    }
+
+    public void setDesignName(String designName) {
+        this.reagentDesign = designName;
     }
 
     public String getTargetSetName() {
@@ -100,5 +104,9 @@ public class ReagentDesign {
     public void addDesignedReagent(DesignedReagent designedReagent) {
         this.designedReagents.add(designedReagent);
 //        designedReagent.setReagentDesign(this);
+    }
+
+    public Long getReagentDesignId() {
+        return reagentDesignId;
     }
 }
