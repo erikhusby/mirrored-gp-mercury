@@ -7,10 +7,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
-import org.broadinstitute.gpinformatics.athena.entity.orders.BillingStatus;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedgerTest;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -97,7 +95,7 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
             // There should be ledger entries
             Assert.assertFalse(ledgerSet.isEmpty());
             BillingLedger[] ledgerArray = ledgerSet.toArray(new BillingLedger[0]);
-            List<BillingLedger> ledgerList = Arrays.asList( ledgerArray );
+            List<BillingLedger> ledgerList = Arrays.asList(ledgerArray);
             Collections.sort(ledgerList, new Comparator<BillingLedger>() {
                 @Override
                 public int compare(BillingLedger o1, BillingLedger o2) {
@@ -148,11 +146,7 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
 
 
     private BillingLedger createOneBillingLedger(String sampleName, String priceItemName, double quantity ) {
-
-        BillingLedger billingLedger = new BillingLedger( new ProductOrderSample(sampleName),
-                new PriceItem("quoteServerId", "platform", "category", priceItemName), new Date(), quantity );
-        billingLedger.getProductOrderSample().setBillingStatus(BillingStatus.EligibleForBilling);
-        return billingLedger;
+        return BillingLedgerTest.createOneBillingLedger(sampleName, priceItemName, quantity);
     }
 
     private List<BillingLedger> createExpectedBillingLedgerList1 () {
@@ -160,50 +154,50 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
 
         //SM-3KBZD
         {
-            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3KBZD", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1);
+            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3KBZD", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1);
             expList.add( billingLedgerExp );
         }
         {
-            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3KBZD", "RNA Extract from FFPE", -1.5);
+            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3KBZD", "RNA Extract from FFPE", -1.5);
             expList.add( billingLedgerExp );
         }
         //SM-3KBZE
         {
-            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3KBZE", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1);
+            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3KBZE", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1);
             expList.add( billingLedgerExp );
         }
         {
-            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3KBZE", "RNA Extract from FFPE", -1.5);
+            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3KBZE", "RNA Extract from FFPE", -1.5);
             expList.add( billingLedgerExp );
         }
         {
-            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3KBZE", "Strand Specific RNA-Seq (high coverage-50M paired reads)", 1);
+            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3KBZE", "Strand Specific RNA-Seq (high coverage-50M paired reads)", 1);
             expList.add( billingLedgerExp );
         }
         //SM-3MPJX
         {
-            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3MPJX", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1);
+            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3MPJX", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1);
             expList.add( billingLedgerExp );
         }
         {
-            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3MPJX", "RNA Extract from FFPE", -1.5);
+            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3MPJX", "RNA Extract from FFPE", -1.5);
             expList.add( billingLedgerExp );
         }
         {
-            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3MPJX", "Strand Specific RNA-Seq (high coverage-50M paired reads)", 1);
+            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3MPJX", "Strand Specific RNA-Seq (high coverage-50M paired reads)", 1);
             expList.add( billingLedgerExp );
         }
         //SM-3MPJY
         {
-            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3MPJY", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1);
+            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3MPJY", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1);
             expList.add( billingLedgerExp );
         }
         {
-            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3MPJY", "RNA Extract from FFPE", -1.5);
+            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3MPJY", "RNA Extract from FFPE", -1.5);
             expList.add( billingLedgerExp );
         }
         {
-            BillingLedger billingLedgerExp = createOneBillingLedger("SM-3MPJY", "Strand Specific RNA-Seq (high coverage-50M paired reads)", 1);
+            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3MPJY", "Strand Specific RNA-Seq (high coverage-50M paired reads)", 1);
             expList.add( billingLedgerExp );
         }
         return expList;
