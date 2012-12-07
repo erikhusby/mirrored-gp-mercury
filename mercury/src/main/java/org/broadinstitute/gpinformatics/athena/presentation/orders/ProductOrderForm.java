@@ -2,11 +2,13 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.DuplicateTitleException;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderManager;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
@@ -303,9 +305,9 @@ public class ProductOrderForm extends AbstractJsfBean {
     // FIXME: handle db store errors, JIRA server errors.
     public String save() throws IOException {
 
-        try {
+        ProductOrder productOrder = productOrderDetail.getProductOrder();
 
-            ProductOrder productOrder = productOrderDetail.getProductOrder();
+        try {
 
             if (isCreating()) {
                 productOrderManager.save(productOrder, convertTextToList(getEditIdsCache()), getSelectedAddOnPartNumbers());
@@ -320,6 +322,14 @@ public class ProductOrderForm extends AbstractJsfBean {
                             productOrder.getTitle(), productOrder.getJiraTicketKey(), isCreating() ? "created" : "updated"));
             conversationData.endConversation();
             return redirect("view");
+        } catch (QuoteNotFoundException e) {
+            logger.error(e);
+            addErrorMessage("Error saving Product Order: Quote not found: " + productOrder.getQuoteId());
+            return null;
+        } catch (DuplicateTitleException e) {
+            logger.error(e);
+            addErrorMessage("Error saving Product Order: Product Order title already in use, must be unique: " + productOrder.getTitle());
+            return null;
         } catch (Exception e) {
             logger.error(e);
             addErrorMessage("Error saving Product Order: " + e.getMessage());

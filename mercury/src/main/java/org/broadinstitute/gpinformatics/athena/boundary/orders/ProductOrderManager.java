@@ -31,19 +31,17 @@ public class ProductOrderManager {
     private QuoteService quoteService;
 
 
-    private void validateUniqueProjectTitle(ProductOrder productOrder) {
+    private void validateUniqueProjectTitle(ProductOrder productOrder) throws DuplicateTitleException {
         if (productOrderDao.findByTitle(productOrder.getTitle()) != null) {
-            throw new RuntimeException("Product order with this title already exists, please choose a different title");
+            throw new DuplicateTitleException();
         }
     }
 
-    private void validateQuote(ProductOrder productOrder) {
+    private void validateQuote(ProductOrder productOrder) throws QuoteNotFoundException {
         try {
             quoteService.getQuoteByAlphaId(productOrder.getQuoteId());
         } catch (QuoteServerException e) {
             throw new RuntimeException(e);
-        } catch (QuoteNotFoundException e) {
-            throw new RuntimeException("Invalid quote: " + productOrder.getQuoteId());
         }
     }
 
@@ -84,7 +82,15 @@ public class ProductOrderManager {
     }
 
 
-    public void save(ProductOrder productOrder, List<String> productOrderSamplesIds, List<String> addOnPartNumbers) {
+    /**
+     * Including {@link QuoteNotFoundException} since this is an expected failure that may occur in application validation
+     *
+     * @param productOrder
+     * @param productOrderSamplesIds
+     * @param addOnPartNumbers
+     * @throws QuoteNotFoundException
+     */
+    public void save(ProductOrder productOrder, List<String> productOrderSamplesIds, List<String> addOnPartNumbers) throws DuplicateTitleException, QuoteNotFoundException {
 
         validateUniqueProjectTitle(productOrder);
         validateQuote(productOrder);
