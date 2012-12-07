@@ -11,12 +11,21 @@
 <cc:interface>
     <cc:attribute name="batches" required="true"/>
 </cc:interface>
-<cc:implementation>
+<cc:implementation xmlns:c="http://java.sun.com/jsf/composite/container">
     <h:outputText value="#{batchListBean.updateBatches(cc.attrs.batches)}"/>
     <p:dataTable id="batchResultsTable" var="foundBatch" value="#{batchListBean.batches}">
         <f:facet name="header">
             Batch Details
         </f:facet>
+        <p:column style="width:4%">
+            <f:facet name="header">
+                <h:outputText value="Vessel Details"/>
+            </f:facet>
+            <p:commandButton
+                    value="#{batchListBean.getOpenCloseValue(batchListBean.showVesselView)}"
+                    actionListener="#{batchListBean.toggleVesselView(foundBatch)}"
+                    update=":#{cc.clientId}:vesselOutputPanel,@this" title="View the vessel list/"/>
+        </p:column>
         <p:column>
             <f:facet name="header">
                 <h:outputText value="Batch Name"/>
@@ -27,9 +36,16 @@
             <f:facet name="header">
                 <h:outputText value="Jira Ticket Name"/>
             </f:facet>
-            <h:link value="#{foundBatch.jiraTicket.ticketName}" target="#{foundBatch.jiraTicket.browserUrl}"/>
+            <h:outputLink value="#{foundBatch.jiraTicket.browserUrl}">
+                <h:outputText value="#{foundBatch.jiraTicket.ticketName}"/>
+            </h:outputLink>
         </p:column>
-
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Is Active"/>
+            </f:facet>
+            <h:outputText value="#{foundBatch.active}"/>
+        </p:column>
         <p:column>
             <f:facet name="header">
                 <h:outputText value="Create Date"/>
@@ -62,5 +78,10 @@
             <h:outputText value="#{batchListBean.getLatestEvent(foundBatch).eventDate}"/>
         </p:column>
     </p:dataTable>
+    <p:outputPanel id="vesselOutputPanel">
+        <p:panel id="vesselPanel" rendered="#{batchListBean.showVesselView}">
+            <c:vesselList vessels="#{batchListBean.selectedBatch.startingLabVesselsList}" expandable="false"/>
+        </p:panel>
+    </p:outputPanel>
 </cc:implementation>
 </html>

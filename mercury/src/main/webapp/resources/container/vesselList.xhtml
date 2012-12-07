@@ -9,6 +9,7 @@
       xmlns:ui="http://java.sun.com/jsf/facelets">
 <cc:interface>
     <cc:attribute name="vessels" required="true"/>
+    <cc:attribute name="expandable" default="true"/>
 </cc:interface>
 <cc:implementation xmlns:c="http://java.sun.com/jsf/composite/container"
                    xmlns:s="http://java.sun.com/jsf/composite/sample">
@@ -17,7 +18,7 @@
         <f:facet name="header">
             Vessel List
         </f:facet>
-        <p:column style="width:4%">
+        <p:column style="width:4%" rendered="${cc.attrs.expandable == true}">
             <f:facet name="header">
                 <h:outputText value="Plate View"/>
             </f:facet>
@@ -26,7 +27,7 @@
                     actionListener="#{vesselListBean.togglePlateLayout(foundVessel)}"
                     update=":#{cc.clientId}:vesselOutput, @this" title="View the plate layout/"/>
         </p:column>
-        <p:column style="width:4%">
+        <p:column style="width:4%" rendered="${cc.attrs.expandable == true}">
             <f:facet name="header">
                 <h:outputText value="Sample List"/>
             </f:facet>
