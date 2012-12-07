@@ -81,7 +81,9 @@
                 </div>
             </div>
             <div class="row-fluid">
-                <ui:include src="navigation.xhtml"/>
+                <security:isLoggedIn>
+                    <ui:include src="navigation.xhtml"/>
+                </security:isLoggedIn>
             </div>
         </div>
 
