@@ -163,44 +163,6 @@ public class LabBatch {
         return createdOn;
     }
 
-    /**
-     * addPublicComment Allows a user to create a jira comment for this product order
-     *
-     *
-     * @param comment comment to set in Jira
-     *
-     * @throws IOException
-     */
-    public void addPublicComment(String comment) throws IOException {
-        jiraTicket.addComment(comment);
-    }
-
-    /**
-     * addWatcher allows a user to add a user as a watcher of the Jira ticket associated with this product order
-     *
-     *
-     * @param personLoginId Broad User Id
-     *
-     * @throws IOException
-     */
-    public void addWatcher(String personLoginId) throws IOException {
-        jiraTicket.addWatcher(personLoginId);
-    }
-
-    /**
-     * addLink allows a user to link this the jira ticket associated with this product order with another Jira Ticket
-     *
-     *
-     * @param targetTicketKey Unique Jira Key of the Jira ticket to which this product order's Jira Ticket will be
-     *                        linked
-     *
-     * @throws IOException
-     */
-    public void addJiraLink(String targetTicketKey) throws IOException {
-
-        jiraTicket.addJiraLink(targetTicketKey);
-    }
-
     public static String generateBatchName(@Nonnull String workflowName, @Nonnull Collection<String> pdoNames) {
 
         StringBuilder batchName = new StringBuilder();
@@ -262,5 +224,32 @@ public class LabBatch {
         public String getFieldName() {
             return fieldName;
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o)
+            return true;
+        if (!(o instanceof LabBatch))
+            return false;
+
+        LabBatch labBatch = (LabBatch) o;
+
+        if (isActive != labBatch.isActive)
+            return false;
+        if (batchName != null ? !batchName.equals(labBatch.batchName) : labBatch.batchName != null)
+            return false;
+        if (jiraTicket != null ? !jiraTicket.equals(labBatch.jiraTicket) : labBatch.jiraTicket != null)
+            return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = (isActive ? 1 : 0);
+        result = 31 * result + (batchName != null ? batchName.hashCode() : 0);
+        result = 31 * result + (jiraTicket != null ? jiraTicket.hashCode() : 0);
+        return result;
     }
 }

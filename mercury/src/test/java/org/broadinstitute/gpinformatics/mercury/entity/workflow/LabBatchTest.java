@@ -43,7 +43,7 @@ public class LabBatchTest {
     @BeforeMethod
     public void setUp() {
 
-        pdoBusinessName = "PD0-1";
+        pdoBusinessName = "PD0-999";
 
         pdoNames = new ArrayList<String>();
         Collections.addAll(pdoNames, pdoBusinessName);
@@ -131,6 +131,10 @@ public class LabBatchTest {
         testBatch.setJiraTicket(new JiraTicket(JiraServiceProducer.stubInstance(), testLCSetTicketKey));
 
         Assert.assertNotNull(testBatch.getJiraTicket());
+
+        Assert.assertNotNull(testBatch.getJiraTicket().getLabBatch());
+
+        Assert.assertEquals(testBatch, testBatch.getJiraTicket().getLabBatch());
 
     }
 }

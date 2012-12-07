@@ -4,8 +4,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
@@ -20,6 +22,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
+import java.util.Map;
 
 /**
  *
@@ -79,12 +82,13 @@ public class LabBatchEjb {
 
         for (String pdo : LabVessel.extractPdoList(newBatch.getStartingLabVessels())) {
             try {
-            newBatch.addJiraLink(pdo);
-            jiraService.addComment(pdo, "New Batch Created: " +
-                    newBatch.getJiraTicket().getTicketName() + " " + newBatch.getBatchName());
+                jiraService.addLink(AddIssueLinkRequest.LinkType.Related,
+                                    newBatch.getJiraTicket().getTicketName(),pdo);
+                jiraService.addComment(pdo, "New Batch Created: " +
+                                            newBatch.getJiraTicket().getTicketName() +
+                                            " " + newBatch.getBatchName());
             }  catch (IOException ioe) {
                 logger.error("Error attempting to link Batch "+ticket.getTicketName()+" to Product order "+pdo, ioe);
-
             }
         }
     }
@@ -98,9 +102,11 @@ public class LabBatchEjb {
                                                                                                athenaClientService,
                                                                                                jiraService);
 
+        Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
+
         JiraIssue jiraIssue = jiraService.createIssue(project.getKeyPrefix(), reporter, batchSubType,
                                                       batch.getBatchName(), fieldBuilder.generateDescription(),
-                                                      fieldBuilder.getCustomFields());
+                                                      fieldBuilder.getCustomFields(submissionFields));
 
         return new JiraTicket(jiraService, jiraIssue.getKey());
     }

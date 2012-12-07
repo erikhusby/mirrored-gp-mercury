@@ -1,20 +1,36 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import junit.framework.Assert;
+import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,14 +43,16 @@ import java.util.Map;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class LCSetJiraFieldBuilderTest {
 
-    private String                        pdoBusinessName;
-    private List<String>                  pdoNames;
-    private String                        workflowName;
-    private Map<String, TwoDBarcodedTube> mapBarcodeToTube;
+    private String                             pdoBusinessName;
+    private List<String>                       pdoNames;
+    private String                             workflowName;
+    private Map<String, TwoDBarcodedTube>      mapBarcodeToTube;
+    private String                             rpSynopsis;
+    private Map<String, CustomFieldDefinition> jiraFieldDefs;
 
     @BeforeMethod
-    public void startUp() {
-        pdoBusinessName = "PD0-1";
+    public void startUp() throws IOException {
+        pdoBusinessName = "PDO-999";
 
         pdoNames = new ArrayList<String>();
         Collections.addAll(pdoNames, pdoBusinessName);
@@ -45,10 +63,13 @@ public class LCSetJiraFieldBuilderTest {
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
-        ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
-                "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, workflowName, false), new ResearchProject(101L, "Test RP", "Test synopsis",
-                                                                                false));
+        rpSynopsis = "Test synopsis";
+        ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123",
+                                                     new Product("Test product",
+                                                                 new ProductFamily("Test product family"), "test",
+                                                                 "1234", null, null, 10000, 20000, 100, 40, null, null,
+                                                                 true, workflowName, false),
+                                                     new ResearchProject(101L, "Test RP", rpSynopsis, false));
         productOrder.setJiraTicketKey(pdoBusinessName);
         mapKeyToProductOrder.put(pdoBusinessName, productOrder);
 
@@ -66,6 +87,8 @@ public class LCSetJiraFieldBuilderTest {
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
 
+        jiraFieldDefs = JiraServiceProducer.stubInstance().getCustomFields();
+
     }
 
     @AfterMethod
@@ -73,8 +96,56 @@ public class LCSetJiraFieldBuilderTest {
 
     }
 
-    public void testFieldGeneration() {
+    public void testLCSetFieldGeneration() throws IOException {
+        LabBatch testBatch = new LabBatch(LabBatch.generateBatchName(workflowName, pdoNames),
+                                          new HashSet<LabVessel>(mapBarcodeToTube.values()));
 
+        AbstractBatchJiraFieldBuilder testBuilder = AbstractBatchJiraFieldBuilder
+                .getInstance(CreateFields.ProjectType.LCSET_PROJECT, testBatch, AthenaClientProducer.stubInstance(),
+                             JiraServiceProducer.stubInstance());
+
+        Assert.assertEquals(rpSynopsis, testBuilder.generateDescription());
+
+        Collection<CustomField> generatedFields = testBuilder.getCustomFields(jiraFieldDefs);
+
+        Assert.assertEquals(7, generatedFields.size());
+
+        for (CustomField currField : generatedFields) {
+            if (currField.getFieldDefinition().getName()
+                         .equals(LabBatch.RequiredSubmissionFields.WORK_REQUEST_IDS.getFieldName())) {
+                Assert.assertTrue(StringUtils.isBlank((String) currField.getValue()));
+            }
+            if (currField.getFieldDefinition().getName()
+                         .equals(LabBatch.RequiredSubmissionFields.GSSR_IDS.getFieldName())) {
+                for (LabVessel currVessel : testBatch.getStartingLabVessels()) {
+                    Assert.assertTrue(((String) currField.getValue()).contains(currVessel.getLabel()));
+                }
+            }
+            if (currField.getFieldDefinition().getName()
+                         .equals(LabBatch.RequiredSubmissionFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName())) {
+                Assert.assertEquals(((String) currField.getValue()), LCSetJiraFieldBuilder.LIB_QC_SEQ_REQUIRED);
+            }
+            if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName())) {
+                Assert.assertEquals(String.valueOf(testBatch.getStartingLabVessels().size()), (String) currField.getValue());
+            }
+            if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName())) {
+                Assert.assertEquals(LCSetJiraFieldBuilder.POOLING_STATUS, currField.getValue());
+            }
+            if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.PROGRESS_STATUS.getFieldName())) {
+                Assert.assertEquals(LCSetJiraFieldBuilder.PROGRESS_STATUS, currField.getValue());
+            }
+            if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.PROTOCOL.getFieldName())) {
+                WorkflowLoader wfLoader = new WorkflowLoader();
+                WorkflowConfig wfConfig = wfLoader.load();
+                AthenaClientService athenaSvc = AthenaClientProducer.stubInstance();
+
+                ProductWorkflowDef workflowDef = wfConfig.getWorkflowByName(
+                        athenaSvc.retrieveProductOrderDetails(pdoBusinessName).getProduct().getWorkflowName());
+
+                Assert.assertEquals(workflowDef.getEffectiveVersion().getVersion(), currField.getValue());
+
+            }
+        }
     }
 
 }

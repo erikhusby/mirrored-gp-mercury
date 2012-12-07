@@ -3,12 +3,14 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author Scott Matthews
@@ -17,7 +19,7 @@ import java.util.Collection;
  */
 public abstract class AbstractBatchJiraFieldBuilder {
 
-    public abstract Collection<CustomField> getCustomFields() throws IOException;
+    public abstract Collection<CustomField> getCustomFields(Map<String, CustomFieldDefinition> submissionFields) throws IOException;
 
     public abstract String generateDescription();
 

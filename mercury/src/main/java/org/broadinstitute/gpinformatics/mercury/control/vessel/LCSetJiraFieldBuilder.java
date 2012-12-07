@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -14,11 +13,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -28,6 +24,10 @@ import java.util.Set;
  *         Time: 10:39 AM
  */
 public class LCSetJiraFieldBuilder extends AbstractBatchJiraFieldBuilder {
+
+    public static final  String LIB_QC_SEQ_REQUIRED = "None";
+    public static final  String POOLING_STATUS      = "Pool w/o Positive Control";
+    public static final String PROGRESS_STATUS     = "On Track";
 
     private final LabBatch            batch;
     private final AthenaClientService athenaClientService;
@@ -41,23 +41,21 @@ public class LCSetJiraFieldBuilder extends AbstractBatchJiraFieldBuilder {
     }
 
     @Override
-    public Collection<CustomField> getCustomFields() throws IOException {
+    public Collection<CustomField> getCustomFields(Map<String, CustomFieldDefinition> submissionFields)
+            throws IOException {
         Collection<String> pdos = LabVessel.extractPdoList(batch.getStartingLabVessels());
 
         Set<CustomField> customFields = new HashSet<CustomField>();
-        Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
-        List<CustomField> listOfFields = new ArrayList<CustomField>();
+        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.WORK_REQUEST_IDS, ""));
 
-        listOfFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.WORK_REQUEST_IDS, ""));
+        customFields.add(new CustomField(
+                submissionFields.get(LabBatch.RequiredSubmissionFields.PROGRESS_STATUS.getFieldName()), PROGRESS_STATUS,
+                CustomField.SingleFieldType.RADIO_BUTTON));
 
-        listOfFields.add(new CustomField(submissionFields.get(
-                LabBatch.RequiredSubmissionFields.PROGRESS_STATUS.getFieldName()), "On Track",
-                                         CustomField.SingleFieldType.RADIO_BUTTON));
-
-        listOfFields.add(new CustomField(submissionFields.get(
-                LabBatch.RequiredSubmissionFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName()), "None",
-                                         CustomField.SingleFieldType.SINGLE_SELECT));
+        customFields.add(new CustomField(
+                submissionFields.get(LabBatch.RequiredSubmissionFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName()),
+                LIB_QC_SEQ_REQUIRED, CustomField.SingleFieldType.SINGLE_SELECT));
 
         StringBuilder sampleList = new StringBuilder();
 
@@ -65,24 +63,24 @@ public class LCSetJiraFieldBuilder extends AbstractBatchJiraFieldBuilder {
             sampleList.append("\n").append(currVessel.getLabel());
         }
 
-        listOfFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.GSSR_IDS,
+        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.GSSR_IDS,
                                          sampleList.toString()));
-        listOfFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES,
+        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES,
                                          String.valueOf(batch.getStartingLabVessels().size())));
 
-        listOfFields.add(new CustomField(submissionFields.get(
-                LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName()), "Pool w/o Positive Control",
-                                         CustomField.SingleFieldType.SINGLE_SELECT));
+        customFields.add(new CustomField(
+                submissionFields.get(LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName()), POOLING_STATUS,
+                CustomField.SingleFieldType.SINGLE_SELECT));
 
         if (!pdos.isEmpty() && pdos.size() == 1) {
             //TODO SGM:  Validate.  The following assumes that a description is set ONLY when there is one PDO in the batch set
             ProductOrder pdo = athenaClientService.retrieveProductOrderDetails(pdos.iterator().next());
 
-/*
-            SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
+            /*
+                        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
 
-            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.DUE_DATE,dateFormat.format(pdo.)))
-*/
+                        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.DUE_DATE,dateFormat.format(pdo.)))
+            */
 
             WorkflowLoader wfLoader = new WorkflowLoader();
             WorkflowConfig wfConfig = wfLoader.load();
@@ -91,7 +89,6 @@ public class LCSetJiraFieldBuilder extends AbstractBatchJiraFieldBuilder {
 
             customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.PROTOCOL,
                                              workflowDef.getEffectiveVersion().getVersion()));
-
         }
 
         return customFields;
