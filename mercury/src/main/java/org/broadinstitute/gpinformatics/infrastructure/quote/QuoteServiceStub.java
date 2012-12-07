@@ -53,11 +53,17 @@ public class QuoteServiceStub implements QuoteService {
         throw new IllegalStateException("Not Yet Implemented");
     }
 
-
     @Override
-    public Quote getQuoteByAlphaId(final String alphaId) throws QuoteServerException, QuoteNotFoundException {
-        //TODO PMB remove this impl method
-        throw new IllegalStateException("Not Yet Implemented");
+    public Quote getQuoteByAlphaId(String id) throws QuoteServerException, QuoteNotFoundException {
+        Quote quote = null;
+
+        for (Quote aQuote : getAllSequencingPlatformQuotes().getQuotes()) {
+            if (aQuote.getAlphanumericId().equals(id)) {
+                quote = aQuote;
+            }
+        }
+        return quote;
     }
+
 
 }
