@@ -146,7 +146,7 @@
     <properties>
         <!-- Clover -->
         <clover.version>3.1.8</clover.version>
-        <clover.plugin.version>3.1.82</clover.plugin.version>
+        <clover.plugin.version>3.1.8</clover.plugin.version>
         <clover.targetPercentage>15%</clover.targetPercentage>
 
         <!-- For site reports -->
