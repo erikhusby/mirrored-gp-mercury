@@ -6,6 +6,9 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -24,10 +27,23 @@ public class ProductOrderManager {
     @Inject
     private ProductDao productDao;
 
+    @Inject
+    private QuoteService quoteService;
+
 
     private void validateUniqueProjectTitle(ProductOrder productOrder) {
         if (productOrderDao.findByTitle(productOrder.getTitle()) != null) {
             throw new RuntimeException("Product order with this title already exists, please choose a different title");
+        }
+    }
+
+    private void validateQuote(ProductOrder productOrder) {
+        try {
+            quoteService.getQuoteByAlphaId(productOrder.getQuoteId());
+        } catch (QuoteServerException e) {
+            throw new RuntimeException(e);
+        } catch (QuoteNotFoundException e) {
+            throw new RuntimeException("Invalid quote: " + productOrder.getQuoteId());
         }
     }
 
@@ -71,6 +87,7 @@ public class ProductOrderManager {
     public void save(ProductOrder productOrder, List<String> productOrderSamplesIds, List<String> addOnPartNumbers) {
 
         validateUniqueProjectTitle(productOrder);
+        validateQuote(productOrder);
         updateSamples(productOrder, productOrderSamplesIds);
         updateAddOnProducts(productOrder, addOnPartNumbers);
         updateStatus(productOrder);

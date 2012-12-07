@@ -14,14 +14,6 @@ public interface QuoteService extends Serializable {
 
     // todo make registerNewWork mock
 
-    /**
-     * Asks the quote server for basic information about a quote.
-     *
-     * @param id Alphanumeric ID for the quote
-     * @return If the quote exists the return value will be a quote object. Otherwise null.
-     */
-    public Quote getQuoteFromQuoteServer(String id) throws QuoteServerException, QuoteNotFoundException;
-
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException;
 
     public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException;
@@ -36,6 +28,5 @@ public interface QuoteService extends Serializable {
 
     public Quote getQuoteByNumericId(final String numericId) throws QuoteServerException, QuoteNotFoundException;
 
-    //TODO Remove this method, its a dupe of getQuoteFromQuoteServer
     public Quote getQuoteByAlphaId(String alphaId) throws QuoteServerException, QuoteNotFoundException;
 }

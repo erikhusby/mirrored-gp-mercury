@@ -14,20 +14,8 @@ public class QuoteServiceStub implements QuoteService {
     }
 
     @Override
-    public Quote getQuoteFromQuoteServer(String id) throws QuoteServerException, QuoteNotFoundException {
-        Quote quote = null;
-
-        for (Quote aQuote : getAllSequencingPlatformQuotes().getQuotes()) {
-            if (aQuote.getAlphanumericId().equals(id)) {
-                quote = aQuote;
-            }
-        }
-        return quote;
-    }
-
-    @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
-        PriceList priceList = null;
+        PriceList priceList;
 
         try {
             priceList = QuoteServerDataSnapshotter.readPriceListFromTestFile();
@@ -38,9 +26,10 @@ public class QuoteServiceStub implements QuoteService {
         return priceList;
     }
 
+
     @Override
     public Quotes getAllSequencingPlatformQuotes() throws QuoteServerException, QuoteNotFoundException {
-        Quotes quotes = null;
+        Quotes quotes;
         try {
             quotes = QuoteServerDataSnapshotter.readAllQuotesFromTestFile();
         }
@@ -50,23 +39,25 @@ public class QuoteServiceStub implements QuoteService {
         return quotes;
     }
 
+
     @Override
     public String registerNewWork(Quote quote, PriceItem priceItem, Date reportedCompletionDate,
                                   double numWorkUnits, String callbackUrl, String callbackParameterName, String callbackParameterValue) {
         return Integer.toString(workItemId++);
     }
 
+
     @Override
     public Quote getQuoteByNumericId(final String numericId) throws QuoteServerException, QuoteNotFoundException {
         //TODO PMB remove this impl method
         throw new IllegalStateException("Not Yet Implemented");
-        //return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
+
 
     @Override
     public Quote getQuoteByAlphaId(final String alphaId) throws QuoteServerException, QuoteNotFoundException {
         //TODO PMB remove this impl method
         throw new IllegalStateException("Not Yet Implemented");
-        //return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
+
 }

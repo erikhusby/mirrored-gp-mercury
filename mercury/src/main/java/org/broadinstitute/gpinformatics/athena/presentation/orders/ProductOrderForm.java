@@ -112,7 +112,7 @@ public class ProductOrderForm extends AbstractJsfBean {
         String quoteId = productOrderDetail.getProductOrder().getQuoteId();
         if (!StringUtils.isBlank(quoteId)) {
             try {
-                Quote quote = quoteService.getQuoteFromQuoteServer(quoteId);
+                Quote quote = quoteService.getQuoteByAlphaId(quoteId);
                 String fundsRemainingString = quote.getQuoteFunding().getFundsRemaining();
                 try {
                     double fundsRemaining = Double.parseDouble(fundsRemainingString);

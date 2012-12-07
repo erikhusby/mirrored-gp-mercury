@@ -147,16 +147,6 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         forceResponseMimeTypes(client, MediaType.APPLICATION_XML_TYPE);
     }
 
-    /**
-     * Asks the GAP quote server for basic information about a quote.
-     *
-     * @param id Alphanumeric ID for the quote
-     * @return If the quote exists the return value will be a quote object. Otherwise null.
-     */
-    @Override
-    public Quote getQuoteFromQuoteServer(String id) throws QuoteServerException, QuoteNotFoundException {
-        return getSingleQuoteById(id, url(Endpoint.SINGLE_QUOTE));
-    }
 
     @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
