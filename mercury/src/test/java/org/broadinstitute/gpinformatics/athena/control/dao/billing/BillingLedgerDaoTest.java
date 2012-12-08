@@ -168,13 +168,12 @@ public class BillingLedgerDaoTest  extends ContainerTest {
         }
 
         {
-          //TODO hmc Comment out until samplePosition change is resolved.
-//        // test an order with dupes
-//        billingLedgerDao.removeLedgerItemsWithoutBillingSession(dupeOrders);
-//        billingLedgerDao.flush();
-//        //verify by trying to retieve what is pending but not yet billed should be none left
-//        Set<BillingLedger> dupeLedgerEntries = billingLedgerDao.findWithoutBillingSessionByOrderList(dupeOrders);
-//        Assert.assertEquals("The specified order should find one test ledger", 2, dupeLedgerEntries.size()) ;
+        // test an order with dupes
+        billingLedgerDao.removeLedgerItemsWithoutBillingSession(dupeOrders);
+        billingLedgerDao.flush();
+        //verify by trying to retieve what is pending but not yet billed should be none left
+        Set<BillingLedger> dupeLedgerEntries = billingLedgerDao.findWithoutBillingSessionByOrderList(dupeOrders);
+        Assert.assertEquals("The specified order should find one test ledger", 2, dupeLedgerEntries.size()) ;
         }
 
     }

@@ -41,6 +41,7 @@ public class ProductOrderSampleTest {
         class ProductOrderSampleFactory implements EquivalentFactory<ProductOrderSample> {
             @Override public ProductOrderSample create() {
                 ProductOrderSample sample = new ProductOrderSample("SM-12345", BSPSampleDTO.DUMMY);
+                sample.setSamplePosition(0);
                 return sample;
             }
         }

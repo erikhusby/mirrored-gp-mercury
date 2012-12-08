@@ -54,8 +54,8 @@ public class ProductOrderSample implements Serializable {
     @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private Set<BillingLedger> ledgerItems = new HashSet<BillingLedger>();
 
-    @Column(name="SAMPLE_POSITION", insertable=false, updatable=false)
-    private int samplePosition;
+    @Column(name="SAMPLE_POSITION", updatable = false, insertable = false, nullable=false)
+    private Integer samplePosition;
 
     @Transient
     private BSPSampleDTO bspDTO = BSPSampleDTO.DUMMY;
@@ -111,11 +111,11 @@ public class ProductOrderSample implements Serializable {
         return isInBspFormat() && !hasBspDTOBeenInitialized;
     }
 
-    public int getSamplePosition() {
+    public Integer getSamplePosition() {
         return samplePosition;
     }
 
-    public void setSamplePosition(int samplePosition) {
+    public void setSamplePosition(Integer samplePosition) {
         this.samplePosition = samplePosition;
     }
 
