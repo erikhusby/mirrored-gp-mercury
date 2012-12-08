@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
-import org.apache.poi.ss.usermodel.Sheet;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -56,7 +55,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
     private BSPUserList bspUserList;
 
-
     public SampleLedgerExporter(ProductOrder... productOrders) {
         this(Arrays.asList(productOrders));
     }
@@ -88,15 +86,15 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         return user.getFirstName() + " " + user.getLastName();
     }
 
-    private Date getWorkCompleteDate(Set<BillingLedger> billingLedgers, ProductOrderSample productOrderSample) {
+    private static Date getWorkCompleteDate(Set<BillingLedger> billingLedgers, ProductOrderSample productOrderSample) {
         if (billingLedgers == null) {
             return null;
         }
 
-        // very simplistic logic that for now rolls up all work complete dates and assumes they are the same across
-        // all price items on the PDO sample
+        // Very simple logic that for now rolls up all work complete dates and assumes they are the same across
+        // all price items on the PDO sample.
         for (BillingLedger billingLedger : billingLedgers) {
-            if (billingLedger.getProductOrderSample().equals(productOrderSample) && billingLedger.getWorkCompleteDate() != null) {
+            if (!billingLedger.isBilled() && billingLedger.getProductOrderSample().equals(productOrderSample)) {
                 return billingLedger.getWorkCompleteDate();
             }
         }
@@ -126,15 +124,11 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell(priceItem.getName() + " [" + product.getPartNumber() + "]", 2, getPriceItemProductHeaderStyle());
     }
 
-    private int writeBillAndNewHeaders(int currentIndex) {
-        Sheet sheet = getWriter().getCurrentSheet();
-        sheet.setColumnWidth(currentIndex, VALUE_WIDTH);
-        sheet.setColumnWidth(currentIndex + 1, VALUE_WIDTH);
-
+    private void writeBillAndNewHeaders() {
         getWriter().writeCell("Billed", getBilledAmountsHeaderStyle());
+        getWriter().setColumnWidth(VALUE_WIDTH);
         getWriter().writeCell("Update Quantity To", getBilledAmountsHeaderStyle());
-
-        return currentIndex + 2;
+        getWriter().setColumnWidth(VALUE_WIDTH);
     }
 
     /**
@@ -154,8 +148,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
             // per 2012-11-19 conversation with Alex and Hugh, Excel does not give us enough characters in a tab
             // name to allow for the product name in all cases, so use just the part number
-            Sheet sheet = getWorkbook().createSheet(currentProduct.getPartNumber());
-            getWriter().setCurrentSheet(sheet);
+            getWriter().createSheet(currentProduct.getPartNumber());
 
             List<ProductOrder> productOrders = orderMap.get(currentProduct);
 
@@ -278,12 +271,22 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
     }
 
-    private void writeHeaders(Product currentProduct, List<PriceItem> sortedPriceItems, List<Product> sortedAddOns) {
-        int currentIndex = FIXED_HEADERS.length;
+    private static String getBillingError(Set<BillingLedger> billableItems) {
+        Set<String> errors = new HashSet<String>();
 
+        // Collect all unique errors
+        for (BillingLedger ledger : billableItems) {
+            if (!StringUtils.isBlank(ledger.getBillingMessage())) {
+                errors.add(ledger.getBillingMessage());
+            }
+        }
+
+        return StringUtils.join(errors.iterator(), ", ");
+    }
+
+    private void writeHeaders(Product currentProduct, List<PriceItem> sortedPriceItems, List<Product> sortedAddOns) {
         for (PriceItem priceItem : sortedPriceItems) {
             writePriceItemProductHeader(priceItem, currentProduct);
-            currentIndex += 2;
         }
 
         // Repeat the process for add ons
@@ -291,21 +294,18 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             List<PriceItem> sortedAddOnPriceItems = getPriceItems(addOn);
             for (PriceItem priceItem : sortedAddOnPriceItems) {
                 writePriceItemProductHeader(priceItem, addOn);
-                currentIndex += 2;
             }
         }
 
-        Sheet sheet = getWriter().getCurrentSheet();
-        sheet.setColumnWidth(currentIndex++, COMMENTS_WIDTH);
         getWriter().writeCell("Comments", getFixedHeaderStyle());
-        sheet.setColumnWidth(currentIndex, ERRORS_WIDTH);
+        getWriter().setColumnWidth(COMMENTS_WIDTH);
         getWriter().writeCell("Billing Errors", getFixedHeaderStyle());
+        getWriter().setColumnWidth(ERRORS_WIDTH);
 
         writeAllBillAndNewHeaders(currentProduct.getOptionalPriceItems(), currentProduct.getAddOns());
     }
 
     private void writeAllBillAndNewHeaders(Set<PriceItem> priceItems, Set<Product> addOns) {
-
         // The new row
         getWriter().nextRow();
 
@@ -313,27 +313,26 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         writeEmptyFixedHeaders();
 
         // primary price item for main product
-        int currentIndex = FIXED_HEADERS.length;
-        currentIndex = writeBillAndNewHeaders(currentIndex);
+        writeBillAndNewHeaders();
         for (PriceItem priceItem : priceItems) {
-            currentIndex = writeBillAndNewHeaders(currentIndex);
+            writeBillAndNewHeaders();
         }
 
         for (Product addOn : addOns) {
             // primary price item for this add-on
-            currentIndex = writeBillAndNewHeaders(currentIndex);
+            writeBillAndNewHeaders();
 
             for (PriceItem priceItem : addOn.getOptionalPriceItems()) {
-                currentIndex = writeBillAndNewHeaders(currentIndex);
+                writeBillAndNewHeaders();
             }
         }
 
         // GPLIM-491 freeze the first two rows so sort doesn't disturb them
-        getWriter().getCurrentSheet().createFreezePane(0, 2);
+        getWriter().createFreezePane(0, 2);
     }
 
     private void writeEmptyFixedHeaders() {
-        // Write blank secondary header line for fixed columns, with default styling
+        // Write blank secondary header line for fixed columns, with default styling.
         for (String header : FIXED_HEADERS) {
             getWriter().writeCell(" ");
         }
@@ -367,5 +366,4 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             getWriter().writeCell(ProductOrderSample.NO_BILL_COUNT);
         }
     }
-
 }

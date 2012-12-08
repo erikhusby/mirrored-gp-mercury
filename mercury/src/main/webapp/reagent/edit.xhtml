@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:b="http://mercury.broadinstitute.org/ui">
+<body>
+<ui:composition template="/layout.xhtml">
+    <ui:define
+            name="title">#{reagentDesignForm.reagentDesign.reagentDesignId == null ? 'New' : 'Edit'} Reagent Design</ui:define>
+
+    <ui:define name="metadata">
+        <f:metadata>
+            <f:viewParam name="reagentDesign" value="#{reagentDesignForm.reagentDesign}" converter="#{reagentDesignConverter}"
+                         valueChangeListener="#{reagentDesignConverter.updateModel}">
+                <!--<f:event type="preValidate" listener="#{reagentDesignForm.initReagent}"/>-->
+            </f:viewParam>
+        </f:metadata>
+    </ui:define>
+    <ui:define name="body">
+        <h:form id="form" prependId="false" styleClass="form-horizontal">
+
+            <!-- reagentDesign -->
+            <div class="control-group">
+                <p:outputLabel for="designName" value="Name" styleClass="control-label"/>
+
+                <div class="controls">
+                    <p:inputText id="designName"
+                                 value="#{reagentDesignForm.reagentDesign.designName}" size="50" required="true"
+                                 maxlength="255">
+                        <f:validateLength maximum="255"/>
+                    </p:inputText>
+                    <p:watermark for="designName" value="Enter the name of the reagent design."/>
+                    <p:message for="designName"/>
+                </div>
+            </div>
+
+            <!-- Target Set -->
+            <div class="control-group">
+                <p:outputLabel for="targetSetName" value="Target Set" styleClass="control-label"/>
+
+                <div class="controls">
+                    <p:inputText id="targetSetName"
+                                 value="#{reagentDesignForm.reagentDesign.targetSetName}" size="50" required="true"
+                                 maxlength="255">
+                        <f:validateLength maximum="255"/>
+                    </p:inputText>
+                    <p:watermark for="targetSetName" value="Enter the name of the target set."/>
+                    <p:message for="targetSetName"/>
+                </div>
+            </div>
+
+            <!-- manufacturersName Set -->
+            <div class="control-group">
+                <p:outputLabel for="manufacturersName" value="Manufacturers Name" styleClass="control-label"/>
+
+                <div class="controls">
+                    <p:inputText id="manufacturersName"
+                                 value="#{reagentDesignForm.reagentDesign.manufacturersName}" size="50"
+                                 required="true"
+                                 maxlength="255">
+                        <f:validateLength maximum="255"/>
+                    </p:inputText>
+                    <p:watermark for="manufacturersName" value="Enter the name of the manufacturer."/>
+                    <p:message for="manufacturersName"/>
+                </div>
+            </div>
+
+
+            <div class="control-group">
+                <div class="controls">
+                    <div class="row-fluid">
+                        <div class="span1">
+                            <b:commandButton value="Save"
+                                             disabled="#{!userBean.validUser}"
+                                             action="#{reagentDesignForm.edit}"
+                                             ajax="false" styleClass="ui-priority-primary"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </h:form>
+    </ui:define>
+</ui:composition>
+</body>
+</html>

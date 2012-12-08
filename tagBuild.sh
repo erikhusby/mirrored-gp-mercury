@@ -14,8 +14,9 @@ if [ $# -eq 2 ] ; then
     mkdir target/checkout
     git clone ssh://git@stash.broadinstitute.org:7999/GPIN/mercury.git target/checkout
     cd target/checkout
+    git push origin :$TAG
     git tag -a -m "Successful build" --force $TAG $BRRN
-    git push origin $TAG
+    git push origin --tags
 else
     echo "Usage: $0 TAG bamboo.repository.revision.number"
     echo "You must specify the tag name and the revision number associated with the build"

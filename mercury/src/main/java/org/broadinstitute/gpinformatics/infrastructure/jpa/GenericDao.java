@@ -30,7 +30,7 @@ import java.util.List;
 @RequestScoped
 public class GenericDao {
 
-    public static final int IN_CLAUSE_LIMIT = 1000;
+    private static final int IN_CLAUSE_LIMIT = 1000;
 
     /**
      * Interface for callbacks that want to specify fetches from the specified {@link Root}, make the query distinct,
@@ -132,6 +132,7 @@ public class GenericDao {
         return getEntityManager().getCriteriaBuilder();
     }
 
+
     /**
      * Returns all entities of the specified entity type.
      * @param entity the class of entity to return
@@ -139,9 +140,24 @@ public class GenericDao {
      * @return list of entities, or empty list if none found
      */
     public <ENTITY_TYPE> List<ENTITY_TYPE> findAll(Class<ENTITY_TYPE> entity) {
+        return findAll(entity, null);
+    }
+
+    /**
+    * Returns all entities of the specified entity type.
+    * @param entity the class of entity to return
+    * @param <ENTITY_TYPE> the type of the entity to return
+    * @return list of entities, or empty list if none found
+    */
+    public <ENTITY_TYPE> List<ENTITY_TYPE> findAll(Class<ENTITY_TYPE> entity, @Nullable GenericDaoCallback<ENTITY_TYPE> callback) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
-        criteriaQuery.from(entity);
+        Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
+
+        if (callback != null) {
+            callback.callback(criteriaQuery, root);
+        }
+
         try {
             return getEntityManager().createQuery(criteriaQuery).getResultList();
         } catch (NoResultException ignored) {

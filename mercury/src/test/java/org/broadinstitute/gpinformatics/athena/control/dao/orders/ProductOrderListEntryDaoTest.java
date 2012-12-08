@@ -6,10 +6,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -90,7 +90,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
      *
      * @param productOrderListEntries
      */
-    private void assertPDOUniqueness(Collection<ProductOrderListEntry> productOrderListEntries) {
+    private static void assertPDOUniqueness(Collection<ProductOrderListEntry> productOrderListEntries) {
 
         Map<String, Long> countsMap = new HashMap<String, Long>();
         for (ProductOrderListEntry productOrderListEntry : productOrderListEntries) {
@@ -106,11 +106,11 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         CollectionUtils.filter(countsEntries, new Predicate<Map.Entry<String, Long>>() {
             @Override
             public boolean evaluate(Map.Entry<String, Long> stringLongEntry) {
-                return stringLongEntry.getValue().longValue() > 1 /* temp hack for dev */ && ! stringLongEntry.getKey().equals("PDO-191");
+                return stringLongEntry.getValue() > 1 /* temp hack for dev */ && ! stringLongEntry.getKey().equals("PDO-70");
             }
         });
 
-        if (countsEntries.size() > 0) {
+        if (!countsEntries.isEmpty()) {
             List<String> strings = new ArrayList<String>();
             for (Map.Entry<String, Long> countEntry : countsEntries) {
                 strings.add(countEntry.getKey() + ": " + countEntry.getValue());
@@ -171,11 +171,10 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
 
     public void testOneLedgerEntryWithBillingSession() {
-        final BillingLedger billingLedger =
+        BillingLedger billingLedger =
                 new BillingLedger(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(), new Date(), 2);
 
-        BillingSession billingSession = new BillingSession(1L);
-        billingSession.setBillingLedgerItems(new HashSet<BillingLedger>() {{ add(billingLedger); }});
+        BillingSession billingSession = new BillingSession(1L, Collections.singleton(billingLedger));
 
         billingSessionDao.persist(billingSession);
         billingSessionDao.flush();
