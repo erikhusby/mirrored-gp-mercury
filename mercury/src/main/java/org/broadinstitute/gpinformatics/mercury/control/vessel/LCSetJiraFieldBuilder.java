@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
+import clover.org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -25,25 +27,35 @@ import java.util.Set;
  */
 public class LCSetJiraFieldBuilder extends AbstractBatchJiraFieldBuilder {
 
-    public static final  String LIB_QC_SEQ_REQUIRED = "None";
-    public static final  String POOLING_STATUS      = "Pool w/o Positive Control";
+    public static final String LIB_QC_SEQ_REQUIRED = "None";
+    public static final String POOLING_STATUS      = "Pool w/o Positive Control";
     public static final String PROGRESS_STATUS     = "On Track";
 
     private final LabBatch            batch;
-    private final AthenaClientService athenaClientService;
-    private final JiraService         jiraService;
+    private final Set<ResearchProject>    foundResearchProjectList = new HashSet<ResearchProject>();
+    private final Set<ProductWorkflowDef> workflowDefs             = new HashSet<ProductWorkflowDef>();
+    private final Collection<String> pdos;
 
-    public LCSetJiraFieldBuilder(@Nonnull LabBatch batch, AthenaClientService athenaClientService,
-                                 JiraService jiraService) {
+    public LCSetJiraFieldBuilder(@Nonnull LabBatch batch, AthenaClientService athenaClientService) {
         this.batch = batch;
-        this.athenaClientService = athenaClientService;
-        this.jiraService = jiraService;
+
+        WorkflowLoader wfLoader = new WorkflowLoader();
+        WorkflowConfig wfConfig = wfLoader.load();
+
+        pdos = LabVessel.extractPdoList(batch.getStartingLabVessels());
+
+        for (String currPdo : pdos) {
+            ProductOrder pdo = athenaClientService.retrieveProductOrderDetails(currPdo);
+
+            workflowDefs.add(wfConfig.getWorkflowByName(pdo.getProduct().getWorkflowName()));
+            foundResearchProjectList.add(pdo.getResearchProject());
+        }
+
     }
 
     @Override
     public Collection<CustomField> getCustomFields(Map<String, CustomFieldDefinition> submissionFields)
             throws IOException {
-        Collection<String> pdos = LabVessel.extractPdoList(batch.getStartingLabVessels());
 
         Set<CustomField> customFields = new HashSet<CustomField>();
 
@@ -72,23 +84,17 @@ public class LCSetJiraFieldBuilder extends AbstractBatchJiraFieldBuilder {
                 submissionFields.get(LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName()), POOLING_STATUS,
                 CustomField.SingleFieldType.SINGLE_SELECT));
 
-        if (!pdos.isEmpty() && pdos.size() == 1) {
-            //TODO SGM:  Validate.  The following assumes that a description is set ONLY when there is one PDO in the batch set
-            ProductOrder pdo = athenaClientService.retrieveProductOrderDetails(pdos.iterator().next());
+        if (!workflowDefs.isEmpty()) {
+            String builtProtocol = "";
+            for (ProductWorkflowDef currWorkflowDef : workflowDefs) {
 
-            /*
-                        SimpleDateFormat dateFormat = new SimpleDateFormat("MM/dd/yyyy");
-
-                        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.DUE_DATE,dateFormat.format(pdo.)))
-            */
-
-            WorkflowLoader wfLoader = new WorkflowLoader();
-            WorkflowConfig wfConfig = wfLoader.load();
-
-            ProductWorkflowDef workflowDef = wfConfig.getWorkflowByName(pdo.getProduct().getWorkflowName());
-
-            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.PROTOCOL,
-                                             workflowDef.getEffectiveVersion().getVersion()));
+                if (StringUtils.isNotBlank(builtProtocol)) {
+                    builtProtocol += ", ";
+                }
+                builtProtocol += currWorkflowDef.getName() + ":" + currWorkflowDef.getEffectiveVersion().getVersion();
+            }
+            customFields
+                    .add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.PROTOCOL, builtProtocol));
         }
 
         return customFields;
@@ -97,13 +103,16 @@ public class LCSetJiraFieldBuilder extends AbstractBatchJiraFieldBuilder {
 
     @Override
     public String generateDescription() {
-        Collection<String> pdos = LabVessel.extractPdoList(batch.getStartingLabVessels());
+
         String ticketDescription = "";
 
-        if (!pdos.isEmpty() && pdos.size() == 1) {
-            //TODO SGM:  Validate.  The following assumes that a description is set ONLY when there is one PDO in the batch set
-            ProductOrder pdo = athenaClientService.retrieveProductOrderDetails(pdos.iterator().next());
-            ticketDescription = pdo.getResearchProject().getSynopsis();
+        if (!foundResearchProjectList.isEmpty()) {
+            for (ResearchProject currRp : foundResearchProjectList) {
+                if (StringUtils.isNotBlank(ticketDescription)) {
+                    ticketDescription += "\n";
+                }
+                ticketDescription += currRp.getSynopsis();
+            }
         }
 
         return ticketDescription;

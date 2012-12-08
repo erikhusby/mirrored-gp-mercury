@@ -32,7 +32,7 @@ public abstract class AbstractBatchJiraFieldBuilder {
 
         switch (projectType) {
             case LCSET_PROJECT:
-                builder = new LCSetJiraFieldBuilder(batch, athenaClientService, jiraService);
+                builder = new LCSetJiraFieldBuilder(batch, athenaClientService);
         }
 
         return builder;

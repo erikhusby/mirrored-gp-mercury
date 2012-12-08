@@ -142,7 +142,7 @@ public class LCSetJiraFieldBuilderTest {
                 ProductWorkflowDef workflowDef = wfConfig.getWorkflowByName(
                         athenaSvc.retrieveProductOrderDetails(pdoBusinessName).getProduct().getWorkflowName());
 
-                Assert.assertEquals(workflowDef.getEffectiveVersion().getVersion(), currField.getValue());
+                Assert.assertEquals(workflowDef.getName() +":"+ workflowDef.getEffectiveVersion().getVersion(), currField.getValue());
 
             }
         }
