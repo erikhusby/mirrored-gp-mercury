@@ -12,7 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueL
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldBuilder;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -26,7 +26,6 @@ import java.util.HashSet;
 import java.util.Map;
 
 /**
- *
  * Encapsulates the business logic related to {@link LabBatch}s.  This includes the creation
  * of a new batch entity and saving that to Jira
  *
@@ -39,26 +38,23 @@ public class LabBatchEjb {
 
     private final static Log logger = LogFactory.getLog(LabBatchEjb.class);
 
-    @Inject
     LabBatchDAO labBatchDao;
 
-    @Inject
     AthenaClientService athenaClientService;
 
-    @Inject
     JiraService jiraService;
 
-    @Inject
     JiraTicketDao jiraTicketDao;
 
     /**
+     * createLabBatch will, given a group of lab plastic ware, create a batch entity and a new Jira Ticket for that
+     * entity
      *
-     * createLabBatch will, given a group of lab plastic ware, create a batch
+     * @param batchContents The Plastic ware that for which the newly created lab batch will represent
+     * @param reporter      The User that is attempting to create the batch
+     * @param jiraTicket    Optional parameter that represents an existing Jira Ticket that refers to this batch
      *
-     * @param batchContents
-     * @param reporter
-     * @param jiraTicket
-     * @return
+     * @return a new instance of a LabBatch entity
      */
     public LabBatch createLabBatch(@Nonnull Collection<LabVessel> batchContents, @Nonnull String reporter,
                                    String jiraTicket) {
@@ -75,14 +71,36 @@ public class LabBatchEjb {
         return newBatch;
     }
 
+    /**
+     * batchToJira Extracts all necessary information from the Given Batch Object and creates (if necessary) and
+     * associates a jira ticket that will represent this batch
+     *
+     * @param reporter   The User that is attempting to create the batch
+     * @param jiraTicket Optional parameter that represents an existing Jira Ticket that refers to this batch
+     * @param newBatch   The source of the Batch information that will assist in populating the Jira Ticket
+     */
     public void batchToJira(String reporter, String jiraTicket, LabBatch newBatch) {
-        JiraTicket ticket = jiraTicketDao.fetchByName(jiraTicket);
+        JiraTicket ticket = null;
+
         try {
-            if (ticket == null) {
+            if (jiraTicket == null) {
+
+                AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
+                        .getInstance(CreateFields.ProjectType.LCSET_PROJECT, newBatch, athenaClientService);
+
+                Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
                 // TODO SGM Determine Project and Issue type better.  Use Workflow Configuration
-                ticket = createJiraTicket(newBatch, reporter, CreateFields.IssueType.EXOME_EXPRESS,
-                                          CreateFields.ProjectType.LCSET_PROJECT);
+                JiraIssue jiraIssue = jiraService
+                        .createIssue(CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix(), reporter,
+                                     CreateFields.IssueType.EXOME_EXPRESS, newBatch.getBatchName(),
+                                     fieldBuilder.generateDescription(),
+                                     fieldBuilder.getCustomFields(submissionFields));
+
+                ticket = new JiraTicket(jiraService, jiraIssue.getKey());
+
+            } else {
+                ticket = jiraTicketDao.fetchByName(jiraTicket);
             }
             newBatch.setJiraTicket(ticket);
         } catch (IOException ioe) {
@@ -97,27 +115,34 @@ public class LabBatchEjb {
                                             newBatch.getJiraTicket().getTicketName() +
                                             " " + newBatch.getBatchName(), Visibility.Type.role,
                                     Visibility.Value.QA_Jira_Users);
-                                                                                                                                     } catch (IOException ioe) {
+            } catch (IOException ioe) {
                 logger.error("Error attempting to link Batch " + ticket.getTicketName() + " to Product order " + pdo,
                              ioe);
             }
         }
     }
 
-    public JiraTicket createJiraTicket(@Nonnull LabBatch batch, @Nonnull String reporter,
-                                       @Nonnull CreateFields.IssueType batchSubType,
-                                       @Nonnull CreateFields.ProjectType project) throws IOException {
 
-        AbstractBatchJiraFieldBuilder fieldBuilder =
-                AbstractBatchJiraFieldBuilder.getInstance(project, batch, athenaClientService, jiraService);
-
-        Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
-
-        JiraIssue jiraIssue = jiraService
-                .createIssue(project.getKeyPrefix(), reporter, batchSubType, batch.getBatchName(),
-                             fieldBuilder.generateDescription(), fieldBuilder.getCustomFields(submissionFields));
-
-        return new JiraTicket(jiraService, jiraIssue.getKey());
+    /*
+        To Support DBFree Tests
+     */
+    @Inject
+    public void setLabBatchDao(LabBatchDAO labBatchDao) {
+        this.labBatchDao = labBatchDao;
     }
 
+    @Inject
+    public void setAthenaClientService(AthenaClientService athenaClientService) {
+        this.athenaClientService = athenaClientService;
+    }
+
+    @Inject
+    public void setJiraService(JiraService jiraService) {
+        this.jiraService = jiraService;
+    }
+
+    @Inject
+    public void setJiraTicketDao(JiraTicketDao jiraTicketDao) {
+        this.jiraTicketDao = jiraTicketDao;
+    }
 }

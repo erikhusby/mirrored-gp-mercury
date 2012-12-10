@@ -4,7 +4,6 @@ import clover.org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -14,30 +13,41 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
-import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
 /**
+ *
+ * Concrete factory implementation specific to creating the custom and required fields for creating an LCSET ticket
+ *
  * @author Scott Matthews
  *         Date: 12/7/12
  *         Time: 10:39 AM
  */
-public class LCSetJiraFieldBuilder extends AbstractBatchJiraFieldBuilder {
+public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
     public static final String LIB_QC_SEQ_REQUIRED = "None";
     public static final String POOLING_STATUS      = "Pool w/o Positive Control";
     public static final String PROGRESS_STATUS     = "On Track";
 
-    private final LabBatch            batch;
     private final Set<ResearchProject>    foundResearchProjectList = new HashSet<ResearchProject>();
     private final Set<ProductWorkflowDef> workflowDefs             = new HashSet<ProductWorkflowDef>();
     private final Collection<String> pdos;
 
-    public LCSetJiraFieldBuilder(@Nonnull LabBatch batch, AthenaClientService athenaClientService) {
-        this.batch = batch;
+    /**
+     * LCSet Field constructor.  Extracts information that is used by each of the provided factory fields so that the
+     * work is only done once.
+     *
+     * @param batch instance of the Lab Batch entity for which a new LCSetT Ticket is to be created
+     * @param athenaClientService Infrastructure service to allow this factory the ability to retrieve
+     *                            {@link ProductOrder} information for the {@link LabVessel}s that comprise the
+     *                            batch entity
+     *
+     */
+    public LCSetJiraFieldFactory(@Nonnull LabBatch batch, @Nonnull AthenaClientService athenaClientService) {
+        super(batch);
 
         WorkflowLoader wfLoader = new WorkflowLoader();
         WorkflowConfig wfConfig = wfLoader.load();
@@ -54,8 +64,7 @@ public class LCSetJiraFieldBuilder extends AbstractBatchJiraFieldBuilder {
     }
 
     @Override
-    public Collection<CustomField> getCustomFields(Map<String, CustomFieldDefinition> submissionFields)
-            throws IOException {
+    public Collection<CustomField> getCustomFields(Map<String, CustomFieldDefinition> submissionFields) {
 
         Set<CustomField> customFields = new HashSet<CustomField>();
 

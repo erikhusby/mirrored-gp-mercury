@@ -53,6 +53,8 @@ public class LabBatch {
 
     private Date createdOn;
 
+    //TODO SGM Add field for Description for Jira Creation Override
+
     /**
      * Create a new batch with the given name
      * and set of @link Starter starting materials
@@ -163,6 +165,16 @@ public class LabBatch {
         return createdOn;
     }
 
+    /**
+     * Helper nethod to dynamically create batch names based on Input from PDM's.  The format for the Names of the
+     * batches, when not manually defined, will be:
+     *
+     * [Product name] [Product workflow Version]: [comma separated list of PDO names]
+     *
+     * @param workflowName
+     * @param pdoNames
+     * @return
+     */
     public static String generateBatchName(@Nonnull String workflowName, @Nonnull Collection<String> pdoNames) {
 
         StringBuilder batchName = new StringBuilder();

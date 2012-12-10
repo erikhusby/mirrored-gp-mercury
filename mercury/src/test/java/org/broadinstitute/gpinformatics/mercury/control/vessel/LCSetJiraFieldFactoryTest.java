@@ -41,7 +41,7 @@ import java.util.Map;
  *         Time: 1:20 PM
  */
 @Test(groups = TestGroups.DATABASE_FREE)
-public class LCSetJiraFieldBuilderTest {
+public class LCSetJiraFieldFactoryTest {
 
     private String                             pdoBusinessName;
     private List<String>                       pdoNames;
@@ -100,9 +100,8 @@ public class LCSetJiraFieldBuilderTest {
         LabBatch testBatch = new LabBatch(LabBatch.generateBatchName(workflowName, pdoNames),
                                           new HashSet<LabVessel>(mapBarcodeToTube.values()));
 
-        AbstractBatchJiraFieldBuilder testBuilder = AbstractBatchJiraFieldBuilder
-                .getInstance(CreateFields.ProjectType.LCSET_PROJECT, testBatch, AthenaClientProducer.stubInstance(),
-                             JiraServiceProducer.stubInstance());
+        AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory
+                .getInstance(CreateFields.ProjectType.LCSET_PROJECT, testBatch, AthenaClientProducer.stubInstance());
 
         Assert.assertEquals(rpSynopsis, testBuilder.generateDescription());
 
@@ -123,16 +122,16 @@ public class LCSetJiraFieldBuilderTest {
             }
             if (currField.getFieldDefinition().getName()
                          .equals(LabBatch.RequiredSubmissionFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName())) {
-                Assert.assertEquals(((String) currField.getValue()), LCSetJiraFieldBuilder.LIB_QC_SEQ_REQUIRED);
+                Assert.assertEquals(((String) currField.getValue()), LCSetJiraFieldFactory.LIB_QC_SEQ_REQUIRED);
             }
             if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName())) {
                 Assert.assertEquals(String.valueOf(testBatch.getStartingLabVessels().size()), (String) currField.getValue());
             }
             if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName())) {
-                Assert.assertEquals(LCSetJiraFieldBuilder.POOLING_STATUS, currField.getValue());
+                Assert.assertEquals(LCSetJiraFieldFactory.POOLING_STATUS, currField.getValue());
             }
             if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.PROGRESS_STATUS.getFieldName())) {
-                Assert.assertEquals(LCSetJiraFieldBuilder.PROGRESS_STATUS, currField.getValue());
+                Assert.assertEquals(LCSetJiraFieldFactory.PROGRESS_STATUS, currField.getValue());
             }
             if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.PROTOCOL.getFieldName())) {
                 WorkflowLoader wfLoader = new WorkflowLoader();
