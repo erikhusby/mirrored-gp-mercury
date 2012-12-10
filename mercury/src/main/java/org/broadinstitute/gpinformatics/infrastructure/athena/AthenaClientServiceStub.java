@@ -32,6 +32,7 @@ import java.util.Random;
 public class AthenaClientServiceStub implements AthenaClientService {
 
     private static final Long TEST_CREATOR = 1111L;
+    public static final  String  rpSynopsis = "Test synopsis";
 
     @Override
     public ProductOrder retrieveProductOrderDetails ( String poBusinessKey ) {
@@ -76,7 +77,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
-        String rpSynopsis = "Test synopsis";
+
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123",
                                                      new Product("Test product",
                                                                  new ProductFamily("Test product family"), "test",

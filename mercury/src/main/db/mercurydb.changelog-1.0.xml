@@ -424,4 +424,48 @@
         <dropTable tableName="person_aud" schemaName="mercury" />
     </changeSet>
 
+    <changeSet id="GPLIM-521-1" author="scottmat">
+        <preConditions>
+            <not>
+                <columnExists columnName="batch_description" schemaName="mercury" tableName="lab_batch" />
+            </not>
+        </preConditions>
+        <addColumn tableName="lab_batch" schemaName="mercury">
+            <column name="batch_description" type="varchar2(4000)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-521-2" author="scottmat">
+        <preConditions>
+            <not>
+                <columnExists columnName="batch_description" schemaName="mercury" tableName="lab_batch_aud" />
+            </not>
+        </preConditions>
+        <addColumn tableName="lab_batch_aud" schemaName="mercury">
+            <column name="batch_description" type="varchar2(4000)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-521-3" author="scottmat">
+        <preConditions>
+            <not>
+                <columnExists columnName="due_date" schemaName="mercury" tableName="lab_batch" />
+            </not>
+        </preConditions>
+        <addColumn tableName="lab_batch" schemaName="mercury">
+            <column name="due_date" type="oracle.sql.TIMESTAMP" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-521-4" author="scottmat">
+        <preConditions>
+            <not>
+                <columnExists columnName="due_date" schemaName="mercury" tableName="lab_batch_aud" />
+            </not>
+        </preConditions>
+        <addColumn tableName="lab_batch_aud" schemaName="mercury">
+            <column name="due_date" type="oracle.sql.TIMESTAMP" />
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

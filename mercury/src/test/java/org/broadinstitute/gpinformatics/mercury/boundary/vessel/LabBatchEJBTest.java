@@ -1,40 +1,28 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import junit.framework.Assert;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
-import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.easymock.EasyMock;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Scott Matthews
@@ -99,21 +87,14 @@ public class LabBatchEjbTest extends ContainerTest {
 
     }
 
+
     @Test
     public void testCreateLabBatch() throws Exception {
 
+        final String batchName = "Test lab Batch Name";
         LabBatch testBatch =
-                labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), "scottmat", null);
-
-        Assert.assertNotNull(testBatch);
-        Assert.assertNotNull(testBatch.getJiraTicket());
-        Assert.assertNotNull(testBatch.getJiraTicket().getTicketName());
-        Assert.assertEquals(testBatch, testBatch.getJiraTicket().getLabBatch());
-        Assert.assertNotNull(testBatch.getStartingLabVessels());
-        Assert.assertEquals(6, testBatch.getStartingLabVessels().size());
-        Assert.assertEquals(workflowName + ": " + STUB_TEST_PDO_KEY, testBatch.getBatchName());
-
-        String batchName = testBatch.getBatchName();
+                labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), scottmat, null, null,
+                                           null);
 
         labBatchDAO.flush();
         labBatchDAO.clear();
@@ -125,7 +106,48 @@ public class LabBatchEjbTest extends ContainerTest {
         Assert.assertNotNull(testFind.getJiraTicket().getTicketName());
         Assert.assertNotNull(testFind.getStartingLabVessels());
         Assert.assertEquals(6, testFind.getStartingLabVessels().size());
-        Assert.assertEquals(workflowName + ": " + STUB_TEST_PDO_KEY, testFind.getBatchName());
+        Assert.assertEquals(batchName, testFind.getBatchName());
+        Assert.assertEquals(AthenaClientServiceStub.rpSynopsis, testFind.getBatchDescription());
     }
+
+    @Test
+    public void testCreateLabBatchWithValues() throws Exception {
+
+        final String batchName = "Test lab Batch Name";
+        final String description = "Test of New user input Batch Description";
+
+        Date now = new Date();
+        Calendar cal = Calendar.getInstance();
+
+        cal.setTime(now);
+
+        cal.add(Calendar.DATE, 21);
+
+        Date future = cal.getTime();
+
+        SimpleDateFormat dFormatter = new SimpleDateFormat("MM/dd/yy");
+
+        String futureDate = dFormatter.format(future);
+
+        LabBatch testBatch =
+                labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), scottmat, null,
+                                           description, future);
+
+        labBatchDAO.flush();
+        labBatchDAO.clear();
+
+        LabBatch testFind = labBatchDAO.findByName(batchName);
+
+        Assert.assertNotNull(testFind);
+        Assert.assertNotNull(testFind.getJiraTicket());
+        Assert.assertNotNull(testFind.getJiraTicket().getTicketName());
+        Assert.assertNotNull(testFind.getStartingLabVessels());
+        Assert.assertEquals(6, testFind.getStartingLabVessels().size());
+        Assert.assertEquals(batchName, testFind.getBatchName());
+        Assert.assertEquals(description, testFind.getBatchDescription());
+
+        Assert.assertEquals(futureDate, dFormatter.format(testFind.getDueDate()));
+    }
+
 
 }

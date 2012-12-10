@@ -8,7 +8,6 @@ import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
-import java.io.IOException;
 import java.util.*;
 
 /**
@@ -54,6 +53,10 @@ public class LabBatch {
     private Date createdOn;
 
     //TODO SGM Add field for Description for Jira Creation Override
+
+    private String batchDescription;
+
+    private Date dueDate;
 
     /**
      * Create a new batch with the given name
@@ -107,12 +110,18 @@ public class LabBatch {
         return startingLabVessels;
     }
 
-    public void addLabVessel(LabVessel labVessel) {
+    public void addLabVessel(@Nonnull LabVessel labVessel) {
         if (labVessel == null) {
             throw new NullPointerException("vessel cannot be null.");
         }
         startingLabVessels.add(labVessel);
         labVessel.addLabBatch(this);
+    }
+
+    public void addLabVessels(@Nonnull Collection<LabVessel> vessels) {
+        for(LabVessel currVessel:vessels) {
+            addLabVessel(currVessel);
+        }
     }
 
     public boolean getActive() {
@@ -163,6 +172,22 @@ public class LabBatch {
 
     public Date getCreatedOn() {
         return createdOn;
+    }
+
+    public String getBatchDescription() {
+        return batchDescription;
+    }
+
+    public Date getDueDate() {
+        return dueDate;
+    }
+
+    public void setBatchDescription(String batchDescription) {
+        this.batchDescription = batchDescription;
+    }
+
+    public void setDueDate(Date dueDate) {
+        this.dueDate = dueDate;
     }
 
     /**
