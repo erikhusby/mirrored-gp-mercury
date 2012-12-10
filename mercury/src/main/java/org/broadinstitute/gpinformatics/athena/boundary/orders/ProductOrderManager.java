@@ -116,8 +116,11 @@ public class ProductOrderManager {
      */
     public void update(ProductOrder productOrder) {
         // update JIRA ticket with new quote
-        updateJiraIssue(productOrder);
-        // persist updated productOrder
-        productOrderDao.persist(productOrder);
+        // GPLIM-488
+        // updateJiraIssue(productOrder);
+
+        // In the PDO edit UI, if the user goes through and edits the quote and then hits 'Submit', this works
+        // without the merge.  But if the user tabs out of the quote field, this merge is required.
+        productOrderDao.getEntityManager().merge(productOrder);
     }
 }
