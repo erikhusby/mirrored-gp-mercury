@@ -58,11 +58,17 @@ public class UserLogin extends AbstractJsfBean {
         String targetPage;
         FacesContext context = FacesContext.getCurrentInstance();
 
-        try {
-            HttpServletRequest request = (HttpServletRequest)context.getExternalContext().getRequest();
+        HttpServletRequest request = (HttpServletRequest)context.getExternalContext().getRequest();
+        UserRole role = UserRole.fromRequest(request);
 
+        // Order is important here since getLoginUserName() could be null.
+        if (username.equalsIgnoreCase(userBean.getLoginUserName())) {
+            // User is already logged in, don't try to login again.
+            return redirect(role.landingPage);
+        }
+
+        try {
             request.login(username, password);
-            UserRole role = UserRole.fromRequest(request);
             targetPage = role.landingPage;
             userBean.login(request);
 
@@ -100,7 +106,7 @@ public class UserLogin extends AbstractJsfBean {
         // Order of roles is important, if user is both PDM and PM we want to go to PDM's page.
         PDM("/orders/list", DB.Role.PDM.name),
         PM("/projects/list", DB.Role.PM.name),
-        OTHER("index", "");
+        OTHER("/index", "");
 
         private static final String INDEX = AuthorizationListener.HOME_PAGE;
         private static final String MERCURY_PAGE = "/Mercury";
