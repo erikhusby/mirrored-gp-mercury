@@ -25,32 +25,16 @@ import java.util.List;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BillingTrackerUtilsTest extends TestCase {
 
-    public static final File BILLING_TRACKER_TEST_FILE = new File("src/test/data/billing/BillingTracker-DBFreeTestData.xlsx");
+    public static final String BILLING_TRACKER_TEST_FILENAME = new String("BillingTracker-ContainerTest.xlsx");
+    public static final File BILLING_TRACKER_TEST_FILE = new File("src/test/resources/testdata/" + BILLING_TRACKER_TEST_FILENAME);
     private static final Log logger = LogFactory.getLog(BillingTrackerUtilsTest.class);
 
     @Test
-    void testImport() throws Exception {
-
-        File testFile = BILLING_TRACKER_TEST_FILE;
-
-        BillingTrackerImporter billingTrackerImporter = new BillingTrackerImporter(null);
+    public void testHeaderParsing() throws Exception {
         FileInputStream fis=null;
-        File tempFile=null;
 
         try {
-            fis = new FileInputStream(testFile);
-            tempFile = billingTrackerImporter.copyFromStreamToTempFile(fis);
-            Assert.assertNotNull(tempFile);
-            Assert.assertNotNull(tempFile.getAbsoluteFile());
-
-        } catch ( Exception e ) {
-            logger.error(e);
-        } finally {
-            IOUtils.closeQuietly(fis);
-        }
-
-        try {
-            fis = new FileInputStream(tempFile);
+            fis = new FileInputStream(BILLING_TRACKER_TEST_FILE);
             Workbook workbook = WorkbookFactory.create(fis);
             Sheet sheet = workbook.getSheetAt(0);
             Row row0 = sheet.getRow(0);
@@ -63,9 +47,8 @@ public class BillingTrackerUtilsTest extends TestCase {
     }
 
     @Test
-    void testExtractPartNumberFromHeader() throws Exception {
+    public void testExtractPartNumberFromHeader() throws Exception {
 
-        BillingTrackerImporter billingTrackerImporter = new BillingTrackerImporter(null);
         String headerTest = "DNA Extract from blood, fresh frozen tissue, cell pellet, stool, or saliva [P-ESH-0004]";
         Assert.assertEquals("P-ESH-0004", BillingTrackerUtils.extractBillableRefFromHeader(headerTest).getProductPartNumber());
         Assert.assertEquals("DNA Extract from blood, fresh frozen tissue, cell pellet, stool, or saliva",
@@ -81,13 +64,19 @@ public class BillingTrackerUtilsTest extends TestCase {
         try {
             BillingTrackerUtils.extractBillableRefFromHeader(headerTest).getProductPartNumber();
             Assert.fail( "should have thrown on failure to find ppn");
-        } catch ( Exception e) {}
+        } catch ( Exception e) {
+            // expect exception to be thrown
+            Assert.assertTrue( e.getMessage().contains( "Tracker Sheet Header Format Error.  Could not find product partNumber in column header.") );
+        }
 
         headerTest = "DNA Extract from blood, fresh frozen tissue, cell pellet, stool, or saliva ]P-ESH-0004[";
         try {
             BillingTrackerUtils.extractBillableRefFromHeader(headerTest).getProductPartNumber();
             Assert.fail( "should have thrown on failure to find ppn");
-        } catch ( Exception e) {}
+        } catch ( Exception e) {
+            // expect exception to be thrown
+            Assert.assertTrue( e.getMessage().contains( "Tracker Sheet Header Format Error.  Could not find product partNumber in column header.") );
+        }
 
     }
 

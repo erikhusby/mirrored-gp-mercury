@@ -54,6 +54,9 @@ public class ProductOrderSample implements Serializable {
     @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private Set<BillingLedger> ledgerItems = new HashSet<BillingLedger>();
 
+    @Column(name="SAMPLE_POSITION", updatable = false, insertable = false, nullable=false)
+    private Integer samplePosition;
+
     @Transient
     private BSPSampleDTO bspDTO = BSPSampleDTO.DUMMY;
 
@@ -106,6 +109,14 @@ public class ProductOrderSample implements Serializable {
 
     public boolean needsBspMetaData() {
         return isInBspFormat() && !hasBspDTOBeenInitialized;
+    }
+
+    public Integer getSamplePosition() {
+        return samplePosition;
+    }
+
+    public void setSamplePosition(Integer samplePosition) {
+        this.samplePosition = samplePosition;
     }
 
     /**
@@ -168,15 +179,13 @@ public class ProductOrderSample implements Serializable {
         }
 
         ProductOrderSample that = (ProductOrderSample) o;
-        return new EqualsBuilder().append(sampleName, that.sampleName).append(billingStatus, that.billingStatus)
-                .append(sampleComment, that.sampleComment)
-                .append(productOrder, that.productOrder).append(bspDTO, that.bspDTO).build();
+        return new EqualsBuilder().append(sampleName, that.sampleName).append(samplePosition, that.samplePosition)
+                .append(productOrder, that.productOrder).build();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(sampleName).append(billingStatus)
-                .append(sampleComment).append(productOrder).append(bspDTO).build();
+        return new HashCodeBuilder().append(sampleName).append(samplePosition).append(productOrder).build();
     }
 
     public Set<BillingLedger> getBillableLedgerItems() {

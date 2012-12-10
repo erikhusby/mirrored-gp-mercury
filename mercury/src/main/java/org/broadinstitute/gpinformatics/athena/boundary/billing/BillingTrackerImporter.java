@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExpor
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 
 import java.io.*;
@@ -117,7 +118,7 @@ public class BillingTrackerImporter {
         ProductOrder productOrder = null;
         Product product = null;
         List<ProductOrderSample> samples = null;
-
+        Map<TrackerColumnInfo, PriceItem> priceItemMap = null;
         String primaryProductPartNumber = sheet.getSheetName();
         int maxNumberOfProductsInSheet = trackerColumnInfos.size();
         String currentPdoId = "";
@@ -163,6 +164,9 @@ public class BillingTrackerImporter {
 
                 product = productOrder.getProduct();
                 samples = productOrder.getSamples();
+                if (priceItemMap == null) {
+                    priceItemMap = BillingTrackerUtils.createPriceItemMapForSheet(trackerColumnInfos, product);
+                }
 
             }
 
@@ -183,7 +187,7 @@ public class BillingTrackerImporter {
                                            + productOrderSample.getSampleName());
             }
 
-            parseRowForSummaryMap(row, pdoSummaryStatsMap, trackerColumnInfos, product);
+            parseRowForSummaryMap(row, pdoSummaryStatsMap, trackerColumnInfos, product, productOrderSample, priceItemMap);
             sheetSummaryMap.put(rowPdoIdStr, pdoSummaryStatsMap);
 
             sampleIndexInOrder++;
@@ -194,8 +198,10 @@ public class BillingTrackerImporter {
 
     private void parseRowForSummaryMap(
             Row row, Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap,
-            List<TrackerColumnInfo> trackerColumnInfos, Product product) {
+            List<TrackerColumnInfo> trackerColumnInfos, Product product, ProductOrderSample productOrderSample,
+            Map<TrackerColumnInfo, PriceItem> priceItemMap ) {
 
+        Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = ProductOrderSample.getLedgerQuantities(productOrderSample);
 
         for (int priceItemIndex = 0; priceItemIndex < trackerColumnInfos.size(); priceItemIndex++) {
             double newQuantity;
@@ -208,26 +214,30 @@ public class BillingTrackerImporter {
             // Get the AlreadyBilled cell
             Cell billedCell = row.getCell(currentBilledPosition);
             if (BillingTrackerUtils.isNonNullNumericCell(billedCell)) {
+                // Check the already billed amount against the DB.
                 previouslyBilledQuantity = billedCell.getNumericCellValue();
-                //TODO hmc need the AlreadyBilled validation check here per GPLIM-451.
+                PriceItem priceItem = priceItemMap.get( trackerColumnInfos.get(priceItemIndex) );
                 // Check billedQuantity parsed against that which is already billed for this POS and PriceItem - should match
-                //TODO Sum the already billed amount for this sample
+                ProductOrderSample.LedgerQuantities quantities = billCounts.get(priceItem);
+                if ((quantities != null ) && (quantities.getBilled() != previouslyBilledQuantity)) {
+                    throw new RuntimeException(
+                            String.format("Found a different billed quantity '%f' in the database for sample in %s in %s, price item '%s', in Product sheet %s. " +
+                                    "The billed quantity in the spreadsheet is '%f', please download a recent copy of the BillingTracker spreadsheet.",
+                                    quantities.getBilled(), row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
+                                billableRef.getPriceItemName(), product.getPartNumber(), previouslyBilledQuantity ));
+                }
             }
 
             // Get the newQuantity cell value
             Cell newQuantityCell = row.getCell(currentBilledPosition + 1);
             if ( BillingTrackerUtils.isNonNullNumericCell(newQuantityCell)) {
                 newQuantity = newQuantityCell.getNumericCellValue();
-
                 if (newQuantity < 0) {
                     throw new RuntimeException(
                             String.format("Found negative new quantity '%f' for sample %s in %s, price item '%s', in Product sheet %s",
                                 newQuantity, row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
                                 billableRef.getPriceItemName(), product.getPartNumber()));
                 }
-
-                //TODO Get the actual value from the DB for this POS to calculate the delta  !!!!!!!!!
-
                 double delta = newQuantity - previouslyBilledQuantity;
 
                 if ( delta != 0 ) {

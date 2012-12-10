@@ -1,21 +1,22 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.meanbean.test.BeanTester;
-import org.meanbean.test.Configuration;
-import org.meanbean.test.ConfigurationBuilder;
+import org.meanbean.lang.EquivalentFactory;
+import org.meanbean.test.*;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
+import java.util.Random;
 
 /**
  * Created by IntelliJ IDEA.
@@ -41,13 +42,43 @@ public class ProductOrderTest {
     }
 
     @Test
-    public void test_basic_beaniness() {
+    public void testBeaniness() {
 
-        //TODO hmc need to ignore the samples list as meanbean is by default using a list of Strings
-        // to test the samples setter. There may be a api solution for this.
         BeanTester tester = new BeanTester();
-        Configuration configuration = new ConfigurationBuilder().ignoreProperty("samples").build();
+        // Current;y ProductOrder is equivalent based only on RP and title.
+        Configuration configuration = new ConfigurationBuilder().ignoreProperty("samples")
+                .ignoreProperty("jiraTicketKey")
+                .ignoreProperty("orderStatus")
+                .ignoreProperty("count")
+                .ignoreProperty("modifiedBy")
+                .ignoreProperty("createdDate")
+                .ignoreProperty("modifiedDate")
+                .ignoreProperty("quoteId")
+                .ignoreProperty("product")
+                .ignoreProperty("comments")
+                .build();
         tester.testBean(ProductOrder.class, configuration);
+
+        class ProductOrderFactory implements EquivalentFactory<ProductOrder> {
+            public final long ID = new Random().nextInt(Integer.MAX_VALUE);
+            public String title = "title";
+
+            @Override public ProductOrder create() {
+
+                Product product = new Product("Exome Express", null, "Exome Express", "P-EX-0002", new Date(), null,
+                        1814400, 1814400, 184, null, null, null, true, "Exome Express", false);
+                ResearchProject researchProject = new ResearchProject(ID, title, "RP title", ResearchProject.IRB_NOT_ENGAGED);
+
+                ProductOrder productOrder = new ProductOrder(ID, "PO title", sixBspSamplesNoDupes, "quoteId", product,researchProject );
+
+                return productOrder;
+            }
+        }
+
+        // Current;y ProductOrder is equivalent based only on RP and title.
+        new EqualsMethodTester().testEqualsMethod(new ProductOrderFactory(), configuration);
+
+        new HashCodeMethodTester().testHashCodeMethod(new ProductOrderFactory());
 
     }
 
@@ -132,29 +163,11 @@ public class ProductOrderTest {
     }
 
     public static List<ProductOrderSample> createSampleList(String... sampleList) {
-        return createSampleList(sampleList, new HashSet<BillableItem>(), false);
+        return ProductOrderSampleTest.createSampleList(sampleList, new HashSet<BillingLedger>(), false);
     }
 
     public static List<ProductOrderSample> createDBFreeSampleList(String... sampleList) {
-        return createSampleList(sampleList, new HashSet<BillableItem>(), true);
+        return ProductOrderSampleTest.createSampleList(sampleList, new HashSet<BillingLedger>(), true);
     }
 
-    public static List<ProductOrderSample> createSampleList(String[] sampleArray,
-                                                            Set<BillableItem> billableItems,
-                                                            boolean dbFree) {
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>(sampleArray.length);
-        for (String sampleName : sampleArray) {
-            ProductOrderSample productOrderSample;
-            if (dbFree) {
-                productOrderSample = new ProductOrderSample(sampleName, BSPSampleDTO.DUMMY);
-            } else {
-                productOrderSample = new ProductOrderSample(sampleName);
-            }
-
-            productOrderSample.setSampleComment("athenaComment");
-
-            productOrderSamples.add(productOrderSample);
-        }
-        return productOrderSamples;
-    }
 }

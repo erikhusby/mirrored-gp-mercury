@@ -11,7 +11,7 @@
 <body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="metadata">
-            <f:event type="preRenderView" listener="#{productOrderForm.initView}"/>
+            <f:event type="preRenderView" listener="#{productOrderListForm.initView}"/>
         </ui:define>
         <ui:define name="title">Product Orders</ui:define>
 
@@ -22,12 +22,12 @@
             </div>
 
                 <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.billingManagerRole}">
-                    <p:commandButton value="Start Billing Session" action="#{productOrderForm.startBillingSession}"
+                    <p:commandButton value="Start Billing Session" action="#{productOrderListForm.startBillingSession}"
                                  ajax="false" style="margin-bottom:5px;margin-right:30px;"/>
                 </security:authorizeBlock>
 
-                <p:commandButton value="Download Billing Tracker" action="#{productOrderForm.downloadBillingTracker}"
-                                 ajax="false" style="margin-bottom:5px;margin-right:8px;"/>
+                <p:commandButton value="Download Billing Tracker" action="#{productOrderListForm.downloadBillingTracker}"
+                                 ajax="false" style="margin-bottom:5px;margin-right:8px;" />
 
                 <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.productManagerRole}">
                     <h:link outcome="uploadTracker" value="Upload Billing Tracker">
@@ -35,12 +35,12 @@
                     </h:link>
                 </security:authorizeBlock>
 
-                <p:dataTable value="#{productOrderForm.allProductOrders}"
+                <p:dataTable value="#{productOrderListForm.allProductOrders}"
                      sortBy="#{order.title}"
                      sortOrder="ascending"
                      var="order"
-                     filteredValue="#{productOrderForm.allProductOrders.filteredValues}"
-                     selection="#{productOrderForm.selectedProductOrders}">
+                     filteredValue="#{productOrderListForm.allProductOrders.filteredValues}"
+                     selection="#{productOrderListForm.selectedProductOrders}">
 
                     <p:column selectionMode="multiple" style="width:18px;" />
 
@@ -58,7 +58,7 @@
 
                     <p:column headerText="Product" width="180" filterBy="#{order.productName}"
                               sortBy="#{order.productName}" sortingComparator="caseInsensitiveText"
-                              filterOptions="#{productOrderBean.allProductNames}" filterMatchMode="exact">
+                              filterOptions="#{productOrderListForm.allProductNames}" filterMatchMode="exact">
                         #{order.productName}
                     </p:column>
 
@@ -66,7 +66,7 @@
                         #{order.productFamilyName}
                     </p:column>
 
-                    <p:column headerText="Status" filterBy="#{order.orderStatus}" filterOptions="#{productOrderBean.allOrderStatuses}" filterMatchMode="exact">
+                    <p:column headerText="Status" filterBy="#{order.orderStatus}" filterOptions="#{productOrderListForm.allOrderStatuses}" filterMatchMode="exact">
                         #{order.orderStatus}
                     </p:column>
 
@@ -74,7 +74,7 @@
                         #{order.researchProjectTitle}
                     </p:column>
 
-                    <p:column headerText="Owner" filterBy="#{order.ownerId}" filterOptions="#{productOrderForm.allProjectOwners}" filterMatchMode="exact">
+                    <p:column headerText="Owner" filterBy="#{order.ownerId}" filterOptions="#{productOrderListForm.allProjectOwners}" filterMatchMode="exact">
                         #{userListBean.getUserFullName(order.ownerId)}
                     </p:column>
 

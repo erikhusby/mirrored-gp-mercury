@@ -12,9 +12,9 @@ import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 @Named("productView")
 @RequestScoped
@@ -35,7 +35,7 @@ public class ProductViewBean extends AbstractJsfBean {
      * Store price items in conversation scope to support p:dataTable sorting.
      */
     @ConversationScoped public static class PriceItemTableData extends TableData<PriceItem> {}
-    @Inject private PriceItemTableData priceItemData;
+    @Inject private PriceItemTableData optionalPriceItemData;
 
     @Inject
     private FacesContext facesContext;
@@ -43,24 +43,28 @@ public class ProductViewBean extends AbstractJsfBean {
     @Inject
     private Conversation conversation;
 
-    public void initView() {
-        if (!facesContext.isPostback() && shouldRenderForm()) {
-            addOnData.setValues(new ArrayList<Product>(product.getAddOns()));
-            Collections.sort(addOnData.getValues());
-            priceItemData.setValues(new ArrayList<PriceItem>(product.getOptionalPriceItems()));
-            Collections.sort(priceItemData.getValues());
-            if (conversation.isTransient()) {
-                conversation.begin();
+    public void onPreRenderView() {
+
+        if (! facesContext.isPostback()) {
+            if (product != null) {
+                List<Product> addOnList = new ArrayList<Product>(product.getAddOns());
+                Collections.sort(addOnList);
+                addOnData.setValues(addOnList);
+
+                List<PriceItem> priceItemList = new ArrayList<PriceItem>(product.getOptionalPriceItems());
+                Collections.sort(priceItemList);
+                optionalPriceItemData.setValues(priceItemList);
+
+                if (conversation.isTransient()) {
+                    conversation.begin();
+                }
+            } else {
+                addErrorMessage("No product with this part number exists.");
+                facesContext.renderResponse();
             }
         }
     }
 
-    public void onPreRenderView() throws IOException {
-        if (! shouldRenderForm()) {
-                addErrorMessage("No product with this part number exists.");
-                facesContext.renderResponse();
-        }
-    }
 
     // TODO: create and use secondsToDaysConverter
     public Integer getExpectedCycleTimeDays() {
@@ -78,7 +82,7 @@ public class ProductViewBean extends AbstractJsfBean {
     }
 
     public boolean shouldRenderForm() {
-        if (!facesContext.isPostback()) {
+        if (! facesContext.isPostback()) {
             return product != null;
         } else {
             return true;
@@ -101,11 +105,11 @@ public class ProductViewBean extends AbstractJsfBean {
         this.addOnData = addOnData;
     }
 
-    public PriceItemTableData getPriceItemData() {
-        return priceItemData;
+    public PriceItemTableData getOptionalPriceItemData() {
+        return optionalPriceItemData;
     }
 
-    public void setPriceItemData(PriceItemTableData priceItemData) {
-        this.priceItemData = priceItemData;
+    public void setOptionalPriceItemData(PriceItemTableData optionalPriceItemData) {
+        this.optionalPriceItemData = optionalPriceItemData;
     }
 }
