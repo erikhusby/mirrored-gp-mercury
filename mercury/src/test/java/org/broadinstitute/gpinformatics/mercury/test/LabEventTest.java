@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransfe
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
@@ -85,8 +86,7 @@ public class LabEventTest {
 
         @Override
         public BspUser getOperator ( Long bspUserId ) {
-            BspUser testUser =new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
-            return testUser;
+            return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
         }
 
         @Override
@@ -411,10 +411,7 @@ public class LabEventTest {
             fluidigmSampleInputJaxb.getPlate().setPhysType(
                     StaticPlate.PlateType.Fluidigm48_48AccessArrayIFC.getDisplayName());
             fluidigmSampleInputJaxb.getPlate().setSection(SBSSection.P384COLS4_6BYROW.getSectionName());
-            BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
-            bettaLIMSMessage.getPlateTransferEvent().add(fluidigmSampleInputJaxb);
-            messageList.add(bettaLIMSMessage);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, fluidigmSampleInputJaxb);
 
             // FluidigmIndexedAdapterInput plate P96COLS1-6BYROW to chip P384COLS4-6BYROW
             fluidigmIndexedAdapterInputJaxb = this.bettaLimsMessageFactory.buildPlateToPlate(
@@ -425,10 +422,7 @@ public class LabEventTest {
             fluidigmIndexedAdapterInputJaxb.getPlate().setPhysType(
                     StaticPlate.PlateType.Fluidigm48_48AccessArrayIFC.getDisplayName());
             fluidigmIndexedAdapterInputJaxb.getPlate().setSection(SBSSection.P384COLS4_6BYROW.getSectionName());
-            BettaLIMSMessage bettaLIMSMessage1 = new BettaLIMSMessage();
-            bettaLIMSMessage1.getPlateTransferEvent().add(fluidigmIndexedAdapterInputJaxb);
-            messageList.add(bettaLIMSMessage1);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, fluidigmIndexedAdapterInputJaxb);
 
             // FluidigmHarvestingToRack chip P384COLS4-6BYROW to rack P96COLS1-6BYROW
             harvestRackBarcode = "Harvest" + testPrefix;
@@ -446,10 +440,7 @@ public class LabEventTest {
             fluidigmHarvestingToRackJaxb.setPositionMap(buildFluidigmPositionMap(tubeBarcodes, fluidigmSampleInputJaxb
                     .getSourcePlate().getBarcode()));
             fluidigmHarvestingToRackJaxb.getPlate().setSection(SBSSection.P96COLS1_6BYROW.getSectionName());
-            BettaLIMSMessage bettaLIMSMessage2 = new BettaLIMSMessage();
-            bettaLIMSMessage2.getPlateTransferEvent().add(fluidigmIndexedAdapterInputJaxb);
-            messageList.add(bettaLIMSMessage2);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, fluidigmHarvestingToRackJaxb);
         }
 
         private PositionMapType buildFluidigmPositionMap(ArrayList<String> tubeBarcodes, String rackBarcode) {
@@ -488,6 +479,27 @@ public class LabEventTest {
             TubeFormation harvestRack = (TubeFormation) fluidigmHarvestingToRackEntity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(harvestRack.getSampleInstances().size(), mapBarcodeToTube.size(), "Wrong number of sample instances");
         }
+    }
+
+    public static void addMessage(List<BettaLIMSMessage> messageList, BettaLimsMessageFactory bettaLimsMessageFactory,
+            StationEventType ... stationEventTypes) {
+        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+        bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
+        for (StationEventType stationEventType : stationEventTypes) {
+            if(stationEventType instanceof PlateTransferEventType) {
+                bettaLIMSMessage.getPlateTransferEvent().add((PlateTransferEventType) stationEventType);
+            } else if (stationEventType instanceof PlateCherryPickEvent) {
+                bettaLIMSMessage.getPlateCherryPickEvent().add((PlateCherryPickEvent) stationEventType);
+            } else if(stationEventType instanceof PlateEventType) {
+                bettaLIMSMessage.getPlateEvent().add((PlateEventType) stationEventType);
+            } else if(stationEventType instanceof ReceptaclePlateTransferEvent) {
+                bettaLIMSMessage.getReceptaclePlateTransferEvent().add((ReceptaclePlateTransferEvent) stationEventType);
+            } else {
+                throw new RuntimeException("Unknown station event type " + stationEventType);
+            }
+        }
+        messageList.add(bettaLIMSMessage);
+        bettaLimsMessageFactory.advanceTime();
     }
 
     private static void validateWorkflow(String nextEventTypeName, Collection<? extends LabVessel> tubes) {
@@ -668,41 +680,26 @@ public class LabEventTest {
             preflightPicoSetup1 = this.bettaLimsMessageFactory.buildRackToPlate("PreflightPicoSetup", rackBarcode,
                                                                                 tubeBarcodes,
                                                                                 "PreflightPicoPlate1" + testPrefix);
-            BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
-            bettaLIMSMessage.getPlateTransferEvent().add(preflightPicoSetup1);
-            messageList.add(bettaLIMSMessage);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, preflightPicoSetup1);
 
             preflightPicoSetup2 = this.bettaLimsMessageFactory.buildRackToPlate("PreflightPicoSetup", rackBarcode,
                                                                                 tubeBarcodes,
                                                                                 "PreflightPicoPlate2" + testPrefix);
-            BettaLIMSMessage bettaLIMSMessage1 = new BettaLIMSMessage();
-            bettaLIMSMessage1.getPlateTransferEvent().add(preflightPicoSetup2);
-            messageList.add(bettaLIMSMessage1);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, preflightPicoSetup2);
 
             preflightNormalization = this.bettaLimsMessageFactory.buildRackEvent("PreflightNormalization", rackBarcode,
                                                                                  tubeBarcodes);
-            BettaLIMSMessage bettaLIMSMessage2 = new BettaLIMSMessage();
-            bettaLIMSMessage2.getPlateEvent().add(preflightNormalization);
-            messageList.add(bettaLIMSMessage2);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, preflightNormalization);
 
             preflightPostNormPicoSetup1 = this.bettaLimsMessageFactory.buildRackToPlate("PreflightPostNormPicoSetup",
                                                                                         rackBarcode, tubeBarcodes,
                                                                                         "PreflightPostNormPicoPlate1" + testPrefix);
-            BettaLIMSMessage bettaLIMSMessage3 = new BettaLIMSMessage();
-            bettaLIMSMessage3.getPlateEvent().add(preflightPostNormPicoSetup1);
-            messageList.add(bettaLIMSMessage3);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, preflightPostNormPicoSetup1);
 
             preflightPostNormPicoSetup2 = this.bettaLimsMessageFactory.buildRackToPlate("PreflightPostNormPicoSetup",
                                                                                         rackBarcode, tubeBarcodes,
                                                                                         "PreflightPostNormPicoPlate2" + testPrefix);
-            BettaLIMSMessage bettaLIMSMessage4 = new BettaLIMSMessage();
-            bettaLIMSMessage4.getPlateEvent().add(preflightPostNormPicoSetup2);
-            messageList.add(bettaLIMSMessage4);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, preflightPostNormPicoSetup2);
 
             return this;
         }
@@ -843,26 +840,17 @@ public class LabEventTest {
             shearPlateBarcode = "ShearPlate" + testPrefix;
             shearingTransferEventJaxb = bettaLimsMessageFactory.buildRackToPlate("ShearingTransfer", rackBarcode,
                                                                                  tubeBarcodeList, shearPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
-            bettaLIMSMessage.getPlateTransferEvent().add(shearingTransferEventJaxb);
-            messageList.add(bettaLIMSMessage);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, shearingTransferEventJaxb);
 
             shearCleanPlateBarcode = "ShearCleanPlate" + testPrefix;
             postShearingTransferCleanupEventJaxb = bettaLimsMessageFactory.buildPlateToPlate(
                     "PostShearingTransferCleanup", shearPlateBarcode, shearCleanPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage1 = new BettaLIMSMessage();
-            bettaLIMSMessage1.getPlateTransferEvent().add(postShearingTransferCleanupEventJaxb);
-            messageList.add(bettaLIMSMessage1);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, postShearingTransferCleanupEventJaxb);
 
             String shearQcPlateBarcode = "ShearQcPlate" + testPrefix;
             shearingQcEventJaxb = bettaLimsMessageFactory.buildPlateToPlate("ShearingQC", shearCleanPlateBarcode,
                                                                             shearQcPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage2 = new BettaLIMSMessage();
-            bettaLIMSMessage2.getPlateTransferEvent().add(shearingQcEventJaxb);
-            messageList.add(bettaLIMSMessage2);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, shearingQcEventJaxb);
 
             return this;
         }
@@ -1055,26 +1043,17 @@ public class LabEventTest {
             covarisRackBarCode = "CovarisLoaded" + testPrefix;
             CovarisLoadEventJaxb = bettaLimsMessageFactory.buildRackToPlate("CovarisLoaded", rackBarcode,
                                                                             tubeBarcodeList, covarisRackBarCode);
-            BettaLIMSMessage bettaLIMSMessage1 = new BettaLIMSMessage();
-            bettaLIMSMessage1.getPlateTransferEvent().add(CovarisLoadEventJaxb);
-            messageList.add(bettaLIMSMessage1);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, CovarisLoadEventJaxb);
 
             shearCleanPlateBarcode = "ShearCleanPlate" + testPrefix;
             postShearingTransferCleanupEventJaxb = bettaLimsMessageFactory.buildPlateToPlate(
                     "PostShearingTransferCleanup", covarisRackBarCode, shearCleanPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage2 = new BettaLIMSMessage();
-            bettaLIMSMessage2.getPlateTransferEvent().add(postShearingTransferCleanupEventJaxb);
-            messageList.add(bettaLIMSMessage2);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, postShearingTransferCleanupEventJaxb);
 
             String shearQcPlateBarcode = "ShearQcPlate" + testPrefix;
             shearingQcEventJaxb = bettaLimsMessageFactory.buildPlateToPlate("ShearingQC", shearCleanPlateBarcode,
                                                                             shearQcPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage3 = new BettaLIMSMessage();
-            bettaLIMSMessage3.getPlateTransferEvent().add(shearingQcEventJaxb);
-            messageList.add(bettaLIMSMessage3);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, shearingQcEventJaxb);
 
             return this;
         }
@@ -1336,60 +1315,36 @@ public class LabEventTest {
 
         public LibraryConstructionJaxbBuilder invoke() {
             endRepairJaxb = bettaLimsMessageFactory.buildPlateEvent("EndRepair", shearCleanPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
-            bettaLIMSMessage.getPlateEvent().add(endRepairJaxb);
-            messageList.add(bettaLIMSMessage);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, endRepairJaxb);
 
             endRepairCleanupJaxb = bettaLimsMessageFactory.buildPlateEvent("EndRepairCleanup", shearCleanPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage1 = new BettaLIMSMessage();
-            bettaLIMSMessage1.getPlateEvent().add(endRepairCleanupJaxb);
-            messageList.add(bettaLIMSMessage1);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, endRepairCleanupJaxb);
 
             aBaseJaxb = bettaLimsMessageFactory.buildPlateEvent("ABase", shearCleanPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage2 = new BettaLIMSMessage();
-            bettaLIMSMessage2.getPlateEvent().add(aBaseJaxb);
-            messageList.add(bettaLIMSMessage2);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, aBaseJaxb);
 
             aBaseCleanupJaxb = bettaLimsMessageFactory.buildPlateEvent("ABaseCleanup", shearCleanPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage3 = new BettaLIMSMessage();
-            bettaLIMSMessage3.getPlateEvent().add(aBaseCleanupJaxb);
-            messageList.add(bettaLIMSMessage3);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, aBaseCleanupJaxb);
 
 //            indexPlateBarcode = "IndexPlate" + testPrefix;
             indexedAdapterLigationJaxb = bettaLimsMessageFactory.buildPlateToPlate("IndexedAdapterLigation",
                                                                                    indexPlateBarcode,
                                                                                    shearCleanPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage4 = new BettaLIMSMessage();
-            bettaLIMSMessage4.getPlateTransferEvent().add(indexedAdapterLigationJaxb);
-            messageList.add(bettaLIMSMessage4);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, indexedAdapterLigationJaxb);
 
             String ligationCleanupBarcode = "ligationCleanupPlate" + testPrefix;
             ligationCleanupJaxb = bettaLimsMessageFactory.buildPlateToPlate("AdapterLigationCleanup",
                                                                             shearCleanPlateBarcode,
                                                                             ligationCleanupBarcode);
-            BettaLIMSMessage bettaLIMSMessage5 = new BettaLIMSMessage();
-            bettaLIMSMessage5.getPlateTransferEvent().add(ligationCleanupJaxb);
-            messageList.add(bettaLIMSMessage5);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, ligationCleanupJaxb);
 
             pondEnrichmentJaxb = bettaLimsMessageFactory.buildPlateEvent("PondEnrichment", ligationCleanupBarcode);
-            BettaLIMSMessage bettaLIMSMessage6 = new BettaLIMSMessage();
-            bettaLIMSMessage6.getPlateEvent().add(pondEnrichmentJaxb);
-            messageList.add(bettaLIMSMessage6);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, pondEnrichmentJaxb);
 
             String pondCleanupBarcode = "pondCleanupPlate" + testPrefix;
             pondCleanupJaxb = bettaLimsMessageFactory.buildPlateToPlate("HybSelPondEnrichmentCleanup",
                                                                         ligationCleanupBarcode, pondCleanupBarcode);
-            BettaLIMSMessage bettaLIMSMessage7 = new BettaLIMSMessage();
-            bettaLIMSMessage7.getPlateTransferEvent().add(pondCleanupJaxb);
-            messageList.add(bettaLIMSMessage7);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, pondCleanupJaxb);
 
             pondRegRackBarcode = "PondReg" + testPrefix;
             pondRegTubeBarcodes = new ArrayList<String>();
@@ -1398,10 +1353,7 @@ public class LabEventTest {
             }
             pondRegistrationJaxb = bettaLimsMessageFactory.buildPlateToRack("PondRegistration", pondCleanupBarcode,
                                                                             pondRegRackBarcode, pondRegTubeBarcodes);
-            BettaLIMSMessage bettaLIMSMessage8 = new BettaLIMSMessage();
-            bettaLIMSMessage8.getPlateTransferEvent().add(pondRegistrationJaxb);
-            messageList.add(bettaLIMSMessage8);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, pondRegistrationJaxb);
 
             return this;
         }
@@ -1729,109 +1681,64 @@ public class LabEventTest {
                                                                      pondRegTubeBarcodes.subList(0, pondRegTubeBarcodes
                                                                              .size() / 2), preSelPoolRackBarcode,
                                                                      preSelPoolBarcodes);
-            BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
-            bettaLIMSMessage.getPlateTransferEvent().add(preSelPoolJaxb);
-            messageList.add(bettaLIMSMessage);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, preSelPoolJaxb);
 
             preSelPoolJaxb2 = bettaLimsMessageFactory.buildRackToRack("PreSelectionPool", pondRegRackBarcode,
                                                                       pondRegTubeBarcodes.subList(
                                                                               pondRegTubeBarcodes.size() / 2,
                                                                               pondRegTubeBarcodes.size()),
                     preSelPoolRackBarcode, preSelPoolBarcodes);
-            BettaLIMSMessage bettaLIMSMessage1 = new BettaLIMSMessage();
-            bettaLIMSMessage1.getPlateTransferEvent().add(preSelPoolJaxb2);
-            messageList.add(bettaLIMSMessage1);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, preSelPoolJaxb2);
 
             String hybridizationPlateBarcode = "Hybrid" + testPrefix;
             hybridizationJaxb = bettaLimsMessageFactory.buildRackToPlate("Hybridization", preSelPoolRackBarcode,
                                                                          preSelPoolBarcodes, hybridizationPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage2 = new BettaLIMSMessage();
-            bettaLIMSMessage2.getPlateTransferEvent().add(hybridizationJaxb);
-            messageList.add(bettaLIMSMessage2);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, hybridizationJaxb);
 
             baitTubeBarcode = "Bait" + testPrefix;
             String baitSetupBarcode = "BaitSetup" + testPrefix;
             baitSetupJaxb = bettaLimsMessageFactory.buildTubeToPlate("BaitSetup", baitTubeBarcode, baitSetupBarcode,
                                                                      LabEventFactory.PHYS_TYPE_EPPENDORF_96,
                                                                      LabEventFactory.SECTION_ALL_96, "tube");
-            BettaLIMSMessage bettaLIMSMessage3 = new BettaLIMSMessage();
-            bettaLIMSMessage3.getReceptaclePlateTransferEvent().add(baitSetupJaxb);
-            messageList.add(bettaLIMSMessage3);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, baitSetupJaxb);
 
             baitAdditionJaxb = bettaLimsMessageFactory.buildPlateToPlate("BaitAddition", baitSetupBarcode,
                     hybridizationPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage4 = new BettaLIMSMessage();
-            bettaLIMSMessage4.getPlateTransferEvent().add(baitAdditionJaxb);
-            messageList.add(bettaLIMSMessage4);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, baitAdditionJaxb);
 
             beadAdditionJaxb = bettaLimsMessageFactory.buildPlateEvent("BeadAddition", hybridizationPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage5 = new BettaLIMSMessage();
-            bettaLIMSMessage5.getPlateEvent().add(beadAdditionJaxb);
-            messageList.add(bettaLIMSMessage5);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, beadAdditionJaxb);
 
             apWashJaxb = bettaLimsMessageFactory.buildPlateEvent("APWash", hybridizationPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage6 = new BettaLIMSMessage();
-            bettaLIMSMessage6.getPlateEvent().add(apWashJaxb);
-            messageList.add(bettaLIMSMessage6);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, apWashJaxb);
 
             gsWash1Jaxb = bettaLimsMessageFactory.buildPlateEvent("GSWash1", hybridizationPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage7 = new BettaLIMSMessage();
-            bettaLIMSMessage7.getPlateEvent().add(gsWash1Jaxb);
-            messageList.add(bettaLIMSMessage7);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, gsWash1Jaxb);
 
             gsWash2Jaxb = bettaLimsMessageFactory.buildPlateEvent("GSWash2", hybridizationPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage8 = new BettaLIMSMessage();
-            bettaLIMSMessage8.getPlateEvent().add(gsWash2Jaxb);
-            messageList.add(bettaLIMSMessage8);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, gsWash2Jaxb);
 
             gsWash3Jaxb = bettaLimsMessageFactory.buildPlateEvent("GSWash3", hybridizationPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage15 = new BettaLIMSMessage();
-            bettaLIMSMessage15.getPlateEvent().add(gsWash3Jaxb);
-            messageList.add(bettaLIMSMessage15);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, gsWash3Jaxb);
 
             gsWash4Jaxb = bettaLimsMessageFactory.buildPlateEvent("GSWash4", hybridizationPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage12 = new BettaLIMSMessage();
-            bettaLIMSMessage12.getPlateEvent().add(gsWash4Jaxb);
-            messageList.add(bettaLIMSMessage12);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, gsWash4Jaxb);
 
             gsWash5Jaxb = bettaLimsMessageFactory.buildPlateEvent("GSWash5", hybridizationPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage13 = new BettaLIMSMessage();
-            bettaLIMSMessage13.getPlateEvent().add(gsWash5Jaxb);
-            messageList.add(bettaLIMSMessage13);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, gsWash5Jaxb);
 
             gsWash6Jaxb = bettaLimsMessageFactory.buildPlateEvent("GSWash6", hybridizationPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage14 = new BettaLIMSMessage();
-            bettaLIMSMessage14.getPlateEvent().add(gsWash6Jaxb);
-            messageList.add(bettaLIMSMessage14);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, gsWash6Jaxb);
 
             catchEnrichmentSetupJaxb = bettaLimsMessageFactory.buildPlateEvent("CatchEnrichmentSetup",
                                                                                hybridizationPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage9 = new BettaLIMSMessage();
-            bettaLIMSMessage9.getPlateEvent().add(catchEnrichmentSetupJaxb);
-            messageList.add(bettaLIMSMessage9);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, catchEnrichmentSetupJaxb);
 
             String catchCleanupBarcode = "catchCleanPlate" + testPrefix;
             catchEnrichmentCleanupJaxb = bettaLimsMessageFactory.buildPlateToPlate("CatchEnrichmentCleanup",
                                                                                    hybridizationPlateBarcode,
                                                                                    catchCleanupBarcode);
-            BettaLIMSMessage bettaLIMSMessage10 = new BettaLIMSMessage();
-            bettaLIMSMessage10.getPlateTransferEvent().add(catchEnrichmentCleanupJaxb);
-            messageList.add(bettaLIMSMessage10);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, catchEnrichmentCleanupJaxb);
 
             normCatchBarcodes = new ArrayList<String>();
             for (int rackPosition = 1; rackPosition <= pondRegTubeBarcodes.size() / 2; rackPosition++) {
@@ -1841,10 +1748,7 @@ public class LabEventTest {
             normCatchJaxb = bettaLimsMessageFactory.buildPlateToRack("NormalizedCatchRegistration",
                                                                      hybridizationPlateBarcode, normCatchRackBarcode,
                                                                      normCatchBarcodes);
-            BettaLIMSMessage bettaLIMSMessage11 = new BettaLIMSMessage();
-            bettaLIMSMessage11.getPlateTransferEvent().add(normCatchJaxb);
-            messageList.add(bettaLIMSMessage11);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, normCatchJaxb);
 
             return this;
         }
@@ -2055,10 +1959,7 @@ public class LabEventTest {
             poolingTransferJaxb = bettaLimsMessageFactory.buildCherryPick("PoolingTransfer", Arrays.asList(
                     normCatchRackBarcode), Arrays.asList(normCatchBarcodes), poolRackBarcode, poolTubeBarcodes,
                     poolingCherryPicks);
-            BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
-            bettaLIMSMessage.getPlateCherryPickEvent().add(poolingTransferJaxb);
-            messageList.add(bettaLIMSMessage);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, poolingTransferJaxb);
 
             // DenatureTransfer
             denatureRackBarcode = "DenatureRack" + testPrefix;
@@ -2071,10 +1972,7 @@ public class LabEventTest {
             denatureJaxb = bettaLimsMessageFactory.buildCherryPick("DenatureTransfer", Arrays.asList(poolRackBarcode),
                                                                    Arrays.asList(poolTubeBarcodes), denatureRackBarcode,
                                                                    denatureTubeBarcodes, denatureCherryPicks);
-            BettaLIMSMessage bettaLIMSMessage1 = new BettaLIMSMessage();
-            bettaLIMSMessage1.getPlateCherryPickEvent().add(denatureJaxb);
-            messageList.add(bettaLIMSMessage1);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, denatureJaxb);
 
             // StripTubeBTransfer
             stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
@@ -2095,19 +1993,13 @@ public class LabEventTest {
                                                                                        stripTubeHolderBarcode,
                                                                                        Arrays.asList(stripTubeBarcode),
                                                                                        stripTubeCherryPicks);
-            BettaLIMSMessage bettaLIMSMessage2 = new BettaLIMSMessage();
-            bettaLIMSMessage2.getPlateCherryPickEvent().add(stripTubeTransferJaxb);
-            messageList.add(bettaLIMSMessage2);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, stripTubeTransferJaxb);
 
             // FlowcellTransfer
             flowcellBarcode = "Flowcell" + testPrefix;
             flowcellTransferJaxb = bettaLimsMessageFactory.buildStripTubeToFlowcell("FlowcellTransfer",
                     stripTubeBarcode, flowcellBarcode);
-            BettaLIMSMessage bettaLIMSMessage3 = new BettaLIMSMessage();
-            bettaLIMSMessage3.getPlateTransferEvent().add(flowcellTransferJaxb);
-            messageList.add(bettaLIMSMessage3);
-            bettaLimsMessageFactory.advanceTime();
+            addMessage(messageList, bettaLimsMessageFactory, flowcellTransferJaxb);
 
             return this;
         }

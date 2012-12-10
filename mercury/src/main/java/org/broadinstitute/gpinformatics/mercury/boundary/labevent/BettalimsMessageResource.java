@@ -5,8 +5,15 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConnector;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
@@ -14,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -34,8 +42,10 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.sax.SAXSource;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Allows BettaLIMS messages to be submitted through JAX-RS.  In this context, BettaLIMS refers to the message format,
@@ -44,6 +54,7 @@ import java.util.List;
 @Path("/bettalimsmessage")
 @Stateless // todo jmt should this be stateful?  It has stateful DAOs injected.
 public class BettalimsMessageResource {
+    public static final String WORKFLOW_MESSAGE = " error(s) processing workflows for ";
 
     private static final Log LOG = LogFactory.getLog(BettalimsMessageResource.class);
 
@@ -74,6 +85,8 @@ public class BettalimsMessageResource {
     @Inject
     private BettalimsConnector bettalimsConnector;
 
+    @Inject
+    private ThriftService thriftService;
 
     /**
      * Accepts a message from (typically) a liquid handling deck
@@ -85,16 +98,11 @@ public class BettalimsMessageResource {
         try {
             storeAndProcess(message);
         } catch (Exception e) {
-            /*
-            todo jmt fix this
-                        if(e.getMessage().contains(LabWorkflowBatchException.MESSAGE)) {
-                            throw new ResourceException(e.getMessage(), Response.Status.CREATED);
-                        } else {
-            */
-            throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-            /*
-                        }
-            */
+            if(e.getMessage().contains(WORKFLOW_MESSAGE)) {
+                throw new ResourceException(e.getMessage(), Response.Status.CREATED);
+            } else {
+                throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            }
         }
         // The VWorks client seems to prefer 200 to 204
         return Response.status(Response.Status.OK).entity("Message persisted").type(MediaType.TEXT_PLAIN_TYPE).build();
@@ -132,9 +140,43 @@ public class BettalimsMessageResource {
 
             BettaLIMSMessage bettaLIMSMessage = (BettaLIMSMessage) unmarshaller.unmarshal(source);
 
-            // todo jmt attempt JAX-RS, fall back to JMS, or send unavailable to client?
             boolean processInMercury = false;
-            BettalimsConnector.BettalimsResponse bettalimsResponse = bettalimsConnector.sendMessage(message);
+            boolean processInSquid = false;
+            if(bettaLIMSMessage.getMode().equals(LabEventFactory.MODE_MERCURY)) {
+                processInMercury = true;
+                processInSquid = false;
+            } else {
+                LabEventType labEventType = getLabEventType(bettaLIMSMessage);
+                if(labEventType == null) {
+                    throw new RuntimeException("Failed to find event type");
+                }
+                switch (labEventType.getSystemOfRecord()) {
+                    case MERCURY:
+                        processInMercury = true;
+                        processInSquid = false;
+                        break;
+                    case SQUID:
+                        processInMercury = false;
+                        processInSquid = true;
+                        break;
+                    case PRODUCT_DEPENDENT:
+                        // todo jmt traverse plastic
+                        break;
+                    case BOTH:
+                        processInMercury = true;
+                        processInSquid = true;
+                        break;
+                    default:
+                        throw new RuntimeException("Unexpected enum value " + labEventType.getSystemOfRecord());
+                }
+            }
+
+            // todo jmt attempt JAX-RS, fall back to JMS, or send unavailable to client?
+            BettalimsConnector.BettalimsResponse bettalimsResponse = null;
+            if (processInSquid) {
+                bettalimsResponse = bettalimsConnector.sendMessage(message);
+            }
+/*
             if(bettalimsResponse.getCode() == 500) {
                 LOG.error("Error response from Bettalims " + bettalimsResponse.getCode() + " " + bettalimsResponse.getMessage());
                 if(bettalimsResponse.getMessage().contains("Missing source receptacle for barcode") ||
@@ -147,6 +189,8 @@ public class BettalimsMessageResource {
                     processInMercury = true;
                 }
             }
+*/
+            // todo jmt special cases for Bait and index addition?
             // results of grep -h Exception `ls 2012*` | sort | less
             // Missing source receptacle for barcode R12071515141
             // Source plate doesn't exist 000003542852
@@ -159,14 +203,101 @@ public class BettalimsMessageResource {
             // Machine not found
             // Source receptacle 0120759474 is not in the database
             // Program not found
+
             if (processInMercury) {
                 processMessage(bettaLIMSMessage);
+            }
+            if (bettalimsResponse != null && bettalimsResponse.getCode() != 200) {
+                throw new RuntimeException(bettalimsResponse.getMessage());
             }
         } catch (Exception e) {
             wsMessageStore.recordError(message, now, e);
             LOG.error("Failed to process run", e);
             throw e;
         }
+    }
+
+    private LabEventType getLabEventType(BettaLIMSMessage bettaLIMSMessage) {
+        LabEventType labEventType = null;
+        for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
+            labEventType = LabEventType.getByName(plateCherryPickEvent.getEventType());
+            if(labEventType != null) {
+                break;
+            }
+        }
+        if (labEventType == null) {
+            for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
+                labEventType = LabEventType.getByName(plateEventType.getEventType());
+                if(labEventType != null) {
+                    break;
+                }
+            }
+        }
+        if(labEventType == null) {
+            for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
+                labEventType = LabEventType.getByName(plateTransferEventType.getEventType());
+                if(labEventType != null) {
+                    break;
+                }
+            }
+        }
+        if(labEventType == null) {
+            for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
+                labEventType = LabEventType.getByName(receptaclePlateTransferEvent.getEventType());
+                if(labEventType != null) {
+                    break;
+                }
+            }
+        }
+        return labEventType;
+    }
+
+    private boolean sourcesExistInSquid(BettaLIMSMessage bettaLIMSMessage) {
+        List<String> sourceTubeBarcodes = new ArrayList<String>();
+        List<String> sourcePlateBarcodes = new ArrayList<String>();
+        for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
+            for (PositionMapType positionMapType : plateCherryPickEvent.getSourcePositionMap()) {
+                for (ReceptacleType receptacleType : positionMapType.getReceptacle()) {
+                    sourceTubeBarcodes.add(receptacleType.getBarcode());
+                }
+            }
+        }
+        for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
+            if(plateEventType.getPlate() != null) {
+                sourcePlateBarcodes.add(plateEventType.getPlate().getBarcode());
+            }
+            if(plateEventType.getPositionMap() != null) {
+                for (ReceptacleType receptacleType : plateEventType.getPositionMap().getReceptacle()) {
+                    sourceTubeBarcodes.add(receptacleType.getBarcode());
+                }
+            }
+        }
+        for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
+            if(plateTransferEventType.getSourcePlate() != null) {
+                sourcePlateBarcodes.add(plateTransferEventType.getSourcePlate().getBarcode());
+            }
+            if(plateTransferEventType.getSourcePositionMap() != null) {
+                for (ReceptacleType receptacleType : plateTransferEventType.getSourcePositionMap().getReceptacle()) {
+                    sourceTubeBarcodes.add(receptacleType.getBarcode());
+                }
+            }
+        }
+        for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
+            sourceTubeBarcodes.add(receptaclePlateTransferEvent.getSourceReceptacle().getBarcode());
+        }
+        if(sourceTubeBarcodes.isEmpty() && sourcePlateBarcodes.isEmpty()) {
+            throw new RuntimeException("Failed to find any sources");
+        }
+        boolean squidRecognizesTubes = false;
+        Map<String,Boolean> mapPositionToOccupied = null;
+        if(!sourceTubeBarcodes.isEmpty()) {
+            squidRecognizesTubes = thriftService.doesSquidRecognizeAllLibraries(sourceTubeBarcodes);
+        } else if(!sourcePlateBarcodes.isEmpty()) {
+            // todo jmt fetchPlateInfo would be more efficient
+            // todo jmt catch exception
+            mapPositionToOccupied = thriftService.fetchParentRackContentsForPlate(sourcePlateBarcodes.get(0));
+        }
+        return (squidRecognizesTubes || (mapPositionToOccupied != null));
     }
 
     /**
