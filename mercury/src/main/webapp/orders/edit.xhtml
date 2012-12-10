@@ -41,19 +41,19 @@
             </div>
 
 
-            <!--<div class="control-group">-->
-                <!--<span class="control-label label-form">Research Project</span>-->
-                        <!--<span class="controls">-->
-                            <!--<h:link outcome="/projects/view">-->
-                                <!--<f:param name="researchProject"  value="#{productOrderDetail.productOrder.researchProject.jiraTicketKey}"/>-->
-                                <!--<h:outputText value="#{productOrderDetail.productOrder.researchProject.title}"/>-->
-                            <!--</h:link>-->
-                            <!--(<h:outputLink target="JIRA" styleClass="external"-->
-                                           <!--value="#{jiraLink.browseUrl(productOrderDetail.productOrder.researchProject.jiraTicketKey)}">-->
-                            <!--<h:outputText value="#{productOrderDetail.productOrder.researchProject.jiraTicketKey}"/>-->
-                        <!--</h:outputLink>)-->
-                        <!--</span>-->
-            <!--</div>-->
+            <div class="control-group">
+                <span class="control-label label-form">Research Project</span>
+                        <span class="controls">
+                            <h:link outcome="/projects/view">
+                                <f:param name="researchProject"  value="#{pdoEditBean.productOrder.researchProject.jiraTicketKey}"/>
+                                <h:outputText value="#{pdoEditBean.productOrder.researchProject.title}"/>
+                            </h:link>
+                            (<h:outputLink target="JIRA" styleClass="external"
+                                           value="#{jiraLink.browseUrl(pdoEditBean.productOrder.researchProject.jiraTicketKey)}">
+                            <h:outputText value="#{pdoEditBean.productOrder.researchProject.jiraTicketKey}"/>
+                        </h:outputLink>)
+                        </span>
+            </div>
 
             <!--<div class="control-group">-->
                 <!--<span class="control-label label-form">Product</span>-->
@@ -88,14 +88,14 @@
                 </div>
 
 
-            <!--<h:panelGroup rendered="#{productOrderDetail.productOrder.product.productFamily.supportsNumberOfLanes}">-->
-                <!--<div class="control-group">-->
-                    <!--<span class="control-label label-form">Number of Lanes</span>-->
-                            <!--<span class="controls">-->
-                                <!--#{productOrderDetail.productOrder.count}-->
-                            <!--</span>-->
-                <!--</div>-->
-            <!--</h:panelGroup>-->
+            <h:panelGroup rendered="#{pdoEditBean.productOrder.product.productFamily.supportsNumberOfLanes}">
+                <div class="control-group">
+                    <span class="control-label label-form">Number of Lanes</span>
+                            <span class="controls">
+                                #{pdoEditBean.productOrder.count}
+                            </span>
+                </div>
+            </h:panelGroup>
 
             <div class="control-group">
                 <span class="control-label label-form">Comments</span>
