@@ -306,28 +306,6 @@
         <addUniqueConstraint tableName="molecular_index" columnNames="sequence"
                              constraintName="uk_mi_sequence" schemaName="mercury"/>
     </changeSet>
-<!--
-    <changeSet id="GPLIM-308-1" author="dryan">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <columnExists columnName="target_set" tableName="reagent" schemaName="mercury"/>
-            </not>
-        </preConditions>
-        <addColumn tableName="reagent" schemaName="mercury">
-            <column name="target_set" type="varchar2(255)"/>
-        </addColumn>
-    </changeSet>
-    <changeSet id="GPLIM-308-2" author="dryan">
-        <preConditions onFail="MARK_RAN">
-            <not>
-                <columnExists columnName="target_set" tableName="reagent_aud" schemaName="mercury"/>
-            </not>
-        </preConditions>
-        <addColumn tableName="reagent_aud" schemaName="mercury">
-            <column name="target_set" type="varchar2(255)"/>
-        </addColumn>
-    </changeSet>
--->
 
     <changeSet id="GPLIM-73-12" author="thompson">
         <createTable tableName="reagent_design" schemaName="mercury">
@@ -423,5 +401,14 @@
         </preConditions>
         <dropTable tableName="person_aud" schemaName="mercury" />
     </changeSet>
+    <changeSet id="GPLIM-308-11" author="dryan">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists schemaName="mercury" indexName="uk_reagent_design"/>
+            </not>
 
+        </preConditions>
+            <addUniqueConstraint tableName="reagent_design" columnNames="reagent_design,reagent_type"
+                                 constraintName="uk_reagent_design" schemaName="mercury"/>
+        </changeSet>
 </databaseChangeLog>

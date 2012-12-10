@@ -81,7 +81,7 @@
                     <div class="controls">
                         <!--@elvariable id="product" type="org.broadinstitute.gpinformatics.athena.entity.products.Product"-->
                         <p:autoComplete id="product" value="#{productOrderDetail.productOrder.product}"
-                                        completeMethod="#{productList.getProductCompletions}"
+                                        completeMethod="#{productSearcher.searchProductsForProductOrder}"
                                         forceSelection="true"
                                         var="product"
                                         itemLabel="#{product.productName}"

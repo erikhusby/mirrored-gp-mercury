@@ -25,8 +25,6 @@ public class QuoteWorkItemsExporter extends AbstractSpreadsheetExporter {
     private static final String[] FIXED_HEADERS = { "Quote", "Platform", "Category", "Price Item", "Quantity", "Billed Date", "Billing Message"};
 
     public QuoteWorkItemsExporter(BillingSession billingSession, List<QuoteImportItem> quoteItems) {
-        super();
-
         this.quoteItems = quoteItems;
         this.billingSession = billingSession;
     }
@@ -40,7 +38,7 @@ public class QuoteWorkItemsExporter extends AbstractSpreadsheetExporter {
      */
     public void writeToStream(OutputStream out, BSPUserList bspUserList) throws IOException {
 
-        getWriter().setCurrentSheet(getWorkbook().createSheet(billingSession.getBusinessKey()));
+        getWriter().createSheet(billingSession.getBusinessKey());
 
         BspUser user = bspUserList.getById(billingSession.getCreatedBy());
 

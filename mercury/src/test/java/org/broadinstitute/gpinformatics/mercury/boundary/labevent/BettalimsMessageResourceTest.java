@@ -15,10 +15,10 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -46,13 +46,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
@@ -87,11 +81,14 @@ public class BettalimsMessageResourceTest extends Arquillian {
     @Inject
     private ResearchProjectDao researchProjectDao;
 
+    @Inject
+    private ReagentDesignDao reagentDesignDao;
+
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private UserTransaction utx;
 
-    private final SimpleDateFormat testPrefixDateFormat = new SimpleDateFormat("MMddHHmmss");
+    private final SimpleDateFormat testPrefixDateFormat=new SimpleDateFormat("MMddHHmmss");
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -101,7 +98,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
     @BeforeMethod(groups = EXTERNAL_INTEGRATION)
     public void setUp() throws SystemException, NotSupportedException {
         // Skip if no injections, meaning we're not running in container
-        if (utx == null) {
+        if(utx == null) {
             return;
         }
 
@@ -111,7 +108,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
     @AfterMethod(groups = EXTERNAL_INTEGRATION)
     public void tearDown() {
         // Skip if no injections, meaning we're not running in container
-        if (utx == null) {
+        if(utx == null) {
             return;
         }
 
@@ -138,59 +135,59 @@ public class BettalimsMessageResourceTest extends Arquillian {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);
 
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
-        for(int rackPosition = 1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {
-            String barcode = "R" + testPrefix + rackPosition;
+        List<ProductOrderSample> productOrderSamples=new ArrayList<ProductOrderSample>();
+        Map<String,TwoDBarcodedTube> mapBarcodeToTube=new LinkedHashMap<String,TwoDBarcodedTube>();
+        for (int rackPosition=1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {
+            String barcode="R" + testPrefix + rackPosition;
 
-            String bspStock = "SM-" +  testPrefix + rackPosition;
-            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            String bspStock="SM-" + testPrefix + rackPosition;
+            TwoDBarcodedTube bspAliquot=new TwoDBarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(null, bspStock));
             mapBarcodeToTube.put(barcode, bspAliquot);
             productOrderSamples.add(new ProductOrderSample(bspStock));
 
             twoDBarcodedTubeDAO.persist(bspAliquot);
         }
-        Product exomeExpressProduct = productDao.findByPartNumber("P-EX-0002");
+        Product exomeExpressProduct=productDao.findByPartNumber("P-EX-0002");
         if(exomeExpressProduct == null) {
-            exomeExpressProduct = new Product("Exome Express", productFamilyDao.find("Exome"), "Exome Express",
+            exomeExpressProduct=new Product("Exome Express", productFamilyDao.find("Exome"), "Exome Express",
                     "P-EX-0002", new Date(), null, 1814400, 1814400, 184, null, null, null, true, "Exome Express", false);
             exomeExpressProduct.setPrimaryPriceItem(new PriceItem("1234", PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Standard Pony"));
             productDao.persist(exomeExpressProduct);
             productDao.flush();
         }
-        ResearchProject researchProject = researchProjectDao.findByBusinessKey("RP-19");
+        ResearchProject researchProject=researchProjectDao.findByBusinessKey("RP-19");
         if(researchProject == null) {
-            researchProject = new ResearchProject(101L, "SIGMA Sarcoma", "SIGMA Sarcoma", false);
+            researchProject=new ResearchProject(101L, "SIGMA Sarcoma", "SIGMA Sarcoma", false);
             researchProjectDao.persist(researchProject);
         }
-        ProductOrder productOrder = new ProductOrder(101L, "Messaging Test " + testPrefix, productOrderSamples, "GSP-123",
+        ProductOrder productOrder=new ProductOrder(101L, "Messaging Test " + testPrefix, productOrderSamples, "GSP-123",
                 exomeExpressProduct, researchProject);
-        String jiraTicketKey = "PD0-MsgTest";
+        String jiraTicketKey="PD0-MsgTest";
         productOrder.setJiraTicketKey(jiraTicketKey);
         twoDBarcodedTubeDAO.flush();
         twoDBarcodedTubeDAO.clear();
         utx.commit();
         utx.begin();
 
-        BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
+        BettaLimsMessageFactory bettaLimsMessageFactory=new BettaLimsMessageFactory();
 
-        LabEventTest.PreFlightJaxbBuilder preFlightJaxbBuilder = new LabEventTest.PreFlightJaxbBuilder(bettaLimsMessageFactory, testPrefix,
+        LabEventTest.PreFlightJaxbBuilder preFlightJaxbBuilder=new LabEventTest.PreFlightJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 new ArrayList<String>(mapBarcodeToTube.keySet())).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : preFlightJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage);
         }
 
-        LabEventTest.ShearingJaxbBuilder shearingJaxbBuilder = new LabEventTest.ShearingJaxbBuilder(bettaLimsMessageFactory,
+        LabEventTest.ShearingJaxbBuilder shearingJaxbBuilder=new LabEventTest.ShearingJaxbBuilder(bettaLimsMessageFactory,
                 new ArrayList<String>(mapBarcodeToTube.keySet()), testPrefix, preFlightJaxbBuilder.getRackBarcode()).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : shearingJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage);
         }
 
-        Map<String,StaticPlate> mapBarcodeToPlate = indexedPlateFactory.parseStream(
+        Map<String,StaticPlate> mapBarcodeToPlate=indexedPlateFactory.parseStream(
                 Thread.currentThread().getContextClassLoader().getResourceAsStream("DuplexCOAforBroad.xlsx"),
                 IndexedPlateFactory.TechnologiesAndParsers.ILLUMINA_SINGLE);
-        StaticPlate indexPlate = mapBarcodeToPlate.values().iterator().next();
+        StaticPlate indexPlate=mapBarcodeToPlate.values().iterator().next();
         if(staticPlateDAO.findByBarcode(indexPlate.getLabel()) == null) {
             staticPlateDAO.persist(indexPlate);
             staticPlateDAO.flush();
@@ -206,10 +203,16 @@ public class BettalimsMessageResourceTest extends Arquillian {
             sendMessage(bettaLIMSMessage);
         }
 
-        LabEventTest.HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = new LabEventTest.HybridSelectionJaxbBuilder(bettaLimsMessageFactory,
+        LabEventTest.HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder=new LabEventTest.HybridSelectionJaxbBuilder(bettaLimsMessageFactory,
                 testPrefix, libraryConstructionJaxbBuilder.getPondRegRackBarcode(),
                 libraryConstructionJaxbBuilder.getPondRegTubeBarcodes()).invoke();
-        twoDBarcodedTubeDAO.persist(LabEventTest.buildBaitTube(hybridSelectionJaxbBuilder.getBaitTubeBarcode()));
+        final List<ReagentDesign> reagentDesigns=reagentDesignDao.findAll(ReagentDesign.class, 0, 1);
+        ReagentDesign baitDesign=null;
+        if(reagentDesigns != null && !reagentDesigns.isEmpty()) {
+            baitDesign=reagentDesigns.get(0);
+        }
+
+        twoDBarcodedTubeDAO.persist(LabEventTest.buildBaitTube(hybridSelectionJaxbBuilder.getBaitTubeBarcode(), baitDesign));
         twoDBarcodedTubeDAO.flush();
         twoDBarcodedTubeDAO.clear();
         utx.commit();
@@ -218,17 +221,17 @@ public class BettalimsMessageResourceTest extends Arquillian {
             sendMessage(bettaLIMSMessage);
         }
 
-        LabEventTest.QtpJaxbBuilder qtpJaxbBuilder = new LabEventTest.QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
+        LabEventTest.QtpJaxbBuilder qtpJaxbBuilder=new LabEventTest.QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 hybridSelectionJaxbBuilder.getNormCatchBarcodes(), hybridSelectionJaxbBuilder.getNormCatchRackBarcode()).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage);
         }
 //        Controller.stopCPURecording();
-        TwoDBarcodedTube pooltube = twoDBarcodedTubeDAO.findByBarcode(qtpJaxbBuilder.getPoolTubeBarcode());
+        TwoDBarcodedTube pooltube=twoDBarcodedTubeDAO.findByBarcode(qtpJaxbBuilder.getPoolTubeBarcode());
         Assert.assertEquals(pooltube.getSampleInstances().size(), LabEventTest.NUM_POSITIONS_IN_RACK,
                 "Wrong number of sample instances");
 
-        String runName = "TestRun" + testPrefix;
+        String runName="TestRun" + testPrefix;
         try {
             solexaRunResource.registerRun(new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(), runName, new Date(), "SL-HAL",
                     File.createTempFile("RunDir", ".txt").getAbsolutePath(), null));
@@ -249,28 +252,28 @@ public class BettalimsMessageResourceTest extends Arquillian {
                 .post(String.class);
     }
 
-    @Test(enabled = false, groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled=false, groups=EXTERNAL_INTEGRATION, dataProvider=Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testHttp(@ArquillianResource URL baseUrl) {
-        File inboxDirectory = new File("C:/Temp/seq/lims/bettalims/production/inbox");
-        List<String> dayDirectoryNames =  Arrays.asList(inboxDirectory.list());
+        File inboxDirectory=new File("C:/Temp/seq/lims/bettalims/production/inbox");
+        List<String> dayDirectoryNames=Arrays.asList(inboxDirectory.list());
         Collections.sort(dayDirectoryNames);
         for (String dayDirectoryName : dayDirectoryNames) {
-            if (dayDirectoryName.startsWith("2012")) {
-                File dayDirectory = new File(inboxDirectory, dayDirectoryName);
-                List<String> messageFileNames =  Arrays.asList(dayDirectory.list());
+            if(dayDirectoryName.startsWith("2012")) {
+                File dayDirectory=new File(inboxDirectory, dayDirectoryName);
+                List<String> messageFileNames=Arrays.asList(dayDirectory.list());
                 Collections.sort(messageFileNames);
                 for (String messageFileName : messageFileNames) {
-                    String response = null;
+                    String response=null;
                     try {
-    //                    String message = FileUtils.readFileToString(new File(dayDirectory, messageFileName));
-    //                    if(message.contains("PreSelectionPool")) {
-                            response = Client.create().resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
-                                    .type(MediaType.APPLICATION_XML_TYPE)
-                                    .accept(MediaType.APPLICATION_XML)
-                                    .entity(new File(dayDirectory, messageFileName))
-                                    .post(String.class);
-    //                    }
+                        //                    String message = FileUtils.readFileToString(new File(dayDirectory, messageFileName));
+                        //                    if(message.contains("PreSelectionPool")) {
+                        response=Client.create().resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
+                                .type(MediaType.APPLICATION_XML_TYPE)
+                                .accept(MediaType.APPLICATION_XML)
+                                .entity(new File(dayDirectory, messageFileName))
+                                .post(String.class);
+                        //                    }
                     } catch (Exception e) {
                         System.out.println(e.getMessage());
                     }
@@ -280,12 +283,12 @@ public class BettalimsMessageResourceTest extends Arquillian {
         }
     }
 
-    @Test(enabled = false, groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled=false, groups=EXTERNAL_INTEGRATION, dataProvider=Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testSingleFile(@ArquillianResource URL baseUrl) {
-        String response = null;
+        String response=null;
         try {
-            response = Client.create().resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
+            response=Client.create().resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
                     .type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
                     .entity(new File("c:/Temp/seq/lims/bettalims/production/inbox/20120103/20120103_101119570_localhost_9998_ws.xml"))
