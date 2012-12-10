@@ -76,21 +76,35 @@ public class ProductOrderFixupTest extends Arquillian {
         changeProductOrderQuoteId(jiraKey, newQuote);
     }
 
+    /**
+     * Change quote for a PDO, see http://prodinfojira.broadinstitute.org:8080/jira/browse/GPLIM-522
+     * @throws Exception
+     */
+    @Test(enabled = false)
+    public void change_quote_for_pdo_55() throws Exception {
+        String jiraKey = "PDO-55";
+        String newQuote = "MMM8GQ";
+        changeProductOrderQuoteId(jiraKey, newQuote);
+    }
+
     private void changeProductOrderQuoteId(String jiraKey, String newQuoteStr) throws IOException {
         ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraKey);
 
-        Map<String, CustomFieldDefinition> jiraFields = jiraService.getCustomFields();
-        Set<CustomField> customFields = new HashSet<CustomField>();
+        // comment out until we can update a Quote on a Jira ticket, need to extend the JiraService for transitions.
+        if ( false ) {
+            Map<String, CustomFieldDefinition> jiraFields = jiraService.getCustomFields();
+            Set<CustomField> customFields = new HashSet<CustomField>();
 
-        for (Map.Entry<String, CustomFieldDefinition> stringCustomFieldDefinitionEntry : jiraFields.entrySet()) {
-            log.info(stringCustomFieldDefinitionEntry.getKey());
-            if (stringCustomFieldDefinitionEntry.getKey().equals("Quote ID")) {
-                CustomField quoteCustomField = new CustomField(stringCustomFieldDefinitionEntry.getValue(),newQuoteStr, CustomField.SingleFieldType.TEXT);
-                customFields.add(quoteCustomField);
+            for (Map.Entry<String, CustomFieldDefinition> stringCustomFieldDefinitionEntry : jiraFields.entrySet()) {
+                log.info(stringCustomFieldDefinitionEntry.getKey());
+                if (stringCustomFieldDefinitionEntry.getKey().equals("Quote ID")) {
+                    CustomField quoteCustomField = new CustomField(stringCustomFieldDefinitionEntry.getValue(),newQuoteStr, CustomField.SingleFieldType.TEXT);
+                    customFields.add(quoteCustomField);
+                }
             }
-        }
 
-        jiraService.updateIssue(jiraKey,customFields);
+            jiraService.updateIssue(jiraKey,customFields);
+        }
         log.info("Attempting to change Quote ID on product order " + productOrder.getJiraTicketKey() + " from " + productOrder.getQuoteId() + " to " +
                 newQuoteStr );
         productOrder.setQuoteId(newQuoteStr);
