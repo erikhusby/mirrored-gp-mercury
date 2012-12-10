@@ -2,16 +2,9 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
@@ -30,44 +23,52 @@ import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Scott Matthews
  *         Date: 12/7/12
  *         Time: 4:31 PM
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-public class LabBatchEjbTest extends ContainerTest {
+@Test(groups = TestGroups.DATABASE_FREE)
+public class LabBatchEjbDBFreeTest {
 
     public static final String STUB_TEST_PDO_KEY = "PDO-999";
 
-    @Inject
+    private AthenaClientService athenaClientService;
+
     private LabBatchEjb labBatchEJB;
 
-    @Inject
-    private UserTransaction utx;
-
-    @Inject
     private LabBatchDAO labBatchDAO;
 
     private LinkedHashMap<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
     private String            workflowName;
     private ArrayList<String> pdoNames;
     private String            scottmat;
+    private String testLCSetKey;
+    private JiraTicketDao mockJira;
 
-    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() throws Exception {
+        testLCSetKey = "LCSet-tst932";
 
-        if (utx == null) {
-            return;
-        }
+        athenaClientService = AthenaClientProducer.stubInstance();
+        labBatchEJB = new LabBatchEjb();
+        labBatchEJB.setAthenaClientService(athenaClientService);
+        labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
 
-        utx.begin();
+        mockJira = EasyMock.createMock(JiraTicketDao.class);
+        EasyMock.expect(mockJira.fetchByName(testLCSetKey))
+                .andReturn(new JiraTicket(JiraServiceProducer.stubInstance(), testLCSetKey));
+        labBatchEJB.setJiraTicketDao(mockJira);
+
+        labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
+        labBatchEJB.setLabBatchDao(labBatchDAO);
+
+        EasyMock.replay(mockJira, labBatchDAO);
+
 
         pdoNames = new ArrayList<String>();
         Collections.addAll(pdoNames, STUB_TEST_PDO_KEY);
@@ -89,14 +90,9 @@ public class LabBatchEjbTest extends ContainerTest {
         scottmat = "scottmat";
     }
 
-    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @AfterMethod(groups = TestGroups.DATABASE_FREE)
     public void tearDown() throws Exception {
-        if (utx == null) {
-            return;
-        }
-
-        utx.rollback();
-
+        EasyMock.verify(labBatchDAO);
     }
 
     @Test
@@ -108,24 +104,25 @@ public class LabBatchEjbTest extends ContainerTest {
         Assert.assertNotNull(testBatch);
         Assert.assertNotNull(testBatch.getJiraTicket());
         Assert.assertNotNull(testBatch.getJiraTicket().getTicketName());
-        Assert.assertEquals(testBatch, testBatch.getJiraTicket().getLabBatch());
         Assert.assertNotNull(testBatch.getStartingLabVessels());
         Assert.assertEquals(6, testBatch.getStartingLabVessels().size());
         Assert.assertEquals(workflowName + ": " + STUB_TEST_PDO_KEY, testBatch.getBatchName());
 
-        String batchName = testBatch.getBatchName();
-
-        labBatchDAO.flush();
-        labBatchDAO.clear();
-
-        LabBatch testFind = labBatchDAO.findByName(batchName);
-
-        Assert.assertNotNull(testFind);
-        Assert.assertNotNull(testFind.getJiraTicket());
-        Assert.assertNotNull(testFind.getJiraTicket().getTicketName());
-        Assert.assertNotNull(testFind.getStartingLabVessels());
-        Assert.assertEquals(6, testFind.getStartingLabVessels().size());
-        Assert.assertEquals(workflowName + ": " + STUB_TEST_PDO_KEY, testFind.getBatchName());
     }
 
+    @Test
+    public void testCreateLabBatchWithJiraTicket() throws Exception {
+
+        LabBatch testBatch =
+                labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), scottmat, testLCSetKey);
+        EasyMock.verify(mockJira);
+
+        Assert.assertNotNull(testBatch);
+        Assert.assertNotNull(testBatch.getJiraTicket());
+        Assert.assertNotNull(testBatch.getJiraTicket().getTicketName());
+        Assert.assertEquals(testLCSetKey, testBatch.getJiraTicket().getTicketName());
+        Assert.assertNotNull(testBatch.getStartingLabVessels());
+        Assert.assertEquals(6, testBatch.getStartingLabVessels().size());
+        Assert.assertEquals(workflowName + ": " + STUB_TEST_PDO_KEY, testBatch.getBatchName());
+    }
 }
