@@ -17,7 +17,7 @@ import java.util.*;
 @Entity
 @Audited
 @Table(schema = "athena",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"PART_NUMBER"}))
+        uniqueConstraints = @UniqueConstraint(columnNames = {"partNumber"}))
 public class Product implements Serializable, Comparable<Product> {
 
     @Id
