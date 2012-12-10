@@ -11,12 +11,6 @@
 
 package org.broadinstitute.gpinformatics.mercury.presentation.reagent;
 
-import org.apache.commons.logging.Log;
-import org.broadinstitute.gpinformatics.infrastructure.jsf.TableData;
-import org.broadinstitute.gpinformatics.mercury.boundary.reagent.ReagentDesignManager;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
-import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
-
 import javax.enterprise.context.Conversation;
 import javax.enterprise.context.ConversationScoped;
 import javax.enterprise.context.RequestScoped;
@@ -24,6 +18,13 @@ import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.List;
+
+import org.apache.commons.logging.Log;
+
+import org.broadinstitute.gpinformatics.infrastructure.jsf.TableData;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 /**
  * @author dryan
@@ -35,7 +36,7 @@ public class ReagentDesignForm extends AbstractJsfBean {
     private Log log;
 
     @Inject
-    private ReagentDesignManager reagentDesignManager;
+    private ReagentDesignDao reagentDesignDao;
 
     @Inject
     private FacesContext facesContext;
@@ -54,7 +55,7 @@ public class ReagentDesignForm extends AbstractJsfBean {
 
     public void initView() {
         if (!facesContext.isPostback()) {
-            reagentDesignTableData.setValues(reagentDesignManager.findAll());
+            reagentDesignTableData.setValues(reagentDesignDao.findAll());
             if (conversation.isTransient()) {
                 conversation.begin();
             }
@@ -67,7 +68,7 @@ public class ReagentDesignForm extends AbstractJsfBean {
             updatedOrCreated = "created";
         }
         try {
-            reagentDesignManager.saveOrEditReagentDesign(reagentDesign);
+            reagentDesignDao.persist(reagentDesign);
         } catch (Exception e) {
             log.error(e);
             addErrorMessage(e.getMessage());
