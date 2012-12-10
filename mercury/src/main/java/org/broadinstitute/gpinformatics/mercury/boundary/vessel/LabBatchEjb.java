@@ -26,6 +26,10 @@ import java.util.HashSet;
 import java.util.Map;
 
 /**
+ *
+ * Encapsulates the business logic related to {@link LabBatch}s.  This includes the creation
+ * of a new batch entity and saving that to Jira
+ *
  * @author Scott Matthews
  *         Date: 12/6/12
  *         Time: 2:01 PM
@@ -47,6 +51,15 @@ public class LabBatchEjb {
     @Inject
     JiraTicketDao jiraTicketDao;
 
+    /**
+     *
+     * createLabBatch will, given a group of lab plastic ware, create a batch
+     *
+     * @param batchContents
+     * @param reporter
+     * @param jiraTicket
+     * @return
+     */
     public LabBatch createLabBatch(@Nonnull Collection<LabVessel> batchContents, @Nonnull String reporter,
                                    String jiraTicket) {
 
@@ -84,10 +97,7 @@ public class LabBatchEjb {
                                             newBatch.getJiraTicket().getTicketName() +
                                             " " + newBatch.getBatchName(), Visibility.Type.role,
                                     Visibility.Value.QA_Jira_Users);
-//                jiraService.addComment(pdo, "New Batch Created: " +
-//                        newBatch.getJiraTicket().getTicketName() +
-//                        " " + newBatch.getBatchName());
-            } catch (IOException ioe) {
+                                                                                                                                     } catch (IOException ioe) {
                 logger.error("Error attempting to link Batch " + ticket.getTicketName() + " to Product order " + pdo,
                              ioe);
             }

@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -17,6 +18,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -41,12 +43,23 @@ public class LabBatchEjbTest extends ContainerTest {
 
     @Inject
     LabBatchEjb labBatchEJB;
+
+    @Inject
+    private UserTransaction utx;
+
+
     private LinkedHashMap<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
     private String            workflowName;
     private ArrayList<String> pdoNames;
 
-    @BeforeMethod
+    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
+
+        if (utx == null) {
+            return;
+        }
+
+        utx.begin();
 
         pdoNames = new ArrayList<String>();
         Collections.addAll(pdoNames, STUB_TEST_PDO_KEY);
@@ -69,8 +82,13 @@ public class LabBatchEjbTest extends ContainerTest {
         }
     }
 
-    @AfterMethod
+    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
+        if (utx == null) {
+            return;
+        }
+
+        utx.rollback();
 
     }
 
