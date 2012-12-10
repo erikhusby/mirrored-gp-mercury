@@ -144,9 +144,9 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
 
         PriceItem priceItem = (PriceItem) o;
 
-        return new EqualsBuilder().append(category, priceItem.category)
-                .append(name, priceItem.name)
-                .append(platform, priceItem.platform).build();
+        return new EqualsBuilder().append(category, priceItem.getCategory())
+                .append(name, priceItem.getName())
+                .append(platform, priceItem.getPlatform()).build();
     }
 
     @Override
