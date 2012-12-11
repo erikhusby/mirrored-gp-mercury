@@ -108,7 +108,12 @@ public class UserBean implements Serializable {
         return bspUser;
     }
 
+    public String getLoginUserName() {
+        return loginUserName;
+    }
+
     public void logout() {
+        loginUserName = null;
         bspUser = UNKNOWN;
         jiraUsername = "";
         roles.clear();

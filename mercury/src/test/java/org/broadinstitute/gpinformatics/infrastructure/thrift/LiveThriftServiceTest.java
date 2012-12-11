@@ -1,9 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
-import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
-import edu.mit.broad.prodinfo.thrift.lims.LIMQueries;
-import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
-import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.apache.commons.logging.Log;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
@@ -15,6 +12,7 @@ import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
@@ -88,6 +86,29 @@ public class LiveThriftServiceTest {
     }
 
     @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchMaterialTypesForTubeBarcodes() throws Exception {
+        List<String> result = thriftService.fetchMaterialTypesForTubeBarcodes(Arrays.asList("0099443960", "406164"));
+        assertThat(result.size(), equalTo(2));
+        assertThat(result.get(0), equalTo("454 Material-Diluted ssDNA Library"));
+        assertThat(result.get(1), equalTo("454 Beads-Recovered Sequencing Beads"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchMaterialTypesForTubeBarcodesNotFound() throws Exception {
+        List<String> result = thriftService.fetchMaterialTypesForTubeBarcodes(Arrays.asList("unknown_barcode"));
+        assertThat(result.size(), equalTo(0));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchMaterialTypesForTubeBarcodesMixed() throws Exception {
+        List<String> result = thriftService.fetchMaterialTypesForTubeBarcodes(Arrays.asList("0099443960", "unknown_barcode", "406164"));
+        // TODO: should an error be raised here because not all tubes were found and, therefore, the index values of the query and response don't line up?
+        assertThat(result.size(), equalTo(2));
+        assertThat(result.get(0), equalTo("454 Material-Diluted ssDNA Library"));
+        assertThat(result.get(1), equalTo("454 Beads-Recovered Sequencing Beads"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
     public void testFindFlowcellDesignationByTaskName() throws Exception {
         FlowcellDesignation flowcellDesignation = thriftService.findFlowcellDesignationByTaskName("14A_03.19.2012");
         assertThat(flowcellDesignation, not(nullValue()));
@@ -156,6 +177,33 @@ public class LiveThriftServiceTest {
         verify(mockLog);
     }
 
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFindImmediatePlateParentsNoResult() {
+        List<String> result = thriftService.findImmediatePlateParents("000000703408");
+        assertThat(result.size(), equalTo(0));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFindImmediatePlateParentsPlateResult() {
+        List<String> result = thriftService.findImmediatePlateParents("000009873173");
+        assertThat(result.size(), equalTo(1));
+        assertThat(result.get(0), equalTo("000009891873"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFindImmediatePlateParentsMultiplePlateResult() {
+        List<String> result = thriftService.findImmediatePlateParents("000001383666");
+        assertThat(result.size(), equalTo(2));
+        assertThat(result.get(0), equalTo("000000010208"));
+        assertThat(result.get(1), equalTo("000002458823"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFindImmediatePlateParentsUnknownPlate() {
+        List<String> result = thriftService.findImmediatePlateParents("unknown_barcode");
+        assertThat(result.size(), equalTo(0));
+    }
+
     @Test(groups = DATABASE_FREE)
     public void testFetchParentRackContentsForPlate() throws Exception {
         expectThriftCall();
@@ -192,6 +240,91 @@ public class LiveThriftServiceTest {
         assertThat(caught.getMessage(), equalTo("Plate not found for barcode: 123456"));
 
         verifyAll();
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchUnfulfilledDesignations() {
+        List<String> result = thriftService.fetchUnfulfilledDesignations();
+        // This is about all we can do because the result is going to change over time
+        assertThat(result, notNullValue());
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchRelatedDesignationsForAnyTube() {
+        List<String> result = thriftService.findRelatedDesignationsForAnyTube(Arrays.asList("0115399989", "0115399754"));
+        // TODO: this is tough to test because it only returns open designations, or no content if the isn't one
+        assertThat(result, notNullValue());
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchSourceTubesForPlate() {
+        List<WellAndSourceTube> result = thriftService.fetchSourceTubesForPlate("000009873173");
+        assertThat(result.size(), equalTo(191));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchSourceTubesForPlateNotFound() {
+        Exception caught = null;
+        try {
+            thriftService.fetchSourceTubesForPlate("unknown_plate");
+        } catch (Exception e) {
+            caught = e;
+        }
+        assertThat(caught, instanceOf(RuntimeException.class));
+        assertThat(caught.getMessage(), equalTo("Plate not found for barcode: unknown_plate"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchTransfersForPlate() {
+        List<PlateTransfer> result = thriftService.fetchTransfersForPlate("000009873173", (short) 2);
+        // spot check number of transfers and that one was from a rack of 95 tubes
+        assertThat(result.size(), equalTo(3));
+        assertThat(result.get(1).getSourcePositionMap().size(), equalTo(95));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchTransfersForPlateNotFound() {
+        Exception caught = null;
+        try {
+            thriftService.fetchTransfersForPlate("unknown_plate", (short) 2);
+        } catch (Exception e) {
+            caught = e;
+        }
+        assertThat(caught, instanceOf(RuntimeException.class));
+        assertThat(caught.getMessage(), equalTo("Plate not found for barcode: unknown_plate"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchPoolGroups() {
+        List<PoolGroup> result = thriftService.fetchPoolGroups(Arrays.asList("0089526681", "0089526682"));
+        assertThat(result.size(), equalTo(1));
+        assertThat(result.get(0).getName(), equalTo("21490_pg"));
+        assertThat(result.get(0).getTubeBarcodes(), hasItem("0089526681"));
+        assertThat(result.get(0).getTubeBarcodes(), hasItem("0089526682"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchPoolGroupsAllTubesNotFound() {
+        Exception caught = null;
+        try {
+            thriftService.fetchPoolGroups(Arrays.asList("unknown_tube1", "unknown_tube2"));
+        } catch (Exception e) {
+            caught = e;
+        }
+        assertThat(caught, instanceOf(RuntimeException.class));
+        assertThat(caught.getMessage(), equalTo("Some or all of the tubes were not found."));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchPoolGroupsSomeTubesNotFound() {
+        Exception caught = null;
+        try {
+            thriftService.fetchPoolGroups(Arrays.asList("0089526681", "unknown_tube1"));
+        } catch (Exception e) {
+            caught = e;
+        }
+        assertThat(caught, instanceOf(RuntimeException.class));
+        assertThat(caught.getMessage(), equalTo("Some or all of the tubes were not found."));
     }
 
     private IExpectationSetters<Object> expectThriftCall() {
