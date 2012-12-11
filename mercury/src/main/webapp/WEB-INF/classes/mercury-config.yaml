@@ -12,6 +12,9 @@ app:
     QA:
       url:      http://pmbridgedev.broadinstitute.org:8081/Mercury/
 
+    RC:
+      url:      http://mercuryrc.broadinstitute.org:8082/Mercury/
+
     PROD:
       url:      http://mercury.broadinstitute.org/Mercury/
 
