@@ -178,22 +178,9 @@
             <div id='tableauReport'></div>
 
             <script type="text/javascript">
+                // url contains a negotiated, per-session trust id.
                 tableauUrl = "#{tableauLink.passReportUrl(researchProjectDetail.project.title)}";
-
-                $.ajax({
-                    url:tableauUrl,
-                    method:'GET',
-                    beforeSend:function (req) {
-                        req.setRequestHeader('Authorization', "Basic " + "#{tableauLink.tableauAuth()}");
-                    },
-                    error:function (xhr, ajaxOptions, thrownError) {
-                        if (xhr) {
-                            $('#tableauReport').html('<iframe src="' + tableauUrl + '"  width="600" height="500"></iframe>');
-                        } else {
-                            alert('login error, status: ' + xhr.status + ', error: ' + thrownError + ', response: ' + xhr.responseText);
-                        }
-                    }
-                });
+                $('#tableauReport').html('<iframe src="' + tableauUrl + '"  width="600" height="500"></iframe>');
             </script>
 
         </p:layoutUnit>
