@@ -41,6 +41,7 @@ public enum LabEventType {
     // Hybrid Selection
     PRE_SELECTION_POOL ("PreSelectionPool", false, true, SystemOfRecord.SQUID),
     HYBRIDIZATION ("Hybridization", false, true, SystemOfRecord.SQUID),
+    POST_HYBRIDIZATION_THERMO_CYCLER_LOADED("PostHybridizationThermoCyclerLoaded", false, true, SystemOfRecord.SQUID),
     BAIT_SETUP ("BaitSetup", true, true, SystemOfRecord.SQUID), // todo jmt change to BOTH
     BAIT_ADDITION ("BaitAddition", true, false, SystemOfRecord.SQUID),
     BEAD_ADDITION ("BeadAddition", true, true, SystemOfRecord.SQUID),
@@ -52,6 +53,7 @@ public enum LabEventType {
     GS_WASH_5 ("GSWash5", true, true, SystemOfRecord.SQUID),
     GS_WASH_6 ("GSWash6", true, true, SystemOfRecord.SQUID),
     CATCH_ENRICHMENT_SETUP ("CatchEnrichmentSetup", true, true, SystemOfRecord.SQUID),
+    POST_CATCH_ENRICHMENT_SETUP_THERMO_CYCLER_LOADED ("PostCatchEnrichmentSetupThermoCyclerLoaded", true, true, SystemOfRecord.SQUID),
     CATCH_ENRICHMENT_CLEANUP ("CatchEnrichmentCleanup", false, true, SystemOfRecord.SQUID),
     NORMALIZED_CATCH_REGISTRATION ("NormalizedCatchRegistration", false, true, SystemOfRecord.SQUID),
     CATCH_PICO ("CatchPico", false, true, SystemOfRecord.SQUID),
