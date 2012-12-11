@@ -59,8 +59,7 @@ public class UserLogin extends AbstractJsfBean {
         HttpServletRequest request = (HttpServletRequest)context.getExternalContext().getRequest();
         UserRole role = UserRole.fromRequest(request);
 
-        // Order is important here since getLoginUserName() could be null.
-        if (username.equalsIgnoreCase(userBean.getLoginUserName())) {
+        if (request.getUserPrincipal() != null && username.equalsIgnoreCase(request.getUserPrincipal().getName())) {
             // User is already logged in, don't try to login again.
             return redirect(role.landingPage);
         }
