@@ -16,7 +16,7 @@ public class WsMessageStoreProducer {
     @Inject
     private Deployment deployment;
 
-    // Can't call SessionScoped beans from a message drive bean, so use RequestScoped
+    // Can't call SessionScoped beans from a message driven bean, so use RequestScoped
     @Produces
     @Default
     @RequestScoped

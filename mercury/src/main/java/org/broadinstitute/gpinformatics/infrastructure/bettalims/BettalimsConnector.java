@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.bettalims;
 
-import com.sun.jersey.api.client.ClientResponse;
-
 import java.io.Serializable;
 
 /**

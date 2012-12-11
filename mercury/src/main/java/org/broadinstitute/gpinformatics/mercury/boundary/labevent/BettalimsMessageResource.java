@@ -142,7 +142,7 @@ public class BettalimsMessageResource {
 
             boolean processInMercury = false;
             boolean processInSquid = false;
-            if(bettaLIMSMessage.getMode().equals(LabEventFactory.MODE_MERCURY)) {
+            if(bettaLIMSMessage.getMode() != null && bettaLIMSMessage.getMode().equals(LabEventFactory.MODE_MERCURY)) {
                 processInMercury = true;
                 processInSquid = false;
             } else {

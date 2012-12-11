@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -30,9 +29,9 @@ import java.util.Map;
 /**
  * Test JMS
  */
-public class BettalimsMessageBeanTest extends ContainerTest {
+public class BettalimsMessageBeanTest {
 
-    @Test
+    @Test(enabled = false)
     public void testJms() {
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         PlateTransferEventType plateTransferEventType = bettaLimsMessageFactory.buildPlateToPlate(
@@ -56,7 +55,7 @@ public class BettalimsMessageBeanTest extends ContainerTest {
         try{
             Map<String, Object> connectionParams = new HashMap<String, Object>();
             connectionParams.put(TransportConstants.PORT_PROP_NAME, 5445);
-            connectionParams.put(TransportConstants.HOST_PROP_NAME, "seqlims");
+            connectionParams.put(TransportConstants.HOST_PROP_NAME, "localhost");
             TransportConfiguration transportConfiguration = new TransportConfiguration(
                     NettyConnectorFactory.class.getName(), connectionParams);
             HornetQConnectionFactory connectionFactory = HornetQJMSClient.createConnectionFactoryWithoutHA(
@@ -66,7 +65,7 @@ public class BettalimsMessageBeanTest extends ContainerTest {
             connection.start();
 
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            Destination destination = session.createQueue("broad.queue.mercury.bettalims.production");
+            Destination destination = session.createQueue("broad.queue.mercury.bettalims.dev");
             MessageProducer producer = session.createProducer(destination);
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
 

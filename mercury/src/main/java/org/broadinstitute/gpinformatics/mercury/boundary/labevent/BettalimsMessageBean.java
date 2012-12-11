@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
-import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -10,14 +9,17 @@ import javax.jms.MessageListener;
 import javax.jms.TextMessage;
 
 /**
- * A Message Driven Bean to receive JMS messages from liquid handling decks
+ * A Message Driven Bean to receive JMS messages from liquid handling decks.
+ * The destination property is overridden in ejb-jar.xml, to allow different values in different environments.
  */
 @SuppressWarnings("UnusedDeclaration")
 @MessageDriven(name = "BettalimsMessageBean", activationConfig = {
-        @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/broad.queue.mercury.bettalims.production"),
-        @ActivationConfigProperty(propertyName = "connectorClassName", propertyValue ="org.hornetq.core.remoting.impl.netty.NettyConnectorFactory"),
-        @ActivationConfigProperty(propertyName = "connectionParameters", propertyValue = "host=vseqlims;port=5445")})
+//        @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue")
+//        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/broad.queue.mercury.bettalims.production"),
+//        @ActivationConfigProperty(propertyName = "destination", propertyValue = "junk"),
+//        @ActivationConfigProperty(propertyName = "connectorClassName", propertyValue ="org.hornetq.core.remoting.impl.netty.NettyConnectorFactory"),
+//        @ActivationConfigProperty(propertyName = "connectionParameters", propertyValue = "host=vseqlims;port=5445")
+})
 public class BettalimsMessageBean implements MessageListener {
 
 //    @Resource
