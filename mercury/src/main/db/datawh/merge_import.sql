@@ -6,7 +6,6 @@
 CREATE OR REPLACE PROCEDURE merge_import
 IS
 
-CURSOR im_billable_item_cur IS SELECT * FROM im_billable_item WHERE is_delete = 'F';
 CURSOR im_po_cur IS SELECT * FROM im_product_order WHERE is_delete = 'F';
 CURSOR im_po_sample_cur IS SELECT * FROM im_product_order_sample WHERE is_delete = 'F';
 CURSOR im_po_status_cur IS SELECT * FROM im_product_order_status WHERE is_delete = 'F';
@@ -40,11 +39,6 @@ WHERE product_order_id IN (
 DELETE FROM product_order_sample_status
 WHERE product_order_sample_id IN (
   SELECT product_order_sample_id FROM im_product_order_sample_stat WHERE is_delete = 'T'
-);
-
-DELETE FROM billable_item
-WHERE billable_item_id IN (
-  SELECT billable_item_id FROM im_billable_item WHERE is_delete = 'T'
 );
 
 DELETE FROM product_order_add_on
@@ -611,40 +605,6 @@ FOR new IN im_po_sample_stat_cur LOOP
 
 END LOOP;
 
-
-FOR new IN im_billable_item_cur  LOOP
-  BEGIN
-    UPDATE billable_item SET
-      product_order_sample_id = new.product_order_sample_id,
-      price_item_id = new.price_item_id,
-      item_count = new.item_count,
-      etl_date = new.etl_date
-    WHERE billable_item_id = new.billable_item_id;
-
-    INSERT INTO billable_item (
-      billable_item_id,
-      product_order_sample_id,
-      price_item_id,
-      item_count,
-      etl_date
-    )
-    SELECT
-      new.billable_item_id,
-      new.product_order_sample_id,
-      new.price_item_id,
-      new.item_count,
-      new.etl_date
-    FROM DUAL WHERE NOT EXISTS (
-      SELECT 1 FROM billable_item
-      WHERE billable_item_id = new.billable_item_id
-    );
-  EXCEPTION WHEN OTHERS THEN 
-    errmsg := SQLERRM;
-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_billable_item:'||new.line_number||'  '||errmsg);
-    CONTINUE;
-  END;
-
-END LOOP;
 
 COMMIT;
 

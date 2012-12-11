@@ -58,8 +58,6 @@ public class ExtractTransform {
     @Inject
     private AuditReaderDao auditReaderDao;
     @Inject
-    private BillableItemEtl billableItemEtl;
-    @Inject
     private ProductEtl productEtl;
     @Inject
     private ProductOrderEtl productOrderEtl;
@@ -156,7 +154,6 @@ public class ExtractTransform {
             recordCount += researchProjectIrbEtl.doEtl(lastRev, etlRev, etlDateStr);
             recordCount += researchProjectFundingEtl.doEtl(lastRev, etlRev, etlDateStr);
             recordCount += researchProjectCohortEtl.doEtl(lastRev, etlRev, etlDateStr);
-            recordCount += billableItemEtl.doEtl(lastRev, etlRev, etlDateStr);
             recordCount += productOrderSampleEtl.doEtl(lastRev, etlRev, etlDateStr);
             recordCount += productOrderSampleStatusEtl.doEtl(lastRev, etlRev, etlDateStr);
             recordCount += productOrderEtl.doEtl(lastRev, etlRev, etlDateStr);

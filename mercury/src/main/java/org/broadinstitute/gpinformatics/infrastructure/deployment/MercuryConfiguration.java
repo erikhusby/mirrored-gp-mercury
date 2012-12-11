@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
+import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.EtlConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deckmsgs.DeckMessagesConfig;
@@ -49,7 +50,7 @@ public class MercuryConfiguration {
             GAPConfig.class,
             DeckMessagesConfig.class,
             EtlConfig.class,
-            WsMessageStore.class
+            BettalimsConfig.class
     };
 
     private static final String MERCURY_CONFIG = "/mercury-config.yaml";
@@ -123,7 +124,11 @@ public class MercuryConfiguration {
     private MercuryConnections mercuryConnections = new MercuryConnections();
 
     private String getConfigKey(Class<? extends AbstractConfig> configClass) {
-        return configClass.getAnnotation(ConfigKey.class).value();
+        ConfigKey annotation = configClass.getAnnotation(ConfigKey.class);
+        if(annotation == null) {
+            throw new RuntimeException("Failed to get config key for " + configClass.getName());
+        }
+        return annotation.value();
     }
 
     private Class<? extends AbstractConfig> getConfigClass(String configKey) {

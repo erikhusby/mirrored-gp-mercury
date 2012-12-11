@@ -1,11 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.login;
 
-/**
- * @author Scott Matthews
- *         Date: 4/2/12
- *         Time: 1:35 PM
- */
-
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.mercury.entity.DB;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
@@ -21,10 +15,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
+/**
+ * Handles user sign in and roles stuff.
+ *
+ * @author Scott Matthews
+ */
 @Named
 @RequestScoped
 public class UserLogin extends AbstractJsfBean {
-
     private String username;
 
     private String password;
@@ -61,8 +59,7 @@ public class UserLogin extends AbstractJsfBean {
         HttpServletRequest request = (HttpServletRequest)context.getExternalContext().getRequest();
         UserRole role = UserRole.fromRequest(request);
 
-        // Order is important here since getLoginUserName() could be null.
-        if (username.equalsIgnoreCase(userBean.getLoginUserName())) {
+        if (request.getUserPrincipal() != null && username.equalsIgnoreCase(request.getUserPrincipal().getName())) {
             // User is already logged in, don't try to login again.
             return redirect(role.landingPage);
         }

@@ -1,5 +1,4 @@
 
-DROP TABLE billable_item;
 DROP TABLE product_order_add_on;
 DROP TABLE product_order_sample_status;
 DROP TABLE product_order_sample;
@@ -168,23 +167,8 @@ CREATE TABLE product_order_add_on (
     REFERENCES product_order(product_order_id)
 );
 
-CREATE TABLE billable_item (
-  billable_item_id NUMERIC(19) NOT NULL PRIMARY KEY,
-  product_order_sample_id NUMERIC(19) NOT NULL,
-  price_item_id NUMERIC(19) NOT NULL,
-  item_count NUMERIC(19) NOT NULL,
-  etl_date DATE NOT NULL,
-  CONSTRAINT fk_po_billable_item_po_sid FOREIGN KEY (product_order_sample_id)
-    REFERENCES product_order_sample(product_order_sample_id),
-  CONSTRAINT fk_po_billable_item_piid FOREIGN KEY (price_item_id)
-    REFERENCES  price_item(price_item_id)
-);
-
-CREATE INDEX billable_item_idx1 ON billable_item (product_order_sample_id, price_item_id);
-
 
 -- Import tables
-DROP TABLE im_billable_item;
 DROP TABLE im_product_order_add_on;
 DROP TABLE im_product_order_sample_stat;
 DROP TABLE im_product_order_sample;
@@ -343,16 +327,6 @@ CREATE TABLE im_product_order_add_on (
   product_order_add_on_id NUMERIC(19) NOT NULL,
   product_order_id NUMERIC(19),
   product_id NUMERIC(19)
-);
-
-CREATE TABLE im_billable_item (
-  line_number NUMERIC(9) NOT NULL,
-  etl_date DATE NOT NULL,
-  is_delete CHAR(1) NOT NULL,
-  billable_item_id NUMERIC(19) NOT NULL,
-  product_order_sample_id NUMERIC(19),
-  price_item_id NUMERIC(19),
-  item_count NUMERIC(19)
 );
 
 COMMIT;

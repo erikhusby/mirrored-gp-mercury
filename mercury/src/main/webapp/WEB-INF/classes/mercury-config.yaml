@@ -158,7 +158,7 @@ thrift:
       port: 9090
 
 
-
+# rename to wsMsgStore
 deckMsgs:
 
     DEV:
@@ -176,6 +176,35 @@ deckMsgs:
 
         messageStoreDirRoot: /seq/lims/mercury/prod
 
+bettaLimsServer:
+    DEV:
+        wsHost: node115
+        wsPort: 9998
+        #14009
+        jmsHost: node115
+        jmsPort: 61616
+        jmsQueue: broad.queue.bettalims.thompson
+
+    TEST:
+        wsHost: node115
+        wsPort: 9998
+        jmsHost: node115
+        jmsPort: 61616
+        jmsQueue: broad.queue.bettalims.test
+
+    QA:
+        wsHost: vbettalimsqa
+        wsPort: 9998
+        jmsHost: node115
+        jmsPort: 61616
+        jmsQueue: broad.queue.bettalims.qa
+
+    PROD:
+        wsHost: seqlims
+        wsPort: 9998
+        jmsHost: seqlims
+        jmsPort: 61616
+        jmsQueue: broad.queue.bettalims
 
 datawhEtl:
 
@@ -210,6 +239,7 @@ mercury:
       thrift:   QA
       deckMsgs: DEV
       datawhEtl: DEV
+      bettaLimsServer: DEV
 
 
     TEST:
@@ -224,6 +254,7 @@ mercury:
       thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
+      bettaLimsServer: TEST
 
     QA:
 
@@ -237,6 +268,7 @@ mercury:
       thrift:   QA
       deckMsgs: QA
       datawhEtl: QA
+      bettaLimsServer: QA
 
 
     RC:
@@ -251,6 +283,7 @@ mercury:
       thrift:   QA
       deckMsgs: QA
       datawhEtl: QA
+      bettaLimsServer: QA
 
 
     PROD:
@@ -265,4 +298,5 @@ mercury:
       thrift:   PROD
       deckMsgs: PROD
       datawhEtl: PROD
+      bettaLimsServer: PROD
 
