@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
-import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
-import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
-import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import edu.mit.broad.prodinfo.thrift.lims.*;
 
 import java.io.Serializable;
 import java.util.List;
@@ -24,11 +22,15 @@ public interface ThriftService extends Serializable {
 
     boolean doesSquidRecognizeAllLibraries(List<String> barcodes);
 
+    public List<String> fetchMaterialTypesForTubeBarcodes(List<String> tubeBarcodes);
+
     public FlowcellDesignation findFlowcellDesignationByTaskName(final String taskName);
 
     public FlowcellDesignation findFlowcellDesignationByFlowcellBarcode(final String flowcellBarcode);
 
     public FlowcellDesignation findFlowcellDesignationByReagentBlockBarcode(final String flowcellBarcode);
+
+    public List<String> findImmediatePlateParents(String plateBarcode);
 
     public String fetchUserIdForBadgeId(String badgeId);
 
@@ -39,4 +41,14 @@ public interface ThriftService extends Serializable {
     public double fetchQuantForTube(String tubeBarcode, String quantType);
 
     public List<LibraryData> fetchLibraryDetailsByLibraryName(List<String> libraryNames);
+
+    public List<String> fetchUnfulfilledDesignations();
+
+    public List<String> findRelatedDesignationsForAnyTube(List<String> tubeBarcodes);
+
+    public List<WellAndSourceTube> fetchSourceTubesForPlate(String plateBarcode);
+
+    public List<PlateTransfer> fetchTransfersForPlate(String plateBarcode, short depth);
+
+    public List<PoolGroup> fetchPoolGroups(List<String> tubeBarcoces);
 }

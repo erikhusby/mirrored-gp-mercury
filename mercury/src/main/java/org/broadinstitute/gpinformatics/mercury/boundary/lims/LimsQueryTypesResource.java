@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
 import javax.ejb.Stateless;
 import javax.ws.rs.Consumes;
@@ -49,11 +50,27 @@ public class LimsQueryTypesResource {
     }
 
     @POST
-    @Produces(MediaType.APPLICATION_JSON)
     @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
     @Path("/echoFlowcellDesignation")
     public FlowcellDesignationType echoFlowcellDesignation(FlowcellDesignationType flowcellDesignation) {
         return flowcellDesignation;
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/echoWellAndSourceTube")
+    public WellAndSourceTubeType echoWellAndSourceTube(WellAndSourceTubeType wellAndSourceTube) {
+        return wellAndSourceTube;
+    }
+
+    @POST
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/echoWellAndSourceTubeList")
+    public List<WellAndSourceTubeType> echoWellAndSourceTubeList(List<WellAndSourceTubeType> wellAndSourceTubes) {
+        return wellAndSourceTubes;
     }
 
     @POST

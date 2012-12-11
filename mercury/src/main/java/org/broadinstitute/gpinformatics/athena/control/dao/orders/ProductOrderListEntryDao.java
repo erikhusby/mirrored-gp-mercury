@@ -20,13 +20,14 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.criteria.*;
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @RequestScoped
 @Stateful
-public class ProductOrderListEntryDao extends GenericDao {
+public class ProductOrderListEntryDao extends GenericDao implements Serializable {
 
     /**
      * Second-pass, ledger aware query that merges its results into the first-pass objects passed as an argument.

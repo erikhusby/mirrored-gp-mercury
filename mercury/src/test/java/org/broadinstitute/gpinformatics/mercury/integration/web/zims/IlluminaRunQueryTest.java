@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.integration.web.zims;
 
-import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
-import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
-import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.OfflineThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
@@ -132,6 +130,11 @@ public class IlluminaRunQueryTest extends Arquillian {
         }
 
         @Override
+        public List<String> fetchMaterialTypesForTubeBarcodes(List<String> tubeBarcodes) {
+            return null;
+        }
+
+        @Override
         public FlowcellDesignation findFlowcellDesignationByTaskName(String taskName) {
             return null;
         }
@@ -143,6 +146,11 @@ public class IlluminaRunQueryTest extends Arquillian {
 
         @Override
         public FlowcellDesignation findFlowcellDesignationByReagentBlockBarcode(String flowcellBarcode) {
+            return null;
+        }
+
+        @Override
+        public List<String> findImmediatePlateParents(String plateBarcode) {
             return null;
         }
 
@@ -178,6 +186,31 @@ public class IlluminaRunQueryTest extends Arquillian {
             }
 
             return libraryDataList;
+        }
+
+        @Override
+        public List<String> fetchUnfulfilledDesignations() {
+            return null;
+        }
+
+        @Override
+        public List<String> findRelatedDesignationsForAnyTube(List<String> tubeBarcodes) {
+            return null;
+        }
+
+        @Override
+        public List<WellAndSourceTube> fetchSourceTubesForPlate(String plateBarcode) {
+            return null;
+        }
+
+        @Override
+        public List<PlateTransfer> fetchTransfersForPlate(String plateBarcode, short depth) {
+            return null;
+        }
+
+        @Override
+        public List<PoolGroup> fetchPoolGroups(List<String> tubeBarcoces) {
+            return null;
         }
     }
 }

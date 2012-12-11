@@ -98,7 +98,8 @@ public class BillingLedgerDao extends GenericDao {
         criteriaQuery.where(fullPredicate);
 
         try {
-            return new HashSet<BillingLedger>(getEntityManager().createQuery(criteriaQuery).getResultList());
+            List<BillingLedger> billingLedgerList = getEntityManager().createQuery(criteriaQuery).getResultList();
+                return new HashSet<BillingLedger>(billingLedgerList);
         } catch (NoResultException ignored) {
             return Collections.emptySet();
         }
@@ -148,4 +149,5 @@ public class BillingLedgerDao extends GenericDao {
             remove(item);
         }
     }
+
 }
