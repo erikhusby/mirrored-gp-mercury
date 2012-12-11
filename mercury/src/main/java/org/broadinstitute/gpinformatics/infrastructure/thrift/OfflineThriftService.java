@@ -32,6 +32,11 @@ public class OfflineThriftService implements ThriftService {
     }
 
     @Override
+    public List<String> fetchMaterialTypesForTubeBarcodes(List<String> tubeBarcodes) {
+        return null;
+    }
+
+    @Override
     public FlowcellDesignation findFlowcellDesignationByTaskName(String taskName) {
         return null;
     }
@@ -43,6 +48,11 @@ public class OfflineThriftService implements ThriftService {
 
     @Override
     public FlowcellDesignation findFlowcellDesignationByReagentBlockBarcode(String flowcellBarcode) {
+        return null;
+    }
+
+    @Override
+    public List<String> findImmediatePlateParents(String plateBarcode) {
         return null;
     }
 
@@ -77,6 +87,26 @@ public class OfflineThriftService implements ThriftService {
         }
 
         return libraryDataList;
+    }
+
+    @Override
+    public List<String> fetchUnfulfilledDesignations() {
+        return null;
+    }
+
+    @Override
+    public List<WellAndSourceTube> fetchSourceTubesForPlate(String plateBarcode) {
+        return null;
+    }
+
+    @Override
+    public List<PlateTransfer> fetchTransfersForPlate(String plateBarcode, short depth) {
+        return null;
+    }
+
+    @Override
+    public List<PoolGroup> fetchPoolGroups(List<String> tubeBarcoces) {
+        return null;
     }
 
     public static TZamboniRun makeRun(String runName, int numLanes, int numLibraries) {

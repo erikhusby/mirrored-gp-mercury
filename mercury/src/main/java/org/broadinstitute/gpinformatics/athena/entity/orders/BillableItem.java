@@ -70,8 +70,8 @@ public class BillableItem {
 
         final BillableItem that = (BillableItem) o;
 
-        if (count != null ? !count.equals(that.count) : that.count != null) return false;
-        if (priceItem != null ? !priceItem.equals(that.priceItem) : that.priceItem != null) return false;
+        if (count != null ? !count.equals(that.getCount()) : that.getCount() != null) return false;
+        if (priceItem != null ? !priceItem.equals(that.getPriceItem()) : that.getPriceItem() != null) return false;
 
         return true;
     }
