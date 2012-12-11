@@ -269,6 +269,20 @@ public class LiveThriftService implements ThriftService {
     }
 
     @Override
+    public List<String> findRelatedDesignationsForAnyTube(final List<String> tubeBarcodes) {
+        return thriftConnection.call(new ThriftConnection.Call<List<String>>() {
+            @Override
+            public List<String> call(LIMQueries.Client client) {
+                try {
+                    return client.findRelatedDesignationsForAnyTube(tubeBarcodes);
+                } catch (TException e) {
+                    throw handleThriftException(e);
+                }
+            }
+        });
+    }
+
+    @Override
     public List<WellAndSourceTube> fetchSourceTubesForPlate(final String plateBarcode) {
         return thriftConnection.call(new ThriftConnection.Call<List<WellAndSourceTube>>() {
             @Override

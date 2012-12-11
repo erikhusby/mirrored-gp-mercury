@@ -250,6 +250,13 @@ public class LiveThriftServiceTest {
     }
 
     @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchRelatedDesignationsForAnyTube() {
+        List<String> result = thriftService.findRelatedDesignationsForAnyTube(Arrays.asList("0115399989", "0115399754"));
+        // TODO: this is tough to test because it only returns open designations, or no content if the isn't one
+        assertThat(result, notNullValue());
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
     public void testFetchSourceTubesForPlate() {
         List<WellAndSourceTube> result = thriftService.fetchSourceTubesForPlate("000009873173");
         assertThat(result.size(), equalTo(191));
