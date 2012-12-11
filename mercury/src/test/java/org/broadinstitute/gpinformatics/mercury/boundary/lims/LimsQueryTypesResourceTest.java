@@ -161,6 +161,26 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
+    public void testEchoWellAndSourceTube(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "echoWellAndSourceTube");
+
+        String request = "{\"wellName\":\"A01\",\"tubeBarcode\":\"tube_barcode1\"}";
+        String result = post(resource, request);
+        assertThat(result, equalTo(request));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testEchoWellAndSourceTubeList(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "echoWellAndSourceTube");
+
+        String request = "[{\"wellName\":\"A01\",\"tubeBarcode\":\"tube_barcode1\"},{\"wellName\":\"A02\",\"tubeBarcode\":\"tube_barcode2\"}]";
+        String result = post(resource, request);
+        assertThat(result, equalTo(request));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
     public void testThrowRuntimeException(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "throwRuntimeException");
         UniformInterfaceException caught = getWithError(resource.queryParam("message", "testThrowRuntimeException"));

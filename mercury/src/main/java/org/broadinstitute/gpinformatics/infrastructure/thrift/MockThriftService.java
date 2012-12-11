@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
-import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
-import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
-import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import edu.mit.broad.prodinfo.thrift.lims.*;
 
 import javax.enterprise.inject.Alternative;
 import java.io.IOException;
@@ -38,6 +36,11 @@ public class MockThriftService implements ThriftService {
     }
 
     @Override
+    public List<String> fetchMaterialTypesForTubeBarcodes(List<String> tubeBarcodes) {
+        return null;
+    }
+
+    @Override
     public FlowcellDesignation findFlowcellDesignationByTaskName(String taskName) {
         return null;
     }
@@ -49,6 +52,11 @@ public class MockThriftService implements ThriftService {
 
     @Override
     public FlowcellDesignation findFlowcellDesignationByReagentBlockBarcode(String flowcellBarcode) {
+        return null;
+    }
+
+    @Override
+    public List<String> findImmediatePlateParents(String plateBarcode) {
         return null;
     }
 
@@ -75,6 +83,26 @@ public class MockThriftService implements ThriftService {
     @Override
     public List<LibraryData> fetchLibraryDetailsByLibraryName(List<String> libraryNames) {
         return  null;
+    }
+
+    @Override
+    public List<String> fetchUnfulfilledDesignations() {
+        return null;
+    }
+
+    @Override
+    public List<WellAndSourceTube> fetchSourceTubesForPlate(String plateBarcode) {
+        return null;
+    }
+
+    @Override
+    public List<PlateTransfer> fetchTransfersForPlate(String plateBarcode, short depth) {
+        return null;
+    }
+
+    @Override
+    public List<PoolGroup> fetchPoolGroups(List<String> tubeBarcoces) {
+        return null;
     }
 
 

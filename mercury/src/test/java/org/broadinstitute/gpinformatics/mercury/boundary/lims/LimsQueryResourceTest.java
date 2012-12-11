@@ -76,6 +76,15 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
+    public void testFetchMaterialTypesForTubeBarcodes(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchMaterialTypesForTubeBarcodes");
+
+        String result1 = get(addQueryParam(resource, "q", Arrays.asList("0099443960", "406164")));
+        assertThat(result1, equalTo("[\"454 Material-Diluted ssDNA Library\",\"454 Beads-Recovered Sequencing Beads\"]"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
     public void testFindFlowcellDesignationByTaskName(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "findFlowcellDesignationByTaskName").queryParam("taskName", "14A_03.19.2012");
         String result = get(resource);
@@ -115,6 +124,14 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         String result = get(resource);
         assertThat(result, notNullValue());
         assertThat(result, containsString("9A_10.26.2011"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFindImmediatePlateParents(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "findImmediatePlateParents").queryParam("plateBarcode", "000001383666");
+        String result = get(resource);
+        assertThat(result, equalTo("[\"000000010208\",\"000002458823\"]"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
@@ -213,5 +230,40 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         UniformInterfaceException caught = getWithError(resource);
         assertThat(caught.getResponse().getStatus(), equalTo(500));
         assertThat(getResponseContent(caught), equalTo("Tube or quant not found for barcode: 000001859062, quant type: Catch Pico"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchSourceTubesForPlate(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchSourceTubesForPlate").queryParam("plateBarcode", "000009873173");
+        String result = get(resource);
+        // quick spot check of one of the (191) source tubes
+        assertThat(result, containsString("0116240473"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchTransfersForPlate(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchTransfersForPlate").queryParam("plateBarcode", "000009873173").queryParam("depth", "2");
+        String result = get(resource);
+        assertThat(result, containsString("000009873173"));
+        assertThat(result, containsString("000009891873"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchPoolGroups(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchPoolGroups").queryParam("q", "0089526681").queryParam("q", "0089526682");
+        String result = get(resource);
+        assertThat(result, equalTo("[{\"name\":\"21490_pg\",\"tubeBarcodes\":[\"0089526682\",\"0089526681\"]}]"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFetchUnfulfilledDesignations(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchUnfulfilledDesignations");
+        String result = get(resource);
+        // This is about all we can do because the result is going to change over time
+        assertThat(result, notNullValue());
     }
 }
