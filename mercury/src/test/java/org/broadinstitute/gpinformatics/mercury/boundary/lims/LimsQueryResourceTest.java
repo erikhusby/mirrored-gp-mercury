@@ -234,6 +234,30 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
+    public void testFetchUnfulfilledDesignations(@ArquillianResource URL baseUrl) {
+        WebResource resource = makeWebResource(baseUrl, "fetchUnfulfilledDesignations");
+        String result = get(resource);
+        // This is about all we can do because the result is going to change over time
+        assertThat(result, notNullValue());
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFindRelatedDesignationsForAnyTube(@ArquillianResource URL baseUrl) {
+        Exception caught = null;
+        WebResource resource = makeWebResource(baseUrl, "findRelatedDesignationsForAnyTube").queryParam("q", "0115399989");
+        String result = null;
+        try {
+            result = get(resource);
+        } catch (Exception e) {
+            caught = e;
+        }
+        // TODO: this is tough to test because it only returns open designations, or no content if the isn't one
+        assertThat(caught, instanceOf(UniformInterfaceException.class));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
     public void testFetchSourceTubesForPlate(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "fetchSourceTubesForPlate").queryParam("plateBarcode", "000009873173");
         String result = get(resource);
@@ -256,14 +280,5 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
         WebResource resource = makeWebResource(baseUrl, "fetchPoolGroups").queryParam("q", "0089526681").queryParam("q", "0089526682");
         String result = get(resource);
         assertThat(result, equalTo("[{\"name\":\"21490_pg\",\"tubeBarcodes\":[\"0089526682\",\"0089526681\"]}]"));
-    }
-
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
-    @RunAsClient
-    public void testFetchUnfulfilledDesignations(@ArquillianResource URL baseUrl) {
-        WebResource resource = makeWebResource(baseUrl, "fetchUnfulfilledDesignations");
-        String result = get(resource);
-        // This is about all we can do because the result is going to change over time
-        assertThat(result, notNullValue());
     }
 }

@@ -95,6 +95,11 @@ public class OfflineThriftService implements ThriftService {
     }
 
     @Override
+    public List<String> findRelatedDesignationsForAnyTube(List<String> tubeBarcodes) {
+        return null;
+    }
+
+    @Override
     public List<WellAndSourceTube> fetchSourceTubesForPlate(String plateBarcode) {
         return null;
     }

@@ -44,6 +44,8 @@ public interface ThriftService extends Serializable {
 
     public List<String> fetchUnfulfilledDesignations();
 
+    public List<String> findRelatedDesignationsForAnyTube(List<String> tubeBarcodes);
+
     public List<WellAndSourceTube> fetchSourceTubesForPlate(String plateBarcode);
 
     public List<PlateTransfer> fetchTransfersForPlate(String plateBarcode, short depth);
