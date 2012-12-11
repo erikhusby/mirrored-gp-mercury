@@ -1,11 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.login;
 
-/**
- * @author Scott Matthews
- *         Date: 4/2/12
- *         Time: 1:35 PM
- */
-
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.mercury.entity.DB;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
@@ -21,10 +15,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
+/**
+ * Handles user sign in and roles stuff.
+ *
+ * @author Scott Matthews
+ */
 @Named
 @RequestScoped
 public class UserLogin extends AbstractJsfBean {
-
     private String username;
 
     private String password;
