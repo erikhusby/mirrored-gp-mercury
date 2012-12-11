@@ -54,16 +54,16 @@ public class LabBatchEjb {
      * Alternate create lab batch method to allow a user to define the vessels for use by their barcode
      *
      * @param reporter    The User that is attempting to create the batch
-     * @param vesselNames The barcodes of the Plastic ware that for which the newly created lab batch will represent
+     * @param labVessels The plastic ware that the newly created lab batch will represent
      * @param jiraTicket  Optional parameter that represents an existing Jira Ticket that refers to this batch
      */
-    public LabBatch createLabBatch(@Nonnull Collection<LabVessel> vesselNames, @Nonnull String reporter, String jiraTicket) {
+    public LabBatch createLabBatch(@Nonnull Collection<LabVessel> labVessels, @Nonnull String reporter, String jiraTicket) {
 
-        Collection<String> pdoList = LabVessel.extractPdoList(vesselNames);
+        Collection<String> pdoList = LabVessel.extractPdoList(labVessels);
 
         LabBatch batchObject =
                 new LabBatch(LabBatch.generateBatchName(CreateFields.IssueType.EXOME_EXPRESS.getJiraName(), pdoList),
-                             new HashSet<LabVessel>(vesselNames));
+                             new HashSet<LabVessel>(labVessels));
 
         labBatchDao.persist(batchObject);
 
@@ -76,7 +76,8 @@ public class LabBatchEjb {
      * createLabBatch will, given a group of lab plastic ware, create a batch entity and a new Jira Ticket for that
      * entity
      *
-     * @param batchObject
+     * @param batchObject A constructed, but not persisted, batch object containing all initial information necessary
+     *                    to persist a new batch
      * @param reporter    The User that is attempting to create the batch
      * @param jiraTicket  Optional parameter that represents an existing Jira Ticket that refers to this batch
      */
