@@ -244,14 +244,14 @@ public class BettalimsMessageResourceTest extends Arquillian {
     }
 
     private void sendMessage(BettaLIMSMessage bettaLIMSMessage) {
-//        bettalimsMessageResource.processMessage(bettaLIMSMessage);
-//        twoDBarcodedTubeDAO.flush();
-//        twoDBarcodedTubeDAO.clear();
-        String response = Client.create().resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/bettalimsmessage")
-                .type(MediaType.APPLICATION_XML_TYPE)
-                .accept(MediaType.APPLICATION_XML)
-                .entity(bettaLIMSMessage)
-                .post(String.class);
+        bettalimsMessageResource.processMessage(bettaLIMSMessage);
+        twoDBarcodedTubeDAO.flush();
+        twoDBarcodedTubeDAO.clear();
+//        String response = Client.create().resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/bettalimsmessage")
+//                .type(MediaType.APPLICATION_XML_TYPE)
+//                .accept(MediaType.APPLICATION_XML)
+//                .entity(bettaLIMSMessage)
+//                .post(String.class);
     }
 
     @Test(enabled=false, groups=EXTERNAL_INTEGRATION, dataProvider=Arquillian.ARQUILLIAN_DATA_PROVIDER)
