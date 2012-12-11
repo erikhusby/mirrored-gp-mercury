@@ -50,58 +50,44 @@ public class LabBatchEjb {
 
     JiraTicketDao jiraTicketDao;
 
-    TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
-
     /**
      * Alternate create lab batch method to allow a user to define the vessels for use by their barcode
-     *
-     *
      *
      * @param reporter    The User that is attempting to create the batch
      * @param vesselNames The barcodes of the Plastic ware that for which the newly created lab batch will represent
      * @param jiraTicket  Optional parameter that represents an existing Jira Ticket that refers to this batch
-     * @param description
-     *@param dueDate @return
      */
-    public LabBatch createLabBatch(@Nonnull String reporter, @Nonnull Collection<String> vesselNames, String jiraTicket,
-                                   String description, Date dueDate) {
-        Set<LabVessel> vessels = new HashSet<LabVessel>(vesselNames.size());
+    public LabBatch createLabBatch(@Nonnull Collection<LabVessel> vesselNames, @Nonnull String reporter, String jiraTicket) {
 
-        for (String vesselName : vesselNames) {
-            LabVessel currVessel = twoDBarcodedTubeDAO.findByBarcode(vesselName);
-            if (currVessel != null) {
-                vessels.add(currVessel);
-            } else {
-                throw new InformaticsServiceException("Vessel " + vesselName + " Not found");
-            }
-        }
+        Collection<String> pdoList = LabVessel.extractPdoList(vesselNames);
 
-        return createLabBatch(vessels, reporter, jiraTicket, description, dueDate);
+        LabBatch batchObject =
+                new LabBatch(LabBatch.generateBatchName(CreateFields.IssueType.EXOME_EXPRESS.getJiraName(), pdoList),
+                             new HashSet<LabVessel>(vesselNames));
+
+        labBatchDao.persist(batchObject);
+
+        batchToJira(reporter, jiraTicket, batchObject);
+
+        return batchObject;
     }
 
     /**
      * createLabBatch will, given a group of lab plastic ware, create a batch entity and a new Jira Ticket for that
      * entity
      *
-     *
-     *
-     * @param batchContents The Plastic ware that for which the newly created lab batch will represent
-     * @param reporter      The User that is attempting to create the batch
-     * @param jiraTicket    Optional parameter that represents an existing Jira Ticket that refers to this batch
-     * @param description
-     *@param dueDate @return a new instance of a LabBatch entity
+     * @param batchObject
+     * @param reporter    The User that is attempting to create the batch
+     * @param jiraTicket  Optional parameter that represents an existing Jira Ticket that refers to this batch
      */
-    public LabBatch createLabBatch(@Nonnull Collection<LabVessel> batchContents, @Nonnull String reporter,
-                                   String jiraTicket, String description, Date dueDate) {
+    public LabBatch createLabBatch(@Nonnull LabBatch batchObject, @Nonnull String reporter, String jiraTicket) {
 
-        Collection<String> pdoList = LabVessel.extractPdoList(batchContents);
+        Collection<String> pdoList = LabVessel.extractPdoList(batchObject.getStartingLabVessels());
 
-        LabBatch batchObject = new LabBatch(
-                    LabBatch.generateBatchName(CreateFields.IssueType.EXOME_EXPRESS.getJiraName(), pdoList),
-                    new HashSet<LabVessel>(batchContents));
-
-        batchObject.setDueDate(dueDate);
-        batchObject.setBatchDescription(description);
+        if (StringUtils.isBlank(batchObject.getBatchName())) {
+            batchObject.setBatchName(
+                    LabBatch.generateBatchName(CreateFields.IssueType.EXOME_EXPRESS.getJiraName(), pdoList));
+        }
 
         labBatchDao.persist(batchObject);
 
@@ -187,8 +173,4 @@ public class LabBatchEjb {
         this.jiraTicketDao = jiraTicketDao;
     }
 
-    @Inject
-    public void setTwoDBarcodedTubeDAO(TwoDBarcodedTubeDAO twoDBarcodedTubeDAO) {
-        this.twoDBarcodedTubeDAO = twoDBarcodedTubeDAO;
-    }
 }

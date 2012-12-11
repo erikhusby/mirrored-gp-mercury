@@ -190,6 +190,10 @@ public class LabBatch {
         this.dueDate = dueDate;
     }
 
+    public void setBatchName(String batchName) {
+        this.batchName = batchName;
+    }
+
     /**
      * Helper nethod to dynamically create batch names based on Input from PDM's.  The format for the Names of the
      * batches, when not manually defined, will be:

@@ -44,15 +44,13 @@ public class LabBatchEjbDBFreeTest {
 
     private LabBatchDAO labBatchDAO;
 
-    private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
-
     private LinkedHashMap<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
     private String            workflowName;
     private ArrayList<String> pdoNames;
     private String            scottmat;
     private String            testLCSetKey;
     private JiraTicketDao     mockJira;
-    private List<String> vesselSampleList;
+    private List<String>      vesselSampleList;
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() throws Exception {
@@ -71,16 +69,7 @@ public class LabBatchEjbDBFreeTest {
         labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
         labBatchEJB.setLabBatchDao(labBatchDAO);
 
-        twoDBarcodedTubeDAO = EasyMock.createNiceMock(TwoDBarcodedTubeDAO.class);
-        EasyMock.expect(twoDBarcodedTubeDAO.findByBarcode("SM-423")).andReturn(new TwoDBarcodedTube("SM-423"));
-        EasyMock.expect(twoDBarcodedTubeDAO.findByBarcode("SM-243")).andReturn(new TwoDBarcodedTube("SM-243"));
-        EasyMock.expect(twoDBarcodedTubeDAO.findByBarcode("SM-765")).andReturn(new TwoDBarcodedTube("SM-765"));
-        EasyMock.expect(twoDBarcodedTubeDAO.findByBarcode("SM-143")).andReturn(new TwoDBarcodedTube("SM-143"));
-        EasyMock.expect(twoDBarcodedTubeDAO.findByBarcode("SM-9243")).andReturn(new TwoDBarcodedTube("SM-9243"));
-        EasyMock.expect(twoDBarcodedTubeDAO.findByBarcode("SM-118")).andReturn(new TwoDBarcodedTube("SM-118"));
-        labBatchEJB.setTwoDBarcodedTubeDAO(twoDBarcodedTubeDAO);
-
-        EasyMock.replay(mockJira, labBatchDAO, twoDBarcodedTubeDAO);
+        EasyMock.replay(mockJira, labBatchDAO);
 
         pdoNames = new ArrayList<String>();
         Collections.addAll(pdoNames, STUB_TEST_PDO_KEY);
@@ -111,7 +100,7 @@ public class LabBatchEjbDBFreeTest {
     public void testCreateLabBatch() throws Exception {
 
         LabBatch testBatch = labBatchEJB
-                .createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), "scottmat", null, null, null);
+                .createLabBatch(new LabBatch("", new HashSet<LabVessel>(mapBarcodeToTube.values())), "scottmat", null);
 
         Assert.assertNotNull(testBatch);
         Assert.assertNotNull(testBatch.getJiraTicket());
@@ -126,9 +115,8 @@ public class LabBatchEjbDBFreeTest {
     @Test
     public void testCreateLabBatchWithVesselBarcodes() throws Exception {
 
-        LabBatch testBatch = labBatchEJB
-                .createLabBatch("scottmat", vesselSampleList, null, null, null);
-        EasyMock.verify(twoDBarcodedTubeDAO);
+        LabBatch testBatch =
+                labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), "scottmat", null);
 
         Assert.assertNotNull(testBatch);
         Assert.assertNotNull(testBatch.getJiraTicket());
@@ -144,7 +132,8 @@ public class LabBatchEjbDBFreeTest {
     public void testCreateLabBatchWithJiraTicket() throws Exception {
 
         LabBatch testBatch = labBatchEJB
-                .createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), scottmat, testLCSetKey, null, null);
+                .createLabBatch(new LabBatch("", new HashSet<LabVessel>(mapBarcodeToTube.values())), scottmat,
+                                testLCSetKey);
         EasyMock.verify(mockJira);
 
         Assert.assertNotNull(testBatch);
@@ -161,23 +150,15 @@ public class LabBatchEjbDBFreeTest {
 
     @Test
     public void testCreateLabBatchWithExtraValues() throws Exception {
-        Date now = new Date();
-        Calendar cal = Calendar.getInstance();
-
-        cal.setTime(now);
-
-        cal.add(Calendar.DATE, 21);
-
-        Date future = cal.getTime();
-
-        SimpleDateFormat dFormatter = new SimpleDateFormat("MM/dd/yy");
-
-        String futureDate = dFormatter.format(future);
 
         final String description =
                 "New User defined description set here at the Create LabBatch call level.  SHould be useful when giving users the ability to set their own description for the LCSET or whatever ticket";
-        LabBatch testBatch = labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), scottmat,
-                                                        testLCSetKey, description, future);
+        LabBatch batchInput = new LabBatch("", new HashSet<LabVessel>(mapBarcodeToTube.values()));
+        batchInput.setBatchDescription(description);
+
+        LabBatch testBatch = labBatchEJB
+                .createLabBatch(batchInput, scottmat,
+                                testLCSetKey);
         EasyMock.verify(mockJira);
 
         Assert.assertNotNull(testBatch);
@@ -188,9 +169,6 @@ public class LabBatchEjbDBFreeTest {
         Assert.assertEquals(6, testBatch.getStartingLabVessels().size());
         Assert.assertEquals(workflowName + ": " + STUB_TEST_PDO_KEY, testBatch.getBatchName());
         Assert.assertEquals(description, testBatch.getBatchDescription());
-        Assert.assertNotNull(testBatch.getDueDate());
-
-        Assert.assertEquals(futureDate, dFormatter.format(testBatch.getDueDate()));
 
     }
 }
