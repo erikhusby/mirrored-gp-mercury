@@ -184,7 +184,6 @@ CREATE INDEX billable_item_idx1 ON billable_item (product_order_sample_id, price
 
 
 -- Import tables
-DROP TABLE im_billable_item;
 DROP TABLE im_product_order_add_on;
 DROP TABLE im_product_order_sample_stat;
 DROP TABLE im_product_order_sample;
@@ -343,16 +342,6 @@ CREATE TABLE im_product_order_add_on (
   product_order_add_on_id NUMERIC(19) NOT NULL,
   product_order_id NUMERIC(19),
   product_id NUMERIC(19)
-);
-
-CREATE TABLE im_billable_item (
-  line_number NUMERIC(9) NOT NULL,
-  etl_date DATE NOT NULL,
-  is_delete CHAR(1) NOT NULL,
-  billable_item_id NUMERIC(19) NOT NULL,
-  product_order_sample_id NUMERIC(19),
-  price_item_id NUMERIC(19),
-  item_count NUMERIC(19)
 );
 
 COMMIT;
