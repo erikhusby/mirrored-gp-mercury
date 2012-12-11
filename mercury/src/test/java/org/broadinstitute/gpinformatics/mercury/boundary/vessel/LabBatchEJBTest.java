@@ -91,10 +91,9 @@ public class LabBatchEjbTest extends ContainerTest {
     @Test
     public void testCreateLabBatch() throws Exception {
 
-        final String batchName = "Test lab Batch Name";
         LabBatch testBatch =
-                labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), scottmat, null, null,
-                                           null);
+                labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), scottmat, null);
+        final String batchName = testBatch.getBatchName();
 
         labBatchDAO.flush();
         labBatchDAO.clear();
@@ -129,9 +128,11 @@ public class LabBatchEjbTest extends ContainerTest {
 
         String futureDate = dFormatter.format(future);
 
-        LabBatch testBatch =
-                labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), scottmat, null,
-                                           description, future);
+        LabBatch batchInput =new LabBatch(batchName,new HashSet<LabVessel>(mapBarcodeToTube.values()));
+        batchInput.setBatchDescription(description);
+        batchInput.setDueDate(future);
+
+        labBatchEJB.createLabBatch(batchInput, scottmat, null);
 
         labBatchDAO.flush();
         labBatchDAO.clear();
