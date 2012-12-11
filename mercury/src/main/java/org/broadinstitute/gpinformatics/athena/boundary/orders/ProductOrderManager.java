@@ -46,9 +46,9 @@ public class ProductOrderManager {
     }
 
 
-    private void updateSamples(ProductOrder productOrder, List<String> sampleIds) {
+    private void updateSamples(ProductOrder productOrder, List<String> sampleIds) throws NoSamplesException {
         if (sampleIds.isEmpty()) {
-            throw new RuntimeException("You must add at least one sample before placing an order");
+            throw new NoSamplesException();
         }
 
         List<ProductOrderSample> orderSamples = new ArrayList<ProductOrderSample>(sampleIds.size());
@@ -90,7 +90,7 @@ public class ProductOrderManager {
      * @param addOnPartNumbers
      * @throws QuoteNotFoundException
      */
-    public void save(ProductOrder productOrder, List<String> productOrderSamplesIds, List<String> addOnPartNumbers) throws DuplicateTitleException, QuoteNotFoundException {
+    public void save(ProductOrder productOrder, List<String> productOrderSamplesIds, List<String> addOnPartNumbers) throws DuplicateTitleException, QuoteNotFoundException, NoSamplesException {
 
         validateUniqueProjectTitle(productOrder);
         validateQuote(productOrder);
