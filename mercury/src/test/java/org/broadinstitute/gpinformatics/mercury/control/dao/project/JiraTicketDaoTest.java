@@ -25,6 +25,10 @@ public class JiraTicketDaoTest extends ContainerTest{
     private JiraTicketDao jiraTicketDao;
 
     @Inject
+    private JiraService jiraService;
+
+
+    @Inject
     private UserTransaction utx;
 
     @BeforeMethod(groups = EXTERNAL_INTEGRATION)
@@ -50,7 +54,7 @@ public class JiraTicketDaoTest extends ContainerTest{
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testFetchByName() {
         String ticketName = "UT-" + UUID.randomUUID();
-        JiraTicket jiraTicket = new JiraTicket(JiraServiceProducer.stubInstance(), ticketName);
+        JiraTicket jiraTicket = new JiraTicket(jiraService, ticketName);
         jiraTicketDao.persist(jiraTicket);
         jiraTicketDao.flush();
         jiraTicketDao.clear();
