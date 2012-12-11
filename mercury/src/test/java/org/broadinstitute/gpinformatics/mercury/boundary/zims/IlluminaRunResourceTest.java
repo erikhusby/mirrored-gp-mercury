@@ -92,7 +92,7 @@ public class IlluminaRunResourceTest extends Arquillian {
 
         doAssertions(zamboniRun,runBean,wrIdToPDO);
     }
-    
+
     /**
      * Does the same test as {@link #test_zims_in_container()},
      * but does it over http, which means it's actually checking
