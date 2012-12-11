@@ -112,6 +112,7 @@ public class DriedBloodSpotDbFreeTest {
 
             String incubationPlateBarcode = "DBSIncPlate";
             BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+            bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
             int paperNum = 1;
             for (String ftaPaperBarcode : ftaPaperBarcodes) {
                 // DBSSamplePunch receptacle -> plate A01 etc.
@@ -132,46 +133,28 @@ public class DriedBloodSpotDbFreeTest {
             reagentType.setKitType("Incubation Mix");
             reagentType.setBarcode("IncubationMix1234");
             incubationMixJaxb.getReagent().add(reagentType);
-            BettaLIMSMessage bettaLIMSMessage2 = new BettaLIMSMessage();
-            bettaLIMSMessage2.getPlateEvent().add(incubationMixJaxb);
-            messageList.add(bettaLIMSMessage2);
-            bettaLimsMessageFactory.advanceTime();
+            LabEventTest.addMessage(messageList, bettaLimsMessageFactory, incubationMixJaxb);
 
             // DBSLysisBuffer plateEvent
             lysisBufferJaxb = bettaLimsMessageFactory.buildPlateEvent("DBSLysisBuffer", incubationPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage3 = new BettaLIMSMessage();
-            bettaLIMSMessage3.getPlateEvent().add(lysisBufferJaxb);
-            messageList.add(bettaLIMSMessage3);
-            bettaLimsMessageFactory.advanceTime();
+            LabEventTest.addMessage(messageList, bettaLimsMessageFactory, lysisBufferJaxb);
 
             // DBSMagneticResin plateEVent
             magneticResinJaxb = bettaLimsMessageFactory.buildPlateEvent("DBSMagneticResin", incubationPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage4 = new BettaLIMSMessage();
-            bettaLIMSMessage4.getPlateEvent().add(magneticResinJaxb);
-            messageList.add(bettaLIMSMessage4);
-            bettaLimsMessageFactory.advanceTime();
+            LabEventTest.addMessage(messageList, bettaLimsMessageFactory, magneticResinJaxb);
 
             String firstPurificationBarcode = "DBS1stPur";
             // DBS1stPurification plate -> plate
             dbs1stPurificationJaxb = bettaLimsMessageFactory.buildPlateToPlate("DBS1stPurification", incubationPlateBarcode, firstPurificationBarcode);
-            BettaLIMSMessage bettaLIMSMessage5 = new BettaLIMSMessage();
-            bettaLIMSMessage5.getPlateEvent().add(dbs1stPurificationJaxb);
-            messageList.add(bettaLIMSMessage5);
-            bettaLimsMessageFactory.advanceTime();
+            LabEventTest.addMessage(messageList, bettaLimsMessageFactory, dbs1stPurificationJaxb);
 
             // DBSWashBuffer plateEvent
             dbsWashBufferJaxb = bettaLimsMessageFactory.buildPlateEvent("DBSWashBuffer", firstPurificationBarcode);
-            BettaLIMSMessage bettaLIMSMessage6 = new BettaLIMSMessage();
-            bettaLIMSMessage6.getPlateEvent().add(dbsWashBufferJaxb);
-            messageList.add(bettaLIMSMessage6);
-            bettaLimsMessageFactory.advanceTime();
+            LabEventTest.addMessage(messageList, bettaLimsMessageFactory, dbsWashBufferJaxb);
 
             // DBSElutionBuffer plateEvent
             dbsElutionBufferJaxb = bettaLimsMessageFactory.buildPlateEvent("DBSElutionBuffer", firstPurificationBarcode);
-            BettaLIMSMessage bettaLIMSMessage8 = new BettaLIMSMessage();
-            bettaLIMSMessage8.getPlateEvent().add(dbsElutionBufferJaxb);
-            messageList.add(bettaLIMSMessage8);
-            bettaLimsMessageFactory.advanceTime();
+            LabEventTest.addMessage(messageList, bettaLimsMessageFactory, dbsElutionBufferJaxb);
 
             // DBSFinalTransfer plate -> rack
             List<String> finalTubeBarcodes = new ArrayList<String>();
@@ -179,10 +162,7 @@ public class DriedBloodSpotDbFreeTest {
                 finalTubeBarcodes.add("DBSFinal" + i);
             }
             dbsFinalTransferJaxb = bettaLimsMessageFactory.buildPlateToRack("DBSFinalTransfer", firstPurificationBarcode, "DBSFinal", finalTubeBarcodes);
-            BettaLIMSMessage bettaLIMSMessage9 = new BettaLIMSMessage();
-            bettaLIMSMessage9.getPlateEvent().add(dbsFinalTransferJaxb);
-            messageList.add(bettaLIMSMessage9);
-            bettaLimsMessageFactory.advanceTime();
+            LabEventTest.addMessage(messageList, bettaLimsMessageFactory, dbsFinalTransferJaxb);
         }
 
         public List<BettaLIMSMessage> getMessageList() {

@@ -1,11 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.login;
 
-/**
- * @author Scott Matthews
- *         Date: 4/2/12
- *         Time: 1:35 PM
- */
-
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.mercury.entity.DB;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
@@ -21,10 +15,14 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
 
+/**
+ * Handles user sign in and roles stuff.
+ *
+ * @author Scott Matthews
+ */
 @Named
 @RequestScoped
 public class UserLogin extends AbstractJsfBean {
-
     private String username;
 
     private String password;
@@ -58,11 +56,16 @@ public class UserLogin extends AbstractJsfBean {
         String targetPage;
         FacesContext context = FacesContext.getCurrentInstance();
 
-        try {
-            HttpServletRequest request = (HttpServletRequest)context.getExternalContext().getRequest();
+        HttpServletRequest request = (HttpServletRequest)context.getExternalContext().getRequest();
+        UserRole role = UserRole.fromRequest(request);
 
+        if (request.getUserPrincipal() != null && username.equalsIgnoreCase(request.getUserPrincipal().getName())) {
+            // User is already logged in, don't try to login again.
+            return redirect(role.landingPage);
+        }
+
+        try {
             request.login(username, password);
-            UserRole role = UserRole.fromRequest(request);
             targetPage = role.landingPage;
             userBean.login(request);
 
@@ -100,7 +103,7 @@ public class UserLogin extends AbstractJsfBean {
         // Order of roles is important, if user is both PDM and PM we want to go to PDM's page.
         PDM("/orders/list", DB.Role.PDM.name),
         PM("/projects/list", DB.Role.PM.name),
-        OTHER("index", "");
+        OTHER("/index", "");
 
         private static final String INDEX = AuthorizationListener.HOME_PAGE;
         private static final String MERCURY_PAGE = "/Mercury";

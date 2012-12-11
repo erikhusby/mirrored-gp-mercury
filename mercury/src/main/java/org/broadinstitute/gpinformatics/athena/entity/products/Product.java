@@ -299,7 +299,7 @@ public class Product implements Serializable, Comparable<Product> {
 
         Product product = (Product) o;
 
-        if (partNumber != null ? !partNumber.equals(product.partNumber) : product.partNumber != null) return false;
+        if (partNumber != null ? !partNumber.equals(product.getPartNumber()) : product.getPartNumber() != null) return false;
 
         return true;
     }

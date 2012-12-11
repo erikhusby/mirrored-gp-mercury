@@ -14,6 +14,7 @@ import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
@@ -151,12 +152,26 @@ public class LimsQueryResourceUnitTest {
         expect(mockThriftService.doesSquidRecognizeAllLibraries(Arrays.asList("squid_barcode", "sequel_barcode"))).andReturn(false);
         Map<String, TwoDBarcodedTube> sequelTubes = new HashMap<String, TwoDBarcodedTube>();
         sequelTubes.put("sequel_barcode", new TwoDBarcodedTube("sequel_barcode"));
-        expect(mockTwoDBarcodedTubeDAO.findByBarcodes(Arrays.asList("squid_barcode", "sequel_barcode"))).andReturn(sequelTubes);
+//        expect(mockTwoDBarcodedTubeDAO.findByBarcodes(Arrays.asList("squid_barcode", "sequel_barcode"))).andReturn(sequelTubes);
         replayAll();
 
         boolean result = resource.doesLimsRecognizeAllTubes(Arrays.asList("squid_barcode", "sequel_barcode"));
         // result is false because one system does not know about both tubes (TBD if this is correct behavior)
         assertThat(result, is(false));
+
+        verifyAll();
+    }
+
+    public void testFetchMaterialTypesForTubeBarcodes() {
+        expect(mockThriftService.fetchMaterialTypesForTubeBarcodes(Arrays.asList("barcode1", "barcode2"))).andReturn(Arrays.asList("type1", "type2"));
+        replayAll();
+
+        List<String> result = resource.fetchMaterialTypesForTubeBarcodes(Arrays.asList("barcode1", "barcode2"));
+        assertThat(result.size(), equalTo(2));
+        assertThat(result.get(0), equalTo("type1"));
+        assertThat(result.get(1), equalTo("type2"));
+
+        verifyAll();
     }
 
     @Test(groups = DATABASE_FREE)

@@ -179,8 +179,8 @@ public class ProductOrderSample implements Serializable {
         }
 
         ProductOrderSample that = (ProductOrderSample) o;
-        return new EqualsBuilder().append(sampleName, that.sampleName).append(samplePosition, that.samplePosition)
-                .append(productOrder, that.productOrder).build();
+        return new EqualsBuilder().append(sampleName, that.getSampleName()).append(samplePosition, that.getSamplePosition())
+                .append(productOrder, that.getProductOrder()).build();
     }
 
     @Override

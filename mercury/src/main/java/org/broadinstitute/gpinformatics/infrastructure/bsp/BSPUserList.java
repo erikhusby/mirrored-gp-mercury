@@ -3,18 +3,22 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.faces.model.SelectItem;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Application wide access to BSP's user list. The list is currently cached once at application startup. In the
@@ -24,8 +28,7 @@ import java.util.*;
 @ApplicationScoped
 public class BSPUserList extends AbstractCache implements Serializable {
 
-    @Inject
-    private Log logger;
+    private static Log logger = LogFactory.getLog(BSPUserList.class);
 
     @Inject
     private Deployment deployment;
@@ -175,7 +178,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
 
             users = ImmutableList.copyOf(rawUsers);
         } catch (Exception ex) {
-            logger.debug("Could not refresh the user list", ex);
+            logger.error("Could not refresh the user list", ex);
         }
     }
 

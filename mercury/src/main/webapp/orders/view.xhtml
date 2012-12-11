@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html
-        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
@@ -29,11 +27,11 @@
                     <p:commandButton value="Close Out" action="create" ajax="false" styleClass="btn">
                         <f:param name="productOrderTitle" value="#{productOrderDetail.productOrder.title}"/>
                     </p:commandButton>
-                    &nbsp;
+                    &#160;
                     <p:commandButton value="Copy" action="create" ajax="false" styleClass="btn">
                         <f:param name="productOrderTitle" value="#{productOrderDetail.productOrder.title}"/>
                     </p:commandButton>
-                    &nbsp;
+                    &#160;
                     <p:splitButton value="  More Actions  ">
                         <p:menuitem value="Get Quote Template" action="create" icon="ui-icon-folder-open"/>
                         <p:menuitem value="Update Billing" action="create" icon="ui-icon-arrowrefresh-1-e"/>
@@ -162,19 +160,19 @@
                             #{sample.billingStatus.displayName}
                         </p:column>
                         <p:column headerText="Eligible" width="100">
-                            &nbsp;
+                            &#160;
                         </p:column>
                         <p:column headerText="Billed" width="100">
-                            &nbsp;
+                            &#160;
                         </p:column>
                         <p:column headerText="Abandoned" width="70">
-                            &nbsp;
+                            &#160;
                         </p:column>
                         <p:column headerText="Price Item 1" width="100">
-                            &nbsp;
+                            &#160;
                         </p:column>
                         <p:column headerText="Price Item 2" width="100">
-                            &nbsp;
+                            &#160;
                         </p:column>
                         <p:column headerText="Comment" width="200">
                             #{sample.sampleComment}
