@@ -52,6 +52,18 @@
         </xsd:sequence>
     </xsd:complexType>
 
+    <xsd:complexType name="plateTransferType">
+        <xsd:sequence>
+            <xsd:element name="sourceBarcode" type="xsd:string"/>
+            <xsd:element name="sourceSection" type="xsd:string"/>
+            <xsd:element name="sourcePositionMap" type="wellAndSourceTubeType" maxOccurs="unbounded"/>
+            <xsd:element name="destinationBarcode" type="xsd:string"/>
+            <xsd:element name="destinationSection" type="xsd:string"/>
+            <xsd:element name="destinationPositionMap" type="wellAndSourceTubeType" maxOccurs="unbounded"/>
+            <!-- TODO: metaDataMap -->
+        </xsd:sequence>
+    </xsd:complexType>
+    
     <xsd:complexType name="poolGroupType">
         <xsd:sequence>
             <xsd:element name="name" type="xsd:string"/>

@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
-import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
-import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
-import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import edu.mit.broad.prodinfo.thrift.lims.*;
 
 import java.io.Serializable;
 import java.util.List;
@@ -45,4 +43,10 @@ public interface ThriftService extends Serializable {
     public List<LibraryData> fetchLibraryDetailsByLibraryName(List<String> libraryNames);
 
     public List<String> fetchUnfulfilledDesignations();
+
+    public List<WellAndSourceTube> fetchSourceTubesForPlate(String plateBarcode);
+
+    public List<PlateTransfer> fetchTransfersForPlate(String plateBarcode, short depth);
+
+    public List<PoolGroup> fetchPoolGroups(List<String> tubeBarcoces);
 }

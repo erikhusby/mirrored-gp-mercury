@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.integration.web.zims;
 
-import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
-import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
-import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.OfflineThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
@@ -192,6 +190,21 @@ public class IlluminaRunQueryTest extends Arquillian {
 
         @Override
         public List<String> fetchUnfulfilledDesignations() {
+            return null;
+        }
+
+        @Override
+        public List<WellAndSourceTube> fetchSourceTubesForPlate(String plateBarcode) {
+            return null;
+        }
+
+        @Override
+        public List<PlateTransfer> fetchTransfersForPlate(String plateBarcode, short depth) {
+            return null;
+        }
+
+        @Override
+        public List<PoolGroup> fetchPoolGroups(List<String> tubeBarcoces) {
             return null;
         }
     }

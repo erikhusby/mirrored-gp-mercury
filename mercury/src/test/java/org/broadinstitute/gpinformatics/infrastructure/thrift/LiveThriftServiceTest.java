@@ -1,9 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
-import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
-import edu.mit.broad.prodinfo.thrift.lims.LIMQueries;
-import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
-import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.apache.commons.logging.Log;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
@@ -250,6 +247,77 @@ public class LiveThriftServiceTest {
         List<String> result = thriftService.fetchUnfulfilledDesignations();
         // This is about all we can do because the result is going to change over time
         assertThat(result, notNullValue());
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchSourceTubesForPlate() {
+        List<WellAndSourceTube> result = thriftService.fetchSourceTubesForPlate("000009873173");
+        assertThat(result.size(), equalTo(191));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchSourceTubesForPlateNotFound() {
+        Exception caught = null;
+        try {
+            thriftService.fetchSourceTubesForPlate("unknown_plate");
+        } catch (Exception e) {
+            caught = e;
+        }
+        assertThat(caught, instanceOf(RuntimeException.class));
+        assertThat(caught.getMessage(), equalTo("Plate not found for barcode: unknown_plate"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchTransfersForPlate() {
+        List<PlateTransfer> result = thriftService.fetchTransfersForPlate("000009873173", (short) 2);
+        // spot check number of transfers and that one was from a rack of 95 tubes
+        assertThat(result.size(), equalTo(3));
+        assertThat(result.get(1).getSourcePositionMap().size(), equalTo(95));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchTransfersForPlateNotFound() {
+        Exception caught = null;
+        try {
+            thriftService.fetchTransfersForPlate("unknown_plate", (short) 2);
+        } catch (Exception e) {
+            caught = e;
+        }
+        assertThat(caught, instanceOf(RuntimeException.class));
+        assertThat(caught.getMessage(), equalTo("Plate not found for barcode: unknown_plate"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchPoolGroups() {
+        List<PoolGroup> result = thriftService.fetchPoolGroups(Arrays.asList("0089526681", "0089526682"));
+        assertThat(result.size(), equalTo(1));
+        assertThat(result.get(0).getName(), equalTo("21490_pg"));
+        assertThat(result.get(0).getTubeBarcodes(), hasItem("0089526681"));
+        assertThat(result.get(0).getTubeBarcodes(), hasItem("0089526682"));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchPoolGroupsAllTubesNotFound() {
+        Exception caught = null;
+        try {
+            thriftService.fetchPoolGroups(Arrays.asList("unknown_tube1", "unknown_tube2"));
+        } catch (Exception e) {
+            caught = e;
+        }
+        assertThat(caught, instanceOf(RuntimeException.class));
+        assertThat(caught.getMessage(), equalTo("Some or all of the tubes were not found."));
+    }
+
+    @Test(groups = EXTERNAL_INTEGRATION)
+    public void testFetchPoolGroupsSomeTubesNotFound() {
+        Exception caught = null;
+        try {
+            thriftService.fetchPoolGroups(Arrays.asList("0089526681", "unknown_tube1"));
+        } catch (Exception e) {
+            caught = e;
+        }
+        assertThat(caught, instanceOf(RuntimeException.class));
+        assertThat(caught.getMessage(), equalTo("Some or all of the tubes were not found."));
     }
 
     private IExpectationSetters<Object> expectThriftCall() {

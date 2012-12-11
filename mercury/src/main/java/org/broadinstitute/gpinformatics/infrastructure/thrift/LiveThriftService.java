@@ -1,10 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
-import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
-import edu.mit.broad.prodinfo.thrift.lims.LIMQueries;
-import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
-import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
-import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.apache.commons.logging.Log;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
@@ -260,7 +256,7 @@ public class LiveThriftService implements ThriftService {
 
     @Override
     public List<String> fetchUnfulfilledDesignations() {
-        List<String> result = thriftConnection.call(new ThriftConnection.Call<List<String>>() {
+        return thriftConnection.call(new ThriftConnection.Call<List<String>>() {
             @Override
             public List<String> call(LIMQueries.Client client) {
                 try {
@@ -270,7 +266,66 @@ public class LiveThriftService implements ThriftService {
                 }
             }
         });
-        return result;
+    }
+
+    @Override
+    public List<WellAndSourceTube> fetchSourceTubesForPlate(final String plateBarcode) {
+        return thriftConnection.call(new ThriftConnection.Call<List<WellAndSourceTube>>() {
+            @Override
+            public List<WellAndSourceTube> call(LIMQueries.Client client) {
+                try {
+                    return client.fetchSourceTubesForPlate(plateBarcode);
+                } catch (TTransportException e) {
+                    if (e.getType() == TTransportException.END_OF_FILE) {
+                        throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
+                    } else {
+                        throw handleThriftException(e);
+                    }
+                } catch (TException e) {
+                    throw handleThriftException(e);
+                }
+            }
+        });
+    }
+
+    @Override
+    public List<PlateTransfer> fetchTransfersForPlate(final String plateBarcode, final short depth) {
+        return thriftConnection.call(new ThriftConnection.Call<List<PlateTransfer>>() {
+            @Override
+            public List<PlateTransfer> call(LIMQueries.Client client) {
+                try {
+                    return client.fetchTransfersForPlate(plateBarcode, depth);
+                } catch (TTransportException e) {
+                    if (e.getType() == TTransportException.END_OF_FILE) {
+                        throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
+                    } else {
+                        throw handleThriftException(e);
+                    }
+                } catch (TException e) {
+                    throw handleThriftException(e);
+                }
+            }
+        });
+    }
+
+    @Override
+    public List<PoolGroup> fetchPoolGroups(final List<String> tubeBarcoces) {
+        return thriftConnection.call(new ThriftConnection.Call<List<PoolGroup>>() {
+            @Override
+            public List<PoolGroup> call(LIMQueries.Client client) {
+                try {
+                    return client.fetchPoolGroups(tubeBarcoces);
+                } catch (TTransportException e) {
+                    if (e.getType() == TTransportException.END_OF_FILE) {
+                        throw new RuntimeException("Some or all of the tubes were not found.");
+                    } else {
+                        throw handleThriftException(e);
+                    }
+                } catch (TException e) {
+                    throw handleThriftException(e);
+                }
+            }
+        });
     }
 
     private RuntimeException handleThriftException(TException e) {

@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
-import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
-import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
-import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import edu.mit.broad.prodinfo.thrift.lims.*;
 
 import javax.enterprise.inject.Alternative;
 import java.io.IOException;
@@ -89,6 +87,21 @@ public class MockThriftService implements ThriftService {
 
     @Override
     public List<String> fetchUnfulfilledDesignations() {
+        return null;
+    }
+
+    @Override
+    public List<WellAndSourceTube> fetchSourceTubesForPlate(String plateBarcode) {
+        return null;
+    }
+
+    @Override
+    public List<PlateTransfer> fetchTransfersForPlate(String plateBarcode, short depth) {
+        return null;
+    }
+
+    @Override
+    public List<PoolGroup> fetchPoolGroups(List<String> tubeBarcoces) {
         return null;
     }
 
