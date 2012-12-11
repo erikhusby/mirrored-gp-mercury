@@ -893,7 +893,8 @@ public class ProductOrder implements Serializable {
         Complete("Complete"),
         Cancel("Cancel"),
         StartProgress("Start Progress"),
-        PutOnHold("Put On Hold");
+        PutOnHold("Put On Hold"),
+        DeveloperEdit("Developer Edit");
 
         private final String stateName;
 

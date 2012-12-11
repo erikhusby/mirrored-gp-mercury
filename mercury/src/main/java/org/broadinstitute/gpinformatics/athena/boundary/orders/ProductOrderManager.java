@@ -125,7 +125,8 @@ public class ProductOrderManager {
         // updateJiraIssue(productOrder);
 
         // In the PDO edit UI, if the user goes through and edits the quote and then hits 'Submit', this works
-        // without the merge.  But if the user tabs out of the quote field, this merge is required.
+        // without the merge.  But if the user tabs out of the quote field before hitting 'Submit', this merge
+        // is required because our method receives a detached ProductOrder instance.
         ProductOrder updatedProductOrder = productOrderDao.getEntityManager().merge(productOrder);
 
         // update add-ons, first remove old
@@ -133,6 +134,7 @@ public class ProductOrderManager {
             productOrderDao.remove(productOrderAddOn);
         }
 
+        // set new add-ons in
         Set<ProductOrderAddOn> productOrderAddOns = new HashSet<ProductOrderAddOn>();
         for (Product addOn : productDao.findByPartNumbers(selectedAddOnPartNumbers)) {
             ProductOrderAddOn productOrderAddOn = new ProductOrderAddOn(addOn, updatedProductOrder);
