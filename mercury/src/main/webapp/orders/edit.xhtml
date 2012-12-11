@@ -11,7 +11,7 @@
       xmlns:b="http://mercury.broadinstitute.org/ui">
 <body>
     <ui:composition template="/layout.xhtml">
-        <ui:define name="title">Edit Product Order (note: only Quote is currently editable)</ui:define>
+        <ui:define name="title">Edit Product Order</ui:define>
 
         <ui:define name="metadata">
             <f:metadata>
@@ -55,6 +55,42 @@
                         </span>
             </div>
 
+
+                <div class="control-group">
+                    <p:outputLabel for="product" value="Product" styleClass="control-label"/>
+                    <div class="controls">
+                        <!--@elvariable id="product" type="org.broadinstitute.gpinformatics.athena.entity.products.Product"-->
+                        <p:autoComplete id="product" value="#{pdoEditBean.productOrder.product}"
+                                        completeMethod="#{productSearcher.searchProductsForProductOrder}"
+                                        forceSelection="true"
+                                        var="product"
+                                        itemLabel="#{product.productName}"
+                                        itemValue="#{product}"
+                                        converter="#{productConverter}"
+                                        dropdown="true"
+                                        required="true"
+                                        scrollHeight="250"
+                                        size="50">
+                            <p:ajax event="itemSelect" listener="#{pdoEditBean.setupAddOns}" update="perfbyselection"/>
+                        </p:autoComplete>
+                        <p:watermark for="product" value="Type name to search"/>
+                        <p:message for="product"/>
+                    </div>
+                </div>
+
+
+                <div class="control-group">
+                    <p:outputLabel for="selectedAddOns" value="Add-ons" styleClass="control-label"/>
+                    <div class="controls">
+                        <h:panelGroup id="perfbyselection">
+                            <p:selectManyCheckbox
+                                    id="selectedAddOns" value="#{pdoEditBean.selectedAddOnPartNumbers}" layout="pageDirection">
+                                <f:selectItems value="#{pdoEditBean.addOns}" var="addOn" itemLabel="#{addOn.productName}" itemValue="#{addOn.partNumber}"/>
+                            </p:selectManyCheckbox>
+                        </h:panelGroup>
+                    </div>
+                </div>
+
             <!--<div class="control-group">-->
                 <!--<span class="control-label label-form">Product</span>-->
                         <!--<span class="controls">-->
@@ -87,15 +123,6 @@
                     </div>
                 </div>
 
-
-            <h:panelGroup rendered="#{pdoEditBean.productOrder.product.productFamily.supportsNumberOfLanes}">
-                <div class="control-group">
-                    <span class="control-label label-form">Number of Lanes</span>
-                            <span class="controls">
-                                #{pdoEditBean.productOrder.count}
-                            </span>
-                </div>
-            </h:panelGroup>
 
             <div class="control-group">
                 <span class="control-label label-form">Comments</span>

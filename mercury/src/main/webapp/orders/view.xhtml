@@ -7,7 +7,8 @@
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
-      xmlns:p="http://primefaces.org/ui">
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:security="http://mercury.broadinstitute.org/tags">
 <body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">View Product Order</ui:define>
@@ -19,9 +20,11 @@
         <ui:define name="body">
             <h:form styleClass="view-horizontal">
                 <div class="row-fluid" style="margin-bottom: 30px;">
-                    <p:button value="Edit" outcome="edit" >
-                        <f:param name="productOrder" value="#{productOrderDetail.productOrder.businessKey}"/>
-                    </p:button>
+                    <!--<security:authorizeBlock roles="#{userBean.developerRole}">-->
+                        <p:button value="Edit" outcome="edit">
+                            <f:param name="productOrder" value="#{productOrderDetail.productOrder.businessKey}"/>
+                        </p:button>
+                    <!--</security:authorizeBlock>-->
                     <!--
                     <p:commandButton value="Close Out" action="create" ajax="false" styleClass="btn">
                         <f:param name="productOrderTitle" value="#{productOrderDetail.productOrder.title}"/>

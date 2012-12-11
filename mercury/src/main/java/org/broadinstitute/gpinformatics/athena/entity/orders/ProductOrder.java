@@ -353,9 +353,21 @@ public class ProductOrder implements Serializable {
         }
     }
 
-    public void setAddOns(Set<ProductOrderAddOn> addOns) {
-        this.addOns = addOns;
+    public void setProductOrderAddOns(Set<ProductOrderAddOn> addOns) {
+        this.addOns.clear();
+        this.addOns.addAll(addOns);
     }
+
+
+    public void setAddons(List<Product> addOns) {
+        this.addOns.clear();
+
+        for (Product product : addOns) {
+            ProductOrderAddOn productOrderAddOn = new ProductOrderAddOn(product, this);
+            this.addOns.add(productOrderAddOn);
+        }
+    }
+
 
     public ResearchProject getResearchProject() {
         return researchProject;

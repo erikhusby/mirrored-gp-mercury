@@ -4,6 +4,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
@@ -15,7 +16,9 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Stateful
 @RequestScoped
@@ -111,16 +114,33 @@ public class ProductOrderManager {
 
 
     /**
-     * Initially the only change we support will be an updated quote, which is simply a field on the {@link ProductOrder}
+     * Allow updated quotes, products, and add-ons.
+     *
      * @param productOrder
+     * @param selectedAddOnPartNumbers
      */
-    public void update(ProductOrder productOrder) {
+    public void update(final ProductOrder productOrder, final List<String> selectedAddOnPartNumbers) {
         // update JIRA ticket with new quote
         // GPLIM-488
         // updateJiraIssue(productOrder);
 
         // In the PDO edit UI, if the user goes through and edits the quote and then hits 'Submit', this works
         // without the merge.  But if the user tabs out of the quote field, this merge is required.
-        productOrderDao.getEntityManager().merge(productOrder);
+        ProductOrder updatedProductOrder = productOrderDao.getEntityManager().merge(productOrder);
+
+        // update add-ons, first remove old
+        for (ProductOrderAddOn productOrderAddOn : updatedProductOrder.getAddOns()) {
+            productOrderDao.remove(productOrderAddOn);
+        }
+
+        Set<ProductOrderAddOn> productOrderAddOns = new HashSet<ProductOrderAddOn>();
+        for (Product addOn : productDao.findByPartNumbers(selectedAddOnPartNumbers)) {
+            ProductOrderAddOn productOrderAddOn = new ProductOrderAddOn(addOn, updatedProductOrder);
+            productOrderDao.persist(productOrderAddOn);
+            productOrderAddOns.add(productOrderAddOn);
+        }
+        
+        updatedProductOrder.setProductOrderAddOns(productOrderAddOns);
+
     }
 }

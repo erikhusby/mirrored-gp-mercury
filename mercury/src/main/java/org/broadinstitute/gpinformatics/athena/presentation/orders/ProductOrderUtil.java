@@ -27,7 +27,7 @@ public class ProductOrderUtil {
 
         String quoteId = productOrder.getQuoteId();
         String fundsRemainingString;
-        if (!StringUtils.isBlank(quoteId)) {
+        if ( ! StringUtils.isBlank(quoteId)) {
             try {
 
                 Quote quote = quoteService.getQuoteByAlphaId(quoteId);
