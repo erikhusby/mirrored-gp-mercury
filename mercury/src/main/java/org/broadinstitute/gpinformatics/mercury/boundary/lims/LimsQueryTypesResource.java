@@ -68,7 +68,7 @@ public class LimsQueryTypesResource {
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/echoWellAndSourceTube")
+    @Path("/echoWellAndSourceTubeList")
     public List<WellAndSourceTubeType> echoWellAndSourceTubeList(List<WellAndSourceTubeType> wellAndSourceTubes) {
         return wellAndSourceTubes;
     }

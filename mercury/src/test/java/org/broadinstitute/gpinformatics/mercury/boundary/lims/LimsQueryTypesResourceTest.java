@@ -172,7 +172,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEchoWellAndSourceTubeList(@ArquillianResource URL baseUrl) {
-        WebResource resource = makeWebResource(baseUrl, "echoWellAndSourceTube");
+        WebResource resource = makeWebResource(baseUrl, "echoWellAndSourceTubeList");
 
         String request = "[{\"wellName\":\"A01\",\"tubeBarcode\":\"tube_barcode1\"},{\"wellName\":\"A02\",\"tubeBarcode\":\"tube_barcode2\"}]";
         String result = post(resource, request);
