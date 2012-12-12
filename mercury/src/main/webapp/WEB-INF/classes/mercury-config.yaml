@@ -86,8 +86,6 @@ jira:
       urlBase:      https://labopsjira.broadinstitute.org
 
 
-
-
 pmbridge:
 
     DEV:
@@ -221,6 +219,16 @@ datawhEtl:
         datawhEtlDirRoot: /seq/lims/datawh/prod
 
 
+tableau:
+
+    PROD:
+
+        trustedTicketServer: https://tableau-dev.broadinstitute.org
+        username: lab\tableau-test
+        reportUrls:
+            - {name: PASS, url: "/views/PMBPASSSampleDashboard/PMBridgeSamplesDashboard?Research%20Project="}
+
+
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 
 
@@ -240,6 +248,7 @@ mercury:
       deckMsgs: DEV
       datawhEtl: DEV
       bettaLimsServer: DEV
+      tableau:  PROD
 
 
     TEST:
@@ -255,6 +264,8 @@ mercury:
       deckMsgs: DEV
       datawhEtl: DEV
       bettaLimsServer: TEST
+      tableau:  PROD
+
 
     QA:
 
@@ -269,6 +280,7 @@ mercury:
       deckMsgs: QA
       datawhEtl: QA
       bettaLimsServer: QA
+      tableau:  PROD
 
 
     RC:
@@ -284,6 +296,7 @@ mercury:
       deckMsgs: QA
       datawhEtl: QA
       bettaLimsServer: QA
+      tableau:  PROD
 
 
     PROD:
@@ -299,4 +312,4 @@ mercury:
       deckMsgs: PROD
       datawhEtl: PROD
       bettaLimsServer: PROD
-
+      tableau:  PROD
