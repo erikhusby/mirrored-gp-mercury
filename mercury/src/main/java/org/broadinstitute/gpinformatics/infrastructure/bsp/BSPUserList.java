@@ -28,7 +28,8 @@ import java.util.Set;
 @ApplicationScoped
 public class BSPUserList extends AbstractCache implements Serializable {
 
-    private static Log logger = LogFactory.getLog(BSPUserList.class);
+    private static final Log logger = LogFactory.getLog(BSPUserList.class);
+
 
     @Inject
     private Deployment deployment;
@@ -48,8 +49,8 @@ public class BSPUserList extends AbstractCache implements Serializable {
      */
     public List<BspUser> getUsers() {
 
-        if (users == null) {
-            refreshCache();
+        if ((users == null) || shouldReFresh(deployment) ) {
+                doRefresh();
         }
 
         return users;
@@ -62,7 +63,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
     public BspUser getById(long id) {
         // Could improve performance here by storing users in a TreeMap.  Wait until performance becomes
         // an issue, then fix.
-        for (BspUser user : users) {
+        for (BspUser user : getUsers()) {
             if (user.getUserId() == id) {
                 return user;
             }
@@ -78,7 +79,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
      * @return the BSP user or null
      */
     public BspUser getByUsername(String username) {
-        for (BspUser user : users) {
+        for (BspUser user : getUsers()) {
             if (user.getUsername().equalsIgnoreCase(username)) {
                 return user;
             }
@@ -95,7 +96,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
     public List<BspUser> find(String query) {
         String[] lowerQueryItems = query.toLowerCase().split("\\s");
         List<BspUser> results = new ArrayList<BspUser>();
-        for (BspUser user : users) {
+        for (BspUser user : getUsers()) {
             boolean eachItemMatchesSomething = true;
             for (String lowerQuery : lowerQueryItems) {
                 // If none of the fields match this item, then all items are not matched
@@ -131,19 +132,17 @@ public class BSPUserList extends AbstractCache implements Serializable {
     }
 
     @Inject
-    // MLC constructor injection appears to be required to get a BSPManagerFactory injected???
     public BSPUserList(BSPManagerFactory bspManagerFactory) {
         this.bspManagerFactory = bspManagerFactory;
-        refreshCache();
+        doRefresh();
     }
-
-//    @PostConstruct
-//    private void postConstruct() {
-//        refreshCache();
-//    }
 
     @Override
     public synchronized void refreshCache() {
+            setNeedsRefresh(true);
+    }
+
+    private void doRefresh() {
         try {
             List<BspUser> rawUsers = bspManagerFactory.createUserManager().getUsers();
             serverValid = rawUsers != null;
@@ -177,6 +176,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
             });
 
             users = ImmutableList.copyOf(rawUsers);
+            setNeedsRefresh(false);
         } catch (Exception ex) {
             logger.error("Could not refresh the user list", ex);
         }
