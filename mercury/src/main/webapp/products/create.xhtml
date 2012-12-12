@@ -150,9 +150,8 @@
                         <p:watermark for="useAutomatedBilling" value="Should this product use automated billing ?"/>
                         <p:selectBooleanCheckbox id="useAutomatedBilling" value="#{productForm.product.useAutomatedBilling}"
                                                  style="vertical-align: middle;">
-                            <p:ajax update="automatedBillingSettings" />
+                            <p:ajax update="automatedBillingSettings :productParam"/>
                         </p:selectBooleanCheckbox>
-                        <p:message for="useAutomatedBilling"/>
                     </div>
                 </div>
 
@@ -161,19 +160,16 @@
                         <p:outputLabel for="requirementsAttribute" value="Bill When" styleClass="control-label"/>
                         <div class="controls">
                             <p:inputText id="requirementsAttribute" value="#{productForm.product.requirements.attribute}"
-                                         disabled="#{!productForm.product.useAutomatedBilling}"
                                          style="vertical-align: top;"/>
                             <p:watermark for="requirementsAttribute" value="Attribute to compare"/>
                             &#160;
                             <p:selectOneMenu value="#{productForm.product.requirements.operator}"
                                              converter="#{requirementsOperatorConverter}"
-                                             disabled="#{!productForm.product.useAutomatedBilling}"
                                              style="width:80px;">
                                 <f:selectItems value="#{requirementsOperatorConverter.allItems}" var="op" itemLabel="#{op.label}" />
                             </p:selectOneMenu>
                             &#160;
                             <p:inputText id="requirementsValue" value="#{productForm.product.requirements.value}"
-                                         disabled="#{!productForm.product.useAutomatedBilling}"
                                          style="vertical-align: top;"/>
                             <p:watermark for="requirementsValue" value="Value to compare"/>
                         </div>
