@@ -272,7 +272,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     public void postNewTransition(String jiraIssueKey, Transition transition, Collection<CustomField> customFields, String comment) throws IOException {
         IssueTransitionRequest jiraIssueTransition = new IssueTransitionRequest(transition, customFields, comment);
 
-        String urlString = getBaseUrl() + "/" + jiraIssueKey + "/transitions";
+        String urlString = getBaseUrl() + "/issue/" + jiraIssueKey + "/transitions";
         WebResource webResource = getJerseyClient().resource(urlString);
         post(webResource, jiraIssueTransition);
     }

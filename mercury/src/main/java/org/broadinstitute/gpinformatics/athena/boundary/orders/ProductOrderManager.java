@@ -115,7 +115,7 @@ public class ProductOrderManager {
     private void updateJiraIssue(ProductOrder productOrder) throws IOException {
         Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(), "Developer Edit");
         final String PRODUCT = "Product";
-        final String PRODUCT_FAMILY = "ProductFamily";
+        final String PRODUCT_FAMILY = "Product Family";
         final String QUOTE_ID = "Quote ID";
 
         Map<String, CustomFieldDefinition> customFieldDefinitions =
