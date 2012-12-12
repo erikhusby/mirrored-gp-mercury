@@ -1,18 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
-import org.hibernate.envers.Audited;
-
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.OneToMany;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.HashSet;
 import java.util.Set;
+
+import org.hibernate.envers.Audited;
 
 /**
  * A ReagentDesign is the name of magical
@@ -22,7 +14,7 @@ import java.util.Set;
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
+@Table(schema = "mercury", uniqueConstraints = {@UniqueConstraint(columnNames = {"reagentDesign", "reagentType"})})
 public class ReagentDesign {
 
     @Id
@@ -30,7 +22,6 @@ public class ReagentDesign {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_REAGENT_DESIGN")
     private Long reagentDesignId;
 
-    // name, manufacturer's ID, target set name
     private String reagentDesign;
     private String targetSetName;
     private String manufacturersName;
@@ -38,39 +29,48 @@ public class ReagentDesign {
     @OneToMany(mappedBy = "reagentDesign")
     private Set<DesignedReagent> designedReagents = new HashSet<DesignedReagent>();
 
-    /** For JPA */
-    ReagentDesign() {
+    /**
+     * For JPA
+     */
+    public ReagentDesign() {
     }
 
-    public enum REAGENT_TYPE {
-        BAIT,CAT
+    public static enum ReagentType {
+        BAIT, CAT
     }
 
     @Enumerated(EnumType.STRING)
-    private REAGENT_TYPE reagent_type;
+    private ReagentType reagentType;
 
     /**
-     *
-     * @param designName     Example: cancer_2000gene_shift170_undercovered
+     * @param designName  Example: cancer_2000gene_shift170_undercovered
      * @param reagentType
      */
-    public ReagentDesign(String designName, REAGENT_TYPE reagentType) {
+    public ReagentDesign(String designName, ReagentType reagentType) {
         if (designName == null) {
-             throw new NullPointerException("designName cannot be null."); 
+            throw new NullPointerException("designName cannot be null.");
         }
         if (reagentType == null) {
-             throw new NullPointerException("reagentType cannot be null.");
+            throw new NullPointerException("reagentType cannot be null.");
         }
         this.reagentDesign = designName;
-        this.reagent_type = reagentType;
+        this.reagentType = reagentType;
     }
 
-    public REAGENT_TYPE getReagentType() {
-        return reagent_type;
+    public ReagentType getReagentType() {
+        return reagentType;
+    }
+
+    public void setReagentType(ReagentType reagentType) {
+        this.reagentType = reagentType;
     }
 
     public String getDesignName() {
         return reagentDesign;
+    }
+
+    public void setDesignName(String designName) {
+        this.reagentDesign = designName;
     }
 
     public String getTargetSetName() {
@@ -78,8 +78,7 @@ public class ReagentDesign {
     }
 
     /**
-     *
-     * @param targetSetName      Example: Cancer_2K
+     * @param targetSetName Example: Cancer_2K
      */
     public void setTargetSetName(String targetSetName) {
         this.targetSetName = targetSetName;
@@ -99,6 +98,5 @@ public class ReagentDesign {
 
     public void addDesignedReagent(DesignedReagent designedReagent) {
         this.designedReagents.add(designedReagent);
-//        designedReagent.setReagentDesign(this);
     }
 }

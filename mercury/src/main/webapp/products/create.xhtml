@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html
-        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
@@ -185,7 +183,7 @@
                 <div class="control-group">
                     <p:outputLabel for="addOns" value="Add-ons" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="addOns" value="#{productForm.addOns}" completeMethod="#{productList.searchProduct}"
+                        <p:autoComplete id="addOns" value="#{productForm.addOns}" completeMethod="#{productForm.searchProductsForAddonsInProductEdit}"
                                         var="product" itemLabel="#{productForm.addOnLabel(product)}" itemValue="#{product}"
                                         converter="#{productConverter}" multiple="true" scrollHeight="250">
                             <p:column style="width:100%">

@@ -1,16 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
-import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
-import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
+import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PoolGroupType;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.*;
 
 import javax.inject.Inject;
 import javax.ws.rs.GET;
@@ -65,9 +62,9 @@ public class LimsQueryResource {
         return result;
     }
 
-    // TODO round 2: map<string,ConcentrationAndVolume> fetchConcentrationAndVolumeForTubeBarcodes(1:list<string> tubeBarcodes)
+    // TODO round 3: map<string,ConcentrationAndVolume> fetchConcentrationAndVolumeForTubeBarcodes(1:list<string> tubeBarcodes)
 
-    // TODO round 2: bool areLibrariesAllTheSameType(1:list<string> tubeBarcodes) throws (1:NotFoundException details)
+    // TODO round 3: bool areLibrariesAllTheSameType(1:list<string> tubeBarcodes) throws (1:NotFoundException details)
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -78,7 +75,12 @@ public class LimsQueryResource {
         return doesSquidRecognizeAllTubes; // || doesSequelRecognizeAllTubes;
     }
 
-    // TODO round 2: list<string> fetchMaterialTypesForTubeBarcodes(1:list<string> tubeBarcodes)
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/fetchMaterialTypesForTubeBarcodes")
+    public List<String> fetchMaterialTypesForTubeBarcodes(@QueryParam("q") List<String> tubeBarcodes) {
+        return thriftService.fetchMaterialTypesForTubeBarcodes(tubeBarcodes);
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -108,9 +110,14 @@ public class LimsQueryResource {
         return responseFactory.makeFlowcellDesignation(flowcellDesignation);
     }
 
-    // TODO round 2: bool checkReceptaclesInTask(1:list<string> tubeBarcodes, 2:string taskName) throws(1:NotFoundException details)
+    // TODO round 3: bool checkReceptaclesInTask(1:list<string> tubeBarcodes, 2:string taskName) throws(1:NotFoundException details)
 
-    // TODO round 2: list<string> findImmediatePlateParents(1:string plateBarcode)
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/findImmediatePlateParents")
+    public List<String> findImmediatePlateParents(@QueryParam("plateBarcode") String plateBarcode) {
+        return thriftService.findImmediatePlateParents(plateBarcode);
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -137,13 +144,18 @@ public class LimsQueryResource {
         return libraryDataTypeList;
     }
 
-    // TODO round 2: list<string> fetchUnfulfilledDesignations()
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/fetchUnfulfilledDesignations")
+    public List<String> fetchUnfulfilledDesignations() {
+        return thriftService.fetchUnfulfilledDesignations();
+    }
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/findRelatedDesignationsForAnyTube")
     public List<String> findRelatedDesignationsForAnyTube(@QueryParam("q") List<String> tubeBarcodes) {
-        // TODO: thrift proxy implementation
+        // TODO round 2: thrift proxy implementation
         return null;
 
     }
@@ -187,9 +199,9 @@ public class LimsQueryResource {
         return map != null ? map : mercuryMap;
     }
 
-    // TODO round 2: TZamboniRun fetchSingleLane(1:string runName, 2:i16 laneNumber) throws (1:TZIMSException details)
+    // TODO round 3: TZamboniRun fetchSingleLane(1:string runName, 2:i16 laneNumber) throws (1:TZIMSException details)
 
-    // TODO round 2: TZamboniRun fetchRun(1:string runName) throws (1:TZIMSException details)
+    // TODO round 3: TZamboniRun fetchRun(1:string runName) throws (1:TZIMSException details)
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -205,19 +217,43 @@ public class LimsQueryResource {
         return thriftService.fetchQuantForTube(tubeBarcode, quantType);
     }
 
-    // TODO round 2: list<WellAndSourceTube> fetchSourceTubesForPlate(1:string plateBarcode)
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/fetchSourceTubesForPlate")
+    public List<WellAndSourceTubeType> fetchSourceTubesForPlate(@QueryParam("plateBarcode") String plateBarcode) {
+        List<WellAndSourceTubeType> wellAndSourceTubeTypes = new ArrayList<WellAndSourceTubeType>();
+        List<WellAndSourceTube> wellAndSourceTubes = thriftService.fetchSourceTubesForPlate(plateBarcode);
+        for (WellAndSourceTube wellAndSourceTube : wellAndSourceTubes) {
+            wellAndSourceTubeTypes.add(responseFactory.makeWellAndSourceTube(wellAndSourceTube));
+        }
+        return wellAndSourceTubeTypes;
+    }
 
-    // TODO ???: PlateInfo fetchPlateInfo(1:string plateBarcode)
+    // TODO round 3?: PlateInfo fetchPlateInfo(1:string plateBarcode)
 
-    // TODO round 2: list<PlateTransfer> fetchTransfersForPlate(1:string plateBarcode, 2:i16 depth)
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("/fetchTransfersForPlate")
+    public List<PlateTransferType> fetchTransfersForPlate(@QueryParam("plateBarcode") String plateBarcode, @QueryParam("depth") short depth) {
+        List<PlateTransferType> plateTransferTypes = new ArrayList<PlateTransferType>();
+        List<PlateTransfer> plateTransfers = thriftService.fetchTransfersForPlate(plateBarcode, depth);
+        for (PlateTransfer plateTransfer : plateTransfers) {
+            plateTransferTypes.add(responseFactory.makePlateTransfer(plateTransfer));
+        }
+        return plateTransferTypes;
+    }
 
-    // TODO round 2: list<PlateTransfer> fetchTransfersForRack(1:string rackBarcode, 2:list<WellAndSourceTube> positionMap, 3:i16 depth)
+    // TODO round ?: list<PlateTransfer> fetchTransfersForRack(1:string rackBarcode, 2:list<WellAndSourceTube> positionMap, 3:i16 depth)
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchPoolGroups")
     public List<PoolGroupType> fetchPoolGroups(@QueryParam("q") List<String> tubeBarcodes) {
-        // TODO: thrift proxy implementation
-        return null;
+        List<PoolGroupType> poolGroupTypes = new ArrayList<PoolGroupType>();
+        List<PoolGroup> poolGroups = thriftService.fetchPoolGroups(tubeBarcodes);
+        for (PoolGroup poolGroup : poolGroups) {
+            poolGroupTypes.add(responseFactory.makePoolGroup(poolGroup));
+        }
+        return poolGroupTypes;
     }
 }

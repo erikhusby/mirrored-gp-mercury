@@ -83,7 +83,7 @@ public class BucketBean {
      * @param operator
      * @param labEventLocation
      */
-    public void add(@Nonnull String productOrder, @Nonnull List<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
+    public void add(@Nonnull String productOrder, @Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
                     @Nonnull String operator, @Nonnull String labEventLocation) {
 
         List<BucketEntry> listOfNewEntries = new LinkedList<BucketEntry>();

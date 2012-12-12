@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <version>1.13-SNAPSHOT</version>
+    <version>1.14-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -667,6 +667,36 @@
                 </testResources>
 	        </build>
         </profile>
+        <profile>
+            <id>SCOTT</id>
+            <properties>
+                <!--  Oracle Dev database -->
+                <database>oracle</database>
+                <database.delimiterType>row</database.delimiterType>
+
+                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
+                <database.url>jdbc:oracle:thin:@192.168.195.13:1521:gpinfprd</database.url>
+                <mercury.password>guest</mercury.password>
+                <athena.password>guest</athena.password>
+            </properties>
+            <build>
+                <testResources>
+                    <testResource>
+                        <directory>src/test/resources</directory>
+                    </testResource>
+                    <testResource>
+                        <directory>src/test/resources-build</directory>
+                        <filtering>true</filtering>
+                    </testResource>
+                    <testResource>
+                        <directory>src/main/webapp/WEB-INF/classes</directory>
+                        <includes>
+                            <include>mercury-config.yaml</include>
+                        </includes>
+                    </testResource>
+                </testResources>
+	        </build>
+        </profile>
 
         <profile>
             <id>BUILD</id>
@@ -1266,6 +1296,19 @@
             <artifactId>meanbean</artifactId>
             <version>2.0.3</version>
             <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.hornetq</groupId>
+            <artifactId>hornetq-core-client</artifactId>
+            <version>2.2.7.Final</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.hornetq</groupId>
+            <artifactId>hornetq-jms-client</artifactId>
+            <version>2.2.7.Final</version>
+            <scope>compile</scope>
         </dependency>
     </dependencies>
 

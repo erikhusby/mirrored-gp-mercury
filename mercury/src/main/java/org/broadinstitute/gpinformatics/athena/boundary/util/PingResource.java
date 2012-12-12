@@ -52,7 +52,7 @@ public class PingResource {
             results.add(pdo.getTitle() +  "\n");
         }
 
-        List<Product> pList = pDao.findProducts();
+        List<Product> pList = pDao.findProductsForProductList();
         for (Product p : pList) {
             results.add(p.getProductName() +  "\n");
         }

@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 
+import java.text.MessageFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -71,17 +72,9 @@ public class QuoteImportItem {
         return ledgerItems.get(0).getBillingMessage();
     }
 
-    public void setupBilledInfo(String billedMessage) {
-        Date currentDate = new Date();
-
+    public void setBillingMessages(String billedMessage) {
         for (BillingLedger ledgerItem : ledgerItems) {
             ledgerItem.setBillingMessage(billedMessage);
-        }
-    }
-
-    public void setupBillError(String errorMessage) {
-        for (BillingLedger ledgerItem : ledgerItems) {
-            ledgerItem.setBillingMessage(errorMessage);
         }
     }
 
@@ -94,7 +87,6 @@ public class QuoteImportItem {
     }
 
     public String getNumSamples() {
-        String plural = (ledgerItems.size() == 1) ? "" : "s";
-        return ledgerItems.size() + " Sample" + plural;
+        return MessageFormat.format("{0} Sample{0, choice, 0#s|1#|1<s}", ledgerItems.size());
     }
 }

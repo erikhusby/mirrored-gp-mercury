@@ -308,6 +308,7 @@ public class BettaLimsMessageFactory {
         plateTransferEvent.setDisambiguator(1L);
         plateTransferEvent.setOperator("hrafal");
         plateTransferEvent.setStation("ZAN");
+        plateTransferEvent.setProgram("Bravo");
     }
 
     private PlateType buildRack(String rackBarcode) {

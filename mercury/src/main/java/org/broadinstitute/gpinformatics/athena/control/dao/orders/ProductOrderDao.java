@@ -34,6 +34,40 @@ public class ProductOrderDao extends GenericDao {
         Samples
     }
 
+
+    private class ProductOrderDaoCallback implements GenericDaoCallback<ProductOrder> {
+
+        private Set<FetchSpec> fetchSpecs;
+
+        ProductOrderDaoCallback(FetchSpec... fs) {
+
+           fetchSpecs = new HashSet<FetchSpec>(Arrays.asList(fs));
+        }
+
+
+        @Override
+        public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> productOrder) {
+            if (fetchSpecs.contains(FetchSpec.Samples)) {
+                // one to many so set distinct
+                criteriaQuery.distinct(true);
+                productOrder.fetch(ProductOrder_.samples, JoinType.LEFT);
+            }
+
+            if (fetchSpecs.contains(FetchSpec.Product) || fetchSpecs.contains(FetchSpec.ProductFamily)) {
+                productOrder.fetch(ProductOrder_.product);
+            }
+
+            if (fetchSpecs.contains(FetchSpec.ProductFamily)) {
+                Join<ProductOrder,Product> productOrderProductJoin = productOrder.join(ProductOrder_.product);
+                productOrderProductJoin.fetch(Product_.productFamily);
+            }
+
+            if (fetchSpecs.contains(FetchSpec.ResearchProject)) {
+                productOrder.fetch(ProductOrder_.researchProject);
+            }
+        }
+    }
+
     /**
      * Find the order using the business key (the jira ticket number).
      *
@@ -68,32 +102,7 @@ public class ProductOrderDao extends GenericDao {
      */
     public List<ProductOrder> findListByBusinessKeyList(List<String> businessKeyList, FetchSpec... fs) {
 
-        final Set<FetchSpec> fetchSpecs = new HashSet<FetchSpec>(Arrays.asList(fs));
-
-        return findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, businessKeyList, new GenericDaoCallback<ProductOrder>() {
-            @Override
-            public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> productOrder) {
-
-                if (fetchSpecs.contains(FetchSpec.Samples)) {
-                    // one to many so set distinct
-                    criteriaQuery.distinct(true);
-                    productOrder.fetch(ProductOrder_.samples, JoinType.LEFT);
-                }
-
-                if (fetchSpecs.contains(FetchSpec.Product) || fetchSpecs.contains(FetchSpec.ProductFamily)) {
-                    productOrder.fetch(ProductOrder_.product);
-                }
-
-                if (fetchSpecs.contains(FetchSpec.ProductFamily)) {
-                    Join<ProductOrder,Product> productOrderProductJoin = productOrder.join(ProductOrder_.product);
-                    productOrderProductJoin.fetch(Product_.productFamily);
-                }
-
-                if (fetchSpecs.contains(FetchSpec.ResearchProject)) {
-                    productOrder.fetch(ProductOrder_.researchProject);
-                }
-            }
-        });
+        return findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, businessKeyList, new ProductOrderDaoCallback(fs));
     }
 
 
@@ -155,6 +164,11 @@ public class ProductOrderDao extends GenericDao {
      */
     public List<ProductOrder> findAll() {
         return findAll(ProductOrder.class);
+    }
+
+
+    public List<ProductOrder> findAll(FetchSpec... fetchSpecs) {
+        return findAll(ProductOrder.class, new ProductOrderDaoCallback(fetchSpecs));
     }
 
 

@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedger
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderForm;
+import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderListForm;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
@@ -59,8 +59,9 @@ public class BillingSessionForm extends AbstractJsfBean {
 
         boolean errorsInBilling = false;
 
-        String sessionKey =  billingSessionBean.getBillingSession().getBusinessKey();
-        for (QuoteImportItem item : billingSessionBean.getBillingSession().getUnBilledQuoteImportItems()) {
+        BillingSession session = billingSessionBean.getBillingSession();
+        String sessionKey =  session.getBusinessKey();
+        for (QuoteImportItem item : session.getUnBilledQuoteImportItems()) {
 
             Quote quote = new Quote();
             quote.setAlphanumericId(item.getQuoteId());
@@ -78,11 +79,11 @@ public class BillingSessionForm extends AbstractJsfBean {
                     quote, quotePriceItem, item.getWorkCompleteDate(), item.getQuantity(), pageUrl, "billingSession",
                     sessionKey);
 
-                item.setupBilledInfo(BillingSession.SUCCESS);
+                item.setBillingMessages(BillingSession.SUCCESS);
                 addInfoMessage("Sent to quote server " + message);
             } catch (Exception ex) {
                 // Any exceptions in sending to the quote server will just be reported and will continue on to the next one
-                item.setupBillError(ex.getMessage());
+                item.setBillingMessages(ex.getMessage());
                 addErrorMessage(ex.getMessage());
                 errorsInBilling = true;
             }
@@ -93,22 +94,19 @@ public class BillingSessionForm extends AbstractJsfBean {
             return endSession();
         }
 
-        sessionDao.persist(billingSessionBean.getBillingSession());
+        sessionDao.persist(session);
         return null;
     }
 
     public String endSession() {
-        // Remove all the sessions from the non-billed items
-        BillingSession.RemoveStatus removeStatus = billingSessionBean.getBillingSession().cancelSession();
+        // Remove all the sessions from the non-billed items.
+        boolean allFailed = billingSessionBean.getBillingSession().cancelSession();
 
-        if (removeStatus == BillingSession.RemoveStatus.AllRemoved) {
+        if (allFailed) {
             // If all removed then remove the session, totally.
             sessionDao.remove(billingSessionBean.getBillingSession());
         } else {
-            // Anything that has been billed will be attached to this session and those are now ALL billed
-            billingSessionBean.getBillingSession().setBilledDate(new Date());
-
-            // If some or allare billed, then just persist the updates
+            // If some or all are billed, then just persist the updates.
             sessionDao.persist(billingSessionBean.getBillingSession());
         }
 
@@ -119,7 +117,7 @@ public class BillingSessionForm extends AbstractJsfBean {
     
     public String downloadTracker() {
         List<String> productOrderBusinessKeys = billingSessionBean.getBillingSession().getProductOrderBusinessKeys();
-        return ProductOrderForm.getTrackerForOrders(productOrderBusinessKeys, bspUserList, billingLedgerDao, productOrderDao);
+        return ProductOrderListForm.getTrackerForOrders(productOrderBusinessKeys, bspUserList, billingLedgerDao, productOrderDao);
     }
 
     public String downloadQuoteItems() throws IOException {

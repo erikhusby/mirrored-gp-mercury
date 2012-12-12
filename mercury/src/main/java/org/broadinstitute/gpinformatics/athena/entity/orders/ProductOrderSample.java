@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.hibernate.annotations.Index;
@@ -28,7 +27,7 @@ import java.util.regex.Pattern;
 public class ProductOrderSample implements Serializable {
 
     /** Count shown when no billing has occurred. */
-    public static final double NO_BILL_COUNT = 0.0d;
+    public static final double NO_BILL_COUNT = 0;
 
     @Id
     @SequenceGenerator(name = "SEQ_ORDER_SAMPLE", schema = "athena", sequenceName = "SEQ_ORDER_SAMPLE")
@@ -54,6 +53,9 @@ public class ProductOrderSample implements Serializable {
 
     @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private Set<BillingLedger> ledgerItems = new HashSet<BillingLedger>();
+
+    @Column(name="SAMPLE_POSITION", updatable = false, insertable = false, nullable=false)
+    private Integer samplePosition;
 
     @Transient
     private BSPSampleDTO bspDTO = BSPSampleDTO.DUMMY;
@@ -109,6 +111,14 @@ public class ProductOrderSample implements Serializable {
         return isInBspFormat() && !hasBspDTOBeenInitialized;
     }
 
+    public Integer getSamplePosition() {
+        return samplePosition;
+    }
+
+    public void setSamplePosition(Integer samplePosition) {
+        this.samplePosition = samplePosition;
+    }
+
     /**
      * @return true if sample is a loaded BSP sample but BSP didn't have any data for it.
      */
@@ -119,7 +129,7 @@ public class ProductOrderSample implements Serializable {
     }
 
     public BSPSampleDTO getBspDTO() {
-        if ( ! hasBspDTOBeenInitialized) {
+        if (!hasBspDTOBeenInitialized) {
             if (isInBspFormat()) {
                 productOrder.loadBspData();
             } else {
@@ -169,15 +179,13 @@ public class ProductOrderSample implements Serializable {
         }
 
         ProductOrderSample that = (ProductOrderSample) o;
-        return new EqualsBuilder().append(sampleName, that.sampleName).append(billingStatus, that.billingStatus)
-                .append(sampleComment, that.sampleComment)
-                .append(productOrder, that.productOrder).append(bspDTO, that.bspDTO).build();
+        return new EqualsBuilder().append(sampleName, that.getSampleName()).append(samplePosition, that.getSamplePosition())
+                .append(productOrder, that.getProductOrder()).build();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(sampleName).append(billingStatus)
-                .append(sampleComment).append(productOrder).append(bspDTO).build();
+        return new HashCodeBuilder().append(sampleName).append(samplePosition).append(productOrder).build();
     }
 
     public Set<BillingLedger> getBillableLedgerItems() {
@@ -201,7 +209,7 @@ public class ProductOrderSample implements Serializable {
         if (getLedgerItems() != null) {
             for (BillingLedger billingLedger : getLedgerItems() ) {
                 // If there is a message that is not success, add the message to the end
-                if ((billingLedger.getBillingMessage() != null) && !BillingSession.SUCCESS.equals(billingLedger.getBillingMessage())) {
+                if ((billingLedger.getBillingMessage() != null) && billingLedger.isBilled()) {
                     builder.append(billingLedger.getBillingMessage()).append("\n");
                 }
             }
@@ -247,11 +255,11 @@ public class ProductOrderSample implements Serializable {
                 sampleStatus.put(item.getPriceItem(), new LedgerQuantities());
             }
 
-            if ((item.getBillingSession() != null) && (item.getBillingSession().getBilledDate() != null) ||
-                ((item.getBillingMessage() != null) && item.getBillingMessage().equals(BillingSession.SUCCESS))) {
+            if (item.isBilled()) {
                 sampleStatus.get(item.getPriceItem()).addToBilled(item.getQuantity());
             } else {
-                // The item is not part of a completed billed session or successfully billed item from an active session
+                // The item is not part of a completed billed session or successfully billed item
+                // from an active session.
                 sampleStatus.get(item.getPriceItem()).addToUploaded(item.getQuantity());
             }
         }

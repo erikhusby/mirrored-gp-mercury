@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
+import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConfig;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.datawh.EtlConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deckmsgs.DeckMessagesConfig;
@@ -10,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.pmbridge.PMBridgeConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
+import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftConfig;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
 import org.yaml.snakeyaml.Yaml;
@@ -49,6 +51,8 @@ public class MercuryConfiguration {
             GAPConfig.class,
             DeckMessagesConfig.class,
             EtlConfig.class,
+            BettalimsConfig.class,
+            TableauConfig.class,
             WsMessageStore.class
     };
 
@@ -123,7 +127,11 @@ public class MercuryConfiguration {
     private MercuryConnections mercuryConnections = new MercuryConnections();
 
     private String getConfigKey(Class<? extends AbstractConfig> configClass) {
-        return configClass.getAnnotation(ConfigKey.class).value();
+        ConfigKey annotation = configClass.getAnnotation(ConfigKey.class);
+        if(annotation == null) {
+            throw new RuntimeException("Failed to get config key for " + configClass.getName());
+        }
+        return annotation.value();
     }
 
     private Class<? extends AbstractConfig> getConfigClass(String configKey) {

@@ -34,7 +34,7 @@ public class MolecularIndex implements Serializable {
         BASE_INDEXES.put('T', 3);
         BASE_INDEXES.put('U', 3); // Not a typo: T and U use the same index
     }
-    private static final Integer EMPTY_INDEX = new Integer(4);
+    private static final int EMPTY_INDEX = 4;
 
     private Long molecularIndexId;
 

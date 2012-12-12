@@ -91,6 +91,8 @@ public class LabEventFactory {
      * Pattern that groups non-zero trailing digits
      */
     private static final Pattern LEADING_ZERO_PATTERN            = Pattern.compile ( "^0+(?!$)" );
+    /** For test messages, the message router uses the bettaLIMSMessage.mode attribute */
+    public static final String MODE_MERCURY = "Mercury";
 
     @Inject
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDao;
@@ -98,7 +100,8 @@ public class LabEventFactory {
     @Inject
     private StaticPlateDAO staticPlateDAO;
 
-    private transient BSPUserList bspUserList;
+    @Inject
+    private BSPUserList bspUserList;
 
     @Inject
     private TubeFormationDao tubeFormationDao;

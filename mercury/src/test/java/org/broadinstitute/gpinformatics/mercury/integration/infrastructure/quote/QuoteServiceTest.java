@@ -24,7 +24,7 @@ public class QuoteServiceTest {
     @Test(groups = {EXTERNAL_INTEGRATION}, enabled = false)
     public void test_register_work() throws Exception {
         QuoteService service = QuoteServiceProducer.qaInstance();
-        Quote fetchedQuote = service.getQuoteFromQuoteServer(quote.getAlphanumericId());
+        Quote fetchedQuote = service.getQuoteByAlphaId(quote.getAlphanumericId());
         System.out.println(fetchedQuote.getQuoteFunding().getFundsRemaining());
         String workBatchId =
             service.registerNewWork(quote, priceItem, new Date(), 0.0001,
