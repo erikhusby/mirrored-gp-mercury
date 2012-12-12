@@ -167,9 +167,6 @@ deckMsgs:
     DEV:
 
         messageStoreDirRoot: /seq/lims/mercury/dev
-#        jmsHost:
-#        jmsPort:
-#        jmsQueue:
 
     QA:
 
@@ -190,7 +187,7 @@ bettaLimsServer:
 
     TEST:
         wsHost: node115
-        wsPort: 9998
+        wsPort: 9997
         jmsHost: node115
         jmsPort: 61616
         jmsQueue: broad.queue.bettalims.test
