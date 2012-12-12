@@ -23,7 +23,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.util.EnumSet;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -45,13 +45,6 @@ public class ReagentDesignForm extends AbstractJsfBean {
     Conversation conversation;
 
     private ReagentDesign reagentDesign;
-
-    private static final EnumSet<ReagentDesign.ReagentType> reagentTypes = EnumSet
-            .allOf(ReagentDesign.ReagentType.class);
-
-    public ReagentDesign.ReagentType[] getReagentTypes() {
-        return ReagentDesign.ReagentType.values();
-    }
 
     @ConversationScoped
     public static class ReagentDesignTableData extends TableData<ReagentDesign> {
@@ -123,5 +116,9 @@ public class ReagentDesignForm extends AbstractJsfBean {
 
     public boolean isCreating() {
         return (reagentDesign == null || reagentDesign.getDesignName() == null);
+    }
+
+    public  List<ReagentDesign.ReagentType> getReagentTypes() {
+        return Arrays.asList(ReagentDesign.ReagentType.values());
     }
 }
