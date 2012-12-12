@@ -24,21 +24,26 @@
 
 <h:body>
     <ui:composition template="/layout.xhtml">
-        <ui:define name="title">Create Batch</ui:define>
+        <ui:define name="title">Create Batch - Search</ui:define>
+        <ui:define name="metadata">
+            <f:event type="preRenderView" listener="#{batchFromPlasticBean.initForm}"/>
+        </ui:define>
+
         <ui:define name="body">
             <h:form id="batchForm">
                 <div class="control-group">
                     <div class="controls">
-                        <p:inputText id="barcode" value="#{batchFromPlasticBean.barcode}" size="50"/>
+                        <p:inputTextarea id="barcode" value="#{batchFromPlasticBean.barcode}" size="50"/>
                         <p:watermark value="Enter the list of barcodes from which to create a batch" for="barcode"/>
                         <p:commandButton value="Search" action="#{batchFromPlasticBean.barcodeSearch}"
-                                           update=":batchForm:searchResultPanel" styleClass="ui-priority-primary"/>
+                                         update=":batchForm:searchResultPanel" styleClass="ui-priority-primary"/>
                     </div>
                 </div>
                 <p:panel id="searchResultPanel">
-                    <p:dataTable id="batchFormTable" var="foundVessel" value="#{batchFromPlasticBean.foundVessels}" rowKey="#{foundVessel.label}"
-                            selection="#{batchFromPlasticBean.selectedVessels}" selectionMode="multiple">
-                        <p:ajax event="rowToggle" listener="#{batchFromPlasticBean.onRowToggle}"/>
+                    <p:dataTable id="batchFormTable" var="foundVessel" value="#{batchFromPlasticBean.foundVessels}"
+                                 rowKey="#{foundVessel.label}"
+                                 selection="#{batchFromPlasticBean.selectedVessels}" selectionMode="multiple">
+                        <!--<p:ajax event="rowToggle" listener="#{batchFromPlasticBean.onRowToggle}"/>-->
                         <f:facet name="header">
                             Barcode Search Results
                         </f:facet>
@@ -46,7 +51,7 @@
                             <f:facet name="header">
                                 <h:outputText value="Sample Details"/>
                             </f:facet>
-                            <p:rowToggler rendered="#{batchFromPlasticBean.vesselSampleSizeMap.get(foundVessel) > 0}"/>
+                            <!--<p:rowToggler rendered="#{batchFromPlasticBean.vesselSampleSizeMap.get(foundVessel) > 0}"/>-->
                         </p:column>
                         <p:column>
                             <f:facet name="header">
@@ -106,23 +111,22 @@
                             </f:facet>
                             <h:outputText value="#{foundVessel.createdOn}"/>
                         </p:column>
-                        <p:rowExpansion>
-                            <p:outputPanel id="outputContainerPanel">
-                                <p:panel id="platePanel">
-                                    <c:container barcode="#{batchFromPlasticBean.selectedVessel.label}"/>
-                                </p:panel>
-                                <p:panel id="samplePanel">
-                                    <s:sampleList barcode="#{batchFromPlasticBean.selectedVessel.label}"/>
-                                </p:panel>
-                            </p:outputPanel>
-                        </p:rowExpansion>
+                        <!--
+                                                <p:rowExpansion>
+                                                    <p:outputPanel id="outputContainerPanel">
+                                                        <p:panel id="platePanel">
+                                                            <c:container barcode="#{batchFromPlasticBean.selectedVessel.label}"/>
+                                                        </p:panel>
+                                                        <p:panel id="samplePanel">
+                                                            <s:sampleList barcode="#{batchFromPlasticBean.selectedVessel.label}"/>
+                                                        </p:panel>
+                                                    </p:outputPanel>
+                                                </p:rowExpansion>
+                        -->
                         <f:facet name="footer">
 
-                            <p:inputText id="jiraKey" value="#{batchFromPlasticBean.jiraKey}"/>
-                            <p:watermark value="Enter a Jira Key for an existing Batch" for="jiraKey"/>
-
-                            <p:commandButton value="Create Batch" action="#{batchFromPlasticBean.createBatch}"
-                                               styleClass="ui-priority-primary"/>
+                            <p:commandButton value="Enter Jira Informaiton...."
+                                             action="/search/create_batch_jira.xhtml?faces-redirect=true"/>
 
                         </f:facet>
                     </p:dataTable>

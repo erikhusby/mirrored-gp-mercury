@@ -4,11 +4,15 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.primefaces.event.ToggleEvent;
+import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
+import javax.enterprise.context.ConversationScoped;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.inject.Inject;
+import javax.inject.Named;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -16,22 +20,24 @@ import java.util.Map;
 
 @ManagedBean
 @ViewScoped
-public class BatchFromPlasticBean {
+public class BatchFromPlasticBean extends AbstractJsfBean {
+
     @Inject
-    private LabVesselDao    labVesselDao;
+    private LabVesselDao labVesselDao;
+
     @Inject
-    private BSPUserList     bspUserList;
-    private String          barcode;
-    private LabVessel       selectedVessel;
+    private BSPUserList bspUserList;
+
+    @Inject
+    private UserBean userBean;
+
+    private String barcode;
+    //    private LabVessel       selectedVessel;
     private List<LabVessel> foundVessels;
     private Map<LabVessel, Integer> vesselSampleSizeMap = new HashMap<LabVessel, Integer>();
-    private String      jiraKey;
 
-    public LabVessel[] getSelectedVessels() {
-        return selectedVessels;
-    }
-
-    private LabVessel[] selectedVessels;
+    @Inject
+    private CreateBatchConversationData conversationData;
 
     public Map<LabVessel, Integer> getVesselSampleSizeMap() {
         return vesselSampleSizeMap;
@@ -53,6 +59,7 @@ public class BatchFromPlasticBean {
         this.barcode = barcode;
     }
 
+/*
     public LabVessel getSelectedVessel() {
         return selectedVessel;
     }
@@ -60,6 +67,7 @@ public class BatchFromPlasticBean {
     public void setSelectedVessel(LabVessel selectedVessel) {
         this.selectedVessel = selectedVessel;
     }
+*/
 
     public void barcodeSearch(String barcode) {
         this.barcode = barcode;
@@ -74,14 +82,10 @@ public class BatchFromPlasticBean {
         }
     }
 
-    public void createBatch() {
-
-    }
-
-    public void onRowToggle(ToggleEvent event) {
-        selectedVessel = labVesselDao.findByIdentifier(((LabVessel) event.getData()).getLabel());
-    }
-
+    //    public void onRowToggle(ToggleEvent event) {
+//        selectedVessel = labVesselDao.findByIdentifier(((LabVessel) event.getData()).getLabel());
+//    }
+//
     public String getUserNameById(Long id) {
         BspUser user = bspUserList.getById(id);
         String username = "";
@@ -92,14 +96,35 @@ public class BatchFromPlasticBean {
     }
 
     public String getJiraKey() {
-        return jiraKey;
+        return conversationData.getJiraKey();
     }
 
     public void setJiraKey(String jiraKey) {
-        this.jiraKey = jiraKey;
+        conversationData.setJiraKey(jiraKey);
     }
 
     public void setSelectedVessels(LabVessel[] selectedVessels) {
-        this.selectedVessels = selectedVessels;
+        conversationData.setSelectedVessels(selectedVessels);
+    }
+
+    public LabVessel[] getSelectedVessels() {
+        return conversationData.getSelectedVessels();
+    }
+
+    public CreateBatchConversationData getConversationData() {
+        return conversationData;
+    }
+
+    public void setConversationData(CreateBatchConversationData conversationData) {
+        this.conversationData = conversationData;
+    }
+
+    public void initForm() {
+        if (userBean.ensureUserValid()) {
+            conversationData.beginConversation();
+        } else {
+            addErrorMessage(MessageFormat.format(UserBean.LOGIN_WARNING,
+                    "create a research project"));
+        }
     }
 }

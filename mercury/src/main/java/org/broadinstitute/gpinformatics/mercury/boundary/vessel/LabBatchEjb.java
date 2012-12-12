@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
@@ -24,10 +23,8 @@ import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Encapsulates the business logic related to {@link LabBatch}s.  This includes the creation
@@ -42,13 +39,13 @@ public class LabBatchEjb {
 
     private final static Log logger = LogFactory.getLog(LabBatchEjb.class);
 
-    LabBatchDAO labBatchDao;
+    private LabBatchDAO labBatchDao;
 
-    AthenaClientService athenaClientService;
+    private AthenaClientService athenaClientService;
 
-    JiraService jiraService;
+    private JiraService jiraService;
 
-    JiraTicketDao jiraTicketDao;
+    private JiraTicketDao jiraTicketDao;
 
     /**
      * Alternate create lab batch method to allow a user to define the vessels for use by their barcode

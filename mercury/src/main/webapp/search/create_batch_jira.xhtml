@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Created by IntelliJ IDEA.
+  User: scottmat
+  Date: 12/11/12
+  Time: 1:22 PM
+-->
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+
+<h:head>
+    <title>Simple JSF Facelets page</title>
+</h:head>
+
+<h:body>
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="title">Create Batch - Jira Data</ui:define>
+        <ui:define name="body">
+
+            <h:form id="batchJiraForm">
+                <div class="control-group" id="ctrlGroup">
+                    <div class="controls" id="selectCtrls">
+
+                        <h:outputText value="Please select how Jira is associate with this Batch: "
+                                      id="jiraInputQuestion"/>
+                        <p:selectOneRadio id="jiraInputType" value="#{batchJiraInput.jiraInputType}">
+                            <f:selectItem itemLabel="Existing Jira Ticket" itemValue="existingTicket"/>
+                            <f:selectItem itemLabel="New Jira Ticket" itemValue="newTicket"/>
+                        </p:selectOneRadio>
+
+                        <!--<h:panelGrid columns="2">-->
+                            <!--<p:radioButton id="existingTicket" for="jiraInputType" itemIndex="0"/>-->
+                            <!--<h:outputLabel for="existingTicket" value="Existing Jira Ticket"/>-->
+
+                            <!--<p:radioButton id="newTicket" for="jiraInputType" itemIndex="1"/>-->
+                            <!--<h:outputLabel for="newTicket" value="New Jira Ticket"/>-->
+                        <!--</h:panelGrid>-->
+                    </div>
+                </div>
+                <p:outputPanel id="jiraInputPanel" autoUpdate="true">
+                    <div class="control-group">
+                        <p:outputLabel for="jiraTicketId" value="Ticket Id"/>
+                        <!--
+                                                <p:outputLabel for="jiraTicketId" value="Ticket Id"
+                                                               rendered="#{batchJiraInput.useExistingTicket}"/>
+                        -->
+
+                        <div class="controls">
+                            <p:inputText id="jiraTicketId" required="true" value="#{batchJiraInput.jiraTicketId}"/>
+                            <!--
+                                                        <p:inputText rendered="#{batchJiraInput.useExistingTicket}" id="jiraTicketId"
+                                                                     required="true" value="#{batchJiraInput.jiraTicketId}"/>
+                            -->
+                            <p:watermark value="Enter Existing Jira Ticket Id" for="jiraTicketId"/>
+                            <p:message for="jiraTicketId"/>
+                        </div>
+                    </div>
+
+
+                    <div class="control-group">
+                        <!--<p:outputLabel for="batchName" rendered="#{batchJiraInput.makeNewJiraTicket}" value="Name"/>-->
+                        <p:outputLabel for="batchName" value="Name"/>
+
+                        <div class="controls">
+                            <p:inputText id="batchName" required="true" value="#{batchJiraInput.batchName}"/>
+                            <!--
+                                                        <p:inputText id="batchName" rendered="#{batchJiraInput.makeNewJiraTicket}" required="true"
+                                                                     value="#{batchJiraInput.batchName}"/>
+                            -->
+                            <p:watermark for="batchName" value="Enter a Name for the new Batch"/>
+                            <p:message for="batchName"/>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <!--
+                                                <p:outputLabel for="batchDescription" rendered="#{batchJiraInput.makeNewJiraTicket}"
+                                                               value="Batch Description"/>
+                        -->
+                        <p:outputLabel for="batchDescription" value="Batch Description"/>
+
+                        <div class="controls">
+                            <p:inputText id="batchDescription" required="true"
+                                         value="#{batchJiraInput.batchDescription}"/>
+                            <!--
+                                                        <p:inputText id="batchDescription" rendered="#{batchJiraInput.makeNewJiraTicket}"
+                                                                     required="true"
+                                                                     value="#{batchJiraInput.batchDescription}"/>
+                            -->
+                            <p:watermark for="batchDescription" value="Enter a Name for the new Batch"/>
+                            <p:message for="batchDescription"/>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <!--
+                                                <p:outputLabel for="batchDueDate" rendered="#{batchJiraInput.makeNewJiraTicket}"
+                                                               value="Due Date"/>
+                        -->
+                        <p:outputLabel for="batchDueDate" value="Due Date"/>
+
+                        <div class="controls">
+                            <!--
+                                                        <p:calendar id="batchDueDate" rendered="#{batchJiraInput.makeNewJiraTicket}" required="true"
+                                                                    value="#{batchJiraInput.batchDueDate}"/>
+                            -->
+                            <p:calendar id="batchDueDate" required="true" value="#{batchJiraInput.batchDueDate}"/>
+                            <p:watermark for="batchDueDate" value="Enter a Due Date for the new Batch"/>
+                            <p:message for="batchDueDate"/>
+                        </div>
+                    </div>
+
+                </p:outputPanel>
+
+                <div class="control-group">
+                    <div class="controls">
+                        <p:commandButton value="Create Batch" action="#{batchJiraInput.createBatch}"/>
+                    </div>
+                </div>
+            </h:form>
+
+        </ui:define>
+    </ui:composition>
+
+</h:body>
+
+</html>
