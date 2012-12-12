@@ -6,8 +6,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionListResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -94,7 +94,8 @@ public interface JiraService extends Serializable {
      * reference, the field map is indexed by the field name.
      * @throws IOException
      */
-    public Map<String, CustomFieldDefinition> getCustomFields ( ) throws IOException;
+    public Map<String, CustomFieldDefinition> getCustomFields (String... fieldNames) throws IOException;
+
 
     /**
      * addLink provides a user with the ability to, tell the Jira system to create a new link to another jira ticket
@@ -136,11 +137,13 @@ public interface JiraService extends Serializable {
      */
     void addWatcher(String key, String watcherId) throws IOException;
 
-    IssueTransitionResponse findAvailableTransitions ( String jiraIssueKey );
+    IssueTransitionListResponse findAvailableTransitions ( String jiraIssueKey );
 
-    void postNewTransition( String jiraIssueKey, IssueTransitionRequest jiraIssueTransition ) throws IOException;
+    Transition findAvailableTransitionByName(String jiraIssueKey, String transitionName);
 
-    void postNewTransition ( String jiraIssueKey, String transitionId ) throws IOException;
+    void postNewTransition(String jiraIssueKey, Transition transition) throws IOException;
+
+    void postNewTransition(String jiraIssueKey, Transition transition, Collection<CustomField> customFields, String comment) throws IOException;
 
     /**
      * Check and see if the user is an exact match for a JIRA user, and has an active account.

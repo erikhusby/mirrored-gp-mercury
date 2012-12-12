@@ -7,6 +7,10 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -15,10 +19,7 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 @Stateful
 @RequestScoped
@@ -32,6 +33,9 @@ public class ProductOrderManager {
 
     @Inject
     private QuoteService quoteService;
+
+    @Inject
+    private JiraService jiraService;
 
 
     private void validateUniqueProjectTitle(ProductOrder productOrder) throws DuplicateTitleException {
@@ -108,8 +112,33 @@ public class ProductOrderManager {
     }
 
 
-    private void updateJiraIssue(ProductOrder productOrder) {
-        throw new UnsupportedOperationException("updateJiraTicket not yet implemented");
+    private void updateJiraIssue(ProductOrder productOrder) throws IOException {
+        Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(), "Developer Edit");
+        final String PRODUCT = "Product";
+        final String PRODUCT_FAMILY = "ProductFamily";
+        final String QUOTE_ID = "Quote ID";
+
+        Map<String, CustomFieldDefinition> customFieldDefinitions =
+                jiraService.getCustomFields(PRODUCT, PRODUCT_FAMILY, QUOTE_ID);
+
+        List<CustomField> customFields = new ArrayList<CustomField>();
+
+        customFields.add(new CustomField(
+                customFieldDefinitions.get(PRODUCT),
+                productOrder.getProduct().getProductName(),
+                CustomField.SingleFieldType.TEXT));
+
+        customFields.add(new CustomField(
+                customFieldDefinitions.get(PRODUCT_FAMILY),
+                productOrder.getProduct().getProductFamily().getName(),
+                CustomField.SingleFieldType.TEXT));
+
+        customFields.add(new CustomField(
+                customFieldDefinitions.get(QUOTE_ID),
+                productOrder.getQuoteId(),
+                CustomField.SingleFieldType.TEXT));
+
+        jiraService.postNewTransition(productOrder.getJiraTicketKey(), transition, customFields, "Stuff was updated!");
     }
 
 
@@ -122,7 +151,11 @@ public class ProductOrderManager {
     public void update(final ProductOrder productOrder, final List<String> selectedAddOnPartNumbers) {
         // update JIRA ticket with new quote
         // GPLIM-488
-        // updateJiraIssue(productOrder);
+        try {
+            updateJiraIssue(productOrder);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         // In the PDO edit UI, if the user goes through and edits the quote and then hits 'Submit', this works
         // without the merge.  But if the user tabs out of the quote field before hitting 'Submit', this merge
