@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -14,7 +15,7 @@ import org.hibernate.envers.Audited;
  */
 @Entity
 @Audited
-@Table(schema = "mercury",uniqueConstraints = {@UniqueConstraint(columnNames={"reagentDesign", "reagentType"})})
+@Table(schema = "mercury", uniqueConstraints = {@UniqueConstraint(columnNames = {"reagentDesign", "reagentType"})})
 public class ReagentDesign {
 
     @Id
@@ -29,28 +30,29 @@ public class ReagentDesign {
     @OneToMany(mappedBy = "reagentDesign")
     private Set<DesignedReagent> designedReagents = new HashSet<DesignedReagent>();
 
-    /** For JPA */
-    ReagentDesign() {
+    /**
+     * For JPA
+     */
+    public ReagentDesign() {
     }
 
     public enum REAGENT_TYPE {
-        BAIT,CAT
+        BAIT, CAT
     }
 
     @Enumerated(EnumType.STRING)
     private REAGENT_TYPE reagentType;
 
     /**
-     *
-     * @param designName     Example: cancer_2000gene_shift170_undercovered
+     * @param designName  Example: cancer_2000gene_shift170_undercovered
      * @param reagentType
      */
     public ReagentDesign(String designName, REAGENT_TYPE reagentType) {
         if (designName == null) {
-             throw new NullPointerException("designName cannot be null."); 
+            throw new NullPointerException("designName cannot be null.");
         }
         if (reagentType == null) {
-             throw new NullPointerException("reagentType cannot be null.");
+            throw new NullPointerException("reagentType cannot be null.");
         }
         this.reagentDesign = designName;
         this.reagentType = reagentType;
@@ -58,6 +60,10 @@ public class ReagentDesign {
 
     public REAGENT_TYPE getReagentType() {
         return reagentType;
+    }
+
+    public void setReagentType(REAGENT_TYPE reagentType) {
+        this.reagentType = reagentType;
     }
 
     public String getDesignName() {
@@ -73,8 +79,7 @@ public class ReagentDesign {
     }
 
     /**
-     *
-     * @param targetSetName      Example: Cancer_2K
+     * @param targetSetName Example: Cancer_2K
      */
     public void setTargetSetName(String targetSetName) {
         this.targetSetName = targetSetName;
@@ -94,10 +99,5 @@ public class ReagentDesign {
 
     public void addDesignedReagent(DesignedReagent designedReagent) {
         this.designedReagents.add(designedReagent);
-//        designedReagent.setReagentDesign(this);
-    }
-
-    public Long getReagentDesignId() {
-        return reagentDesignId;
     }
 }

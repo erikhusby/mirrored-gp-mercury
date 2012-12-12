@@ -30,7 +30,7 @@ public class ReagentDesignDao extends GenericDao {
         return super.findAll(ReagentDesign.class);
     }
 
-    public ReagentDesign findById(Long id){
-        return findSingle(ReagentDesign.class, ReagentDesign_.reagentDesignId,id);
+    public ReagentDesign findByBusinessKey(String value) {
+        return findSingle(ReagentDesign.class, ReagentDesign_.reagentDesign, value);
     }
 }

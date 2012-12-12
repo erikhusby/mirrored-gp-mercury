@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<!DOCTYPE html
-        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
@@ -28,9 +25,11 @@
                 <p:column headerText="Design Name" sortBy="#{reagentDesign.designName}"
                           sortingComparator="caseInsensitiveText">
                     <h:link outcome="edit" value="#{reagentDesign.designName}">
-                        <f:param name="reagentDesign" value="#{reagentDesign.reagentDesignId}"/>
+                        <f:param name="reagentDesign" value="#{reagentDesign.designName}"/>
                     </h:link>
                 </p:column>
+                <p:column headerText="Reagent Type" sortBy="#{reagentDesign.reagentType}"
+                          sortingComparator="caseInsensitiveText">#{reagentDesign.reagentType}</p:column>
                 <p:column headerText="Target Set" sortBy="#{reagentDesign.targetSetName}"
                           sortingComparator="caseInsensitiveText">#{reagentDesign.targetSetName}</p:column>
                 <p:column headerText="Manufacturer" sortBy="#{reagentDesign.manufacturersName}"
