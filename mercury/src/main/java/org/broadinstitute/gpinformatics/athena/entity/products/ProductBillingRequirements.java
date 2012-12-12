@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 /**
  * This class represents the requirements for a product or addon to be billable.
  *
- * A product or addon is billable if the per-sample result 'attribute' is 'operator' 'value'.
+ * A product or add-on is billable if the per-sample result 'attribute' is 'operator' 'value'.
  *
  * @author pshapiro
  */
@@ -11,8 +11,8 @@ public class ProductBillingRequirements {
 
     public enum Operator {
         GREATER_THAN(">"),
-        LESS_THAN("<"),
         GREATER_THAN_OR_EQUAL_TO(">="),
+        LESS_THAN("<"),
         LESS_THAN_OR_EQUAL_TO("<=");
 
         public final String label;
