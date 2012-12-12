@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.links;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
 
@@ -23,7 +24,10 @@ public class TableauLink {
     private final Logger logger = Logger.getLogger(this.getClass());
     private static final String TRUST_PATH = "/trusted/";
     private static final String PASS_REPORT_NAME = "PASS"; //the lookup key for urls in yaml config file
+
     private static long TRUSTED_ID_LIFETIME = 10 * 1000L;  //trusted ticket is good for at least ten seconds
+    public static final String BAD_TABLEAU_TICKET = "-1";
+
     private String trustId = null;
     private long trustedIdTimestamp = 0L;
 
@@ -82,30 +86,19 @@ public class TableauLink {
             out.write(data.toString());
             out.flush();
 
-            // Reads response
-            StringBuffer rsp = new StringBuffer();
+            // Reads response which will be the ticket id
             in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            String line;
-            while ((line = in.readLine()) != null) {
-                rsp.append(line);
-            }
-            String ticket = rsp.toString();
-            if (ticket.equals("-1")) {
-                logger.warn("Tableau server " + serverUrl() + " returns ticketId -1 for user " + user);
+            String ticket = new String(IOUtils.toCharArray(in));
+            if (ticket.equals(BAD_TABLEAU_TICKET)) {
+                logger.warn("Tableau server " + serverUrl() + " returns ticketId " + ticket + " for user " + user);
             }
             return ticket;
 
         } catch (Exception e) {
             logger.error("Exception while getting trusted ticket from tableau server", e);
         } finally {
-            try {
-                if (in != null) in.close();
-            } catch (IOException e) {
-            }
-            try {
-                if (out != null) out.close();
-            } catch (IOException e) {
-            }
+            IOUtils.closeQuietly(in);
+            IOUtils.closeQuietly(out);
         }
         return null;
     }
