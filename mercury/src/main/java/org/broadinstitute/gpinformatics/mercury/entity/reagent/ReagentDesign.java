@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -36,18 +35,18 @@ public class ReagentDesign {
     public ReagentDesign() {
     }
 
-    public enum REAGENT_TYPE {
+    public static enum ReagentType {
         BAIT, CAT
     }
 
     @Enumerated(EnumType.STRING)
-    private REAGENT_TYPE reagentType;
+    private ReagentType reagentType;
 
     /**
      * @param designName  Example: cancer_2000gene_shift170_undercovered
      * @param reagentType
      */
-    public ReagentDesign(String designName, REAGENT_TYPE reagentType) {
+    public ReagentDesign(String designName, ReagentType reagentType) {
         if (designName == null) {
             throw new NullPointerException("designName cannot be null.");
         }
@@ -58,11 +57,11 @@ public class ReagentDesign {
         this.reagentType = reagentType;
     }
 
-    public REAGENT_TYPE getReagentType() {
+    public ReagentType getReagentType() {
         return reagentType;
     }
 
-    public void setReagentType(REAGENT_TYPE reagentType) {
+    public void setReagentType(ReagentType reagentType) {
         this.reagentType = reagentType;
     }
 

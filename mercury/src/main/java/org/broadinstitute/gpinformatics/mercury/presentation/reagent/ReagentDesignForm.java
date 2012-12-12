@@ -46,11 +46,11 @@ public class ReagentDesignForm extends AbstractJsfBean {
 
     private ReagentDesign reagentDesign;
 
-    private static final EnumSet<ReagentDesign.REAGENT_TYPE> reagentTypes = EnumSet
-            .allOf(ReagentDesign.REAGENT_TYPE.class);
+    private static final EnumSet<ReagentDesign.ReagentType> reagentTypes = EnumSet
+            .allOf(ReagentDesign.ReagentType.class);
 
-    public EnumSet<ReagentDesign.REAGENT_TYPE> getReagentTypes() {
-        return reagentTypes;
+    public ReagentDesign.ReagentType[] getReagentTypes() {
+        return ReagentDesign.ReagentType.values();
     }
 
     @ConversationScoped

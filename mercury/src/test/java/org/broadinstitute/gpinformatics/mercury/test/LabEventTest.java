@@ -42,6 +42,7 @@ import java.io.IOException;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign.*;
 
 /**
  * Test messaging
@@ -1438,7 +1439,7 @@ public class LabEventTest {
 
             // BaitSetup
             ReagentDesign baitDesign=
-                    new ReagentDesign("cancer_2000gene_shift170_undercovered", ReagentDesign.REAGENT_TYPE.BAIT);
+                    new ReagentDesign("cancer_2000gene_shift170_undercovered", ReagentType.BAIT);
 
             TwoDBarcodedTube baitTube=buildBaitTube(hybridSelectionJaxbBuilder.getBaitTubeBarcode(), baitDesign);
             LabEvent baitSetupEntity=labEventFactory.buildVesselToSectionDbFree(
@@ -1529,7 +1530,7 @@ public class LabEventTest {
         TwoDBarcodedTube baitTube=new TwoDBarcodedTube(tubeBarcode);
         if(reagent == null) {
             reagent=new ReagentDesign("cancer_2000gene_shift170_undercovered",
-                    ReagentDesign.REAGENT_TYPE.BAIT);
+                    ReagentType.BAIT);
             reagent.setTargetSetName("Cancer_2K");
             reagent.setManufacturersName("1234abc");
         }
