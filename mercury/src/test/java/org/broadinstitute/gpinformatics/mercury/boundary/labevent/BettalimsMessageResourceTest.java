@@ -4,6 +4,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
 import com.sun.jersey.api.client.Client;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -81,6 +82,9 @@ public class BettalimsMessageResourceTest extends Arquillian {
     private ProductFamilyDao productFamilyDao;
 
     @Inject
+    private ProductOrderDao productOrderDao;
+
+    @Inject
     private ResearchProjectDao researchProjectDao;
 
     @Inject
@@ -137,6 +141,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);
 
+        String jiraTicketKey="PD0-MsgTest" + testPrefix;
         List<ProductOrderSample> productOrderSamples=new ArrayList<ProductOrderSample>();
         Map<String,TwoDBarcodedTube> mapBarcodeToTube=new LinkedHashMap<String,TwoDBarcodedTube>();
         for (int rackPosition=1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {
@@ -144,12 +149,13 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
             String bspStock="SM-" + testPrefix + rackPosition;
             TwoDBarcodedTube bspAliquot=new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(null, bspStock));
+            bspAliquot.addSample(new MercurySample(jiraTicketKey, bspStock));
             mapBarcodeToTube.put(barcode, bspAliquot);
             productOrderSamples.add(new ProductOrderSample(bspStock));
 
             twoDBarcodedTubeDAO.persist(bspAliquot);
         }
+
         Product exomeExpressProduct=productDao.findByPartNumber("P-EX-0002");
         if(exomeExpressProduct == null) {
             exomeExpressProduct=new Product("Exome Express", productFamilyDao.find("Exome"), "Exome Express",
@@ -165,10 +171,10 @@ public class BettalimsMessageResourceTest extends Arquillian {
         }
         ProductOrder productOrder=new ProductOrder(101L, "Messaging Test " + testPrefix, productOrderSamples, "GSP-123",
                 exomeExpressProduct, researchProject);
-        String jiraTicketKey="PD0-MsgTest";
         productOrder.setJiraTicketKey(jiraTicketKey);
-        twoDBarcodedTubeDAO.flush();
-        twoDBarcodedTubeDAO.clear();
+        productOrderDao.persist(productOrder);
+        productOrderDao.flush();
+        productOrderDao.clear();
         utx.commit();
         utx.begin();
 
