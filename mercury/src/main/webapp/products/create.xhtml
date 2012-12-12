@@ -146,6 +146,29 @@
                 </div>
 
                 <div class="control-group">
+                    <p:outputLabel for="useAutomatedBilling" value="Use Automated Billing" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:watermark for="useAutomatedBilling" value="Should this product use automated billing ?"/>
+                        <p:selectBooleanCheckbox id="useAutomatedBilling" value="#{productForm.product.useAutomatedBilling}" />
+                        <p:message for="useAutomatedBilling"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <!--<p:outputLabel for="BillingRequirements" value="Billing Requirements" styleClass="control-label"/>-->
+                    <div class="controls">
+                        <p:inputText id="requirementsAttribute" value="#{productForm.product.requirements.attribute}"/>
+                        <p:watermark for="requirementsAttribute" value="Attribute to compare"/>
+                        <p:selectOneMenu value="#{productForm.product.requirements.operator}"
+                                         converter="#{requirementsOperatorConverter}">
+                            <f:selectItems value="#{requirementsOperatorConverter.allItems}" var="op" itemLabel="#{op.label}" />
+                        </p:selectOneMenu>
+                        <p:inputText id="requirementsValue" value="#{productForm.product.requirements.value}"/>
+                        <p:watermark for="requirementsValue" value="Value to compare"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
                     <p:outputLabel for="defaultPriceItem" value="Primary Price Item *" styleClass="control-label"/>
                     <div class="controls">
                         <p:autoComplete id="defaultPriceItem" value="#{productForm.defaultPriceItem}"
