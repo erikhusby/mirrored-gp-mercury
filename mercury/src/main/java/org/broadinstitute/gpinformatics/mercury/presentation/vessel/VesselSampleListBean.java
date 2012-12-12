@@ -6,9 +6,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
@@ -52,19 +53,11 @@ public class VesselSampleListBean {
     }
 
     public void updateVessel(String barcode) {
-        if (barcode != null) {
+        if (barcode != null && !barcode.equals("")) {
             this.vessel = labVesselDao.findByIdentifier(barcode);
             this.barcode = barcode;
-            if (OrmUtil.proxySafeIsInstance(vessel, TubeFormation.class)) {
-                vesselContainer = ((TubeFormation) vessel).getContainerRole();
-            } else if (OrmUtil.proxySafeIsInstance(vessel, StaticPlate.class)) {
-                vesselContainer = ((StaticPlate) vessel).getContainerRole();
-            } else if (OrmUtil.proxySafeIsInstance(vessel, StripTube.class)) {
-                vesselContainer = ((StripTube) vessel).getContainerRole();
-            } else if (OrmUtil.proxySafeIsInstance(vessel, IlluminaFlowcell.class)) {
-                vesselContainer = ((IlluminaFlowcell) vessel).getContainerRole();
-            } else {
-                vesselContainer = null;
+            if (vessel != null) {
+                vesselContainer = vessel.getContainerRole();
             }
         }
     }

@@ -64,6 +64,18 @@
         </p:column>
         <p:column>
             <f:facet name="header">
+                <h:outputText value="PDOs"/>
+            </f:facet>
+            <h:outputText value="#{vesselListBean.getPdoKeys(foundVessel).size()}"/>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="Indexes"/>
+            </f:facet>
+            <h:outputText value="#{vesselListBean.getIndexes(foundVessel).size()}"/>
+        </p:column>
+        <p:column>
+            <f:facet name="header">
                 <h:outputText value="Lab Batches"/>
             </f:facet>
             <ui:repeat value="#{foundVessel.labBatchesList}" var="batch">
