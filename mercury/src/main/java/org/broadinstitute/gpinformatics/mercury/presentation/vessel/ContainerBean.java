@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.RequestScoped;
@@ -54,8 +54,8 @@ public class ContainerBean {
         return rows;
     }
 
-    //we need to keep a running count of rows since the datagrid won't do this for us
-    //http://code.google.com/p/primefaces/issues/detail?id=4124
+    // This method keeps a running count of rows since the primefaces DataGrid does not do this.
+    // Details on this issue can be found here: http://code.google.com/p/primefaces/issues/detail?id=4124
     public String getRowNumIndex() {
         index++;
         int columnNum = getColumnNumFromIndex();
@@ -84,19 +84,7 @@ public class ContainerBean {
             String columnName = vessel.getVesselGeometry().getColumnNames()[getColumnNumFromIndex()];
             String rowName = vessel.getVesselGeometry().getRowNames()[getRowNumFromIndex()];
             VesselPosition position = VesselPosition.getByName(rowName + columnName);
-            VesselContainer<?> vesselContainer = null;
-            if (OrmUtil.proxySafeIsInstance(vessel, TubeFormation.class)) {
-                vesselContainer = ((TubeFormation) vessel).getContainerRole();
-            }
-            if (OrmUtil.proxySafeIsInstance(vessel, StaticPlate.class)) {
-                vesselContainer = ((StaticPlate) vessel).getContainerRole();
-            }
-            if (OrmUtil.proxySafeIsInstance(vessel, StripTube.class)) {
-                vesselContainer = ((StripTube) vessel).getContainerRole();
-            }
-            if (OrmUtil.proxySafeIsInstance(vessel, IlluminaFlowcell.class)) {
-                vesselContainer = ((IlluminaFlowcell) vessel).getContainerRole();
-            }
+            VesselContainer<?> vesselContainer = vessel.getContainerRole();
             if (vesselContainer != null) {
                 sampleInstances = vesselContainer.getSampleInstancesAtPositionList(position);
             } else {
@@ -114,6 +102,7 @@ public class ContainerBean {
                 geometry.add("");
             }
         }
+
         return geometry;
     }
 }
