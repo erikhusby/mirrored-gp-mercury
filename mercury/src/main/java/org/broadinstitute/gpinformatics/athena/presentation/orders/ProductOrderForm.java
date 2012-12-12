@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.DuplicateTitleException;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.NoSamplesException;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderManager;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -283,6 +284,8 @@ public class ProductOrderForm extends AbstractJsfBean {
 
         ProductOrder productOrder = productOrderDetail.getProductOrder();
 
+        final String BASE_ERROR_TEXT = "Error saving Product Order: ";
+
         try {
 
             productOrderManager.save(productOrder, convertTextToList(getEditIdsCache()), getSelectedAddOnPartNumbers());
@@ -295,11 +298,15 @@ public class ProductOrderForm extends AbstractJsfBean {
 
         } catch (QuoteNotFoundException e) {
             logger.error(e);
-            addErrorMessage("Error saving Product Order: Quote not found: " + productOrder.getQuoteId());
+            addErrorMessage(BASE_ERROR_TEXT + productOrder.getQuoteId());
             return null;
         } catch (DuplicateTitleException e) {
             logger.error(e);
-            addErrorMessage("Error saving Product Order: Product Order title already in use, must be unique: " + productOrder.getTitle());
+            addErrorMessage(BASE_ERROR_TEXT + "Product Order title already in use, must be unique: " + productOrder.getTitle());
+            return null;
+        } catch (NoSamplesException e) {
+            logger.error(e);
+            addErrorMessage(BASE_ERROR_TEXT + "You must add at least one sample before placing an order");
             return null;
         } catch (Exception e) {
             logger.error(e);
