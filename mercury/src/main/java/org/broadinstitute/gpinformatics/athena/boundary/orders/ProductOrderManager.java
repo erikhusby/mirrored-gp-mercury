@@ -10,11 +10,14 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -36,6 +39,9 @@ public class ProductOrderManager {
 
     @Inject
     private JiraService jiraService;
+
+    @Inject
+    private UserBean userBean;
 
 
     private void validateUniqueProjectTitle(ProductOrder productOrder) throws DuplicateTitleException {
@@ -112,33 +118,95 @@ public class ProductOrderManager {
     }
 
 
+    /**
+     * Has to be static or Weld crashes with ArrayIndexOutOfBoundsExceptions
+     */
+    private static class PDOUpdateField {
+
+        private String displayName;
+
+        private String newValue;
+
+        public String getUpdateMessage(ProductOrder productOrder, Map<String, CustomFieldDefinition> customFieldDefinitionMap, IssueFieldsResponse issueFieldsResponse) {
+
+            if ( ! customFieldDefinitionMap.containsKey(displayName)) {
+                throw new RuntimeException("Custom field '" + displayName + "' not found in issue " + productOrder.getJiraTicketKey());
+            }
+            CustomFieldDefinition customFieldDefinition = customFieldDefinitionMap.get(displayName);
+
+            String previousValue = issueFieldsResponse.getFields().get(customFieldDefinition.getJiraCustomFieldId());
+
+            if (previousValue == null) {
+                throw new RuntimeException("Custom field value for '" + displayName + "' not found in issue '" + productOrder.getJiraTicketKey() + "'");
+            }
+
+            if ( ! previousValue.equals(newValue)) {
+                return displayName + " was updated from '" + previousValue + "' to '" + newValue + "'\n";
+            }
+            return "";
+        }
+
+        public PDOUpdateField(@Nonnull String displayName, @Nonnull String newValue) {
+            this.displayName = displayName;
+            this.newValue = newValue;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public String getNewValue() {
+            return newValue;
+        }
+    }
+
+
     private void updateJiraIssue(ProductOrder productOrder) throws IOException {
         Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(), "Developer Edit");
-        final String PRODUCT = "Product";
-        final String PRODUCT_FAMILY = "Product Family";
-        final String QUOTE_ID = "Quote ID";
+
+        PDOUpdateField [] pdoUpdateFields = new PDOUpdateField[] {
+            new PDOUpdateField("Product", productOrder.getProduct().getProductName()),
+            new PDOUpdateField("Product Family", productOrder.getProduct().getProductFamily().getName()),
+            new PDOUpdateField("Quote ID", productOrder.getQuoteId())
+        };
+
+        List<String> customFieldNames = new ArrayList<String>();
+
+        for (PDOUpdateField pdoUpdateField : pdoUpdateFields) {
+            customFieldNames.add(pdoUpdateField.getDisplayName());
+        }
 
         Map<String, CustomFieldDefinition> customFieldDefinitions =
-                jiraService.getCustomFields(PRODUCT, PRODUCT_FAMILY, QUOTE_ID);
+                jiraService.getCustomFields(customFieldNames.toArray(new String[]{}));
+
+        IssueFieldsResponse issueFieldsResponse =
+                jiraService.getIssueFields(productOrder.getJiraTicketKey(), customFieldDefinitions.values());
 
         List<CustomField> customFields = new ArrayList<CustomField>();
 
-        customFields.add(new CustomField(
-                customFieldDefinitions.get(PRODUCT),
-                productOrder.getProduct().getProductName(),
-                CustomField.SingleFieldType.TEXT));
+        String comment = "";
 
-        customFields.add(new CustomField(
-                customFieldDefinitions.get(PRODUCT_FAMILY),
-                productOrder.getProduct().getProductFamily().getName(),
-                CustomField.SingleFieldType.TEXT));
+        for (PDOUpdateField pdoUpdateField : pdoUpdateFields) {
+            customFields.add(new CustomField(
+                customFieldDefinitions.get(pdoUpdateField.getDisplayName()),
+                pdoUpdateField.getNewValue(),
+                CustomField.SingleFieldType.TEXT
+            ));
 
-        customFields.add(new CustomField(
-                customFieldDefinitions.get(QUOTE_ID),
-                productOrder.getQuoteId(),
-                CustomField.SingleFieldType.TEXT));
+            comment = comment + pdoUpdateField.getUpdateMessage(productOrder, customFieldDefinitions, issueFieldsResponse);
+        }
 
-        jiraService.postNewTransition(productOrder.getJiraTicketKey(), transition, customFields, "Stuff was updated!");
+        // if we detect from the comment that nothing has changed, make a note of that (maybe the user changed
+        // something in the PDO that is not reflected in JIRA like add-ons)
+        if ("".equals(comment)) {
+            comment = "No JIRA Product Order fields were updated";
+        }
+        else {
+            comment = "\n" + productOrder.getJiraTicketKey() + " was edited by " + userBean.getBspUser().getUsername() + "\n\n";
+        }
+
+
+        jiraService.postNewTransition(productOrder.getJiraTicketKey(), transition, customFields, comment);
     }
 
 
@@ -148,7 +216,10 @@ public class ProductOrderManager {
      * @param productOrder
      * @param selectedAddOnPartNumbers
      */
-    public void update(final ProductOrder productOrder, final List<String> selectedAddOnPartNumbers) {
+    public void update(final ProductOrder productOrder, final List<String> selectedAddOnPartNumbers) throws QuoteNotFoundException {
+
+        validateQuote(productOrder);
+
         // update JIRA ticket with new quote
         // GPLIM-488
         try {
@@ -159,7 +230,7 @@ public class ProductOrderManager {
 
         // In the PDO edit UI, if the user goes through and edits the quote and then hits 'Submit', this works
         // without the merge.  But if the user tabs out of the quote field before hitting 'Submit', this merge
-        // is required because our method receives a detached ProductOrder instance.
+        // is required because this method receives a detached ProductOrder instance.
         ProductOrder updatedProductOrder = productOrderDao.getEntityManager().merge(productOrder);
 
         // update add-ons, first remove old

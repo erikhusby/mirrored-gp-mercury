@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.jira;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
@@ -90,6 +91,8 @@ public interface JiraService extends Serializable {
 
     /**
      * getCustomFields returns all possible custom fields in the system for a given JIRA project
+     * @param fieldNames A vararg list of the fields to return by name, this filters the full list of custom fields.
+     *                   If no fieldNames are specified the full list is returned.
      * @return A {@link Map} of the custom fields found for the project/issuetype combination.  To make it easy to
      * reference, the field map is indexed by the field name.
      * @throws IOException
@@ -144,6 +147,8 @@ public interface JiraService extends Serializable {
     void postNewTransition(String jiraIssueKey, Transition transition) throws IOException;
 
     void postNewTransition(String jiraIssueKey, Transition transition, Collection<CustomField> customFields, String comment) throws IOException;
+
+    IssueFieldsResponse getIssueFields(String jiraIssueKey, Collection<CustomFieldDefinition> customFieldDefinitions) throws IOException;
 
     /**
      * Check and see if the user is an exact match for a JIRA user, and has an active account.

@@ -64,7 +64,10 @@ public class ProductOrderEditBean extends AbstractJsfBean implements Serializabl
         } catch (QuoteNotFoundException e) {
             String errorMessage = MessageFormat.format("The Quote ID ''{0}'' is invalid.", productOrder.getQuoteId());
             logger.error(errorMessage);
-            addErrorMessage("quote", errorMessage, errorMessage + ": " + e);
+            // mlc do not have an error message for this, this method is invoked on blur from the quote entry field,
+            // so it's not really a big deal
+            // field and it results in a disturbing red message at the bottom of the screen on the next request cycle
+            // addErrorMessage("quote", errorMessage, errorMessage + ": " + e);
             return "";
         }
     }
@@ -99,18 +102,25 @@ public class ProductOrderEditBean extends AbstractJsfBean implements Serializabl
     }
 
 
+    private String handleError(String message, Exception e) {
+        logger.error(message, e);
+        addErrorMessage(message);
+        return null;
+    }
+
+
+
     public String update() {
-
         try {
-
             productOrderManager.update(productOrder, selectedAddOnPartNumbers);
+
+        } catch (QuoteNotFoundException e) {
+
+            return handleError("Error attempting to update Product Order: Invalid Quote ID '" + productOrder.getQuoteId() + "'", e);
 
         } catch (Exception e) {
 
-            String message = "Error attempting to update ProductOrder: " + e.getMessage();
-            logger.error(message, e);
-            addErrorMessage(message);
-            return null;
+            return handleError("Error attempting to update Product Order: " + e.getMessage(), e);
         }
 
         addInfoMessage(

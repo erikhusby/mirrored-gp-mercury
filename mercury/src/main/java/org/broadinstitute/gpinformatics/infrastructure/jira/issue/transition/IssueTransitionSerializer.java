@@ -32,20 +32,22 @@ public class IssueTransitionSerializer extends JsonSerializer<IssueTransitionReq
     }
 
     private void writeComment(JsonGenerator jsonGenerator, String comment) throws IOException {
-        jsonGenerator.writeFieldName("update");
+        if (comment != null) {
+            jsonGenerator.writeFieldName("update");
 
-        jsonGenerator.writeStartObject();
-        jsonGenerator.writeArrayFieldStart("comment");
+            jsonGenerator.writeStartObject();
+            jsonGenerator.writeArrayFieldStart("comment");
 
-        jsonGenerator.writeStartObject();
-        jsonGenerator.writeFieldName("add");
+            jsonGenerator.writeStartObject();
+            jsonGenerator.writeFieldName("add");
 
-        jsonGenerator.writeStartObject();
-        jsonGenerator.writeStringField("body", comment);
+            jsonGenerator.writeStartObject();
+            jsonGenerator.writeStringField("body", comment);
 
-        jsonGenerator.writeEndObject();
-        jsonGenerator.writeEndObject();
-        jsonGenerator.writeEndArray();
-        jsonGenerator.writeEndObject();
+            jsonGenerator.writeEndObject();
+            jsonGenerator.writeEndObject();
+            jsonGenerator.writeEndArray();
+            jsonGenerator.writeEndObject();
+        }
     }
 }

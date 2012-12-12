@@ -4,6 +4,7 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
@@ -300,5 +301,22 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         } catch (IOException e) {
             return false;
         }
+    }
+
+    @Override
+    public IssueFieldsResponse getIssueFields(String jiraIssueKey, Collection<CustomFieldDefinition> customFieldDefinitions) throws IOException {
+        List<String> fieldIds = new ArrayList<String>();
+
+        for (CustomFieldDefinition customFieldDefinition : customFieldDefinitions) {
+            fieldIds.add(customFieldDefinition.getJiraCustomFieldId());
+        }
+
+        String fieldArgs = StringUtils.join(fieldIds, ",");
+        String url = getBaseUrl() + "/issue/" + jiraIssueKey + "?fields=" + fieldArgs;
+        log.info(url);
+        WebResource webResource =
+                getJerseyClient().resource(getBaseUrl() + "/issue/" + jiraIssueKey).queryParam("fields", fieldArgs);
+
+        return get(webResource, new GenericType<IssueFieldsResponse>(){});
     }
 }
