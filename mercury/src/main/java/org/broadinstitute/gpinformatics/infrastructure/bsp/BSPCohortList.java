@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
 import javax.inject.Inject;
@@ -27,15 +28,26 @@ public class BSPCohortList extends AbstractCache {
 
     private Set<Cohort> cohortList;
 
-    @Inject
     private BSPCohortSearchService cohortSearchService;
+
+    @Inject
+    private Deployment deployment;
+
+    public BSPCohortList() {
+    }
+
+    @Inject
+    public BSPCohortList(BSPCohortSearchService cohortSearchService) {
+        this.cohortSearchService = cohortSearchService;
+        doRefresh();
+    }
 
     /**
      * @return list of bsp users, sorted by cohortId.
      */
     public Set<Cohort> getCohorts() {
-        if (cohortList == null) {
-            refreshCache();
+        if ((cohortList == null) ||  shouldReFresh(deployment)) {
+                doRefresh();
         }
 
         return cohortList;
@@ -132,6 +144,10 @@ public class BSPCohortList extends AbstractCache {
 
     @Override
     public synchronized void refreshCache() {
+            setNeedsRefresh(true);
+    }
+
+    private void doRefresh() {
         try {
             Set<Cohort> rawCohorts = cohortSearchService.getAllCohorts();
 
@@ -141,8 +157,9 @@ public class BSPCohortList extends AbstractCache {
             }
 
             cohortList = ImmutableSet.copyOf(rawCohorts);
+            setNeedsRefresh(false);
         } catch (Exception ex) {
-            logger.debug("Could not refresh the cohort list", ex);
+            logger.error("Could not refresh the cohort list", ex);
         }
     }
 }
