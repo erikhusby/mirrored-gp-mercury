@@ -1035,6 +1035,17 @@
             <version>1.0.0.Alpha1-SNAPSHOT</version>
         </dependency>
 -->
+        <dependency>
+            <groupId>net.sourceforge.stripes</groupId>
+            <artifactId>stripes</artifactId>
+            <version>1.5.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.samaxes.stripes</groupId>
+            <artifactId>stripes-injection-enricher</artifactId>
+            <version>1.0.2</version>
+        </dependency>
 
         <dependency>
             <groupId>commons-collections</groupId>
