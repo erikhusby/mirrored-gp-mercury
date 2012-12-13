@@ -66,7 +66,7 @@ public class ProductOrderEditBean extends AbstractJsfBean implements Serializabl
             logger.error(errorMessage);
             // mlc do not have an error message for this, this method is invoked on blur from the quote entry field,
             // so it's not really a big deal
-            // field and it results in a disturbing red message at the bottom of the screen on the next request cycle
+            // and it results in multiple disturbing red messages at the bottom of the screen on the next request cycle
             // addErrorMessage("quote", errorMessage, errorMessage + ": " + e);
             return "";
         }

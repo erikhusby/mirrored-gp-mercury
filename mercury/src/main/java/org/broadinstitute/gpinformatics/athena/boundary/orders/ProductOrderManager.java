@@ -184,7 +184,7 @@ public class ProductOrderManager {
 
         List<CustomField> customFields = new ArrayList<CustomField>();
 
-        String comment = "";
+        String updateComment = "";
 
         for (PDOUpdateField pdoUpdateField : pdoUpdateFields) {
             customFields.add(new CustomField(
@@ -193,18 +193,15 @@ public class ProductOrderManager {
                 CustomField.SingleFieldType.TEXT
             ));
 
-            comment = comment + pdoUpdateField.getUpdateMessage(productOrder, customFieldDefinitions, issueFieldsResponse);
+            updateComment = updateComment + pdoUpdateField.getUpdateMessage(productOrder, customFieldDefinitions, issueFieldsResponse);
         }
 
         // if we detect from the comment that nothing has changed, make a note of that (maybe the user changed
         // something in the PDO that is not reflected in JIRA like add-ons)
-        if ("".equals(comment)) {
-            comment = "No JIRA Product Order fields were updated";
-        }
-        else {
-            comment = "\n" + productOrder.getJiraTicketKey() + " was edited by " + userBean.getBspUser().getUsername() + "\n\n";
-        }
 
+        String comment = "\n" + productOrder.getJiraTicketKey() + " was edited by " + userBean.getBspUser().getUsername() + "\n\n";
+
+        comment = comment + ("".equals(updateComment) ? "No JIRA Product Order fields were updated\n\n" : updateComment);
 
         jiraService.postNewTransition(productOrder.getJiraTicketKey(), transition, customFields, comment);
     }
