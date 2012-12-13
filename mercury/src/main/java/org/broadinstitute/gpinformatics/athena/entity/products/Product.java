@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
@@ -72,6 +73,14 @@ public class Product implements Serializable, Comparable<Product> {
     private String workflowName;
 
     private boolean pdmOrderableOnly;
+
+    /**
+     * Allowable Material Types for the product.
+     */
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @JoinTable(schema = "athena", name = "PRODUCT_MATERIAL_TYPES")
+    private Set<MaterialType> allowableMaterialTypes = new HashSet<MaterialType>();
+
 
     /**
      * JPA package visible no arg constructor
@@ -181,6 +190,9 @@ public class Product implements Serializable, Comparable<Product> {
         return optionalPriceItems;
     }
 
+    public Set<MaterialType> getAllowableMaterialTypes() {
+        return allowableMaterialTypes;
+    }
 
     public void setProductName(final String productName) {
         this.productName = productName;
@@ -242,6 +254,10 @@ public class Product implements Serializable, Comparable<Product> {
 
         optionalPriceItems.add(priceItem);
 
+    }
+
+    public void addAllowableMaterialType(MaterialType materialType) {
+        allowableMaterialTypes.add(materialType);
     }
 
     public Set<Product> getAddOns() {
