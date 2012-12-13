@@ -13,9 +13,7 @@
 
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam id="productParam" name="product" value="#{productBean.product}" converter="#{productConverter}" valueChangeListener="#{productConverter.updateModel}">
-                    <f:event type="preValidate" listener="#{productBean.initEmptyProduct}"/>
-                </f:viewParam>
+                <f:viewParam id="productParam" name="product" value="#{productBean.product}" converter="#{productConverter}" />
             </f:metadata>
             <f:event type="preRenderView" listener="#{productBean.onPreRenderView}"/>
         </ui:define>
@@ -146,7 +144,7 @@
                 <div class="control-group">
                     <p:outputLabel for="defaultPriceItem" value="Primary Price Item *" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="defaultPriceItem" value="#{productBean.defaultPriceItem}"
+                        <p:autoComplete id="defaultPriceItem" value="#{productBean.primaryPriceItem}"
                                         completeMethod="#{productBean.searchSelectedPriceItems}" var="defaultPriceItem"
                                         itemLabel='#{productBean.labelFor(defaultPriceItem)}' scrollHeight="250"
                                         itemValue="#{defaultPriceItem}" converter="#{priceItemConverter}"
@@ -164,7 +162,7 @@
                 <div class="control-group">
                     <p:outputLabel for="priceItem" value="Optional Price Items" styleClass="control-label"/>
                     <div class="controls">
-                        <p:autoComplete id="priceItem" value="#{productBean.priceItems}"
+                        <p:autoComplete id="priceItem" value="#{productBean.optionalPriceItems}"
                                         completeMethod="#{productBean.searchPriceItems}" var="priceItem"
                                         itemLabel="#{productBean.labelFor(priceItem)}"
                                         itemValue="#{priceItem}" converter="#{priceItemConverter}" multiple="true"
@@ -173,7 +171,7 @@
                             <p:column style="width:100%">
                                 <div>#{priceItem.platformName} | #{priceItem.categoryName} | #{priceItem.name}</div>
                             </p:column>
-                            <p:ajax event="itemSelect" listener="#{productBean.removeDuplicates(productBean.priceItems, 'priceItem')}" update="priceItem optionalPriceItemsMessage :productParam"/>
+                            <p:ajax event="itemSelect" listener="#{productBean.removeDuplicates(productBean.optionalPriceItems, 'priceItem')}" update="priceItem optionalPriceItemsMessage :productParam"/>
                         </p:autoComplete>
                         <p:watermark for="priceItem" value="Type text to search for Price Items"/>
                         <p:message id="optionalPriceItemsMessage" for="priceItem" />
