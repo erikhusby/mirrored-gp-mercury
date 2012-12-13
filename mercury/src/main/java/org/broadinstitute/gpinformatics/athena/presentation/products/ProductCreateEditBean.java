@@ -1,12 +1,12 @@
 package org.broadinstitute.gpinformatics.athena.presentation.products;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductManager;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductSearcher;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
+import org.broadinstitute.gpinformatics.athena.control.ProductUtil;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
@@ -22,9 +22,9 @@ import java.util.*;
 /**
  * TODO: Update method documentation, especially around price item selection.
  */
-@Named
+@Named("productBean")
 @RequestScoped
-public class ProductForm extends AbstractJsfBean {
+public class ProductCreateEditBean extends AbstractJsfBean {
 
     @Inject
     private ProductFamilyDao productFamilyDao;
@@ -38,8 +38,6 @@ public class ProductForm extends AbstractJsfBean {
     @Inject
     private PriceListCache priceListCache;
 
-    @Inject
-    private Log logger;
 
     @Inject
     private ProductSearcher productSearcher;
@@ -69,7 +67,6 @@ public class ProductForm extends AbstractJsfBean {
 
     public static final String DEFAULT_WORKFLOW_NAME = "";
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
-    private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
     private Product product;
 
     /**
@@ -318,17 +315,17 @@ public class ProductForm extends AbstractJsfBean {
     }
 
     public Integer getExpectedCycleTimeDays() {
-        return convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
+        return ProductUtil.convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
     }
     public void setExpectedCycleTimeDays(final Integer expectedCycleTimeDays) {
-        product.setExpectedCycleTimeSeconds(convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
+        product.setExpectedCycleTimeSeconds(ProductUtil.convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
     }
 
     public Integer getGuaranteedCycleTimeDays() {
-        return convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
+        return ProductUtil.convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
     }
     public void setGuaranteedCycleTimeDays(final Integer guaranteedCycleTimeDays) {
-        product.setGuaranteedCycleTimeSeconds(convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
+        product.setGuaranteedCycleTimeSeconds(ProductUtil.convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
     }
 
 
@@ -357,33 +354,6 @@ public class ProductForm extends AbstractJsfBean {
 
     public void setPriceItems(List<PriceItem> priceItems) {
         this.priceItems = priceItems;
-    }
-
-
-    /**
-     * Converts cycle times from days to seconds.
-     * @return the number of seconds.
-     */
-    public static Integer convertCycleTimeDaysToSeconds(Integer cycleTimeDays) {
-        Integer cycleTimeSeconds = null;
-        if ( cycleTimeDays != null ) {
-            cycleTimeSeconds = ( cycleTimeDays == null ? 0 : cycleTimeDays.intValue() * ONE_DAY_IN_SECONDS);
-        }
-        return cycleTimeSeconds;
-    }
-
-    /**
-     * Converts cycle times from seconds to days.
-     * This method rounds down to the nearest day
-     * @param cycleTimeSeconds
-     * @return the number of days.
-     */
-    public static Integer convertCycleTimeSecondsToDays(Integer cycleTimeSeconds) {
-        Integer cycleTimeDays = null;
-        if ((cycleTimeSeconds != null) && cycleTimeSeconds >= ONE_DAY_IN_SECONDS) {
-            cycleTimeDays =  (cycleTimeSeconds - (cycleTimeSeconds % ONE_DAY_IN_SECONDS)) / ONE_DAY_IN_SECONDS;
-        }
-        return cycleTimeDays;
     }
 
 
