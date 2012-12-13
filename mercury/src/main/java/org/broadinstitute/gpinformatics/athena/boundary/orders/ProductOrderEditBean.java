@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -20,6 +21,9 @@ import java.util.List;
 
 @ManagedBean(name = "pdoEditBean")
 @ViewScoped
+/**
+ * Backing bean for {@link ProductOrder} edit
+ */
 public class ProductOrderEditBean extends AbstractJsfBean implements Serializable {
 
     private ProductOrder productOrder;
@@ -30,17 +34,23 @@ public class ProductOrderEditBean extends AbstractJsfBean implements Serializabl
     @Inject
     private ProductOrderUtil productOrderUtil;
 
-    @Inject
-    private Log logger;
+    private Log logger = LogFactory.getLog(ProductOrderEditBean.class);
 
+    /**
+     * List of selected add-on part numbers pushed in from the selectManyCheckbox
+     */
     private List<String> selectedAddOnPartNumbers = new ArrayList<String>();
 
+    /**
+     * List of all add-ons available for the currently selected Product used to render the selectManyCheckbox
+     */
     private List<Product> addOns = new ArrayList<Product>();
 
 
     public ProductOrder getProductOrder() {
         return productOrder;
     }
+
 
     public void setProductOrder(ProductOrder productOrder) {
         this.productOrder = productOrder;
@@ -58,19 +68,24 @@ public class ProductOrderEditBean extends AbstractJsfBean implements Serializabl
         }
     }
 
+
     public String getFundsRemaining() {
         try {
             return productOrderUtil.getFundsRemaining(productOrder);
         } catch (QuoteNotFoundException e) {
             String errorMessage = MessageFormat.format("The Quote ID ''{0}'' is invalid.", productOrder.getQuoteId());
             logger.error(errorMessage);
-            // mlc do not have an error message for this, this method is invoked on blur from the quote entry field,
-            // so it's not really a big deal
-            // and it results in multiple disturbing red messages at the bottom of the screen on the next request cycle
+            // mlc do not have an error message for this, this method will be invoked on blur from the quote entry field,
+            // so it's not really a big deal.
+            // It results in multiple disturbing red messages at the bottom of the screen on the next full request cycle.
+
+            // The real quote validation will be performed in the ProductOrderManager#update method
+
             // addErrorMessage("quote", errorMessage, errorMessage + ": " + e);
             return "";
         }
     }
+
 
     public List<Product> getAddOns() {
         return addOns;
@@ -109,8 +124,8 @@ public class ProductOrderEditBean extends AbstractJsfBean implements Serializabl
     }
 
 
-
     public String update() {
+
         try {
             productOrderManager.update(productOrder, selectedAddOnPartNumbers);
 

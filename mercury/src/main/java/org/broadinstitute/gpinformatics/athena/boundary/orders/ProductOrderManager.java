@@ -26,6 +26,9 @@ import java.util.*;
 
 @Stateful
 @RequestScoped
+/**
+ * Transactional manager for {@link ProductOrder}s
+ */
 public class ProductOrderManager {
 
     @Inject
@@ -59,7 +62,7 @@ public class ProductOrderManager {
     }
 
 
-    private void updateSamples(ProductOrder productOrder, List<String> sampleIds) throws NoSamplesException {
+    private void setSamples(ProductOrder productOrder, List<String> sampleIds) throws NoSamplesException {
         if (sampleIds.isEmpty()) {
             throw new NoSamplesException();
         }
@@ -81,7 +84,7 @@ public class ProductOrderManager {
     }
 
 
-    private void updateAddOnProducts(ProductOrder productOrder, List<String> addOnPartNumbers) {
+    private void setAddOnProducts(ProductOrder productOrder, List<String> addOnPartNumbers) {
         List<Product> addOns =
                 addOnPartNumbers.isEmpty() ? new ArrayList<Product>() : productDao.findByPartNumbers(addOnPartNumbers);
 
@@ -89,7 +92,7 @@ public class ProductOrderManager {
     }
 
 
-    private void updateStatus(ProductOrder productOrder) {
+    private void setStatus(ProductOrder productOrder) {
         // DRAFT orders not yet supported; force state of new PDOs to Submitted.
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
     }
@@ -107,9 +110,9 @@ public class ProductOrderManager {
 
         validateUniqueProjectTitle(productOrder);
         validateQuote(productOrder);
-        updateSamples(productOrder, productOrderSamplesIds);
-        updateAddOnProducts(productOrder, addOnPartNumbers);
-        updateStatus(productOrder);
+        setSamples(productOrder, productOrderSamplesIds);
+        setAddOnProducts(productOrder, addOnPartNumbers);
+        setStatus(productOrder);
         // create JIRA before we attempt to persist since that is more likely to fail
         createJiraIssue(productOrder);
 
@@ -119,7 +122,11 @@ public class ProductOrderManager {
 
 
     /**
-     * Has to be static or Weld crashes with ArrayIndexOutOfBoundsExceptions
+     * Utility class to help with mapping from display names of custom fields to their {@link CustomFieldDefinition}s,
+     * as well as tracking changes that have been made to the values of those fields relative to the existing state
+     * of the PDO JIRA ticket.
+     *
+     * This inner class has to be static or Weld crashes with ArrayIndexOutOfBoundsExceptions
      */
     private static class PDOUpdateField {
 
@@ -127,6 +134,16 @@ public class ProductOrderManager {
 
         private String newValue;
 
+        /**
+         * Return the update message appropriate for this field.  If there are no changes this will return the empty
+         * string, otherwise a string of the form "Product was updated from 'Old Product' to 'New Product'"
+         *
+         * @param productOrder contains the new values
+         * @param customFieldDefinitionMap contains the mapping from display names of fields to their JIRA IDs, needed
+         *                                 to dig the old values contained in the fields out of the issueFieldsResponse
+         * @param issueFieldsResponse contains the old values
+         * @return
+         */
         public String getUpdateMessage(ProductOrder productOrder, Map<String, CustomFieldDefinition> customFieldDefinitionMap, IssueFieldsResponse issueFieldsResponse) {
 
             if ( ! customFieldDefinitionMap.containsKey(displayName)) {
@@ -136,6 +153,7 @@ public class ProductOrderManager {
 
             String previousValue = issueFieldsResponse.getFields().get(customFieldDefinition.getJiraCustomFieldId());
 
+            // this assumes all target fields are not nullable, which is currently true but may not be in the future
             if (previousValue == null) {
                 throw new RuntimeException("Custom field value for '" + displayName + "' not found in issue '" + productOrder.getJiraTicketKey() + "'");
             }
@@ -161,6 +179,13 @@ public class ProductOrderManager {
     }
 
 
+    /**
+     * Update the JIRA issue, executing the 'Developer Edit' transition to effect edits of fields that are read-only
+     * on the UI.  Add a comment to the issue to indicate what was changed and by whom.
+     *
+     * @param productOrder
+     * @throws IOException
+     */
     private void updateJiraIssue(ProductOrder productOrder) throws IOException {
         Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(), "Developer Edit");
 
