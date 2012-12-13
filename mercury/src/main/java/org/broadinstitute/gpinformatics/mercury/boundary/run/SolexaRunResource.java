@@ -7,7 +7,9 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequenci
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 
+import javax.ejb.Stateful;
 import javax.ejb.Stateless;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
@@ -22,7 +24,8 @@ import java.net.URI;
  * A JAX-RS resource for Solexa sequencing runs
  */
 @Path("/solexarun")
-@Stateless // todo jmt should this be stateful?  It has stateful DAOs injected.
+@Stateful
+@RequestScoped
 public class SolexaRunResource {
 
     private static final Log LOG = LogFactory.getLog(SolexaRunResource.class);

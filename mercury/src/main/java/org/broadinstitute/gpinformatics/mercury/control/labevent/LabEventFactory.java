@@ -44,6 +44,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.io.Serializable;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -57,11 +58,12 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Creates Lab Event entities from BettaLIMS JAXB beans
+ * Creates Lab Event entities from BettaLIMS JAXB beans.  Implements Serializable because it's used by a Stateful
+ * session bean.
  */
 @SuppressWarnings({"FeatureEnvy", "OverlyCoupledClass", "serial", "CloneableClassWithoutClone",
         "ClassExtendsConcreteCollection", "OverlyComplexClass", "ClassWithTooManyMethods", "ClassWithTooManyFields"})
-public class LabEventFactory {
+public class LabEventFactory implements Serializable {
 
     /**
      * Section for all wells in a 96 well plate

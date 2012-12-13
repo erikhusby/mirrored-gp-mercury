@@ -46,6 +46,8 @@ public class ReagentDesignForm extends AbstractJsfBean {
 
     private ReagentDesign reagentDesign;
 
+    final String LIST_PAGE = "list_reagent_designs";
+
     @ConversationScoped
     public static class ReagentDesignTableData extends TableData<ReagentDesign> {
 
@@ -84,7 +86,7 @@ public class ReagentDesignForm extends AbstractJsfBean {
                 String.format("The Research Design \"%s\" has been %s.", reagentDesign.getDesignName(),
                         updatedOrCreated);
         addInfoMessage(infoMessage);
-        return redirect("list");
+        return redirect(LIST_PAGE);
     }
 
     public Conversation getConversation() {
