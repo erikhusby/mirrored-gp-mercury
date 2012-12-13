@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
+import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
@@ -14,11 +15,12 @@ import javax.jms.TextMessage;
 */
 @SuppressWarnings("UnusedDeclaration")
 @MessageDriven(name = "BettalimsMessageBean", activationConfig = {
-//        @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue")
+        @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
+        // Increase probability that messages are read in the order they were sent
+        @ActivationConfigProperty(propertyName = "maxSession", propertyValue = "1")
 //        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/broad.queue.mercury.bettalims.production"),
-//        @ActivationConfigProperty(propertyName = "destination", propertyValue = "junk"),
 //        @ActivationConfigProperty(propertyName = "connectorClassName", propertyValue ="org.hornetq.core.remoting.impl.netty.NettyConnectorFactory"),
-//        @ActivationConfigProperty(propertyName = "connectionParameters", propertyValue = "host=vseqlims;port=5445")
+//        @ActivationConfigProperty(propertyName = "connectionParameters", propertyValue = "host=gpinfx-jms;port=5445")
 })
 public class BettalimsMessageBean implements MessageListener {
 
