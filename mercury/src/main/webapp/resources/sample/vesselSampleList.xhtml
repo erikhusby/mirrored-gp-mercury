@@ -60,6 +60,11 @@
                 <h:outputText value="Also Contained In"/>
             </f:facet>
         </p:column>
+        <p:column>
+            <f:facet name="header">
+                <h:outputText value="BSP Info"/>
+            </f:facet>
+        </p:column>
         <p:subTable value="#{vesselSampleListBean.getSampleInstancesAtPosition(positionName)}"
                     var="sampleInstance">
             <p:column rendered="#{vesselSampleListBean.vesselContainer == null}">
@@ -121,6 +126,47 @@
                                   value="#{container.getPositionOfVessel(vesselSampleListBean.getVesselAtPosition(positionName))}"/>
                     <br/>
                 </ui:repeat>
+            </p:column>
+            <p:column>
+                <p:commandButton value="Load"
+                                 actionListener="#{vesselSampleListBean.lookupBspSampleInfo(sampleInstance)}"
+                                 update=":#{cc.clientId}:plateSampleResults"
+                                 rendered="#{vesselSampleListBean.getBspInfoDetails(sampleInstance.startingSample.sampleKey) == null}"/>
+                <p:panelGrid
+                        rendered="#{vesselSampleListBean.getBspInfoDetails(sampleInstance.startingSample.sampleKey) != null}">
+                    <p:row>
+                        <p:column>
+                            <h:outputText style="font-weight: bold;" value="Collab. ID"/>
+                        </p:column>
+                        <p:column>
+                            <h:outputText
+                                    value="#{vesselSampleListBean.getBspInfoDetails(sampleInstance.startingSample.sampleKey).collaboratorParticipantId}"/>
+                        </p:column>
+                        <p:column>
+                            <h:outputText style="font-weight: bold;" value="Sample Type"/>
+                        </p:column>
+                        <p:column>
+                            <h:outputText
+                                    value="#{vesselSampleListBean.getBspInfoDetails(sampleInstance.startingSample.sampleKey).sampleType}"/>
+                        </p:column>
+                    </p:row>
+                    <p:row>
+                        <p:column>
+                            <h:outputText style="font-weight: bold;" value="Organism"/>
+                        </p:column>
+                        <p:column>
+                            <h:outputText
+                                    value="#{vesselSampleListBean.getBspInfoDetails(sampleInstance.startingSample.sampleKey).organism}"/>
+                        </p:column>
+                        <p:column>
+                            <h:outputText style="font-weight: bold;" value="Material Type"/>
+                        </p:column>
+                        <p:column>
+                            <h:outputText
+                                    value="#{vesselSampleListBean.getBspInfoDetails(sampleInstance.startingSample.sampleKey).materialType}"/>
+                        </p:column>
+                    </p:row>
+                </p:panelGrid>
             </p:column>
         </p:subTable>
     </p:dataTable>

@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
@@ -10,22 +12,27 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 import javax.faces.bean.ManagedBean;
-import javax.faces.bean.RequestScoped;
+import javax.faces.bean.ViewScoped;
 import javax.inject.Inject;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.io.Serializable;
+import java.util.*;
 
 @ManagedBean
-@RequestScoped
-public class VesselSampleListBean {
+@ViewScoped
+public class VesselSampleListBean extends AbstractJsfBean implements Serializable {
     @Inject
     private LabVesselDao labVesselDao;
 
+    @Inject
+    private BSPSampleDataFetcher sampleDataFetcher;
+
     private LabVessel vessel;
     private String barcode;
+    private Map<String, BSPSampleDTO> bspInfoDetails = new HashMap<String, BSPSampleDTO>();
+
     private VesselContainer<?> vesselContainer;
 
     public LabVessel getVessel() {
@@ -50,6 +57,10 @@ public class VesselSampleListBean {
 
     public void setVesselContainer(VesselContainer<?> vesselContainer) {
         this.vesselContainer = vesselContainer;
+    }
+
+    public BSPSampleDTO getBspInfoDetails(String sampleName) {
+        return bspInfoDetails.get(sampleName);
     }
 
     public void updateVessel(String barcode) {
@@ -121,5 +132,23 @@ public class VesselSampleListBean {
             vesselAtPosition = vessel;
         }
         return vesselAtPosition;
+    }
+
+    public void lookupBspSampleInfo(SampleInstance sample) {
+        if (sample != null) {
+            BSPSampleDTO bspSampleDTO;
+            if (sample.getStartingSample().getBspSampleDTO() != null) {
+                bspSampleDTO = sample.getStartingSample().getBspSampleDTO();
+            } else {
+                try {
+                    bspSampleDTO = sampleDataFetcher.fetchSingleSampleFromBSP(sample.getStartingSample().getSampleKey());
+                    //bspSampleDTO = sampleDataFetcher.fetchSingleSampleFromBSP("SM-12CO4");
+                } catch (RuntimeException re) {
+                    bspSampleDTO = null;
+                    addWarnMessage("BSP Warning: " + re.getLocalizedMessage());
+                }
+            }
+            bspInfoDetails.put(sample.getStartingSample().getSampleKey(), bspSampleDTO);
+        }
     }
 }
