@@ -131,7 +131,8 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     public void testFindImmediatePlateParents(@ArquillianResource URL baseUrl) {
         WebResource resource = makeWebResource(baseUrl, "findImmediatePlateParents").queryParam("plateBarcode", "000001383666");
         String result = get(resource);
-        assertThat(result, equalTo("[\"000000010208\",\"000002458823\"]"));
+        assertThat(result, containsString("\"000000010208\""));
+        assertThat(result, containsString("\"000002458823\""));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
