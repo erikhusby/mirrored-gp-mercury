@@ -15,7 +15,7 @@
     <ui:define name="body">
         <h:form>
             <div class="row">
-                <h:link value="New Reagent" outcome="edit" styleClass="pull-right"/>
+                <h:link value="New Reagent" outcome="edit_reagent_designs" styleClass="pull-right"/>
             </div>
             <p:dataTable value="#{reagentDesignForm.allReagentDesigns}"
                          var="reagentDesign"
@@ -24,7 +24,7 @@
 
                 <p:column headerText="Design Name" sortBy="#{reagentDesign.designName}"
                           sortingComparator="caseInsensitiveText">
-                    <h:link outcome="edit" value="#{reagentDesign.designName}">
+                    <h:link outcome="edit_reagent_designs" value="#{reagentDesign.designName}">
                         <f:param name="reagentDesign" value="#{reagentDesign.designName}"/>
                     </h:link>
                 </p:column>

@@ -365,7 +365,7 @@ public class ImportFromSquidTest extends ContainerTest {
             String barcode = (String) columns[0];
             String designName = (String) columns[1];
             if(!previousDesignName.equals(designName)) {
-                reagentDesign = new ReagentDesign(designName, ReagentDesign.REAGENT_TYPE.BAIT);
+                reagentDesign = new ReagentDesign(designName, ReagentDesign.ReagentType.BAIT);
                 previousDesignName = designName;
             }
             TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(barcode);
@@ -412,7 +412,7 @@ public class ImportFromSquidTest extends ContainerTest {
             String vendorDesignName = (String) columns[1];
             String barcode = (String) columns[2];
             if(!previousDesignName.equals(designName)) {
-                reagentDesign = new ReagentDesign(designName, ReagentDesign.REAGENT_TYPE.CAT);
+                reagentDesign = new ReagentDesign(designName, ReagentDesign.ReagentType.CAT);
                 reagentDesign.setManufacturersName(vendorDesignName);
                 previousDesignName = designName;
             }
