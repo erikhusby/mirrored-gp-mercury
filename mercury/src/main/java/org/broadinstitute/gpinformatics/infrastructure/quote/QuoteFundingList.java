@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.logging.Log;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
 import javax.inject.Inject;
@@ -23,19 +24,31 @@ public class QuoteFundingList extends AbstractCache {
 
     private Set<Funding> fundingList;
 
-    @Inject
     private PMBQuoteService quoteService;
 
     @Inject
     private Log logger;
+
+    @Inject
+    private Deployment deployment;
+
+
+    public QuoteFundingList() {
+    }
+
+    @Inject
+    public QuoteFundingList(PMBQuoteService quoteService) {
+        this.quoteService = quoteService;
+        doRefresh();
+    }
 
     /**
      * @return list of bsp users, sorted by cohortId.
      */
     public Set<Funding> getFunding() {
         // any time the funding is null but we are asking for it, try and retrieve it again
-        if (fundingList == null) {
-            refreshCache();
+        if ((fundingList == null) ||  shouldReFresh(deployment)) {
+                doRefresh();
         }
 
         return fundingList;
@@ -100,6 +113,10 @@ public class QuoteFundingList extends AbstractCache {
     }
 
     public synchronized void refreshCache() {
+            setNeedsRefresh(true);
+    }
+
+    private void doRefresh() {
         try {
             Set<Funding> rawFunding = quoteService.getAllFundingSources();
 
@@ -109,8 +126,9 @@ public class QuoteFundingList extends AbstractCache {
             }
 
             fundingList = ImmutableSet.copyOf(rawFunding);
+            setNeedsRefresh(false);
         } catch (Exception ex) {
-            logger.debug("Could not refresh the funding list", ex);
+            logger.error("Could not refresh the funding list", ex);
         }
     }
 }

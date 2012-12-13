@@ -1,4 +1,24 @@
 
+DROP INDEX research_project_fund_idx1;
+DROP INDEX research_project_cohort_idx1;
+DROP INDEX research_project_irb_idx1;
+DROP INDEX product_order_idx1;
+DROP INDEX product_order_idx2;
+DROP INDEX product_order_sample_idx1;
+
+ALTER TABLE research_project_status DROP CONSTRAINT fk_rp_status_rpid;
+ALTER TABLE research_project_person DROP CONSTRAINT fk_rp_person_rpid;
+ALTER TABLE research_project_funding DROP CONSTRAINT fk_rp_funding_rpid;
+ALTER TABLE research_project_cohort DROP CONSTRAINT fk_rp_cohort_rpid;
+ALTER TABLE research_project_irb DROP CONSTRAINT fk_rp_irb_rpid;
+ALTER TABLE product_order DROP CONSTRAINT fk_po_rpid;
+ALTER TABLE product_order DROP CONSTRAINT fk_po_productid;
+ALTER TABLE product_order_status DROP CONSTRAINT fk_po_status_poid;
+ALTER TABLE product_order_sample DROP CONSTRAINT fk_pos_poid;
+ALTER TABLE product_order_sample_status DROP CONSTRAINT fk_po_sample_b_s_po_sid;
+ALTER TABLE product_order_add_on DROP CONSTRAINT fk_po_add_on_prodid;
+ALTER TABLE product_order_add_on DROP CONSTRAINT fk_po_add_on_poid;
+
 DROP TABLE product_order_add_on;
 DROP TABLE product_order_sample_status;
 DROP TABLE product_order_sample;
@@ -291,7 +311,7 @@ CREATE TABLE im_product_order (
   jira_ticket_key VARCHAR2(255)
 );
 
-CREATE TABLE im_product_order_status 
+CREATE TABLE im_product_order_status (
   line_number NUMERIC(9) NOT NULL,
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL,
