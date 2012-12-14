@@ -785,6 +785,18 @@
                 <mercury.password>mercury_prod</mercury.password>
                 <athena.password>athena_prod</athena.password>
             </properties>
+            <build>
+                <!-- This allows us to overwrite the ejb-jar.xml for development with the special version for production -->
+                <resources>
+                    <resource>
+                        <directory>src/main/resources</directory>
+                    </resource>
+                    <resource>
+                        <directory>src/main/webapp-prod/WEB-INF</directory>
+                        <targetPath>WEB-INF</targetPath>
+                    </resource>
+                </resources>
+            </build>
         </profile>
 
         <profile>
