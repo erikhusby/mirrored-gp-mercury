@@ -785,6 +785,14 @@
                 <mercury.password>mercury_prod</mercury.password>
                 <athena.password>athena_prod</athena.password>
             </properties>
+            <build>
+                <resources>
+                    <resource>
+                        <directory>src/main/webapp-prod/WEB-INF</directory>
+                        <targetPath>WEB-INF</targetPath>
+                    </resource>
+                </resources>
+            </build>
         </profile>
 
         <profile>
