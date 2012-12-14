@@ -25,7 +25,7 @@
                     actionListener="#{sampleListBean.setSelectedSample(sample)}"
                     update=":#{cc.clientId}:plasticResults,@this" title="View the plastic history.">
                 <p:effect event="click" type="fade" for=":#{cc.clientId}:plasticPanel">
-                    <f:param name="mode" value="'toggle'"/>
+                    <f:param name="mode" value="'show'"/>
                 </p:effect>
             </p:commandButton>
         </p:column>
@@ -59,6 +59,11 @@
         <p:effect event="load" type="fade" speed="1">
             <f:param name="mode" value="'hide'"/>
         </p:effect>
+        <p:commandButton value="Close">
+            <p:effect type="fade" event="click" for=":#{cc.clientId}:plasticPanel">
+                <f:param name="mode" value="'hide'"/>
+            </p:effect>
+        </p:commandButton>
         <p:outputPanel id="plasticResults">
             <s:plasticHistory barcode="#{sampleListBean.selectedSample.sampleKey}"/>
         </p:outputPanel>
