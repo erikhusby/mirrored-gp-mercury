@@ -5,7 +5,6 @@ import org.hibernate.envers.Audited;
 import javax.persistence.*;
 import java.util.Date;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * This is the message containing all information for work complete
@@ -40,21 +39,21 @@ public class WorkCompleteMessage {
     }
 
     @Id
-    @SequenceGenerator(name = "SEQ_WORK_COMPLETE", schema = "athena", sequenceName = "SEQ_WORK_COMPLETE", allocationSize = 10)
+    @SequenceGenerator(name = "SEQ_WORK_COMPLETE", schema = "athena", sequenceName = "SEQ_WORK_COMPLETE", allocationSize = 5)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_WORK_COMPLETE")
     private Long workCompleteMessageId;
 
-    @Column(name = "PDO_NAME")
+    @Column(name = "PDO_NAME", length = 255, nullable = false)
     private String pdoName;
 
-    @Column(name = "COLLABORATOR_SAMPLE_ID")
+    @Column(name = "COLLABORATOR_SAMPLE_ID", length = 255, nullable = false)
     private String collaboratorSampleId;
 
     // If the same sample exists multiple times in the PDO, this will let us know which was meant
     @Column(name = "SAMPLE_INDEX")
     private Long sampleIndex;
 
-    @Column(name = "ALIQUOT_LSID")
+    @Column(name = "ALIQUOT_LSID", length = 255, nullable = true)
     private String aliquotLsid;
 
     @Column(name = "COMPLETED_DATE")
