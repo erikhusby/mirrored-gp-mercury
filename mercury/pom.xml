@@ -774,7 +774,7 @@
             </properties>
         </profile>
         <profile>
-            <id>PROD</id>
+            <id>PROD</id><!-- THis is for PRODUCTION ONLY -->
             <properties>
                 <!-- Oracle Dev -->
                 <database>oracle</database>
@@ -787,15 +787,20 @@
             </properties>
             <build>
                 <!-- This allows us to overwrite the ejb-jar.xml for development with the special version for production -->
-                <resources>
-                    <resource>
-                        <directory>src/main/resources</directory>
-                    </resource>
-                    <resource>
-                        <directory>src/main/webapp-prod/WEB-INF</directory>
-                        <targetPath>WEB-INF</targetPath>
-                    </resource>
-                </resources>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <version>2.2</version>
+                        <configuration>
+                            <webResources>
+                                <resource>
+                                    <directory>src/main/webapp-prod</directory>
+                                </resource>
+                            </webResources>
+                        </configuration>
+                    </plugin>
+                </plugins>
             </build>
         </profile>
 
