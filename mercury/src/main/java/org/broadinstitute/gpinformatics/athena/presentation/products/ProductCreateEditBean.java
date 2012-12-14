@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.presentation.products;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductManager;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductSearcher;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
+import org.broadinstitute.gpinformatics.athena.control.ProductUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -13,18 +13,19 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
-import javax.enterprise.context.RequestScoped;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
-import javax.inject.Named;
+import java.io.Serializable;
 import java.util.*;
 
 /**
  * TODO: Update method documentation, especially around price item selection.
  */
-@Named
-@RequestScoped
-public class ProductForm extends AbstractJsfBean {
+@ManagedBean
+@ViewScoped
+public class ProductCreateEditBean extends AbstractJsfBean implements Serializable {
 
     @Inject
     private ProductFamilyDao productFamilyDao;
@@ -39,16 +40,7 @@ public class ProductForm extends AbstractJsfBean {
     private PriceListCache priceListCache;
 
     @Inject
-    private Log logger;
-
-    @Inject
     private ProductSearcher productSearcher;
-
-    @Inject
-    private FacesContext facesContext;
-
-    @Inject
-    private ProductCreateEditConversationData conversationData;
 
     /**
      * Transaction support for create / update operations
@@ -67,31 +59,23 @@ public class ProductForm extends AbstractJsfBean {
             "These price items have been temporarily removed from this product; hit Save to remove these price items permanently or Cancel to abort.";
 
 
-    public static final String DEFAULT_WORKFLOW_NAME = "";
-    public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
-    private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
     private Product product;
 
     /**
      * These are in their own field since they are JAXB {@link PriceItem} DTOs and not JPA entities
      */
-    private List<PriceItem> priceItems;
+    private List<PriceItem> optionalPriceItems;
 
     /**
      * This is in its own field since this is a JAXB {@link PriceItem} DTO and not a JPA entity
      */
-    private PriceItem defaultPriceItem;
-
-    private List<Product> addOns;
-
+    private PriceItem primaryPriceItem;
 
     /**
-     * Hook for the preRenderView event that initiates the long running conversation and sets up conversation scoped
-     * data from the product, also initializes the form as appropriate
+     * This is a {@link List} to support p:autoComplete
      */
-    public void onPreRenderView() {
-        initForm();
-    }
+    private List<Product> addOns;
+
 
 
     /**
@@ -143,46 +127,38 @@ public class ProductForm extends AbstractJsfBean {
     /**
      * Initialize the form if this is not a postback
      */
-    private void initForm() {
-        if (!facesContext.isPostback()) {
-            if (isCreating()) {
-                // No form initialization needed for create, but do set the conversation data product to null
-                conversationData.beginConversation(null);
-            } else {
+    public void onPreRenderView() {
+        if (!FacesContext.getCurrentInstance().isPostback()) {
 
-                conversationData.beginConversation(product);
+            if (isCreating()) {
+                product = Product.makeEmptyProduct();
+            } else {
 
                 if (product.getPrimaryPriceItem() != null) {
                     PriceItem priceItemDto = entityToDto(product.getPrimaryPriceItem());
 
-                    if (! priceListCache.contains(priceItemDto)) {
+                    if (!priceListCache.contains(priceItemDto)) {
                         issueMessagesForPriceItemNotOnPriceList("defaultPriceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, true));
-                        defaultPriceItem = null;
-                    }
-                    else {
-                        defaultPriceItem = entityToDto(product.getPrimaryPriceItem());
-                    }
-                }
-                if (product.getOptionalPriceItems() != null) {
-                    priceItems = new ArrayList<PriceItem>();
-                    for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getOptionalPriceItems()) {
-
-                        PriceItem priceItemDto = entityToDto(priceItem);
-                        if (! priceListCache.contains(priceItemDto)) {
-                            issueMessagesForPriceItemNotOnPriceList("priceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, false));
-                            defaultPriceItem = null;
-                        }
-                        else {
-                            priceItems.add(priceItemDto);
-                        }
+                        primaryPriceItem = null;
+                    } else {
+                        primaryPriceItem = entityToDto(product.getPrimaryPriceItem());
                     }
                 }
 
-                // TODO: is this needed? or does the actual backing model work for p:autoComplete?
-                if (product.getAddOns() != null) {
-                    addOns = new ArrayList<Product>();
-                    addOns.addAll(product.getAddOns());
+                optionalPriceItems = new ArrayList<PriceItem>();
+                for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getOptionalPriceItems()) {
+
+                    PriceItem priceItemDto = entityToDto(priceItem);
+                    if (!priceListCache.contains(priceItemDto)) {
+                        issueMessagesForPriceItemNotOnPriceList("priceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, false));
+                        primaryPriceItem = null;
+                    } else {
+                        optionalPriceItems.add(priceItemDto);
+                    }
                 }
+
+                addOns = new ArrayList<Product>();
+                addOns.addAll(product.getAddOns());
             }
         }
     }
@@ -196,13 +172,6 @@ public class ProductForm extends AbstractJsfBean {
         return new PriceItem(entity.getQuoteServerId(), entity.getPlatform(), entity.getCategory(), entity.getName());
     }
 
-    /**
-     * Initialze an empty {@link Product} so fields can drill into the backing product without NPEs
-     */
-    public void initEmptyProduct() {
-        product = new Product(null, null, null, null, null, null, null,
-                null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME, false);
-    }
 
     /**
      * Enumerate the product families
@@ -233,14 +202,12 @@ public class ProductForm extends AbstractJsfBean {
             }
 
             productManager.save(product);
-        }
-        catch (Exception e ) {
+        } catch (Exception e) {
             addErrorMessage(e.getMessage());
             return null;
         }
 
         addInfoMessage("Product \"" + product.getProductName() + "\" has been " + (creating ? "created." : "updated."));
-        conversationData.endConversation();
         return redirect("view") + addProductParam();
     }
 
@@ -293,17 +260,17 @@ public class ProductForm extends AbstractJsfBean {
      */
     private void addAllPriceItemsToProduct() throws ApplicationValidationException {
 
-        if (defaultPriceItem == null) {
+        if (primaryPriceItem == null) {
             // ApplicationValidationException is rollback=true, but we're not in a transaction at the time of this
             // validation, I just wanted to reuse the same exception type since this is an application validation
-            throw new ApplicationValidationException("Default price item must be entered");
+            throw new ApplicationValidationException("Primary price item must be entered");
         }
 
-        product.setPrimaryPriceItem(findEntity(defaultPriceItem));
+        product.setPrimaryPriceItem(findEntity(primaryPriceItem));
 
         product.getOptionalPriceItems().clear();
-        if (priceItems != null) {
-            for (PriceItem priceItem : priceItems) {
+        if (optionalPriceItems != null) {
+            for (PriceItem priceItem : optionalPriceItems) {
                 org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity = findEntity(priceItem);
                 product.addPriceItem(entity);
             }
@@ -313,22 +280,23 @@ public class ProductForm extends AbstractJsfBean {
     public Product getProduct() {
         return product;
     }
+
     public void setProduct(final Product product) {
         this.product = product;
     }
 
     public Integer getExpectedCycleTimeDays() {
-        return convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
+        return ProductUtil.convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
     }
     public void setExpectedCycleTimeDays(final Integer expectedCycleTimeDays) {
-        product.setExpectedCycleTimeSeconds(convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
+        product.setExpectedCycleTimeSeconds(ProductUtil.convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
     }
 
     public Integer getGuaranteedCycleTimeDays() {
-        return convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
+        return ProductUtil.convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
     }
     public void setGuaranteedCycleTimeDays(final Integer guaranteedCycleTimeDays) {
-        product.setGuaranteedCycleTimeSeconds(convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
+        product.setGuaranteedCycleTimeSeconds(ProductUtil.convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
     }
 
 
@@ -350,40 +318,24 @@ public class ProductForm extends AbstractJsfBean {
     }
 
 
-    public List<PriceItem> getPriceItems() {
-        return priceItems;
-    }
-
-
-    public void setPriceItems(List<PriceItem> priceItems) {
-        this.priceItems = priceItems;
-    }
-
-
-    /**
-     * Converts cycle times from days to seconds.
-     * @return the number of seconds.
-     */
-    public static Integer convertCycleTimeDaysToSeconds(Integer cycleTimeDays) {
-        Integer cycleTimeSeconds = null;
-        if ( cycleTimeDays != null ) {
-            cycleTimeSeconds = ( cycleTimeDays == null ? 0 : cycleTimeDays.intValue() * ONE_DAY_IN_SECONDS);
+    public List<PriceItem> getOptionalPriceItems() {
+        if (product == null) {
+            return new ArrayList<PriceItem>();
         }
-        return cycleTimeSeconds;
+
+        if (optionalPriceItems == null) {
+            optionalPriceItems = new ArrayList<PriceItem>();
+
+            for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getOptionalPriceItems()) {
+                optionalPriceItems.add(entityToDto(priceItem));
+            }
+        }
+        return optionalPriceItems;
     }
 
-    /**
-     * Converts cycle times from seconds to days.
-     * This method rounds down to the nearest day
-     * @param cycleTimeSeconds
-     * @return the number of days.
-     */
-    public static Integer convertCycleTimeSecondsToDays(Integer cycleTimeSeconds) {
-        Integer cycleTimeDays = null;
-        if ((cycleTimeSeconds != null) && cycleTimeSeconds >= ONE_DAY_IN_SECONDS) {
-            cycleTimeDays =  (cycleTimeSeconds - (cycleTimeSeconds % ONE_DAY_IN_SECONDS)) / ONE_DAY_IN_SECONDS;
-        }
-        return cycleTimeDays;
+
+    public void setOptionalPriceItems(List<PriceItem> optionalPriceItems) {
+        this.optionalPriceItems = optionalPriceItems;
     }
 
 
@@ -410,22 +362,22 @@ public class ProductForm extends AbstractJsfBean {
     public List<PriceItem> searchPriceItems(String query) {
         List<PriceItem> searchResults = priceListCache.searchPriceItems(query);
         // filter out price items that are already selected
-        if (priceItems != null) {
-            for (PriceItem priceItem : priceItems) {
+        if (optionalPriceItems != null) {
+            for (PriceItem priceItem : optionalPriceItems) {
                 searchResults.remove(priceItem);
             }
         }
-        searchResults.remove(defaultPriceItem);
+        searchResults.remove(primaryPriceItem);
 
         return searchResults;
     }
 
-    public PriceItem getDefaultPriceItem() {
-        return defaultPriceItem;
+    public PriceItem getPrimaryPriceItem() {
+        return primaryPriceItem;
     }
 
-    public void setDefaultPriceItem(PriceItem defaultPriceItem) {
-        this.defaultPriceItem = defaultPriceItem;
+    public void setPrimaryPriceItem(PriceItem primaryPriceItem) {
+        this.primaryPriceItem = primaryPriceItem;
     }
 
     /**
@@ -469,7 +421,7 @@ public class ProductForm extends AbstractJsfBean {
 
 
     public List<Product> searchProductsForAddonsInProductEdit(String searchText) {
-        return productSearcher.searchProductsForAddonsInProductEdit(conversationData.getProduct(), searchText);
+        return productSearcher.searchProductsForAddonsInProductEdit(getProduct(), searchText);
     }
 
 }
