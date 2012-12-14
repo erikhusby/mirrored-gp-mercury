@@ -11,20 +11,20 @@
 
 package org.broadinstitute.gpinformatics.mercury.presentation.reagent;
 
+import org.apache.commons.logging.Log;
+import org.broadinstitute.gpinformatics.infrastructure.jsf.TableData;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
+
 import javax.enterprise.context.Conversation;
 import javax.enterprise.context.ConversationScoped;
 import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.util.Arrays;
 import java.util.List;
-
-import org.apache.commons.logging.Log;
-
-import org.broadinstitute.gpinformatics.infrastructure.jsf.TableData;
-import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
-import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
 /**
  * @author dryan
@@ -46,8 +46,11 @@ public class ReagentDesignForm extends AbstractJsfBean {
 
     private ReagentDesign reagentDesign;
 
+    final String LIST_PAGE = "list_reagent_designs";
+
     @ConversationScoped
     public static class ReagentDesignTableData extends TableData<ReagentDesign> {
+
     }
 
     @Inject
@@ -56,17 +59,22 @@ public class ReagentDesignForm extends AbstractJsfBean {
     public void initView() {
         if (!facesContext.isPostback()) {
             reagentDesignTableData.setValues(reagentDesignDao.findAll());
-            if (conversation.isTransient()) {
-                conversation.begin();
-            }
+            beginConversation();
+        }
+    }
+
+    public void initForm() {
+            getReagentDesign();
+    }
+
+    private void beginConversation() {
+        if (conversation.isTransient()) {
+            conversation.begin();
         }
     }
 
     public String edit() {
-        String updatedOrCreated = "updated";
-        if (reagentDesign.getReagentDesignId() == null) {
-            updatedOrCreated = "created";
-        }
+        String updatedOrCreated = isCreating() ? "created" : "updated";
         try {
             reagentDesignDao.persist(reagentDesign);
         } catch (Exception e) {
@@ -74,10 +82,11 @@ public class ReagentDesignForm extends AbstractJsfBean {
             addErrorMessage(e.getMessage());
             return null;
         }
-        final String infoMessage = String.format("The Research Design \"%s\" has been %s.",
-                reagentDesign.getDesignName(), updatedOrCreated);
+        final String infoMessage =
+                String.format("The Research Design \"%s\" has been %s.", reagentDesign.getDesignName(),
+                        updatedOrCreated);
         addInfoMessage(infoMessage);
-        return redirect("list");
+        return redirect(LIST_PAGE);
     }
 
     public Conversation getConversation() {
@@ -98,12 +107,20 @@ public class ReagentDesignForm extends AbstractJsfBean {
 
     public ReagentDesign getReagentDesign() {
         if (reagentDesign == null) {
-            reagentDesign = new ReagentDesign("", ReagentDesign.REAGENT_TYPE.BAIT);
+            reagentDesign = new ReagentDesign();
         }
         return reagentDesign;
     }
 
     public void setReagentDesign(ReagentDesign reagentDesign) {
         this.reagentDesign = reagentDesign;
+    }
+
+    public boolean isCreating() {
+        return (reagentDesign == null || reagentDesign.getDesignName() == null);
+    }
+
+    public  List<ReagentDesign.ReagentType> getReagentTypes() {
+        return Arrays.asList(ReagentDesign.ReagentType.values());
     }
 }

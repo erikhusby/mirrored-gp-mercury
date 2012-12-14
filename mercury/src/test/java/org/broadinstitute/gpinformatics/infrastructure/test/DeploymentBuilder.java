@@ -49,6 +49,7 @@ public class DeploymentBuilder {
                 .addAsWebInfResource(new File("src/test/resources/mercury-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsWebInfResource(new File("src/test/resources/squid-" + dataSourceEnvironment + "-ds.xml"))
                 .addAsResource(new File("src/main/resources/META-INF/persistence.xml"), "META-INF/persistence.xml")
+                .addAsWebInfResource(new File("src/main/webapp/WEB-INF/ejb-jar.xml"))
                 .addPackages(true, "org.broadinstitute.gpinformatics")
                 .addAsWebInfResource(new StringAsset("MERCURY_DEPLOYMENT=" + deployment.name()), "classes/jndi.properties");
         addWebResourcesTo(war, "src/test/resources/testdata");

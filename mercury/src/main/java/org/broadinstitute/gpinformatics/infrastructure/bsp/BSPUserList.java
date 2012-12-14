@@ -3,18 +3,22 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.faces.model.SelectItem;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * Application wide access to BSP's user list. The list is currently cached once at application startup. In the
@@ -24,8 +28,8 @@ import java.util.*;
 @ApplicationScoped
 public class BSPUserList extends AbstractCache implements Serializable {
 
-    @Inject
-    private Log logger;
+    private static final Log logger = LogFactory.getLog(BSPUserList.class);
+
 
     @Inject
     private Deployment deployment;
@@ -45,8 +49,8 @@ public class BSPUserList extends AbstractCache implements Serializable {
      */
     public List<BspUser> getUsers() {
 
-        if (users == null) {
-            refreshCache();
+        if ((users == null) || shouldReFresh(deployment) ) {
+                doRefresh();
         }
 
         return users;
@@ -59,7 +63,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
     public BspUser getById(long id) {
         // Could improve performance here by storing users in a TreeMap.  Wait until performance becomes
         // an issue, then fix.
-        for (BspUser user : users) {
+        for (BspUser user : getUsers()) {
             if (user.getUserId() == id) {
                 return user;
             }
@@ -75,7 +79,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
      * @return the BSP user or null
      */
     public BspUser getByUsername(String username) {
-        for (BspUser user : users) {
+        for (BspUser user : getUsers()) {
             if (user.getUsername().equalsIgnoreCase(username)) {
                 return user;
             }
@@ -92,7 +96,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
     public List<BspUser> find(String query) {
         String[] lowerQueryItems = query.toLowerCase().split("\\s");
         List<BspUser> results = new ArrayList<BspUser>();
-        for (BspUser user : users) {
+        for (BspUser user : getUsers()) {
             boolean eachItemMatchesSomething = true;
             for (String lowerQuery : lowerQueryItems) {
                 // If none of the fields match this item, then all items are not matched
@@ -128,19 +132,17 @@ public class BSPUserList extends AbstractCache implements Serializable {
     }
 
     @Inject
-    // MLC constructor injection appears to be required to get a BSPManagerFactory injected???
     public BSPUserList(BSPManagerFactory bspManagerFactory) {
         this.bspManagerFactory = bspManagerFactory;
-        refreshCache();
+        doRefresh();
     }
-
-//    @PostConstruct
-//    private void postConstruct() {
-//        refreshCache();
-//    }
 
     @Override
     public synchronized void refreshCache() {
+            setNeedsRefresh(true);
+    }
+
+    private void doRefresh() {
         try {
             List<BspUser> rawUsers = bspManagerFactory.createUserManager().getUsers();
             serverValid = rawUsers != null;
@@ -174,8 +176,9 @@ public class BSPUserList extends AbstractCache implements Serializable {
             });
 
             users = ImmutableList.copyOf(rawUsers);
+            setNeedsRefresh(false);
         } catch (Exception ex) {
-            logger.debug("Could not refresh the user list", ex);
+            logger.error("Could not refresh the user list", ex);
         }
     }
 

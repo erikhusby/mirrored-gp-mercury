@@ -63,20 +63,26 @@ public class Product implements Serializable, Comparable<Product> {
      */
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "athena", name = "PRODUCT_OPT_PRICE_ITEMS")
-    private Set<PriceItem> optionalPriceItems = new HashSet<PriceItem>();
+    private final Set<PriceItem> optionalPriceItems = new HashSet<PriceItem>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "athena")
-    private Set<Product> addOns = new HashSet<Product>();
+    private final Set<Product> addOns = new HashSet<Product>();
 
     private String workflowName;
 
     private boolean pdmOrderableOnly;
 
+    /** True if this product/addon supports auto-billing. */
+    @Transient
+    private boolean useAutomatedBilling;
+
+    /** To determine if this product can be billed, the following criteria must be true. */
+    @Transient
+    private ProductBillingRequirements requirements = new ProductBillingRequirements();
+
     /**
      * JPA package visible no arg constructor
-     *
-     * @return
      */
     Product() {}
 
@@ -173,44 +179,43 @@ public class Product implements Serializable, Comparable<Product> {
         return primaryPriceItem;
     }
 
-    public void setPrimaryPriceItem(PriceItem defaultPriceItem) {
-        this.primaryPriceItem = defaultPriceItem;
+    public void setPrimaryPriceItem(PriceItem primaryPriceItem) {
+        this.primaryPriceItem = primaryPriceItem;
     }
 
     public Set<PriceItem> getOptionalPriceItems() {
         return optionalPriceItems;
     }
 
-
-    public void setProductName(final String productName) {
+    public void setProductName(String productName) {
         this.productName = productName;
     }
 
-    public void setProductFamily(final ProductFamily productFamily) {
+    public void setProductFamily(ProductFamily productFamily) {
         this.productFamily = productFamily;
     }
 
-    public void setDescription(final String description) {
+    public void setDescription(String description) {
         this.description = description;
     }
 
-    public void setAvailabilityDate(final Date availabilityDate) {
+    public void setAvailabilityDate(Date availabilityDate) {
         this.availabilityDate = availabilityDate;
     }
 
-    public void setDiscontinuedDate(final Date discontinuedDate) {
+    public void setDiscontinuedDate(Date discontinuedDate) {
         this.discontinuedDate = discontinuedDate;
     }
 
-    public void setExpectedCycleTimeSeconds(final Integer expectedCycleTimeSeconds) {
+    public void setExpectedCycleTimeSeconds(Integer expectedCycleTimeSeconds) {
         this.expectedCycleTimeSeconds = expectedCycleTimeSeconds;
     }
 
-    public void setGuaranteedCycleTimeSeconds(final Integer guaranteedCycleTimeSeconds) {
+    public void setGuaranteedCycleTimeSeconds(Integer guaranteedCycleTimeSeconds) {
         this.guaranteedCycleTimeSeconds = guaranteedCycleTimeSeconds;
     }
 
-    public void setSamplesPerWeek(final Integer samplesPerWeek) {
+    public void setSamplesPerWeek(Integer samplesPerWeek) {
         this.samplesPerWeek = samplesPerWeek;
     }
 
@@ -218,41 +223,36 @@ public class Product implements Serializable, Comparable<Product> {
         return minimumOrderSize;
     }
 
-    public void setMinimumOrderSize(final Integer minimumOrderSize) {
+    public void setMinimumOrderSize(Integer minimumOrderSize) {
         this.minimumOrderSize = minimumOrderSize;
     }
 
-    public void setInputRequirements(final String inputRequirements) {
+    public void setInputRequirements(String inputRequirements) {
         this.inputRequirements = inputRequirements;
     }
 
-    public void setDeliverables(final String deliverables) {
+    public void setDeliverables(String deliverables) {
         this.deliverables = deliverables;
     }
 
-    public void setTopLevelProduct(final boolean topLevelProduct) {
+    public void setTopLevelProduct(boolean topLevelProduct) {
         this.topLevelProduct = topLevelProduct;
     }
 
-    public void setWorkflowName(final String workflowName) {
+    public void setWorkflowName(String workflowName) {
         this.workflowName = workflowName;
     }
 
     public void addPriceItem(PriceItem priceItem) {
-
         optionalPriceItems.add(priceItem);
-
     }
 
     public Set<Product> getAddOns() {
         return addOns;
     }
 
-
     public void addAddOn(Product addOn) {
-
         addOns.add(addOn);
-
     }
 
     public String getWorkflowName() {
@@ -265,6 +265,18 @@ public class Product implements Serializable, Comparable<Product> {
 
     public void setPdmOrderableOnly(boolean pdmOrderableOnly) {
         this.pdmOrderableOnly = pdmOrderableOnly;
+    }
+
+    public boolean isUseAutomatedBilling() {
+        return useAutomatedBilling;
+    }
+
+    public void setUseAutomatedBilling(boolean useAutomatedBilling) {
+        this.useAutomatedBilling = useAutomatedBilling;
+    }
+
+    public ProductBillingRequirements getRequirements() {
+        return requirements;
     }
 
     public boolean isAvailable() {
@@ -316,7 +328,7 @@ public class Product implements Serializable, Comparable<Product> {
     @Override
     public int compareTo(Product that) {
         CompareToBuilder builder = new CompareToBuilder();
-        builder.append(this.getPartNumber(), that.getPartNumber());
+        builder.append(getPartNumber(), that.getPartNumber());
         return builder.build();
     }
 

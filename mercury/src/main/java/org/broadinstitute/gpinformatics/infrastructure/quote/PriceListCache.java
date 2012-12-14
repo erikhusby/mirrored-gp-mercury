@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
 import javax.enterprise.context.ApplicationScoped;
@@ -26,11 +28,12 @@ public class PriceListCache extends AbstractCache implements Serializable {
     
     private PriceList priceList;
 
-    @Inject
     private PMBQuoteService quoteService;
 
     @Inject
-    private Log logger;
+    private Deployment deployment;
+
+    private Log logger = LogFactory.getLog(PriceListCache.class);
 
     public PriceListCache() {}
 
@@ -41,10 +44,16 @@ public class PriceListCache extends AbstractCache implements Serializable {
      */
     public PriceListCache(PriceList priceList) {
         if (priceList == null) {
-             throw new NullPointerException("priceList cannot be null."); 
+             throw new NullPointerException("priceList cannot be null.");
         }
 
         this.priceList = priceList;
+    }
+
+    @Inject
+    public PriceListCache(PMBQuoteService quoteService) {
+        this.quoteService = quoteService;
+        doRefresh();
     }
 
     /**
@@ -53,15 +62,20 @@ public class PriceListCache extends AbstractCache implements Serializable {
      * @return The full price list
      */
     public PriceList getPriceList() {
-        if (priceList == null) {
-            refreshCache();
+        if ((priceList == null) || shouldReFresh(deployment)) {
+                doRefresh();
         }
-
         return priceList;
     }
 
+
+
     @Override
     public synchronized void refreshCache() {
+        setNeedsRefresh(true);
+    }
+
+    private void doRefresh() {
         try {
             PriceList rawPriceList = quoteService.getAllPriceItems();
 
@@ -71,8 +85,9 @@ public class PriceListCache extends AbstractCache implements Serializable {
             }
 
             priceList = rawPriceList;
+            setNeedsRefresh(false);
         } catch (Exception ex) {
-            logger.debug("Could not refresh the price item list", ex);
+            logger.error("Could not refresh the price item list", ex);
         }
     }
 

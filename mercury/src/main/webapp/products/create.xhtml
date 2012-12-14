@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html
-        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
@@ -140,10 +138,43 @@
                     <p:outputLabel for="pdmOrderableOnly" value="PDM Orderable Only" styleClass="control-label"/>
                     <div class="controls">
                         <p:watermark for="pdmOrderableOnly" value="Is this Product orderable only by Product Managers (PDMs) ?"/>
-                        <p:selectBooleanCheckbox id="pdmOrderableOnly" value="#{productForm.product.pdmOrderableOnly}" />
+                        <p:selectBooleanCheckbox id="pdmOrderableOnly" value="#{productForm.product.pdmOrderableOnly}"
+                                                 style="vertical-align: middle;"/>
                         <p:message for="pdmOrderableOnly"/>
                     </div>
                 </div>
+
+                <div class="control-group">
+                    <p:outputLabel for="useAutomatedBilling" value="Use Automated Billing" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:watermark for="useAutomatedBilling" value="Should this product use automated billing ?"/>
+                        <p:selectBooleanCheckbox id="useAutomatedBilling" value="#{productForm.product.useAutomatedBilling}"
+                                                 style="vertical-align: middle;">
+                            <p:ajax update="automatedBillingSettings :productParam"/>
+                        </p:selectBooleanCheckbox>
+                    </div>
+                </div>
+
+                <p:outputPanel id="automatedBillingSettings">
+                    <div class="control-group">
+                        <p:outputLabel for="requirementsAttribute" value="Bill When" styleClass="control-label"/>
+                        <div class="controls">
+                            <p:inputText id="requirementsAttribute" value="#{productForm.product.requirements.attribute}"
+                                         style="vertical-align: top;"/>
+                            <p:watermark for="requirementsAttribute" value="Attribute to compare"/>
+                            &#160;
+                            <p:selectOneMenu value="#{productForm.product.requirements.operator}"
+                                             converter="#{requirementsOperatorConverter}"
+                                             style="width:80px;">
+                                <f:selectItems value="#{requirementsOperatorConverter.allItems}" var="op" itemLabel="#{op.label}" />
+                            </p:selectOneMenu>
+                            &#160;
+                            <p:inputText id="requirementsValue" value="#{productForm.product.requirements.value}"
+                                         style="vertical-align: top;"/>
+                            <p:watermark for="requirementsValue" value="Value to compare"/>
+                        </div>
+                    </div>
+                </p:outputPanel>
 
                 <div class="control-group">
                     <p:outputLabel for="defaultPriceItem" value="Primary Price Item *" styleClass="control-label"/>
