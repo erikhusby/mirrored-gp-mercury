@@ -32,6 +32,8 @@
         <script type="text/javascript"> var $j = jQuery.noConflict(); </script>
 
         <script type="text/javascript" src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-dropdown.js"></script>
+        <script type="text/javascript" src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-tooltip.js"></script>
+        <script type="text/javascript" src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-popover.js"></script>
 
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.gpUseful-1.0.js"></script>
         <script type="text/javascript" src="${ctxpath}/resources/scripts/DataTables-1.9.4/media/js/jquery.dataTables.min.js"></script>
@@ -51,6 +53,7 @@
         <script>
             $(document).ready(function () {
                 $j('.dropdown-toggle').dropdown();
+                $j('#userBadge').popover({ trigger: "hover", html: true });
             });
         </script>
         <title>Mercury | ${pageTitle}</title>
@@ -71,7 +74,8 @@
                         <!-- security-isLoggedIn" -->
                             |
                              <span id="userBadge" class="badge ${actionBean.userBean.badgeClass}" style="cursor: help;"
-                                   title="${actionBean.userBean.bspStatus} ${actionBean.userBean.jiraStatus}  ${actionBean.userBean.rolesString}">${actionBean.userBean.loginUserName}</span>
+                                   data-original-title="Account Info" rel="popover" data-placement="bottom"
+                                   data-content="${actionBean.userBean.bspStatus}<br/>${actionBean.userBean.jiraStatus}<br/>${actionBean.userBean.rolesString}">${actionBean.userBean.loginUserName}</span>
 
 
                             &#160;
