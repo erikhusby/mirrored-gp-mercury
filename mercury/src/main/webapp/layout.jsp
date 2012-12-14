@@ -98,6 +98,11 @@
         </p>
 
         <section>
+            <c:if test="${sectionTitle ne null}">
+                <div class="page-header">
+                    <h3>${sectionTitle}</h3>
+                </div>
+            </c:if>
             <stripes:layout-component name="content"/>
         </section>
 
