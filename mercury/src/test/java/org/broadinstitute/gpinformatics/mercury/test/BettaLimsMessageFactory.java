@@ -128,12 +128,12 @@ public class BettaLimsMessageFactory {
         return rackEvent;
     }
 
-    public ReceptacleEventType buildReceptacleEvent(String eventType, String tubeBarcode) {
+    public ReceptacleEventType buildReceptacleEvent(String eventType, String tubeBarcode, String tubeType) {
         ReceptacleEventType receptacleEventType = new ReceptacleEventType();
         setStationEventData(eventType, receptacleEventType);
         ReceptacleType receptacleType = new ReceptacleType();
         receptacleType.setBarcode(tubeBarcode);
-        receptacleType.setReceptacleType("tube");
+        receptacleType.setReceptacleType(tubeType);
         receptacleEventType.setReceptacle(receptacleType);
         return receptacleEventType;
     }
@@ -317,6 +317,7 @@ public class BettaLimsMessageFactory {
         ReceptacleType receptacleType = new ReceptacleType();
         receptacleType.setBarcode(barcode);
         receptacleType.setPosition(buildWellName(rackPosition));
+        receptacleType.setReceptacleType("tube");
         targetPositionMap.getReceptacle().add(receptacleType);
     }
 }
