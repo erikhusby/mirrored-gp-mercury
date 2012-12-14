@@ -4,7 +4,9 @@ import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
 import javax.annotation.Nonnull;
+import javax.ejb.Stateful;
 import javax.ejb.Stateless;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -15,7 +17,8 @@ import java.util.List;
  * list the athena research project info.
  */
 @Path("/researchProjects")
-@Stateless
+@Stateful
+@RequestScoped
 public class ResearchProjectResource {
 
     @Inject

@@ -49,8 +49,6 @@
                     </p:inputText>
                     <p:watermark for="targetSetName" value="Enter the name of the target set."/>
                     <p:message for="targetSetName"/>
-                    <p:watermark for="targetSetName" value="Enter the name of the target set."/>
-                    <p:message for="targetSetName"/>
                 </div>
             </div>
 
@@ -75,11 +73,12 @@
                 <p:outputLabel for="reagentType" value="Reagent Type" styleClass="control-label"/>
 
                 <div class="controls">
-                    <p:selectOneListbox id="reagentType" value="#{reagentDesignForm.reagentDesign.reagentType}">
+                    <p:selectOneMenu required="true" id="reagentType" value="#{reagentDesignForm.reagentDesign.reagentType}">
+                        <f:selectItem itemLabel="Choose..." itemValue=""/>
                         <f:selectItems value="#{reagentDesignForm.reagentTypes}"
                                        var="reagentType" itemLabel="#{reagentType}"
                                        itemValue="#{reagentType}"/>
-                    </p:selectOneListbox>
+                    </p:selectOneMenu>
                 </div>
             </div>
 

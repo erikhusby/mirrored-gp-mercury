@@ -7,11 +7,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 
 import javax.inject.Inject;
 import java.io.File;
+import java.io.Serializable;
 
 /**
- * Creates a sequencing run from a JAX-RS DTO
+ * Creates a sequencing run from a JAX-RS DTO.  Implements Serializable because it's used by a Stateful session bean.
  */
-public class IlluminaSequencingRunFactory {
+public class IlluminaSequencingRunFactory implements Serializable {
     @Inject
     private IlluminaFlowcellDao illuminaFlowcellDao;
 
