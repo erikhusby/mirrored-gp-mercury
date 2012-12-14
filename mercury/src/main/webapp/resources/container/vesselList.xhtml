@@ -15,11 +15,11 @@
                    xmlns:s="http://java.sun.com/jsf/composite/sample">
     <p:dataTable id="vesselResultsTable" var="foundVessel" value="#{cc.attrs.vessels}" emptyMessage="">
         <f:facet name="header">
-            Vessel List
+            Vessel Details
         </f:facet>
         <p:column style="width:4%" rendered="${cc.attrs.expandable == true}">
             <f:facet name="header">
-                <h:outputText value="Plate View"/>
+                <h:outputText value="Plastic View"/>
             </f:facet>
             <p:commandButton
                     value=""

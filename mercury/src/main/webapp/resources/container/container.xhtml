@@ -18,7 +18,7 @@
     <p:panel id="gridPanel">
         <p:dataGrid id="containerGrid" var="well" columns="#{containerBean.columns}" emptyMessage=""
                     rows="#{containerBean.columns * containerBean.rows}" value="#{containerBean.geometry}"
-                    styleClass="ui-container" rendered="#{containerBean.geometry.size() > 1}">
+                    styleClass="ui-container">
 
             <f:facet name="header">
                 Sample Layout for #{containerBean.barcode}
