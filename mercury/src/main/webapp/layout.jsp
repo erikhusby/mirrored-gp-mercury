@@ -58,17 +58,17 @@
     <body>
             <div class="container-fluid">
                 <div class="row-fluid">
-                    <div class="brand">
+                    <div class="brand" style="display:inline;">
                         <img src="${ctxpath}/images/broad_logo.png" alt="Broad Institute"/>
                         <a href="/index"
                            style="padding-left: 30px;text-decoration: none; font-variant: small-caps; font-size: 3em">
                             <img src="${ctxpath}/images/mercury_helmet_${actionBean.buildInfoBean.deployment}.png" alt="Mercury Helmet" width="40" height="30"/> Mercury</a>
                     </div>
-                    <div id="navbarForm" styleClass="nav pull-right">
+                    <div id="navbarForm" class="nav pull-right">
                                 <span id="jiraProblem" class="badge" style="cursor: pointer;"
                                       title="Click here to send a bug report or feedback">Feedback</span>
 
-                        <div id="security-isLoggedIn">
+                        <!-- security-isLoggedIn" -->
                             |
                              <span id="userBadge" class="badge ${actionBean.userBean.badgeClass}" style="cursor: help;"
                                    title="${actionBean.userBean.bspStatus} ${actionBean.userBean.jiraStatus}  ${actionBean.userBean.rolesString}">${actionBean.userBean.loginUserName}</span>
@@ -76,7 +76,6 @@
 
                             &#160;
                             <a href="${ctxpath}/logout" value="Sign out" class="btn btn-mini">Sign out</a>
-                        </div>
                     </div>
                 </div>
             </div>
