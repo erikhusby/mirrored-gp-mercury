@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
+import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
@@ -80,7 +81,6 @@ public class Product implements Serializable, Comparable<Product> {
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "athena", name = "PRODUCT_MATERIAL_TYPES")
     private Set<MaterialType> allowableMaterialTypes = new HashSet<MaterialType>();
-
 
     /**
      * JPA package visible no arg constructor
