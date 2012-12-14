@@ -57,6 +57,8 @@
             });
         </script>
         <title>Mercury | ${pageTitle}</title>
+
+        <stripes:layout-component name="extraHead"/>
     </head>
     <body>
             <div class="container-fluid">

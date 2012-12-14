@@ -8,7 +8,7 @@
 
         <div class="row-fluid" style="width:800px; margin:0px auto;">
             <div class="span3">
-                <h2>Research Projects</h2>
+                <h2>Research projects</h2>
 
                 <p>Review and manage all your research projects.</p>
 
