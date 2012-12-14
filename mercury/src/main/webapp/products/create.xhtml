@@ -13,7 +13,7 @@
 
         <ui:define name="metadata">
             <f:metadata>
-                <f:viewParam id="productParam" name="product" value="#{productCreateEditBean.product}" converter="#{productCreateEditConverter}" />
+                <f:viewParam id="productParam" name="product" value="#{productCreateEditBean.product}" converter="#{productConverter}" />
             </f:metadata>
             <f:event type="preRenderView" listener="#{productCreateEditBean.onPreRenderView}"/>
         </ui:define>
@@ -53,7 +53,7 @@
                 <div class="control-group">
                     <p:outputLabel for="partNumber" value="Part Number" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="partNumber" value="#{productCreateEditBean.product.partNumber}" size="50" required="true"/>
+                        <p:inputText id="partNumber" value="#{productCreateEditBean.partNumber}" size="50" required="true"/>
                         <p:watermark for="partNumber" value="Enter the part number of this product"/>
                         <p:message for="partNumber"/>
                     </div>

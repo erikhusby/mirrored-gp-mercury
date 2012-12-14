@@ -62,6 +62,15 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
     private Product product;
 
     /**
+     * GPLIM-559 The part number input field is bound to this separate part number property to avoid issues with updated
+     * model values being cycled back out to the viewParam after application validation failures in #save().  If we
+     * pass application validation, this part number is passed into the ProductManager#save method to undergo further
+     * validations.  If all these validations pass, the part number is copied into the model object and saved to the db.
+     * This is the general JSF pattern that should be followed for user-editable business keys.
+     */
+    private String partNumber;
+
+    /**
      * These are in their own field since they are JAXB {@link PriceItem} DTOs and not JPA entities
      */
     private List<PriceItem> optionalPriceItems;
@@ -201,7 +210,7 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
                 return null;
             }
 
-            productManager.save(product);
+            productManager.save(product, partNumber);
         } catch (Exception e) {
             addErrorMessage(e.getMessage());
             return null;
@@ -283,6 +292,14 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
 
     public void setProduct(final Product product) {
         this.product = product;
+    }
+
+    public String getPartNumber() {
+        return partNumber;
+    }
+
+    public void setPartNumber(String partNumber) {
+        this.partNumber = partNumber;
     }
 
     public Integer getExpectedCycleTimeDays() {

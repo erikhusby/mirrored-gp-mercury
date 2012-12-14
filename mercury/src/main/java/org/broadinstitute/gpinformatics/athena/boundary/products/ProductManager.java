@@ -26,11 +26,13 @@ public class ProductManager {
     /**
      * Make sure part number is not duplicated
      *
+     *
      * @param product
+     * @param partNumber
      * @throws ApplicationValidationException
      */
-    private void validateUniquePartNumber(Product product) throws ApplicationValidationException {
-        Product existingProduct = productDao.findByPartNumber(product.getPartNumber());
+    private void validateUniquePartNumber(Product product, String partNumber) throws ApplicationValidationException {
+        Product existingProduct = productDao.findByPartNumber(partNumber);
         if (existingProduct != null && ! existingProduct.getProductId().equals(product.getProductId())) {
             throw new ApplicationValidationException("Part number '" + product.getPartNumber() + "' is already in use");
         }
@@ -50,10 +52,13 @@ public class ProductManager {
     }
 
 
-    public void save(Product product) throws ApplicationValidationException {
+    public void save(Product product, String partNumber) throws ApplicationValidationException {
 
-        validateUniquePartNumber(product);
+        validateUniquePartNumber(product, partNumber);
         validateDateRangeOkay(product);
+
+        // copy in the part number as the last thing we do before writing to db
+        product.setPartNumber(partNumber);
 
         // if we are doing a create we will need to persist and flush, otherwise just falling off the end of this
         // @Stateful method will commit our transaction
