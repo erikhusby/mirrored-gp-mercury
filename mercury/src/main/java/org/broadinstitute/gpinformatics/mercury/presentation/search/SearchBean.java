@@ -90,6 +90,7 @@ public class SearchBean implements Serializable {
     }
 
     private List<String> cleanInputString() {
+        searchKey = searchKey.replaceAll("\\n", ",");
         String[] keys = searchKey.split(",");
         int index = 0;
         for (String key : keys) {

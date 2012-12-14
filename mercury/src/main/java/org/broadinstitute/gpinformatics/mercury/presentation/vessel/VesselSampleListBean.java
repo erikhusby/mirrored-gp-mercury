@@ -151,4 +151,5 @@ public class VesselSampleListBean extends AbstractJsfBean implements Serializabl
             bspInfoDetails.put(sample.getStartingSample().getSampleKey(), bspSampleDTO);
         }
     }
+
 }
