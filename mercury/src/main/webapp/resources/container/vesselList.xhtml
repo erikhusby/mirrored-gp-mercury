@@ -25,8 +25,8 @@
                     value=""
                     actionListener="#{vesselListBean.setSelectedVessel(foundVessel)}"
                     update=":#{cc.clientId}:plateResults, @this" title="View the plate layout.">
-                <p:effect event="click" type="fade" for=":#{cc.clientId}:platePanel">
-                    <f:param name="mode" value="'toggle'"/>
+                <p:effect event="click" type="fade" for=":#{cc.clientId}:platePanel" speed="2000">
+                    <f:param name="mode" value="'show'"/>
                 </p:effect>
             </p:commandButton>
         </p:column>
@@ -38,8 +38,8 @@
                     value=""
                     actionListener="#{vesselListBean.setSelectedVessel(foundVessel)}"
                     update=":#{cc.clientId}:sampleResults, @this" title="View the sample list.">
-                <p:effect event="click" type="fade" for=":#{cc.clientId}:samplePanel">
-                    <f:param name="mode" value="'toggle'"/>
+                <p:effect event="click" type="fade" for=":#{cc.clientId}:samplePanel" speed="2000">
+                    <f:param name="mode" value="'show'"/>
                 </p:effect>
             </p:commandButton>
         </p:column>
@@ -125,6 +125,11 @@
         </p:column>
     </p:dataTable>
     <p:panel id="platePanel">
+        <p:commandButton value="Close">
+            <p:effect type="fade" event="click" for=":#{cc.clientId}:platePanel">
+                <f:param name="mode" value="'hide'"/>
+            </p:effect>
+        </p:commandButton>
         <p:effect event="load" type="fade" speed="1">
             <f:param name="mode" value="'hide'"/>
         </p:effect>
@@ -136,6 +141,11 @@
         <p:effect event="load" type="fade" speed="1">
             <f:param name="mode" value="'hide'"/>
         </p:effect>
+        <p:commandButton value="Close">
+            <p:effect type="fade" event="click" for=":#{cc.clientId}:samplePanel">
+                <f:param name="mode" value="'hide'"/>
+            </p:effect>
+        </p:commandButton>
         <p:outputPanel id="sampleResults">
             <s:vesselSampleList barcode="#{vesselListBean.selectedVessel.label}"/>
         </p:outputPanel>
