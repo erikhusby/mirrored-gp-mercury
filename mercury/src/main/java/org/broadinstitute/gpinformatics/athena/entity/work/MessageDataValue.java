@@ -21,7 +21,7 @@ public class MessageDataValue {
     }
 
     @Id
-    @SequenceGenerator(name = "SEQ_MESSAGE_DATA_VALUE", schema = "athena", sequenceName = "SEQ_MESSAGE_DATA_VALUE", allocationSize = 10)
+    @SequenceGenerator(name = "SEQ_MESSAGE_DATA_VALUE", schema = "athena", sequenceName = "SEQ_MESSAGE_DATA_VALUE", allocationSize = 50)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MESSAGE_DATA_VALUE")
     private Long messageDataValueId;
 

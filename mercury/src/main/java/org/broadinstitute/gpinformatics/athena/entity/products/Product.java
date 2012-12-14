@@ -74,12 +74,14 @@ public class Product implements Serializable, Comparable<Product> {
     private boolean pdmOrderableOnly;
 
     /** True if this product/addon supports auto-billing. */
-    @Transient
+    @Column(name = "USE_AUTOMATED_BILLING", nullable = false)
     private boolean useAutomatedBilling;
 
     /** To determine if this product can be billed, the following criteria must be true. */
-    @Transient
-    private ProductBillingRequirements requirements = new ProductBillingRequirements();
+    // Note that for now, there will only be one requirement. We use OneToMay to allow for lazy loading of the
+    // requirements.
+    @OneToMany(fetch = FetchType.LAZY)
+    private List<BillingRequirement> requirements = Collections.singletonList(new BillingRequirement());
 
     /**
      * JPA package visible no arg constructor
@@ -275,8 +277,8 @@ public class Product implements Serializable, Comparable<Product> {
         this.useAutomatedBilling = useAutomatedBilling;
     }
 
-    public ProductBillingRequirements getRequirements() {
-        return requirements;
+    public BillingRequirement getRequirement() {
+        return requirements.get(0);
     }
 
     public boolean isAvailable() {

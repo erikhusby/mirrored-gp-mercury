@@ -1,13 +1,25 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
+import org.hibernate.envers.Audited;
+
+import javax.persistence.*;
+
 /**
- * This class represents the requirements for a product or addon to be billable.
+ * This class represents the requirements for a product or add-on to be billable.
  *
  * A product or add-on is billable if the per-sample result 'attribute' is 'operator' 'value'.
  *
  * @author pshapiro
  */
-public class ProductBillingRequirements {
+@Entity
+@Audited()
+@Table(schema = "athena", name = "billing_requirement")
+public class BillingRequirement {
+
+    @Id
+    @SequenceGenerator(name = "SEQ_BILLING_REQUIREMENT", schema = "athena", sequenceName = "SEQ_BILLING_REQUIREMENT")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_BILLING_REQUIREMENT")
+    private Integer billing_requirement_id;
 
     public enum Operator {
         GREATER_THAN(">"),
@@ -35,11 +47,14 @@ public class ProductBillingRequirements {
         }
     }
 
+    @Column(name = "attribute", nullable = false)
     private String attribute;
 
+    @Column(name = "operator", nullable = false)
     private Operator operator;
 
-    private Double value;
+    @Column(name = "value", nullable = false)
+    private double value;
 
     public String getAttribute() {
         return attribute;
@@ -57,11 +72,11 @@ public class ProductBillingRequirements {
         this.operator = operator;
     }
 
-    public Double getValue() {
+    public double getValue() {
         return value;
     }
 
-    public void setValue(Double value) {
+    public void setValue(double value) {
         this.value = value;
     }
 }

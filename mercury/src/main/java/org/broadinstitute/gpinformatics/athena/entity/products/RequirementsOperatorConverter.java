@@ -13,19 +13,19 @@ import javax.inject.Named;
 public class RequirementsOperatorConverter extends AbstractConverter {
 
     public Object[] getAllItems() {
-        return ProductBillingRequirements.Operator.values();
+        return BillingRequirement.Operator.values();
     }
 
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) {
-        return ProductBillingRequirements.Operator.fromLabel(value);
+        return BillingRequirement.Operator.fromLabel(value);
     }
 
     @Override
     public String getAsString(FacesContext context, UIComponent component, Object object) {
         // check for null because the converter might be passed null during an AJAX request
         if (object != null) {
-            return ((ProductBillingRequirements.Operator) object).label;
+            return ((BillingRequirement.Operator) object).label;
         }
         return "";
     }

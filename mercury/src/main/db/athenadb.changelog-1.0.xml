@@ -1450,34 +1450,8 @@
         <addNotNullConstraint schemaName="athena" tableName="research_projectirb" columnName="research_project" />
     </changeSet>
 
-    <changeSet id="GPLIM-543" author="pshapiro">
-        <preConditions>
-            <not>
-                <columnExists tableName="product" columnName="use_automated_billing" schemaName="athena"/>
-            </not>
-        </preConditions>
-        <addColumn tableName="product">
-            <column name="use_automated_billing" type="number(1,0)"/>
-        </addColumn>
-        <addNotNullConstraint
-                tableName="product"
-                columnName="use_automated_billing"
-                defaultNullValue="0" />
-    </changeSet>
-
-    <changeSet id="GPLIM-543_aud" author="pshapiro">
-        <preConditions>
-            <not>
-                <columnExists tableName="product_aud" columnName="use_automated_billing" schemaName="athena"/>
-            </not>
-        </preConditions>
-        <addColumn tableName="product_aud">
-            <column name="use_automated_billing" type="number(1,0)"/>
-        </addColumn>
-    </changeSet>
-
     <changeSet id="GPLIM-543-1" author="hrafal">
-        <preConditions>
+        <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="WORK_COMPLETE_MESSAGE" schemaName="athena"/>
             </not>
@@ -1505,7 +1479,7 @@
     </changeSet>
 
     <changeSet id="GPLIM-543-2" author="hrafal">
-        <preConditions>
+        <preConditions onFail="MARK_RAN">
             <not>
                 <sequenceExists sequenceName="SEQ_WORK_COMPLETE" schemaName="athena"/>
             </not>
@@ -1548,7 +1522,7 @@
     </changeSet>
 
     <changeSet id="GPLIM-543-4" author="hrafal">
-        <preConditions>
+        <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="MESSAGE_DATA_VALUE" schemaName="athena"/>
             </not>
@@ -1569,8 +1543,17 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="GPLIM-543-4.1" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sequenceExists sequenceName="SEQ_MESSAGE_DATA_VALUE" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_MESSAGE_DATA_VALUE" schemaName="athena" startValue="1" incrementBy="50"/>
+    </changeSet>
+
     <changeSet id="GPLIM-543-5" author="hrafal">
-        <preConditions>
+        <preConditions onFail="MARK_RAN">
             <not>
                 <foreignKeyConstraintExists foreignKeyName="fk_work_complete_data" schemaName="athena"/>
             </not>
@@ -1612,6 +1595,90 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-7" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="product" columnName="use_automated_billing" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product">
+            <column name="use_automated_billing" type="number(1,0)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-8" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="product_aud" columnName="use_automated_billing" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_aud">
+            <column name="use_automated_billing" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-9" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="billing_requirement" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="billing_requirement" schemaName="athena">
+            <column name="billing_requirement_id" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="attribute" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="operator" type="varchar(5)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="value" type="float">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-10" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sequenceExists sequenceName="SEQ_BILLING_REQUIREMENT" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_BILLING_REQUIREMENT" schemaName="athena"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-11" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="billing_requirement_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="billing_requirement_aud" schemaName="athena">
+            <column name="billing_requirement_id" type="int"/>
+            <column name="product_id" type="int"/>
+            <column name="attribute" type="varchar(255)"/>
+            <column name="operator" type="varchar(5)"/>
+            <column name="value" type="float"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-12" author="pshapiro">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_product_billing_requirement" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_product_billing_requirement" baseTableSchemaName="athena"
+                                 baseTableName="product_billing_requirement" baseColumnNames="product"
+                                 referencedTableName="product" referencedColumnNames="product_id"/>
     </changeSet>
 
 </databaseChangeLog>
