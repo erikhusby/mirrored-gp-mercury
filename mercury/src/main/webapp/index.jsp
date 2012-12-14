@@ -10,28 +10,28 @@
         </div>
 
         <div class="row-fluid">
-            <div class="span4">
+            <div class="span3">
                 <h2>Research Projects</h2>
 
                 <p>Review and manage all your research projects.</p>
 
                 <p><a class="btn" href="/projects/list">View details &#187;</a></p>
             </div>
-            <div class="span4">
+            <div class="span3">
                 <h2>Product orders</h2>
 
                 <p>Review and manage all your research projects.</p>
 
                 <p><a class="btn" href="/orders/list">View details &#187;</a></p>
             </div>
-            <div class="span4">
+            <div class="span3">
                 <h2>Products</h2>
 
                 <p>Review and manage all your products.</p>
 
                 <p><a class="btn" href="/products/list">View details &#187;</a></p>
             </div>
-            <div class="span4">
+            <div class="span3">
                 <h2>Billing</h2>
 
                 <p>Review and manage all your billing and quotes.</p>

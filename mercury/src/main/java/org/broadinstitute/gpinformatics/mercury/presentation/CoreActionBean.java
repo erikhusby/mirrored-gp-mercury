@@ -21,6 +21,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.BuildInfoBean;
 
+import javax.ejb.EJB;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;

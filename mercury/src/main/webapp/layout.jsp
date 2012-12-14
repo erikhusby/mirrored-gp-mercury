@@ -31,9 +31,10 @@
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery-1.8.3.min.js"></script>
         <script type="text/javascript"> var $j = jQuery.noConflict(); </script>
 
+        <script type="text/javascript" src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-dropdown.js"></script>
+
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.gpUseful-1.0.js"></script>
-        <script type="text/javascript"
-                src="${ctxpath}/resources/scripts/DataTables-1.9.4/media/js/jquery.dataTables.min.js"></script>
+        <script type="text/javascript" src="${ctxpath}/resources/scripts/DataTables-1.9.4/media/js/jquery.dataTables.min.js"></script>
         <script type="text/javascript" src="${ctxpath}/scripts/json.js"></script>
 
         <script type="text/javascript"
@@ -44,22 +45,26 @@
                     e.preventDefault();
                     showCollectorDialog();
                 });
-            }};</script>
+            }};
+        </script>
 
+        <script>
+            $(document).ready(function () {
+                $j('.dropdown-toggle').dropdown();
+            });
+        </script>
         <title>Mercury | ${pageTitle}</title>
     </head>
     <body>
-    <header class="navbar">
-        <div class="navbar-inner">
             <div class="container-fluid">
                 <div class="row-fluid">
                     <div class="brand">
-                        <img src="/images/broad_logo.png" alt="Broad Institute"/>
+                        <img src="${ctxpath}/images/broad_logo.png" alt="Broad Institute"/>
                         <a href="/index"
                            style="padding-left: 30px;text-decoration: none; font-variant: small-caps; font-size: 1.2em">
-                            <img src="/images/mercury_helmet_${actionBean.buildInfoBean.deployment}.png" alt="Mercury Helmet" width="40" height="30"/> Mercury</a>
+                            <img src="${ctxpath}/images/mercury_helmet_${actionBean.buildInfoBean.deployment}.png" alt="Mercury Helmet" width="40" height="30"/> Mercury</a>
                     </div>
-                    <div id="navbarForm" styleClass="navbar-form pull-right">
+                    <div id="navbarForm" styleClass="nav pull-right">
                                 <span id="jiraProblem" class="badge" style="cursor: pointer;"
                                       title="Click here to send a bug report or feedback">Feedback</span>
 
@@ -70,23 +75,19 @@
 
 
                             &#160;
-                            <a href="${ctxpath}/logout" value="Sign out" styleClass="btn btn-mini"/>
+                            <a href="${ctxpath}/logout" value="Sign out" class="btn btn-mini">Sign out</a>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-        <nav class="row-fluid">
-            <stripes:layout-component name="menu">
-                <jsp:include page="/navigation.jsp"/>
-            </stripes:layout-component>
-            <ui:include src="navigation.xhtml"/>
 
-        </nav>
-    </header>
+            <nav class="row-fluid">
+                <stripes:layout-component name="menu">
+                    <jsp:include page="/navigation.jsp"/>
+                </stripes:layout-component>
+            </nav>
 
-
-    <div class="row-fluid">
+            <div class="row-fluid">
         <!-- show messages/errors -->
         <p>
             <stripes:errors/>
