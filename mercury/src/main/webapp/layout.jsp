@@ -61,7 +61,7 @@
                     <div class="brand">
                         <img src="${ctxpath}/images/broad_logo.png" alt="Broad Institute"/>
                         <a href="/index"
-                           style="padding-left: 30px;text-decoration: none; font-variant: small-caps; font-size: 1.2em">
+                           style="padding-left: 30px;text-decoration: none; font-variant: small-caps; font-size: 3em">
                             <img src="${ctxpath}/images/mercury_helmet_${actionBean.buildInfoBean.deployment}.png" alt="Mercury Helmet" width="40" height="30"/> Mercury</a>
                     </div>
                     <div id="navbarForm" styleClass="nav pull-right">
@@ -71,7 +71,7 @@
                         <div id="security-isLoggedIn">
                             |
                              <span id="userBadge" class="badge ${actionBean.userBean.badgeClass}" style="cursor: help;"
-                                   title="${actionBean.userBean.bspStatus} ${actionBean.userBean.jiraStatus}  ${actionBean.userBean.rolesString}">${context.request.remoteUser}"</span>
+                                   title="${actionBean.userBean.bspStatus} ${actionBean.userBean.jiraStatus}  ${actionBean.userBean.rolesString}">${actionBean.userBean.loginUserName}</span>
 
 
                             &#160;
@@ -95,9 +95,6 @@
         </p>
 
         <section>
-            <div class="page-header">
-                <h3>${pageTitle}</h3>
-            </div>
             <stripes:layout-component name="content"/>
         </section>
 
