@@ -17,14 +17,15 @@ import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
+import java.io.Serializable;
 import java.util.*;
 
 /**
  * TODO: Update method documentation, especially around price item selection.
  */
-@ManagedBean(name = "productBean")
+@ManagedBean
 @ViewScoped
-public class ProductCreateEditBean extends AbstractJsfBean {
+public class ProductCreateEditBean extends AbstractJsfBean implements Serializable {
 
     @Inject
     private ProductFamilyDao productFamilyDao;
@@ -58,8 +59,6 @@ public class ProductCreateEditBean extends AbstractJsfBean {
             "These price items have been temporarily removed from this product; hit Save to remove these price items permanently or Cancel to abort.";
 
 
-    public static final String DEFAULT_WORKFLOW_NAME = "";
-    public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
     private Product product;
 
     /**
@@ -77,14 +76,6 @@ public class ProductCreateEditBean extends AbstractJsfBean {
      */
     private List<Product> addOns;
 
-
-    /**
-     * Hook for the preRenderView event that initiates the long running conversation and sets up conversation scoped
-     * data from the product, also initializes the form as appropriate
-     */
-    public void onPreRenderView() {
-        initForm();
-    }
 
 
     /**
@@ -136,43 +127,38 @@ public class ProductCreateEditBean extends AbstractJsfBean {
     /**
      * Initialize the form if this is not a postback
      */
-    private void initForm() {
+    public void onPreRenderView() {
         if (!FacesContext.getCurrentInstance().isPostback()) {
 
             if (isCreating()) {
-                product = initEmptyProduct();
+                product = Product.makeEmptyProduct();
             } else {
 
                 if (product.getPrimaryPriceItem() != null) {
                     PriceItem priceItemDto = entityToDto(product.getPrimaryPriceItem());
 
-                    if (! priceListCache.contains(priceItemDto)) {
+                    if (!priceListCache.contains(priceItemDto)) {
                         issueMessagesForPriceItemNotOnPriceList("defaultPriceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, true));
                         primaryPriceItem = null;
                     } else {
                         primaryPriceItem = entityToDto(product.getPrimaryPriceItem());
                     }
                 }
-                if (product.getOptionalPriceItems() != null) {
-                    optionalPriceItems = new ArrayList<PriceItem>();
-                    for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getOptionalPriceItems()) {
 
-                        PriceItem priceItemDto = entityToDto(priceItem);
-                        if (! priceListCache.contains(priceItemDto)) {
-                            issueMessagesForPriceItemNotOnPriceList("priceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, false));
-                            primaryPriceItem = null;
-                        } else {
-                            optionalPriceItems.add(priceItemDto);
-                        }
+                optionalPriceItems = new ArrayList<PriceItem>();
+                for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getOptionalPriceItems()) {
+
+                    PriceItem priceItemDto = entityToDto(priceItem);
+                    if (!priceListCache.contains(priceItemDto)) {
+                        issueMessagesForPriceItemNotOnPriceList("priceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, false));
+                        primaryPriceItem = null;
+                    } else {
+                        optionalPriceItems.add(priceItemDto);
                     }
                 }
 
-                // TODO: is this needed? or does the actual backing model work for p:autoComplete?
-                // I believe this is needed because the backing model is a Set and p:autoComplete wants a List
-                if (product.getAddOns() != null) {
-                    addOns = new ArrayList<Product>();
-                    addOns.addAll(product.getAddOns());
-                }
+                addOns = new ArrayList<Product>();
+                addOns.addAll(product.getAddOns());
             }
         }
     }
@@ -186,13 +172,6 @@ public class ProductCreateEditBean extends AbstractJsfBean {
         return new PriceItem(entity.getQuoteServerId(), entity.getPlatform(), entity.getCategory(), entity.getName());
     }
 
-    /**
-     * Initialze an empty {@link Product} so fields can drill into the backing product without NPEs
-     */
-    private Product initEmptyProduct() {
-        return new Product(null, null, null, null, null, null, null,
-                null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME, false);
-    }
 
     /**
      * Enumerate the product families
@@ -284,7 +263,7 @@ public class ProductCreateEditBean extends AbstractJsfBean {
         if (primaryPriceItem == null) {
             // ApplicationValidationException is rollback=true, but we're not in a transaction at the time of this
             // validation, I just wanted to reuse the same exception type since this is an application validation
-            throw new ApplicationValidationException("Default price item must be entered");
+            throw new ApplicationValidationException("Primary price item must be entered");
         }
 
         product.setPrimaryPriceItem(findEntity(primaryPriceItem));
@@ -301,6 +280,7 @@ public class ProductCreateEditBean extends AbstractJsfBean {
     public Product getProduct() {
         return product;
     }
+
     public void setProduct(final Product product) {
         this.product = product;
     }
@@ -339,6 +319,17 @@ public class ProductCreateEditBean extends AbstractJsfBean {
 
 
     public List<PriceItem> getOptionalPriceItems() {
+        if (product == null) {
+            return new ArrayList<PriceItem>();
+        }
+
+        if (optionalPriceItems == null) {
+            optionalPriceItems = new ArrayList<PriceItem>();
+
+            for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getOptionalPriceItems()) {
+                optionalPriceItems.add(entityToDto(priceItem));
+            }
+        }
         return optionalPriceItems;
     }
 

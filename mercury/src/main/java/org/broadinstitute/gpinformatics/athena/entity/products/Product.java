@@ -2,6 +2,9 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.FetchProfile;
+import org.hibernate.annotations.FetchProfiles;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
@@ -27,7 +30,7 @@ public class Product implements Serializable, Comparable<Product> {
 
     private String productName;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST}, optional = false)
     private ProductFamily productFamily;
 
     @Column(length = 2000)
@@ -72,6 +75,9 @@ public class Product implements Serializable, Comparable<Product> {
     private String workflowName;
 
     private boolean pdmOrderableOnly;
+
+    public static final String DEFAULT_WORKFLOW_NAME = "";
+    public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
 
     /**
      * JPA package visible no arg constructor
@@ -360,4 +366,11 @@ public class Product implements Serializable, Comparable<Product> {
             }
         }
     }
+
+
+    public static Product makeEmptyProduct() {
+        return new Product(null, null, null, null, null, null, null,
+                null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME, false);
+    }
+
 }
