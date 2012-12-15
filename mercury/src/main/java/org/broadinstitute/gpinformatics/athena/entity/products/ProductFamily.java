@@ -73,7 +73,6 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
         return builder.build();
     }
 
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

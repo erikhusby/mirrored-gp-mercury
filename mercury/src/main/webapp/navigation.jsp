@@ -19,11 +19,10 @@
             <li class="dropdown">
                 <a id="productNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown">Products <b class="caret"></b></a>
                 <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
-                    <li><a tabindex="-1" href="${ctxpath}/products/list">list</a></li>
-                    <li><a tabindex="-1" href="${ctxpath}/products/create">create</a></li>
+                    <li><a tabindex="-1" href="${ctxpath}/products/product.action?list">list</a></li>
+                    <li><a tabindex="-1" href="${ctxpath}/products/product.action?create">create</a></li>
                 </ul>
             </li>
-
 
             <!-- security:authorizeBlock ${actionBean.userBean.developerRole} -->
             <li class="dropdown">

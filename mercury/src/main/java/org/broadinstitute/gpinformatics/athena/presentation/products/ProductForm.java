@@ -3,9 +3,9 @@ package org.broadinstitute.gpinformatics.athena.presentation.products;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductManager;
-import org.broadinstitute.gpinformatics.athena.boundary.products.ProductSearcher;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
@@ -42,7 +42,7 @@ public class ProductForm extends AbstractJsfBean {
     private Log logger;
 
     @Inject
-    private ProductSearcher productSearcher;
+    private ProductDao productDao;
 
     @Inject
     private FacesContext facesContext;
@@ -469,7 +469,7 @@ public class ProductForm extends AbstractJsfBean {
 
 
     public List<Product> searchProductsForAddonsInProductEdit(String searchText) {
-        return productSearcher.searchProductsForAddonsInProductEdit(conversationData.getProduct(), searchText);
+        return productDao.searchProductsForAddonsInProductEdit(conversationData.getProduct(), searchText);
     }
 
 }

@@ -26,7 +26,7 @@
 
                 <p>Review and manage all your products.</p>
 
-                <p><a class="btn" href="/products/list">View details &#187;</a></p>
+                <p><a class="btn" href="/products/product.action?list">View details &#187;</a></p>
             </div>
             <div class="span3">
                 <h2>Billing</h2>

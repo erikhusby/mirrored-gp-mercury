@@ -26,6 +26,7 @@
         <meta http-equiv="Content-Language" content="en"/>
         <link rel="Shortcut Icon" type="image/x-icon" href="${ctxpath}/favicon.ico"/>
         <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/bootstrap.css"/>
+        <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/scripts/DataTables-1.9.4/media/css/jquery.dataTables.css"/>
         <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/styles.css"/>
 
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery-1.8.3.min.js"></script>
@@ -37,7 +38,7 @@
 
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.gpUseful-1.0.js"></script>
         <script type="text/javascript" src="${ctxpath}/resources/scripts/DataTables-1.9.4/media/js/jquery.dataTables.min.js"></script>
-        <script type="text/javascript" src="${ctxpath}/scripts/json.js"></script>
+        <script type="text/javascript" src="${ctxpath}/resources/scripts/json.js"></script>
 
         <script type="text/javascript"
                 src="http://prodinfojira.broadinstitute.org/jira/s/en_US-vrke9z/733/4/1.2.5/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector.js?collectorId=ad2bd4e3"></script>
@@ -70,18 +71,17 @@
                             <img src="${ctxpath}/images/mercury_helmet_${actionBean.buildInfoBean.deployment}.png" alt="Mercury Helmet" width="40" height="30"/> Mercury</a>
                     </div>
                     <div id="navbarForm" class="nav pull-right">
-                                <span id="jiraProblem" class="badge" style="cursor: pointer;"
-                                      title="Click here to send a bug report or feedback">Feedback</span>
+                        <span id="jiraProblem" class="badge" style="cursor: pointer;"
+                              title="Click here to send a bug report or feedback">Feedback</span>
 
                         <!-- security-isLoggedIn" -->
                             |
-                             <span id="userBadge" class="badge ${actionBean.userBean.badgeClass}" style="cursor: help;"
-                                   data-original-title="Account Info" rel="popover" data-placement="bottom"
-                                   data-content="${actionBean.userBean.bspStatus}<br/>${actionBean.userBean.jiraStatus}<br/>${actionBean.userBean.rolesString}">${actionBean.userBean.loginUserName}</span>
+                         <span id="userBadge" class="badge ${actionBean.userBean.badgeClass}" style="cursor: help;"
+                               data-original-title="Account Info" rel="popover" data-placement="bottom"
+                               data-content="${actionBean.userBean.bspStatus}<br/>${actionBean.userBean.jiraStatus}<br/>${actionBean.userBean.rolesString}">${actionBean.userBean.loginUserName}</span>
 
-
-                            &#160;
-                            <a href="${ctxpath}/logout" value="Sign out" class="btn btn-mini">Sign out</a>
+                        &#160;
+                        <a href="${ctxpath}/logout" value="Sign out" class="btn btn-mini">Sign out</a>
                     </div>
                 </div>
             </div>
@@ -93,30 +93,31 @@
             </nav>
 
             <div class="row-fluid">
-        <!-- show messages/errors -->
-        <p>
-            <stripes:errors/>
-            <stripes:messages/>
-        </p>
 
-        <section>
-            <c:if test="${sectionTitle ne null}">
-                <div class="page-header">
-                    <h3>${sectionTitle}</h3>
-                </div>
-            </c:if>
-            <stripes:layout-component name="content"/>
-        </section>
+                <!-- show messages/errors -->
+                <p>
+                    <stripes:errors/>
+                    <stripes:messages/>
+                </p>
 
-    </div>
-    </div>
-    <footer>
-        <p>Copyright © 2012 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or
-            disclosure is permitted.<br/>
-            Genomics Platform. ${actionBean.buildInfoBean.buildInformation}. Deployment
-            - ${actionBean.buildInfoBean.deployment}.</p>
-    </footer>
+                <section>
+                    <c:if test="${sectionTitle ne null}">
+                        <div class="page-header">
+                            <h3>${sectionTitle}</h3>
+                        </div>
+                    </c:if>
+                    <stripes:layout-component name="content"/>
+                </section>
 
+            </div>
+        </body>
+
+        <footer>
+            <p>Copyright © 2012 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or
+                disclosure is permitted.<br/>
+                Genomics Platform. ${actionBean.buildInfoBean.buildInformation}. Deployment
+                - ${actionBean.buildInfoBean.deployment}.</p>
+        </footer>
 
     </html>
 
