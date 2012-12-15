@@ -25,8 +25,8 @@
                         {"bSortable": true},
                         {"bSortable": false}],
                     "oTableTools": {
-                        "sSwfPath": "/gap/scripts/DataTables-1.9.1/extras/TableTools/media/swf/copy_csv_xls.swf",
-                        "aButtons": [ "copy", "xls", "print" ]
+                        "sSwfPath": "${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
+                        "aButtons": [ "copy", "csv", "print" ]
                     }
                 })
             });
@@ -35,7 +35,7 @@
 
     <stripes:layout-component name="content">
 
-        <table style="width:98%; margin-left:10px;" id="productList" class="table table-striped table-bordered">
+        <table id="productList" class="table table-striped table-bordered">
             <thead>
                 <tr>
                     <th>Part Number</th>

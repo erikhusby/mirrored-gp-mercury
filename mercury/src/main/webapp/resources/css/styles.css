@@ -87,3 +87,4 @@ fieldset .ui-chkbox {margin-left:5px}
 
 .dataTables_filter { float: left; margin-left: 10px; }
 .dataTables_filter input { font-size: small; height: 14px; }
+.dataTables_wrapper { width: 98%; margin-left: 10px; }

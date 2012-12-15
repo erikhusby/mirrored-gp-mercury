@@ -64,16 +64,6 @@ public class ProductActionBean extends CoreActionBean{
 
     private Product editProduct;
 
-    private String getClientMessageForPriceItemNotInPriceList(PriceItem priceitem, boolean isPrimary) {
-        String message = "%s price item '%s: %s: %s' did not appear on the current quote server price list and " +
-                         "has temporarily been removed from this product";
-        message = String.format(
-                message, isPrimary ? "Primary" : "Optional",
-                priceitem.getPlatformName(), priceitem.getCategoryName(), priceitem.getName());
-
-        return message;
-    }
-
     /**
      * maps between athena price item and the quote server version of PriceItem
      *
