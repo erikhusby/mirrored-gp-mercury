@@ -108,7 +108,13 @@
                             <h3>${sectionTitle}</h3>
                         </div>
                     </c:if>
-                    <stripes:layout-component name="content"/>
+
+                    <div class="page-title">
+                         ${pageTitle}
+                    </div>
+                    <div class="page-body">
+                        <stripes:layout-component name="content"/>
+                    </div>
                 </section>
 
             </div>

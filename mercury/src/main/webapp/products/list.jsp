@@ -3,7 +3,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Athena Product List">
+<stripes:layout-render name="/layout.jsp" pageTitle="List Products">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
