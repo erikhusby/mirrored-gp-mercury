@@ -52,7 +52,6 @@ public class ProductActionBean extends CoreActionBean{
 
     public static final String DEFAULT_WORKFLOW_NAME = "";
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
-    private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 
     // Data needed for displaying the view
     private List<ProductFamily> productFamilies;
@@ -90,14 +89,18 @@ public class ProductActionBean extends CoreActionBean{
     /**
      * Initialize the product with the passed in key for display in the form
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {"view", "edit"})
+    @After(stages = LifecycleStage.BindingAndValidation, on = {"view", "edit"})
     public void init() {
         product = productDao.findByBusinessKey(productKey);
+    }
+
+    @After(stages = LifecycleStage.BindingAndValidation, on = {"create", "edit"})
+    public void setupFamilies() {
         productFamilies = productFamilyDao.findAll();
         Collections.sort(productFamilies);
     }
 
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {"list"})
+    @After(stages = LifecycleStage.BindingAndValidation, on = {"list"})
     public void listInit() {
         allProducts = productDao.findAll(Product.class);
     }
@@ -129,6 +132,21 @@ public class ProductActionBean extends CoreActionBean{
     @HandlesEvent("list")
     public Resolution list() {
         return new ForwardResolution(LIST_PAGE);
+    }
+
+    @HandlesEvent("view")
+    public Resolution view() {
+        return new ForwardResolution(VIEW_PAGE);
+    }
+
+    @HandlesEvent("create")
+    public Resolution create() {
+        return new ForwardResolution(CREATE_PAGE);
+    }
+
+    @HandlesEvent("edit")
+    public Resolution edit() {
+        return new ForwardResolution(CREATE_PAGE);
     }
 
     @HandlesEvent(value = "save")
@@ -175,44 +193,6 @@ public class ProductActionBean extends CoreActionBean{
         this.product = product;
     }
 
-    public Integer getExpectedCycleTimeDays() {
-        return convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
-    }
-    public void setExpectedCycleTimeDays(final Integer expectedCycleTimeDays) {
-        product.setExpectedCycleTimeSeconds(convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
-    }
-
-    public Integer getGuaranteedCycleTimeDays() {
-        return convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
-    }
-    public void setGuaranteedCycleTimeDays(final Integer guaranteedCycleTimeDays) {
-        product.setGuaranteedCycleTimeSeconds(convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
-    }
-
-    /**
-     * Converts cycle times from days to seconds.
-     * @return the number of seconds.
-     */
-    public static int convertCycleTimeDaysToSeconds(Integer cycleTimeDays) {
-        return (cycleTimeDays == null) ? 0 : cycleTimeDays * ONE_DAY_IN_SECONDS;
-    }
-
-    /**
-     * Converts cycle times from seconds to days.
-     * This method rounds down to the nearest day
-     *
-     * @param cycleTimeSeconds The cycle time in seconds
-     *
-     * @return the number of days.
-     */
-    public static Integer convertCycleTimeSecondsToDays(Integer cycleTimeSeconds) {
-        Integer cycleTimeDays = null;
-        if ((cycleTimeSeconds != null) && cycleTimeSeconds >= ONE_DAY_IN_SECONDS) {
-            cycleTimeDays =  (cycleTimeSeconds - (cycleTimeSeconds % ONE_DAY_IN_SECONDS)) / ONE_DAY_IN_SECONDS;
-        }
-        return cycleTimeDays;
-    }
-
     public Product getEditProduct() {
         return editProduct;
     }
@@ -223,5 +203,13 @@ public class ProductActionBean extends CoreActionBean{
 
     public List<Product> getAllProducts() {
         return allProducts;
+    }
+
+    public String getProductKey() {
+        return productKey;
+    }
+
+    public void setProductKey(String productKey) {
+        this.productKey = productKey;
     }
 }

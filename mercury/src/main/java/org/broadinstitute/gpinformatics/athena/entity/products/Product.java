@@ -19,6 +19,7 @@ import java.util.*;
 @Table(schema = "athena",
         uniqueConstraints = @UniqueConstraint(columnNames = {"partNumber"}))
 public class Product implements Serializable, Comparable<Product> {
+    private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")
@@ -359,5 +360,43 @@ public class Product implements Serializable, Comparable<Product> {
                 duplicates.add(optionalPriceItem.getName());
             }
         }
+    }
+
+    public Integer getExpectedCycleTimeDays() {
+        return convertCycleTimeSecondsToDays(getExpectedCycleTimeSeconds()) ;
+    }
+    public void setExpectedCycleTimeDays(final Integer expectedCycleTimeDays) {
+        setExpectedCycleTimeSeconds(convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
+    }
+
+    public Integer getGuaranteedCycleTimeDays() {
+        return convertCycleTimeSecondsToDays(getGuaranteedCycleTimeSeconds()) ;
+    }
+    public void setGuaranteedCycleTimeDays(final Integer guaranteedCycleTimeDays) {
+        setGuaranteedCycleTimeSeconds(convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
+    }
+
+    /**
+     * Converts cycle times from days to seconds.
+     * @return the number of seconds.
+     */
+    public static int convertCycleTimeDaysToSeconds(Integer cycleTimeDays) {
+        return (cycleTimeDays == null) ? 0 : cycleTimeDays * ONE_DAY_IN_SECONDS;
+    }
+
+    /**
+     * Converts cycle times from seconds to days.
+     * This method rounds down to the nearest day
+     *
+     * @param cycleTimeSeconds The cycle time in seconds
+     *
+     * @return the number of days.
+     */
+    public static Integer convertCycleTimeSecondsToDays(Integer cycleTimeSeconds) {
+        Integer cycleTimeDays = null;
+        if ((cycleTimeSeconds != null) && cycleTimeSeconds >= ONE_DAY_IN_SECONDS) {
+            cycleTimeDays =  (cycleTimeSeconds - (cycleTimeSeconds % ONE_DAY_IN_SECONDS)) / ONE_DAY_IN_SECONDS;
+        }
+        return cycleTimeDays;
     }
 }
