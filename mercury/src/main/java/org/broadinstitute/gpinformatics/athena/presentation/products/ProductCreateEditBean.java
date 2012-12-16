@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.athena.presentation.products;
 
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductSearcher;
-import org.broadinstitute.gpinformatics.athena.control.ProductUtil;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
@@ -231,17 +230,17 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
     }
 
     public Integer getExpectedCycleTimeDays() {
-        return ProductUtil.convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
+        return Product.convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
     }
     public void setExpectedCycleTimeDays(final Integer expectedCycleTimeDays) {
-        product.setExpectedCycleTimeSeconds(ProductUtil.convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
+        product.setExpectedCycleTimeSeconds(Product.convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
     }
 
     public Integer getGuaranteedCycleTimeDays() {
-        return ProductUtil.convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
+        return Product.convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
     }
     public void setGuaranteedCycleTimeDays(final Integer guaranteedCycleTimeDays) {
-        product.setGuaranteedCycleTimeSeconds(ProductUtil.convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
+        product.setGuaranteedCycleTimeSeconds(Product.convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
     }
 
 
