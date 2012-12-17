@@ -1667,18 +1667,47 @@
             <column name="attribute" type="varchar(255)"/>
             <column name="operator" type="varchar(5)"/>
             <column name="value" type="float"/>
+            <column name="rev" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
         </createTable>
     </changeSet>
 
     <changeSet id="GPLIM-543-12" author="pshapiro">
         <preConditions>
             <not>
-                <foreignKeyConstraintExists foreignKeyName="fk_product_billing_requirement" schemaName="athena"/>
+                <foreignKeyConstraintExists foreignKeyName="fk_billing_requirement" schemaName="athena"/>
             </not>
         </preConditions>
-        <addForeignKeyConstraint constraintName="fk_product_billing_requirement" baseTableSchemaName="athena"
-                                 baseTableName="product_billing_requirement" baseColumnNames="product"
+        <addForeignKeyConstraint constraintName="fk_billing_requirement" baseTableSchemaName="athena"
+                                 baseTableName="billing_requirement" baseColumnNames="product"
                                  referencedTableName="product" referencedColumnNames="product_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-13" author="pshapiro">
+        <preConditions>
+            <not>
+                <tableExists tableName="product_requirement_join_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="product_requirement_join_aud" schemaName="athena">
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="billing_requirement_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="athena" tableName="product_requirement_join_aud" columnNames="rev, product, billing_requirement_id"/>
     </changeSet>
 
 </databaseChangeLog>

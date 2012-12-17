@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
@@ -81,6 +82,8 @@ public class Product implements Serializable, Comparable<Product> {
     // Note that for now, there will only be one requirement. We use OneToMany to allow for lazy loading of the
     // requirement.
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @JoinColumn(name = "product", nullable = false)
+    @AuditJoinTable(name = "product_requirement_join_aud")
     private List<BillingRequirement> requirements = Collections.singletonList(new BillingRequirement());
 
     /**
