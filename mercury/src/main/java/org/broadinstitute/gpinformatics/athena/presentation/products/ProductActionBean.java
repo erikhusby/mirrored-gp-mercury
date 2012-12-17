@@ -24,7 +24,8 @@ import java.util.List;
  * This class supports all the actions done on products
  */
 @UrlBinding("/products/product.action")
-public class ProductActionBean extends CoreActionBean{
+public class ProductActionBean extends CoreActionBean {
+
     private static final String CREATE = "Create New Product";
     private static final String EDIT = "Edit Product: ";
 

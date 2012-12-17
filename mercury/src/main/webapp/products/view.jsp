@@ -3,7 +3,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="View Product" sectionTitle="View Product: ${actionBean.product.productName}">
+<stripes:layout-render name="/layout.jsp" pageTitle="View Product" sectionTitle="View Product: ${actionBean.editProduct.productName}">
 
     <stripes:layout-component name="content">
 
@@ -11,98 +11,98 @@
             <div class="control-group">
                 <label class="control-label label-form">Product Family</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.product.productFamily.name}</div>
+                    <div class="form-value">${actionBean.editProduct.productFamily.name}</div>
                 </div>
             </div>
 
             <div class="control-group">
                 <label class="control-label label-form">Product Name</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.product.productName}</div>
+                    <div class="form-value">${actionBean.editProduct.productName}</div>
                 </div>
             </div>
 
             <div class="control-group">
                 <label class="control-label label-form">Part Number</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.product.partNumber}</div>
+                    <div class="form-value">${actionBean.editProduct.partNumber}</div>
                 </div>
             </div>
 
             <div class="control-group">
                 <label class="control-label label-form">Availability Date</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.product.availabilityDate}</div>
+                    <div class="form-value">${actionBean.editProduct.availabilityDate}</div>
                 </div>
             </div>
 
             <div class="control-group">
                 <label class="control-label label-form">Discontinued Date</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.product.discontinuedDate}</div>
+                    <div class="form-value">${actionBean.editProduct.discontinuedDate}</div>
                 </div>
             </div>
 
             <div class="control-group">
                 <label class="control-label label-form">Description</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.product.description}</div>
+                    <div class="form-value">${actionBean.editProduct.description}</div>
                 </div>
             </div>
 
             <div class="control-group">
                 <label class="control-label label-form">Deliverables</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.product.deliverables}</div>
+                    <div class="form-value">${actionBean.editProduct.deliverables}</div>
                 </div>
             </div>
 
             <div class="control-group">
                 <label class="control-label label-form">Input Requirements</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.product.inputRequirements}</div>
+                    <div class="form-value">${actionBean.editProduct.inputRequirements}</div>
                 </div>
             </div>
 
             <div class="control-group">
                 <label class="control-label label-form">Expected Cycle Time (Days)</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.product.expectedCycleTimeDays}</div>
+                    <div class="form-value">${actionBean.editProduct.expectedCycleTimeDays}</div>
                 </div>
             </div>
 
             <div class="control-group">
                 <label class="control-label label-form">Guaranteed Cycle Time (Days)</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.product.guaranteedCycleTimeDays}</div>
+                    <div class="form-value">${actionBean.editProduct.guaranteedCycleTimeDays}</div>
                 </div>
             </div>
 
             <div class="control-group">
                 <label class="control-label label-form">Samples Per Week</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.product.samplesPerWeek}</div>
+                    <div class="form-value">${actionBean.editProduct.samplesPerWeek}</div>
                 </div>
             </div>
 
             <div class="control-group">
                 <label class="control-label label-form">Minimum Order Size</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.product.minimumOrderSize}</div>
+                    <div class="form-value">${actionBean.editProduct.minimumOrderSize}</div>
                 </div>
             </div>
 
             <div class="control-group">
                 <label class="control-label label-form">Primary Price Items</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.product.primaryPriceItem.category} : ${actionBean.product.primaryPriceItem.name}</div>
+                    <div class="form-value">${actionBean.editProduct.primaryPriceItem.category} : ${actionBean.editProduct.primaryPriceItem.name}</div>
                 </div>
             </div>
 
             <div class="control-group">
                 <label class="control-label label-form">PDM Orderable Only</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.product.pdmOrderableOnly}</div>
+                    <div class="form-value">${actionBean.editProduct.pdmOrderableOnly}</div>
                 </div>
             </div>
         </div>
@@ -120,7 +120,7 @@
                 </tr>
             </thead>
             <tbody>
-                <c:forEach items="${actionBean.product.addOns}" var="addOnProduct">
+                <c:forEach items="${actionBean.editProduct.addOns}" var="addOnProduct">
                     <tr>
                         <td>
                             <stripes:link href="/products/product.action" event="view">
@@ -153,7 +153,7 @@
                 </tr>
             </thead>
             <tbody>
-                <c:forEach items="${actionBean.product.optionalPriceItems}" var="optionalPriceItem">
+                <c:forEach items="${actionBean.editProduct.optionalPriceItems}" var="optionalPriceItem">
                     <tr>
                         <td>${optionalPriceItem.platform}</td>
                         <td>${optionalPriceItem.category}</td>

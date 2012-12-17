@@ -43,3 +43,23 @@ table.table thead .sorting_desc { background: url('/Mercury/images/arrow_up.gif'
 
 table.table thead .sorting_asc_disabled { background: url('/Mercury/images/sort_asc_disabled.png') no-repeat center right; }
 table.table thead .sorting_desc_disabled { background: url('/Mercury/images/sort_desc_disabled.png') no-repeat center right; }
+
+.dataTables_filter input { font-size: small; height: 14px; }
+
+.defaultText { }
+.defaultTextActive { color: #A1A1A1; font-style: italic; }
+
+/* jquery date picker */
+.ui-datepicker-trigger {
+    width: 19px;
+    height: 19px;
+    vertical-align: top;
+    margin-top: 2px;
+}
+
+/* multi-check box count indicator */
+.checkedCount {
+    font-size:xx-small;
+    vertical-align: super;
+    margin-left: 2px;
+}
