@@ -5,15 +5,15 @@
             <li class="dropdown">
                 <a id="projectNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown">Projects <b class="caret"></b></a>
                 <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
-                    <li><a tabindex="-1" href="${ctxpath}/projects/list">list</a></li>
-                    <li><a tabindex="-1" href="${ctxpath}/projects/create">create</a></li>
+                    <li><a tabindex="-1" href="${ctxpath}/projects/project.action?list">list</a></li>
+                    <li><a tabindex="-1" href="${ctxpath}/projects/project.action?create">create</a></li>
                 </ul>
             </li>
             <li class="dropdown">
                 <a id="orderNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown">Orders <b class="caret"></b></a>
                 <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
-                    <li><a tabindex="-1" href="${ctxpath}/orders/list">list</a></li>
-                    <li><a tabindex="-1" href="${ctxpath}/orders/create">create</a></li>
+                    <li><a tabindex="-1" href="${ctxpath}/orders/order.action?list">list</a></li>
+                    <li><a tabindex="-1" href="${ctxpath}/orders/order.action?create">create</a></li>
                 </ul>
             </li>
             <li class="dropdown">
