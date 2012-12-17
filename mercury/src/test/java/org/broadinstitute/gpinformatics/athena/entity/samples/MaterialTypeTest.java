@@ -30,6 +30,21 @@ public class MaterialTypeTest {
 
         MaterialType materialTypeB = new MaterialType( "nameb", "category");
         Assert.assertEquals(-1, materialTypeA1.compareTo( materialTypeB));
+
+        try {
+            MaterialType materialTypeC1 = new MaterialType( null, "category");
+            Assert.fail("expected npe exception");
+        } catch ( Exception e ) {
+        }
+
+        try {
+            MaterialType materialTypeC2 = new MaterialType( "nameb", null);
+            Assert.fail("expected npe exception");
+        } catch ( Exception e ) {
+        }
+
+         Assert.assertEquals(-1, materialTypeA1.compareTo( materialTypeB));
+
     }
 
     @Test
