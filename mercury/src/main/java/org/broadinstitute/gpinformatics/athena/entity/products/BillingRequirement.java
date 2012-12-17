@@ -12,14 +12,14 @@ import javax.persistence.*;
  * @author pshapiro
  */
 @Entity
-@Audited()
+@Audited
 @Table(schema = "athena", name = "billing_requirement")
 public class BillingRequirement {
 
     @Id
     @SequenceGenerator(name = "SEQ_BILLING_REQUIREMENT", schema = "athena", sequenceName = "SEQ_BILLING_REQUIREMENT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_BILLING_REQUIREMENT")
-    private Integer billing_requirement_id;
+    private Long billing_requirement_id;
 
     public enum Operator {
         GREATER_THAN(">"),
@@ -48,10 +48,10 @@ public class BillingRequirement {
     }
 
     @Column(name = "attribute", nullable = false)
-    private String attribute;
+    private String attribute = "x";
 
     @Column(name = "operator", nullable = false)
-    private Operator operator;
+    private Operator operator = Operator.GREATER_THAN;
 
     @Column(name = "value", nullable = false)
     private double value;

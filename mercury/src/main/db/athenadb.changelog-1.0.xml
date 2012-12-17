@@ -1652,7 +1652,7 @@
                 <sequenceExists sequenceName="SEQ_BILLING_REQUIREMENT" schemaName="athena"/>
             </not>
         </preConditions>
-        <createSequence sequenceName="SEQ_BILLING_REQUIREMENT" schemaName="athena"/>
+        <createSequence sequenceName="SEQ_BILLING_REQUIREMENT" startValue="1" schemaName="athena"/>
     </changeSet>
 
     <changeSet id="GPLIM-543-11" author="pshapiro">
@@ -1663,7 +1663,7 @@
         </preConditions>
         <createTable tableName="billing_requirement_aud" schemaName="athena">
             <column name="billing_requirement_id" type="int"/>
-            <column name="product_id" type="int"/>
+            <column name="product" type="int"/>
             <column name="attribute" type="varchar(255)"/>
             <column name="operator" type="varchar(5)"/>
             <column name="value" type="float"/>

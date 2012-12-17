@@ -73,14 +73,14 @@ public class Product implements Serializable, Comparable<Product> {
 
     private boolean pdmOrderableOnly;
 
-    /** True if this product/addon supports auto-billing. */
+    /** True if this product/add-on supports automated billing. */
     @Column(name = "USE_AUTOMATED_BILLING", nullable = false)
     private boolean useAutomatedBilling;
 
     /** To determine if this product can be billed, the following criteria must be true. */
-    // Note that for now, there will only be one requirement. We use OneToMay to allow for lazy loading of the
-    // requirements.
-    @OneToMany(fetch = FetchType.LAZY)
+    // Note that for now, there will only be one requirement. We use OneToMany to allow for lazy loading of the
+    // requirement.
+    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     private List<BillingRequirement> requirements = Collections.singletonList(new BillingRequirement());
 
     /**
