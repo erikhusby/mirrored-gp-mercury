@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BasePlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
@@ -379,6 +380,7 @@ public class LabEventFactory implements Serializable {
      * @param targetRackOfTubes entity
      * @return entity
      */
+    @DaoFree
     public LabEvent buildCherryPickRackToRackDbFree(PlateCherryPickEvent plateCherryPickEvent,
             Map<String, TubeFormation> mapBarcodeToSourceTubeFormation,
             Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes,
@@ -425,6 +427,7 @@ public class LabEventFactory implements Serializable {
      * @param mapBarcodeToSourceRackOfTubes
      * @return entity
      */
+    @DaoFree
     public LabEvent buildCherryPickRackToStripTubeDbFree(PlateCherryPickEvent plateCherryPickEvent,
             Map<String, TubeFormation> mapBarcodeToSourceTubeFormation,
             Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube,
@@ -627,6 +630,7 @@ public class LabEventFactory implements Serializable {
      *
      * @return entity
      */
+    @DaoFree
     public LabEvent buildFromBettaLimsRackToPlateDbFree ( PlateTransferEventType plateTransferEvent,
             Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes,
             RackOfTubes sourceRackOfTubes,
@@ -656,6 +660,7 @@ public class LabEventFactory implements Serializable {
      *
      * @return entity
      */
+    @DaoFree
     public LabEvent buildFromBettaLimsRackToPlateDbFree ( PlateTransferEventType plateTransferEvent,
                                                           TubeFormation tubeFormation, StaticPlate targetPlate ) {
         LabEvent labEvent = constructReferenceData ( plateTransferEvent, labEventRefDataFetcher );
@@ -711,6 +716,7 @@ public class LabEventFactory implements Serializable {
      * @return entity
      */
     // todo jmt combine following four methods?
+    @DaoFree
     public LabEvent buildFromBettaLimsRackToRackDbFree(PlateTransferEventType plateTransferEvent,
             TubeFormation sourceTubeFormation,
             Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes, RackOfTubes targetRackOfTubes) {
@@ -736,6 +742,7 @@ public class LabEventFactory implements Serializable {
      * @return entity
      */
     // todo jmt revisit uses of this
+    @DaoFree
     public LabEvent buildFromBettaLimsRackToRackDbFree ( PlateTransferEventType plateTransferEvent,
             Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes,
             RackOfTubes sourceRackOfTubes,
@@ -765,6 +772,7 @@ public class LabEventFactory implements Serializable {
      * @return entity
      */
     // todo jmt revisit uses of this
+    @DaoFree
     public LabEvent buildFromBettaLimsRackToRackDbFree ( PlateTransferEventType plateTransferEvent,
             Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes,
             RackOfTubes rackOfTubes,
@@ -789,6 +797,7 @@ public class LabEventFactory implements Serializable {
      *
      * @return entity
      */
+    @DaoFree
     public LabEvent buildFromBettaLimsRackToRackDbFree(
             PlateTransferEventType plateTransferEvent,
             TubeFormation sourceTubeFormation,
@@ -800,6 +809,7 @@ public class LabEventFactory implements Serializable {
         return labEvent;
     }
 
+    @DaoFree
     public LabEvent buildFromBettaLimsPlateToRackDbFree(PlateTransferEventType plateTransferEvent,
             StaticPlate sourcePlate,
             Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes, RackOfTubes targetRackOfTubes) {
@@ -813,6 +823,7 @@ public class LabEventFactory implements Serializable {
         return labEvent;
     }
 
+    @DaoFree
     public LabEvent buildFromBettaLimsPlateEventDbFree ( PlateEventType plateEvent, StaticPlate plate ) {
         LabEvent labEvent = constructReferenceData ( plateEvent, labEventRefDataFetcher );
         if ( plate == null ) {
@@ -836,6 +847,7 @@ public class LabEventFactory implements Serializable {
         }
     }
 
+    @DaoFree
     public LabEvent buildFromBettaLimsRackEventDbFree(PlateEventType plateEvent, TubeFormation tubeFormation,
             Map<String, TwoDBarcodedTube> mapBarcodeToTubes, RackOfTubes rackOfTubes) {
         LabEvent labEvent = constructReferenceData ( plateEvent, labEventRefDataFetcher );
@@ -847,6 +859,7 @@ public class LabEventFactory implements Serializable {
         return labEvent;
     }
 
+    @DaoFree
     public LabEvent buildFromBettaLimsPlateToPlateDbFree ( PlateTransferEventType plateTransferEvent,
                                                            StaticPlate sourcePlate, StaticPlate targetPlate ) {
         LabEvent labEvent = constructReferenceData ( plateTransferEvent, labEventRefDataFetcher );
@@ -862,6 +875,7 @@ public class LabEventFactory implements Serializable {
         return labEvent;
     }
 
+    @DaoFree
     public LabEvent buildFromBettaLimsPlateToPlateDbFree ( PlateTransferEventType plateTransferEvent,
                                                            StripTube sourceStripTube,
                                                            IlluminaFlowcell targetFlowcell ) {
@@ -879,6 +893,7 @@ public class LabEventFactory implements Serializable {
         return labEvent;
     }
 
+    @DaoFree
     public LabEvent buildVesselToSectionDbFree ( ReceptaclePlateTransferEvent receptaclePlateTransferEvent,
                                                  TwoDBarcodedTube sourceTube, StaticPlate targetPlate,
                                                  String targetSection ) {
