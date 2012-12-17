@@ -36,7 +36,7 @@ public class MaterialType implements Serializable, Comparable<MaterialType> {
     private String category;
 
 
-    private static final Comparator<MaterialType> MATERIAL_TYPE_COMPARATOR = new Comparator<MaterialType>() {
+    public static final Comparator<MaterialType> MATERIAL_TYPE_COMPARATOR = new Comparator<MaterialType>() {
         @Override
         public int compare(MaterialType materialType, MaterialType MaterialType1) {
             CompareToBuilder builder = new CompareToBuilder();
