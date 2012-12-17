@@ -1488,7 +1488,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="category" type="varchar(80)">
-                <constraints nullable="true"/>
+                <constraints nullable="false"/>
             </column>
         </createTable>
         <addPrimaryKey schemaName="athena" tableName="material_type" columnNames="material_type_id"/>
