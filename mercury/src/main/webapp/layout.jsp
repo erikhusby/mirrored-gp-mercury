@@ -37,6 +37,7 @@
         <script type="text/javascript" src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-dropdown.js"></script>
         <script type="text/javascript" src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-tooltip.js"></script>
         <script type="text/javascript" src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-popover.js"></script>
+        <script type="text/javascript" src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-alert.js"></script>
 
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.gpUseful-1.0.js"></script>
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.dateRangeSelector.js"></script>
