@@ -103,7 +103,7 @@
                               title="Click here to send a bug report or feedback">Feedback</span>
 
                         <!-- security-isLoggedIn" -->
-                        <c:if test="${actionBean.context.username ne null}">
+                        <c:if test="${bean.context.username ne null}">
                             |
                          <span id="userBadge" class="badge ${bean.userBean.badgeClass}" style="cursor: help;"
                                data-original-title="Account Info" rel="popover" data-placement="bottom"
@@ -118,7 +118,7 @@
 
             <nav class="row-fluid">
                 <stripes:layout-component name="menu">
-                    <c:if test="${actionBean.context.username ne null}">
+                    <c:if test="${bean.context.username ne null}">
                         <jsp:include page="/navigation.jsp"/>
                     </c:if>
                 </stripes:layout-component>
