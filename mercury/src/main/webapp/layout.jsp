@@ -1,7 +1,7 @@
 <%@ page contentType="text/html;charset=UTF-8" language="java" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
-<stripes:useActionBean var="actionBean"
+<stripes:useActionBean var="bean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean"/>
 
 <stripes:layout-definition>
@@ -39,6 +39,7 @@
         <script type="text/javascript" src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-popover.js"></script>
 
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.gpUseful-1.0.js"></script>
+        <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.dateRangeSelector.js"></script>
         <script type="text/javascript" src="${ctxpath}/resources/scripts/DataTables-1.9.4/media/js/jquery.dataTables.min.js"></script>
         <script type="text/javascript" src="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/js/TableTools.min.js"></script>
         <script type="text/javascript" src="${ctxpath}/resources/scripts/bootstrap-dt.js"></script>
@@ -61,6 +62,27 @@
             $(document).ready(function () {
                 $j('.dropdown-toggle').dropdown();
                 $j('#userBadge').popover({ trigger: "hover", html: true });
+                $j('.shiftCheckbox').enableCheckboxRangeSelection();
+
+                $j(".defaultText").focus(function (srcc) {
+                    if ($j(this).val() == $j(this)[0].title) {
+                        $j(this).removeClass("defaultTextActive");
+                        $j(this).val("");
+                    }
+                });
+
+                $j(".defaultText").blur(function () {
+                    if ($j(this).val() == "") {
+                        $j(this).addClass("defaultTextActive");
+                        $j(this).val($j(this)[0].title);
+                    }
+                });
+
+                // Default date range selector (if there is a dateRangeDiv, the action bean will HAVE to have this
+                $j('#dateRangeDiv').dateRangeSelector();
+
+                $j(".defaultText").blur();
+
             });
         </script>
         <title>Mercury | ${pageTitle}</title>
@@ -74,7 +96,7 @@
                         <img src="${ctxpath}/images/broad_logo.png" alt="Broad Institute"/>
                         <a href="${ctxpath}/index"
                            style="padding-left: 30px;text-decoration: none; font-variant: small-caps; font-size: 3em">
-                            <img src="${ctxpath}/images/mercury_helmet_${actionBean.buildInfoBean.deployment}.png" alt="Mercury Helmet" width="40" height="30"/> Mercury</a>
+                            <img src="${ctxpath}/images/mercury_helmet_${bean.buildInfoBean.deployment}.png" alt="Mercury Helmet" width="40" height="30"/> Mercury</a>
                     </div>
                     <div id="navbarForm" class="nav pull-right">
                         <span id="jiraProblem" class="badge" style="cursor: pointer;"
@@ -83,10 +105,9 @@
                         <!-- security-isLoggedIn" -->
                         <c:if test="${actionBean.context.username ne null}">
                             |
-                            <span id="userBadge" class="badge ${actionBean.userBean.badgeClass}" style="cursor: help;"
+                         <span id="userBadge" class="badge ${bean.userBean.badgeClass}" style="cursor: help;"
                                data-original-title="Account Info" rel="popover" data-placement="bottom"
-                               data-content="${actionBean.userBean.bspStatus}<br/>${actionBean.userBean.jiraStatus}<br/>${actionBean.userBean.rolesString}">${actionBean.userBean.loginUserName}
-                            </span>
+                               data-content="${bean.userBean.bspStatus}<br/>${bean.userBean.jiraStatus}<br/>${bean.userBean.rolesString}">${bean.userBean.loginUserName}</span>
 
                             &#160;
                             <a href="${ctxpath}/security/security.action?signOut" value="Sign out" class="btn btn-mini">Sign out</a>
@@ -128,8 +149,8 @@
         <footer>
             <p>Copyright © 2012 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or
                 disclosure is permitted.<br/>
-                Genomics Platform. ${actionBean.buildInfoBean.buildInformation}. Deployment
-                - ${actionBean.buildInfoBean.deployment}.</p>
+                Genomics Platform. ${bean.buildInfoBean.buildInformation}. Deployment
+                - ${bean.buildInfoBean.deployment}.</p>
         </footer>
 
     </html>

@@ -96,3 +96,18 @@ section { margin-left: 10px; }
 
 .defaultText { }
 .defaultTextActive { color: #A1A1A1; font-style: italic; }
+
+/* jquery date picker */
+.ui-datepicker-trigger {
+    width: 19px;
+    height: 19px;
+    vertical-align: top;
+    margin-top: 2px;
+}
+
+/* multi-check box count indicator */
+.checkedCount {
+    font-size:xx-small;
+    vertical-align: super;
+    margin-left: 2px;
+}

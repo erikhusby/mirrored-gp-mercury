@@ -20,8 +20,8 @@ import net.sourceforge.stripes.validation.ValidationErrors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.BuildInfoBean;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 
-import javax.ejb.EJB;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
@@ -51,6 +51,8 @@ public class CoreActionBean implements ActionBean {
 
     @Inject
     private UserBean userBean;
+
+    private DateRangeSelector dateRange;
 
     /**
      * @return the context
@@ -210,5 +212,13 @@ public class CoreActionBean implements ActionBean {
      */
     public UserBean getUserBean() {
         return userBean;
+    }
+
+    public void setDateRange(DateRangeSelector dateRange) {
+        this.dateRange = dateRange;
+    }
+
+    public DateRangeSelector getDateRange() {
+        return dateRange;
     }
 }

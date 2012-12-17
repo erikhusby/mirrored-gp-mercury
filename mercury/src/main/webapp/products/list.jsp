@@ -20,6 +20,11 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
+        <p>
+            <stripes:link title="New Research Project" href="${ctxpath}/products/product.action?create" class="pull-right">New product</stripes:link>
+        </p>
+
+        <div class="clearfix"></div>
 
         <table id="productList" class="table table-striped table-bordered simple">
             <thead>
