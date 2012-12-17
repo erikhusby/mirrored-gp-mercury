@@ -4,6 +4,7 @@
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.submitString} ${actionBean.editProduct.productName}">
+${actionBean.submitString} ${actionBean.editProduct.productName}">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">

@@ -112,9 +112,6 @@
                         </div>
                     </c:if>
 
-                    <div class="page-title">
-                         ${pageTitle}
-                    </div>
                     <div class="page-body">
                         <stripes:layout-component name="content"/>
                     </div>

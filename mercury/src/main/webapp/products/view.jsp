@@ -3,7 +3,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="View Product: ${actionBean.product.productName}">
+<stripes:layout-render name="/layout.jsp" pageTitle="View Product" sectionTitle="View Product: ${actionBean.product.productName}">
 
     <stripes:layout-component name="content">
 

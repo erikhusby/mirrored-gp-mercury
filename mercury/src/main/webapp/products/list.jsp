@@ -3,7 +3,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="List Products">
+<stripes:layout-render name="/layout.jsp" pageTitle="List Products" sectionTitle="List Products">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
@@ -15,7 +15,6 @@
                     "bStateSave": false,
                     "bJQueryUI": true,
                     "bPaginate": false,
-                    "sSearch": "Filter:",
                     "bLengthChange": false,
                     "asStripClasses": [ 'odd', 'even' ],
                     "aaSorting": [[1,'asc']],
