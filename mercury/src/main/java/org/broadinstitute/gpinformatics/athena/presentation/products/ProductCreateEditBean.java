@@ -1,11 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.presentation.products;
 
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.boundary.products.ProductManager;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductSearcher;
-import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
-import org.broadinstitute.gpinformatics.athena.control.ProductUtil;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
@@ -17,20 +13,18 @@ import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
-import java.util.*;
+import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-/**
- * TODO: Update method documentation, especially around price item selection.
- */
-@ManagedBean(name = "productBean")
+
+@ManagedBean
 @ViewScoped
-public class ProductCreateEditBean extends AbstractJsfBean {
+public class ProductCreateEditBean extends AbstractJsfBean implements Serializable {
 
     @Inject
     private ProductFamilyDao productFamilyDao;
-
-    @Inject
-    private PriceItemDao priceItemDao;
 
     /**
      * Source of quote server sourced price data
@@ -45,7 +39,7 @@ public class ProductCreateEditBean extends AbstractJsfBean {
      * Transaction support for create / update operations
      */
     @Inject
-    private ProductManager productManager;
+    private ProductEjb productEjb;
 
     /**
      * Flag so we don't issue the same summary warning more than once per request
@@ -58,9 +52,16 @@ public class ProductCreateEditBean extends AbstractJsfBean {
             "These price items have been temporarily removed from this product; hit Save to remove these price items permanently or Cancel to abort.";
 
 
-    public static final String DEFAULT_WORKFLOW_NAME = "";
-    public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
     private Product product;
+
+    /**
+     * GPLIM-559 The part number input field is bound to this separate part number property to avoid issues with updated
+     * model values being cycled back out to the viewParam after application validation failures in #save().  If we
+     * pass application validation, this part number is passed into the ProductManager#save method to undergo further
+     * validations.  If all these validations pass, the part number is copied into the model object and saved to the db.
+     * This is the general JSF pattern that should be followed for user-editable business keys.
+     */
+    private String partNumber;
 
     /**
      * These are in their own field since they are JAXB {@link PriceItem} DTOs and not JPA entities
@@ -77,28 +78,6 @@ public class ProductCreateEditBean extends AbstractJsfBean {
      */
     private List<Product> addOns;
 
-
-    /**
-     * Hook for the preRenderView event that initiates the long running conversation and sets up conversation scoped
-     * data from the product, also initializes the form as appropriate
-     */
-    public void onPreRenderView() {
-        initForm();
-    }
-
-
-    /**
-     * Utility method to map JAXB DTOs to entities for price items
-     * @param priceItem
-     * @return
-     */
-    private org.broadinstitute.gpinformatics.athena.entity.products.PriceItem dtoToEntity(PriceItem priceItem) {
-        return new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
-                priceItem.getId(),
-                priceItem.getPlatformName(),
-                priceItem.getCategoryName(),
-                priceItem.getName());
-    }
 
     /**
      * Convenience method to differentiate between create and edit use cases
@@ -136,43 +115,40 @@ public class ProductCreateEditBean extends AbstractJsfBean {
     /**
      * Initialize the form if this is not a postback
      */
-    private void initForm() {
+    public void onPreRenderView() {
         if (!FacesContext.getCurrentInstance().isPostback()) {
 
             if (isCreating()) {
-                product = initEmptyProduct();
+                product = Product.makeEmptyProduct();
             } else {
 
                 if (product.getPrimaryPriceItem() != null) {
                     PriceItem priceItemDto = entityToDto(product.getPrimaryPriceItem());
 
-                    if (! priceListCache.contains(priceItemDto)) {
+                    if (!priceListCache.contains(priceItemDto)) {
                         issueMessagesForPriceItemNotOnPriceList("defaultPriceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, true));
                         primaryPriceItem = null;
                     } else {
                         primaryPriceItem = entityToDto(product.getPrimaryPriceItem());
                     }
                 }
-                if (product.getOptionalPriceItems() != null) {
-                    optionalPriceItems = new ArrayList<PriceItem>();
-                    for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getOptionalPriceItems()) {
 
-                        PriceItem priceItemDto = entityToDto(priceItem);
-                        if (! priceListCache.contains(priceItemDto)) {
-                            issueMessagesForPriceItemNotOnPriceList("priceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, false));
-                            primaryPriceItem = null;
-                        } else {
-                            optionalPriceItems.add(priceItemDto);
-                        }
+                optionalPriceItems = new ArrayList<PriceItem>();
+                for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getOptionalPriceItems()) {
+
+                    PriceItem priceItemDto = entityToDto(priceItem);
+                    if (!priceListCache.contains(priceItemDto)) {
+                        issueMessagesForPriceItemNotOnPriceList("priceItem", getClientMessageForPriceItemNotInPriceList(priceItemDto, false));
+                        primaryPriceItem = null;
+                    } else {
+                        optionalPriceItems.add(priceItemDto);
                     }
                 }
 
-                // TODO: is this needed? or does the actual backing model work for p:autoComplete?
-                // I believe this is needed because the backing model is a Set and p:autoComplete wants a List
-                if (product.getAddOns() != null) {
-                    addOns = new ArrayList<Product>();
-                    addOns.addAll(product.getAddOns());
-                }
+                addOns = new ArrayList<Product>();
+                addOns.addAll(product.getAddOns());
+
+                partNumber = product.getPartNumber();
             }
         }
     }
@@ -186,13 +162,6 @@ public class ProductCreateEditBean extends AbstractJsfBean {
         return new PriceItem(entity.getQuoteServerId(), entity.getPlatform(), entity.getCategory(), entity.getName());
     }
 
-    /**
-     * Initialze an empty {@link Product} so fields can drill into the backing product without NPEs
-     */
-    private Product initEmptyProduct() {
-        return new Product(null, null, null, null, null, null, null,
-                null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME, false);
-    }
 
     /**
      * Enumerate the product families
@@ -212,19 +181,25 @@ public class ProductCreateEditBean extends AbstractJsfBean {
         boolean creating = isCreating();
 
         try {
-            addAllAddOnsToProduct();
-            addAllPriceItemsToProduct();
+            productEjb.save(product, partNumber, addOns, primaryPriceItem, optionalPriceItems);
 
-            // If there are duplicate price items, send an error message
-            String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
-            if (duplicatePriceItems != null) {
-                addErrorMessage("Cannot save with duplicate price items: " + StringUtils.join(duplicatePriceItems, ", "));
-                return null;
-            }
-
-            productManager.save(product);
-        } catch (Exception e) {
-            addErrorMessage(e.getMessage());
+        } catch (ProductEjb.ExpiredAddOnsException e) {
+            addErrorMessage("Add-ons are no longer available: " + e.getMessage());
+            return null;
+        } catch (ProductEjb.DuplicateBusinessKeyException e) {
+            addErrorMessage("Part number already in use by another Product: " + partNumber);
+            return null;
+        } catch (ProductEjb.NoPrimaryPriceItemException e) {
+            addErrorMessage("No Primary Price Item set");
+            return null;
+        } catch (ProductEjb.IncompatibleDatesException e) {
+            addErrorMessage("Incompatible availablility and discontinued dates, discontinued date must be defined and come after availability date");
+            return null;
+        } catch (ProductEjb.DuplicatePriceItemNamesException e) {
+            addErrorMessage("Cannot save with duplicate price items: " + e.getMessage());
+            return null;
+        } catch (RuntimeException e) {
+            addErrorMessage("Error creating Product: " + e);
             return null;
         }
 
@@ -238,85 +213,34 @@ public class ProductCreateEditBean extends AbstractJsfBean {
     }
 
 
-    /**
-     * Entify all the addons from our JAXB DTOs and add them to the {@link Product} before persisting
-     */
-    private void addAllAddOnsToProduct() {
-        Date now = Calendar.getInstance().getTime();
-        product.getAddOns().clear();
-        if ( addOns != null) {
-            for ( Product aProductAddOn : addOns ) {
-                if ( aProductAddOn != null ) {
-                    if ( aProductAddOn.isAvailable() || aProductAddOn.getAvailabilityDate().after( now ) ) {
-                        product.addAddOn(aProductAddOn);
-                    } else {
-                        throw new RuntimeException("Product AddOn " + aProductAddOn.getPartNumber() + " is no longer available. Please remove it from the list.");
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Utility method to grab a persistent/detached JPA entity corresponding to this JAXB DTO if one exists,
-     * otherwise return just a transient JPA entity
-     *
-     * @param priceItem
-     * @return
-     */
-    private org.broadinstitute.gpinformatics.athena.entity.products.PriceItem findEntity(PriceItem priceItem) {
-        // quite sure this is not the right way to do this, restructure as necessary
-        org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity =
-                priceItemDao.find(priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
-
-        if (entity == null) {
-            entity = dtoToEntity(priceItem);
-        }
-
-        return entity;
-    }
-
-    /**
-     * Entify all the price items from our JAXB DTOs and add them to the {@link Product} before persisting
-     */
-    private void addAllPriceItemsToProduct() throws ApplicationValidationException {
-
-        if (primaryPriceItem == null) {
-            // ApplicationValidationException is rollback=true, but we're not in a transaction at the time of this
-            // validation, I just wanted to reuse the same exception type since this is an application validation
-            throw new ApplicationValidationException("Default price item must be entered");
-        }
-
-        product.setPrimaryPriceItem(findEntity(primaryPriceItem));
-
-        product.getOptionalPriceItems().clear();
-        if (optionalPriceItems != null) {
-            for (PriceItem priceItem : optionalPriceItems) {
-                org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity = findEntity(priceItem);
-                product.addPriceItem(entity);
-            }
-        }
-    }
-
     public Product getProduct() {
         return product;
     }
+
     public void setProduct(final Product product) {
         this.product = product;
     }
 
+    public String getPartNumber() {
+        return partNumber;
+    }
+
+    public void setPartNumber(String partNumber) {
+        this.partNumber = partNumber;
+    }
+
     public Integer getExpectedCycleTimeDays() {
-        return ProductUtil.convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
+        return Product.convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
     }
     public void setExpectedCycleTimeDays(final Integer expectedCycleTimeDays) {
-        product.setExpectedCycleTimeSeconds(ProductUtil.convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
+        product.setExpectedCycleTimeSeconds(Product.convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
     }
 
     public Integer getGuaranteedCycleTimeDays() {
-        return ProductUtil.convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
+        return Product.convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
     }
     public void setGuaranteedCycleTimeDays(final Integer guaranteedCycleTimeDays) {
-        product.setGuaranteedCycleTimeSeconds(ProductUtil.convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
+        product.setGuaranteedCycleTimeSeconds(Product.convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
     }
 
 
@@ -339,6 +263,17 @@ public class ProductCreateEditBean extends AbstractJsfBean {
 
 
     public List<PriceItem> getOptionalPriceItems() {
+        if (product == null) {
+            return new ArrayList<PriceItem>();
+        }
+
+        if (optionalPriceItems == null) {
+            optionalPriceItems = new ArrayList<PriceItem>();
+
+            for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItem : product.getOptionalPriceItems()) {
+                optionalPriceItems.add(entityToDto(priceItem));
+            }
+        }
         return optionalPriceItems;
     }
 
@@ -390,7 +325,9 @@ public class ProductCreateEditBean extends AbstractJsfBean {
     }
 
     /**
-     * Encapsulate logic for coming up with nice {@link PriceItem} labels that fit in the allotted space
+     * Encapsulate logic for coming up with nice {@link PriceItem} labels that fit in the allotted space.  It would be
+     * better to make sure the PrimeFaces p:autoComplete fields were wide enough to accommodate our PriceItem text,
+     * but the multiple=true p:autoComplete does not seem to honor size=xxx specifications.
      *
      * @param priceItem
      * @return
@@ -411,6 +348,7 @@ public class ProductCreateEditBean extends AbstractJsfBean {
         }
         return priceItem.getName();
     }
+
 
     public String addOnLabel(Product product) {
 

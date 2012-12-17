@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
-import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
@@ -29,7 +28,7 @@ public class Product implements Serializable, Comparable<Product> {
 
     private String productName;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST}, optional = false)
     private ProductFamily productFamily;
 
     @Column(length = 2000)
@@ -74,6 +73,11 @@ public class Product implements Serializable, Comparable<Product> {
     private String workflowName;
 
     private boolean pdmOrderableOnly;
+
+    public static final String DEFAULT_WORKFLOW_NAME = "";
+    public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
+
+    private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 
     /**
      * Allowable Material Types for the product.
@@ -120,6 +124,32 @@ public class Product implements Serializable, Comparable<Product> {
         this.topLevelProduct = topLevelProduct;
         this.workflowName = workflowName;
         this.pdmOrderableOnly = pdmOrderableOnly;
+    }
+
+    /**
+     * Converts cycle times from days to seconds.
+     * @return the number of seconds.
+     */
+    public static Integer convertCycleTimeDaysToSeconds(Integer cycleTimeDays) {
+        Integer cycleTimeSeconds = null;
+        if ( cycleTimeDays != null ) {
+            cycleTimeSeconds = ( cycleTimeDays == null ? 0 : cycleTimeDays.intValue() * ONE_DAY_IN_SECONDS);
+        }
+        return cycleTimeSeconds;
+    }
+
+    /**
+     * Converts cycle times from seconds to days.
+     * This method rounds down to the nearest day
+     * @param cycleTimeSeconds
+     * @return the number of days.
+     */
+    public static Integer convertCycleTimeSecondsToDays(Integer cycleTimeSeconds) {
+        Integer cycleTimeDays = null;
+        if ((cycleTimeSeconds != null) && cycleTimeSeconds >= ONE_DAY_IN_SECONDS) {
+            cycleTimeDays =  (cycleTimeSeconds - (cycleTimeSeconds % ONE_DAY_IN_SECONDS)) / ONE_DAY_IN_SECONDS;
+        }
+        return cycleTimeDays;
     }
 
     public Long getProductId() {
@@ -376,4 +406,11 @@ public class Product implements Serializable, Comparable<Product> {
             }
         }
     }
+
+
+    public static Product makeEmptyProduct() {
+        return new Product(null, null, null, null, null, null, null,
+                null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME, false);
+    }
+
 }
