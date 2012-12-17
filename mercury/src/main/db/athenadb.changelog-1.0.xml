@@ -1450,4 +1450,27 @@
         <addNotNullConstraint schemaName="athena" tableName="research_projectirb" columnName="research_project" />
     </changeSet>
 
+
+    <changeSet id="GPLIM-492.1" author="mccrory">
+        <preConditions onFail="WARN">
+            <and>
+              <sqlCheck expectedResult="0">select count(*) from billable_item_aud</sqlCheck>
+              <tableExists schemaName="athena" tableName="billable_item_aud"  />
+            </and>
+        </preConditions>
+        <comment>The billable_item_aud table was superceded by billing_ledger_aud table</comment>
+        <dropTable tableName="billable_item_aud"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-492.2" author="mccrory">
+        <preConditions onFail="WARN">
+            <and>
+              <sqlCheck expectedResult="0">select count(*) from billable_item</sqlCheck>
+              <tableExists schemaName="athena" tableName="billable_item"  />
+            </and>
+        </preConditions>
+        <comment>The billable_item table was superceded by billing_ledger table</comment>
+        <dropTable tableName="billable_item"/>
+    </changeSet>
+
 </databaseChangeLog>

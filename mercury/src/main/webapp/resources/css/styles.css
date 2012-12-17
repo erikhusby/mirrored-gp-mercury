@@ -82,5 +82,5 @@ fieldset .ui-chkbox {margin-left:5px}
     background-color: #0081C2;
 }
 
-.b-commandButton { padding: 1px; } /* overlay is just slightly too small; make it bigger */
+.b-commandButton { display: inline-block; padding: 1px; } /* overlay is just slightly too small; make it bigger */
 .b-commandButton .blockOverlay { background: white; opacity: 0.5; } /* Bootstrap says to fade disabled buttons by 50% */
