@@ -1,17 +1,32 @@
 package org.broadinstitute.gpinformatics.athena.infrastructure.bsp;
 
+import junit.framework.Assert;
+import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortSearchService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfigProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceImpl;
+import org.testng.annotations.Test;
+
+import java.util.Set;
+
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.QA;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
+
 public class BSPCohortSearchServiceTest {
 
-    //TODO need tests for BSPCohortSearchService method
-//    @Test(groups = EXTERNAL_INTEGRATION, enabled = false)
-//    public void testBasic() {
-//        BSPCohortSearchService service = new BSPCohortSearchServiceImpl(new QABSPConnectionParameters());
-//        final String TEST_SAMPLE_ID = "SM-12CO4";
-//        String [] sampleIDs = new String [] {TEST_SAMPLE_ID};
-//        List<String[]> data = service.runSampleSearch(Arrays.asList(sampleIDs), BSPSampleSearchColumn.SAMPLE_ID,
-//                BSPSampleSearchColumn.COLLABORATOR_SAMPLE_ID,
-//                BSPSampleSearchColumn.ROOT_SAMPLE);
-//        Assert.assertEquals(TEST_SAMPLE_ID, data.get(0)[0]);
-//    }
+    @Test(groups = EXTERNAL_INTEGRATION, enabled = false)
+    public void testBasic() {
+        Set<Cohort> rawCohorts = null;
+        try {
+            BSPConfig bspConfig = BSPConfigProducer.getConfig(QA);
+            BSPCohortSearchService cohortSearchService  = new BSPSampleSearchServiceImpl( bspConfig );
+            rawCohorts = cohortSearchService.getAllCohorts();
+        } catch (Exception ex) {
+            Assert.fail("Could not get BSP Cohorts from BSP QA");
+        }
+
+        Assert.assertNotNull(rawCohorts);
+    }
 
 }

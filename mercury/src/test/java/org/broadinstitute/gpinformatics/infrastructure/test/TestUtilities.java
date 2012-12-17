@@ -10,9 +10,6 @@ package org.broadinstitute.gpinformatics.infrastructure.test;
 public class TestUtilities {
 
     public static WeldUtil bootANewWeld() {
-//        WeldContainer weld = new Weld().initialize();
-        //service = weld.instance().select(BSPCohortSearchService.class).get();
-//        return new WeldUtil(weld);
         return new WeldUtil();
     }
 
