@@ -5,7 +5,9 @@ import com.sun.jersey.api.client.filter.LoggingFilter;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -45,9 +47,13 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         // Start of extraction - call LabBatchResource
         BettaLIMSMessage extractionStartMsg = new BettaLIMSMessage();
         for (String sampleBarcode : sampleBarcodes) {
+            ReceptacleEventType receptacleEventType = bettaLimsMessageFactory.buildReceptacleEvent(
+                    "SamplesExtractionStart", sampleBarcode, "Conical50");
+            // todo jmt restore batch IDs.
+//            receptacleEventType.setBatchId("BP-2001");
             extractionStartMsg.getReceptacleEvent().add(
                     // todo different plastic types - falcon, FFPE
-                    bettaLimsMessageFactory.buildReceptacleEvent("SamplesExtractionStart", sampleBarcode, "Conical50"));
+                    receptacleEventType);
         }
         SamplesPicoDbTest.sendMessages(baseUrl, client, Arrays.asList(extractionStartMsg));
         bettaLimsMessageFactory.advanceTime();
@@ -71,9 +77,11 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         }
 
         BettaLIMSMessage extractionEndMsg = new BettaLIMSMessage();
-        extractionEndMsg.getPlateCherryPickEvent().add(bettaLimsMessageFactory.buildCherryPick(
+        PlateCherryPickEvent plateCherryPickEvent = bettaLimsMessageFactory.buildCherryPick(
                 "SamplesExtractionEndTransfer", sourceRackBarcodes, sourceTubeBarcodes,
-                extEndRackBarcode, extractionEndTubeBarcodes, cherryPicks));
+                extEndRackBarcode, extractionEndTubeBarcodes, cherryPicks);
+//        plateCherryPickEvent.setBatchId("BP-2002");
+        extractionEndMsg.getPlateCherryPickEvent().add(plateCherryPickEvent);
         SamplesPicoDbTest.sendMessages(baseUrl, client, Arrays.asList(extractionEndMsg));
         bettaLimsMessageFactory.advanceTime();
 
@@ -86,8 +94,10 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         }
         String normRackBarcode = "NormRack" + timestamp;
         BettaLIMSMessage normMsg = new BettaLIMSMessage();
-        normMsg.getPlateTransferEvent().add(bettaLimsMessageFactory.buildRackToRack("SamplesNormalizationTransfer",
-                extEndRackBarcode, extractionEndTubeBarcodes, normRackBarcode, normTubeBarcodes));
+        PlateTransferEventType plateTransferEventType = bettaLimsMessageFactory.buildRackToRack("SamplesNormalizationTransfer",
+                extEndRackBarcode, extractionEndTubeBarcodes, normRackBarcode, normTubeBarcodes);
+//        plateTransferEventType.setBatchId("BP-2003");
+        normMsg.getPlateTransferEvent().add(plateTransferEventType);
         SamplesPicoDbTest.sendMessages(baseUrl, client, Arrays.asList(normMsg));
         bettaLimsMessageFactory.advanceTime();
 
@@ -97,6 +107,7 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         PlateTransferEventType rackToCovaris = bettaLimsMessageFactory.buildRackToPlate("SamplesPlatingToCovaris",
                 normRackBarcode, normTubeBarcodes, "CovarisRack" + timestamp);
         rackToCovaris.getPlate().setPhysType("CovarisRack");
+//        rackToCovaris.setBatchId("BP-2004");
         platingMsg.getPlateTransferEvent().add(rackToCovaris);
         SamplesPicoDbTest.sendMessages(baseUrl, client, Arrays.asList(platingMsg));
         bettaLimsMessageFactory.advanceTime();
