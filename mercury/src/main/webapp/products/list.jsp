@@ -15,7 +15,6 @@
                     "bStateSave": false,
                     "bJQueryUI": true,
                     "bPaginate": false,
-                    "sSearch": "Filter:",
                     "bLengthChange": false,
                     "asStripClasses": [ 'odd', 'even' ],
                     "aaSorting": [[1,'asc']],
