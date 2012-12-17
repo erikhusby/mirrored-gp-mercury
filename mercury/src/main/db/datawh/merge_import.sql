@@ -507,6 +507,7 @@ FOR new IN im_po_sample_cur LOOP
       product_order_id = new.product_order_id,
       sample_name = new.sample_name,
       billing_status = new.billing_status,
+      sample_position = new.sample_position,
       etl_date = new.etl_date 
     WHERE product_order_sample_id = new.product_order_sample_id;
 
@@ -515,6 +516,7 @@ FOR new IN im_po_sample_cur LOOP
       product_order_id,
       sample_name,
       billing_status,
+      sample_position,
       etl_date 
     )
     SELECT
@@ -522,6 +524,7 @@ FOR new IN im_po_sample_cur LOOP
       new.product_order_id,
       new.sample_name,
       new.billing_status,
+      new.sample_position,
       new.etl_date 
     FROM DUAL WHERE NOT EXISTS (
       SELECT 1 FROM product_order_sample

@@ -159,6 +159,7 @@ CREATE TABLE product_order_sample (
   product_order_id NUMERIC(19) NOT NULL,
   sample_name VARCHAR2(255),
   billing_status VARCHAR2(40) NOT NULL,
+  sample_position NUMERIC(19) NOT NULL,
   etl_date DATE NOT NULL,
   CONSTRAINT fk_pos_poid FOREIGN KEY (product_order_id)
     REFERENCES product_order(product_order_id)
@@ -326,7 +327,8 @@ CREATE TABLE im_product_order_sample_stat (
   is_delete CHAR(1) NOT NULL,
   product_order_sample_id NUMERIC(19) NOT NULL,
   status_date DATE,
-  billing_status VARCHAR2(40)
+  billing_status VARCHAR2(40),
+  sample_position NUMERIC(19)
 );
 
 
