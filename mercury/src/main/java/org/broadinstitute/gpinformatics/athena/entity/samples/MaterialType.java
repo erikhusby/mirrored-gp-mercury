@@ -31,7 +31,6 @@ public class MaterialType implements Serializable, Comparable<MaterialType> {
     @Column(nullable = false)
     private String name;
 
-    // there are null material type categories. Eg. Bone Marrow.
     @Column(nullable = false)
     private String category;
 
@@ -53,7 +52,13 @@ public class MaterialType implements Serializable, Comparable<MaterialType> {
     MaterialType() {
     }
 
-    public MaterialType(@Nonnull String name, String category) {
+    public MaterialType(@Nonnull String name, @Nonnull String category) {
+        if (name == null) {
+            throw new NullPointerException("Null name!");
+        }
+        if (category == null) {
+            throw new NullPointerException("Null category!");
+        }
         this.name = name;
         this.category = category;
     }
