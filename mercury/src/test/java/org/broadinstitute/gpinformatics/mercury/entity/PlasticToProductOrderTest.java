@@ -29,6 +29,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -188,8 +189,7 @@ public class PlasticToProductOrderTest extends ContainerTest {
 
 
         PlateTransferEventType plateXfer = messageFactory.buildRackToPlate ( LabEventType.POND_REGISTRATION.getName (),
-                                                                             "RackBarcode", barcodeToTubeMap.keySet (),
-                                                                             destinationPlateBarcode );
+                "RackBarcode", new ArrayList<String>(barcodeToTubeMap.keySet ()), destinationPlateBarcode );
 
 
         LabEvent rackToPlateTransfer = eventFactory.buildFromBettaLimsRackToPlateDbFree ( plateXfer, barcodeToTubeMap,

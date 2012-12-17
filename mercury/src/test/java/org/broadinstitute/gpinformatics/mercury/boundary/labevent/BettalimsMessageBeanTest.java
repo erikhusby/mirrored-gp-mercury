@@ -27,7 +27,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Test JMS
+ * Test Message Driven Bean
  */
 public class BettalimsMessageBeanTest {
 
@@ -49,13 +49,14 @@ public class BettalimsMessageBeanTest {
         }
     }
 
-    private static void sendJmsMessage(String message) {
+    public static void sendJmsMessage(String message) {
         Connection connection = null;
         Session session = null;
         try{
             Map<String, Object> connectionParams = new HashMap<String, Object>();
             connectionParams.put(TransportConstants.PORT_PROP_NAME, 5445);
             connectionParams.put(TransportConstants.HOST_PROP_NAME, "localhost");
+//            connectionParams.put(TransportConstants.HOST_PROP_NAME, "gpinfx-jms");
             TransportConfiguration transportConfiguration = new TransportConfiguration(
                     NettyConnectorFactory.class.getName(), connectionParams);
             HornetQConnectionFactory connectionFactory = HornetQJMSClient.createConnectionFactoryWithoutHA(
@@ -66,6 +67,7 @@ public class BettalimsMessageBeanTest {
 
             session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
             Destination destination = session.createQueue("broad.queue.mercury.bettalims.dev");
+//            Destination destination = session.createQueue("broad.queue.mercury.bettalims.production");
             MessageProducer producer = session.createProducer(destination);
             producer.setDeliveryMode(DeliveryMode.PERSISTENT);
 
@@ -82,12 +84,6 @@ public class BettalimsMessageBeanTest {
                 }
                 if (connection != null) {
                     connection.close();
-                }
-                // Give the message bean time to process the message before the container shuts down
-                try {
-                    Thread.sleep(5000L);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
                 }
             } catch (JMSException e) {
                 // do nothing
