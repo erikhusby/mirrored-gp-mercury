@@ -31,7 +31,7 @@ public class MaterialType implements Serializable, Comparable<MaterialType> {
     @Column(nullable = false)
     private String name;
 
-    // there are null material tyep categories. Eg. Bone Marrow.
+    // there are null material type categories. Eg. Bone Marrow.
     @Column(nullable = false)
     private String category;
 
