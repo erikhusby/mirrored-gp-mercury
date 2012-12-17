@@ -33,9 +33,14 @@
 <f:view contentType="text/html">
     <ui:insert name="metadata"/>
     <h:head>
-        <h:outputStylesheet library="css" name="bootstrap.css"/>
-        <h:outputStylesheet library="css" name="primefaces_bootstrap_fixes.css"/>
-        <h:outputStylesheet library="css" name="styles.css"/>
+        <!-- Target our stylesheets in relation to PrimeFaces's to make sure they're in a consistent order even when
+             rendering after a failed validation during postback. Cannot use h:outputStylesheet becaue it doesn't render
+             any actual markup: http://blog.primefaces.org/?p=1433 -->
+        <f:facet name="middle">
+            <link type="text/css" rel="stylesheet" href="#{request.contextPath}/resources/css/bootstrap.css"/>
+            <link type="text/css" rel="stylesheet" href="#{request.contextPath}/resources/css/primefaces_bootstrap_fixes.css"/>
+            <link type="text/css" rel="stylesheet" href="#{request.contextPath}/resources/css/styles.css"/>
+        </f:facet>
         <link rel="shortcut icon" type="image/x-icon" href="#{request.contextPath}/favicon.ico"/>
         <title>Mercury | <ui:insert name="title"/></title>
         <ui:insert name="head"/>
