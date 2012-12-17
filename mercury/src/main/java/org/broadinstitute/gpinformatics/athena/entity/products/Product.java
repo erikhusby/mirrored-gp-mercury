@@ -399,4 +399,21 @@ public class Product implements Serializable, Comparable<Product> {
         }
         return cycleTimeDays;
     }
+
+    public String getProductLabel() {
+
+        if (getProductName() == null) {
+            return "";
+        }
+
+        final int MAX_NAME = 45;
+
+        if (getProductName().length() > MAX_NAME){
+            return getProductName().substring(0, MAX_NAME) + "... ";
+        } else if ( getProductName().length() + getPartNumber().length() < MAX_NAME ){
+            return getProductName() + " : " + getPartNumber();
+        }
+
+        return getProductName();
+    }
 }

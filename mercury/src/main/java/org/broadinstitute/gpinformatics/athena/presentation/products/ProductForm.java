@@ -317,15 +317,8 @@ public class ProductForm extends AbstractJsfBean {
         this.product = product;
     }
 
-    public Integer getExpectedCycleTimeDays() {
-        return convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
-    }
-    public void setExpectedCycleTimeDays(final Integer expectedCycleTimeDays) {
-        product.setExpectedCycleTimeSeconds(convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
-    }
-
     public Integer getGuaranteedCycleTimeDays() {
-        return convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
+        return Product.convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
     }
     public void setGuaranteedCycleTimeDays(final Integer guaranteedCycleTimeDays) {
         product.setGuaranteedCycleTimeSeconds(convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));

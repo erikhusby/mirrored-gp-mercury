@@ -7,18 +7,16 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
+import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.json.JSONArray;
 
 import javax.inject.Inject;
+import java.io.StringReader;
 import java.util.Collections;
 import java.util.List;
 
@@ -27,31 +25,19 @@ import java.util.List;
  */
 @UrlBinding("/products/product.action")
 public class ProductActionBean extends CoreActionBean{
-    private Log logger = LogFactory.getLog(ProductActionBean.class);
+
+    private static final String CREATE = "Create New Product";
+    private static final String EDIT = "Edit Product: ";
 
     private static final String CREATE_PAGE = "/products/create.jsp";
     private static final String LIST_PAGE = "/products/list.jsp";
     private static final String VIEW_PAGE = "/products/view.jsp";
 
-    private static final String GLOBAL_MESSAGE_PRICE_ITEMS_NOT_ON_PRICE_LIST =
-            "One or more price items associated with this product do not appear on the current quote server price list.  " +
-                    "These price items have been temporarily removed from this product; hit Save to remove these price items permanently or Cancel to abort.";
-
     @Inject
     private ProductFamilyDao productFamilyDao;
 
     @Inject
-    private PriceItemDao priceItemDao;
-
-    // The complete price list from the quote server
-    @Inject
-    private PriceListCache priceListCache;
-
-    @Inject
     private ProductDao productDao;
-
-    public static final String DEFAULT_WORKFLOW_NAME = "";
-    public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
 
     // Data needed for displaying the view
     private List<ProductFamily> productFamilies;
@@ -59,39 +45,31 @@ public class ProductActionBean extends CoreActionBean{
 
     @Validate(required = true, on = {"view", "edit"})
     private String productKey;
-    private Product product;
 
     private Product editProduct;
 
-    /**
-     * maps between athena price item and the quote server version of PriceItem
-     *
-     * @param entity The entity The price item entity
-     *
-     * @return The quote servers price item that corresponds
-     */
-    private PriceItem getQuotePriceItem(org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity) {
-        return new PriceItem(entity.getQuoteServerId(), entity.getPlatform(), entity.getCategory(), entity.getName());
+    private String submitString = CREATE;
+
+    // The search query
+    private String q;
+
+    public String getQ() {
+        return q;
     }
 
-    /**
-     * maps between quote server version of PriceItem and athena price item
-     *
-     * @param quotePriceItem The athena price item
-     *
-     * @return The athena price item
-     */
-    private org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getPriceItem(PriceItem quotePriceItem) {
-        return new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
-            quotePriceItem.getId(), quotePriceItem.getPlatformName(), quotePriceItem.getCategoryName(), quotePriceItem.getName());
+    public void setQ(String q) {
+        this.q = q;
     }
 
     /**
      * Initialize the product with the passed in key for display in the form
      */
-    @After(stages = LifecycleStage.BindingAndValidation, on = {"view", "edit"})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {"view", "edit", "save", "addOnsAutocomplete"})
     public void init() {
-        product = productDao.findByBusinessKey(productKey);
+        productKey = getContext().getRequest().getParameter("productKey");
+        if (productKey == null) {
+            editProduct = productDao.findByBusinessKey(productKey);
+        }
     }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = {"create", "edit"})
@@ -105,10 +83,17 @@ public class ProductActionBean extends CoreActionBean{
         allProducts = productDao.findAll(Product.class);
     }
 
+    @After(stages = LifecycleStage.BindingAndValidation, on = {"save", "addOnsAutocomplete"})
+    public void setupOptionalProductKey() {
+        if (productKey == null) {
+            editProduct = productDao.findByBusinessKey(productKey);
+        }
+    }
+
     /**
      * Validate information on the product being edited or created
      */
-    @ValidationMethod(on = {"createForm", "editForm"})
+    @ValidationMethod(on = {"save"})
     public void validatePriceItems(ValidationErrors errors) {
         String[] duplicatePriceItems = editProduct.getDuplicatePriceItemNames();
         if (duplicatePriceItems != null) {
@@ -117,13 +102,13 @@ public class ProductActionBean extends CoreActionBean{
 
         // Is there a product with the part number already?
         Product existingProduct = productDao.findByPartNumber(editProduct.getPartNumber());
-        if (existingProduct != null && ! existingProduct.getProductId().equals(product.getProductId())) {
+        if (existingProduct != null && ! existingProduct.getProductId().equals(editProduct.getProductId())) {
             errors.addGlobalError(new SimpleError("Part number '" + editProduct.getPartNumber() + "' is already in use"));
         }
 
         if ((editProduct.getAvailabilityDate() != null) &&
             (editProduct.getDiscontinuedDate() != null) &&
-            (editProduct.getAvailabilityDate().after(product.getDiscontinuedDate()))) {
+            (editProduct.getAvailabilityDate().after(editProduct.getDiscontinuedDate()))) {
             errors.addGlobalError(new SimpleError("Availability date must precede discontinued date."));
         }
     }
@@ -141,12 +126,26 @@ public class ProductActionBean extends CoreActionBean{
 
     @HandlesEvent("create")
     public Resolution create() {
+        submitString = CREATE;
         return new ForwardResolution(CREATE_PAGE);
     }
 
     @HandlesEvent("edit")
     public Resolution edit() {
+        submitString = EDIT;
         return new ForwardResolution(CREATE_PAGE);
+    }
+
+    @HandlesEvent("addOnsAutocomplete")
+    public Resolution addOnsAutocomplete() throws Exception {
+        List<Product> addOns = productDao.searchProductsForAddonsInProductEdit(editProduct, getQ());
+
+        JSONArray itemList = new JSONArray();
+        for (Product addOn : addOns) {
+            itemList.put(new AutoCompleteToken(addOn.getBusinessKey(), addOn.getProductLabel(), false).getJSONObject());
+        }
+
+        return new StreamingResolution("text", new StringReader(itemList.toString()));
     }
 
     @HandlesEvent(value = "save")
@@ -158,39 +157,8 @@ public class ProductActionBean extends CoreActionBean{
             return null;
         }
 
-        addMessage("Product \"" + product.getProductName() + "\" has been created");
-        return new RedirectResolution(VIEW_PAGE).addParameter("product", editProduct.getProductId());
-    }
-
-    private String addProductParam() {
-        return "&product=" + product.getBusinessKey();
-    }
-
-    /**
-     * convert a quote price item to an athena price item
-     *
-     * @param quotePriceItem The quote server's price item
-     *
-     * @return The athena price item
-     */
-    private org.broadinstitute.gpinformatics.athena.entity.products.PriceItem findEntity(PriceItem quotePriceItem) {
-        org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity =
-            priceItemDao.find(
-                quotePriceItem.getPlatformName(), quotePriceItem.getCategoryName(), quotePriceItem.getName());
-
-        if (entity == null) {
-            entity = getPriceItem(quotePriceItem);
-        }
-
-        return entity;
-    }
-
-    public Product getProduct() {
-        return product;
-    }
-
-    public void setProduct(final Product product) {
-        this.product = product;
+        addMessage("Product \"" + editProduct.getProductName() + "\" has been created");
+        return new RedirectResolution(VIEW_PAGE).addParameter("product", editProduct.getBusinessKey());
     }
 
     public Product getEditProduct() {
@@ -211,5 +179,17 @@ public class ProductActionBean extends CoreActionBean{
 
     public void setProductKey(String productKey) {
         this.productKey = productKey;
+    }
+
+    public List<ProductFamily> getProductFamilies() {
+        return productFamilies;
+    }
+
+    public String getSubmitString() {
+        return submitString;
+    }
+
+    public boolean isCreating() {
+        return CREATE.equals(submitString);
     }
 }

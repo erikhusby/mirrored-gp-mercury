@@ -101,7 +101,7 @@
                 <div class="control-group">
                     <p:outputLabel for="expectedCycleTimeDays" value="Expected Cycle Time (Days)" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="expectedCycleTimeDays" value="#{productForm.expectedCycleTimeDays}" size="50" required="false"/>
+                        <p:inputText id="expectedCycleTimeDays" value="#{productForm.product.expectedCycleTimeDays}" size="50" required="false"/>
                         <p:watermark for="expectedCycleTimeDays" value="Enter the expected cycle time in days"/>
                         <p:message for="expectedCycleTimeDays"/>
                     </div>
@@ -110,7 +110,7 @@
                 <div class="control-group">
                     <p:outputLabel for="guaranteedCycleTimeDays" value="Guaranteed Cycle Time (Days)" styleClass="control-label"/>
                     <div class="controls">
-                        <p:inputText id="guaranteedCycleTimeDays" value="#{productForm.guaranteedCycleTimeDays}" size="50" required="false"/>
+                        <p:inputText id="guaranteedCycleTimeDays" value="#{productForm.product.guaranteedCycleTimeDays}" size="50" required="false"/>
                         <p:watermark for="guaranteedCycleTimeDays" value="Enter the guaranteed cycle time in days"/>
                         <p:message for="guaranteedCycleTimeDays"/>
                     </div>

@@ -5,8 +5,6 @@
 
 <stripes:layout-render name="/layout.jsp" pageTitle="View Product: ${actionBean.product.productName}">
 
-    <stripes:layout-component name="extraHead">
-    </stripes:layout-component>
     <stripes:layout-component name="content">
 
         <div class="form-horizontal">
