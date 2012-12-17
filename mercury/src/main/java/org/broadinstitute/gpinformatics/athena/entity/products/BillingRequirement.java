@@ -51,6 +51,7 @@ public class BillingRequirement {
     private String attribute = "x";
 
     @Column(name = "operator", nullable = false)
+    @Enumerated(EnumType.STRING)
     private Operator operator = Operator.GREATER_THAN;
 
     @Column(name = "value", nullable = false)
