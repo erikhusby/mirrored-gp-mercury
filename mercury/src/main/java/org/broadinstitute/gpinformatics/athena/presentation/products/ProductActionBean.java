@@ -25,13 +25,12 @@ import java.util.List;
  */
 @UrlBinding("/products/product.action")
 public class ProductActionBean extends CoreActionBean{
-
     private static final String CREATE = "Create New Product";
     private static final String EDIT = "Edit Product: ";
 
-    private static final String CREATE_PAGE = "/products/create.jsp";
-    private static final String LIST_PAGE = "/products/list.jsp";
-    private static final String VIEW_PAGE = "/products/view.jsp";
+    public static final String PROUDCT_CREATE_PAGE = "/products/create.jsp";
+    public static final String PRODUCT_LIST_PAGE = "/products/list.jsp";
+    public static final String PRODUCT_VIEW_PAGE = "/products/view.jsp";
 
     @Inject
     private ProductFamilyDao productFamilyDao;
@@ -116,24 +115,24 @@ public class ProductActionBean extends CoreActionBean{
     @DefaultHandler
     @HandlesEvent("list")
     public Resolution list() {
-        return new ForwardResolution(LIST_PAGE);
+        return new ForwardResolution(PRODUCT_LIST_PAGE);
     }
 
     @HandlesEvent("view")
     public Resolution view() {
-        return new ForwardResolution(VIEW_PAGE);
+        return new ForwardResolution(PRODUCT_VIEW_PAGE);
     }
 
     @HandlesEvent("create")
     public Resolution create() {
         submitString = CREATE;
-        return new ForwardResolution(CREATE_PAGE);
+        return new ForwardResolution(PROUDCT_CREATE_PAGE);
     }
 
     @HandlesEvent("edit")
     public Resolution edit() {
         submitString = EDIT;
-        return new ForwardResolution(CREATE_PAGE);
+        return new ForwardResolution(PROUDCT_CREATE_PAGE);
     }
 
     @HandlesEvent("addOnsAutocomplete")
@@ -158,7 +157,7 @@ public class ProductActionBean extends CoreActionBean{
         }
 
         addMessage("Product \"" + editProduct.getProductName() + "\" has been created");
-        return new RedirectResolution(VIEW_PAGE).addParameter("product", editProduct.getBusinessKey());
+        return new RedirectResolution(PRODUCT_VIEW_PAGE).addParameter("product", editProduct.getBusinessKey());
     }
 
     public Product getEditProduct() {

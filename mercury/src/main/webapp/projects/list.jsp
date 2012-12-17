@@ -1,7 +1,7 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
-                       beanclass="edu.mit.broad.gap.portal.web.stripes.workspace.DataDownloadActionBean" />
+                       beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" />
 
 <stripes:layout-render name="/layout.jsp" pageTitle="List research projects" sectionTitle="List research projects">
 
@@ -9,40 +9,42 @@
         <script type="text/javascript">
             $j(document).ready(function () {
                 $j('.shiftCheckbox').enableCheckboxRangeSelection();
-                $j('#projectsTable').dataTable({
-                    "aaSorting":[],
-                    "bFilter":true
-                });
+                $j('#projectsTable').dataTable( {  })
+            });
         </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
 
     <p>
-        <stripes:link title="New Research Project" href="/project/project.action?create" class="pull-right"/>
+        <stripes:link title="New Research Project" href="${ctxpath}/projects/project.action?create" class="pull-right">New research project</stripes:link>
     </p>
 
-    <table class="simple" id="studies" width="100%">
+    <div class="clearfix"></div>
+
+    <p>
+    <table class="table simple" id="projectsTable" width="100%">
         <thead>
         <tr>
             <th width="*">Name</th>
-            <th style="text-align: center;">ID</th>
-            <th style="text-align: center;">Status</th>
+            <th>ID</th>
+            <th>Status</th>
             <th>Owner</th>
             <th>Updated</th>
-            <th style="text-align: center;"># of Orders</th>
+            <th># of Orders</th>
         </tr>
         </thead>
         <tbody>
-            <c:forEach items="${actionBean.researchProjectData.values}" var="project">
+        <c:forEach items="${actionBean.allResearchProjects}" var="project">
+            <tr>
                 <td>
-                    ${project.title}
+                        ${project.title}
                 </td>
                 <td>
+                    <stripes:link href="/projects/project.action" event="view">
+                        <stripes:param name="businessKey" value="${project.businessKey}"/>
                         ${project.businessKey}
-                </td>
-                <td>
-                        ${project.jiraTicketKey}
+                    </stripes:link>
                 </td>
                 <td>
                         ${project.status}
@@ -56,10 +58,11 @@
                 <td>
                         ${actionBean.researchProjectCounts.get(project.jiraTicketKey)}
                 </td>
-            </c:forEach>
+            </tr>
+        </c:forEach>
         </tbody>
     </table>
-
+    </p>
 
     </stripes:layout-component>
 </stripes:layout-render>

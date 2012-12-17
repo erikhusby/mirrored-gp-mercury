@@ -1,7 +1,7 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <stripes:layout-render name="/layout.jsp" pageTitle="Mercury">
     <stripes:layout-component name="content">
-        <div class="hero-unit" style="width:900px; margin:0px auto;">
+        <div class="hero-unit" style="width:900px; margin:0px auto; background-image: url('${ctxpath}/images/labhero.jpg'); background-size: 100%;">
             <p>This page allows you to manage a variety of things, just select an item below or navigate directly to
                 where you need to go from the menubar.</p>
         </div>

@@ -8,25 +8,12 @@
         <script type="text/javascript">
             $j(document).ready(function() {
                 $j('#productList').dataTable( {
-                    "sDom": '<"H"lfr>t<"F"Tip>',
-                    "sWrapper": "dataTables_wrapper form-inline",
-                    "bAutoWidth": false,
-                    "bInfo": false,
-                    "bStateSave": false,
-                    "bJQueryUI": true,
-                    "bPaginate": false,
-                    "bLengthChange": false,
-                    "asStripClasses": [ 'odd', 'even' ],
                     "aaSorting": [[1,'asc']],
                     "aoColumns": [
                         {"bSortable": true},
                         {"bSortable": true},
                         {"bSortable": true},
-                        {"bSortable": false}],
-                    "oTableTools": {
-                        "sSwfPath": "${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
-                        "aButtons": [ "copy", "csv", "print" ]
-                    }
+                        {"bSortable": false}]
                 })
             });
         </script>
@@ -34,7 +21,7 @@
 
     <stripes:layout-component name="content">
 
-        <table id="productList" class="table table-striped table-bordered">
+        <table id="productList" class="table table-striped table-bordered simple">
             <thead>
                 <tr>
                     <th>Part Number</th>

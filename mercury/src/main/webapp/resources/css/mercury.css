@@ -1,0 +1,45 @@
+/*
+ * The Broad Institute
+ * SOFTWARE COPYRIGHT NOTICE AGREEMENT
+ * This software and its documentation are copyright 2012 by the
+ * Broad Institute/Massachusetts Institute of Technology. All rights are
+ * reserved.
+ *
+ * This software is supplied without any warranty or guaranteed support
+ * whatsoever. Neither the Broad Institute nor MIT can be responsible for its
+ * use, misuse, or functionality.
+ */
+body { padding-bottom: 40px; font-size: 12px; }
+footer { font-size: 10px; text-align: center; padding-top: 20px; }
+section { margin-left: 2%; margin-right: 2% }
+
+/* Override Bootstrap's opinion that links should not be underlined. */
+a { text-decoration: underline; color: #0088CC; }
+a.external {background-image:url("/Mercury/images/external-link.gif");background-position:right center;background-repeat:no-repeat;display:inline;padding:0 20px 0 0;}
+
+label, input, button, select, textarea { font-size: 12px }
+/* SIMPLE (HIGHTLIGHTS ROW W/ MOUSE)***************** */
+table.simple thead tr { background-color: #e9e9ef; text-align: left; }
+table.simple tr.even { background-color: #fff; }
+table.simple tr.odd { background-color: #f5f5f5; }
+table.simple { border: 1px solid #ccc; border-collapse: collapse; }
+table.simple tr:hover td { background-color: #def; }
+table.simple td,table.simple th { spacing: 10px ; border-right: 1px solid #ccc; border-bottom: 1px dotted #dfdfdf; padding: 2px; }
+table.nocol tbody td,table.nocol tbody th { border-left: none; border-right: none; }
+
+.page-header { border-bottom: 1px solid #EEEEEE; color: #644436; font-size: 2em; font-variant: small-caps; margin: 0 0 10px; padding-bottom: 0;}
+
+
+/* DataTables sorting CSS */
+table.table thead .sorting,
+table.table thead .sorting_asc,
+table.table thead .sorting_desc,
+table.table thead .sorting_asc_disabled,
+table.table thead .sorting_desc_disabled { cursor: pointer; *cursor: hand; }
+
+table.table thead .sorting { background: url('/Mercury/images/arrow_off.gif') no-repeat center right; }
+table.table thead .sorting_asc { background: url('/Mercury/images/arrow_down.gif') no-repeat center right; }
+table.table thead .sorting_desc { background: url('/Mercury/images/arrow_up.gif') no-repeat center right; }
+
+table.table thead .sorting_asc_disabled { background: url('/Mercury/images/sort_asc_disabled.png') no-repeat center right; }
+table.table thead .sorting_desc_disabled { background: url('/Mercury/images/sort_desc_disabled.png') no-repeat center right; }
