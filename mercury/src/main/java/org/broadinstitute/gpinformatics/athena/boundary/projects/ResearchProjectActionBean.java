@@ -22,7 +22,7 @@ import java.util.Map;
  *
  * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
  */
-@UrlBinding("/project/project.action")
+@UrlBinding("/projects/project.action")
 public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private ResearchProjectDao researchProjectDao;
