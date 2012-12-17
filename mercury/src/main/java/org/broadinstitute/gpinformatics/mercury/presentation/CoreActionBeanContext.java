@@ -37,5 +37,15 @@ public class CoreActionBeanContext extends ActionBeanContext {
     public void invalidateSession() {
         getSession().invalidate();
     }
+
+    /**
+     * Get the JAAS username.
+     *
+     * @return the JAAS username
+     */
+    public String getUsername() {
+        HttpServletRequest request = getRequest();
+        return request.getRemoteUser();
+    }
 }
 

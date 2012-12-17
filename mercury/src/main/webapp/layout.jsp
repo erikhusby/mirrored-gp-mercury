@@ -81,22 +81,28 @@
                               title="Click here to send a bug report or feedback">Feedback</span>
 
                         <!-- security-isLoggedIn" -->
+                        <c:if test="${actionBean.context.username ne null}">
                             |
-                         <span id="userBadge" class="badge ${actionBean.userBean.badgeClass}" style="cursor: help;"
+                            <span id="userBadge" class="badge ${actionBean.userBean.badgeClass}" style="cursor: help;"
                                data-original-title="Account Info" rel="popover" data-placement="bottom"
-                               data-content="${actionBean.userBean.bspStatus}<br/>${actionBean.userBean.jiraStatus}<br/>${actionBean.userBean.rolesString}">${actionBean.userBean.loginUserName}</span>
+                               data-content="${actionBean.userBean.bspStatus}<br/>${actionBean.userBean.jiraStatus}<br/>${actionBean.userBean.rolesString}">${actionBean.userBean.loginUserName}
+                            </span>
 
-                        &#160;
-                        <a href="${ctxpath}/logout" value="Sign out" class="btn btn-mini">Sign out</a>
+                            &#160;
+                            <a href="${ctxpath}/security/security.action?signOut" value="Sign out" class="btn btn-mini">Sign out</a>
+                        </c:if>
                     </div>
                 </div>
             </div>
 
             <nav class="row-fluid">
                 <stripes:layout-component name="menu">
-                    <jsp:include page="/navigation.jsp"/>
+                    <c:if test="${actionBean.context.username ne null}">
+                        <jsp:include page="/navigation.jsp"/>
+                    </c:if>
                 </stripes:layout-component>
             </nav>
+
 
             <div class="row-fluid">
 
