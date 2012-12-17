@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
-
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -84,7 +83,7 @@ public class Product implements Serializable, Comparable<Product> {
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product", nullable = false)
     @AuditJoinTable(name = "product_requirement_join_aud")
-    private List<BillingRequirement> requirements = Collections.singletonList(new BillingRequirement());
+    private List<BillingRequirement> requirements;
 
     /**
      * JPA package visible no arg constructor
@@ -281,6 +280,11 @@ public class Product implements Serializable, Comparable<Product> {
     }
 
     public BillingRequirement getRequirement() {
+        if (requirements == null) {
+            requirements = Collections.singletonList(new BillingRequirement());
+        } else if (requirements.isEmpty()) {
+            requirements.add(new BillingRequirement());
+        }
         return requirements.get(0);
     }
 
