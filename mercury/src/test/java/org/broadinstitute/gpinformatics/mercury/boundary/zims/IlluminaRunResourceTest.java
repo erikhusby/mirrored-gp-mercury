@@ -253,13 +253,13 @@ public class IlluminaRunResourceTest extends Arquillian {
                 foundIt = true;
                 assertEquals(libBean.getProject(),zLib.getProject());
                 assertEquals(libBean.getWorkRequestId().longValue(),zLib.getWorkRequestId());
-                assertEquals(libBean.getSampleAlias(),zLib.getSampleAlias());
+                assertEquals(libBean.getCollaboratorSampleId(),zLib.getSampleAlias());
                 assertEquals(libBean.getParticipantId(),zLib.getIndividual());
                 assertEquals(libBean.getAligner(),zLib.getAligner());
                 assertEquals(libBean.getAnalysisType(),zLib.getAnalysisType());
                 assertEquals(libBean.getBaitSetName(),zLib.getBaitSetName());
                 assertEquals(libBean.getExpectedInsertSize(),zLib.getExpectedInsertSize());
-                assertEquals(libBean.getGssrSampleType(),zLib.getGssrSampleType());
+                assertEquals(libBean.getMaterialType(),zLib.getGssrSampleType());
                 assertEquals(libBean.getInitiative(),zLib.getInitiative());
                 assertEquals(libBean.getLabMeasuredInsertSize(),zLib.getLabMeasuredInsertSize() == 0 ? null : zLib.getLabMeasuredInsertSize());
                 assertEquals(libBean.getLibrary(),zLib.getLibrary());
@@ -267,17 +267,21 @@ public class IlluminaRunResourceTest extends Arquillian {
                 assertEquals(libBean.getReferenceSequenceVersion(),zLib.getReferenceSequenceVersion());
                 assertEquals(libBean.getRestrictionEnzyme(),zLib.getRestrictionEnzyme());
                 assertEquals(libBean.getRrbsSizeRange(),zLib.getRrbsSizeRange());
-                assertEquals(libBean.getStrain(),zLib.getStrain());
-                assertEquals(libBean.getSpecies(),zLib.getSpecies());
                 assertEquals(libBean.doAggregation().booleanValue(),zLib.aggregate);
 
-                if (HUMAN.equals(zLib.getOrganism())) {
-                    if (!(HUMAN.equals(libBean.getOrganism()) || BSP_HUMAN.equals(libBean.getOrganism()))) {
-                        fail("Not the right human:" + libBean.getOrganism());
-                    }
+
+                if (libBean.isGssrSample()) {
+                    assertEquals(libBean.getSpecies(),zLib.getOrganism() + ":" + zLib.getSpecies() + ":" + zLib.getStrain());
                 }
                 else {
-                    assertEquals(libBean.getOrganism(),zLib.getOrganism());
+                    if (HUMAN.equals(zLib.getOrganism())) {
+                        if (!(HUMAN.equals(libBean.getSpecies()) || BSP_HUMAN.equals(libBean.getSpecies()))) {
+                            fail("Not the right human:" + libBean.getSpecies());
+                        }
+                    }
+                    else {
+                        fail("Can't grok organism " + zLib.getOrganism());
+                    }
                 }
                 assertEquals(libBean.getLsid(),zLib.getLsid());
                 checkEquality(zLib.getMolecularIndexes(), libBean.getMolecularIndexingScheme());

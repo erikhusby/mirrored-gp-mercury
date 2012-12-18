@@ -92,23 +92,17 @@ public class BSPSampleDTO {
                         String volume, String concentration, String sampleLsid, String collaboratorParticipantId,
                         String materialType, String total, String sampleType, String primaryDisease,
                         String gender, String stockType, String fingerprint, String sampleId,String collaboratorName) {
+        this(primaryDisease,sampleLsid,materialType,collaboratorsSampleName,organism,patientId);
         this.containerId = containerId;
         this.stockSample = stockSample;
         this.rootSample = rootSample;
         this.aliquotSample = aliquotSample;
-        this.patientId = patientId;
         this.collaboratorsSampleName = collaboratorsSampleName;
         this.collection = collection;
-
         this.volume = safeParseDouble(volume);
         this.concentration = safeParseDouble(concentration);
-        this.organism = organism;
-        this.sampleLsid = sampleLsid;
-        this.collaboratorParticipantId = collaboratorParticipantId;
-        this.materialType = materialType;
         this.total = safeParseDouble(total);
         this.sampleType = sampleType;
-        this.primaryDisease = primaryDisease;
         this.gender = gender;
         this.stockType = stockType;
         this.fingerprint = fingerprint;
@@ -117,17 +111,26 @@ public class BSPSampleDTO {
         negativeControl = false;
         this.sampleId = sampleId;
         this.collaboratorName = collaboratorName;
+        this.collaboratorParticipantId = collaboratorParticipantId;
     }
 
     /**
-     * Test only
+     * Useful for tests
      * @param primaryDisease
      * @param lsid
      */
     public BSPSampleDTO(String primaryDisease,
-                        String lsid) {
+                        String lsid,
+                        String materialType,
+                        String collaboratorsSampleName,
+                        String organism,
+                        String patientId) {
         this.primaryDisease = primaryDisease;
         this.sampleLsid = lsid;
+        this.materialType = materialType;
+        this.collaboratorsSampleName = collaboratorsSampleName;
+        this.organism = organism;
+        this.patientId = patientId;
     }
 
     public double getVolume() {

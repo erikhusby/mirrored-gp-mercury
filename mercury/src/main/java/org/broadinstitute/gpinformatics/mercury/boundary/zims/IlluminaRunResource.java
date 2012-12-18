@@ -77,7 +77,8 @@ public class IlluminaRunResource implements Serializable {
      */
     ZimsIlluminaRun getRun(final TZamboniRun tRun,
                            Map<String,BSPSampleDTO> lsidToBSPSample,
-                           ThriftLibraryConverter thriftLibConverter) {
+                           ThriftLibraryConverter thriftLibConverter,
+                           ProductOrderDao pdoDao) {
         if (tRun == null) {
             throw new NullPointerException("tRun cannot be null");
         }
@@ -99,11 +100,10 @@ public class IlluminaRunResource implements Serializable {
                 BSPSampleDTO bspDTO = lsidToBSPSample.get(zamboniLibrary.getLsid());
                 ProductOrder pdo = null;
                 if (zamboniLibrary.getPdoKey() != null) {
-                    pdo = pdoDao.findSingle(ProductOrder.class,ProductOrder_.jiraTicketKey,zamboniLibrary.getPdoKey());
+                    pdo = pdoDao.findByBusinessKey(zamboniLibrary.getPdoKey());
                 }
                 libraries.add(thriftLibConverter.convertLibrary(zamboniLibrary,bspDTO,pdo));
             }
-            //TODO SGM:  pull lane library name from tZamboniLane
             runBean.addLane(new ZimsIlluminaChamber(tZamboniLane.getLaneNumber(), libraries, tZamboniLane.getPrimer(), tZamboniLane.getSequencedLibraryName()));
         }
         return runBean;
@@ -117,8 +117,8 @@ public class IlluminaRunResource implements Serializable {
             throw new RuntimeException("Could not load run " + runName);
         }
         else {
-            final Map<String,BSPSampleDTO> lsidToBSPSample = fetchAllBSPDataAtOnce(tRun);
-            runBean = getRun(tRun,lsidToBSPSample,new SquidThriftLibraryConverter());
+            Map<String,BSPSampleDTO> lsidToBSPSample = fetchAllBSPDataAtOnce(tRun);
+            runBean = getRun(tRun,lsidToBSPSample,new SquidThriftLibraryConverter(),pdoDao);
         }
 
         return runBean;

@@ -85,9 +85,9 @@ public class LibraryBeanFactory {
                     null/*Boolean negativeControl*/,
                     /*String weirdness*/
                     /*Double preCircularizationDnaSize*/
-                    null/*Boolean partOfDevExperiment*/,
+                    /*Boolean partOfDevExperiment*/
                     null/*TZDevExperimentData devExperimentData*/,
-                    null/*String gssrBarcode*/,
+                    /*String gssrBarcode*/
                     null/*Collection<String> gssrBarcodes*/,
                     null/*String gssrSampleType*/,
                     /*Short targetLaneCoverage*/

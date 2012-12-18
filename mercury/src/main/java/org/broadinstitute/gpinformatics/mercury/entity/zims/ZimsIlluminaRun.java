@@ -57,7 +57,7 @@ public class ZimsIlluminaRun {
                            String sequencer,
                            String sequencerModel,
                            String runDate,
-                           boolean isPaired) {
+                           Boolean isPaired) {
         this.runName = runName;
         this.runBarcode = runBarcode;
         this.flowcellBarcode = flowcellBarcode;

@@ -52,21 +52,11 @@ public class LibraryBean {
     @JsonProperty("referenceSequenceVersion")
     private String referenceSequenceVersion;
 
-    /** the name the collaborator has given to the sample */
-    @JsonProperty("sampleAlias")
-    private String collaboratorSampleId;
-
     @JsonProperty("aggregate")
     private Boolean doAggregation;
 
-    @JsonProperty("organism")
-    private String organism;
-
     @JsonProperty("species")
     private String species;
-
-    @JsonProperty("strain")
-    private String strain;
 
     @JsonProperty("lsid")
     private String sampleLSID;
@@ -102,9 +92,6 @@ public class LibraryBean {
     @JsonProperty("gssrBarcodes")
     private Collection<String> gssrBarcodes = new ArrayList<String>();
 
-    @JsonProperty("gssrSampleType")
-    private String gssrSampleType;
-
     @JsonProperty("customAmpliconSetNames")
     private Collection<String> customAmpliconSetNames = new ArrayList<String>();
 
@@ -129,10 +116,6 @@ public class LibraryBean {
     @JsonProperty
     private String productFamily;
 
-    @JsonProperty
-    // todo arz merge with gssr species
-    private String bspSpecies;
-
     private String rootSample;
 
     @JsonProperty
@@ -151,20 +134,36 @@ public class LibraryBean {
     private String sampleType;
 
     @JsonProperty
-    // todo arz merge with gssr collab sample id
-    private String bspCollaboratorSampleId;
+    private String collaboratorSampleId;
+
+    @JsonProperty
+    private String materialType;
+
+    @JsonProperty
+    private boolean isGssrSample;
 
     public LibraryBean() {}
 
     /**
-     * Test-only
+     * Sets gssr parameters and then overrides them
+     * with BSP values.  Useful for testing.
      * @param gssrLsid
      * @param bspSampleDTO
      */
-    public LibraryBean(String gssrLsid,
+    LibraryBean(String gssrLsid,
+                       String gssrMaterialType,
+                       String gssrCollaboratorSampleId,
+                       String gssrOrganism,
+                       String gssrSpecies,
+                       String gssrStrain,
+                       String gssrIndividual,
                        BSPSampleDTO bspSampleDTO) {
         this.sampleLSID = gssrLsid;
-        initBSPFields(bspSampleDTO);
+        this.materialType = gssrMaterialType;
+        this.collaboratorSampleId = gssrCollaboratorSampleId;
+        this.species = gssrOrganism + ":" + gssrSpecies + ":" + gssrStrain;
+        this.participantId = gssrIndividual;
+        overrideSampleFieldsFromBSP(bspSampleDTO);
     }
 
     /**
@@ -192,9 +191,7 @@ public class LibraryBean {
      * @param labMeasuredInsertSize
      * @param positiveControl
      * @param negativeControl
-     * @param partOfDevExperiment
      * @param devExperimentData
-     * @param gssrBarcode
      * @param gssrBarcodes
      * @param gssrSampleType
      * @param doAggregation
@@ -204,6 +201,8 @@ public class LibraryBean {
      * @param bspSampleDTO trumps all other sample-related fields.  Other sample
 *                     related fields (such as inidividual, organism, etc.) are here
 *                     for GSSR samples.  If bspSampleDTO is non-null, all sample
+*                     information is derived from bspSampleDTO; otherwise individual
+*                     sample fields are pulled from their constructor counterparts
      */
     public LibraryBean(String library, String project, String initiative, Long workRequest,
                        MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize,
@@ -211,10 +210,10 @@ public class LibraryBean {
                        String organism, String species, String strain, String sampleLSID,
                        String aligner, String rrbsSizeRange, String restrictionEnzyme,
                        String bait, String individual, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
-                       Boolean partOfDevExperiment,
-                       TZDevExperimentData devExperimentData, String gssrBarcode, Collection<String> gssrBarcodes,
+                       TZDevExperimentData devExperimentData, Collection<String> gssrBarcodes,
                        String gssrSampleType, Boolean doAggregation, Collection<String> customAmpliconSetNames,
                        ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO) {
+        this(sampleLSID,gssrSampleType,collaboratorSampleId,organism,species,strain,individual,bspSampleDTO);
         this.library = library;
         this.project = project;
         this.initiative = initiative;
@@ -227,16 +226,10 @@ public class LibraryBean {
         this.analysisType = analysisType;
         this.referenceSequence = referenceSequence;
         this.referenceSequenceVersion = referenceSequenceVersion;
-        this.collaboratorSampleId = collaboratorSampleId;
-        this.organism = organism;
-        this.species = species;
-        this.strain = strain;
-        this.sampleLSID = sampleLSID;
         this.aligner = aligner;
         this.rrbsSizeRange = rrbsSizeRange;
         this.restrictionEnzyme = restrictionEnzyme;
         this.bait = bait;
-        this.participantId = individual;
         this.labMeasuredInsertSize = ThriftConversionUtil.zeroAsNull(labMeasuredInsertSize);
         isPositiveControl = positiveControl;
         isNegativeControl = negativeControl;
@@ -244,7 +237,6 @@ public class LibraryBean {
             this.devExperimentData = new DevExperimentDataBean(devExperimentData);
         }
         this.gssrBarcodes = gssrBarcodes;
-        this.gssrSampleType = gssrSampleType;
         this.doAggregation = doAggregation;
         this.customAmpliconSetNames = customAmpliconSetNames;
         if (productOrder != null) {
@@ -265,14 +257,18 @@ public class LibraryBean {
             }
         }
         this.lcSet = lcSet;
-        if (bspSampleDTO != null) {
-            initBSPFields(bspSampleDTO);
-        }
     }
 
-    private final void initBSPFields(BSPSampleDTO bspSampleDTO) {
+    /**
+     * Set various sample related fields to whatever the
+     * {@link BSPSampleDTO} says.  In other words,
+     * ignore any GSSR parameters and overwrite them
+     * with what BSP says.
+     * @param bspSampleDTO
+     */
+    private final void overrideSampleFieldsFromBSP(BSPSampleDTO bspSampleDTO) {
         if (bspSampleDTO != null) {
-            this.bspSpecies = bspSampleDTO.getOrganism();
+            this.species = bspSampleDTO.getOrganism();
             this.primaryDisease = bspSampleDTO.getPrimaryDisease();
             this.sampleType = bspSampleDTO.getSampleType();
             this.rootSample = bspSampleDTO.getRootSample();
@@ -281,7 +277,13 @@ public class LibraryBean {
             this.gender = bspSampleDTO.getGender();
             // todo arz pop/ethnicity,
             this.collection = bspSampleDTO.getCollection();
-            this.bspCollaboratorSampleId = bspSampleDTO.getCollaboratorsSampleName();
+            this.collaboratorSampleId = bspSampleDTO.getCollaboratorsSampleName();
+            this.materialType = bspSampleDTO.getMaterialType();
+            this.participantId = bspSampleDTO.getPatientId();
+            isGssrSample = false;
+        }
+        else {
+            isGssrSample = true;
         }
     }
 
@@ -293,11 +295,7 @@ public class LibraryBean {
         return project;
     }
 
-    public String getOrganism() {
-        return organism;
-    }
-
-    public String getSampleAlias() {
+    public String getCollaboratorSampleId() {
         return collaboratorSampleId;
     }
 
@@ -323,10 +321,6 @@ public class LibraryBean {
 
     public Collection<String> getGssrBarcodes() {
         return gssrBarcodes;
-    }
-    
-    public String getGssrSampleType() {
-        return gssrSampleType;
     }
 
     public String getInitiative() {
@@ -367,10 +361,6 @@ public class LibraryBean {
     
     public String getSpecies() {
         return species;
-    }
-
-    public String getStrain() {
-        return strain;
     }
 
     public DevExperimentDataBean getDevExperimentData() {
@@ -445,12 +435,11 @@ public class LibraryBean {
         return collection;
     }
 
-    public String getBspSpecies() {
-        return bspSpecies;
+    public String getMaterialType() {
+        return materialType;
     }
 
-    public String getBspCollaboratorSampleId() {
-        return bspCollaboratorSampleId;
+    public boolean isGssrSample() {
+        return isGssrSample;
     }
-
 }

@@ -20,17 +20,37 @@ public class LibraryBeanTest {
         String gssrLsid = "gssr:lsid";
         String bspLsid = "bsp:lsid";
         String disease = "cancer";
-        BSPSampleDTO bspDto = new BSPSampleDTO(bspLsid,disease);
+        String gssrMaterialType = "Genomic DNA";
+        String bspMaterialType = "DNA: Genomic";
+        String bspCollabSampleId = "bsp:collabId";
+        String gssrCollabSampleId = "gssr:collabId";
+        String gssrOrganism = "gssrOrg";
+        String gssrSpecies = "gssrSpecies";
+        String gssrStrain = "gssrStrain";
+        String bspSpecies = "bsp species";
+        String gssrParticipant = "gssrPatient";
+        String bspParticipant = "bsp participant";
+        BSPSampleDTO bspDto = new BSPSampleDTO(bspLsid,disease,bspMaterialType,bspCollabSampleId,bspSpecies,bspParticipant);
 
         // send in some GSSR sample attributes in addition to bsp DTO to verify GSSR override
-        LibraryBean libraryBean = new LibraryBean(gssrLsid,bspDto);
+        LibraryBean libraryBean = new LibraryBean(gssrLsid,gssrMaterialType,gssrCollabSampleId,gssrOrganism,gssrSpecies,gssrStrain,gssrParticipant,bspDto);
 
         assertEquals(libraryBean.getPrimaryDisease(),bspDto.getPrimaryDisease());
         assertEquals(libraryBean.getLsid(),bspDto.getSampleLsid());
+        assertFalse(libraryBean.isGssrSample());
+        assertEquals(libraryBean.getMaterialType(),bspDto.getMaterialType());
+        assertEquals(libraryBean.getCollaboratorSampleId(),bspCollabSampleId);
+        assertEquals(libraryBean.getSpecies(),bspDto.getOrganism());
+        assertEquals(libraryBean.getParticipantId(),bspDto.getPatientId());
 
         // new up sans bsp DTO to confirm gssr fields work
-        libraryBean = new LibraryBean(gssrLsid,null);
+        libraryBean = new LibraryBean(gssrLsid,gssrMaterialType,gssrCollabSampleId,gssrOrganism,gssrSpecies,gssrStrain,gssrParticipant,null);
         assertEquals(libraryBean.getLsid(),gssrLsid);
+        assertTrue(libraryBean.isGssrSample());
+        assertEquals(libraryBean.getMaterialType(),gssrMaterialType);
+        assertEquals(libraryBean.getCollaboratorSampleId(),gssrCollabSampleId);
+        assertEquals(libraryBean.getSpecies(),gssrOrganism + ":" + gssrSpecies + ":" + gssrStrain);
+        assertEquals(libraryBean.getParticipantId(),gssrParticipant);
     }
 
     /**
@@ -42,13 +62,13 @@ public class LibraryBeanTest {
         BSPSampleSearchServiceStub bspSampleSearchServiceStub = new BSPSampleSearchServiceStub();
         BSPSampleDTO sampleDTO = new BSPSampleDataFetcher(bspSampleSearchServiceStub).fetchSingleSampleFromBSP(BSPSampleSearchServiceStub.SM_12CO4);
 
-        LibraryBean libraryBean = new LibraryBean(null,sampleDTO);
+        LibraryBean libraryBean = new LibraryBean(null,null,null,null,null,null,null,sampleDTO);
 
         assertEquals(libraryBean.getGender(),sampleDTO.getGender());
         assertEquals(libraryBean.getLsid(),sampleDTO.getSampleLsid());
         assertEquals(libraryBean.getCollection(),sampleDTO.getCollection());
         assertEquals(libraryBean.getRootSample(),sampleDTO.getRootSample());
-        assertEquals(libraryBean.getBspSpecies(),sampleDTO.getOrganism());
+        assertEquals(libraryBean.getSpecies(),sampleDTO.getOrganism());
         assertEquals(libraryBean.getSampleId(),sampleDTO.getSampleId());
     }
 }
