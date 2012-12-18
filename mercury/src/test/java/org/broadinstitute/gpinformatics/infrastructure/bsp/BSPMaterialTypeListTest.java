@@ -9,19 +9,24 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import java.util.List;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false )
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true )
 public class BSPMaterialTypeListTest extends ContainerTest {
 
     @Inject
     BSPMaterialTypeList bspMaterialTypeList;
+//
+//    @Deployment
+//    public static WebArchive deployment() {
+//        return DeploymentBuilder.buildMercuryWar(DEV);
+//    }
 
     @Test
     public void testGetAllMaterials() throws Exception {
         List<MaterialType> materialTypes = bspMaterialTypeList.getMaterialTypes();
         Assert.assertNotNull(materialTypes);
         Assert.assertTrue(!materialTypes.isEmpty());
-        //An arbitrary sanity check; the actual database has at least 80 types
-        Assert.assertTrue(materialTypes.size() > 80);
+        //An arbitrary sanity check, BSP Dev has over 80, Stubby has 5 total
+        Assert.assertTrue("actual number was " + materialTypes.size(), materialTypes.size() > 4);
 
     }
 
@@ -30,8 +35,8 @@ public class BSPMaterialTypeListTest extends ContainerTest {
         List<MaterialType> materialTypes = bspMaterialTypeList.getByCategory( "DNA");
         Assert.assertNotNull(materialTypes);
         Assert.assertTrue(!materialTypes.isEmpty());
-        // An arbitrary sanity check; the actual database has at least several DNA material types
-        Assert.assertTrue(materialTypes.size() > 8);
+        // An arbitrary sanity check; BSP Dev has many, Stubby has 3 for DNA
+        Assert.assertTrue("actual number was " + materialTypes.size(), materialTypes.size() > 2 );
     }
 
     @Test
@@ -51,7 +56,7 @@ public class BSPMaterialTypeListTest extends ContainerTest {
         materialTypes = bspMaterialTypeList.find( "  Genomic  ");
         Assert.assertNotNull(materialTypes);
         Assert.assertTrue(!materialTypes.isEmpty());
-        // An arbitrary sanity check; the actual database has at least one Genomic material types
-        Assert.assertTrue(materialTypes.size() > 0);
+        // An arbitrary sanity check; the actual database has at least one Genomic material type
+        Assert.assertTrue("actual number was " + materialTypes.size(), materialTypes.size() > 0);
     }
 }
