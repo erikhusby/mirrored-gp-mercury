@@ -4,30 +4,21 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import edu.mit.broad.prodinfo.thrift.lims.*;
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.*;
-import org.broadinstitute.gpinformatics.mercury.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.*;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
-import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.transaction.UserTransaction;
 import javax.ws.rs.core.MediaType;
 import java.net.URL;
 import java.util.*;
@@ -263,7 +254,7 @@ public class IlluminaRunResourceTest extends Arquillian {
                 assertEquals(libBean.getProject(),zLib.getProject());
                 assertEquals(libBean.getWorkRequestId().longValue(),zLib.getWorkRequestId());
                 assertEquals(libBean.getSampleAlias(),zLib.getSampleAlias());
-                assertEquals(libBean.getIndividual(),zLib.getIndividual());
+                assertEquals(libBean.getParticipantId(),zLib.getIndividual());
                 assertEquals(libBean.getAligner(),zLib.getAligner());
                 assertEquals(libBean.getAnalysisType(),zLib.getAnalysisType());
                 assertEquals(libBean.getBaitSetName(),zLib.getBaitSetName());
@@ -299,9 +290,9 @@ public class IlluminaRunResourceTest extends Arquillian {
                     if (pdo != null) {
                         // todo arz other fields
                         assertEquals(libBean.getProductOrderTitle(),pdo.getTitle(),PDO_COMPARISON_ERROR_MESSAGE);
-                        assertEquals(libBean.getMercuryProjectKey(),pdo.getResearchProject().getBusinessKey(),PDO_COMPARISON_ERROR_MESSAGE);
+                        assertEquals(libBean.getResearchProjectId(),pdo.getResearchProject().getBusinessKey(),PDO_COMPARISON_ERROR_MESSAGE);
                         assertEquals(libBean.getProductOrderKey(),pdo.getBusinessKey(),PDO_COMPARISON_ERROR_MESSAGE);
-                        assertEquals(libBean.getMercuryProjectTitle(),pdo.getResearchProject().getTitle(),PDO_COMPARISON_ERROR_MESSAGE);
+                        assertEquals(libBean.getResearchProjectName(),pdo.getResearchProject().getTitle(),PDO_COMPARISON_ERROR_MESSAGE);
                     }
                 }
                 if (zLib.getLcset() != null) {

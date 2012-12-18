@@ -83,9 +83,9 @@ public class LibraryBean {
     @JsonProperty("baitSetName")
     private String bait;
 
-    /** obfuscated name of the individual (person) from whence this sample was taken */
-    @JsonProperty("individual")
-    private String individual;
+    /** obfuscated name of the participantId (person) from whence this sample was taken */
+    @JsonProperty("participantId")
+    private String participantId;
 
     @JsonProperty("labMeasuredInsertSize")
     private Double labMeasuredInsertSize;
@@ -118,16 +118,16 @@ public class LibraryBean {
     private String productOrderKey;
 
     @JsonProperty
-    private String mercuryProjectTitle;
+    private String researchProjectName;
 
     @JsonProperty
-    private String mercuryProjectKey;
+    private String researchProjectId;
 
     @JsonProperty
-    private String mercuryProduct;
+    private String product;
 
     @JsonProperty
-    private String mercuryProductFamily;
+    private String productFamily;
 
     @JsonProperty
     private String bspSpecies;
@@ -235,7 +235,7 @@ public class LibraryBean {
         this.rrbsSizeRange = rrbsSizeRange;
         this.restrictionEnzyme = restrictionEnzyme;
         this.bait = bait;
-        this.individual = individual;
+        this.participantId = individual;
         this.labMeasuredInsertSize = ThriftConversionUtil.zeroAsNull(labMeasuredInsertSize);
         isPositiveControl = positiveControl;
         isNegativeControl = negativeControl;
@@ -251,15 +251,15 @@ public class LibraryBean {
             this.productOrderTitle = productOrder.getTitle();
             ResearchProject mercuryProject = productOrder.getResearchProject();
             if (mercuryProject != null) {
-                this.mercuryProjectKey = mercuryProject.getBusinessKey();
-                this.mercuryProjectTitle = mercuryProject.getTitle();
+                this.researchProjectId = mercuryProject.getBusinessKey();
+                this.researchProjectName = mercuryProject.getTitle();
             }
             Product product = productOrder.getProduct();
             if (product != null) {
-                mercuryProduct = product.getProductName();
+                this.product = product.getProductName();
                 ProductFamily family = product.getProductFamily();
                 if (family != null) {
-                    mercuryProductFamily = family.getName();
+                    productFamily = family.getName();
                 }
             }
         }
@@ -304,8 +304,8 @@ public class LibraryBean {
         return sampleLSID;
     }
 
-    public String getIndividual() {
-        return individual;
+    public String getParticipantId() {
+        return participantId;
     }
 
     public String getLibrary() {
@@ -412,20 +412,20 @@ public class LibraryBean {
         return lcSet;
     }
 
-    public String getMercuryProjectKey()  {
-        return mercuryProjectKey;
+    public String getResearchProjectId()  {
+        return researchProjectId;
     }
 
-    public String getMercuryProjectTitle() {
-        return mercuryProjectTitle;
+    public String getResearchProjectName() {
+        return researchProjectName;
     }
 
-    public String getMercuryProduct() {
-        return mercuryProduct;
+    public String getProduct() {
+        return product;
     }
 
-    public String getMercuryProductFamily() {
-        return mercuryProductFamily;
+    public String getProductFamily() {
+        return productFamily;
     }
 
     public String getBspRootSample() {
