@@ -24,6 +24,19 @@
         <ui:define name="title">Create Batch - Jira Data</ui:define>
         <ui:define name="body">
 
+            <p:panel id="batchDetails" header="Selected Vessels">
+
+                <div class="control-group">
+                    <label class="control-label label-form">Selected vessels for the batch are:</label>
+
+                    <div class="controls">
+                        <ui:repeat value="#{batchJiraInput.conversationData.selectedVessels}" var="vessel">
+                            #{vessel.label}
+                        </ui:repeat>
+                    </div>
+                </div>
+            </p:panel>
+
             <h:form id="batchJiraForm">
                 <div class="control-group" id="ctrlGroup">
                     <div class="controls" id="selectCtrls">
@@ -31,91 +44,67 @@
                         <h:outputText value="Please select how Jira is associate with this Batch: "
                                       id="jiraInputQuestion"/>
                         <p:selectOneRadio id="jiraInputType" value="#{batchJiraInput.jiraInputType}">
-                            <f:selectItem itemLabel="Existing Jira Ticket" itemValue="existingTicket"/>
+                            <f:selectItem itemLabel="Existing Jira Ticket" itemValue="existingTicket" />
                             <f:selectItem itemLabel="New Jira Ticket" itemValue="newTicket"/>
+                            <p:ajax update=":batchJiraForm:ticketIdGroup, :batchJiraForm:newTicketGroup" event="change"
+                                    listener="#{batchJiraInput.updateTicketUsage}"/>
                         </p:selectOneRadio>
 
-                        <!--<h:panelGrid columns="2">-->
-                            <!--<p:radioButton id="existingTicket" for="jiraInputType" itemIndex="0"/>-->
-                            <!--<h:outputLabel for="existingTicket" value="Existing Jira Ticket"/>-->
-
-                            <!--<p:radioButton id="newTicket" for="jiraInputType" itemIndex="1"/>-->
-                            <!--<h:outputLabel for="newTicket" value="New Jira Ticket"/>-->
-                        <!--</h:panelGrid>-->
                     </div>
                 </div>
-                <p:outputPanel id="jiraInputPanel" autoUpdate="true">
-                    <div class="control-group">
-                        <p:outputLabel for="jiraTicketId" value="Ticket Id"/>
-                        <!--
-                                                <p:outputLabel for="jiraTicketId" value="Ticket Id"
-                                                               rendered="#{batchJiraInput.useExistingTicket}"/>
-                        -->
+                <p:outputPanel id="inputPanel" autoUpdate="true">
+                    <h:panelGroup id="ticketIdGroup">
+                        <div class="control-group">
+                            <p:outputLabel for="jiraTicketId" value="Ticket Id"
+                                           rendered="#{batchJiraInput.useExistingTicket}"/>
 
-                        <div class="controls">
-                            <p:inputText id="jiraTicketId" required="true" value="#{batchJiraInput.jiraTicketId}"/>
-                            <!--
-                                                        <p:inputText rendered="#{batchJiraInput.useExistingTicket}" id="jiraTicketId"
-                                                                     required="true" value="#{batchJiraInput.jiraTicketId}"/>
-                            -->
-                            <p:watermark value="Enter Existing Jira Ticket Id" for="jiraTicketId"/>
-                            <p:message for="jiraTicketId"/>
+                            <div class="controls">
+                                <p:inputText rendered="#{batchJiraInput.useExistingTicket}" id="jiraTicketId"
+                                             required="true" value="#{batchJiraInput.jiraTicketId}"/>
+                                <p:watermark value="Enter Existing Jira Ticket Id" for="jiraTicketId"/>
+                                <p:message for="jiraTicketId"/>
+                            </div>
                         </div>
-                    </div>
+                    </h:panelGroup>
 
 
-                    <div class="control-group">
-                        <!--<p:outputLabel for="batchName" rendered="#{batchJiraInput.makeNewJiraTicket}" value="Name"/>-->
-                        <p:outputLabel for="batchName" value="Name"/>
+                    <h:panelGroup id="newTicketGroup">
+                        <div class="control-group">
+                            <p:outputLabel for="batchName" rendered="#{!batchJiraInput.useExistingTicket}"
+                                           value="Name"/>
 
-                        <div class="controls">
-                            <p:inputText id="batchName" required="true" value="#{batchJiraInput.batchName}"/>
-                            <!--
-                                                        <p:inputText id="batchName" rendered="#{batchJiraInput.makeNewJiraTicket}" required="true"
-                                                                     value="#{batchJiraInput.batchName}"/>
-                            -->
-                            <p:watermark for="batchName" value="Enter a Name for the new Batch"/>
-                            <p:message for="batchName"/>
+                            <div class="controls">
+                                <p:inputText id="batchName" rendered="#{!batchJiraInput.useExistingTicket}"
+                                             required="true"
+                                             value="#{batchJiraInput.batchName}"/>
+                                <p:watermark for="batchName" value="Enter a Name for the new Batch"/>
+                                <p:message for="batchName"/>
+                            </div>
                         </div>
-                    </div>
-                    <div class="control-group">
-                        <!--
-                                                <p:outputLabel for="batchDescription" rendered="#{batchJiraInput.makeNewJiraTicket}"
-                                                               value="Batch Description"/>
-                        -->
-                        <p:outputLabel for="batchDescription" value="Batch Description"/>
+                        <div class="control-group">
+                            <p:outputLabel for="batchDescription" rendered="#{!batchJiraInput.useExistingTicket}"
+                                           value="Batch Description"/>
 
-                        <div class="controls">
-                            <p:inputText id="batchDescription" required="true"
-                                         value="#{batchJiraInput.batchDescription}"/>
-                            <!--
-                                                        <p:inputText id="batchDescription" rendered="#{batchJiraInput.makeNewJiraTicket}"
-                                                                     required="true"
-                                                                     value="#{batchJiraInput.batchDescription}"/>
-                            -->
-                            <p:watermark for="batchDescription" value="Enter a Name for the new Batch"/>
-                            <p:message for="batchDescription"/>
+                            <div class="controls">
+                                <p:inputText id="batchDescription" rendered="#{!batchJiraInput.useExistingTicket}"
+                                             required="true"
+                                             value="#{batchJiraInput.batchDescription}"/>
+                                <p:watermark for="batchDescription" value="Enter a Name for the new Batch"/>
+                                <p:message for="batchDescription"/>
+                            </div>
                         </div>
-                    </div>
-                    <div class="control-group">
-                        <!--
-                                                <p:outputLabel for="batchDueDate" rendered="#{batchJiraInput.makeNewJiraTicket}"
-                                                               value="Due Date"/>
-                        -->
-                        <p:outputLabel for="batchDueDate" value="Due Date"/>
+                        <div class="control-group">
+                            <p:outputLabel for="batchDueDate" rendered="#{!batchJiraInput.useExistingTicket}"
+                                           value="Due Date"/>
 
-                        <div class="controls">
-                            <!--
-                                                        <p:calendar id="batchDueDate" rendered="#{batchJiraInput.makeNewJiraTicket}" required="true"
-                                                                    value="#{batchJiraInput.batchDueDate}"/>
-                            -->
-                            <p:calendar id="batchDueDate" required="true" value="#{batchJiraInput.batchDueDate}"/>
-                            <p:watermark for="batchDueDate" value="Enter a Due Date for the new Batch"/>
-                            <p:message for="batchDueDate"/>
+                            <div class="controls">
+                                <p:calendar id="batchDueDate" rendered="#{!batchJiraInput.useExistingTicket}"
+                                            value="#{batchJiraInput.batchDueDate}"/>
+                                <p:watermark for="batchDueDate" value="Enter a Due Date for the new Batch"/>
+                                <p:message for="batchDueDate"/>
+                            </div>
                         </div>
-                    </div>
-
-                </p:outputPanel>
+                    </h:panelGroup></p:outputPanel>
 
                 <div class="control-group">
                     <div class="controls">

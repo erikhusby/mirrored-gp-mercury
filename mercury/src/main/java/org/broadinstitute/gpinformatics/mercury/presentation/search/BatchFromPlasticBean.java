@@ -121,7 +121,9 @@ public class BatchFromPlasticBean extends AbstractJsfBean {
 
     public void initForm() {
         if (userBean.ensureUserValid()) {
-            conversationData.beginConversation();
+            if(conversationData.getConversation().isTransient()) {
+                conversationData.beginConversation();
+            }
         } else {
             addErrorMessage(MessageFormat.format(UserBean.LOGIN_WARNING,
                     "create a research project"));

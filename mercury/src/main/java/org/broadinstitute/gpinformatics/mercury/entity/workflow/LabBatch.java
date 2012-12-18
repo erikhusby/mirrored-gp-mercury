@@ -233,8 +233,8 @@ public class LabBatch {
         //Will not have WR ID info in Mercury.  Set to a Blank string
         WORK_REQUEST_IDS("Work Request ID(s)", true),
         POOLING_STATUS("Pooling Status", true),
-        PRIORITY("priority", false),
-        DUE_DATE("duedate", false),
+        PRIORITY("Priority", false),
+        DUE_DATE("Due", false),
 
         //User comments at batch creation (Post Dec 1 addition)
         IMPORTANT("Important", true),

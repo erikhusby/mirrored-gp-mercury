@@ -372,12 +372,15 @@ public abstract class LabVessel implements Serializable {
 
             if (nearestPdos != null && !nearestPdos.isEmpty()) {
                 pdoNames.add(nearestPdos.iterator().next());
-            } else {
+            }
+/*
+            else {
                 pdoNames.add(currVessel.getLabel());
                 logger.warning("No PDO was found as the most recent for" + currVessel
                         .getLabel() + ".  Using the label name instead");
             }
-            if (nearestPdos == null || nearestPdos.size() != 1) {
+*/
+            else  {
                 logger.warning("Most recent PDO came up with more than one result");
             }
         }

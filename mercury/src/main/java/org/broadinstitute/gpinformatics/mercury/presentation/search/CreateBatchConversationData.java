@@ -8,6 +8,7 @@ import javax.enterprise.context.ConversationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.Serializable;
+import java.util.*;
 
 @Named
 @ConversationScoped
@@ -52,4 +53,24 @@ public class CreateBatchConversationData implements Serializable{
         this.batchObject = batchObject;
     }
 
+    public LabBatch getBatchObject() {
+        return batchObject;
+    }
+
+    public Conversation getConversation() {
+        return conversation;
+    }
+
+    public void setConversation(Conversation conversation) {
+        this.conversation = conversation;
+    }
+
+    public List<String> getVesselLabels() {
+        List<String> labels = new ArrayList<String>(selectedVessels.length);
+
+        for(LabVessel vessel: selectedVessels) {
+            labels.add(vessel.getLabel());
+        }
+        return labels;
+    }
 }

@@ -1,20 +1,19 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.glassfish.gmbal.ManagedData;
 
-import javax.enterprise.context.RequestScoped;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
+import javax.faces.event.AjaxBehaviorEvent;
 import javax.inject.Inject;
-import javax.inject.Named;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.HashSet;
+import java.text.MessageFormat;
+import java.util.*;
 
 /**
  * @author Scott Matthews
@@ -28,6 +27,9 @@ public class BatchJiraInput extends AbstractJsfBean {
     @Inject
     private LabBatchEjb labBatchEjb;
 
+    @Inject
+    TwoDBarcodedTubeDAO tubeDAO;
+
     public static final String EXISTING_TICKET = "existingTicket";
     public static final String NEW_TICKET = "newTicket";
 
@@ -37,26 +39,35 @@ public class BatchJiraInput extends AbstractJsfBean {
     @Inject
     private UserBean userBean;
 
-    private String jiraInputType = "";
+    private String jiraInputType = EXISTING_TICKET;
     private String jiraTicketId = "";
     private String batchName = "";
     private String batchDescription = "";
     private Date batchDueDate;
 
+    private boolean useExistingTicket = true;
+
     public void setJiraInputType(String jiraInputType) {
         this.jiraInputType = jiraInputType;
+
     }
+
+    public void updateTicketUsage(AjaxBehaviorEvent event) {
+        this.useExistingTicket = (jiraInputType == null) ? false : jiraInputType.equals(EXISTING_TICKET);
+    }
+
+
 
     public String getJiraInputType() {
         return jiraInputType;
     }
 
-    public boolean useExistingTicket() {
-        return (jiraInputType == null)?false: jiraInputType.equals(EXISTING_TICKET);
+    public boolean isUseExistingTicket() {
+        return useExistingTicket;
     }
 
-    public boolean makeNewJiraTicket() {
-        return !useExistingTicket();
+    public void setUseExistingTicket(boolean useExistingTicket) {
+        this.useExistingTicket = useExistingTicket;
     }
 
     public void setJiraTicketId(String jiraTicketId) {
@@ -91,24 +102,42 @@ public class BatchJiraInput extends AbstractJsfBean {
         return batchDueDate;
     }
 
+    public CreateBatchConversationData getConversationData() {
+        return conversationData;
+    }
+
     public String createBatch() {
-        if (useExistingTicket()) {
+        LabBatch batchObject;
+
+        if (isUseExistingTicket()) {
             conversationData.setJiraKey(this.jiraTicketId);
 
-            labBatchEjb.createLabBatch(Arrays.asList(conversationData.getSelectedVessels()), userBean.getBspUser()
-                    .getUsername(), jiraTicketId);
+            batchObject = labBatchEjb.createLabBatch(userBean.getBspUser()
+                    .getUsername(), conversationData.getVesselLabels(), jiraTicketId);
         } else {
-            LabBatch batchObject =
-                    new LabBatch(batchName,
-                            new HashSet<LabVessel>(Arrays.asList(conversationData.getSelectedVessels())));
+
+//            Collection<TwoDBarcodedTube> tubeList =
+//                    tubeDAO.findByBarcodes(conversationData.getVesselLabels()).values();
+//
+//            Set<LabVessel> vesselSet = new HashSet<LabVessel>(tubeList);
+            Set<LabVessel> vesselSet =
+                    new HashSet<LabVessel>(tubeDAO.findByBarcodes(conversationData.getVesselLabels()).values());
+
+            batchObject = new LabBatch(batchName, vesselSet);
             batchObject.setBatchDescription(batchDescription);
             batchObject.setDueDate(batchDueDate);
-            conversationData.setBatchObject(batchObject);
 
-            labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername(),null);
+            labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername(), null);
         }
 
-        conversationData.endConversation();
+        addInfoMessage(
+                MessageFormat.format("Lab batch ''{0}'' ({1}) has been created",
+                        batchObject.getBatchName(), batchObject.getJiraTicket().getTicketName())
+        );
+
+        conversationData.setBatchObject(batchObject);
+
+//        conversationData.endConversation();
         return redirect("/search/batch_confirm");
     }
 }

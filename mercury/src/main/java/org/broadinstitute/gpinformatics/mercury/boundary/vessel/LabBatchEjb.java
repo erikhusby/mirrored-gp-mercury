@@ -12,10 +12,12 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
@@ -25,6 +27,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Encapsulates the business logic related to {@link LabBatch}s.  This includes the creation
@@ -47,20 +50,43 @@ public class LabBatchEjb {
 
     private JiraTicketDao jiraTicketDao;
 
+    private TwoDBarcodedTubeDAO tubeDAO;
+
     /**
      * Alternate create lab batch method to allow a user to define the vessels for use by their barcode
      *
-     * @param reporter    The User that is attempting to create the batch
-     * @param labVessels The plastic ware that the newly created lab batch will represent
-     * @param jiraTicket  Optional parameter that represents an existing Jira Ticket that refers to this batch
+     * @param reporter   The User that is attempting to create the batch
+     * @param labVesselNames The plastic ware that the newly created lab batch will represent
+     * @param jiraTicket Optional parameter that represents an existing Jira Ticket that refers to this batch
+     * @return
      */
-    public LabBatch createLabBatch(@Nonnull Collection<LabVessel> labVessels, @Nonnull String reporter, String jiraTicket) {
+    public LabBatch createLabBatch(@Nonnull String reporter, @Nonnull Collection<String> labVesselNames,
+                                   String jiraTicket) {
+
+        Set<LabVessel> vesselsForBatch = new HashSet<LabVessel>(labVesselNames.size());
+
+        for (String currVesselLabel : labVesselNames) {
+            vesselsForBatch.add(tubeDAO.findByBarcode(currVesselLabel));
+        }
+
+        return createLabBatch(vesselsForBatch, reporter, jiraTicket);
+    }
+
+    /**
+     * Allows a user to define the vessels for use
+     *
+     * @param reporter   The User that is attempting to create the batch
+     * @param labVessels The plastic ware that the newly created lab batch will represent
+     * @param jiraTicket Optional parameter that represents an existing Jira Ticket that refers to this batch
+     */
+    public LabBatch createLabBatch(@Nonnull Collection<LabVessel> labVessels, @Nonnull String reporter,
+                                   String jiraTicket) {
 
         Collection<String> pdoList = LabVessel.extractPdoList(labVessels);
 
         LabBatch batchObject =
                 new LabBatch(LabBatch.generateBatchName(CreateFields.IssueType.EXOME_EXPRESS.getJiraName(), pdoList),
-                             new HashSet<LabVessel>(labVessels));
+                        new HashSet<LabVessel>(labVessels));
 
         labBatchDao.persist(batchObject);
 
@@ -120,8 +146,8 @@ public class LabBatchEjb {
                 // TODO SGM Determine Project and Issue type better.  Use Workflow Configuration
                 JiraIssue jiraIssue = jiraService
                         .createIssue(CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix(), reporter,
-                                     CreateFields.IssueType.EXOME_EXPRESS, newBatch.getBatchName(),
-                                     newBatch.getBatchDescription(), fieldBuilder.getCustomFields(submissionFields));
+                                CreateFields.IssueType.EXOME_EXPRESS, newBatch.getBatchName(),
+                                newBatch.getBatchDescription(), fieldBuilder.getCustomFields(submissionFields));
 
                 ticket = new JiraTicket(jiraService, jiraIssue.getKey());
 
@@ -137,13 +163,13 @@ public class LabBatchEjb {
         for (String pdo : LabVessel.extractPdoList(newBatch.getStartingLabVessels())) {
             try {
                 jiraService.addLink(AddIssueLinkRequest.LinkType.Related, pdo, newBatch.getJiraTicket().getTicketName(),
-                                    "New Batch Created: " +
-                                            newBatch.getJiraTicket().getTicketName() +
-                                            " " + newBatch.getBatchName(), Visibility.Type.role,
-                                    Visibility.Value.QA_Jira_Users);
+                        "New Batch Created: " +
+                        newBatch.getJiraTicket().getTicketName() +
+                        " " + newBatch.getBatchName(), Visibility.Type.role,
+                        Visibility.Value.QA_Jira_Users);
             } catch (IOException ioe) {
                 logger.error("Error attempting to link Batch " + ticket.getTicketName() + " to Product order " + pdo,
-                             ioe);
+                        ioe);
             }
         }
     }
@@ -171,4 +197,8 @@ public class LabBatchEjb {
         this.jiraTicketDao = jiraTicketDao;
     }
 
+    @Inject
+    public void setTubeDAO(TwoDBarcodedTubeDAO tubeDAO) {
+        this.tubeDAO = tubeDAO;
+    }
 }
