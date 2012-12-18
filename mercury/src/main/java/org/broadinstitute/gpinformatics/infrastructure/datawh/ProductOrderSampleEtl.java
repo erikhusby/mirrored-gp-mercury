@@ -46,7 +46,8 @@ public class ProductOrderSampleEtl extends GenericEntityEtl {
                 entity.getProductOrderSampleId(),
                 format(entity.getProductOrder() != null ? entity.getProductOrder().getProductOrderId() : null),
                 format(entity.getSampleName()),
-                format(entity.getBillingStatus().getDisplayName())
+                format(entity.getBillingStatus().getDisplayName()),
+                format(entity.getSamplePosition())
         );
     }
 
