@@ -160,12 +160,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         assertEquals(runBean.getFlowcellBarcode(),thriftRun.getFlowcellBarcode());
         assertEquals(runBean.getSequencer(),thriftRun.getSequencer());
         assertEquals(runBean.getSequencerModel(),thriftRun.getSequencerModel());
-        assertEquals(runBean.getFirstCycle(),new Integer(thriftRun.getFirstCycle()));
-        assertEquals(runBean.getFirstCycleReadLength(),new Integer(thriftRun.getFirstCycleReadLength()));
-        assertEquals(runBean.getMolecularBarcodeCycle(),new Integer(thriftRun.getMolBarcodeCycle()));
-        assertEquals(runBean.getMolecularBarcodeLength(),new Integer(thriftRun.getMolBarcodeLength()));
         assertEquals(runBean.getPairedRun(),thriftRun.isPairedRun());
-        assertEquals(runBean.getLastCycle(),new Integer(thriftRun.getLastCycle()));
 
         doReadAssertions(thriftRun,runBean);
 
@@ -265,11 +260,8 @@ public class IlluminaRunResourceTest extends Arquillian {
             assertNotNull(libBean.getLibrary());
             if (libBean.getLibrary().equals(zLib.getLibrary())) {
                 foundIt = true;
-                assertEquals(libBean.getPreCircularizationDnaSize(), zLib.getPrecircularizationDnaSize() == 0 ? null : zLib.getPrecircularizationDnaSize(),
-                        "Precircularization size is wrong for " + libBean.getLibrary());
                 assertEquals(libBean.getProject(),zLib.getProject());
                 assertEquals(libBean.getWorkRequestId().longValue(),zLib.getWorkRequestId());
-                assertEquals(libBean.getCellLine(),zLib.getCellLine());
                 assertEquals(libBean.getSampleAlias(),zLib.getSampleAlias());
                 assertEquals(libBean.getIndividual(),zLib.getIndividual());
                 assertEquals(libBean.getAligner(),zLib.getAligner());
@@ -284,12 +276,8 @@ public class IlluminaRunResourceTest extends Arquillian {
                 assertEquals(libBean.getReferenceSequenceVersion(),zLib.getReferenceSequenceVersion());
                 assertEquals(libBean.getRestrictionEnzyme(),zLib.getRestrictionEnzyme());
                 assertEquals(libBean.getRrbsSizeRange(),zLib.getRrbsSizeRange());
-                assertEquals(libBean.getSampleCollaborator(),zLib.getSampleCollaborator());
                 assertEquals(libBean.getStrain(),zLib.getStrain());
                 assertEquals(libBean.getSpecies(),zLib.getSpecies());
-                assertEquals(libBean.getTargetLaneCoverage(),new Short(zLib.getTargetLaneCoverage()));
-                assertEquals(libBean.getTissueType(),zLib.getTissueType());
-                assertEquals(libBean.getWeirdness(),zLib.getWeirdness());
                 assertEquals(libBean.doAggregation().booleanValue(),zLib.aggregate);
 
                 if (HUMAN.equals(zLib.getOrganism())) {

@@ -50,6 +50,5 @@ public class LibraryBeanTest {
         assertEquals(libraryBean.getBspRootSample(),sampleDTO.getRootSample());
         assertEquals(libraryBean.getBspSpecies(),sampleDTO.getOrganism());
         assertEquals(libraryBean.getBspSampleId(),sampleDTO.getSampleId());
-        assertEquals(libraryBean.getBspCollaboratorName(),sampleDTO.getCollaboratorName());
     }
 }

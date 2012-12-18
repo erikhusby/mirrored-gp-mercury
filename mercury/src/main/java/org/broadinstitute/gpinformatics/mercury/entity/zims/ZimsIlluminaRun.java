@@ -37,26 +37,11 @@ public class ZimsIlluminaRun {
     @JsonIgnore
     private Date runDate;
 
-    @JsonProperty("firstCycle")
-    private Integer firstCycle;
-
-    @JsonProperty("firstCycleReadLength")
-    private Integer firstCycleReadLength;
-
-    @JsonProperty("lastCycle")
-    private Integer lastCycle;
-
     @JsonIgnore
     private final SimpleDateFormat dateFormat =  new SimpleDateFormat(DATE_FORMAT);
 
     @JsonProperty("lanes")
     private List<ZimsIlluminaChamber> chambers = new ArrayList<ZimsIlluminaChamber>();
-
-    @JsonProperty("molecularBarcodeCycle")
-    private Integer molecularBarcodeCycle;
-
-    @JsonProperty("molecularBarcodeLength")
-    private Integer molecularBarcodeLength;
 
     @JsonProperty("pairedRun")
     private Boolean isPaired;
@@ -72,11 +57,6 @@ public class ZimsIlluminaRun {
                            String sequencer,
                            String sequencerModel,
                            String runDate,
-                           short firstCycle,
-                           short firstCycleReadLength,
-                           short lastCycle,
-                           short molecularBarcodeCycle,
-                           short molecularBarcodeLength,
                            boolean isPaired) {
         this.runName = runName;
         this.runBarcode = runBarcode;
@@ -89,11 +69,6 @@ public class ZimsIlluminaRun {
         catch(ParseException e) {
             throw new RuntimeException("Cannot parse run date " + runDate + " for " + runName);
         }
-        this.firstCycle = ThriftConversionUtil.zeroAsNull(firstCycle);
-        this.firstCycleReadLength = ThriftConversionUtil.zeroAsNull(firstCycleReadLength);
-        this.lastCycle = ThriftConversionUtil.zeroAsNull(lastCycle);
-        this.molecularBarcodeCycle = ThriftConversionUtil.zeroAsNull(molecularBarcodeCycle);
-        this.molecularBarcodeLength = ThriftConversionUtil.zeroAsNull(molecularBarcodeLength);
         this.isPaired = isPaired;
     }
 
@@ -111,21 +86,6 @@ public class ZimsIlluminaRun {
         return isPaired;
     }
 
-    public Integer getMolecularBarcodeLength() {
-        return molecularBarcodeLength;
-    }
-
-    public Integer getMolecularBarcodeCycle() {
-        return molecularBarcodeCycle;
-    }
-
-    public Integer getFirstCycleReadLength() {
-        return firstCycleReadLength;
-    }
-
-    public Integer getFirstCycle() {
-        return firstCycle;
-    }
 
     /**
      * Format is 01/03/2010 24:19
@@ -159,10 +119,6 @@ public class ZimsIlluminaRun {
 
     public String getFlowcellBarcode() {
         return flowcellBarcode;
-    }
-
-    public Integer getLastCycle() {
-        return lastCycle;
     }
 
     public String getName() {

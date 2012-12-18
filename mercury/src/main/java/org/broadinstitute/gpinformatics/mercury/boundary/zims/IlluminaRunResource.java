@@ -5,7 +5,6 @@ import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.control.zims.SquidThriftLibraryConverter;
 import org.broadinstitute.gpinformatics.mercury.control.zims.ThriftLibraryConverter;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
@@ -89,11 +88,6 @@ public class IlluminaRunResource implements Serializable {
                 tRun.getSequencer(),
                 tRun.getSequencerModel(),
                 tRun.getRunDate(),
-                tRun.getFirstCycle(),
-                tRun.getFirstCycleReadLength(),
-                tRun.getLastCycle(),
-                tRun.getMolBarcodeCycle(),
-                tRun.getMolBarcodeLength(),
                 tRun.isPairedRun());
 
         for (TZamboniRead tZamboniRead : tRun.getReads()) {

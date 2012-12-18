@@ -59,10 +59,6 @@ public class LibraryBean {
     @JsonProperty("aggregate")
     private Boolean doAggregation;
 
-    /** the name of the collaborator */
-    @JsonProperty("sampleCollaborator")
-    private String collaborator;
-
     @JsonProperty("organism")
     private String organism;
 
@@ -75,12 +71,6 @@ public class LibraryBean {
     @JsonProperty("lsid")
     private String sampleLSID;
 
-    @JsonProperty("tissueType")
-    private String tissueType;
-
-    @JsonProperty("expectedPlasmid")
-    private String expectedPlasmid;
-
     @JsonProperty("aligner")
     private String aligner;
 
@@ -89,9 +79,6 @@ public class LibraryBean {
 
     @JsonProperty("restrictionEnzyme")
     private String restrictionEnzyme;
-
-    @JsonProperty("cellLine")
-    private String cellLine;
 
     @JsonProperty("baitSetName")
     private String bait;
@@ -109,12 +96,6 @@ public class LibraryBean {
     @JsonProperty("negativeControl")
     private Boolean isNegativeControl;
 
-    @JsonProperty("weirdness")
-    private String weirdness;
-
-    @JsonProperty("preCircularizationDnaSize")
-    private Double preCircularizationDnaSize;
-
     @JsonProperty("devExperimentData")
     private DevExperimentDataBean devExperimentData;
 
@@ -124,14 +105,8 @@ public class LibraryBean {
     @JsonProperty("gssrSampleType")
     private String gssrSampleType;
 
-    @JsonProperty("targetLaneCoverage")
-    private Short targetLaneCoverage;
-
     @JsonProperty("customAmpliconSetNames")
     private Collection<String> customAmpliconSetNames = new ArrayList<String>();
-
-    @JsonProperty("fastTrack")
-    private Boolean isFastTrack;
 
     @JsonProperty
     private String lcSet;
@@ -178,9 +153,6 @@ public class LibraryBean {
     @JsonProperty
     private String bspCollaboratorSampleId;
 
-    @JsonProperty
-    private String bspCollaboratorName;
-
     public LibraryBean() {}
 
     /**
@@ -207,49 +179,40 @@ public class LibraryBean {
      * @param referenceSequence
      * @param referenceSequenceVersion
      * @param collaboratorSampleId
-     * @param collaborator
      * @param organism
      * @param species
      * @param strain
      * @param sampleLSID
-     * @param tissueType
-     * @param expectedPlasmid
      * @param aligner
      * @param rrbsSizeRange
      * @param restrictionEnzyme
-     * @param cellLine
      * @param bait
      * @param individual
      * @param labMeasuredInsertSize
      * @param positiveControl
      * @param negativeControl
-     * @param weirdness
-     * @param preCircularizationDnaSize
      * @param partOfDevExperiment
      * @param devExperimentData
      * @param gssrBarcode
      * @param gssrBarcodes
      * @param gssrSampleType
-     * @param targetLaneCoverage
      * @param doAggregation
      * @param customAmpliconSetNames
-     * @param fastTrack
      * @param productOrder
      * @param lcSet
      * @param bspSampleDTO trumps all other sample-related fields.  Other sample
-     *                     related fields (such as inidividual, organism, etc.) are here
-     *                     for GSSR samples.  If bspSampleDTO is non-null, all sample
-     *                     related attributes will be fetched via the BSP DTO.
+*                     related fields (such as inidividual, organism, etc.) are here
+*                     for GSSR samples.  If bspSampleDTO is non-null, all sample
      */
     public LibraryBean(String library, String project, String initiative, Long workRequest,
                        MolecularIndexingScheme indexingScheme, Boolean hasIndexingRead, String expectedInsertSize,
                        String analysisType, String referenceSequence, String referenceSequenceVersion, String collaboratorSampleId,
-                       String collaborator, String organism, String species, String strain, String sampleLSID, String tissueType,
-                       String expectedPlasmid, String aligner, String rrbsSizeRange, String restrictionEnzyme, String cellLine,
+                       String organism, String species, String strain, String sampleLSID,
+                       String aligner, String rrbsSizeRange, String restrictionEnzyme,
                        String bait, String individual, double labMeasuredInsertSize, Boolean positiveControl, Boolean negativeControl,
-                       String weirdness, double preCircularizationDnaSize, Boolean partOfDevExperiment,
+                       Boolean partOfDevExperiment,
                        TZDevExperimentData devExperimentData, String gssrBarcode, Collection<String> gssrBarcodes,
-                       String gssrSampleType, Short targetLaneCoverage, Boolean doAggregation, Collection<String> customAmpliconSetNames, Boolean fastTrack,
+                       String gssrSampleType, Boolean doAggregation, Collection<String> customAmpliconSetNames,
                        ProductOrder productOrder, String lcSet, BSPSampleDTO bspSampleDTO) {
         this.library = library;
         this.project = project;
@@ -264,33 +227,25 @@ public class LibraryBean {
         this.referenceSequence = referenceSequence;
         this.referenceSequenceVersion = referenceSequenceVersion;
         this.collaboratorSampleId = collaboratorSampleId;
-        this.collaborator = collaborator;
         this.organism = organism;
         this.species = species;
         this.strain = strain;
         this.sampleLSID = sampleLSID;
-        this.tissueType = tissueType;
-        this.expectedPlasmid = expectedPlasmid;
         this.aligner = aligner;
         this.rrbsSizeRange = rrbsSizeRange;
         this.restrictionEnzyme = restrictionEnzyme;
-        this.cellLine = cellLine;
         this.bait = bait;
         this.individual = individual;
         this.labMeasuredInsertSize = ThriftConversionUtil.zeroAsNull(labMeasuredInsertSize);
         isPositiveControl = positiveControl;
         isNegativeControl = negativeControl;
-        this.weirdness = weirdness;
-        this.preCircularizationDnaSize = ThriftConversionUtil.zeroAsNull(preCircularizationDnaSize);
         if (devExperimentData != null) {
             this.devExperimentData = new DevExperimentDataBean(devExperimentData);
         }
         this.gssrBarcodes = gssrBarcodes;
         this.gssrSampleType = gssrSampleType;
-        this.targetLaneCoverage = targetLaneCoverage;
         this.doAggregation = doAggregation;
         this.customAmpliconSetNames = customAmpliconSetNames;
-        this.isFastTrack = fastTrack;
         if (productOrder != null) {
             this.productOrderKey = productOrder.getBusinessKey();
             this.productOrderTitle = productOrder.getTitle();
@@ -326,13 +281,7 @@ public class LibraryBean {
             // todo arz pop/ethnicity,
             this.bspCollection = bspSampleDTO.getCollection();
             this.bspCollaboratorSampleId = bspSampleDTO.getCollaboratorsSampleName();
-            this.bspCollaboratorName = bspSampleDTO.getCollaboratorName();
         }
-    }
-
-
-    public Double getPreCircularizationDnaSize() {
-        return preCircularizationDnaSize;
     }
 
     public Long getWorkRequestId() {
@@ -353,10 +302,6 @@ public class LibraryBean {
 
     public String getLsid() {
         return sampleLSID;
-    }
-
-    public String getCellLine() {
-        return cellLine;
     }
 
     public String getIndividual() {
@@ -403,10 +348,6 @@ public class LibraryBean {
         return rrbsSizeRange;
     }
     
-    public String getSampleCollaborator() {
-        return collaborator;
-    }
-    
     public String getExpectedInsertSize() {
         return expectedInsertSize;
     }
@@ -426,21 +367,9 @@ public class LibraryBean {
     public String getSpecies() {
         return species;
     }
-    
-    public String getTissueType() {
-        return tissueType;
-    }
-    
-    public Short getTargetLaneCoverage() {
-        return targetLaneCoverage;
-    }
-    
+
     public String getStrain() {
         return strain;
-    }
-    
-    public String getWeirdness() {
-        return weirdness;
     }
 
     public DevExperimentDataBean getDevExperimentData() {
@@ -461,10 +390,6 @@ public class LibraryBean {
 
     public Collection<String> getCustomAmpliconSetNames() {
         return customAmpliconSetNames;
-    }
-
-    public Boolean getFastTrack() {
-        return isFastTrack;
     }
 
     public String getBspPrimaryDisease() {
@@ -521,10 +446,6 @@ public class LibraryBean {
 
     public String getBspSpecies() {
         return bspSpecies;
-    }
-
-    public String getBspCollaboratorName() {
-        return bspCollaboratorName;
     }
 
     public String getBspCollaboratorSampleId() {
