@@ -218,6 +218,14 @@ public class ProductOrderSample implements Serializable {
         return builder.toString();
     }
 
+    public String getStripBspName() {
+        if ((sampleName.length() > 3) && isInBspFormat(sampleName)) {
+            return sampleName.substring(3);
+        }
+
+        return sampleName;
+    }
+
     /**
      * This class holds the billed and uploaded ledger counts for a particular pdo and price item
      */

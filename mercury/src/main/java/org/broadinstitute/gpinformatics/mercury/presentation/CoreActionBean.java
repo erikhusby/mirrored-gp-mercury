@@ -38,6 +38,9 @@ import java.util.List;
 public class CoreActionBean implements ActionBean {
     private static final Log log = LogFactory.getLog(CoreActionBean.class);
 
+    public static final String CREATE = "Create ";
+    public static final String EDIT = "Edit : ";
+
     public boolean hasFlashError;
 
     public static final String FLASH_ERROR = "flash_error";
@@ -45,6 +48,8 @@ public class CoreActionBean implements ActionBean {
     public static final String FLASH_MESSAGE = "flash_message";
 
     private CoreActionBeanContext context;
+
+    private String submitString;
 
     @Inject
     private BuildInfoBean buildInfoBean;
@@ -220,5 +225,17 @@ public class CoreActionBean implements ActionBean {
 
     public DateRangeSelector getDateRange() {
         return dateRange;
+    }
+
+    public String getSubmitString() {
+        return submitString;
+    }
+
+    public void setSubmitString(String submitString) {
+        this.submitString = submitString;
+    }
+
+    public boolean isCreating() {
+        return submitString.startsWith(CREATE);
     }
 }

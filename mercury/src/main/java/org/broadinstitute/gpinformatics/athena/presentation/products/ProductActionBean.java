@@ -26,10 +26,10 @@ import java.util.List;
 @UrlBinding("/products/product.action")
 public class ProductActionBean extends CoreActionBean {
 
-    private static final String CREATE = "Create New Product";
-    private static final String EDIT = "Edit Product: ";
+    private static final String CREATE_PRODUCT = CoreActionBean.CREATE + "New Product";
+    private static final String EDIT_PRODUCT = CoreActionBean.EDIT + "Product: ";
 
-    public static final String PROUDCT_CREATE_PAGE = "/products/create.jsp";
+    public static final String PRODUCT_CREATE_PAGE = "/products/create.jsp";
     public static final String PRODUCT_LIST_PAGE = "/products/list.jsp";
     public static final String PRODUCT_VIEW_PAGE = "/products/view.jsp";
 
@@ -48,8 +48,6 @@ public class ProductActionBean extends CoreActionBean {
 
     private Product editProduct;
 
-    private String submitString = CREATE;
-
     // The search query
     private String q;
 
@@ -67,7 +65,7 @@ public class ProductActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {"view", "edit", "save", "addOnsAutocomplete"})
     public void init() {
         productKey = getContext().getRequest().getParameter("productKey");
-        if (productKey == null) {
+        if (productKey != null) {
             editProduct = productDao.findByBusinessKey(productKey);
         }
     }
@@ -81,13 +79,6 @@ public class ProductActionBean extends CoreActionBean {
     @After(stages = LifecycleStage.BindingAndValidation, on = {"list"})
     public void listInit() {
         allProducts = productDao.findAll(Product.class);
-    }
-
-    @After(stages = LifecycleStage.BindingAndValidation, on = {"save", "addOnsAutocomplete"})
-    public void setupOptionalProductKey() {
-        if (productKey == null) {
-            editProduct = productDao.findByBusinessKey(productKey);
-        }
     }
 
     /**
@@ -126,14 +117,14 @@ public class ProductActionBean extends CoreActionBean {
 
     @HandlesEvent("create")
     public Resolution create() {
-        submitString = CREATE;
-        return new ForwardResolution(PROUDCT_CREATE_PAGE);
+        setSubmitString(CREATE_PRODUCT);
+        return new ForwardResolution(PRODUCT_CREATE_PAGE);
     }
 
     @HandlesEvent("edit")
     public Resolution edit() {
-        submitString = EDIT;
-        return new ForwardResolution(PROUDCT_CREATE_PAGE);
+        setSubmitString(EDIT_PRODUCT);
+        return new ForwardResolution(PRODUCT_CREATE_PAGE);
     }
 
     @HandlesEvent("addOnsAutocomplete")
@@ -183,13 +174,5 @@ public class ProductActionBean extends CoreActionBean {
 
     public List<ProductFamily> getProductFamilies() {
         return productFamilies;
-    }
-
-    public String getSubmitString() {
-        return submitString;
-    }
-
-    public boolean isCreating() {
-        return CREATE.equals(submitString);
     }
 }

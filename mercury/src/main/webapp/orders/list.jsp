@@ -8,18 +8,9 @@
         <script type="text/javascript">
             $j(document).ready(function() {
                 $j('#productOrderList').dataTable( {
-                    "sDom": '<"H"lfr>t<"F"Tip>',
-                    "sWrapper": "dataTables_wrapper form-inline",
-                    "bAutoWidth": false,
-                    "bInfo": false,
-                    "bStateSave": false,
-                    "bJQueryUI": true,
-                    "bPaginate": false,
-                    "bLengthChange": false,
-                    "asStripClasses": [ 'odd', 'even' ],
                     "aaSorting": [[1,'asc']],
                     "aoColumns": [
-                        {"bSortable": false},   // checkbox
+                        {"bSortable": false},                   // checkbox
                         {"bSortable": true, "sType": "html"},   // Name
                         {"bSortable": true, "sType": "html"},   // ID
                         {"bSortable": true},                    // Product
@@ -48,7 +39,7 @@
         <div class="clearfix"></div>
 
         <stripes:form action="/orders/order.action" id="createForm" class="form-horizontal">
-            <div style="align:left">
+            <div style="align:left;">
                 <!--security:authorizeBlock roles="${userBean.developerRole}, ${userBean.billingManagerRole}"-->
                 <stripes:submit name="startBilling" value="Start Billing Session"/>
                 <!--/security:authorizeBlock-->
@@ -61,21 +52,21 @@
                 </stripes:link>
             </div>
 
-            <table id="productOrderList" class="table table-striped table-bordered">
+            <table id="productOrderList" class="table simple">
                 <thead>
                     <tr>
-                        <th width="35">
+                        <th width="40">
                             <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
                         </th>
                         <th>Name</th>
                         <th width="100">ID</th>
-                        <th width="100">Product</th>
+                        <th width="200">Product</th>
                         <th width="220">Product Family</th>
                         <th>Status</th>
                         <th width="150">Research Project</th>
                         <th>Owner</th>
                         <th width="70">Updated</th>
-                        <th>Sample Count</th>
+                        <th width="25">Sample Count</th>
                         <th width="35">Billing Session</th>
                         <th width="25">Can Bill</th>
                     </tr>
@@ -88,7 +79,7 @@
                             </td>
                             <td>
                                 <stripes:link href="/orders/order.action" event="view">
-                                    <stripes:param name="productOrder" value="${order.businessKey}"/>
+                                    <stripes:param name="orderKey" value="${order.businessKey}"/>
                                     ${order.title}
                                 </stripes:link>
                             </td>

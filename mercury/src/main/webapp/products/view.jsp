@@ -8,98 +8,98 @@
     <stripes:layout-component name="content">
 
         <div class="form-horizontal">
-            <div class="control-group">
+            <div class="view-control-group control-group">
                 <label class="control-label label-form">Product Family</label>
                 <div class="controls">
                     <div class="form-value">${actionBean.editProduct.productFamily.name}</div>
                 </div>
             </div>
 
-            <div class="control-group">
+            <div class="view-control-group control-group">
                 <label class="control-label label-form">Product Name</label>
                 <div class="controls">
                     <div class="form-value">${actionBean.editProduct.productName}</div>
                 </div>
             </div>
 
-            <div class="control-group">
+            <div class="view-control-group control-group">
                 <label class="control-label label-form">Part Number</label>
                 <div class="controls">
                     <div class="form-value">${actionBean.editProduct.partNumber}</div>
                 </div>
             </div>
 
-            <div class="control-group">
+            <div class="view-control-group control-group">
                 <label class="control-label label-form">Availability Date</label>
                 <div class="controls">
                     <div class="form-value">${actionBean.editProduct.availabilityDate}</div>
                 </div>
             </div>
 
-            <div class="control-group">
+            <div class="view-control-group control-group">
                 <label class="control-label label-form">Discontinued Date</label>
                 <div class="controls">
                     <div class="form-value">${actionBean.editProduct.discontinuedDate}</div>
                 </div>
             </div>
 
-            <div class="control-group">
+            <div class="view-control-group control-group">
                 <label class="control-label label-form">Description</label>
                 <div class="controls">
                     <div class="form-value">${actionBean.editProduct.description}</div>
                 </div>
             </div>
 
-            <div class="control-group">
+            <div class="view-control-group control-group">
                 <label class="control-label label-form">Deliverables</label>
                 <div class="controls">
                     <div class="form-value">${actionBean.editProduct.deliverables}</div>
                 </div>
             </div>
 
-            <div class="control-group">
+            <div class="view-control-group control-group">
                 <label class="control-label label-form">Input Requirements</label>
                 <div class="controls">
                     <div class="form-value">${actionBean.editProduct.inputRequirements}</div>
                 </div>
             </div>
 
-            <div class="control-group">
+            <div class="view-control-group control-group">
                 <label class="control-label label-form">Expected Cycle Time (Days)</label>
                 <div class="controls">
                     <div class="form-value">${actionBean.editProduct.expectedCycleTimeDays}</div>
                 </div>
             </div>
 
-            <div class="control-group">
+            <div class="view-control-group control-group">
                 <label class="control-label label-form">Guaranteed Cycle Time (Days)</label>
                 <div class="controls">
                     <div class="form-value">${actionBean.editProduct.guaranteedCycleTimeDays}</div>
                 </div>
             </div>
 
-            <div class="control-group">
+            <div class="view-control-group control-group">
                 <label class="control-label label-form">Samples Per Week</label>
                 <div class="controls">
                     <div class="form-value">${actionBean.editProduct.samplesPerWeek}</div>
                 </div>
             </div>
 
-            <div class="control-group">
+            <div class="view-control-group control-group">
                 <label class="control-label label-form">Minimum Order Size</label>
                 <div class="controls">
                     <div class="form-value">${actionBean.editProduct.minimumOrderSize}</div>
                 </div>
             </div>
 
-            <div class="control-group">
+            <div class="view-control-group control-group">
                 <label class="control-label label-form">Primary Price Items</label>
                 <div class="controls">
                     <div class="form-value">${actionBean.editProduct.primaryPriceItem.category} : ${actionBean.editProduct.primaryPriceItem.name}</div>
                 </div>
             </div>
 
-            <div class="control-group">
+            <div class="view-control-group control-group">
                 <label class="control-label label-form">PDM Orderable Only</label>
                 <div class="controls">
                     <div class="form-value">${actionBean.editProduct.pdmOrderableOnly}</div>
@@ -110,7 +110,8 @@
         <div style="width:98%; border-bottom: 2px solid #4169e1;">
             Add Ons
         </div>
-        <table id="addOnList" style="width:98%" class="table table-striped table-bordered">
+
+        <table id="addOnList" style="width:98%" class="table simple">
             <thead>
                 <tr>
                     <th>Part Number</th>

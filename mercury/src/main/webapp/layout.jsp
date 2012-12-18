@@ -79,11 +79,10 @@
                     }
                 });
 
-                // Default date range selector (if there is a dateRangeDiv, the action bean will HAVE to have this
-                $j('#dateRangeDiv').dateRangeSelector();
-
                 $j(".defaultText").blur();
 
+                // Default date range selector (if there is a dateRangeDiv, the action bean will HAVE to have this
+                $j('#dateRangeDiv').dateRangeSelector();
             });
         </script>
         <title>Mercury | ${pageTitle}</title>

@@ -13,7 +13,11 @@
                         {"bSortable": true},
                         {"bSortable": true},
                         {"bSortable": true},
-                        {"bSortable": false}]
+                        {"bSortable": false}],
+                    "oTableTools": {
+                        "sSwfPath": "${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
+                        "aButtons": [ "copy", "csv", "print" ]
+                    }
                 })
             });
         </script>
@@ -26,7 +30,7 @@
 
         <div class="clearfix"></div>
 
-        <table id="productList" class="table table-striped table-bordered simple">
+        <table id="productList" class="table simple">
             <thead>
                 <tr>
                     <th>Part Number</th>
