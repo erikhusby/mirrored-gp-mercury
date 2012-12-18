@@ -41,7 +41,7 @@ public class WorkCompleteMessageBean implements MessageListener {
                 // This pulls all the values out of the message
                 Map<String, Object> values = new HashMap<String, Object> ();
 
-                Enumeration mapNames = mapMessage.getMapNames();
+                Enumeration<?> mapNames = mapMessage.getMapNames();
                 while (mapNames.hasMoreElements()) {
                     String name  = (String) mapNames.nextElement();
                     values.put(name, mapMessage.getObject(name));

@@ -21,10 +21,10 @@ public class WorkCompleteMessage {
     }
 
     public WorkCompleteMessage(
-        String pdoName, String sampleName, long sampleIndex, String aliquotLsid, Date completedDate, Map<String, Object> dataMap) {
+        String pdoName, String collaboratorSampleId, long sampleIndex, String aliquotLsid, Date completedDate, Map<String, Object> dataMap) {
 
         this.pdoName = pdoName;
-        this.collaboratorSampleId = sampleName;
+        this.collaboratorSampleId = collaboratorSampleId;
         this.sampleIndex = sampleIndex;
         this.aliquotLsid = aliquotLsid;
         this.completedDate = completedDate;
