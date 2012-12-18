@@ -12,45 +12,58 @@ public class TransitionFields {
     private String required;
     private FieldSchema schema;
     private String name;
-    private List<String>           operations;
+    private List<String> operations;
     private List<String> allowedValues;
+    private String autoCompleteUrl;
 
-    public TransitionFields ( String nameIn ) {
-        name = nameIn;
+    public TransitionFields() {
     }
 
-    public TransitionFields ( String requiredIn, FieldSchema schemaIn, String nameIn ) {
-        required = requiredIn;
-        schema = schemaIn;
-        name = nameIn;
-    }
-
-    public TransitionFields ( String requiredIn, FieldSchema schemaIn, String nameIn, List<String> operationsIn,
-                              List<String> allowedValuesIn ) {
-        required = requiredIn;
-        schema = schemaIn;
-        name = nameIn;
-        operations = operationsIn;
-        allowedValues = allowedValuesIn;
-    }
-
-    public String getRequired ( ) {
+    public String getRequired() {
         return required;
     }
 
-    public FieldSchema getSchema ( ) {
+    public void setRequired(String required) {
+        this.required = required;
+    }
+
+    public FieldSchema getSchema() {
         return schema;
     }
 
-    public String getName ( ) {
+    public void setSchema(FieldSchema schema) {
+        this.schema = schema;
+    }
+
+    public String getName() {
         return name;
     }
 
-    public List<String> getOperations ( ) {
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public List<String> getOperations() {
         return operations;
     }
 
-    public List<String> getAllowedValues ( ) {
+    public void setOperations(List<String> operations) {
+        this.operations = operations;
+    }
+
+    public List<String> getAllowedValues() {
         return allowedValues;
+    }
+
+    public void setAllowedValues(List<String> allowedValues) {
+        this.allowedValues = allowedValues;
+    }
+
+    public String getAutoCompleteUrl() {
+        return autoCompleteUrl;
+    }
+
+    public void setAutoCompleteUrl(String autoCompleteUrl) {
+        this.autoCompleteUrl = autoCompleteUrl;
     }
 }

@@ -1,33 +1,45 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition;
 
-import java.util.Map;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.UpdateFields;
+import org.codehaus.jackson.map.annotate.JsonSerialize;
 
-/**
- * @author Scott Matthews
- *         Date: 10/11/12
- *         Time: 10:10 AM
- */
+import java.util.Collection;
+
+
+@JsonSerialize(using = IssueTransitionSerializer.class)
 public class IssueTransitionRequest {
 
-
-    private Map<String, TransitionFields> fields;
+    // assumes we only want to update custom fields, which for the current GPLIM-488 and GPLIM-371 use cases is true
+    private UpdateFields fields = new UpdateFields();
 
     private Transition transition;
 
-    public IssueTransitionRequest ( Transition transitionIn ) {
-        transition = transitionIn;
+    private String comment;
+
+
+    public IssueTransitionRequest(Transition transition) {
+        this.transition = transition;
     }
 
-    public IssueTransitionRequest ( Map<String, TransitionFields> fieldsIn, Transition transitionIn ) {
-        fields = fieldsIn;
-        transition = transitionIn;
+
+    public IssueTransitionRequest(Transition transition, Collection<CustomField> customFields, String comment) {
+        this.transition = transition;
+        if (customFields != null) {
+            fields.getCustomFields().addAll(customFields);
+        }
+        this.comment = comment;
     }
 
-    public Map<String, TransitionFields> getFields ( ) {
+    public UpdateFields getFields() {
         return fields;
     }
 
-    public Transition getTransition ( ) {
+    public Transition getTransition() {
         return transition;
+    }
+
+    public String getComment() {
+        return comment;
     }
 }
