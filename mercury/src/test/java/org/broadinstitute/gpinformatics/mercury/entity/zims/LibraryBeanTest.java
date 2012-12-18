@@ -25,7 +25,7 @@ public class LibraryBeanTest {
         // send in some GSSR sample attributes in addition to bsp DTO to verify GSSR override
         LibraryBean libraryBean = new LibraryBean(gssrLsid,bspDto);
 
-        assertEquals(libraryBean.getBspPrimaryDisease(),bspDto.getPrimaryDisease());
+        assertEquals(libraryBean.getPrimaryDisease(),bspDto.getPrimaryDisease());
         assertEquals(libraryBean.getLsid(),bspDto.getSampleLsid());
 
         // new up sans bsp DTO to confirm gssr fields work
@@ -44,11 +44,11 @@ public class LibraryBeanTest {
 
         LibraryBean libraryBean = new LibraryBean(null,sampleDTO);
 
-        assertEquals(libraryBean.getBSpGender(),sampleDTO.getGender());
+        assertEquals(libraryBean.getGender(),sampleDTO.getGender());
         assertEquals(libraryBean.getLsid(),sampleDTO.getSampleLsid());
-        assertEquals(libraryBean.getBspCollection(),sampleDTO.getCollection());
-        assertEquals(libraryBean.getBspRootSample(),sampleDTO.getRootSample());
+        assertEquals(libraryBean.getCollection(),sampleDTO.getCollection());
+        assertEquals(libraryBean.getRootSample(),sampleDTO.getRootSample());
         assertEquals(libraryBean.getBspSpecies(),sampleDTO.getOrganism());
-        assertEquals(libraryBean.getBspSampleId(),sampleDTO.getSampleId());
+        assertEquals(libraryBean.getSampleId(),sampleDTO.getSampleId());
     }
 }

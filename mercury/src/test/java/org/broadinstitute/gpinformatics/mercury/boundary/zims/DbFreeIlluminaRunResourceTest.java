@@ -60,8 +60,8 @@ public class DbFreeIlluminaRunResourceTest {
         for (ZimsIlluminaChamber lane : runBean.getLanes()) {
             for (LibraryBean libraryBean : lane.getLibraries()) {
                 Assert.assertEquals(sampleDTO.getOrganism(),libraryBean.getBspSpecies());
-                Assert.assertEquals(sampleDTO.getPrimaryDisease(),libraryBean.getBspPrimaryDisease());
-                Assert.assertEquals(sampleDTO.getSampleType(),libraryBean.getBspSampleType());
+                Assert.assertEquals(sampleDTO.getPrimaryDisease(),libraryBean.getPrimaryDisease());
+                Assert.assertEquals(sampleDTO.getSampleType(),libraryBean.getSampleType());
             }
         }
 

@@ -130,27 +130,28 @@ public class LibraryBean {
     private String productFamily;
 
     @JsonProperty
+    // todo arz merge with gssr species
     private String bspSpecies;
 
-    @JsonProperty("bspRootSample")
-    private String bspRootSample;
+    private String rootSample;
 
     @JsonProperty
-    private String bspSampleId;
+    private String sampleId;
 
     @JsonProperty
-    private String bspGender;
+    private String gender;
 
     @JsonProperty
-    private String bspCollection;
+    private String collection;
 
     @JsonProperty
-    private String bspPrimaryDisease;
+    private String primaryDisease;
 
     @JsonProperty
-    private String bspSampleType;
+    private String sampleType;
 
     @JsonProperty
+    // todo arz merge with gssr collab sample id
     private String bspCollaboratorSampleId;
 
     public LibraryBean() {}
@@ -272,14 +273,14 @@ public class LibraryBean {
     private final void initBSPFields(BSPSampleDTO bspSampleDTO) {
         if (bspSampleDTO != null) {
             this.bspSpecies = bspSampleDTO.getOrganism();
-            this.bspPrimaryDisease = bspSampleDTO.getPrimaryDisease();
-            this.bspSampleType = bspSampleDTO.getSampleType();
-            this.bspRootSample = bspSampleDTO.getRootSample();
+            this.primaryDisease = bspSampleDTO.getPrimaryDisease();
+            this.sampleType = bspSampleDTO.getSampleType();
+            this.rootSample = bspSampleDTO.getRootSample();
             this.sampleLSID = bspSampleDTO.getSampleLsid();
-            this.bspSampleId = bspSampleDTO.getSampleId();
-            this.bspGender = bspSampleDTO.getGender();
+            this.sampleId = bspSampleDTO.getSampleId();
+            this.gender = bspSampleDTO.getGender();
             // todo arz pop/ethnicity,
-            this.bspCollection = bspSampleDTO.getCollection();
+            this.collection = bspSampleDTO.getCollection();
             this.bspCollaboratorSampleId = bspSampleDTO.getCollaboratorsSampleName();
         }
     }
@@ -392,12 +393,12 @@ public class LibraryBean {
         return customAmpliconSetNames;
     }
 
-    public String getBspPrimaryDisease() {
-        return bspPrimaryDisease;
+    public String getPrimaryDisease() {
+        return primaryDisease;
     }
 
-    public String getBspSampleType() {
-        return bspSampleType;
+    public String getSampleType() {
+        return sampleType;
     }
 
     public String getProductOrderKey() {
@@ -428,20 +429,20 @@ public class LibraryBean {
         return productFamily;
     }
 
-    public String getBspRootSample() {
-        return bspRootSample;
+    public String getRootSample() {
+        return rootSample;
     }
 
-    public String getBSpGender() {
-        return bspGender;
+    public String getGender() {
+        return gender;
     }
 
-    public String getBspSampleId() {
-        return bspSampleId;
+    public String getSampleId() {
+        return sampleId;
     }
 
-    public String getBspCollection() {
-        return bspCollection;
+    public String getCollection() {
+        return collection;
     }
 
     public String getBspSpecies() {

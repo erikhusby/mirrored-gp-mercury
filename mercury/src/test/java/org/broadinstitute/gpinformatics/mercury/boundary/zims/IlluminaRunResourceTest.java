@@ -123,13 +123,13 @@ public class IlluminaRunResourceTest extends Arquillian {
                 if (libraryBean.getLsid() != null) {
                     if (libraryBean.getLsid().contains("bsp")) {
                         foundBspSample = true;
-                        assertNotNull(libraryBean.getBspRootSample());
-                        assertNotNull(libraryBean.getBspCollection());
-                        assertNotNull(libraryBean.getBspSampleId());
+                        assertNotNull(libraryBean.getRootSample());
+                        assertNotNull(libraryBean.getCollection());
+                        assertNotNull(libraryBean.getSampleId());
                     }
                     if ("broadinstitute.org:bsp.prod.sample:12MD2".equals(libraryBean.getLsid())) {
                         foundTumor = true;
-                        assertEquals(libraryBean.getBspSampleType(), BSPSampleDTO.TUMOR_IND);
+                        assertEquals(libraryBean.getSampleType(), BSPSampleDTO.TUMOR_IND);
                     }
                     if (libraryBean.getLcSet() != null) {
                         foundLcSet = true;
