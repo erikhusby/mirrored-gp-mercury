@@ -33,7 +33,7 @@
 
                 <p>Review and manage all your billing and quotes.</p>
 
-                <p><a class="btn" href="/${ctxpath}/billings/billing.action?sessions">View details &#187;</a></p>
+                <p><a class="btn" href="/${ctxpath}/billing/session.action?sessions">View details &#187;</a></p>
             </div>
         </div>
     </stripes:layout-component>

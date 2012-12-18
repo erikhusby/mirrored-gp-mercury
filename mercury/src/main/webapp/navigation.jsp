@@ -14,6 +14,8 @@
                 <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
                     <li><a tabindex="-1" href="${ctxpath}/orders/order.action?list">list</a></li>
                     <li><a tabindex="-1" href="${ctxpath}/orders/order.action?create">create</a></li>
+                    <li class="divider"></li>
+                    <li><a tabindex="-1" href="${ctxpath}/billing/session.action?list">billing sessions</a></li>
                 </ul>
             </li>
             <li class="dropdown">

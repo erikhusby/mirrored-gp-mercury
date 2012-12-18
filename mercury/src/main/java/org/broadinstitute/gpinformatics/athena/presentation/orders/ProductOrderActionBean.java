@@ -15,7 +15,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.util.List;
-import java.util.Map;
 
 /**
  * This handles all the needed interface processing elements
@@ -34,9 +33,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private ProductOrderListEntryDao orderListEntryDao;
 
     @Inject
-    private BSPUserList bspUserList;
-
-    @Inject
     private JiraLink jiraLink;
 
     @Inject
@@ -49,8 +45,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     private ProductOrderDao productOrderDao;
 
     private List<ProductOrderListEntry> allProductOrders;
-
-    private Map<Long, String> fullNameMap;
 
     @Validate(required = true, on = {"view", "edit"})
     private String orderKey;
@@ -115,14 +109,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getJiraUrl() {
         return jiraLink.browseUrl();
-    }
-
-    public Map<Long, String> getFullNameMap() {
-        if (fullNameMap == null) {
-            fullNameMap = bspUserList.getFullNameMap();
-        }
-
-        return fullNameMap;
     }
 
     public ProductOrder getEditOrder() {

@@ -20,12 +20,14 @@ import net.sourceforge.stripes.validation.ValidationErrors;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.boundary.BuildInfoBean;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 /*
  * This class is a core class to extend Stripes actions from, providing some basic functionality for
@@ -51,11 +53,16 @@ public class CoreActionBean implements ActionBean {
 
     private String submitString;
 
+    private Map<Long, String> fullNameMap;
+
     @Inject
     private BuildInfoBean buildInfoBean;
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private BSPUserList bspUserList;
 
     private DateRangeSelector dateRange;
 
@@ -238,4 +245,13 @@ public class CoreActionBean implements ActionBean {
     public boolean isCreating() {
         return submitString.startsWith(CREATE);
     }
+
+    public Map<Long, String> getFullNameMap() {
+        if (fullNameMap == null) {
+            fullNameMap = bspUserList.getFullNameMap();
+        }
+
+        return fullNameMap;
+    }
+
 }

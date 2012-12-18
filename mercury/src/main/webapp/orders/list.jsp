@@ -21,11 +21,7 @@
                         {"bSortable": true, "sType": "date"},   // Updated
                         {"bSortable": false},                   // Count
                         {"bSortable": false},                   // Billing Session ID
-                        {"bSortable": false}],                  // Eligible For Billing
-                    "oTableTools": {
-                        "sSwfPath": "${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
-                        "aButtons": [ "copy", "csv", "print" ]
-                    }
+                        {"bSortable": false}]
                 })
             });
         </script>
@@ -33,7 +29,7 @@
 
     <stripes:layout-component name="content">
         <p>
-            <stripes:link title="New Research Project" href="${ctxpath}/orders/order.action?create" class="pull-right">New order</stripes:link>
+            <stripes:link title="New Product Order" href="${ctxpath}/orders/order.action?create" class="pull-right">New order</stripes:link>
         </p>
 
         <div class="clearfix"></div>

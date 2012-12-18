@@ -21,7 +21,7 @@
 
     <stripes:layout-component name="content">
         <p>
-            <stripes:link title="New Research Project" href="${ctxpath}/products/product.action?create" class="pull-right">New product</stripes:link>
+            <stripes:link title="New Product" href="${ctxpath}/products/product.action?create" class="pull-right">New product</stripes:link>
         </p>
 
         <div class="clearfix"></div>
