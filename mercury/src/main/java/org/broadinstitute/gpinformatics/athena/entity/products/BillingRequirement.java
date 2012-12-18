@@ -47,10 +47,10 @@ public class BillingRequirement {
         }
     }
 
-    @Column(name = "attribute")
+    @Column(name = "attribute", length = 255)
     private String attribute;
 
-    @Column(name = "operator")
+    @Column(name = "operator", length = 30)
     @Enumerated(EnumType.STRING)
     private Operator operator;
 
