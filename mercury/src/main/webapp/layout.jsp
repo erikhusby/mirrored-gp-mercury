@@ -103,7 +103,7 @@
                 <div class="row-fluid">
                     <div class="brand" style="display:inline;">
                         <img src="${ctxpath}/images/broad_logo.png" alt="Broad Institute"/>
-                        <a href="${ctxpath}/index"
+                        <a href="${ctxpath}/"
                            style="padding-left: 30px;text-decoration: none; font-variant: small-caps; font-size: 3em">
                             <img src="${ctxpath}/images/mercury_helmet_${bean.buildInfoBean.deployment}.png" alt="Mercury Helmet" width="40" height="30"/> Mercury</a>
                     </div>

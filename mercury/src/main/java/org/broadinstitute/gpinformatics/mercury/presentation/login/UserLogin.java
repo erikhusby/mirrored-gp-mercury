@@ -103,7 +103,7 @@ public class UserLogin extends AbstractJsfBean {
         // Order of roles is important, if user is both PDM and PM we want to go to PDM's page.
         PDM("/orders/list", DB.Role.PDM.name),
         PM("/projects/list", DB.Role.PM.name),
-        OTHER("/index", "");
+        OTHER("/index.jsp", "");
 
         private static final String INDEX = AuthorizationListener.HOME_PAGE;
         private static final String MERCURY_PAGE = "/Mercury";
@@ -132,8 +132,8 @@ public class UserLogin extends AbstractJsfBean {
                     if (targetPage.endsWith("/")) {
                         newUrlBuilder.deleteCharAt(targetPage.lastIndexOf("/"));
                     }
-                    newUrlBuilder.append(landingPage).append(".xhtml");
-                } else if (targetPage.endsWith(INDEX) || targetPage.endsWith(INDEX + ".xhtml")) {
+                    newUrlBuilder.append(landingPage).append(".jsp");
+                } else if (targetPage.endsWith(INDEX) || targetPage.endsWith(INDEX + ".jsp")) {
                     newUrlBuilder = new StringBuilder(targetPage.replace(INDEX, landingPage));
                 }
             }

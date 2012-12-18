@@ -18,6 +18,8 @@ section { margin-left: 2%; margin-right: 2% }
 a { text-decoration: underline; color: #0088CC; }
 a.external {background-image:url("/Mercury/images/external-link.gif");background-position:right center;background-repeat:no-repeat;display:inline;padding:0 20px 0 0;}
 
+h1, h2, h3, h4, h5 {color: #644436;}
+
 label, input, button, select, textarea { font-size: 12px }
 /* SIMPLE (HIGHTLIGHTS ROW W/ MOUSE)***************** */
 table.simple thead tr { background-color: #e9e9ef; text-align: left; }
@@ -28,7 +30,7 @@ table.simple tr:hover td { background-color: #def; }
 table.simple td,table.simple th { spacing: 10px ; border-right: 1px solid #ccc; border-bottom: 1px dotted #dfdfdf; padding: 2px; }
 table.nocol tbody td,table.nocol tbody th { border-left: none; border-right: none; }
 
-.page-header { border-bottom: 1px solid #EEEEEE; color: #644436; font-size: 2em; font-variant: small-caps; margin: 0 0 10px; padding-bottom: 0;}
+.page-header { border-bottom: 1px solid #EEEEEE; font-size: 2em; font-variant: small-caps; margin: 0 0 10px; padding-bottom: 0;}
 
 
 /* DataTables sorting CSS */
