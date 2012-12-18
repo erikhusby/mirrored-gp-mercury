@@ -13,11 +13,7 @@
                         {"bSortable": true},
                         {"bSortable": true},
                         {"bSortable": true},
-                        {"bSortable": false}],
-                    "oTableTools": {
-                        "sSwfPath": "${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
-                        "aButtons": [ "copy", "csv", "print" ]
-                    }
+                        {"bSortable": false}]
                 })
             });
         </script>

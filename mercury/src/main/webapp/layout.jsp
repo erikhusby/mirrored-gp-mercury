@@ -24,13 +24,6 @@
     <head>
         <meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
         <meta http-equiv="Content-Language" content="en"/>
-        <link rel="Shortcut Icon" type="image/x-icon" href="${ctxpath}/favicon.ico"/>
-        <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/bootstrap.css"/>
-        <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/scripts/DataTables-1.9.4/media/css/jquery.dataTables.css"/>
-        <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/css/TableTools.css"/>
-        <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/token-input.css"/>
-        <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/jquery-ui-1.9.2.custom.min.css"/>
-        <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/mercury.css"/>
 
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery-1.8.3.min.js"></script>
         <script type="text/javascript"> var $j = jQuery.noConflict(); </script>
@@ -50,6 +43,14 @@
         <script type="text/javascript" src="${ctxpath}/resources/scripts/json.js"></script>
 
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.tokeninput-1.6.0.js"></script>
+
+        <link rel="Shortcut Icon" type="image/x-icon" href="${ctxpath}/favicon.ico"/>
+        <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/bootstrap.css"/>
+        <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/scripts/DataTables-1.9.4/media/css/jquery.dataTables.css"/>
+        <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/css/TableTools.css"/>
+        <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/token-input.css"/>
+        <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/jquery-ui-1.9.2.custom.min.css"/>
+        <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/mercury.css"/>
 
         <script type="text/javascript"
                 src="http://prodinfojira.broadinstitute.org/jira/s/en_US-vrke9z/733/4/1.2.5/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector.js?collectorId=ad2bd4e3"></script>

@@ -15,7 +15,7 @@
                         {"bSortable": true},                    // Volume
                         {"bSortable": true},                    // Concentration
                         {"bSortable": true},                    // Yield Amount
-                        {"bSortable": true},                    // FP Status
+                        {"bSortable": true, "sType": "html"},   // FP Status
                         {"bSortable": true},                    // Status
                         {"bSortable": true},                    // Eligible
                         {"bSortable": true},                    // Billed
@@ -167,7 +167,7 @@
                             <td width="70">${sample.bspDTO.total}</td>
                             <td width="60">
                                 <c:if test="${sample.bspDTO.hasFingerprint}">
-                                    <stripes:image name="" src="/images/check.png"/>
+                                    <stripes:image name="" alt="Yes" src="/images/check.png"/>
                                 </c:if>
                             </td>
                             <td width="100">${sample.billingStatus.displayName}</td>
