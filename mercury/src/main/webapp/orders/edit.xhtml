@@ -8,7 +8,8 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:p="http://primefaces.org/ui"
       xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:b="http://mercury.broadinstitute.org/ui">
+      xmlns:b="http://mercury.broadinstitute.org/ui"
+      xmlns:security="http://mercury.broadinstitute.org/tags">
 <body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">Edit Product Order</ui:define>
@@ -20,6 +21,9 @@
         </ui:define>
 
         <ui:define name="body">
+
+            <security:authorizeBlock roles="#{userBean.developerRole}">
+
 
             <h:form id="form" prependId="false" styleClass="form-horizontal">
 
@@ -145,6 +149,7 @@
                     </div>
                 </div>
             </h:form>
+            </security:authorizeBlock>
         </ui:define>
     </ui:composition>
 </body>

@@ -18,11 +18,11 @@
         <ui:define name="body">
             <h:form styleClass="view-horizontal">
                 <div class="row-fluid" style="margin-bottom: 30px;">
-                    <!--<security:authorizeBlock roles="#{userBean.developerRole}">-->
+                    <security:authorizeBlock roles="#{userBean.developerRole}">
                         <p:button value="Edit" outcome="edit">
                             <f:param name="productOrder" value="#{productOrderDetail.productOrder.businessKey}"/>
                         </p:button>
-                    <!--</security:authorizeBlock>-->
+                    </security:authorizeBlock>
                     <!--
                     <p:commandButton value="Close Out" action="create" ajax="false" styleClass="btn">
                         <f:param name="productOrderTitle" value="#{productOrderDetail.productOrder.title}"/>
