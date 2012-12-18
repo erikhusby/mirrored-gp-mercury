@@ -298,7 +298,7 @@ public class ProductOrderForm extends AbstractJsfBean {
 
         } catch (QuoteNotFoundException e) {
             logger.error(e);
-            addErrorMessage(BASE_ERROR_TEXT + productOrder.getQuoteId());
+            addErrorMessage(BASE_ERROR_TEXT + "Invalid Quote ID: " + productOrder.getQuoteId());
             return null;
         } catch (DuplicateTitleException e) {
             logger.error(e);
