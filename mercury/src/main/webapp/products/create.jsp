@@ -17,8 +17,12 @@ ${actionBean.submitString} ${actionBean.editProduct.productName}">
                             preventDuplicates: true
                         }
                     );
+
+                    $j("#availabilityDate").datepicker();
+                    $j("#discontinuedDate").datepicker();
                 }
             );
+
         </script>
     </stripes:layout-component>
 
@@ -57,7 +61,7 @@ ${actionBean.submitString} ${actionBean.editProduct.productName}">
                 <stripes:label for="partNumber" name="Part Number" class="control-label"/>
                 <div class="controls">
                     <stripes:text id="partNumber" name="editProduct.partNumber" class="defaultText"
-                        title="Enter the description of the new product" value="${actionBean.editProduct.partNumber}"/>
+                        title="Enter the part number of the new product" value="${actionBean.editProduct.partNumber}"/>
                 </div>
             </div>
 
@@ -65,9 +69,8 @@ ${actionBean.submitString} ${actionBean.editProduct.productName}">
                 <stripes:label for="availabilityDate" name="Availability Date" class="control-label"/>
                 <div class="controls">
                     <stripes:text id="availabilityDate" name="editProduct.availabilityDate" class="defaultText"
-                        title="enter date (MM/dd/yyyy)">
-                        <fmt:formatDate value="${actionBean.editProduct.availabilityDate}" pattern="MM/dd/yyyy"/>
-                    </stripes:text>
+                        title="enter date (MM/dd/yyyy)"><fmt:formatDate
+                            value="${actionBean.editProduct.availabilityDate}" pattern="MM/dd/yyyy"/></stripes:text>
                 </div>
             </div>
 
@@ -75,9 +78,8 @@ ${actionBean.submitString} ${actionBean.editProduct.productName}">
                 <stripes:label for="discontinuedDate" name="Discontinued Date" class="control-label"/>
                 <div class="controls">
                     <stripes:text id="discontinuedDate" name="editProduct.discontinuedDate" class="defaultText"
-                        title="enter date (MM/dd/yyyy)">
-                        <fmt:formatDate value="${actionBean.editProduct.discontinuedDate}" pattern="MM/dd/yyyy"/>
-                    </stripes:text>
+                        title="enter date (MM/dd/yyyy)"><fmt:formatDate
+                            value="${actionBean.editProduct.discontinuedDate}" pattern="MM/dd/yyyy"/></stripes:text>
                 </div>
             </div>
 

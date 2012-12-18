@@ -29,10 +29,13 @@
         <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/scripts/DataTables-1.9.4/media/css/jquery.dataTables.css"/>
         <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/css/TableTools.css"/>
         <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/token-input.css"/>
+        <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/jquery-ui-1.9.2.custom.min.css"/>
         <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/mercury.css"/>
 
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+        <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery-1.8.3.min.js"></script>
         <script type="text/javascript"> var $j = jQuery.noConflict(); </script>
+
+        <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery-ui-1.9.2.custom.min.js"></script>
 
         <script type="text/javascript" src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-dropdown.js"></script>
         <script type="text/javascript" src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-tooltip.js"></script>
@@ -72,18 +75,23 @@
                     }
                 });
 
-                $j(".defaultText").blur(function () {
-                    if ($j(this).val() == "") {
-                        $j(this).addClass("defaultTextActive");
-                        $j(this).val($j(this)[0].title);
-                    }
-                });
+                $j(".defaultText").blur(updateActiveText);
+                $j(".defaultText").change(updateActiveText);
 
                 $j(".defaultText").blur();
 
                 // Default date range selector (if there is a dateRangeDiv, the action bean will HAVE to have this
                 $j('#dateRangeDiv').dateRangeSelector();
             });
+
+            function updateActiveText() {
+                if ($j(this).val() == "") {
+                    $j(this).addClass("defaultTextActive");
+                    $j(this).val($j(this)[0].title);
+                } else {
+                    $j(this).removeClass("defaultTextActive");
+                }
+            }
         </script>
         <title>Mercury | ${pageTitle}</title>
 

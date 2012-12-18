@@ -50,8 +50,8 @@ table.table thead .sorting_desc_disabled { background: url('/Mercury/images/sort
 .threecolumn {-moz-column-count:3;-webkit-column-count:3;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
 .fourcolumn {-moz-column-count:4;-webkit-column-count:4;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
 
-.defaultText { }
-.defaultTextActive { color: #A1A1A1; font-style: italic; }
+input[type="text"].defaultText, .defaultText { }
+input[type="text"].defaultTextActive, .defaultTextActive { font-size: 10px; color: #A1A1A1; font-style: italic; }
 
 /* jquery date picker */
 .ui-datepicker-trigger {
