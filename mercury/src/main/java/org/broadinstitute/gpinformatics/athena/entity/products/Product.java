@@ -2,9 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
-import org.hibernate.annotations.FetchMode;
-import org.hibernate.annotations.FetchProfile;
-import org.hibernate.annotations.FetchProfiles;
+import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
@@ -80,6 +78,13 @@ public class Product implements Serializable, Comparable<Product> {
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
 
     private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
+
+    /**
+     * Allowable Material Types for the product.
+     */
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @JoinTable(schema = "athena", name = "PRODUCT_MATERIAL_TYPES")
+    private Set<MaterialType> allowableMaterialTypes = new HashSet<MaterialType>();
 
     /**
      * JPA package visible no arg constructor
@@ -215,6 +220,9 @@ public class Product implements Serializable, Comparable<Product> {
         return optionalPriceItems;
     }
 
+    public Set<MaterialType> getAllowableMaterialTypes() {
+        return allowableMaterialTypes;
+    }
 
     public void setProductName(final String productName) {
         this.productName = productName;
@@ -276,6 +284,10 @@ public class Product implements Serializable, Comparable<Product> {
 
         optionalPriceItems.add(priceItem);
 
+    }
+
+    public void addAllowableMaterialType(MaterialType materialType) {
+        allowableMaterialTypes.add(materialType);
     }
 
     public Set<Product> getAddOns() {

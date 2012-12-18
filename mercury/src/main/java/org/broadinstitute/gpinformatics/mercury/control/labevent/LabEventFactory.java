@@ -944,11 +944,12 @@ public class LabEventFactory implements Serializable {
             throw new RuntimeException ( "Unexpected event type " + stationEventType.getEventType () );
         }
 
-        Long operator = labEventRefDataFetcher.getOperator( stationEventType.getOperator () ).getUserId();
-
-        if ( operator == null ) {
+        BspUser bspUser = labEventRefDataFetcher.getOperator(stationEventType.getOperator());
+        if ( bspUser == null ) {
             throw new RuntimeException ( "Failed to find operator " + stationEventType.getOperator () );
         }
+        Long operator = bspUser.getUserId();
+
         Long disambiguator = stationEventType.getDisambiguator ();
         if ( disambiguator == null ) {
             disambiguator = 1L;
