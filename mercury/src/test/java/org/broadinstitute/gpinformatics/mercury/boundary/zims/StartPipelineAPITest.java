@@ -27,7 +27,7 @@ public class StartPipelineAPITest extends Arquillian {
     public void test_start_server_for_kt() {
         try {
             System.out.println("Starting up");
-            Thread.sleep(1000 * 60 * 60 * 24);
+            Thread.sleep(1000 * 60 * 60 * 96);
         }
         catch(InterruptedException e) {
             System.out.println("Shutting down");
