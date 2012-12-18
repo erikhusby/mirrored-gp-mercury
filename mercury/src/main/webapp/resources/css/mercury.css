@@ -86,3 +86,7 @@ input[type='checkbox'].checkAll {
     border-bottom: 2px solid #4169e1;
     margin-top: 15px;
 }
+
+textarea.controlledText {
+    width: auto;
+}

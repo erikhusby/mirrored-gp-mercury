@@ -111,7 +111,7 @@
 
     <stripes:layout-component name="content">
 
-        <div style="float: left; margin-right: 40px;">
+        <div style="float: left; margin-right: 40px; margin-top: 5px;">
             <stripes:form action="/products/product.action" id="createForm" class="form-horizontal">
                 <div class="control-group">
                     <stripes:label for="orderName" name="Name" class="control-label"/>
@@ -175,7 +175,7 @@
                 <div class="control-group">
                     <div class="controls">
                         <div class="row-fluid">
-                            <div class="span1">
+                            <div class="span2">
                                 <stripes:submit name="save" value="Save"/>
                             </div>
                             <div class="span1">
@@ -199,13 +199,13 @@
 
         <div style="float: left; width: 600px;" class="help-block">
             <stripes:form action="/products/product.action" id="createForm" class="form-horizontal">
-                Enter samples into this list to add them to the samples list at the bottom. You can remove samples
-                by clicking on the remove button in the list. This will add the samples to the end of the list.
+                Enter samples into this box and click Add Samples to add them to the samples list at the bottom. You can remove samples
+                by clicking on the remove buttona in the list.
                 <br/>
                 <br/>
-                <stripes:textarea id="samplesToAdd" name="samplesToAdd" rows="20" cols="150"/>
+                <stripes:textarea class="controlledText" id="samplesToAdd" name="samplesToAdd" rows="15" cols="120"/>
                 <br/>
-                <stripes:button name="addSamples" value="Add Samples" onclick="addSamples"/>
+                <stripes:button style="margin-top:5px;" name="addSamples" value="Add Samples" onclick="addSamples"/>
             </stripes:form>
         </div>
 

@@ -164,7 +164,7 @@
             <div class="control-group">
                 <div class="controls">
                     <div class="row-fluid">
-                        <div class="span1">
+                        <div class="span2">
                             <stripes:submit name="save" value="Save"/>
                         </div>
                         <div class="offset">
