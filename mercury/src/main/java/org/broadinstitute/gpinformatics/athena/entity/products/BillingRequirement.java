@@ -47,15 +47,15 @@ public class BillingRequirement {
         }
     }
 
-    @Column(name = "attribute", nullable = false)
-    private String attribute = "x";
+    @Column(name = "attribute")
+    private String attribute;
 
-    @Column(name = "operator", nullable = false)
+    @Column(name = "operator")
     @Enumerated(EnumType.STRING)
-    private Operator operator = Operator.GREATER_THAN;
+    private Operator operator;
 
-    @Column(name = "value", nullable = false)
-    private double value;
+    @Column(name = "value")
+    private Double value;
 
     public String getAttribute() {
         return attribute;
@@ -73,11 +73,11 @@ public class BillingRequirement {
         this.operator = operator;
     }
 
-    public double getValue() {
+    public Double getValue() {
         return value;
     }
 
-    public void setValue(double value) {
+    public void setValue(Double value) {
         this.value = value;
     }
 }

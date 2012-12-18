@@ -1656,15 +1656,9 @@
             <column name="product" type="int">
                 <constraints nullable="false"/>
             </column>
-            <column name="attribute" type="varchar(255)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="operator" type="varchar(30)">
-                <constraints nullable="false"/>
-            </column>
-            <column name="value" type="float">
-                <constraints nullable="false"/>
-            </column>
+            <column name="attribute" type="varchar(255)"/>
+            <column name="operator" type="varchar(30)"/>
+            <column name="value" type="float"/>
         </createTable>
     </changeSet>
 
@@ -1717,17 +1711,13 @@
         </preConditions>
         <createTable tableName="product_requirement_join_aud" schemaName="athena">
             <column name="rev" type="int">
-                <constraints nullable="false"/>
+                <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="revtype" type="int">
                 <constraints nullable="false"/>
             </column>
-            <column name="product" type="int">
-                <constraints nullable="false"/>
-            </column>
-            <column name="billing_requirement_id" type="int">
-                <constraints nullable="false"/>
-            </column>
+            <column name="product" type="int"/>
+            <column name="billing_requirement_id" type="int"/>
         </createTable>
         <addPrimaryKey schemaName="athena" tableName="product_requirement_join_aud" columnNames="rev, product, billing_requirement_id"/>
     </changeSet>
