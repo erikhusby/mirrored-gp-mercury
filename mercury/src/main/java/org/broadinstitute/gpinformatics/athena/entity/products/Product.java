@@ -1,9 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
-import org.hibernate.annotations.FetchMode;
-import org.hibernate.annotations.FetchProfile;
-import org.hibernate.annotations.FetchProfiles;
+import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
@@ -92,6 +90,13 @@ public class Product implements Serializable, Comparable<Product> {
     @JoinColumn(name = "product", nullable = false)
     @AuditJoinTable(name = "product_requirement_join_aud")
     private List<BillingRequirement> requirements;
+
+    /**
+     * Allowable Material Types for the product.
+     */
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @JoinTable(schema = "athena", name = "PRODUCT_MATERIAL_TYPES")
+    private Set<MaterialType> allowableMaterialTypes = new HashSet<MaterialType>();
 
     /**
      * JPA package visible no arg constructor
@@ -225,6 +230,10 @@ public class Product implements Serializable, Comparable<Product> {
         return optionalPriceItems;
     }
 
+    public Set<MaterialType> getAllowableMaterialTypes() {
+        return allowableMaterialTypes;
+    }
+
     public void setProductName(String productName) {
         this.productName = productName;
     }
@@ -283,6 +292,10 @@ public class Product implements Serializable, Comparable<Product> {
 
     public void addPriceItem(PriceItem priceItem) {
         optionalPriceItems.add(priceItem);
+    }
+
+    public void addAllowableMaterialType(MaterialType materialType) {
+        allowableMaterialTypes.add(materialType);
     }
 
     public Set<Product> getAddOns() {

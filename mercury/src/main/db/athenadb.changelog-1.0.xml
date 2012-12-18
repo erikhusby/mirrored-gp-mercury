@@ -915,7 +915,7 @@
     <changeSet id="GPLIM-239-2" author="mcovarr">
         <addNotNullConstraint columnName="jira_ticket_key" schemaName="athena" tableName="research_project" />
     </changeSet>
-    
+
     <changeSet id="GPLIM-229-1" author="mccrory">
       <sql>
         update product set samples_per_week = null where samples_per_week = 0;
@@ -1470,6 +1470,114 @@
         </preConditions>
         <comment>The billable_item table was superceded by billing_ledger table</comment>
         <dropTable tableName="billable_item"/>
+    </changeSet>
+
+    <!-- GPLIM-580: Entity table for material_type -->
+    <changeSet id="GPLIM-580.1" author="mccrory">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="material_type" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="material_type" schemaName="athena">
+            <column name="material_type_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar(80)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category" type="varchar(80)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="athena" tableName="material_type" columnNames="material_type_id"/>
+    </changeSet>
+
+    <!-- Audit table for the above entity table for material_type -->
+    <changeSet id="GPLIM-580.2" author="mccrory">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="material_type_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="material_type_aud" schemaName="athena">
+            <column name="material_type_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar(80)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="category" type="varchar(80)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="athena" tableName="material_type_aud" columnNames="material_type_id,rev"/>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-580.2a" author="mccrory">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_mtypes_aud_rev_id" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_mtypes_aud_rev_id"
+                  baseTableSchemaName="athena" baseTableName="material_type_aud" baseColumnNames="rev"
+                  referencedTableSchemaName="mercury" referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+
+    <!-- Join table between product and material_type -->
+    <changeSet id="GPLIM-580.3" author="mccrory">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="product_material_types" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="product_material_types" schemaName="athena">
+            <column name="product_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="material_type_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="athena" tableName="product_material_types" columnNames="product_id, material_type_id"/>
+        <addForeignKeyConstraint constraintName="fk_pd_mtypes_product_id" baseTableSchemaName="athena" baseTableName="product_material_types" baseColumnNames="product_id"
+                                 referencedTableName="product" referencedColumnNames="product_id"/>
+        <addForeignKeyConstraint constraintName="fk_pd_mtypes_material_type_id" baseTableSchemaName="athena" baseTableName="product_material_types" baseColumnNames="material_type_id"
+                                 referencedTableName="material_type" referencedColumnNames="material_type_id"/>
+    </changeSet>
+
+    <!-- Audit table for the above join table between product and material_type -->
+    <changeSet id="GPLIM-580.4" author="mccrory">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="product_material_types_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="product_material_types_aud" schemaName="athena">
+            <column name="product_id" type="int">
+            </column>
+            <column name="material_type_id" type="int">
+            </column>
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="athena" tableName="product_material_types_aud" columnNames="product_id,material_type_id,rev"/>
+        <addForeignKeyConstraint constraintName="fk_pd_mtypes_aud_rev_id"
+                  baseTableSchemaName="athena" baseTableName="product_material_types_aud" baseColumnNames="rev"
+                  referencedTableSchemaName="mercury" referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
     </changeSet>
 
     <changeSet id="GPLIM-543-1" author="hrafal">
