@@ -285,7 +285,7 @@ mercury:
 
     RC:
 
-      app:      QA
+      app:      RC
       bsp:      QA
       gap:      QA
       jira:     TEST

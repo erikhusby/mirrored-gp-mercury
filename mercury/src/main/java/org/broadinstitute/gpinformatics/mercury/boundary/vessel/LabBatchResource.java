@@ -14,7 +14,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
+import javax.ejb.Stateful;
 import javax.ejb.Stateless;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -29,7 +31,8 @@ import java.util.Set;
  * For importing data from Squid and BSP, creates a batch of tubes
  */
 @Path("/labbatch")
-@Stateless
+@Stateful
+@RequestScoped
 public class LabBatchResource {
 
     @Inject

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:b="http://mercury.broadinstitute.org/ui"
+      xmlns:security="http://mercury.broadinstitute.org/tags">
+<body>
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="title">Edit Product Order</ui:define>
+
+        <ui:define name="metadata">
+            <f:metadata>
+                <f:viewParam name="productOrder" value="#{pdoEditBean.productOrder}" converter="#{productOrderConverter}" />
+            </f:metadata>
+        </ui:define>
+
+        <ui:define name="body">
+
+            <security:authorizeBlock roles="#{userBean.developerRole}">
+
+
+            <h:form id="form" prependId="false" styleClass="form-horizontal">
+
+            <div class="control-group">
+                <span class="control-label label-form">Name</span>
+                        <span class="controls">
+                            #{pdoEditBean.productOrder.title}
+                        </span>
+            </div>
+
+            <div class="control-group">
+                <span class="control-label label-form">Order Barcode</span>
+                        <span class="controls">
+                            <h:outputLink target="JIRA" class="external"
+                                          value="#{jiraLink.browseUrl(pdoEditBean.productOrder.jiraTicketKey)}">
+                                <h:outputText value="#{pdoEditBean.productOrder.jiraTicketKey}" />
+                            </h:outputLink>
+                        </span>
+            </div>
+
+
+            <div class="control-group">
+                <span class="control-label label-form">Research Project</span>
+                        <span class="controls">
+                            <h:link outcome="/projects/view">
+                                <f:param name="researchProject"  value="#{pdoEditBean.productOrder.researchProject.jiraTicketKey}"/>
+                                <h:outputText value="#{pdoEditBean.productOrder.researchProject.title}"/>
+                            </h:link>
+                            (<h:outputLink target="JIRA" styleClass="external"
+                                           value="#{jiraLink.browseUrl(pdoEditBean.productOrder.researchProject.jiraTicketKey)}">
+                            <h:outputText value="#{pdoEditBean.productOrder.researchProject.jiraTicketKey}"/>
+                        </h:outputLink>)
+                        </span>
+            </div>
+
+
+                <div class="control-group">
+                    <p:outputLabel for="product" value="Product" styleClass="control-label"/>
+                    <div class="controls">
+                        <!--@elvariable id="product" type="org.broadinstitute.gpinformatics.athena.entity.products.Product"-->
+                        <p:autoComplete id="product" value="#{pdoEditBean.productOrder.product}"
+                                        completeMethod="#{productSearcher.searchProductsForProductOrder}"
+                                        forceSelection="true"
+                                        var="product"
+                                        itemLabel="#{product.productName}"
+                                        itemValue="#{product}"
+                                        converter="#{productConverter}"
+                                        dropdown="true"
+                                        required="true"
+                                        scrollHeight="250"
+                                        size="50">
+                            <p:ajax event="itemSelect" listener="#{pdoEditBean.setupAddOns}" update="perfbyselection"/>
+                        </p:autoComplete>
+                        <p:watermark for="product" value="Type name to search"/>
+                        <p:message for="product"/>
+                    </div>
+                </div>
+
+
+                <div class="control-group">
+                    <p:outputLabel for="selectedAddOns" value="Add-ons" styleClass="control-label"/>
+                    <div class="controls">
+                        <h:panelGroup id="perfbyselection">
+                            <p:selectManyCheckbox
+                                    id="selectedAddOns" value="#{pdoEditBean.selectedAddOnPartNumbers}" layout="pageDirection">
+                                <f:selectItems value="#{pdoEditBean.addOns}" var="addOn" itemLabel="#{addOn.productName}" itemValue="#{addOn.partNumber}"/>
+                            </p:selectManyCheckbox>
+                        </h:panelGroup>
+                    </div>
+                </div>
+
+            <!--<div class="control-group">-->
+                <!--<span class="control-label label-form">Product</span>-->
+                        <!--<span class="controls">-->
+                            <!--<h:link outcome="/products/view">-->
+                                <!--<f:param name="product"  value="#{productOrderDetail.productOrder.product.partNumber}"/>-->
+                                <!--<h:outputText value="#{productOrderDetail.productOrder.product.productName}"/>-->
+                            <!--</h:link>-->
+                        <!--</span>-->
+            <!--</div>-->
+
+            <!--<div class="control-group">-->
+                <!--<span class="control-label label-form">Add-ons</span>-->
+                        <!--<span class="controls" style="width:250px;">-->
+                            <!--#{productOrderDetail.productOrder.addOnList}-->
+                        <!--</span>-->
+            <!--</div>-->
+
+
+
+                <div class="control-group">
+                    <p:outputLabel for="quote" value="Quote" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:inputText id="quote" value="#{pdoEditBean.productOrder.quoteId}" size="50" required="true">
+                            <p:ajax update="fundsRemaining"/>
+                        </p:inputText>
+                        <p:watermark for="quote" value="Enter Quote ID"/>
+                        <p:message for="quote"/>
+                        <p/>
+                        <h:outputText id="fundsRemaining" value="Funds Remaining: #{pdoEditBean.fundsRemaining}" />
+                    </div>
+                </div>
+
+
+            <div class="control-group">
+                <span class="control-label label-form">Comments</span>
+                <div class="tall-controls">#{pdoEditBean.productOrder.comments}</div>
+            </div>
+
+                <div class="control-group">
+                    <div class="controls">
+                        <div class="row-fluid">
+                            <div class="span2">
+                                <b:commandButton
+                                        disabled="#{!userBean.validUser}"
+                                        value="Update &nbsp;Order" action="#{pdoEditBean.update}"
+                                        ajax="false" styleClass="ui-priority-primary"/>
+                            </div>
+                            <div class="span1">
+                                <h:link outcome="list" value="Cancel"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </h:form>
+            </security:authorizeBlock>
+        </ui:define>
+    </ui:composition>
+</body>
+</html>

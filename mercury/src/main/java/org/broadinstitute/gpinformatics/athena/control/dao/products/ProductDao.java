@@ -124,6 +124,18 @@ public class ProductDao extends GenericDao implements Serializable {
     }
 
 
+    /**
+     * Find a Product by part number, eagerly fetching the Product Family.
+     *
+     * @param partNumber
+     * @return
+     */
+    public Product findByPartNumberEagerProductFamily(String partNumber) {
+        // mlc temporarily changed Product to EAGER fetch its ProductFamily until I get fetch profiles working
+        return findByPartNumber(partNumber);
+    }
+
+
     public Product findByBusinessKey(String key) {
         return findByPartNumber(key);
     }

@@ -68,36 +68,24 @@ public class SamplesPicoEndToEndTest {
         LabEventResource labEventResource = new LabEventResource();
         List<LabEventBean> labEventBeans = labEventResource.buildLabEventBeans(new ArrayList<LabEvent>(
                 labBatch.getLabEvents()),
+                new LabEventFactory.LabEventRefDataFetcher() {
+                    @Override
+                    public BspUser getOperator(String userId) {
+                        BSPUserList testList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
+                        return testList.getByUsername(userId);
+                    }
 
-                                                                               new LabEventFactory.LabEventRefDataFetcher() {
-                                                                                   @Override
-                                                                                   public BspUser getOperator(
-                                                                                           String userId) {
-                                                                                       BSPUserList testList =
-                                                                                               new BSPUserList(
-                                                                                                       BSPManagerFactoryProducer
-                                                                                                               .stubInstance());
-                                                                                       return testList.getByUsername(
-                                                                                               userId);
-                                                                                   }
+                    @Override
+                    public BspUser getOperator(Long bspUserId) {
+                        BSPUserList testList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
+                        return testList.getById(bspUserId);
+                    }
 
-                                                                                   @Override
-                                                                                   public BspUser getOperator(
-                                                                                           Long bspUserId) {
-                                                                                       BSPUserList testList =
-                                                                                               new BSPUserList(
-                                                                                                       BSPManagerFactoryProducer
-                                                                                                               .stubInstance());
-                                                                                       return testList.getById(
-                                                                                               bspUserId);
-                                                                                   }
-
-                                                                                   @Override
-                                                                                   public LabBatch getLabBatch(
-                                                                                           String labBatchName) {
-                                                                                       return null;
-                                                                                   }
-                                                                               });
+                    @Override
+                    public LabBatch getLabBatch(String labBatchName) {
+                        return null;
+                    }
+                });
         Assert.assertEquals("Wrong number of messages", 10, labEventBeans.size());
         LabEventBean standardsTransferEvent = labEventBeans.get(labEventBeans.size() - 1);
         LabVesselBean microfluorPlate = standardsTransferEvent.getTargets().iterator().next();
@@ -343,14 +331,12 @@ public class SamplesPicoEndToEndTest {
             labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
                 @Override
                 public BspUser getOperator(String userId) {
-
                     return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
                 }
 
                 @Override
                 public BspUser getOperator(Long bspUserId) {
-                    BspUser testUser = new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
-                    return testUser;
+                    return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
                 }
 
                 @Override
