@@ -10,5 +10,6 @@ TRAILING NULLCOLS
  product_order_sample_id,
  product_order_id,
  sample_name,
- billing_status
+ billing_status,
+ sample_position
 )
