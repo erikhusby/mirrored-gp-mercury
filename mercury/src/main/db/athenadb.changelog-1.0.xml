@@ -1738,10 +1738,12 @@
             </not>
         </preConditions>
         <addColumn tableName="product">
-            <column name="use_automated_billing" type="number(1,0)">
-                <constraints nullable="false"/>
-            </column>
+            <column name="use_automated_billing" type="number(1,0)"/>
         </addColumn>
+        <addNotNullConstraint
+                tableName="product"
+                columnName="use_automated_billing"
+                defaultNullValue="0" />
     </changeSet>
 
     <changeSet id="GPLIM-543-8" author="pshapiro">
