@@ -6,10 +6,15 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessio
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This handles all the needed interface processing elements
@@ -28,6 +33,9 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     @Inject
     private QuoteLink quoteLink;
+
+    @Inject
+    private PriceListCache priceListCache;
 
     private List<BillingSession> billingSessions;
 
@@ -80,5 +88,17 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     public void setEditSession(BillingSession editSession) {
         this.editSession = editSession;
+    }
+
+    private final Map<String, String> priceItemNameMap = new HashMap<String, String>();
+    public Map<String, String> getQuotePriceItemNameMap() {
+        Collection<PriceItem> priceItems = priceListCache.getPriceItems ();
+        if (priceItemNameMap.isEmpty() && !priceItems.isEmpty()) {
+            for (PriceItem priceItem : priceListCache.getPriceItems()) {
+                priceItemNameMap.put(priceItem.getId(), priceItem.getName());
+            }
+        }
+
+        return priceItemNameMap;
     }
 }
