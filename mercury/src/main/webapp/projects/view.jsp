@@ -6,6 +6,10 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="View Project" sectionTitle="View Project: ${actionBean.researchProject.title}">
 
     <stripes:layout-component name="content">
+        <p>
+            <stripes:link title="Click to edit ${actionBean.researchProject.title}" href="${ctxpath}/projects/project.action?create" class="pull-right"><span class="icon-home"></span> Edit research project</stripes:link>
+        </p>
+
 
         <div class="form-horizontal">
             <div class="control-group view-control-group">
