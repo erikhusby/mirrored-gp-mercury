@@ -23,7 +23,6 @@ import org.broadinstitute.gpinformatics.athena.boundary.BuildInfoBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 
-import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
@@ -188,7 +187,7 @@ public class CoreActionBean implements ActionBean {
      *
      * @param errorMessage The message to put into a SimpleError
      */
-    protected void addGlobalValidationError(String errorMessage) {
+    public void addGlobalValidationError(String errorMessage) {
         this.getContext().getValidationErrors().add(ValidationErrors.GLOBAL_ERROR, new SimpleError(errorMessage));
     }
 
@@ -255,4 +254,40 @@ public class CoreActionBean implements ActionBean {
         return fullNameMap;
     }
 
+    /**
+     * Set HTTP response headers appropiately for a file download
+     * (as opposed to a normal HTTP response).
+     *
+     * The content type may be null, in which case we default it
+     * to application/octet-stream, which will typically cause the
+     * receiving browser to offer to save the file or allow the
+     * user to pick an application to use to open it.
+     *
+     * The file name argument specifies the default file name the
+     * browser should give the file on the client.  If the file
+     * name is null, we do not send a file name in the headers.
+     * In this case, the browser will typically default the file
+     * name based on the URL used to download the file.
+     *
+     * @param contentType The MIME type of the response or null.
+     * @param fileName The name of the downloaded file or null.
+     */
+    public void setFileDownloadHeaders(String contentType,
+        String fileName) {
+        // Some applications also muck with the character encoding
+        // and cache control headers on file download, but it
+        // doesn't seem that we need this.
+        if (contentType == null) {
+            contentType = "application/octet-stream";
+        }
+
+        if (fileName == null) {
+            getContext().getResponse().setContentType(contentType);
+        } else {
+            String doubleQuotedFileName =
+                    "\"" + fileName + "\"";
+            getContext().getResponse().setContentType(contentType + "; file=" + doubleQuotedFileName);
+            getContext().getResponse().setHeader("Content-Disposition", "attachment; filename=" + doubleQuotedFileName);
+        }
+    }
 }

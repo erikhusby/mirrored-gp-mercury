@@ -71,7 +71,7 @@
                     <c:forEach items="${actionBean.allProductOrders}" var="order">
                         <tr>
                             <td>
-                                <stripes:checkbox class="shiftCheckbox" name="selectedProductOrders" value="${order.businessKey}"/>
+                                <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderBusinessKeys" value="${order.businessKey}"/>
                             </td>
                             <td>
                                 <stripes:link href="/orders/order.action" event="view">
