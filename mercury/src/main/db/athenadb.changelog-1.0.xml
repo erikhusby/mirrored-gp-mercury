@@ -1825,7 +1825,7 @@
         </preConditions>
         <createTable tableName="product_requirement_join_aud" schemaName="athena">
             <column name="rev" type="int">
-                <constraints primaryKey="true" nullable="false"/>
+                <constraints nullable="false"/>
             </column>
             <column name="revtype" type="int">
                 <constraints nullable="false"/>
