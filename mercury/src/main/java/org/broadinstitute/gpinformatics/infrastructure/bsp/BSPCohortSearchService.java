@@ -14,6 +14,6 @@ public interface BSPCohortSearchService extends Serializable {
      * Group Name
      * Archived
      */
-    Set<Cohort> getAllCohorts();
+    public Set<Cohort> getAllCohorts();
 
 }
