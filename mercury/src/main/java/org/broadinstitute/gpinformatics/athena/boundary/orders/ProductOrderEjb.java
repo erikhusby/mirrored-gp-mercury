@@ -29,7 +29,7 @@ import java.util.*;
 /**
  * Transactional manager for {@link ProductOrder}s
  */
-public class ProductOrderManager {
+public class ProductOrderEjb {
 
     @Inject
     private ProductOrderDao productOrderDao;
