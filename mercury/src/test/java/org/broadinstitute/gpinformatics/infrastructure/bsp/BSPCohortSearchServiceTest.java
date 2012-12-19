@@ -2,13 +2,14 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.annotations.Test;
 
 import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
-public class BSPCohortSearchServiceTest {
+public class BSPCohortSearchServiceTest  extends ContainerTest {
 
     @Test(groups = EXTERNAL_INTEGRATION, enabled = false)
     public void testBasic() {
