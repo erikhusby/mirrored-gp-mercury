@@ -76,7 +76,7 @@
                         #{order.productFamilyName}
                     </p:column>
 
-                    <p:column headerText="Status">
+                    <p:column headerText="Status" sortBy="#{order.orderStatus}">
                         #{order.orderStatus}
                     </p:column>
 
@@ -85,7 +85,8 @@
                         #{order.researchProjectTitle}
                     </p:column>
 
-                    <p:column headerText="Owner" filterBy="#{userListBean.getUserFullName(order.ownerId)}" filterStyleClass="hide" filterMatchMode="contains">
+                    <p:column headerText="Owner" sortBy="#{userListBean.getUserFullName(order.ownerId)}"
+                              filterBy="#{userListBean.getUserFullName(order.ownerId)}" filterStyleClass="hide" filterMatchMode="contains">
                         #{userListBean.getUserFullName(order.ownerId)}
                     </p:column>
 
