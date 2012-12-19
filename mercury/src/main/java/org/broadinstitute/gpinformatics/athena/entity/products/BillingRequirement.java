@@ -33,7 +33,7 @@ public class BillingRequirement {
         if (messageData != null) {
             try {
                 double messageValue = Double.parseDouble(messageData.getValue());
-                return operator.apply(value, messageValue);
+                return operator.apply(messageValue, value);
             } catch (NumberFormatException e) {
                 // Fall through to return false below.
             }

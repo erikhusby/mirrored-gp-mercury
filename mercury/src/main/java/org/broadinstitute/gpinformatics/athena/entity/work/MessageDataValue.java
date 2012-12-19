@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.work;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import java.text.MessageFormat;
 
 /**
  * This holds a single piece of message data
@@ -37,5 +38,10 @@ public class MessageDataValue {
 
     public String getValue() {
         return value;
+    }
+
+    @Override
+    public String toString() {
+        return MessageFormat.format("({0}, {1})", key, value);
     }
 }
