@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import clover.org.apache.commons.lang.StringUtils;
 import com.google.common.collect.ImmutableList;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
@@ -23,9 +24,7 @@ import java.util.*;
 @Named
 @ApplicationScoped
 public class BSPUserList extends AbstractCache implements Serializable {
-
     private static final Log logger = LogFactory.getLog(BSPUserList.class);
-
 
     @Inject
     private Deployment deployment;
@@ -77,12 +76,18 @@ public class BSPUserList extends AbstractCache implements Serializable {
     }
 
     /**
-     * Returns a list of users whose first name, last name, or username match the given query.
+     * Returns a list of users whose first name, last name, or username match the given query.  If the query is
+     * null then it will return an empty list.
      *
      * @param query the query string to match on
      * @return a list of matching users
      */
     public List<BspUser> find(String query) {
+        if (StringUtils.isBlank(query)) {
+            // no query string supplied
+            return new ArrayList<BspUser>();
+        }
+
         String[] lowerQueryItems = query.toLowerCase().split("\\s");
         List<BspUser> results = new ArrayList<BspUser>();
         for (BspUser user : getUsers().values()) {
@@ -103,7 +108,6 @@ public class BSPUserList extends AbstractCache implements Serializable {
     }
 
     private List<BspUser> getSortedUserList(List<BspUser> rawUsers) {
-
         Collections.sort(rawUsers, new Comparator<BspUser>() {
             @Override
             public int compare(BspUser o1, BspUser o2) {

@@ -7,14 +7,18 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.athena.boundary.FundingListBean;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
+import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.json.JSONArray;
 
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
+import java.io.StringReader;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -53,6 +57,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     @Inject
     private JiraLink jiraLink;
+
+    /*
+     * The search query.
+     */
+    private String q;
 
     /**
      * All research projects, fetched once and stored per-request (as a result of this bean being @RequestScoped).
@@ -149,25 +158,33 @@ public class ResearchProjectActionBean extends CoreActionBean {
      */
     public String getManagersListString() {
         String listString = "";
-        listString = getUserListString(editResearchProject.getProjectManagers());
+        if (editResearchProject != null) {
+            listString = getUserListString(editResearchProject.getProjectManagers());
+        }
         return listString;
     }
 
     public String getBroadPIsListString() {
         String listString = "";
-        listString = getUserListString(editResearchProject.getBroadPIs());
+        if (editResearchProject != null) {
+            listString = getUserListString(editResearchProject.getBroadPIs());
+        }
         return listString;
     }
 
     public String getExternalCollaboratorsListString() {
         String listString = "";
-        listString = getUserListString(editResearchProject.getExternalCollaborators());
+        if (editResearchProject != null) {
+            listString = getUserListString(editResearchProject.getExternalCollaborators());
+        }
         return listString;
     }
 
     public String getScientistsListString() {
         String listString = "";
-        listString = getUserListString(editResearchProject.getScientists());
+        if (editResearchProject != null) {
+            listString = getUserListString(editResearchProject.getScientists());
+        }
         return listString;
     }
 
@@ -181,19 +198,57 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * @return name of the Creator
      */
     public String getResearchProjectCreatorString() {
+        if (editResearchProject == null) {
+            return "";
+        }
         return bspUserList.getUserFullName(editResearchProject.getCreatedBy());
     }
 
     public String getCohortsListString() {
+        if (editResearchProject == null) {
+            return "";
+        }
         return cohortList.getCohortListString(editResearchProject.getCohortIds());
     }
 
     public String getFundingSourcesListString() {
+        if (editResearchProject == null) {
+            return "";
+        }
         return fundingList.getFundingListString(editResearchProject.getFundingIds());
     }
 
     public String getJiraUrl() {
+        if (jiraLink == null) {
+            return "";
+        }
         return jiraLink.browseUrl();
     }
 
+    public String getQ() {
+        return q;
+    }
+
+    public void setQ(String q) {
+        this.q = q;
+    }
+
+    /**
+     * Used for AJAX autocomplete (i.e. from create.jsp page).
+     *
+     * @return JSON list of matching users
+     * @throws Exception
+     */
+    @HandlesEvent("projectManagersAutocomplete")
+    public Resolution projectManagersAutocomplete() throws Exception {
+        List<BspUser> bspUsers = bspUserList.find(getQ());
+
+        JSONArray itemList = new JSONArray();
+        for (BspUser bspUser : bspUsers) {
+            String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
+            itemList.put(new AutoCompleteToken("" + bspUser.getUserId(), fullName, false).getJSONObject());
+        }
+
+        return new StreamingResolution("text", new StringReader(itemList.toString()));
+    }
 }
