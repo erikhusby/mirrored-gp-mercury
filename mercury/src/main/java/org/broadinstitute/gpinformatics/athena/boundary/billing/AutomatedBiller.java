@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 
-import javax.ejb.Schedule;
 import javax.ejb.Singleton;
 import javax.ejb.Startup;
 import javax.inject.Inject;
@@ -45,7 +44,7 @@ public class AutomatedBiller {
         this.billingLedgerDao = billingLedgerDao;
     }
 
-    @Schedule(minute = "*/15", hour = "*")
+    //@Schedule(minute = "*/15", hour = "*")
     public void processMessages() {
         for (WorkCompleteMessage message : workCompleteMessageDao.getNewMessages()) {
             try {
