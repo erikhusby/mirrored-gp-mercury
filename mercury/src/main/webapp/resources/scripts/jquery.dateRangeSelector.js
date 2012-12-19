@@ -50,7 +50,7 @@ var DAY_MILLIS = 1000 * 60 * 60 * 24;
 (function($){
 
     var defaults = {
-        rangeFieldName: '',
+        rangeFieldName: 'dateRange',
         rangeSelector: 0,
         startString: '',
         endString: '',

@@ -22,11 +22,7 @@
                         {"bSortable": true},                    // Abandoned
                         {"bSortable": true},                    // Price Item 1
                         {"bSortable": true},                    // Price Item 2
-                        {"bSortable": false}],                  // Comment
-                    "oTableTools": {
-                        "sSwfPath": "${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
-                        "aButtons": [ "copy", "csv", "print" ]
-                    }
+                        {"bSortable": false}]                   // Comment
                 })
             });
         </script>

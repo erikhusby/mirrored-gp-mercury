@@ -83,6 +83,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
 
         BspUser user = bspUserList.getById(id);
+        if (user == null) {
+            return "User id " + id;
+        }
+
         return user.getFirstName() + " " + user.getLastName();
     }
 
