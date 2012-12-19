@@ -239,8 +239,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * @return JSON list of matching users
      * @throws Exception
      */
-    @HandlesEvent("projectManagersAutocomplete")
-    public Resolution projectManagersAutocomplete() throws Exception {
+    @HandlesEvent("usersAutocomplete")
+    public Resolution usersAutocomplete() throws Exception {
         List<BspUser> bspUsers = bspUserList.find(getQ());
 
         JSONArray itemList = new JSONArray();

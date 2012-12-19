@@ -224,7 +224,6 @@ public class BSPUserList extends AbstractCache implements Serializable {
      * @return the list of select items for the users.
      */
     public static List<SelectItem> createSelectItems(Set<BspUser> users) {
-
         // order the users by last name so the SelectItem generator below will create items in a predictable order
         // per GPLIM-401
         List<BspUser> bspUserList = new ArrayList<BspUser>(users);

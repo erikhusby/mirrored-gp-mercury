@@ -9,15 +9,33 @@
             $j(document).ready(
                     function () {
                         $j("#projectManagers").tokenInput(
-                                "${ctxpath}/projects/project.action?projectManagersAutocomplete=", {
-                                    searchDelay: 2000,
+                                "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                    searchDelay: 500,
                                     minChars: 2,
                                     preventDuplicates: true
                                 }
                         );
-
-                        $j("#availabilityDate").datepicker();
-                        $j("#discontinuedDate").datepicker();
+                        $j("#scientists").tokenInput(
+                                "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                    searchDelay: 500,
+                                    minChars: 2,
+                                    preventDuplicates: true
+                                }
+                        );
+                        $j("#externalCollaborators").tokenInput(
+                                "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                    searchDelay: 500,
+                                    minChars: 2,
+                                    preventDuplicates: true
+                                }
+                        );
+                        $j("#broadPIs").tokenInput(
+                                "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                    searchDelay: 500,
+                                    minChars: 2,
+                                    preventDuplicates: true
+                                }
+                        );
                     }
             );
         </script>

@@ -11,7 +11,7 @@
                 function () {
                     $j("#addOns").tokenInput(
                         "${ctxpath}/products/product.action?addOnsAutocomplete=&productKey=${actionBean.editProduct.businessKey}", {
-                            searchDelay: 2000,
+                            searchDelay: 500,
                             minChars: 2,
                             preventDuplicates: true
                         }
