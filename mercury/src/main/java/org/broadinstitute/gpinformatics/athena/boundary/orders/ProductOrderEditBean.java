@@ -53,15 +53,18 @@ public class ProductOrderEditBean extends AbstractJsfBean implements Serializabl
 
 
     public void setProductOrder(ProductOrder productOrder) {
-        this.productOrder = productOrder;
 
-        setupAddOns();
+        if (this.productOrder == null) {
+            this.productOrder = productOrder;
 
-        if (productOrder != null) {
-            for (ProductOrderAddOn pdoAddOn : productOrder.getAddOns()) {
-                selectedAddOnPartNumbers.add(pdoAddOn.getAddOn().getPartNumber());
+            setupAddOns();
+
+            if (productOrder != null) {
+                for (ProductOrderAddOn pdoAddOn : productOrder.getAddOns()) {
+                    selectedAddOnPartNumbers.add(pdoAddOn.getAddOn().getPartNumber());
+                }
+                Collections.sort(selectedAddOnPartNumbers);
             }
-            Collections.sort(selectedAddOnPartNumbers);
         }
 
     }
