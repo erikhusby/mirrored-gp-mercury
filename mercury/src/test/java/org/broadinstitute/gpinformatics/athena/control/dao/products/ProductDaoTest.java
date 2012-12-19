@@ -6,6 +6,7 @@ import org.apache.commons.collections15.Predicate;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
@@ -26,12 +27,6 @@ import static org.broadinstitute.gpinformatics.athena.control.dao.products.Produ
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ProductDaoTest extends ContainerTest {
-
-    //TODO hmc  TEMP override
-//    @Deployment
-//    public static WebArchive buildMercuryWar() {
-//        return DeploymentBuilder.buildMercuryWar(org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV);
-//    }
 
     @Inject
     private ProductDao dao;
@@ -110,10 +105,10 @@ public class ProductDaoTest extends ContainerTest {
         product.setPrimaryPriceItem(priceItem1);
         product.addPriceItem(priceItem2);
 
-//        MaterialType materialType1 = new MaterialType("DNA Genomic", "DNA");
-//        product.addAllowableMaterialType(materialType1);
-//        MaterialType materialType2 = new MaterialType("DNA Somatic", "DNA");
-//        product.addAllowableMaterialType(materialType2);
+        MaterialType materialType1 = new MaterialType("DNA Genomic", "DNA");
+        product.addAllowableMaterialType(materialType1);
+        MaterialType materialType2 = new MaterialType("DNA Somatic", "DNA");
+        product.addAllowableMaterialType(materialType2);
 
         return product;
     }
@@ -328,7 +323,7 @@ public class ProductDaoTest extends ContainerTest {
         Assert.assertNotNull(foundProduct, "Product not found!");
 
         Assert.assertNotNull( foundProduct.getAllowableMaterialTypes());
-        Assert.assertEquals( 2, foundProduct.getAllowableMaterialTypes().size(), "expected 2 material types");
+        Assert.assertEquals(2, foundProduct.getAllowableMaterialTypes().size(), "expected 2 material types");
 
         Product nonexistentProduct = dao.findByPartNumber("NONEXISTENT PART!!!");
         Assert.assertNull(nonexistentProduct, "Unexpectedly found product that shouldn't exist!");
