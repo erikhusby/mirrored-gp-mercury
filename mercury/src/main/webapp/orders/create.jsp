@@ -10,6 +10,7 @@
             $j(document).ready(
                 function () {
                     $j('#productList').dataTable( {
+                        "oTableTools": ttExportDefines,
                         "aaSorting": [[1,'asc']],
                         "aoColumns": [
                             {"bSortable": true},

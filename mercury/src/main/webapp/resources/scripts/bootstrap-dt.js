@@ -1,3 +1,8 @@
+var ttExportDefines = {
+    "sSwfPath": "/Mercury/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
+    "aButtons": [ "copy", "csv", "print" ]
+};
+
 /* Set the defaults for DataTables initialization */
 $j.extend( true, $j.fn.dataTable.defaults, {
     "sDom": "<'row-fluid'<'span6'T><'span6'f>r>t<'row-fluid'<'span6'i><'span6'p>>",

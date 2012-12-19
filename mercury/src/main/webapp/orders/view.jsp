@@ -8,6 +8,7 @@
         <script type="text/javascript">
             $j(document).ready(function() {
                 $j('#sampleData').dataTable( {
+                    "oTableTools": ttExportDefines,
                     "aaSorting": [[0,'asc']],
                     "aoColumns": [
                         {"bSortable": true, "sType": "html"},   // ID

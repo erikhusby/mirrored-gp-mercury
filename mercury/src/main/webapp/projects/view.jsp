@@ -110,7 +110,11 @@
             <div class="control-group view-control-group">
                 <label class="control-label label-form">IRB Not Engaged</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.researchProject.irbNotEngaged}</div>
+                    <div class="form-value">
+                        <c:if test="${actionBean.researchProject.irbNotEngaged}">
+                            <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
+                        </c:if>
+                    </div>
                 </div>
             </div>
         </div>
