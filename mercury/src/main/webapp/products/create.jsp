@@ -21,7 +21,6 @@
                     $j("#discontinuedDate").datepicker();
                 }
             );
-
         </script>
     </stripes:layout-component>
 

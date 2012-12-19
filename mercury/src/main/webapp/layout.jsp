@@ -144,7 +144,7 @@
 
                 <section>
                     <c:if test="${sectionTitle ne null}">
-                        <div class="page-header">${sectionTitle}</div>
+                        <div class="page-header"><h4>${sectionTitle}</h4></div>
                     </c:if>
 
                     <div class="page-body">

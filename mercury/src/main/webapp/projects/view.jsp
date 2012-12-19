@@ -111,19 +111,24 @@
                 <label class="control-label label-form">IRB Not Engaged</label>
                 <div class="controls">
                     <div class="form-value">
-                        <c:if test="${actionBean.researchProject.irbNotEngaged}">
-                            <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
-                        </c:if>
+                        <c:choose>
+                            <c:when test="${actionBean.researchProject.irbNotEngaged}">
+                                <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
+                            </c:when>
+                            <c:otherwise>
+                                No
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
             </div>
         </div>
 
-        <div style="width:98%; border-bottom: 2px solid #4169e1;">
+        <div class="tableBar">
             Orders
         </div>
 
-        <table id="orderList" style="width:98%" class="table simple">
+        <table id="orderList" class="table simple">
             <thead>
                 <tr>
                     <th>Name</th>

@@ -117,7 +117,7 @@
                 Samples
             </div>
 
-            <div class="fourcolumn" style="width:98%;">
+            <div class="fourcolumn">
                 <ul>
                     <c:forEach items="${actionBean.editOrder.sampleSummaryComments}" var="comment">
                         <li>${comment}</li>

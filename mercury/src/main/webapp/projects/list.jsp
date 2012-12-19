@@ -25,7 +25,7 @@
     <div class="clearfix"></div>
 
     <p>
-    <table class="table simple" id="projectsTable" width="100%">
+    <table class="table simple" id="projectsTable">
         <thead>
         <tr>
             <th width="*">Name</th>

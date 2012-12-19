@@ -102,16 +102,25 @@
             <div class="view-control-group control-group">
                 <label class="control-label label-form">PDM Orderable Only</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editProduct.pdmOrderableOnly}</div>
+                    <div class="form-value">
+                        <c:choose>
+                            <c:when test="${actionBean.editProduct.pdmOrderableOnly}">
+                                <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
+                            </c:when>
+                            <c:otherwise>
+                                No
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div style="width:98%; border-bottom: 2px solid #4169e1;">
+        <div class="tableBar">
             Add Ons
         </div>
 
-        <table id="addOnList" style="width:98%" class="table simple">
+        <table id="addOnList" class="table simple">
             <thead>
                 <tr>
                     <th>Part Number</th>
@@ -142,10 +151,10 @@
             </tbody>
         </table>
 
-        <div style="width:98%; border-bottom: 2px solid #4169e1;">
+        <div class="tableBar">
             Optional Price Items
         </div>
-        <table id="optionPriceList" style="width:98%" class="table table-striped table-bordered">
+        <table id="optionPriceList" class="table table-striped table-bordered">
             <thead>
                 <tr>
                     <th>Platform</th>
