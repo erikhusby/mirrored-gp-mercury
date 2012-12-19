@@ -36,6 +36,7 @@ public class ProductTest {
                 .ignoreProperty("guaranteedCycleTimeSeconds")
                 .ignoreProperty("topLevelProduct")
                 .ignoreProperty("discontinuedDate")
+                .ignoreProperty("useAutomatedBilling")
                 .build();
 
         class ProductFactory implements EquivalentFactory<Product> {
