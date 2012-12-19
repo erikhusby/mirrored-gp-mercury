@@ -10,6 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
 import javax.annotation.Nonnull;
@@ -29,6 +30,7 @@ import java.util.TreeSet;
  * Date: 12/17/12
  * Time: 3:34 PM
  */
+@Impl
 public class BSPCohortSearchServiceImpl extends AbstractJerseyClientService implements BSPCohortSearchService {
 
     private static Log logger = LogFactory.getLog(BSPCohortSearchServiceImpl.class);
