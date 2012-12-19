@@ -6,7 +6,8 @@
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:p="http://primefaces.org/ui"
       xmlns:f="http://java.sun.com/jsf/core"
-      xmlns:b="http://mercury.broadinstitute.org/ui">
+      xmlns:b="http://mercury.broadinstitute.org/ui"
+      xmlns:security="http://mercury.broadinstitute.org/tags">
 <body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">#{productCreateEditBean.creating ? 'Create Product' : 'Edit Product Detail'} </ui:define>
@@ -136,7 +137,8 @@
                     <p:outputLabel for="pdmOrderableOnly" value="PDM Orderable Only" styleClass="control-label"/>
                     <div class="controls">
                         <p:watermark for="pdmOrderableOnly" value="Is this Product orderable only by Product Managers (PDMs) ?"/>
-                        <p:selectBooleanCheckbox id="pdmOrderableOnly" value="#{productCreateEditBean.product.pdmOrderableOnly}" />
+                        <p:selectBooleanCheckbox id="pdmOrderableOnly" value="#{productCreateEditBean.product.pdmOrderableOnly}"
+                                                 style="vertical-align: middle;"/>
                         <p:message for="pdmOrderableOnly"/>
                     </div>
                 </div>
@@ -196,6 +198,45 @@
                     </div>
                 </div>
 
+                <security:authorizeBlock roles="#{userBean.developerRole}">
+                    <div class="control-group" style="margin-top: 20px">
+                        <p:outputLabel for="useAutomatedBilling" value="Use Automated Billing" styleClass="control-label"/>
+                        <div class="controls">
+                            <p:watermark for="useAutomatedBilling" value="Should this product use automated billing ?"/>
+                            <p:selectBooleanCheckbox id="useAutomatedBilling" value="#{productCreateEditBean.product.useAutomatedBilling}"
+                                                     style="vertical-align: middle;">
+                                <p:ajax update="automatedBillingSettings :productParam"/>
+                            </p:selectBooleanCheckbox>
+                        </div>
+                    </div>
+
+                    <p:outputPanel id="automatedBillingSettings">
+                        <div class="control-group">
+                            <p:outputLabel for="requirementsAttribute" value="Bill When" styleClass="control-label"/>
+                            <div class="controls">
+                                <p:inputText id="requirementsAttribute" value="#{productCreateEditBean.product.requirement.attribute}"
+                                             disabled="#{!productCreateEditBean.product.useAutomatedBilling}"
+                                             required="true"
+                                             style="vertical-align: top;"/>
+                                <p:watermark for="requirementsAttribute" value="Attribute to compare"/>
+                                &#160;
+                                <p:selectOneMenu value="#{productCreateEditBean.product.requirement.operator}"
+                                                 converter="#{requirementsOperatorConverter}"
+                                                 disabled="#{!productCreateEditBean.product.useAutomatedBilling}"
+                                                 required="true"
+                                                 style="width:80px;">
+                                    <f:selectItems value="#{requirementsOperatorConverter.allItems}" var="op" itemLabel="#{op.label}"/>
+                                </p:selectOneMenu>
+                                &#160;
+                                <p:inputText id="requirementsValue" value="#{productCreateEditBean.product.requirement.value}"
+                                             disabled="#{!productCreateEditBean.product.useAutomatedBilling}"
+                                             required="true"
+                                             style="vertical-align: top;"/>
+                                <p:watermark for="requirementsValue" value="Value to compare"/>
+                            </div>
+                        </div>
+                    </p:outputPanel>
+                </security:authorizeBlock>
 
                 <div class="control-group">
                     <div class="controls">
