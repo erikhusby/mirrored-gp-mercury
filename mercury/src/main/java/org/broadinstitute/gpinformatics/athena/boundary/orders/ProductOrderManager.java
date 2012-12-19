@@ -253,6 +253,8 @@ public class ProductOrderManager {
         // In the PDO edit UI, if the user goes through and edits the quote and then hits 'Submit', this works
         // without the merge.  But if the user tabs out of the quote field before hitting 'Submit', this merge
         // is required because this method receives a detached ProductOrder instance.
+
+        // Also we would get a detached instance after quote validation failures GPLIM-488
         ProductOrder updatedProductOrder = productOrderDao.getEntityManager().merge(productOrder);
 
         // update add-ons, first remove old
