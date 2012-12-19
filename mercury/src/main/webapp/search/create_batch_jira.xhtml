@@ -44,7 +44,7 @@
                         <h:outputText value="Please select how Jira is associate with this Batch: "
                                       id="jiraInputQuestion"/>
                         <p:selectOneRadio id="jiraInputType" value="#{batchJiraInput.jiraInputType}">
-                            <f:selectItem itemLabel="Existing Jira Ticket" itemValue="existingTicket" />
+                            <f:selectItem itemLabel="Existing Jira Ticket" itemValue="existingTicket"/>
                             <f:selectItem itemLabel="New Jira Ticket" itemValue="newTicket"/>
                             <p:ajax update=":batchJiraForm:ticketIdGroup, :batchJiraForm:newTicketGroup" event="change"
                                     listener="#{batchJiraInput.updateTicketUsage}"/>
@@ -75,7 +75,7 @@
 
                             <div class="controls">
                                 <p:inputText id="batchName" rendered="#{!batchJiraInput.useExistingTicket}"
-                                             required="true"
+                                             required="true" size="50"
                                              value="#{batchJiraInput.batchName}"/>
                                 <p:watermark for="batchName" value="Enter a Name for the new Batch"/>
                                 <p:message for="batchName"/>
@@ -86,10 +86,10 @@
                                            value="Batch Description"/>
 
                             <div class="controls">
-                                <p:inputText id="batchDescription" rendered="#{!batchJiraInput.useExistingTicket}"
-                                             required="true"
-                                             value="#{batchJiraInput.batchDescription}"/>
-                                <p:watermark for="batchDescription" value="Enter a Name for the new Batch"/>
+                                <p:inputTextarea id="batchDescription" rendered="#{!batchJiraInput.useExistingTicket}"
+                                                 cols="50" rows="3" required="true"
+                                                 value="#{batchJiraInput.batchDescription}"/>
+                                <p:watermark for="batchDescription" value="Enter a Description for the new Batch"/>
                                 <p:message for="batchDescription"/>
                             </div>
                         </div>
@@ -100,7 +100,7 @@
                             <div class="controls">
                                 <p:calendar id="batchDueDate" rendered="#{!batchJiraInput.useExistingTicket}"
                                             value="#{batchJiraInput.batchDueDate}"/>
-                                <p:watermark for="batchDueDate" value="Enter a Due Date for the new Batch"/>
+                                <p:watermark for="batchDueDate" value="Batch Due Date"/>
                                 <p:message for="batchDueDate"/>
                             </div>
                         </div>

@@ -23,6 +23,10 @@
     <ui:composition template="/layout.xhtml">
         <ui:define name="title">Create Batch - Batch Confirmation Confirmation</ui:define>
         <ui:define name="metadata">
+            <f:metadata>
+                <f:viewParam id="batchParam" name="labBatch"
+                             value="#{batchConfirm.foundBatch}" converter="#{labBatchConverter}" />
+            </f:metadata>
             <f:event type="preRenderView" listener="#{batchConfirm.initForm}"/>
         </ui:define>
 
@@ -31,7 +35,7 @@
                 <div class="control-group">
                     <label class="control-label label-form">Batch Ticket</label>
                     <div class="form-value">
-                        <h:outputLink target="JIRA" value="#{batchConfirm.foundBatch.jiraTicket.ticketName}" class="external">
+                        <h:outputLink target="JIRA" value="#{jiraLink.browseUrl(batchConfirm.foundBatch.jiraTicket.ticketName)}" class="external">
                             <h:outputText value="#{batchConfirm.foundBatch.jiraTicket.ticketName}" />
                         </h:outputLink>
                     </div>

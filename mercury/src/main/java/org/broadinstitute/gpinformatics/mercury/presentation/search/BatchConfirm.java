@@ -7,9 +7,11 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
+import javax.enterprise.context.RequestScoped;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,9 +25,6 @@ import java.util.List;
 public class BatchConfirm extends AbstractJsfBean {
 
     @Inject
-    private CreateBatchConversationData conversationData;
-
-    @Inject
     LabBatchDAO labBatchDAO;
 
     @Inject
@@ -37,14 +36,7 @@ public class BatchConfirm extends AbstractJsfBean {
 
     public void initForm() {
 
-        foundBatch = labBatchDAO.findByName(conversationData.getBatchObject().getBatchName());
-
         listOfVessels = new ArrayList<LabVessel>(foundBatch.getStartingLabVessels());
-
-//        if(!conversationData.getConversation().isTransient()) {
-//            conversationData.endConversation();
-//        }
-
     }
 
     public List<LabVessel> getListOfVessels() {
@@ -53,14 +45,6 @@ public class BatchConfirm extends AbstractJsfBean {
 
     public void setListOfVessels(List<LabVessel> listOfVessels) {
         this.listOfVessels = listOfVessels;
-    }
-
-    public CreateBatchConversationData getConversationData() {
-        return conversationData;
-    }
-
-    public void setConversationData(CreateBatchConversationData conversationData) {
-        this.conversationData = conversationData;
     }
 
     public String getUserNameById(Long id) {

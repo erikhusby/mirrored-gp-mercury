@@ -17,21 +17,12 @@ public class CreateBatchConversationData implements Serializable{
     @Inject
     private Conversation conversation;
 
-    private String      jiraKey;
     private LabVessel[] selectedVessels;
 
     private LabBatch batchObject;
 
     public LabVessel[] getSelectedVessels() {
         return selectedVessels;
-    }
-
-    public String getJiraKey() {
-        return jiraKey;
-    }
-
-    public void setJiraKey(String jiraKey) {
-        this.jiraKey = jiraKey;
     }
 
     public void setSelectedVessels(LabVessel[] selectedVessels) {
@@ -73,4 +64,5 @@ public class CreateBatchConversationData implements Serializable{
         }
         return labels;
     }
+
 }

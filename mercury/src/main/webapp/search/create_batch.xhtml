@@ -33,7 +33,7 @@
             <h:form id="batchForm">
                 <div class="control-group">
                     <div class="controls">
-                        <p:inputTextarea id="barcode" value="#{batchFromPlasticBean.barcode}" size="50"/>
+                        <p:inputTextarea id="barcode" value="#{batchFromPlasticBean.barcode}" cols="50" rows="3" />
                         <p:watermark value="Enter the list of barcodes from which to create a batch" for="barcode"/>
                         <p:commandButton value="Search" action="#{batchFromPlasticBean.barcodeSearch}"
                                          update=":batchForm:searchResultPanel" styleClass="ui-priority-primary"/>

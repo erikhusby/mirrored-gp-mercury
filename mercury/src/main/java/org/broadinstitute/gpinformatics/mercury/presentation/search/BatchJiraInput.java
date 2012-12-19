@@ -1,19 +1,22 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
+import javax.enterprise.context.RequestScoped;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.faces.event.AjaxBehaviorEvent;
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * @author Scott Matthews
@@ -28,16 +31,17 @@ public class BatchJiraInput extends AbstractJsfBean {
     private LabBatchEjb labBatchEjb;
 
     @Inject
-    TwoDBarcodedTubeDAO tubeDAO;
+    private LabVesselDao labVesselDao;
 
-    public static final String EXISTING_TICKET = "existingTicket";
-    public static final String NEW_TICKET = "newTicket";
+    private static final String EXISTING_TICKET = "existingTicket";
+    private static final String NEW_TICKET = "newTicket";
 
     @Inject
     private CreateBatchConversationData conversationData;
 
     @Inject
     private UserBean userBean;
+
 
     private String jiraInputType = EXISTING_TICKET;
     private String jiraTicketId = "";
@@ -55,7 +59,6 @@ public class BatchJiraInput extends AbstractJsfBean {
     public void updateTicketUsage(AjaxBehaviorEvent event) {
         this.useExistingTicket = (jiraInputType == null) ? false : jiraInputType.equals(EXISTING_TICKET);
     }
-
 
 
     public String getJiraInputType() {
@@ -109,19 +112,15 @@ public class BatchJiraInput extends AbstractJsfBean {
     public String createBatch() {
         LabBatch batchObject;
 
+        Set<LabVessel> vesselSet =
+                new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(conversationData.getVesselLabels()));
+
         if (isUseExistingTicket()) {
-            conversationData.setJiraKey(this.jiraTicketId);
 
-            batchObject = labBatchEjb.createLabBatch(userBean.getBspUser()
-                    .getUsername(), conversationData.getVesselLabels(), jiraTicketId);
+            batchObject =
+                    labBatchEjb.createLabBatch(vesselSet,userBean.getBspUser().getUsername(),
+                            jiraTicketId);
         } else {
-
-//            Collection<TwoDBarcodedTube> tubeList =
-//                    tubeDAO.findByBarcodes(conversationData.getVesselLabels()).values();
-//
-//            Set<LabVessel> vesselSet = new HashSet<LabVessel>(tubeList);
-            Set<LabVessel> vesselSet =
-                    new HashSet<LabVessel>(tubeDAO.findByBarcodes(conversationData.getVesselLabels()).values());
 
             batchObject = new LabBatch(batchName, vesselSet);
             batchObject.setBatchDescription(batchDescription);
@@ -137,7 +136,9 @@ public class BatchJiraInput extends AbstractJsfBean {
 
         conversationData.setBatchObject(batchObject);
 
-//        conversationData.endConversation();
-        return redirect("/search/batch_confirm");
+        String redirectValue = redirect("/search/batch_confirm") + "&labBatch="+batchObject.getBatchName();
+
+        conversationData.endConversation();
+        return redirectValue;
     }
 }

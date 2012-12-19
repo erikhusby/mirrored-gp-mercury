@@ -2,12 +2,14 @@ package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jsf.TableData;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.enterprise.context.ConversationScoped;
+import javax.enterprise.context.RequestScoped;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.inject.Inject;
@@ -32,7 +34,10 @@ public class BatchFromPlasticBean extends AbstractJsfBean {
     private UserBean userBean;
 
     private String barcode;
-    //    private LabVessel       selectedVessel;
+
+//    @ConversationScoped public static class FoundVesselData extends TableData<LabVessel> {}
+//    @Inject private FoundVesselData foundVesselData;
+
     private List<LabVessel> foundVessels;
     private Map<LabVessel, Integer> vesselSampleSizeMap = new HashMap<LabVessel, Integer>();
 
@@ -51,6 +56,14 @@ public class BatchFromPlasticBean extends AbstractJsfBean {
         this.foundVessels = foundVessels;
     }
 
+//    public FoundVesselData getFoundVesselData() {
+//        return foundVesselData;
+//    }
+//
+//    public void setFoundVesselData(FoundVesselData foundVesselData) {
+//        this.foundVesselData = foundVesselData;
+//    }
+
     public String getBarcode() {
         return barcode;
     }
@@ -58,16 +71,6 @@ public class BatchFromPlasticBean extends AbstractJsfBean {
     public void setBarcode(String barcode) {
         this.barcode = barcode;
     }
-
-/*
-    public LabVessel getSelectedVessel() {
-        return selectedVessel;
-    }
-
-    public void setSelectedVessel(LabVessel selectedVessel) {
-        this.selectedVessel = selectedVessel;
-    }
-*/
 
     public void barcodeSearch(String barcode) {
         this.barcode = barcode;
@@ -82,10 +85,6 @@ public class BatchFromPlasticBean extends AbstractJsfBean {
         }
     }
 
-    //    public void onRowToggle(ToggleEvent event) {
-//        selectedVessel = labVesselDao.findByIdentifier(((LabVessel) event.getData()).getLabel());
-//    }
-//
     public String getUserNameById(Long id) {
         BspUser user = bspUserList.getById(id);
         String username = "";
@@ -93,14 +92,6 @@ public class BatchFromPlasticBean extends AbstractJsfBean {
             username = bspUserList.getById(id).getUsername();
         }
         return username;
-    }
-
-    public String getJiraKey() {
-        return conversationData.getJiraKey();
-    }
-
-    public void setJiraKey(String jiraKey) {
-        conversationData.setJiraKey(jiraKey);
     }
 
     public void setSelectedVessels(LabVessel[] selectedVessels) {
