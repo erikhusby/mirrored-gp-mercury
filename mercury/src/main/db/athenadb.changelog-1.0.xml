@@ -1834,6 +1834,7 @@
             <column name="billing_requirement_id" type="int"/>
         </createTable>
         <addPrimaryKey schemaName="athena" tableName="product_requirement_join_aud" columnNames="rev, product, billing_requirement_id"/>
+    </changeSet>
 
     <changeSet id="GPLIM-581.1" author="mccrory">
         <preConditions onFail="MARK_RAN">
