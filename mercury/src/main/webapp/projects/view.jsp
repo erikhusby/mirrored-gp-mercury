@@ -1,0 +1,161 @@
+<%@ include file="/resources/layout/taglibs.jsp" %>
+
+<stripes:useActionBean var="actionBean"
+                       beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
+
+<stripes:layout-render name="/layout.jsp" pageTitle="View Project" sectionTitle="View Project: ${actionBean.researchProject.title}">
+
+    <stripes:layout-component name="content">
+
+        <div class="form-horizontal">
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">Project</label>
+
+                <div class="controls">
+                    <div class="form-value">${actionBean.researchProject.title}</div>
+                </div>
+            </div>
+
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">ID</label>
+
+                <div class="controls">
+                    <div class="form-value">
+                        <c:if test="${actionBean.researchProject.jiraTicketKey} ne null">
+                            <stripes:link target="JIRA"
+                                          href="${actionBean.jiraLink.browseUrl(actionBean.researchProject.jiraTicketKey)}"
+                                          class="external">
+                                ${actionBean.researchProject.jiraTicketKey}
+                            </stripes:link>
+                        </c:if>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Synopsis -->
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">Synopsis</label>
+
+                <div class="controls">
+                    <div class="form-value">${actionBean.researchProject.synopsis}</div>
+                </div>
+            </div>
+
+            <!-- Project Managers -->
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">Project Managers</label>
+
+                <div class="controls">
+                    <div class="form-value">${actionBean.managersListString}</div>
+                </div>
+            </div>
+
+            <!-- Broad PIs -->
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">Broad PIs</label>
+
+                <div class="controls">
+                    <div class="form-value">${actionBean.broadPIsListString}</div>
+                </div>
+            </div>
+
+            <!-- External Collaborators -->
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">External Collaborators</label>
+
+                <div class="controls">
+                    <div class="form-value">${actionBean.externalCollaboratorsListString}</div>
+                </div>
+            </div>
+
+            <!-- Project Managers -->
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">Scientists</label>
+
+                <div class="controls">
+                    <div class="form-value">${actionBean.scientistsListString}</div>
+                </div>
+            </div>
+
+
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">Created by</label>
+
+                <div class="controls">
+                    <div class="form-value">
+                        ${actionBean.researchProjectCreatorString} on <fmt:formatDate value="${actionBean.researchProject.createdDate}" pattern="MM/dd/yyyy"/>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">Funding Sources</label>
+
+                <div class="controls">
+                    <div class="form-value">${actionBean.fundingSourcesListString}</div>
+                </div>
+            </div>
+
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">Sample Cohorts</label>
+
+                <div class="controls">
+                    <div class="form-value">${actionBean.cohortsListString}</div>
+                </div>
+            </div>
+
+
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">IRB Not Engaged</label>
+                <div class="controls">
+                    <div class="form-value">${actionBean.researchProject.irbNotEngaged}</div>
+                </div>
+            </div>
+        </div>
+
+        <div style="width:98%; border-bottom: 2px solid #4169e1;">
+            Orders
+        </div>
+
+        <table id="orderList" style="width:98%" class="table simple">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Order ID</th>
+                    <th>Product</th>
+                    <th>Status</th>
+                    <th>Owner</th>
+                    <th>Updated</th>
+                    <th>Samples</th>
+                </tr>
+            </thead>
+            <tbody>
+                <c:forEach items="${actionBean.researchProject.productOrders}" var="order">
+                    <tr>
+                        <td>
+                            <stripes:link href="/orders/order.action" event="view">
+                                <stripes:param name="orderKey" value="${order.businessKey}"/>
+                                ${order.title}
+                            </stripes:link>
+                        </td>
+                        <td>
+                            <a class="external" target="JIRA" href="${actionBean.jiraUrl}${order.jiraTicketKey}" class="external" target="JIRA">
+                                    ${order.jiraTicketKey}
+                            </a>
+                        </td>
+                        <td>${order.title}</td>
+                        <td>${order.orderStatus}</td>
+                        <td>${actionBean.fullNameMap[order.modifiedBy]}</td>
+                        <td>
+                            <fmt:formatDate value="${order.modifiedDate}" pattern="MM/dd/yyyy"/>
+                        </td>
+                        <td>${order.pdoSampleCount}</td>
+                    </tr>
+                </c:forEach>
+            </tbody>
+        </table>
+
+    </stripes:layout-component>
+</stripes:layout-render>

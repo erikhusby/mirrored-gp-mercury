@@ -38,13 +38,15 @@
         <c:forEach items="${actionBean.allResearchProjects}" var="project">
             <tr>
                 <td>
-                        ${project.title}
-                </td>
-                <td>
                     <stripes:link href="/projects/project.action" event="view">
                         <stripes:param name="businessKey" value="${project.businessKey}"/>
-                        ${project.businessKey}
+                        ${project.title}
                     </stripes:link>
+                </td>
+                <td>
+                    <a class="external" target="JIRA" href="${actionBean.jiraUrl}${project.businessKey}" class="external" target="JIRA">
+                            ${project.jiraTicketKey}
+                    </a>
                 </td>
                 <td>
                         ${project.status}
@@ -53,7 +55,7 @@
                         ${project.createdBy}
                 </td>
                 <td>
-                        ${project.modifiedDate}
+                        <fmt:formatDate value="${project.modifiedDate}" pattern="MM/dd/yyyy HH:mm"/>
                 </td>
                 <td>
                         ${actionBean.researchProjectCounts.get(project.jiraTicketKey)}
