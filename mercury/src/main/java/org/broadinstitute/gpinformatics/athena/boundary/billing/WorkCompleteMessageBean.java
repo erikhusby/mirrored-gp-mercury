@@ -20,10 +20,7 @@ import java.util.Map;
  */
 @SuppressWarnings("UnusedDeclaration")
 @MessageDriven(name = "WorkReporting", activationConfig = {
-        @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/broad.queue.athena.workreporting.production"),
-        @ActivationConfigProperty(propertyName = "connectorClassName", propertyValue ="org.hornetq.core.remoting.impl.netty.NettyConnectorFactory"),
-        @ActivationConfigProperty(propertyName = "connectionParameters", propertyValue = "host=vseqlims;port=5445")})
+        @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue") } )
 public class WorkCompleteMessageBean implements MessageListener {
 
     @Inject
