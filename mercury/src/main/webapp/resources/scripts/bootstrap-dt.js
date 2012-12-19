@@ -1,17 +1,13 @@
-/* Set the defaults for DataTables initialisation */
+/* Set the defaults for DataTables initialization */
 $j.extend( true, $j.fn.dataTable.defaults, {
-    "sDom": "<'row-fluid'<'span6'l><'span6'f>r>t<'row-fluid'<'span6'i><'span6'p>>",
+    "sDom": "<'row-fluid'<'span6'T><'span6'f>r>t<'row-fluid'<'span6'i><'span6'p>>",
     "bAutoWidth": false,
     "bInfo": false,
     "bStateSave": false,
     "bJQueryUI": false,
     "bPaginate": false,
     /* "sPaginationType": "bootstrap", */
-    "bLengthChange": false,
-    "oTableTools": {
-        "sSwfPath": "/Mercury/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
-        "aButtons": [ "copy", "csv", "print" ]
-        },
+    /* "bLengthChange": false, */
     "oLanguage": {
         "sLengthMenu": "_MENU_ records per page"
         }

@@ -13,6 +13,8 @@ body { padding-bottom: 40px; padding-top: 5px; font-size: 12px; }
 footer { font-size: 10px; text-align: center; padding-top: 20px; }
 section { margin-left: 2%; margin-right: 2% }
 
+ul.DTTT_dropdown.dropdown-menu li {
+  position: relative; }
 
 /* Override Bootstrap's opinion that links should not be underlined. */
 a { text-decoration: underline; color: #0088CC; }

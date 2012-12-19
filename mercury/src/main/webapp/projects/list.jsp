@@ -9,7 +9,12 @@
         <script type="text/javascript">
             $j(document).ready(function () {
                 $j('.shiftCheckbox').enableCheckboxRangeSelection();
-                $j('#projectsTable').dataTable( {  })
+                $j('#projectsTable').dataTable({
+                    "oTableTools": {
+                        "sSwfPath": "/Mercury/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
+                        "aButtons": [ "copy", "csv", "print" ]
+                    }
+                })
             });
         </script>
     </stripes:layout-component>
