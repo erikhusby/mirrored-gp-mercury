@@ -8,12 +8,12 @@ import org.json.JSONObject;
  */
 public class AutoCompleteToken {
     private String id;
-    private String value;
+    private String name;
     private boolean readonly;
 
-    public AutoCompleteToken(String id, String value, boolean readonly) {
+    public AutoCompleteToken(String id, String name, boolean readonly) {
         this.id = id;
-        this.value = value;
+        this.name = name;
         this.readonly = readonly;
     }
 
@@ -21,8 +21,8 @@ public class AutoCompleteToken {
         return id;
     }
 
-    public String getValue() {
-        return value;
+    public String getName() {
+        return name;
     }
 
     public boolean isReadonly() {
@@ -32,7 +32,7 @@ public class AutoCompleteToken {
     public JSONObject getJSONObject() throws JSONException {
         JSONObject item = new JSONObject();
         item.put("id", id);
-        item.put("value", value); // product name
+        item.put("name", name); // product name
         item.put("readonly", Boolean.valueOf(readonly));
         return item;
     }
