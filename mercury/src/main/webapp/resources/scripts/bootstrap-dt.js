@@ -6,8 +6,8 @@ $j.extend( true, $j.fn.dataTable.defaults, {
     "bStateSave": false,
     "bJQueryUI": false,
     "bPaginate": false,
-    /* "sPaginationType": "bootstrap", */
-    /* "bLengthChange": false, */
+    "sPaginationType": "bootstrap",
+    "bLengthChange": false,
     "oLanguage": {
         "sLengthMenu": "_MENU_ records per page"
         }

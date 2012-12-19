@@ -8,6 +8,10 @@
         <script type="text/javascript">
             $j(document).ready(function() {
                 $j('#productOrderList').dataTable( {
+                    "oTableTools": {
+                        "sSwfPath": "/Mercury/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
+                        "aButtons": [ "copy", "csv", "print" ]
+                    },
                     "aaSorting": [[1,'asc']],
                     "aoColumns": [
                         {"bSortable": false},                   // checkbox
