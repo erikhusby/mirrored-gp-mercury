@@ -137,6 +137,6 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             }
         }
 
-        return ticketDescription;
+        return ticketDescription.trim();
     }
 }

@@ -119,11 +119,11 @@ public class BatchJiraInput extends AbstractJsfBean {
 
             batchObject =
                     labBatchEjb.createLabBatch(vesselSet,userBean.getBspUser().getUsername(),
-                            jiraTicketId);
+                            jiraTicketId.trim());
         } else {
 
-            batchObject = new LabBatch(batchName, vesselSet);
-            batchObject.setBatchDescription(batchDescription);
+            batchObject = new LabBatch(batchName.trim(), vesselSet);
+            batchObject.setBatchDescription(batchDescription.trim());
             batchObject.setDueDate(batchDueDate);
 
             labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername(), null);

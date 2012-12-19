@@ -220,7 +220,7 @@ public class LabBatch {
             first = false;
         }
 
-        return batchName.toString();
+        return batchName.toString().trim();
     }
 
     /**

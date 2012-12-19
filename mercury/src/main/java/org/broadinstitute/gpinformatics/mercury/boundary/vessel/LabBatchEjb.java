@@ -152,7 +152,12 @@ public class LabBatchEjb {
                 ticket = new JiraTicket(jiraService, jiraIssue.getKey());
 
             } else {
+                JiraIssue jiraIssue = jiraService.getIssue(jiraTicket);
+
                 ticket = jiraTicketDao.fetchByName(jiraTicket);
+                if(ticket == null) {
+                    ticket =new JiraTicket(jiraService, jiraIssue.getKey());
+                }
             }
             newBatch.setJiraTicket(ticket);
         } catch (IOException ioe) {
