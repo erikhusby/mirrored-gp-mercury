@@ -1581,4 +1581,13 @@
                   referencedTableSchemaName="mercury" referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
     </changeSet>
 
+    <changeSet id="GPLIM-581.1" author="mccrory">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sequenceExists sequenceName="SEQ_MATERIAL_TYPE" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_MATERIAL_TYPE" schemaName="athena" startValue="1" incrementBy="10"/>
+    </changeSet>
+
 </databaseChangeLog>
