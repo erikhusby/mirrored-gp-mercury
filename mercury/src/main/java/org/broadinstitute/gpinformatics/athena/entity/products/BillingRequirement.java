@@ -1,8 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
+import org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import java.util.Map;
 
 /**
  * This class represents the requirements for a product or add-on to be billable.
@@ -21,6 +23,24 @@ public class BillingRequirement {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_BILLING_REQUIREMENT")
     private Long billing_requirement_id;
 
+    /**
+     * Check to see if this requirement is satisfied with the data.
+     * @param data a name, value map of data
+     * @return true if the requirements are satisfied.
+     */
+    public boolean canBill(Map<String, MessageDataValue> data) {
+        MessageDataValue messageData = data.get(attribute);
+        if (messageData != null) {
+            try {
+                double messageValue = Double.parseDouble(messageData.getValue());
+                return operator.apply(value, messageValue);
+            } catch (NumberFormatException e) {
+                // Fall through to return false below.
+            }
+        }
+        return false;
+    }
+
     public enum Operator {
         GREATER_THAN(">"),
         GREATER_THAN_OR_EQUAL_TO(">="),
@@ -28,6 +48,20 @@ public class BillingRequirement {
         LESS_THAN_OR_EQUAL_TO("<=");
 
         public final String label;
+
+        public boolean apply(double d1, double d2) {
+            switch (this) {
+            case GREATER_THAN:
+                return d1 > d2;
+            case GREATER_THAN_OR_EQUAL_TO:
+                return d1 >= d2;
+            case LESS_THAN:
+                return d1 < d2;
+            case LESS_THAN_OR_EQUAL_TO:
+                return d1 <= d2;
+            }
+            throw new RuntimeException();
+        }
 
         static Operator fromLabel(String label) {
             for (Operator op : values()) {

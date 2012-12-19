@@ -72,6 +72,10 @@ public class BillingLedger {
         return quantity;
     }
 
+    public void setQuantity(double quantity) {
+        this.quantity = quantity;
+    }
+
     public BillingSession getBillingSession() {
         return billingSession;
     }

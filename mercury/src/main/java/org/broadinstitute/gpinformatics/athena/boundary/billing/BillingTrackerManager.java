@@ -7,7 +7,6 @@ import org.apache.poi.ss.usermodel.*;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
-import org.broadinstitute.gpinformatics.athena.entity.orders.BillingStatus;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -260,19 +259,12 @@ public class BillingTrackerManager {
                     } else if (billedQuantity == null) {
                         throw BillingTrackerUtils.getRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " + (row.getRowNum() + 1) +
                                 " of spreadsheet " + product.getPartNumber() +
-                                " has a blank billed date. Please redownload the tracker to populate this.");
+                                " has a blank billed date. Please re-download the tracker to populate this.");
                     } else {
                         double delta = newQuantity - billedQuantity;
 
                         if (delta != 0) {
-                            BillingLedger billingLedger =
-                                    new BillingLedger(productOrderSample, priceItem, workCompleteDate, delta);
-                            productOrderSample.getLedgerItems().add(billingLedger);
-                            productOrderSample.setBillingStatus(BillingStatus.EligibleForBilling);
-                            logger.debug("Added BillingLedger item for sample " + productOrderSample.getSampleName() +
-                                    " to PDO " + productOrderSample.getProductOrder().getBusinessKey() +
-                                    " for PriceItemName[PPN]: " + billableRef.getPriceItemName() + "[" +
-                                    billableRef.getProductPartNumber() + "] - Quantity:" + delta);
+                            productOrderSample.addLedgerItem(workCompleteDate, priceItem, delta);
                         }
                     }
                 } else {

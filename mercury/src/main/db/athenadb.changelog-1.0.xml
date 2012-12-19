@@ -1605,6 +1605,7 @@
             <column name="COMPLETED_DATE" type="date">
                 <constraints nullable="false"/>
             </column>
+            <column name="PROCESS_DATE" type="date"/>
         </createTable>
     </changeSet>
 
@@ -1640,6 +1641,9 @@
                 <constraints nullable="true"/>
             </column>
             <column name="COMPLETED_DATE" type="date">
+                <constraints nullable="true"/>
+            </column>
+            <column name="PROCESS_DATE" type="date">
                 <constraints nullable="true"/>
             </column>
             <column name="rev" type="int">

@@ -62,4 +62,40 @@ public class WorkCompleteMessage {
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch= FetchType.LAZY)
     @MapKeyColumn(name="key")
     private Map<String, MessageDataValue> data;
+
+    /** If not null, the date when this message was processed.  If null, the message hasn't yet been processed. */
+    @Column(name = "PROCESS_DATE")
+    private Date processDate;
+
+    public String getPdoName() {
+        return pdoName;
+    }
+
+    public String getCollaboratorSampleId() {
+        return collaboratorSampleId;
+    }
+
+    public Long getSampleIndex() {
+        return sampleIndex;
+    }
+
+    public String getAliquotLsid() {
+        return aliquotLsid;
+    }
+
+    public Date getCompletedDate() {
+        return completedDate;
+    }
+
+    public Map<String, MessageDataValue> getData() {
+        return data;
+    }
+
+    public Date getProcessDate() {
+        return processDate;
+    }
+
+    public void setProcessDate(Date processDate) {
+        this.processDate = processDate;
+    }
 }

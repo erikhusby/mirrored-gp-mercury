@@ -196,12 +196,12 @@ public class BillingTrackerImporter {
         return sheetSummaryMap;
     }
 
-    private void parseRowForSummaryMap(
+    private static void parseRowForSummaryMap(
             Row row, Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap,
             List<TrackerColumnInfo> trackerColumnInfos, Product product, ProductOrderSample productOrderSample,
-            Map<TrackerColumnInfo, PriceItem> priceItemMap ) {
+            Map<TrackerColumnInfo, PriceItem> priceItemMap) {
 
-        Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = ProductOrderSample.getLedgerQuantities(productOrderSample);
+        Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = productOrderSample.getLedgerQuantities();
 
         for (int priceItemIndex = 0; priceItemIndex < trackerColumnInfos.size(); priceItemIndex++) {
             double newQuantity;
@@ -219,7 +219,7 @@ public class BillingTrackerImporter {
                 PriceItem priceItem = priceItemMap.get( trackerColumnInfos.get(priceItemIndex) );
                 // Check billedQuantity parsed against that which is already billed for this POS and PriceItem - should match
                 ProductOrderSample.LedgerQuantities quantities = billCounts.get(priceItem);
-                if ((quantities != null ) && (quantities.getBilled() != previouslyBilledQuantity)) {
+                if ((quantities != null) && (quantities.getBilled() != previouslyBilledQuantity)) {
                     throw new RuntimeException(
                             String.format("Found a different billed quantity '%f' in the database for sample in %s in %s, price item '%s', in Product sheet %s. " +
                                     "The billed quantity in the spreadsheet is '%f', please download a recent copy of the BillingTracker spreadsheet.",

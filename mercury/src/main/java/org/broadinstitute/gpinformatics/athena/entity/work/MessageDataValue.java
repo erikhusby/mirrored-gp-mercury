@@ -26,8 +26,16 @@ public class MessageDataValue {
     private Long messageDataValueId;
 
     @Column(name = "KEY")
-    String key;
+    private String key;
 
     @Column(name = "VALUE")
-    String value;
+    private String value;
+
+    public String getKey() {
+        return key;
+    }
+
+    public String getValue() {
+        return value;
+    }
 }
