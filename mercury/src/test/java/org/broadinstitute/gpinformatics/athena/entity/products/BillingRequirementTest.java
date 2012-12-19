@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -9,10 +10,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * @author pshapiro
- */
-@Test(groups = "DatabaseFree")
+@Test(groups = TestGroups.DATABASE_FREE)
 public class BillingRequirementTest {
 
     static final String CALL_RATE = "callRate";
