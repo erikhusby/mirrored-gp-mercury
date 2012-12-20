@@ -77,13 +77,13 @@
 
     <stripes:layout-component name="content">
 
-        <stripes:form action="/projects/project.action" id="createForm" class="form-horizontal">
+        <stripes:form beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" id="createForm" class="form-horizontal">
         <stripes:hidden name="businessKey" value="${actionBean.researchProject.jiraTicketKey}"/>
         <div class="form-horizontal">
             <div class="control-group">
                 <stripes:label for="title" class="control-label">Project *</stripes:label>
                 <div class="controls">
-                        <stripes:text name="researchProject.title" value="${actionBean.researchProject.title}" id="title" title="Enter in the project name"/>
+                        <stripes:text name="researchProject.title" id="title" title="Enter in the project name"/>
                 </div>
             </div>
 
@@ -102,8 +102,7 @@
                 <stripes:label for="projectManagers" class="control-label">Project Managers *</stripes:label>
 
                 <div class="controls">
-                    <stripes:text id="projectManagers" name="researchProject.projectManagers" class="defaultText"
-                                  title="Type text to search to search for Project Managers" style="width:390"/>
+                    <stripes:text id="projectManagers" name="researchProject.projectManagers" />
                 </div>
             </div>
 
@@ -112,8 +111,7 @@
                 <stripes:label for="broadPIs" class="control-label">Broad PIs</stripes:label>
 
                 <div class="controls">
-                    <stripes:text id="broadPIs" name="researchProject.broadPIs" class="defaultText"
-                                  title="Type text to search to search for Broad PIs"/>
+                    <stripes:text id="broadPIs" name="researchProject.broadPIs" />
                 </div>
             </div>
 
@@ -121,17 +119,15 @@
             <div class="control-group">
                 <stripes:label for="externalCollaborators" class="control-label">External Collaborators</stripes:label>
                 <div class="controls">
-                    <stripes:text id="externalCollaborators" name="researchProject.externalCollaborators" class="defaultText"
-                                  title="Type text to search to search for External Collaborators"/>
+                    <stripes:text id="externalCollaborators" name="researchProject.externalCollaborators" />
                 </div>
             </div>
 
-            <!-- Project Managers -->
+            <!-- Scientists -->
             <div class="control-group">
-                <stripes:label for="scientists"class="control-label">Scientists</stripes:label>
+                <stripes:label for="scientists" class="control-label">Scientists</stripes:label>
                 <div class="controls">
-                    <stripes:text id="scientists" name="researchProject.scientists" class="defaultText"
-                                  title="Type text to search to search for Scientists"/>
+                    <stripes:text id="scientists" name="researchProject.scientists" />
                 </div>
             </div>
 
@@ -152,8 +148,7 @@
                 <stripes:label for="fundingSources" class="control-label">Funding Sources</stripes:label>
 
                 <div class="controls">
-                    <stripes:text id="fundingSources" name="researchProject.fundingSourcesListString" class="defaultText"
-                                  title="Type text to search to search for Funding Sources"/>
+                    <stripes:text id="fundingSources" name="researchProject.fundingSourcesListString" />
                 </div>
             </div>
 
@@ -161,8 +156,7 @@
                 <stripes:label for="cohorts" class="control-label">Sample Cohorts</stripes:label>
 
                 <div class="controls">
-                    <stripes:text id="cohorts" name="researchProject.cohortsListString" class="defaultText"
-                                  title="Type text to search to search for Cohorts"/>
+                    <stripes:text id="cohorts" name="researchProject.cohortsListString" />
                 </div>
             </div>
 
@@ -171,11 +165,9 @@
                 <stripes:label for="irbs" class="control-label">IRB/IACUC Numbers</stripes:label>
 
                 <div class="controls">
-                    <stripes:text id="irbs" name="researchProject.irbs" class="defaultText"
-                                  title="Type text to give irb selections"/>
+                    <stripes:text id="irbs" name="researchProject.irbs" />
                     <p>
-                        <stripes:checkbox id="irbNotEngaged" name="researchProject.irbNotEngaged"
-                                          value="${actionBean.researchProject.irbNotEngaged}"/>&nbsp;<stripes:label for="irbNotEngaged" name="IRB Not Engaged" style="display:inline;"/>
+                        <stripes:checkbox id="irbNotEngaged" name="researchProject.irbNotEngaged"/>&nbsp;<stripes:label for="irbNotEngaged" name="IRB Not Engaged" style="display:inline;"/>
                     </p>
                 </div>
             </div>

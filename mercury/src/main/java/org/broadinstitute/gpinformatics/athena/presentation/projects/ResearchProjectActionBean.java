@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * This class is for ...
+ * This class is for research projects action bean / web page.
  *
  * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
  */
@@ -51,6 +51,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private FundingListBean fundingList;
 
+    @Validate(required = true, on={"edit", "view"})
     private String businessKey;
 
     @ValidateNestedProperties({
@@ -89,7 +90,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     /**
-     * Initialize the project with the passed in key for display in the form
+     * Initialize the project with the passed in key for display in the form.  Need to handle in @Before so we can
+     * get the OriginalTitle on the project for validation.
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {"view", "edit", "save"})
     public void init() {
@@ -137,6 +139,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     @Default
+    @HandlesEvent("list")
     public Resolution list() {
         return new ForwardResolution(PROJECT_LIST_PAGE);
     }
@@ -154,8 +157,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public Resolution save() throws Exception {
         researchProjectDao.persist(editResearchProject);
-        this.addMessage("The research project '" + editResearchProject.getTitle() + "' has been saved.");
-        return new ForwardResolution(PROJECT_VIEW_PAGE);
+        addMessage("The research project '" + editResearchProject.getTitle() + "' has been saved.");
+        return new RedirectResolution(ResearchProjectActionBean.class, "view").addParameter("businessKey", editResearchProject.getBusinessKey());
     }
 
 
