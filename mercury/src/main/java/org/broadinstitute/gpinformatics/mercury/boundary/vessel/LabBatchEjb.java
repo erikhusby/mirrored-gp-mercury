@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
-import clover.org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
@@ -88,6 +88,10 @@ public class LabBatchEjb {
                 new LabBatch(LabBatch.generateBatchName(CreateFields.IssueType.EXOME_EXPRESS.getJiraName(), pdoList),
                         new HashSet<LabVessel>(labVessels));
 
+        if(jiraTicket != null) {
+            setJiraInformaiton(batchObject, jiraTicket);
+        }
+
         labBatchDao.persist(batchObject);
 
         batchToJira(reporter, jiraTicket, batchObject);
@@ -113,11 +117,40 @@ public class LabBatchEjb {
                     LabBatch.generateBatchName(CreateFields.IssueType.EXOME_EXPRESS.getJiraName(), pdoList));
         }
 
+        if(jiraTicket != null) {
+            setJiraInformaiton(batchObject, jiraTicket);
+        }
         labBatchDao.persist(batchObject);
 
         batchToJira(reporter, jiraTicket, batchObject);
 
         return batchObject;
+    }
+
+    /**
+     *
+     * @param batchObject
+     * @param jiraTicket
+     */
+    private void setJiraInformaiton(LabBatch batchObject, String jiraTicket) {
+
+        JiraTicket ticket;
+        try {
+            JiraIssue jiraIssue = jiraService.getIssue(jiraTicket);
+
+            ticket = jiraTicketDao.fetchByName(jiraTicket);
+            if(ticket == null) {
+                ticket =new JiraTicket(jiraService, jiraIssue.getKey());
+            }
+
+            batchObject.setBatchName(jiraIssue.getSummary());
+            batchObject.setBatchDescription(jiraIssue.getDescription());
+
+            batchObject.setJiraTicket(ticket);
+        } catch (IOException ioe) {
+            logger.error("Error attempting to create Lab Batch in Jira", ioe);
+            throw new InformaticsServiceException("Error attempting to create Lab Batch in Jira", ioe);
+        }
     }
 
     /**
@@ -129,8 +162,8 @@ public class LabBatchEjb {
      * @param newBatch   The source of the Batch information that will assist in populating the Jira Ticket
      */
     public void batchToJira(String reporter, String jiraTicket, LabBatch newBatch) {
-        JiraTicket ticket;
 
+        JiraTicket ticket = null;
         try {
             AbstractBatchJiraFieldFactory fieldBuilder = AbstractBatchJiraFieldFactory
                     .getInstance(CreateFields.ProjectType.LCSET_PROJECT, newBatch, athenaClientService);
@@ -151,15 +184,21 @@ public class LabBatchEjb {
 
                 ticket = new JiraTicket(jiraService, jiraIssue.getKey());
 
-            } else {
-                JiraIssue jiraIssue = jiraService.getIssue(jiraTicket);
+//            }
+//            else {
+//                JiraIssue jiraIssue = jiraService.getIssue(jiraTicket);
+//
+//                ticket = jiraTicketDao.fetchByName(jiraTicket);
+//                if(ticket == null) {
+//                    ticket =new JiraTicket(jiraService, jiraIssue.getKey());
+//                }
+//
+//                newBatch.setBatchName(jiraIssue.getSummary());
+//                newBatch.setBatchDescription(jiraIssue.getDescription());
+//            }
 
-                ticket = jiraTicketDao.fetchByName(jiraTicket);
-                if(ticket == null) {
-                    ticket =new JiraTicket(jiraService, jiraIssue.getKey());
-                }
+                newBatch.setJiraTicket(ticket);
             }
-            newBatch.setJiraTicket(ticket);
         } catch (IOException ioe) {
             logger.error("Error attempting to create Lab Batch in Jira", ioe);
             throw new InformaticsServiceException("Error attempting to create Lab Batch in Jira", ioe);

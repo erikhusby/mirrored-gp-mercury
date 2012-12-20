@@ -84,6 +84,32 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         JiraIssueData() { }
     }
 
+    private static class JiraSearchIssueData extends JiraIssueData {
+
+        private String expand;
+        private String summary;
+        private String description;
+
+        public String getSummary() {
+            return summary;
+        }
+
+        public void setSummary(String summary) {
+            this.summary = summary;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        private JiraSearchIssueData() {
+        }
+    }
+
     @Override
     public JiraIssue createIssue(String projectPrefix, String reporter, CreateFields.IssueType issueType,
                                            String summary, String description,
@@ -109,8 +135,37 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     @Override
-    public JiraIssue getIssue(String key) {
-        return new JiraIssue(key, this);
+    public JiraIssue getIssue(String key) throws IOException  {
+
+
+        String urlString = getBaseUrl() + "/issue/"+key;
+
+
+        WebResource webResource = getJerseyClient().resource(urlString).queryParam("fields","summary,description");
+
+        String queryResponse = webResource.get(String.class);
+
+        JiraSearchIssueData data = parseSearch(queryResponse);
+
+        JiraIssue issueResult =new JiraIssue(key, this);
+        issueResult.setDescription(data.getDescription());
+        issueResult.setSummary(data.getSummary());
+
+        return issueResult;
+    }
+
+    private JiraSearchIssueData parseSearch(String queryResponse) throws IOException{
+
+        JiraSearchIssueData parsedResults = new JiraSearchIssueData();
+
+        final Map root = new ObjectMapper().readValue(queryResponse,Map.class);
+        parsedResults.setKey((String)root.get("key"));
+        final Map fields  = (Map)root.get("fields");
+
+        parsedResults.setDescription((String)fields.get("description"));
+        parsedResults.setSummary((String)fields.get("summary"));
+
+        return parsedResults;
     }
 
     @Override
