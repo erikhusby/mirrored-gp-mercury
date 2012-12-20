@@ -7,7 +7,10 @@
 
     <stripes:layout-component name="content">
         <p>
-            <stripes:link title="Click to edit ${actionBean.researchProject.title}" href="${ctxpath}/projects/project.action?edit=&businessKey=${actionBean.researchProject.businessKey}" class="pull-right"><span class="icon-home"></span> Edit research project</stripes:link>
+            <stripes:link title="Click to edit ${actionBean.researchProject.title}" href="${ctxpath}/projects/project.action?edit" class="pull-right">
+                <span class="icon-home"></span> Edit research project
+                <stripes:param name="businessKey" value="${actionBean.researchProject.businessKey}"/>
+            </stripes:link>
         </p>
 
 

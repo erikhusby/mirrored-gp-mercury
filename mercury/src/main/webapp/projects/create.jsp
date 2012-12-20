@@ -81,7 +81,7 @@
         <stripes:hidden name="businessKey" value="${actionBean.researchProject.jiraTicketKey}"/>
         <div class="form-horizontal">
             <div class="control-group">
-                <stripes:label for="title" name="Project" class="control-label"/>
+                <stripes:label for="title" class="control-label">Project *</stripes:label>
                 <div class="controls">
                         <stripes:text name="researchProject.title" value="${actionBean.researchProject.title}" id="title" title="Enter in the project name"/>
                 </div>
@@ -89,7 +89,7 @@
 
             <!-- Synopsis -->
             <div class="control-group">
-                <stripes:label for="synopsis" name="Synopsis" class="control-label"/>
+                <stripes:label for="synopsis" class="control-label">Synopsis *</stripes:label>
 
                 <div class="controls">
                     <stripes:text id="synopsis" name="researchProject.synopsis" class="defaultText" style="width:390"
@@ -99,7 +99,7 @@
 
             <!-- Project Managers -->
             <div class="control-group">
-                <stripes:label for="projectManagers" name="Project Managers" class="control-label"/>
+                <stripes:label for="projectManagers" class="control-label">Project Managers *</stripes:label>
 
                 <div class="controls">
                     <stripes:text id="projectManagers" name="researchProject.projectManagers" class="defaultText"
@@ -109,7 +109,7 @@
 
             <!-- Broad PIs -->
             <div class="control-group">
-                <stripes:label for="broadPIs" name="Broad PIs" class="control-label"/>
+                <stripes:label for="broadPIs" class="control-label">Broad PIs</stripes:label>
 
                 <div class="controls">
                     <stripes:text id="broadPIs" name="researchProject.broadPIs" class="defaultText"
@@ -119,7 +119,7 @@
 
             <!-- External Collaborators -->
             <div class="control-group">
-                <stripes:label for="externalCollaborators" name="External Collaborators" class="control-label"/>
+                <stripes:label for="externalCollaborators" class="control-label">External Collaborators</stripes:label>
                 <div class="controls">
                     <stripes:text id="externalCollaborators" name="researchProject.externalCollaborators" class="defaultText"
                                   title="Type text to search to search for External Collaborators"/>
@@ -128,26 +128,28 @@
 
             <!-- Project Managers -->
             <div class="control-group">
-                <stripes:label for="scientists" name="Scientists" class="control-label"/>
+                <stripes:label for="scientists"class="control-label">Scientists</stripes:label>
                 <div class="controls">
                     <stripes:text id="scientists" name="researchProject.scientists" class="defaultText"
                                   title="Type text to search to search for Scientists"/>
                 </div>
             </div>
 
-            <div class="control-group">
-                <stripes:label for="createdBy" name="createdBy" class="control-label"/>
+            <c:if test="${actionBean.researchProjectCreatorString} ne null">
+                <div class="control-group">
+                    <stripes:label for="createdBy" class="control-label">Created By</stripes:label>
 
-                <div class="controls">
-                    <div class="form-value">
-                        ${actionBean.researchProjectCreatorString} on <fmt:formatDate value="${actionBean.researchProject.createdDate}" pattern="MM/dd/yyyy"/>
+                    <div class="controls">
+                        <div class="form-value">
+                                ${actionBean.researchProjectCreatorString} on <fmt:formatDate
+                                value="${actionBean.researchProject.createdDate}" pattern="MM/dd/yyyy"/>
+                        </div>
                     </div>
                 </div>
-            </div>
-
+            </c:if>
 
             <div class="control-group">
-                <stripes:label for="fundingSources" name="Funding Sources" class="control-label"/>
+                <stripes:label for="fundingSources" class="control-label">Funding Sources</stripes:label>
 
                 <div class="controls">
                     <stripes:text id="fundingSources" name="researchProject.fundingSourcesListString" class="defaultText"
@@ -156,7 +158,7 @@
             </div>
 
             <div class="control-group">
-                <stripes:label for="cohorts" name="Sample Cohorts" class="control-label"/>
+                <stripes:label for="cohorts" class="control-label">Sample Cohorts</stripes:label>
 
                 <div class="controls">
                     <stripes:text id="cohorts" name="researchProject.cohortsListString" class="defaultText"
@@ -166,7 +168,7 @@
 
 
             <div class="control-group">
-                <stripes:label for="irbs" name="IRB/IACUC Numbers" class="control-label"/>
+                <stripes:label for="irbs" class="control-label">IRB/IACUC Numbers</stripes:label>
 
                 <div class="controls">
                     <stripes:text id="irbs" name="researchProject.irbs" class="defaultText"

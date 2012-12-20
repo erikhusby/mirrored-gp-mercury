@@ -259,6 +259,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
         this.q = q;
     }
 
+    /**
+     * Handles the autocomplete for the jQuery Token plugin.
+     *
+     * @return
+     * @throws Exception
+     */
     @HandlesEvent("autocomplete")
     public Resolution autocomplete() throws Exception {
         Collection<ResearchProject> projects = researchProjectDao.searchProjects(getQ());
