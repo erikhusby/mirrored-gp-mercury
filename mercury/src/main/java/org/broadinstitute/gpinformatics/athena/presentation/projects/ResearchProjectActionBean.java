@@ -53,11 +53,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     private String businessKey;
 
-
     @ValidateNestedProperties({
             @Validate(field="title", maxlength=4000, on={"save"}),
             @Validate(field="synopsis", maxlength=4000, on={"save"}),
-            @Validate(field="comments", maxlength=2000, on={"save"}),
             @Validate(field="comments", maxlength=2000, on={"save"})
     })
     private ResearchProject editResearchProject;
@@ -82,6 +80,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
      */
     private Map<String, Long> projectOrderCounts;
 
+    /**
+     * Fetch the complete list of research projects.
+     */
     @After(stages = LifecycleStage.BindingAndValidation, on = {"list"})
     public void listInit() {
         allResearchProjects = researchProjectDao.findAllResearchProjects();
@@ -98,9 +99,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
         }
     }
 
+    /**
+     * Validation of project name.
+     *
+     * @param errors
+     */
     @ValidationMethod(on = "save")
     public void createUniqueNameValidation(ValidationErrors errors) {
-
         // If the research project has no original title, then it was not fetched from hibernate, so this is a create
         // OR if this was fetched and the title has been changed
         if ((editResearchProject.getOriginalTitle() == null) ||
@@ -109,7 +114,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             // Check if there is an existing research project and error out if it already exists
             ResearchProject existingProject = researchProjectDao.findByTitle(editResearchProject.getTitle());
             if (existingProject != null) {
-                errors.add("title", new SimpleError("A research project already exists with this name"));
+                errors.add("title", new SimpleError("A research project already exists with this name."));
             }
         }
     }
@@ -148,6 +153,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     public Resolution save() {
+        researchProjectDao.persist(editResearchProject);
         this.addMessage("The research project '" + editResearchProject.getTitle() +"' has been saved.");
         return new ForwardResolution(PROJECT_VIEW_PAGE);
     }
@@ -250,6 +256,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return fundingList.getFundingListString(editResearchProject.getFundingIds());
     }
 
+    /**
+     * Get the fully qualified Jira URL.
+     *
+     * @return URL string
+     */
     public String getJiraUrl() {
         if (jiraLink == null) {
             return "";
