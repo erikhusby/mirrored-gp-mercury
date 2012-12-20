@@ -260,12 +260,8 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     @Override
-    public void postNewTransition(String jiraIssueKey, Transition transition) throws IOException {
-        IssueTransitionRequest jiraIssueTransition = new IssueTransitionRequest(transition);
-
-        String urlString = getBaseUrl() + "/issue/" + jiraIssueKey + "/transitions";
-        WebResource webResource = getJerseyClient().resource(urlString);
-        post(webResource, jiraIssueTransition);
+    public void postNewTransition(String jiraIssueKey, Transition transition, String comment) throws IOException {
+        postNewTransition(jiraIssueKey, transition, null, comment);
     }
 
 
@@ -318,5 +314,17 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
                 getJerseyClient().resource(getBaseUrl() + "/issue/" + jiraIssueKey).queryParam("fields", fieldArgs);
 
         return get(webResource, new GenericType<IssueFieldsResponse>(){});
+    }
+
+    @Override
+    public String getResolution(String jiraIssueKey) throws IOException {
+        String url = getBaseUrl() + "/issue/" + jiraIssueKey;
+        log.info(url);
+        WebResource webResource =
+                getJerseyClient().resource(getBaseUrl() + "/issue/" + jiraIssueKey).queryParam("fields", "resolution");
+
+        IssueResolutionResponse issueResolutionResponse = get(webResource, new GenericType<IssueResolutionResponse>() {});
+
+        return issueResolutionResponse.getFields().entrySet().iterator().next().getValue().getName();
     }
 }

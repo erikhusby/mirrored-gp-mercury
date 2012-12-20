@@ -144,11 +144,13 @@ public interface JiraService extends Serializable {
 
     Transition findAvailableTransitionByName(String jiraIssueKey, String transitionName);
 
-    void postNewTransition(String jiraIssueKey, Transition transition) throws IOException;
+    void postNewTransition(String jiraIssueKey, Transition transition, String comment) throws IOException;
 
     void postNewTransition(String jiraIssueKey, Transition transition, Collection<CustomField> customFields, String comment) throws IOException;
 
     IssueFieldsResponse getIssueFields(String jiraIssueKey, Collection<CustomFieldDefinition> customFieldDefinitions) throws IOException;
+
+    String getResolution(String jiraIssueKey) throws IOException;
 
     /**
      * Check and see if the user is an exact match for a JIRA user, and has an active account.

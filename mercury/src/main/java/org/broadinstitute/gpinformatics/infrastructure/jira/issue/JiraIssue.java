@@ -97,7 +97,7 @@ public class JiraIssue implements Serializable {
      * @param transition the target transition state
      */
     public void postNewTransition(Transition transition) throws IOException {
-        jiraService.postNewTransition(key, transition);
+        jiraService.postNewTransition(key, transition, null);
     }
 
 

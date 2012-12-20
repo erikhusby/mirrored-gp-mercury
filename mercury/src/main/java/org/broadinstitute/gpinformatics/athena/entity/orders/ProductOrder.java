@@ -882,7 +882,8 @@ public class ProductOrder implements Serializable {
     public enum OrderStatus implements StatusType {
         Draft,
         Submitted,
-        Closed;
+        Abandoned,
+        Complete;
 
         @Override
         public String getDisplayName() {
@@ -890,7 +891,7 @@ public class ProductOrder implements Serializable {
         }
     }
 
-    private enum TransitionStates {
+    public enum TransitionStates {
         Complete("Complete"),
         Cancel("Cancel"),
         StartProgress("Start Progress"),
