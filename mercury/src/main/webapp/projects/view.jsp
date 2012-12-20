@@ -10,6 +10,7 @@
             <stripes:link title="Click to edit ${actionBean.researchProject.title}" href="${ctxpath}/projects/project.action?edit" class="pull-right">
                 <span class="icon-home"></span> Edit research project
                 <stripes:param name="businessKey" value="${actionBean.researchProject.businessKey}"/>
+                <stripes:param name="submitString" value="${actionBean.submitString}"/>
             </stripes:link>
         </p>
 

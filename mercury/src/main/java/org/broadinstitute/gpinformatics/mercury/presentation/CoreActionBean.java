@@ -243,6 +243,8 @@ public class CoreActionBean implements ActionBean {
     }
 
     public boolean isCreating() {
+        if (submitString == null) return false;
+
         return submitString.startsWith(CREATE);
     }
 

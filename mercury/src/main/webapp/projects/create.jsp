@@ -175,8 +175,31 @@
                                   title="Type text to give irb selections"/>
                     <p>
                         <stripes:checkbox id="irbNotEngaged" name="researchProject.irbNotEngaged"
-                                          class="defaultText" value="${actionBean.researchProject.irbNotEngaged}"/>&nbsp;<stripes:label for="irbNotEngaged" name="IRB Not Engaged"/>
+                                          value="${actionBean.researchProject.irbNotEngaged}"/>&nbsp;<stripes:label for="irbNotEngaged" name="IRB Not Engaged" style="display:inline;"/>
                     </p>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-group">
+            <div class="controls">
+                <div class="row-fluid">
+                    <div class="span2">
+                        <stripes:submit name="save" value="Save"/>
+                    </div>
+                    <div class="offset">
+                        <c:choose>
+                            <c:when test="${actionBean.creating}">
+                                <stripes:link href="${ctxpath}/projects/product.action?list=">Cancel</stripes:link>
+                            </c:when>
+                            <c:otherwise>
+                                <stripes:link href="${ctxpath}/projects/project.action?view=">
+                                    <stripes:param name="businessKey" value="${actionBean.researchProject.businessKey}"/>
+                                    Cancel
+                                </stripes:link>
+                            </c:otherwise>
+                        </c:choose>
+                    </div>
                 </div>
             </div>
         </div>

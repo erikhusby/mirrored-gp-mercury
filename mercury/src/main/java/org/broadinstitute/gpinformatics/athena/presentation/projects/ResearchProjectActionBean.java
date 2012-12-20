@@ -32,8 +32,8 @@ import java.util.Map;
  */
 @UrlBinding("/projects/project.action")
 public class ResearchProjectActionBean extends CoreActionBean {
-    private static final String CREATE = "Create New Product";
-    private static final String EDIT = "Edit Product: ";
+    private static final String CREATE = "Create New Project";
+    private static final String EDIT = "Edit Project: ";
 
     public static final String PROJECT_CREATE_PAGE = "/projects/create.jsp";
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
@@ -146,6 +146,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
         submitString = EDIT;
         return new ForwardResolution(PROJECT_CREATE_PAGE);
     }
+
+    public Resolution save() {
+        this.addMessage("The research project '" + editResearchProject.getTitle() +"' has been saved.");
+        return new ForwardResolution(PROJECT_VIEW_PAGE);
+    }
+
 
     public Resolution view() {
         return new ForwardResolution(PROJECT_VIEW_PAGE);
