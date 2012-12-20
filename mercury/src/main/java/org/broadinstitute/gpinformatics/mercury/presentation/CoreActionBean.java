@@ -209,6 +209,15 @@ public class CoreActionBean implements ActionBean {
     }
 
     /**
+     * If the error list isn't empty then it has errors.
+     *
+     * @return true if there are some errors
+     */
+    public boolean hasErrors() {
+        return !getContext().getValidationErrors().isEmpty();
+    }
+
+    /**
      * Get the build info bean.
      *
      * @return the injected BuildInfoBean

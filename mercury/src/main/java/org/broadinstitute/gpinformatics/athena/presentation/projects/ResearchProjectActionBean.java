@@ -54,9 +54,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private String businessKey;
 
     @ValidateNestedProperties({
-            @Validate(field="title", maxlength=4000, on={"save"}),
-            @Validate(field="synopsis", maxlength=4000, on={"save"}),
-            @Validate(field="comments", maxlength=2000, on={"save"})
+            @Validate(field = "title", maxlength = 4000, on = {"save"}),
+            @Validate(field = "synopsis", maxlength = 4000, on = {"save"}),
+            @Validate(field = "comments", maxlength = 2000, on = {"save"})
     })
     private ResearchProject editResearchProject;
 
@@ -109,7 +109,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         // If the research project has no original title, then it was not fetched from hibernate, so this is a create
         // OR if this was fetched and the title has been changed
         if ((editResearchProject.getOriginalTitle() == null) ||
-            (!editResearchProject.getTitle().equalsIgnoreCase(editResearchProject.getOriginalTitle()))) {
+                (!editResearchProject.getTitle().equalsIgnoreCase(editResearchProject.getOriginalTitle()))) {
 
             // Check if there is an existing research project and error out if it already exists
             ResearchProject existingProject = researchProjectDao.findByTitle(editResearchProject.getTitle());
@@ -152,9 +152,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return new ForwardResolution(PROJECT_CREATE_PAGE);
     }
 
-    public Resolution save() {
+    public Resolution save() throws Exception {
         researchProjectDao.persist(editResearchProject);
-        this.addMessage("The research project '" + editResearchProject.getTitle() +"' has been saved.");
+        this.addMessage("The research project '" + editResearchProject.getTitle() + "' has been saved.");
         return new ForwardResolution(PROJECT_VIEW_PAGE);
     }
 
@@ -322,7 +322,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         for (Long userId : editResearchProject.getBroadPIs()) {
             BspUser bspUser = bspUserList.getById(userId);
             String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
-            itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName,  false).getJSONObject());
+            itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName, false).getJSONObject());
         }
 
         return itemList.toString();
@@ -337,7 +337,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         for (Long userId : editResearchProject.getExternalCollaborators()) {
             BspUser bspUser = bspUserList.getById(userId);
             String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
-            itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName,  false).getJSONObject());
+            itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName, false).getJSONObject());
         }
 
         return itemList.toString();
@@ -352,7 +352,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         for (Long userId : editResearchProject.getScientists()) {
             BspUser bspUser = bspUserList.getById(userId);
             String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
-            itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName,  false).getJSONObject());
+            itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName, false).getJSONObject());
         }
 
         return itemList.toString();
@@ -367,7 +367,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         for (Long userId : editResearchProject.getProjectManagers()) {
             BspUser bspUser = bspUserList.getById(userId);
             String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
-            itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName,  false).getJSONObject());
+            itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName, false).getJSONObject());
         }
 
         return itemList.toString();
@@ -382,7 +382,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         JSONArray itemList = new JSONArray();
         for (String fundingId : editResearchProject.getFundingIds()) {
             Funding funding = fundingList.getById(fundingId);
-            itemList.put(new AutoCompleteToken(fundingId, funding.getDisplayName(),  false).getJSONObject());
+            itemList.put(new AutoCompleteToken(fundingId, funding.getDisplayName(), false).getJSONObject());
         }
 
         return itemList.toString();
@@ -396,7 +396,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         JSONArray itemList = new JSONArray();
         for (String cohortId : editResearchProject.getCohortIds()) {
             Cohort cohort = cohortListBean.getCohortById(cohortId);
-            itemList.put(new AutoCompleteToken(cohortId, cohort.getDisplayName(),  false).getJSONObject());
+            itemList.put(new AutoCompleteToken(cohortId, cohort.getDisplayName(), false).getJSONObject());
         }
 
         return itemList.toString();
@@ -409,7 +409,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
         JSONArray itemList = new JSONArray();
         for (String irbNumber : editResearchProject.getIrbNumbers()) {
-            itemList.put(new AutoCompleteToken(irbNumber,  irbNumber, false).getJSONObject());
+            itemList.put(new AutoCompleteToken(irbNumber, irbNumber, false).getJSONObject());
         }
 
         return itemList.toString();

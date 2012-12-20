@@ -4,6 +4,15 @@
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="View Research Project" sectionTitle="View Project: ${actionBean.researchProject.title}">
+    <stripes:layout-component name="extraHead">
+        <script type="text/javascript">
+            $j(document).ready(function () {
+                $j('#orderList').dataTable({
+                    "oTableTools": ttExportDefines
+                })
+            });
+        </script>
+    </stripes:layout-component>
 
     <stripes:layout-component name="content">
         <p>
