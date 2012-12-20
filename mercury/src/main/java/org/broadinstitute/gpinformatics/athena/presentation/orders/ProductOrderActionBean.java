@@ -197,7 +197,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been created");
-        return new RedirectResolution(ORDER_VIEW_PAGE).addParameter("order", editOrder.getBusinessKey());
+        return new RedirectResolution(ProductOrderActionBean.class, "view").addParameter("order", editOrder.getBusinessKey());
     }
 
     @HandlesEvent("downloadBillingTracker")
@@ -220,15 +220,14 @@ public class ProductOrderActionBean extends CoreActionBean {
                 billingLedgerDao.findWithoutBillingSessionByOrderList(getSelectedProductOrderBusinessKeys());
         if ((ledgerItems == null) || (ledgerItems.isEmpty())) {
             addGlobalValidationError("There is nothing to bill");
-            return list();
+            return new RedirectResolution(ProductOrderActionBean.class, "list");
         }
 
         BillingSession session = new BillingSession(userBean.getBspUser().getUserId(), ledgerItems);
         billingSessionDao.persist(session);
 
-        return new RedirectResolution(BillingSessionActionBean.class)
-                .addParameter("view", "")
-                .addParameter("billingSession=", session.getBusinessKey());
+        return new RedirectResolution(BillingSessionActionBean.class, "view")
+                .addParameter("billingSession", session.getBusinessKey());
     }
 
     public List<String> getSelectedProductOrderBusinessKeys() {
