@@ -69,7 +69,7 @@ public class AssociateReagentsForm extends AbstractJsfBean {
 
     @SuppressWarnings({"unchecked"})
     public List<ReagentDesign> findReagent(String searchString) {
-        return reagentDesignDao.findListWithWildcard(ReagentDesign.class, searchString,
+        return reagentDesignDao.findListWithWildcard(ReagentDesign.class, searchString, true,
                 ReagentDesign_.reagentDesign,
                 ReagentDesign_.targetSetName,
                 ReagentDesign_.manufacturersName

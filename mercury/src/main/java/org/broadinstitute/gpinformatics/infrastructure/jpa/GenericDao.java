@@ -9,10 +9,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import javax.persistence.metamodel.SingularAttribute;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -329,14 +326,22 @@ public class GenericDao {
      * @return list of entities that match the value, or empty list if not found
      */
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListWithWildcard(
-            Class<ENTITY_TYPE> entity, String value,
+            Class<ENTITY_TYPE> entity, String value, boolean ignoreCase,
             SingularAttribute<METADATA_TYPE, VALUE_TYPE>... singularAttributes) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
-        Predicate[] predicates=new Predicate[singularAttributes.length];
+        Predicate[] predicates = new Predicate[singularAttributes.length];
         for (int i = 0; i < singularAttributes.length; i++) {
-            predicates[i]= criteriaBuilder.like(root.get(singularAttributes[i]).as(String.class), "%" + value + "%");
+            Expression<String> expression;
+            final Expression<String> asExpression = root.get(singularAttributes[i]).as(String.class);
+            if (ignoreCase) {
+                expression = criteriaBuilder.lower(asExpression);
+                value=value.toLowerCase();
+            } else {
+                expression = asExpression;
+            }
+            predicates[i] = criteriaBuilder.like(expression, "%" + value + "%");
         }
         criteriaQuery.where(criteriaBuilder.or(predicates));
         try {
