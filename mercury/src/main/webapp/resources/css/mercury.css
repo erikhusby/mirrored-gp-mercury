@@ -75,3 +75,5 @@ input[type='checkbox'].checkAll { margin-left: -8px; }
 textarea.controlledText { width: auto; }
 
 .label-form { color: #909090; }
+
+.actionButtons { align:left; margin-bottom: 10px; }

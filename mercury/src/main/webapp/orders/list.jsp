@@ -36,7 +36,7 @@
         <div class="clearfix"></div>
 
         <stripes:form action="/orders/order.action" id="createForm" class="form-horizontal">
-            <div style="align:left;">
+            <div class="actionButtons">
                 <!--security:authorizeBlock roles="${userBean.developerRole}, ${userBean.billingManagerRole}"-->
                 <stripes:submit name="startBilling" value="Start Billing Session"/>
                 <!--/security:authorizeBlock-->

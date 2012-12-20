@@ -187,7 +187,7 @@ public class ProductDao extends GenericDao implements Serializable {
      *
      * @return The products in the db that matches
      */
-    public List<Product> searchProductsForProductOrder(String searchText) {
+    public List<Product> searchProducts(String searchText) {
         return findInProducts(searchText, findTopLevelProductsForProductOrder());
     }
 

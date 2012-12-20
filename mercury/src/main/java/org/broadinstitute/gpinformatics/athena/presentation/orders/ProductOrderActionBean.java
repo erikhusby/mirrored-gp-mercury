@@ -2,27 +2,39 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
-import net.sourceforge.stripes.validation.Validate;
+import net.sourceforge.stripes.validation.*;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.BspLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
 import java.util.Calendar;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+
+import static org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao.FetchSpec.*;
 
 /**
  * This handles all the needed interface processing elements
@@ -55,14 +67,28 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private ProductOrderDao productOrderDao;
 
+    @Inject
+    private BillingSessionDao billingSessionDao;
+
+    @Inject
+    private BillingLedgerDao billingLedgerDao;
+
+    @Inject
+    private UserBean userBean;
+
     private List<ProductOrderListEntry> allProductOrders;
 
-    @Validate(required = true, on = {"view", "edit"})
+    @Validate(required = true, on={"view", "edit", "save"})
     private String orderKey;
 
-    ProductOrder editOrder;
+    @ValidateNestedProperties({
+            @Validate(field="productOrderId", required=true, on="edit"),
+            @Validate(field="comments", maxlength=2000, on={"edit", "view"})
+    })
+    private ProductOrder editOrder;
 
     private List<String> selectedProductOrderBusinessKeys;
+    private List<ProductOrder> selectedProductOrders;
 
     /**
      * Initialize the product with the passed in key for display in the form
@@ -72,6 +98,49 @@ public class ProductOrderActionBean extends CoreActionBean {
         orderKey = getContext().getRequest().getParameter("orderKey");
         if (orderKey != null) {
             editOrder = productOrderDao.findByBusinessKey(orderKey);
+        }
+    }
+
+    @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
+    public void validateOrderSelection(ValidationErrors errors) {
+        if (!userBean.isValidBspUser()) {
+            errors.addGlobalError(new SimpleError("This requires that you be a valid bsp user "));
+            return;
+        }
+
+        if ((selectedProductOrderBusinessKeys == null) || selectedProductOrderBusinessKeys.isEmpty()) {
+            errors.addGlobalError(new SimpleError("Please select at least one product order"));
+            return;
+        }
+
+        Set<Product> products = new HashSet<Product> ();
+        selectedProductOrders =
+            productOrderDao.findListByBusinessKeyList(selectedProductOrderBusinessKeys, Product, ResearchProject, Samples);
+        for (ProductOrder order : selectedProductOrders) {
+            products.add(order.getProduct());
+        }
+
+        // Go through each products and report invalid duplicate price item names
+        for (Product product : products) {
+            String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
+            if (duplicatePriceItems != null) {
+                errors.addGlobalError(new SimpleError(
+                    "The Product " + product.getPartNumber() + " has duplicate price items: " + StringUtils.join(duplicatePriceItems, ", ")));
+            }
+        }
+
+        // If there are locked out orders, then do not allow the session to start
+        Set<BillingLedger> lockedOutOrders = billingLedgerDao.findLockedOutByOrderList(getSelectedProductOrderBusinessKeys());
+        if (!lockedOutOrders.isEmpty()) {
+            Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());
+            for (BillingLedger ledger : lockedOutOrders) {
+                lockedOutOrderStrings.add(ledger.getProductOrderSample().getProductOrder().getTitle());
+            }
+
+            String lockedOutString = StringUtils.join(lockedOutOrderStrings.toArray(), ", ");
+
+            errors.addGlobalError(new SimpleError(
+                "The following orders are locked out by active billing sessions: " + lockedOutString));
         }
     }
 
@@ -103,7 +172,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         return new ForwardResolution(ORDER_CREATE_PAGE);
     }
 
-    @HandlesEvent(value = "save")
+    @HandlesEvent("save")
     public Resolution save() {
         try {
             productOrderDao.persist(editOrder);
@@ -118,10 +187,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("downloadBillingTracker")
     public Resolution downloadBillingTracker() {
-        List<String> productOrderBusinessKeys = getSelectedProductOrderBusinessKeys();
         Resolution downloadResolution =
-            ProductOrderActionBean.getTrackerForOrders(
-                this, productOrderDao, productOrderBusinessKeys, bspUserList);
+            ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, bspUserList);
 
         // If there is no file to download, just pass on the errors
         if (downloadResolution == null) {
@@ -130,6 +197,23 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // Do the download
         return downloadResolution;
+    }
+
+    @HandlesEvent("startBilling")
+    public Resolution startBilling() {
+        Set<BillingLedger> ledgerItems =
+                billingLedgerDao.findWithoutBillingSessionByOrderList(getSelectedProductOrderBusinessKeys());
+        if ((ledgerItems == null) || (ledgerItems.isEmpty())) {
+            addGlobalValidationError("There is nothing to bill");
+            return list();
+        }
+
+        BillingSession session = new BillingSession(userBean.getBspUser().getUserId(), ledgerItems);
+        billingSessionDao.persist(session);
+
+        return new RedirectResolution(BillingSessionActionBean.class)
+                .addParameter("view", "")
+                .addParameter("billingSession=", session.getBusinessKey());
     }
 
     public List<String> getSelectedProductOrderBusinessKeys() {
@@ -174,8 +258,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public static Resolution getTrackerForOrders(
         final CoreActionBean actionBean,
-        ProductOrderDao productOrderDao,
-        List<String> pdoBusinessKeys,
+        List<ProductOrder> productOrderList,
         BSPUserList bspUserList) {
 
         OutputStream outputStream = null;
@@ -187,7 +270,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             final File tempFile = File.createTempFile(filename, "xls");
             outputStream = new FileOutputStream(tempFile);
 
-            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(pdoBusinessKeys, bspUserList, productOrderDao);
+            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(productOrderList, bspUserList);
             sampleLedgerExporter.writeToStream(outputStream);
             IOUtils.closeQuietly(outputStream);
 
@@ -213,5 +296,13 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         return null;
+    }
+
+    public String getOrderKey() {
+        return orderKey;
+    }
+
+    public void setOrderKey(String orderKey) {
+        this.orderKey = orderKey;
     }
 }

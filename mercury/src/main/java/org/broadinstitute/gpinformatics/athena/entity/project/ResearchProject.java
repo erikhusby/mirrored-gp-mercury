@@ -1,8 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
@@ -19,7 +20,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
@@ -33,7 +33,7 @@ import java.util.*;
 @Entity
 @Audited
 @Table(name = "RESEARCH_PROJECT", schema = "athena")
-public class ResearchProject implements Serializable {
+public class ResearchProject implements Serializable, Comparable<ResearchProject> {
 
     public static final boolean IRB_ENGAGED = false;
     public static final boolean IRB_NOT_ENGAGED = true;
@@ -604,5 +604,12 @@ public class ResearchProject implements Serializable {
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(getJiraTicketKey()).toHashCode();
+    }
+
+    @Override
+    public int compareTo(ResearchProject that) {
+        CompareToBuilder builder = new CompareToBuilder();
+        builder.append(title, that.getTitle());
+        return builder.build();
     }
 }

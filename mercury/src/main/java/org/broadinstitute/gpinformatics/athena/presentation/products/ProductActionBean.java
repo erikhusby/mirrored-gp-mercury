@@ -127,6 +127,18 @@ public class ProductActionBean extends CoreActionBean {
         return new ForwardResolution(PRODUCT_CREATE_PAGE);
     }
 
+    @HandlesEvent("autocomplete")
+    public Resolution autocomplete() throws Exception {
+        List<Product> products = productDao.searchProducts(getQ());
+
+        JSONArray itemList = new JSONArray();
+        for (Product product : products) {
+            itemList.put(new AutoCompleteToken(product.getBusinessKey(), product.getProductLabel(), false).getJSONObject());
+        }
+
+        return new StreamingResolution("text", new StringReader(itemList.toString()));
+    }
+
     @HandlesEvent("addOnsAutocomplete")
     public Resolution addOnsAutocomplete() throws Exception {
         List<Product> addOns = productDao.searchProductsForAddonsInProductEdit(editProduct, getQ());

@@ -7,11 +7,9 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.athena.boundary.FundingListBean;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.json.JSONArray;
@@ -20,6 +18,7 @@ import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.StringReader;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -231,6 +230,18 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public void setQ(String q) {
         this.q = q;
+    }
+
+    @HandlesEvent("autocomplete")
+    public Resolution autocomplete() throws Exception {
+        Collection<ResearchProject> projects = researchProjectDao.searchProjects(getQ());
+
+        JSONArray itemList = new JSONArray();
+        for (ResearchProject project : projects) {
+            itemList.put(new AutoCompleteToken(project.getBusinessKey(), project.getTitle(), false).getJSONObject());
+        }
+
+        return new StreamingResolution("text", new StringReader(itemList.toString()));
     }
 
     /**

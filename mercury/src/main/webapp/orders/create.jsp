@@ -28,18 +28,18 @@
                     });
 
                     $j("#researchProject").tokenInput(
-                        "${ctxpath}/orders/order.action?researchProjectAutocomplete=&orderKey=${actionBean.editOrder.businessKey}", {
+                        "${ctxpath}/projects/project.action?autocomplete=", {
                             searchDelay: 2000,
                             minChars: 2,
-                            preventDuplicates: true
+                            tokenLimit: 1
                         }
                     );
 
                     $j("#product").tokenInput(
-                            "${ctxpath}/orders/order.action?productAutocomplete=&orderKey=${actionBean.editOrder.businessKey}", {
+                            "${ctxpath}/products/product.action?autocomplete=", {
                                 searchDelay: 2000,
                                 minChars: 2,
-                                preventDuplicates: true
+                                tokenLimit: 1
                             }
                     );
 
@@ -114,6 +114,7 @@
 
         <div style="float: left; margin-right: 40px; margin-top: 5px;">
             <stripes:form action="/products/product.action" id="createForm" class="form-horizontal">
+                <stripes:hidden name="orderKey" value="${actionBean.orderKey}"/>
                 <div class="control-group">
                     <stripes:label for="orderName" name="Name" class="control-label"/>
                     <div class="controls">

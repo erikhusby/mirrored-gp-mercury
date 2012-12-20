@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedger
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -27,6 +28,8 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.*;
+
+import static org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao.FetchSpec.*;
 
 /**
  * This handles all the needed interface processing elements
@@ -94,9 +97,12 @@ public class BillingSessionActionBean extends CoreActionBean {
     @HandlesEvent("downloadTracker")
     public Resolution downloadTracker() {
         List<String> productOrderBusinessKeys = editSession.getProductOrderBusinessKeys();
+
+        List<ProductOrder> productOrders =
+                productOrderDao.findListByBusinessKeyList(productOrderBusinessKeys, Product, ResearchProject, Samples);
+
         Resolution downloadResolution =
-            ProductOrderActionBean.getTrackerForOrders(
-                this, productOrderDao, productOrderBusinessKeys, bspUserList);
+            ProductOrderActionBean.getTrackerForOrders(this, productOrders, bspUserList);
 
         // If there is no file to download, just pass on the errors
         if (downloadResolution == null) {

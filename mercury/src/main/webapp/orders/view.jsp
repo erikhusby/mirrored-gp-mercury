@@ -54,7 +54,9 @@
                 <label class="control-label label-form">Research Project</label>
                 <div class="controls">
                     <div class="form-value">
-                        <stripes:link title="Research Project" href="${ctxpath}/projects/project.action?view">${actionBean.editOrder.researchProject.title}</stripes:link>
+                        <stripes:link title="Research Project" href="${ctxpath}/projects/project.action?view=">
+                            <stripes:param name="businessKey" value="${actionBean.editOrder.researchProject.businessKey}"/>
+                            ${actionBean.editOrder.researchProject.title}</stripes:link>
                             (<a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.researchProject.jiraTicketKey}" class="external" target="JIRA">
                                 ${actionBean.editOrder.researchProject.jiraTicketKey}
                             </a>)
