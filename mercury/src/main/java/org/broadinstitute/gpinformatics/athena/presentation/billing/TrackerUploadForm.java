@@ -106,11 +106,18 @@ public class TrackerUploadForm extends AbstractJsfBean {
             Collection<Map<String, Map<BillableRef, OrderBillSummaryStat>>> productOrderToBillableRefsMap =
                     productProductOrderPriceItemChargesMap.values();
 
+            Set<String> automatedPDOs = new HashSet<String>();
+
             // Keys are product order business keys, values are maps of billable refs (product + price item) to
             // bill stats.
             for (Map<String, Map<BillableRef, OrderBillSummaryStat>> entry : productOrderToBillableRefsMap) {
                 for (Map.Entry<String, Map<BillableRef, OrderBillSummaryStat>> pdoEntry : entry.entrySet()) {
                     String pdoKey = pdoEntry.getKey();
+
+                    ProductOrder order = productOrderDao.findByBusinessKey(pdoKey);
+                    if (order != null && order.getProduct().isUseAutomatedBilling()) {
+                        automatedPDOs.add(pdoKey);
+                    }
 
                     for (Map.Entry<BillableRef, OrderBillSummaryStat> value : pdoEntry.getValue().entrySet()) {
                         String partNumber = value.getKey().getProductPartNumber();
@@ -130,6 +137,11 @@ public class TrackerUploadForm extends AbstractJsfBean {
 
             if (counter == 0) {
                 addInfoMessage("No updated billing data found when previewing the file.");
+            }
+
+            if (!automatedPDOs.isEmpty()) {
+                addErrorMessage("Can't upload data for these product orders because they use " +
+                                "automated billing: " + StringUtils.join(automatedPDOs, ", "));
             }
 
         } catch (Exception e) {
