@@ -21,9 +21,7 @@ import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -34,14 +32,17 @@ import java.util.*;
  */
 @Named("fileUploadController")
 @RequestScoped
-public class TrackerUploadForm  extends AbstractJsfBean {
+public class TrackerUploadForm extends AbstractJsfBean {
 
     @Inject
     private ProductOrderDao productOrderDao;
 
     @ConversationScoped
-    public static class UploadPreviewTableData extends TableData<UploadPreviewData> {}
-    @Inject UploadPreviewTableData uploadPreviewTableData;
+    public static class UploadPreviewTableData extends TableData<UploadPreviewData> {
+    }
+
+    @Inject
+    UploadPreviewTableData uploadPreviewTableData;
 
     @Inject
     private BillingUploadConversationData conversationData;
@@ -61,7 +62,7 @@ public class TrackerUploadForm  extends AbstractJsfBean {
     }
 
     public void initView() {
-        if (! facesContext.isPostback()) {
+        if (!facesContext.isPostback()) {
             // the conversation data will consider the transience of the conversation before starting a new one
             conversationData.beginConversation();
         }
@@ -82,32 +83,31 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         UploadedFile file = event.getFile();
 
         if (file != null) {
-            InputStream inputStream = null;
-
-            previewUploadedFile(file, inputStream);
+            previewUploadedFile(file);
         } else {
             addErrorMessage("No file received!");
         }
     }
 
-    private void previewUploadedFile(UploadedFile file, InputStream inputStream) {
-        int counter=0;
+    private void previewUploadedFile(UploadedFile file) {
+        int counter = 0;
+        InputStream inputStream = null;
+        BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao);
         try {
             inputStream = file.getInputstream();
 
-            BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao);
-
-            Map<String, Map<String,Map<BillableRef, OrderBillSummaryStat>>> productProductOrderPriceItemChargesMap =
+            Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> productProductOrderPriceItemChargesMap =
                     importer.parseFileForSummaryMap(inputStream);
 
             List<UploadPreviewData> uploadPreviewData = new ArrayList<UploadPreviewData>();
 
-            // for the purposes of preview we don't actually care about the product keys in this nested map, only
-            // the product orders and price items
-            Collection<Map<String,Map<BillableRef,OrderBillSummaryStat>>> productOrderToBillableRefsMap =
+            // For the purposes of preview we don't actually care about the product keys in this nested map, only
+            // the product orders and price items.
+            Collection<Map<String, Map<BillableRef, OrderBillSummaryStat>>> productOrderToBillableRefsMap =
                     productProductOrderPriceItemChargesMap.values();
 
-            // keys are product order bizkeys, values are maps of billable refs (product + price item) to bill stats
+            // Keys are product order business keys, values are maps of billable refs (product + price item) to
+            // bill stats.
             for (Map<String, Map<BillableRef, OrderBillSummaryStat>> entry : productOrderToBillableRefsMap) {
                 for (Map.Entry<String, Map<BillableRef, OrderBillSummaryStat>> pdoEntry : entry.entrySet()) {
                     String pdoKey = pdoEntry.getKey();
@@ -129,29 +129,27 @@ public class TrackerUploadForm  extends AbstractJsfBean {
             uploadPreviewTableData.setValues(uploadPreviewData);
 
             if (counter == 0) {
-                addInfoMessage("No updated billing data found when previewing the file." );
+                addInfoMessage("No updated billing data found when previewing the file.");
             }
 
         } catch (Exception e) {
             logger.error(e);
-            throw new RuntimeException( e );
+            throw new RuntimeException(e);
         } finally {
             IOUtils.closeQuietly(inputStream);
         }
 
-        if ( counter > 0 ) {
-            InputStream fis=null;
+        if (counter > 0) {
             try {
-                BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao);
-                fis = file.getInputstream();
-                File tempFile = importer.copyFromStreamToTempFile(fis);
-                //Keep the filename in conversation scope
-                conversationData.setFilename( tempFile.getAbsolutePath() );
-            } catch ( Exception e ) {
+                inputStream = file.getInputstream();
+                File tempFile = copyFromStreamToTempFile(inputStream);
+                // Keep the filename in conversation scope.
+                conversationData.setFilename(tempFile.getAbsolutePath());
+            } catch (Exception e) {
                 logger.error(e);
-                throw new RuntimeException( e );
+                addErrorMessage("Error copying file: " + e);
             } finally {
-                IOUtils.closeQuietly(fis);
+                IOUtils.closeQuietly(inputStream);
             }
         }
     }
@@ -162,14 +160,14 @@ public class TrackerUploadForm  extends AbstractJsfBean {
         String tempFilename = conversationData.getFilename();
         String username = getUsername();
 
-        if ( StringUtils.isNotBlank( tempFilename ) ) {
-            logger.info( "Billing Start: About to process billing for user " + username + " for file " + tempFilename );
-            File tempFile = new File( tempFilename );
+        if (StringUtils.isNotBlank(tempFilename)) {
+            logger.info("Billing Start: About to process billing for user " + username + " for file " + tempFilename);
+            File tempFile = new File(tempFilename);
             processBillingOnTempFile(tempFile);
-            logger.info( "Billing Complete: Completed billing for " + username + " for file " + tempFilename );
+            logger.info("Billing Complete: Completed billing for " + username + " for file " + tempFilename);
 
         } else {
-          addInfoMessage("Could not Upload. Filename is blank." );
+            addInfoMessage("Could not Upload. Filename is blank.");
         }
 
         return null;
@@ -179,22 +177,23 @@ public class TrackerUploadForm  extends AbstractJsfBean {
     private void processBillingOnTempFile(File tempFile) {
         InputStream inputStream = null;
         try {
-            inputStream =  new FileInputStream(tempFile);
+            inputStream = new FileInputStream(tempFile);
 
-            Map<String, List<ProductOrder>> billedProductOrdersMapByPartNumber = billingTrackerManager.parseFileForBilling(inputStream);
+            Map<String, List<ProductOrder>> billedProductOrdersMapByPartNumber =
+                    billingTrackerManager.parseFileForBilling(inputStream);
 
             int numberOfProducts = 0;
             List<String> orderIdsUpdated = new ArrayList<String>();
-            if ( billedProductOrdersMapByPartNumber != null ) {
+            if (billedProductOrdersMapByPartNumber != null) {
                 numberOfProducts = billedProductOrdersMapByPartNumber.keySet().size();
                 orderIdsUpdated = extractOrderIdsFromMap(billedProductOrdersMapByPartNumber);
             }
 
             // Set filename to null to disable the upload button and prevent re-billing.
-            conversationData.setFilename( null );
+            conversationData.setFilename(null);
 
             addInfoMessage("Updated the billing ledger for  : " + orderIdsUpdated.size() + " Product Order(s) for " +
-                    numberOfProducts + " primary product(s)." );
+                           numberOfProducts + " primary product(s).");
 
         } catch (Exception e) {
             addErrorMessage(e.getMessage());
@@ -204,18 +203,19 @@ public class TrackerUploadForm  extends AbstractJsfBean {
     }
 
 
-    private List<String> extractOrderIdsFromMap(Map<String, List<ProductOrder>> billedProductOrdersMapByPartNumber ) {
+    private static List<String> extractOrderIdsFromMap(
+            Map<String, List<ProductOrder>> billedProductOrdersMapByPartNumber) {
         List<String> orderIdsUpdated = new ArrayList<String>();
 
-        if ( billedProductOrdersMapByPartNumber != null ) {
-            for (String productPartNumberStr : billedProductOrdersMapByPartNumber.keySet() ) {
-                List<ProductOrder> sheetOrders = billedProductOrdersMapByPartNumber.get( productPartNumberStr );
-                if ( sheetOrders != null ) {
-                    for (ProductOrder productOrder : sheetOrders ) {
-                        if ( productOrder != null ) {
+        if (billedProductOrdersMapByPartNumber != null) {
+            for (String productPartNumberStr : billedProductOrdersMapByPartNumber.keySet()) {
+                List<ProductOrder> sheetOrders = billedProductOrdersMapByPartNumber.get(productPartNumberStr);
+                if (sheetOrders != null) {
+                    for (ProductOrder productOrder : sheetOrders) {
+                        if (productOrder != null) {
                             String productOrderIdStr = productOrder.getBusinessKey();
                             if (StringUtils.isNotBlank(productOrderIdStr)) {
-                                orderIdsUpdated.add( productOrder.getBusinessKey() );
+                                orderIdsUpdated.add(productOrderIdStr);
                             }
                         }
                     }
@@ -228,20 +228,35 @@ public class TrackerUploadForm  extends AbstractJsfBean {
 
     public String cancelUpload() {
 
-        conversationData.setFilename( null );
-        uploadPreviewTableData.setValues( null );
+        conversationData.setFilename(null);
+        uploadPreviewTableData.setValues(null);
         conversationData.endConversation();
 
         //return to the orders pages
-       return redirect("/orders/list");
+        return redirect("/orders/list");
 
     }
 
     public boolean getHasFilename() {
-        return ( StringUtils.isNotBlank( conversationData.getFilename() ));
+        return (StringUtils.isNotBlank(conversationData.getFilename()));
     }
 
     public UploadPreviewTableData getUploadPreviewTableData() {
         return uploadPreviewTableData;
+    }
+
+    public static File copyFromStreamToTempFile(InputStream is) throws IOException {
+        Date now = new Date();
+        File tempFile = File.createTempFile("BillingTrackerTempFile_" + now.getTime(), ".xls");
+
+        OutputStream out = new FileOutputStream(tempFile);
+
+        try {
+            IOUtils.copy(is, out);
+        } finally {
+            IOUtils.closeQuietly(out);
+        }
+
+        return tempFile.getAbsoluteFile();
     }
 }

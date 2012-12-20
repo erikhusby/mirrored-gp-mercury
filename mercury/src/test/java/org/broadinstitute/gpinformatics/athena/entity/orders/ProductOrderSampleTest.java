@@ -17,10 +17,8 @@ import java.util.List;
  *
  * @author mccory
  */
-@Test(groups = {TestGroups.DATABASE_FREE})
+@Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderSampleTest {
-
-
 
     @Test
     public void testIsInBspFormat() throws Exception {
@@ -47,9 +45,7 @@ public class ProductOrderSampleTest {
         }
 
         new EqualsMethodTester().testEqualsMethod(new ProductOrderSampleFactory(), configuration);
-
         new HashCodeMethodTester().testHashCodeMethod(new ProductOrderSampleFactory());
-
     }
 
     public static List<ProductOrderSample> createSampleList(String[] sampleArray,
@@ -63,17 +59,10 @@ public class ProductOrderSampleTest {
             } else {
                 productOrderSample = new ProductOrderSample(sampleName);
             }
-
             productOrderSample.setSampleComment("athenaComment");
-
             productOrderSample.getLedgerItems().addAll( billableItems );
-
             productOrderSamples.add(productOrderSample);
-
-
         }
         return productOrderSamples;
     }
-
-
 }
