@@ -6,6 +6,7 @@ import org.apache.commons.collections15.Predicate;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
@@ -16,7 +17,10 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDaoTest.DateSpec.*;
 
@@ -100,6 +104,11 @@ public class ProductDaoTest extends ContainerTest {
 
         product.setPrimaryPriceItem(priceItem1);
         product.addPriceItem(priceItem2);
+
+        MaterialType materialType1 = new MaterialType("DNA Genomic", "DNA");
+        product.addAllowableMaterialType(materialType1);
+        MaterialType materialType2 = new MaterialType("DNA Somatic", "DNA");
+        product.addAllowableMaterialType(materialType2);
 
         return product;
     }
@@ -312,6 +321,9 @@ public class ProductDaoTest extends ContainerTest {
 
         Product foundProduct = dao.findByPartNumber(product.getPartNumber());
         Assert.assertNotNull(foundProduct, "Product not found!");
+
+        Assert.assertNotNull( foundProduct.getAllowableMaterialTypes());
+        Assert.assertEquals(2, foundProduct.getAllowableMaterialTypes().size(), "expected 2 material types");
 
         Product nonexistentProduct = dao.findByPartNumber("NONEXISTENT PART!!!");
         Assert.assertNull(nonexistentProduct, "Unexpectedly found product that shouldn't exist!");

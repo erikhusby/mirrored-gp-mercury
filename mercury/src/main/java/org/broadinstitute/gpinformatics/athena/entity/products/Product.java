@@ -95,7 +95,10 @@ public class Product implements Serializable, Comparable<Product> {
      * Allowable Material Types for the product.
      */
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
-    @JoinTable(schema = "athena", name = "PRODUCT_MATERIAL_TYPES")
+    @JoinTable(schema = "athena", name = "PRODUCT_MATERIAL_TYPES",
+            joinColumns=@JoinColumn(name="PRODUCT_ID"),
+            inverseJoinColumns=@JoinColumn(name="MATERIAL_TYPE_ID")
+    )
     private Set<MaterialType> allowableMaterialTypes = new HashSet<MaterialType>();
 
     /**

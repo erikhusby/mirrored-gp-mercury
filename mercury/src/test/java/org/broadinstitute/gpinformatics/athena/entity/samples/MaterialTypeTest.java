@@ -14,7 +14,6 @@ import org.testng.annotations.Test;
  * Time: 10:51 AM
  */
 @Test(groups = TestGroups.DATABASE_FREE)
-
 public class MaterialTypeTest {
 
     @Test

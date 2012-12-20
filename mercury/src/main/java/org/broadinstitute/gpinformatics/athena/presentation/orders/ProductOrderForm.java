@@ -4,7 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.DuplicateTitleException;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.NoSamplesException;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderManager;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -49,7 +49,7 @@ public class ProductOrderForm extends AbstractJsfBean {
     private Log logger;
 
     @Inject
-    private ProductOrderManager productOrderManager;
+    private ProductOrderEjb productOrderEjb;
 
     @Inject
     private ProductOrderUtil productOrderUtil;
@@ -288,7 +288,7 @@ public class ProductOrderForm extends AbstractJsfBean {
 
         try {
 
-            productOrderManager.save(productOrder, convertTextToList(getEditIdsCache()), getSelectedAddOnPartNumbers());
+            productOrderEjb.save(productOrder, convertTextToList(getEditIdsCache()), getSelectedAddOnPartNumbers());
 
             addInfoMessage(
                     MessageFormat.format("Product Order ''{0}'' ({1}) has been created.",

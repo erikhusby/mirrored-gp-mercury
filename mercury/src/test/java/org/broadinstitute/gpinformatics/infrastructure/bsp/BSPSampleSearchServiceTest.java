@@ -1,8 +1,5 @@
-package org.broadinstitute.gpinformatics.mercury.integration.bsp;
+package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchColumn;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchService;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceProducer;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 

@@ -12,7 +12,7 @@ import javax.inject.Inject;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.QA;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.STUBBY;
 
-public class BSPSampleSearchServiceProducer {
+public class BSPCohortSearchServiceProducer {
 
     @Inject
     private Deployment deployment;
@@ -21,7 +21,7 @@ public class BSPSampleSearchServiceProducer {
     @Produces
     @Default
     @SessionScoped
-    public BSPSampleSearchService produce(@New BSPSampleSearchServiceStub stub, @New BSPSampleSearchServiceImpl impl) {
+    public BSPCohortSearchService produce(@New BSPCohortSearchServiceStub stub, @New BSPCohortSearchServiceImpl impl) {
 
         if ( deployment == STUBBY )
             return stub;
@@ -29,22 +29,22 @@ public class BSPSampleSearchServiceProducer {
         return impl;
     }
 
-    public static BSPSampleSearchService stubInstance() {
-        return new BSPSampleSearchServiceStub();
+    public static BSPCohortSearchService stubInstance() {
+        return new BSPCohortSearchServiceStub();
     }
 
 
     /**
-     * Creates a BSPSampleSearchService with plain old new operator for container-free testing,
+     * Creates a BSPCohortSearchService with plain old new operator for container-free testing,
      * not a managed bean!
      *
      * @return
      */
-    public static BSPSampleSearchService qaInstance() {
+    public static BSPCohortSearchService qaInstance() {
 
         BSPConfig bspConfig = BSPConfigProducer.getConfig(QA);
 
-        return new BSPSampleSearchServiceImpl( bspConfig );
+        return new BSPCohortSearchServiceImpl( bspConfig );
 
     }
 }
