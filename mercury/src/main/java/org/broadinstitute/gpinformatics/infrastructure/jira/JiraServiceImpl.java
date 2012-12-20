@@ -323,8 +323,22 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         WebResource webResource =
                 getJerseyClient().resource(getBaseUrl() + "/issue/" + jiraIssueKey).queryParam("fields", "resolution");
 
-        IssueResolutionResponse issueResolutionResponse = get(webResource, new GenericType<IssueResolutionResponse>() {});
+        IssueResolutionResponse issueResolutionResponse = get(webResource, new GenericType<IssueResolutionResponse>() {
+        });
 
-        return issueResolutionResponse.getFields().entrySet().iterator().next().getValue().getName();
+
+        Map<String, IssueResolutionResponse.Resolution> fields = issueResolutionResponse.getFields();
+
+        if (fields == null || fields.isEmpty()) {
+            return null;
+        }
+
+        IssueResolutionResponse.Resolution value = fields.entrySet().iterator().next().getValue();
+
+        if (value == null) {
+            return null;
+        }
+
+        return value.getName();
     }
 }

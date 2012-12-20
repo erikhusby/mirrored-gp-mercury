@@ -28,17 +28,8 @@ public class ProductOrderAbandon extends Arquillian {
     @Test
     public void abandon() {
         String [] pdos = new String[] {
-                "PDO-11",
-                "PDO-14",
-                "PDO-15",
-                "PDO-19",
-                "PDO-22",
-                "PDO-34",
-                "PDO-75",
-                "PDO-171",
-                "PDO-180",
-                "PDO-182",
-                "PDO-185"
+            "PDO-55",
+            "PDO-214"
         };
 
         for (String pdo : pdos) {
