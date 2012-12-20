@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -410,10 +409,6 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         projectFunding.add(funding);
     }
 
-    public void removeFunding(ResearchProjectFunding funding) {
-        projectFunding.remove(funding);
-    }
-
     public Status getStatus() {
         return status;
     }
@@ -424,10 +419,6 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
 
     public List<ProductOrder> getProductOrders() {
         return productOrders;
-    }
-
-    public RoleType[] getRoleTypes() {
-        return RoleType.values();
     }
 
     public void submit() throws IOException {
@@ -513,26 +504,6 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
 
     public String getOriginalTitle() {
         return originalTitle;
-    }
-
-    /**
-     *
-     * Provides the ability to retrieve a filtered list of associated people based on their role type
-     *
-     * @param personType
-     *
-     * @return
-     */
-    private Collection<ProjectPerson> findPeopleByType(RoleType personType) {
-        List<ProjectPerson> foundPersonList = new ArrayList<ProjectPerson>(associatedPeople.size());
-
-        for (ProjectPerson currPerson : associatedPeople) {
-            if (currPerson.getRole() == personType) {
-                foundPersonList.add(currPerson);
-            }
-        }
-
-        return foundPersonList;
     }
 
     /**
