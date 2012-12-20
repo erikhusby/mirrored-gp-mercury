@@ -26,7 +26,7 @@
 
     <stripes:layout-component name="content">
 
-        <stripes:form action="/products/product.action" id="createForm" class="form-horizontal">
+        <stripes:form beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean" id="createForm" class="form-horizontal">
             <div class="control-group">
                 <stripes:label for="productFamily" name="Product Family" class="control-label"/>
                 <div class="controls">
@@ -154,8 +154,7 @@
             <div class="control-group">
                 <stripes:label for="addOns" name="Add-ons" class="control-label"/>
                 <div class="controls">
-                    <stripes:text id="addOns" name="editProduct.addOns" class="defaultText"
-                        title="Type text to search to search for Add-ons"
+                    <stripes:text id="addOns" name="editProduct.addOns"
                         value="${actionBean.editProduct.addOns}"/>
                 </div>
             </div>

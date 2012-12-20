@@ -219,6 +219,29 @@ public class BSPUserList extends AbstractCache implements Serializable {
     }
 
     /**
+     * Passin a list of user IDs and get back a comma separated list of user ful names.
+     *
+     * @param userIds list of user IDs
+     *
+     * @return string representation of named users in CSV format
+     */
+    public String getCsvFullNameList(Long[] userIds) {
+        String listString = "";
+        if (userIds != null) {
+            String[] nameList = new String[userIds.length];
+            int i = 0;
+            for (Long id : userIds) {
+                BspUser user = getById(id);
+                nameList[i++] = user.getFirstName() + " " + user.getLastName();
+            }
+
+            listString = org.apache.commons.lang3.StringUtils.join(nameList, ", ");
+        }
+
+        return listString;
+    }
+
+    /**
      * Create a list of SelectItems for use in the JSF UI.  The first element in the list is a dummy value, 'Any'.
      * @param users the list of bsp users
      * @return the list of select items for the users.

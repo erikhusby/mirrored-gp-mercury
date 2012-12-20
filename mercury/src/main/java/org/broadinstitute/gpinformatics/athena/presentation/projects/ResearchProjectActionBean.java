@@ -174,23 +174,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return allResearchProjects;
     }
 
-    private String getUserListString(Long[] ids) {
-        String listString = "";
-
-        if (ids != null) {
-            String[] nameList = new String[ids.length];
-            int i = 0;
-            for (Long id : ids) {
-                BspUser user = bspUserList.getById(id);
-                nameList[i++] = user.getFirstName() + " " + user.getLastName();
-            }
-
-            listString = StringUtils.join(nameList, ", ");
-        }
-
-        return listString;
-    }
-
     /**
      * Get a comma separated list of all the project managers for the current project.
      *
@@ -199,7 +182,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public String getManagersListString() {
         String listString = "";
         if (editResearchProject != null) {
-            listString = getUserListString(editResearchProject.getProjectManagers());
+            listString = bspUserList.getCsvFullNameList(editResearchProject.getProjectManagers());
         }
         return listString;
     }
@@ -207,7 +190,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public String getBroadPIsListString() {
         String listString = "";
         if (editResearchProject != null) {
-            listString = getUserListString(editResearchProject.getBroadPIs());
+            listString = bspUserList.getCsvFullNameList(editResearchProject.getBroadPIs());
         }
         return listString;
     }
@@ -215,7 +198,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public String getExternalCollaboratorsListString() {
         String listString = "";
         if (editResearchProject != null) {
-            listString = getUserListString(editResearchProject.getExternalCollaborators());
+            listString = bspUserList.getCsvFullNameList(editResearchProject.getExternalCollaborators());
         }
         return listString;
     }
@@ -223,7 +206,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public String getScientistsListString() {
         String listString = "";
         if (editResearchProject != null) {
-            listString = getUserListString(editResearchProject.getScientists());
+            listString = bspUserList.getCsvFullNameList(editResearchProject.getScientists());
         }
         return listString;
     }
