@@ -17,9 +17,9 @@
             <div class="row">
                 <h:link value="New Reagent" outcome="edit_reagent_designs" styleClass="pull-right"/>
             </div>
-            <p:dataTable value="#{reagentDesignForm.allReagentDesigns}"
+            <p:dataTable value="#{reagentsBean.allReagentDesigns}"
                          var="reagentDesign"
-                         sortBy="#{reagentDesignForm.reagentDesign.designName}"
+                         sortBy="#{reagentsBean.reagentDesign.designName}"
                          sortOrder="ascending">
 
                 <p:column headerText="Design Name" sortBy="#{reagentDesign.designName}"

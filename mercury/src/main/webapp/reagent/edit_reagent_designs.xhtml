@@ -13,7 +13,7 @@
             name="title">#{reagentDesignForm.creating == true ? 'New' : 'Edit'} Reagent Design</ui:define>
     <ui:define name="metadata">
         <f:metadata>
-            <f:viewParam name="reagentDesign" value="#{reagentDesignForm.reagentDesign}"
+            <f:viewParam name="reagentDesign" value="#{reagentsBean.reagentDesign}"
                          converter="#{reagentDesignConverter}">
                 <f:event type="preValidate" listener="#{reagentDesignForm.initForm}"/>
             </f:viewParam>
@@ -28,7 +28,7 @@
 
                 <div class="controls">
                     <p:inputText id="designName"
-                                 value="#{reagentDesignForm.reagentDesign.designName}" size="50" required="true"
+                                 value="#{reagentsBean.reagentDesign.designName}" size="50" required="true"
                                  maxlength="255">
                         <f:validateLength maximum="255"/>
                     </p:inputText>
@@ -43,7 +43,7 @@
 
                 <div class="controls">
                     <p:inputText id="targetSetName"
-                                 value="#{reagentDesignForm.reagentDesign.targetSetName}" size="50" required="true"
+                                 value="#{reagentsBean.reagentDesign.targetSetName}" size="50" required="true"
                                  maxlength="255">
                         <f:validateLength maximum="255"/>
                     </p:inputText>
@@ -58,7 +58,7 @@
 
                 <div class="controls">
                     <p:inputText id="manufacturersName"
-                                 value="#{reagentDesignForm.reagentDesign.manufacturersName}" size="50"
+                                 value="#{reagentsBean.reagentDesign.manufacturersName}" size="50"
                                  required="true"
                                  maxlength="255">
                         <f:validateLength maximum="255"/>
@@ -73,7 +73,7 @@
                 <p:outputLabel for="reagentType" value="Reagent Type" styleClass="control-label"/>
 
                 <div class="controls">
-                    <p:selectOneMenu required="true" id="reagentType" value="#{reagentDesignForm.reagentDesign.reagentType}">
+                    <p:selectOneMenu required="true" id="reagentType" value="#{reagentsBean.reagentDesign.reagentType}">
                         <f:selectItem itemLabel="Choose..." itemValue=""/>
                         <f:selectItems value="#{reagentDesignForm.reagentTypes}"
                                        var="reagentType" itemLabel="#{reagentType}"

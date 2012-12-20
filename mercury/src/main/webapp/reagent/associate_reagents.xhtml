@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+
+<!--
+  ~ The Broad Institute
+  ~ SOFTWARE COPYRIGHT NOTICE AGREEMENT
+  ~ This software and its documentation are copyright 2012 by the
+  ~ Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
+  ~
+  ~ This software is supplied without any warranty or guaranteed support
+  ~ whatsoever. Neither the Broad Institute nor MIT can be responsible for its
+  ~ use, misuse, or functionality.
+  -->
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:b="http://mercury.broadinstitute.org/ui">
+<body>
+<ui:composition template="/layout.xhtml">
+    <ui:define name="title">Associate Bait Designs</ui:define>
+
+    <ui:define name="metadata">
+        <f:metadata>
+            <f:viewParam name="reagentDesign" value="#{reagentsBean.reagentDesign}"
+                         converter="#{reagentDesignConverter}">
+                <f:event type="preValidate" listener="#{associateReagentsForm.initForm}"/>
+            </f:viewParam>
+        </f:metadata>
+        <f:event type="preRenderView" listener="#{associateReagentsForm.initView}"/>
+    </ui:define>
+
+    <ui:define name="body">
+        <h:form id="form" prependId="false" styleClass="form-horizontal">
+            <div class="control-group">
+                <p:outputLabel for="barcodes" value="Enter barcode(s)" styleClass="control-label"/>
+
+                <div class="controls">
+                    <p:inputText id="barcodes" value="#{reagentsBean.barcode}" size="50" required="true"/>
+                    <p:watermark for="barcodes" value="Enter tube barcode"/>
+                </div>
+            </div>
+            <div class="control-group">
+                <p:outputLabel for="reagentDesign" value="Available Reagents" styleClass="control-label"/>
+
+                <div class="controls">
+                    <p:autoComplete id="reagentDesign" value="#{associateReagentsForm.reagentsBean.reagentDesign}"
+                                    completeMethod="#{associateReagentsForm.findReagent}"
+                                    forceSelection="true"
+                                    var="reagentDesign"
+                                    itemValue="#{reagentDesign}"
+                                    converter="#{reagentDesignConverter}"
+                                    dropdown="true"
+                                    required="true"
+                                    scrollHeight="250"
+                                    size="50">
+                        <p:column>#{reagentDesign.designName}<br/>
+                        #{reagentDesign.targetSetName} - #{reagentDesign.manufacturersName}</p:column>
+                            </p:autoComplete>
+                    <p:watermark for="reagentDesign" value="Type name or RP # to search"/>
+                    <p:message for="reagentDesign"/>
+                </div>
+            </div>
+            <div class="control-group">
+                <p:commandButton value="Save" action="#{associateReagentsForm.associateReagent}"
+                                 styleClass="ui-priority-primary"/>
+            </div>
+        </h:form>
+
+    </ui:define>
+</ui:composition>
+</body>
+</html>
