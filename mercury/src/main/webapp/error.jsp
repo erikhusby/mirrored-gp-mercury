@@ -1,8 +1,5 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
-<stripes:useActionBean var="bean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean"/>
-
 <stripes:layout-render name="/layout.jsp" pageTitle="Mercury">
     <stripes:layout-component name="content">
 
