@@ -107,6 +107,15 @@ public class ProductOrder implements Serializable {
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
     private Set<ProductOrderAddOn> addOns = new HashSet<ProductOrderAddOn>();
 
+    @Transient
+    private String originalTitle;   // This is used for edit to keep track of changes to the object.
+
+    // Initialize our transient data after the object has been loaded from the database.
+    @PostLoad
+    private void initialize() {
+        originalTitle = title;
+    }
+
     public String getBusinessKey() {
         return jiraTicketKey;
     }
@@ -921,5 +930,9 @@ public class ProductOrder implements Serializable {
 
     public Integer getPdoSampleCount() {
         return pdoSampleCount;
+    }
+
+    public String getOriginalTitle() {
+        return originalTitle;
     }
 }

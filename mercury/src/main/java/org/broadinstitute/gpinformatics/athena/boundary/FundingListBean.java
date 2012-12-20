@@ -32,5 +32,9 @@ public class FundingListBean {
 
         return StringUtils.join(fundingIds, ", ");
     }
+
+    public Funding getById(String fundingId) {
+        return fundingList.getById(fundingId);
+    }
 }
 

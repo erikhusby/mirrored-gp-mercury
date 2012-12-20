@@ -2,15 +2,18 @@ package org.broadinstitute.gpinformatics.athena.presentation.projects;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import net.sourceforge.stripes.validation.*;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.athena.boundary.FundingListBean;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.json.JSONArray;
 
@@ -43,13 +46,20 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private BSPUserList bspUserList;
 
     @Inject
-    private CohortListBean cohortList;
+    private CohortListBean cohortListBean;
 
     @Inject
     private FundingListBean fundingList;
 
     private String businessKey;
 
+
+    @ValidateNestedProperties({
+            @Validate(field="title", maxlength=4000, on={"save"}),
+            @Validate(field="synopsis", maxlength=4000, on={"save"}),
+            @Validate(field="comments", maxlength=2000, on={"save"}),
+            @Validate(field="comments", maxlength=2000, on={"save"})
+    })
     private ResearchProject editResearchProject;
 
     private String submitString;
@@ -85,6 +95,22 @@ public class ResearchProjectActionBean extends CoreActionBean {
         businessKey = getContext().getRequest().getParameter("businessKey");
         if (businessKey != null) {
             editResearchProject = researchProjectDao.findByBusinessKey(businessKey);
+        }
+    }
+
+    @ValidationMethod(on = "save")
+    public void createUniqueNameValidation(ValidationErrors errors) {
+
+        // If the research project has no original title, then it was not fetched from hibernate, so this is a create
+        // OR if this was fetched and the title has been changed
+        if ((editResearchProject.getOriginalTitle() == null) ||
+            (!editResearchProject.getTitle().equalsIgnoreCase(editResearchProject.getOriginalTitle()))) {
+
+            // Check if there is an existing research project and error out if it already exists
+            ResearchProject existingProject = researchProjectDao.findByTitle(editResearchProject.getTitle());
+            if (existingProject != null) {
+                errors.add("title", new SimpleError("A research project already exists with this name"));
+            }
         }
     }
 
@@ -207,7 +233,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
         if (editResearchProject == null) {
             return "";
         }
-        return cohortList.getCohortListString(editResearchProject.getCohortIds());
+
+        return cohortListBean.getCohortListString(editResearchProject.getCohortIds());
     }
 
     public String getFundingSourcesListString() {
@@ -257,9 +284,111 @@ public class ResearchProjectActionBean extends CoreActionBean {
         JSONArray itemList = new JSONArray();
         for (BspUser bspUser : bspUsers) {
             String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
-            itemList.put(new AutoCompleteToken("" + bspUser.getUserId(), fullName, false).getJSONObject());
+            itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName, false).getJSONObject());
         }
 
         return new StreamingResolution("text", new StringReader(itemList.toString()));
+    }
+
+    public String getBroadPICompleteData() throws Exception {
+        if (editResearchProject == null) {
+            return "";
+        }
+
+        JSONArray itemList = new JSONArray();
+        for (Long userId : editResearchProject.getBroadPIs()) {
+            BspUser bspUser = bspUserList.getById(userId);
+            String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
+            itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName,  false).getJSONObject());
+        }
+
+        return itemList.toString();
+    }
+
+    public String getExternalCollaboratorCompleteData() throws Exception {
+        if (editResearchProject == null) {
+            return "";
+        }
+
+        JSONArray itemList = new JSONArray();
+        for (Long userId : editResearchProject.getExternalCollaborators()) {
+            BspUser bspUser = bspUserList.getById(userId);
+            String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
+            itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName,  false).getJSONObject());
+        }
+
+        return itemList.toString();
+    }
+
+    public String getScientistCompleteData() throws Exception {
+        if (editResearchProject == null) {
+            return "";
+        }
+
+        JSONArray itemList = new JSONArray();
+        for (Long userId : editResearchProject.getScientists()) {
+            BspUser bspUser = bspUserList.getById(userId);
+            String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
+            itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName,  false).getJSONObject());
+        }
+
+        return itemList.toString();
+    }
+
+    public String getProjectManagerCompleteData() throws Exception {
+        if (editResearchProject == null) {
+            return "";
+        }
+
+        JSONArray itemList = new JSONArray();
+        for (Long userId : editResearchProject.getProjectManagers()) {
+            BspUser bspUser = bspUserList.getById(userId);
+            String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
+            itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName,  false).getJSONObject());
+        }
+
+        return itemList.toString();
+    }
+
+    @Inject
+    public String getFundingSourcesCompleteData() throws Exception {
+        if (editResearchProject == null) {
+            return "";
+        }
+
+        JSONArray itemList = new JSONArray();
+        for (String fundingId : editResearchProject.getFundingIds()) {
+            Funding funding = fundingList.getById(fundingId);
+            itemList.put(new AutoCompleteToken(fundingId, funding.getDisplayName(),  false).getJSONObject());
+        }
+
+        return itemList.toString();
+    }
+
+    public String getCohortsCompleteData() throws Exception {
+        if (editResearchProject == null) {
+            return "";
+        }
+
+        JSONArray itemList = new JSONArray();
+        for (String cohortId : editResearchProject.getCohortIds()) {
+            Cohort cohort = cohortListBean.getCohortById(cohortId);
+            itemList.put(new AutoCompleteToken(cohortId, cohort.getDisplayName(),  false).getJSONObject());
+        }
+
+        return itemList.toString();
+    }
+
+    public String getIrbsCompleteData() throws Exception {
+        if (editResearchProject == null) {
+            return "";
+        }
+
+        JSONArray itemList = new JSONArray();
+        for (String irbNumber : editResearchProject.getIrbNumbers()) {
+            itemList.put(new AutoCompleteToken(irbNumber,  irbNumber, false).getJSONObject());
+        }
+
+        return itemList.toString();
     }
 }

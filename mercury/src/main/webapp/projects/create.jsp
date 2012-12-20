@@ -12,28 +12,62 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
-                                    preventDuplicates: true
+                                    preventDuplicates: true,
+                                    prePopulate: ${actionBean.projectManagerCompleteData}
                                 }
                         );
+
                         $j("#scientists").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
-                                    preventDuplicates: true
+                                    preventDuplicates: true,
+                                    prePopulate: ${actionBean.scientistCompleteData}
                                 }
                         );
+
                         $j("#externalCollaborators").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
-                                    preventDuplicates: true
+                                    preventDuplicates: true,
+                                    prePopulate: ${actionBean.externalCollaboratorCompleteData}
                                 }
                         );
+
                         $j("#broadPIs").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
-                                    preventDuplicates: true
+                                    preventDuplicates: true,
+                                    prePopulate: ${actionBean.broadPICompleteData}
+                                }
+                        );
+
+                        $j("#fundingSources").tokenInput(
+                                "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                    searchDelay: 500,
+                                    minChars: 2,
+                                    preventDuplicates: true,
+                                    prePopulate: ${actionBean.fundingSourcesCompleteData}
+                                }
+                        );
+
+                        $j("#cohorts").tokenInput(
+                                "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                    searchDelay: 500,
+                                    minChars: 2,
+                                    preventDuplicates: true,
+                                    prePopulate: ${actionBean.cohortsCompleteData}
+                                }
+                        );
+
+                        $j("#irbs").tokenInput(
+                                "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                    searchDelay: 500,
+                                    minChars: 2,
+                                    preventDuplicates: true,
+                                    prePopulate: ${actionBean.irbsCompleteData}
                                 }
                         );
                     }
@@ -58,7 +92,7 @@
                 <stripes:label for="synopsis" name="Synopsis" class="control-label"/>
 
                 <div class="controls">
-                    <stripes:text id="synopsis" name="researchProject.synopsis" class="defaultText"
+                    <stripes:text id="synopsis" name="researchProject.synopsis" class="defaultText" style="width:390"
                                   title="Enter the synopsis of the project" value="${actionBean.researchProject.synopsis}"/>
                 </div>
             </div>
@@ -69,8 +103,7 @@
 
                 <div class="controls">
                     <stripes:text id="projectManagers" name="researchProject.projectManagers" class="defaultText"
-                                  title="Type text to search to search for Project Managers"
-                                  value="${actionBean.researchProject.projectManagers}"/>
+                                  title="Type text to search to search for Project Managers" style="width:390"/>
                 </div>
             </div>
 
@@ -80,8 +113,7 @@
 
                 <div class="controls">
                     <stripes:text id="broadPIs" name="researchProject.broadPIs" class="defaultText"
-                                  title="Type text to search to search for Broad PIs"
-                                  value="${actionBean.researchProject.broadPIs}"/>
+                                  title="Type text to search to search for Broad PIs"/>
                 </div>
             </div>
 
@@ -90,8 +122,7 @@
                 <stripes:label for="externalCollaborators" name="External Collaborators" class="control-label"/>
                 <div class="controls">
                     <stripes:text id="externalCollaborators" name="researchProject.externalCollaborators" class="defaultText"
-                                  title="Type text to search to search for External Collaborators"
-                                  value="${actionBean.researchProject.externalCollaborators}"/>
+                                  title="Type text to search to search for External Collaborators"/>
                 </div>
             </div>
 
@@ -100,8 +131,7 @@
                 <stripes:label for="scientists" name="Scientists" class="control-label"/>
                 <div class="controls">
                     <stripes:text id="scientists" name="researchProject.scientists" class="defaultText"
-                                  title="Type text to search to search for Scientists"
-                                  value="${actionBean.researchProject.scientists}"/>
+                                  title="Type text to search to search for Scientists"/>
                 </div>
             </div>
 
@@ -117,32 +147,34 @@
 
 
             <div class="control-group">
-                <stripes:label for="fundingSourcesListString" name="Funding Sources" class="control-label"/>
+                <stripes:label for="fundingSources" name="Funding Sources" class="control-label"/>
 
                 <div class="controls">
-                    <stripes:text id="fundingSourcesListString" name="researchProject.fundingSourcesListString" class="defaultText"
-                                  title="Type text to search to search for Funding Sources"
-                                  value="${actionBean.researchProject.fundingSourcesListString}"/>
+                    <stripes:text id="fundingSources" name="researchProject.fundingSourcesListString" class="defaultText"
+                                  title="Type text to search to search for Funding Sources"/>
                 </div>
             </div>
 
             <div class="control-group">
-                <stripes:label for="cohortsListString" name="Sample Cohorts" class="control-label"/>
+                <stripes:label for="cohorts" name="Sample Cohorts" class="control-label"/>
 
                 <div class="controls">
-                    <stripes:text id="cohortsListString" name="researchProject.cohortsListString" class="defaultText"
-                                  title="Type text to search to search for Cohorts"
-                                  value="${actionBean.researchProject.cohortsListString}"/>
+                    <stripes:text id="cohorts" name="researchProject.cohortsListString" class="defaultText"
+                                  title="Type text to search to search for Cohorts"/>
                 </div>
             </div>
 
 
             <div class="control-group">
-                <stripes:label for="irbNotEngaged" name="IRB Not Engaged" class="control-label"/>
+                <stripes:label for="irbs" name="IRB/IACUC Numbers" class="control-label"/>
 
                 <div class="controls">
-                    <stripes:checkbox id="irbNotEngaged" name="researchProject.irbNotEngaged"
-                                      class="defaultText" value="${actionBean.researchProject.irbNotEngaged}"/>
+                    <stripes:text id="irbs" name="researchProject.irbs" class="defaultText"
+                                  title="Type text to give irb selections"/>
+                    <p>
+                        <stripes:checkbox id="irbNotEngaged" name="researchProject.irbNotEngaged"
+                                          class="defaultText" value="${actionBean.researchProject.irbNotEngaged}"/>&nbsp;<stripes:label for="irbNotEngaged" name="IRB Not Engaged"/>
+                    </p>
                 </div>
             </div>
         </div>

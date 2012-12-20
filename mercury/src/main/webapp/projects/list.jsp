@@ -51,16 +51,16 @@
                     </a>
                 </td>
                 <td>
-                        ${project.status}
+                    ${project.status}
                 </td>
                 <td>
-                        ${project.createdBy}
+                    ${actionBean.fullNameMap[project.createdBy]}
                 </td>
                 <td>
-                        <fmt:formatDate value="${project.modifiedDate}" pattern="MM/dd/yyyy HH:mm"/>
+                    <fmt:formatDate value="${project.modifiedDate}" pattern="MM/dd/yyyy HH:mm"/>
                 </td>
                 <td>
-                        ${actionBean.researchProjectCounts.get(project.jiraTicketKey)}
+                    ${actionBean.researchProjectCounts.get(project.jiraTicketKey)}
                 </td>
             </tr>
         </c:forEach>

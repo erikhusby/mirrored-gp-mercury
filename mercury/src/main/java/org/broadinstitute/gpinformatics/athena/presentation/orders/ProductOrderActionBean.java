@@ -82,8 +82,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String orderKey;
 
     @ValidateNestedProperties({
-            @Validate(field="productOrderId", required=true, on="edit"),
-            @Validate(field="comments", maxlength=2000, on={"edit", "view"})
+            @Validate(field="comments", maxlength=2000, on={"save"})
     })
     private ProductOrder editOrder;
 
@@ -98,6 +97,22 @@ public class ProductOrderActionBean extends CoreActionBean {
         orderKey = getContext().getRequest().getParameter("orderKey");
         if (orderKey != null) {
             editOrder = productOrderDao.findByBusinessKey(orderKey);
+        }
+    }
+
+    @ValidationMethod(on = "edit")
+    public void editUniqueNameValidation(ValidationErrors errors) {
+        // If the title has been changed, check uniqueness. Otherwise, we are just saving an existing one
+        if (!editOrder.getTitle().equalsIgnoreCase(editOrder.getOriginalTitle())) {
+            createUniqueNameValidation(errors);
+        }
+    }
+
+    @ValidationMethod(on = "create")
+    public void createUniqueNameValidation(ValidationErrors errors) {
+        ProductOrder existingOrder = productOrderDao.findByTitle(editOrder.getTitle());
+        if (existingOrder != null) {
+            errors.add("orderName", new SimpleError("An order already exists with this name"));
         }
     }
 
