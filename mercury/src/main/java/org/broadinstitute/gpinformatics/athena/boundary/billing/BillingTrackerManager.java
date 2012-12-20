@@ -244,25 +244,28 @@ public class BillingTrackerManager {
             Cell newQuantityCell = row.getCell(currentBilledPosition + 1);
             Double newQuantity = getCellValueAsNonNullDouble(row, productOrderSample, product, newQuantityCell);
 
-            //Calculate the delta, quantities should be non-null here
-            double delta = newQuantity.doubleValue() - billedQuantity.doubleValue();
+            if ( (billedQuantity != null ) && (newQuantity != null) ) {
 
-            if (delta != 0) {
-                PriceItem priceItem = priceItemMap.get(trackerColumnInfo);
+                //Calculate the delta, quantities are non-null here
+                double delta = newQuantity.doubleValue() - billedQuantity.doubleValue();
 
-                // Only need to check date existence when newQuantity is different than Billed Quantity
-                if (workCompleteDate == null) {
-                    throw BillingTrackerUtils.getRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " + (row.getRowNum() + 1) +
-                            " of spreadsheet " + product.getPartNumber() +
-                            " has an invalid Date Completed value. Please correct and try again.");
+                if (delta != 0) {
+                    PriceItem priceItem = priceItemMap.get(trackerColumnInfo);
+
+                    // Only need to check date existence when newQuantity is different than Billed Quantity
+                    if (workCompleteDate == null) {
+                        throw BillingTrackerUtils.getRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " + (row.getRowNum() + 1) +
+                                " of spreadsheet " + product.getPartNumber() +
+                                " has an invalid Date Completed value. Please correct and try again.");
+                    } else {
+                        productOrderSample.addLedgerItem(workCompleteDate, priceItem, delta);
+                    }
                 } else {
-                    productOrderSample.addLedgerItem(workCompleteDate, priceItem, delta);
+                    logger.debug("Skipping BillingLedger item for sample " + productOrderSample.getSampleName() +
+                            " to PDO " + productOrderSample.getProductOrder().getBusinessKey() +
+                            " for PriceItemName[PPN]: " + billableRef.getPriceItemName() + "[" +
+                            billableRef.getProductPartNumber() + "] - quantity:" + newQuantity + " same as Billed amount.");
                 }
-            } else {
-                logger.debug("Skipping BillingLedger item for sample " + productOrderSample.getSampleName() +
-                        " to PDO " + productOrderSample.getProductOrder().getBusinessKey() +
-                        " for PriceItemName[PPN]: " + billableRef.getPriceItemName() + "[" +
-                        billableRef.getProductPartNumber() + "] - quantity:" + newQuantity + " same as Billed amount.");
             }
         } // end of for each productIndex loop
     }
