@@ -236,9 +236,10 @@ public class ProductOrderListForm extends AbstractJsfBean {
             return null;
         }
 
-        // Go through each products and report invalid duplicate price item names
+        // Go through all products and report invalid duplicate price item names.
         Set<Product> products = getSelectedProducts();
         for (Product product : products) {
+
             String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
             if (duplicatePriceItems != null) {
                 addErrorMessage("The Product " + product.getPartNumber() +
@@ -247,7 +248,7 @@ public class ProductOrderListForm extends AbstractJsfBean {
             }
         }
 
-        // If there are locked out orders, then do not allow the session to start
+        // Do not allow the session to start if there are locked out orders.
         Set<BillingLedger> lockedOutOrders = billingLedgerDao.findLockedOutByOrderList(getSelectedProductOrderBusinessKeys());
         if (!lockedOutOrders.isEmpty()) {
             Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());
@@ -262,6 +263,4 @@ public class ProductOrderListForm extends AbstractJsfBean {
 
         return billingLedgerDao.findWithoutBillingSessionByOrderList(getSelectedProductOrderBusinessKeys());
     }
-
-
 }

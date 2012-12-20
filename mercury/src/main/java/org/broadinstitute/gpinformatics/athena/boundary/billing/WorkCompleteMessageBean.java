@@ -19,11 +19,8 @@ import java.util.Map;
  * A Message Driven Bean to receive JMS messages from liquid handling decks
  */
 @SuppressWarnings("UnusedDeclaration")
-@MessageDriven(name = "WorkReporting", activationConfig = {
-        @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue"),
-        @ActivationConfigProperty(propertyName = "destination", propertyValue = "queue/broad.queue.athena.workreporting.production"),
-        @ActivationConfigProperty(propertyName = "connectorClassName", propertyValue ="org.hornetq.core.remoting.impl.netty.NettyConnectorFactory"),
-        @ActivationConfigProperty(propertyName = "connectionParameters", propertyValue = "host=vseqlims;port=5445")})
+@MessageDriven(name = "WorkCompleteMessageBean", activationConfig = {
+        @ActivationConfigProperty(propertyName = "destinationType", propertyValue = "javax.jms.Queue") } )
 public class WorkCompleteMessageBean implements MessageListener {
 
     @Inject

@@ -261,27 +261,4 @@ public class BillingTrackerImporter {
             }
         }
     }
-
-
-    public File copyFromStreamToTempFile(InputStream is) throws IOException {
-
-        Date now = new Date();
-        File tempFile = File.createTempFile("BillingTrackerTempFile_" + now.getTime(), ".xls");
-
-        OutputStream out = new FileOutputStream(tempFile);
-
-        try {
-            IOUtils.copy(is, out);
-
-            logger.info("New file created!");
-        } catch (IOException e) {
-            logger.error(e);
-        } finally {
-            IOUtils.closeQuietly(out);
-        }
-
-        return tempFile.getAbsoluteFile();
-    }
-
-
 }
