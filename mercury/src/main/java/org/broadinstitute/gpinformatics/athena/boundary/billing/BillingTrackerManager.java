@@ -231,58 +231,65 @@ public class BillingTrackerManager {
         }
 
         for (int billingRefIndex = 0; billingRefIndex < trackerColumnInfos.size(); billingRefIndex++) {
-            double newQuantity;
             TrackerColumnInfo trackerColumnInfo = trackerColumnInfos.get(billingRefIndex);
             BillableRef billableRef = trackerColumnInfos.get(billingRefIndex).getBillableRef();
 
             // There are two cells per product header cell, so we need to account for this.
             int currentBilledPosition = BillingTrackerUtils.fixedHeaders.length + (billingRefIndex * 2);
 
-            //Get the AlreadyBilled cell
+            //Get the AlreadyBilled cell and amount
             Cell billedCell = row.getCell(currentBilledPosition);
-            Double billedQuantity = null;
-            if (BillingTrackerUtils.isNonNullNumericCell(billedCell)) {
-                billedQuantity = billedCell.getNumericCellValue();
-            }
+            Double billedQuantity = getCellValueAsNonNullDouble(row, productOrderSample, product, billedCell);
 
-            //Get the newQuantity cell value and add it onto the productOrderSample
+            //Get the newQuantity cell and amount
             Cell newQuantityCell = row.getCell(currentBilledPosition + 1);
-            if (BillingTrackerUtils.isNonNullNumericCell(newQuantityCell)) {
-                newQuantity = newQuantityCell.getNumericCellValue();
-                if (newQuantity > 0) {
+            Double newQuantity = getCellValueAsNonNullDouble(row, productOrderSample, product, newQuantityCell);
+
+            if ( (billedQuantity != null ) && (newQuantity != null) ) {
+                //Calculate the delta, quantities are non-null here
+                double delta = newQuantity.doubleValue() - billedQuantity.doubleValue();
+
+                if (delta != 0) {
                     PriceItem priceItem = priceItemMap.get(trackerColumnInfo);
 
-                    // Only need to check date existence when cell is changed here for ledger
+                    // Only need to check date existence when newQuantity is different than Billed Quantity
                     if (workCompleteDate == null) {
                         throw BillingTrackerUtils.getRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " + (row.getRowNum() + 1) +
                                 " of spreadsheet " + product.getPartNumber() +
                                 " has an invalid Date Completed value. Please correct and try again.");
-                    } else if (billedQuantity == null) {
-                        throw BillingTrackerUtils.getRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " + (row.getRowNum() + 1) +
-                                " of spreadsheet " + product.getPartNumber() +
-                                " has a blank billed date. Please redownload the tracker to populate this.");
                     } else {
-                        double delta = newQuantity - billedQuantity;
+                        BillingLedger billingLedger =
+                                new BillingLedger(productOrderSample, priceItem, workCompleteDate, delta);
+                        productOrderSample.getLedgerItems().add(billingLedger);
+                        productOrderSample.setBillingStatus(BillingStatus.EligibleForBilling);
 
-                        if (delta != 0) {
-                            BillingLedger billingLedger =
-                                    new BillingLedger(productOrderSample, priceItem, workCompleteDate, delta);
-                            productOrderSample.getLedgerItems().add(billingLedger);
-                            productOrderSample.setBillingStatus(BillingStatus.EligibleForBilling);
-                            logger.debug("Added BillingLedger item for sample " + productOrderSample.getSampleName() +
-                                    " to PDO " + productOrderSample.getProductOrder().getBusinessKey() +
-                                    " for PriceItemName[PPN]: " + billableRef.getPriceItemName() + "[" +
-                                    billableRef.getProductPartNumber() + "] - Quantity:" + delta);
-                        }
+                        logger.info("Added BillingLedger item for sample " + productOrderSample.getSampleName() +
+                                " to PDO " + productOrderSample.getProductOrder().getBusinessKey() +
+                                " for PriceItemName[PPN]: " + billableRef.getPriceItemName() + "[" +
+                                billableRef.getProductPartNumber() + "] - Delta quantity:" + delta);
                     }
                 } else {
                     logger.debug("Skipping BillingLedger item for sample " + productOrderSample.getSampleName() +
                             " to PDO " + productOrderSample.getProductOrder().getBusinessKey() +
                             " for PriceItemName[PPN]: " + billableRef.getPriceItemName() + "[" +
-                            billableRef.getProductPartNumber() + "] - quantity:" + newQuantity);
+                            billableRef.getProductPartNumber() + "] - quantity:" + newQuantity + " same as Billed amount.");
                 }
             }
         } // end of for each productIndex loop
+    }
+
+    private Double getCellValueAsNonNullDouble(Row row, ProductOrderSample productOrderSample, Product product,
+                                               Cell cell) {
+        Double quantity = null;
+        if (BillingTrackerUtils.isNonNullNumericCell(cell)) {
+            quantity = cell.getNumericCellValue();
+            if (quantity == null) {
+                throw BillingTrackerUtils.getRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " + (row.getRowNum() + 1) +
+                        " of spreadsheet " + product.getPartNumber() +
+                        " has a blank value. Please redownload the tracker to populate this.");
+            }
+        }
+        return quantity;
     }
 
     private void persistProductOrder(ProductOrder productOrder) {

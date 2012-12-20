@@ -193,7 +193,7 @@ public class TrackerUploadForm  extends AbstractJsfBean {
             // Set filename to null to disable the upload button and prevent re-billing.
             conversationData.setFilename( null );
 
-            addInfoMessage("Updated the billing ledger for  : " + orderIdsUpdated.size() + " Product Order(s) for " +
+            addInfoMessage("Updated the billing ledger for " + orderIdsUpdated.size() + " product order(s) across " +
                     numberOfProducts + " primary product(s)." );
 
         } catch (Exception e) {
