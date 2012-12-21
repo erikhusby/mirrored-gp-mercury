@@ -102,7 +102,7 @@
                 <stripes:label for="projectManagers" class="control-label">Project Managers *</stripes:label>
 
                 <div class="controls">
-                    <stripes:text id="projectManagers" name="researchProject.projectManagers" />
+                    <stripes:text id="projectManagers" name="projectManagerList" />
                 </div>
             </div>
 
@@ -111,7 +111,7 @@
                 <stripes:label for="broadPIs" class="control-label">Broad PIs</stripes:label>
 
                 <div class="controls">
-                    <stripes:text id="broadPIs" name="researchProject.broadPIs" />
+                    <stripes:text id="broadPIs" name="broadPiList" />
                 </div>
             </div>
 
@@ -119,7 +119,7 @@
             <div class="control-group">
                 <stripes:label for="externalCollaborators" class="control-label">External Collaborators</stripes:label>
                 <div class="controls">
-                    <stripes:text id="externalCollaborators" name="researchProject.externalCollaborators" />
+                    <stripes:text id="externalCollaborators" name="externalCollaboratorList" />
                 </div>
             </div>
 
@@ -127,7 +127,7 @@
             <div class="control-group">
                 <stripes:label for="scientists" class="control-label">Scientists</stripes:label>
                 <div class="controls">
-                    <stripes:text id="scientists" name="researchProject.scientists" />
+                    <stripes:text id="scientists" name="scientistList" />
                 </div>
             </div>
 
@@ -148,7 +148,7 @@
                 <stripes:label for="fundingSources" class="control-label">Funding Sources</stripes:label>
 
                 <div class="controls">
-                    <stripes:text id="fundingSources" name="researchProject.fundingSourcesListString" />
+                    <stripes:text id="fundingSources" name="fundingSourceList" />
                 </div>
             </div>
 
@@ -156,7 +156,7 @@
                 <stripes:label for="cohorts" class="control-label">Sample Cohorts</stripes:label>
 
                 <div class="controls">
-                    <stripes:text id="cohorts" name="researchProject.cohortsListString" />
+                    <stripes:text id="cohorts" name="cohortsList" />
                 </div>
             </div>
 
@@ -167,7 +167,7 @@
                 <div class="controls">
                     <stripes:text id="irbs" name="researchProject.irbs" />
                     <p>
-                        <stripes:checkbox id="irbNotEngaged" name="researchProject.irbNotEngaged"/>&nbsp;<stripes:label for="irbNotEngaged" name="IRB Not Engaged" style="display:inline;"/>
+                        <stripes:checkbox id="irbNotEngaged" name="irbList"/>&nbsp;<stripes:label for="irbNotEngaged" style="display:inline;">IRB Not Engaged</stripes:label>
                     </p>
                 </div>
             </div>

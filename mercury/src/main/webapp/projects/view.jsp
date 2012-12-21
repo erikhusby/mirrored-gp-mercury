@@ -38,9 +38,9 @@
 
                 <div class="controls">
                     <div class="form-value">
-                        <c:if test="${actionBean.researchProject.jiraTicketKey} ne null">
+                        <c:if test="${actionBean.researchProject.jiraTicketKey != null}">
                             <stripes:link target="JIRA"
-                                          href="${actionBean.jiraLink.browseUrl(actionBean.researchProject.jiraTicketKey)}"
+                                          href="${actionBean.jiraUrl}${actionBean.researchProject.jiraTicketKey}"
                                           class="external">
                                 ${actionBean.researchProject.jiraTicketKey}
                             </stripes:link>

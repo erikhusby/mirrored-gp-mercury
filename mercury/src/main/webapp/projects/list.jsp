@@ -46,7 +46,7 @@
                     </stripes:link>
                 </td>
                 <td>
-                    <a class="external" target="JIRA" href="${actionBean.jiraUrl}${project.businessKey}" class="external" target="JIRA">
+                    <a class="external" target="JIRA" href="${actionBean.jiraUrl}${project.jiraTicketKey}" class="external" target="JIRA">
                             ${project.jiraTicketKey}
                     </a>
                 </td>

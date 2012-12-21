@@ -3,27 +3,27 @@ package org.broadinstitute.gpinformatics.athena.presentation.projects;
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.*;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.athena.boundary.FundingListBean;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
+import org.broadinstitute.gpinformatics.athena.entity.project.Irb;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.json.JSONArray;
+import org.json.JSONException;
 
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.StringReader;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This class is for research projects action bean / web page.
@@ -80,6 +80,15 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * On demand counts of orders on the project. Map of business key to count value *
      */
     private Map<String, Long> projectOrderCounts;
+
+    // These are the fields for catching the input tokens
+    private String projectManagerList = "";
+    private String scientistList = "";
+    private String externalCollaboratorList = "";
+    private String broadPiList = "";
+    private String fundingSourceList = "";
+    private String cohortsList = "";
+    private String irbList = "";
 
     /**
      * Fetch the complete list of research projects.
@@ -156,11 +165,79 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     public Resolution save() throws Exception {
+        populateTokenListFields();
         researchProjectDao.persist(editResearchProject);
         addMessage("The research project '" + editResearchProject.getTitle() + "' has been saved.");
         return new RedirectResolution(ResearchProjectActionBean.class, "view").addParameter("businessKey", editResearchProject.getBusinessKey());
     }
 
+    private void populateTokenListFields() {
+        editResearchProject.clearPeople();
+        editResearchProject.addPeople(RoleType.BROAD_PI, getBspUser(broadPiList));
+        editResearchProject.addPeople(RoleType.EXTERNAL, getBspUser(externalCollaboratorList));
+        editResearchProject.addPeople(RoleType.SCIENTIST, getBspUser(scientistList));
+        editResearchProject.addPeople(RoleType.PM, getBspUser(projectManagerList));
+
+        editResearchProject.populateCohorts(getCohorts());
+        editResearchProject.populateFunding(getFundingSources());
+        editResearchProject.populateIrbs(getIrbs());
+    }
+
+    private List<BspUser> getBspUser(String userIdList) {
+        if (userIdList == null) {
+            return Collections.emptyList();
+        }
+
+        String[] userIds = userIdList.split(",");
+        List<BspUser> bspUsers = new ArrayList<BspUser>();
+        for (String userIdString : userIds) {
+            long userId = Long.valueOf(userIdString);
+            bspUsers.add(bspUserList.getById(userId));
+        }
+
+        return bspUsers;
+    }
+
+    private List<Funding> getFundingSources() {
+        if (fundingSourceList == null) {
+            return Collections.emptyList();
+        }
+
+        String[] fundingArray = fundingSourceList.split(",");
+        List<Funding> fundings = new ArrayList<Funding> ();
+        for (String funding : fundingArray) {
+            fundings.add(fundingList.getById(funding));
+        }
+
+        return fundings;
+    }
+    private List<Cohort> getCohorts() {
+        if (cohortsList == null) {
+            return Collections.emptyList();
+        }
+
+        String[] cohortArray = cohortsList.split(",");
+        List<Cohort> cohorts = new ArrayList<Cohort> ();
+        for (String cohort : cohortArray) {
+            cohorts.add(cohortListBean.getCohortById(cohort));
+        }
+
+        return cohorts;
+    }
+
+    private List<Irb> getIrbs() {
+        if (irbList == null) {
+            return Collections.emptyList();
+        }
+
+        String[] irbArray = irbList.split(",");
+        List<Irb> irbs = new ArrayList<Irb> ();
+        for (String irb : irbArray) {
+            irbs.add((Irb) IrbConverter.getAsObject(irb.trim()));
+        }
+
+        return irbs;
+    }
 
     public Resolution view() {
         return new ForwardResolution(PROJECT_VIEW_PAGE);
@@ -304,8 +381,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
             return "";
         }
 
+        return getUserCompleteData(editResearchProject.getBroadPIs());
+    }
+
+    private String getUserCompleteData(Long[] userIds) throws JSONException {
+
         JSONArray itemList = new JSONArray();
-        for (Long userId : editResearchProject.getBroadPIs()) {
+        for (Long userId : userIds) {
             BspUser bspUser = bspUserList.getById(userId);
             String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
             itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName, false).getJSONObject());
@@ -319,14 +401,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             return "";
         }
 
-        JSONArray itemList = new JSONArray();
-        for (Long userId : editResearchProject.getExternalCollaborators()) {
-            BspUser bspUser = bspUserList.getById(userId);
-            String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
-            itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName, false).getJSONObject());
-        }
-
-        return itemList.toString();
+        return getUserCompleteData(editResearchProject.getExternalCollaborators());
     }
 
     public String getScientistCompleteData() throws Exception {
@@ -334,14 +409,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             return "";
         }
 
-        JSONArray itemList = new JSONArray();
-        for (Long userId : editResearchProject.getScientists()) {
-            BspUser bspUser = bspUserList.getById(userId);
-            String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
-            itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName, false).getJSONObject());
-        }
-
-        return itemList.toString();
+        return getUserCompleteData(editResearchProject.getScientists());
     }
 
     public String getProjectManagerCompleteData() throws Exception {
@@ -349,14 +417,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
             return "";
         }
 
-        JSONArray itemList = new JSONArray();
-        for (Long userId : editResearchProject.getProjectManagers()) {
-            BspUser bspUser = bspUserList.getById(userId);
-            String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
-            itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName, false).getJSONObject());
-        }
-
-        return itemList.toString();
+        return getUserCompleteData(editResearchProject.getProjectManagers());
     }
 
     @Inject
@@ -399,5 +460,61 @@ public class ResearchProjectActionBean extends CoreActionBean {
         }
 
         return itemList.toString();
+    }
+
+    public String getIrbList() {
+        return irbList;
+    }
+
+    public void setIrbList(String irbList) {
+        this.irbList = irbList;
+    }
+
+    public String getCohortsList() {
+        return cohortsList;
+    }
+
+    public void setCohortsList(String cohortsList) {
+        this.cohortsList = cohortsList;
+    }
+
+    public String getFundingSourceList() {
+        return fundingSourceList;
+    }
+
+    public void setFundingSourceList(String fundingSourceList) {
+        this.fundingSourceList = fundingSourceList;
+    }
+
+    public String getBroadPiList() {
+        return broadPiList;
+    }
+
+    public void setBroadPiList(String broadPiList) {
+        this.broadPiList = broadPiList;
+    }
+
+    public String getExternalCollaboratorList() {
+        return externalCollaboratorList;
+    }
+
+    public void setExternalCollaboratorList(String externalCollaboratorList) {
+        this.externalCollaboratorList = externalCollaboratorList;
+    }
+
+    public String getScientistList() {
+        return scientistList;
+    }
+
+    public void setScientistList(String scientistList) {
+        this.scientistList = scientistList;
+    }
+
+    public String getProjectManagerList() {
+        return projectManagerList;
+    }
+
+    public void setProjectManagerList(String projectManagerList) {
+        this.projectManagerList = projectManagerList;
     }
 }

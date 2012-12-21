@@ -18,6 +18,10 @@ public class IrbConverter implements Converter {
 
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) {
+        return getAsObject(value);
+    }
+
+    public static Object getAsObject(String value) {
         int index = value.trim().lastIndexOf(":");
 
         if (index < 1) {
