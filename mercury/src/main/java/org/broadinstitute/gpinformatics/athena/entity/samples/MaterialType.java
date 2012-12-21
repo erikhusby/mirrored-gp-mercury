@@ -28,10 +28,10 @@ public class MaterialType implements Serializable, Comparable<MaterialType> {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MATERIAL_TYPE")
     private Long materialTypeId;
 
-    @Column(nullable = false)
+    @Column(name = "NAME",nullable = false)
     private String name;
 
-    @Column(nullable = false)
+    @Column(name = "CATEGORY", nullable = false)
     private String category;
 
 
@@ -45,6 +45,7 @@ public class MaterialType implements Serializable, Comparable<MaterialType> {
         }
     };
 
+    private transient String fullName;
 
     /**
      * Package visible constructor for JPA
@@ -52,7 +53,7 @@ public class MaterialType implements Serializable, Comparable<MaterialType> {
     MaterialType() {
     }
 
-    public MaterialType(@Nonnull String name, @Nonnull String category) {
+    public MaterialType(@Nonnull String category, @Nonnull String name ) {
         if (name == null) {
             throw new NullPointerException("Null name!");
         }
@@ -71,6 +72,13 @@ public class MaterialType implements Serializable, Comparable<MaterialType> {
         return category;
     }
 
+    public String getFullName() {
+        return fullName;
+    }
+
+    public void setFullName(String fullName) {
+        this.fullName = fullName;
+    }
 
     @Override
     public int compareTo(MaterialType that) {

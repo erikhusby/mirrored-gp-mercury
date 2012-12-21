@@ -1,10 +1,12 @@
 package org.broadinstitute.gpinformatics.athena.presentation.products;
 
+import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductSearcher;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPMaterialTypeList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
@@ -34,6 +36,9 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
 
     @Inject
     private ProductSearcher productSearcher;
+
+    @Inject
+    private BSPMaterialTypeList materialTypeListCache;
 
     /**
      * Transaction support for create / update operations
@@ -77,6 +82,12 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
      * This is a {@link List} to support p:autoComplete
      */
     private List<Product> addOns;
+
+    /**
+     * These are in their own field since they are JAXB {@link org.broadinstitute.bsp.client.sample.MaterialType} DTOs and not JPA entities
+     */
+    private List<org.broadinstitute.bsp.client.sample.MaterialType> allowedMaterialTypes;
+
 
 
     /**
@@ -162,6 +173,9 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
         return new PriceItem(entity.getQuoteServerId(), entity.getPlatform(), entity.getCategory(), entity.getName());
     }
 
+    private MaterialType entityToDto(org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType entity) {
+        return new org.broadinstitute.bsp.client.sample.MaterialType(entity.getFullName() );
+    }
 
     /**
      * Enumerate the product families
@@ -181,7 +195,7 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
         boolean creating = isCreating();
 
         try {
-            productEjb.save(product, partNumber, addOns, primaryPriceItem, optionalPriceItems);
+            productEjb.save(product, partNumber, addOns, primaryPriceItem, optionalPriceItems, allowedMaterialTypes);
 
         } catch (ProductEjb.ExpiredAddOnsException e) {
             addErrorMessage("Add-ons are no longer available: " + e.getMessage());
@@ -283,6 +297,24 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
     }
 
 
+    public List<MaterialType> getAllowedMaterialTypes() {
+        if (product == null) {
+            return new ArrayList<MaterialType>();
+        }
+
+        if ( allowedMaterialTypes == null ) {
+            allowedMaterialTypes = new ArrayList<MaterialType>();
+            for ( org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType materialType : product.getAllowableMaterialTypes() ) {
+                allowedMaterialTypes.add( entityToDto(materialType) );
+            }
+        }
+        return allowedMaterialTypes;
+    }
+
+    public void setAllowedMaterialTypes(List<MaterialType> allowedMaterialTypes) {
+        this.allowedMaterialTypes = allowedMaterialTypes;
+    }
+
     /**
      *
      * Used for {@link org.primefaces.component.autocomplete.AutoComplete}ing the default price item, restrict search
@@ -312,6 +344,18 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
             }
         }
         searchResults.remove(primaryPriceItem);
+
+        return searchResults;
+    }
+
+    public List<MaterialType> searchMaterialTypes(String query) {
+        List<MaterialType> searchResults = materialTypeListCache.find(query);
+        // filter out material types that are already selected
+        if (allowedMaterialTypes != null) {
+            for (MaterialType materialType : allowedMaterialTypes) {
+                searchResults.remove(materialType);
+            }
+        }
 
         return searchResults;
     }
@@ -347,6 +391,23 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
             return priceItem.getPlatformName() + ": " + priceItem.getName();
         }
         return priceItem.getName();
+    }
+
+    public String labelForMaterialType(MaterialType materialType) {
+
+        if (materialType == null) {
+            return "";
+        }
+
+        final int MAX_NAME = 45;
+
+        if (materialType.getName().length() > MAX_NAME){
+            return materialType.getName().substring(0, MAX_NAME) + "... ";
+        }
+        else if (materialType.getCategory().length() + materialType.getName().length() + 2 < MAX_NAME) {
+            return materialType.getCategory() + ": " + materialType.getName();
+        }
+        return materialType.getName();
     }
 
 
