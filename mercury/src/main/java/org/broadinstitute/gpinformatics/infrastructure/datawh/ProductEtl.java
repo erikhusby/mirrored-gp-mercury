@@ -5,6 +5,8 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 
 @Stateless
@@ -42,6 +44,40 @@ public class ProductEtl  extends GenericEntityEtl {
             logger.info("Cannot export.  Product having id " + entityId + " no longer exists.");
             return null;
         }
+        return entityRecord(etlDateStr, isDelete, entity);
+    }
+
+    /**
+     * Returns data records for all entity instances of this class.
+     * @return
+     */
+    @Override
+    Collection<String> entityRecordsInRange(long startId, long endId, String etlDateStr, boolean isDelete) {
+        Collection<String> allRecords = new ArrayList<String>();
+        if (startId == 0 && endId == Long.MAX_VALUE) {
+            // Default case gets all entities.
+            for (Product entity : dao.findAll(Product.class)) {
+                allRecords.add(entityRecord(etlDateStr, isDelete, entity));
+            }
+        } else {
+            // Spins through the ids one at a time.
+            // TODO change this to specify the range in a GenericDaoCallback
+            for (long entityId = startId; entityId <= endId; ++entityId) {
+                Product entity = dao.findById(Product.class, entityId);
+                if (entity != null) {
+                    allRecords.add(entityRecord(etlDateStr, isDelete, entity));
+                }
+            }
+        }
+        return allRecords;
+    }
+
+    /**
+     * Makes a data record from an entity, in a format that matches the corresponding SqlLoader control file.
+     * @param entity Mercury Entity
+     * @return delimited SqlLoader record
+     */
+    String entityRecord(String etlDateStr, boolean isDelete, Product entity) {
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductId(),
                 format(entity.getProductName()),

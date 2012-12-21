@@ -1,5 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import bsh.commands.dir;
+import org.apache.commons.io.IOUtils;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
@@ -13,11 +17,11 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.IOException;
+import javax.ws.rs.core.Response;
+import java.io.*;
+import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -33,6 +37,10 @@ public class ExtractTransformTest extends Arquillian {
     private final Date now = new Date();
     private final String nowMsec = String.valueOf(now.getTime());
     private String badDataDir = datafileDir + nowMsec;
+    final String PRODUCT_ORDER_SAMPLE_CLASSNAME = "org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample";
+    final String PRODUCT_ORDER_SAMPLE_FILENAME = "product_order_sample.dat";
+    final String RESEARCH_PROJECT_CLASSNAME = "org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject";
+    final String RESEARCH_PROJECT_FILENAME = "research_project.dat";
 
     @Inject
     private ExtractTransform extractTransform;
@@ -76,16 +84,23 @@ public class ExtractTransformTest extends Arquillian {
         }
     }
 
+
     /** Passes a blank and a non-existent directory for datafiles. */
     public void testInvalidDir() {
         extractTransform.setDatafileDir(null);
         Assert.assertEquals(-1, extractTransform.incrementalEtl());
+        Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR,
+                extractTransform.backfillEtl(PRODUCT_ORDER_SAMPLE_CLASSNAME, 0, Long.MAX_VALUE));
 
         extractTransform.setDatafileDir("");
         Assert.assertEquals(-1, extractTransform.incrementalEtl());
+        Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR,
+                extractTransform.backfillEtl(PRODUCT_ORDER_SAMPLE_CLASSNAME, 0, Long.MAX_VALUE));
 
         extractTransform.setDatafileDir(badDataDir);
         Assert.assertEquals(-1, extractTransform.incrementalEtl());
+        Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR,
+                extractTransform.backfillEtl(PRODUCT_ORDER_SAMPLE_CLASSNAME, 0, Long.MAX_VALUE));
     }
 
     /**  Mathematically excludes changes by setting last ETL version impossibly high. */
@@ -93,6 +108,20 @@ public class ExtractTransformTest extends Arquillian {
         extractTransform.writeLastEtlRun(datafileDir, Long.MAX_VALUE - 1);
         Assert.assertEquals(0, extractTransform.incrementalEtl());
         Assert.assertTrue(ExtractTransform.getCurrentRunStartTime() >= 0);
+    }
+
+    public void testBadRange() {
+        Assert.assertEquals(Response.Status.BAD_REQUEST,
+                extractTransform.backfillEtl(PRODUCT_ORDER_SAMPLE_CLASSNAME, -1, Long.MAX_VALUE));
+
+        Assert.assertEquals(Response.Status.BAD_REQUEST,
+                extractTransform.backfillEtl(PRODUCT_ORDER_SAMPLE_CLASSNAME, 1000, 999));
+    }
+
+    /** Must supply fully qualified classname */
+    public void testInvalidClassname() {
+        Assert.assertEquals(Response.Status.NOT_FOUND,
+                extractTransform.backfillEtl("ProductOrderSample", 0, Long.MAX_VALUE));
     }
 
     /** Normal ETL.  Picks up the last 2000 (or fewer) audits. */
@@ -109,6 +138,125 @@ public class ExtractTransformTest extends Arquillian {
         String readyFilename = ExtractTransform.fullDateFormat.format(new Date(etlMsec)) + ExtractTransform.READY_FILE_SUFFIX;
         Assert.assertTrue((new File(datafileDir, readyFilename)).exists());
     }
+
+    /** Backfill ETL for a non-default range. */
+    public void testBackfillEtlRange() throws Exception {
+        // Selects an entity to ETL, or skips the test if there's none available.
+        List<ProductOrderSample> list = auditReaderDao.findAll(ProductOrderSample.class, 1, 3);
+        if (list.size() == 0) {
+            return;
+        }
+        ProductOrderSample entity = null;
+        for (ProductOrderSample pos : list) {
+            if (pos.getProductOrderSampleId() > 1) {
+                entity = pos;
+                break;
+            }
+        }
+        // ETLs a range of entity ids that includes the known entity id.
+        long startId = entity.getProductOrderSampleId() -  1;
+        long endId = entity.getProductOrderSampleId() +  1;
+
+        final long msecStart = System.currentTimeMillis();
+
+        Assert.assertEquals(Response.Status.NO_CONTENT,
+                extractTransform.backfillEtl(PRODUCT_ORDER_SAMPLE_CLASSNAME, startId, endId));
+
+        final long msecEnd = System.currentTimeMillis() + 1000;
+
+        // Verifies there is only one .dat file and one _is_ready file, both having
+        // a datetime in the expected range.
+        File[] filelist = getDirFiles(datafileDir, msecStart, msecEnd);
+        boolean foundDataFile = false;
+        boolean foundIsReadyFile = false;
+        for (File file : filelist) {
+            String filename = file.getName();
+            if (filename.endsWith(".dat")) {
+                //should only have found one dat file
+                Assert.assertFalse(foundDataFile);
+                Assert.assertTrue(filename.endsWith(PRODUCT_ORDER_SAMPLE_FILENAME));
+                foundDataFile = true;
+
+                // verifies that the entity id is present in the .dat file
+                Reader reader = new FileReader(file);
+                String content = IOUtils.toString(reader);
+                IOUtils.closeQuietly(reader);
+                Assert.assertTrue(content.contains("," + entity.getProductOrderSampleId() + ","));
+            }
+            if (filename.endsWith("_is_ready")) {
+                //should only have found one _is_ready file
+                Assert.assertFalse(foundIsReadyFile);
+                foundIsReadyFile = true;
+            }
+        }
+        Assert.assertTrue(foundDataFile);
+        Assert.assertTrue(foundIsReadyFile);
+    }
+
+    /** Backfill ETL for default range. */
+    public void testBackfillEtl() throws Exception {
+        // Skips the test if there's no entities available.
+        if (auditReaderDao.findAll(ResearchProject.class, 1, 1).size() == 0) {
+            return;
+        }
+
+        long msecStart = System.currentTimeMillis();
+
+        Assert.assertEquals(Response.Status.NO_CONTENT,
+                extractTransform.backfillEtl(RESEARCH_PROJECT_CLASSNAME, 0, Long.MAX_VALUE));
+
+        final long msecEnd = System.currentTimeMillis() + 1000;
+
+        // Verifies there is only one .dat file and one _is_ready file, both having
+        // a datetime in the expected range.
+        File[] list = getDirFiles(datafileDir, msecStart, msecEnd);
+        boolean foundDataFile = false;
+        boolean foundIsReadyFile = false;
+        for (File file : list) {
+            String filename = file.getName();
+            if (filename.endsWith(".dat")) {
+                //should only have found one dat file
+                Assert.assertFalse(foundDataFile);
+                Assert.assertTrue(filename.endsWith(RESEARCH_PROJECT_FILENAME));
+                foundDataFile = true;
+
+                // data file should have at least one record in it
+                Reader reader = new FileReader(file);
+                List<String> content = IOUtils.readLines(reader);
+                IOUtils.closeQuietly(reader);
+                Assert.assertTrue(content.size() > 0);
+            }
+            if (filename.endsWith("_is_ready")) {
+                //should only have found one _is_ready file
+                Assert.assertFalse(foundIsReadyFile);
+                foundIsReadyFile = true;
+            }
+        }
+        Assert.assertTrue(foundDataFile);
+        Assert.assertTrue(foundIsReadyFile);
+    }
+
+    /** Returns all files in the given directory, having filename timestamp in the given range. */
+    private File[] getDirFiles(String directoryName, long msecStart, long msecEnd) {
+        final long yyyymmddHHMMSSstart = Long.parseLong(ExtractTransform.fullDateFormat.format(new Date(msecStart)));
+        final long yyyymmddHHMMSSend = Long.parseLong(ExtractTransform.fullDateFormat.format(new Date(msecEnd)));
+        File dir = new File (directoryName);
+        File[] list = dir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dirname, String filename) {
+                try {
+                    // Only cares about files named <dateTime>_<*>
+                    String s = filename.split("_")[0];
+                    long timestamp = Long.parseLong(s);
+                    return (timestamp >= yyyymmddHHMMSSstart && timestamp <= yyyymmddHHMMSSend);
+                } catch (NumberFormatException e) {
+                    return false;
+                }
+            }
+        });
+        return list;
+    }
+
 
     /** Passes a non-existent directory for the last run file. */
     public void testInvalidLastEtlBadDir() {

@@ -5,6 +5,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 
 @Stateless
@@ -33,6 +35,10 @@ public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
         return null;
     }
 
+    @Override
+    Collection<String> entityRecordsInRange(long startId, long endId, String etlDateStr, boolean isDelete) {
+        return Collections.EMPTY_LIST;
+    }
 
     /**
      * Makes a data record from entity status fields, and possible the Envers revision date,

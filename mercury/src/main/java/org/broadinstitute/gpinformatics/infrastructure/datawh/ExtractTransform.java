@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
@@ -8,6 +9,8 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDa
 import javax.ejb.Schedule;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import javax.ws.rs.*;
+import javax.ws.rs.core.Response;
 import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -32,6 +35,7 @@ import java.util.concurrent.Semaphore;
  */
 
 @Stateless
+@Path("etl")
 public class ExtractTransform {
     /** Record delimiter expected in sqlLoader file. */
     public static final String DELIM = ",";
@@ -84,17 +88,35 @@ public class ExtractTransform {
     @Inject
     private ProductOrderAddOnEtl productOrderAddOnEtl;
 
+
     /**
      * JEE auto-schedules incremental ETL.
      */
     @Schedule(hour="*", minute="*/15", persistent=false)
     private void scheduledEtl() {
-        if (null == etlConfig) {
-            etlConfig = (EtlConfig) MercuryConfiguration.getInstance().getConfig(EtlConfig.class, deployment);
-            setDatafileDir(etlConfig.getDatawhEtlDirRoot() + DATAFILE_SUBDIR);
-        }
+        initConfig();
         incrementalEtl();
     }
+
+    /**
+     * Runs on-demand ETL on one entity class, to force a refresh the Data Warehouse, for example after
+     * adding a new field to be exported.
+     *
+     * @param entityClassname The fully qualified classname of the Mercury class to ETL.
+     * @param firstId First entity id of a range of ids to backfill.  Optional query param that defaults to min id.
+     * @param lastId Last entity id of a range of ids to backfill.  Optional query param that defaults to max id.
+     */
+    @Path("backfill/{entityClassname}")
+    @PUT
+    public Response onDemandEtl(@PathParam("entityClassname") String entityClassname,
+                                @DefaultValue("0") @QueryParam("startId") long firstId,
+                                @DefaultValue("-1") @QueryParam("lastId") long lastId) {
+
+        initConfig();
+        Response.Status status = backfillEtl(entityClassname, firstId, lastId);
+        return Response.status(status).build();
+    }
+
 
     /**
      * Extracts data from operational database, transforms the data to data warehouse records,
@@ -107,8 +129,10 @@ public class ExtractTransform {
         // may run at a time.  Does not queue a new job if busy, to avoid snowball effect if system is
         // busy for a long time, for whatever reason.
         if (!mutex.tryAcquire()) {
-            logger.info("Skipping new ETL run since previous run is still busy ("
-                    + (int)Math.ceil((System.currentTimeMillis() - currentRunStartTime) / MSEC_IN_MINUTE) + " minutes).");
+            int minutes = (int)Math.ceil((System.currentTimeMillis() - currentRunStartTime) / MSEC_IN_MINUTE);
+            if (minutes > 0) {
+                logger.info("Skipping new ETL run since previous run is still busy after " + minutes + " minutes.");
+            }
             return -1;
         }
         try {
@@ -116,13 +140,13 @@ public class ExtractTransform {
             String dataDir = getDatafileDir();
             if (null == dataDir || dataDir.length() == 0) {
                 if (!loggedConfigError) {
-                    logger.fatal("ETL data file directory is not configured.");
+                    logger.info("ETL data file directory is not configured. ETL will not be run.");
                     loggedConfigError = true;
                 }
                 return -1;
             } else if (!(new File(dataDir)).exists()) {
                 if (!loggedConfigError) {
-                    logger.fatal("ETL data file directory is missing: " + dataDir);
+                    logger.error("ETL data file directory is missing: " + dataDir);
                     loggedConfigError = true;
                 }
                 return -1;
@@ -175,15 +199,82 @@ public class ExtractTransform {
     }
 
     /**
+     * Does ETL for instances of a single entity class having ids in the specified range.
+     *
+     * Backfill ETL can run independently of periodic incremental ETL, and doesn't affect its state.
+     * The generated standard sqlLoader data file should be picked up and processed normally by the
+     * periodic cron job.
+     *
+     * @param entityClassname The fully qualified classname of the Mercury class to ETL.
+     * @param firstId First entity id of a range of ids to backfill.  Optional query param that defaults to min id.
+     * @param lastId Last entity id of a range of ids to backfill.  Optional query param that defaults to max id.
+     */
+    public Response.Status backfillEtl(String entityClassname, long firstId, long lastId) {
+        String dataDir = getDatafileDir();
+        if (null == dataDir || dataDir.length() == 0) {
+            logger.info("ETL data file directory is not configured. Backfill ETL will not be run.");
+            return Response.Status.INTERNAL_SERVER_ERROR;
+        } else if (!(new File(dataDir)).exists()) {
+            logger.error("ETL data file directory is missing: " + dataDir);
+            return Response.Status.INTERNAL_SERVER_ERROR;
+        }
+
+        final Date etlDate = new Date();
+        final String etlDateStr = fullDateFormat.format(etlDate);
+
+        Class entityClass;
+        try {
+            entityClass = Class.forName(entityClassname);
+        } catch (ClassNotFoundException e) {
+            logger.error("Unknown class " + entityClassname);
+            return Response.Status.NOT_FOUND;
+        }
+
+        if (lastId == -1) {
+            lastId = Long.MAX_VALUE;
+        }
+        if (firstId < 0 ||lastId < firstId) {
+            logger.error("Invalid entity id range " + firstId + " to " + lastId);
+            return Response.Status.BAD_REQUEST;
+        }
+
+        logger.info("ETL backfill of " + entityClass.getName() + " having ids " + firstId + " to " + lastId);
+
+        int recordCount = 0;
+        // The one of these that matches the entityClass will make ETL records, others are no-ops.
+        recordCount += productEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
+        recordCount += priceItemEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
+        recordCount += researchProjectEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
+        recordCount += researchProjectStatusEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
+        recordCount += projectPersonEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
+        recordCount += researchProjectIrbEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
+        recordCount += researchProjectFundingEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
+        recordCount += researchProjectCohortEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
+        recordCount += productOrderSampleEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
+        recordCount += productOrderSampleStatusEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
+        recordCount += productOrderEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
+        recordCount += productOrderStatusEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
+        recordCount += productOrderAddOnEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
+
+        if (recordCount > 0) {
+            writeIsReadyFile(dataDir, etlDateStr);
+            logger.info("Backfill ETL created " + recordCount + " data records in "
+                    + (int) Math.ceil((System.currentTimeMillis() - currentRunStartTime) / 1000.) + " seconds.");
+        }
+
+        return Response.Status.NO_CONTENT;
+    }
+
+
+    /**
      * Reads the last incremental ETL run file and returns start of this etl interval.
-     * @return the end rev of last incremental ETL
+     * @return the end rev of last incremental ETL, or 0 if missing.
      */
     public long readLastEtlRun(String dataDir) {
-        BufferedReader rdr = null;
         try {
-            File file = new File (dataDir, LAST_ETL_FILE);
-            rdr = new BufferedReader(new FileReader(file));
-            String s = rdr.readLine();
+            Reader rdr = new FileReader(new File (dataDir, LAST_ETL_FILE));
+            String s = IOUtils.toString(rdr);
+            IOUtils.closeQuietly(rdr);
             return Long.parseLong(s);
         } catch (FileNotFoundException e) {
             logger.warn("Missing file: " + LAST_ETL_FILE);
@@ -194,14 +285,6 @@ public class ExtractTransform {
         } catch (NumberFormatException e) {
             logger.error("Cannot parse " + LAST_ETL_FILE + " : " + e);
             return 0L;
-        } finally {
-            try {
-                if (rdr != null) {
-                    rdr.close();
-                }
-            } catch (IOException e) {
-                logger.error("Cannot close file: " + LAST_ETL_FILE, e);
-            }
         }
     }
 
@@ -212,10 +295,9 @@ public class ExtractTransform {
      */
     public boolean writeLastEtlRun(String dataDir, long etlRev) {
         try {
-            File file = new File (dataDir, LAST_ETL_FILE);
-            FileWriter fw = new FileWriter(file, false);
-            fw.write(String.valueOf(etlRev));
-            fw.close();
+            Writer fw = new FileWriter(new File (dataDir, LAST_ETL_FILE), false);
+            IOUtils.write(String.valueOf(etlRev), fw);
+            IOUtils.closeQuietly(fw);
             return true;
         } catch (IOException e) {
             logger.error("Error writing file " + LAST_ETL_FILE);
@@ -229,10 +311,9 @@ public class ExtractTransform {
      */
     public void writeIsReadyFile(String dataDir, String etlDateStr) {
         try {
-            File file = new File (dataDir, etlDateStr + READY_FILE_SUFFIX);
-            FileWriter fw = new FileWriter(file, false);
-            fw.write(" ");
-            fw.close();
+            FileWriter fw = new FileWriter(new File (dataDir, etlDateStr + READY_FILE_SUFFIX), false);
+            IOUtils.write(" ", fw);
+            IOUtils.closeQuietly(fw);
         } catch (IOException e) {
             logger.error("Error creating file " + etlDateStr + READY_FILE_SUFFIX, e);
         }
@@ -253,5 +334,14 @@ public class ExtractTransform {
     public static long getCurrentRunStartTime() {
         return currentRunStartTime;
     }
+
+    /** Gets relevant configuration from the .yaml file */
+    private void initConfig() {
+        if (null == etlConfig) {
+            etlConfig = (EtlConfig) MercuryConfiguration.getInstance().getConfig(EtlConfig.class, deployment);
+            setDatafileDir(etlConfig.getDatawhEtlDirRoot() + DATAFILE_SUBDIR);
+        }
+    }
+
 }
 

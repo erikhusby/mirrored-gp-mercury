@@ -7,6 +7,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 
 @Stateless
@@ -47,16 +49,49 @@ public class ProjectPersonEtl  extends GenericEntityEtl {
             logger.info("Cannot export.  ProjectPerson having id " + entityId + " no longer exists.");
             return null;
         }
+        return entityRecord(etlDateStr, isDelete, entity);
+    }
+
+    /**
+     * Returns data records for all entity instances of this class.
+     * @return
+     */
+    @Override
+    Collection<String> entityRecordsInRange(long startId, long endId, String etlDateStr, boolean isDelete) {
+        Collection<String> allRecords = new ArrayList<String>();
+        if (startId == 0 && endId == Long.MAX_VALUE) {
+            // Default case gets all entities.
+            for (ProjectPerson entity : dao.findAll(ProjectPerson.class)) {
+                allRecords.add(entityRecord(etlDateStr, isDelete, entity));
+            }
+        } else {
+            // Spins through the ids one at a time.
+            // TODO change this to specify the range in a GenericDaoCallback
+            for (long entityId = startId; entityId <= endId; ++entityId) {
+                ProjectPerson entity = dao.findById(ProjectPerson.class, entityId);
+                if (entity != null) {
+                    allRecords.add(entityRecord(etlDateStr, isDelete, entity));
+                }
+            }
+        }
+        return allRecords;
+    }
+
+    /**
+     * Makes a data record from an entity, in a format that matches the corresponding SqlLoader control file.
+     * @param entity Mercury Entity
+     * @return delimited SqlLoader record
+     */
+    String entityRecord(String etlDateStr, boolean isDelete, ProjectPerson entity) {
         Long personId = entity.getPersonId();
         BspUser bspUser = null;
         if (personId != null) {
             bspUser = userList.getById(personId);
         }
         if (bspUser == null) {
-            logger.info("Cannot export.  BspUser having id " + entityId + " no longer exists.");
+            logger.info("Cannot export.  BspUser having id " + entity.getPersonId() + " no longer exists.");
             return null;
         }
-
         return genericRecord(etlDateStr, isDelete,
                 entity.getProjectPersonId(),
                 format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null),

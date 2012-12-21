@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
@@ -46,6 +47,9 @@ abstract public class GenericEntityEtl {
      * @return delimited SqlLoader record
      */
     abstract String entityRecord(String etlDateStr, boolean isDelete, Long entityId);
+
+    /** Returns data records for entities in a range of ids. */
+    abstract Collection<String> entityRecordsInRange(long startId, long endId, String etlDateStr, boolean isDelete);
 
     /**
      * Makes a data record from entity status fields, and possible the Envers revision date,
@@ -158,6 +162,34 @@ abstract public class GenericEntityEtl {
         }
     }
 
+    public int doBackfillEtl(Class entityClass, long startId, long endId, String etlDateStr) {
+        // No-op unless this class is the requested one.
+        if (!getEntityClass().equals(entityClass)) {
+            return 0;
+        }
+
+        // Creates the wrapped Writer to the sqlLoader data file.
+        String filename = dataFilename(etlDateStr, getBaseFilename());
+        DataFile dataFile = new DataFile(filename);
+
+        try {
+            // Writes the records.
+            //   for (String record : entityRecordsInRange(startId, endId, etlDateStr, false)) {
+
+            Collection<String> list = entityRecordsInRange(startId, endId, etlDateStr, false);
+            for (String record : list) {
+                dataFile.write(record);
+            }
+        } catch (IOException e) {
+            logger.error("Error while writing file " + dataFile.getFilename(), e);
+        } finally {
+            dataFile.close();
+        }
+
+        return dataFile.getRecordCount();
+    }
+
+
     /**
      * Builds a data file name.
      *
@@ -258,13 +290,7 @@ abstract public class GenericEntityEtl {
         }
 
         void close() {
-            try {
-                if (writer != null) {
-                    writer.close();
-                }
-            } catch (IOException e) {
-                logger.error("Problem closing file " + filename);
-            }
+            IOUtils.closeQuietly(writer);
         }
     }
 }
