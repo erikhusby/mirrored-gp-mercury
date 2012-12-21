@@ -60,8 +60,8 @@
                             <f:facet name="header">
                                 <h:outputText value="Lab Batches"/>
                             </f:facet>
-                            <ui:repeat value="#{foundVessel.labBatchesList}" var="batch">
-                                <h:outputText value="#{batch.batchName}"/>
+                            <ui:repeat value="#{searchPlasticBean.batchesByVessel.get(foundVessel)}" var="batch">
+                                <h:outputText value="#{batch.jiraTicket.ticketId}"/>
                                 <br/>
                             </ui:repeat>
                         </p:column>

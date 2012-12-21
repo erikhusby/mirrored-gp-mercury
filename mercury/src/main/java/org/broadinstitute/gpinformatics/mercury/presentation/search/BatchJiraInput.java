@@ -14,6 +14,7 @@ import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -52,13 +53,11 @@ public class BatchJiraInput extends AbstractJsfBean {
 
     public void setJiraInputType(String jiraInputType) {
         this.jiraInputType = jiraInputType;
-
     }
 
     public void updateTicketUsage(AjaxBehaviorEvent event) {
         this.useExistingTicket = (jiraInputType == null) ? false : jiraInputType.equals(EXISTING_TICKET);
     }
-
 
     public String getJiraInputType() {
         return jiraInputType;
@@ -108,6 +107,14 @@ public class BatchJiraInput extends AbstractJsfBean {
         return conversationData;
     }
 
+    public void setBatchImportantInfo(String batchImportantInfo) {
+        this.batchImportantInfo = batchImportantInfo;
+    }
+
+    public String getBatchImportantInfo() {
+        return batchImportantInfo;
+    }
+
     public String createBatch() {
         LabBatch batchObject;
 
@@ -139,11 +146,4 @@ public class BatchJiraInput extends AbstractJsfBean {
         return redirect("/search/batch_confirm","labBatch="+batchObject.getBatchName());
     }
 
-    public void setBatchImportantInfo(String batchImportantInfo) {
-        this.batchImportantInfo = batchImportantInfo;
-    }
-
-    public String getBatchImportantInfo() {
-        return batchImportantInfo;
-    }
 }

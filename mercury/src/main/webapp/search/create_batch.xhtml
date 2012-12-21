@@ -43,7 +43,7 @@
                     <p:dataTable id="batchFormTable" var="foundVessel" value="#{batchFromPlasticBean.foundVessels}"
                                  rowKey="#{foundVessel.label}"
                                  selection="#{batchFromPlasticBean.selectedVessels}" selectionMode="multiple">
-                        <!--<p:ajax event="rowToggle" listener="#{batchFromPlasticBean.onRowToggle}"/>-->
+                        <p:ajax event="rowToggle" listener="#{batchFromPlasticBean.onRowToggle}"/>
                         <f:facet name="header">
                             Barcode Search Results
                         </f:facet>
@@ -51,7 +51,7 @@
                             <f:facet name="header">
                                 <h:outputText value="Sample Details"/>
                             </f:facet>
-                            <!--<p:rowToggler rendered="#{batchFromPlasticBean.vesselSampleSizeMap.get(foundVessel) > 0}"/>-->
+                            <p:rowToggler rendered="#{batchFromPlasticBean.vesselSampleSizeMap.get(foundVessel) > 0}"/>
                         </p:column>
                         <p:column>
                             <f:facet name="header">
@@ -75,11 +75,11 @@
                             <f:facet name="header">
                                 <h:outputText value="Lab Batches"/>
                             </f:facet>
-                            <!--<ui:repeat value="#{foundVessel.nearestLabBatches}" var="batch">-->
-                                <!--<h:outputText value="#{batch.jiraTicket.ticketId}"/>-->
+                            <!--<ui:repeat value="#{foundVessel.labBatchesList}" var="batch">-->
+                                <!--<h:outputText value="#{batch.batchName}"/>-->
+                                <ui:repeat value="#{batchFromPlasticBean.batchesByVessel.get(foundVessel)}" var="batch">
+                                <h:outputText value="#{batch.jiraTicket.ticketId}"/>
 
-                            <ui:repeat value="#{foundVessel.labBatchesList}" var="batch">
-                                <h:outputText value="#{batch.batchName}"/>
                                 <br/>
                             </ui:repeat>
                         </p:column>

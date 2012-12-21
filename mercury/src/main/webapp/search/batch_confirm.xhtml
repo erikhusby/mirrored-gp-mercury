@@ -101,15 +101,15 @@
                             </f:facet>
                             <h:outputText value="#{foundVessel.type.name}"/>
                         </p:column>
-                        <p:column>
-                            <f:facet name="header">
-                                <h:outputText value="Lab Batches"/>
-                            </f:facet>
-                            <ui:repeat value="#{foundVessel.labBatchesList}" var="batch">
-                                <h:outputText value="#{batch.batchName}"/>
-                                <br/>
-                            </ui:repeat>
-                        </p:column>
+                        <!--<p:column>-->
+                            <!--<f:facet name="header">-->
+                                <!--<h:outputText value="Lab Batches"/>-->
+                            <!--</f:facet>-->
+                            <!--<ui:repeat value="#{foundVessel.labBatchesList}" var="batch">-->
+                                <!--<h:outputText value="#{batch.batchName}"/>-->
+                                <!--<br/>-->
+                            <!--</ui:repeat>-->
+                        <!--</p:column>-->
                         <p:column>
                             <f:facet name="header">
                                 <h:outputText value="Latest Event"/>
