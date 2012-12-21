@@ -2,12 +2,18 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding_;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 @Stateless
 public class ResearchProjectFundingEtl  extends GenericEntityEtl {
@@ -29,14 +35,6 @@ public class ResearchProjectFundingEtl  extends GenericEntityEtl {
         return ((ResearchProjectFunding)entity).getResearchProjectFundingId();
     }
 
-    /**
-     * Makes a data record from selected entity fields, in a format that matches the corresponding
-     * SqlLoader control file.
-     * @param etlDateStr date
-     * @param isDelete indicates deleted entity
-     * @param entityId look up this entity
-     * @return delimited SqlLoader record
-     */
     @Override
     String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         ResearchProjectFunding entity = dao.getEntityManager().find(ResearchProjectFunding.class, entityId);
@@ -48,28 +46,25 @@ public class ResearchProjectFundingEtl  extends GenericEntityEtl {
     }
 
     /**
-     * Returns data records for all entity instances of this class.
-     * @return
+     * @{inheritDoc}
      */
     @Override
-    Collection<String> entityRecordsInRange(long startId, long endId, String etlDateStr, boolean isDelete) {
-        Collection<String> allRecords = new ArrayList<String>();
-        if (startId == 0 && endId == Long.MAX_VALUE) {
-            // Default case gets all entities.
-            for (ResearchProjectFunding entity : dao.findAll(ResearchProjectFunding.class)) {
-                allRecords.add(entityRecord(etlDateStr, isDelete, entity));
-            }
-        } else {
-            // Spins through the ids one at a time.
-            // TODO change this to specify the range in a GenericDaoCallback
-            for (long entityId = startId; entityId <= endId; ++entityId) {
-                ResearchProjectFunding entity = dao.findById(ResearchProjectFunding.class, entityId);
-                if (entity != null) {
-                    allRecords.add(entityRecord(etlDateStr, isDelete, entity));
-                }
-            }
+    Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
+        Collection<String> recordList = new ArrayList<String>();
+        List<ResearchProjectFunding> entityList = dao.findAll(ResearchProjectFunding.class,
+                new GenericDao.GenericDaoCallback<ResearchProjectFunding>() {
+                    @Override
+                    public void callback(CriteriaQuery<ResearchProjectFunding> cq, Root<ResearchProjectFunding> root) {
+                        if (startId > 0 || endId < Long.MAX_VALUE) {
+                            CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
+                            cq.where(cb.between(root.get(ResearchProjectFunding_.researchProjectFundingId), startId, endId));
+                        }
+                    }
+                });
+        for (ResearchProjectFunding entity : entityList) {
+            recordList.add(entityRecord(etlDateStr, isDelete, entity));
         }
-        return allRecords;
+        return recordList;
     }
 
     /**

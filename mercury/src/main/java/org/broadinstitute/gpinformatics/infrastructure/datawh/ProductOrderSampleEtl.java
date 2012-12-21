@@ -2,40 +2,50 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.List;
 
 @Stateless
 public class ProductOrderSampleEtl extends GenericEntityEtl {
     @Inject
     ProductOrderSampleDao dao;
 
+    /**
+     * @{inheritDoc}
+     */
     @Override
     Class getEntityClass() {
         return ProductOrderSample.class;
     }
 
+    /**
+     * @{inheritDoc}
+     */
     @Override
     String getBaseFilename() {
         return "product_order_sample";
     }
 
+    /**
+     * @{inheritDoc}
+     */
     @Override
     Long entityId(Object entity) {
         return ((ProductOrderSample)entity).getProductOrderSampleId();
     }
 
     /**
-     * Makes a data record from selected entity fields, in a format that matches the corresponding
-     * SqlLoader control file.
-     * @param etlDateStr date
-     * @param isDelete indicates deleted entity
-     * @param entityId look up this entity
-     * @return delimited SqlLoader record
+     * @{inheritDoc}
      */
     @Override
     String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
@@ -48,28 +58,25 @@ public class ProductOrderSampleEtl extends GenericEntityEtl {
     }
 
     /**
-     * Returns data records for all entity instances of this class.
-     * @return
+     * @{inheritDoc}
      */
     @Override
-    Collection<String> entityRecordsInRange(long startId, long endId, String etlDateStr, boolean isDelete) {
-        Collection<String> allRecords = new ArrayList<String>();
-        if (startId == 0 && endId == Long.MAX_VALUE) {
-            // Default case gets all entities.
-            for (ProductOrderSample entity : dao.findAll(ProductOrderSample.class)) {
-                allRecords.add(entityRecord(etlDateStr, isDelete, entity));
-            }
-        } else {
-            // Spins through the ids one at a time.
-            // TODO change this to specify the range in a GenericDaoCallback
-            for (long entityId = startId; entityId <= endId; ++entityId) {
-                ProductOrderSample entity = dao.findById(ProductOrderSample.class, entityId);
-                if (entity != null) {
-                    allRecords.add(entityRecord(etlDateStr, isDelete, entity));
-                }
-            }
+    Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
+        Collection<String> recordList = new ArrayList<String>();
+        List<ProductOrderSample> entityList = dao.findAll(ProductOrderSample.class,
+                new GenericDao.GenericDaoCallback<ProductOrderSample>() {
+                    @Override
+                    public void callback(CriteriaQuery<ProductOrderSample> cq, Root<ProductOrderSample> root) {
+                        if (startId > 0 || endId < Long.MAX_VALUE) {
+                            CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
+                            cq.where(cb.between(root.get(ProductOrderSample_.productOrderSampleId), startId, endId));
+                        }
+                    }
+                });
+        for (ProductOrderSample entity : entityList) {
+            recordList.add(entityRecord(etlDateStr, isDelete, entity));
         }
-        return allRecords;
+        return recordList;
     }
 
     /**

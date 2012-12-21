@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import bsh.commands.dir;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -19,7 +18,7 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
 import java.io.*;
-import java.util.Collection;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
@@ -61,25 +60,27 @@ public class ExtractTransformTest extends Arquillian {
     @BeforeMethod
     public void beforeMethod() throws Exception {
         extractTransform.setDatafileDir(datafileDir);
+        deleteEtlFiles(datafileDir);
     }
 
     @AfterMethod
     public void afterMethod() throws Exception {
-        long etlMsec = extractTransform.getCurrentRunStartTime();
-        String etlFullDate = ExtractTransform.fullDateFormat.format(new Date(etlMsec));
-        deleteEtlFiles(etlFullDate);
+        deleteEtlFiles(datafileDir);
     }
 
-    /** Deletes all the files written by these tests including data, isReady, and lastEtlRun files. */
-    private void deleteEtlFiles(final String etlFullDate) {
-        File dir = new File (datafileDir);
+    /** Deletes all the files written by these tests including .dat, isReady, and lastEtlRun files. */
+    private void deleteEtlFiles(final String dir) {
+        // Uses current year month day to determine whether to delete a file.
+        final String yyyymmdd = (new SimpleDateFormat("yyyyMMdd")).format(new Date());
         FilenameFilter filter = new FilenameFilter() {
             @Override
             public boolean accept(File dirname, String filename) {
-                return filename.startsWith(etlFullDate) || filename.equals(ExtractTransform.LAST_ETL_FILE);
+                return (filename.startsWith(yyyymmdd) && filename.endsWith(".dat")
+                        || filename.startsWith(yyyymmdd) && filename.endsWith(ExtractTransform.READY_FILE_SUFFIX))
+                        || filename.equals(ExtractTransform.LAST_ETL_FILE);
             }
         };
-        for (File file : dir.listFiles(filter)) {
+        for (File file : new File (dir).listFiles(filter)) {
             file.delete();
         }
     }
@@ -107,7 +108,7 @@ public class ExtractTransformTest extends Arquillian {
     public void testNoChanges() {
         extractTransform.writeLastEtlRun(datafileDir, Long.MAX_VALUE - 1);
         Assert.assertEquals(0, extractTransform.incrementalEtl());
-        Assert.assertTrue(ExtractTransform.getCurrentRunStartTime() >= 0);
+        Assert.assertTrue(ExtractTransform.getIncrementalRunStartTime() >= 0);
     }
 
     public void testBadRange() {
@@ -134,7 +135,7 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertTrue(recordCount > 0);
         Assert.assertEquals(endRev, extractTransform.readLastEtlRun(datafileDir));
 
-        long etlMsec = extractTransform.getCurrentRunStartTime();
+        long etlMsec = extractTransform.getIncrementalRunStartTime();
         String readyFilename = ExtractTransform.fullDateFormat.format(new Date(etlMsec)) + ExtractTransform.READY_FILE_SUFFIX;
         Assert.assertTrue((new File(datafileDir, readyFilename)).exists());
     }

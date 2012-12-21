@@ -48,7 +48,14 @@ abstract public class GenericEntityEtl {
      */
     abstract String entityRecord(String etlDateStr, boolean isDelete, Long entityId);
 
-    /** Returns data records for entities in a range of ids. */
+    /**
+     * Returns sqlLoader data records for entities having id in the given range.
+     * @param startId start of the entity id range.
+     * @param endId end of the entity id range.
+     * @param etlDateStr the etl date to put in each record.
+     * @param isDelete the delete flag to put in each record.
+     * @return collection of strings, one per data file record.
+     */
     abstract Collection<String> entityRecordsInRange(long startId, long endId, String etlDateStr, boolean isDelete);
 
     /**
@@ -62,7 +69,9 @@ abstract public class GenericEntityEtl {
      */
     abstract String entityStatusRecord(String etlDateStr, Date revDate, Object revObject, boolean isDelete);
 
-    /** Returns true if entity etl record supports entity ETL via primary key.  Status records do not. */
+    /**
+     * Returns true if entity etl record supports entity ETL via primary key.  Status records do not.
+     */
     abstract boolean isEntityEtl();
 
     /**
@@ -89,9 +98,8 @@ abstract public class GenericEntityEtl {
     }
 
     /**
-     * Iterates on the modified Mercury entities, converts them to sqlLoader records, and
-     * writes the records to the data file.
-     * This code was broken out for testability.
+     * Iterates on the modified Mercury entities obtained from AuditReader.  Converts them to sqlLoader records, and
+     * writes the records to the data file.  This code was broken out for testability.
      * @param dataChanges
      * @param dataFile
      * @param etlDateStr
@@ -163,8 +171,8 @@ abstract public class GenericEntityEtl {
     }
 
     public int doBackfillEtl(Class entityClass, long startId, long endId, String etlDateStr) {
-        // No-op unless this class is the requested one.
-        if (!getEntityClass().equals(entityClass)) {
+        // No-op unless the implementing class is the requested entity class.
+        if (!getEntityClass().equals(entityClass) || !isEntityEtl()) {
             return 0;
         }
 

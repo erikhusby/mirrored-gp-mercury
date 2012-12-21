@@ -17,10 +17,10 @@ import java.util.Date;
 import java.util.concurrent.Semaphore;
 
 /**
- * This is a JEE scheduled bean that does the initial parts of ETL for the data warehouse.
+ * This is a JEE scheduled bean that does the extract and transform parts of ETL for the data warehouse.
  *
- * Envers AuditReader is used to get relevant data from the _AUD tables which contain changed
- * data and a revision number.  For most entities, ETL only wants the latest (current) version,
+ * For incremental etl, Envers AuditReader is used to get relevant data from the _AUD tables which contain
+ * changed data and a revision number.  ETL only wants the latest (current) version of an entity,
  * but for status history, it's necessary to iterate over the relevant range of revisions (all
  * changes since the last ETL run), and extract the status from the entity and obtain the status
  * date from the corresponding Envers rev info.
@@ -29,9 +29,7 @@ import java.util.concurrent.Semaphore;
  * sqlLoader control files (located in mercury/src/main/db/datawh/control), one for each type of
  * data file created by ETL.
  *
- * Created with IntelliJ IDEA.
- * User: epolk
- * Date: 10/29/12
+ * For backfill etl, the entities are obtained from the EntityManager, regardless of their audit history.
  */
 
 @Stateless
@@ -53,7 +51,7 @@ public class ExtractTransform {
     private static final long MSEC_IN_MINUTE = 60 * 1000;
     private static final Logger logger = Logger.getLogger(ExtractTransform.class);
     private static final Semaphore mutex = new Semaphore(1);
-    private static long currentRunStartTime = System.currentTimeMillis();  // only useful for logging
+    private static long incrementalRunStartTime = System.currentTimeMillis();  // only useful for logging
     private static boolean loggedConfigError = false;
     private EtlConfig etlConfig = null;
 
@@ -103,17 +101,17 @@ public class ExtractTransform {
      * adding a new field to be exported.
      *
      * @param entityClassname The fully qualified classname of the Mercury class to ETL.
-     * @param firstId First entity id of a range of ids to backfill.  Optional query param that defaults to min id.
-     * @param lastId Last entity id of a range of ids to backfill.  Optional query param that defaults to max id.
+     * @param startId First entity id of a range of ids to backfill.  Optional query param that defaults to min id.
+     * @param endId Last entity id of a range of ids to backfill.  Optional query param that defaults to max id.
      */
     @Path("backfill/{entityClassname}")
     @PUT
     public Response onDemandEtl(@PathParam("entityClassname") String entityClassname,
-                                @DefaultValue("0") @QueryParam("startId") long firstId,
-                                @DefaultValue("-1") @QueryParam("lastId") long lastId) {
+                                @DefaultValue("0") @QueryParam("startId") long startId,
+                                @DefaultValue("-1") @QueryParam("endId") long endId) {
 
         initConfig();
-        Response.Status status = backfillEtl(entityClassname, firstId, lastId);
+        Response.Status status = backfillEtl(entityClassname, startId, endId);
         return Response.status(status).build();
     }
 
@@ -129,7 +127,7 @@ public class ExtractTransform {
         // may run at a time.  Does not queue a new job if busy, to avoid snowball effect if system is
         // busy for a long time, for whatever reason.
         if (!mutex.tryAcquire()) {
-            int minutes = (int)Math.ceil((System.currentTimeMillis() - currentRunStartTime) / MSEC_IN_MINUTE);
+            int minutes = lastRunDuration(incrementalRunStartTime);
             if (minutes > 0) {
                 logger.info("Skipping new ETL run since previous run is still busy after " + minutes + " minutes.");
             }
@@ -155,7 +153,7 @@ public class ExtractTransform {
             // The same etl_date is used for all DW data processed by one ETL run.
             final Date etlDate = new Date();
             final String etlDateStr = fullDateFormat.format(etlDate);
-            currentRunStartTime = etlDate.getTime();
+            incrementalRunStartTime = etlDate.getTime();
 
             final long lastRev = readLastEtlRun(dataDir);
             final long etlRev = auditReaderDao.currentRevNumber(etlDate);
@@ -187,8 +185,7 @@ public class ExtractTransform {
             boolean lastEtlFileWritten = writeLastEtlRun(dataDir, etlRev);
             if (recordCount > 0 && lastEtlFileWritten) {
                 writeIsReadyFile(dataDir, etlDateStr);
-                logger.debug("Incremental ETL created " + recordCount + " data records in "
-                        + (int)Math.ceil((System.currentTimeMillis() - currentRunStartTime) / 1000.) + " seconds.");
+                logger.debug("Incremental ETL created " + recordCount + " data records in " + lastRunDuration(incrementalRunStartTime) + " seconds.");
             }
 
             return recordCount;
@@ -206,10 +203,10 @@ public class ExtractTransform {
      * periodic cron job.
      *
      * @param entityClassname The fully qualified classname of the Mercury class to ETL.
-     * @param firstId First entity id of a range of ids to backfill.  Optional query param that defaults to min id.
-     * @param lastId Last entity id of a range of ids to backfill.  Optional query param that defaults to max id.
+     * @param startId First entity id of a range of ids to backfill.  Optional query param that defaults to min id.
+     * @param endId Last entity id of a range of ids to backfill.  Optional query param that defaults to max id.
      */
-    public Response.Status backfillEtl(String entityClassname, long firstId, long lastId) {
+    public Response.Status backfillEtl(String entityClassname, long startId, long endId) {
         String dataDir = getDatafileDir();
         if (null == dataDir || dataDir.length() == 0) {
             logger.info("ETL data file directory is not configured. Backfill ETL will not be run.");
@@ -230,37 +227,38 @@ public class ExtractTransform {
             return Response.Status.NOT_FOUND;
         }
 
-        if (lastId == -1) {
-            lastId = Long.MAX_VALUE;
+        if (endId == -1) {
+            endId = Long.MAX_VALUE;
         }
-        if (firstId < 0 ||lastId < firstId) {
-            logger.error("Invalid entity id range " + firstId + " to " + lastId);
+        if (startId < 0 ||endId < startId) {
+            logger.error("Invalid entity id range " + startId + " to " + endId);
             return Response.Status.BAD_REQUEST;
         }
 
-        logger.info("ETL backfill of " + entityClass.getName() + " having ids " + firstId + " to " + lastId);
+        logger.debug("ETL backfill of " + entityClass.getName() + " having ids " + startId + " to " + endId);
+        long backfillStartTime = etlDate.getTime();
 
         int recordCount = 0;
         // The one of these that matches the entityClass will make ETL records, others are no-ops.
-        recordCount += productEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
-        recordCount += priceItemEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
-        recordCount += researchProjectEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
-        recordCount += researchProjectStatusEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
-        recordCount += projectPersonEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
-        recordCount += researchProjectIrbEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
-        recordCount += researchProjectFundingEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
-        recordCount += researchProjectCohortEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
-        recordCount += productOrderSampleEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
-        recordCount += productOrderSampleStatusEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
-        recordCount += productOrderEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
-        recordCount += productOrderStatusEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
-        recordCount += productOrderAddOnEtl.doBackfillEtl(entityClass, firstId, lastId, etlDateStr);
+        recordCount += productEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += priceItemEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += researchProjectEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += researchProjectStatusEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += projectPersonEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += researchProjectIrbEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += researchProjectFundingEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += researchProjectCohortEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += productOrderSampleEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += productOrderSampleStatusEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += productOrderEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += productOrderStatusEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += productOrderAddOnEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
 
         if (recordCount > 0) {
             writeIsReadyFile(dataDir, etlDateStr);
-            logger.info("Backfill ETL created " + recordCount + " data records in "
-                    + (int) Math.ceil((System.currentTimeMillis() - currentRunStartTime) / 1000.) + " seconds.");
         }
+        logger.info("Backfill ETL created " + recordCount + " " + entityClass.getSimpleName()
+                + " data records in " + lastRunDuration(backfillStartTime) + " seconds.");
 
         return Response.Status.NO_CONTENT;
     }
@@ -331,8 +329,12 @@ public class ExtractTransform {
         return mutex;
     }
 
-    public static long getCurrentRunStartTime() {
-        return currentRunStartTime;
+    public static long getIncrementalRunStartTime() {
+        return incrementalRunStartTime;
+    }
+
+    private int lastRunDuration(long startTime) {
+        return (int)Math.ceil((System.currentTimeMillis() - startTime) / MSEC_IN_MINUTE);
     }
 
     /** Gets relevant configuration from the .yaml file */
