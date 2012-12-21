@@ -9,10 +9,7 @@ import javax.inject.Inject;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
+import javax.persistence.criteria.*;
 import javax.persistence.metamodel.SingularAttribute;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -263,7 +260,6 @@ public class GenericDao {
     }
 
 
-
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListByList(
             Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, List<VALUE_TYPE> values) {
         return findListByList(entity, singularAttribute, values, null);
@@ -298,24 +294,36 @@ public class GenericDao {
 
     /**
      * Returns a list of entities that matches wildcarded string ('% string %') for a specified property.
+     *
      * @param entity the class of entity to return
-     * @param singularAttribute the metadata field for the property to query
      * @param value the value to query
+     * @param singularAttributes one or more metadata fields for the property to query
      * @param <VALUE_TYPE> the type of the value in the query, e.g. String
      * @param <METADATA_TYPE> the type on which the property is defined, this can be different from the ENTITY_TYPE if
      *                       there is inheritance
      * @param <ENTITY_TYPE> the type of the entity to return
+     *
      * @return list of entities that match the value, or empty list if not found
      */
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findListWithWildcard(
-            Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, String value) {
+            Class<ENTITY_TYPE> entity, String value, boolean ignoreCase,
+            SingularAttribute<METADATA_TYPE, VALUE_TYPE>... singularAttributes) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
-        criteriaQuery.select(root);
-        Predicate valuePredicate =
-                criteriaBuilder.like(root.get(singularAttribute).as(String.class), "%" + value + "%");
-        criteriaQuery.where(valuePredicate);
+        Predicate[] predicates=new Predicate[singularAttributes.length];
+        for (int i = 0; i < singularAttributes.length; i++) {
+            Expression<String> expression;
+            final Expression<String> asExpression = root.get(singularAttributes[i]).as(String.class);
+            if (ignoreCase) {
+                expression = criteriaBuilder.lower(asExpression);
+                value=value.toLowerCase();
+            } else {
+                expression = asExpression;
+            }
+            predicates[i] = criteriaBuilder.like(expression, "%" + value + "%");
+        }
+        criteriaQuery.where(criteriaBuilder.or(predicates));
         try {
             return getEntityManager().createQuery(criteriaQuery).getResultList();
         } catch (NoResultException ignored) {
