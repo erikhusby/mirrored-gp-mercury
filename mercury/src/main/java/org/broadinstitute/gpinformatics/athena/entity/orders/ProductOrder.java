@@ -459,6 +459,10 @@ public class ProductOrder implements Serializable {
         return createdBy;
     }
 
+    public void setCreatedBy(Long createdBy) {
+        this.createdBy = createdBy;
+    }
+
     public Date getModifiedDate() {
         return modifiedDate;
     }
