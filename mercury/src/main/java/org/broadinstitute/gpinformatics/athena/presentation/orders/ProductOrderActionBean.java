@@ -283,7 +283,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             final File tempFile = File.createTempFile(filename, "xls");
             outputStream = new FileOutputStream(tempFile);
 
-            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(productOrderList, bspUserList);
+            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(productOrderList);
             sampleLedgerExporter.writeToStream(outputStream);
             IOUtils.closeQuietly(outputStream);
 

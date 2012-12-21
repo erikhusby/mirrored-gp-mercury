@@ -234,7 +234,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         // per 2012-11-19 meeting not doing this
         // getWriter().writeCell(sample.getBillingStatus().getDisplayName());
 
-        Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = ProductOrderSample.getLedgerQuantities(sample);
+        Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = sample.getLedgerQuantities();
 
         // write out for the price item columns
         for (PriceItem item : sortedPriceItems) {
