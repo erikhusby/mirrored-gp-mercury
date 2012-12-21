@@ -8,8 +8,8 @@ import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
@@ -21,14 +21,30 @@ import java.util.Collection;
 import java.util.List;
 
 @Impl
-public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements BSPSampleSearchService {
+public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService implements
+                                                BSPSampleSearchService {
 
-    @Inject
-    private Log log;
+    private static Log logger = LogFactory.getLog(BSPSampleSearchServiceImpl.class);
 
+    public static final String SEARCH_RUN_SAMPLE_SEARCH = "search/runSampleSearch";
 
     @Inject
     private BSPConfig bspConfig;
+
+    enum Endpoint {
+
+        SAMPLE_SEARCH("search/runSampleSearch");
+
+        String suffixUrl;
+
+        Endpoint(String suffixUrl) {
+            this.suffixUrl = suffixUrl;
+        }
+
+        public String getSuffixUrl() {
+            return suffixUrl;
+        }
+    }
 
 
     /**
@@ -44,7 +60,7 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
      */
     public BSPSampleSearchServiceImpl(BSPConfig bspConfig) {
         this.bspConfig = bspConfig;
-        log = LogFactory.getLog(BSPSampleSearchServiceImpl.class);
+        logger = LogFactory.getLog(BSPSampleSearchServiceImpl.class);
     }
 
 
@@ -73,19 +89,13 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
             return new ArrayList<String[]>();
 
         List<String[]> ret = new ArrayList<String[]>();
-        
 
-        String urlString = "http://%s:%d/ws/bsp/search/runSampleSearch";
-        urlString = String.format(urlString, bspConfig.getHost(), bspConfig.getPort());
-        
-        log.info(String.format("url string is '%s'", urlString));
-        
+        String urlString = bspConfig.getWSUrl(SEARCH_RUN_SAMPLE_SEARCH);
+        logger.debug(String.format("URL string is '%s'", urlString));
         WebResource webResource = getJerseyClient().resource(urlString);
 
-
         List<String> queryParameters = new ArrayList<String>();
-       
-        
+
         try {
 
             for (BSPSampleSearchColumn column : queryColumns)
@@ -98,7 +108,7 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
             if (queryParameters.size() > 0)
                 queryString = StringUtils.join(queryParameters, "&");
 
-            log.info("query string to be POSTed is '" + queryString + "'");
+            logger.info("query string to be POSTed is '" + queryString + "'");
             
             ClientResponse clientResponse =
                     webResource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(ClientResponse.class, queryString);
@@ -107,7 +117,7 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
             BufferedReader rdr = new BufferedReader(new InputStreamReader(is));     
             
             if (clientResponse.getStatus() / 100 != 2) {
-                log.error("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
+                logger.error("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
                 return ret;
                 // throw new RuntimeException("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
             }
@@ -152,10 +162,10 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
 
     }
 
-
     @Override
     public List<String[]> runSampleSearch(Collection<String> sampleIDs, List<BSPSampleSearchColumn> resultColumns) {
         BSPSampleSearchColumn [] dummy = new BSPSampleSearchColumn[resultColumns.size()];
         return runSampleSearch(sampleIDs, resultColumns.toArray(dummy));
     }
+
 }

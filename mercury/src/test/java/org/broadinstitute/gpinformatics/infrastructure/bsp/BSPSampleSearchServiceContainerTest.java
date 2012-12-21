@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.integration.bsp;
+package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;

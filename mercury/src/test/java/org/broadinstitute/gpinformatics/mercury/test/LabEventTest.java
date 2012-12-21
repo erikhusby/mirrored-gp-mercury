@@ -59,14 +59,12 @@ public class LabEventTest {
 
                 @Override
                 public BspUser getOperator(String userId) {
-
                     return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
                 }
 
                 @Override
                 public BspUser getOperator(Long bspUserId) {
-                    BspUser testUser=new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
-                    return testUser;
+                    return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
                 }
 
                 @Override
@@ -1935,15 +1933,14 @@ public class LabEventTest {
             List<String> poolTubeBarcodes=new ArrayList<String>();
             for (int rackPosition=1; rackPosition <= normCatchBarcodes.size(); rackPosition++) {
                 poolingCherryPicks.add(new BettaLimsMessageFactory.CherryPick(normCatchRackBarcode,
-                        bettaLimsMessageFactory.buildWellName(
-                                rackPosition), poolRackBarcode,
+                        bettaLimsMessageFactory.buildWellName(rackPosition), poolRackBarcode,
                         "A01"));
                 poolTubeBarcodes.add("Pool" + testPrefix + rackPosition);
             }
             poolTubeBarcode="Pool" + testPrefix + "1";
-            poolingTransferJaxb=bettaLimsMessageFactory.buildCherryPick("PoolingTransfer", Arrays.asList(
-                    normCatchRackBarcode), Arrays.asList(normCatchBarcodes), poolRackBarcode, poolTubeBarcodes,
-                    poolingCherryPicks);
+            poolingTransferJaxb=bettaLimsMessageFactory.buildCherryPick("PoolingTransfer",
+                    Arrays.asList(normCatchRackBarcode), Arrays.asList(normCatchBarcodes), poolRackBarcode,
+                    poolTubeBarcodes, poolingCherryPicks);
             addMessage(messageList, bettaLimsMessageFactory, poolingTransferJaxb);
 
             // DenatureTransfer

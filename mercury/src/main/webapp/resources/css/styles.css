@@ -26,8 +26,6 @@ label, input, button, select, textarea { font-size: 12px }
 /* Make p:autoComplete's input field a little wider to fit longer watermarks. */
 .ui-autocomplete-multiple .ui-autocomplete-input-token input {  width: 500px; }
 
-.ui-autocomplete-multiple-container { width: 480px; overflow: visible }
-
 /* Tighten vertical spacing of Bootstrap horizontal forms. */
 .form-horizontal .control-group { margin-bottom: 12px; clear:both; }
 
@@ -82,32 +80,5 @@ fieldset .ui-chkbox {margin-left:5px}
     background-color: #0081C2;
 }
 
-.b-commandButton { padding: 1px; } /* overlay is just slightly too small; make it bigger */
+.b-commandButton { display: inline-block; padding: 1px; } /* overlay is just slightly too small; make it bigger */
 .b-commandButton .blockOverlay { background: white; opacity: 0.5; } /* Bootstrap says to fade disabled buttons by 50% */
-
-.dataTables_filter { float: left; }
-.dataTables_filter input { font-size: small; height: 14px; }
-.dataTables_wrapper { width: 98%; }
-
-section { margin-left: 10px; }
-
-.page-title { height: 20px; margin-right: 10px; font-size: 12pt; color: gray; border-top-right-radius: 10px; border-top-left-radius: 10px; border: 2px solid lightgray; text-indent: 5px; background-color: #ececec; }
-.page-body { border: 2px solid lightgray; border-top-width: 0; padding-top: 10px; padding-left: 4px;  margin-right: 10px; padding-bottom: 40px; }
-
-.defaultText { }
-.defaultTextActive { color: #A1A1A1; font-style: italic; }
-
-/* jquery date picker */
-.ui-datepicker-trigger {
-    width: 19px;
-    height: 19px;
-    vertical-align: top;
-    margin-top: 2px;
-}
-
-/* multi-check box count indicator */
-.checkedCount {
-    font-size:xx-small;
-    vertical-align: super;
-    margin-left: 2px;
-}

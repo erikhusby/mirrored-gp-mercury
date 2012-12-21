@@ -2,9 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConnector;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
@@ -12,14 +10,12 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryP
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
-import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
-import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.xml.sax.Attributes;
@@ -29,18 +25,26 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLFilterImpl;
 import org.xml.sax.helpers.XMLReaderFactory;
 
-import javax.ejb.Stateless;
+import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+//import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+//import javax.xml.bind.ValidationEvent;
+//import javax.xml.bind.ValidationEventHandler;
 import javax.xml.transform.sax.SAXSource;
+//import javax.xml.validation.Schema;
+//import javax.xml.validation.SchemaFactory;
+//import java.io.File;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Date;
@@ -52,8 +56,10 @@ import java.util.Map;
  * defined by bettalims.xsd.  There is a BettaLIMS server that is part of the Squid suite of applications.
  */
 @Path("/bettalimsmessage")
-@Stateless // todo jmt should this be stateful?  It has stateful DAOs injected.
+@Stateful
+@RequestScoped
 public class BettalimsMessageResource {
+    /** workflow error message from Squid */
     public static final String WORKFLOW_MESSAGE = " error(s) processing workflows for ";
 
     private static final Log LOG = LogFactory.getLog(BettalimsMessageResource.class);
@@ -67,20 +73,20 @@ public class BettalimsMessageResource {
     @Inject
     private WsMessageStore wsMessageStore;
 
-    @Inject
-    private BucketDao bucketDao;
-
-    @Inject
-    private BucketBean bucketBean;
-
-    @Inject
-    private BSPUserList bspUserList;
-
-    @Inject
-    private WorkflowLoader workflowLoader;
-
-    @Inject
-    private AthenaClientService athenaClientService;
+//    @Inject
+//    private BucketDao bucketDao;
+//
+//    @Inject
+//    private BucketBean bucketBean;
+//
+//    @Inject
+//    private BSPUserList bspUserList;
+//
+//    @Inject
+//    private WorkflowLoader workflowLoader;
+//
+//    @Inject
+//    private AthenaClientService athenaClientService;
 
     @Inject
     private BettalimsConnector bettalimsConnector;
@@ -89,7 +95,8 @@ public class BettalimsMessageResource {
     private ThriftService thriftService;
 
     /**
-     * Accepts a message from (typically) a liquid handling deck
+     * Accepts a message from (typically) a liquid handling deck.  We unmarshal ourselves, rather than letting JAX-RS
+     * do it, because we need to write the text to the file system.
      * @param message the text of the message
      */
     @POST
@@ -121,28 +128,12 @@ public class BettalimsMessageResource {
         try {
             wsMessageStore.store(message, now);
 
-            // todo jmt move so done only once
-            JAXBContext jc = JAXBContext.newInstance(BettaLIMSMessage.class);
-            Unmarshaller unmarshaller = jc.createUnmarshaller();
-
-            //Create an XMLReader to use with our filter
-            XMLReader reader = XMLReaderFactory.createXMLReader();
-
-            //Create the filter (to remove namespace) and set the xmlReader as its parent.
-            NamespaceFilter inFilter = new NamespaceFilter(null, false);
-            inFilter.setParent(reader);
-
-            //Prepare the input
-            InputSource is = new InputSource(new StringReader(message));
-
-            //Create a SAXSource specifying the filter
-            SAXSource source = new SAXSource(inFilter, is);
-
-            BettaLIMSMessage bettaLIMSMessage = (BettaLIMSMessage) unmarshaller.unmarshal(source);
+            BettaLIMSMessage bettaLIMSMessage = unmarshal(message);
 
             boolean processInMercury = false;
             boolean processInSquid = false;
             if(bettaLIMSMessage.getMode() != null && bettaLIMSMessage.getMode().equals(LabEventFactory.MODE_MERCURY)) {
+                // Don't route Mercury test messages to BettalIMS/Squid
                 processInMercury = true;
                 processInSquid = false;
             } else {
@@ -160,7 +151,7 @@ public class BettalimsMessageResource {
                         processInSquid = true;
                         break;
                     case PRODUCT_DEPENDENT:
-                        // todo jmt traverse plastic
+                        // todo jmt for Mar 1, traverse plastic
                         break;
                     case BOTH:
                         processInMercury = true;
@@ -171,39 +162,10 @@ public class BettalimsMessageResource {
                 }
             }
 
-            // todo jmt attempt JAX-RS, fall back to JMS, or send unavailable to client?
             BettalimsConnector.BettalimsResponse bettalimsResponse = null;
             if (processInSquid) {
                 bettalimsResponse = bettalimsConnector.sendMessage(message);
             }
-/*
-            if(bettalimsResponse.getCode() == 500) {
-                LOG.error("Error response from Bettalims " + bettalimsResponse.getCode() + " " + bettalimsResponse.getMessage());
-                if(bettalimsResponse.getMessage().contains("Missing source receptacle for barcode") ||
-                        bettalimsResponse.getMessage().contains("Source plate doesn't exist") ||
-                        bettalimsResponse.getMessage().contains("No strip tube found with barcode") ||
-                        bettalimsResponse.getMessage().contains("Plate not found") ||
-                        bettalimsResponse.getMessage().contains("No appropriate message handlers found") ||
-                        bettalimsResponse.getMessage().contains("Source tube has not been registered") ||
-                        bettalimsResponse.getMessage().contains("is not in the database")) {
-                    processInMercury = true;
-                }
-            }
-*/
-            // todo jmt special cases for Bait and index addition?
-            // results of grep -h Exception `ls 2012*` | sort | less
-            // Missing source receptacle for barcode R12071515141
-            // Source plate doesn't exist 000003542852
-            // No strip tube found with barcode: 123456789012
-            // Plate not found
-            // No appropriate message handlers found. Either the handler isn't configured or the event type/class does not exist in the database.
-            // Can't find source plate info?
-            // Source tube has not been registered
-            // Barcode 000000012708 not found
-            // Machine not found
-            // Source receptacle 0120759474 is not in the database
-            // Program not found
-
             if (processInMercury) {
                 processMessage(bettaLIMSMessage);
             }
@@ -217,6 +179,57 @@ public class BettalimsMessageResource {
         }
     }
 
+    /**
+     * Convert from String to object
+     * @param message from deck
+     * @return JAXB bean
+     * @throws JAXBException
+     * @throws SAXException
+     */
+    BettaLIMSMessage unmarshal(String message) throws JAXBException, SAXException {
+        // todo jmt move so done only once
+//        SchemaFactory sf = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+//        Schema schema = sf.newSchema(new File("e:/java/mercury/mercury/src/main/xsd/bettalims.xsd"));
+
+        JAXBContext jc = JAXBContext.newInstance(BettaLIMSMessage.class);
+        Unmarshaller unmarshaller = jc.createUnmarshaller();
+//        unmarshaller.setSchema(schema);
+//        unmarshaller.setEventHandler(new ValidationEventHandler() {
+//            @Override
+//            public boolean handleEvent(ValidationEvent event) {
+//                throw new RuntimeException("XSD Validation failure: "+
+//                        "SEVERITY: " + event.getSeverity() + "MESSAGE: " + event.getMessage() +
+//                        "LINKED EXCEPTION:  " + event.getLinkedException() +
+//                        "LINE NUMBER:  " + event.getLocator().getLineNumber() +
+//                        "COLUMN NUMBER:  " + event.getLocator().getColumnNumber() +
+//                        "OFFSET:  " + event.getLocator().getOffset() +
+//                        "OBJECT:  " + event.getLocator().getObject() +
+//                        "NODE:  " + event.getLocator().getNode() +
+//                        "URL:  " + event.getLocator().getURL());
+//            }
+//        });
+
+        //Create an XMLReader to use with our filter
+        XMLReader reader = XMLReaderFactory.createXMLReader();
+
+        //Create the filter (to remove namespace) and set the xmlReader as its parent.
+        NamespaceFilter inFilter = new NamespaceFilter(null, false);
+        inFilter.setParent(reader);
+
+        //Prepare the input
+        InputSource is = new InputSource(new StringReader(message));
+
+        //Create a SAXSource specifying the filter
+        SAXSource source = new SAXSource(inFilter, is);
+
+        return (BettaLIMSMessage) unmarshaller.unmarshal(source);
+    }
+
+    /**
+     * Find the first event type in the message
+     * @param bettaLIMSMessage from deck
+     * @return enum value, or null if not found
+     */
     private LabEventType getLabEventType(BettaLIMSMessage bettaLIMSMessage) {
         LabEventType labEventType = null;
         for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
@@ -249,9 +262,23 @@ public class BettalimsMessageResource {
                 }
             }
         }
+        if(labEventType == null) {
+            for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
+                labEventType = LabEventType.getByName(receptacleEventType.getEventType());
+                if(labEventType != null) {
+                    break;
+                }
+            }
+        }
         return labEventType;
     }
 
+    /**
+     * Not needed until March 1st.
+     * Determine whether BettaLIMS/Squid is responsible for the plastic referred to by the message.
+     * @param bettaLIMSMessage from deck
+     * @return true if the message should be routed to BettaLIMS/Squid
+     */
     private boolean sourcesExistInSquid(BettaLIMSMessage bettaLIMSMessage) {
         List<String> sourceTubeBarcodes = new ArrayList<String>();
         List<String> sourcePlateBarcodes = new ArrayList<String>();
@@ -372,7 +399,7 @@ public class BettalimsMessageResource {
             if (addNamespace) {
                 startControlledPrefixMapping();
             } else {
-                //Remove the namespace, i.e. don't call startPrefixMapping for parent!
+                //Remove the namespace, i.e. don't call startPrefixMapping for parent
             }
         }
 

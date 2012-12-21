@@ -31,10 +31,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     // Each worksheet is a different product, so distribute the list of orders by product
     private final Map<Product, List<ProductOrder>> orderMap = new HashMap<Product, List<ProductOrder>>();
 
-    public final static String SAMPLE_ID_HEADING = "Sample ID";
-    public final static String ORDER_ID_HEADING = "Product Order ID";
-    public final static String WORK_COMPLETE_DATE_HEADING = "Date Completed";
-    public final static String SORT_COLUMN_HEADING = "Sort Column";
+    public static final String SAMPLE_ID_HEADING = "Sample ID";
+    public static final String ORDER_ID_HEADING = "Product Order ID";
+    public static final String WORK_COMPLETE_DATE_HEADING = "Date Completed";
+    public static final String SORT_COLUMN_HEADING = "Sort Column";
 
     public static final String[] FIXED_HEADERS = {
             SAMPLE_ID_HEADING,
@@ -56,11 +56,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     private BSPUserList bspUserList;
 
     public SampleLedgerExporter(ProductOrder... productOrders) {
-        this(Arrays.asList(productOrders), null);
+        this(Arrays.asList(productOrders));
     }
 
-    public SampleLedgerExporter(List<ProductOrder> productOrders, BSPUserList bspUserList) {
-        super();
+    public SampleLedgerExporter(List<ProductOrder> productOrders) {
 
         for (ProductOrder productOrder : productOrders) {
             if (!orderMap.containsKey(productOrder.getProduct())) {
@@ -69,12 +68,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
             orderMap.get(productOrder.getProduct()).add(productOrder);
         }
-
-        this.bspUserList = bspUserList;
     }
 
     public SampleLedgerExporter(List<String> pdoBusinessKeys, BSPUserList bspUserList, ProductOrderDao productOrderDao) {
-        this(productOrderDao.findListByBusinessKeyList(pdoBusinessKeys, Product, ResearchProject, Samples), bspUserList);
+        this(productOrderDao.findListByBusinessKeyList(pdoBusinessKeys, Product, ResearchProject, Samples));
     }
 
     private String getBspFullName(long id) {

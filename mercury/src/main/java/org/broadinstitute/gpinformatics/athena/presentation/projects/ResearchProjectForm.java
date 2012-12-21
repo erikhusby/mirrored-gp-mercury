@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.projects;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectManager;
+import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 import org.broadinstitute.gpinformatics.athena.entity.project.Irb;
@@ -56,6 +57,9 @@ public class ResearchProjectForm extends AbstractJsfBean {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private ResearchProjectDao researchProjectDao;
 
     private List<BspUser> projectManagers;
 
@@ -136,10 +140,17 @@ public class ResearchProjectForm extends AbstractJsfBean {
     }
 
     public String save() {
-        if (isCreating()) {
-            return create();
-        } else {
-            return edit();
+        try {
+            if (isCreating()) {
+                return create();
+            } else {
+                return edit();
+            }
+        } catch (RuntimeException e) {
+            String message = "Error saving research project: " + e;
+            addErrorMessage(message);
+            log.error(message, e);
+            throw e;
         }
     }
 
@@ -178,7 +189,11 @@ public class ResearchProjectForm extends AbstractJsfBean {
     }
 
     public String edit() {
-        ResearchProject project = detail.getProject();
+        // GPLIM-556 we can receive detached ResearchProject instances after validation failures.  ProductOrder edit
+        // has similar issues after tabbing out of the AJAX quote field.  Adding a valueChangeListener hooked to the
+        // ResearchProjectConverter#updateModel doesn't help the problem.  There is probably a more elegant way of
+        // solving this that forces the converter to update the model more aggressively but I'm not aware of it.
+        ResearchProject project = researchProjectDao.getEntityManager().merge(detail.getProject());
         addCollections(project);
 
         project.recordModification(userBean.getBspUser().getUserId());

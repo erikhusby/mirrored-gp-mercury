@@ -14,7 +14,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionListResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -362,9 +363,21 @@ public class ProductOrder implements Serializable {
         }
     }
 
-    public void setAddOns(Set<ProductOrderAddOn> addOns) {
-        this.addOns = addOns;
+    public void setProductOrderAddOns(Set<ProductOrderAddOn> addOns) {
+        this.addOns.clear();
+        this.addOns.addAll(addOns);
     }
+
+
+    public void setAddons(List<Product> addOns) {
+        this.addOns.clear();
+
+        for (Product product : addOns) {
+            ProductOrderAddOn productOrderAddOn = new ProductOrderAddOn(product, this);
+            this.addOns.add(productOrderAddOn);
+        }
+    }
+
 
     public ResearchProject getResearchProject() {
         return researchProject;
@@ -779,11 +792,11 @@ public class ProductOrder implements Serializable {
         }
         JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
         JiraIssue issue = jiraService.getIssue(jiraTicketKey);
-        IssueTransitionResponse transitions = issue.findAvailableTransitions();
+        IssueTransitionListResponse transitions = issue.findAvailableTransitions();
 
-        String transitionId = transitions.getTransitionId(TransitionStates.Complete.getStateName());
+        Transition transition = transitions.getTransitionByName(TransitionStates.Complete.getStateName());
 
-        issue.postNewTransition(transitionId);
+        issue.postNewTransition(transition);
     }
 
     /**
@@ -890,7 +903,8 @@ public class ProductOrder implements Serializable {
         Complete("Complete"),
         Cancel("Cancel"),
         StartProgress("Start Progress"),
-        PutOnHold("Put On Hold");
+        PutOnHold("Put On Hold"),
+        DeveloperEdit("Developer Edit");
 
         private final String stateName;
 

@@ -144,7 +144,6 @@
                 </div>
             </div>
 
-
             <p:dataTable value="#{productView.addOnData.values}" var="addOn" >
                 <f:facet name="header">
                     <h:outputText value="Add-ons" />
@@ -198,6 +197,27 @@
                     <h:outputText value="#{priceItem.name}"/>
                 </p:column>
             </p:dataTable>
+
+            <security:authorizeBlock roles="#{userBean.developerRole}">
+                <div class="control-group" style="margin-top: 20px">
+                    <label class="control-label label-form">Use Automated Billing?</label>
+                    <div class="controls">
+                        <div class="form-value">#{productView.product.useAutomatedBilling ? "Yes" : "No"}</div>
+                    </div>
+                </div>
+
+                <p:outputPanel rendered="#{productView.product.useAutomatedBilling}">
+                    <div class="control-group">
+                        <label class="control-label label-form">Bill When</label>
+                        <div class="controls">
+                            <div class="form-value">#{productView.product.requirement.attribute}&#160;
+                                #{productView.product.requirement.operator.label}&#160;
+                                #{productView.product.requirement.value}
+                            </div>
+                        </div>
+                    </div>
+                </p:outputPanel>
+            </security:authorizeBlock>
 
         </h:form>
 

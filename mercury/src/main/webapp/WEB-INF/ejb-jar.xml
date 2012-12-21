@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ejb-jar xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          version="3.0" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/ejb-jar_3_0.xsd">
-    <!-- This file configures queues for message driven beans, to allow them to be different in each environment.
-    All other EJB attributes are configured in annotations. -->
+    <!--
+     NOTE: This is the ejb-jar.xml to be used for all development versions of Mercury. See the webapp-prod/WEB-INF/ejb-jar.xml for
+     the Production settings.
+
+    This file configures queues for message driven beans, to allow them to be different in each environment.
+    All other EJB attributes are configured in annotations.
+    -->
     <enterprise-beans>
-<!--
         <message-driven>
             <ejb-name>BettalimsMessageBean</ejb-name>
             <ejb-class>org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageBean</ejb-class>
@@ -13,25 +17,17 @@
                     <activation-config-property-name>destination</activation-config-property-name>
                     <activation-config-property-value>queue/broad.queue.mercury.bettalims.dev</activation-config-property-value>
                 </activation-config-property>
-                <activation-config-property>
-                    <activation-config-property-name>destinationType</activation-config-property-name>
-                    <activation-config-property-value>javax.jms.Queue</activation-config-property-value>
-                </activation-config-property>
--->
-                <!--
-                Remote broker only for production.  Other environments use local broker, and inherent host / port uniqueness.
-                <activation-config-property>
-                    <activation-config-property-name>connectorClassName</activation-config-property-name>
-                    <activation-config-property-value>org.hornetq.core.remoting.impl.netty.NettyConnectorFactory</activation-config-property-value>
-                </activation-config-property>
-                <activation-config-property>
-                    <activation-config-property-name>connectionParameters</activation-config-property-name>
-                    <activation-config-property-value>host=vseqlims;port=5445</activation-config-property-value>
-                </activation-config-property>
-                -->
-<!--
             </activation-config>
         </message-driven>
--->
+        <message-driven>
+            <ejb-name>WorkCompleteMessageBean</ejb-name>
+            <ejb-class>org.broadinstitute.gpinformatics.athena.boundary.billing.WorkCompleteMessageBean</ejb-class>
+            <activation-config>
+                <activation-config-property>
+                    <activation-config-property-name>destination</activation-config-property-name>
+                    <activation-config-property-value>queue/broad.queue.athena.workreporting.dev</activation-config-property-value>
+                </activation-config-property>
+            </activation-config>
+        </message-driven>
     </enterprise-beans>
 </ejb-jar>

@@ -4,6 +4,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
 import com.sun.jersey.api.client.Client;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -19,7 +20,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesig
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -45,8 +45,12 @@ import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
+//import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.URL;
+//import java.nio.MappedByteBuffer;
+//import java.nio.channels.FileChannel;
+//import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -79,6 +83,9 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
     @Inject
     private ProductFamilyDao productFamilyDao;
+
+    @Inject
+    private ProductOrderDao productOrderDao;
 
     @Inject
     private ResearchProjectDao researchProjectDao;
@@ -137,6 +144,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);
 
+        String jiraTicketKey="PD0-MsgTest" + testPrefix;
         List<ProductOrderSample> productOrderSamples=new ArrayList<ProductOrderSample>();
         Map<String,TwoDBarcodedTube> mapBarcodeToTube=new LinkedHashMap<String,TwoDBarcodedTube>();
         for (int rackPosition=1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {
@@ -144,12 +152,13 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
             String bspStock="SM-" + testPrefix + rackPosition;
             TwoDBarcodedTube bspAliquot=new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(null, bspStock));
+            bspAliquot.addSample(new MercurySample(jiraTicketKey, bspStock));
             mapBarcodeToTube.put(barcode, bspAliquot);
             productOrderSamples.add(new ProductOrderSample(bspStock));
 
             twoDBarcodedTubeDAO.persist(bspAliquot);
         }
+
         Product exomeExpressProduct=productDao.findByPartNumber("P-EX-0002");
         if(exomeExpressProduct == null) {
             exomeExpressProduct=new Product("Exome Express", productFamilyDao.find("Exome"), "Exome Express",
@@ -165,10 +174,10 @@ public class BettalimsMessageResourceTest extends Arquillian {
         }
         ProductOrder productOrder=new ProductOrder(101L, "Messaging Test " + testPrefix, productOrderSamples, "GSP-123",
                 exomeExpressProduct, researchProject);
-        String jiraTicketKey="PD0-MsgTest";
         productOrder.setJiraTicketKey(jiraTicketKey);
-        twoDBarcodedTubeDAO.flush();
-        twoDBarcodedTubeDAO.clear();
+        productOrderDao.persist(productOrder);
+        productOrderDao.flush();
+        productOrderDao.clear();
         utx.commit();
         utx.begin();
 
@@ -270,6 +279,19 @@ public class BettalimsMessageResourceTest extends Arquillian {
                     try {
                         //                    String message = FileUtils.readFileToString(new File(dayDirectory, messageFileName));
                         //                    if(message.contains("PreSelectionPool")) {
+/*
+                        String message;
+                        FileInputStream stream = new FileInputStream(new File(dayDirectory, messageFileName));
+                        try {
+                            FileChannel fc = stream.getChannel();
+                            MappedByteBuffer mappedByteBuffer = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
+                            message = Charset.defaultCharset().decode(mappedByteBuffer).toString();
+                        }
+                        finally {
+                            stream.close();
+                        }
+                        BettalimsMessageBeanTest.sendJmsMessage(message);
+*/
                         response=Client.create().resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
                                 .type(MediaType.APPLICATION_XML_TYPE)
                                 .accept(MediaType.APPLICATION_XML)

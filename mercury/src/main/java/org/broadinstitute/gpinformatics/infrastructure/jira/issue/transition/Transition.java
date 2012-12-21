@@ -17,36 +17,47 @@ public class Transition {
 
     private Map<String, TransitionFields> fields;
 
-    public Transition ( String idIn ) {
-        id = idIn;
+    /**
+     * needed for deserialization
+     */
+    public Transition() {
     }
 
-    public Transition ( String idIn, String nameIn, NextTransition toIn ) {
-        id = idIn;
-        name = nameIn;
-        to = toIn;
-    }
-
-    public Transition ( String idIn, String nameIn, NextTransition toIn, Map<String, TransitionFields> fieldsIn ) {
+    public Transition (String idIn, String nameIn, NextTransition toIn) {
         id = idIn;
         name = nameIn;
         to = toIn;
-        fields = fieldsIn;
     }
 
-    public String getId ( ) {
+    public String getId() {
         return id;
     }
 
-    public String getName ( ) {
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    public String getName() {
         return name;
     }
 
-    public NextTransition getTo ( ) {
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public NextTransition getTo() {
         return to;
     }
 
-    public Map<String, TransitionFields> getFields ( ) {
+    public void setTo(NextTransition to) {
+        this.to = to;
+    }
+
+    public Map<String, TransitionFields> getFields() {
         return fields;
+    }
+
+    public void setFields(Map<String, TransitionFields> fields) {
+        this.fields = fields;
     }
 }
