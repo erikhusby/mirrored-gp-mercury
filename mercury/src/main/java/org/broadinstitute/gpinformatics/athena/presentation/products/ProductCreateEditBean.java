@@ -174,7 +174,7 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
     }
 
     private MaterialType entityToDto(org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType entity) {
-        return new org.broadinstitute.bsp.client.sample.MaterialType(entity.getFullName() );
+        return new org.broadinstitute.bsp.client.sample.MaterialType( entity.getCategory(), entity.getName() );
     }
 
     /**
