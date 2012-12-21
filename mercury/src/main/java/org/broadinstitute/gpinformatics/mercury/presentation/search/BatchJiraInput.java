@@ -48,6 +48,7 @@ public class BatchJiraInput extends AbstractJsfBean {
     private Date batchDueDate;
 
     private boolean useExistingTicket = true;
+    private String batchImportantInfo;
 
     public void setJiraInputType(String jiraInputType) {
         this.jiraInputType = jiraInputType;
@@ -123,6 +124,7 @@ public class BatchJiraInput extends AbstractJsfBean {
             batchObject = new LabBatch(batchName.trim(), vesselSet);
             batchObject.setBatchDescription(batchDescription.trim());
             batchObject.setDueDate(batchDueDate);
+            batchObject.setImportant(batchImportantInfo);
 
             labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername());
         }
@@ -135,5 +137,13 @@ public class BatchJiraInput extends AbstractJsfBean {
 
         conversationData.endConversation();
         return redirect("/search/batch_confirm","labBatch="+batchObject.getBatchName());
+    }
+
+    public void setBatchImportantInfo(String batchImportantInfo) {
+        this.batchImportantInfo = batchImportantInfo;
+    }
+
+    public String getBatchImportantInfo() {
+        return batchImportantInfo;
     }
 }

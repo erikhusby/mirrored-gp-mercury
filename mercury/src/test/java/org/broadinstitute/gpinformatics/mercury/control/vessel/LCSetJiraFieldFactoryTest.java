@@ -107,12 +107,13 @@ public class LCSetJiraFieldFactoryTest {
 
         Collection<CustomField> generatedFields = testBuilder.getCustomFields(jiraFieldDefs);
 
-        Assert.assertEquals(7, generatedFields.size());
+//        Assert.assertEquals(7, generatedFields.size());
+        Assert.assertEquals(5, generatedFields.size());
 
         for (CustomField currField : generatedFields) {
             if (currField.getFieldDefinition().getName()
                          .equals(LabBatch.RequiredSubmissionFields.WORK_REQUEST_IDS.getFieldName())) {
-                Assert.assertTrue(StringUtils.isBlank((String) currField.getValue()));
+                Assert.assertEquals("N/A",(String) currField.getValue());
             }
             if (currField.getFieldDefinition().getName()
                          .equals(LabBatch.RequiredSubmissionFields.GSSR_IDS.getFieldName())) {
@@ -125,7 +126,7 @@ public class LCSetJiraFieldFactoryTest {
                 Assert.assertEquals(((String) currField.getValue()), LCSetJiraFieldFactory.LIB_QC_SEQ_REQUIRED);
             }
             if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName())) {
-                Assert.assertEquals(String.valueOf(testBatch.getStartingLabVessels().size()), (String) currField.getValue());
+                Assert.assertEquals(testBatch.getStartingLabVessels().size(), currField.getValue());
             }
             if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName())) {
                 Assert.assertEquals(LCSetJiraFieldFactory.POOLING_STATUS, currField.getValue());

@@ -87,9 +87,10 @@ public class LabBatchEjb {
 
         labBatchDao.persist(batchObject);
 
+        setJiraInformaiton(batchObject, jiraTicket);
+
         batchToJira(reporter, jiraTicket, batchObject);
 
-        setJiraInformaiton(batchObject, jiraTicket);
         return batchObject;
     }
 

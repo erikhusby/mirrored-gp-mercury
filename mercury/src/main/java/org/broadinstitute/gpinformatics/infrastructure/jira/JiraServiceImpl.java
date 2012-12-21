@@ -4,6 +4,7 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
@@ -23,7 +24,10 @@ import org.codehaus.jackson.map.ObjectMapper;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.IOException;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -33,8 +37,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     @Inject
     private JiraConfig jiraConfig;
 
-    @Inject
-    private Log log;
+    private final static Log log = LogFactory.getLog(JiraServiceImpl.class);
 
     private String baseUrl;
 
@@ -47,7 +50,6 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
      */
     public JiraServiceImpl(JiraConfig jiraConfig) {
         this.jiraConfig = jiraConfig;
-        log = LogFactory.getLog(JiraServiceImpl.class);
     }
 
     @Override
@@ -81,6 +83,10 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         public void setSelf(String self) {
         }
 
+        public String getKey() {
+            return key;
+        }
+
         JiraIssueData() { }
     }
 
@@ -89,6 +95,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         private String expand;
         private String summary;
         private String description;
+        private Date dueDate;
 
         public String getSummary() {
             return summary;
@@ -104,6 +111,14 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         public void setDescription(String description) {
             this.description = description;
+        }
+
+        public Date getDueDate() {
+            return dueDate;
+        }
+
+        public void setDueDate(Date dueDate) {
+            this.dueDate = dueDate;
         }
 
         private JiraSearchIssueData() {
@@ -141,7 +156,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         String urlString = getBaseUrl() + "/issue/"+key;
 
 
-        WebResource webResource = getJerseyClient().resource(urlString).queryParam("fields","summary,description");
+        WebResource webResource = getJerseyClient().resource(urlString).queryParam("fields","summary,description,duedate");
 
         String queryResponse = webResource.get(String.class);
 
@@ -150,6 +165,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         JiraIssue issueResult =new JiraIssue(key, this);
         issueResult.setDescription(data.getDescription());
         issueResult.setSummary(data.getSummary());
+        issueResult.setDueDate(data.getDueDate());
 
         return issueResult;
     }
@@ -162,8 +178,18 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         parsedResults.setKey((String)root.get("key"));
         final Map fields  = (Map)root.get("fields");
 
-        parsedResults.setDescription((String)fields.get("description"));
+        parsedResults.setDescription((String) fields.get("description"));
         parsedResults.setSummary((String)fields.get("summary"));
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String dueDateValue =(String) fields.get("duedate");
+        try {
+            if(StringUtils.isNotBlank(dueDateValue)) {
+                parsedResults.setDueDate(dateFormat.parse(dueDateValue));
+            }
+        } catch (ParseException pe) {
+            log.error("Unable to parse the Due Date for Jira Issue " + parsedResults.getKey());
+        }
 
         return parsedResults;
     }

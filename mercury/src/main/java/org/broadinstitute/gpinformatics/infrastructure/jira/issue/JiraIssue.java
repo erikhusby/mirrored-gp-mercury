@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Iss
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Date;
 
 public class JiraIssue implements Serializable {
 
@@ -16,6 +17,8 @@ public class JiraIssue implements Serializable {
 
     private String summary;
     private String description;
+
+    private Date dueDate;
 
     private final JiraService jiraService;
 
@@ -42,6 +45,14 @@ public class JiraIssue implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public Date getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(Date dueDate) {
+        this.dueDate = dueDate;
     }
 
     /**

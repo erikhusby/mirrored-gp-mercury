@@ -60,6 +60,9 @@ public class  LabBatch {
     @Transient
     private Date dueDate;
 
+    @Transient
+    private String important;
+
     /**
      * Create a new batch with the given name
      * and set of @link Starter starting materials
@@ -197,6 +200,14 @@ public class  LabBatch {
         this.dueDate = dueDate;
     }
 
+    public String getImportant() {
+        return important;
+    }
+
+    public void setImportant(String important) {
+        this.important = important;
+    }
+
     /**
      * Helper nethod to dynamically create batch names based on Input from PDM's.  The format for the Names of the
      * batches, when not manually defined, will be:
@@ -237,7 +248,7 @@ public class  LabBatch {
         WORK_REQUEST_IDS("Work Request ID(s)", true),
         POOLING_STATUS("Pooling Status", true),
         PRIORITY("Priority", false),
-        DUE_DATE("Due", false),
+        DUE_DATE("Due Date", false),
 
         //User comments at batch creation (Post Dec 1 addition)
         IMPORTANT("Important", true),
@@ -253,7 +264,9 @@ public class  LabBatch {
         PROGRESS_STATUS("Progress Status", true),
 
         //List of Sample names
-        GSSR_IDS("GSSR ID(s)", true),;
+        GSSR_IDS("GSSR ID(s)", true),
+
+        ;
 
         private final String fieldName;
         private final boolean customField;

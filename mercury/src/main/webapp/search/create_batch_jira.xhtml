@@ -87,12 +87,25 @@
 
                             <div class="controls">
                                 <p:inputTextarea id="batchDescription" rendered="#{!batchJiraInput.useExistingTicket}"
-                                                 cols="50" rows="3" required="true"
-                                                 value="#{batchJiraInput.batchDescription}"/>
+                                                 cols="50" rows="3" value="#{batchJiraInput.batchDescription}"/>
                                 <p:watermark for="batchDescription" value="Enter a Description for the new Batch"/>
                                 <p:message for="batchDescription"/>
                             </div>
                         </div>
+
+                        <div class="control-group">
+                            <p:outputLabel for="batchImportant" rendered="#{!batchJiraInput.useExistingTicket}"
+                                           value="Important Info"/>
+
+                            <div class="controls">
+                                <p:inputTextarea id="batchImportant" rendered="#{!batchJiraInput.useExistingTicket}"
+                                                 cols="50" rows="3" value="#{batchJiraInput.batchImportantInfo}"/>
+                                <p:watermark for="batchImportant" value="Enter any important info for the new Batch"/>
+                                <p:message for="batchImportant"/>
+                            </div>
+                        </div>
+
+
                         <div class="control-group">
                             <p:outputLabel for="batchDueDate" rendered="#{!batchJiraInput.useExistingTicket}"
                                            value="Due Date"/>

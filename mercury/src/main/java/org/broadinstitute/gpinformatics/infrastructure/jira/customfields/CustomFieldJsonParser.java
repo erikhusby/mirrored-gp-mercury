@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.customfields;
 
+import clover.org.apache.commons.lang.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
@@ -53,9 +54,11 @@ public class CustomFieldJsonParser {
             String fieldName = (String)fieldProperties.get(NAME);
             Boolean required = (Boolean)fieldProperties.get(REQUIRED);
 
-            if (fieldId.startsWith(CUSTOMFIELD)) {
+//            if (fieldId.startsWith(CUSTOMFIELD)) {
+            if (StringUtils.isNotBlank(fieldName)) {
                 customFields.put(fieldName, new CustomFieldDefinition(fieldId, fieldName, required));
             }
+//            }
         }
         return customFields;
     }

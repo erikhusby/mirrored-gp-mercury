@@ -97,12 +97,17 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 //                submissionFields.get(LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName()), POOLING_STATUS,
 //                CustomField.SingleFieldType.SINGLE_SELECT));
 
-//        if (batch.getDueDate() != null) {
-//
+        if (batch.getDueDate() != null) {
+
 //            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MMM/yy");
-//            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.DUE_DATE, dateFormat
-//                    .format(batch.getDueDate())));
-//        }
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.DUE_DATE, dateFormat
+                    .format(batch.getDueDate())));
+        }
+
+        if(batch.getImportant() != null) {
+            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.IMPORTANT,batch.getImportant()));
+        }
 
         if (!workflowDefs.isEmpty()) {
             String builtProtocol = "";
