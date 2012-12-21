@@ -80,7 +80,7 @@ public class BillingSessionForm extends AbstractJsfBean {
                     sessionKey);
 
                 item.setBillingMessages(BillingSession.SUCCESS);
-                addInfoMessage("Sent to quote server " + message);
+                addInfoMessage("Billing Session " + sessionKey + " sent to quote server. Response: " + message);
             } catch (Exception ex) {
                 // Any exceptions in sending to the quote server will just be reported and will continue on to the next one
                 item.setBillingMessages(ex.getMessage());
