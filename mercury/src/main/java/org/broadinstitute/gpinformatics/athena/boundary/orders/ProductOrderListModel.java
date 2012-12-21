@@ -12,10 +12,11 @@ import java.util.List;
  */
 public class ProductOrderListModel extends ListDataModel<ProductOrderListEntry> implements SelectableDataModel<ProductOrderListEntry>, Serializable {
 
-    public ProductOrderListModel() {
-    }
-
     private List<ProductOrderListEntry> filteredValues;
+
+    public ProductOrderListModel(List<ProductOrderListEntry> productOrderListEntries) {
+        super(productOrderListEntries);
+    }
 
     @Override
     public Object getRowKey(ProductOrderListEntry order) {
