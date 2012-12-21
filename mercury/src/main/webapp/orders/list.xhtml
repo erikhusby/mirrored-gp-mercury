@@ -45,7 +45,7 @@
                     <f:facet name="header">
                         <p:outputPanel styleClass="pull-right">
                             <h:outputText value=" Search "/>
-                            <p:inputText id="globalFilter" onkeyup="dataTable.filter()" style="width:150px"/>
+                            <p:inputText id="globalFilter" onkeyup="dataTable.unselectAllRows(); dataTable.filter();" style="width:150px"/>
                         </p:outputPanel>
                     </f:facet>
 
