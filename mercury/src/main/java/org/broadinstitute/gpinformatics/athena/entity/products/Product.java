@@ -74,10 +74,17 @@ public class Product implements Serializable, Comparable<Product> {
 
     private boolean pdmOrderableOnly;
 
+    @Transient
+    private String originalPartNumber;   // This is used for edit to keep track of changes to the object.
+
+    // Initialize our transient data after the object has been loaded from the database.
+    @PostLoad
+    private void initialize() {
+        originalPartNumber = partNumber;
+    }
+
     /**
      * JPA package visible no arg constructor
-     *
-     * @return
      */
     Product() {}
 
@@ -415,5 +422,9 @@ public class Product implements Serializable, Comparable<Product> {
         }
 
         return getProductName();
+    }
+
+    public String getOriginalPartNumber() {
+        return originalPartNumber;
     }
 }

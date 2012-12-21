@@ -23,7 +23,6 @@
             </stripes:link>
         </p>
 
-
         <div class="form-horizontal">
             <div class="control-group view-control-group">
                 <label class="control-label label-form">Project</label>

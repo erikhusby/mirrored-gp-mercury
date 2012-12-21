@@ -6,6 +6,12 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="View Product" sectionTitle="View Product: ${actionBean.editProduct.productName}">
 
     <stripes:layout-component name="content">
+        <p>
+            <stripes:link title="Click to edit ${actionBean.editProduct.productName}" href="${ctxpath}/products/product.action?edit" class="pull-right">
+                <span class="icon-home"></span> Edit product
+                <stripes:param name="productKey" value="${actionBean.editProduct.partNumber}"/>
+            </stripes:link>
+        </p>
 
         <div class="form-horizontal">
             <div class="view-control-group control-group">

@@ -26,8 +26,8 @@ import java.util.List;
 @UrlBinding("/products/product.action")
 public class ProductActionBean extends CoreActionBean {
 
-    private static final String CREATE_PRODUCT = CoreActionBean.CREATE + "New Product";
-    private static final String EDIT_PRODUCT = CoreActionBean.EDIT + "Product: ";
+    private static final String CREATE_PRODUCT = CoreActionBean.CREATE + "Create New Product";
+    private static final String EDIT_PRODUCT = CoreActionBean.EDIT + "Edit Product: ";
 
     public static final String PRODUCT_CREATE_PAGE = "/products/create.jsp";
     public static final String PRODUCT_LIST_PAGE = "/products/list.jsp";
@@ -91,12 +91,17 @@ public class ProductActionBean extends CoreActionBean {
             errors.addGlobalError(new SimpleError("Cannot save with duplicate price items: " + StringUtils.join(duplicatePriceItems, ", ")));
         }
 
-        // Is there a product with the part number already?
-        Product existingProduct = productDao.findByPartNumber(editProduct.getPartNumber());
-        if (existingProduct != null && ! existingProduct.getProductId().equals(editProduct.getProductId())) {
-            errors.addGlobalError(new SimpleError("Part number '" + editProduct.getPartNumber() + "' is already in use"));
+        // check for existing name for create or name change on edit
+        if ((editProduct.getOriginalPartNumber() == null) ||
+            (!editProduct.getPartNumber().equalsIgnoreCase(editProduct.getOriginalPartNumber()))) {
+
+            Product existingProduct = productDao.findByPartNumber(editProduct.getPartNumber());
+            if (existingProduct != null && ! existingProduct.getProductId().equals(editProduct.getProductId())) {
+                errors.add("partNumber", new SimpleError("Part number '" + editProduct.getPartNumber() + "' is already in use"));
+            }
         }
 
+        // Check that the dates are consistent
         if ((editProduct.getAvailabilityDate() != null) &&
             (editProduct.getDiscontinuedDate() != null) &&
             (editProduct.getAvailabilityDate().after(editProduct.getDiscontinuedDate()))) {
@@ -153,15 +158,9 @@ public class ProductActionBean extends CoreActionBean {
 
     @HandlesEvent(value = "save")
     public Resolution save() {
-        try {
-            productDao.persist(editProduct);
-        } catch (Exception e ) {
-            addGlobalValidationError(e.getMessage());
-            return null;
-        }
-
+        productDao.persist(editProduct);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been created");
-        return new RedirectResolution(PRODUCT_VIEW_PAGE).addParameter("product", editProduct.getBusinessKey());
+        return new RedirectResolution(ProductActionBean.class, "view").addParameter("productKey", editProduct.getPartNumber());
     }
 
     public Product getEditProduct() {

@@ -113,7 +113,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     /**
      * Validation of project name.
      *
-     * @param errors
+     * @param errors The errors object
      */
     @ValidationMethod(on = "save")
     public void createUniqueNameValidation(ValidationErrors errors) {
