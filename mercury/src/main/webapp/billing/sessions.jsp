@@ -8,6 +8,7 @@
         <script type="text/javascript">
             $j(document).ready(function() {
                 $j('#sessionList').dataTable( {
+                    "oTableTools": ttExportDefines,
                     "aaSorting": [[2,'desc']],
                     "aoColumns": [
                         {"bSortable": true},                   // ID

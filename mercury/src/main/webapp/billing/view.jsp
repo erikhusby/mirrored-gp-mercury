@@ -8,6 +8,7 @@
         <script type="text/javascript">
             $j(document).ready(function() {
                 $j('#quoteReporting').dataTable( {
+                    "oTableTools": ttExportDefines,
                     "aaSorting": [[0,'desc']],
                     "aoColumns": [
                         {"bSortable": true},                   // Quote
@@ -17,7 +18,7 @@
                         {"bSortable": true},                   // Quantity
                         {"bSortable": true, "sType": "date"},  // Work Completed
                         {"bSortable": true, "sType": "date"},  // Work Reported
-                        {"bSortable": false}]                  // Billed Date
+                        {"bSortable": false}]                  // Billed Message
                 })
             });
         </script>
@@ -27,7 +28,7 @@
         <stripes:form action="/billing/session.action" id="orderForm" class="form-horizontal">
             <stripes:hidden name="sessionKey" value="${actionBean.sessionKey}"/>
 
-            <!--security:authorizeBlock roles="${userBean.developerRole}, ${userBean.billingManagerRole}"-->
+            <!--security:authorizeBlock roles="${actionBean.userBean.developerRole}, ${actionBean.userBean.billingManagerRole}"-->
             <c:if test="${actionBean.editSession.billedDate == null}">
                 <stripes:submit name="bill" value="Bill Work in Broad Quotes" style="margin-right:30px;"/>
             </c:if>
@@ -36,7 +37,7 @@
             <stripes:submit name="downloadTracker" value="Download Tracker" style="margin-right:30px;"/>
             <stripes:submit name="downloadQuoteItems" value="Download Quote Items" style="margin-right:30px;"/>
 
-            <!--security:authorizeBlock roles="${userBean.developerRole}, ${userBean.billingManagerRole}"-->
+            <!--security:authorizeBlock roles="${actionBean.userBean.developerRole}, ${actionBean.userBean.billingManagerRole}"-->
             <c:if test="${actionBean.editSession.billedDate == null}">
                 <stripes:submit name="endSession" value="End Billing Session" style="margin-right:15px;px;"/>
             </c:if>
