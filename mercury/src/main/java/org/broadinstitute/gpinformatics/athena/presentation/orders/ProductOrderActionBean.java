@@ -100,19 +100,18 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @ValidationMethod(on = "edit")
-    public void editUniqueNameValidation(ValidationErrors errors) {
-        // If the title has been changed, check uniqueness. Otherwise, we are just saving an existing one
-        if (!editOrder.getTitle().equalsIgnoreCase(editOrder.getOriginalTitle())) {
-            createUniqueNameValidation(errors);
-        }
-    }
+    @ValidationMethod(on = "save")
+    public void uniqueNameValidation(ValidationErrors errors) {
+        // If the research project has no original title, then it was not fetched from hibernate, so this is a create
+        // OR if this was fetched and the title has been changed
+        if ((editOrder.getOriginalTitle() == null) ||
+                (!editOrder.getTitle().equalsIgnoreCase(editOrder.getOriginalTitle()))) {
 
-    @ValidationMethod(on = "create")
-    public void createUniqueNameValidation(ValidationErrors errors) {
-        ProductOrder existingOrder = productOrderDao.findByTitle(editOrder.getTitle());
-        if (existingOrder != null) {
-            errors.add("orderName", new SimpleError("An order already exists with this name"));
+            // Check if there is an existing research project and error out if it already exists
+            ProductOrder existingOrder = productOrderDao.findByTitle(editOrder.getTitle());
+            if (existingOrder != null) {
+                errors.add("title", new SimpleError("A product order already exists with this name."));
+            }
         }
     }
 
