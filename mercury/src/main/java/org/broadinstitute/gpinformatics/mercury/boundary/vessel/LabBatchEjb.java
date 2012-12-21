@@ -17,7 +17,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
@@ -80,22 +79,17 @@ public class LabBatchEjb {
      * @param jiraTicket Optional parameter that represents an existing Jira Ticket that refers to this batch
      */
     public LabBatch createLabBatch(@Nonnull Collection<LabVessel> labVessels, @Nonnull String reporter,
-                                   String jiraTicket) {
+                                   @Nonnull String jiraTicket) {
 
         Collection<String> pdoList = LabVessel.extractPdoList(labVessels);
 
-        LabBatch batchObject =
-                new LabBatch(LabBatch.generateBatchName(CreateFields.IssueType.EXOME_EXPRESS.getJiraName(), pdoList),
-                        new HashSet<LabVessel>(labVessels));
-
-        if(jiraTicket != null) {
-            setJiraInformaiton(batchObject, jiraTicket);
-        }
+        LabBatch batchObject = new LabBatch(jiraTicket, new HashSet<LabVessel>(labVessels));
 
         labBatchDao.persist(batchObject);
 
         batchToJira(reporter, jiraTicket, batchObject);
 
+        setJiraInformaiton(batchObject, jiraTicket);
         return batchObject;
     }
 
@@ -106,23 +100,18 @@ public class LabBatchEjb {
      * @param batchObject A constructed, but not persisted, batch object containing all initial information necessary
      *                    to persist a new batch
      * @param reporter    The User that is attempting to create the batch
-     * @param jiraTicket  Optional parameter that represents an existing Jira Ticket that refers to this batch
      */
-    public LabBatch createLabBatch(@Nonnull LabBatch batchObject, @Nonnull String reporter, String jiraTicket) {
+    public LabBatch createLabBatch(@Nonnull LabBatch batchObject, @Nonnull String reporter) {
 
         Collection<String> pdoList = LabVessel.extractPdoList(batchObject.getStartingLabVessels());
 
         if (StringUtils.isBlank(batchObject.getBatchName())) {
-            batchObject.setBatchName(
-                    LabBatch.generateBatchName(CreateFields.IssueType.EXOME_EXPRESS.getJiraName(), pdoList));
+            throw new InformaticsServiceException("The Name for the batch Object cannot be null");
         }
 
-        if(jiraTicket != null) {
-            setJiraInformaiton(batchObject, jiraTicket);
-        }
         labBatchDao.persist(batchObject);
 
-        batchToJira(reporter, jiraTicket, batchObject);
+        batchToJira(reporter, null, batchObject);
 
         return batchObject;
     }
@@ -143,7 +132,7 @@ public class LabBatchEjb {
                 ticket =new JiraTicket(jiraService, jiraIssue.getKey());
             }
 
-            batchObject.setBatchName(jiraIssue.getSummary());
+//            batchObject.setBatchName(jiraIssue.getSummary());
             batchObject.setBatchDescription(jiraIssue.getDescription());
 
             batchObject.setJiraTicket(ticket);
@@ -176,6 +165,8 @@ public class LabBatchEjb {
 
                 Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
+                // TODO  SGM Set Due Date
+
                 // TODO SGM Determine Project and Issue type better.  Use Workflow Configuration
                 JiraIssue jiraIssue = jiraService
                         .createIssue(CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix(), reporter,
@@ -183,19 +174,6 @@ public class LabBatchEjb {
                                 newBatch.getBatchDescription(), fieldBuilder.getCustomFields(submissionFields));
 
                 ticket = new JiraTicket(jiraService, jiraIssue.getKey());
-
-//            }
-//            else {
-//                JiraIssue jiraIssue = jiraService.getIssue(jiraTicket);
-//
-//                ticket = jiraTicketDao.fetchByName(jiraTicket);
-//                if(ticket == null) {
-//                    ticket =new JiraTicket(jiraService, jiraIssue.getKey());
-//                }
-//
-//                newBatch.setBatchName(jiraIssue.getSummary());
-//                newBatch.setBatchDescription(jiraIssue.getDescription());
-//            }
 
                 newBatch.setJiraTicket(ticket);
             }

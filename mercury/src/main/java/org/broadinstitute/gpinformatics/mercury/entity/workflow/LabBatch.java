@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
@@ -17,7 +19,7 @@ import java.util.*;
 @Entity
 @Audited
 @Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"batchName"}))
-public class LabBatch {
+public class  LabBatch {
 
     public static final Comparator<LabBatch> byDate = new Comparator<LabBatch>() {
         @Override
@@ -52,17 +54,16 @@ public class LabBatch {
 
     private Date createdOn;
 
-    //TODO SGM Add field for Description for Jira Creation Override
-
+    @Transient
     private String batchDescription;
 
+    @Transient
     private Date dueDate;
 
     /**
      * Create a new batch with the given name
      * and set of @link Starter starting materials
      *
-     * @param batchName
      * @param starters
      */
     //    public LabBatch(ProjectPlan projectPlan,
@@ -119,7 +120,7 @@ public class LabBatch {
     }
 
     public void addLabVessels(@Nonnull Collection<LabVessel> vessels) {
-        for(LabVessel currVessel:vessels) {
+        for (LabVessel currVessel : vessels) {
             addLabVessel(currVessel);
         }
     }
@@ -136,9 +137,15 @@ public class LabBatch {
         return batchName;
     }
 
+    public void setBatchName(String batchName) {
+        this.batchName = batchName;
+    }
+
     public void setJiraTicket(JiraTicket jiraTicket) {
         this.jiraTicket = jiraTicket;
         jiraTicket.setLabBatch(this);
+
+        batchName = this.jiraTicket.getTicketName();
     }
 
 
@@ -178,26 +185,22 @@ public class LabBatch {
         return batchDescription;
     }
 
-    public Date getDueDate() {
-        return dueDate;
-    }
-
     public void setBatchDescription(String batchDescription) {
         this.batchDescription = batchDescription;
+    }
+
+    public Date getDueDate() {
+        return dueDate;
     }
 
     public void setDueDate(Date dueDate) {
         this.dueDate = dueDate;
     }
 
-    public void setBatchName(String batchName) {
-        this.batchName = batchName;
-    }
-
     /**
      * Helper nethod to dynamically create batch names based on Input from PDM's.  The format for the Names of the
      * batches, when not manually defined, will be:
-     *
+     * <p/>
      * [Product name] [Product workflow Version]: [comma separated list of PDO names]
      *
      * @param workflowName
@@ -252,7 +255,7 @@ public class LabBatch {
         //List of Sample names
         GSSR_IDS("GSSR ID(s)", true),;
 
-        private final String  fieldName;
+        private final String fieldName;
         private final boolean customField;
 
         private RequiredSubmissionFields(String fieldNameIn, boolean customFieldInd) {
@@ -267,30 +270,37 @@ public class LabBatch {
         }
     }
 
+    public LabVessel[] getStartingVesselsArray() {
+        return startingLabVessels.toArray(new LabVessel[startingLabVessels.size()]);
+    }
+
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (!(o instanceof LabBatch))
+        }
+        if (!(o instanceof LabBatch)) {
             return false;
+        }
 
         LabBatch labBatch = (LabBatch) o;
 
-        if (isActive != labBatch.isActive)
-            return false;
-        if (batchName != null ? !batchName.equals(labBatch.batchName) : labBatch.batchName != null)
-            return false;
-        if (jiraTicket != null ? !jiraTicket.equals(labBatch.jiraTicket) : labBatch.jiraTicket != null)
-            return false;
+        EqualsBuilder equalsBuilder = new EqualsBuilder();
 
-        return true;
+        equalsBuilder.append(isActive, labBatch.getActive());
+        equalsBuilder.append(batchName, labBatch.getBatchName());
+        equalsBuilder.append(jiraTicket, labBatch.getJiraTicket());
+
+        return equalsBuilder.isEquals();
     }
 
     @Override
     public int hashCode() {
-        int result = (isActive ? 1 : 0);
-        result = 31 * result + (batchName != null ? batchName.hashCode() : 0);
-        result = 31 * result + (jiraTicket != null ? jiraTicket.hashCode() : 0);
-        return result;
+
+        HashCodeBuilder hashCodeBuilder = new HashCodeBuilder();
+
+        hashCodeBuilder.append(isActive).append(batchName).append(jiraTicket).append(getStartingVesselsArray());
+
+        return hashCodeBuilder.hashCode();
     }
 }

@@ -25,42 +25,52 @@
         <ui:define name="metadata">
             <f:metadata>
                 <f:viewParam id="batchParam" name="labBatch"
-                             value="#{batchConfirm.foundBatch}" converter="#{labBatchConverter}" />
+                             value="#{batchConfirm.foundBatch}" converter="#{labBatchConverter}"/>
             </f:metadata>
             <f:event type="preRenderView" listener="#{batchConfirm.initForm}"/>
         </ui:define>
 
         <ui:define name="body">
             <h:form styleClass="view-horizontal">
-                <div class="control-group">
+                <div class="row-fluid">
                     <label class="control-label label-form">Batch Ticket</label>
-                    <div class="form-value">
-                        <h:outputLink target="JIRA" value="#{jiraLink.browseUrl(batchConfirm.foundBatch.jiraTicket.ticketName)}" class="external">
-                            <h:outputText value="#{batchConfirm.foundBatch.jiraTicket.ticketName}" />
-                        </h:outputLink>
+
+                    <div class="controls">
+                        <div class="control-label label-form">
+                            <h:outputLink target="JIRA"
+                                          value="#{jiraLink.browseUrl(batchConfirm.foundBatch.jiraTicket.ticketName)}"
+                                          class="external">
+                                <h:outputText value="#{batchConfirm.foundBatch.jiraTicket.ticketName}"/>
+                            </h:outputLink>
+                        </div>
                     </div>
                 </div>
 
-                <div class="row-fluid">
-                    <label class="control-label label-form">Batch name</label>
-                    <div class="controls">
-                        <div class="form-value">#{batchConfirm.foundBatch.batchName}</div>
-                    </div>
-                </div>
+                <p:panel id="jiraDetails" rendered="#{batchConfirm.jiraInfoFound}">
+                    <div class="row-fluid">
+                        <label class="control-label label-form">Batch name</label>
 
-                <div class="row-fluid">
-                    <label class="control-label label-form">Batch Description</label>
-                    <div class="controls">
-                        <div class="form-value">#{batchConfirm.foundBatch.batchDescription}</div>
+                        <div class="controls">
+                            <div class="form-value">#{batchConfirm.jiraIssue.summary}</div>
+                        </div>
                     </div>
-                </div>
 
-                <div class="row-fluid">
-                    <label class="control-label label-form">Batch Due Date</label>
-                    <div class="controls">
-                        <div class="form-value">#{batchConfirm.foundBatch.dueDate}</div>
+                    <div class="row-fluid">
+                        <label class="control-label label-form">Batch Description</label>
+
+                        <div class="controls">
+                            <div class="form-value">#{batchConfirm.jiraIssue.description}</div>
+                        </div>
                     </div>
-                </div>
+
+                    <!--
+                                    <div class="row-fluid">
+                                        <label class="control-label label-form">Batch Due Date</label>
+                                        <div class="controls">
+                                            <div class="form-value">#{batchConfirm.foundBatch.dueDate}</div>
+                                        </div>
+                                    </div>
+                    --></p:panel>
 
 
                 <p:panel id="searchResultPanel">
@@ -74,10 +84,10 @@
                             </f:facet>
                         </p:column>
                         <!--<p:column>-->
-                            <!--<f:facet name="header">-->
-                                <!--<h:outputText value="Sample #"/>-->
-                            <!--</f:facet>-->
-                            <!--<h:outputText value="#{foundVessel.sampleInstances.size}"/>-->
+                        <!--<f:facet name="header">-->
+                        <!--<h:outputText value="Sample #"/>-->
+                        <!--</f:facet>-->
+                        <!--<h:outputText value="#{foundVessel.sampleInstances.size}"/>-->
                         <!--</p:column>-->
                         <p:column sortBy="#{foundVessel.label}">
                             <f:facet name="header">

@@ -7,12 +7,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
-import javax.enterprise.context.RequestScoped;
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.faces.event.AjaxBehaviorEvent;
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.text.MessageFormat;
 import java.util.Date;
 import java.util.HashSet;
@@ -126,19 +124,16 @@ public class BatchJiraInput extends AbstractJsfBean {
             batchObject.setBatchDescription(batchDescription.trim());
             batchObject.setDueDate(batchDueDate);
 
-            labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername(), null);
+            labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername());
         }
 
         addInfoMessage(
-                MessageFormat.format("Lab batch ''{0}'' ({1}) has been created",
-                        batchObject.getBatchName(), batchObject.getJiraTicket().getTicketName())
+                MessageFormat.format("Lab batch ''{0}'' has been created", batchObject.getJiraTicket().getTicketName())
         );
 
         conversationData.setBatchObject(batchObject);
 
-        String redirectValue = redirect("/search/batch_confirm") + "&labBatch="+batchObject.getBatchName();
-
         conversationData.endConversation();
-        return redirectValue;
+        return redirect("/search/batch_confirm","labBatch="+batchObject.getBatchName());
     }
 }

@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 

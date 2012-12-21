@@ -83,6 +83,11 @@ public class JiraTicket {
         }
     }
 
+
+    public JiraIssue getJiraDetails() throws IOException{
+        return jiraService.getIssue(ticketId);
+    }
+
     /**
      * addWatcher allows a user to add a user as a watcher of the Jira ticket associated with this product order
      *

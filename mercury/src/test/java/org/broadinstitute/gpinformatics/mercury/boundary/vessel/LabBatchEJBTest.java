@@ -132,7 +132,7 @@ public class LabBatchEjbTest extends ContainerTest {
         batchInput.setBatchDescription(description);
         batchInput.setDueDate(future);
 
-        labBatchEJB.createLabBatch(batchInput, scottmat, null);
+        labBatchEJB.createLabBatch(batchInput, scottmat);
 
         labBatchDAO.flush();
         labBatchDAO.clear();

@@ -15,10 +15,7 @@ import javax.faces.bean.ViewScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @ManagedBean
 @ViewScoped
@@ -78,7 +75,15 @@ public class BatchFromPlasticBean extends AbstractJsfBean {
     }
 
     public void barcodeSearch() {
-        List<String> barcodeList = Arrays.asList(barcode.trim().split(","));
+
+        String[] splitBarcodes = barcode.trim().split(",");
+
+        List<String> barcodeList = new ArrayList<String>(splitBarcodes.length);
+
+        for(String barcode:splitBarcodes) {
+            barcodeList.add(barcode.trim());
+        }
+
         foundVessels = labVesselDao.findByListIdentifiers(barcodeList);
         for (LabVessel foundVessel : foundVessels) {
             vesselSampleSizeMap.put(foundVessel, foundVessel.getSampleInstances().size());

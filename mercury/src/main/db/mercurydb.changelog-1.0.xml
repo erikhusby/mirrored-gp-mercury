@@ -468,4 +468,34 @@
         </addColumn>
     </changeSet>
 
+
+    <changeSet id="GPLIM-517-1" author="scottmat">
+        <preConditions>
+            <columnExists columnName="batch_description" schemaName="mercury" tableName="lab_batch" />
+        </preConditions>
+        <dropColumn schemaName="mercury" tableName="lab_batch" columnName="batch_description" />
+    </changeSet>
+
+    <changeSet id="GPLIM-517-2" author="scottmat">
+        <preConditions>
+            <columnExists columnName="batch_description" schemaName="mercury" tableName="lab_batch_aud" />
+        </preConditions>
+        <dropColumn schemaName="mercury" tableName="lab_batch_aud" columnName="batch_description" />
+    </changeSet>
+
+    <changeSet id="GPLIM-517-3" author="scottmat">
+        <preConditions>
+            <columnExists columnName="due_date" schemaName="mercury" tableName="lab_batch" />
+        </preConditions>
+        <dropColumn schemaName="mercury" tableName="lab_batch" columnName="due_date" />
+    </changeSet>
+
+    <changeSet id="GPLIM-517-4" author="scottmat">
+        <preConditions>
+            <columnExists columnName="due_date" schemaName="mercury" tableName="lab_batch_aud" />
+        </preConditions>
+        <dropColumn schemaName="mercury" tableName="lab_batch_aud" columnName="due_date" />
+    </changeSet>
+
+
 </databaseChangeLog>

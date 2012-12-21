@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -12,6 +14,7 @@ import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,13 +33,24 @@ public class BatchConfirm extends AbstractJsfBean {
     @Inject
     private BSPUserList bspUserList;
 
+    @Inject
+    JiraService jiraService;
+
     private LabBatch foundBatch;
+
+    private JiraIssue jiraIssue;
 
     private List<LabVessel> listOfVessels;
 
     public void initForm() {
 
         listOfVessels = new ArrayList<LabVessel>(foundBatch.getStartingLabVessels());
+
+        try {
+            jiraIssue = jiraService.getIssue(foundBatch.getJiraTicket().getTicketName());
+        } catch (IOException ioe) {
+            addErrorMessage("Unable to retrieve Summary and Description from Jira");
+        }
     }
 
     public List<LabVessel> getListOfVessels() {
@@ -62,5 +76,17 @@ public class BatchConfirm extends AbstractJsfBean {
 
     public void setFoundBatch(LabBatch foundBatch) {
         this.foundBatch = foundBatch;
+    }
+
+    public JiraIssue getJiraIssue() {
+        return jiraIssue;
+    }
+
+    public void setJiraIssue(JiraIssue jiraIssue) {
+        this.jiraIssue = jiraIssue;
+    }
+
+    public boolean isJiraInfoFound() {
+        return jiraIssue!=null;
     }
 }

@@ -54,7 +54,7 @@ public class LabBatchResource {
         Map<MercurySample, MercurySample> mapSampleToSample = mercurySampleDao.findByMercurySample(mercurySampleKeys);
         LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample/*, null*/);
 
-        JiraTicket jiraTicket = new JiraTicket(jiraService, labBatch.getBatchName());
+        JiraTicket jiraTicket = new JiraTicket(jiraService, labBatchBean.getBatchId());
         labBatch.setJiraTicket(jiraTicket);
         jiraTicket.setLabBatch(labBatch);
         labBatchDAO.persist(labBatch);

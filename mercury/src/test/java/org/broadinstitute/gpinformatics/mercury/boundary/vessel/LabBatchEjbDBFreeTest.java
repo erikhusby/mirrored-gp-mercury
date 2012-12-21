@@ -7,7 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -19,11 +18,8 @@ import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -100,7 +96,7 @@ public class LabBatchEjbDBFreeTest {
     public void testCreateLabBatch() throws Exception {
 
         LabBatch testBatch = labBatchEJB
-                .createLabBatch(new LabBatch("", new HashSet<LabVessel>(mapBarcodeToTube.values())), "scottmat", null);
+                .createLabBatch(new LabBatch("", new HashSet<LabVessel>(mapBarcodeToTube.values())), "scottmat");
 
         Assert.assertNotNull(testBatch);
         Assert.assertNotNull(testBatch.getJiraTicket());
@@ -132,8 +128,8 @@ public class LabBatchEjbDBFreeTest {
     public void testCreateLabBatchWithJiraTicket() throws Exception {
 
         LabBatch testBatch = labBatchEJB
-                .createLabBatch(new LabBatch("", new HashSet<LabVessel>(mapBarcodeToTube.values())), scottmat,
-                                testLCSetKey);
+                .createLabBatch(new LabBatch("", new HashSet<LabVessel>(mapBarcodeToTube.values())), scottmat
+                );
         EasyMock.verify(mockJira);
 
         Assert.assertNotNull(testBatch);
@@ -157,8 +153,8 @@ public class LabBatchEjbDBFreeTest {
         batchInput.setBatchDescription(description);
 
         LabBatch testBatch = labBatchEJB
-                .createLabBatch(batchInput, scottmat,
-                                testLCSetKey);
+                .createLabBatch(batchInput, scottmat
+                );
         EasyMock.verify(mockJira);
 
         Assert.assertNotNull(testBatch);
