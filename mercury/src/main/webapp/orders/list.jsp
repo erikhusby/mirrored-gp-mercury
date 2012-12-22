@@ -37,16 +37,17 @@
 
         <stripes:form action="/orders/order.action" id="createForm" class="form-horizontal">
             <div class="actionButtons">
-                <!--security:authorizeBlock roles="${userBean.developerRole}, ${userBean.billingManagerRole}"-->
-                <stripes:submit name="startBilling" value="Start Billing Session" style="margin-right:20px;"/>
-                <!--/security:authorizeBlock-->
+                <security:authorizeBlock roles="${actionBean.userBean.developerRole}, ${actionBean.userBean.billingManagerRole}">
+                    <stripes:submit name="startBilling" value="Start Billing Session" style="margin-right:30px;"/>
+                </security:authorizeBlock>
 
-                <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" style="margin-right:10px;"/>
+                <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" style="margin-right:5px;"/>
 
-                <!--security:authorizeBlock roles="${userBean.developerRole}, ${userBean.productManagerRole}"-->
-                <stripes:link href="/orders/order.action" event="uploadBillingTracker" style="margin-left:10px;">
-                    Upload Billing Tracker
-                </stripes:link>
+                <security:authorizeBlock roles="${actionBean.userBean.developerRole}, ${actionBean.userBean.productManagerRole}">
+                    <stripes:link href="/orders/order.action" event="uploadBillingTracker">
+                        Upload Billing Tracker
+                    </stripes:link>
+                </security:authorizeBlock>
             </div>
 
             <table id="productOrderList" class="table simple">

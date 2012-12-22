@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<taglib xmlns="http://java.sun.com/xml/ns/javaee"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-jsptaglibrary_2_1.xsd"
+        version="2.1">
+
+<description> Provides tags for use with the Mercury Stripes Security mechanism</description>
+    <display-name>Stripes Security Tag Library</display-name>
+    <tlib-version>1.0</tlib-version>
+    <short-name>authorizeBlock</short-name>
+    <uri>http://www.broadinstitute.org/Mercury/SecureTag</uri>
+    <tag>
+        <description><![CDATA[<p>Wraps pieces of a jsp page that need to be authenticated.</p>]]></description>
+        <name>authorizeBlock</name>
+        <tag-class>org.broadinstitute.gpinformatics.mercury.presentation.tags.security.AuthorizeBlockStripesTag</tag-class>
+        <body-content>JSP</body-content>
+        <attribute>
+            <description>
+                Comma separated list of groups that this block will allow access.  Using "All" will mean all groups have access
+            </description>
+            <name>roles</name>
+            <required>true</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+        <attribute>
+            <description>
+                Comma separated list of groups that this block will restrict access to. restriction overrides inclusion
+            </description>
+            <name>exclusionRoles</name>
+            <required>false</required>
+            <rtexprvalue>true</rtexprvalue>
+            <type>java.lang.String</type>
+        </attribute>
+    </tag>
+</taglib>
