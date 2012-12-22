@@ -53,7 +53,7 @@
                         );
 
                         $j("#fundingSources").tokenInput(
-                                "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                "${ctxpath}/projects/project.action?fundingAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
                                     <c:if test="${actionBean.fundingSourcesCompleteData != null}">
@@ -75,9 +75,9 @@
                         );
 
                         $j("#irbs").tokenInput(
-                                "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                "${ctxpath}/projects/project.action?irbAutocomplete=", {
                                     searchDelay: 500,
-                                    minChars: 2,
+                                    minChars: 1,
                                     <c:if test="${actionBean.irbsCompleteData != null}">
                                         prePopulate: ${actionBean.irbsCompleteData},
                                     </c:if>
@@ -145,7 +145,7 @@
                 </div>
             </div>
 
-            <c:if test="${actionBean.researchProjectCreatorString} ne null">
+            <c:if test="${actionBean.researchProjectCreatorString != null}">
                 <div class="control-group">
                     <stripes:label for="createdBy" class="control-label">Created By</stripes:label>
 
@@ -179,7 +179,7 @@
                 <stripes:label for="irbs" class="control-label">IRB/IACUC Numbers</stripes:label>
 
                 <div class="controls">
-                    <stripes:text id="irbs" name="researchProject.irbs" />
+                    <stripes:text id="irbs" name="irbList" />
                     <p>
                         <stripes:checkbox id="irbNotEngaged" name="irbList"/>&nbsp;<stripes:label for="irbNotEngaged" style="display:inline;">IRB Not Engaged</stripes:label>
                     </p>

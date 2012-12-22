@@ -295,16 +295,12 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
 
     public String[] getIrbNumbers() {
         int i = 0;
-        if (irbNumbers != null) {
-            String[] irbNumberList = new String[irbNumbers.size()];
-            for (ResearchProjectIRB irb : irbNumbers) {
-                irbNumberList[i++] = irb.getIrb() + ": " + irb.getIrbType().getDisplayName();
-            }
-
-            return irbNumberList;
+        String[] irbNumberList = new String[irbNumbers.size()];
+        for (ResearchProjectIRB irb : irbNumbers) {
+            irbNumberList[i++] = irb.getIrb() + ": " + irb.getIrbType().getDisplayName();
         }
 
-        return new String[0];
+        return irbNumberList;
     }
 
     public void addIrbNumber(ResearchProjectIRB irbNumber) {

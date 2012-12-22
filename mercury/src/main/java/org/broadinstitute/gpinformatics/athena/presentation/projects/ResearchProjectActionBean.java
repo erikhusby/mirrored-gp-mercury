@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.projects;
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.*;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.athena.boundary.FundingListBean;
@@ -11,6 +12,7 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 import org.broadinstitute.gpinformatics.athena.entity.project.Irb;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
@@ -32,6 +34,9 @@ import java.util.*;
  */
 @UrlBinding("/projects/project.action")
 public class ResearchProjectActionBean extends CoreActionBean {
+
+    private static final int IRB_NAME_MAX_LENGTH = 250;
+
     private static final String CREATE = "Create New Project";
     private static final String EDIT = "Edit Project: ";
 
@@ -180,7 +185,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
         editResearchProject.populateCohorts(getCohorts());
         editResearchProject.populateFunding(getFundingSources());
-        editResearchProject.populateIrbs(getIrbs());
+        editResearchProject.populateIrbs(IrbConverter.getIrbs(irbList));
     }
 
     private List<BspUser> getBspUser(String userIdList) {
@@ -223,20 +228,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
         }
 
         return cohorts;
-    }
-
-    private List<Irb> getIrbs() {
-        if (irbList == null) {
-            return Collections.emptyList();
-        }
-
-        String[] irbArray = irbList.split(",");
-        List<Irb> irbs = new ArrayList<Irb> ();
-        for (String irb : irbArray) {
-            irbs.add((Irb) IrbConverter.getAsObject(irb.trim()));
-        }
-
-        return irbs;
     }
 
     public Resolution view() {
@@ -379,6 +370,100 @@ public class ResearchProjectActionBean extends CoreActionBean {
         }
 
         return new StreamingResolution("text", new StringReader(itemList.toString()));
+    }
+
+    /**
+     * Used for AJAX autocomplete (i.e. from create.jsp page).
+     *
+     * @return JSON list of matching users
+     * @throws Exception
+     */
+    @HandlesEvent("cohortAutocomplete")
+    public Resolution cohortAutocomplete() throws Exception {
+        List<Cohort> cohorts = cohortListBean.searchActiveCohort(getQ());
+
+        JSONArray itemList = new JSONArray();
+        for (Cohort cohort : cohorts) {
+            String fullName = cohort.getDisplayName();
+            itemList.put(new AutoCompleteToken(cohort.getCohortId(), fullName, false).getJSONObject());
+        }
+
+        return new StreamingResolution("text", new StringReader(itemList.toString()));
+    }
+
+    /**
+     * Used for AJAX autocomplete (i.e. from create.jsp page).
+     *
+     * @return JSON list of matching users
+     * @throws Exception
+     */
+    @HandlesEvent("fundingAutocomplete")
+    public Resolution fundingAutocomplete() throws Exception {
+        List<Funding> fundings = fundingList.searchFunding(getQ());
+
+        JSONArray itemList = new JSONArray();
+        for (Funding funding : fundings) {
+            String fullName = funding.getDisplayName();
+            itemList.put(new AutoCompleteToken(String.valueOf(funding.getDisplayName()), fullName, false).getJSONObject());
+        }
+
+        return new StreamingResolution("text", new StringReader(itemList.toString()));
+    }
+
+    /**
+     * Used for AJAX autocomplete (i.e. from create.jsp page).
+     *
+     * @return JSON list of matching users
+     * @throws Exception
+     */
+    @HandlesEvent("irbAutocomplete")
+    public Resolution irbAutocomplete() throws Exception {
+        JSONArray itemList = new JSONArray();
+
+        String trimmedQuery = getQ().trim();
+        if (!StringUtils.isBlank(trimmedQuery)) {
+            for (ResearchProjectIRB.IrbType type : ResearchProjectIRB.IrbType.values()) {
+                Irb irb = createIrb(trimmedQuery, type, IRB_NAME_MAX_LENGTH);
+                itemList.put(new AutoCompleteToken(irb.getDisplayName(), irb.getDisplayName(), false).getJSONObject());
+            }
+        }
+
+        return new StreamingResolution("text", new StringReader(itemList.toString()));
+    }
+
+    /**
+     * This creates a valid IRB object out of the type.
+     *
+     * @param irbName The name of the irb
+     * @param type The irb type
+     * @param irbNameMaxLength The maximum length name that can be display
+     *
+     * @return The irb object
+     */
+    public Irb createIrb(String irbName, ResearchProjectIRB.IrbType type, int irbNameMaxLength) {
+
+        // If the type + the space-colon-space is longer than max length, then we cannot have a unique name.
+        if (type.getDisplayName().length() + 4 > irbNameMaxLength) {
+            throw new IllegalArgumentException("IRB type: " + type.getDisplayName() + " is too long to allow for a name");
+        }
+
+        // Strip off any long name to the maximum number of characters
+        String returnName = irbName;
+        int lengthOfFullString = getFullIrbString(irbName, type.getDisplayName()).length();
+        if (lengthOfFullString > irbNameMaxLength) {
+            returnName = irbName.substring(0, irbName.length() - (lengthOfFullString - irbNameMaxLength));
+        }
+
+        return new Irb(returnName, type);
+    }
+
+    private String getFullIrbString(String irbName, String irbType) {
+        String returnValue = irbName;
+        if (irbType != null) {
+            returnValue += " : " + irbType;
+        }
+
+        return returnValue;
     }
 
     public String getBroadPICompleteData() throws Exception {

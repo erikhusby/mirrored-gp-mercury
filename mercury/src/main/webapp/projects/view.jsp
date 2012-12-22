@@ -16,10 +16,9 @@
 
     <stripes:layout-component name="content">
         <p>
-            <stripes:link title="Click to edit ${actionBean.researchProject.title}" href="${ctxpath}/projects/project.action?edit" class="pull-right">
+            <stripes:link title="Click to edit ${actionBean.researchProject.title}" beanclass="${actionBean.class.name}" event="edit" class="pull-right">
                 <span class="icon-home"></span> Edit research project
                 <stripes:param name="businessKey" value="${actionBean.researchProject.businessKey}"/>
-                <stripes:param name="submitString" value="${actionBean.submitString}"/>
             </stripes:link>
         </p>
 
@@ -122,6 +121,17 @@
                 </div>
             </div>
 
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">Irb Numbers</label>
+
+                <div class="controls">
+                    <div class="form-value">
+                        <c:forEach items="${actionBean.researchProject.irbNumbers}" var="irb">
+                                ${irb}
+                        </c:forEach>
+                    </div>
+                </div>
+            </div>
 
             <div class="control-group view-control-group">
                 <label class="control-label label-form">IRB Not Engaged</label>
@@ -160,7 +170,7 @@
                 <c:forEach items="${actionBean.researchProject.productOrders}" var="order">
                     <tr>
                         <td>
-                            <stripes:link href="/orders/order.action" event="view">
+                            <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" event="view">
                                 <stripes:param name="businessKey" value="${order.businessKey}"/>
                                 ${order.title}
                             </stripes:link>
