@@ -55,6 +55,7 @@ table.nocol tbody td,table.nocol tbody th { border-left: none; border-right: non
 
 .page-header { border-bottom: 1px solid #EEEEEE; font-size: 2em; font-variant: small-caps; margin: 0 0 10px; padding-bottom: 0;}
 
+.twocolumn {-moz-column-count:2;-webkit-column-count:2;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
 .threecolumn {-moz-column-count:3;-webkit-column-count:3;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
 .fourcolumn {-moz-column-count:4;-webkit-column-count:4;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
 
@@ -71,12 +72,17 @@ input[type='checkbox'].checkAll { margin-left: -8px; }
 
 .form-horizontal .view-control-group { margin-bottom: 5px; }
 .form-horizontal .view-control-group .controls { margin-top: 5px; }
+.controls-text { margin-top: 5px; }
 
 .tableBar { border-bottom: 2px solid #644436; }
 .borderHeader { font-size: 16px; border-bottom: 2px solid #644436; margin-top: 15px; }
 
-textarea.controlledText { width: auto; }
+textarea.controlledText { width: 550px; }
 
 .label-form { color: #909090; }
 
 .actionButtons { align:left; margin-bottom: 10px; }
+
+.form-search input[type='checkbox'],
+.form-inline input[type='checkbox'],
+.form-horizontal input[type='checkbox'] { float: left; margin-right: 5px; vertical-align: middle; }

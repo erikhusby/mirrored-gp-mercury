@@ -38,10 +38,10 @@
         <stripes:form action="/orders/order.action" id="createForm" class="form-horizontal">
             <div class="actionButtons">
                 <!--security:authorizeBlock roles="${userBean.developerRole}, ${userBean.billingManagerRole}"-->
-                <stripes:submit name="startBilling" value="Start Billing Session"/>
+                <stripes:submit name="startBilling" value="Start Billing Session" style="margin-right:20px;"/>
                 <!--/security:authorizeBlock-->
 
-                <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" style="margin-left:10px;"/>
+                <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" style="margin-right:10px;"/>
 
                 <!--security:authorizeBlock roles="${userBean.developerRole}, ${userBean.productManagerRole}"-->
                 <stripes:link href="/orders/order.action" event="uploadBillingTracker" style="margin-left:10px;">
@@ -76,7 +76,7 @@
                             </td>
                             <td>
                                 <stripes:link href="/orders/order.action" event="view">
-                                    <stripes:param name="orderKey" value="${order.businessKey}"/>
+                                    <stripes:param name="businessKey" value="${order.businessKey}"/>
                                     ${order.title}
                                 </stripes:link>
                             </td>

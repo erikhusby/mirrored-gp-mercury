@@ -161,7 +161,7 @@
                     <tr>
                         <td>
                             <stripes:link href="/orders/order.action" event="view">
-                                <stripes:param name="orderKey" value="${order.businessKey}"/>
+                                <stripes:param name="businessKey" value="${order.businessKey}"/>
                                 ${order.title}
                             </stripes:link>
                         </td>

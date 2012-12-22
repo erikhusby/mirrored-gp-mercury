@@ -32,10 +32,11 @@
     <stripes:layout-component name="content">
         <!--security:authorizeBlock roles="${actionBean.userBean.developerRole}, ${actionBean.userBean.billingManagerRole}"-->
             <p>
-                <stripes:link title="Click to edit ${actionBean.editOrder.title}" href="${ctxpath}/products/product.action?edit" class="pull-right">
+                <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" class="pull-right">
                     <span class="icon-home"></span> Edit product order
                     <stripes:param name="businessKey" value="${actionBean.editOrder.businessKey}"/>
-                    <stripes:param name="submitString" value="${actionBean.submitString}"/>
+                    <stripes:param name="edit"/>
                 </stripes:link>
             </p>
         <!--/security:authorizeBlock-->

@@ -12,8 +12,10 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
-                                    preventDuplicates: true,
-                                    prePopulate: ${actionBean.projectManagerCompleteData}
+                                    <c:if test="${actionBean.projectManagerCompleteData != null}">
+                                        prePopulate: ${actionBean.projectManagerCompleteData},
+                                    </c:if>
+                                    preventDuplicates: true
                                 }
                         );
 
@@ -21,8 +23,10 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
-                                    preventDuplicates: true,
-                                    prePopulate: ${actionBean.scientistCompleteData}
+                                    <c:if test="${actionBean.scientistCompleteData != null}">
+                                        prePopulate: ${actionBean.scientistCompleteData},
+                                    </c:if>
+                                    preventDuplicates: true
                                 }
                         );
 
@@ -30,8 +34,10 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
-                                    preventDuplicates: true,
-                                    prePopulate: ${actionBean.externalCollaboratorCompleteData}
+                                    <c:if test="${actionBean.externalCollaboratorCompleteData != null}">
+                                        prePopulate: ${actionBean.externalCollaboratorCompleteData},
+                                    </c:if>
+                                    preventDuplicates: true
                                 }
                         );
 
@@ -39,8 +45,10 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
-                                    preventDuplicates: true,
-                                    prePopulate: ${actionBean.broadPICompleteData}
+                                    <c:if test="${actionBean.broadPICompleteData != null}">
+                                        prePopulate: ${actionBean.broadPICompleteData},
+                                    </c:if>
+                                    preventDuplicates: true
                                 }
                         );
 
@@ -48,17 +56,21 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
-                                    preventDuplicates: true,
-                                    prePopulate: ${actionBean.fundingSourcesCompleteData}
+                                    <c:if test="${actionBean.fundingSourcesCompleteData != null}">
+                                        prePopulate: ${actionBean.fundingSourcesCompleteData},
+                                    </c:if>
+                                    preventDuplicates: true
                                 }
                         );
 
                         $j("#cohorts").tokenInput(
-                                "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                "${ctxpath}/projects/project.action?cohortAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
-                                    preventDuplicates: true,
-                                    prePopulate: ${actionBean.cohortsCompleteData}
+                                    <c:if test="${actionBean.cohortsCompleteData != null}">
+                                        prePopulate: ${actionBean.cohortsCompleteData},
+                                    </c:if>
+                                    preventDuplicates: true
                                 }
                         );
 
@@ -66,8 +78,10 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
-                                    preventDuplicates: true,
-                                    prePopulate: ${actionBean.irbsCompleteData}
+                                    <c:if test="${actionBean.irbsCompleteData != null}">
+                                        prePopulate: ${actionBean.irbsCompleteData},
+                                    </c:if>
+                                    preventDuplicates: true
                                 }
                         );
                     }
@@ -217,7 +231,7 @@
                     <tr>
                         <td>
                             <stripes:link href="/orders/order.action" event="view">
-                                <stripes:param name="orderKey" value="${order.businessKey}"/>
+                                <stripes:param name="businessKey" value="${order.businessKey}"/>
                                 ${order.title}
                             </stripes:link>
                         </td>

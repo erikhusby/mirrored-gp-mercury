@@ -342,19 +342,24 @@ public class ResearchProjectActionBean extends CoreActionBean {
     /**
      * Handles the autocomplete for the jQuery Token plugin.
      *
-     * @return
+     * @return The ajax resolution
      * @throws Exception
      */
     @HandlesEvent("autocomplete")
     public Resolution autocomplete() throws Exception {
         Collection<ResearchProject> projects = researchProjectDao.searchProjects(getQ());
 
+        String completeString = getAutoCompleteJsonString(projects);
+        return new StreamingResolution("text", new StringReader(completeString));
+    }
+
+    public static String getAutoCompleteJsonString(Collection<ResearchProject> projects) throws JSONException {
         JSONArray itemList = new JSONArray();
         for (ResearchProject project : projects) {
             itemList.put(new AutoCompleteToken(project.getBusinessKey(), project.getTitle(), false).getJSONObject());
         }
 
-        return new StreamingResolution("text", new StringReader(itemList.toString()));
+        return itemList.toString();
     }
 
     /**

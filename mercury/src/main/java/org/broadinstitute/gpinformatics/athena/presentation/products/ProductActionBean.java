@@ -14,9 +14,11 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.json.JSONArray;
+import org.json.JSONException;
 
 import javax.inject.Inject;
 import java.io.StringReader;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -136,12 +138,17 @@ public class ProductActionBean extends CoreActionBean {
     public Resolution autocomplete() throws Exception {
         List<Product> products = productDao.searchProducts(getQ());
 
+        String completeString = getAutoCompleteJsonString(products);
+        return new StreamingResolution("text", new StringReader(completeString));
+    }
+
+    public static String getAutoCompleteJsonString(Collection<Product> products) throws JSONException {
         JSONArray itemList = new JSONArray();
         for (Product product : products) {
-            itemList.put(new AutoCompleteToken(product.getBusinessKey(), product.getProductLabel(), false).getJSONObject());
+            itemList.put(new AutoCompleteToken(product.getBusinessKey(), product.getProductName(), false).getJSONObject());
         }
 
-        return new StreamingResolution("text", new StringReader(itemList.toString()));
+        return itemList.toString();
     }
 
     @HandlesEvent("addOnsAutocomplete")
@@ -150,7 +157,7 @@ public class ProductActionBean extends CoreActionBean {
 
         JSONArray itemList = new JSONArray();
         for (Product addOn : addOns) {
-            itemList.put(new AutoCompleteToken(addOn.getBusinessKey(), addOn.getProductLabel(), false).getJSONObject());
+            itemList.put(new AutoCompleteToken(addOn.getBusinessKey(), addOn.getProductName(), false).getJSONObject());
         }
 
         return new StreamingResolution("text", new StringReader(itemList.toString()));

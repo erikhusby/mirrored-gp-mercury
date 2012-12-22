@@ -8,33 +8,35 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
+import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.BspLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean;
+import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
-import java.util.Calendar;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-
-import static org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao.FetchSpec.*;
+import java.util.*;
 
 /**
  * This handles all the needed interface processing elements
@@ -68,6 +70,12 @@ public class ProductOrderActionBean extends CoreActionBean {
     private ProductOrderDao productOrderDao;
 
     @Inject
+    private ProductDao productDao;
+
+    @Inject
+    private ResearchProjectDao projectDao;
+
+    @Inject
     private BillingSessionDao billingSessionDao;
 
     @Inject
@@ -78,8 +86,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrderListEntry> allProductOrders;
 
-    @Validate(required = true, on={"view", "edit", "save"})
-    private String orderKey;
+    @Validate(required = true, on = {"view", "edit", "save"})
+    private String businessKey;
 
     @ValidateNestedProperties({
             @Validate(field="comments", maxlength=2000, on={"save"})
@@ -89,14 +97,24 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<String> selectedProductOrderBusinessKeys;
     private List<ProductOrder> selectedProductOrders;
 
+    // For the Add-ons update we need the product title
+    @Validate(required = true, on = {"getAddOns"})
+    private String productKey;
+
+    private List<String> addOnKeys = new ArrayList<String> ();
+
+    // The token input autocomplete backing objects
+    private String researchProjectList;
+    private String productList;
+
     /**
      * Initialize the product with the passed in key for display in the form
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {"view", "edit", "downloadBillingTracker", "save", "addOnsAutocomplete"})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {"view", "edit", "downloadBillingTracker", "save"})
     public void init() {
-        orderKey = getContext().getRequest().getParameter("orderKey");
-        if (orderKey != null) {
-            editOrder = productOrderDao.findByBusinessKey(orderKey);
+        businessKey = getContext().getRequest().getParameter("businessKey");
+        if (businessKey != null) {
+            editOrder = productOrderDao.findByBusinessKey(businessKey);
         }
     }
 
@@ -129,7 +147,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         Set<Product> products = new HashSet<Product> ();
         selectedProductOrders =
-            productOrderDao.findListByBusinessKeyList(selectedProductOrderBusinessKeys, Product, ResearchProject, Samples);
+            productOrderDao.findListByBusinessKeyList(
+                selectedProductOrderBusinessKeys,
+                ProductOrderDao.FetchSpec.Product,
+                ProductOrderDao.FetchSpec.ResearchProject,
+                ProductOrderDao.FetchSpec.Samples);
+
         for (ProductOrder order : selectedProductOrders) {
             products.add(order.getProduct());
         }
@@ -139,7 +162,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
             if (duplicatePriceItems != null) {
                 errors.addGlobalError(new SimpleError(
-                    "The Product " + product.getPartNumber() + " has duplicate price items: " + StringUtils.join(duplicatePriceItems, ", ")));
+                    "The Product " + product.getPartNumber() + " has duplicate price items: " +
+                    StringUtils.join(duplicatePriceItems, ", ")));
             }
         }
 
@@ -189,6 +213,18 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("save")
     public Resolution save() {
         try {
+            // update the addons from the keys
+            List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
+            editOrder.setAddons(addOnProducts);
+
+            // Since there is one product, can just use the list as the key
+            Product product = productDao.findByPartNumber(productList);
+            editOrder.setProduct(product);
+
+            // Since there is one project, can just use the list as the key
+            ResearchProject project = projectDao.findByBusinessKey(researchProjectList);
+            editOrder.setResearchProject(project);
+
             productOrderDao.persist(editOrder);
         } catch (Exception e ) {
             addGlobalValidationError(e.getMessage());
@@ -196,7 +232,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been created");
-        return new RedirectResolution(ProductOrderActionBean.class, "view").addParameter("order", editOrder.getBusinessKey());
+        return new RedirectResolution(ProductOrderActionBean.class, "view").addParameter("businessKey", editOrder.getBusinessKey());
     }
 
     @HandlesEvent("downloadBillingTracker")
@@ -229,6 +265,22 @@ public class ProductOrderActionBean extends CoreActionBean {
                 .addParameter("billingSession", session.getBusinessKey());
     }
 
+    @HandlesEvent("getAddOns")
+    public Resolution getAddOns() throws Exception {
+        JSONArray itemList = new JSONArray();
+
+        Product product = productDao.findByBusinessKey(productKey);
+        for (Product addOn : product.getAddOns()) {
+            JSONObject item = new JSONObject();
+            item.put("key", addOn.getBusinessKey());
+            item.put("value", addOn.getProductName());
+
+            itemList.put(item);
+        }
+
+        return new StreamingResolution("text", new StringReader(itemList.toString()));
+    }
+
     public List<String> getSelectedProductOrderBusinessKeys() {
         return selectedProductOrderBusinessKeys;
     }
@@ -251,14 +303,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setEditOrder(ProductOrder order) {
         this.editOrder = order;
-    }
-
-    public String getProductKey() {
-        return orderKey;
-    }
-
-    public void setProductKey(String orderKey) {
-        this.orderKey = orderKey;
     }
 
     public String getQuoteUrl() {
@@ -311,11 +355,59 @@ public class ProductOrderActionBean extends CoreActionBean {
         return null;
     }
 
-    public String getOrderKey() {
-        return orderKey;
+    public String getBusinessKey() {
+        return businessKey;
     }
 
-    public void setOrderKey(String orderKey) {
-        this.orderKey = orderKey;
+    public void setBusinessKey(String businessKey) {
+        this.businessKey = businessKey;
+    }
+
+    public String getProductKey() {
+        return productKey;
+    }
+
+    public void setProductKey(String productKey) {
+        this.productKey = productKey;
+    }
+
+    public String getResearchProjectList() {
+        return researchProjectList;
+    }
+
+    public void setResearchProjectList(String researchProjectList) {
+        this.researchProjectList = researchProjectList;
+    }
+
+    public String getProductList() {
+        return productList;
+    }
+
+    public void setProductList(String productList) {
+        this.productList = productList;
+    }
+
+    public String getProjectCompleteData() throws Exception {
+        if (editOrder == null) {
+            return "";
+        }
+
+        return ResearchProjectActionBean.getAutoCompleteJsonString(Collections.singletonList(editOrder.getResearchProject()));
+    }
+
+    public String getProductCompleteData() throws Exception {
+        if (editOrder == null) {
+            return "";
+        }
+
+        return ProductActionBean.getAutoCompleteJsonString(Collections.singletonList(editOrder.getProduct()));
+    }
+
+    public List<String> getAddOnKeys() {
+        return addOnKeys;
+    }
+
+    public void setAddOnKeys(List<String> addOnKeys) {
+        this.addOnKeys = addOnKeys;
     }
 }

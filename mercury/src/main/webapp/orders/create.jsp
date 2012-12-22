@@ -31,50 +31,67 @@
                         "${ctxpath}/projects/project.action?autocomplete=", {
                             searchDelay: 2000,
                             minChars: 2,
+                            <c:if test="${actionBean.projectCompleteData != null}">
+                                prePopulate: ${actionBean.projectCompleteData},
+                            </c:if>
                             tokenLimit: 1
                         }
                     );
 
                     $j("#product").tokenInput(
-                            "${ctxpath}/products/product.action?autocomplete=", {
-                                searchDelay: 2000,
-                                minChars: 2,
-                                tokenLimit: 1
-                            }
+                        "${ctxpath}/products/product.action?autocomplete=", {
+                            searchDelay: 2000,
+                            minChars: 2,
+                            onAdd: updateAddOnCheckboxes,
+                            onDelete: updateAddOnCheckboxes,
+                            <c:if test="${actionBean.productCompleteData != null}">
+                                prePopulate: ${actionBean.productCompleteData},
+                            </c:if>
+                            tokenLimit: 1
+                        }
                     );
 
                     updateAddOnCheckboxes();
                 }
             );
 
+            var addOn = new Array();
+            <c:forEach items="${actionBean.editOrder.addOns}" var="addOnProduct">
+                addOn['${addOnProduct.addOn.businessKey}'] = true;
+            </c:forEach>
+
             function updateAddOnCheckboxes() {
-                var productTitle = $j("product").val();
-                if (productTitle == "") {
-                    $j("addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
+                var productKey = $j("#product").val();
+                if ((productKey == null) || (productKey == "")) {
+                    $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
                 }
 
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getAddOns=&productTitle=" + productTitle,
+                    url: "${ctxpath}/orders/order.action?getAddOns=&productKey=" + productKey,
                     dataType: 'json',
-                    data: data,
                     success: setupCheckboxes
                 });
             }
 
             function setupCheckboxes(data) {
-                var productTitle = $j("product").val();
+                var productTitle = $j("#product").val();
 
                 if (data.length == 0) {
                     $j("#addOnCheckboxes").text("The product '" + productTitle + "' has no Add-ons");
                     return;
                 }
 
-                var addOnIndex = 0;
                 var checkboxText = "";
-                $j.each(data, function(key, val) {
-                    var addOnId = "addOnCheckbox-" + addOnIndex++;
-                    checkboxText += '<input id="' + addOnId + '" type="checkbox" name="editOrder.addOns" value="' + key + '"/>';
-                    checkboxText += '<label for="' + addOnId + '">' + val + '</label>';
+                $j.each(data, function(index, val) {
+                    // if this value is in the add on list, then check the checkbox
+                    checked = '';
+                    if (addOn[val.key]) {
+                        checked = ' checked="checked" ';
+                    }
+
+                    var addOnId = "addOnCheckbox-" + index;
+                    checkboxText += '  <input id="' + addOnId + '" type="checkbox"' + checked + ' name="addOnKeys" value="' + val.key + '"/>';
+                    checkboxText += '  <label style="font-size: x-small;" for="' + addOnId + '">' + val.value +' [' + val.key + ']</label>';
                 });
 
                 $j("#addOnCheckboxes").html(checkboxText);
@@ -113,8 +130,8 @@
     <stripes:layout-component name="content">
 
         <div style="float: left; margin-right: 40px; margin-top: 5px;">
-            <stripes:form action="/products/product.action" id="createForm" class="form-horizontal">
-                <stripes:hidden name="orderKey" value="${actionBean.orderKey}"/>
+            <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
+                <stripes:hidden name="businessKey" value="${actionBean.businessKey}"/>
                 <div class="control-group">
                     <stripes:label for="orderName" name="Name" class="control-label"/>
                     <div class="controls">
@@ -126,7 +143,7 @@
                 <div class="control-group">
                     <stripes:label for="researchProject" name="Research Project" class="control-label"/>
                     <div class="controls">
-                        <stripes:text id="researchProject" name="editOrder.description" class="defaultText"
+                        <stripes:text id="researchProject" name="researchProjectList" class="defaultText"
                             title="Enter the research project for this order" value="${actionBean.editOrder.researchProject}"/>
                     </div>
                 </div>
@@ -134,17 +151,14 @@
                 <div class="control-group">
                     <stripes:label for="product" name="Product" class="control-label"/>
                     <div class="controls">
-                        <stripes:text id="product" name="editOrder.product" class="defaultText"
-                            onchange="updateAddOnCheckBoxes;"
+                        <stripes:text id="product" name="productList" class="defaultText"
                             title="Enter the product name for this order" value="${actionBean.editOrder.product}"/>
                     </div>
                 </div>
 
                 <div class="control-group">
                     <stripes:label for="selectedAddOns" name="Add-ons" class="control-label"/>
-                    <div id="addOnCheckboxes" class="controls">
-
-                    </div>
+                    <div id="addOnCheckboxes" class="controls controls-text"> </div>
                 </div>
 
                 <div class="control-group">
@@ -183,11 +197,11 @@
                             <div class="span1">
                                 <c:choose>
                                     <c:when test="${actionBean.creating}">
-                                        <stripes:link href="${ctxpath}/products/product.action?list=">Cancel</stripes:link>
+                                        <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
                                     </c:when>
                                     <c:otherwise>
-                                        <stripes:link href="${ctxpath}/products/product.action?view=">
-                                            <stripes:param name="productKey" value="${actionBean.editOrder.businessKey}"/>
+                                        <stripes:link beanclass="${actionBean.class.name}" event="view">
+                                            <stripes:param name="businessKey" value="${actionBean.editOrder.businessKey}"/>
                                             Cancel
                                         </stripes:link>
                                     </c:otherwise>
@@ -200,7 +214,7 @@
         </div>
 
         <div style="float: left; width: 600px;" class="help-block">
-            <stripes:form action="/products/product.action" id="createForm" class="form-horizontal">
+            <stripes:form action="${actionBean.class.name}" id="samplesForm" class="form-horizontal">
                 Enter samples into this box and click Add Samples to add them to the samples list at the bottom. You can remove samples
                 by clicking on the remove buttona in the list.
                 <br/>
@@ -218,7 +232,7 @@
             Samples
         </div>
 
-        <stripes:form action="/products/product.action" id="createForm" class="form-horizontal">
+        <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
 
             <table id="sampleTable" class="table simple">
                 <thead>
