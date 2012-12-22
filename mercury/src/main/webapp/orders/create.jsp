@@ -110,27 +110,13 @@
             function updateFunds(data) {
                 $j("#fundsRemaining").text(data.fundsRemaining);
             }
-
-            function addSamples() {
-                var sampleList = $j("#samplesToAdd").val();
-                $j.ajax({
-                    url: "${ctxpath}/orders/order.action?addSamples&sampleList=" + sampleList,
-                    dataType: 'json',
-                    data: data,
-                    success: updateSampleTable
-                });
-            }
-
-            function updateSampleTable(data) {
-
-            }
         </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
 
-        <div style="float: left; margin-right: 40px; margin-top: 5px;">
-            <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
+        <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
+            <div style="float: left; margin-right: 40px; margin-top: 5px;">
                 <stripes:hidden name="businessKey" value="${actionBean.businessKey}"/>
                 <div class="control-group">
                     <stripes:label for="orderName" name="Name" class="control-label"/>
@@ -210,72 +196,16 @@
                         </div>
                     </div>
                 </div>
-            </stripes:form>
-        </div>
+            </div>
 
-        <div style="float: left; width: 600px;" class="help-block">
-            <stripes:form action="${actionBean.class.name}" id="samplesForm" class="form-horizontal">
-                Enter samples into this box and click Add Samples to add them to the samples list at the bottom. You can remove samples
-                by clicking on the remove buttona in the list.
+            <div style="float: left; width: 600px;" class="help-block">
+                Enter samples names in this box, one per line. When you save the order, the view page will show
+                all sample details.
                 <br/>
                 <br/>
-                <stripes:textarea class="controlledText" id="samplesToAdd" name="samplesToAdd" rows="15" cols="120"/>
-                <br/>
-                <stripes:button style="margin-top:5px;" name="addSamples" value="Add Samples" onclick="addSamples"/>
-            </stripes:form>
-        </div>
-
-        <div style="clear:both"> </div>
-
-
-        <div class="borderHeader">
-            Samples
-        </div>
-
-        <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
-
-            <table id="sampleTable" class="table simple">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Participant</th>
-                        <th>Collaborator Sample</th>
-                        <th>Collaborator Participant Id</th>
-                        <th>Material</th>
-                        <th>Volume</th>
-                        <th>Concentration</th>
-                        <th>Total</th>
-                        <th>Sample Type</th>
-                        <th>Primary Disease</th>
-                        <th>Gender</th>
-                        <th>Stock Type</th>
-                        <th>Fingerprint Available</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <c:forEach items="${actionBean.editOrder.samples}" var="sample">
-                        <tr>
-                            <td>${sample.sampleName}</td>
-                            <td>${sample.bspDTO.patientId}</td>
-                            <td>${sample.bspDTO.collaboratorsSampleName}</td>
-                            <td>${sample.bspDTO.collaboratorParticipantId}</td>
-                            <td>${sample.bspDTO.materialType}</td>
-                            <td>${sample.bspDTO.volume}</td>
-                            <td>${sample.bspDTO.concentration}</td>
-                            <td>${sample.bspDTO.total}</td>
-                            <td>${sample.bspDTO.sampleType}</td>
-                            <td>${sample.bspDTO.primaryDisease}</td>
-                            <td>${sample.bspDTO.gender}</td>
-                            <td>${sample.bspDTO.stockType}</td>
-                            <td>
-                                <c:if test="${sample.bspDTO.hasFingerprint}">
-                                    <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
-                                </c:if>
-                            </td>
-                        </tr>
-                    </c:forEach>
-                </tbody>
-            </table>
+                <stripes:textarea class="controlledText" id="samplesToAdd" name="editOrder.sampleList"
+                                  rows="15" cols="120" value="${actionBean.editOrder.sampleList}"/>
+            </div>
         </stripes:form>
 
     </stripes:layout-component>

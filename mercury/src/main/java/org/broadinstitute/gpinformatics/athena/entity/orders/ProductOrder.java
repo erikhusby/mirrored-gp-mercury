@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -111,6 +113,9 @@ public class ProductOrder implements Serializable {
     @Transient
     private String originalTitle;   // This is used for edit to keep track of changes to the object.
 
+    @Transient
+    private String sampleList;
+
     // Initialize our transient data after the object has been loaded from the database.
     @PostLoad
     private void initialize() {
@@ -145,6 +150,13 @@ public class ProductOrder implements Serializable {
 
     public void setCount(int count) {
         this.count = count;
+    }
+
+    public void updateData(ResearchProject project, Product product, List<Product> addOnProducts) {
+        setAddons(addOnProducts);
+        setProduct(product);
+        setResearchProject(project);
+        updateSamplesFromList();
     }
 
     /**
@@ -918,24 +930,23 @@ public class ProductOrder implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public boolean equals(Object other) {
 
-        ProductOrder that = (ProductOrder) o;
+        if ((this == other)) {
+            return true;
+        }
 
-        if (researchProject != null ? !researchProject.equals(that.getResearchProject()) : that.getResearchProject() != null)
+        if (!(other instanceof ProductOrder)) {
             return false;
-        if (title != null ? !title.equals(that.getTitle()) : that.getTitle() != null) return false;
+        }
 
-        return true;
+        ProductOrder castOther = (ProductOrder) other;
+        return new EqualsBuilder().append(getBusinessKey(), castOther.getBusinessKey()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        int result = title != null ? title.hashCode() : 0;
-        result = 31 * result + (researchProject != null ? researchProject.hashCode() : 0);
-        return result;
+        return new HashCodeBuilder().append(getBusinessKey()).toHashCode();
     }
 
     public boolean hasJiraTicketKey() {
@@ -948,5 +959,27 @@ public class ProductOrder implements Serializable {
 
     public String getOriginalTitle() {
         return originalTitle;
+    }
+
+    public String getSampleList() {
+        if (sampleList == null) {
+            sampleList = "";
+            for (ProductOrderSample sample : samples) {
+                sampleList += sample.getSampleName() + "\n";
+            }
+        }
+
+        return sampleList;
+    }
+
+    public void updateSamplesFromList() {
+        samples.clear();
+        for (String sampleName : sampleList.trim().split("\n")) {
+            samples.add(new ProductOrderSample(sampleName.trim()));
+        }
+    }
+
+    public void setSampleList(String sampleList) {
+        this.sampleList = sampleList;
     }
 }

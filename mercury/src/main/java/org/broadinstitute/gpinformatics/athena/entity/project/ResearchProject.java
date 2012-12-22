@@ -586,12 +586,12 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         }
 
         ResearchProject castOther = (ResearchProject) other;
-        return new EqualsBuilder().append(getJiraTicketKey(), castOther.getJiraTicketKey()).isEquals();
+        return new EqualsBuilder().append(getBusinessKey(), castOther.getBusinessKey()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(getJiraTicketKey()).toHashCode();
+        return new HashCodeBuilder().append(getBusinessKey()).toHashCode();
     }
 
     @Override

@@ -213,18 +213,17 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("save")
     public Resolution save() {
         try {
-            // update the addons from the keys
-            List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
-            editOrder.setAddons(addOnProducts);
+            // Since there is one project, can just use the list as the key
+            ResearchProject project = projectDao.findByBusinessKey(researchProjectList);
 
             // Since there is one product, can just use the list as the key
             Product product = productDao.findByPartNumber(productList);
-            editOrder.setProduct(product);
 
-            // Since there is one project, can just use the list as the key
-            ResearchProject project = projectDao.findByBusinessKey(researchProjectList);
-            editOrder.setResearchProject(project);
+            // update the addons from the keys
+            List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
+            editOrder.updateData(project, product, addOnProducts);
 
+            // save it!
             productOrderDao.persist(editOrder);
         } catch (Exception e ) {
             addGlobalValidationError(e.getMessage());
