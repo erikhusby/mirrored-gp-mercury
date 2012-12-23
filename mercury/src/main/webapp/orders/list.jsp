@@ -30,12 +30,14 @@
 
     <stripes:layout-component name="content">
         <p>
-            <stripes:link title="New Product Order" href="${ctxpath}/orders/order.action?create" class="pull-right">New order</stripes:link>
+            <stripes:link title="New Product Order" beanclass="${actionBean.class.name}" event="create" class="pull-right">
+                New order
+            </stripes:link>
         </p>
 
         <div class="clearfix"></div>
 
-        <stripes:form action="/orders/order.action" id="createForm" class="form-horizontal">
+        <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
             <div class="actionButtons">
                 <security:authorizeBlock roles="${actionBean.userBean.developerRole}, ${actionBean.userBean.billingManagerRole}">
                     <stripes:submit name="startBilling" value="Start Billing Session" style="margin-right:30px;"/>
@@ -44,7 +46,7 @@
                 <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" style="margin-right:5px;"/>
 
                 <security:authorizeBlock roles="${actionBean.userBean.developerRole}, ${actionBean.userBean.productManagerRole}">
-                    <stripes:link href="/orders/order.action" event="uploadBillingTracker">
+                    <stripes:link beanclass="${actionBean.class.name}" event="uploadBillingTracker">
                         Upload Billing Tracker
                     </stripes:link>
                 </security:authorizeBlock>
@@ -76,7 +78,7 @@
                                 <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderBusinessKeys" value="${order.businessKey}"/>
                             </td>
                             <td>
-                                <stripes:link href="/orders/order.action" event="view">
+                                <stripes:link beanclass="${actionBean.class.name}" event="view">
                                     <stripes:param name="businessKey" value="${order.businessKey}"/>
                                     ${order.title}
                                 </stripes:link>
@@ -97,7 +99,8 @@
                             <td>${order.pdoSampleCount}</td>
                             <td>
                                 <c:if test="${order.billingSessionBusinessKey != null}">
-                                    <stripes:link href="/billing/billing.action" event="view">
+                                    <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"
+                                                  event="view">
                                         <stripes:param name="billingSession" value="${order.billingSessionBusinessKey}"/>
                                         ${order.billingSessionBusinessKey}
                                     </stripes:link>
