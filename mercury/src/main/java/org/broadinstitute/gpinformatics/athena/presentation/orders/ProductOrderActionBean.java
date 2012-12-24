@@ -323,7 +323,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             String filename =
                     "BillingTracker-" + AbstractSpreadsheetExporter.DATE_FORMAT.format(Calendar.getInstance().getTime());
 
-            final File tempFile = File.createTempFile(filename, "xls");
+            final File tempFile = File.createTempFile(filename, ".xls");
             outputStream = new FileOutputStream(tempFile);
 
             SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(productOrderList);

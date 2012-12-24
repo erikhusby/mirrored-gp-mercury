@@ -2,13 +2,14 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.validation.Validate;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillableRef;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerImporter;
-import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerManager;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -31,14 +32,14 @@ public class UploadTrackerActionBean extends CoreActionBean {
     @Inject
     private ProductOrderDao productOrderDao;
 
+    @Inject
+    private BillingLedgerDao billingLedgerDao;
+
     @Validate(required = true, on = "preview")
     private FileBean trackerFile;
 
     @Validate(required = true, on = "upload")
     private String previewFilePath;
-
-    @Inject
-    private BillingTrackerManager billingTrackerManager;
 
     private List<PreviewData> previewData;
 
@@ -50,12 +51,18 @@ public class UploadTrackerActionBean extends CoreActionBean {
 
     private void previewUploadedFile() {
         InputStream inputStream = null;
-        BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao);
+        BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, billingLedgerDao, getContext().getValidationErrors());
+
         try {
             inputStream = trackerFile.getInputStream();
 
             Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> productProductOrderPriceItemChargesMap =
                     importer.parseFileForSummaryMap(inputStream);
+
+            // If there were parsing errors, just return
+            if (!getContext().getValidationErrors().isEmpty()) {
+                return;
+            }
 
             previewData = new ArrayList<PreviewData>();
 
@@ -91,33 +98,29 @@ public class UploadTrackerActionBean extends CoreActionBean {
 
             if (previewData.isEmpty()) {
                 addGlobalValidationError("No updated billing data found in tracker file.");
+                return;
             }
 
             if (!automatedPDOs.isEmpty()) {
                 addGlobalValidationError("Cannot upload data for these product orders because they use " +
                         "automated billing: " + StringUtils.join(automatedPDOs, ", "));
+                return;
             }
 
-        } catch (Exception e) {
-            addGlobalValidationError("Error uploading tracker: " + e.getMessage());
-            logger.error(e);
-            throw new RuntimeException(e);
-        } finally {
+            // Close the file that was just read in so we can get ready to copy to our temp directory
             IOUtils.closeQuietly(inputStream);
-        }
 
-        // If there is data to upload, the copy the stream to a temp file
-        if (!previewData.isEmpty()) {
-            try {
+            // If there is data to upload, then copy the stream to a temp file
+            if (!previewData.isEmpty()) {
                 inputStream = trackerFile.getInputStream();
                 File tempFile = copyFromStreamToTempFile(inputStream);
                 previewFilePath = tempFile.getAbsolutePath();
-            } catch (Exception e) {
-                addGlobalValidationError("Error copying file: " + e);
-                logger.error(e);
-            } finally {
-                IOUtils.closeQuietly(inputStream);
             }
+        } catch (Exception e) {
+            logger.error(e);
+            addGlobalValidationError("Error uploading tracker: " + e.getMessage());
+        } finally {
+            IOUtils.closeQuietly(inputStream);
         }
     }
 
@@ -136,13 +139,19 @@ public class UploadTrackerActionBean extends CoreActionBean {
         return tempFile.getAbsoluteFile();
     }
 
-    private void processBillingOnTempFile(File tempFile) {
+    private void processBillingOnTempFile() {
+        BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, billingLedgerDao, getContext().getValidationErrors());
+
         InputStream inputStream = null;
         try {
-            inputStream = new FileInputStream(tempFile);
+            File previewFile = new File(previewFilePath);
+            inputStream = new FileInputStream(previewFile);
 
             Map<String, List<ProductOrder>> billedProductOrdersMapByPartNumber =
-                    billingTrackerManager.parseFileForBilling(inputStream);
+                    importer.parseFileForBilling(inputStream);
+            if (!getContext().getValidationErrors().isEmpty()) {
+                return;
+            }
 
             int numberOfProducts = 0;
             List<String> orderIdsUpdated = new ArrayList<String>();
@@ -151,14 +160,17 @@ public class UploadTrackerActionBean extends CoreActionBean {
                 orderIdsUpdated = extractOrderIdsFromMap(billedProductOrdersMapByPartNumber);
             }
 
-            addGlobalValidationError(
-                    "Updated the billing ledger for " + orderIdsUpdated.size() + " product order(s) across " +
+            addMessage("Updated the billing ledger for " + orderIdsUpdated.size() + " product order(s) across " +
                             numberOfProducts + " primary product(s).");
 
+            // Since everything worked, delete the file
+            IOUtils.closeQuietly(inputStream);
+            FileUtils.deleteQuietly(previewFile);
         } catch (Exception e) {
             logger.error(e);
             addGlobalValidationError(e.getMessage());
         } finally {
+            // No matter what, close the file but it will be ignored if everything was closed and deleted
             IOUtils.closeQuietly(inputStream);
         }
     }
@@ -186,16 +198,29 @@ public class UploadTrackerActionBean extends CoreActionBean {
         return orderIdsUpdated;
     }
 
+    @DefaultHandler
+    @HandlesEvent("view")
+    public Resolution view() {
+        isPreview = false;
+        return new ForwardResolution(TRACKER_PAGE);
+    }
+
     @HandlesEvent("upload")
     public Resolution upload() {
         isPreview = false;
+        processBillingOnTempFile();
         return new ForwardResolution(TRACKER_PAGE);
     }
 
     @HandlesEvent("preview")
     public Resolution preview() {
-        isPreview = true;
         previewUploadedFile();
+
+        // If there are no errors, show the preview!
+        if (getContext().getValidationErrors().isEmpty()) {
+            isPreview = true;
+        }
+
         return new ForwardResolution(TRACKER_PAGE);
     }
 
@@ -215,14 +240,14 @@ public class UploadTrackerActionBean extends CoreActionBean {
         this.trackerFile = trackerFile;
     }
 
-    private static class PreviewData {
+    public static class PreviewData {
         private final String order;
         private final String partNumber;
         private final String priceItemName;
         private final double newCharges;
         private final double newCredits;
 
-        public PreviewData(String order, String partNumber, String priceItemName, double newCredits, double newCharges) {
+        public PreviewData(String order, String partNumber, String priceItemName, double newCharges, double newCredits) {
             this.order = order;
             this.partNumber = partNumber;
             this.priceItemName = priceItemName;
@@ -234,7 +259,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
             return order;
         }
 
-        public String partNumber() {
+        public String getPartNumber() {
             return partNumber;
         }
 
@@ -250,4 +275,5 @@ public class UploadTrackerActionBean extends CoreActionBean {
             return newCredits;
         }
     }
+
 }

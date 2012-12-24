@@ -168,7 +168,7 @@ public class CoreActionBean implements ActionBean {
      * @param message The message to put into a SimpleMessage
      */
     protected void addMessage(String message) {
-        this.getContext().getMessages().add(new SimpleMessage(message));
+        getContext().getMessages().add(new SimpleMessage(message));
     }
 
     /**
@@ -178,7 +178,7 @@ public class CoreActionBean implements ActionBean {
      * @param errorMessage The message to put into a SimpleError
      */
     protected void addValidationError(String field, String errorMessage) {
-        this.getContext().getValidationErrors().add(field, new SimpleError(errorMessage));
+        getContext().getValidationErrors().add(field, new SimpleError(errorMessage));
     }
 
 
@@ -188,7 +188,7 @@ public class CoreActionBean implements ActionBean {
      * @param errorMessage The message to put into a SimpleError
      */
     public void addGlobalValidationError(String errorMessage) {
-        this.getContext().getValidationErrors().add(ValidationErrors.GLOBAL_ERROR, new SimpleError(errorMessage));
+        getContext().getValidationErrors().add(ValidationErrors.GLOBAL_ERROR, new SimpleError(errorMessage));
     }
 
     /**

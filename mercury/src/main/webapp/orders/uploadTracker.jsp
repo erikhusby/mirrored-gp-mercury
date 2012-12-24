@@ -30,9 +30,9 @@
 
     <stripes:layout-component name="content">
 
-        <stripes:form action="${actionBean.class.name}" id="createForm" class="form-horizontal">
+        <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
 
-            <stripes:hidden name="previewFilePath"/>
+            <input type="hidden" name="previewFilePath" value="${actionBean.previewFilePath}"/>
 
             <p class="help-block">
                 Choose an updated billing tracker spreadsheet to import and then click preview. You will be presented with
@@ -40,16 +40,24 @@
                 enter all information into the billing ledger.
             </p>
 
-            <stripes:label for="trackerFile">Tracker File</stripes:label>
-            <stripes:file id="trackerFile" name="trackerFile" title="Tracker File"/><br/>
-            <stripes:submit name="preview" value="Preview Tracker"/>
+            <div class="control-group">
+                <stripes:label for="trackerFile" class="control-label">Tracker File</stripes:label>
 
-            <br/>
+                <div class="controls">
+                    <stripes:file id="trackerFile" name="trackerFile" title="Tracker File"/><br/>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="controls">
+                    <stripes:submit name="preview" value="Preview Tracker"/>
+                </div>
+            </div>
 
             <c:if test="${actionBean.isPreview}">
                 <div class="borderHeader">
-                    Preview
-                    <stripes:submit name="upload" value="Do Upload"/>
+                    Summary of Tracker
+                    <stripes:submit class="actionButtons" style="margin-left:20px;" name="upload" value="Do Upload"/>
                 </div>
 
                 <table id="uploadPreviewTable" class="table simple">

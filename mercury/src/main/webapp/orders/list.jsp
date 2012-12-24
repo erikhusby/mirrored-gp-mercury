@@ -46,7 +46,7 @@
                 <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" style="margin-right:5px;"/>
 
                 <security:authorizeBlock roles="${actionBean.userBean.developerRole}, ${actionBean.userBean.productManagerRole}">
-                    <stripes:link beanclass="${actionBean.class.name}" event="uploadBillingTracker">
+                    <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean" event="view">
                         Upload Billing Tracker
                     </stripes:link>
                 </security:authorizeBlock>
