@@ -8,6 +8,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillableRef;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerImporter;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerManager;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -45,17 +46,20 @@ public class UploadTrackerActionBean extends CoreActionBean {
 
     private boolean isPreview = false;
 
+    @Inject
+    private BillingTrackerManager billingTrackerManager;
+
     public List<PreviewData> getPreviewData() {
         return previewData;
     }
 
     private void previewUploadedFile() {
         InputStream inputStream = null;
-        BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, billingLedgerDao, getContext().getValidationErrors());
 
         try {
             inputStream = trackerFile.getInputStream();
 
+            BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, getContext().getValidationErrors());
             Map<String, Map<String, Map<BillableRef, OrderBillSummaryStat>>> productProductOrderPriceItemChargesMap =
                     importer.parseFileForSummaryMap(inputStream);
 
@@ -140,15 +144,15 @@ public class UploadTrackerActionBean extends CoreActionBean {
     }
 
     private void processBillingOnTempFile() {
-        BillingTrackerImporter importer = new BillingTrackerImporter(productOrderDao, billingLedgerDao, getContext().getValidationErrors());
-
         InputStream inputStream = null;
+
         try {
             File previewFile = new File(previewFilePath);
             inputStream = new FileInputStream(previewFile);
 
             Map<String, List<ProductOrder>> billedProductOrdersMapByPartNumber =
-                    importer.parseFileForBilling(inputStream);
+                    billingTrackerManager.parseFileForBilling(inputStream);
+
             if (!getContext().getValidationErrors().isEmpty()) {
                 return;
             }

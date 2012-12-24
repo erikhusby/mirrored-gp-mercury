@@ -261,7 +261,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         billingSessionDao.persist(session);
 
         return new RedirectResolution(BillingSessionActionBean.class, "view")
-                .addParameter("billingSession", session.getBusinessKey());
+                .addParameter("sessionKey", session.getBusinessKey());
     }
 
     @HandlesEvent("getAddOns")
