@@ -23,10 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao.FetchSpec.*;
@@ -124,9 +121,9 @@ public class BillingSessionActionBean extends CoreActionBean {
         OutputStream outputStream = null;
 
         try {
-            String filename = editSession.getBusinessKey() + "_" + new Date() + ".xls";
+            String filename = editSession.getBusinessKey() + "_" + new Date();
 
-            final File tempFile = File.createTempFile(filename, "xls");
+            final File tempFile = File.createTempFile(filename, ".xls");
             outputStream = new FileOutputStream(tempFile);
 
             QuoteWorkItemsExporter exporter =
@@ -143,6 +140,7 @@ public class BillingSessionActionBean extends CoreActionBean {
 
                     try {
                         setFileDownloadHeaders("application/excel", tempFile.getName());
+                        inputStream = new FileInputStream(tempFile);
                         IOUtils.copy(inputStream, getContext().getResponse().getOutputStream());
                     } finally {
                         IOUtils.closeQuietly(inputStream);
