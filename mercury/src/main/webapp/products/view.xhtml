@@ -198,6 +198,26 @@
                 </p:column>
             </p:dataTable>
 
+
+            <p:dataTable value="#{productView.allowedMaterialTypeData.values}" var="materialType" >
+                <f:facet name="header">
+                    <h:outputText value="Allowed Material Types" />
+                </f:facet>
+                <p:column sortBy="#{materialType.category}">
+                    <f:facet name="header">
+                        <h:outputText value="Material Category"/>
+                    </f:facet>
+                    <h:outputText value="#{materialType.category}"/>
+                </p:column>
+                <p:column sortBy="#{materialType.name}">
+                    <f:facet name="header">
+                        <h:outputText value="Material Name"/>
+                    </f:facet>
+                    <h:outputText value="#{materialType.name}"/>
+                </p:column>
+            </p:dataTable>
+
+
             <security:authorizeBlock roles="#{userBean.developerRole}">
                 <div class="control-group" style="margin-top: 20px">
                     <label class="control-label label-form">Use Automated Billing?</label>

@@ -480,6 +480,10 @@ public class ProductOrder implements Serializable {
         return createdBy;
     }
 
+    public void setCreatedBy(Long createdBy) {
+        this.createdBy = createdBy;
+    }
+
     public Date getModifiedDate() {
         return modifiedDate;
     }
@@ -591,25 +595,25 @@ public class ProductOrder implements Serializable {
 
     public int getTumorCount() {
         counts.generateCounts();
-        Integer count = counts.sampleTypeCounts.get(BSPSampleDTO.TUMOR_IND);
+        Integer count = counts.sampleTypeCounts.get(ProductOrderSample.TUMOR_IND);
         return count == null ? 0 : count;
     }
 
     public int getNormalCount() {
         counts.generateCounts();
-        Integer count = counts.sampleTypeCounts.get(BSPSampleDTO.NORMAL_IND);
+        Integer count = counts.sampleTypeCounts.get(ProductOrderSample.NORMAL_IND);
         return count == null ? 0 : count;
     }
 
     public int getFemaleCount() {
         counts.generateCounts();
-        Integer count = counts.genderCounts.get(BSPSampleDTO.FEMALE_IND);
+        Integer count = counts.genderCounts.get(ProductOrderSample.FEMALE_IND);
         return count == null ? 0 : count;
     }
 
     public int getMaleCount() {
         counts.generateCounts();
-        Integer count = counts.genderCounts.get(BSPSampleDTO.MALE_IND);
+        Integer count = counts.genderCounts.get(ProductOrderSample.MALE_IND);
         return count == null ? 0 : count;
     }
 

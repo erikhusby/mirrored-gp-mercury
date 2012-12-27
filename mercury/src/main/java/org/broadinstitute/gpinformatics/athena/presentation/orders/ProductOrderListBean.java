@@ -3,14 +3,13 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
-import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.boundary.BoundaryUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderListModel;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -22,15 +21,16 @@ import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.faces.application.FacesMessage;
+import javax.faces.bean.ManagedBean;
+import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
-import javax.faces.model.SelectItem;
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.*;
 import java.util.*;
 
-@Named
-public class ProductOrderListForm extends AbstractJsfBean {
+@ManagedBean
+@ViewScoped
+public class ProductOrderListBean extends AbstractJsfBean {
 
     @Inject
     private FacesContext facesContext;
@@ -51,15 +51,20 @@ public class ProductOrderListForm extends AbstractJsfBean {
     private BSPUserList bspUserList;
 
     @Inject
-    private ProductOrderListConversationData productOrderListConversationData;
+    private ProductOrderListEntryDao productOrderListEntryDao;
+
+    private ProductOrderListEntry[] selectedProductOrders;
 
     @Inject
     private UserBean userBean;
 
+    private ProductOrderListModel productOrderListModel;
+
 
     public void initView() {
-        if (!facesContext.isPostback()) {
-            productOrderListConversationData.beginConversation();
+        if (productOrderListModel == null) {
+            List<ProductOrderListEntry> productOrderListEntries = productOrderListEntryDao.findProductOrderListEntries();
+            productOrderListModel = new ProductOrderListModel(productOrderListEntries);
         }
     }
 
@@ -70,37 +75,7 @@ public class ProductOrderListForm extends AbstractJsfBean {
      * @return list of all product orders
      */
     public ProductOrderListModel getAllProductOrders() {
-        return productOrderListConversationData.getAllProductOrders();
-    }
-
-
-    /**
-     * Returns a list of SelectItems for all product order statuses, including an "Any" selection.
-     *
-     * @return list of all research project statuses
-     */
-    public List<SelectItem> getAllOrderStatuses() {
-        return BoundaryUtils.buildEnumFilterList(ProductOrder.OrderStatus.values());
-    }
-
-
-    public List<SelectItem> getAllProductNames() {
-
-        // only show products that are actually referenced in orders -- is that reasonable or do we really want all products?
-        List<ProductOrder> productOrders = productOrderDao.findAll(ProductOrderDao.FetchSpec.Product);
-
-        SortedSet<String> productNames = new TreeSet<String>();
-        for (ProductOrder productOrder : productOrders) {
-            productNames.add(productOrder.getProduct().getProductName());
-        }
-
-        List<SelectItem> items = new ArrayList<SelectItem>();
-        items.add(new SelectItem("", "Any"));
-        for (String productName : productNames) {
-            items.add(new SelectItem(productName));
-        }
-
-        return items;
+        return productOrderListModel;
     }
 
 
@@ -115,26 +90,6 @@ public class ProductOrderListForm extends AbstractJsfBean {
         return productSet;
     }
 
-    /**
-     * Returns a list of SelectItems for all people who are owners of research projects.
-     *
-     * @return list of research project owners
-     */
-    public List<SelectItem> getAllProjectOwners() {
-        Set<BspUser> owners = new HashSet<BspUser>();
-        for (ProductOrderListEntry order : getAllProductOrders()) {
-            Long createdBy = order.getOwnerId();
-            if (createdBy != null) {
-                BspUser bspUser = bspUserList.getById(createdBy);
-                if (bspUser != null) {
-                    owners.add(bspUser);
-                }
-            }
-        }
-
-        return BSPUserList.createSelectItems(owners);
-    }
-
 
     private List<String> getSelectedProductOrderBusinessKeys() {
 
@@ -145,8 +100,6 @@ public class ProductOrderListForm extends AbstractJsfBean {
 
         return businessKeys;
     }
-
-
 
 
     public static String getTrackerForOrders(
@@ -187,11 +140,11 @@ public class ProductOrderListForm extends AbstractJsfBean {
 
 
     public ProductOrderListEntry[] getSelectedProductOrders() {
-        return productOrderListConversationData.getSelectedProductOrders();
+        return selectedProductOrders;
     }
 
     public void setSelectedProductOrders(ProductOrderListEntry[] selectedProductOrders) {
-        productOrderListConversationData.setSelectedProductOrders(selectedProductOrders);
+        this.selectedProductOrders = selectedProductOrders;
     }
 
 

@@ -9,7 +9,7 @@
 <body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="metadata">
-            <f:event type="preRenderView" listener="#{productOrderListForm.initView}"/>
+            <f:event type="preRenderView" listener="#{productOrderListBean.initView}"/>
         </ui:define>
         <ui:define name="title">Product Orders</ui:define>
 
@@ -20,11 +20,11 @@
             </div>
 
                 <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.billingManagerRole}">
-                    <p:commandButton value="Start Billing Session" action="#{productOrderListForm.startBillingSession}"
+                    <p:commandButton value="Start Billing Session" action="#{productOrderListBean.startBillingSession}"
                                  ajax="false" style="margin-bottom:5px;margin-right:30px;"/>
                 </security:authorizeBlock>
 
-                <p:commandButton value="Download Billing Tracker" action="#{productOrderListForm.downloadBillingTracker}"
+                <p:commandButton value="Download Billing Tracker" action="#{productOrderListBean.downloadBillingTracker}"
                                  ajax="false" style="margin-bottom:5px;margin-right:8px;" />
 
                 <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.productManagerRole}">
@@ -33,19 +33,19 @@
                     </h:link>
                 </security:authorizeBlock>
 
-                <p:dataTable value="#{productOrderListForm.allProductOrders}"
+                <p:dataTable value="#{productOrderListBean.allProductOrders}"
                      sortBy="#{order.title}"
                      sortOrder="ascending"
                      var="order"
                      id="dataTable"
                      widgetVar="dataTable"
-                     filteredValue="#{productOrderListForm.allProductOrders.filteredValues}"
-                     selection="#{productOrderListForm.selectedProductOrders}">
+                     filteredValue="#{productOrderListBean.allProductOrders.filteredValues}"
+                     selection="#{productOrderListBean.selectedProductOrders}">
 
                     <f:facet name="header">
                         <p:outputPanel styleClass="pull-right">
                             <h:outputText value=" Search "/>
-                            <p:inputText id="globalFilter" onkeyup="dataTable.filter()" style="width:150px"/>
+                            <p:inputText id="globalFilter" onkeyup="dataTable.unselectAllRows(); dataTable.filter();" style="width:150px"/>
                         </p:outputPanel>
                     </f:facet>
 
