@@ -86,3 +86,6 @@ textarea.controlledText { width: 550px; }
 .form-search input[type='checkbox'],
 .form-inline input[type='checkbox'],
 .form-horizontal input[type='checkbox'] { float: left; margin-right: 5px; vertical-align: middle; }
+
+.global-search { list-style-type: none; margin-top: 5px;vertical-align: top;height:14px; }
+.global-search li { margin-top: 1px; }

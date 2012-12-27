@@ -418,6 +418,10 @@ public abstract class LabVessel {
         return traversalResults.getSampleInstances();
     }
 
+    public int getSampleInstanceCount() {
+        return getSampleInstances().size();
+    }
+
     /**
      * The results of traversing (ancestor) vessels
      */
