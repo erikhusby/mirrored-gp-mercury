@@ -3,6 +3,17 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Mercury" sectionTitle="Sign In">
+    <stripes:layout-component name="extraHead">
+        <script type="text/javascript">
+            $j(document).ready(function() {
+                if ($j('#username').val() == '') {
+                    $j('#username').focus();
+                } else {
+                    $j('#password').focus();
+                }
+            });
+        </script>
+    </stripes:layout-component>
     <stripes:layout-component name="content">
         <div class="row-fluid">
             <div class="span3">
