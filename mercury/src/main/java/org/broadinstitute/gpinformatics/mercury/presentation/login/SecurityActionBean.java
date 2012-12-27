@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationListener;
 
-import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -106,7 +105,7 @@ public class SecurityActionBean extends CoreActionBean {
 
     public Resolution signOut() {
         getContext().invalidateSession();
-        return new RedirectResolution(UserRole.APP_CONTEXT);
+        return new RedirectResolution("/");
     }
 
     public enum UserRole {

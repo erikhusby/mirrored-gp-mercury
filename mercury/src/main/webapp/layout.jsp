@@ -136,16 +136,16 @@
 
             <div class="row-fluid">
 
-                <!-- show messages/errors -->
-                <p>
-                    <stripes:errors/>
-                    <stripes:messages/>
-                </p>
-
                 <section>
                     <c:if test="${sectionTitle ne null}">
                         <div class="page-header"><h4>${sectionTitle}</h4></div>
                     </c:if>
+
+                    <!-- show messages/errors -->
+                    <p>
+                        <stripes:errors/>
+                        <stripes:messages/>
+                    </p>
 
                     <div class="page-body">
                         <stripes:layout-component name="content"/>
