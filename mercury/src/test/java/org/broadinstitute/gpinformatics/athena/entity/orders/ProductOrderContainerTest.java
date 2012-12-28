@@ -6,7 +6,6 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -63,8 +62,8 @@ public class ProductOrderContainerTest extends Arquillian {
 
         Assert.assertEquals(3, testOrder.getFingerprintCount());
 
-        Assert.assertTrue(testOrder.getCountsByStockType().containsKey(BSPSampleDTO.ACTIVE_IND));
-        Assert.assertEquals(3, testOrder.getCountsByStockType().get(BSPSampleDTO.ACTIVE_IND).intValue());
+        Assert.assertTrue(testOrder.getCountsByStockType().containsKey(ProductOrderSample.ACTIVE_IND));
+        Assert.assertEquals(3, testOrder.getCountsByStockType().get(ProductOrderSample.ACTIVE_IND).intValue());
 
         //test the sample order should be the same as when created.
         Assert.assertEquals("SM-1P3X9", testOrder.getSamples().get(0).getSampleName());

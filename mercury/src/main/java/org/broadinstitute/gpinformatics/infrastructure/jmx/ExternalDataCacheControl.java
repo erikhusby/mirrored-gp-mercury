@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.jmx;
 
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
+import javax.ejb.Startup;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import java.util.List;
  * and override refreshCache().
  */
 @Singleton
+@Startup
 public class ExternalDataCacheControl extends AbstractCacheControl {
 
     private final List<AbstractCache> caches = new ArrayList<AbstractCache>();
@@ -19,7 +21,7 @@ public class ExternalDataCacheControl extends AbstractCacheControl {
     private int maxCacheSize = MAX_SIZE;
 
     @Override
-    @Schedule(minute = "*/5", hour = "*")
+    @Schedule(minute = "*/15", hour = "*")
     public void invalidateCache() {
         for (AbstractCache cache : caches) {
             cache.refreshCache();

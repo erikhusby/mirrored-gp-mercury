@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryP
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
@@ -41,10 +42,16 @@ import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+//import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+//import javax.xml.bind.ValidationEvent;
+//import javax.xml.bind.ValidationEventHandler;
 import javax.xml.transform.sax.SAXSource;
+//import javax.xml.validation.Schema;
+//import javax.xml.validation.SchemaFactory;
+//import java.io.File;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Date;
@@ -228,10 +235,28 @@ public class BettalimsMessageResource {
      * @throws JAXBException
      * @throws SAXException
      */
-    private BettaLIMSMessage unmarshal(String message) throws JAXBException, SAXException {
+    BettaLIMSMessage unmarshal(String message) throws JAXBException, SAXException {
         // todo jmt move so done only once
+//        SchemaFactory sf = SchemaFactory.newInstance(XMLConstants.W3C_XML_SCHEMA_NS_URI);
+//        Schema schema = sf.newSchema(new File("e:/java/mercury/mercury/src/main/xsd/bettalims.xsd"));
+
         JAXBContext jc = JAXBContext.newInstance(BettaLIMSMessage.class);
         Unmarshaller unmarshaller = jc.createUnmarshaller();
+//        unmarshaller.setSchema(schema);
+//        unmarshaller.setEventHandler(new ValidationEventHandler() {
+//            @Override
+//            public boolean handleEvent(ValidationEvent event) {
+//                throw new RuntimeException("XSD Validation failure: "+
+//                        "SEVERITY: " + event.getSeverity() + "MESSAGE: " + event.getMessage() +
+//                        "LINKED EXCEPTION:  " + event.getLinkedException() +
+//                        "LINE NUMBER:  " + event.getLocator().getLineNumber() +
+//                        "COLUMN NUMBER:  " + event.getLocator().getColumnNumber() +
+//                        "OFFSET:  " + event.getLocator().getOffset() +
+//                        "OBJECT:  " + event.getLocator().getObject() +
+//                        "NODE:  " + event.getLocator().getNode() +
+//                        "URL:  " + event.getLocator().getURL());
+//            }
+//        });
 
         //Create an XMLReader to use with our filter
         XMLReader reader = XMLReaderFactory.createXMLReader();
@@ -281,6 +306,14 @@ public class BettalimsMessageResource {
         if(labEventType == null) {
             for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
                 labEventType = LabEventType.getByName(receptaclePlateTransferEvent.getEventType());
+                if(labEventType != null) {
+                    break;
+                }
+            }
+        }
+        if(labEventType == null) {
+            for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
+                labEventType = LabEventType.getByName(receptacleEventType.getEventType());
                 if(labEventType != null) {
                     break;
                 }

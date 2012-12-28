@@ -1,26 +1,28 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.meanbean.lang.EquivalentFactory;
 import org.meanbean.test.*;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
 
 /**
  * A test.
  *
  * @author mccory
  */
-@Test(groups = {TestGroups.DATABASE_FREE})
+@Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderSampleTest {
-
-
 
     @Test
     public void testIsInBspFormat() throws Exception {
@@ -47,9 +49,7 @@ public class ProductOrderSampleTest {
         }
 
         new EqualsMethodTester().testEqualsMethod(new ProductOrderSampleFactory(), configuration);
-
         new HashCodeMethodTester().testHashCodeMethod(new ProductOrderSampleFactory());
-
     }
 
     public static List<ProductOrderSample> createSampleList(String[] sampleArray,
@@ -63,17 +63,90 @@ public class ProductOrderSampleTest {
             } else {
                 productOrderSample = new ProductOrderSample(sampleName);
             }
-
             productOrderSample.setSampleComment("athenaComment");
-
             productOrderSample.getLedgerItems().addAll( billableItems );
-
             productOrderSamples.add(productOrderSample);
-
-
         }
         return productOrderSamples;
     }
 
+    static final String MATERIAL_NAME = "Blood";
 
+    static class TestPDOData {
+        final Product product;
+        final Product addOn;
+        final ProductOrderSample sample1;
+        final ProductOrderSample sample2;
+
+        public TestPDOData() {
+            ProductOrder order = AthenaClientServiceStub.createDummyProductOrder();
+            product = order.getProduct();
+            MaterialType materialType = new MaterialType("", MATERIAL_NAME);
+            addOn = AthenaClientServiceStub.createDummyProduct();
+            addOn.addAllowableMaterialType(materialType);
+            addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
+            product.addAddOn(addOn);
+            sample1 = new ProductOrderSample("",
+                    new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", MATERIAL_NAME, "", "", "", "", "", "",
+                            ""));
+            sample2 = new ProductOrderSample("",
+                    new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "XXX", "", "", "", "", "", "", ""));
+            order.setSamples(Collections.singletonList(sample1));
+            List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
+            samples.add(sample1);
+            samples.add(sample2);
+            order.setSamples(samples);
+        }
+    }
+
+    @DataProvider(name = "getBillablePriceItems")
+    public static Object[][] makeGetBillablePriceItemsData() {
+        TestPDOData data = new TestPDOData();
+        Product product = data.product;
+        Product addOn = data.addOn;
+
+        List<PriceItem> expectedItems = new ArrayList<PriceItem>();
+        expectedItems.add(product.getPrimaryPriceItem());
+        expectedItems.add(addOn.getPrimaryPriceItem());
+
+        return new Object[][] {
+                new Object[] { data.sample1, expectedItems },
+                new Object[] { data.sample2, Collections.singletonList(product.getPrimaryPriceItem()) }
+        };
+    }
+
+    @Test(dataProvider = "getBillablePriceItems")
+    public void testGetBillablePriceItems(ProductOrderSample sample, List<PriceItem> priceItems) {
+        List<PriceItem> generatedItems = sample.getBillablePriceItems();
+        Assert.assertEquals(generatedItems.size(), priceItems.size());
+        generatedItems.removeAll(priceItems);
+        Assert.assertTrue(generatedItems.isEmpty());
+    }
+
+    @DataProvider(name = "autoBillSample")
+    public static Object[][] makeAutoBillSampleData() {
+        TestPDOData data = new TestPDOData();
+        Date completedDate = new Date();
+        Set<BillingLedger> ledgers = new HashSet<BillingLedger>();
+        ledgers.add(new BillingLedger(data.sample1, data.product.getPrimaryPriceItem(),  completedDate, 1));
+        ledgers.add(new BillingLedger(data.sample1, data.addOn.getPrimaryPriceItem(),  completedDate, 1));
+
+        data.sample2.addLedgerItem(completedDate, data.product.getPrimaryPriceItem(), 1);
+        BillingLedger ledger = data.sample2.getLedgerItems().iterator().next();
+        ledger.setBillingMessage(BillingSession.SUCCESS);
+        ledger.setBillingSession(new BillingSession(0L, Collections.singleton(ledger)));
+
+        return new Object[][] {
+                new Object[] { data.sample1, completedDate, ledgers, BillingStatus.EligibleForBilling },
+                new Object[] { data.sample1, completedDate, ledgers, BillingStatus.EligibleForBilling },
+                new Object[] { data.sample2, completedDate, Collections.emptySet(), BillingStatus.EligibleForBilling }
+        };
+    }
+
+    @Test(dataProvider = "autoBillSample")
+    public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<BillingLedger> billingLedgers, BillingStatus billingStatus) {
+        sample.autoBillSample(completedDate, 1);
+        Assert.assertEquals(sample.getBillableLedgerItems(), billingLedgers);
+        Assert.assertEquals(sample.getBillingStatus(), billingStatus);
+    }
 }

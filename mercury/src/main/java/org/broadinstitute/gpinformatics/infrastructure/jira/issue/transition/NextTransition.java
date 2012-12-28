@@ -7,30 +7,60 @@ package org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition;
 */
 public class NextTransition {
     private String self;
+    private String name;
     private String description;
     private String iconUrl;
     private String id;
 
-    public NextTransition ( String selfIn, String descriptionIn, String iconUrlIn, String idIn ) {
+    public NextTransition() {
+    }
+
+    public NextTransition (String selfIn, String nameIn, String descriptionIn, String iconUrlIn, String idIn) {
         self = selfIn;
+        name = nameIn;
         description = descriptionIn;
         iconUrl = iconUrlIn;
         id = idIn;
     }
 
-    public String getSelf ( ) {
+
+    public String getSelf() {
         return self;
     }
 
-    public String getDescription ( ) {
+    public void setSelf(String self) {
+        this.self = self;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getDescription() {
         return description;
     }
 
-    public String getIconUrl ( ) {
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public String getIconUrl() {
         return iconUrl;
     }
 
-    public String getId ( ) {
+    public void setIconUrl(String iconUrl) {
+        this.iconUrl = iconUrl;
+    }
+
+    public String getId() {
         return id;
+    }
+
+    public void setId(String id) {
+        this.id = id;
     }
 }

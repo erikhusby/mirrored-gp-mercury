@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.run;
 
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -21,7 +22,8 @@ public class IlluminaSequencingRunFactory implements Serializable {
         IlluminaFlowcell illuminaFlowcell = illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());
         return buildDbFree(solexaRunBean, illuminaFlowcell);
     }
-    
+
+    @DaoFree
     public IlluminaSequencingRun buildDbFree(SolexaRunBean solexaRunBean, IlluminaFlowcell illuminaFlowcell) {
         if (illuminaFlowcell == null) {
             throw new RuntimeException("Flowcell with barcode '" + solexaRunBean.getFlowcellBarcode() + "' does not exist");

@@ -4,7 +4,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionListResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -87,17 +88,18 @@ public class JiraIssue implements Serializable {
     /**
      * @return a list of all available workflow transitions for this ticket in its current state
      */
-    public IssueTransitionResponse findAvailableTransitions() {
+    public IssueTransitionListResponse findAvailableTransitions() {
         return jiraService.findAvailableTransitions(key);
     }
 
     /**
-     * Transition a given Jira Ticket to a new Transition state.
-     * @param transitionId id representing the next transition state
+     * Transition a given Jira Ticket
+     * @param transition the target transition state
      */
-    public void postNewTransition(String transitionId) throws IOException {
-        jiraService.postNewTransition(key, transitionId);
+    public void postNewTransition(Transition transition) throws IOException {
+        jiraService.postNewTransition(key, transition);
     }
+
 
     @Override
     public String toString() {

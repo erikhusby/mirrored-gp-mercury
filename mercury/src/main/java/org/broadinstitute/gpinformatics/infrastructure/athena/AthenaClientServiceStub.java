@@ -6,16 +6,15 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.project.Irb;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
+import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Scott Matthews
@@ -74,9 +73,13 @@ public class AthenaClientServiceStub implements AthenaClientService {
     public static ResearchProject createDummyResearchProject() {
         ResearchProject researchProject = new ResearchProject(10950L, "MyResearchProject", "To study stuff.", ResearchProject.IRB_ENGAGED);
 
+        Set<Funding> fundingList = Collections.singleton(new Funding(Funding.PURCHASE_ORDER, "A piece of Funding", "POFunding"));
+        researchProject.populateFunding(fundingList);
         researchProject.addFunding(new ResearchProjectFunding (researchProject, "TheGrant"));
         researchProject.addFunding(new ResearchProjectFunding(researchProject, "ThePO"));
 
+        Collection<Irb> irbs = Collections.singleton(new Irb("irbInitial", ResearchProjectIRB.IrbType.FARBER));
+        researchProject.populateIrbs(irbs);
         researchProject.addIrbNumber(new ResearchProjectIRB (researchProject, ResearchProjectIRB.IrbType.BROAD, "irb123"));
         researchProject.addIrbNumber(new ResearchProjectIRB(researchProject, ResearchProjectIRB.IrbType.OTHER, "irb456"));
 
