@@ -238,8 +238,8 @@ public class BettalimsMessageResourceTest extends Arquillian {
             sendMessage(bettaLIMSMessage);
         }
 //        Controller.stopCPURecording();
-        TwoDBarcodedTube pooltube=twoDBarcodedTubeDAO.findByBarcode(qtpJaxbBuilder.getPoolTubeBarcode());
-        Assert.assertEquals(pooltube.getSampleInstances().size(), LabEventTest.NUM_POSITIONS_IN_RACK,
+        TwoDBarcodedTube poolTube = twoDBarcodedTubeDAO.findByBarcode(qtpJaxbBuilder.getPoolTubeBarcode());
+        Assert.assertEquals(poolTube.getSampleInstances().size(), LabEventTest.NUM_POSITIONS_IN_RACK,
                 "Wrong number of sample instances");
 
         String runName="TestRun" + testPrefix;
@@ -261,6 +261,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
 //                .accept(MediaType.APPLICATION_XML)
 //                .entity(bettaLIMSMessage)
 //                .post(String.class);
+//        BettalimsMessageBeanTest.sendJmsMessage(BettalimsMessageBeanTest.marshalMessage(bettaLIMSMessage));
     }
 
     @Test(enabled=false, groups=EXTERNAL_INTEGRATION, dataProvider=Arquillian.ARQUILLIAN_DATA_PROVIDER)

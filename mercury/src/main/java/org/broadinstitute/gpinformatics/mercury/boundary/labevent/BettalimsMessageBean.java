@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 
+import org.jboss.weld.context.bound.BoundSessionContext;
+
 import javax.ejb.ActivationConfigProperty;
 import javax.ejb.MessageDriven;
 import javax.ejb.TransactionAttribute;
@@ -8,6 +10,7 @@ import javax.inject.Inject;
 import javax.jms.Message;
 import javax.jms.MessageListener;
 import javax.jms.TextMessage;
+import java.util.HashMap;
 
 /**
 * A Message Driven Bean to receive JMS messages from liquid handling decks.
@@ -24,8 +27,8 @@ import javax.jms.TextMessage;
 })
 public class BettalimsMessageBean implements MessageListener {
 
-//    @Resource
-//    private MessageDrivenContext messageDrivenContext;
+    @Inject
+    private BoundSessionContext sessionContext;
 
     @Inject
     private BettalimsMessageResource bettalimsMessageResource;
@@ -41,18 +44,27 @@ public class BettalimsMessageBean implements MessageListener {
     @TransactionAttribute(value= TransactionAttributeType.NOT_SUPPORTED)
     @Override
     public void onMessage(Message message) {
-        // The deck side code is written in JavaScript, so it sends text messages, rather than object messages.
-        if (message instanceof TextMessage) {
-            //noinspection OverlyBroadCatchBlock
-            try {
-                String text = ((TextMessage) message).getText();
-                bettalimsMessageResource.storeAndProcess(text);
-            } catch (Exception e) {
+        try {
+            // Need to associate this JMS message with a session, to allow injection of Session scoped beans, e.g.
+            // BSP user list.
+            sessionContext.associate(new HashMap<String, Object>());
+            sessionContext.activate();
+            // The deck side code is written in JavaScript, so it sends text messages, rather than object messages.
+            if (message instanceof TextMessage) {
+                //noinspection OverlyBroadCatchBlock
+                try {
+                    String text = ((TextMessage) message).getText();
+                    bettalimsMessageResource.storeAndProcess(text);
+                } catch (Exception e) {
+                    // todo jmt email LIMS oddities
+                }
+            } else {
                 // todo jmt email LIMS oddities
+                //"Expected TextMessage, received " + message.getClass().getName()
             }
-        } else {
-            // todo jmt email LIMS oddities
-            //"Expected TextMessage, received " + message.getClass().getName()
+        } finally {
+            sessionContext.invalidate();
+            sessionContext.deactivate();
         }
     }
 }
