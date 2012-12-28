@@ -19,7 +19,7 @@
     <stripes:layout-component name="content">
 
     <p>
-        <stripes:link title="Click to make a new Research Project" href="${ctxpath}/projects/project.action?create" class="pull-right"><span class="icon-home"></span> New research project</stripes:link>
+        <stripes:link beanclass="${actionBean.class.name}" event="create" title="Click to make a new Research Project" class="pull-right"><span class="icon-home"></span>New research project</stripes:link>
     </p>
 
     <div class="clearfix"></div>
@@ -40,7 +40,7 @@
         <c:forEach items="${actionBean.allResearchProjects}" var="project">
             <tr>
                 <td>
-                    <stripes:link href="/projects/project.action" event="view">
+                    <stripes:link beanclass="${actionBean.class.name}" event="view">
                         <stripes:param name="businessKey" value="${project.businessKey}"/>
                         ${project.title}
                     </stripes:link>

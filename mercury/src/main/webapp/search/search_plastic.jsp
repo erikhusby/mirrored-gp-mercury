@@ -30,7 +30,7 @@
 
         <stripes:form beanclass="${actionBean.class.name}" id="searchForm" class="form-horizontal">
             <div class="form-horizontal">
-                <div class="control-group">
+                <div class="control-group" style="margin-bottom:5px;">
                     <stripes:label for="barcode" class="control-label" style="width: 60px;">barcode</stripes:label>
                     <div class="controls" style="margin-left: 80px;">
                         <stripes:text name="barcode" id="barcode" title="Enter the barcode to search" style="font-size: x-small; height: 14px;" class="defaultText"/>

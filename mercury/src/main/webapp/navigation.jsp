@@ -30,7 +30,7 @@
             <li class="dropdown">
                 <a id="adminNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span class="icon-cog"></span> Admin <b class="caret"></b></a>
                 <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
-                    <li><a tabindex="-1" href="${ctxpath}/administration/page_administration">page config</a></li>
+                    <li><a tabindex="-1" href="${ctxpath}/security/authorizePage.action?list">authorize pages</a></li>
                     <li class="divider"></li>
                     <li><a tabindex="-1" href="${ctxpath}/reagent/list">list</a></li>
                     <li><a tabindex="-1" href="${ctxpath}/reagent/create">create</a></li>
