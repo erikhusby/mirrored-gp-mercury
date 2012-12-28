@@ -80,7 +80,7 @@ public class BettalimsMessageResource {
     @Inject
     private WsMessageStore wsMessageStore;
 
-    @Resource(name = "mail/broadsmtp")
+//    @Resource(name = "mail/broadsmtp")
     private Session mailSession;
 
 //    @Inject
@@ -111,7 +111,7 @@ public class BettalimsMessageResource {
      */
     @POST
     @Consumes({MediaType.APPLICATION_XML})
-    public Response processMessage(String message) {
+    public Response processMessage(String message) throws ResourceException {
         try {
             storeAndProcess(message);
         } catch (Exception e) {
@@ -185,7 +185,7 @@ public class BettalimsMessageResource {
         } catch (Exception e) {
             wsMessageStore.recordError(message, now, e);
             LOG.error("Failed to process run", e);
-            notifySupport(e);
+//            notifySupport(e);
             throw e;
         }
     }
