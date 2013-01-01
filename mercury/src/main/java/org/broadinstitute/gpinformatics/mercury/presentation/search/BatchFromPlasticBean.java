@@ -102,6 +102,9 @@ public class BatchFromPlasticBean extends AbstractJsfBean {
         barcodeSearch();
     }
 
+    /**
+     * Executes a search of all lab vessels that match a given list of 2d Barcodes
+     */
     public void barcodeSearch() {
 
         String[] splitBarcodes = barcode.trim().split(",");
@@ -123,8 +126,11 @@ public class BatchFromPlasticBean extends AbstractJsfBean {
         selectedVessel = labVesselDao.findByIdentifier(((LabVessel) event.getData()).getLabel());
     }
 
-
-
+    /**
+     *  Helper method to retrieve the name of a user based on that users unique BspID
+     * @param id
+     * @return
+     */
     public String getUserNameById(Long id) {
         BspUser user = bspUserList.getById(id);
         String username = "";
@@ -150,6 +156,10 @@ public class BatchFromPlasticBean extends AbstractJsfBean {
         this.conversationData = conversationData;
     }
 
+    /**
+     * Form initializer for the first screen in the Wizard.  The main duty of this initializer is to start the
+     * conversation that will store the wizard data.
+     */
     public void initForm() {
         if (userBean.ensureUserValid()) {
             if(conversationData.getConversation().isTransient()) {
@@ -157,7 +167,7 @@ public class BatchFromPlasticBean extends AbstractJsfBean {
             }
         } else {
             addErrorMessage(MessageFormat.format(UserBean.LOGIN_WARNING,
-                    "create a research project"));
+                    "Create a Batch"));
         }
     }
 }

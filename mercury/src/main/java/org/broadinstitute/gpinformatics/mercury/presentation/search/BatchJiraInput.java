@@ -18,6 +18,10 @@ import java.util.List;
 import java.util.Set;
 
 /**
+ *
+ * Backing Bean for the second page in the Batch input.  This been bears the responsibility of assisting in processing
+ * the Jira related data for the newly created batch
+ *
  * @author Scott Matthews
  *         Date: 12/12/12
  *         Time: 10:46 AM
@@ -32,6 +36,9 @@ public class BatchJiraInput extends AbstractJsfBean {
     @Inject
     private LabVesselDao labVesselDao;
 
+    /*
+        Helper constants for the selection radio buttons on the screen
+     */
     private static final String EXISTING_TICKET = "existingTicket";
     private static final String NEW_TICKET = "newTicket";
 
@@ -55,6 +62,12 @@ public class BatchJiraInput extends AbstractJsfBean {
         this.jiraInputType = jiraInputType;
     }
 
+    /**
+     * Event Toggle for every time a user choose a Jira input method
+     *
+     * TODO SGM:  This may be one extra method that is not needed.  Revisit how to consolidate input type check after demo
+     * @param event
+     */
     public void updateTicketUsage(AjaxBehaviorEvent event) {
         this.useExistingTicket = (jiraInputType == null) ? false : jiraInputType.equals(EXISTING_TICKET);
     }
@@ -115,6 +128,10 @@ public class BatchJiraInput extends AbstractJsfBean {
         return batchImportantInfo;
     }
 
+    /**
+     * Supports the submission for the page.  Will forward to confirmation page on success
+     * @return
+     */
     public String createBatch() {
         LabBatch batchObject;
 
@@ -122,14 +139,22 @@ public class BatchJiraInput extends AbstractJsfBean {
                 new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(conversationData.getVesselLabels()));
 
         if (isUseExistingTicket()) {
+            /*
+               If the user is associating the batch with an existing ticket, just the ticket ID and the set of vessels
+               are needed to create the batch
+            */
 
             batchObject =
                     labBatchEjb.createLabBatch(vesselSet,userBean.getBspUser().getUsername(),
                             jiraTicketId.trim());
         } else {
 
+            /*
+                If a new ticket is to be created, pass the description, summary, due date and important info in a batch
+                object acting as a DTO
+             */
             batchObject = new LabBatch(batchName.trim(), vesselSet);
-            batchObject.setBatchDescription(batchDescription.trim());
+            batchObject.setBatchDescription(batchDescription);
             batchObject.setDueDate(batchDueDate);
             batchObject.setImportant(batchImportantInfo);
 
