@@ -20,6 +20,11 @@ import javax.inject.Named;
 import java.text.MessageFormat;
 import java.util.*;
 
+/**
+ *
+ * Backing bean for Step one of the create batch Wizard.  The main duties of this backing bean is to search for lab
+ * vessels and assist in transitioning the user to the second screen to enter Jira related inforation for the Batch
+ */
 @ManagedBean
 @ViewScoped
 public class BatchFromPlasticBean extends AbstractJsfBean {
@@ -35,16 +40,24 @@ public class BatchFromPlasticBean extends AbstractJsfBean {
 
     private String barcode;
 
-//    @ConversationScoped public static class FoundVesselData extends TableData<LabVessel> {}
-//    @Inject private FoundVesselData foundVesselData;
 
     private List<LabVessel> foundVessels;
+
+    /*
+        Maps a vessel to the number of samples registered with the vessel
+     */
     private Map<LabVessel, Integer> vesselSampleSizeMap = new HashMap<LabVessel, Integer>();
+
+    /*
+        Maps a vessel to the Batches associated with the vessel
+     */
     private Map<LabVessel, List<LabBatch>> batchesByVessel = new HashMap<LabVessel, List<LabBatch>>();
 
     private LabVessel selectedVessel;
 
-
+    /*
+        Stores information to be persisted across the pages within the Batch Creation Wizard.
+     */
     @Inject
     private CreateBatchConversationData conversationData;
 
@@ -59,14 +72,6 @@ public class BatchFromPlasticBean extends AbstractJsfBean {
     public void setFoundVessels(List<LabVessel> foundVessels) {
         this.foundVessels = foundVessels;
     }
-
-//    public FoundVesselData getFoundVesselData() {
-//        return foundVesselData;
-//    }
-//
-//    public void setFoundVesselData(FoundVesselData foundVesselData) {
-//        this.foundVesselData = foundVesselData;
-//    }
 
     public String getBarcode() {
         return barcode;
