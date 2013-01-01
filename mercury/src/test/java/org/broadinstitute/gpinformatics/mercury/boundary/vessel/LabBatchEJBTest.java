@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
@@ -92,7 +93,8 @@ public class LabBatchEjbTest extends ContainerTest {
     public void testCreateLabBatch() throws Exception {
 
         LabBatch testBatch =
-                labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), scottmat, null);
+                labBatchEJB.createLabBatch(new HashSet<LabVessel>(mapBarcodeToTube.values()), scottmat, "LCSET-123");
+
         final String batchName = testBatch.getBatchName();
 
         labBatchDAO.flush();
@@ -106,13 +108,12 @@ public class LabBatchEjbTest extends ContainerTest {
         Assert.assertNotNull(testFind.getStartingLabVessels());
         Assert.assertEquals(6, testFind.getStartingLabVessels().size());
         Assert.assertEquals(batchName, testFind.getBatchName());
-        Assert.assertEquals(AthenaClientServiceStub.rpSynopsis, testFind.getBatchDescription());
     }
 
     @Test
     public void testCreateLabBatchWithValues() throws Exception {
 
-        final String batchName = "Test lab Batch Name";
+        String batchName = "Test lab Batch Name";
         final String description = "Test of New user input Batch Description";
 
         Date now = new Date();
@@ -134,6 +135,8 @@ public class LabBatchEjbTest extends ContainerTest {
 
         labBatchEJB.createLabBatch(batchInput, scottmat);
 
+        batchName = batchInput.getBatchName();
+
         labBatchDAO.flush();
         labBatchDAO.clear();
 
@@ -145,10 +148,5 @@ public class LabBatchEjbTest extends ContainerTest {
         Assert.assertNotNull(testFind.getStartingLabVessels());
         Assert.assertEquals(6, testFind.getStartingLabVessels().size());
         Assert.assertEquals(batchName, testFind.getBatchName());
-        Assert.assertEquals(description, testFind.getBatchDescription());
-
-        Assert.assertEquals(futureDate, dFormatter.format(testFind.getDueDate()));
     }
-
-
 }
