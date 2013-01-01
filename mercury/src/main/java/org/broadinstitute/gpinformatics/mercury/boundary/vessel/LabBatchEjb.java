@@ -54,12 +54,13 @@ public class LabBatchEjb {
     /**
      * Alternate create lab batch method to allow a user to define the vessels for use by their barcode
      *
+     *
      * @param reporter   The User that is attempting to create the batch
      * @param labVesselNames The plastic ware that the newly created lab batch will represent
      * @param jiraTicket Optional parameter that represents an existing Jira Ticket that refers to this batch
      * @return
      */
-    public LabBatch createLabBatch(@Nonnull String reporter, @Nonnull Collection<String> labVesselNames,
+    public LabBatch createLabBatch(@Nonnull String reporter, @Nonnull Set<String> labVesselNames,
                                    String jiraTicket) {
 
         Set<LabVessel> vesselsForBatch = new HashSet<LabVessel>(labVesselNames.size());
@@ -74,16 +75,16 @@ public class LabBatchEjb {
     /**
      * Allows a user to define the vessels for use
      *
-     * @param reporter   The User that is attempting to create the batch
      * @param labVessels The plastic ware that the newly created lab batch will represent
+     * @param reporter   The User that is attempting to create the batch
      * @param jiraTicket Optional parameter that represents an existing Jira Ticket that refers to this batch
      */
-    public LabBatch createLabBatch(@Nonnull Collection<LabVessel> labVessels, @Nonnull String reporter,
+    public LabBatch createLabBatch(@Nonnull Set<LabVessel> labVessels, @Nonnull String reporter,
                                    @Nonnull String jiraTicket) {
 
-        Collection<String> pdoList = LabVessel.extractPdoList(labVessels);
+//        Collection<String> pdoList = LabVessel.extractPdoList(labVessels);
 
-        LabBatch batchObject = new LabBatch(jiraTicket, new HashSet<LabVessel>(labVessels));
+        LabBatch batchObject = new LabBatch(jiraTicket, labVessels);
 
         labBatchDao.persist(batchObject);
 
@@ -104,7 +105,7 @@ public class LabBatchEjb {
      */
     public LabBatch createLabBatch(@Nonnull LabBatch batchObject, @Nonnull String reporter) {
 
-        Collection<String> pdoList = LabVessel.extractPdoList(batchObject.getStartingLabVessels());
+        Collection<String> pdoList = LabVessel.extractPdoKeyList(batchObject.getStartingLabVessels());
 
         if (StringUtils.isBlank(batchObject.getBatchName())) {
             throw new InformaticsServiceException("The Name for the batch Object cannot be null");
@@ -183,7 +184,7 @@ public class LabBatchEjb {
             throw new InformaticsServiceException("Error attempting to create Lab Batch in Jira", ioe);
         }
 
-        for (String pdo : LabVessel.extractPdoList(newBatch.getStartingLabVessels())) {
+        for (String pdo : LabVessel.extractPdoKeyList(newBatch.getStartingLabVessels())) {
             try {
                 jiraService.addLink(AddIssueLinkRequest.LinkType.Related, pdo, newBatch.getJiraTicket().getTicketName(),
                         "New Batch Created: " +

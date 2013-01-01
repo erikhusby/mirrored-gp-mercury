@@ -51,7 +51,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         WorkflowLoader wfLoader = new WorkflowLoader();
         WorkflowConfig wfConfig = wfLoader.load();
 
-        pdos = LabVessel.extractPdoList(batch.getStartingLabVessels());
+        pdos = LabVessel.extractPdoKeyList(batch.getStartingLabVessels());
 
         for (String currPdo : pdos) {
             ProductOrder pdo = athenaClientService.retrieveProductOrderDetails(currPdo);

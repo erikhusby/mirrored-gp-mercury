@@ -363,7 +363,7 @@ public abstract class LabVessel implements Serializable {
 
     public abstract CONTAINER_TYPE getType();
 
-    public static Collection<String> extractPdoList(Collection<LabVessel> labVessels) {
+    public static Collection<String> extractPdoKeyList(Collection<LabVessel> labVessels) {
 
         Set<String> pdoNames = new HashSet<String>();
 
@@ -371,15 +371,8 @@ public abstract class LabVessel implements Serializable {
             Collection<String> nearestPdos = currVessel.getNearestProductOrders();
 
             if (nearestPdos != null && !nearestPdos.isEmpty()) {
-                pdoNames.add(nearestPdos.iterator().next());
+                pdoNames.addAll(nearestPdos);
             }
-/*
-            else {
-                pdoNames.add(currVessel.getLabel());
-                logger.warning("No PDO was found as the most recent for" + currVessel
-                        .getLabel() + ".  Using the label name instead");
-            }
-*/
             else  {
                 logger.warning("Most recent PDO came up with more than one result");
             }

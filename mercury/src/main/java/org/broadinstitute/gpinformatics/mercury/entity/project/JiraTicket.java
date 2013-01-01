@@ -40,7 +40,6 @@ public class JiraTicket {
     }
 
     public JiraTicket(@Nonnull JiraService jiraService, @Nonnull String ticketId) {
-        this();
         if (ticketId == null) {
             throw new NullPointerException("ticketId cannot be null.");
         }

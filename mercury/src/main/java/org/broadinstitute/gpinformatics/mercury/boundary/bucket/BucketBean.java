@@ -123,7 +123,7 @@ public class BucketBean {
 
     private Collection<String> getVesselNameList(Collection<LabVessel> vessels) {
 
-        List<String> vesselNames = new LinkedList<String>();
+        List<String> vesselNames = new ArrayList<String>(vessels.size());
 
         for (LabVessel currVessel : vessels) {
             vesselNames.add(currVessel.getLabCentricName());
@@ -336,8 +336,9 @@ public class BucketBean {
             Collection<LabBatch> nearestBatches = currEntry.getLabVessel().getNearestLabBatches() ;
             if (nearestBatches !=null ) {
 
-                if (trackBatches == null)
+                if (trackBatches == null) {
                     trackBatches = new LinkedList<LabBatch>();
+                }
 
                 List<LabBatch> currBatchList = new LinkedList<LabBatch>(nearestBatches);
 
@@ -360,7 +361,7 @@ public class BucketBean {
             bucketBatch = trackBatches.get(0);
         } else {
             bucketBatch = new LabBatch(LabBatch.generateBatchName(CreateFields.IssueType.EXOME_EXPRESS.getJiraName(),
-                                                                  LabVessel.extractPdoList(batchVessels)),
+                                                                  LabVessel.extractPdoKeyList(batchVessels)),
                                        batchVessels);
         }
 
@@ -406,8 +407,7 @@ public class BucketBean {
      */
     public void cancel(@Nonnull BucketEntry bucketEntry, String operator, String reason) {
 
-        List<BucketEntry> singleRemoval = new LinkedList<BucketEntry>();
-        singleRemoval.add(bucketEntry);
+        Collection<BucketEntry> singleRemoval = Collections.singletonList(bucketEntry);
 
         removeEntries(singleRemoval);
 
@@ -435,7 +435,7 @@ public class BucketBean {
         }
     }
 
-    private Set<String> extractProductOrderSet(Collection<BucketEntry> entries) {
+    private static Set<String> extractProductOrderSet(Collection<BucketEntry> entries) {
         Set<String> pdoSet = new HashSet<String>();
 
         for (BucketEntry currEntry : entries) {
@@ -449,7 +449,7 @@ public class BucketBean {
         List<LabVessel> labVessels = new LinkedList<LabVessel>();
 
         for (BucketEntry currEntry : entries) {
-            if (currEntry.getPoBusinessKey().equalsIgnoreCase(pdo)) {
+            if (currEntry.getPoBusinessKey().equals(pdo)) {
                 labVessels.add(currEntry.getLabVessel());
             }
         }
