@@ -14,6 +14,9 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
+ *
+ * Applies workflow names to known Products in Production.  This helps support the Workflow efforts of Mercury
+ *
  * @author Scott Matthews
  *         Date: 12/20/12
  *         Time: 4:29 PM
