@@ -147,6 +147,5 @@ public class ProductOrderSampleTest {
     public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<BillingLedger> billingLedgers, BillingStatus billingStatus) {
         sample.autoBillSample(completedDate, 1);
         Assert.assertEquals(sample.getBillableLedgerItems(), billingLedgers);
-        Assert.assertEquals(sample.getBillingStatus(), billingStatus);
     }
 }

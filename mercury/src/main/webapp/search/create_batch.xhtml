@@ -1,32 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<!DOCTYPE html>
+<!--
+  Created by IntelliJ IDEA.
+  User: scottmat
+  Date: 12/5/12
+  Time: 2:04 PM
+-->
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:p="http://primefaces.org/ui"
-      xmlns:f="http://java.sun.com/jsf/core"
       xmlns:c="http://java.sun.com/jsf/composite/container"
-      xmlns:s="http://java.sun.com/jsf/composite/sample">
+      xmlns:s="http://java.sun.com/jsf/composite/sample"
+      xmlns:bui="http://mercury.broadinstitute.org/ui">
+
+<h:head>
+    <title>Simple JSF Facelets page</title>
+</h:head>
+
 <h:body>
     <ui:composition template="/layout.xhtml">
-        <ui:define name="title">
-            Barcode Lookup
+        <ui:define name="title">Create Batch - Search</ui:define>
+        <ui:define name="metadata">
+            <f:event type="preRenderView" listener="#{batchFromPlasticBean.initForm}"/>
         </ui:define>
+
         <ui:define name="body">
-            <h:form id="results">
+            <h:form id="batchForm">
                 <div class="control-group">
                     <div class="controls">
-                        <p:inputText id="name" value="#{searchPlasticBean.barcode}" size="50"/>
-                        <p:watermark for="name" value="Enter the barcode to search for"/>
-                        <p:commandButton value="Search" action="#{searchPlasticBean.barcodeSearch}"
-                                         update=":results:searchResultPanel" styleClass="ui-priority-primary"/>
+                        <p:inputTextarea id="barcode" value="#{batchFromPlasticBean.barcode}" cols="50" rows="3" />
+                        <p:watermark value="Enter barcodes: Comma Separated" for="barcode"/>
+                        <p:commandButton value="Search" action="#{batchFromPlasticBean.barcodeSearch}"
+                                         update=":batchForm:searchResultPanel" styleClass="ui-priority-primary"/>
                     </div>
                 </div>
                 <p:panel id="searchResultPanel">
-                    <p:dataTable id="resultsTable" var="foundVessel" value="#{searchPlasticBean.foundVessels}">
-                        <p:ajax event="rowToggle" listener="#{searchPlasticBean.onRowToggle}"/>
+                    <p:dataTable id="batchFormTable" var="foundVessel" value="#{batchFromPlasticBean.foundVessels}"
+                                 rowKey="#{foundVessel.label}"
+                                 selection="#{batchFromPlasticBean.selectedVessels}" selectionMode="multiple">
+                        <p:ajax event="rowToggle" listener="#{batchFromPlasticBean.onRowToggle}"/>
                         <f:facet name="header">
                             Barcode Search Results
                         </f:facet>
@@ -34,13 +51,13 @@
                             <f:facet name="header">
                                 <h:outputText value="Sample Details"/>
                             </f:facet>
-                            <p:rowToggler rendered="#{searchPlasticBean.vesselSampleSizeMap.get(foundVessel) > 0}"/>
+                            <p:rowToggler rendered="#{batchFromPlasticBean.vesselSampleSizeMap.get(foundVessel) > 0}"/>
                         </p:column>
                         <p:column>
                             <f:facet name="header">
                                 <h:outputText value="Sample #"/>
                             </f:facet>
-                            <h:outputText value="#{searchPlasticBean.vesselSampleSizeMap.get(foundVessel)}"/>
+                            <h:outputText value="#{batchFromPlasticBean.vesselSampleSizeMap.get(foundVessel)}"/>
                         </p:column>
                         <p:column sortBy="#{foundVessel.label}">
                             <f:facet name="header">
@@ -58,20 +75,14 @@
                             <f:facet name="header">
                                 <h:outputText value="Lab Batches"/>
                             </f:facet>
-                            <ui:repeat value="#{foundVessel.labBatchesList}" var="batch">
-                                <h:outputText value="#{batch.batchName}"/>
+                            <!--<ui:repeat value="#{foundVessel.labBatchesList}" var="batch">-->
+                                <!--<h:outputText value="#{batch.batchName}"/>-->
+                                <ui:repeat value="#{batchFromPlasticBean.batchesByVessel.get(foundVessel)}" var="batch">
+                                <h:outputText value="#{batch.jiraTicket.ticketId}"/>
+
                                 <br/>
                             </ui:repeat>
                         </p:column>
-                        <!-- <p:column>
-                           <f:facet name="header">
-                               <h:outputText value="QC Metrics"/>
-                           </f:facet>
-                           <ui:repeat value="#{searchResult.metrics}" var="metric">
-                               <h:outputText value="#{metric.name} : #{metric.value} #{metric.units}"/>
-                               <br/>
-                           </ui:repeat>
-                       </p:column> -->
                         <p:column>
                             <f:facet name="header">
                                 <h:outputText value="Latest Event"/>
@@ -88,7 +99,8 @@
                             <f:facet name="header">
                                 <h:outputText value="Event User"/>
                             </f:facet>
-                            <h:outputText value="#{searchPlasticBean.getUserNameById(foundVessel.latestEvent.eventOperator)}"/>
+                            <h:outputText
+                                    value="#{batchFromPlasticBean.getUserNameById(foundVessel.latestEvent.eventOperator)}"/>
                         </p:column>
                         <p:column>
                             <f:facet name="header">
@@ -102,20 +114,18 @@
                             </f:facet>
                             <h:outputText value="#{foundVessel.createdOn}"/>
                         </p:column>
-                        <p:rowExpansion>
-                            <p:outputPanel id="outputContainerPanel">
-                                <p:panel id="platePanel">
-                                    <c:container barcode="#{searchPlasticBean.selectedVessel.label}"/>
-                                </p:panel>
-                                <p:panel id="samplePanel">
-                                    <s:sampleList barcode="#{searchPlasticBean.selectedVessel.label}"/>
-                                </p:panel>
-                            </p:outputPanel>
-                        </p:rowExpansion>
+                        <f:facet name="footer">
+
+                            <p:commandButton value="Enter Jira Informaiton...."
+                                             action="/search/create_batch_jira.xhtml?faces-redirect=true"/>
+
+                        </f:facet>
                     </p:dataTable>
                 </p:panel>
             </h:form>
         </ui:define>
     </ui:composition>
+
 </h:body>
+
 </html>

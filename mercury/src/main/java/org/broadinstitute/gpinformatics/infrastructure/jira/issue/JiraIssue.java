@@ -10,10 +10,16 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Tra
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Date;
 
 public class JiraIssue implements Serializable {
 
     private final String key;
+
+    private String summary;
+    private String description;
+
+    private Date dueDate;
 
     private final JiraService jiraService;
 
@@ -24,6 +30,30 @@ public class JiraIssue implements Serializable {
 
     public String getKey() {
         return key;
+    }
+
+    public String getSummary() {
+        return summary;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Date getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(Date dueDate) {
+        this.dueDate = dueDate;
     }
 
     /**

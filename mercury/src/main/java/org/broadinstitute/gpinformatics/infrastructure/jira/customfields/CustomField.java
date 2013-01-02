@@ -57,6 +57,7 @@ public class CustomField {
 
     public enum SingleFieldType {
         TEXT,
+        NUMERIC,
         RADIO_BUTTON,
         SINGLE_SELECT
     }

@@ -55,8 +55,6 @@ public class ProductOrderSample implements Serializable {
     @Column(nullable = false)
     private String sampleName;      // This is the name of the BSP or Non-BSP sample.
 
-    private BillingStatus billingStatus = BillingStatus.NotYetBilled;
-
     private String sampleComment;
 
     @Index(name = "ix_pos_product_order")
@@ -105,14 +103,6 @@ public class ProductOrderSample implements Serializable {
 
     public String getSampleName() {
         return sampleName;
-    }
-
-    public BillingStatus getBillingStatus() {
-        return billingStatus;
-    }
-
-    public void setBillingStatus(BillingStatus billingStatus) {
-        this.billingStatus = billingStatus;
     }
 
     public String getSampleComment() {
@@ -354,7 +344,6 @@ public class ProductOrderSample implements Serializable {
     public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta) {
         BillingLedger billingLedger = new BillingLedger(this, priceItem, workCompleteDate, delta);
         ledgerItems.add(billingLedger);
-        billingStatus = BillingStatus.EligibleForBilling;
         log.debug(MessageFormat.format(
                 "Added BillingLedger item for sample {0} to PDO {1} for PriceItemName: {2} - Quantity:{3}",
                 sampleName, productOrder.getBusinessKey(), priceItem.getName(), delta));

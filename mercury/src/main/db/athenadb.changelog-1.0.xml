@@ -1845,4 +1845,19 @@
         <createSequence sequenceName="SEQ_MATERIAL_TYPE" schemaName="athena" startValue="1" incrementBy="10"/>
     </changeSet>
 
+    <changeSet id="GPLIM-426.1" author="mcovarr">
+        <preConditions>
+            <columnExists columnName="billing_status" schemaName="athena" tableName="product_order_sample" />
+        </preConditions>
+        <dropColumn columnName="billing_status" schemaName="athena" tableName="product_order_sample" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-426.1_aud" author="mcovarr">
+        <preConditions>
+            <columnExists columnName="billing_status" schemaName="athena" tableName="product_order_sample_aud" />
+        </preConditions>
+        <dropColumn columnName="billing_status" schemaName="athena" tableName="product_order_sample_aud" />
+    </changeSet>
+
 </databaseChangeLog>
