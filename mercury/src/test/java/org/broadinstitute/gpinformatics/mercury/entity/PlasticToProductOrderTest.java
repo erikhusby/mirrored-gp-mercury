@@ -85,6 +85,9 @@ public class PlasticToProductOrderTest extends ContainerTest {
         }
         utx.begin ();
 
+        if(bucketDao == null) {
+            return;
+        }
         bucketDef = new WorkflowBucketDef (BUCKET_REFERENCE_NAME);
 
         bucket = new Bucket (bucketDef);
