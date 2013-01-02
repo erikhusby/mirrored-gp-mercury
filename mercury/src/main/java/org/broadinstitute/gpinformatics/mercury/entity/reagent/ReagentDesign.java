@@ -41,15 +41,11 @@ public class ReagentDesign {
     // Initialize our transient data after the object has been loaded from the database.
     @PostLoad
     private void initialize() {
-        originalName = reagentDesign;
+        originalName = designName;
     }
 
     public String getOriginalName() {
         return originalName;
-    }
-
-    public String getBusinessKey() {
-        return reagentDesign;
     }
 
     /**
