@@ -510,7 +510,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return getUserCompleteData(editResearchProject.getProjectManagers());
     }
 
-    @Inject
     public String getFundingSourcesCompleteData() throws Exception {
         if (editResearchProject == null) {
             return "";

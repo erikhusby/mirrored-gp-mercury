@@ -407,8 +407,10 @@ public class Product implements Serializable, Comparable<Product> {
     }
 
     private void addProductDuplicates(List<String> duplicates, Set<String> priceItemNames) {
-        // No price items yet, so can just add it
-        priceItemNames.add(primaryPriceItem.getName());
+        if (primaryPriceItem != null) {
+            // No price items yet, so can just add it
+            priceItemNames.add(primaryPriceItem.getName());
+        }
 
         for (PriceItem optionalPriceItem : optionalPriceItems) {
             if (!priceItemNames.add(optionalPriceItem.getName())) {
@@ -482,4 +484,7 @@ public class Product implements Serializable, Comparable<Product> {
                 null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME, false);
     }
 
+    public String getDisplayName() {
+        return productName + " [" + partNumber + "]";
+    }
 }

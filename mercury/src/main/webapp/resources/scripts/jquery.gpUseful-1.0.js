@@ -1,4 +1,4 @@
-/*
+    /*
  * Useful jQuery functions that are simple (and too annoying) to make into many different 
  * jQuery plugins.  Many of these are commonly used and wrapping them into a single script
  * speeds up the loading time of the page.
@@ -131,3 +131,18 @@
         }
     });
 })(jQuery);
+
+// extend sorting for datatables to allow for title sorting
+jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+    "title-string-pre": function ( a ) {
+        return a.match(/title="(.*?)"/)[1].toLowerCase();
+    },
+
+    "title-string-asc": function ( a, b ) {
+        return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+    },
+
+    "title-string-desc": function ( a, b ) {
+        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+    }
+});

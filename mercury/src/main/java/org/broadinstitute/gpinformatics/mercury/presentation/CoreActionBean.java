@@ -41,7 +41,7 @@ public class CoreActionBean implements ActionBean {
     private static final Log log = LogFactory.getLog(CoreActionBean.class);
 
     public static final String CREATE = "Create ";
-    public static final String EDIT = "Edit : ";
+    public static final String EDIT = "Edit ";
 
     public boolean hasFlashError;
 

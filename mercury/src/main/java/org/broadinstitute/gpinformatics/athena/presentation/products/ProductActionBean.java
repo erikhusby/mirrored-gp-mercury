@@ -2,22 +2,22 @@ package org.broadinstitute.gpinformatics.athena.presentation.products;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
-import net.sourceforge.stripes.validation.SimpleError;
-import net.sourceforge.stripes.validation.Validate;
-import net.sourceforge.stripes.validation.ValidationErrors;
-import net.sourceforge.stripes.validation.ValidationMethod;
+import net.sourceforge.stripes.validation.*;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.json.JSONArray;
 import org.json.JSONException;
 
 import javax.inject.Inject;
 import java.io.StringReader;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -28,8 +28,8 @@ import java.util.List;
 @UrlBinding("/products/product.action")
 public class ProductActionBean extends CoreActionBean {
 
-    private static final String CREATE_PRODUCT = CoreActionBean.CREATE + "Create New Product";
-    private static final String EDIT_PRODUCT = CoreActionBean.EDIT + "Edit Product: ";
+    private static final String CREATE_PRODUCT = CoreActionBean.CREATE + " New Product";
+    private static final String EDIT_PRODUCT = CoreActionBean.EDIT + " Product: ";
 
     public static final String PRODUCT_CREATE_PAGE = "/products/create.jsp";
     public static final String PRODUCT_LIST_PAGE = "/products/list.jsp";
@@ -41,6 +41,9 @@ public class ProductActionBean extends CoreActionBean {
     @Inject
     private ProductDao productDao;
 
+    @Inject
+    private PriceListCache priceListCache;
+
     // Data needed for displaying the view
     private List<ProductFamily> productFamilies;
     private List<Product> allProducts;
@@ -48,7 +51,17 @@ public class ProductActionBean extends CoreActionBean {
     @Validate(required = true, on = {"view", "edit"})
     private String productKey;
 
+    @ValidateNestedProperties({
+        @Validate(field="productName", required = true, maxlength=255, on={"save"})
+    })
     private Product editProduct;
+
+
+    // These are the fields for catching the input tokens
+    @Validate(required = true, on = {"save"})
+    private String pricetItemList = "";
+
+    private String addOnList = "";
 
     // The search query
     private String q;
@@ -163,11 +176,32 @@ public class ProductActionBean extends CoreActionBean {
         return new StreamingResolution("text", new StringReader(itemList.toString()));
     }
 
+    @HandlesEvent("priceItemAutocomplete")
+    public Resolution priceItemAutocomplete() throws Exception {
+        List<PriceItem> priceItems = priceListCache.searchPriceItems(getQ());
+
+        JSONArray itemList = new JSONArray();
+        for (PriceItem priceItem : priceItems) {
+            itemList.put(new AutoCompleteToken(priceItem.getId(), priceItem.getName(), false).getJSONObject());
+        }
+
+        return new StreamingResolution("text", new StringReader(itemList.toString()));
+    }
+
     @HandlesEvent(value = "save")
     public Resolution save() {
+        populateTokenListFields();
+
         productDao.persist(editProduct);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been created");
         return new RedirectResolution(ProductActionBean.class, "view").addParameter("productKey", editProduct.getPartNumber());
+    }
+
+    private void populateTokenListFields() {
+        editProduct.getAddOns().clear();
+        editProduct.getAddOns().addAll(getAddOns());
+
+        editProduct.setPrimaryPriceItem(getPriceItem());
     }
 
     public Product getEditProduct() {
@@ -192,5 +226,58 @@ public class ProductActionBean extends CoreActionBean {
 
     public List<ProductFamily> getProductFamilies() {
         return productFamilies;
+    }
+
+    public List<Product> getAddOns() {
+        List<String> addOnIdList = Arrays.asList(addOnList.split(","));
+        return productDao.findByPartNumbers(addOnIdList);
+    }
+
+    public org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getPriceItem() {
+        PriceItem priceItem = priceListCache.findById(Long.valueOf(pricetItemList));
+
+        return new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
+                priceItem.getId(), priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
+    }
+
+    public String getAddOnCompleteData() throws Exception {
+        if (editProduct == null) {
+            return "";
+        }
+
+        JSONArray itemList = new JSONArray();
+        for (Product product : editProduct.getAddOns()) {
+            itemList.put(new AutoCompleteToken(product.getBusinessKey(), product.getDisplayName(), false).getJSONObject());
+        }
+
+        return itemList.toString();
+    }
+
+    public String getPriceItemCompleteData() throws Exception {
+        if (editProduct == null) {
+            return "";
+        }
+
+        JSONArray itemList = new JSONArray();
+        String quotePriceItemId = priceListCache.findByConcatenatedKey(editProduct.getPrimaryPriceItem().getConcatenatedKey()).getId();
+        itemList.put(new AutoCompleteToken(quotePriceItemId, editProduct.getPrimaryPriceItem().getDisplayName(), false).getJSONObject());
+
+        return itemList.toString();
+    }
+
+    public String getPricetItemList() {
+        return pricetItemList;
+    }
+
+    public void setPricetItemList(String pricetItemList) {
+        this.pricetItemList = pricetItemList;
+    }
+
+    public String getAddOnList() {
+        return addOnList;
+    }
+
+    public void setAddOnList(String addOnList) {
+        this.addOnList = addOnList;
     }
 }

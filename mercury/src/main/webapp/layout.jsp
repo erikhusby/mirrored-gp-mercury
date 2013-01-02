@@ -35,7 +35,6 @@
         <script type="text/javascript" src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-popover.js"></script>
         <script type="text/javascript" src="${ctxpath}/resources/scripts/Bootstrap/bootstrap-alert.js"></script>
 
-        <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.gpUseful-1.0.js"></script>
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.dateRangeSelector.js"></script>
         <script type="text/javascript" src="${ctxpath}/resources/scripts/DataTables-1.9.4/media/js/jquery.dataTables.min.js"></script>
         <script type="text/javascript" src="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/js/TableTools.min.js"></script>
@@ -51,6 +50,8 @@
         <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/token-input.css"/>
         <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/jquery-ui-1.9.2.custom.min.css"/>
         <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/mercury.css"/>
+
+        <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.gpUseful-1.0.js"></script>
 
         <script type="text/javascript"
                 src="http://prodinfojira.broadinstitute.org/jira/s/en_US-vrke9z/733/4/1.2.5/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector.js?collectorId=ad2bd4e3"></script>

@@ -1,3 +1,4 @@
+<%@ taglib prefix="security" uri="http://www.broadinstitute.org/Mercury/SecureTag" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -38,14 +39,18 @@
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Availability Date</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editProduct.availabilityDate}</div>
+                    <div class="form-value">
+                        <fmt:formatDate value="${actionBean.editProduct.availabilityDate}" pattern="MM/dd/yyyy"/>
+                    </div>
                 </div>
             </div>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Discontinued Date</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editProduct.discontinuedDate}</div>
+                    <div class="form-value">
+                        <fmt:formatDate value="${actionBean.editProduct.discontinuedDate}" pattern="MM/dd/yyyy"/>
+                    </div>
                 </div>
             </div>
 
@@ -120,6 +125,25 @@
                     </div>
                 </div>
             </div>
+
+            <div class="control-group" style="margin-top: 20px">
+                <label class="control-label label-form">Use Automated Billing?</label>
+                <div class="controls">
+                    <div class="form-value">${actionBean.editProduct.useAutomatedBilling ? "Yes, Bill When:" : "No"}</div>
+                </div>
+            </div>
+
+            <c:if test="${actionBean.editProduct.useAutomatedBilling}">
+                <div class="control-group">
+                    <label class="control-label label-form">&nbsp;</label>
+                    <div class="controls">
+                        <div class="form-value">${actionBean.editProduct.requirement.attribute}&#160;
+                                ${actionBean.editProduct.requirement.operator.label}&#160;
+                                ${actionBean.editProduct.requirement.value}
+                        </div>
+                    </div>
+                </div>
+            </c:if>
         </div>
 
         <div class="tableBar">
@@ -147,7 +171,7 @@
                         <td>${addOnProduct.productName}</td>
                         <td>${addOnProduct.productFamily.name}</td>
                         <td>
-                            ${addOnProduct.primaryPriceItem.category} : ${addOnProduct.primaryPriceItem.name}
+                            ${addOnProduct.primaryPriceItem.displayName}
                             <c:if test="${addOnProduct.available}">
                                 <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
                             </c:if>

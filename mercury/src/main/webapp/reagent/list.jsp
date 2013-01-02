@@ -1,20 +1,20 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.ReagentDesignActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="List Products" sectionTitle="List Products">
+<stripes:layout-render name="/layout.jsp" pageTitle="List of Designed Reagents" sectionTitle="Designed Reagents">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
-                $j('#productList').dataTable( {
+                $j('#reagentList').dataTable( {
                     "oTableTools": ttExportDefines,
                     "aaSorting": [[1,'asc']],
                     "aoColumns": [
                         {"bSortable": true, "sType": "html"},
                         {"bSortable": true},
                         {"bSortable": true},
-                        {"bSortable": true, "sSortDataType" : "title-string-asc"}]
+                        {"bSortable": true}]
                 })
             });
         </script>
@@ -22,8 +22,8 @@
 
     <stripes:layout-component name="content">
         <p>
-            <stripes:link title="New Product" beanclass="${actionBean.class.name}" event="create" class="pull-right">
-                New product
+            <stripes:link title="New Reagent Design" beanclass="${actionBean.class.name}" event="create" class="pull-right">
+                New reagent design
             </stripes:link>
         </p>
 
@@ -32,28 +32,24 @@
         <table id="productList" class="table simple">
             <thead>
                 <tr>
-                    <th>Part Number</th>
-                    <th>Product Name</th>
-                    <th>Product Family</th>
-                    <th>Is Available</th>
+                    <th>Design Name</th>
+                    <th>Reagent Type</th>
+                    <th>Target Set</th>
+                    <th>Manufacturer</th>
                 </tr>
             </thead>
             <tbody>
-                <c:forEach items="${actionBean.allProducts}" var="product">
+                <c:forEach items="${actionBean.allReagentDesigns}" var="design">
                     <tr>
                         <td>
                             <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                <stripes:param name="productKey" value="${product.businessKey}"/>
-                                ${product.partNumber}
+                                <stripes:param name="businessKey" value="${design.businessKey}"/>
+                                ${design.designName}
                             </stripes:link>
                         </td>
-                        <td>${product.productName}</td>
-                        <td>${product.productFamily.name}</td>
-                        <td>
-                            <c:if test="${product.available}">
-                                <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
-                            </c:if>
-                        </td>
+                        <td>${design.reagentType}</td>
+                        <td>${design.targetSetName}</td>
+                        <td>${design.manufacturersName}</td>
                     </tr>
                 </c:forEach>
             </tbody>

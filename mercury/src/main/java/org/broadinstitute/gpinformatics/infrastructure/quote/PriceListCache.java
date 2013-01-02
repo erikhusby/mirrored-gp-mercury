@@ -178,6 +178,16 @@ public class PriceListCache extends AbstractCache implements Serializable {
         return null;
     }
 
+    public PriceItem findById(Long priceItemId) {
+        for (PriceItem priceItem : getPriceList().getPriceItems()) {
+            if (priceItem.getId().equals(priceItemId.toString())) {
+                return priceItem;
+            }
+        }
+
+        return null;
+    }
+
     public String getPriceItemName(Long priceItemId) {
         for (PriceItem priceItem : getPriceList().getPriceItems()) {
             if (priceItem.getId().equals(priceItemId.toString())) {

@@ -26,19 +26,16 @@
                 </ul>
             </li>
 
-            <!-- security:authorizeBlock ${actionBean.userBean.developerRole} -->
-            <li class="dropdown">
-                <a id="adminNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span class="icon-cog"></span> Admin <b class="caret"></b></a>
-                <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
-                    <!--
-                    <li><a tabindex="-1" href="${ctxpath}/security/authorizePage.action?list">authorize pages</a></li>
-                    <li class="divider"></li>
-                    -->
-                    <li><a tabindex="-1" href="${ctxpath}/reagent/list">list</a></li>
-                    <li><a tabindex="-1" href="${ctxpath}/reagent/create">create</a></li>
-                </ul>
-            </li>
+            <!--security:authorizeBlock roles="${actionBean.userBean.developerRole}"-->
+                <li class="dropdown">
+                    <a id="adminNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span class="icon-cog"></span> Admin <b class="caret"></b></a>
+                    <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
+                        <li><a tabindex="-1" href="${ctxpath}/reagent/design.action?list">reagent design</a></li>
+                    </ul>
+                </li>
+            <!--/security:authorizeBlock-->
         </ul>
+
         <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchPlasticActionBean" style="height:35px;">
             <ul class="nav pull-right global-search">
                 <li>
