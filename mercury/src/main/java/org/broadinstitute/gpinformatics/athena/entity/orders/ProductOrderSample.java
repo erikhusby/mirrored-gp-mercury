@@ -6,6 +6,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
@@ -67,6 +68,25 @@ public class ProductOrderSample implements Serializable {
 
     @Column(name="SAMPLE_POSITION", updatable = false, insertable = false, nullable=false)
     private Integer samplePosition;
+
+    public static enum DeliveryStatus implements StatusType {
+        NOT_STARTED("Not Started"),
+        DELIVERED("Delivered"),
+        ABANDONED("Abandoned");
+
+        private String displayName;
+
+        DeliveryStatus(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
+    @Enumerated(EnumType.STRING)
+    private DeliveryStatus deliveryStatus = DeliveryStatus.NOT_STARTED;
 
     @Transient
     private BSPSampleDTO bspDTO = BSPSampleDTO.DUMMY;
@@ -154,6 +174,10 @@ public class ProductOrderSample implements Serializable {
 
     public Long getProductOrderSampleId() {
         return productOrderSampleId;
+    }
+
+    public DeliveryStatus getDeliveryStatus() {
+        return deliveryStatus;
     }
 
     public void setBspDTO(@Nonnull BSPSampleDTO bspDTO) {

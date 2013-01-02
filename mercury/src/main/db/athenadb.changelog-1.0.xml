@@ -1860,4 +1860,30 @@
         <dropColumn columnName="billing_status" schemaName="athena" tableName="product_order_sample_aud" />
     </changeSet>
 
+    <changeSet id="GPLIM-426.2" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists columnName="delivery_status" schemaName="athena" tableName="product_order_sample" />
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_sample" schemaName="athena">
+            <column name="delivery_status" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-426.2_aud" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists columnName="delivery_status" schemaName="athena" tableName="product_order_sample_aud" />
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_sample_aud" schemaName="athena">
+            <column name="delivery_status" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-426.3" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="product_order_sample" columnName="delivery_status" defaultNullValue="NOT_STARTED" />
+    </changeSet>
+
 </databaseChangeLog>

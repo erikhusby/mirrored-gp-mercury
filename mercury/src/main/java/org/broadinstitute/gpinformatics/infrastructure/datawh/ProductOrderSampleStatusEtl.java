@@ -61,20 +61,16 @@ public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
             return null;
         }
 
-        return null;
-
-/*
         // Skips entity changes that don't affect status (i.e. status will be null in the Envers entity).
-        if (entity.getBillingStatus() == null) {
+        if (entity.getDeliveryStatus() == null) {
             return null;
         }
 
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderSampleId(),
                 format(revDate),
-                format(entity.getBillingStatus().getDisplayName())
+                format(entity.getDeliveryStatus().getDisplayName())
         );
-*/
     }
 
     /** This entity etl does not make entity records. */
