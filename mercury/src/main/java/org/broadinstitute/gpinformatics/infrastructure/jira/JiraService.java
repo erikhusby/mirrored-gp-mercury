@@ -48,7 +48,7 @@ public interface JiraService extends Serializable {
      * @param key the key
      * @return the issue object for the key
      */
-    JiraIssue getIssue(String key);
+    JiraIssue getIssue(String key) throws IOException ;
     /**
      * Add a publicly visible comment to the specified issue.
      * 

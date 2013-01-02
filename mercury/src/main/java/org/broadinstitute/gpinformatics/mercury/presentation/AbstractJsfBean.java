@@ -19,8 +19,32 @@ public abstract class AbstractJsfBean {
 
     private static final BusinessKeySorter businessKeySorter = new BusinessKeySorter();
 
+    /**
+     * Global redirect helper to preserve the usage of View params between page requests
+     * @param result
+     * @return
+     */
     public String redirect(String result) {
         return result + "?faces-redirect=true&includeViewParams=true";
+    }
+
+    /**
+     *
+     * Extends the basic options of the {@link #redirect(String, String...)} method to allow users to add
+     * 1->many parameters to the URL
+     *
+     * @param result
+     * @param params
+     * @return
+     */
+    public String redirect(String result, String... params) {
+        String initialResult = redirect(result);
+
+        for(String param:params) {
+            initialResult = initialResult + "&" + param;
+        }
+
+        return initialResult;
     }
 
     /**

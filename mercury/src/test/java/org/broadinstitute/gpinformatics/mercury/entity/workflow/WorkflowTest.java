@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import junit.framework.Assert;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.testng.annotations.Test;
@@ -17,6 +18,7 @@ import java.util.Date;
 /**
  * Test product workflow, processes and steps
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class WorkflowTest {
 
     private WorkflowConfig            workflowConfig;

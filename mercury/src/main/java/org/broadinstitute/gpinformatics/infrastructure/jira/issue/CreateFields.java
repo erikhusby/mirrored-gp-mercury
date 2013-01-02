@@ -67,7 +67,7 @@ public class CreateFields extends UpdateFields {
     @JsonSerialize(using = JsonLabopsJiraIssueTypeSerializer.class)
     public enum ProjectType {
 
-        LCSET_PROJECT_PREFIX("Illumina Library Construction Tracking", "LCSET"),
+        LCSET_PROJECT("Illumina Library Construction Tracking", "LCSET"),
         Product_Ordering("Product Ordering", "PDO"),
         Research_Projects("Research Projects", "RP");
 
