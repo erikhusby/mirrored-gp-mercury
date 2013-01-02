@@ -50,8 +50,6 @@ public class ProductOrderSample implements Serializable {
 
     public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile("SM-[A-Z1-9]{4,6}");
 
-    static final IllegalStateException ILLEGAL_STATE_EXCEPTION = new IllegalStateException("Sample data not available");
-
     @Index(name = "ix_pos_sample_name")
     @Column(nullable = false)
     private String sampleName;      // This is the name of the BSP or Non-BSP sample.
