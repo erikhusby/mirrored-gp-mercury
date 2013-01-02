@@ -596,55 +596,6 @@ public class ProductOrder implements Serializable {
         return count == null ? 0 : count;
     }
 
-    /**
-     * getBilledNotBilledCounts calculates both how many samples registered to this product have been billed and how
-     * many samples have not been billed
-     *
-     * @return an instance of a BilledNotBilledCounts object which exposes both the Billed counts and the not billed
-     *         counts
-     */
-    public BilledNotBilledCounts getBilledNotBilledCounts() {
-        return new BilledNotBilledCounts(getBillingStatusCount(BillingStatus.Billed),
-                getBillingStatusCount(BillingStatus.NotYetBilled));
-    }
-
-    /**
-     * getElligibleForBillingCounts calculates how many samples are eligible to be billed
-     *
-     * @return a count of all samples registered to this product order that are eligible for billing
-     */
-    public int getElligibleForBillingCounts() {
-        return getBillingStatusCount(BillingStatus.EligibleForBilling);
-    }
-
-    /**
-     * getNotBillableCounts calculates how many samples have not been billed
-     *
-     * @return a count of all samples registered to this product order that have not been billed
-     */
-    public int getNotBillableCounts() {
-        return getBillingStatusCount(BillingStatus.NotBillable);
-    }
-
-    /**
-     * getBillingStatusCount calculates how many samples registered to this product order have a billing status that
-     * matches targetStatus
-     *
-     * @param targetStatus an instance of a BillingStatus enum for which the user wishes to compare against the list
-     *                     of Product Order Samples registered to this Product Order
-     * @return a count of all samples that have a billing status that matches the given billing status
-     */
-    private int getBillingStatusCount(BillingStatus targetStatus) {
-        int statusCount = 0;
-
-        for (ProductOrderSample sample : samples) {
-            if (targetStatus == sample.getBillingStatus()) {
-                statusCount++;
-            }
-        }
-
-        return statusCount;
-    }
 
     /**
      * getFingerprintCount calculates how many samples registered to this product order have a fingerprint associated
@@ -837,27 +788,6 @@ public class ProductOrder implements Serializable {
     @Transient
     public CreateFields.IssueType fetchJiraIssueType() {
         return CreateFields.IssueType.PRODUCT_ORDER;
-    }
-
-    public String getSampleBillingSummary() {
-        if (sampleBillingSummary == null) {
-            if (samples != null) {
-                Map<BillingStatus, Integer> totals = new EnumMap<BillingStatus, Integer>(BillingStatus.class);
-                for (ProductOrderSample sample : samples) {
-                    Integer total = totals.get(sample.getBillingStatus());
-                    if (total == null) {
-                        total = 0;
-                    }
-                    totals.put(sample.getBillingStatus(), ++total);
-                }
-                StringBuilder sb = new StringBuilder();
-                for (Map.Entry<BillingStatus, Integer> entry : totals.entrySet()) {
-                    sb.append(MessageFormat.format("{0}: {1} ", entry.getKey().getDisplayName(), entry.getValue()));
-                }
-                sampleBillingSummary = sb.toString();
-            }
-        }
-        return sampleBillingSummary;
     }
 
     /**
