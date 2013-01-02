@@ -69,7 +69,7 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
     }
 
 
-    @Test
+    @Test( enabled = true )
     public void testImport() throws Exception {
 
         FileInputStream fis=null;

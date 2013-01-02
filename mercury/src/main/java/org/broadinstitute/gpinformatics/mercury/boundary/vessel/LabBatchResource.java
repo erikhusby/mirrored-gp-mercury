@@ -45,10 +45,7 @@ public class LabBatchResource {
     private LabBatchDAO labBatchDAO;
 
     @Inject
-    JiraService jiraService;
-
-
-
+    private JiraService jiraService;
 
     @POST
     public String createLabBatch(LabBatchBean labBatchBean) {
@@ -65,7 +62,7 @@ public class LabBatchResource {
         Map<MercurySample, MercurySample> mapSampleToSample = mercurySampleDao.findByMercurySample(mercurySampleKeys);
         LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample/*, null*/);
 
-        JiraTicket jiraTicket = new JiraTicket(labBatch.getBatchName());
+        JiraTicket jiraTicket = new JiraTicket(jiraService, labBatchBean.getBatchId());
         labBatch.setJiraTicket(jiraTicket);
         jiraTicket.setLabBatch(labBatch);
         labBatchDAO.persist(labBatch);
@@ -106,16 +103,4 @@ public class LabBatchResource {
         return labBatch;
     }
 
-    public void createJiraTicket(@Nonnull LabBatch batch, @Nonnull String reporter, @Nonnull CreateFields.IssueType batchSubType,
-                                 @Nonnull String projectPrefix) throws IOException {
-
-        Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
-
-        JiraIssue jiraIssue = jiraService.createIssue(projectPrefix, reporter, batchSubType, batch.getBatchName(), "",
-                                                      batch.retrieveCustomFields(submissionFields));
-
-        JiraTicket jiraTicket = new JiraTicket(jiraIssue);
-        batch.setJiraTicket(jiraTicket);
-
-    }
 }
