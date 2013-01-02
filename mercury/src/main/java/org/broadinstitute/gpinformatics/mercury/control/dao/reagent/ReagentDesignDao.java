@@ -31,6 +31,6 @@ public class ReagentDesignDao extends GenericDao {
     }
 
     public ReagentDesign findByBusinessKey(String value) {
-        return findSingle(ReagentDesign.class, ReagentDesign_.reagentDesign, value);
+        return findSingle(ReagentDesign.class, ReagentDesign_.designName, value);
     }
 }

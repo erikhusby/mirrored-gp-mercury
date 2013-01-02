@@ -1,4 +1,15 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
+<%--
+  ~ The Broad Institute
+  ~ SOFTWARE COPYRIGHT NOTICE AGREEMENT
+  ~ This software and its documentation are copyright 2013 by the
+  ~ Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
+  ~
+  ~ This software is supplied without any warranty or guaranteed support
+  ~ whatsoever. Neither the Broad Institute nor MIT can be responsible for its
+  ~ use, misuse, or functionality.
+  --%>
+
 <header class="navbar">
     <div class="navbar-inner">
         <ul class="nav" role="navigation">
@@ -32,8 +43,8 @@
                 <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
                     <li><a tabindex="-1" href="${ctxpath}/administration/page_administration">page config</a></li>
                     <li class="divider"></li>
-                    <li><a tabindex="-1" href="${ctxpath}/reagent/list">list</a></li>
-                    <li><a tabindex="-1" href="${ctxpath}/reagent/create">create</a></li>
+                    <li><a tabindex="-1" href="${ctxpath}/reagent/list_reagent_designs.xhtml">list</a></li>
+                    <li><a tabindex="-1" href="${ctxpath}/reagent/edit_reagent_designs.xhtml">create</a></li>
                 </ul>
             </li>
         </ul>

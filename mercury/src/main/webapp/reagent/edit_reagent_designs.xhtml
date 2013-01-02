@@ -27,7 +27,7 @@
                 <p:outputLabel for="designName" value="Name" styleClass="control-label"/>
 
                 <div class="controls">
-                    <p:inputText id="designName"
+                    <p:inputText id="designName" readonly="#{reagentDesignForm.creating == false}"
                                  value="#{reagentDesignForm.reagentDesign.designName}" size="50" required="true"
                                  maxlength="255">
                         <f:validateLength maximum="255"/>
