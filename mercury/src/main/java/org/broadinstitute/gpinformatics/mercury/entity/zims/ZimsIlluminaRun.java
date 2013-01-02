@@ -49,6 +49,11 @@ public class ZimsIlluminaRun {
     @JsonProperty("reads")
     private List<ZamboniRead> reads = new ArrayList<ZamboniRead>();
 
+    // if something blows up, we put the error message here
+    // to keep clients happy
+    @JsonProperty
+    private String error;
+
     public ZimsIlluminaRun() {}
 
     public ZimsIlluminaRun(String runName,
@@ -135,6 +140,18 @@ public class ZimsIlluminaRun {
     
     public Collection<ZimsIlluminaChamber> getLanes() {
         return chambers;
+    }
+
+    /**
+     * Should only be used in the REST resource itself.
+     * @param error
+     */
+    public void setError(String error) {
+        this.error = error;
+    }
+
+    public String getError() {
+        return error;
     }
 
 

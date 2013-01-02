@@ -84,6 +84,14 @@ public class IlluminaRunResourceTest extends Arquillian {
         doAssertions(zamboniRun,runBean,wrIdToPDO);
     }
 
+    @Test
+    public void test_error_handling() throws Exception {
+        ZimsIlluminaRun runBean = runLaneResource.getRun(null);
+
+        assertNotNull(runBean.getError());
+        assertEquals(runBean.getError(),"runName cannot be null");
+    }
+
     /**
      * Does the same test as {@link #test_zims_in_container()},
      * but does it over http, which means it's actually checking
@@ -147,6 +155,7 @@ public class IlluminaRunResourceTest extends Arquillian {
     }
     
     public static void doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean,Map<Long,ProductOrder> wrIdToPDO) {
+        assertNull(runBean.getError());
         assertEquals(runBean.getLanes().size(),thriftRun.getLanes().size());
         assertEquals(runBean.getFlowcellBarcode(),thriftRun.getFlowcellBarcode());
         assertEquals(runBean.getSequencer(),thriftRun.getSequencer());

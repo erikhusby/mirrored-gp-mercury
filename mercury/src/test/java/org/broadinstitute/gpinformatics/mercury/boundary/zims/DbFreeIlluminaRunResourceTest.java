@@ -43,6 +43,15 @@ public class DbFreeIlluminaRunResourceTest {
     }
 
     @Test(groups = DATABASE_FREE)
+    public void test_error_handling() throws Exception {
+        TZamboniRun thriftRun = ThriftFileAccessor.deserializeRun();
+        ZimsIlluminaRun runBean = new IlluminaRunResource().getRun(null);
+
+        Assert.assertNotNull(runBean.getError());
+        Assert.assertEquals("runName cannot be null",runBean.getError());
+    }
+
+    @Test(groups = DATABASE_FREE)
     public void test_known_good_run() throws Exception {
         TZamboniRun thriftRun = ThriftFileAccessor.deserializeRun();
         ZimsIlluminaRun runBean = new IlluminaRunResource(

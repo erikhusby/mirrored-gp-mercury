@@ -58,11 +58,16 @@ public class IlluminaRunResource implements Serializable {
     public ZimsIlluminaRun getRun(
             @QueryParam("runName") String runName)
     {
-        if (runName == null) {
-            throw new NullPointerException("runName cannot be null");
+        ZimsIlluminaRun runBean = new ZimsIlluminaRun();
+        try {
+            if (runName == null) {
+                throw new NullPointerException("runName cannot be null");
+            }
+            runBean = getRun(thriftService,runName);
         }
-
-       ZimsIlluminaRun runBean = getRun(thriftService,runName);
+        catch(Throwable t) {
+            runBean.setError(t.getMessage());
+        }
 
         return runBean;
     }

@@ -142,6 +142,12 @@ public class LibraryBean {
     @JsonProperty
     private boolean isGssrSample;
 
+    @JsonProperty
+    private String population;
+
+    @JsonProperty
+    private String race;
+
     public LibraryBean() {}
 
     /**
@@ -280,6 +286,8 @@ public class LibraryBean {
             this.collaboratorSampleId = bspSampleDTO.getCollaboratorsSampleName();
             this.materialType = bspSampleDTO.getMaterialType();
             this.participantId = bspSampleDTO.getPatientId();
+            this.population = bspSampleDTO.getPopulation();
+            this.race = bspSampleDTO.getRace();
             isGssrSample = false;
         }
         else {
@@ -441,5 +449,14 @@ public class LibraryBean {
 
     public boolean isGssrSample() {
         return isGssrSample;
+    }
+
+    // todo arz db-free test
+    public String getPopulation() {
+        return population;
+    }
+
+    public String getRace() {
+        return race;
     }
 }

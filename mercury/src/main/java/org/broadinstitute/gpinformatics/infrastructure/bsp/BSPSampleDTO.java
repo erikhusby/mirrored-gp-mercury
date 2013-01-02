@@ -65,11 +65,15 @@ public class BSPSampleDTO {
 
     private String collaboratorName;
 
+    private String race;
+
+    private String population;
+
     /**
      * Use this when no valid DTO is present, to avoid null checks
      */
     public static final BSPSampleDTO DUMMY =
-            new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "","");
+            new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "","","","");
 
     // collaborator?
     // species vs organism?
@@ -91,7 +95,8 @@ public class BSPSampleDTO {
                         String patientId, String organism, String collaboratorsSampleName, String collection,
                         String volume, String concentration, String sampleLsid, String collaboratorParticipantId,
                         String materialType, String total, String sampleType, String primaryDisease,
-                        String gender, String stockType, String fingerprint, String sampleId,String collaboratorName) {
+                        String gender, String stockType, String fingerprint, String sampleId,String collaboratorName,
+                        String race,String population) {
         this(primaryDisease,sampleLsid,materialType,collaboratorsSampleName,organism,patientId);
         this.containerId = containerId;
         this.stockSample = stockSample;
@@ -112,6 +117,8 @@ public class BSPSampleDTO {
         this.sampleId = sampleId;
         this.collaboratorName = collaboratorName;
         this.collaboratorParticipantId = collaboratorParticipantId;
+        this.race = race;
+        this.population = population;
     }
 
     /**
@@ -264,5 +271,13 @@ public class BSPSampleDTO {
 
     public String getCollaboratorName() {
         return collaboratorName;
+    }
+
+    public String getPopulation() {
+        return population;
+    }
+
+    public String getRace() {
+        return race;
     }
 }

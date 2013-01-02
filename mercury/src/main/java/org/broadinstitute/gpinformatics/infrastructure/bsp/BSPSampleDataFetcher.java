@@ -91,6 +91,8 @@ public class BSPSampleDataFetcher {
         String containerId = null;
         String sampleId = null;
         String collaboratorName = null;
+        String population = null;
+        String ethnicity = null;
 
         if (bspColumns.length > 0) {
             patientId = getIfNotNullAndNotEmpty(bspColumns[0]);
@@ -152,11 +154,18 @@ public class BSPSampleDataFetcher {
         if (bspColumns.length > 19) {
             collaboratorName = getIfNotNullAndNotEmpty(bspColumns[19]);
         }
+        if (bspColumns.length > 20) {
+            ethnicity = getIfNotNullAndNotEmpty(bspColumns[20]);
+        }
+        if (bspColumns.length > 21) {
+            population = getIfNotNullAndNotEmpty(bspColumns[21]);
+        }
         /** beware of DBFreeBSPSampleTest: if you add columns here, you'll need to add them to the mock **/
 
         return new BSPSampleDTO(containerId,stockSample,rootSample,null,patientId,organism,collaboratorSampleId,collection,
                                 volume,concentration, sampleLsid, collaboratorParticipantId, materialType, total,
-                                sampleType, primaryDisease,gender, stockType, fingerprint, sampleId,collaboratorName);
+                                sampleType, primaryDisease,gender, stockType, fingerprint, sampleId,collaboratorName,
+                                ethnicity,population);
 
     }
 
@@ -190,6 +199,8 @@ public class BSPSampleDataFetcher {
                 BSPSampleSearchColumn.FINGERPRINT,
                 BSPSampleSearchColumn.CONTAINER_ID,
                 BSPSampleSearchColumn.SAMPLE_ID,
-                BSPSampleSearchColumn.COLLABORATOR_NAME);
+                BSPSampleSearchColumn.COLLABORATOR_NAME,
+                BSPSampleSearchColumn.ETHNICITY,
+                BSPSampleSearchColumn.RACE);
     }
 }
