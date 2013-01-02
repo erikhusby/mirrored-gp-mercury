@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -19,18 +20,19 @@ import java.util.Set;
  * The workflow definition for a product, composed of processes
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ProductWorkflowDef {
+public class ProductWorkflowDef implements Serializable {
+
+    private static final long serialVersionUID = 20130101L;
 
     /** e.g. Exome Express */
     private String name;
 
     /** List of versions */
-    List<ProductWorkflowDefVersion> productWorkflowDefVersions = new ArrayList<ProductWorkflowDefVersion>();
+    private List<ProductWorkflowDefVersion> productWorkflowDefVersions = new ArrayList<ProductWorkflowDefVersion>();
 
     /** Transient list of versions, in descending order of effective date */
     private transient ArrayList<ProductWorkflowDefVersion> workflowVersionsDescEffDate;
-    private transient Map<String, ProductWorkflowDefVersion> productDefVersionsByVersion =
-        new HashMap<String, ProductWorkflowDefVersion>();
+    private transient Map<String, ProductWorkflowDefVersion> productDefVersionsByVersion = new HashMap<String, ProductWorkflowDefVersion>();
 
     public ProductWorkflowDef(String name) {
         this.name = name;
@@ -50,6 +52,12 @@ public class ProductWorkflowDef {
         this.productDefVersionsByVersion.put ( productWorkflowDefVersion.getVersion (), productWorkflowDefVersion );
     }
 
+    /**
+     * Determine whether the given next event is valid for the given lab vessel.
+     * @param labVessel vessel, typically with event history
+     * @param nextEventTypeName the event that the lab intends to do next
+     * @return list of errors, empty if event is valid
+     */
     public List<String> validate(LabVessel labVessel, String nextEventTypeName) {
         List<String> errors = new ArrayList<String>();
         ProductWorkflowDefVersion effectiveWorkflowDef = getEffectiveVersion();
@@ -98,11 +106,11 @@ public class ProductWorkflowDef {
         for (LabEvent labEvent : transfers) {
             String actualEventName = labEvent.getLabEventType().getName();
             actualEventNames.add(actualEventName);
-/*
+            // this doesn't handle repeated messages, e.g. pico duplicates
+            // look up event in workflow
             if(actualEventName.equals(nextEventTypeName)) {
                 errors.add("For vessel " + labVessel.getLabCentricName() + ", event " + nextEventTypeName + " has already occurred");
             }
-*/
             if(validPredecessorEventNames.contains(actualEventName)) {
                 found = true;
                 break;

@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import com.cenqua.clover.SamplingPerTestCoverage;
 import org.apache.commons.lang3.builder.CompareToBuilder;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
@@ -14,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Rework;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.Audited;
@@ -125,6 +124,10 @@ public abstract class LabVessel {
 
     @OneToMany(mappedBy = "targetLabVessel")
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsTarget = new HashSet<VesselToVesselTransfer>();
+
+    // todo jmt should this be ManyToMany?
+    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "reworkedLabVessel")
+    private Set<Rework> reworks = new HashSet<Rework>();
 
     protected LabVessel(String label) {
         createdOn = new Date();
@@ -374,7 +377,7 @@ public abstract class LabVessel {
     /**
      * Returned from getAncestors and getDescendants
      */
-    static class VesselEvent {
+    public static class VesselEvent {
         private LabVessel labVessel;
         private VesselContainer vesselContainer;
         private VesselPosition position;
@@ -641,6 +644,10 @@ public abstract class LabVessel {
 
     public Set<BucketEntry> getBucketEntries () {
         return Collections.unmodifiableSet(bucketEntries);
+    }
+
+    public void addRework(Rework rework) {
+        reworks.add(rework);
     }
 
     /* *

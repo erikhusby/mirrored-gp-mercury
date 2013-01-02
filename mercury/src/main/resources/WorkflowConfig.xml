@@ -20,6 +20,7 @@
                 <reEntryPoint>false</reEntryPoint>
                 <quantType>PICO</quantType>
             </workflowStepDefs>
+            <!-- PREFLIGHT_PICO_SETUP and PREFLIGHT_POST_NORM_PICO_SETUP are done twice.   -->
             <workflowStepDefs>
                 <name>Preflight Pico Setup</name>
                 <labEventTypes>PREFLIGHT_PICO_SETUP</labEventTypes>

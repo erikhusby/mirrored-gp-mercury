@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,7 +13,9 @@ import java.util.List;
  * A step in a process
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class WorkflowStepDef {
+public class WorkflowStepDef implements Serializable {
+
+    private static final long serialVersionUID = 20130101L;
 
     enum QuantType {
         PICO,
