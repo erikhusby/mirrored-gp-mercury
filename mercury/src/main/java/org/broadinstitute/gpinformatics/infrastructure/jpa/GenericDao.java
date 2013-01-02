@@ -295,13 +295,13 @@ public class GenericDao {
     /**
      * Returns a list of entities that matches wildcarded string ('% string %') for a specified property.
      *
-     * @param entity the class of entity to return
-     * @param value the value to query
+     * @param entity             the class of entity to return
+     * @param value              the value to query
      * @param singularAttributes one or more metadata fields for the property to query
-     * @param <VALUE_TYPE> the type of the value in the query, e.g. String
-     * @param <METADATA_TYPE> the type on which the property is defined, this can be different from the ENTITY_TYPE if
-     *                       there is inheritance
-     * @param <ENTITY_TYPE> the type of the entity to return
+     * @param <VALUE_TYPE>       the type of the value in the query, e.g. String
+     * @param <METADATA_TYPE>    the type on which the property is defined, this can be different from the ENTITY_TYPE if
+     *                           there is inheritance
+     * @param <ENTITY_TYPE>      the type of the entity to return
      *
      * @return list of entities that match the value, or empty list if not found
      */
@@ -311,13 +311,15 @@ public class GenericDao {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
-        Predicate[] predicates=new Predicate[singularAttributes.length];
+        Predicate[] predicates = new Predicate[singularAttributes.length];
+        if (ignoreCase) {
+            value = value.toLowerCase();
+        }
         for (int i = 0; i < singularAttributes.length; i++) {
             Expression<String> expression;
             final Expression<String> asExpression = root.get(singularAttributes[i]).as(String.class);
             if (ignoreCase) {
                 expression = criteriaBuilder.lower(asExpression);
-                value=value.toLowerCase();
             } else {
                 expression = asExpression;
             }
