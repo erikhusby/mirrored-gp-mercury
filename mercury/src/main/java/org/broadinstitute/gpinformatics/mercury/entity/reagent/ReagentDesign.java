@@ -14,7 +14,7 @@ import org.hibernate.envers.Audited;
  */
 @Entity
 @Audited
-@Table(schema = "mercury", uniqueConstraints = {@UniqueConstraint(columnNames = {"reagentDesign", "reagentType"})})
+@Table(schema = "mercury", uniqueConstraints = {@UniqueConstraint(columnNames = {"reagent_design"})})
 public class ReagentDesign {
 
     @Id
@@ -22,9 +22,15 @@ public class ReagentDesign {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_REAGENT_DESIGN")
     private Long reagentDesignId;
 
-    private String reagentDesign;
+    @Column(name = "reagent_design", updatable = false, insertable = true, nullable = false)
+    private String designName;
+
     private String targetSetName;
     private String manufacturersName;
+
+    public String getBusinessKey() {
+        return designName;
+    }
 
     @OneToMany(mappedBy = "reagentDesign")
     private Set<DesignedReagent> designedReagents = new HashSet<DesignedReagent>();
@@ -70,7 +76,7 @@ public class ReagentDesign {
         if (reagentType == null) {
             throw new NullPointerException("reagentType cannot be null.");
         }
-        this.reagentDesign = designName;
+        this.designName = designName;
         this.reagentType = reagentType;
     }
 
@@ -83,11 +89,11 @@ public class ReagentDesign {
     }
 
     public String getDesignName() {
-        return reagentDesign;
+        return designName;
     }
 
     public void setDesignName(String designName) {
-        this.reagentDesign = designName;
+        this.designName = designName;
     }
 
     public String getTargetSetName() {
