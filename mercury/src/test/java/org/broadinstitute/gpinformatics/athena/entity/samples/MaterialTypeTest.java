@@ -19,25 +19,25 @@ public class MaterialTypeTest {
     @Test
     public void testBeaniness() {
         new BeanTester().testBean(MaterialType.class);
-        new EqualsMethodTester().testEqualsMethod(MaterialType.class);
+        new EqualsMethodTester().testEqualsMethod(MaterialType.class, "fullName");
     }
 
     public void testCompareTo() throws Exception {
-        MaterialType materialTypeA1 = new MaterialType( "namea", "category");
-        MaterialType materialTypeA2 = new MaterialType( "namea", "category");
+        MaterialType materialTypeA1 = new MaterialType( "category",  "namea" );
+        MaterialType materialTypeA2 = new MaterialType( "category", "namea");
         Assert.assertEquals(0,materialTypeA1.compareTo( materialTypeA2));
 
-        MaterialType materialTypeB = new MaterialType( "nameb", "category");
+        MaterialType materialTypeB = new MaterialType("category",  "nameb");
         Assert.assertEquals(-1, materialTypeA1.compareTo( materialTypeB));
 
         try {
-            MaterialType materialTypeC1 = new MaterialType( null, "category");
+            MaterialType materialTypeC1 = new MaterialType( "category", null);
             Assert.fail("expected npe exception");
         } catch ( Exception e ) {
         }
 
         try {
-            MaterialType materialTypeC2 = new MaterialType( "nameb", null);
+            MaterialType materialTypeC2 = new MaterialType( null,  "nameb");
             Assert.fail("expected npe exception");
         } catch ( Exception e ) {
         }
@@ -48,7 +48,7 @@ public class MaterialTypeTest {
 
     @Test
     public void testEquals() throws Exception {
-        new EqualsMethodTester().testEqualsMethod(MaterialType.class);
+        new EqualsMethodTester().testEqualsMethod(MaterialType.class, "fullName" );
     }
 
     @Test

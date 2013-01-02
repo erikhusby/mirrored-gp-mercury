@@ -36,6 +36,11 @@ public class ProductOrderSample implements Serializable {
 
     /** Count shown when no billing has occurred. */
     public static final double NO_BILL_COUNT = 0;
+    public static final String TUMOR_IND = BSPSampleDTO.TUMOR_IND;
+    public static final String NORMAL_IND = BSPSampleDTO.NORMAL_IND;
+    public static final String FEMALE_IND = BSPSampleDTO.FEMALE_IND;
+    public static final String MALE_IND = BSPSampleDTO.MALE_IND;
+    public static final String ACTIVE_IND = BSPSampleDTO.ACTIVE_IND;
 
     @Id
     @SequenceGenerator(name = "SEQ_ORDER_SAMPLE", schema = "athena", sequenceName = "SEQ_ORDER_SAMPLE")

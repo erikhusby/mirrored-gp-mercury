@@ -32,6 +32,7 @@
             <security:authorizeBlock roles="#{userBean.developerRole}">
                 <p:submenu label="Search" icon="ui-icon-search">
                     <p:menuitem value="Barcode" outcome="/search/search_plastic"/>
+                    <p:menuitem value="Create Batch" outcome="/search/create_batch"/>
                 </p:submenu>
             </security:authorizeBlock>
 

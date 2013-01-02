@@ -81,7 +81,7 @@ public class ProductOrderSampleTest {
         public TestPDOData() {
             ProductOrder order = AthenaClientServiceStub.createDummyProductOrder();
             product = order.getProduct();
-            MaterialType materialType = new MaterialType(MATERIAL_NAME, "");
+            MaterialType materialType = new MaterialType("", MATERIAL_NAME);
             addOn = AthenaClientServiceStub.createDummyProduct();
             addOn.addAllowableMaterialType(materialType);
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));

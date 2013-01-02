@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
 import org.apache.commons.logging.Log;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
@@ -15,10 +17,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
@@ -36,6 +35,9 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     Log log;
+
+    @Inject
+    private BSPUserList bspUserList;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -132,6 +134,46 @@ public class ProductOrderFixupTest extends Arquillian {
         // The entity is already persistent, this call to persist is solely to begin and end a transaction, so the
         // change gets flushed.  This is an artifact of the test environment.
         productOrderDao.persist(productOrder);
+    }
+
+
+    @Test(enabled = false)
+    public void reassignPDOsToElizabethNickerson() {
+        String[] jiraKeys = new String[]{
+                "PDO-132",
+                "PDO-131",
+                "PDO-130",
+                "PDO-112",
+                "PDO-108",
+                "PDO-107",
+                "PDO-13",
+                "PDO-12",
+                "PDO-9",
+        };
+
+        // at the time of this writing this resolves to the one user we want, but add some checks to make sure that
+        // remains the case
+        List<BspUser> bspUsers = bspUserList.find("Nickerson");
+        if (bspUsers == null || bspUsers.isEmpty()) {
+            throw new RuntimeException("No Nickersons found!");
+        }
+
+        if (bspUsers.size() > 1) {
+            throw new RuntimeException("Too many Nickersons found!");
+        }
+
+        BspUser bspUser = bspUsers.get(0);
+        if ( ! "Elizabeth".equals(bspUser.getFirstName()) || ! "Nickerson".equals(bspUser.getLastName())) {
+            throw new RuntimeException("Wrong person found: " + bspUser);
+        }
+
+        for (String jiraKey : jiraKeys) {
+            ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraKey);
+            productOrder.setCreatedBy(bspUser.getUserId());
+
+            productOrderDao.persist(productOrder);
+        }
+
     }
 
 }

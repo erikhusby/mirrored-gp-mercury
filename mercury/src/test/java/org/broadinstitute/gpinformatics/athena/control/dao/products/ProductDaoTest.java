@@ -105,9 +105,9 @@ public class ProductDaoTest extends ContainerTest {
         product.setPrimaryPriceItem(priceItem1);
         product.addPriceItem(priceItem2);
 
-        MaterialType materialType1 = new MaterialType("DNA Genomic", "DNA");
+        MaterialType materialType1 = new MaterialType("DNA", "DNA Genomic");
         product.addAllowableMaterialType(materialType1);
-        MaterialType materialType2 = new MaterialType("DNA Somatic", "DNA");
+        MaterialType materialType2 = new MaterialType("DNA", "DNA Somatic");
         product.addAllowableMaterialType(materialType2);
 
         return product;

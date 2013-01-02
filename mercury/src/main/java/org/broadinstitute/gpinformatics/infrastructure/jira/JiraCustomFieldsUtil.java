@@ -25,9 +25,19 @@ public class JiraCustomFieldsUtil {
                           ResearchProject.RequiredSubmissionFields.FUNDING_SOURCE.getFieldName(),
                           ResearchProject.RequiredSubmissionFields.IRB_NOT_ENGAGED_FIELD.getFieldName(),
                           ResearchProject.RequiredSubmissionFields.IRB_IACUC_NUMBER.getFieldName(),
-                          ResearchProject.RequiredSubmissionFields.COHORTS.getFieldName()
-//                    ,
-//                          ResearchProject.RequiredSubmissionFields.Sponsoring_Scientist.getFieldName()
+                          ResearchProject.RequiredSubmissionFields.COHORTS.getFieldName(),
+                    LabBatch.RequiredSubmissionFields.PROTOCOL.getFieldName(),
+                    LabBatch.RequiredSubmissionFields.WORK_REQUEST_IDS.getFieldName(),
+                    LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName(),
+                    LabBatch.RequiredSubmissionFields.PRIORITY.getFieldName(),
+                    LabBatch.RequiredSubmissionFields.DUE_DATE.getFieldName(),
+                    LabBatch.RequiredSubmissionFields.IMPORTANT.getFieldName(),
+                    LabBatch.RequiredSubmissionFields.NUMBER_OF_CONTROLS.getFieldName(),
+                    LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName(),
+                    LabBatch.RequiredSubmissionFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName(),
+                    LabBatch.RequiredSubmissionFields.PROGRESS_STATUS.getFieldName(),
+                    LabBatch.RequiredSubmissionFields.GSSR_IDS.getFieldName()
+                    ,
             };
 
     /**
@@ -35,7 +45,7 @@ public class JiraCustomFieldsUtil {
      */
     public static Map<String,CustomFieldDefinition> getRequiredLcSetFieldDefinitions(JiraService jiraService) throws IOException {
         final Map<String, CustomFieldDefinition> allCustomFields =
-                jiraService.getRequiredFields ( new CreateFields.Project ( LabBatch.LCSET_PROJECT_PREFIX ),
+                jiraService.getRequiredFields ( new CreateFields.Project ( CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix() ),
                                                 CreateFields.IssueType.WHOLE_EXOME_HYBSEL );
 
         final Map<String,CustomFieldDefinition> requiredCustomFieldDefinitions = new HashMap<String,CustomFieldDefinition>();
@@ -56,8 +66,6 @@ public class JiraCustomFieldsUtil {
             }
         }
 
-        //this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10020","Protocol",true),"test protocol"));
-        //this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10011","Work Request ID(s)",true),"WR 1 Billion!"));
         return requiredCustomFieldDefinitions;
     }
 }

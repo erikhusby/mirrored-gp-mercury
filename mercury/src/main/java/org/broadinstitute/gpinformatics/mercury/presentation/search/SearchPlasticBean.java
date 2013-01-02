@@ -4,15 +4,13 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.primefaces.event.ToggleEvent;
 
 import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import javax.inject.Inject;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @ManagedBean
 @ViewScoped
@@ -25,9 +23,15 @@ public class SearchPlasticBean {
     private LabVessel selectedVessel;
     private List<LabVessel> foundVessels;
     private Map<LabVessel, Integer> vesselSampleSizeMap = new HashMap<LabVessel, Integer>();
+    private Map<LabVessel, List<LabBatch>> batchesByVessel = new HashMap<LabVessel, List<LabBatch>>();
+
 
     public Map<LabVessel, Integer> getVesselSampleSizeMap() {
         return vesselSampleSizeMap;
+    }
+
+    public Map<LabVessel, List<LabBatch>> getBatchesByVessel() {
+        return batchesByVessel;
     }
 
     public List<LabVessel> getFoundVessels() {
@@ -65,6 +69,7 @@ public class SearchPlasticBean {
         foundVessels = labVesselDao.findByListIdentifiers(barcodeList);
         for (LabVessel foundVessel : foundVessels) {
             vesselSampleSizeMap.put(foundVessel, foundVessel.getSampleInstances().size());
+            batchesByVessel.put(foundVessel, new ArrayList<LabBatch>(foundVessel.getNearestLabBatches()));
         }
     }
 

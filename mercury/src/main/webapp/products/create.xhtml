@@ -180,6 +180,28 @@
                     </div>
                 </div>
 
+
+                <div class="control-group">
+                    <p:outputLabel for="priceItem" value="Allowed Material Types" styleClass="control-label"/>
+                    <div class="controls">
+                        <p:autoComplete id="materialType" value="#{productCreateEditBean.allowedMaterialTypes}"
+                                        completeMethod="#{productCreateEditBean.searchMaterialTypes}" var="materialType"
+                                        itemLabel="#{productCreateEditBean.labelForMaterialType(materialType)}"
+                                        itemValue="#{materialType}" converter="#{materialTypeConverter}" multiple="true"
+                                        scrollHeight="250">
+
+                            <p:column style="width:100%">
+                                <div>#{materialType.fullName}</div>
+                            </p:column>
+                            <p:ajax event="itemSelect" listener="#{productCreateEditBean.removeDuplicates(productCreateEditBean.allowedMaterialTypes, 'materialType')}"
+                                    update="materialType allowedMaterialTypesMessage :productParam"/>
+                        </p:autoComplete>
+                        <p:watermark for="materialType" value="Type text to search for material types"/>
+                        <p:message id="allowedMaterialTypesMessage" for="materialType" />
+                    </div>
+                </div>
+
+
                 <div class="control-group">
                     <p:outputLabel for="addOns" value="Add-ons" styleClass="control-label"/>
                     <div class="controls">
