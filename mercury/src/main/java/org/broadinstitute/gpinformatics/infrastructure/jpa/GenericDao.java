@@ -311,13 +311,15 @@ public class GenericDao {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
-        Predicate[] predicates=new Predicate[singularAttributes.length];
+        Predicate[] predicates = new Predicate[singularAttributes.length];
+        if (ignoreCase) {
+            value = value.toLowerCase();
+        }
         for (int i = 0; i < singularAttributes.length; i++) {
             Expression<String> expression;
             final Expression<String> asExpression = root.get(singularAttributes[i]).as(String.class);
             if (ignoreCase) {
                 expression = criteriaBuilder.lower(asExpression);
-                value=value.toLowerCase();
             } else {
                 expression = asExpression;
             }
