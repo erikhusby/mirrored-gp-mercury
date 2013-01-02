@@ -16,6 +16,9 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * This is the bean class for the generic search page.
+ */
 @ManagedBean
 @ViewScoped
 public class SearchBean implements Serializable {
@@ -25,7 +28,6 @@ public class SearchBean implements Serializable {
     private MercurySampleDao mercurySampleDao;
     @Inject
     private ProductOrderDao productOrderDao;
-
     @Inject
     private LabBatchDAO labBatchDAO;
 
@@ -81,15 +83,24 @@ public class SearchBean implements Serializable {
         listSearch();
     }
 
+    /**
+     * This method searches all of the various DAOs to get their respective entities based on the search keys.
+     */
     public void listSearch() {
-        List<String> searchList = cleanInputString();
+        List<String> searchList = cleanInputString(searchKey);
         foundVessels = labVesselDao.findByListIdentifiers(searchList);
         foundSamples = mercurySampleDao.findBySampleKeys(searchList);
         foundPDOs = productOrderDao.findListByBusinessKeyList(searchList);
         foundBatches = labBatchDAO.findByListIdentifier(searchList);
     }
 
-    private List<String> cleanInputString() {
+    /**
+     * This method takes a list of search keys turns newlines into commas and splits the individual search keys into
+     * a list.
+     *
+     * @return A list of all the keys from the searchKey string.
+     */
+    private static List<String> cleanInputString(String searchKey) {
         searchKey = searchKey.replaceAll("\\n", ",");
         String[] keys = searchKey.split(",");
         int index = 0;

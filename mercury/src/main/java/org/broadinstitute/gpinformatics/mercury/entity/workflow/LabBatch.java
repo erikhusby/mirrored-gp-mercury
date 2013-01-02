@@ -267,6 +267,10 @@ public class LabBatch {
         return CreateFields.IssueType.WHOLE_EXOME_HYBSEL;
     }
 
+    public String getBusinessKey() {
+        return batchName;
+    }
+
 
     /**
      * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket

@@ -18,6 +18,9 @@ import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * This is the bean class for the vessel list composite component
+ */
 @ManagedBean
 @ViewScoped
 public class VesselListBean implements Serializable {
@@ -41,11 +44,18 @@ public class VesselListBean implements Serializable {
         BspUser user = bspUserList.getById(id);
         String username = "";
         if (user != null) {
-            username = bspUserList.getById(id).getUsername();
+            username = user.getUsername();
         }
         return username;
     }
 
+    /**
+     * This method gets all sample instances for a given lab vessel. If this vessel has a container role than the
+     * samples are taken from that container.
+     *
+     * @param vessel the vessel to get the sample instances from.
+     * @return a set of sample instances contained in this vessel.
+     */
     public Set<SampleInstance> getAllSamples(LabVessel vessel) {
         Set<SampleInstance> allSamples = new HashSet<SampleInstance>();
         allSamples.addAll(vessel.getSampleInstances());
@@ -55,9 +65,14 @@ public class VesselListBean implements Serializable {
         return allSamples;
     }
 
+    /**
+     * This method gets all of the product orders for every sample in the vessel.
+     *
+     * @param vessel the vessel that contains the samples to get product orders from.
+     * @return a set of strings representing all product orders in this vessel.
+     */
     public Set<String> getPdoKeys(LabVessel vessel) {
         Set<String> pdoKeys = new HashSet<String>();
-
         for (SampleInstance sample : getAllSamples(vessel)) {
             pdoKeys.add(sample.getStartingSample().getProductOrderKey());
         }
@@ -65,6 +80,12 @@ public class VesselListBean implements Serializable {
         return pdoKeys;
     }
 
+    /**
+     * This method get index information for all samples in this vessel.
+     *
+     * @param vessel the vessel that contains the samples to get the indexes.
+     * @return a set of strings representing all indexes in this vessel.
+     */
     public Set<String> getIndexes(LabVessel vessel) {
         Set<String> indexes = new HashSet<String>();
         StringBuilder indexInfo = new StringBuilder();

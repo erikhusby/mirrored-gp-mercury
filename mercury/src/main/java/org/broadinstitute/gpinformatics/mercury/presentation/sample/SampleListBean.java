@@ -6,6 +6,9 @@ import javax.faces.bean.ManagedBean;
 import javax.faces.bean.ViewScoped;
 import java.io.Serializable;
 
+/**
+ * This is the bean class for the composite component that represents a list of samples.
+ */
 @ManagedBean
 @ViewScoped
 public class SampleListBean implements Serializable {

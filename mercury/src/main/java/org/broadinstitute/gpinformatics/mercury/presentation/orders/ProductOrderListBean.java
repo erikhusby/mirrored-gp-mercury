@@ -10,12 +10,14 @@ import javax.faces.bean.RequestScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
 
+/**
+ * This is the bean class for the composite component that represents a list of PDOs.
+ */
 @ManagedBean
 @RequestScoped
 public class ProductOrderListBean implements Serializable {
     @Inject
     private ProductOrderDao productOrderDao;
-
     @Inject
     private BSPUserList bspUserList;
 
@@ -23,11 +25,19 @@ public class ProductOrderListBean implements Serializable {
         BspUser user = bspUserList.getById(id);
         String username = "";
         if (user != null) {
-            username = bspUserList.getById(id).getUsername();
+            username = user.getUsername();
         }
         return username;
     }
 
+    /**
+     * Used to load the entity back into the session if we have lost it. This is used to avoid lazy initialization
+     * exceptions.
+     *
+     * @param order    the order that information is being loaded from
+     * @param property the property of the order we are trying to access.
+     * @return the order that is now loaded into the hibernate session.
+     */
     public ProductOrder safeLoad(ProductOrder order, String property) {
         if (!productOrderDao.getEntityManager().getEntityManagerFactory().getPersistenceUnitUtil().isLoaded(order, property)) {
             order = productOrderDao.findById(order.getProductOrderId());

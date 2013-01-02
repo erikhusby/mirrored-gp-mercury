@@ -12,6 +12,9 @@ import javax.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This is the bean class for the container view composite component
+ */
 @ManagedBean
 @RequestScoped
 public class ContainerBean {
@@ -78,6 +81,12 @@ public class ContainerBean {
         return index % getColumns();
     }
 
+
+    /**
+     * This method finds all of the sample instances at a specific container position.
+     *
+     * @return a list of sample instances for all samples at the current container position (represented by index)
+     */
     public List<SampleInstance> samplesAtPosition() {
         List<SampleInstance> sampleInstances = null;
         if (vessel != null && index != -1) {
@@ -95,6 +104,12 @@ public class ContainerBean {
         return sampleInstances;
     }
 
+    /**
+     * This method returns a dummy list of strings that prime faces data grid iterates over in order to get the
+     * geometry of the container correct.
+     *
+     * @return a list of dummy strings for dataGrid to iterate over.
+     */
     public List<String> getGeometry() {
         if (vessel != null && geometry.size() == 0) {
             int capacity = vessel.getVesselGeometry().getCapacity();

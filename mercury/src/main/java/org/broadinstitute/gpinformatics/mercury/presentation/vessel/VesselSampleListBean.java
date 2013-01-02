@@ -20,6 +20,9 @@ import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.*;
 
+/**
+ * This is the bean class for the sample list per vessel composite component.
+ */
 @ManagedBean
 @ViewScoped
 public class VesselSampleListBean extends AbstractJsfBean implements Serializable {
@@ -73,8 +76,14 @@ public class VesselSampleListBean extends AbstractJsfBean implements Serializabl
         }
     }
 
+    /**
+     * This method get index information for a sample instance.
+     *
+     * @param sample the sample to get the indexes from.
+     * @return a string representing all indexes for this sample.
+     */
     public String indexValueForSample(SampleInstance sample) {
-        StringBuilder indexInfo = new StringBuilder("");
+        StringBuilder indexInfo = new StringBuilder();
         for (Reagent reagent : sample.getReagents()) {
             if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
                 MolecularIndexReagent indexReagent = (MolecularIndexReagent) reagent;
@@ -91,6 +100,12 @@ public class VesselSampleListBean extends AbstractJsfBean implements Serializabl
         return indexInfo.toString();
     }
 
+    /**
+     * This method get all reagent information for a sample instance execept indexes.
+     *
+     * @param sample the sample to get the reagents from.
+     * @return a string representing all reagents (except indexes) for this sample.
+     */
     public String reagentInfoForSample(SampleInstance sample) {
         StringBuilder reagentInfo = new StringBuilder();
         for (Reagent reagent : sample.getReagents()) {
@@ -104,10 +119,14 @@ public class VesselSampleListBean extends AbstractJsfBean implements Serializabl
         return reagentInfo.toString();
     }
 
+    /**
+     * This method gets a list of all vessel names for the selected vessel.
+     *
+     * @return a list of all vessel positions for the vessel.
+     */
     public List<VesselPosition> getPositionNameList() {
-        List<VesselPosition> positions = null;
+        List<VesselPosition> positions = new ArrayList<VesselPosition>();
         if (vessel != null) {
-            positions = new ArrayList<VesselPosition>();
             Iterator<String> iterator = vessel.getVesselGeometry().getPositionNames();
             while (iterator.hasNext()) {
                 positions.add(VesselPosition.getByName(iterator.next()));
@@ -116,6 +135,13 @@ public class VesselSampleListBean extends AbstractJsfBean implements Serializabl
         return positions;
     }
 
+    /**
+     * This method gets all of the samples instances at a vessel position. If there is not a vessel container
+     * the samples are taken from the vessel directly.
+     *
+     * @param position the vessel position to get samples from
+     * @return a list of samples at the vessel position
+     */
     public List<SampleInstance> getSampleInstancesAtPosition(VesselPosition position) {
         if (vesselContainer != null) {
             return vesselContainer.getSampleInstancesAtPositionList(position);
@@ -124,6 +150,13 @@ public class VesselSampleListBean extends AbstractJsfBean implements Serializabl
         }
     }
 
+    /**
+     * This method gets the vessel at the a specific postion.  If this vessel is in a container it does the lookup
+     * by the position of that container. Otherwise it returns itself.
+     *
+     * @param position the position to get the vessel from..
+     * @return the vessel at the position.
+     */
     public LabVessel getVesselAtPosition(VesselPosition position) {
         LabVessel vesselAtPosition;
         if (vesselContainer != null && !vesselContainer.hasAnonymousVessels()) {
@@ -134,6 +167,11 @@ public class VesselSampleListBean extends AbstractJsfBean implements Serializabl
         return vesselAtPosition;
     }
 
+    /**
+     * This method looks up bsp sample information and stores it in the bsp info details.
+     *
+     * @param sample the sample instance to look up bsp info for.
+     */
     public void lookupBspSampleInfo(SampleInstance sample) {
         if (sample != null) {
             BSPSampleDTO bspSampleDTO;
@@ -142,7 +180,6 @@ public class VesselSampleListBean extends AbstractJsfBean implements Serializabl
             } else {
                 try {
                     bspSampleDTO = sampleDataFetcher.fetchSingleSampleFromBSP(sample.getStartingSample().getSampleKey());
-                    //bspSampleDTO = sampleDataFetcher.fetchSingleSampleFromBSP("SM-12CO4");
                 } catch (RuntimeException re) {
                     bspSampleDTO = null;
                     addWarnMessage("BSP Warning: " + re.getLocalizedMessage());

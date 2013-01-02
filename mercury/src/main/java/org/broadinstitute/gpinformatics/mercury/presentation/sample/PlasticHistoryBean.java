@@ -12,6 +12,9 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * This is the bean class for the composite component that represents the plastic history of a sample.
+ */
 @ManagedBean
 @ViewScoped
 public class PlasticHistoryBean implements Serializable {
@@ -36,6 +39,11 @@ public class PlasticHistoryBean implements Serializable {
         selectedSample = mercurySampleDao.findBySampleKey(barcode);
     }
 
+    /**
+     * This method traverses the all descendant vessels for the selected sample.
+     *
+     * @return a list of vessels that represents the plastic history of the selected sample.
+     */
     public List<LabVessel> getPlasticHistory() {
         List<LabVessel> targetVessels = new ArrayList<LabVessel>();
         if (selectedSample != null) {
