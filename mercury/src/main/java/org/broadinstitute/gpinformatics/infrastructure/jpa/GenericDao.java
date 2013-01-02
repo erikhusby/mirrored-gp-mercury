@@ -316,14 +316,11 @@ public class GenericDao {
             value = value.toLowerCase();
         }
         for (int i = 0; i < singularAttributes.length; i++) {
-            Expression<String> expression;
-            final Expression<String> asExpression = root.get(singularAttributes[i]).as(String.class);
+            Expression<String> expression = root.get(singularAttributes[i]).as(String.class);
             if (ignoreCase) {
-                expression = criteriaBuilder.lower(asExpression);
-            } else {
-                expression = asExpression;
+                expression = criteriaBuilder.lower(expression);
             }
-            predicates[i] = criteriaBuilder.like(expression, "%" + value + "%");
+            predicates[i] = criteriaBuilder.like(expression, '%' + value + '%');
         }
         criteriaQuery.where(criteriaBuilder.or(predicates));
         try {
