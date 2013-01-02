@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
@@ -48,6 +49,16 @@ abstract public class GenericEntityEtl {
     abstract String entityRecord(String etlDateStr, boolean isDelete, Long entityId);
 
     /**
+     * Returns sqlLoader data records for entities having id in the given range.
+     * @param startId start of the entity id range.
+     * @param endId end of the entity id range.
+     * @param etlDateStr the etl date to put in each record.
+     * @param isDelete the delete flag to put in each record.
+     * @return collection of strings, one per data file record.
+     */
+    abstract Collection<String> entityRecordsInRange(long startId, long endId, String etlDateStr, boolean isDelete);
+
+    /**
      * Makes a data record from entity status fields, and possible the Envers revision date,
      * in a format that matches the corresponding SqlLoader control file.
      * @param etlDateStr date
@@ -58,7 +69,9 @@ abstract public class GenericEntityEtl {
      */
     abstract String entityStatusRecord(String etlDateStr, Date revDate, Object revObject, boolean isDelete);
 
-    /** Returns true if entity etl record supports entity ETL via primary key.  Status records do not. */
+    /**
+     * Returns true if entity etl record supports entity ETL via primary key.  Status records do not.
+     */
     abstract boolean isEntityEtl();
 
     /**
@@ -85,9 +98,8 @@ abstract public class GenericEntityEtl {
     }
 
     /**
-     * Iterates on the modified Mercury entities, converts them to sqlLoader records, and
-     * writes the records to the data file.
-     * This code was broken out for testability.
+     * Iterates on the modified Mercury entities obtained from AuditReader.  Converts them to sqlLoader records, and
+     * writes the records to the data file.  This code was broken out for testability.
      * @param dataChanges
      * @param dataFile
      * @param etlDateStr
@@ -157,6 +169,34 @@ abstract public class GenericEntityEtl {
             dataFile.close();
         }
     }
+
+    public int doBackfillEtl(Class entityClass, long startId, long endId, String etlDateStr) {
+        // No-op unless the implementing class is the requested entity class.
+        if (!getEntityClass().equals(entityClass) || !isEntityEtl()) {
+            return 0;
+        }
+
+        // Creates the wrapped Writer to the sqlLoader data file.
+        String filename = dataFilename(etlDateStr, getBaseFilename());
+        DataFile dataFile = new DataFile(filename);
+
+        try {
+            // Writes the records.
+            //   for (String record : entityRecordsInRange(startId, endId, etlDateStr, false)) {
+
+            Collection<String> list = entityRecordsInRange(startId, endId, etlDateStr, false);
+            for (String record : list) {
+                dataFile.write(record);
+            }
+        } catch (IOException e) {
+            logger.error("Error while writing file " + dataFile.getFilename(), e);
+        } finally {
+            dataFile.close();
+        }
+
+        return dataFile.getRecordCount();
+    }
+
 
     /**
      * Builds a data file name.
@@ -258,13 +298,7 @@ abstract public class GenericEntityEtl {
         }
 
         void close() {
-            try {
-                if (writer != null) {
-                    writer.close();
-                }
-            } catch (IOException e) {
-                logger.error("Problem closing file " + filename);
-            }
+            IOUtils.closeQuietly(writer);
         }
     }
 }

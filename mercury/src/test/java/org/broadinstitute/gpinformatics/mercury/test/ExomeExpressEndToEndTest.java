@@ -261,14 +261,12 @@ public class ExomeExpressEndToEndTest {
             labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
                 @Override
                 public BspUser getOperator(String userId) {
-
                     return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
                 }
 
                 @Override
                 public BspUser getOperator(Long bspUserId) {
-                    BspUser testUser = new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
-                    return testUser;
+                    return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
                 }
 
                 @Override

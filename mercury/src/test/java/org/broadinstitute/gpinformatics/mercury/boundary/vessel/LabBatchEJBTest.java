@@ -31,7 +31,7 @@ import java.util.List;
  *         Time: 4:31 PM
  */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-public class LabBatchEjbTest extends ContainerTest {
+public class LabBatchEJBTest extends ContainerTest {
 
     public static final String STUB_TEST_PDO_KEY = "PDO-999";
 

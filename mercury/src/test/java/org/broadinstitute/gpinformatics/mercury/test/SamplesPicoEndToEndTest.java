@@ -68,36 +68,24 @@ public class SamplesPicoEndToEndTest {
         LabEventResource labEventResource = new LabEventResource();
         List<LabEventBean> labEventBeans = labEventResource.buildLabEventBeans(new ArrayList<LabEvent>(
                 labBatch.getLabEvents()),
+                new LabEventFactory.LabEventRefDataFetcher() {
+                    @Override
+                    public BspUser getOperator(String userId) {
+                        BSPUserList testList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
+                        return testList.getByUsername(userId);
+                    }
 
-                                                                               new LabEventFactory.LabEventRefDataFetcher() {
-                                                                                   @Override
-                                                                                   public BspUser getOperator(
-                                                                                           String userId) {
-                                                                                       BSPUserList testList =
-                                                                                               new BSPUserList(
-                                                                                                       BSPManagerFactoryProducer
-                                                                                                               .stubInstance());
-                                                                                       return testList.getByUsername(
-                                                                                               userId);
-                                                                                   }
+                    @Override
+                    public BspUser getOperator(Long bspUserId) {
+                        BSPUserList testList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
+                        return testList.getById(bspUserId);
+                    }
 
-                                                                                   @Override
-                                                                                   public BspUser getOperator(
-                                                                                           Long bspUserId) {
-                                                                                       BSPUserList testList =
-                                                                                               new BSPUserList(
-                                                                                                       BSPManagerFactoryProducer
-                                                                                                               .stubInstance());
-                                                                                       return testList.getById(
-                                                                                               bspUserId);
-                                                                                   }
-
-                                                                                   @Override
-                                                                                   public LabBatch getLabBatch(
-                                                                                           String labBatchName) {
-                                                                                       return null;
-                                                                                   }
-                                                                               });
+                    @Override
+                    public LabBatch getLabBatch(String labBatchName) {
+                        return null;
+                    }
+                });
         Assert.assertEquals("Wrong number of messages", 10, labEventBeans.size());
         LabEventBean standardsTransferEvent = labEventBeans.get(labEventBeans.size() - 1);
         LabVesselBean microfluorPlate = standardsTransferEvent.getTargets().iterator().next();
@@ -190,12 +178,8 @@ public class SamplesPicoEndToEndTest {
             picoDilutionTransferJaxbB1.getPlate().setPhysType(StaticPlate.PlateType.Eppendorf384.getDisplayName());
             picoDilutionTransferJaxbB1.setBatchId(labBatchId);
 
-            BettaLIMSMessage dilutionTransferMessage = new BettaLIMSMessage();
-            dilutionTransferMessage.getPlateTransferEvent().add(picoDilutionTransferJaxbA1);
-            dilutionTransferMessage.getPlateTransferEvent().add(picoDilutionTransferJaxbA2);
-            dilutionTransferMessage.getPlateTransferEvent().add(picoDilutionTransferJaxbB1);
-            messageList.add(dilutionTransferMessage);
-            bettaLimsMessageFactory.advanceTime();
+            LabEventTest.addMessage(messageList, bettaLimsMessageFactory, picoDilutionTransferJaxbA1,
+                    picoDilutionTransferJaxbA2, picoDilutionTransferJaxbB1);
 
             /*
                         // PicoBufferTransfer
@@ -209,10 +193,7 @@ public class SamplesPicoEndToEndTest {
             // plateEvent PicoBufferAddition
             picoBufferAdditionJaxb = bettaLimsMessageFactory.buildPlateEvent("PicoBufferAddition",
                                                                              picoDilutionPlateBarcode);
-            BettaLIMSMessage picoBufferAdditionMessage = new BettaLIMSMessage();
-            picoBufferAdditionMessage.getPlateEvent().add(picoBufferAdditionJaxb);
-            messageList.add(picoBufferAdditionMessage);
-            bettaLimsMessageFactory.advanceTime();
+            LabEventTest.addMessage(messageList, bettaLimsMessageFactory, picoBufferAdditionJaxb);
 
             // PicoMicrofluorTransfer
             String picoMicrofluorPlateBarcode = "PicoMicrofluorPlate" + timestamp;
@@ -226,11 +207,7 @@ public class SamplesPicoEndToEndTest {
             picoMicrofluorTransferJaxb.getPlate().setPhysType(StaticPlate.PlateType.Eppendorf384.getDisplayName());
             // todo jmt batch ID is set only for the first message?
             picoMicrofluorTransferJaxb.setBatchId(labBatchId);
-
-            BettaLIMSMessage microfluorTransferMessage = new BettaLIMSMessage();
-            microfluorTransferMessage.getPlateTransferEvent().add(picoMicrofluorTransferJaxb);
-            messageList.add(microfluorTransferMessage);
-            bettaLimsMessageFactory.advanceTime();
+            LabEventTest.addMessage(messageList, bettaLimsMessageFactory, picoMicrofluorTransferJaxb);
 
             // 6 x PicoStandardsTransfer
             picoStandardsTransferCol2Jaxb = bettaLimsMessageFactory.buildPlateToPlate("PicoStandardsTransfer",
@@ -281,15 +258,9 @@ public class SamplesPicoEndToEndTest {
             picoStandardsTransferCol12Jaxb.getPlate().setPhysType(StaticPlate.PlateType.Eppendorf384.getDisplayName());
             picoStandardsTransferCol12Jaxb.setBatchId(labBatchId);
 
-            BettaLIMSMessage standardsTransferMessage = new BettaLIMSMessage();
-            standardsTransferMessage.getPlateTransferEvent().add(picoStandardsTransferCol2Jaxb);
-            standardsTransferMessage.getPlateTransferEvent().add(picoStandardsTransferCol4Jaxb);
-            standardsTransferMessage.getPlateTransferEvent().add(picoStandardsTransferCol6Jaxb);
-            standardsTransferMessage.getPlateTransferEvent().add(picoStandardsTransferCol8Jaxb);
-            standardsTransferMessage.getPlateTransferEvent().add(picoStandardsTransferCol10Jaxb);
-            standardsTransferMessage.getPlateTransferEvent().add(picoStandardsTransferCol12Jaxb);
-            messageList.add(standardsTransferMessage);
-            bettaLimsMessageFactory.advanceTime();
+            LabEventTest.addMessage(messageList, bettaLimsMessageFactory, picoStandardsTransferCol2Jaxb,
+                    picoStandardsTransferCol4Jaxb, picoStandardsTransferCol6Jaxb, picoStandardsTransferCol8Jaxb,
+                    picoStandardsTransferCol10Jaxb, picoStandardsTransferCol12Jaxb);
         }
 
         public List<BettaLIMSMessage> getMessageList() {
@@ -360,14 +331,12 @@ public class SamplesPicoEndToEndTest {
             labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
                 @Override
                 public BspUser getOperator(String userId) {
-
                     return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
                 }
 
                 @Override
                 public BspUser getOperator(Long bspUserId) {
-                    BspUser testUser = new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
-                    return testUser;
+                    return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
                 }
 
                 @Override

@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html
-        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
@@ -11,7 +9,7 @@
 <body>
     <ui:composition template="/layout.xhtml">
         <ui:define name="metadata">
-            <f:event type="preRenderView" listener="#{productOrderListForm.initView}"/>
+            <f:event type="preRenderView" listener="#{productOrderListBean.initView}"/>
         </ui:define>
         <ui:define name="title">Product Orders</ui:define>
 
@@ -22,11 +20,11 @@
             </div>
 
                 <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.billingManagerRole}">
-                    <p:commandButton value="Start Billing Session" action="#{productOrderListForm.startBillingSession}"
+                    <p:commandButton value="Start Billing Session" action="#{productOrderListBean.startBillingSession}"
                                  ajax="false" style="margin-bottom:5px;margin-right:30px;"/>
                 </security:authorizeBlock>
 
-                <p:commandButton value="Download Billing Tracker" action="#{productOrderListForm.downloadBillingTracker}"
+                <p:commandButton value="Download Billing Tracker" action="#{productOrderListBean.downloadBillingTracker}"
                                  ajax="false" style="margin-bottom:5px;margin-right:8px;" />
 
                 <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.productManagerRole}">
@@ -35,46 +33,60 @@
                     </h:link>
                 </security:authorizeBlock>
 
-                <p:dataTable value="#{productOrderListForm.allProductOrders}"
+                <p:dataTable value="#{productOrderListBean.allProductOrders}"
                      sortBy="#{order.title}"
                      sortOrder="ascending"
                      var="order"
-                     filteredValue="#{productOrderListForm.allProductOrders.filteredValues}"
-                     selection="#{productOrderListForm.selectedProductOrders}">
+                     id="dataTable"
+                     widgetVar="dataTable"
+                     filteredValue="#{productOrderListBean.allProductOrders.filteredValues}"
+                     selection="#{productOrderListBean.selectedProductOrders}">
+
+                    <f:facet name="header">
+                        <p:outputPanel styleClass="pull-right">
+                            <h:outputText value=" Search "/>
+                            <p:inputText id="globalFilter" onkeyup="dataTable.unselectAllRows(); dataTable.filter();" style="width:150px"/>
+                        </p:outputPanel>
+                    </f:facet>
 
                     <p:column selectionMode="multiple" style="width:18px;" />
 
-                    <p:column headerText="Name" sortBy="#{order.title}" sortingComparator="caseInsensitiveText">
+                    <p:column headerText="Name" sortBy="#{order.title}" sortingComparator="caseInsensitiveText" filterBy="#{order.title}" filterStyleClass="hide">
                         <h:link outcome="view" value="#{order.title}">
                             <f:param name="productOrder" value="#{order.businessKey}"/>
                         </h:link>
                     </p:column>
 
-                    <p:column headerText="ID" width="75" sortBy="#{order.jiraTicketKey}" sortFunction="#{productOrderForm.businessKeySorter.sort}">
+                    <p:column headerText="ID" width="75" sortBy="#{order.jiraTicketKey}" sortFunction="#{productOrderForm.businessKeySorter.sort}"
+                            filterBy="#{order.jiraTicketKey}" filterStyleClass="hide" filterMatchMode="contains">
                         <h:outputLink target="JIRA" value="#{jiraLink.browseUrl(order.jiraTicketKey)}" class="external" >
                             <h:outputText value="#{order.jiraTicketKey}" />
                         </h:outputLink>
                     </p:column>
 
-                    <p:column headerText="Product" width="180" filterBy="#{order.productName}"
+                    <p:column headerText="Product" width="180"
                               sortBy="#{order.productName}" sortingComparator="caseInsensitiveText"
-                              filterOptions="#{productOrderListForm.allProductNames}" filterMatchMode="exact">
+                              filterBy="#{order.productName}" filterStyleClass="hide" filterMatchMode="contains" >
                         #{order.productName}
                     </p:column>
 
-                    <p:column headerText="Product Family" style="width:150px;" sortBy="#{order.productFamilyName}" sortingComparator="caseInsensitiveText">
+                    <p:column headerText="Product Family" style="width:150px;"
+                              sortBy="#{order.productFamilyName}" sortingComparator="caseInsensitiveText"
+                            filterBy="#{order.productFamilyName}" filterStyleClass="hide" filterMatchMode="contains">
                         #{order.productFamilyName}
                     </p:column>
 
-                    <p:column headerText="Status" filterBy="#{order.orderStatus}" filterOptions="#{productOrderListForm.allOrderStatuses}" filterMatchMode="exact">
+                    <p:column headerText="Status" sortBy="#{order.orderStatus}">
                         #{order.orderStatus}
                     </p:column>
 
-                    <p:column headerText="Research Project" width="120" sortBy="#{order.researchProjectTitle}">
+                    <p:column headerText="Research Project" width="120" sortBy="#{order.researchProjectTitle}"
+                            filterBy="#{order.researchProjectTitle}" filterStyleClass="hide" filterMatchMode="contains">
                         #{order.researchProjectTitle}
                     </p:column>
 
-                    <p:column headerText="Owner" filterBy="#{order.ownerId}" filterOptions="#{productOrderListForm.allProjectOwners}" filterMatchMode="exact">
+                    <p:column headerText="Owner" sortBy="#{userListBean.getUserFullName(order.ownerId)}"
+                              filterBy="#{userListBean.getUserFullName(order.ownerId)}" filterStyleClass="hide" filterMatchMode="contains">
                         #{userListBean.getUserFullName(order.ownerId)}
                     </p:column>
 

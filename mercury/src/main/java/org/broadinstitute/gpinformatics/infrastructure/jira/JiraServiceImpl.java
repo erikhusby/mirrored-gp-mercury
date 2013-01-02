@@ -15,8 +15,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.*;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionListResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -26,10 +26,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Collection;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Impl
 public class JiraServiceImpl extends AbstractJsonJerseyClientService implements JiraService {
@@ -289,11 +286,26 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     @Override
-    public Map<String, CustomFieldDefinition> getCustomFields() throws IOException {
+    public Map<String, CustomFieldDefinition> getCustomFields(String... fieldNames) throws IOException {
         String urlString = getBaseUrl() + "/field";
 
         String jsonResponse = getJerseyClient().resource(urlString).get(String.class);
-        return CustomFieldJsonParser.parseCustomFields(jsonResponse);
+        Map<String, CustomFieldDefinition> customFieldDefinitionMap = CustomFieldJsonParser.parseCustomFields(jsonResponse);
+
+        if (fieldNames.length == 0) {
+            return customFieldDefinitionMap;
+        }
+
+        Set<String> fieldNamesSet = new HashSet<String>(Arrays.asList(fieldNames));
+        Map<String, CustomFieldDefinition> filteredMap = new HashMap<String, CustomFieldDefinition>();
+        for (Map.Entry<String, CustomFieldDefinition> entry : customFieldDefinitionMap.entrySet()) {
+            if (fieldNamesSet.contains(entry.getKey())) {
+                filteredMap.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return filteredMap;
+
     }
 
     @Override
@@ -304,27 +316,43 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     @Override
-    public IssueTransitionResponse findAvailableTransitions(String jiraIssueKey) {
-        String urlString = getBaseUrl() + "/" + jiraIssueKey + "/transitions";
+    public IssueTransitionListResponse findAvailableTransitions(String jiraIssueKey) {
+        String urlString = getBaseUrl() + "/issue/" + jiraIssueKey + "/transitions";
 
         WebResource webResource =
                 getJerseyClient().resource(urlString).queryParam("expand", "transitions.fields");
 
-        return get(webResource, new GenericType<IssueTransitionResponse>(){});
+        return get(webResource, new GenericType<IssueTransitionListResponse>(){});
     }
 
     @Override
-    public void postNewTransition(String jiraIssueKey, IssueTransitionRequest jiraIssueTransition) throws IOException {
-        String urlString = getBaseUrl() + "/" + jiraIssueKey + "/transitions";
+    public Transition findAvailableTransitionByName(String jiraIssueKey, String transitionName) {
+        IssueTransitionListResponse availableTransitions = findAvailableTransitions(jiraIssueKey);
+
+        for (Transition transition : availableTransitions.getTransitions()) {
+            if (transition.getName().equals(transitionName)) {
+                return transition;
+            }
+        }
+
+        return null;
+    }
+
+    @Override
+    public void postNewTransition(String jiraIssueKey, Transition transition) throws IOException {
+        IssueTransitionRequest jiraIssueTransition = new IssueTransitionRequest(transition);
+
+        String urlString = getBaseUrl() + "/issue/" + jiraIssueKey + "/transitions";
         WebResource webResource = getJerseyClient().resource(urlString);
         post(webResource, jiraIssueTransition);
     }
 
-    @Override
-    public void postNewTransition(String jiraIssueKey, String transitionId) throws IOException {
-        IssueTransitionRequest jiraIssueTransition = new IssueTransitionRequest(new Transition(transitionId));
 
-        String urlString = getBaseUrl() + "/" + jiraIssueKey + "/transitions";
+    @Override
+    public void postNewTransition(String jiraIssueKey, Transition transition, Collection<CustomField> customFields, String comment) throws IOException {
+        IssueTransitionRequest jiraIssueTransition = new IssueTransitionRequest(transition, customFields, comment);
+
+        String urlString = getBaseUrl() + "/issue/" + jiraIssueKey + "/transitions";
         WebResource webResource = getJerseyClient().resource(urlString);
         post(webResource, jiraIssueTransition);
     }
@@ -352,5 +380,22 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         } catch (IOException e) {
             return false;
         }
+    }
+
+    @Override
+    public IssueFieldsResponse getIssueFields(String jiraIssueKey, Collection<CustomFieldDefinition> customFieldDefinitions) throws IOException {
+        List<String> fieldIds = new ArrayList<String>();
+
+        for (CustomFieldDefinition customFieldDefinition : customFieldDefinitions) {
+            fieldIds.add(customFieldDefinition.getJiraCustomFieldId());
+        }
+
+        String fieldArgs = StringUtils.join(fieldIds, ",");
+        String url = getBaseUrl() + "/issue/" + jiraIssueKey + "?fields=" + fieldArgs;
+        log.info(url);
+        WebResource webResource =
+                getJerseyClient().resource(getBaseUrl() + "/issue/" + jiraIssueKey).queryParam("fields", fieldArgs);
+
+        return get(webResource, new GenericType<IssueFieldsResponse>(){});
     }
 }

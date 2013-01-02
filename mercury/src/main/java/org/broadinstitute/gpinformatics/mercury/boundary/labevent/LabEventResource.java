@@ -20,7 +20,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
+import javax.ejb.Stateful;
 import javax.ejb.Stateless;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -38,7 +40,8 @@ import java.util.Set;
  * A JAX-RS web service to return Transfers etc., by various criteria
  */
 @Path("/labevent")
-@Stateless
+@Stateful
+@RequestScoped
 public class LabEventResource {
 
     @Inject

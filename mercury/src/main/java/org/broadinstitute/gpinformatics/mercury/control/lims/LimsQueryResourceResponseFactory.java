@@ -1,13 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.control.lims;
 
-import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
-import edu.mit.broad.prodinfo.thrift.lims.Lane;
-import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
-import edu.mit.broad.prodinfo.thrift.lims.SampleInfo;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LaneType;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.LibraryDataType;
-import org.broadinstitute.gpinformatics.mercury.limsquery.generated.SampleInfoType;
+import edu.mit.broad.prodinfo.thrift.lims.*;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.*;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
@@ -93,5 +87,36 @@ public class LimsQueryResourceResponseFactory {
         outSampleInfo.setIndexSequence(sampleInfo.getIndexSequence());
         outSampleInfo.setReferenceSequence(sampleInfo.getReferenceSequence());
         return outSampleInfo;
+    }
+
+    public WellAndSourceTubeType makeWellAndSourceTube(WellAndSourceTube wellAndSourceTube) {
+        WellAndSourceTubeType outWellAndSourceTube = new WellAndSourceTubeType();
+        outWellAndSourceTube.setWellName(wellAndSourceTube.getWellName());
+        outWellAndSourceTube.setTubeBarcode(wellAndSourceTube.getTubeBarcode());
+        return outWellAndSourceTube;
+    }
+
+    public PlateTransferType makePlateTransfer(PlateTransfer plateTransfer) {
+        PlateTransferType plateTransferType = new PlateTransferType();
+        plateTransferType.setSourceBarcode(plateTransfer.getSourceBarcode());
+        plateTransferType.setSourceSection(plateTransfer.getSourceSection());
+        for (WellAndSourceTube wellAndSourceTube : plateTransfer.getSourcePositionMap()) {
+            plateTransferType.getSourcePositionMap().add(makeWellAndSourceTube(wellAndSourceTube));
+        }
+        plateTransferType.setDestinationBarcode(plateTransfer.getDestinationBarcode());
+        plateTransferType.setDestinationSection(plateTransfer.getDestinationSection());
+        for (WellAndSourceTube wellAndSourceTube : plateTransfer.getDestinationPositionMap()) {
+            plateTransferType.getDestinationPositionMap().add(makeWellAndSourceTube(wellAndSourceTube));
+        }
+        return plateTransferType;
+    }
+
+    public PoolGroupType makePoolGroup(PoolGroup poolGroup) {
+        PoolGroupType poolGroupType = new PoolGroupType();
+        poolGroupType.setName(poolGroup.getName());
+        for (String tubeBarcode : poolGroup.getTubeBarcodes()) {
+            poolGroupType.getTubeBarcodes().add(tubeBarcode);
+        }
+        return poolGroupType;
     }
 }

@@ -5,6 +5,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource;
@@ -157,6 +158,7 @@ public class BucketBean {
      * @param workingBucket
      * @param batchInitiationLocation
      */
+    @DaoFree
     public void startDBFree(@Nonnull String operator, @Nonnull Collection<LabVessel> vesselsToBatch,
                             @Nonnull Bucket workingBucket, String batchInitiationLocation) {
 
@@ -228,6 +230,7 @@ public class BucketBean {
      * @param numberOfBatchSamples
      * @param workingBucket
      */
+    @DaoFree
     public void startDBFree(@Nonnull String operator, final int numberOfBatchSamples, @Nonnull Bucket workingBucket) {
         Set<BucketEntry> bucketEntrySet = buildBatchListBySize(numberOfBatchSamples, workingBucket);
         startDBFree(bucketEntrySet, operator, LabEvent.UI_EVENT_LOCATION);
@@ -320,7 +323,7 @@ public class BucketBean {
 
     }
 
-    //TODO SGM  Move to a bucket factory class
+    @DaoFree
     private LabBatch startDBFree(Collection<BucketEntry> bucketEntries, String operator,
                                  String batchInitiationLocation) {
         LabBatch bucketBatch;
@@ -457,4 +460,4 @@ public class BucketBean {
         return labVessels;
     }
 
-}
+        }

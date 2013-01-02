@@ -11,14 +11,14 @@
 
 package org.broadinstitute.gpinformatics.mercury.presentation.converter;
 
-import org.broadinstitute.gpinformatics.athena.presentation.converter.AbstractConverter;
-import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
-
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
+
+import org.broadinstitute.gpinformatics.athena.presentation.converter.AbstractConverter;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 
 /**
  * JSF converter for ReagentDesign instances.
@@ -32,7 +32,7 @@ public class ReagentDesignConverter extends AbstractConverter {
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) {
         if (!value.isEmpty()) {
-            return reagentDesignDao.findById(Long.parseLong(value));
+            return reagentDesignDao.findByBusinessKey(value);
         }
         return null;
     }
@@ -40,10 +40,10 @@ public class ReagentDesignConverter extends AbstractConverter {
     @Override
     public String getAsString(FacesContext context, UIComponent component, Object object) {
         // check for null because the converter might be passed null during an AJAX request
-        if (object != null) {
+         if (object != null) {
             ReagentDesign reagent = (ReagentDesign) object;
-            if (reagent.getReagentDesignId() != null) {
-                return reagent.getReagentDesignId().toString();
+            if (reagent.getDesignName() != null) {
+                return reagent.getDesignName();
             }
         }
         return "";

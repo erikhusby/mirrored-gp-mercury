@@ -7,7 +7,9 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
+import javax.ejb.Stateful;
 import javax.ejb.Stateless;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -19,7 +21,8 @@ import java.util.List;
  * list the athena research project info.
  */
 @Path("/util")
-@Stateless
+@Stateful
+@RequestScoped
 public class PingResource {
 
     @Inject

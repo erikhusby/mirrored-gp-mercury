@@ -3,13 +3,12 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.DuplicateTitleException;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderManager;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.NoSamplesException;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.primefaces.event.SelectEvent;
@@ -22,7 +21,6 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.text.NumberFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 
@@ -35,9 +33,6 @@ public class ProductOrderForm extends AbstractJsfBean {
 
     @Inject
     private ProductOrderDetail productOrderDetail;
-
-    @Inject
-    private QuoteService quoteService;
 
     @Inject
     private FacesContext facesContext;
@@ -54,7 +49,10 @@ public class ProductOrderForm extends AbstractJsfBean {
     private Log logger;
 
     @Inject
-    private ProductOrderManager productOrderManager;
+    private ProductOrderEjb productOrderEjb;
+
+    @Inject
+    private ProductOrderUtil productOrderUtil;
 
     /**
      * This is required to get the editIdsCache value in the case where we want to skip the process
@@ -85,19 +83,6 @@ public class ProductOrderForm extends AbstractJsfBean {
         }
     }
 
-    /**
-     * Convenience method to differentiate between create and edit use cases
-     * @return
-     */
-    public boolean isCreating() {
-        if (productOrderDetail == null) {
-            return true;
-        }
-
-        return productOrderDetail.getProductOrder() == null || ! productOrderDetail.getProductOrder().isInDB();
-    }
-
-
     public UIInput getEditIdsCacheBinding() {
         return editIdsCacheBinding;
     }
@@ -119,23 +104,15 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     public String getFundsRemaining() {
-        String quoteId = productOrderDetail.getProductOrder().getQuoteId();
-        if (!StringUtils.isBlank(quoteId)) {
-            try {
-                Quote quote = quoteService.getQuoteByAlphaId(quoteId);
-                String fundsRemainingString = quote.getQuoteFunding().getFundsRemaining();
-                try {
-                    double fundsRemaining = Double.parseDouble(fundsRemainingString);
-                    return NumberFormat.getCurrencyInstance().format(fundsRemaining);
-                } catch (NumberFormatException e) {
-                    return fundsRemainingString;
-                }
-            } catch (Exception e) {
-                String errorMessage = MessageFormat.format("The Quote ID ''{0}'' is invalid.", quoteId);
-                addErrorMessage("quote", errorMessage, errorMessage + ": " + e);
-            }
+        ProductOrder productOrder = productOrderDetail.getProductOrder();
+        try {
+            return productOrderUtil.getFundsRemaining(productOrder);
+        } catch (QuoteNotFoundException e) {
+            String errorMessage = MessageFormat.format("The Quote ID ''{0}'' is invalid.", productOrder.getQuoteId());
+            logger.error(errorMessage);
+            addErrorMessage("quote", errorMessage, errorMessage + ": " + e);
+            return "";
         }
-        return "";
     }
 
     /**
@@ -307,28 +284,29 @@ public class ProductOrderForm extends AbstractJsfBean {
 
         ProductOrder productOrder = productOrderDetail.getProductOrder();
 
+        final String BASE_ERROR_TEXT = "Error saving Product Order: ";
+
         try {
 
-            if (isCreating()) {
-                productOrderManager.save(productOrder, convertTextToList(getEditIdsCache()), getSelectedAddOnPartNumbers());
-            }
-            else {
-                // if we're going to allow abandoning samples we'll need to modify the signature of this method
-                productOrderManager.update(productOrder);
-            }
+            productOrderEjb.save(productOrder, convertTextToList(getEditIdsCache()), getSelectedAddOnPartNumbers());
 
             addInfoMessage(
-                    MessageFormat.format("Product Order ''{0}'' ({1}) has been {2}.",
-                            productOrder.getTitle(), productOrder.getJiraTicketKey(), isCreating() ? "created" : "updated"));
+                    MessageFormat.format("Product Order ''{0}'' ({1}) has been created.",
+                            productOrder.getTitle(), productOrder.getJiraTicketKey()));
             conversationData.endConversation();
             return redirect("view");
+
         } catch (QuoteNotFoundException e) {
             logger.error(e);
-            addErrorMessage("Error saving Product Order: Quote not found: " + productOrder.getQuoteId());
+            addErrorMessage(BASE_ERROR_TEXT + "Invalid Quote ID: " + productOrder.getQuoteId());
             return null;
         } catch (DuplicateTitleException e) {
             logger.error(e);
-            addErrorMessage("Error saving Product Order: Product Order title already in use, must be unique: " + productOrder.getTitle());
+            addErrorMessage(BASE_ERROR_TEXT + "Product Order title already in use, must be unique: " + productOrder.getTitle());
+            return null;
+        } catch (NoSamplesException e) {
+            logger.error(e);
+            addErrorMessage(BASE_ERROR_TEXT + "You must add at least one sample before placing an order");
             return null;
         } catch (Exception e) {
             logger.error(e);

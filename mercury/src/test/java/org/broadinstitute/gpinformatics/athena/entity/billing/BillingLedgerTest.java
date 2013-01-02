@@ -69,7 +69,7 @@ public class BillingLedgerTest {
     @Test
     public void testBean() {
         new BeanTester().testBean(BillingLedger.class);
-        new EqualsMethodTester().testEqualsMethod(BillingLedger.class, "billingMessage" );
+        new EqualsMethodTester().testEqualsMethod(BillingLedger.class, "billingMessage", "quantity");
         new HashCodeMethodTester().testHashCodeMethod(BillingLedger.class);
 
     }

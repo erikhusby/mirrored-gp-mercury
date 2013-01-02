@@ -63,7 +63,7 @@ public class ProductOrderAddOn {
         }
 
         ProductOrderAddOn that = (ProductOrderAddOn) o;
-        return new EqualsBuilder().append(productOrder, that.productOrder).append(addOn, that.addOn).build();
+        return new EqualsBuilder().append(productOrder, that.getProductOrder()).append(addOn, that.getAddOn()).build();
     }
 
     @Override

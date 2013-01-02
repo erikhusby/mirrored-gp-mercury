@@ -1,12 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
-import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
-import edu.mit.broad.prodinfo.thrift.lims.LIMQueries;
-import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
-import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
-import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.apache.commons.logging.Log;
 import org.apache.thrift.TException;
+import org.apache.thrift.transport.TTransportException;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 
 import javax.inject.Inject;
@@ -57,10 +54,32 @@ public class LiveThriftService implements ThriftService {
             public List<LibraryData> call(LIMQueries.Client client) {
                 try {
                     return client.fetchLibraryDetailsByTubeBarcode(tubeBarcodes, includeWorkRequestDetails);
-                } catch (TException e) {
-                    String message = "Thrift error: " + e.getMessage();
+                } catch (TTransportException e) {
+                    String type;
+                    switch (e.getType()) {
+                        case TTransportException.ALREADY_OPEN:
+                            type = "already open";
+                            break;
+                        case TTransportException.END_OF_FILE:
+                            type = "end of file";
+                            break;
+                        case TTransportException.NOT_OPEN:
+                            type = "not open";
+                            break;
+                        case TTransportException.TIMED_OUT:
+                            type = "timed out";
+                            break;
+                        case TTransportException.UNKNOWN:
+                            type = "unknown";
+                            break;
+                        default:
+                            type = "unexpected error type";
+                    }
+                    String message = "Thrift error: " + type + ": " + e.getMessage();
                     log.error(message, e);
                     throw new RuntimeException(message, e);
+                } catch (TException e) {
+                    throw handleThriftException(e);
                 }
             }
         });
@@ -74,9 +93,21 @@ public class LiveThriftService implements ThriftService {
                 try {
                     return client.doesSquidRecognizeAllLibraries(barcodes);
                 } catch (TException e) {
-                    String message = "Thrift error: " + e.getMessage();
-                    log.error(message, e);
-                    throw new RuntimeException(message, e);
+                    throw handleThriftException(e);
+                }
+            }
+        });
+    }
+
+    @Override
+    public List<String> fetchMaterialTypesForTubeBarcodes(final List<String> tubeBarcodes) {
+        return thriftConnection.call(new ThriftConnection.Call<List<String>>() {
+            @Override
+            public List<String> call(LIMQueries.Client client) {
+                try {
+                    return client.fetchMaterialTypesForTubeBarcodes(tubeBarcodes);
+                } catch (TException e) {
+                    throw handleThriftException(e);
                 }
             }
         });
@@ -129,6 +160,20 @@ public class LiveThriftService implements ThriftService {
                 } catch (TException e) {
                     log.error("Thrift error. Probably couldn't find designation for reagent block barcode '" + reagentBlockBarcode + "': " + e.getMessage(), e);
                     throw new RuntimeException("Designation not found for flowcell barcode: " + reagentBlockBarcode);
+                }
+            }
+        });
+    }
+
+    @Override
+    public List<String> findImmediatePlateParents(final String plateBarcode) {
+        return thriftConnection.call(new ThriftConnection.Call<List<String>>() {
+            @Override
+            public List<String> call(LIMQueries.Client client) {
+                try {
+                    return client.findImmediatePlateParents(plateBarcode);
+                } catch (TException e) {
+                    throw handleThriftException(e);
                 }
             }
         });
@@ -209,4 +254,97 @@ public class LiveThriftService implements ThriftService {
         });
     }
 
+    @Override
+    public List<String> fetchUnfulfilledDesignations() {
+        return thriftConnection.call(new ThriftConnection.Call<List<String>>() {
+            @Override
+            public List<String> call(LIMQueries.Client client) {
+                try {
+                    return client.fetchUnfulfilledDesignations();
+                } catch (TException e) {
+                    throw handleThriftException(e);
+                }
+            }
+        });
+    }
+
+    @Override
+    public List<String> findRelatedDesignationsForAnyTube(final List<String> tubeBarcodes) {
+        return thriftConnection.call(new ThriftConnection.Call<List<String>>() {
+            @Override
+            public List<String> call(LIMQueries.Client client) {
+                try {
+                    return client.findRelatedDesignationsForAnyTube(tubeBarcodes);
+                } catch (TException e) {
+                    throw handleThriftException(e);
+                }
+            }
+        });
+    }
+
+    @Override
+    public List<WellAndSourceTube> fetchSourceTubesForPlate(final String plateBarcode) {
+        return thriftConnection.call(new ThriftConnection.Call<List<WellAndSourceTube>>() {
+            @Override
+            public List<WellAndSourceTube> call(LIMQueries.Client client) {
+                try {
+                    return client.fetchSourceTubesForPlate(plateBarcode);
+                } catch (TTransportException e) {
+                    if (e.getType() == TTransportException.END_OF_FILE) {
+                        throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
+                    } else {
+                        throw handleThriftException(e);
+                    }
+                } catch (TException e) {
+                    throw handleThriftException(e);
+                }
+            }
+        });
+    }
+
+    @Override
+    public List<PlateTransfer> fetchTransfersForPlate(final String plateBarcode, final short depth) {
+        return thriftConnection.call(new ThriftConnection.Call<List<PlateTransfer>>() {
+            @Override
+            public List<PlateTransfer> call(LIMQueries.Client client) {
+                try {
+                    return client.fetchTransfersForPlate(plateBarcode, depth);
+                } catch (TTransportException e) {
+                    if (e.getType() == TTransportException.END_OF_FILE) {
+                        throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
+                    } else {
+                        throw handleThriftException(e);
+                    }
+                } catch (TException e) {
+                    throw handleThriftException(e);
+                }
+            }
+        });
+    }
+
+    @Override
+    public List<PoolGroup> fetchPoolGroups(final List<String> tubeBarcoces) {
+        return thriftConnection.call(new ThriftConnection.Call<List<PoolGroup>>() {
+            @Override
+            public List<PoolGroup> call(LIMQueries.Client client) {
+                try {
+                    return client.fetchPoolGroups(tubeBarcoces);
+                } catch (TTransportException e) {
+                    if (e.getType() == TTransportException.END_OF_FILE) {
+                        throw new RuntimeException("Some or all of the tubes were not found.");
+                    } else {
+                        throw handleThriftException(e);
+                    }
+                } catch (TException e) {
+                    throw handleThriftException(e);
+                }
+            }
+        });
+    }
+
+    private RuntimeException handleThriftException(TException e) {
+        String message = "Thrift error: " + e.getMessage();
+        log.error(message, e);
+        return new RuntimeException(message, e);
+    }
 }
