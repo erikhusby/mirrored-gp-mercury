@@ -138,7 +138,7 @@ public class JiraServiceStub implements JiraService {
     }
 
     @Override
-    public void postNewTransition(String jiraIssueKey, Transition transition) throws IOException {
+    public void postNewTransition(String jiraIssueKey, Transition transition, String comment) throws IOException {
 
     }
 
@@ -151,5 +151,10 @@ public class JiraServiceStub implements JiraService {
     @Override
     public IssueFieldsResponse getIssueFields(String jiraIssueKey, Collection<CustomFieldDefinition> customFieldDefinitions) throws IOException {
         return null;
+    }
+
+    @Override
+    public String getResolution(String jiraIssueKey) throws IOException {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 }
