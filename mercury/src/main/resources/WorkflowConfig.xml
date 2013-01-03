@@ -20,7 +20,6 @@
                 <reEntryPoint>false</reEntryPoint>
                 <quantType>PICO</quantType>
             </workflowStepDefs>
-            <!-- PREFLIGHT_PICO_SETUP and PREFLIGHT_POST_NORM_PICO_SETUP are done twice.   -->
             <workflowStepDefs>
                 <name>Preflight Pico Setup</name>
                 <labEventTypes>PREFLIGHT_PICO_SETUP</labEventTypes>
@@ -28,6 +27,7 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <quantType>PICO</quantType>
+                <numberOfRepeats>1</numberOfRepeats>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Preflight Normalization</name>
@@ -42,6 +42,7 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <numberOfRepeats>1</numberOfRepeats>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>

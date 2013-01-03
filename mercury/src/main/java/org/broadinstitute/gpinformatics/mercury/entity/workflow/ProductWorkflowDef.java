@@ -32,7 +32,8 @@ public class ProductWorkflowDef implements Serializable {
 
     /** Transient list of versions, in descending order of effective date */
     private transient ArrayList<ProductWorkflowDefVersion> workflowVersionsDescEffDate;
-    private transient Map<String, ProductWorkflowDefVersion> productDefVersionsByVersion = new HashMap<String, ProductWorkflowDefVersion>();
+    private transient Map<String, ProductWorkflowDefVersion> productDefVersionsByVersion =
+            new HashMap<String, ProductWorkflowDefVersion>();
 
     public ProductWorkflowDef(String name) {
         this.name = name;
@@ -74,7 +75,7 @@ public class ProductWorkflowDef implements Serializable {
             for (ProductWorkflowDefVersion.LabEventNode predecessorNode : labEventNode.getPredecessors()) {
                 validPredecessorEventNames.add(predecessorNode.getLabEventType().getName());
                 // todo jmt recurse
-                if(predecessorNode.isOptional()) {
+                if(predecessorNode.getStepDef().isOptional()) {
                     start = predecessorNode.getPredecessors().isEmpty();
                     for (ProductWorkflowDefVersion.LabEventNode predPredEventNode : predecessorNode.getPredecessors()) {
                         validPredecessorEventNames.add(predPredEventNode.getLabEventType().getName());
@@ -83,15 +84,15 @@ public class ProductWorkflowDef implements Serializable {
             }
 
             found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
-                    found, labVessel.getTransfersFrom());
+                    found, labVessel.getTransfersFrom(), labEventNode);
 
             if (!found) {
                 found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
-                        found, labVessel.getTransfersTo());
+                        found, labVessel.getTransfersTo(), labEventNode);
             }
             if(!found) {
                 found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
-                        found, labVessel.getInPlaceEvents());
+                        found, labVessel.getInPlaceEvents(), labEventNode);
             }
             if(!found && !start) {
                 errors.add("Vessel " + labVessel.getLabCentricName() + " has actual events " + actualEventNames +
@@ -102,14 +103,14 @@ public class ProductWorkflowDef implements Serializable {
     }
 
     private boolean validateTransfers(String nextEventTypeName, List<String> errors, Set<String> validPredecessorEventNames,
-            LabVessel labVessel, Set<String> actualEventNames, boolean found, Set<LabEvent> transfers) {
+            LabVessel labVessel, Set<String> actualEventNames, boolean found, Set<LabEvent> transfers,
+            ProductWorkflowDefVersion.LabEventNode labEventNode) {
         for (LabEvent labEvent : transfers) {
             String actualEventName = labEvent.getLabEventType().getName();
             actualEventNames.add(actualEventName);
-            // this doesn't handle repeated messages, e.g. pico duplicates
-            // look up event in workflow
-            if(actualEventName.equals(nextEventTypeName)) {
-                errors.add("For vessel " + labVessel.getLabCentricName() + ", event " + nextEventTypeName + " has already occurred");
+            if(actualEventName.equals(nextEventTypeName) && labEventNode.getStepDef().getNumberOfRepeats() == 0) {
+                errors.add("For vessel " + labVessel.getLabCentricName() + ", event " + nextEventTypeName +
+                        " has already occurred");
             }
             if(validPredecessorEventNames.contains(actualEventName)) {
                 found = true;
