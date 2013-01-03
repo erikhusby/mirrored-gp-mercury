@@ -6,6 +6,7 @@ import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
@@ -49,13 +50,9 @@ public class ProductOrderSample implements Serializable {
 
     public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile("SM-[A-Z1-9]{4,6}");
 
-    static final IllegalStateException ILLEGAL_STATE_EXCEPTION = new IllegalStateException("Sample data not available");
-
     @Index(name = "ix_pos_sample_name")
     @Column(nullable = false)
     private String sampleName;      // This is the name of the BSP or Non-BSP sample.
-
-    private BillingStatus billingStatus = BillingStatus.NotYetBilled;
 
     private String sampleComment;
 
@@ -69,6 +66,25 @@ public class ProductOrderSample implements Serializable {
 
     @Column(name="SAMPLE_POSITION", updatable = false, insertable = false, nullable=false)
     private Integer samplePosition;
+
+    public static enum DeliveryStatus implements StatusType {
+        NOT_STARTED("Not Started"),
+        DELIVERED("Delivered"),
+        ABANDONED("Abandoned");
+
+        private String displayName;
+
+        DeliveryStatus(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
+    @Enumerated(EnumType.STRING)
+    private DeliveryStatus deliveryStatus = DeliveryStatus.NOT_STARTED;
 
     @Transient
     private BSPSampleDTO bspDTO = BSPSampleDTO.DUMMY;
@@ -105,14 +121,6 @@ public class ProductOrderSample implements Serializable {
 
     public String getSampleName() {
         return sampleName;
-    }
-
-    public BillingStatus getBillingStatus() {
-        return billingStatus;
-    }
-
-    public void setBillingStatus(BillingStatus billingStatus) {
-        this.billingStatus = billingStatus;
     }
 
     public String getSampleComment() {
@@ -164,6 +172,10 @@ public class ProductOrderSample implements Serializable {
 
     public Long getProductOrderSampleId() {
         return productOrderSampleId;
+    }
+
+    public DeliveryStatus getDeliveryStatus() {
+        return deliveryStatus;
     }
 
     public void setBspDTO(@Nonnull BSPSampleDTO bspDTO) {
@@ -362,7 +374,6 @@ public class ProductOrderSample implements Serializable {
     public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta) {
         BillingLedger billingLedger = new BillingLedger(this, priceItem, workCompleteDate, delta);
         ledgerItems.add(billingLedger);
-        billingStatus = BillingStatus.EligibleForBilling;
         log.debug(MessageFormat.format(
                 "Added BillingLedger item for sample {0} to PDO {1} for PriceItemName: {2} - Quantity:{3}",
                 sampleName, productOrder.getBusinessKey(), priceItem.getName(), delta));

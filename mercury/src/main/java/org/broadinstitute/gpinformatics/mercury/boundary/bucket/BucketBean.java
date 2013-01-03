@@ -293,7 +293,7 @@ public class BucketBean {
      */
     public void start(@Nonnull Collection<BucketEntry> bucketEntries, @Nonnull String operator,
                       String batchInitiationLocation) {
-        start(bucketEntries, operator, null, batchInitiationLocation);
+        start(bucketEntries, operator, batchInitiationLocation, null);
     }
 
     /**

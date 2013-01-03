@@ -1845,4 +1845,45 @@
         <createSequence sequenceName="SEQ_MATERIAL_TYPE" schemaName="athena" startValue="1" incrementBy="10"/>
     </changeSet>
 
+    <changeSet id="GPLIM-426.1" author="mcovarr">
+        <preConditions>
+            <columnExists columnName="billing_status" schemaName="athena" tableName="product_order_sample" />
+        </preConditions>
+        <dropColumn columnName="billing_status" schemaName="athena" tableName="product_order_sample" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-426.1_aud" author="mcovarr">
+        <preConditions>
+            <columnExists columnName="billing_status" schemaName="athena" tableName="product_order_sample_aud" />
+        </preConditions>
+        <dropColumn columnName="billing_status" schemaName="athena" tableName="product_order_sample_aud" />
+    </changeSet>
+
+    <changeSet id="GPLIM-426.2" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists columnName="delivery_status" schemaName="athena" tableName="product_order_sample" />
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_sample" schemaName="athena">
+            <column name="delivery_status" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-426.2_aud" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists columnName="delivery_status" schemaName="athena" tableName="product_order_sample_aud" />
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_sample_aud" schemaName="athena">
+            <column name="delivery_status" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-426.3" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="product_order_sample" columnName="delivery_status" defaultNullValue="NOT_STARTED" />
+    </changeSet>
+
 </databaseChangeLog>

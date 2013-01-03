@@ -19,7 +19,7 @@ import java.util.*;
 @Entity
 @Audited
 @Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"batchName"}))
-public class  LabBatch {
+public class LabBatch {
 
     public static final Comparator<LabBatch> byDate = new Comparator<LabBatch>() {
         @Override
@@ -112,6 +112,10 @@ public class  LabBatch {
 
     public Set<LabVessel> getStartingLabVessels() {
         return startingLabVessels;
+    }
+
+    public List<LabVessel> getStartingLabVesselsList() {
+        return new ArrayList<LabVessel>(startingLabVessels);
     }
 
     public void addLabVessel(@Nonnull LabVessel labVessel) {
@@ -237,6 +241,10 @@ public class  LabBatch {
         return batchName.toString().trim();
     }
 
+    public String getBusinessKey() {
+        return batchName;
+    }
+
     /**
      * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
      * for Product orders
@@ -264,9 +272,7 @@ public class  LabBatch {
         PROGRESS_STATUS("Progress Status", true),
 
         //List of Sample names
-        GSSR_IDS("GSSR ID(s)", true),
-
-        ;
+        GSSR_IDS("GSSR ID(s)", true),;
 
         private final String fieldName;
         private final boolean customField;

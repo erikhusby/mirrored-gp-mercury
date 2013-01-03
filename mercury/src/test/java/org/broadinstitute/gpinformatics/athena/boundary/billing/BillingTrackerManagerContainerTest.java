@@ -128,7 +128,6 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
                 BillingLedger expBillingLedger = expectedBillingLedgerList.get(i);
 
                 Assert.assertEquals(expBillingLedger.getProductOrderSample().getSampleName(), billingLedger.getProductOrderSample().getSampleName() );
-                Assert.assertEquals(expBillingLedger.getProductOrderSample().getBillingStatus(), billingLedger.getProductOrderSample().getBillingStatus() );
                 Assert.assertEquals(expBillingLedger.getPriceItem().getName(), billingLedger.getPriceItem().getName() );
                 Assert.assertEquals("Quantity check for " + billingLedger.getProductOrderSample().getSampleName() + " priceItem "  +
                         billingLedger.getPriceItem().getName() + " failed",

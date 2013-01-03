@@ -105,7 +105,7 @@ public class BettalimsMessageResource {
         try {
             storeAndProcess(message);
         } catch (Exception e) {
-            if(e.getMessage().contains(WORKFLOW_MESSAGE)) {
+            if(e.getMessage() != null && e.getMessage().contains(WORKFLOW_MESSAGE)) {
                 throw new ResourceException(e.getMessage(), Response.Status.CREATED);
             } else {
                 throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);

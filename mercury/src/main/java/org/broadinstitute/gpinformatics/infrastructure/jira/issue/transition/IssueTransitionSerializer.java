@@ -15,17 +15,21 @@ public class IssueTransitionSerializer extends JsonSerializer<IssueTransitionReq
 
         jsonGenerator.writeStartObject();
 
-        jsonGenerator.writeFieldName("fields");
-        jsonGenerator.writeStartObject();
-        UpdateJiraIssueUpdateSerializer.writeCustomFields(value.getFields().getCustomFields(), jsonGenerator);
-        jsonGenerator.writeEndObject();
+        if ( ! value.getFields().getCustomFields().isEmpty()) {
+            jsonGenerator.writeFieldName("fields");
+            jsonGenerator.writeStartObject();
+            UpdateJiraIssueUpdateSerializer.writeCustomFields(value.getFields().getCustomFields(), jsonGenerator);
+            jsonGenerator.writeEndObject();
+        }
 
         jsonGenerator.writeFieldName("transition");
         jsonGenerator.writeStartObject();
         jsonGenerator.writeStringField("id", value.getTransition().getId());
         jsonGenerator.writeEndObject();
 
-        writeComment(jsonGenerator, value.getComment());
+        if (value.getComment() != null) {
+            writeComment(jsonGenerator, value.getComment());
+        }
 
         jsonGenerator.writeEndObject();
 
