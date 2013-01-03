@@ -42,7 +42,7 @@
                 <c:forEach items="${actionBean.allReagentDesigns}" var="design">
                     <tr>
                         <td>
-                            <stripes:link beanclass="${actionBean.class.name}" event="view">
+                            <stripes:link beanclass="${actionBean.class.name}" event="edit">
                                 <stripes:param name="businessKey" value="${design.businessKey}"/>
                                 ${design.designName}
                             </stripes:link>

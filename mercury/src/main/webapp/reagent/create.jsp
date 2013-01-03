@@ -27,6 +27,7 @@
     <stripes:layout-component name="content">
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
+            <stripes:hidden name="businessKey" value="${actionBean.reagentDesign.businessKey}"/>
 
             <div class="control-group">
                 <stripes:label for="designName" name="Name" class="control-label"/>

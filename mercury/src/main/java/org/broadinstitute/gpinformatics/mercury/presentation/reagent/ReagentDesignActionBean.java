@@ -39,8 +39,19 @@ public class ReagentDesignActionBean extends CoreActionBean {
     /**
      * Initialize the product with the passed in key for display in the form
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {"view", "save"})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {"edit"})
     public void init() {
+        businessKey = getContext().getRequest().getParameter("businessKey");
+        if (businessKey != null) {
+            reagentDesign = reagentDesignDao.findByBusinessKey(businessKey);
+        }
+    }
+
+    /**
+     * Initialize the product with the passed in key for display in the form
+     */
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {"save"})
+    public void init2() {
         businessKey = getContext().getRequest().getParameter("businessKey");
         if (businessKey != null) {
             reagentDesign = reagentDesignDao.findByBusinessKey(businessKey);
@@ -54,15 +65,21 @@ public class ReagentDesignActionBean extends CoreActionBean {
 
     @ValidationMethod(on = "save")
     public void uniqueNameValidation(ValidationErrors errors) {
-        // If the research project has no original title, then it was not fetched from hibernate, so this is a create
-        // OR if this was fetched and the title has been changed
-        if ((reagentDesign.getOriginalName() == null) ||
-                (!reagentDesign.getDesignName().equalsIgnoreCase(reagentDesign.getOriginalName()))) {
+
+        if (reagentDesign.getOriginalName() == null) {
+            setSubmitString(CREATE_DESIGN);
+        } else {
+            setSubmitString(EDIT_DESIGN);
+        }
+
+        // If we are creating the design or else if the original names do not match, check that the name is not a dupe
+        if ((getSubmitString() == CREATE_DESIGN) ||
+            (!reagentDesign.getDesignName().equalsIgnoreCase(reagentDesign.getOriginalName()))) {
 
             // Check if there is an existing research project and error out if it already exists
             ReagentDesign existingDesign = reagentDesignDao.findByBusinessKey(reagentDesign.getDesignName());
             if (existingDesign != null) {
-                errors.add("designName", new SimpleError("A reagent already exists with that design name."));
+                errors.add("designName", new SimpleError(getSubmitString() + " was successful"));
             }
         }
     }
