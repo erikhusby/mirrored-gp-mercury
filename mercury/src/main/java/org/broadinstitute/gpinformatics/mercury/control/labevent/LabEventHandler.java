@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -351,12 +352,17 @@ public class LabEventHandler implements Serializable {
     public ProductWorkflowDefVersion getWorkflowVersion(String productOrderKey) {
         WorkflowConfig workflowConfig = workflowLoader.load();
 
+        ProductWorkflowDefVersion versionResult = null;
+
         ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(productOrderKey);
 
-        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
-                productOrder.getProduct().getWorkflowName());
+        if(StringUtils.isNotBlank(productOrder.getProduct().getWorkflowName())) {
+            ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
+                    productOrder.getProduct().getWorkflowName());
 
-        return productWorkflowDef.getEffectiveVersion();
+            versionResult = productWorkflowDef.getEffectiveVersion();
+        }
+        return versionResult;
     }
 
 
@@ -367,23 +373,29 @@ public class LabEventHandler implements Serializable {
 
             Collection<String> productOrders = currVessel.getNearestProductOrders();
 
-            ProductWorkflowDefVersion workflowDef = getWorkflowVersion(productOrders.iterator().next());
-            if (workflowDef.isPreviousStepBucket(labEvent.getLabEventType().getName())) {
-                WorkflowStepDef workingBucketName = /*bucketDao.findByName(*/workflowDef.getPreviousStep(
-                        labEvent.getLabEventType().getName())/*)*/;
-                if(workingBucketName == null) {
-                    workingBucketName = workflowDef.getPreviousStep(
-                                                labEvent.getLabEventType().getName());
-                }
+            if (productOrders != null && !productOrders.isEmpty()) {
+                ProductWorkflowDefVersion workflowDef = getWorkflowVersion(productOrders.iterator().next());
 
-                if (!bucketVessels.containsKey(workingBucketName)) {
-                    bucketVessels.put(workingBucketName, new LinkedList<LabVessel>());
-                    if(bucketVessels.keySet().size() >1) {
-                        LOG.warn("Samples are coming from multiple Buckets");
-//                        throw new IllegalStateException("Samples are coming from multiple Buckets");
+                //TODO SGM consider Null Case for Workflow Dev
+
+                if (workflowDef != null &&
+                    workflowDef.isPreviousStepBucket(labEvent.getLabEventType().getName())) {
+                    WorkflowStepDef workingBucketName = /*bucketDao.findByName(*/workflowDef.getPreviousStep(
+                            labEvent.getLabEventType().getName())/*)*/;
+                    if (workingBucketName == null) {
+                        workingBucketName = workflowDef.getPreviousStep(
+                                labEvent.getLabEventType().getName());
                     }
+
+                    if (!bucketVessels.containsKey(workingBucketName)) {
+                        bucketVessels.put(workingBucketName, new LinkedList<LabVessel>());
+                        if (bucketVessels.keySet().size() > 1) {
+                            LOG.warn("Samples are coming from multiple Buckets");
+//                        throw new IllegalStateException("Samples are coming from multiple Buckets");
+                        }
+                    }
+                    bucketVessels.get(workingBucketName).add(currVessel);
                 }
-                bucketVessels.get(workingBucketName).add(currVessel);
             }
         }
         return bucketVessels;

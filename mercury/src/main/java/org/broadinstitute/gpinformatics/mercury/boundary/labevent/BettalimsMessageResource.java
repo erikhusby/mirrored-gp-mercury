@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConnector;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
@@ -14,6 +15,8 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -73,14 +76,14 @@ public class BettalimsMessageResource {
     @Inject
     private WsMessageStore wsMessageStore;
 
-//    @Inject
-//    private BucketDao bucketDao;
-//
-//    @Inject
-//    private BucketBean bucketBean;
-//
-//    @Inject
-//    private BSPUserList bspUserList;
+    @Inject
+    private BucketDao bucketDao;
+
+    @Inject
+    private BucketBean bucketBean;
+
+    @Inject
+    private BSPUserList bspUserList;
 //
 //    @Inject
 //    private WorkflowLoader workflowLoader;
@@ -339,7 +342,8 @@ public class BettalimsMessageResource {
 
 //          TODO SGM  Commenting to revisit after GPLIM-517
 
-            Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels = labEventHandler.itemizeBucketItems(labEvent);
+            Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels =
+                    labEventHandler.itemizeBucketItems(labEvent);
 
             if(bucketVessels.keySet().size() ==1) {
 
@@ -350,12 +354,11 @@ public class BettalimsMessageResource {
                 }
 
                 bucketBean.start(bspUserList.getById(labEvent.getEventOperator()).getUsername(),
-                                 labEvent.getAllLabVessels(),
-                                 workingBucket,
-                                 labEvent.getEventLocation());
+                        labEvent.getAllLabVessels(),
+                        workingBucket,
+                        labEvent.getEventLocation());
             }
         }
-
     }
 
     /** Allows documents that don't include a namespace */
