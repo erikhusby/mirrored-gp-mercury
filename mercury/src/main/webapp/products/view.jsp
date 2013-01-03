@@ -1,4 +1,3 @@
-<%@ taglib prefix="security" uri="http://www.broadinstitute.org/Mercury/SecureTag" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"

@@ -1,4 +1,3 @@
-<%@ taglib prefix="security" uri="http://www.broadinstitute.org/Mercury/SecureTag" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -40,17 +39,17 @@
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
             <div class="actionButtons">
-                <%--<security:authorizeBlock roles="${actionBean.userBean.developerRole}, ${actionBean.userBean.billingManagerRole}">--%>
+                <%--security:authorizeBlock roles="${actionBean.userBean.developerRole}, ${actionBean.userBean.billingManagerRole}">--%>
                     <stripes:submit name="startBilling" value="Start Billing Session" style="margin-right:30px;"/>
-                <%--</security:authorizeBlock>--%>
+                <%--/security:authorizeBlock>--%>
 
                 <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" style="margin-right:5px;"/>
 
-                <%--<security:authorizeBlock roles="${actionBean.userBean.developerRole}, ${actionBean.userBean.productManagerRole}">--%>
+                <%--security:authorizeBlock roles="${actionBean.userBean.developerRole}, ${actionBean.userBean.productManagerRole}">--%>
                     <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean" event="view">
                         Upload Billing Tracker
                     </stripes:link>
-                <%--</security:authorizeBlock>--%>
+                <%--/security:authorizeBlock>--%>
             </div>
 
             <table id="productOrderList" class="table simple">
