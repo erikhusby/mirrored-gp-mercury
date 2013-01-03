@@ -39,19 +39,8 @@ public class ReagentDesignActionBean extends CoreActionBean {
     /**
      * Initialize the product with the passed in key for display in the form
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {"edit"})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {"edit", "save"})
     public void init() {
-        businessKey = getContext().getRequest().getParameter("businessKey");
-        if (businessKey != null) {
-            reagentDesign = reagentDesignDao.findByBusinessKey(businessKey);
-        }
-    }
-
-    /**
-     * Initialize the product with the passed in key for display in the form
-     */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {"save"})
-    public void init2() {
         businessKey = getContext().getRequest().getParameter("businessKey");
         if (businessKey != null) {
             reagentDesign = reagentDesignDao.findByBusinessKey(businessKey);
@@ -79,7 +68,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
             // Check if there is an existing research project and error out if it already exists
             ReagentDesign existingDesign = reagentDesignDao.findByBusinessKey(reagentDesign.getDesignName());
             if (existingDesign != null) {
-                errors.add("designName", new SimpleError(getSubmitString() + " was successful"));
+                errors.add("designName", new SimpleError("A reagent already exists with that design name."));
             }
         }
     }
@@ -111,7 +100,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
             return null;
         }
 
-        addMessage("Reagent Design \"" + reagentDesign.getBusinessKey() + "\" has been created");
+        addMessage(getSubmitString() + " '" + reagentDesign.getBusinessKey() + "' was successful");
         return new RedirectResolution(ReagentDesignActionBean.class, "list");
     }
 
