@@ -359,6 +359,7 @@ public class LabEventHandler implements Serializable {
         return productWorkflowDef.getEffectiveVersion();
     }
 
+
     public Map<WorkflowStepDef, Collection<LabVessel>> itemizeBucketItems(LabEvent labEvent) {
         Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels = new HashMap<WorkflowStepDef, Collection<LabVessel>>();
 

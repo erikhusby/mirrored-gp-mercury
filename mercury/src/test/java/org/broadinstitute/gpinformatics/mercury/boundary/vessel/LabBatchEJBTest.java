@@ -107,7 +107,7 @@ public class LabBatchEJBTest extends ContainerTest {
         Assert.assertNotNull(testFind.getJiraTicket().getTicketName());
         Assert.assertNotNull(testFind.getStartingLabVessels());
         Assert.assertEquals(6, testFind.getStartingLabVessels().size());
-        Assert.assertEquals(batchName, testFind.getBatchName());
+        Assert.assertEquals(testFind.getBatchName(), testFind.getJiraTicket().getTicketName());
     }
 
     @Test
@@ -147,6 +147,6 @@ public class LabBatchEJBTest extends ContainerTest {
         Assert.assertNotNull(testFind.getJiraTicket().getTicketName());
         Assert.assertNotNull(testFind.getStartingLabVessels());
         Assert.assertEquals(6, testFind.getStartingLabVessels().size());
-        Assert.assertEquals(batchName, testFind.getBatchName());
+        Assert.assertEquals(testFind.getBatchName(), testFind.getJiraTicket().getTicketName());
     }
 }

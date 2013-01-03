@@ -16,8 +16,11 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleTy
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.xml.sax.Attributes;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
@@ -46,10 +49,7 @@ import javax.xml.transform.sax.SAXSource;
 //import javax.xml.validation.SchemaFactory;
 //import java.io.File;
 import java.io.StringReader;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Allows BettaLIMS messages to be submitted through JAX-RS.  In this context, BettaLIMS refers to the message format,
@@ -93,6 +93,7 @@ public class BettalimsMessageResource {
 
     @Inject
     private ThriftService thriftService;
+
 
     /**
      * Accepts a message from (typically) a liquid handling deck.  We unmarshal ourselves, rather than letting JAX-RS
@@ -336,7 +337,6 @@ public class BettalimsMessageResource {
         for (LabEvent labEvent : labEvents) {
             labEventHandler.processEvent(labEvent);
 
-/*
 //          TODO SGM  Commenting to revisit after GPLIM-517
 
             Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels = labEventHandler.itemizeBucketItems(labEvent);
@@ -354,7 +354,6 @@ public class BettalimsMessageResource {
                                  workingBucket,
                                  labEvent.getEventLocation());
             }
-*/
         }
 
     }
