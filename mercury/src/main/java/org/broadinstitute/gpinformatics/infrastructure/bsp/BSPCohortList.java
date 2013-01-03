@@ -2,13 +2,14 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import com.google.common.collect.ImmutableSet;
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
-import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -20,18 +21,17 @@ import java.util.Set;
 @Named
 // MLC @ApplicationScoped breaks the test, as does @javax.ejb.Singleton.  @javax.inject.Singleton is the CDI version
 // and does appear to work.  Much to learn about CDI still...
-@Singleton
+@ApplicationScoped
 public class BSPCohortList extends AbstractCache {
 
-    @Inject
-    private Log logger;
+    private static final Log logger = LogFactory.getLog(BSPCohortList.class);
 
     private Set<Cohort> cohortList;
 
-    private BSPCohortSearchService cohortSearchService;
-
     @Inject
     private Deployment deployment;
+
+    private BSPCohortSearchService cohortSearchService;
 
     public BSPCohortList() {
     }

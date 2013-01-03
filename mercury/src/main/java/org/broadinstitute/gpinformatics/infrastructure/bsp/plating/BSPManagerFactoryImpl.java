@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp.plating;
 
 import org.broadinstitute.bsp.client.container.BspContainerManager;
 import org.broadinstitute.bsp.client.container.ContainerManager;
+import org.broadinstitute.bsp.client.sample.BspSampleManager;
+import org.broadinstitute.bsp.client.sample.SampleManager;
 import org.broadinstitute.bsp.client.users.BspUserManager;
 import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.bsp.client.workrequest.BspWorkRequestManager;
@@ -55,5 +57,9 @@ public class BSPManagerFactoryImpl implements BSPManagerFactory {
 
     public UserManager createUserManager() {
         return (UserManager) create(BspUserManager.class);
+    }
+
+    public SampleManager createSampleManager() {
+        return (SampleManager) create(BspSampleManager.class);
     }
 }

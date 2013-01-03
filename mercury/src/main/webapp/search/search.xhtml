@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE html
+        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui"
+      xmlns:c="http://java.sun.com/jsf/composite/container"
+      xmlns:s="http://java.sun.com/jsf/composite/sample"
+      xmlns:pdo="http://java.sun.com/jsf/composite/orders"
+      xmlns:b="http://java.sun.com/jsf/composite/batch">
+<h:body>
+    <ui:composition template="/layout.xhtml">
+        <ui:define name="title">
+            Search
+        </ui:define>
+        <ui:define name="body">
+            <h:form id="results">
+                <div class="control-group">
+                    <div class="controls">
+                        <p:panelGrid>
+                            <p:row>
+                                <p:column>
+                                    <p:inputTextarea id="name" value="#{searchBean.searchKey}" autoResize="false"
+                                                     rows="5" cols="60"/>
+                                    <p:watermark for="name" value="Enter the value to search for."/>
+                                </p:column>
+                            </p:row>
+                            <p:row>
+                                <p:column>
+                                    <p:commandButton value="Search" action="#{searchBean.listSearch}"
+                                                     update="results:searchResultPanel"
+                                                     styleClass="ui-priority-primary"/>
+                                </p:column>
+                            </p:row>
+                        </p:panelGrid>
+                    </div>
+                </div>
+                <p:outputPanel id="searchResultPanel">
+                    <p:tabView id="searchTabView" dynamic="true" cache="true" effect="fade">
+                        <p:tab id="vesselTab" title="Found Vessels (#{searchBean.foundVessels.size()})"
+                               rendered="#{searchBean.foundVessels != null and searchBean.foundVessels.size() > 0}">
+                            <c:vesselList vessels="#{searchBean.foundVessels}"/>
+                        </p:tab>
+                        <p:tab id="sampleTab" title="Found Samples (#{searchBean.foundSamples.size()})"
+                               rendered="#{searchBean.foundSamples != null and searchBean.foundSamples.size() > 0}">
+                            <s:sampleList samples="#{searchBean.foundSamples}"/>
+                        </p:tab>
+                        <p:tab id="pdoTab" title="Found PDOs (#{searchBean.foundPDOs.size()})"
+                               rendered="#{searchBean.foundPDOs != null and searchBean.foundPDOs.size() > 0}">
+                            <pdo:pdoList pdos="#{searchBean.foundPDOs}"/>
+                        </p:tab>
+                        <p:tab id="batchTab" title="Found Batches(#{searchBean.foundBatches.size()})"
+                               rendered="#{searchBean.foundBatches != null and searchBean.foundBatches.size() > 0}">
+                            <b:batchList batches="#{searchBean.foundBatches}"/>
+                        </p:tab>
+                    </p:tabView>
+                </p:outputPanel>
+            </h:form>
+        </ui:define>
+    </ui:composition>
+</h:body>
+</html>

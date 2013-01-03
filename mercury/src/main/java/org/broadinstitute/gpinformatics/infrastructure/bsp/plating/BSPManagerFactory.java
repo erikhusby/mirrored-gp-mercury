@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.plating;
 
 import org.broadinstitute.bsp.client.container.ContainerManager;
+import org.broadinstitute.bsp.client.sample.SampleManager;
 import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 
@@ -13,5 +14,7 @@ public interface BSPManagerFactory extends Serializable {
     public ContainerManager createContainerManager();
 
     public UserManager createUserManager();
+
+    public SampleManager createSampleManager();
 
 }

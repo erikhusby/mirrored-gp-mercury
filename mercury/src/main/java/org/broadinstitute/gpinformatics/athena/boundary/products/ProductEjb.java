@@ -3,9 +3,11 @@ package org.broadinstitute.gpinformatics.athena.boundary.products;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.samples.MaterialTypeDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 
@@ -57,6 +59,8 @@ public class ProductEjb {
     @Inject
     private PriceItemDao priceItemDao;
 
+    @Inject
+    private MaterialTypeDao materialTypeDao;
 
     /**
      * Utility method to map JAXB DTOs to entities for price items
@@ -71,6 +75,21 @@ public class ProductEjb {
                 priceItem.getName());
     }
 
+    /**
+      * Utility method to map JAXB DTOs to entities for material types
+      * @param materialTypeDto
+      * @return
+      */
+     private org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType dtoToEntity(
+             org.broadinstitute.bsp.client.sample.MaterialType materialTypeDto) {
+
+         org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType materialTypeEntity =
+                 new org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType(
+                         materialTypeDto.getCategory(), materialTypeDto.getName());
+         materialTypeEntity.setFullName( materialTypeDto.getFullName() );
+
+         return materialTypeEntity;
+     }
 
     /**
      * Utility method to grab a persistent/detached JPA entity corresponding to this JAXB DTO if one exists,
@@ -86,6 +105,24 @@ public class ProductEjb {
 
         if (entity == null) {
             entity = dtoToEntity(priceItem);
+        }
+
+        return entity;
+    }
+
+    /**
+     * Utility method to grab a persistent/detached JPA entity corresponding to this JAXB DTO if one exists,
+     * otherwise return just a transient JPA entity
+     *
+     * @param materialType
+     * @return
+     */
+    private org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType findEntity(MaterialType materialType) {
+        org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType entity =
+                materialTypeDao.find(materialType.getCategory(), materialType.getName());
+
+        if (entity == null) {
+            entity = dtoToEntity(materialType);
         }
 
         return entity;
@@ -179,7 +216,8 @@ public class ProductEjb {
     }
 
 
-    public void save(Product product, String partNumber, List<Product> addOns, PriceItem primaryPriceItem, List<PriceItem> optionalPriceItems)
+    public void save(Product product, String partNumber, List<Product> addOns, PriceItem primaryPriceItem,
+                     List<PriceItem> optionalPriceItems, List<MaterialType> allowedMaterialTypes)
             throws ExpiredAddOnsException, DuplicateBusinessKeyException, IncompatibleDatesException, NoPrimaryPriceItemException, DuplicatePriceItemNamesException {
 
         validateUniquePartNumber(product, partNumber);
@@ -206,6 +244,15 @@ public class ProductEjb {
                 product.addPriceItem(entity);
             }
         }
+
+        product.getAllowableMaterialTypes().clear();
+        if (allowedMaterialTypes != null) {
+            for (MaterialType materialType : allowedMaterialTypes) {
+                org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType entity = findEntity(materialType);
+                product.addAllowableMaterialType(entity);
+            }
+        }
+
         // copy in the part number as the last thing we do before writing to db GPLIM-559
         product.setPartNumber(partNumber);
 

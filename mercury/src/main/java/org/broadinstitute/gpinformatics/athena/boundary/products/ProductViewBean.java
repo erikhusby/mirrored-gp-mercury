@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.jsf.TableData;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
@@ -36,6 +37,12 @@ public class ProductViewBean extends AbstractJsfBean {
     @ConversationScoped public static class PriceItemTableData extends TableData<PriceItem> {}
     @Inject private PriceItemTableData optionalPriceItemData;
 
+    /**
+     * Store material types in conversation scope to support p:dataTable sorting.
+     */
+    @ConversationScoped public static class MaterialTypeTableData extends TableData<MaterialType> {}
+    @Inject private MaterialTypeTableData allowedMaterialTypeData;
+
     @Inject
     private FacesContext facesContext;
 
@@ -54,6 +61,11 @@ public class ProductViewBean extends AbstractJsfBean {
                 Collections.sort(priceItemList);
                 optionalPriceItemData.setValues(priceItemList);
 
+                List<MaterialType> materialTypeList = new ArrayList<MaterialType>(product.getAllowableMaterialTypes());
+                Collections.sort(materialTypeList);
+                allowedMaterialTypeData.setValues(materialTypeList);
+
+
                 if (conversation.isTransient()) {
                     conversation.begin();
                 }
@@ -63,7 +75,6 @@ public class ProductViewBean extends AbstractJsfBean {
             }
         }
     }
-
 
     // TODO: create and use secondsToDaysConverter
     public Integer getExpectedCycleTimeDays() {
@@ -110,5 +121,14 @@ public class ProductViewBean extends AbstractJsfBean {
 
     public void setOptionalPriceItemData(PriceItemTableData optionalPriceItemData) {
         this.optionalPriceItemData = optionalPriceItemData;
+    }
+
+
+    public MaterialTypeTableData getAllowedMaterialTypeData() {
+        return allowedMaterialTypeData;
+    }
+
+    public void setAllowedMaterialTypeData(MaterialTypeTableData allowedMaterialTypeData) {
+        this.allowedMaterialTypeData = allowedMaterialTypeData;
     }
 }

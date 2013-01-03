@@ -158,7 +158,7 @@ CREATE TABLE product_order_sample (
   product_order_sample_id NUMERIC(19) PRIMARY KEY NOT NULL,
   product_order_id NUMERIC(19) NOT NULL,
   sample_name VARCHAR2(255),
-  billing_status VARCHAR2(40) NOT NULL,
+  delivery_status VARCHAR2(40) NOT NULL,
   sample_position NUMERIC(19) NOT NULL,
   etl_date DATE NOT NULL,
   CONSTRAINT fk_pos_poid FOREIGN KEY (product_order_id)
@@ -170,7 +170,7 @@ CREATE INDEX product_order_sample_idx1 ON product_order_sample(product_order_id)
 CREATE TABLE product_order_sample_status (
   product_order_sample_id NUMERIC(19) NOT NULL,
   status_date DATE NOT NULL,
-  billing_status VARCHAR2(40) NOT NULL,
+  delivery_status VARCHAR2(40) NOT NULL,
   etl_date DATE NOT NULL,
   CONSTRAINT fk_po_sample_b_s_po_sid FOREIGN KEY (product_order_sample_id)
     REFERENCES product_order_sample(product_order_sample_id),
@@ -327,7 +327,7 @@ CREATE TABLE im_product_order_sample_stat (
   is_delete CHAR(1) NOT NULL,
   product_order_sample_id NUMERIC(19) NOT NULL,
   status_date DATE,
-  billing_status VARCHAR2(40),
+  delivery_status VARCHAR2(40),
   sample_position NUMERIC(19)
 );
 
@@ -339,7 +339,7 @@ CREATE TABLE im_product_order_sample (
   product_order_sample_id NUMERIC(19) NOT NULL,
   product_order_id NUMERIC(19),
   sample_name VARCHAR2(255),
-  billing_status VARCHAR2(40)
+  delivery_status VARCHAR2(40)
 );
 
 CREATE TABLE im_product_order_add_on (

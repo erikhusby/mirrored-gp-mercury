@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.billing;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.BillingStatus;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.meanbean.test.BeanTester;
@@ -32,7 +31,6 @@ public class BillingLedgerTest {
 
         BillingLedger billingLedger = new BillingLedger( new ProductOrderSample(sampleName),
                 new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, quantity );
-        billingLedger.getProductOrderSample().setBillingStatus(BillingStatus.EligibleForBilling);
         return billingLedger;
     }
 
@@ -69,7 +67,7 @@ public class BillingLedgerTest {
     @Test
     public void testBean() {
         new BeanTester().testBean(BillingLedger.class);
-        new EqualsMethodTester().testEqualsMethod(BillingLedger.class, "billingMessage" );
+        new EqualsMethodTester().testEqualsMethod(BillingLedger.class, "billingMessage", "quantity");
         new HashCodeMethodTester().testHashCodeMethod(BillingLedger.class);
 
     }

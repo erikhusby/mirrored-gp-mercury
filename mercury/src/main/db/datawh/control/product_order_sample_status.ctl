@@ -9,5 +9,5 @@ TRAILING NULLCOLS
  is_delete,
  product_order_sample_id,
  status_date DATE "YYYY-MM-DDHH24MISS",
- billing_status
+ delivery_status
 )

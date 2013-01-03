@@ -29,7 +29,7 @@ public class ProductOrderEditBean extends AbstractJsfBean implements Serializabl
     private ProductOrder productOrder;
 
     @Inject
-    private ProductOrderManager productOrderManager;
+    private ProductOrderEjb productOrderEjb;
 
     @Inject
     private ProductOrderUtil productOrderUtil;
@@ -53,19 +53,20 @@ public class ProductOrderEditBean extends AbstractJsfBean implements Serializabl
 
 
     public void setProductOrder(ProductOrder productOrder) {
-        this.productOrder = productOrder;
 
-        if (productOrder != null) {
-            for (Product product : productOrder.getProduct().getAddOns()) {
-                addOns.add(product);
-            }
-            Collections.sort(addOns);
+        if (this.productOrder == null) {
+            this.productOrder = productOrder;
 
-            for (ProductOrderAddOn pdoAddOn : productOrder.getAddOns()) {
-                selectedAddOnPartNumbers.add(pdoAddOn.getAddOn().getPartNumber());
+            setupAddOns();
+
+            if (productOrder != null) {
+                for (ProductOrderAddOn pdoAddOn : productOrder.getAddOns()) {
+                    selectedAddOnPartNumbers.add(pdoAddOn.getAddOn().getPartNumber());
+                }
+                Collections.sort(selectedAddOnPartNumbers);
             }
-            Collections.sort(selectedAddOnPartNumbers);
         }
+
     }
 
 
@@ -127,7 +128,7 @@ public class ProductOrderEditBean extends AbstractJsfBean implements Serializabl
     public String update() {
 
         try {
-            productOrderManager.update(productOrder, selectedAddOnPartNumbers);
+            productOrderEjb.update(productOrder, selectedAddOnPartNumbers);
 
         } catch (QuoteNotFoundException e) {
 

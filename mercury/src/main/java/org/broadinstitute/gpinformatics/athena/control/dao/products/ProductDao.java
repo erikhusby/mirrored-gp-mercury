@@ -162,6 +162,6 @@ public class ProductDao extends GenericDao implements Serializable {
 
     public List<Product> findProductsForProductList() {
         // everybody can see everything
-        return findProducts(Availability.ALL, TopLevelOnly.NO, IncludePDMOnly.NO);
+        return findProducts(Availability.ALL, TopLevelOnly.NO, IncludePDMOnly.YES);
     }
 }

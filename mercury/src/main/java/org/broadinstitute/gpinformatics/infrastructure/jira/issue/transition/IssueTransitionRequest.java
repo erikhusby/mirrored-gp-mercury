@@ -18,8 +18,9 @@ public class IssueTransitionRequest {
     private String comment;
 
 
-    public IssueTransitionRequest(Transition transition) {
+    public IssueTransitionRequest(Transition transition, String comment) {
         this.transition = transition;
+        this.comment = comment;
     }
 
 
