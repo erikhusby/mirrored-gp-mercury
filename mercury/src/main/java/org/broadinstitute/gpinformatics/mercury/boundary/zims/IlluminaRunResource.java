@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 
 import edu.mit.broad.prodinfo.thrift.lims.*;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
@@ -33,6 +35,8 @@ import java.util.*;
 @Path("/IlluminaRun")
 @Stateless
 public class IlluminaRunResource implements Serializable {
+
+    private static final Log LOG = LogFactory.getLog(IlluminaRunResource.class);
 
     @Inject
     BSPSampleDataFetcher bspDataFetcher;
@@ -66,6 +70,7 @@ public class IlluminaRunResource implements Serializable {
             runBean = getRun(thriftService,runName);
         }
         catch(Throwable t) {
+            LOG.error("Failed while running pipeline query for run " + runName,t);
             runBean.setError(t.getMessage());
         }
 
