@@ -369,6 +369,9 @@
                                         <include>org/broadinstitute/gpinformatics/mercury/boundary/Namespaces.java</include>
                                         <include>org/broadinstitute/gpinformatics/mercury/boundary/labevent/*Bean.java</include>
                                     </includes>
+                                    <excludes>
+                                        <exclude>org/broadinstitute/gpinformatics/mercury/boundary/labevent/BettalimsMessageBean.java</exclude>
+                                    </excludes>
                                     <transformSchemas>
                                         <!--
                                             Each schema element defines:
