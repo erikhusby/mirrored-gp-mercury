@@ -1886,4 +1886,56 @@
         <addNotNullConstraint schemaName="athena" tableName="product_order_sample" columnName="delivery_status" defaultNullValue="NOT_STARTED" />
     </changeSet>
 
+
+    <changeSet id="GPLIM-636.1" author="mcovarr">
+        <addColumn schemaName="athena" tableName="product_order">
+            <column name="order_status_varchar" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-636.1_aud" author="mcovarr">
+        <addColumn schemaName="athena" tableName="product_order_aud">
+            <column name="order_status_varchar" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-636.2" author="mcovarr">
+        <sql>
+            update athena.product_order set order_status_varchar = case order_status
+                when 0 then 'Draft'
+                when 1 then 'Submitted'
+                when 2 then 'Abandoned'
+                when 3 then 'Complete'
+            end
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-636.2_aud" author="mcovarr">
+        <sql>
+            update athena.product_order_aud set order_status_varchar = case order_status
+                when 0 then 'Draft'
+                when 1 then 'Submitted'
+                when 2 then 'Abandoned'
+                when 3 then 'Complete'
+            end
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-636.3" author="mcovarr">
+        <dropColumn schemaName="athena" tableName="product_order" columnName="order_status" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636.3_aud" author="mcovarr">
+        <dropColumn schemaName="athena" tableName="product_order_aud" columnName="order_status" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636.4" author="mcovarr">
+        <renameColumn schemaName="athena" tableName="product_order" oldColumnName="order_status_varchar" newColumnName="order_status" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636.4_aud" author="mcovarr">
+        <renameColumn schemaName="athena" tableName="product_order_aud" oldColumnName="order_status_varchar" newColumnName="order_status" />
+    </changeSet>
+
+
 </databaseChangeLog>
