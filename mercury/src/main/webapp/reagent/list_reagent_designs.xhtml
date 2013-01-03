@@ -25,8 +25,14 @@
     <ui:define name="title">Designed Reagents</ui:define>
     <ui:define name="body">
         <h:form>
+
             <div class="row">
                 <h:link value="New Reagent" outcome="edit_reagent_designs" styleClass="pull-right"/>
+            </div>
+            <div class="row">
+                <h:commandButton value="Save" id="associateBarcodes" disabled="#{!userBean.validUser}"
+                                 action="#{associateReagentsForm.associateReagent}" ajax="false" styleClass="ui-priority-primary"/>
+                <p:watermark for="associateBarcodes" value="Associate reagent with supplied barcodes."/>
             </div>
             <p:dataTable value="#{reagentsBean.allReagentDesigns}"
                          var="reagentDesign"
@@ -45,6 +51,10 @@
                           sortingComparator="caseInsensitiveText">#{reagentDesign.targetSetName}</p:column>
                 <p:column headerText="Manufacturer" sortBy="#{reagentDesign.manufacturersName}"
                           sortingComparator="caseInsensitiveText">#{reagentDesign.manufacturersName}</p:column>
+                <p:column headerText="Associate Tube">
+                    <p:inputText id="manufacturersName" value="#{reagentsBean.barcodeMap[reagentDesign.designName]}"
+                                 size="20"/>
+                </p:column>
             </p:dataTable>
         </h:form>
     </ui:define>

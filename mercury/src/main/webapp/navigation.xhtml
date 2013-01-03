@@ -36,20 +36,10 @@
                 </p:submenu>
             </security:authorizeBlock>
 
-
-            <p:submenu label="Lab Setup" icon="ui-icon-wrench">
-                <p:menuitem value="Initialize Bait Tubes" outcome="/reagent/associate_reagents"/>
-                <security:authorizeBlock roles="#{userBean.developerRole}, #{userBean.productManagerRole}">
-                <p:submenu label="Reagents">
-                    <p:menuitem value="List" outcome="/reagent/list_reagent_designs"/>
-                    <p:menuitem value="Create" outcome="/reagent/edit_reagent_designs"/>
-                </p:submenu>
-                </security:authorizeBlock>
-            </p:submenu>
-
             <security:authorizeBlock roles="#{userBean.developerRole}">
                 <p:submenu label="Admin" icon="ui-icon-gear">
                     <p:menuitem value="Page Administration" outcome="/administration/page_administration" />
+                    <p:menuitem value="Reagent Design" outcome="/reagent/list_reagent_designs"/>
                 </p:submenu>
             </security:authorizeBlock>
 

@@ -73,11 +73,11 @@
                 <p:outputLabel for="reagentType" value="Reagent Type" styleClass="control-label"/>
 
                 <div class="controls">
-                    <p:selectOneMenu required="true" id="reagentType" value="#{reagentsBean.reagentDesign.reagentType}">
+                    <p:selectOneMenu required="true" id="reagentType" readonly="#{!reagentDesignForm.creating}"
+                                     value="#{reagentsBean.reagentDesign.reagentType}">
                         <f:selectItem itemLabel="Choose..." itemValue=""/>
-                        <f:selectItems value="#{reagentDesignForm.reagentTypes}"
-                                       var="reagentType" itemLabel="#{reagentType}"
-                                       itemValue="#{reagentType}"/>
+                        <f:selectItems value="#{reagentDesignForm.reagentTypes}" var="reagentType"
+                                       itemLabel="#{reagentType}" itemValue="#{reagentType}"/>
                     </p:selectOneMenu>
                 </div>
             </div>

@@ -57,6 +57,7 @@ public class ReagentDesignForm extends AbstractJsfBean {
             if (conversation.isTransient()) {
                 conversation.begin();
             }
+
         }
     }
 

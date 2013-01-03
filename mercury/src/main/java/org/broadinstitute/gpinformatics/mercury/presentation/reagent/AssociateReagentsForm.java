@@ -52,8 +52,7 @@ public class AssociateReagentsForm extends AbstractJsfBean {
 
     @Inject
     ReagentsBean reagentsBean;
-
-    final String ASSOCIATE_REAGENTS_PAGE = "associate_reagents";
+    final String LIST_PAGE = "list_reagent_designs";
 
     public void initView() {
         if (!facesContext.isPostback()) {
@@ -77,22 +76,33 @@ public class AssociateReagentsForm extends AbstractJsfBean {
     }
 
     public String associateReagent() {
-        if (reagentsBean.getBarcode().isEmpty()) {
+        if (reagentsBean.getBarcodeMap().isEmpty()) {
             addErrorMessage("Can not associate empty barcode to reagent.");
         }
-        String barcodeList[] = reagentsBean.getBarcode().split("\\W");
-        List<TwoDBarcodedTube> twoDBarcodedTubeList = new ArrayList<TwoDBarcodedTube>(barcodeList.length);
-        for (String barcodeItem : barcodeList) {
-            DesignedReagent reagent = new DesignedReagent(reagentsBean.getReagentDesign());
-            TwoDBarcodedTube twoDee = new TwoDBarcodedTube(barcodeItem);
-            twoDee.addReagent(reagent);
-            twoDBarcodedTubeList.add(twoDee);
-        }
-        twoDBarcodedTubeDAO.persistAll(twoDBarcodedTubeList);
-        addInfoMessage(String.format("%s tubes initialized with reagent %s.", twoDBarcodedTubeList.size(),
-                reagentsBean.getReagentDesign()));
 
-        return redirect(ASSOCIATE_REAGENTS_PAGE);
+        List<String> businessKeys = new ArrayList<String>();
+        for (String reagentName : reagentsBean.getBarcodeMap().keySet()) {
+            if (!reagentsBean.getBarcodeMap().get(reagentName).isEmpty()) {
+                businessKeys.add(reagentName);
+            }
+        }
+        List<ReagentDesign> reagentDesigns = reagentDesignDao.findByBusinessKey(businessKeys);
+
+        List<TwoDBarcodedTube> twoDBarcodedTubeList = new ArrayList<TwoDBarcodedTube>();
+        for (ReagentDesign reagentDesign : reagentDesigns) {
+            String barcodeList[] = reagentsBean.getBarcodeMap().get(reagentDesign.getDesignName()).split("\\W");
+            for (String barcodeItem : barcodeList) {
+                DesignedReagent reagent = new DesignedReagent(reagentDesign);
+                TwoDBarcodedTube twoDee = new TwoDBarcodedTube(barcodeItem);
+                twoDee.addReagent(reagent);
+                twoDBarcodedTubeList.add(twoDee);
+            }
+        }
+
+        twoDBarcodedTubeDAO.persistAll(twoDBarcodedTubeList);
+        addInfoMessage(String.format("%s tubes initialized with reagents.", twoDBarcodedTubeList.size()));
+
+        return redirect(LIST_PAGE);
     }
 
     public ReagentsBean getReagentsBean() {

@@ -1,7 +1,7 @@
 /*
  * The Broad Institute
  * SOFTWARE COPYRIGHT NOTICE AGREEMENT
- * This software and its documentation are copyright 2012 by the
+ * This software and its documentation are copyright 2013 by the
  * Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
  *
  * This software is supplied without any warranty or guaranteed support
@@ -19,7 +19,9 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Named
 @RequestScoped
@@ -32,17 +34,11 @@ public class ReagentsBean {
     @Inject
     ReagentsBean.ReagentDesignTableData reagentDesignTableData;
 
-//    @ConversationScoped
-//    public static class TwoDBarcodedTubeDataTable extends TableData<TwoDBarcodedTube> {
-//
-//    }
-//
-//    @Inject
-//    ReagentsBean.TwoDBarcodedTubeDataTable twoDBarcodedTubeDataTable;
-
     private ReagentDesign reagentDesign;
 
     private String barcode;
+
+    private Map<String,String> barcodeMap;
 
     public List<ReagentDesign.ReagentType> getReagentTypes() {
         return Arrays.asList(ReagentDesign.ReagentType.values());
@@ -52,9 +48,16 @@ public class ReagentsBean {
         return reagentDesignTableData.getValues();
     }
 
-//    public List<TwoDBarcodedTube> getAllTwoDBarcodedTubes() {
-//        return twoDBarcodedTubeDataTable.getValues();
-//    }
+    public Map<String, String> getBarcodeMap() {
+        if (barcodeMap == null) {
+            barcodeMap = new HashMap<String, String>();
+        }
+        return barcodeMap;
+    }
+
+    public void setBarcodeMap(Map<String, String> barcodeMap) {
+        this.barcodeMap = barcodeMap;
+    }
 
     private void initReagentDesign() {
         reagentDesign = new ReagentDesign();
