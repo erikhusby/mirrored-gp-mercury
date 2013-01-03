@@ -253,15 +253,25 @@ public class BettalimsMessageResourceTest extends Arquillian {
     }
 
     private void sendMessage(BettaLIMSMessage bettaLIMSMessage) {
+        // In JVM
         bettalimsMessageResource.processMessage(bettaLIMSMessage);
         twoDBarcodedTubeDAO.flush();
         twoDBarcodedTubeDAO.clear();
+
+        // JAX-RS
 //        String response = Client.create().resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/bettalimsmessage")
 //                .type(MediaType.APPLICATION_XML_TYPE)
 //                .accept(MediaType.APPLICATION_XML)
 //                .entity(bettaLIMSMessage)
 //                .post(String.class);
+
+        // JMS
 //        BettalimsMessageBeanTest.sendJmsMessage(BettalimsMessageBeanTest.marshalMessage(bettaLIMSMessage));
+//        try {
+//            Thread.sleep(2000L);
+//        } catch (InterruptedException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     @Test(enabled=false, groups=EXTERNAL_INTEGRATION, dataProvider=Arquillian.ARQUILLIAN_DATA_PROVIDER)

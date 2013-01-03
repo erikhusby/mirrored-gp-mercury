@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceImpl;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.context.SessionScoped;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.New;
@@ -53,7 +54,7 @@ public class BSPManagerFactoryProducer {
 
     @Produces
     @Default
-    @SessionScoped
+    @ApplicationScoped
     public BSPManagerFactory produce(@New BSPManagerFactoryStub stub, @New BSPManagerFactoryImpl impl) {
 
         if (deployment == Deployment.STUBBY) {

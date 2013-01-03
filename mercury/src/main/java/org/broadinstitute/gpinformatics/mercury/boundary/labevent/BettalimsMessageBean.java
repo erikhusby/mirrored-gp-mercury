@@ -46,7 +46,8 @@ public class BettalimsMessageBean implements MessageListener {
     public void onMessage(Message message) {
         try {
             // Need to associate this JMS message with a session, to allow injection of Session scoped beans, e.g.
-            // BSP user list.
+            // UserBean (if there is no session, the UserBean proxy will be injected, but calling any of its methods
+            // causes an exception).
             sessionContext.associate(new HashMap<String, Object>());
             sessionContext.activate();
             // The deck side code is written in JavaScript, so it sends text messages, rather than object messages.
