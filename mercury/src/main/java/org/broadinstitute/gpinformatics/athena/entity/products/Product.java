@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.hibernate.envers.AuditJoinTable;
+import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
@@ -20,6 +21,7 @@ import java.util.*;
 @Table(schema = "athena",
         uniqueConstraints = @UniqueConstraint(columnNames = {"partNumber"}))
 public class Product implements Serializable, Comparable<Product> {
+    private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")
@@ -74,10 +76,17 @@ public class Product implements Serializable, Comparable<Product> {
 
     private boolean pdmOrderableOnly;
 
+    @Transient
+    private String originalPartNumber;   // This is used for edit to keep track of changes to the object.
+
     public static final String DEFAULT_WORKFLOW_NAME = "";
     public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
 
-    private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
+    // Initialize our transient data after the object has been loaded from the database.
+    @PostLoad
+    private void initialize() {
+        originalPartNumber = partNumber;
+    }
 
     /** True if this product/add-on supports automated billing. */
     @Column(name = "USE_AUTOMATED_BILLING", nullable = false)
@@ -103,6 +112,8 @@ public class Product implements Serializable, Comparable<Product> {
 
     /**
      * JPA package visible no arg constructor
+     *
+     * @return
      */
     Product() {}
 
@@ -137,32 +148,6 @@ public class Product implements Serializable, Comparable<Product> {
         this.topLevelProduct = topLevelProduct;
         this.workflowName = workflowName;
         this.pdmOrderableOnly = pdmOrderableOnly;
-    }
-
-    /**
-     * Converts cycle times from days to seconds.
-     * @return the number of seconds.
-     */
-    public static Integer convertCycleTimeDaysToSeconds(Integer cycleTimeDays) {
-        Integer cycleTimeSeconds = null;
-        if ( cycleTimeDays != null ) {
-            cycleTimeSeconds = ( cycleTimeDays == null ? 0 : cycleTimeDays.intValue() * ONE_DAY_IN_SECONDS);
-        }
-        return cycleTimeSeconds;
-    }
-
-    /**
-     * Converts cycle times from seconds to days.
-     * This method rounds down to the nearest day
-     * @param cycleTimeSeconds
-     * @return the number of days.
-     */
-    public static Integer convertCycleTimeSecondsToDays(Integer cycleTimeSeconds) {
-        Integer cycleTimeDays = null;
-        if ((cycleTimeSeconds != null) && cycleTimeSeconds >= ONE_DAY_IN_SECONDS) {
-            cycleTimeDays =  (cycleTimeSeconds - (cycleTimeSeconds % ONE_DAY_IN_SECONDS)) / ONE_DAY_IN_SECONDS;
-        }
-        return cycleTimeDays;
     }
 
     public Long getProductId() {
@@ -422,8 +407,10 @@ public class Product implements Serializable, Comparable<Product> {
     }
 
     private void addProductDuplicates(List<String> duplicates, Set<String> priceItemNames) {
-        // No price items yet, so can just add it
-        priceItemNames.add(primaryPriceItem.getName());
+        if (primaryPriceItem != null) {
+            // No price items yet, so can just add it
+            priceItemNames.add(primaryPriceItem.getName());
+        }
 
         for (PriceItem optionalPriceItem : optionalPriceItems) {
             if (!priceItemNames.add(optionalPriceItem.getName())) {
@@ -432,10 +419,72 @@ public class Product implements Serializable, Comparable<Product> {
         }
     }
 
+    public Integer getExpectedCycleTimeDays() {
+        return convertCycleTimeSecondsToDays(getExpectedCycleTimeSeconds()) ;
+    }
+    public void setExpectedCycleTimeDays(final Integer expectedCycleTimeDays) {
+        setExpectedCycleTimeSeconds(convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
+    }
+
+    public Integer getGuaranteedCycleTimeDays() {
+        return convertCycleTimeSecondsToDays(getGuaranteedCycleTimeSeconds()) ;
+    }
+    public void setGuaranteedCycleTimeDays(final Integer guaranteedCycleTimeDays) {
+        setGuaranteedCycleTimeSeconds(convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
+    }
+
+    /**
+     * Converts cycle times from days to seconds.
+     * @return the number of seconds.
+     */
+    public static int convertCycleTimeDaysToSeconds(Integer cycleTimeDays) {
+        return (cycleTimeDays == null) ? 0 : cycleTimeDays * ONE_DAY_IN_SECONDS;
+    }
+
+    /**
+     * Converts cycle times from seconds to days.
+     * This method rounds down to the nearest day
+     *
+     * @param cycleTimeSeconds The cycle time in seconds
+     *
+     * @return the number of days.
+     */
+    public static Integer convertCycleTimeSecondsToDays(Integer cycleTimeSeconds) {
+        Integer cycleTimeDays = null;
+        if ((cycleTimeSeconds != null) && cycleTimeSeconds >= ONE_DAY_IN_SECONDS) {
+            cycleTimeDays =  (cycleTimeSeconds - (cycleTimeSeconds % ONE_DAY_IN_SECONDS)) / ONE_DAY_IN_SECONDS;
+        }
+        return cycleTimeDays;
+    }
+
+    public String getProductLabel() {
+
+        if (getProductName() == null) {
+            return "";
+        }
+
+        final int MAX_NAME = 45;
+
+        if (getProductName().length() > MAX_NAME){
+            return getProductName().substring(0, MAX_NAME) + "... ";
+        } else if ( getProductName().length() + getPartNumber().length() < MAX_NAME ){
+            return getProductName() + " : " + getPartNumber();
+        }
+
+        return getProductName();
+    }
+
+    public String getOriginalPartNumber() {
+        return originalPartNumber;
+    }
+
 
     public static Product makeEmptyProduct() {
         return new Product(null, null, null, null, null, null, null,
                 null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME, false);
     }
 
+    public String getDisplayName() {
+        return productName + " [" + partNumber + "]";
+    }
 }

@@ -21,7 +21,7 @@ public class BillingTrackerUtils {
 
     private static Log logger = LogFactory.getLog(BillingTrackerUtils.class);
 
-    final static String[] fixedHeaders = SampleLedgerExporter.FIXED_HEADERS;
+    public final static String[] fixedHeaders = SampleLedgerExporter.FIXED_HEADERS;
     final static Map<String, Integer> headerColumnIndices = new HashMap<String, Integer>();
 
     static {
@@ -30,17 +30,17 @@ public class BillingTrackerUtils {
         }
     }
 
-    final static int SAMPLE_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.SAMPLE_ID_HEADING);
-    final static int PDO_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.ORDER_ID_HEADING);
-    final static int SORT_COLUMN_COL_POS = headerColumnIndices.get(SampleLedgerExporter.SORT_COLUMN_HEADING);
-    final static int WORK_COMPLETE_DATE_COL_POS = headerColumnIndices.get(SampleLedgerExporter.WORK_COMPLETE_DATE_HEADING);
-    final static int NUMBER_OF_HEADER_ROWS = 2;
+    public final static int SAMPLE_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.SAMPLE_ID_HEADING);
+    public final static int PDO_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.ORDER_ID_HEADING);
+    public  static int SORT_COLUMN_COL_POS = headerColumnIndices.get(SampleLedgerExporter.SORT_COLUMN_HEADING);
+    public final static int WORK_COMPLETE_DATE_COL_POS = headerColumnIndices.get(SampleLedgerExporter.WORK_COMPLETE_DATE_HEADING);
+    public final static int NUMBER_OF_HEADER_ROWS = 2;
 
-    static boolean isNonNullNumericCell(Cell cell) {
+    public static boolean isNonNullNumericCell(Cell cell) {
         return (cell != null) && (Cell.CELL_TYPE_NUMERIC == cell.getCellType());
     }
 
-    static Row skipHeaderRows(Iterator<Row> rit, Row row) {
+    public static Row skipHeaderRows(Iterator<Row> rit, Row row) {
         Row newRow = row;
         // skip the 3 header rows
         for (int i = 0; i < NUMBER_OF_HEADER_ROWS; i++) {
@@ -49,7 +49,7 @@ public class BillingTrackerUtils {
         return newRow;
     }
 
-    static List<TrackerColumnInfo> parseTrackerSheetHeader(Row row0, String primaryProductPartNumber) {
+    public static List<TrackerColumnInfo> parseTrackerSheetHeader(Row row0, String primaryProductPartNumber) {
 
         String[] fixedHeaders = SampleLedgerExporter.FIXED_HEADERS;
         int numFixedHeaders = fixedHeaders.length;
@@ -132,7 +132,7 @@ public class BillingTrackerUtils {
         return new BillableRef(productPartNumber, priceItemName);
     }
 
-    static Map<TrackerColumnInfo, PriceItem> createPriceItemMapForSheet(
+    public static Map<TrackerColumnInfo, PriceItem> createPriceItemMapForSheet(
             List<TrackerColumnInfo> trackerColumnInfos, Product product) {
         Map<TrackerColumnInfo, PriceItem> resultMap = new HashMap<TrackerColumnInfo, PriceItem>();
 

@@ -138,4 +138,12 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
     public int hashCode() {
         return new HashCodeBuilder().append(category).append(name).append(platform).hashCode();
     }
+
+    public String getConcatenatedKey() {
+        return platform + '|' + category + '|' + name;
+    }
+
+    public String getDisplayName() {
+        return category + " : " + name;
+    }
 }

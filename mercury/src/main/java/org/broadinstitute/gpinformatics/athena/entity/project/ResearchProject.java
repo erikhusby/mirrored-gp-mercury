@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
@@ -32,7 +33,7 @@ import java.util.*;
 @Entity
 @Audited
 @Table(name = "RESEARCH_PROJECT", schema = "athena")
-public class ResearchProject implements Serializable {
+public class ResearchProject implements Serializable, Comparable<ResearchProject> {
 
     public static final boolean IRB_ENGAGED = false;
     public static final boolean IRB_NOT_ENGAGED = true;
@@ -294,16 +295,12 @@ public class ResearchProject implements Serializable {
 
     public String[] getIrbNumbers() {
         int i = 0;
-        if (irbNumbers != null) {
-            String[] irbNumberList = new String[irbNumbers.size()];
-            for (ResearchProjectIRB irb : irbNumbers) {
-                irbNumberList[i++] = irb.getIrb() + ": " + irb.getIrbType().getDisplayName();
-            }
-
-            return irbNumberList;
+        String[] irbNumberList = new String[irbNumbers.size()];
+        for (ResearchProjectIRB irb : irbNumbers) {
+            irbNumberList[i++] = irb.getIrb() + ": " + irb.getIrbType().getDisplayName();
         }
 
-        return new String[0];
+        return irbNumberList;
     }
 
     public void addIrbNumber(ResearchProjectIRB irbNumber) {
@@ -468,14 +465,14 @@ public class ResearchProject implements Serializable {
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
         StringBuilder piList = new StringBuilder();
         boolean first = true;
-        for (Long currPI : getBroadPIs()) {
-            if (null != bspUserList.getById(currPI)) {
+        for (ProjectPerson currPI : findPeopleByType(RoleType.BROAD_PI)) {
+            if (null != bspUserList.getById(currPI.getPersonId())) {
                 if (!first) {
                     piList.append("\n");
                 }
-                piList.append(bspUserList.getById(currPI).getFirstName())
+                piList.append(bspUserList.getById(currPI.getPersonId()).getFirstName())
                       .append(" ")
-                      .append(bspUserList.getById(currPI).getLastName());
+                      .append(bspUserList.getById(currPI.getPersonId()).getLastName());
                 first = false;
             }
         }
@@ -504,6 +501,26 @@ public class ResearchProject implements Serializable {
 
     public String getOriginalTitle() {
         return originalTitle;
+    }
+
+    /**
+     *
+     * Provides the ability to retrieve a filtered list of associated people based on their role type
+     *
+     * @param personType
+     *
+     * @return
+     */
+    private Collection<ProjectPerson> findPeopleByType(RoleType personType) {
+        List<ProjectPerson> foundPersonList = new ArrayList<ProjectPerson>(associatedPeople.size());
+
+        for (ProjectPerson currPerson : associatedPeople) {
+            if (currPerson.getRole() == personType) {
+                foundPersonList.add(currPerson);
+            }
+        }
+
+        return foundPersonList;
     }
 
     /**
@@ -569,11 +586,18 @@ public class ResearchProject implements Serializable {
         }
 
         ResearchProject castOther = (ResearchProject) other;
-        return new EqualsBuilder().append(getJiraTicketKey(), castOther.getJiraTicketKey()).isEquals();
+        return new EqualsBuilder().append(getBusinessKey(), castOther.getBusinessKey()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(getJiraTicketKey()).toHashCode();
+        return new HashCodeBuilder().append(getBusinessKey()).toHashCode();
+    }
+
+    @Override
+    public int compareTo(ResearchProject that) {
+        CompareToBuilder builder = new CompareToBuilder();
+        builder.append(title, that.getTitle());
+        return builder.build();
     }
 }

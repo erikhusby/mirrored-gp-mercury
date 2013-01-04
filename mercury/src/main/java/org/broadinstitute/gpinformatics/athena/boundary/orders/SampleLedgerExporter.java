@@ -72,8 +72,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
     public SampleLedgerExporter(List<String> pdoBusinessKeys, BSPUserList bspUserList, ProductOrderDao productOrderDao) {
         this(productOrderDao.findListByBusinessKeyList(pdoBusinessKeys, Product, ResearchProject, Samples));
-
-        this.bspUserList = bspUserList;
     }
 
     private String getBspFullName(long id) {
@@ -82,6 +80,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         }
 
         BspUser user = bspUserList.getById(id);
+        if (user == null) {
+            return "User id " + id;
+        }
+
         return user.getFirstName() + " " + user.getLastName();
     }
 
@@ -182,7 +184,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             // Write content.
             int sortOrder = 1;
             for (ProductOrder productOrder : productOrders) {
-                productOrder.loadBspData();
                 for (ProductOrderSample sample : productOrder.getSamples()) {
                     writeRow(sortedPriceItems, sortedAddOns, sample, sortOrder++);
                 }

@@ -435,6 +435,10 @@ public abstract class LabVessel implements Serializable {
         return traversalResults.getSampleInstances();
     }
 
+    public int getSampleInstanceCount() {
+        return getSampleInstances().size();
+    }
+
     /**
      * The results of traversing (ancestor) vessels
      */

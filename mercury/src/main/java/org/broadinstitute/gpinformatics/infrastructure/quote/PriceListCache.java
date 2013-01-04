@@ -9,10 +9,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -97,7 +94,11 @@ public class PriceListCache extends AbstractCache implements Serializable {
      * @return the price items
      */
     public Collection<PriceItem> getPriceItems() {
-        return getPriceList().getPriceItems();
+        if (priceList != null) {
+            return priceList.getPriceItems();
+        }
+
+        return Collections.emptyList();
     }
 
     /**
@@ -170,6 +171,16 @@ public class PriceListCache extends AbstractCache implements Serializable {
                 priceItem.getPlatformName() + '|' + priceItem.getCategoryName() + '|' + priceItem.getName();
 
             if (concatenatedKey.equals(currentKey)) {
+                return priceItem;
+            }
+        }
+
+        return null;
+    }
+
+    public PriceItem findById(Long priceItemId) {
+        for (PriceItem priceItem : getPriceList().getPriceItems()) {
+            if (priceItem.getId().equals(priceItemId.toString())) {
                 return priceItem;
             }
         }

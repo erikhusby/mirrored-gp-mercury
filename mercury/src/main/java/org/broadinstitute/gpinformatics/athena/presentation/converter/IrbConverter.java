@@ -18,6 +18,10 @@ public class IrbConverter implements Converter {
 
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) {
+        return getAsObject(value);
+    }
+
+    public static Object getAsObject(String value) {
         int index = value.trim().lastIndexOf(":");
 
         if (index < 1) {
@@ -94,5 +98,19 @@ public class IrbConverter implements Converter {
         }
 
         return new Irb(returnName, type);
+    }
+
+    public static List<Irb> getIrbs(String irbList) {
+        if (irbList == null) {
+            return Collections.emptyList();
+        }
+
+        String[] irbArray = irbList.split(",");
+        List<Irb> irbs = new ArrayList<Irb> ();
+        for (String irb : irbArray) {
+            irbs.add((Irb) IrbConverter.getAsObject(irb.trim()));
+        }
+
+        return irbs;
     }
 }
