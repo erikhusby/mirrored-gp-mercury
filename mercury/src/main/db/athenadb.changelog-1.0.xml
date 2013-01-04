@@ -1937,6 +1937,155 @@
         <renameColumn schemaName="athena" tableName="product_order_aud" oldColumnName="order_status_varchar" newColumnName="order_status" />
     </changeSet>
 
+    <changeSet id="GPLIM-636.5" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="product_order" columnName="order_status" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636.6" author="mcovarr">
+        <sql>
+            ALTER TABLE athena.product_order
+            add CONSTRAINT check_order_status
+            CHECK (order_status IN ('Draft', 'Submitted', 'Abandoned', 'Complete'));
+        </sql>
+    </changeSet>
+
+
+
+    <changeSet id="GPLIM-636a.1" author="mcovarr">
+        <addColumn schemaName="athena" tableName="project_person">
+            <column name="role_varchar" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-636a.1_aud" author="mcovarr">
+        <addColumn schemaName="athena" tableName="project_person_aud">
+            <column name="role_varchar" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-636a.2" author="mcovarr">
+        <sql>
+            update athena.project_person set role_varchar = case role
+            when 0 then 'BROAD_SCIENTIST'
+            when 1 then 'EXTERNAL'
+            when 2 then 'PM_IN_CHARGE'
+            when 3 then 'PM'
+            when 4 then 'PDM'
+            when 5 then 'BROAD_PI'
+            when 6 then 'SCIENTIST'
+            when 7 then 'UNSPECIFIED'
+            end
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-636a.2_aud" author="mcovarr">
+        <sql>
+            update athena.project_person_aud set role_varchar = case role
+            when 0 then 'BROAD_SCIENTIST'
+            when 1 then 'EXTERNAL'
+            when 2 then 'PM_IN_CHARGE'
+            when 3 then 'PM'
+            when 4 then 'PDM'
+            when 5 then 'BROAD_PI'
+            when 6 then 'SCIENTIST'
+            when 7 then 'UNSPECIFIED'
+            end
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-636a.3" author="mcovarr">
+        <dropColumn schemaName="athena" tableName="project_person" columnName="role" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636a.3_aud" author="mcovarr">
+        <dropColumn schemaName="athena" tableName="project_person_aud" columnName="role" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636a.4" author="mcovarr">
+        <renameColumn schemaName="athena" tableName="project_person" oldColumnName="role_varchar" newColumnName="role" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636a.4_aud" author="mcovarr">
+        <renameColumn schemaName="athena" tableName="project_person_aud" oldColumnName="role_varchar" newColumnName="role" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636a.5" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="project_person" columnName="role" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636a.6" author="mcovarr">
+        <sql>
+            ALTER TABLE athena.project_person
+            add CONSTRAINT check_role
+            CHECK (role IN ('BROAD_SCIENTIST', 'EXTERNAL', 'PM_IN_CHARGE', 'PM', 'PDM', 'BROAD_PI', 'SCIENTIST', 'UNSPECIFIED'))
+        </sql>
+    </changeSet>
+
+
+
+    <changeSet id="GPLIM-636b.1" author="mcovarr">
+        <addColumn schemaName="athena" tableName="research_projectirb">
+            <column name="irb_type_varchar" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.1_aud" author="mcovarr">
+        <addColumn schemaName="athena" tableName="research_projectirb_aud">
+            <column name="irb_type_varchar" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.2" author="mcovarr">
+        <sql>
+            update athena.research_projectirb set irb_type_varchar = case irb_type
+            when 0 then 'PARTNERS'
+            when 1 then 'FARBER'
+            when 2 then 'MIT'
+            when 3 then 'BROAD'
+            when 4 then 'OTHER'
+            end
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.2_aud" author="mcovarr">
+        <sql>
+            update athena.research_projectirb_aud set irb_type_varchar = case irb_type
+            when 0 then 'PARTNERS'
+            when 1 then 'FARBER'
+            when 2 then 'MIT'
+            when 3 then 'BROAD'
+            when 4 then 'OTHER'
+            end
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.3" author="mcovarr">
+        <dropColumn schemaName="athena" tableName="research_projectirb" columnName="irb_type" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.3_aud" author="mcovarr">
+        <dropColumn schemaName="athena" tableName="research_projectirb_aud" columnName="irb_type" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.4" author="mcovarr">
+        <renameColumn schemaName="athena" tableName="research_projectirb" oldColumnName="irb_type_varchar" newColumnName="irb_type" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.4_aud" author="mcovarr">
+        <renameColumn schemaName="athena" tableName="research_projectirb_aud" oldColumnName="irb_type_varchar" newColumnName="irb_type" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.5" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="research_projectirb" columnName="irb_type" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.6" author="mcovarr">
+        <sql>
+            ALTER TABLE athena.research_projectirb
+            add CONSTRAINT check_irb_type
+            CHECK (irb_type IN ('PARTNERS', 'FARBER', 'MIT', 'BROAD', 'OTHER'))
+        </sql>
+    </changeSet>
     <changeSet id="GPLIM-543-14" author="pshapiro">
         <preConditions onFail="MARK_RAN">
             <columnExists tableName="WORK_COMPLETE_MESSAGE" schemaName="athena" columnName="ALIQUOT_LSID"/>
