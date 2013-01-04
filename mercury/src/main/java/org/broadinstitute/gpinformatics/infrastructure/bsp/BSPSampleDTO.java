@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.bsp.client.sample.MaterialType;
 
 /**
  * A simple DTO for fetching commonly used data from BSP.
@@ -14,7 +15,6 @@ public class BSPSampleDTO {
     public static final String MALE_IND = "Male";
 
     public static final String ACTIVE_IND = "Active Stock";
-
 
     private final String patientId;
 
@@ -242,5 +242,12 @@ public class BSPSampleDTO {
 
     public String getSampleId() {
         return sampleId;
+    }
+
+    public MaterialType getMaterialTypeObject() {
+        if (StringUtils.isBlank(materialType)) {
+            return null;
+        }
+        return new MaterialType(materialType);
     }
 }

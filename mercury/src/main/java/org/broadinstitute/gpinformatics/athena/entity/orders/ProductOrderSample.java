@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.logging.Log;
@@ -260,12 +259,14 @@ public class ProductOrderSample implements Serializable {
     List<PriceItem> getBillablePriceItems() {
         List<PriceItem> items = new ArrayList<PriceItem>();
         items.add(getProductOrder().getProduct().getPrimaryPriceItem());
-        String sampleMaterialType = getBspDTO().getMaterialType();
+        org.broadinstitute.bsp.client.sample.MaterialType materialTypeObject = getBspDTO().getMaterialTypeObject();
         Set<Product> productAddOns = productOrder.getProduct().getAddOns();
-        if (!StringUtils.isEmpty(sampleMaterialType) && !productAddOns.isEmpty()) {
+        if (materialTypeObject != null && !productAddOns.isEmpty()) {
+            MaterialType sampleMaterialType =
+                    new MaterialType(materialTypeObject.getCategory(), materialTypeObject.getName());
             for (Product addOn : productAddOns) {
                 for (MaterialType materialType : addOn.getAllowableMaterialTypes()) {
-                    if (materialType.getName().equalsIgnoreCase(sampleMaterialType)) {
+                    if (materialType.equals(sampleMaterialType)) {
                         items.add(addOn.getPrimaryPriceItem());
                         // Skip to the next add-on.
                         break;
