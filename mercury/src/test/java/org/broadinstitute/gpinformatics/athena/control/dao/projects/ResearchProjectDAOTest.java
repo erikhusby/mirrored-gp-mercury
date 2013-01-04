@@ -18,7 +18,7 @@ import java.util.Map;
 /**
  * Tests for the research project dao
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=true)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
 public class ResearchProjectDAOTest extends ContainerTest {
 
     @Inject

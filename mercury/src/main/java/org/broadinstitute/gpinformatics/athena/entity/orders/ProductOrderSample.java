@@ -178,6 +178,10 @@ public class ProductOrderSample implements Serializable {
         return deliveryStatus;
     }
 
+    public void setDeliveryStatus(DeliveryStatus deliveryStatus) {
+        this.deliveryStatus = deliveryStatus;
+    }
+
     public void setBspDTO(@Nonnull BSPSampleDTO bspDTO) {
         if (bspDTO == null) {
             throw new NullPointerException("BSP Sample DTO cannot be null");

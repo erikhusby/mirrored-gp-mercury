@@ -295,13 +295,13 @@ public class GenericDao {
     /**
      * Returns a list of entities that matches wildcarded string ('% string %') for a specified property.
      *
-     * @param entity the class of entity to return
-     * @param value the value to query
+     * @param entity             the class of entity to return
+     * @param value              the value to query
      * @param singularAttributes one or more metadata fields for the property to query
-     * @param <VALUE_TYPE> the type of the value in the query, e.g. String
-     * @param <METADATA_TYPE> the type on which the property is defined, this can be different from the ENTITY_TYPE if
-     *                       there is inheritance
-     * @param <ENTITY_TYPE> the type of the entity to return
+     * @param <VALUE_TYPE>       the type of the value in the query, e.g. String
+     * @param <METADATA_TYPE>    the type on which the property is defined, this can be different from the ENTITY_TYPE if
+     *                           there is inheritance
+     * @param <ENTITY_TYPE>      the type of the entity to return
      *
      * @return list of entities that match the value, or empty list if not found
      */
