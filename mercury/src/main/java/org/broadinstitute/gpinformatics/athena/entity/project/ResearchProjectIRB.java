@@ -65,6 +65,7 @@ public class ResearchProjectIRB {
     private String irb;
 
     @Column(name = "IRB_TYPE")
+    @Enumerated(EnumType.STRING)
     private IrbType irbType;
 
     protected ResearchProjectIRB() { }
