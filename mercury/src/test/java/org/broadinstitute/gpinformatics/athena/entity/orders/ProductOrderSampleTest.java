@@ -37,7 +37,7 @@ public class ProductOrderSampleTest {
     @Test
     public void testBeaniness() {
         Configuration configuration = new ConfigurationBuilder().ignoreProperty("productOrder").ignoreProperty("sampleComment")
-                .ignoreProperty("bspDTO").ignoreProperty("billingStatus").build();
+                .ignoreProperty("bspDTO").ignoreProperty("billingStatus").ignoreProperty("deliveryStatus").build();
         new BeanTester().testBean(ProductOrderSample.class, configuration);
 
         class ProductOrderSampleFactory implements EquivalentFactory<ProductOrderSample> {
@@ -147,6 +147,5 @@ public class ProductOrderSampleTest {
     public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<BillingLedger> billingLedgers, BillingStatus billingStatus) {
         sample.autoBillSample(completedDate, 1);
         Assert.assertEquals(sample.getBillableLedgerItems(), billingLedgers);
-        Assert.assertEquals(sample.getBillingStatus(), billingStatus);
     }
 }

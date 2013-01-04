@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -23,6 +25,11 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.*;
+
+import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus.Abandoned;
+import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.TransitionStates.Cancel;
+import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus.ABANDONED;
+import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus.NOT_STARTED;
 
 @Stateful
 @RequestScoped
@@ -273,4 +280,93 @@ public class ProductOrderEjb {
         updatedProductOrder.setProductOrderAddOns(productOrderAddOns);
 
     }
+
+    public static class NoCancelTransitionException extends Exception {
+        public NoCancelTransitionException(String s) {
+            super(s);
+        }
+    }
+
+    public static class NoSuchPDOException extends Exception {
+        public NoSuchPDOException(String s) {
+            super(s);
+        }
+    }
+
+    public static class SamplesNotAbandonableException extends Exception {
+        public SamplesNotAbandonableException(String s) {
+            super(s);
+        }
+    }
+
+
+    public void abandon(String jiraTicketKey) throws NoCancelTransitionException, NoSuchPDOException, SamplesNotAbandonableException {
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraTicketKey);
+
+        if (productOrder == null) {
+            throw new NoSuchPDOException(jiraTicketKey);
+        }
+
+        Set<ProductOrderSample.DeliveryStatus> abandonableDeliveryStatuses =
+                new HashSet<ProductOrderSample.DeliveryStatus>(Arrays.asList(ABANDONED, NOT_STARTED));
+
+        List<ProductOrderSample> unabandonableSamples = new ArrayList<ProductOrderSample>();
+
+        for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
+            if ( ! abandonableDeliveryStatuses.contains(productOrderSample.getDeliveryStatus())) {
+                unabandonableSamples.add(productOrderSample);
+                // keep looping, find all the unabandonable samples and then throw a descriptive exception
+            }
+            else {
+                productOrderSample.setDeliveryStatus(ABANDONED);
+            }
+        }
+
+        if (CollectionUtils.isNotEmpty(unabandonableSamples)) {
+            StringBuilder sb = new StringBuilder("Samples in " + productOrder.getBusinessKey() + " cannot be abandoned: ");
+
+            List<String> sampleErrors = new ArrayList<String>();
+
+            for (ProductOrderSample productOrderSample : unabandonableSamples) {
+                sampleErrors.add(productOrderSample.getSampleName() + " @ " + productOrderSample.getSamplePosition());
+            }
+
+            sb.append(StringUtils.join(unabandonableSamples, ", "));
+
+            throw new SamplesNotAbandonableException(sb.toString());
+        }
+
+        productOrder.setOrderStatus(Abandoned);
+
+        try {
+            Set<String> ALREADY_RESOLVED = new HashSet<String>(Arrays.asList("Cancelled", "Completed"));
+            String resolution = jiraService.getResolution(jiraTicketKey);
+
+            if ( ! ALREADY_RESOLVED.contains(resolution)) {
+
+                Transition transition = jiraService.findAvailableTransitionByName(
+                        productOrder.getJiraTicketKey(), Cancel.getStateName());
+
+                if (transition == null) {
+                    throw new NoCancelTransitionException("Cannot Cancel " + jiraTicketKey + " in resolution '" + resolution + "': no Cancel transition found");
+                }
+
+                String user = userBean.getLoginUserName();
+                jiraService.postNewTransition(productOrder.getJiraTicketKey(), transition,
+                        (user == null ? "Mercury" : user) + " abandoned " + jiraTicketKey);
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
+    public void complete(ProductOrder productOrder) {
+
+        // Mark PDO as complete.  Do we also update the statuses of any non-ABANDONED, non-COMPLETE samples?
+    }
+
+
 }

@@ -37,6 +37,7 @@ public class JiraTicket {
     private JiraService jiraService;
 
     JiraTicket() {
+        jiraService = ServiceAccessUtility.getBean(JiraService.class);
     }
 
     public JiraTicket(@Nonnull JiraService jiraService, @Nonnull String ticketId) {

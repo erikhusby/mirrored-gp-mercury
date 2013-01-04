@@ -1845,4 +1845,97 @@
         <createSequence sequenceName="SEQ_MATERIAL_TYPE" schemaName="athena" startValue="1" incrementBy="10"/>
     </changeSet>
 
+    <changeSet id="GPLIM-426.1" author="mcovarr">
+        <preConditions>
+            <columnExists columnName="billing_status" schemaName="athena" tableName="product_order_sample" />
+        </preConditions>
+        <dropColumn columnName="billing_status" schemaName="athena" tableName="product_order_sample" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-426.1_aud" author="mcovarr">
+        <preConditions>
+            <columnExists columnName="billing_status" schemaName="athena" tableName="product_order_sample_aud" />
+        </preConditions>
+        <dropColumn columnName="billing_status" schemaName="athena" tableName="product_order_sample_aud" />
+    </changeSet>
+
+    <changeSet id="GPLIM-426.2" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists columnName="delivery_status" schemaName="athena" tableName="product_order_sample" />
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_sample" schemaName="athena">
+            <column name="delivery_status" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-426.2_aud" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists columnName="delivery_status" schemaName="athena" tableName="product_order_sample_aud" />
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_sample_aud" schemaName="athena">
+            <column name="delivery_status" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-426.3" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="product_order_sample" columnName="delivery_status" defaultNullValue="NOT_STARTED" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-636.1" author="mcovarr">
+        <addColumn schemaName="athena" tableName="product_order">
+            <column name="order_status_varchar" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-636.1_aud" author="mcovarr">
+        <addColumn schemaName="athena" tableName="product_order_aud">
+            <column name="order_status_varchar" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-636.2" author="mcovarr">
+        <sql>
+            update athena.product_order set order_status_varchar = case order_status
+                when 0 then 'Draft'
+                when 1 then 'Submitted'
+                when 2 then 'Abandoned'
+                when 3 then 'Complete'
+            end
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-636.2_aud" author="mcovarr">
+        <sql>
+            update athena.product_order_aud set order_status_varchar = case order_status
+                when 0 then 'Draft'
+                when 1 then 'Submitted'
+                when 2 then 'Abandoned'
+                when 3 then 'Complete'
+            end
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-636.3" author="mcovarr">
+        <dropColumn schemaName="athena" tableName="product_order" columnName="order_status" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636.3_aud" author="mcovarr">
+        <dropColumn schemaName="athena" tableName="product_order_aud" columnName="order_status" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636.4" author="mcovarr">
+        <renameColumn schemaName="athena" tableName="product_order" oldColumnName="order_status_varchar" newColumnName="order_status" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636.4_aud" author="mcovarr">
+        <renameColumn schemaName="athena" tableName="product_order_aud" oldColumnName="order_status_varchar" newColumnName="order_status" />
+    </changeSet>
+
+
 </databaseChangeLog>

@@ -1,9 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import com.cenqua.clover.SamplingPerTestCoverage;
 import org.apache.commons.lang3.builder.CompareToBuilder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
@@ -13,26 +11,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Embedded;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.JoinTable;
-import javax.persistence.ManyToMany;
-import javax.persistence.OneToMany;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-import javax.persistence.UniqueConstraint;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.util.*;
 import java.util.logging.Level;
@@ -167,7 +152,7 @@ public abstract class LabVessel implements Serializable {
      * Reagent templates, how to register "these 40
      * plates contain adaptors laid out like
      * so:..."
-     *
+     * <p/>
      * Special subclass for DNAReagent to deal with
      * indexes and adaptors?  Or give Reagent a way
      * to express how it modifies the molecular envelope?
@@ -205,11 +190,9 @@ public abstract class LabVessel implements Serializable {
      * @param metricName
      * @param searchMode
      * @param sampleInstance
-     *
      * @return
      */
-    public LabMetric getMetric(LabMetric.MetricName metricName, MetricSearchMode searchMode,
-                               SampleInstance sampleInstance) {
+    public LabMetric getMetric(LabMetric.MetricName metricName, MetricSearchMode searchMode, SampleInstance sampleInstance) {
         throw new RuntimeException("I haven't been written yet.");
     }
 
@@ -246,7 +229,7 @@ public abstract class LabVessel implements Serializable {
      * Get the name of the thing.  This
      * isn't just getName() because that would
      * probably clash with something else.
-     *
+     * <p/>
      * SGM: 6/15/2012 Update.  Added code to return the
      * <a href="http://en.wikipedia.org/wiki/Base_36#Java_implementation" >Base 36 </a> version of the of the label.
      * This implementation assumes that the label can be converted to a long
@@ -372,8 +355,7 @@ public abstract class LabVessel implements Serializable {
 
             if (nearestPdos != null && !nearestPdos.isEmpty()) {
                 pdoNames.addAll(nearestPdos);
-            }
-            else  {
+            } else {
                 logger.warning("Most recent PDO came up with more than one result");
             }
         }
@@ -408,10 +390,10 @@ public abstract class LabVessel implements Serializable {
      * Returned from getAncestors and getDescendants
      */
     static class VesselEvent {
-        private LabVessel       labVessel;
+        private LabVessel labVessel;
         private VesselContainer vesselContainer;
-        private VesselPosition  position;
-        private LabEvent        labEvent;
+        private VesselPosition position;
+        private LabEvent labEvent;
 
         public VesselEvent(LabVessel labVessel, VesselContainer vesselContainer, VesselPosition position,
                            LabEvent labEvent) {
@@ -458,7 +440,7 @@ public abstract class LabVessel implements Serializable {
      */
     static class TraversalResults {
         private Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        private Set<Reagent>        reagents        = new HashSet<Reagent>();
+        private Set<Reagent> reagents = new HashSet<Reagent>();
 
         void add(TraversalResults traversalResults) {
             sampleInstances.addAll(traversalResults.getSampleInstances());
@@ -542,7 +524,7 @@ public abstract class LabVessel implements Serializable {
         List<VesselEvent> vesselEvents = new ArrayList<VesselEvent>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
             vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getSourceVessel(), null, null,
-                                             vesselToVesselTransfer.getLabEvent()));
+                    vesselToVesselTransfer.getLabEvent()));
         }
         for (LabVessel container : containers) {
             vesselEvents.addAll(container.getContainerRole().getAncestors(this));
@@ -559,7 +541,7 @@ public abstract class LabVessel implements Serializable {
         List<VesselEvent> vesselEvents = new ArrayList<VesselEvent>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
             vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getTargetLabVessel(), null, null,
-                                             vesselToVesselTransfer.getLabEvent()));
+                    vesselToVesselTransfer.getLabEvent()));
         }
         for (LabVessel container : containers) {
             vesselEvents.addAll(container.getContainerRole().getDescendants(this));
@@ -571,7 +553,7 @@ public abstract class LabVessel implements Serializable {
      * Metrics are captured on vessels, but when we
      * look up the values, we most often want to
      * see them related to a sample aliquot instance.
-     *
+     * <p/>
      * The search mode tells you "how" to walk the
      * transfer graph to find the given metric.
      */
@@ -626,7 +608,9 @@ public abstract class LabVessel implements Serializable {
      * event performed on this aliquot.  Implementations
      * traipse through lims history to find the most
      * recent event.
-     *
+     * <p/>
+     * For informational use only.  Can be volatile.
+     * <p/>
      * For informational use only.  Can be volatile.
      *
      * @return
@@ -855,8 +839,7 @@ public abstract class LabVessel implements Serializable {
     }
 
     void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
-                          TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent,
-                          int hopCount) {
+                          TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent, int hopCount) {
         transferTraverserCriteria.evaluateVesselPreOrder(this, labEvent, hopCount);
         if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
             for (VesselEvent vesselEvent : getAncestors()) {
@@ -873,15 +856,14 @@ public abstract class LabVessel implements Serializable {
     }
 
     private void evaluateVesselEvent(TransferTraverserCriteria transferTraverserCriteria,
-                                     TransferTraverserCriteria.TraversalDirection traversalDirection, int hopCount,
-                                     VesselEvent vesselEvent) {
+                                     TransferTraverserCriteria.TraversalDirection traversalDirection, int hopCount, VesselEvent vesselEvent) {
         LabVessel labVessel = vesselEvent.getLabVessel();
         if (labVessel == null) {
-            vesselEvent.getVesselContainer().evaluateCriteria(vesselEvent.getPosition(), transferTraverserCriteria,
-                                                              traversalDirection, vesselEvent.getLabEvent(), hopCount);
+            vesselEvent.getVesselContainer().evaluateCriteria(vesselEvent.getPosition(),
+                    transferTraverserCriteria, traversalDirection, vesselEvent.getLabEvent(), hopCount);
         } else {
             labVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection, vesselEvent.getLabEvent(),
-                                       hopCount + 1);
+                    hopCount + 1);
         }
     }
 
@@ -909,6 +891,21 @@ public abstract class LabVessel implements Serializable {
                 new TransferTraverserCriteria.NearestLabBatchFinder();
         evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
         return batchCriteria.getNearestLabBatches();
+    }
+
+    public List<LabBatch> getNearestLabBatchesList() {
+        List<LabBatch> batchList = new ArrayList<LabBatch>();
+        Collection<LabBatch> batchCollection = getNearestLabBatches();
+        if (batchCollection != null) {
+            batchList = new ArrayList<LabBatch>(batchCollection);
+        }
+        return batchList;
+    }
+
+    public Collection<LabVessel> getDescendantVessels() {
+        TransferTraverserCriteria.LabVesselDescendantCriteria descendantCriteria = new TransferTraverserCriteria.LabVesselDescendantCriteria();
+        evaluateCriteria(descendantCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
+        return descendantCriteria.getLabVesselDescendants();
     }
 
 }
