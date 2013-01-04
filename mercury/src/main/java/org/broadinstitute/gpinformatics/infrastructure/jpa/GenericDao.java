@@ -319,9 +319,6 @@ public class GenericDao {
             Expression<String> expression = root.get(singularAttributes[i]).as(String.class);
             if (ignoreCase) {
                 expression = criteriaBuilder.lower(expression);
-                expression = criteriaBuilder.lower(asExpression);
-            } else {
-                expression = asExpression;
             }
             predicates[i] = criteriaBuilder.like(expression, '%' + value + '%');
         }

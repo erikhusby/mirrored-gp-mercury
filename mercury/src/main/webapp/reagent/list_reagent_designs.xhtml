@@ -31,7 +31,7 @@
             </div>
             <div class="row">
                 <h:commandButton value="Save" id="associateBarcodes" disabled="#{!userBean.validUser}"
-                                 action="#{associateReagentsForm.associateReagent}" ajax="false" styleClass="ui-priority-primary"/>
+                                 action="#{associateReagentsForm.associateReagent}" ajax="false" styleClass="ui-priority-primary pull-left"/>
                 <p:watermark for="associateBarcodes" value="Associate reagent with supplied barcodes."/>
             </div>
             <p:dataTable value="#{reagentsBean.allReagentDesigns}"

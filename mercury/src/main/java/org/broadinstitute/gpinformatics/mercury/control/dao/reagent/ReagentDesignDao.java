@@ -36,14 +36,4 @@ public class ReagentDesignDao extends GenericDao {
     public ReagentDesign findByBusinessKey(String value) {
         return findSingle(ReagentDesign.class, ReagentDesign_.designName, value);
     }
-
-    public List<ReagentDesign> findByBusinessKey(final Collection businessKeys) {
-        return findAll(ReagentDesign.class,
-                new GenericDao.GenericDaoCallback<ReagentDesign>() {
-                    @Override
-                    public void callback(CriteriaQuery<ReagentDesign> cq, Root<ReagentDesign> root) {
-                        cq.where(root.get(ReagentDesign_.designName).in(businessKeys));
-                    }
-                });
-    }
 }

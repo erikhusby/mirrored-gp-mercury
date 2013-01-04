@@ -27,6 +27,7 @@ import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Named
@@ -86,11 +87,14 @@ public class AssociateReagentsForm extends AbstractJsfBean {
                 businessKeys.add(reagentName);
             }
         }
-        List<ReagentDesign> reagentDesigns = reagentDesignDao.findByBusinessKey(businessKeys);
+        List<ReagentDesign> reagentDesigns =
+                reagentDesignDao.findListByList(ReagentDesign.class,ReagentDesign_.designName,businessKeys);
 
         List<TwoDBarcodedTube> twoDBarcodedTubeList = new ArrayList<TwoDBarcodedTube>();
+        String savedChanges = "";
         for (ReagentDesign reagentDesign : reagentDesigns) {
-            String barcodeList[] = reagentsBean.getBarcodeMap().get(reagentDesign.getDesignName()).split("\\W");
+            List<String> barcodeList = Arrays.asList(reagentsBean.getBarcodeMap().get(reagentDesign.getDesignName()).trim().split("\\W"));
+            savedChanges+=reagentDesign.getDesignName() + " " + barcodeList.toString() + ")\n";
             for (String barcodeItem : barcodeList) {
                 DesignedReagent reagent = new DesignedReagent(reagentDesign);
                 TwoDBarcodedTube twoDee = new TwoDBarcodedTube(barcodeItem);
@@ -100,7 +104,8 @@ public class AssociateReagentsForm extends AbstractJsfBean {
         }
 
         twoDBarcodedTubeDAO.persistAll(twoDBarcodedTubeList);
-        addInfoMessage(String.format("%s tubes initialized with reagents.", twoDBarcodedTubeList.size()));
+        addInfoMessage(
+                String.format("%s tubes initialized with reagents: %s.", twoDBarcodedTubeList.size(), savedChanges));
 
         return redirect(LIST_PAGE);
     }
