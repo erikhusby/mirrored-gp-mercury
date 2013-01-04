@@ -31,6 +31,7 @@ public class ProjectPerson {
     private ResearchProject researchProject;
 
     @Column(name = "ROLE")
+    @Enumerated(EnumType.STRING)
     private RoleType role;
 
     @Column(name = "PERSON_ID")
