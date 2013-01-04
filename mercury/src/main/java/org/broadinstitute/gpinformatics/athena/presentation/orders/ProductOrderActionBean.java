@@ -27,6 +27,9 @@ import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
@@ -50,6 +53,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String ORDER_CREATE_PAGE = "/orders/create.jsp";
     private static final String ORDER_LIST_PAGE = "/orders/list.jsp";
     private static final String ORDER_VIEW_PAGE = "/orders/view.jsp";
+
+    @Inject
+    private QuoteService quoteService;
 
     @Inject
     private ProductOrderListEntryDao orderListEntryDao;
@@ -90,7 +96,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String businessKey;
 
     @ValidateNestedProperties({
-            @Validate(field="comments", maxlength=2000, on={"save"})
+        @Validate(field="comments", maxlength=2000, on={"save"}),
+        @Validate(field="title", required = true, maxlength=255, on={"save"})
     })
     private ProductOrder editOrder;
 
@@ -130,6 +137,21 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (existingOrder != null) {
                 errors.add("title", new SimpleError("A product order already exists with this name."));
             }
+        }
+    }
+
+    @ValidationMethod(on = "placeOrder")
+    public void validateOrderPlacement(ValidationErrors errors) throws Exception {
+        if (editOrder.getSamples().isEmpty()) {
+            errors.addGlobalError(new SimpleError("Order does not have and samples"));
+        }
+
+        try {
+            quoteService.getQuoteByAlphaId(editOrder.getQuoteId());
+        } catch (QuoteServerException ex) {
+            errors.addGlobalError(new SimpleError("The quote id " + editOrder.getQuoteId() + " is not valid: " + ex.getMessage()));
+        } catch (QuoteNotFoundException ex) {
+            errors.addGlobalError(new SimpleError("The quote id " + editOrder.getQuoteId() + " is not found"));
         }
     }
 
@@ -210,6 +232,20 @@ public class ProductOrderActionBean extends CoreActionBean {
         return new ForwardResolution(ORDER_CREATE_PAGE);
     }
 
+    @HandlesEvent("placeOrder")
+    public Resolution placeOrder() {
+        try {
+            editOrder.submitProductOrder();
+            editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+        } catch (Exception e ) {
+            addGlobalValidationError(e.getMessage());
+            return null;
+        }
+
+        addMessage("Product Order \"" + editOrder.getTitle() + "\" has been placed");
+        return new RedirectResolution(ProductOrderActionBean.class, "view").addParameter("businessKey", editOrder.getBusinessKey());
+    }
+
     @HandlesEvent("save")
     public Resolution save() {
         try {
@@ -222,6 +258,10 @@ public class ProductOrderActionBean extends CoreActionBean {
             // update the addons from the keys
             List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
             editOrder.updateData(project, product, addOnProducts);
+
+            if (editOrder.isDraft()) {
+                editOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
+            }
 
             // save it!
             productOrderDao.persist(editOrder);

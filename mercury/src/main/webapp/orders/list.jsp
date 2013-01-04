@@ -84,9 +84,21 @@
                                 </stripes:link>
                             </td>
                             <td>
-                                <a class="external" target="JIRA" href="${actionBean.jiraUrl}${order.jiraTicketKey}" class="external" target="JIRA">
-                                    ${order.jiraTicketKey}
-                                </a>
+                                <c:choose>
+                                    <c:when test="${actionBean.editOrder.draft}">
+                                        DRAFT
+                                        (
+                                        <stripes:link title="Place Order" beanclass="${actionBean.class.name}" event="" href="${ctxpath}/projects/project.action?view=">
+                                            <stripes:param name="businessKey" value="${actionBean.editOrder.businessKey}"/>
+                                            Place Order</stripes:link>
+                                        )
+                                    </c:when>
+                                    <c:otherwise>
+                                        <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">
+                                                ${order.jiraTicketKey}
+                                        </a>
+                                    </c:otherwise>
+                                </c:choose>
                             </td>
                             <td>${order.productName}</td>
                             <td>${order.productFamilyName}</td>

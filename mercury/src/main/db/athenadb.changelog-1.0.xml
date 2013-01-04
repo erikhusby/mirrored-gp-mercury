@@ -1886,4 +1886,7 @@
         <addNotNullConstraint schemaName="athena" tableName="product_order_sample" columnName="delivery_status" defaultNullValue="NOT_STARTED" />
     </changeSet>
 
+    <changeSet id="GPLIM-603-1" author="hrafal">
+        <dropNotNullConstraint schemaName="athena" tableName="product_order" columnName="jira_ticket_key"/>
+    </changeSet>
 </databaseChangeLog>

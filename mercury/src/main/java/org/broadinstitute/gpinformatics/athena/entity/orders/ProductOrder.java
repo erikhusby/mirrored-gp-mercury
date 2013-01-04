@@ -49,6 +49,8 @@ import java.util.*;
 public class ProductOrder implements Serializable {
     private static final String JIRA_SUBJECT_PREFIX = "Product order for ";
 
+    private static final String DRAFT_PREFIX = "Draft-";
+
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT_ORDER", schema = "athena", sequenceName = "SEQ_PRODUCT_ORDER")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_ORDER")
@@ -81,8 +83,8 @@ public class ProductOrder implements Serializable {
     @Column(length = 2000)
     private String comments;
 
-    /** Reference to the Jira Ticket created when the order is submitted */
-    @Column(name = "JIRA_TICKET_KEY", nullable = false)
+    /** Reference to the Jira Ticket created when the order is placed. Null means that the order is a draft */
+    @Column(name = "JIRA_TICKET_KEY", nullable = true)
     private String jiraTicketKey;
 
     @Column(name = "count")
@@ -122,7 +124,15 @@ public class ProductOrder implements Serializable {
         originalTitle = title;
     }
 
+    /**
+     * @return The business key is the jira ticket key when this is not a draft, otherwise it is the DRAFT_KEY plus the
+     * internal database id.
+     */
     public String getBusinessKey() {
+        if (jiraTicketKey == null) {
+            return DRAFT_PREFIX + productOrderId;
+        }
+
         return jiraTicketKey;
     }
 
@@ -687,6 +697,20 @@ public class ProductOrder implements Serializable {
 
     public Long getProductOrderId() {
         return productOrderId;
+    }
+
+    /**
+     * @return The order is a draft while it is not 'placed,' which is the state of having a jira ticket
+     */
+    public boolean isDraft() {
+        return OrderStatus.Draft == orderStatus;
+    }
+
+    /**
+     * @return The order is a draft while it is not 'placed,' which is the state of having a jira ticket
+     */
+    public boolean isAbandoned() {
+        return OrderStatus.Abandoned == orderStatus;
     }
 
     /**

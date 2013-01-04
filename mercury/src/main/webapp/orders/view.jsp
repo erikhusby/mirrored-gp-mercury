@@ -51,9 +51,21 @@
                 <label class="control-label label-form">Order Barcode</label>
                 <div class="controls">
                     <div class="form-value">
-                        <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">
-                            ${actionBean.editOrder.jiraTicketKey}
-                        </a>
+                        <c:choose>
+                            <c:when test="${actionBean.editOrder.draft}">
+                                DRAFT
+                                (
+                                    <stripes:link title="Place Order" beanclass="${actionBean.class.name}" event="" href="${ctxpath}/projects/project.action?view=">
+                                        <stripes:param name="businessKey" value="${actionBean.editOrder.businessKey}"/>
+                                        Place Order</stripes:link>
+                                )
+                            </c:when>
+                            <c:otherwise>
+                                <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">
+                                        ${actionBean.editOrder.jiraTicketKey}
+                                </a>
+                            </c:otherwise>
+                        </</c:choose>
                     </div>
                 </div>
             </div>
@@ -62,12 +74,15 @@
                 <label class="control-label label-form">Research Project</label>
                 <div class="controls">
                     <div class="form-value">
-                        <stripes:link title="Research Project" href="${ctxpath}/projects/project.action?view=">
+                        <stripes:link title="Research Project"
+                                      beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
+                                      event="view">
                             <stripes:param name="businessKey" value="${actionBean.editOrder.researchProject.businessKey}"/>
-                            ${actionBean.editOrder.researchProject.title}</stripes:link>
-                            (<a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.researchProject.jiraTicketKey}" class="external" target="JIRA">
-                                ${actionBean.editOrder.researchProject.jiraTicketKey}
-                            </a>)
+                            ${actionBean.editOrder.researchProject.title}
+                        </stripes:link>
+                        (<a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.researchProject.jiraTicketKey}" class="external" target="JIRA">
+                            ${actionBean.editOrder.researchProject.jiraTicketKey}
+                        </a>)
                     </div>
                 </div>
             </div>

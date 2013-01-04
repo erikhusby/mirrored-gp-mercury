@@ -47,14 +47,14 @@
             <!--/security:authorizeBlock-->
         </ul>
 
-        <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchPlasticActionBean" style="height:35px;">
+        <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean" style="height:35px;">
             <ul class="nav pull-right global-search">
                 <li>
-                    <input type="text" name="barcode" title="enter a barcode to search" class="defaultText" style="margin-top: 5px;vertical-align: top;height:14px;"/>
+                    <input type="text" name="searchKey" title="enter a barcode to search" class="defaultText" style="margin-top: 5px;vertical-align: top;height:14px;"/>
                     <input type="submit" name="search" value="Search" class="btn btn-mini"/>
                 </li>
                 <li style="float: none; line-height: 5px;">
-                    <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchPlasticActionBean"
+                    <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"
                               event="view">advanced</stripes:link>
                 </li>
             </ul>

@@ -104,25 +104,33 @@ public class ProductOrderEjb {
     /**
      * Including {@link QuoteNotFoundException} since this is an expected failure that may occur in application validation
      *
-     * @param productOrder
-     * @param productOrderSamplesIds
-     * @param addOnPartNumbers
-     * @throws QuoteNotFoundException
+     * @param productOrder The order to save
+     * @param productOrderSampleIds The sample ids
+     * @param addOnPartNumbers The add Ons
+     *
+     * @throws QuoteNotFoundException Quote exceptions
      */
-    public void save(ProductOrder productOrder, List<String> productOrderSamplesIds, List<String> addOnPartNumbers) throws DuplicateTitleException, QuoteNotFoundException, NoSamplesException {
+    public void save(
+        ProductOrder productOrder, List<String> productOrderSampleIds, List<String> addOnPartNumbers)
+            throws DuplicateTitleException, QuoteNotFoundException, NoSamplesException {
 
         validateUniqueProjectTitle(productOrder);
         validateQuote(productOrder);
-        setSamples(productOrder, productOrderSamplesIds);
+        setSamples(productOrder, productOrderSampleIds);
         setAddOnProducts(productOrder, addOnPartNumbers);
         setStatus(productOrder);
-        // create JIRA before we attempt to persist since that is more likely to fail
-        createJiraIssue(productOrder);
-
-        productOrderDao.persist(productOrder);
-
     }
 
+    /**
+     * This handles the creation of jira when placing an order.
+     *
+     * @param productOrder The order to place
+     */
+    public void placeOrder(ProductOrder productOrder) {
+        // create JIRA before we attempt to persist since that is more likely to fail
+        createJiraIssue(productOrder);
+        productOrderDao.persist(productOrder);
+    }
 
     /**
      * Utility class to help with mapping from display names of custom fields to their {@link CustomFieldDefinition}s,
