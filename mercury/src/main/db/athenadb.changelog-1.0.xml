@@ -1937,5 +1937,17 @@
         <renameColumn schemaName="athena" tableName="product_order_aud" oldColumnName="order_status_varchar" newColumnName="order_status" />
     </changeSet>
 
+    <changeSet id="GPLIM-636.5" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="product_order" columnName="order_status" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636.6" author="mcovarr">
+        <sql>
+            ALTER TABLE athena.product_order
+            add CONSTRAINT check_order_status
+            CHECK (order_status IN ('Draft', 'Submitted', 'Abandoned', 'Complete'));
+        </sql>
+    </changeSet>
+
 
 </databaseChangeLog>
