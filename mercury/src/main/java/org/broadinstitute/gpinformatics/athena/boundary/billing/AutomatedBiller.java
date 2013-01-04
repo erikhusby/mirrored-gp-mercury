@@ -53,7 +53,7 @@ public class AutomatedBiller {
                 // FIXME: need to mark messages as processed even when an error occurs; enable this once code is debugged.
 //                workCompleteMessageDao.markMessageProcessed(message);
                 log.error(MessageFormat.format("Error while processing work complete message. PDO: {0}, Sample: {1}, Index: {2}",
-                        message.getPdoName(), message.getCollaboratorSampleId(), message.getSampleIndex()), e);
+                        message.getPdoName(), message.getSampleName(), message.getSampleIndex()), e);
             }
         }
     }
@@ -90,7 +90,7 @@ public class AutomatedBiller {
         if (product.isUseAutomatedBilling()) {
             if (product.getRequirement().canBill(message.getData())) {
                 List<ProductOrderSample> samples =
-                        productOrderSampleDao.findByOrderAndName(order, message.getCollaboratorSampleId());
+                        productOrderSampleDao.findByOrderAndName(order, message.getSampleName());
                 ProductOrderSample sample = samples.get(message.getSampleIndex().intValue());
                 sample.autoBillSample(message.getCompletedDate(), 1);
             }

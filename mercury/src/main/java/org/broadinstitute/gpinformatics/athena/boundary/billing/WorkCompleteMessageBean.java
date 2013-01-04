@@ -35,7 +35,7 @@ public class WorkCompleteMessageBean implements MessageListener {
             if (message instanceof MapMessage) {
                 MapMessage mapMessage = (MapMessage) message;
 
-                // This pulls all the values out of the message
+                // This pulls all the values out of the message.
                 Map<String, Object> values = new HashMap<String, Object> ();
 
                 Enumeration<?> mapNames = mapMessage.getMapNames();
@@ -46,13 +46,15 @@ public class WorkCompleteMessageBean implements MessageListener {
 
                 String pdoName = mapMessage.getString(WorkCompleteMessage.REQUIRED_NAMES.PDO_NAME.name());
                 String sampleName = mapMessage.getString(WorkCompleteMessage.REQUIRED_NAMES.SAMPLE_NAME.name());
-                Long sampleIndex = mapMessage.getLong(WorkCompleteMessage.REQUIRED_NAMES.SAMPLE_INDEX.name());
-                String aliquotLsid = mapMessage.getString(WorkCompleteMessage.REQUIRED_NAMES.ALIQUOT_LSID.name());
+                long sampleIndex = 1;
+                if (mapMessage.itemExists(WorkCompleteMessage.REQUIRED_NAMES.SAMPLE_INDEX.name())) {
+                    sampleIndex = mapMessage.getLong(WorkCompleteMessage.REQUIRED_NAMES.SAMPLE_INDEX.name());
+                }
                 long completedTime = mapMessage.getLong(WorkCompleteMessage.REQUIRED_NAMES.COMPLETED_TIME.name());
                 Date completedDate = new Date(completedTime);
 
                 WorkCompleteMessage workComplete =
-                    new WorkCompleteMessage(pdoName, sampleName, sampleIndex, aliquotLsid, completedDate, values);
+                    new WorkCompleteMessage(pdoName, sampleName, sampleIndex, completedDate, values);
 
                 workCompleteMessageDao.persist(workComplete);
             } else {
