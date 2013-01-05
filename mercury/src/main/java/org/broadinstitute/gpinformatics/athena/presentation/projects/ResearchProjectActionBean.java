@@ -112,6 +112,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
         businessKey = getContext().getRequest().getParameter("businessKey");
         if (businessKey != null) {
             editResearchProject = researchProjectDao.findByBusinessKey(businessKey);
+        } else {
+            editResearchProject = new ResearchProject(getUserBean().getBspUser());
         }
     }
 
@@ -172,7 +174,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution save() throws Exception {
         populateTokenListFields();
 
-        editResearchProject.setCreatedBy(getUserBean().getBspUser().getUserId());
         researchProjectDao.persist(editResearchProject);
         addMessage("The research project '" + editResearchProject.getTitle() + "' has been saved.");
         return new RedirectResolution(ResearchProjectActionBean.class, "view").addParameter("businessKey", editResearchProject.getBusinessKey());

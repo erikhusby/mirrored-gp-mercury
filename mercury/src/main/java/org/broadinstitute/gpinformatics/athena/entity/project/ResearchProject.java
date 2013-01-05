@@ -140,6 +140,10 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         this(null, null, null, false);
     }
 
+    public ResearchProject(BspUser user) {
+        this(user.getUserId(), null, null, false);
+    }
+
     /**
      * The full constructor for fields that are not settable.
      *
