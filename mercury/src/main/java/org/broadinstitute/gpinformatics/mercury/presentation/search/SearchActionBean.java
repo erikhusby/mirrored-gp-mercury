@@ -20,7 +20,7 @@ import java.util.List;
 /**
  * This handles all the needed interface processing elements
  */
-@UrlBinding("/search/plastic.action")
+@UrlBinding("/search/all.action")
 public class SearchActionBean extends CoreActionBean {
 
     private static final String SESSION_LIST_PAGE = "/search/search.jsp";

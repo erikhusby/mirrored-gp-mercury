@@ -14,7 +14,7 @@
                     <stripes:label for="barcode" class="control-label" style="width: 60px;">barcode</stripes:label>
                     <div class="controls" style="margin-left: 80px;">
                         <stripes:textarea rows="5" cols="80" name="searchKey" id="name" title="Enter the value to search"
-                                          style="font-size: x-small; height: 14px;" class="defaultText"/>
+                                          style="font-size: x-small; width:auto;" class="defaultText"/>
                     </div>
                 </div>
 
