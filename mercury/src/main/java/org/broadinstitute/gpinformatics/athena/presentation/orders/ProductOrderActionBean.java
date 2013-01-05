@@ -173,48 +173,51 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void validateOrderSelection(ValidationErrors errors) {
         if (!getUserBean().isValidBspUser()) {
             errors.addGlobalError(new SimpleError("This requires that you be a valid bsp user "));
-            return;
         }
 
         if ((selectedProductOrderBusinessKeys == null) || selectedProductOrderBusinessKeys.isEmpty()) {
             errors.addGlobalError(new SimpleError("Please select at least one product order"));
-            return;
-        }
+        } else {
+            Set<Product> products = new HashSet<Product> ();
+            selectedProductOrders =
+                productOrderDao.findListByBusinessKeyList(
+                    selectedProductOrderBusinessKeys,
+                    ProductOrderDao.FetchSpec.Product,
+                    ProductOrderDao.FetchSpec.ResearchProject,
+                    ProductOrderDao.FetchSpec.Samples);
 
-        Set<Product> products = new HashSet<Product> ();
-        selectedProductOrders =
-            productOrderDao.findListByBusinessKeyList(
-                selectedProductOrderBusinessKeys,
-                ProductOrderDao.FetchSpec.Product,
-                ProductOrderDao.FetchSpec.ResearchProject,
-                ProductOrderDao.FetchSpec.Samples);
+            for (ProductOrder order : selectedProductOrders) {
+                products.add(order.getProduct());
+            }
 
-        for (ProductOrder order : selectedProductOrders) {
-            products.add(order.getProduct());
-        }
+            // Go through each products and report invalid duplicate price item names
+            for (Product product : products) {
+                String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
+                if (duplicatePriceItems != null) {
+                    errors.addGlobalError(new SimpleError(
+                        "The Product " + product.getPartNumber() + " has duplicate price items: " +
+                        StringUtils.join(duplicatePriceItems, ", ")));
+                }
+            }
 
-        // Go through each products and report invalid duplicate price item names
-        for (Product product : products) {
-            String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
-            if (duplicatePriceItems != null) {
+            // If there are locked out orders, then do not allow the session to start
+            Set<BillingLedger> lockedOutOrders = billingLedgerDao.findLockedOutByOrderList(getSelectedProductOrderBusinessKeys());
+            if (!lockedOutOrders.isEmpty()) {
+                Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());
+                for (BillingLedger ledger : lockedOutOrders) {
+                    lockedOutOrderStrings.add(ledger.getProductOrderSample().getProductOrder().getTitle());
+                }
+
+                String lockedOutString = StringUtils.join(lockedOutOrderStrings.toArray(), ", ");
+
                 errors.addGlobalError(new SimpleError(
-                    "The Product " + product.getPartNumber() + " has duplicate price items: " +
-                    StringUtils.join(duplicatePriceItems, ", ")));
+                    "The following orders are locked out by active billing sessions: " + lockedOutString));
             }
         }
 
-        // If there are locked out orders, then do not allow the session to start
-        Set<BillingLedger> lockedOutOrders = billingLedgerDao.findLockedOutByOrderList(getSelectedProductOrderBusinessKeys());
-        if (!lockedOutOrders.isEmpty()) {
-            Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());
-            for (BillingLedger ledger : lockedOutOrders) {
-                lockedOutOrderStrings.add(ledger.getProductOrderSample().getProductOrder().getTitle());
-            }
-
-            String lockedOutString = StringUtils.join(lockedOutOrderStrings.toArray(), ", ");
-
-            errors.addGlobalError(new SimpleError(
-                "The following orders are locked out by active billing sessions: " + lockedOutString));
+        // If there are errors, will reload the page, so need to fetch the list
+        if (errors.size() > 0) {
+            listInit();
         }
     }
 
