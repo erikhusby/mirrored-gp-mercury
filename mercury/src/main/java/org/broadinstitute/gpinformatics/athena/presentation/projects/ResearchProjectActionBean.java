@@ -171,6 +171,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public Resolution save() throws Exception {
         populateTokenListFields();
+
+        editResearchProject.setCreatedBy(getUserBean().getBspUser().getUserId());
         researchProjectDao.persist(editResearchProject);
         addMessage("The research project '" + editResearchProject.getTitle() + "' has been saved.");
         return new RedirectResolution(ResearchProjectActionBean.class, "view").addParameter("businessKey", editResearchProject.getBusinessKey());

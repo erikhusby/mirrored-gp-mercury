@@ -78,23 +78,24 @@
                                 <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderBusinessKeys" value="${order.businessKey}"/>
                             </td>
                             <td>
-                                <stripes:link beanclass="${actionBean.class.name}" event="edit">
+                                <stripes:link beanclass="${actionBean.class.name}" event="view">
                                     <stripes:param name="businessKey" value="${order.businessKey}"/>
                                     ${order.title}
                                 </stripes:link>
                             </td>
                             <td>
                                 <c:choose>
-                                    <c:when test="${actionBean.editOrder.draft}">
+                                    <c:when test="${order.draft}">
                                         DRAFT
                                         (
-                                        <stripes:link title="Place Order" beanclass="${actionBean.class.name}" event="" href="${ctxpath}/projects/project.action?view=">
-                                            <stripes:param name="businessKey" value="${actionBean.editOrder.businessKey}"/>
-                                            Place Order</stripes:link>
+                                            <stripes:link title="Place Order" beanclass="${actionBean.class.name}" event="placeOrder">
+                                                <stripes:param name="businessKey" value="${order.businessKey}"/>
+                                                Place Order
+                                            </stripes:link>
                                         )
                                     </c:when>
                                     <c:otherwise>
-                                        <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">
+                                        <a target="JIRA" href="${actionBean.jiraUrl}${order.jiraTicketKey}" class="external" target="JIRA">
                                                 ${order.jiraTicketKey}
                                         </a>
                                     </c:otherwise>

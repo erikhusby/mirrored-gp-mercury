@@ -82,6 +82,14 @@
 
                 $j(".defaultText").blur();
 
+                $j('.defaultText').closest('form').submit(function() {
+                    jQuery(this).find('.defaultText').each(function() {
+                        if (jQuery(this).val() == jQuery(this).attr('title')) {
+                            jQuery(this).val('');
+                        }
+                    });
+                });
+
                 // Default date range selector (if there is a dateRangeDiv, the action bean will HAVE to have this
                 $j('#dateRangeDiv').dateRangeSelector();
             });

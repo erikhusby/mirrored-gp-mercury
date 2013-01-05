@@ -252,9 +252,7 @@ public class CoreActionBean implements ActionBean {
     }
 
     public boolean isCreating() {
-        if (submitString == null) return false;
-
-        return submitString.startsWith(CREATE);
+        return submitString != null && submitString.startsWith(CREATE);
     }
 
     public Map<Long, String> getFullNameMap() {

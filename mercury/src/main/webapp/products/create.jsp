@@ -14,7 +14,7 @@
                             searchDelay: 500,
                             minChars: 2,
                             preventDuplicates: true,
-                            <c:if test="${actionBean.priceItemCompleteData != null}">
+                            <c:if test="${actionBean.priceItemCompleteData != null && actionBean.priceItemCompleteData != ''}">
                                 prePopulate: ${actionBean.priceItemCompleteData},
                             </c:if>
                             tokenLimit: 1
@@ -25,7 +25,7 @@
                             "${ctxpath}/products/product.action?addOnsAutocomplete=&productKey=${actionBean.editProduct.businessKey}", {
                                 searchDelay: 500,
                                 minChars: 2,
-                                <c:if test="${actionBean.addOnCompleteData != null}">
+                                <c:if test="${actionBean.addOnCompleteData != null && actionBean.addOnCompleteData != ''}">
                                     prePopulate: ${actionBean.addOnCompleteData},
                                 </c:if>
                                 preventDuplicates: true
@@ -43,12 +43,11 @@
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
             <div style="float: left; margin-right: 40px; margin-top: 5px;">
-                <stripes:hidden name="productKey" value="${actionBean.productKey}"/>
+                <stripes:hidden name="productKey"/>
                 <div class="control-group">
                     <stripes:label for="productFamily" name="Product Family" class="control-label"/>
                     <div class="controls">
-                        <stripes:select name="editProduct.productFamily.productFamilyId"
-                                        value="${actionBean.editProduct.productFamily.productFamilyId}" id="productFamily">
+                        <stripes:select name="editProduct.productFamily.productFamilyId" id="productFamily">
                             <stripes:option value="">Select a Product Family</stripes:option>
                             <stripes:options-collection collection="${actionBean.productFamilies}" label="name"
                                                         value="productFamilyId"/>

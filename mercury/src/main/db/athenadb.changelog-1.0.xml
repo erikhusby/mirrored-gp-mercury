@@ -1889,4 +1889,20 @@
     <changeSet id="GPLIM-603-1" author="hrafal">
         <dropNotNullConstraint schemaName="athena" tableName="product_order" columnName="jira_ticket_key"/>
     </changeSet>
+
+    <changeSet id="GPLIM-603-2" author="hrafal">
+        <dropNotNullConstraint schemaName="athena" tableName="product_order" columnName="quote_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-603-3" author="hrafal">
+        <dropNotNullConstraint schemaName="athena" tableName="product_order" columnName="count"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-603-4" author="hrafal">
+        <dropNotNullConstraint schemaName="athena" tableName="product_order" columnName="product"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-603-5" author="hrafal">
+        <dropNotNullConstraint schemaName="athena" tableName="product_order" columnName="research_project"/>
+    </changeSet>
 </databaseChangeLog>
