@@ -34,15 +34,25 @@
 
                     $j("#availabilityDate").datepicker();
                     $j("#discontinuedDate").datepicker();
+
+                    updateBillingRules();
                 }
             );
+
+            function updateBillingRules() {
+                if ($j('#useAutomatedBilling').attr('checked')) {
+                    $j('#billingRules').show();
+                } else {
+                    $j('#billingRules').hide();
+                }
+            }
         </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
-            <div style="float: left; margin-right: 40px; margin-top: 5px;">
+            <div style="float: left; margin-right: 40px; margin-top: 5px; width: 98%">
                 <stripes:hidden name="productKey"/>
                 <div class="control-group">
                     <stripes:label for="productFamily" name="Product Family" class="control-label"/>
@@ -148,7 +158,7 @@
                 <div class="control-group">
                     <stripes:label for="pdmOrderableOnly" name="PDM Orderable Only" class="control-label"/>
                     <div class="controls">
-                        <stripes:checkbox id="pdmOrderableOnly" name="editProduct.pdmOrderableOnly" class="defaultText"/>
+                        <stripes:checkbox id="pdmOrderableOnly" name="editProduct.pdmOrderableOnly" class="defaultText" style="margin-top: 10px;"/>
                     </div>
                 </div>
 
@@ -164,6 +174,30 @@
                     <stripes:label for="addOns" name="Add-ons" class="control-label"/>
                     <div class="controls">
                         <stripes:text id="addOns" name="addOnList"/>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <stripes:label for="useAutomatedBilling" name="Billing" class="control-label"/>
+                    <div class="controls">
+                        <stripes:checkbox id="useAutomatedBilling" name="editProduct.useAutomatedBilling" onchange="updateBillingRules()" style="margin-top: 10px;"/>
+                        <stripes:label for="useAutomatedBilling" name="Automated" class="control-label" style="width:auto;"/>
+                    </div>
+
+                    <div id="billingRules" style="clear:both;" class="controls">
+                        <stripes:label for="requirementsAttribute" name="Bill When" class="control-label" style="width: auto; margin-right:5px;"/>
+
+                        <stripes:text id="requirementsAttribute" name="editProduct.requirement.attribute"
+                                      class="defaultText" title="Attribute to compare"/>
+                        &#160;
+
+                        <stripes:select style="width:50px;" name="editProduct.requirement.operator">
+                            <stripes:options-enumeration enum="org.broadinstitute.gpinformatics.athena.entity.products.BillingRequirement.Operator" label="label"/>
+                        </stripes:select>
+                        &#160;
+
+                        <stripes:text id="requirementsValue" name="editProduct.requirement.value"
+                                      class="defaultText" title="Value to compare"/>
                     </div>
                 </div>
 
