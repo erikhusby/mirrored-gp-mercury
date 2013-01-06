@@ -37,14 +37,13 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 
     private String name;
 
-
     /** Name of the Sequence Only Product Family.  Must be updated if the name is changed in the database! */
     private static final String SEQUENCE_ONLY_NAME = "Sequence Only";
 
     /**
-     * JPA package visible constructor
+     * JPA package visible constructor. Need the empty constructor so that stripes can create this when needed
      */
-    ProductFamily() {
+    public ProductFamily() {
     }
 
     public ProductFamily(@Nonnull String name) {
@@ -88,5 +87,9 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(name).toHashCode();
+    }
+
+    public void setProductFamilyId(Long productFamilyId) {
+        this.productFamilyId = productFamilyId;
     }
 }

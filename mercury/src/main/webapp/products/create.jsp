@@ -10,7 +10,7 @@
             $j(document).ready(
                 function () {
                     $j("#priceItem").tokenInput(
-                        "${ctxpath}/products/product.action?addOnsAutocomplete=&productKey=${actionBean.editProduct.businessKey}", {
+                        "${ctxpath}/products/product.action?priceItemAutocomplete=&productKey=${actionBean.editProduct.businessKey}", {
                             searchDelay: 500,
                             minChars: 2,
                             preventDuplicates: true,
