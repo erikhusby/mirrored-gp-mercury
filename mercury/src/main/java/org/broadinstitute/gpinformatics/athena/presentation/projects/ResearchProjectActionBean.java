@@ -37,8 +37,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     private static final int IRB_NAME_MAX_LENGTH = 250;
 
-    private static final String CREATE = "Create New Project";
-    private static final String EDIT = "Edit Project: ";
+    private static final String CURRENT_OBJECT = "Project";
+    private static final String CREATE_PROJECT = CoreActionBean.CREATE + CURRENT_OBJECT;
+    private static final String EDIT_PROJECT = CoreActionBean.EDIT + CURRENT_OBJECT + ": ";
 
     public static final String PROJECT_CREATE_PAGE = "/projects/create.jsp";
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
@@ -65,8 +66,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
             @Validate(field = "comments", maxlength = 2000, on = {"save"})
     })
     private ResearchProject editResearchProject;
-
-    private String submitString;
 
     @Inject
     private JiraLink jiraLink;
@@ -162,12 +161,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
 
     public Resolution create() {
-        submitString = CREATE;
+        setSubmitString(CREATE_PROJECT);
         return new ForwardResolution(PROJECT_CREATE_PAGE);
     }
 
     public Resolution edit() {
-        submitString = EDIT;
+        setSubmitString(EDIT_PROJECT);
         return new ForwardResolution(PROJECT_CREATE_PAGE);
     }
 
@@ -235,10 +234,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public Resolution view() {
         return new ForwardResolution(PROJECT_VIEW_PAGE);
-    }
-
-    public String getSumbitString() {
-        return submitString;
     }
 
     public List<ResearchProject> getAllResearchProjects() {

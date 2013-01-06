@@ -46,8 +46,9 @@ import java.util.*;
 @UrlBinding("/orders/order.action")
 public class ProductOrderActionBean extends CoreActionBean {
 
-    private static final String CREATE_ORDER = CoreActionBean.CREATE + "New Product Order";
-    private static final String EDIT_ORDER = CoreActionBean.EDIT + "Product Order: ";
+    private static final String CURRENT_OBJECT = "Product Order";
+    private static final String CREATE_ORDER = CoreActionBean.CREATE + CURRENT_OBJECT;
+    private static final String EDIT_ORDER = CoreActionBean.EDIT + CURRENT_OBJECT + ": ";
 
     private static final String ORDER_CREATE_PAGE = "/orders/create.jsp";
     private static final String ORDER_LIST_PAGE = "/orders/list.jsp";
