@@ -16,7 +16,7 @@
                         {"bSortable": true},                    // Volume
                         {"bSortable": true},                    // Concentration
                         {"bSortable": true},                    // Yield Amount
-                        {"bSortable": true, "sSortDataType" : "title-string-asc"},   // FP Status
+                        {"bSortable": true, "sType" : "title-string"},   // FP Status
                         {"bSortable": true},                    // Eligible
                         {"bSortable": true},                    // Billed
                         {"bSortable": true},                    // Abandoned

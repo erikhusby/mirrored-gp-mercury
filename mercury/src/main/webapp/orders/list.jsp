@@ -22,7 +22,7 @@
                         {"bSortable": true, "sType": "date"},   // Updated
                         {"bSortable": false},                   // Count
                         {"bSortable": false},                   // Billing Session ID
-                        {"bSortable": true, "sSortDataType" : "title-string"}]  // eligible for billing
+                        {"bSortable": true, "sType" : "title-string"}]  // eligible for billing
                 })
             });
         </script>
@@ -121,7 +121,7 @@
                             </td>
                             <td>
                                 <c:if test="${order.eligibleForBilling}">
-                                    <stripes:image name="" src="/images/check.png"/>
+                                    <stripes:image name="" title="Yes" src="/images/check.png"/>
                                 </c:if>
                             </td>
                         </tr>

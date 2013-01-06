@@ -70,29 +70,32 @@
                 $j('#userBadge').popover({ trigger: "hover", html: true });
                 $j('.shiftCheckbox').enableCheckboxRangeSelection();
 
-                $j(".defaultText").focus(function (srcc) {
-                    if ($j(this).val() == $j(this)[0].title) {
-                        $j(this).removeClass("defaultTextActive");
-                        $j(this).val("");
-                    }
-                });
-
+                $j(".defaultText").focus(clearOnFocus);
                 $j(".defaultText").blur(updateActiveText);
                 $j(".defaultText").change(updateActiveText);
-
                 $j(".defaultText").blur();
 
-                $j('.defaultText').closest('form').submit(function() {
-                    jQuery(this).find('.defaultText').each(function() {
-                        if (jQuery(this).val() == jQuery(this).attr('title')) {
-                            jQuery(this).val('');
-                        }
-                    });
-                });
+                // The form submit needs to clear the fields
+                $j('.defaultText').closest('form').submit(cleanUpDefaultText);
 
                 // Default date range selector (if there is a dateRangeDiv, the action bean will HAVE to have this
                 $j('#dateRangeDiv').dateRangeSelector();
             });
+
+            function clearOnFocus(srcc) {
+                if ($j(this).val() == $j(this)[0].title) {
+                    $j(this).removeClass("defaultTextActive");
+                    $j(this).val("");
+                }
+            }
+
+            function cleanUpDefaultText() {
+                jQuery(this).find('.defaultText').each(function() {
+                    if (jQuery(this).val() == jQuery(this).attr('title')) {
+                        jQuery(this).val('');
+                    }
+                });
+            }
 
             function updateActiveText() {
                 if ($j(this).val() == "") {
