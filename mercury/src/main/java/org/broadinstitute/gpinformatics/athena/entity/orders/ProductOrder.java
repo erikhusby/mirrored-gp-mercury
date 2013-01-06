@@ -74,6 +74,7 @@ public class ProductOrder implements Serializable {
     @OneToOne
     private Product product;
 
+    @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus = OrderStatus.Draft;
 
     /** Alphanumeric Id */
