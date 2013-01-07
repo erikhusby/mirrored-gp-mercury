@@ -97,7 +97,7 @@
             <div class="control-group">
                 <stripes:label for="title" class="control-label">Project *</stripes:label>
                 <div class="controls">
-                        <stripes:text name="researchProject.title" id="title" title="Enter in the project name"/>
+                        <stripes:text name="researchProject.title" id="title"  class="defaultText" title="Enter in the project name"/>
                 </div>
             </div>
 
