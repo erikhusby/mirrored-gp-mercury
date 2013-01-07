@@ -12,7 +12,7 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
-                                    <c:if test="${actionBean.projectManagerCompleteData != null && actionBean.priceItemCompleteData != ''}">
+                                    <c:if test="${actionBean.projectManagerCompleteData != null && actionBean.projectManagerCompleteData != ''}">
                                         prePopulate: ${actionBean.projectManagerCompleteData},
                                     </c:if>
                                     preventDuplicates: true
