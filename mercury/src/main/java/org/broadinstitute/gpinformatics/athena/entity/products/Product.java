@@ -23,6 +23,9 @@ import java.util.*;
 public class Product implements Serializable, Comparable<Product> {
     private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 
+    public static final boolean TOP_LEVEL_PRODUCT = true;
+    public static final boolean CHILD_PRODUCT = false;
+
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT")
@@ -112,10 +115,12 @@ public class Product implements Serializable, Comparable<Product> {
 
     /**
      * JPA package visible no arg constructor
-     *
-     * @return
      */
     Product() {}
+
+    public Product(boolean topLevelProduct) {
+        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, null, false);
+    }
 
     public Product(String productName,
                    ProductFamily productFamily,

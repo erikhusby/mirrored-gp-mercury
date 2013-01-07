@@ -4,6 +4,7 @@ import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.*;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -42,6 +43,9 @@ public class ProductActionBean extends CoreActionBean {
     private ProductDao productDao;
 
     @Inject
+    private PriceItemDao priceItemDao;
+
+    @Inject
     private PriceListCache priceListCache;
 
     // Data needed for displaying the view
@@ -52,6 +56,7 @@ public class ProductActionBean extends CoreActionBean {
     private String productKey;
 
     @ValidateNestedProperties({
+        @Validate(field="productFamily.productFamilyId", required = true, maxlength=255, on={"save"}),
         @Validate(field="productName", required = true, maxlength=255, on={"save"})
     })
     private Product editProduct;
@@ -59,7 +64,7 @@ public class ProductActionBean extends CoreActionBean {
 
     // These are the fields for catching the input tokens
     @Validate(required = true, on = {"save"})
-    private String pricetItemList = "";
+    private String priceItemList = "";
 
     private String addOnList = "";
 
@@ -80,8 +85,11 @@ public class ProductActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {"view", "edit", "save", "addOnsAutocomplete"})
     public void init() {
         productKey = getContext().getRequest().getParameter("productKey");
-        if (productKey != null) {
+        if (!StringUtils.isBlank(productKey)) {
             editProduct = productDao.findByBusinessKey(productKey);
+        } else {
+            // This must be a create, so construct a new top level product that has nothing else set
+            editProduct = new Product(Product.TOP_LEVEL_PRODUCT);
         }
     }
 
@@ -192,6 +200,8 @@ public class ProductActionBean extends CoreActionBean {
     public Resolution save() {
         populateTokenListFields();
 
+        editProduct.setProductFamily(productFamilyDao.find(editProduct.getProductFamily().getProductFamilyId()));
+
         productDao.persist(editProduct);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been created");
         return new RedirectResolution(ProductActionBean.class, "view").addParameter("productKey", editProduct.getPartNumber());
@@ -229,15 +239,27 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     public List<Product> getAddOns() {
+        if ((addOnList == null) || (addOnList.isEmpty())) {
+            return Collections.emptyList();
+        }
+
         List<String> addOnIdList = Arrays.asList(addOnList.split(","));
         return productDao.findByPartNumbers(addOnIdList);
     }
 
     public org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getPriceItem() {
-        PriceItem priceItem = priceListCache.findById(Long.valueOf(pricetItemList));
+        PriceItem priceItem = priceListCache.findById(Long.valueOf(priceItemList));
 
-        return new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
+        org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity =
+                priceItemDao.find(priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
+
+        // If we don't have this price item, this will add it.
+        if (entity == null) {
+            entity = new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
                 priceItem.getId(), priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
+        }
+
+        return entity;
     }
 
     public String getAddOnCompleteData() throws Exception {
@@ -254,7 +276,7 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     public String getPriceItemCompleteData() throws Exception {
-        if (editProduct == null) {
+        if ((editProduct == null) || (editProduct.getPrimaryPriceItem() == null)) {
             return "";
         }
 
@@ -265,12 +287,12 @@ public class ProductActionBean extends CoreActionBean {
         return itemList.toString();
     }
 
-    public String getPricetItemList() {
-        return pricetItemList;
+    public String getPriceItemList() {
+        return priceItemList;
     }
 
-    public void setPricetItemList(String pricetItemList) {
-        this.pricetItemList = pricetItemList;
+    public void setPriceItemList(String priceItemList) {
+        this.priceItemList = priceItemList;
     }
 
     public String getAddOnList() {

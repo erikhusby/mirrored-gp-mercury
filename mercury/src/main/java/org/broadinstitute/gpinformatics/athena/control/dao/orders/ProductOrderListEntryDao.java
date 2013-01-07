@@ -71,6 +71,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
 
         cq.select(
                 cb.construct(ProductOrderListEntry.class,
+                        productOrderRoot.get(ProductOrder_.productOrderId),
                         productOrderRoot.get(ProductOrder_.jiraTicketKey),
                         billingLedgerBillingSessionJoin.get(BillingSession_.billingSessionId),
                         cb.count(productOrderRoot)));
@@ -79,6 +80,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                 cb.isNull(billingLedgerBillingSessionJoin.get(BillingSession_.billedDate)));
 
         cq.groupBy(
+                productOrderRoot.get(ProductOrder_.productOrderId),
                 productOrderRoot.get(ProductOrder_.jiraTicketKey),
                 billingLedgerBillingSessionJoin.get(BillingSession_.billingSessionId));
 
@@ -104,13 +106,15 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
 
         Root<ProductOrder> productOrderRoot = cq.from(ProductOrder.class);
 
-        // these joins pick out attributes that are selected into the report object
-        Join<ProductOrder, Product> productOrderProductJoin = productOrderRoot.join(ProductOrder_.product);
-        Join<Product, ProductFamily> productProductFamilyJoin = productOrderProductJoin.join(Product_.productFamily);
-        Join<ProductOrder, ResearchProject> productOrderResearchProjectJoin = productOrderRoot.join(ProductOrder_.researchProject);
+        // these joins pick out attributes that are selected into the report object. DRAFTS can have any of these by null
+        // so left joins are needed
+        Join<ProductOrder, Product> productOrderProductJoin = productOrderRoot.join(ProductOrder_.product, JoinType.LEFT);
+        Join<Product, ProductFamily> productProductFamilyJoin = productOrderProductJoin.join(Product_.productFamily, JoinType.LEFT);
+        Join<ProductOrder, ResearchProject> productOrderResearchProjectJoin = productOrderRoot.join(ProductOrder_.researchProject, JoinType.LEFT);
 
         cq.select(
                 cb.construct(ProductOrderListEntry.class,
+                        productOrderRoot.get(ProductOrder_.productOrderId),
                         productOrderRoot.get(ProductOrder_.title),
                         productOrderRoot.get(ProductOrder_.jiraTicketKey),
                         productOrderRoot.get(ProductOrder_.orderStatus),

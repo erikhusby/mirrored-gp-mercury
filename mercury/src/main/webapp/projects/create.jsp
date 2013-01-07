@@ -12,7 +12,7 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
-                                    <c:if test="${actionBean.projectManagerCompleteData != null}">
+                                    <c:if test="${actionBean.projectManagerCompleteData != null && actionBean.priceItemCompleteData != ''}">
                                         prePopulate: ${actionBean.projectManagerCompleteData},
                                     </c:if>
                                     preventDuplicates: true
@@ -23,7 +23,7 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
-                                    <c:if test="${actionBean.scientistCompleteData != null}">
+                                    <c:if test="${actionBean.scientistCompleteData != null && actionBean.scientistCompleteData != ''}">
                                         prePopulate: ${actionBean.scientistCompleteData},
                                     </c:if>
                                     preventDuplicates: true
@@ -34,7 +34,7 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
-                                    <c:if test="${actionBean.externalCollaboratorCompleteData != null}">
+                                    <c:if test="${actionBean.externalCollaboratorCompleteData != null && actionBean.externalCollaboratorCompleteData != ''}">
                                         prePopulate: ${actionBean.externalCollaboratorCompleteData},
                                     </c:if>
                                     preventDuplicates: true
@@ -45,7 +45,7 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
-                                    <c:if test="${actionBean.broadPICompleteData != null}">
+                                    <c:if test="${actionBean.broadPICompleteData != null && actionBean.broadPICompleteData != ''}">
                                         prePopulate: ${actionBean.broadPICompleteData},
                                     </c:if>
                                     preventDuplicates: true
@@ -56,7 +56,7 @@
                                 "${ctxpath}/projects/project.action?fundingAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
-                                    <c:if test="${actionBean.fundingSourcesCompleteData != null}">
+                                    <c:if test="${actionBean.fundingSourcesCompleteData != null && actionBean.fundingSourcesCompleteData != ''}">
                                         prePopulate: ${actionBean.fundingSourcesCompleteData},
                                     </c:if>
                                     preventDuplicates: true
@@ -67,7 +67,7 @@
                                 "${ctxpath}/projects/project.action?cohortAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 2,
-                                    <c:if test="${actionBean.cohortsCompleteData != null}">
+                                    <c:if test="${actionBean.cohortsCompleteData != null && actionBean.cohortsCompleteData != ''}">
                                         prePopulate: ${actionBean.cohortsCompleteData},
                                     </c:if>
                                     preventDuplicates: true
@@ -78,7 +78,7 @@
                                 "${ctxpath}/projects/project.action?irbAutocomplete=", {
                                     searchDelay: 500,
                                     minChars: 1,
-                                    <c:if test="${actionBean.irbsCompleteData != null}">
+                                    <c:if test="${actionBean.irbsCompleteData != null && actionBean.irbsCompleteData != ''}">
                                         prePopulate: ${actionBean.irbsCompleteData},
                                     </c:if>
                                     preventDuplicates: true
@@ -190,10 +190,10 @@
         <div class="control-group">
             <div class="controls">
                 <div class="row-fluid">
-                    <div class="span2">
+                    <div class="span4">
                         <stripes:submit name="save" value="Save"/>
                     </div>
-                    <div class="offset">
+                    <div class="span4">
                         <c:choose>
                             <c:when test="${actionBean.creating}">
                                 <stripes:link href="${ctxpath}/projects/product.action?list=">Cancel</stripes:link>

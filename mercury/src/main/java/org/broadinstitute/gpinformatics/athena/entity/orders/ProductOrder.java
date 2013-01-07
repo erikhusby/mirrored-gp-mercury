@@ -49,7 +49,7 @@ import java.util.*;
 public class ProductOrder implements Serializable {
     private static final String JIRA_SUBJECT_PREFIX = "Product order for ";
 
-    private static final String DRAFT_PREFIX = "Draft-";
+    public static final String DRAFT_PREFIX = "Draft-";
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT_ORDER", schema = "athena", sequenceName = "SEQ_PRODUCT_ORDER")
@@ -337,6 +337,13 @@ public class ProductOrder implements Serializable {
      * Default no-arg constructor
      */
     ProductOrder() {
+    }
+
+    /**
+     * Constructor called when creating a new ProductOrder.
+     */
+    public ProductOrder(@Nonnull BspUser createdBy) {
+        this(createdBy.getUserId(), "", new ArrayList<ProductOrderSample>(), "", null, null);
     }
 
     /**
@@ -934,8 +941,11 @@ public class ProductOrder implements Serializable {
 
     public void updateSamplesFromList() {
         samples.clear();
-        for (String sampleName : sampleList.trim().split("\n")) {
-            samples.add(new ProductOrderSample(sampleName.trim()));
+
+        if (!StringUtils.isBlank(sampleList)) {
+            for (String sampleName : sampleList.trim().split("\n")) {
+                samples.add(new ProductOrderSample(sampleName.trim()));
+            }
         }
     }
 
