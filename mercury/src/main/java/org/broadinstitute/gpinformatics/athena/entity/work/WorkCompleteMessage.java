@@ -59,7 +59,8 @@ public class WorkCompleteMessage {
     private Date completedDate;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
-    @MapKeyColumn(name="key")
+    @MapKeyColumn(name="KEY")
+    @JoinColumn(name = "WORK_COMPLETE_MESSAGE", nullable = false)
     @Nonnull
     private Map<String, MessageDataValue> data;
 
