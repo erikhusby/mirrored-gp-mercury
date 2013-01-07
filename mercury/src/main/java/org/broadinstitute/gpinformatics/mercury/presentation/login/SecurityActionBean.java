@@ -23,6 +23,8 @@ import javax.servlet.http.HttpServletRequest;
 public class SecurityActionBean extends CoreActionBean {
     private Log logger = LogFactory.getLog(SecurityActionBean.class);
 
+    public final static String LOGIN_PAGE = "/security/login.jsp";
+
     private String username;
 
     private String password;
@@ -53,6 +55,12 @@ public class SecurityActionBean extends CoreActionBean {
      */
     @DefaultHandler
     public Resolution welcome() {
+        HttpServletRequest request = (HttpServletRequest) getContext().getRequest();
+        if (request.getUserPrincipal() == null || request.getUserPrincipal().getName() == null) {
+            // User not logged in
+            return new RedirectResolution(LOGIN_PAGE);
+        }
+
         return new ForwardResolution(UserRole.INDEX);
     }
 
@@ -110,11 +118,11 @@ public class SecurityActionBean extends CoreActionBean {
 
     public enum UserRole {
         // Order of roles is important, if user is both PDM and PM we want to go to PDM's page.
-        PDM("/orders/list", DB.Role.PDM.name),
+        PDM("/orders/order.action?list", DB.Role.PDM.name),
         PM(ResearchProjectActionBean.PROJECT_LIST_PAGE, DB.Role.PM.name),
         OTHER("/index.jsp", "");
 
-        private static final String INDEX = AuthorizationListener.HOME_PAGE;
+        private static final String INDEX = "/index.jsp";
         private static final String APP_CONTEXT = "/Mercury"; // getContext().getRequest().getContextPath();
 
         public static UserRole fromRequest(HttpServletRequest request) {
