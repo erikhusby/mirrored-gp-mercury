@@ -190,10 +190,10 @@
         <div class="control-group">
             <div class="controls">
                 <div class="row-fluid">
-                    <div class="span4">
+                    <div class="span1">
                         <stripes:submit name="save" value="Save"/>
                     </div>
-                    <div class="span4">
+                    <div class="span1">
                         <c:choose>
                             <c:when test="${actionBean.creating}">
                                 <stripes:link href="${ctxpath}/projects/product.action?list=">Cancel</stripes:link>
