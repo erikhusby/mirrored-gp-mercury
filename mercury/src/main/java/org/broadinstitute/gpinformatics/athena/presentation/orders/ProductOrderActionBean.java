@@ -27,8 +27,10 @@ import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
-import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -44,12 +46,16 @@ import java.util.*;
 @UrlBinding("/orders/order.action")
 public class ProductOrderActionBean extends CoreActionBean {
 
-    private static final String CREATE_ORDER = CoreActionBean.CREATE + "New Product Order";
-    private static final String EDIT_ORDER = CoreActionBean.EDIT + "Product Order: ";
+    private static final String CURRENT_OBJECT = "Product Order";
+    private static final String CREATE_ORDER = CoreActionBean.CREATE + CURRENT_OBJECT;
+    private static final String EDIT_ORDER = CoreActionBean.EDIT + CURRENT_OBJECT + ": ";
 
     private static final String ORDER_CREATE_PAGE = "/orders/create.jsp";
     private static final String ORDER_LIST_PAGE = "/orders/list.jsp";
     private static final String ORDER_VIEW_PAGE = "/orders/view.jsp";
+
+    @Inject
+    private QuoteService quoteService;
 
     @Inject
     private ProductOrderListEntryDao orderListEntryDao;
@@ -81,16 +87,14 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private BillingLedgerDao billingLedgerDao;
 
-    @Inject
-    private UserBean userBean;
-
     private List<ProductOrderListEntry> allProductOrders;
 
-    @Validate(required = true, on = {"view", "edit", "save"})
+    @Validate(required = true, on = {"view", "edit"+6})
     private String businessKey;
 
     @ValidateNestedProperties({
-            @Validate(field="comments", maxlength=2000, on={"save"})
+        @Validate(field="comments", maxlength=2000, on={"save"}),
+        @Validate(field="title", required = true, maxlength=255, on={"save"})
     })
     private ProductOrder editOrder;
 
@@ -113,8 +117,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {"view", "edit", "downloadBillingTracker", "save"})
     public void init() {
         businessKey = getContext().getRequest().getParameter("businessKey");
-        if (businessKey != null) {
+        if (!StringUtils.isBlank(businessKey)) {
             editOrder = productOrderDao.findByBusinessKey(businessKey);
+        } else {
+            editOrder = new ProductOrder(getUserBean().getBspUser());
         }
     }
 
@@ -133,52 +139,86 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    @ValidationMethod(on = "placeOrder")
+    public void validateOrderPlacement(ValidationErrors errors) throws Exception {
+        if (editOrder.getSamples().isEmpty()) {
+            errors.addGlobalError(new SimpleError("Order does not have anY samples"));
+        }
+
+        if (editOrder.getResearchProject() == null) {
+            errors.addGlobalError(new SimpleError("Cannot place order '" + editOrder.getBusinessKey() + "' because it does not have a research project"));
+        }
+
+        if (editOrder.getQuoteId() == null) {
+            errors.addGlobalError(new SimpleError("Cannot place order '" + editOrder.getBusinessKey() + "' because it does not have a quote specified"));
+        }
+
+        if (editOrder.getProduct() == null) {
+            errors.addGlobalError(new SimpleError("Cannot place order '" + editOrder.getBusinessKey() + "' because it does not have a product"));
+        }
+
+        if (editOrder.getProduct() == null) {
+            errors.addGlobalError(new SimpleError("Cannot place order '" + editOrder.getCount() + "' because it does not have a specified number of lanes"));
+        }
+
+        try {
+            quoteService.getQuoteByAlphaId(editOrder.getQuoteId());
+        } catch (QuoteServerException ex) {
+            errors.addGlobalError(new SimpleError("The quote id " + editOrder.getQuoteId() + " is not valid: " + ex.getMessage()));
+        } catch (QuoteNotFoundException ex) {
+            errors.addGlobalError(new SimpleError("The quote id " + editOrder.getQuoteId() + " is not found"));
+        }
+    }
+
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
     public void validateOrderSelection(ValidationErrors errors) {
-        if (!userBean.isValidBspUser()) {
+        if (!getUserBean().isValidBspUser()) {
             errors.addGlobalError(new SimpleError("This requires that you be a valid bsp user "));
-            return;
         }
 
         if ((selectedProductOrderBusinessKeys == null) || selectedProductOrderBusinessKeys.isEmpty()) {
             errors.addGlobalError(new SimpleError("Please select at least one product order"));
-            return;
-        }
+        } else {
+            Set<Product> products = new HashSet<Product> ();
+            selectedProductOrders =
+                productOrderDao.findListByBusinessKeyList(
+                    selectedProductOrderBusinessKeys,
+                    ProductOrderDao.FetchSpec.Product,
+                    ProductOrderDao.FetchSpec.ResearchProject,
+                    ProductOrderDao.FetchSpec.Samples);
 
-        Set<Product> products = new HashSet<Product> ();
-        selectedProductOrders =
-            productOrderDao.findListByBusinessKeyList(
-                selectedProductOrderBusinessKeys,
-                ProductOrderDao.FetchSpec.Product,
-                ProductOrderDao.FetchSpec.ResearchProject,
-                ProductOrderDao.FetchSpec.Samples);
+            for (ProductOrder order : selectedProductOrders) {
+                products.add(order.getProduct());
+            }
 
-        for (ProductOrder order : selectedProductOrders) {
-            products.add(order.getProduct());
-        }
+            // Go through each products and report invalid duplicate price item names
+            for (Product product : products) {
+                String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
+                if (duplicatePriceItems != null) {
+                    errors.addGlobalError(new SimpleError(
+                        "The Product " + product.getPartNumber() + " has duplicate price items: " +
+                        StringUtils.join(duplicatePriceItems, ", ")));
+                }
+            }
 
-        // Go through each products and report invalid duplicate price item names
-        for (Product product : products) {
-            String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
-            if (duplicatePriceItems != null) {
+            // If there are locked out orders, then do not allow the session to start
+            Set<BillingLedger> lockedOutOrders = billingLedgerDao.findLockedOutByOrderList(getSelectedProductOrderBusinessKeys());
+            if (!lockedOutOrders.isEmpty()) {
+                Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());
+                for (BillingLedger ledger : lockedOutOrders) {
+                    lockedOutOrderStrings.add(ledger.getProductOrderSample().getProductOrder().getTitle());
+                }
+
+                String lockedOutString = StringUtils.join(lockedOutOrderStrings.toArray(), ", ");
+
                 errors.addGlobalError(new SimpleError(
-                    "The Product " + product.getPartNumber() + " has duplicate price items: " +
-                    StringUtils.join(duplicatePriceItems, ", ")));
+                    "The following orders are locked out by active billing sessions: " + lockedOutString));
             }
         }
 
-        // If there are locked out orders, then do not allow the session to start
-        Set<BillingLedger> lockedOutOrders = billingLedgerDao.findLockedOutByOrderList(getSelectedProductOrderBusinessKeys());
-        if (!lockedOutOrders.isEmpty()) {
-            Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());
-            for (BillingLedger ledger : lockedOutOrders) {
-                lockedOutOrderStrings.add(ledger.getProductOrderSample().getProductOrder().getTitle());
-            }
-
-            String lockedOutString = StringUtils.join(lockedOutOrderStrings.toArray(), ", ");
-
-            errors.addGlobalError(new SimpleError(
-                "The following orders are locked out by active billing sessions: " + lockedOutString));
+        // If there are errors, will reload the page, so need to fetch the list
+        if (errors.size() > 0) {
+            listInit();
         }
     }
 
@@ -210,25 +250,38 @@ public class ProductOrderActionBean extends CoreActionBean {
         return new ForwardResolution(ORDER_CREATE_PAGE);
     }
 
-    @HandlesEvent("save")
-    public Resolution save() {
+    @HandlesEvent("placeOrder")
+    public Resolution placeOrder() {
         try {
-            // Since there is one project, can just use the list as the key
-            ResearchProject project = projectDao.findByBusinessKey(researchProjectList);
-
-            // Since there is one product, can just use the list as the key
-            Product product = productDao.findByPartNumber(productList);
-
-            // update the addons from the keys
-            List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
-            editOrder.updateData(project, product, addOnProducts);
-
-            // save it!
-            productOrderDao.persist(editOrder);
+            editOrder.submitProductOrder();
+            editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         } catch (Exception e ) {
             addGlobalValidationError(e.getMessage());
             return null;
         }
+
+        addMessage("Product Order \"" + editOrder.getTitle() + "\" has been placed");
+        return new RedirectResolution(ProductOrderActionBean.class, "view").addParameter("businessKey", editOrder.getBusinessKey());
+    }
+
+    @HandlesEvent("save")
+    public Resolution save() throws Exception {
+        // Since there is one project, can just use the list as the key
+        ResearchProject project = projectDao.findByBusinessKey(researchProjectList);
+
+        // Since there is one product, can just use the list as the key
+        Product product = productDao.findByPartNumber(productList);
+
+        // update the addons from the keys
+        List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
+        editOrder.updateData(project, product, addOnProducts);
+
+        if (editOrder.isDraft()) {
+            editOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
+        }
+
+        // save it!
+        productOrderDao.persist(editOrder);
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been created");
         return new RedirectResolution(ProductOrderActionBean.class, "view").addParameter("businessKey", editOrder.getBusinessKey());
@@ -257,7 +310,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             return new RedirectResolution(ProductOrderActionBean.class, "list");
         }
 
-        BillingSession session = new BillingSession(userBean.getBspUser().getUserId(), ledgerItems);
+        BillingSession session = new BillingSession(getUserBean().getBspUser().getUserId(), ledgerItems);
         billingSessionDao.persist(session);
 
         return new RedirectResolution(BillingSessionActionBean.class, "view")
@@ -387,7 +440,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public String getProjectCompleteData() throws Exception {
-        if (editOrder == null) {
+        if ((editOrder == null) || (editOrder.getResearchProject() == null)) {
             return "";
         }
 
@@ -395,7 +448,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public String getProductCompleteData() throws Exception {
-        if (editOrder == null) {
+        if ((editOrder == null) || (editOrder.getProduct() == null)) {
             return "";
         }
 

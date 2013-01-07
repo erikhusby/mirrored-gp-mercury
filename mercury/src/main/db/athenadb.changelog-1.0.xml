@@ -2021,4 +2021,89 @@
         </sql>
     </changeSet>
 
+
+
+    <changeSet id="GPLIM-636b.1" author="mcovarr">
+        <addColumn schemaName="athena" tableName="research_projectirb">
+            <column name="irb_type_varchar" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.1_aud" author="mcovarr">
+        <addColumn schemaName="athena" tableName="research_projectirb_aud">
+            <column name="irb_type_varchar" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.2" author="mcovarr">
+        <sql>
+            update athena.research_projectirb set irb_type_varchar = case irb_type
+            when 0 then 'PARTNERS'
+            when 1 then 'FARBER'
+            when 2 then 'MIT'
+            when 3 then 'BROAD'
+            when 4 then 'OTHER'
+            end
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.2_aud" author="mcovarr">
+        <sql>
+            update athena.research_projectirb_aud set irb_type_varchar = case irb_type
+            when 0 then 'PARTNERS'
+            when 1 then 'FARBER'
+            when 2 then 'MIT'
+            when 3 then 'BROAD'
+            when 4 then 'OTHER'
+            end
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.3" author="mcovarr">
+        <dropColumn schemaName="athena" tableName="research_projectirb" columnName="irb_type" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.3_aud" author="mcovarr">
+        <dropColumn schemaName="athena" tableName="research_projectirb_aud" columnName="irb_type" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.4" author="mcovarr">
+        <renameColumn schemaName="athena" tableName="research_projectirb" oldColumnName="irb_type_varchar" newColumnName="irb_type" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.4_aud" author="mcovarr">
+        <renameColumn schemaName="athena" tableName="research_projectirb_aud" oldColumnName="irb_type_varchar" newColumnName="irb_type" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.5" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="research_projectirb" columnName="irb_type" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.6" author="mcovarr">
+        <sql>
+            ALTER TABLE athena.research_projectirb
+            add CONSTRAINT check_irb_type
+            CHECK (irb_type IN ('PARTNERS', 'FARBER', 'MIT', 'BROAD', 'OTHER'))
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-603-1" author="hrafal">
+        <dropNotNullConstraint schemaName="athena" tableName="product_order" columnName="jira_ticket_key"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-603-2" author="hrafal">
+        <dropNotNullConstraint schemaName="athena" tableName="product_order" columnName="quote_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-603-3" author="hrafal">
+        <dropNotNullConstraint schemaName="athena" tableName="product_order" columnName="count"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-603-4" author="hrafal">
+        <dropNotNullConstraint schemaName="athena" tableName="product_order" columnName="product"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-603-5" author="hrafal">
+        <dropNotNullConstraint schemaName="athena" tableName="product_order" columnName="research_project"/>
+    </changeSet>
 </databaseChangeLog>

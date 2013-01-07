@@ -132,10 +132,20 @@
     });
 })(jQuery);
 
+
 // extend sorting for datatables to allow for title sorting
 jQuery.extend( jQuery.fn.dataTableExt.oSort, {
     "title-string-pre": function ( a ) {
-        return a.match(/title="(.*?)"/)[1].toLowerCase();
+        var matchingArray = a.match(/title="(.*?)"/);
+        if (matchingArray == null) {
+            return '';
+        }
+
+        if (matchingArray.length < 2) {
+            return '';
+        }
+
+        return matchingArray[1].toLowerCase();
     },
 
     "title-string-asc": function ( a, b ) {
@@ -146,3 +156,4 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
         return ((a < b) ? 1 : ((a > b) ? -1 : 0));
     }
 });
+

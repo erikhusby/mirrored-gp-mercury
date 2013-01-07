@@ -34,13 +34,12 @@ table.dataTable td.dataTables_empty {
 table.dataTable tr.odd { background-color: #E2E4FF; }
 table.dataTable tr.even { background-color: white; }
 
-table.dataTable tr.odd td.sorting_1 { background-color: #ffffe0; }
-table.dataTable tr.odd td.sorting_2 { background-color: #f3f3d3; }
-table.dataTable tr.odd td.sorting_3 { background-color: #eaead3; }
-table.dataTable tr.even td.sorting_1 { background-color: #fffff0; }
-table.dataTable tr.even td.sorting_2 { background-color: #fafaf0; }
-table.dataTable tr.even td.sorting_3 { background-color: #f6f6f0; }
-
+table.dataTable tr.odd:not(:hover) td.sorting_1 { background-color: #ffffe0; }
+table.dataTable tr.odd:not(:hover) td.sorting_2 { background-color: #f3f3d3; }
+table.dataTable tr.odd:not(:hover) td.sorting_3 { background-color: #eaead3; }
+table.dataTable tr.even:not(:hover) td.sorting_1 { background-color: #fffff0; }
+table.dataTable tr.even:not(:hover) td.sorting_2 { background-color: #fafaf0; }
+table.dataTable tr.even:not(:hover) td.sorting_3 { background-color: #f6f6f0; }
 
 /*
  * Table wrapper

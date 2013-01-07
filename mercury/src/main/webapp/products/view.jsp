@@ -1,4 +1,3 @@
-<%@ taglib prefix="security" uri="http://www.broadinstitute.org/Mercury/SecureTag" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -126,10 +125,12 @@
                 </div>
             </div>
 
-            <div class="control-group" style="margin-top: 20px">
-                <label class="control-label label-form">Use Automated Billing?</label>
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Billing</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editProduct.useAutomatedBilling ? "Yes, Bill When:" : "No"}</div>
+                    <div class="form-value">
+                        ${actionBean.editProduct.useAutomatedBilling ? "Automatic When:" : "Manual with tracker"}
+                    </div>
                 </div>
             </div>
 

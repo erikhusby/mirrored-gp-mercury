@@ -70,21 +70,32 @@
                 $j('#userBadge').popover({ trigger: "hover", html: true });
                 $j('.shiftCheckbox').enableCheckboxRangeSelection();
 
-                $j(".defaultText").focus(function (srcc) {
-                    if ($j(this).val() == $j(this)[0].title) {
-                        $j(this).removeClass("defaultTextActive");
-                        $j(this).val("");
-                    }
-                });
-
+                $j(".defaultText").focus(clearOnFocus);
                 $j(".defaultText").blur(updateActiveText);
                 $j(".defaultText").change(updateActiveText);
-
                 $j(".defaultText").blur();
+
+                // The form submit needs to clear the fields
+                $j('.defaultText').closest('form').submit(cleanUpDefaultText);
 
                 // Default date range selector (if there is a dateRangeDiv, the action bean will HAVE to have this
                 $j('#dateRangeDiv').dateRangeSelector();
             });
+
+            function clearOnFocus(srcc) {
+                if ($j(this).val() == $j(this)[0].title) {
+                    $j(this).removeClass("defaultTextActive");
+                    $j(this).val("");
+                }
+            }
+
+            function cleanUpDefaultText() {
+                jQuery(this).find('.defaultText').each(function() {
+                    if (jQuery(this).val() == jQuery(this).attr('title')) {
+                        jQuery(this).val('');
+                    }
+                });
+            }
 
             function updateActiveText() {
                 if ($j(this).val() == "") {
@@ -104,9 +115,9 @@
                 <div class="row-fluid">
                     <div class="brand" style="display:inline;">
                         <img src="${ctxpath}/images/broad_logo.png" alt="Broad Institute"/>
-                        <a href="${ctxpath}/"
+                        <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean"
                            style="padding-left: 30px;text-decoration: none; font-variant: small-caps; font-size: 3em">
-                            <img src="${ctxpath}/images/mercury_helmet_${bean.buildInfoBean.deployment}.png" alt="Mercury Helmet" width="40" height="30"/> Mercury</a>
+                            <img src="${ctxpath}/images/mercury_helmet_${bean.buildInfoBean.deployment}.png" alt="Mercury Helmet" width="40" height="30"/> Mercury</stripes:link>
                     </div>
                     <div id="navbarForm" class="nav pull-right">
                         <span id="jiraProblem" class="badge" style="cursor: pointer;"
@@ -120,7 +131,9 @@
                                data-content="${bean.userBean.bspStatus}<br/>${bean.userBean.jiraStatus}<br/>${bean.userBean.rolesString}">${bean.userBean.loginUserName}</span>
 
                             &#160;
-                            <a href="${ctxpath}/security/security.action?signOut" value="Sign out" class="btn btn-mini">Sign out</a>
+                            <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean"  event="signOut" title="Sign out" class="btn btn-mini">
+                                Sign out
+                            </stripes:link>
                         </c:if>
                     </div>
                 </div>

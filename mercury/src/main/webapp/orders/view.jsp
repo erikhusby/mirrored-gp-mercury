@@ -16,8 +16,7 @@
                         {"bSortable": true},                    // Volume
                         {"bSortable": true},                    // Concentration
                         {"bSortable": true},                    // Yield Amount
-                        {"bSortable": true, "sSortDataType" : "title-string-asc"},   // FP Status
-                        {"bSortable": true},                    // Status
+                        {"bSortable": true, "sType" : "title-string"},   // FP Status
                         {"bSortable": true},                    // Eligible
                         {"bSortable": true},                    // Billed
                         {"bSortable": true},                    // Abandoned
@@ -51,9 +50,16 @@
                 <label class="control-label label-form">Order Barcode</label>
                 <div class="controls">
                     <div class="form-value">
-                        <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">
-                            ${actionBean.editOrder.jiraTicketKey}
-                        </a>
+                        <c:choose>
+                            <c:when test="${actionBean.editOrder.draft}">
+                                DRAFT
+                            </c:when>
+                            <c:otherwise>
+                                <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">
+                                        ${actionBean.editOrder.jiraTicketKey}
+                                </a>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
             </div>
@@ -62,12 +68,17 @@
                 <label class="control-label label-form">Research Project</label>
                 <div class="controls">
                     <div class="form-value">
-                        <stripes:link title="Research Project" href="${ctxpath}/projects/project.action?view=">
-                            <stripes:param name="businessKey" value="${actionBean.editOrder.researchProject.businessKey}"/>
-                            ${actionBean.editOrder.researchProject.title}</stripes:link>
+                        <c:if test="${actionBean.editOrder.researchProject != null}">
+                            <stripes:link title="Research Project"
+                                          beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
+                                          event="view">
+                                <stripes:param name="businessKey" value="${actionBean.editOrder.researchProject.businessKey}"/>
+                                ${actionBean.editOrder.researchProject.title}
+                            </stripes:link>
                             (<a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.researchProject.jiraTicketKey}" class="external" target="JIRA">
                                 ${actionBean.editOrder.researchProject.jiraTicketKey}
                             </a>)
+                        </c:if>
                     </div>
                 </div>
             </div>
@@ -76,10 +87,12 @@
                 <label class="control-label label-form">Product</label>
                 <div class="controls">
                     <div class="form-value">
-                        <stripes:link title="Product" href="${ctxpath}/products/product.action?view">
-                            <stripes:param name="product" value="${actionBean.editOrder.product.partNumber}"/>
-                            ${actionBean.editOrder.product.productName}
-                        </stripes:link>
+                        <c:if test="${actionBean.editOrder.product != null}">
+                            <stripes:link title="Product" href="${ctxpath}/products/product.action?view">
+                                <stripes:param name="product" value="${actionBean.editOrder.product.partNumber}"/>
+                                ${actionBean.editOrder.product.productName}
+                            </stripes:link>
+                        </c:if>
                     </div>
                 </div>
             </div>
@@ -116,13 +129,6 @@
                 </div>
             </div>
 
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Samples</label>
-                <div class="controls">
-                    <div class="form-value">${actionBean.editOrder.sampleBillingSummary}</div>
-                </div>
-            </div>
-
             <div class="borderHeader">
                 Samples
             </div>
@@ -144,7 +150,6 @@
                         <th width="40">Concentration</th>
                         <th width="40">Yield Amount</th>
                         <th width="60">FP Status</th>
-                        <th width="100">Status</th>
                         <th width="40">Eligible</th>
                         <th width="40">Billed</th>
                         <th width="40">Abandoned</th>
@@ -177,7 +182,6 @@
                                     <stripes:image name="" alt="Yes" src="/images/check.png"/>
                                 </c:if>
                             </td>
-                            <td width="100">${sample.billingStatus.displayName}</td>
                             <td width="70">&#160;</td>
                             <td width="70">&#160;</td>
                             <td width="70">&#160;</td>

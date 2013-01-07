@@ -14,7 +14,7 @@
                         {"bSortable": true, "sType": "html"},
                         {"bSortable": true},
                         {"bSortable": true},
-                        {"bSortable": true, "sSortDataType" : "title-string-asc"}]
+                        {"bSortable": true, "sType" : "title-string"}]
                 })
             });
         </script>
