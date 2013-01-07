@@ -97,6 +97,7 @@ public class WorkflowStepDef {
     private QuantType quantType;
     /** How long we expect to spend in this step */
     private Integer expectedCycleTimeMinutes;
+    private String batchJiraProjectType;
     /** The category of output, e.g. library */
     private OutputCategory outputCategory;
     /** The type of output, e.g. enriched */
@@ -151,6 +152,10 @@ public class WorkflowStepDef {
 
     public WorkflowProcessDefVersion getProcessDefVersion () {
         return processDefVersion;
+    }
+
+    public String getBatchJiraProjectType() {
+        return batchJiraProjectType;
     }
 
     public void setProcessDefVersion ( WorkflowProcessDefVersion processDefVersion ) {

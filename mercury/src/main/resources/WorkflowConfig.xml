@@ -11,6 +11,7 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <entryMaterialType>GENOMIC_DNA</entryMaterialType>
+                <batchJiraProjectType></batchJiraProjectType>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Preflight Cleanup</name>
@@ -90,6 +91,7 @@
                 <optional>false</optional>
                 <entryPoint>true</entryPoint>
                 <reEntryPoint>true</reEntryPoint>
+                <batchJiraProjectType>LCSET</batchJiraProjectType>
             </workflowStepDefs>
 <!--
             <workflowStepDefs>
@@ -385,6 +387,7 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <batchJiraProjectType></batchJiraProjectType>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Whole Blood</name>

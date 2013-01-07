@@ -372,7 +372,7 @@ public class LabEventHandler implements Serializable {
         for (LabVessel currVessel : labEvent.getAllLabVessels()) {
 
             Collection<String> productOrders = currVessel.getNearestProductOrders();
-
+            WorkflowStepDef workingBucketName =null;
             if (productOrders != null && !productOrders.isEmpty()) {
                 ProductWorkflowDefVersion workflowDef = getWorkflowVersion(productOrders.iterator().next());
 
@@ -380,26 +380,30 @@ public class LabEventHandler implements Serializable {
 
                 if (workflowDef != null &&
                     workflowDef.isPreviousStepBucket(labEvent.getLabEventType().getName())) {
-                    WorkflowStepDef workingBucketName = /*bucketDao.findByName(*/workflowDef.getPreviousStep(
+                    workingBucketName = /*bucketDao.findByName(*/workflowDef.getPreviousStep(
                             labEvent.getLabEventType().getName())/*)*/;
                     if (workingBucketName == null) {
                         workingBucketName = workflowDef.getPreviousStep(
                                 labEvent.getLabEventType().getName());
                     }
 
-                    if (!bucketVessels.containsKey(workingBucketName)) {
-                        bucketVessels.put(workingBucketName, new LinkedList<LabVessel>());
-                        if (bucketVessels.keySet().size() > 1) {
-                            LOG.warn("Samples are coming from multiple Buckets");
-//                        throw new IllegalStateException("Samples are coming from multiple Buckets");
-                        }
-                    }
-                    bucketVessels.get(workingBucketName).add(currVessel);
                 }
+            }
+
+            if (workingBucketName != null) {
+                if (!bucketVessels.containsKey(workingBucketName)) {
+                    bucketVessels.put(workingBucketName, new LinkedList<LabVessel>());
+                    if (bucketVessels.keySet().size() > 1) {
+                        LOG.warn("Samples are coming from multiple Buckets");
+    //                        throw new IllegalStateException("Samples are coming from multiple Buckets");
+                    }
+                }
+                bucketVessels.get(workingBucketName).add(currVessel);
             }
         }
         return bucketVessels;
     }
+
 
 
 }

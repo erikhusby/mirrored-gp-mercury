@@ -162,7 +162,6 @@ public class LabBatchEjb {
 
                 Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
-                // TODO  SGM Set Due Date
 
                 // TODO SGM Determine Project and Issue type better.  Use Workflow Configuration
                 JiraIssue jiraIssue = jiraService
@@ -187,7 +186,7 @@ public class LabBatchEjb {
                         " " + newBatch.getBatchName(), Visibility.Type.role,
                         Visibility.Value.QA_Jira_Users);
             } catch (IOException ioe) {
-                logger.error("Error attempting to link Batch " + ticket.getTicketName() + " to Product order " + pdo,
+                logger.error("Error attempting to link Batch " + newBatch.getJiraTicket().getTicketName() + " to Product order " + pdo,
                         ioe);
             }
         }

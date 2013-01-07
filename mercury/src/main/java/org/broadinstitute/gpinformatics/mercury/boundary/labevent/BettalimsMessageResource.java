@@ -345,7 +345,7 @@ public class BettalimsMessageResource {
             Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels =
                     labEventHandler.itemizeBucketItems(labEvent);
 
-            if(bucketVessels.keySet().size() ==1) {
+            if(bucketVessels.keySet().size() == 1) {
 
                 WorkflowStepDef workingBucketIdentifier = bucketVessels.keySet().iterator().next();
                 Bucket workingBucket = bucketDao.findByName(workingBucketIdentifier.getName());
