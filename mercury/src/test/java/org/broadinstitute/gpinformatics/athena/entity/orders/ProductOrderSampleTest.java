@@ -37,7 +37,7 @@ public class ProductOrderSampleTest {
     @Test
     public void testBeaniness() {
         Configuration configuration = new ConfigurationBuilder().ignoreProperty("productOrder").ignoreProperty("sampleComment")
-                .ignoreProperty("bspDTO").ignoreProperty("billingStatus").build();
+                .ignoreProperty("bspDTO").ignoreProperty("billingStatus").ignoreProperty("deliveryStatus").build();
         new BeanTester().testBean(ProductOrderSample.class, configuration);
 
         class ProductOrderSampleFactory implements EquivalentFactory<ProductOrderSample> {
@@ -70,7 +70,8 @@ public class ProductOrderSampleTest {
         return productOrderSamples;
     }
 
-    static final String MATERIAL_NAME = "Blood";
+    static final org.broadinstitute.bsp.client.sample.MaterialType BSP_MATERIAL_TYPE =
+            new org.broadinstitute.bsp.client.sample.MaterialType("Cells", "Red Blood Cells");
 
     static class TestPDOData {
         final Product product;
@@ -81,16 +82,16 @@ public class ProductOrderSampleTest {
         public TestPDOData() {
             ProductOrder order = AthenaClientServiceStub.createDummyProductOrder();
             product = order.getProduct();
-            MaterialType materialType = new MaterialType("", MATERIAL_NAME);
+            MaterialType materialType = new MaterialType(BSP_MATERIAL_TYPE.getCategory(), BSP_MATERIAL_TYPE.getName());
             addOn = AthenaClientServiceStub.createDummyProduct();
             addOn.addAllowableMaterialType(materialType);
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);
             sample1 = new ProductOrderSample("",
-                    new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", MATERIAL_NAME, "", "", "", "", "", "",
+                    new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", BSP_MATERIAL_TYPE.getFullName(), "", "", "", "", "", "",
                             ""));
             sample2 = new ProductOrderSample("",
-                    new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "XXX", "", "", "", "", "", "", ""));
+                    new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "XXX:XXX", "", "", "", "", "", "", ""));
             order.setSamples(Collections.singletonList(sample1));
             List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
             samples.add(sample1);

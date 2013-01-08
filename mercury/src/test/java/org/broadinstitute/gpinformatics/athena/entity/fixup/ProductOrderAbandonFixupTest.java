@@ -39,6 +39,8 @@ public class ProductOrderAbandonFixupTest extends Arquillian {
                 log.error("No Cancel transition found for " + pdo + ": " + e.getMessage(), e);
             } catch (ProductOrderEjb.NoSuchPDOException e) {
                 log.error("No such PDO found in DB: " + pdo);
+            } catch (ProductOrderEjb.SamplesNotAbandonableException e) {
+                log.error(e.getMessage());
             }
         }
 

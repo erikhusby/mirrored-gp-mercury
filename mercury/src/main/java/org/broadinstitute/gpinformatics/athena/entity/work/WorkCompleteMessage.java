@@ -2,8 +2,10 @@ package org.broadinstitute.gpinformatics.athena.entity.work;
 
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -14,25 +16,22 @@ import java.util.Map;
 @Table(name= "WORK_COMPLETE_MESSAGE", schema = "athena")
 public class WorkCompleteMessage {
     public enum REQUIRED_NAMES {
-        PDO_NAME, SAMPLE_NAME, SAMPLE_INDEX, ALIQUOT_LSID, COMPLETED_TIME
+        PDO_NAME, SAMPLE_NAME, SAMPLE_INDEX, COMPLETED_TIME
     }
 
     WorkCompleteMessage() {
     }
 
     public WorkCompleteMessage(
-        String pdoName, String collaboratorSampleId, long sampleIndex, String aliquotLsid, Date completedDate, Map<String, Object> dataMap) {
+        @Nonnull String pdoName, @Nonnull String sampleName, long sampleIndex, @Nonnull Date completedDate,
+        @Nonnull Map<String, Object> dataMap) {
 
         this.pdoName = pdoName;
-        this.collaboratorSampleId = collaboratorSampleId;
+        this.sampleName = sampleName;
         this.sampleIndex = sampleIndex;
-        this.aliquotLsid = aliquotLsid;
         this.completedDate = completedDate;
 
-        createMessageDataValues(dataMap);
-    }
-
-    private void createMessageDataValues(Map<String, Object> dataMap) {
+        data = new HashMap<String, MessageDataValue>();
         for (Map.Entry<String, Object> entry : dataMap.entrySet()) {
             data.put(entry.getKey(), new MessageDataValue(entry.getKey(), entry.getValue().toString()));
         }
@@ -44,49 +43,51 @@ public class WorkCompleteMessage {
     private Long workCompleteMessageId;
 
     @Column(name = "PDO_NAME", length = 255, nullable = false)
+    @Nonnull
     private String pdoName;
 
-    @Column(name = "COLLABORATOR_SAMPLE_ID", length = 255, nullable = false)
-    private String collaboratorSampleId;
+    @Column(name = "SAMPLE_NAME", length = 255, nullable = false)
+    @Nonnull
+    private String sampleName;
 
     // If the same sample exists multiple times in the PDO, this will let us know which was meant
-    @Column(name = "SAMPLE_INDEX")
-    private Long sampleIndex;
+    @Column(name = "SAMPLE_INDEX", nullable = false)
+    private long sampleIndex;
 
-    @Column(name = "ALIQUOT_LSID", length = 255, nullable = true)
-    private String aliquotLsid;
-
-    @Column(name = "COMPLETED_DATE")
+    @Column(name = "COMPLETED_DATE", nullable = false)
+    @Nonnull
     private Date completedDate;
 
-    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch= FetchType.LAZY)
-    @MapKeyColumn(name="key")
+    @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true, fetch = FetchType.LAZY)
+    @MapKeyColumn(name="KEY")
+    @JoinColumn(name = "WORK_COMPLETE_MESSAGE", nullable = false)
+    @Nonnull
     private Map<String, MessageDataValue> data;
 
     /** If not null, the date when this message was processed.  If null, the message hasn't yet been processed. */
     @Column(name = "PROCESS_DATE")
     private Date processDate;
 
+    @Nonnull
     public String getPdoName() {
         return pdoName;
     }
 
-    public String getCollaboratorSampleId() {
-        return collaboratorSampleId;
+    @Nonnull
+    public String getSampleName() {
+        return sampleName;
     }
 
     public Long getSampleIndex() {
         return sampleIndex;
     }
 
-    public String getAliquotLsid() {
-        return aliquotLsid;
-    }
-
+    @Nonnull
     public Date getCompletedDate() {
         return completedDate;
     }
 
+    @Nonnull
     public Map<String, MessageDataValue> getData() {
         return data;
     }
