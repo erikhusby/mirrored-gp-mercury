@@ -28,7 +28,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
 public class WorkCompleteMessageBeanTest extends ContainerTest{
 
     public static final String TEST_PDO_NAME = "PDO-xxx";
