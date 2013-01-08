@@ -152,7 +152,7 @@
                         <div class="controls">
                             <div class="form-value">
                                     ${actionBean.researchProjectCreatorString} on <fmt:formatDate
-                                    value="${actionBean.researchProject.createdDate}" dateStyle="short"/>
+                                    value="${actionBean.researchProject.createdDate}"/>
                             </div>
                         </div>
                     </div>
