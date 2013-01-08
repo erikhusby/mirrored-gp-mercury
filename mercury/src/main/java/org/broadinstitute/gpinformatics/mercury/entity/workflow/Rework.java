@@ -46,6 +46,10 @@ public class Rework {
     @Enumerated(EnumType.STRING)
     private ReworkType reworkType;
 
+    /** For JPA */
+    Rework() {
+    }
+
     public Rework(LabVessel reworkedLabVessel, String reworkMarkedStep, String reworkBackToStep, ReworkType reworkType) {
         this.reworkedLabVessel = reworkedLabVessel;
         this.reworkMarkedStep = reworkMarkedStep;
