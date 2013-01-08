@@ -44,6 +44,12 @@ public class CoreActionBean implements ActionBean {
     public static final String CREATE = "Create ";
     public static final String EDIT = "Edit ";
 
+    public static final String CREATE_ACTION = "create";
+    public static final String EDIT_ACTION = "edit";
+    public static final String LIST_ACTION = "list";
+    public static final String SAVE_ACTION = "save";
+    public static final String VIEW_ACTION = "view";
+
     public boolean hasFlashError;
 
     public static final String FLASH_ERROR = "flash_error";

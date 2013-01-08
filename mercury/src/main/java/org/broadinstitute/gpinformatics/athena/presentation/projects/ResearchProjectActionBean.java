@@ -62,13 +62,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private FundingListBean fundingList;
 
-    @Validate(required = true, on={"edit", "view"})
+    @Validate(required = true, on={EDIT_ACTION, VIEW_ACTION})
     private String businessKey;
 
     @ValidateNestedProperties({
-            @Validate(field = "title", maxlength = 4000, on = {"save"}),
-            @Validate(field = "synopsis", maxlength = 4000, on = {"save"}),
-            @Validate(field = "comments", maxlength = 2000, on = {"save"})
+            @Validate(field = "title", maxlength = 4000, on = {SAVE_ACTION}),
+            @Validate(field = "synopsis", maxlength = 4000, on = {SAVE_ACTION}),
+            @Validate(field = "comments", maxlength = 2000, on = {SAVE_ACTION})
     })
     private ResearchProject editResearchProject;
 
@@ -114,7 +114,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     /**
      * Fetch the complete list of research projects.
      */
-    @After(stages = LifecycleStage.BindingAndValidation, on = {"list"})
+    @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION})
     public void listInit() {
         allResearchProjects = researchProjectDao.findAllResearchProjects();
     }
@@ -124,7 +124,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * get the OriginalTitle on the project for validation. Create is needed so that token inputs don't have to check
      * for existence.
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {"view", "edit", "create", "save"})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION})
     public void init() {
         businessKey = getContext().getRequest().getParameter("businessKey");
         if (!StringUtils.isBlank(businessKey)) {
@@ -139,7 +139,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      *
      * @param errors The errors object
      */
-    @ValidationMethod(on = "save")
+    @ValidationMethod(on = SAVE_ACTION)
     public void createUniqueNameValidation(ValidationErrors errors) {
         // If the research project has no original title, then it was not fetched from hibernate, so this is a create
         // OR if this was fetched and the title has been changed
@@ -172,7 +172,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     @Default
-    @HandlesEvent("list")
+    @HandlesEvent(LIST_ACTION)
     public Resolution list() {
         return new ForwardResolution(PROJECT_LIST_PAGE);
     }
@@ -201,7 +201,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
         researchProjectDao.persist(editResearchProject);
         addMessage("The research project '" + editResearchProject.getTitle() + "' has been saved.");
-        return new RedirectResolution(ResearchProjectActionBean.class, "view").addParameter("businessKey", editResearchProject.getBusinessKey());
+        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION).addParameter("businessKey", editResearchProject.getBusinessKey());
     }
 
     private void populateTokenListFields() {

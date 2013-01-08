@@ -29,12 +29,12 @@ public class AuthorizePageActionBean extends CoreActionBean {
     private String originalPagePath = null;
 
     @ValidateNestedProperties({
-        @Validate(field="authorizationId", required = true, maxlength=2000, on={"edit"}),
-        @Validate(field="pagePath", required = true, maxlength=2000, on={"save"})
+        @Validate(field="authorizationId", required = true, maxlength=2000, on={EDIT_ACTION}),
+        @Validate(field="pagePath", required = true, maxlength=2000, on={SAVE_ACTION})
     })
     private PageAuthorization pageAuthorization;
 
-    @After(stages = LifecycleStage.BindingAndValidation, on="list")
+    @After(stages = LifecycleStage.BindingAndValidation, on=LIST_ACTION)
     public void setupList() {
         allPageAuthorizations = authorizationService.getAllAuthorizedPages();
     }
@@ -42,7 +42,7 @@ public class AuthorizePageActionBean extends CoreActionBean {
     /**
      * Initialize the product with the passed in key for display in the form
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {"edit", "save"})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {EDIT_ACTION, SAVE_ACTION})
     public void init() {
         String authId = getContext().getRequest().getParameter("pageAuthorization.authorizationId");
         if (authId != null) {
@@ -51,7 +51,7 @@ public class AuthorizePageActionBean extends CoreActionBean {
         }
     }
 
-    @ValidationMethod(on = "save")
+    @ValidationMethod(on = SAVE_ACTION)
     public void uniqueNameValidation(ValidationErrors errors) {
         // If the there is no original page path, then it was not fetched from hibernate, so this is a create
         // OR if this was fetched and the title has been changed
@@ -66,24 +66,24 @@ public class AuthorizePageActionBean extends CoreActionBean {
     }
 
     @DefaultHandler
-    @HandlesEvent("list")
+    @HandlesEvent(LIST_ACTION)
     public Resolution list() {
         return new ForwardResolution(AUTHORIZE_PAGE_LIST);
     }
 
-    @HandlesEvent("create")
+    @HandlesEvent(CREATE_ACTION)
     public Resolution create() {
         setSubmitString(CREATE_AUTH);
         return new ForwardResolution(AUTHORIZE_PAGE_CREATE);
     }
 
-    @HandlesEvent("edit")
+    @HandlesEvent(EDIT_ACTION)
     public Resolution edit() {
         setSubmitString(EDIT_AUTH);
         return new ForwardResolution(AUTHORIZE_PAGE_CREATE);
     }
 
-    @HandlesEvent("save")
+    @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
         try {
             if (pageAuthorization.getAuthorizationId() == null) {
@@ -98,7 +98,7 @@ public class AuthorizePageActionBean extends CoreActionBean {
         }
 
         addMessage("Athorization for \"" + pageAuthorization.getPagePath() + "\" has been saved");
-        return new RedirectResolution(AuthorizePageActionBean.class, "list");
+        return new RedirectResolution(AuthorizePageActionBean.class, LIST_ACTION);
     }
 
     public PageAuthorization getPageAuthorization() {
