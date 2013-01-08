@@ -16,7 +16,7 @@
                         {"bSortable": true, "sType": "html"},   // ID
                         {"bSortable": true},                    // Product
                         {"bSortable": true},                    // Product Family
-                        {"bSortable": false},                   // Status
+                        {"bSortable": true},                    // Status
                         {"bSortable": true},                    // Research Project
                         {"bSortable": true},                    // Owner
                         {"bSortable": true, "sType": "date"},   // Updated
