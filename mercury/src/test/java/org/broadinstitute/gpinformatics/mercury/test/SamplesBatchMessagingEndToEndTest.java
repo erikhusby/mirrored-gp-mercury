@@ -2,12 +2,15 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.filter.LoggingFilter;
+import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResponseBean;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
@@ -40,6 +43,9 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         sampleBarcodes.add("SM-1002-" + timestamp);
         sampleBarcodes.add("SM-1003-" + timestamp);
 
+        String batchId = "BP-" + timestamp;
+        SamplesPicoDbTest.createBatch(baseUrl, client, batchId, sampleBarcodes);
+
         // Receipt of sample - new web service with SM-ID and optional manufacturer barcode
 
         // Receipt of data ?
@@ -49,6 +55,7 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         for (String sampleBarcode : sampleBarcodes) {
             ReceptacleEventType receptacleEventType = bettaLimsMessageFactory.buildReceptacleEvent(
                     "SamplesExtractionStart", sampleBarcode, "Conical50");
+            receptacleEventType.setBatchId(batchId);
             // todo jmt restore batch IDs.
 //            receptacleEventType.setBatchId("BP-2001");
             extractionStartMsg.getReceptacleEvent().add(
@@ -80,7 +87,7 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         PlateCherryPickEvent plateCherryPickEvent = bettaLimsMessageFactory.buildCherryPick(
                 "SamplesExtractionEndTransfer", sourceRackBarcodes, sourceTubeBarcodes,
                 extEndRackBarcode, extractionEndTubeBarcodes, cherryPicks);
-//        plateCherryPickEvent.setBatchId("BP-2002");
+        plateCherryPickEvent.setBatchId(batchId);
         extractionEndMsg.getPlateCherryPickEvent().add(plateCherryPickEvent);
         SamplesPicoDbTest.sendMessages(baseUrl, client, Arrays.asList(extractionEndMsg));
         bettaLimsMessageFactory.advanceTime();
@@ -96,7 +103,7 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         BettaLIMSMessage normMsg = new BettaLIMSMessage();
         PlateTransferEventType plateTransferEventType = bettaLimsMessageFactory.buildRackToRack("SamplesNormalizationTransfer",
                 extEndRackBarcode, extractionEndTubeBarcodes, normRackBarcode, normTubeBarcodes);
-//        plateTransferEventType.setBatchId("BP-2003");
+        plateTransferEventType.setBatchId(batchId);
         normMsg.getPlateTransferEvent().add(plateTransferEventType);
         SamplesPicoDbTest.sendMessages(baseUrl, client, Arrays.asList(normMsg));
         bettaLimsMessageFactory.advanceTime();
@@ -107,9 +114,16 @@ public class SamplesBatchMessagingEndToEndTest extends ContainerTest {
         PlateTransferEventType rackToCovaris = bettaLimsMessageFactory.buildRackToPlate("SamplesPlatingToCovaris",
                 normRackBarcode, normTubeBarcodes, "CovarisRack" + timestamp);
         rackToCovaris.getPlate().setPhysType("CovarisRack");
-//        rackToCovaris.setBatchId("BP-2004");
+        rackToCovaris.setBatchId(batchId);
         platingMsg.getPlateTransferEvent().add(rackToCovaris);
         SamplesPicoDbTest.sendMessages(baseUrl, client, Arrays.asList(platingMsg));
         bettaLimsMessageFactory.advanceTime();
+
+        LabEventResponseBean labEventResponseBean = client.resource(baseUrl.toExternalForm() + "rest/labevent/batch")
+                .path(batchId)
+                .get(LabEventResponseBean.class);
+        List<LabEventBean> labEventBeans = labEventResponseBean.getLabEventBeans();
+        Assert.assertEquals("Wrong number of lab events", 6, labEventBeans.size());
+        SamplesPicoEndToEndTest.printLabEvents(labEventBeans);
     }
 }
