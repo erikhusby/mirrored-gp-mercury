@@ -104,6 +104,8 @@ public class WorkflowStepDef implements Serializable {
     private OutputCategory outputCategory;
     /** The type of output, e.g. enriched */
     private OutputType outputType;
+    /** How many times the message is repeated, e.g. a transfer to duplicate Pico plates has an original transfer, and one repeat */
+    private Integer numberOfRepeats = 0;
 
     private transient WorkflowProcessDefVersion processDefVersion;
 
@@ -158,5 +160,9 @@ public class WorkflowStepDef implements Serializable {
 
     public void setProcessDefVersion ( WorkflowProcessDefVersion processDefVersion ) {
         this.processDefVersion = processDefVersion;
+    }
+
+    public Integer getNumberOfRepeats() {
+        return numberOfRepeats;
     }
 }

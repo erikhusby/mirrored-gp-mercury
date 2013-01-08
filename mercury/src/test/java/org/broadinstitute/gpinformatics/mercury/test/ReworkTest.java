@@ -16,6 +16,6 @@ public class ReworkTest {
         // Advance rest of samples to end
         // Verify that repeated transition is flagged as error on non-reworked samples
         // Re-enter 2 samples at Pre-LC? (Re-entry points in a process are enabled / disabled on a per product basis)
-        // Can rework one sample in a pool?
+        // Can rework one sample in a pool?  No.
     }
 }

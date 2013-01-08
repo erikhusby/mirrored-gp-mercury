@@ -120,8 +120,7 @@ public abstract class LabVessel implements Serializable {
     @OneToMany(mappedBy = "targetLabVessel")
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsTarget = new HashSet<VesselToVesselTransfer>();
 
-    // todo jmt should this be ManyToMany?
-    @OneToMany(cascade = CascadeType.PERSIST, mappedBy = "reworkedLabVessel")
+    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "reworkedLabVessels")
     private Set<Rework> reworks = new HashSet<Rework>();
 
     protected LabVessel(String label) {

@@ -89,16 +89,14 @@ public class ProductWorkflowDefVersion implements Serializable {
 
     static class LabEventNode {
         private final LabEventType labEventType;
-        private final boolean optional;
         private List<LabEventNode> predecessors = new ArrayList<LabEventNode>();
         private List<LabEventNode> successors = new ArrayList<LabEventNode>();
 
-        private final WorkflowStepDef referencedStep;
+        private final WorkflowStepDef stepDef;
 
-        LabEventNode ( LabEventType labEventType, boolean optional, WorkflowStepDef stepDef ) {
+        LabEventNode ( LabEventType labEventType, WorkflowStepDef stepDef ) {
             this.labEventType = labEventType;
-            this.optional = optional;
-            this.referencedStep = stepDef;
+            this.stepDef = stepDef;
         }
 
         public LabEventType getLabEventType() {
@@ -121,12 +119,8 @@ public class ProductWorkflowDefVersion implements Serializable {
             successors.add(successor);
         }
 
-        public boolean isOptional() {
-            return optional;
-        }
-
-        public WorkflowStepDef getReferencedStep () {
-            return referencedStep;
+        public WorkflowStepDef getStepDef() {
+            return stepDef;
         }
     }
 
@@ -137,7 +131,7 @@ public class ProductWorkflowDefVersion implements Serializable {
             for (WorkflowStepDef workflowStepDef : effectiveProcessDef.getWorkflowStepDefs()) {
                 for (LabEventType labEventType : workflowStepDef.getLabEventTypes()) {
                     // todo jmt optional should probably be on the message, not the step
-                    LabEventNode labEventNode = new LabEventNode(labEventType, workflowStepDef.isOptional(), workflowStepDef );
+                    LabEventNode labEventNode = new LabEventNode(labEventType, workflowStepDef );
                     if(mapNameToLabEvent.put(labEventType.getName(), labEventNode) != null) {
                         throw new RuntimeException("Duplicate lab event in workflow, " + labEventType.getName());
                     }
@@ -182,7 +176,7 @@ public class ProductWorkflowDefVersion implements Serializable {
      * event types' predecessor
      */
     public WorkflowStepDef getPreviousStep(String eventTypeName) {
-        return findStepByEventType(eventTypeName).getPredecessors().get(0).getReferencedStep();
+        return findStepByEventType(eventTypeName).getPredecessors().get(0).getStepDef();
     }
 
     @Override
