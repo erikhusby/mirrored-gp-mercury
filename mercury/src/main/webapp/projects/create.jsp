@@ -162,7 +162,7 @@
                     <stripes:label for="fundingSources" class="control-label">Funding Sources</stripes:label>
 
                     <div class="controls">
-                        <stripes:text id="fundingSources" name="fundingSourceList" />
+                        <stripes:text id="fundingSources" name="fundingSourceList.listOfKeys" />
                     </div>
                 </div>
 
@@ -170,7 +170,7 @@
                     <stripes:label for="cohorts" class="control-label">Sample Cohorts</stripes:label>
 
                     <div class="controls">
-                        <stripes:text id="cohorts" name="cohortsList" />
+                        <stripes:text id="cohorts" name="cohortsList.listOfKeys" />
                     </div>
                 </div>
 
