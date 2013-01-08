@@ -1,3 +1,4 @@
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -17,7 +18,7 @@
     <stripes:layout-component name="content">
         <p>
             <stripes:link title="Click to edit ${actionBean.researchProject.title}" beanclass="${actionBean.class.name}" event="edit" class="pull-right">
-                <span class="icon-home"></span> Edit research project
+                <span class="icon-home"></span> <%=ResearchProjectActionBean.EDIT_PROJECT%>
                 <stripes:param name="businessKey" value="${actionBean.researchProject.businessKey}"/>
             </stripes:link>
         </p>
@@ -28,6 +29,7 @@
 
                 <div class="controls">
                     <div class="form-value">${actionBean.researchProject.title}</div>
+                    (<stripes:link target="tableau" href="${actionBean.tableauLink}" class="external">Pass Report</stripes:link>)
                 </div>
             </div>
 
@@ -46,7 +48,6 @@
                     </div>
                 </div>
             </div>
-
 
             <!-- Synopsis -->
             <div class="control-group view-control-group">

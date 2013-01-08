@@ -1,11 +1,13 @@
-package org.broadinstitute.gpinformatics.infrastructure.common;
+package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 
 import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
+import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import javax.inject.Inject;
 import java.util.List;
 
 /**
@@ -15,11 +17,11 @@ import java.util.List;
  */
 public class CohortTokenInput extends TokenInput<Cohort> {
 
+    @Inject
     private CohortListBean cohortListBean;
 
-    public CohortTokenInput(CohortListBean cohortListBean) {
+    public CohortTokenInput() {
         super();
-        this.cohortListBean = cohortListBean;
     }
 
     @Override

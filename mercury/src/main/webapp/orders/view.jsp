@@ -1,3 +1,4 @@
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -32,7 +33,7 @@
             <p>
                 <stripes:link title="Click to edit ${actionBean.editOrder.title}"
                     beanclass="${actionBean.class.name}" event="edit" class="pull-right">
-                    <span class="icon-home"></span> Edit product order
+                    <span class="icon-home"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
                     <stripes:param name="businessKey" value="${actionBean.editOrder.businessKey}"/>
                 </stripes:link>
             </p>

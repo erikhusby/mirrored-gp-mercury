@@ -47,8 +47,8 @@ import java.util.*;
 public class ProductOrderActionBean extends CoreActionBean {
 
     private static final String CURRENT_OBJECT = "Product Order";
-    private static final String CREATE_ORDER = CoreActionBean.CREATE + CURRENT_OBJECT;
-    private static final String EDIT_ORDER = CoreActionBean.EDIT + CURRENT_OBJECT + ": ";
+    public static final String CREATE_ORDER = CoreActionBean.CREATE + CURRENT_OBJECT;
+    public static final String EDIT_ORDER = CoreActionBean.EDIT + CURRENT_OBJECT;
 
     private static final String ORDER_CREATE_PAGE = "/orders/create.jsp";
     private static final String ORDER_LIST_PAGE = "/orders/list.jsp";
