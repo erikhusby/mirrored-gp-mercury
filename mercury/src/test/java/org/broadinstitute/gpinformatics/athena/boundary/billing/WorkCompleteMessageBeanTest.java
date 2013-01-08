@@ -65,7 +65,6 @@ public class WorkCompleteMessageBeanTest extends ContainerTest{
         workCompleteMessageDao.clear();
     }
 
-
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
         // Skip if no injections, since we're not running in container.
@@ -76,7 +75,7 @@ public class WorkCompleteMessageBeanTest extends ContainerTest{
         utx.rollback();
     }
 
-    @Test
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void testOnMessage() throws Exception {
         List<WorkCompleteMessage> messages = workCompleteMessageDao.getNewMessages();
         Assert.assertTrue("Should be at least one message in new message queue", !messages.isEmpty());
@@ -91,7 +90,7 @@ public class WorkCompleteMessageBeanTest extends ContainerTest{
         Assert.assertTrue("Should find our message in message queue", found);
     }
 
-    @Test
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void testOnMessageReadBack() throws Exception {
         AutomatedBiller automatedBiller = new AutomatedBiller(workCompleteMessageDao, productOrderSampleDao, productOrderDao, billingLedgerDao);
         automatedBiller.processMessages();
