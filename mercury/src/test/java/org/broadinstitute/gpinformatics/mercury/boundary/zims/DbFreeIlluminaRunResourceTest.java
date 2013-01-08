@@ -44,7 +44,6 @@ public class DbFreeIlluminaRunResourceTest {
 
     @Test(groups = DATABASE_FREE)
     public void test_error_handling() throws Exception {
-        TZamboniRun thriftRun = ThriftFileAccessor.deserializeRun();
         ZimsIlluminaRun runBean = new IlluminaRunResource().getRun(null);
 
         Assert.assertNotNull(runBean.getError());

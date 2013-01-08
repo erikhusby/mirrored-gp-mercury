@@ -88,9 +88,9 @@ public class ProductOrderSampleTest {
             product.addAddOn(addOn);
             sample1 = new ProductOrderSample("",
                     new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", MATERIAL_NAME, "", "", "", "", "", "",
-                            ""));
+                            "","","",""));
             sample2 = new ProductOrderSample("",
-                    new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "XXX", "", "", "", "", "", "", ""));
+                    new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "XXX", "", "", "", "", "", "", "","","",""));
             order.setSamples(Collections.singletonList(sample1));
             List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
             samples.add(sample1);
