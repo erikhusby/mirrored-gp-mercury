@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlIDREF;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -18,7 +19,9 @@ import java.util.Map;
  * A version of a product workflow definition
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ProductWorkflowDefVersion {
+public class ProductWorkflowDefVersion implements Serializable {
+
+    private static final long serialVersionUID = 20130101L;
 
     private String version;
     private Date effectiveDate;
@@ -86,16 +89,14 @@ public class ProductWorkflowDefVersion {
 
     static class LabEventNode {
         private final LabEventType labEventType;
-        private final boolean optional;
         private List<LabEventNode> predecessors = new ArrayList<LabEventNode>();
         private List<LabEventNode> successors = new ArrayList<LabEventNode>();
 
-        private final WorkflowStepDef referencedStep;
+        private final WorkflowStepDef stepDef;
 
-        LabEventNode ( LabEventType labEventType, boolean optional, WorkflowStepDef stepDef ) {
+        LabEventNode ( LabEventType labEventType, WorkflowStepDef stepDef ) {
             this.labEventType = labEventType;
-            this.optional = optional;
-            this.referencedStep = stepDef;
+            this.stepDef = stepDef;
         }
 
         public LabEventType getLabEventType() {
@@ -118,12 +119,8 @@ public class ProductWorkflowDefVersion {
             successors.add(successor);
         }
 
-        public boolean isOptional() {
-            return optional;
-        }
-
-        public WorkflowStepDef getReferencedStep () {
-            return referencedStep;
+        public WorkflowStepDef getStepDef() {
+            return stepDef;
         }
     }
 
@@ -134,8 +131,10 @@ public class ProductWorkflowDefVersion {
             for (WorkflowStepDef workflowStepDef : effectiveProcessDef.getWorkflowStepDefs()) {
                 for (LabEventType labEventType : workflowStepDef.getLabEventTypes()) {
                     // todo jmt optional should probably be on the message, not the step
-                    LabEventNode labEventNode = new LabEventNode(labEventType, workflowStepDef.isOptional(), workflowStepDef );
-                    mapNameToLabEvent.put(labEventType.getName(), labEventNode);
+                    LabEventNode labEventNode = new LabEventNode(labEventType, workflowStepDef );
+                    if(mapNameToLabEvent.put(labEventType.getName(), labEventNode) != null) {
+                        throw new RuntimeException("Duplicate lab event in workflow, " + labEventType.getName());
+                    }
                     if(rootLabEventNode == null) {
                         rootLabEventNode = labEventNode;
                     }
@@ -177,7 +176,7 @@ public class ProductWorkflowDefVersion {
      * event types' predecessor
      */
     public WorkflowStepDef getPreviousStep(String eventTypeName) {
-        return findStepByEventType(eventTypeName).getPredecessors().get(0).getReferencedStep();
+        return findStepByEventType(eventTypeName).getPredecessors().get(0).getStepDef();
     }
 
     @Override
