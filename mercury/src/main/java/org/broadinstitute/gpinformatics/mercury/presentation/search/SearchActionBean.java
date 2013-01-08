@@ -46,7 +46,7 @@ public class SearchActionBean extends CoreActionBean {
     private boolean onlyOneResult = false;
 
     @DefaultHandler
-    @HandlesEvent("view")
+    @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
@@ -77,7 +77,7 @@ public class SearchActionBean extends CoreActionBean {
     private RedirectResolution getRedirectResolution() {
         if (foundPDOs.size() > 0) {
             ProductOrder order = foundPDOs.get(0);
-            return new RedirectResolution(ProductOrderActionBean.class, "view").addParameter("businessKey", order.getBusinessKey());
+            return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("businessKey", order.getBusinessKey());
         }
 
         return null;
