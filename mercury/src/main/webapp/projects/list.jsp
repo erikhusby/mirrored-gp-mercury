@@ -1,3 +1,4 @@
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -19,7 +20,8 @@
     <stripes:layout-component name="content">
 
     <p>
-        <stripes:link beanclass="${actionBean.class.name}" event="create" title="Click to make a new Research Project" class="pull-right"><span class="icon-home"></span>New research project</stripes:link>
+        <stripes:link beanclass="${actionBean.class.name}" event="create" title="<%=ResearchProjectActionBean.CREATE_PROJECT%>" class="pull-right">
+            <span class="icon-home"></span><%=ResearchProjectActionBean.CREATE_PROJECT%></stripes:link>
     </p>
 
     <div class="clearfix"></div>

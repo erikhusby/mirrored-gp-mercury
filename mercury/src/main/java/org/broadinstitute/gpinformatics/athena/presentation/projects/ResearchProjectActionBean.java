@@ -11,11 +11,12 @@ import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.TableauLink;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.CohortTokenInput;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.FundingTokenInput;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.common.CohortTokenInput;
-import org.broadinstitute.gpinformatics.infrastructure.common.FundingTokenInput;
-import org.broadinstitute.gpinformatics.infrastructure.common.UserTokenInput;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -39,12 +40,15 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private static final int IRB_NAME_MAX_LENGTH = 250;
 
     private static final String CURRENT_OBJECT = "Project";
-    private static final String CREATE_PROJECT = CoreActionBean.CREATE + CURRENT_OBJECT;
-    private static final String EDIT_PROJECT = CoreActionBean.EDIT + CURRENT_OBJECT + ": ";
+    public static final String CREATE_PROJECT = CoreActionBean.CREATE + CURRENT_OBJECT;
+    public static final String EDIT_PROJECT = CoreActionBean.EDIT + CURRENT_OBJECT;
 
     public static final String PROJECT_CREATE_PAGE = "/projects/create.jsp";
     public static final String PROJECT_LIST_PAGE = "/projects/list.jsp";
     public static final String PROJECT_VIEW_PAGE = "/projects/view.jsp";
+
+    @Inject
+    private TableauLink tableauLink;
 
     @Inject
     private ResearchProjectDao researchProjectDao;
@@ -95,21 +99,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private FundingTokenInput fundingSourceList;
     private CohortTokenInput cohortsList;
     private String irbList = "";
-
-    /**
-     * This assumes that all items need the token input fields. These need inject items, which are loaded after initialization
-     * so doing this for every validation
-     */
-    @Before(stages = LifecycleStage.BindingAndValidation)
-    public void loadTokenInputs() {
-        projectManagerList = new UserTokenInput(bspUserList);
-        scientistList = new UserTokenInput(bspUserList);
-        externalCollaboratorList = new UserTokenInput(bspUserList);
-        broadPiList = new UserTokenInput(bspUserList);
-
-        cohortsList = new CohortTokenInput(cohortListBean);
-        fundingSourceList = new FundingTokenInput(fundingList);
-    }
 
     /**
      * Fetch the complete list of research projects.
@@ -413,5 +402,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public void setQ(String q) {
         this.q = q;
+    }
+
+    public String getTableauLink() {
+        return tableauLink.passReportUrl(editResearchProject.getTitle());
     }
 }

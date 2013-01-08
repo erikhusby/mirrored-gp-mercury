@@ -60,7 +60,7 @@ table.nocol tbody td,table.nocol tbody th { border-left: none; border-right: non
 .fourcolumn {-moz-column-count:4;-webkit-column-count:4;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
 
 input[type="text"].defaultText, .defaultText { }
-input[type="text"].defaultTextActive, .defaultTextActive { font-size: 10px; color: #A1A1A1; font-style: italic; }
+input[type="text"].defaultTextActive, .defaultTextActive { font-size: 12px; color: #A1A1A1; }
 
 /* jquery date picker */
 .ui-datepicker-trigger { width: 19px; height: 19px; vertical-align: top; margin-top: 2px; }

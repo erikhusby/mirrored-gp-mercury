@@ -1,11 +1,13 @@
-package org.broadinstitute.gpinformatics.infrastructure.common;
+package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 
 import org.broadinstitute.gpinformatics.athena.boundary.FundingListBean;
 import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
+import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import javax.inject.Inject;
 import java.util.List;
 
 /**
@@ -15,11 +17,11 @@ import java.util.List;
  */
 public class FundingTokenInput extends TokenInput<Funding> {
 
+    @Inject
     private FundingListBean fundingListBean;
 
-    public FundingTokenInput(FundingListBean fundingListBean) {
+    public FundingTokenInput() {
         super();
-        this.fundingListBean = fundingListBean;
     }
 
     @Override

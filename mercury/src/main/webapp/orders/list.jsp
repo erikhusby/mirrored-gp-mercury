@@ -1,3 +1,4 @@
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -31,8 +32,8 @@
 
     <stripes:layout-component name="content">
         <p>
-            <stripes:link title="New Product Order" beanclass="${actionBean.class.name}" event="create" class="pull-right">
-                New order
+            <stripes:link title="<%=ProductOrderActionBean.CREATE_ORDER%>" beanclass="${actionBean.class.name}" event="create" class="pull-right">
+                <%=ProductOrderActionBean.CREATE_ORDER%>
             </stripes:link>
         </p>
 

@@ -1,11 +1,13 @@
-package org.broadinstitute.gpinformatics.infrastructure.common;
+package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONArray;
 import org.json.JSONException;
 
+import javax.inject.Inject;
 import java.util.List;
 
 /**
@@ -15,11 +17,11 @@ import java.util.List;
  */
 public class UserTokenInput extends TokenInput<BspUser> {
 
+    @Inject
     private BSPUserList bspUserList;
 
-    public UserTokenInput(BSPUserList bspUserList) {
+    public UserTokenInput() {
         super();
-        this.bspUserList = bspUserList;
     }
 
     @Override
