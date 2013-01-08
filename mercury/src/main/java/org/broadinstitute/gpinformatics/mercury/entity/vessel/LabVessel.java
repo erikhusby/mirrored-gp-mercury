@@ -363,6 +363,10 @@ public abstract class LabVessel implements Serializable {
         return pdoNames;
     }
 
+    public String getNearestLabBatchesString() {
+        return "need to implement getNearestLabBatchesString";
+    }
+
     public enum CONTAINER_TYPE {
         STATIC_PLATE("Plate"),
         PLATE_WELL("Plate Well"),
