@@ -17,6 +17,8 @@ import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConvert
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.CohortTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.common.FundingTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.common.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -26,7 +28,10 @@ import org.json.JSONException;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.StringReader;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class is for research projects action bean / web page.
@@ -92,8 +97,8 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private UserTokenInput externalCollaboratorList;
     private UserTokenInput broadPiList;
 
-    private String fundingSourceList = "";
-    private String cohortsList = "";
+    private FundingTokenInput fundingSourceList;
+    private CohortTokenInput cohortsList;
     private String irbList = "";
 
     /**
@@ -106,6 +111,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
         scientistList = new UserTokenInput(bspUserList);
         externalCollaboratorList = new UserTokenInput(bspUserList);
         broadPiList = new UserTokenInput(bspUserList);
+
+        cohortsList = new CohortTokenInput(cohortListBean);
+        fundingSourceList = new FundingTokenInput(fundingList);
     }
 
     /**
@@ -207,36 +215,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
         editResearchProject.addPeople(RoleType.SCIENTIST, scientistList.getTokenObjects());
         editResearchProject.addPeople(RoleType.PM, projectManagerList.getTokenObjects());
 
-        editResearchProject.populateCohorts(getCohorts());
-        editResearchProject.populateFunding(getFundingSources());
+        editResearchProject.populateCohorts(cohortsList.getTokenObjects());
+        editResearchProject.populateFunding(fundingSourceList.getTokenObjects());
         editResearchProject.populateIrbs(IrbConverter.getIrbs(irbList));
-    }
-
-    private List<Funding> getFundingSources() {
-        if (fundingSourceList == null) {
-            return Collections.emptyList();
-        }
-
-        String[] fundingArray = fundingSourceList.split(",");
-        List<Funding> fundings = new ArrayList<Funding> ();
-        for (String funding : fundingArray) {
-            fundings.add(fundingList.getById(funding));
-        }
-
-        return fundings;
-    }
-    private List<Cohort> getCohorts() {
-        if (cohortsList == null) {
-            return Collections.emptyList();
-        }
-
-        String[] cohortArray = cohortsList.split(",");
-        List<Cohort> cohorts = new ArrayList<Cohort> ();
-        for (String cohort : cohortArray) {
-            cohorts.add(cohortListBean.getCohortById(cohort));
-        }
-
-        return cohorts;
     }
 
     public Resolution view() {
@@ -564,19 +545,19 @@ public class ResearchProjectActionBean extends CoreActionBean {
         this.irbList = irbList;
     }
 
-    public String getCohortsList() {
+    public CohortTokenInput getCohortsList() {
         return cohortsList;
     }
 
-    public void setCohortsList(String cohortsList) {
+    public void setCohortsList(CohortTokenInput cohortsList) {
         this.cohortsList = cohortsList;
     }
 
-    public String getFundingSourceList() {
+    public FundingTokenInput getFundingSourceList() {
         return fundingSourceList;
     }
 
-    public void setFundingSourceList(String fundingSourceList) {
+    public void setFundingSourceList(FundingTokenInput fundingSourceList) {
         this.fundingSourceList = fundingSourceList;
     }
 
