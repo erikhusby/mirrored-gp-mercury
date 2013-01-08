@@ -8,6 +8,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 import java.util.List;
 
 /**
@@ -15,6 +16,7 @@ import java.util.List;
  *
  * @author hrafal
  */
+@Named
 public class UserTokenInput extends TokenInput<BspUser> {
 
     @Inject

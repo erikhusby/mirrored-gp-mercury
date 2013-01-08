@@ -91,13 +91,24 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private Map<String, Long> projectOrderCounts;
 
     // These are the fields for catching the input tokens
+    @Inject
     private UserTokenInput projectManagerList;
+
+    @Inject
     private UserTokenInput scientistList;
+
+    @Inject
     private UserTokenInput externalCollaboratorList;
+
+    @Inject
     private UserTokenInput broadPiList;
 
+    @Inject
     private FundingTokenInput fundingSourceList;
+
+    @Inject
     private CohortTokenInput cohortsList;
+
     private String irbList = "";
 
     /**
