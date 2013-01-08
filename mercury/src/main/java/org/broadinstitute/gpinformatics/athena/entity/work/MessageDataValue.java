@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.work;
 
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.text.MessageFormat;
 
@@ -16,7 +17,7 @@ public class MessageDataValue {
     MessageDataValue() {
     }
 
-    public MessageDataValue(String key, String value) {
+    public MessageDataValue(@Nonnull String key, @Nonnull String value) {
         this.key = key;
         this.value = value;
     }
@@ -26,16 +27,20 @@ public class MessageDataValue {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MESSAGE_DATA_VALUE")
     private Long messageDataValueId;
 
-    @Column(name = "KEY")
+    @Column(name = "KEY", nullable = false)
+    @Nonnull
     private String key;
 
-    @Column(name = "VALUE")
+    @Column(name = "VALUE", nullable = false)
+    @Nonnull
     private String value;
 
+    @Nonnull
     public String getKey() {
         return key;
     }
 
+    @Nonnull
     public String getValue() {
         return value;
     }

@@ -61,7 +61,7 @@
                 <label class="control-label label-form">Created Date</label>
                 <div class="controls">
                     <div class="form-value">
-                        <fmt:formatDate value="${actionBean.editSession.createdDate}" pattern="MM/dd/yyyy"/>
+                        <fmt:formatDate value="${actionBean.editSession.createdDate}"/>
                     </div>
                 </div>
             </div>
@@ -70,7 +70,7 @@
                 <label class="control-label label-form">Billed Date</label>
                 <div class="controls">
                     <div class="form-value">
-                        <fmt:formatDate value="${actionBean.editSession.billedDate}" pattern="MM/dd/yyyy"/>
+                        <fmt:formatDate value="${actionBean.editSession.billedDate}"/>
                     </div>
                 </div>
             </div>
@@ -103,12 +103,12 @@
                         <td width="50">${item.quantity}</td>
                         <td>
                             ${item.numSamples}<br/>
-                            <fmt:formatDate value="${item.startRange}" pattern="MM/dd/yyyy"/>
+                            <fmt:formatDate value="${item.startRange}"/>
                                 -
-                            <fmt:formatDate value="${item.endRange}" pattern="MM/dd/yyyy"/>
+                            <fmt:formatDate value="${item.endRange}"/>
                         </td>
                         <td>
-                            <fmt:formatDate value="${item.workCompleteDate}" pattern="MM/dd/yyyy"/>
+                            <fmt:formatDate value="${item.workCompleteDate}"/>
                         </td>
                         <td>${item.billingMessage}</td>
                     </tr>
