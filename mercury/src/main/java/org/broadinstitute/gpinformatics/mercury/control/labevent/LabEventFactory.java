@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BasePlateEve
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
@@ -269,12 +270,18 @@ public class LabEventFactory implements Serializable {
             persistLabEvent ( uniqueEvents, labEvent, true );
             labEvents.add ( labEvent );
         }
-        for ( ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage
-                .getReceptaclePlateTransferEvent() ) {
+        for ( ReceptaclePlateTransferEvent receptaclePlateTransferEvent :
+                bettaLIMSMessage.getReceptaclePlateTransferEvent() ) {
             LabEvent labEvent = buildFromBettaLims ( receptaclePlateTransferEvent );
             persistLabEvent ( uniqueEvents, labEvent, true );
             labEvents.add ( labEvent );
         }
+        for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
+            LabEvent labEvent = buildFromBettaLims(receptacleEventType);
+            persistLabEvent ( uniqueEvents, labEvent, true );
+            labEvents.add(labEvent);
+        }
+
         return labEvents;
     }
 
@@ -931,9 +938,32 @@ public class LabEventFactory implements Serializable {
      * @return entity
      */
     public LabEvent buildFromBettaLims ( ReceptaclePlateTransferEvent receptaclePlateTransferEvent ) {
-        return buildVesselToSectionDbFree ( receptaclePlateTransferEvent, twoDBarcodedTubeDao.findByBarcode (
-                receptaclePlateTransferEvent.getSourceReceptacle ().getBarcode () ), staticPlateDAO.findByBarcode (
-                receptaclePlateTransferEvent.getDestinationPlate ().getBarcode () ), SECTION_ALL_96 );
+        return buildVesselToSectionDbFree ( receptaclePlateTransferEvent,
+                twoDBarcodedTubeDao.findByBarcode (receptaclePlateTransferEvent.getSourceReceptacle ().getBarcode () ),
+                staticPlateDAO.findByBarcode (receptaclePlateTransferEvent.getDestinationPlate ().getBarcode () ),
+                SECTION_ALL_96 );
+    }
+
+    public LabEvent buildFromBettaLims(ReceptacleEventType receptacleEventType) {
+        return buildReceptacleEventDbFree(receptacleEventType, twoDBarcodedTubeDao.findByBarcode(
+                receptacleEventType.getReceptacle().getBarcode()));
+    }
+
+    /**
+     * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
+     * lab event entity for an in-place event on a tube.
+     * @param receptacleEventType JAXB
+     * @param twoDBarcodedTube from database
+     * @return lab event entity
+     */
+    @DaoFree
+    private LabEvent buildReceptacleEventDbFree(ReceptacleEventType receptacleEventType, TwoDBarcodedTube twoDBarcodedTube) {
+        LabEvent labEvent = constructReferenceData ( receptacleEventType, labEventRefDataFetcher );
+        if(twoDBarcodedTube == null) {
+            throw new RuntimeException("Source tube not found for " + receptacleEventType.getReceptacle().getBarcode());
+        }
+        labEvent.setInPlaceLabVessel(twoDBarcodedTube);
+        return labEvent;
     }
 
     public LabEvent constructReferenceData ( StationEventType stationEventType,
