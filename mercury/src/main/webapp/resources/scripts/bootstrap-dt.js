@@ -8,7 +8,7 @@ $j.extend( true, $j.fn.dataTable.defaults, {
     "sDom": "<'row-fluid'<'span6'T><'span6'f>r>t<'row-fluid'<'span6'i><'span6'p>>",
     "bAutoWidth": false,
     "bInfo": false,
-    "bStateSave": false,
+    "bStateSave": true,
     "bJQueryUI": false,
     "bPaginate": false,
     "sPaginationType": "bootstrap",

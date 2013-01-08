@@ -115,9 +115,9 @@
                 <div class="row-fluid">
                     <div class="brand" style="display:inline;">
                         <img src="${ctxpath}/images/broad_logo.png" alt="Broad Institute"/>
-                        <a href="${ctxpath}/"
+                        <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean"
                            style="padding-left: 30px;text-decoration: none; font-variant: small-caps; font-size: 3em">
-                            <img src="${ctxpath}/images/mercury_helmet_${bean.buildInfoBean.deployment}.png" alt="Mercury Helmet" width="40" height="30"/> Mercury</a>
+                            <img src="${ctxpath}/images/mercury_helmet_${bean.buildInfoBean.deployment}.png" alt="Mercury Helmet" width="40" height="30"/> Mercury</stripes:link>
                     </div>
                     <div id="navbarForm" class="nav pull-right">
                         <span id="jiraProblem" class="badge" style="cursor: pointer;"
@@ -131,7 +131,9 @@
                                data-content="${bean.userBean.bspStatus}<br/>${bean.userBean.jiraStatus}<br/>${bean.userBean.rolesString}">${bean.userBean.loginUserName}</span>
 
                             &#160;
-                            <a href="${ctxpath}/security/security.action?signOut" value="Sign out" class="btn btn-mini">Sign out</a>
+                            <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean"  event="signOut" title="Sign out" class="btn btn-mini">
+                                Sign out
+                            </stripes:link>
                         </c:if>
                     </div>
                 </div>

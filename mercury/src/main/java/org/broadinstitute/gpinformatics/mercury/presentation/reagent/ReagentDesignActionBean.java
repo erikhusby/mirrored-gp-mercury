@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.presentation.reagent;
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.*;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -42,8 +43,10 @@ public class ReagentDesignActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {"edit", "save"})
     public void init() {
         businessKey = getContext().getRequest().getParameter("businessKey");
-        if (businessKey != null) {
+        if (!StringUtils.isBlank(businessKey)) {
             reagentDesign = reagentDesignDao.findByBusinessKey(businessKey);
+        } else {
+            reagentDesign = new ReagentDesign();
         }
     }
 
@@ -62,7 +65,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
         }
 
         // If we are creating the design or else if the original names do not match, check that the name is not a dupe
-        if ((getSubmitString() == CREATE_DESIGN) ||
+        if ((getSubmitString().equals(CREATE_DESIGN)) ||
             (!reagentDesign.getDesignName().equalsIgnoreCase(reagentDesign.getOriginalName()))) {
 
             // Check if there is an existing research project and error out if it already exists
@@ -97,7 +100,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
             reagentDesignDao.persist(reagentDesign);
         } catch (Exception e ) {
             addGlobalValidationError(e.getMessage());
-            return null;
+            return new ForwardResolution(getContext().getSourcePage());
         }
 
         addMessage(getSubmitString() + " '" + reagentDesign.getBusinessKey() + "' was successful");

@@ -22,7 +22,7 @@ import javax.servlet.http.HttpServletRequest;
 public class AuthorizationListener extends AbstractJsfBean implements PhaseListener {
     private static final Logger logger = Logger.getLogger(AuthorizationListener.class);
 
-    public static final String HOME_PAGE = "/index";
+    public static final String HOME_PAGE = "/index.jsp";
 
     @Override
     public void afterPhase(PhaseEvent phaseEvent) {

@@ -40,6 +40,7 @@ import java.util.Map;
 public class CoreActionBean implements ActionBean {
     private static final Log log = LogFactory.getLog(CoreActionBean.class);
 
+    // These are used for the create and edit strings in the UI and the submit string.
     public static final String CREATE = "Create ";
     public static final String EDIT = "Edit ";
 
@@ -53,10 +54,14 @@ public class CoreActionBean implements ActionBean {
 
     private String submitString;
 
-    private Map<Long, String> fullNameMap;
-
     @Inject
     private BuildInfoBean buildInfoBean;
+
+    // The full name map and the user stuff after this are here to allow any action bean to deal with full names.
+    // Ideally, mercury would just have simple, quick access to its user list. Instead, we have a singleton cache
+    // of users. Since they are singletons, injecting here does not have huge impact. The full name map is only
+    // instituted when needed for lists that may access many names
+    private Map<Long, String> fullNameMap;
 
     @Inject
     private UserBean userBean;
@@ -64,6 +69,8 @@ public class CoreActionBean implements ActionBean {
     @Inject
     private BSPUserList bspUserList;
 
+    // The date range widget can be used by simply adding a div with a class of dateRangeDiv. If only one date is
+    // needed, this will work for any action bean. If more are needed, then ids should be used and configured directly.
     private DateRangeSelector dateRange;
 
     /**
@@ -235,26 +242,49 @@ public class CoreActionBean implements ActionBean {
         return userBean;
     }
 
+    /**
+     * set the preconfigured, single date range widget.
+     *
+     * @param dateRange The date range selector to configure
+     */
     public void setDateRange(DateRangeSelector dateRange) {
         this.dateRange = dateRange;
     }
 
+    /**
+     * @return The preconfigured date range widget
+     */
     public DateRangeSelector getDateRange() {
         return dateRange;
     }
 
+    /**
+     * @return The string for submitting a save on an object (create or edit)
+     */
     public String getSubmitString() {
         return submitString;
     }
 
+    /**
+     * Set the string from the UI (if passed in from a hidden field)
+     *
+     * @param submitString The string
+     */
     public void setSubmitString(String submitString) {
         this.submitString = submitString;
     }
 
+    /**
+     * @return Utility to figure out whether a save is edit or create
+     */
     public boolean isCreating() {
         return submitString != null && submitString.startsWith(CREATE);
     }
 
+    /**
+     * @return This returns a map of names by the BSP id, which is stored on objects throughout the model. This map
+     * allows JSPs to easily get at the full names for display.
+     */
     public Map<Long, String> getFullNameMap() {
         if (fullNameMap == null) {
             fullNameMap = bspUserList.getFullNameMap();

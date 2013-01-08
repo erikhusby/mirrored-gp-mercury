@@ -114,7 +114,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     /**
      * Initialize the product with the passed in key for display in the form
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {"view", "edit", "downloadBillingTracker", "save"})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {"view", "edit", "downloadBillingTracker", "save", "placeOrder"})
     public void init() {
         businessKey = getContext().getRequest().getParameter("businessKey");
         if (!StringUtils.isBlank(businessKey)) {
@@ -257,7 +257,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         } catch (Exception e ) {
             addGlobalValidationError(e.getMessage());
-            return null;
+            return getContext().getSourcePageResolution();
         }
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been placed");
@@ -289,16 +289,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("downloadBillingTracker")
     public Resolution downloadBillingTracker() {
-        Resolution downloadResolution =
-            ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, bspUserList);
-
-        // If there is no file to download, just pass on the errors
-        if (downloadResolution == null) {
-            return new ForwardResolution(ORDER_VIEW_PAGE);
-        }
-
-        // Do the download
-        return downloadResolution;
+        return ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, bspUserList);
     }
 
     @HandlesEvent("startBilling")
@@ -400,11 +391,10 @@ public class ProductOrderActionBean extends CoreActionBean {
             };
         } catch (Exception ex) {
             actionBean.addGlobalValidationError("Got an exception trying to download the billing tracker: " + ex.getMessage());
+            return actionBean.getContext().getSourcePageResolution();
         } finally {
             IOUtils.closeQuietly(outputStream);
         }
-
-        return null;
     }
 
     public String getBusinessKey() {

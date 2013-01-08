@@ -4,20 +4,18 @@ import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.*;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.athena.boundary.FundingListBean;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
-import org.broadinstitute.gpinformatics.athena.entity.project.Irb;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.common.CohortTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.common.FundingTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.common.UserTokenInput;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -25,7 +23,10 @@ import org.json.JSONException;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.StringReader;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class is for research projects action bean / web page.
@@ -86,13 +87,29 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private Map<String, Long> projectOrderCounts;
 
     // These are the fields for catching the input tokens
-    private String projectManagerList = "";
-    private String scientistList = "";
-    private String externalCollaboratorList = "";
-    private String broadPiList = "";
-    private String fundingSourceList = "";
-    private String cohortsList = "";
+    private UserTokenInput projectManagerList;
+    private UserTokenInput scientistList;
+    private UserTokenInput externalCollaboratorList;
+    private UserTokenInput broadPiList;
+
+    private FundingTokenInput fundingSourceList;
+    private CohortTokenInput cohortsList;
     private String irbList = "";
+
+    /**
+     * This assumes that all items need the token input fields. These need inject items, which are loaded after initialization
+     * so doing this for every validation
+     */
+    @Before(stages = LifecycleStage.BindingAndValidation)
+    public void loadTokenInputs() {
+        projectManagerList = new UserTokenInput(bspUserList);
+        scientistList = new UserTokenInput(bspUserList);
+        externalCollaboratorList = new UserTokenInput(bspUserList);
+        broadPiList = new UserTokenInput(bspUserList);
+
+        cohortsList = new CohortTokenInput(cohortListBean);
+        fundingSourceList = new FundingTokenInput(fundingList);
+    }
 
     /**
      * Fetch the complete list of research projects.
@@ -104,12 +121,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     /**
      * Initialize the project with the passed in key for display in the form.  Need to handle in @Before so we can
-     * get the OriginalTitle on the project for validation.
+     * get the OriginalTitle on the project for validation. Create is needed so that token inputs don't have to check
+     * for existence.
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {"view", "edit", "save"})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {"view", "edit", "create", "save"})
     public void init() {
         businessKey = getContext().getRequest().getParameter("businessKey");
-        if (businessKey != null) {
+        if (!StringUtils.isBlank(businessKey)) {
             editResearchProject = researchProjectDao.findByBusinessKey(businessKey);
         } else {
             editResearchProject = new ResearchProject(getUserBean().getBspUser());
@@ -173,6 +191,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution save() throws Exception {
         populateTokenListFields();
 
+        // Do the jira jig
+        try {
+            editResearchProject.submit();
+        } catch (Exception ex) {
+            addGlobalValidationError("Error creating JIRA ticket for research project");
+            return new ForwardResolution(getContext().getSourcePage());
+        }
+
         researchProjectDao.persist(editResearchProject);
         addMessage("The research project '" + editResearchProject.getTitle() + "' has been saved.");
         return new RedirectResolution(ResearchProjectActionBean.class, "view").addParameter("businessKey", editResearchProject.getBusinessKey());
@@ -180,56 +206,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     private void populateTokenListFields() {
         editResearchProject.clearPeople();
-        editResearchProject.addPeople(RoleType.BROAD_PI, getBspUser(broadPiList));
-        editResearchProject.addPeople(RoleType.EXTERNAL, getBspUser(externalCollaboratorList));
-        editResearchProject.addPeople(RoleType.SCIENTIST, getBspUser(scientistList));
-        editResearchProject.addPeople(RoleType.PM, getBspUser(projectManagerList));
+        editResearchProject.addPeople(RoleType.BROAD_PI, broadPiList.getTokenObjects());
+        editResearchProject.addPeople(RoleType.EXTERNAL, externalCollaboratorList.getTokenObjects());
+        editResearchProject.addPeople(RoleType.SCIENTIST, scientistList.getTokenObjects());
+        editResearchProject.addPeople(RoleType.PM, projectManagerList.getTokenObjects());
 
-        editResearchProject.populateCohorts(getCohorts());
-        editResearchProject.populateFunding(getFundingSources());
+        editResearchProject.populateCohorts(cohortsList.getTokenObjects());
+        editResearchProject.populateFunding(fundingSourceList.getTokenObjects());
         editResearchProject.populateIrbs(IrbConverter.getIrbs(irbList));
-    }
-
-    private List<BspUser> getBspUser(String userIdList) {
-        if (userIdList == null) {
-            return Collections.emptyList();
-        }
-
-        String[] userIds = userIdList.split(",");
-        List<BspUser> bspUsers = new ArrayList<BspUser>();
-        for (String userIdString : userIds) {
-            long userId = Long.valueOf(userIdString);
-            bspUsers.add(bspUserList.getById(userId));
-        }
-
-        return bspUsers;
-    }
-
-    private List<Funding> getFundingSources() {
-        if (fundingSourceList == null) {
-            return Collections.emptyList();
-        }
-
-        String[] fundingArray = fundingSourceList.split(",");
-        List<Funding> fundings = new ArrayList<Funding> ();
-        for (String funding : fundingArray) {
-            fundings.add(fundingList.getById(funding));
-        }
-
-        return fundings;
-    }
-    private List<Cohort> getCohorts() {
-        if (cohortsList == null) {
-            return Collections.emptyList();
-        }
-
-        String[] cohortArray = cohortsList.split(",");
-        List<Cohort> cohorts = new ArrayList<Cohort> ();
-        for (String cohort : cohortArray) {
-            cohorts.add(cohortListBean.getCohortById(cohort));
-        }
-
-        return cohorts;
     }
 
     public Resolution view() {
@@ -246,35 +230,19 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * @return string of the list of project managers
      */
     public String getManagersListString() {
-        String listString = "";
-        if (editResearchProject != null) {
-            listString = bspUserList.getCsvFullNameList(editResearchProject.getProjectManagers());
-        }
-        return listString;
+        return bspUserList.getCsvFullNameList(editResearchProject.getProjectManagers());
     }
 
     public String getBroadPIsListString() {
-        String listString = "";
-        if (editResearchProject != null) {
-            listString = bspUserList.getCsvFullNameList(editResearchProject.getBroadPIs());
-        }
-        return listString;
+        return bspUserList.getCsvFullNameList(editResearchProject.getBroadPIs());
     }
 
     public String getExternalCollaboratorsListString() {
-        String listString = "";
-        if (editResearchProject != null) {
-            listString = bspUserList.getCsvFullNameList(editResearchProject.getExternalCollaborators());
-        }
-        return listString;
+        return bspUserList.getCsvFullNameList(editResearchProject.getExternalCollaborators());
     }
 
     public String getScientistsListString() {
-        String listString = "";
-        if (editResearchProject != null) {
-            listString = bspUserList.getCsvFullNameList(editResearchProject.getScientists());
-        }
-        return listString;
+        return bspUserList.getCsvFullNameList(editResearchProject.getScientists());
     }
 
     public ResearchProject getResearchProject() {
@@ -287,24 +255,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
      * @return name of the Creator
      */
     public String getResearchProjectCreatorString() {
-        if (editResearchProject == null) {
-            return "";
-        }
         return bspUserList.getUserFullName(editResearchProject.getCreatedBy());
     }
 
     public String getCohortsListString() {
-        if (editResearchProject == null) {
-            return "";
-        }
-
         return cohortListBean.getCohortListString(editResearchProject.getCohortIds());
     }
 
     public String getFundingSourcesListString() {
-        if (editResearchProject == null) {
-            return "";
-        }
         return fundingList.getFundingListString(editResearchProject.getFundingIds());
     }
 
@@ -318,14 +276,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
             return "";
         }
         return jiraLink.browseUrl();
-    }
-
-    public String getQ() {
-        return q;
-    }
-
-    public void setQ(String q) {
-        this.q = q;
     }
 
     /**
@@ -351,202 +301,54 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return itemList.toString();
     }
 
-    /**
-     * Used for AJAX autocomplete (i.e. from create.jsp page).
-     *
-     * @return JSON list of matching users
-     * @throws Exception
-     */
+    // Autocomplete events for streaming in the appropriate data
     @HandlesEvent("usersAutocomplete")
     public Resolution usersAutocomplete() throws Exception {
-        List<BspUser> bspUsers = bspUserList.find(getQ());
-
-        JSONArray itemList = new JSONArray();
-        for (BspUser bspUser : bspUsers) {
-            String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
-            itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName, false).getJSONObject());
-        }
-
-        return new StreamingResolution("text", new StringReader(itemList.toString()));
+        return new StreamingResolution("text", new StringReader(UserTokenInput.getJsonString(bspUserList, getQ())));
     }
 
-    /**
-     * Used for AJAX autocomplete (i.e. from create.jsp page).
-     *
-     * @return JSON list of matching users
-     * @throws Exception
-     */
     @HandlesEvent("cohortAutocomplete")
     public Resolution cohortAutocomplete() throws Exception {
-        List<Cohort> cohorts = cohortListBean.searchActiveCohort(getQ());
-
-        JSONArray itemList = new JSONArray();
-        for (Cohort cohort : cohorts) {
-            String fullName = cohort.getDisplayName();
-            itemList.put(new AutoCompleteToken(cohort.getCohortId(), fullName, false).getJSONObject());
-        }
-
-        return new StreamingResolution("text", new StringReader(itemList.toString()));
+        return new StreamingResolution("text", new StringReader(CohortTokenInput.getJsonString(cohortListBean, getQ())));
     }
 
-    /**
-     * Used for AJAX autocomplete (i.e. from create.jsp page).
-     *
-     * @return JSON list of matching users
-     * @throws Exception
-     */
     @HandlesEvent("fundingAutocomplete")
     public Resolution fundingAutocomplete() throws Exception {
-        List<Funding> fundings = fundingList.searchFunding(getQ());
-
-        JSONArray itemList = new JSONArray();
-        for (Funding funding : fundings) {
-            String fullName = funding.getDisplayName();
-            itemList.put(new AutoCompleteToken(String.valueOf(funding.getDisplayName()), fullName, false).getJSONObject());
-        }
-
-        return new StreamingResolution("text", new StringReader(itemList.toString()));
+        return new StreamingResolution("text", new StringReader(FundingTokenInput.getJsonString(fundingList, getQ())));
     }
 
-    /**
-     * Used for AJAX autocomplete (i.e. from create.jsp page).
-     *
-     * @return JSON list of matching users
-     * @throws Exception
-     */
     @HandlesEvent("irbAutocomplete")
     public Resolution irbAutocomplete() throws Exception {
-        JSONArray itemList = new JSONArray();
-
-        String trimmedQuery = getQ().trim();
-        if (!StringUtils.isBlank(trimmedQuery)) {
-            for (ResearchProjectIRB.IrbType type : ResearchProjectIRB.IrbType.values()) {
-                Irb irb = createIrb(trimmedQuery, type, IRB_NAME_MAX_LENGTH);
-                itemList.put(new AutoCompleteToken(irb.getDisplayName(), irb.getDisplayName(), false).getJSONObject());
-            }
-        }
-
-        return new StreamingResolution("text", new StringReader(itemList.toString()));
+        return new StreamingResolution("text", new StringReader(IrbConverter.getJsonString(getQ())));
     }
 
-    /**
-     * This creates a valid IRB object out of the type.
-     *
-     * @param irbName The name of the irb
-     * @param type The irb type
-     * @param irbNameMaxLength The maximum length name that can be display
-     *
-     * @return The irb object
-     */
-    public Irb createIrb(String irbName, ResearchProjectIRB.IrbType type, int irbNameMaxLength) {
-
-        // If the type + the space-colon-space is longer than max length, then we cannot have a unique name.
-        if (type.getDisplayName().length() + 4 > irbNameMaxLength) {
-            throw new IllegalArgumentException("IRB type: " + type.getDisplayName() + " is too long to allow for a name");
-        }
-
-        // Strip off any long name to the maximum number of characters
-        String returnName = irbName;
-        int lengthOfFullString = getFullIrbString(irbName, type.getDisplayName()).length();
-        if (lengthOfFullString > irbNameMaxLength) {
-            returnName = irbName.substring(0, irbName.length() - (lengthOfFullString - irbNameMaxLength));
-        }
-
-        return new Irb(returnName, type);
-    }
-
-    private String getFullIrbString(String irbName, String irbType) {
-        String returnValue = irbName;
-        if (irbType != null) {
-            returnValue += " : " + irbType;
-        }
-
-        return returnValue;
-    }
-
+    // Complete Data getters are for the prepoulates on the create.jsp
     public String getBroadPICompleteData() throws Exception {
-        if (editResearchProject == null) {
-            return "";
-        }
-
-        return getUserCompleteData(editResearchProject.getBroadPIs());
-    }
-
-    private String getUserCompleteData(Long[] userIds) throws JSONException {
-
-        JSONArray itemList = new JSONArray();
-        for (Long userId : userIds) {
-            BspUser bspUser = bspUserList.getById(userId);
-            String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
-            itemList.put(new AutoCompleteToken(String.valueOf(bspUser.getUserId()), fullName, false).getJSONObject());
-        }
-
-        return itemList.toString();
+        return UserTokenInput.getUserCompleteData(bspUserList, editResearchProject.getBroadPIs());
     }
 
     public String getExternalCollaboratorCompleteData() throws Exception {
-        if (editResearchProject == null) {
-            return "";
-        }
-
-        return getUserCompleteData(editResearchProject.getExternalCollaborators());
+        return UserTokenInput.getUserCompleteData(bspUserList, editResearchProject.getExternalCollaborators());
     }
 
     public String getScientistCompleteData() throws Exception {
-        if (editResearchProject == null) {
-            return "";
-        }
-
-        return getUserCompleteData(editResearchProject.getScientists());
+        return UserTokenInput.getUserCompleteData(bspUserList, editResearchProject.getScientists());
     }
 
     public String getProjectManagerCompleteData() throws Exception {
-        if (editResearchProject == null) {
-            return "";
-        }
-
-        return getUserCompleteData(editResearchProject.getProjectManagers());
+        return UserTokenInput.getUserCompleteData(bspUserList, editResearchProject.getProjectManagers());
     }
 
     public String getFundingSourcesCompleteData() throws Exception {
-        if (editResearchProject == null) {
-            return "";
-        }
-
-        JSONArray itemList = new JSONArray();
-        for (String fundingId : editResearchProject.getFundingIds()) {
-            Funding funding = fundingList.getById(fundingId);
-            itemList.put(new AutoCompleteToken(fundingId, funding.getDisplayName(), false).getJSONObject());
-        }
-
-        return itemList.toString();
+        return FundingTokenInput.getFundingCompleteData(fundingList, editResearchProject.getFundingIds());
     }
 
     public String getCohortsCompleteData() throws Exception {
-        if (editResearchProject == null) {
-            return "";
-        }
-
-        JSONArray itemList = new JSONArray();
-        for (String cohortId : editResearchProject.getCohortIds()) {
-            Cohort cohort = cohortListBean.getCohortById(cohortId);
-            itemList.put(new AutoCompleteToken(cohortId, cohort.getDisplayName(), false).getJSONObject());
-        }
-
-        return itemList.toString();
+        return CohortTokenInput.getCohortCompleteData(cohortListBean, editResearchProject.getCohortIds());
     }
 
     public String getIrbsCompleteData() throws Exception {
-        if (editResearchProject == null) {
-            return "";
-        }
-
-        JSONArray itemList = new JSONArray();
-        for (String irbNumber : editResearchProject.getIrbNumbers()) {
-            itemList.put(new AutoCompleteToken(irbNumber, irbNumber, false).getJSONObject());
-        }
-
-        return itemList.toString();
+        return IrbConverter.getIrbCompleteData(editResearchProject.getIrbNumbers());
     }
 
     public String getIrbList() {
@@ -557,51 +359,59 @@ public class ResearchProjectActionBean extends CoreActionBean {
         this.irbList = irbList;
     }
 
-    public String getCohortsList() {
+    public CohortTokenInput getCohortsList() {
         return cohortsList;
     }
 
-    public void setCohortsList(String cohortsList) {
+    public void setCohortsList(CohortTokenInput cohortsList) {
         this.cohortsList = cohortsList;
     }
 
-    public String getFundingSourceList() {
+    public FundingTokenInput getFundingSourceList() {
         return fundingSourceList;
     }
 
-    public void setFundingSourceList(String fundingSourceList) {
+    public void setFundingSourceList(FundingTokenInput fundingSourceList) {
         this.fundingSourceList = fundingSourceList;
     }
 
-    public String getBroadPiList() {
+    public UserTokenInput getBroadPiList() {
         return broadPiList;
     }
 
-    public void setBroadPiList(String broadPiList) {
+    public void setBroadPiList(UserTokenInput broadPiList) {
         this.broadPiList = broadPiList;
     }
 
-    public String getExternalCollaboratorList() {
+    public UserTokenInput getExternalCollaboratorList() {
         return externalCollaboratorList;
     }
 
-    public void setExternalCollaboratorList(String externalCollaboratorList) {
+    public void setExternalCollaboratorList(UserTokenInput externalCollaboratorList) {
         this.externalCollaboratorList = externalCollaboratorList;
     }
 
-    public String getScientistList() {
+    public UserTokenInput getScientistList() {
         return scientistList;
     }
 
-    public void setScientistList(String scientistList) {
+    public void setScientistList(UserTokenInput scientistList) {
         this.scientistList = scientistList;
     }
 
-    public String getProjectManagerList() {
+    public UserTokenInput getProjectManagerList() {
         return projectManagerList;
     }
 
-    public void setProjectManagerList(String projectManagerList) {
+    public void setProjectManagerList(UserTokenInput projectManagerList) {
         this.projectManagerList = projectManagerList;
+    }
+
+    public String getQ() {
+        return q;
+    }
+
+    public void setQ(String q) {
+        this.q = q;
     }
 }
