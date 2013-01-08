@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConvert
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.json.JSONArray;
@@ -86,13 +87,26 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private Map<String, Long> projectOrderCounts;
 
     // These are the fields for catching the input tokens
-    private String projectManagerList = "";
-    private String scientistList = "";
-    private String externalCollaboratorList = "";
-    private String broadPiList = "";
+    private UserTokenInput projectManagerList;
+    private UserTokenInput scientistList;
+    private UserTokenInput externalCollaboratorList;
+    private UserTokenInput broadPiList;
+
     private String fundingSourceList = "";
     private String cohortsList = "";
     private String irbList = "";
+
+    /**
+     * This assumes that all items need the token input fields. These need inject items, which are loaded after initialization
+     * so doing this for every validation
+     */
+    @Before(stages = LifecycleStage.BindingAndValidation)
+    public void loadTokenInputs() {
+        projectManagerList = new UserTokenInput(bspUserList);
+        scientistList = new UserTokenInput(bspUserList);
+        externalCollaboratorList = new UserTokenInput(bspUserList);
+        broadPiList = new UserTokenInput(bspUserList);
+    }
 
     /**
      * Fetch the complete list of research projects.
@@ -109,7 +123,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Before(stages = LifecycleStage.BindingAndValidation, on = {"view", "edit", "save"})
     public void init() {
         businessKey = getContext().getRequest().getParameter("businessKey");
-        if (businessKey != null) {
+        if (!StringUtils.isBlank(businessKey)) {
             editResearchProject = researchProjectDao.findByBusinessKey(businessKey);
         } else {
             editResearchProject = new ResearchProject(getUserBean().getBspUser());
@@ -173,6 +187,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution save() throws Exception {
         populateTokenListFields();
 
+        // Do the jira jig
+        try {
+            editResearchProject.submit();
+        } catch (Exception ex) {
+            addGlobalValidationError("Error creating JIRA ticket for research project");
+            return new ForwardResolution(getContext().getSourcePage());
+        }
+
         researchProjectDao.persist(editResearchProject);
         addMessage("The research project '" + editResearchProject.getTitle() + "' has been saved.");
         return new RedirectResolution(ResearchProjectActionBean.class, "view").addParameter("businessKey", editResearchProject.getBusinessKey());
@@ -180,29 +202,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     private void populateTokenListFields() {
         editResearchProject.clearPeople();
-        editResearchProject.addPeople(RoleType.BROAD_PI, getBspUser(broadPiList));
-        editResearchProject.addPeople(RoleType.EXTERNAL, getBspUser(externalCollaboratorList));
-        editResearchProject.addPeople(RoleType.SCIENTIST, getBspUser(scientistList));
-        editResearchProject.addPeople(RoleType.PM, getBspUser(projectManagerList));
+        editResearchProject.addPeople(RoleType.BROAD_PI, broadPiList.getTokenObjects());
+        editResearchProject.addPeople(RoleType.EXTERNAL, externalCollaboratorList.getTokenObjects());
+        editResearchProject.addPeople(RoleType.SCIENTIST, scientistList.getTokenObjects());
+        editResearchProject.addPeople(RoleType.PM, projectManagerList.getTokenObjects());
 
         editResearchProject.populateCohorts(getCohorts());
         editResearchProject.populateFunding(getFundingSources());
         editResearchProject.populateIrbs(IrbConverter.getIrbs(irbList));
-    }
-
-    private List<BspUser> getBspUser(String userIdList) {
-        if (userIdList == null) {
-            return Collections.emptyList();
-        }
-
-        String[] userIds = userIdList.split(",");
-        List<BspUser> bspUsers = new ArrayList<BspUser>();
-        for (String userIdString : userIds) {
-            long userId = Long.valueOf(userIdString);
-            bspUsers.add(bspUserList.getById(userId));
-        }
-
-        return bspUsers;
     }
 
     private List<Funding> getFundingSources() {
@@ -573,35 +580,35 @@ public class ResearchProjectActionBean extends CoreActionBean {
         this.fundingSourceList = fundingSourceList;
     }
 
-    public String getBroadPiList() {
+    public UserTokenInput getBroadPiList() {
         return broadPiList;
     }
 
-    public void setBroadPiList(String broadPiList) {
+    public void setBroadPiList(UserTokenInput broadPiList) {
         this.broadPiList = broadPiList;
     }
 
-    public String getExternalCollaboratorList() {
+    public UserTokenInput getExternalCollaboratorList() {
         return externalCollaboratorList;
     }
 
-    public void setExternalCollaboratorList(String externalCollaboratorList) {
+    public void setExternalCollaboratorList(UserTokenInput externalCollaboratorList) {
         this.externalCollaboratorList = externalCollaboratorList;
     }
 
-    public String getScientistList() {
+    public UserTokenInput getScientistList() {
         return scientistList;
     }
 
-    public void setScientistList(String scientistList) {
+    public void setScientistList(UserTokenInput scientistList) {
         this.scientistList = scientistList;
     }
 
-    public String getProjectManagerList() {
+    public UserTokenInput getProjectManagerList() {
         return projectManagerList;
     }
 
-    public void setProjectManagerList(String projectManagerList) {
+    public void setProjectManagerList(UserTokenInput projectManagerList) {
         this.projectManagerList = projectManagerList;
     }
 }

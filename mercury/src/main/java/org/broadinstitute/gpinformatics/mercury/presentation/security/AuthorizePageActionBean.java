@@ -94,7 +94,7 @@ public class AuthorizePageActionBean extends CoreActionBean {
             }
         } catch (Exception e ) {
             addGlobalValidationError(e.getMessage());
-            return null;
+            return getContext().getSourcePageResolution();
         }
 
         addMessage("Athorization for \"" + pageAuthorization.getPagePath() + "\" has been saved");
