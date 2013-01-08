@@ -112,11 +112,6 @@
                         <div class="tall-controls">#{productOrderDetail.productOrder.comments}</div>
                     </div>
 
-                    <div class="control-group">
-                        <span class="control-label label-form">Samples</span>
-                        <span class="controls">#{productOrderDetail.productOrder.sampleBillingSummary}</span>
-                    </div>
-
                     <br/>
 
                     <p:dataTable style="width:1640px;"
@@ -155,24 +150,6 @@
                         </p:column>
                         <p:column headerText="FP Status" width="60">
                             #{sample.bspDTO.hasFingerprint ? "Yes" : "No"}
-                        </p:column>
-                        <p:column headerText="Status" width="100">
-                            #{sample.billingStatus.displayName}
-                        </p:column>
-                        <p:column headerText="Eligible" width="100">
-                            &#160;
-                        </p:column>
-                        <p:column headerText="Billed" width="100">
-                            &#160;
-                        </p:column>
-                        <p:column headerText="Abandoned" width="70">
-                            &#160;
-                        </p:column>
-                        <p:column headerText="Price Item 1" width="100">
-                            &#160;
-                        </p:column>
-                        <p:column headerText="Price Item 2" width="100">
-                            &#160;
                         </p:column>
                         <p:column headerText="Comment" width="200">
                             #{sample.sampleComment}

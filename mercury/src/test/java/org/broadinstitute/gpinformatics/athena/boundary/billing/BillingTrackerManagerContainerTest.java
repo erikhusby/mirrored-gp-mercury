@@ -26,7 +26,7 @@ import java.util.*;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=false)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=true)
 public class BillingTrackerManagerContainerTest extends Arquillian {
 
     public static final String BILLING_TRACKER_TEST_FILENAME = new String("BillingTracker-ContainerTest.xlsx");
@@ -69,7 +69,7 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
     }
 
 
-    @Test( enabled = false )
+    @Test( enabled = true )
     public void testImport() throws Exception {
 
         FileInputStream fis=null;
@@ -128,7 +128,6 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
                 BillingLedger expBillingLedger = expectedBillingLedgerList.get(i);
 
                 Assert.assertEquals(expBillingLedger.getProductOrderSample().getSampleName(), billingLedger.getProductOrderSample().getSampleName() );
-                Assert.assertEquals(expBillingLedger.getProductOrderSample().getBillingStatus(), billingLedger.getProductOrderSample().getBillingStatus() );
                 Assert.assertEquals(expBillingLedger.getPriceItem().getName(), billingLedger.getPriceItem().getName() );
                 Assert.assertEquals("Quantity check for " + billingLedger.getProductOrderSample().getSampleName() + " priceItem "  +
                         billingLedger.getPriceItem().getName() + " failed",

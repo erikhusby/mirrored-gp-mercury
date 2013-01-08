@@ -277,7 +277,16 @@ public class GenericDao {
      * @return list of entities that match the value, or empty list if not found
      */
     public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> List<ENTITY_TYPE> findList(
-            Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, VALUE_TYPE value) {
+            Class<ENTITY_TYPE> entity, final SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, VALUE_TYPE value) {
+        if (value == null) {
+            // Need to special case null value to handle it correctly.
+            return findAll(entity, new GenericDaoCallback<ENTITY_TYPE>() {
+                @Override
+                public void callback(CriteriaQuery<ENTITY_TYPE> criteriaQuery, Root<ENTITY_TYPE> root) {
+                    criteriaQuery.where(getCriteriaBuilder().isNull(root.get(singularAttribute)));
+                }
+            });
+        }
         return findListByList(entity, singularAttribute, Collections.singletonList(value));
     }
 
@@ -289,7 +298,7 @@ public class GenericDao {
      * @return a single entity, or null if not found
      */
     public <ENTITY_TYPE> ENTITY_TYPE findById(Class<ENTITY_TYPE> entity, Long id) {
-        return getEntityManager().find(entity, (Object)id);
+        return getEntityManager().find(entity, id);
     }
 
     /**
@@ -311,17 +320,16 @@ public class GenericDao {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
-        Predicate[] predicates=new Predicate[singularAttributes.length];
+        Predicate[] predicates = new Predicate[singularAttributes.length];
+        if (ignoreCase) {
+            value = value.toLowerCase();
+        }
         for (int i = 0; i < singularAttributes.length; i++) {
-            Expression<String> expression;
-            final Expression<String> asExpression = root.get(singularAttributes[i]).as(String.class);
+            Expression<String> expression = root.get(singularAttributes[i]).as(String.class);
             if (ignoreCase) {
-                expression = criteriaBuilder.lower(asExpression);
-                value=value.toLowerCase();
-            } else {
-                expression = asExpression;
+                expression = criteriaBuilder.lower(expression);
             }
-            predicates[i] = criteriaBuilder.like(expression, "%" + value + "%");
+            predicates[i] = criteriaBuilder.like(expression, '%' + value + '%');
         }
         criteriaQuery.where(criteriaBuilder.or(predicates));
         try {

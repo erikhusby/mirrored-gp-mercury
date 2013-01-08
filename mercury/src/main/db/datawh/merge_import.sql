@@ -506,7 +506,7 @@ FOR new IN im_po_sample_cur LOOP
     UPDATE product_order_sample SET
       product_order_id = new.product_order_id,
       sample_name = new.sample_name,
-      billing_status = new.billing_status,
+      delivery_status = new.delivery_status,
       sample_position = new.sample_position,
       etl_date = new.etl_date 
     WHERE product_order_sample_id = new.product_order_sample_id;
@@ -515,7 +515,7 @@ FOR new IN im_po_sample_cur LOOP
       product_order_sample_id,
       product_order_id,
       sample_name,
-      billing_status,
+      delivery_status,
       sample_position,
       etl_date 
     )
@@ -523,7 +523,7 @@ FOR new IN im_po_sample_cur LOOP
       new.product_order_sample_id,
       new.product_order_id,
       new.sample_name,
-      new.billing_status,
+      new.delivery_status,
       new.sample_position,
       new.etl_date 
     FROM DUAL WHERE NOT EXISTS (
@@ -579,7 +579,7 @@ END LOOP;
 FOR new IN im_po_sample_stat_cur LOOP
   BEGIN
     UPDATE product_order_sample_status SET
-      billing_status = new.billing_status,
+      delivery_status = new.delivery_status,
       etl_date = new.etl_date
     WHERE product_order_sample_id = new.product_order_sample_id
     AND status_date = new.status_date;
@@ -587,13 +587,13 @@ FOR new IN im_po_sample_stat_cur LOOP
     INSERT INTO product_order_sample_status (
       product_order_sample_id,
       status_date,
-      billing_status,
+      delivery_status,
       etl_date
     )
     SELECT
       new.product_order_sample_id,
       new.status_date,
-      new.billing_status,
+      new.delivery_status,
       new.etl_date
     FROM DUAL WHERE NOT EXISTS (
       SELECT 1 FROM product_order_sample_status

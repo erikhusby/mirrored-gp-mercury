@@ -48,7 +48,7 @@ public interface JiraService extends Serializable {
      * @param key the key
      * @return the issue object for the key
      */
-    JiraIssue getIssue(String key);
+    JiraIssue getIssue(String key) throws IOException ;
     /**
      * Add a publicly visible comment to the specified issue.
      * 
@@ -144,11 +144,13 @@ public interface JiraService extends Serializable {
 
     Transition findAvailableTransitionByName(String jiraIssueKey, String transitionName);
 
-    void postNewTransition(String jiraIssueKey, Transition transition) throws IOException;
+    void postNewTransition(String jiraIssueKey, Transition transition, String comment) throws IOException;
 
     void postNewTransition(String jiraIssueKey, Transition transition, Collection<CustomField> customFields, String comment) throws IOException;
 
     IssueFieldsResponse getIssueFields(String jiraIssueKey, Collection<CustomFieldDefinition> customFieldDefinitions) throws IOException;
+
+    String getResolution(String jiraIssueKey) throws IOException;
 
     /**
      * Check and see if the user is an exact match for a JIRA user, and has an active account.
