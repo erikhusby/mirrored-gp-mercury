@@ -108,7 +108,7 @@
                             <td>${order.researchProjectTitle}</td>
                             <td>${actionBean.fullNameMap[order.ownerId]}</td>
                             <td>
-                                <fmt:formatDate value="${order.updatedDate}" pattern="MM/dd/yyyy"/>
+                                <fmt:formatDate value="${order.updatedDate}"/>
                             </td>
                             <td>${order.pdoSampleCount}</td>
                             <td>

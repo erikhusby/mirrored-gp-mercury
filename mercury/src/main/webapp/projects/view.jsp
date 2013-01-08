@@ -99,7 +99,7 @@
 
                 <div class="controls">
                     <div class="form-value">
-                        ${actionBean.researchProjectCreatorString} on <fmt:formatDate value="${actionBean.researchProject.createdDate}" pattern="MM/dd/yyyy"/>
+                        ${actionBean.researchProjectCreatorString} on <fmt:formatDate value="${actionBean.researchProject.createdDate}"/>
                     </div>
                 </div>
             </div>
@@ -184,7 +184,7 @@
                         <td>${order.orderStatus}</td>
                         <td>${actionBean.fullNameMap[order.modifiedBy]}</td>
                         <td>
-                            <fmt:formatDate value="${order.modifiedDate}" pattern="MM/dd/yyyy"/>
+                            <fmt:formatDate value="${order.modifiedDate}"/>
                         </td>
                         <td>${order.pdoSampleCount}</td>
                     </tr>
