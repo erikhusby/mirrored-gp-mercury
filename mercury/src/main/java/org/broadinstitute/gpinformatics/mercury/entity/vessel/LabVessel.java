@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
@@ -20,8 +22,6 @@ import org.hibernate.envers.NotAudited;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * A piece of plastic or glass that holds sample, reagent or other plastic.
@@ -37,7 +37,7 @@ public abstract class LabVessel implements Serializable {
 
     //todo SGM:  create comparator for sorting Containers THEN Create getter that gets sorted containers
 
-    private final static Logger logger = Logger.getLogger(LabVessel.class.getName());
+    private final static Log logger = LogFactory.getLog(LabVessel.class);
 
     @SequenceGenerator(name = "SEQ_LAB_VESSEL", schema = "mercury", sequenceName = "SEQ_LAB_VESSEL")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_VESSEL")
@@ -192,7 +192,8 @@ public abstract class LabVessel implements Serializable {
      * @param sampleInstance
      * @return
      */
-    public LabMetric getMetric(LabMetric.MetricName metricName, MetricSearchMode searchMode, SampleInstance sampleInstance) {
+    public LabMetric getMetric(LabMetric.MetricName metricName, MetricSearchMode searchMode,
+                               SampleInstance sampleInstance) {
         throw new RuntimeException("I haven't been written yet.");
     }
 
@@ -246,7 +247,7 @@ public abstract class LabVessel implements Serializable {
 
         } catch (NumberFormatException nfe) {
             vesselContentName = label;
-            logger.log(Level.WARNING, "Could not return Base 36 version of label.  Returning original label instead");
+            logger.warn("Could not return Base 36 version of label.  Returning original label instead");
         }
 
         return vesselContentName;
@@ -356,7 +357,7 @@ public abstract class LabVessel implements Serializable {
             if (nearestPdos != null && !nearestPdos.isEmpty()) {
                 pdoNames.addAll(nearestPdos);
             } else {
-                logger.warning("Most recent PDO came up with more than one result");
+                logger.error("Unable to find at least one nearest PDO for " + currVessel.getLabel());
             }
         }
 
@@ -792,15 +793,18 @@ public abstract class LabVessel implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (!(o instanceof LabVessel))
+        }
+        if (!(o instanceof LabVessel)) {
             return false;
+        }
 
         LabVessel labVessel = (LabVessel) o;
 
-        if (label != null ? !label.equals(labVessel.label) : labVessel.label != null)
+        if (label != null ? !label.equals(labVessel.label) : labVessel.label != null) {
             return false;
+        }
 
         return true;
     }
@@ -839,7 +843,8 @@ public abstract class LabVessel implements Serializable {
     }
 
     void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
-                          TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent, int hopCount) {
+                          TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent,
+                          int hopCount) {
         transferTraverserCriteria.evaluateVesselPreOrder(this, labEvent, hopCount);
         if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
             for (VesselEvent vesselEvent : getAncestors()) {
@@ -856,7 +861,8 @@ public abstract class LabVessel implements Serializable {
     }
 
     private void evaluateVesselEvent(TransferTraverserCriteria transferTraverserCriteria,
-                                     TransferTraverserCriteria.TraversalDirection traversalDirection, int hopCount, VesselEvent vesselEvent) {
+                                     TransferTraverserCriteria.TraversalDirection traversalDirection, int hopCount,
+                                     VesselEvent vesselEvent) {
         LabVessel labVessel = vesselEvent.getLabVessel();
         if (labVessel == null) {
             vesselEvent.getVesselContainer().evaluateCriteria(vesselEvent.getPosition(),
