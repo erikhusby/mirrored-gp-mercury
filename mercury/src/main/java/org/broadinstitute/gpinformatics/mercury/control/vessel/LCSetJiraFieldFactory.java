@@ -57,7 +57,9 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             ProductOrder pdo = athenaClientService.retrieveProductOrderDetails(currPdo);
 
             if (pdo != null) {
-                workflowDefs.add(wfConfig.getWorkflowByName(pdo.getProduct().getWorkflowName()));
+                if(pdo.getProduct().getWorkflowName() != null) {
+                    workflowDefs.add(wfConfig.getWorkflowByName(pdo.getProduct().getWorkflowName()));
+                }
                 foundResearchProjectList.add(pdo.getResearchProject());
             }
         }

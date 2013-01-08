@@ -54,10 +54,9 @@ public class LabBatchEjb {
     /**
      * Alternate create lab batch method to allow a user to define the vessels for use by their barcode
      *
-     *
-     * @param reporter   The User that is attempting to create the batch
+     * @param reporter       The User that is attempting to create the batch
      * @param labVesselNames The plastic ware that the newly created lab batch will represent
-     * @param jiraTicket Optional parameter that represents an existing Jira Ticket that refers to this batch
+     * @param jiraTicket     Optional parameter that represents an existing Jira Ticket that refers to this batch
      * @return
      */
     public LabBatch createLabBatch(@Nonnull String reporter, @Nonnull Set<String> labVesselNames,
@@ -119,7 +118,6 @@ public class LabBatchEjb {
     }
 
     /**
-     *
      * @param batchObject
      * @param jiraTicket
      */
@@ -130,8 +128,8 @@ public class LabBatchEjb {
             JiraIssue jiraIssue = jiraService.getIssue(jiraTicket);
 
             ticket = jiraTicketDao.fetchByName(jiraTicket);
-            if(ticket == null) {
-                ticket =new JiraTicket(jiraService, jiraIssue.getKey());
+            if (ticket == null) {
+                ticket = new JiraTicket(jiraService, jiraIssue.getKey());
             }
 
 //            batchObject.setBatchName(jiraIssue.getSummary());

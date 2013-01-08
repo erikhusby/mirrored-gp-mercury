@@ -48,6 +48,7 @@ public class BatchConfirm extends AbstractJsfBean {
 
         try {
             jiraIssue = jiraService.getIssue(foundBatch.getJiraTicket().getTicketName());
+
         } catch (IOException ioe) {
             addErrorMessage("Unable to retrieve Summary and Description from Jira");
         }

@@ -158,4 +158,6 @@ public interface JiraService extends Serializable {
      * @return true if user is valid to use in JIRA API calls.
      */
     boolean isValidUser(String username);
+
+    JiraIssue getIssueInfo(String key, String... fields) throws IOException;
 }
