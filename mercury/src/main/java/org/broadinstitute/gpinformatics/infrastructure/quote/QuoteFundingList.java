@@ -59,7 +59,7 @@ public class QuoteFundingList extends AbstractCache {
      *
      * @return if found, the cohort, otherwise null
      */
-    public Funding getById(String fundingTypeAndName) {
+    public Funding getById(final String fundingTypeAndName) {
         if (getFunding() != null) {
             for (Funding funding : getFunding()) {
                 if (funding.getDisplayName().equals(fundingTypeAndName)) {
@@ -68,7 +68,13 @@ public class QuoteFundingList extends AbstractCache {
             }
         }
 
-        return null;
+        // In case of error, return a placeholder object to show to the user.
+        return new Funding() {
+            @Override
+            public String getDisplayName() {
+                return "Unknown Funding: " + fundingTypeAndName;
+            }
+        };
     }
 
     /**
