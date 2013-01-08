@@ -4,15 +4,22 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionListResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.Date;
 
 public class JiraIssue implements Serializable {
 
     private final String key;
+
+    private String summary;
+    private String description;
+
+    private Date dueDate;
 
     private final JiraService jiraService;
 
@@ -23,6 +30,30 @@ public class JiraIssue implements Serializable {
 
     public String getKey() {
         return key;
+    }
+
+    public String getSummary() {
+        return summary;
+    }
+
+    public void setSummary(String summary) {
+        this.summary = summary;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
+    }
+
+    public Date getDueDate() {
+        return dueDate;
+    }
+
+    public void setDueDate(Date dueDate) {
+        this.dueDate = dueDate;
     }
 
     /**
@@ -87,17 +118,18 @@ public class JiraIssue implements Serializable {
     /**
      * @return a list of all available workflow transitions for this ticket in its current state
      */
-    public IssueTransitionResponse findAvailableTransitions() {
+    public IssueTransitionListResponse findAvailableTransitions() {
         return jiraService.findAvailableTransitions(key);
     }
 
     /**
-     * Transition a given Jira Ticket to a new Transition state.
-     * @param transitionId id representing the next transition state
+     * Transition a given Jira Ticket
+     * @param transition the target transition state
      */
-    public void postNewTransition(String transitionId) throws IOException {
-        jiraService.postNewTransition(key, transitionId);
+    public void postNewTransition(Transition transition) throws IOException {
+        jiraService.postNewTransition(key, transition, null);
     }
+
 
     @Override
     public String toString() {

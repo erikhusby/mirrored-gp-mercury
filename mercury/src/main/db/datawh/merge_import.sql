@@ -142,7 +142,7 @@ FOR new IN im_rp_cur LOOP
     );
   EXCEPTION WHEN OTHERS THEN
     errmsg := SQLERRM;
-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_research_project:'||new.line_number||'  '||errmsg);
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_research_project.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 
@@ -195,7 +195,7 @@ FOR new IN im_product_cur LOOP
     );
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_product:'||new.line_number||'  '||errmsg);
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_product.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 
@@ -247,7 +247,7 @@ FOR new IN im_po_cur LOOP
     );
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_product_order:'||new.line_number||'  '||errmsg);
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_product_order.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 
@@ -290,7 +290,7 @@ FOR new IN im_price_item_cur LOOP
     );
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_price_item:'||new.line_number||'  '||errmsg);
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_price_item.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 
@@ -322,7 +322,7 @@ FOR new IN im_po_add_on_cur  LOOP
     );
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_product_order_add_on:'||new.line_number||'  '||errmsg);
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_product_order_add_on.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 
@@ -356,7 +356,7 @@ FOR new IN im_rp_status_cur LOOP
     );
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_research_project_status:'||new.line_number||'  '||errmsg);
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_research_project_status.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 
@@ -400,7 +400,7 @@ FOR new IN im_rp_person_cur LOOP
     );
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_research_project_person:'||new.line_number||'  '||errmsg);
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_research_project_person.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 
@@ -431,7 +431,7 @@ FOR new IN im_rp_funding_cur LOOP
     );
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_research_project_funding:'||new.line_number||'  '||errmsg);
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_research_project_funding.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 
@@ -459,7 +459,7 @@ FOR new IN im_rp_cohort_cur LOOP
     );
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_research_project_cohort:'||new.line_number||'  '||errmsg);
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_research_project_cohort.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 
@@ -494,7 +494,7 @@ FOR new IN im_rp_irb_cur LOOP
     );
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_research_project_irb:'||new.line_number||'  '||errmsg);
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_research_project_irb.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 
@@ -506,7 +506,8 @@ FOR new IN im_po_sample_cur LOOP
     UPDATE product_order_sample SET
       product_order_id = new.product_order_id,
       sample_name = new.sample_name,
-      billing_status = new.billing_status,
+      delivery_status = new.delivery_status,
+      sample_position = new.sample_position,
       etl_date = new.etl_date 
     WHERE product_order_sample_id = new.product_order_sample_id;
 
@@ -514,14 +515,16 @@ FOR new IN im_po_sample_cur LOOP
       product_order_sample_id,
       product_order_id,
       sample_name,
-      billing_status,
+      delivery_status,
+      sample_position,
       etl_date 
     )
     SELECT
       new.product_order_sample_id,
       new.product_order_id,
       new.sample_name,
-      new.billing_status,
+      new.delivery_status,
+      new.sample_position,
       new.etl_date 
     FROM DUAL WHERE NOT EXISTS (
       SELECT 1 FROM product_order_sample
@@ -529,7 +532,7 @@ FOR new IN im_po_sample_cur LOOP
     );
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_product_order_sample:'||new.line_number||'  '||errmsg);
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_product_order_sample.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 
@@ -566,7 +569,7 @@ FOR new IN im_po_status_cur LOOP
     );
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_product_order_status:'||new.line_number||'  '||errmsg);
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_product_order_status.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 
@@ -576,7 +579,7 @@ END LOOP;
 FOR new IN im_po_sample_stat_cur LOOP
   BEGIN
     UPDATE product_order_sample_status SET
-      billing_status = new.billing_status,
+      delivery_status = new.delivery_status,
       etl_date = new.etl_date
     WHERE product_order_sample_id = new.product_order_sample_id
     AND status_date = new.status_date;
@@ -584,13 +587,13 @@ FOR new IN im_po_sample_stat_cur LOOP
     INSERT INTO product_order_sample_status (
       product_order_sample_id,
       status_date,
-      billing_status,
+      delivery_status,
       etl_date
     )
     SELECT
       new.product_order_sample_id,
       new.status_date,
-      new.billing_status,
+      new.delivery_status,
       new.etl_date
     FROM DUAL WHERE NOT EXISTS (
       SELECT 1 FROM product_order_sample_status
@@ -599,7 +602,7 @@ FOR new IN im_po_sample_stat_cur LOOP
     );
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_product_order_sample_status:'||new.line_number||'  '||errmsg);
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_product_order_sample_status.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 

@@ -26,11 +26,18 @@
 
 <ui:define name="body">
 <p:layout style="min-width:800px;min-height:800px;">
-<p:layoutUnit position="north" resizable="true" size="60%">
-    <p:layout style="min-width:800px;min-height:400px;">
-        <p:layoutUnit position="west" resizable="true" size="50%">
+    <p:layoutUnit position="north" resizable="true">
             <div class="row">
                 <h:link value="Edit Project" outcome="create?includeViewParams=true" styleClass="pull-right"/>
+            </div>
+
+            <div class="row">
+                <div class="form-value" style="float:right">
+                    <h:outputLink target="passReport" class="external"
+                                  value="#{tableauLink.passReportUrl(researchProjectDetail.project.title)}">
+                        <h:outputText value="PASS Report"/>
+                    </h:outputLink>
+                </div>
             </div>
 
             <!-- Name -->
@@ -164,27 +171,8 @@
 
         </p:layoutUnit>
 
-        <p:layoutUnit position="center" resizable="true">
-            <div class="row">
-                <div class="form-value" style="float:right">
-                    <h:outputLink target="passReport" class="external"
-                                  value="#{tableauLink.passReportUrl(researchProjectDetail.project.title)}">
-                        <h:outputText value="PASS Report"/>
-                    </h:outputLink>
-                </div>
-            </div>
-            <div id='tableauReport'></div>
 
-            <script type="text/javascript">
-                // url contains a negotiated, per-session trust id.
-                tableauUrl = "#{tableauLink.passReportUrl(researchProjectDetail.project.title)}";
-                $('#tableauReport').html('<iframe src="' + tableauUrl + '"  width="600" height="500"></iframe>');
-            </script>
-
-        </p:layoutUnit>
-    </p:layout>
-</p:layoutUnit>
-<p:layoutUnit position="center" resizable="true">
+    <p:layoutUnit position="center" resizable="true">
     <br/>
 
     <h:form>
@@ -220,9 +208,6 @@
             </p:column>
             <p:column headerText="Updated">
                 #{order.modifiedDate}
-            </p:column>
-            <p:column headerText="Samples">
-                #{order.sampleBillingSummary}
             </p:column>
         </p:dataTable>
     </h:form>

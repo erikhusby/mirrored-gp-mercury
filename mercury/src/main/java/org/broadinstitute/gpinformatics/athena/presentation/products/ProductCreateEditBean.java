@@ -1,14 +1,12 @@
 package org.broadinstitute.gpinformatics.athena.presentation.products;
 
-import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.boundary.products.ProductManager;
+import org.broadinstitute.bsp.client.sample.MaterialType;
+import org.broadinstitute.gpinformatics.athena.boundary.products.ProductEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.products.ProductSearcher;
-import org.broadinstitute.gpinformatics.athena.boundary.projects.ApplicationValidationException;
-import org.broadinstitute.gpinformatics.athena.control.ProductUtil;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPMaterialTypeList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
@@ -18,20 +16,17 @@ import javax.faces.bean.ViewScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
-/**
- * TODO: Update method documentation, especially around price item selection.
- */
+
 @ManagedBean
 @ViewScoped
 public class ProductCreateEditBean extends AbstractJsfBean implements Serializable {
 
     @Inject
     private ProductFamilyDao productFamilyDao;
-
-    @Inject
-    private PriceItemDao priceItemDao;
 
     /**
      * Source of quote server sourced price data
@@ -42,11 +37,14 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
     @Inject
     private ProductSearcher productSearcher;
 
+    @Inject
+    private BSPMaterialTypeList materialTypeListCache;
+
     /**
      * Transaction support for create / update operations
      */
     @Inject
-    private ProductManager productManager;
+    private ProductEjb productEjb;
 
     /**
      * Flag so we don't issue the same summary warning more than once per request
@@ -60,6 +58,15 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
 
 
     private Product product;
+
+    /**
+     * GPLIM-559 The part number input field is bound to this separate part number property to avoid issues with updated
+     * model values being cycled back out to the viewParam after application validation failures in #save().  If we
+     * pass application validation, this part number is passed into the ProductManager#save method to undergo further
+     * validations.  If all these validations pass, the part number is copied into the model object and saved to the db.
+     * This is the general JSF pattern that should be followed for user-editable business keys.
+     */
+    private String partNumber;
 
     /**
      * These are in their own field since they are JAXB {@link PriceItem} DTOs and not JPA entities
@@ -76,20 +83,12 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
      */
     private List<Product> addOns;
 
-
-
     /**
-     * Utility method to map JAXB DTOs to entities for price items
-     * @param priceItem
-     * @return
+     * These are in their own field since they are JAXB {@link org.broadinstitute.bsp.client.sample.MaterialType} DTOs and not JPA entities
      */
-    private org.broadinstitute.gpinformatics.athena.entity.products.PriceItem dtoToEntity(PriceItem priceItem) {
-        return new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
-                priceItem.getId(),
-                priceItem.getPlatformName(),
-                priceItem.getCategoryName(),
-                priceItem.getName());
-    }
+    private List<org.broadinstitute.bsp.client.sample.MaterialType> allowedMaterialTypes;
+
+
 
     /**
      * Convenience method to differentiate between create and edit use cases
@@ -159,6 +158,8 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
 
                 addOns = new ArrayList<Product>();
                 addOns.addAll(product.getAddOns());
+
+                partNumber = product.getPartNumber();
             }
         }
     }
@@ -172,6 +173,9 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
         return new PriceItem(entity.getQuoteServerId(), entity.getPlatform(), entity.getCategory(), entity.getName());
     }
 
+    private MaterialType entityToDto(org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType entity) {
+        return new org.broadinstitute.bsp.client.sample.MaterialType( entity.getCategory(), entity.getName() );
+    }
 
     /**
      * Enumerate the product families
@@ -191,19 +195,25 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
         boolean creating = isCreating();
 
         try {
-            addAllAddOnsToProduct();
-            addAllPriceItemsToProduct();
+            productEjb.save(product, partNumber, addOns, primaryPriceItem, optionalPriceItems, allowedMaterialTypes);
 
-            // If there are duplicate price items, send an error message
-            String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
-            if (duplicatePriceItems != null) {
-                addErrorMessage("Cannot save with duplicate price items: " + StringUtils.join(duplicatePriceItems, ", "));
-                return null;
-            }
-
-            productManager.save(product);
-        } catch (Exception e) {
-            addErrorMessage(e.getMessage());
+        } catch (ProductEjb.ExpiredAddOnsException e) {
+            addErrorMessage("Add-ons are no longer available: " + e.getMessage());
+            return null;
+        } catch (ProductEjb.DuplicateBusinessKeyException e) {
+            addErrorMessage("Part number already in use by another Product: " + partNumber);
+            return null;
+        } catch (ProductEjb.NoPrimaryPriceItemException e) {
+            addErrorMessage("No Primary Price Item set");
+            return null;
+        } catch (ProductEjb.IncompatibleDatesException e) {
+            addErrorMessage("Incompatible availablility and discontinued dates, discontinued date must be defined and come after availability date");
+            return null;
+        } catch (ProductEjb.DuplicatePriceItemNamesException e) {
+            addErrorMessage("Cannot save with duplicate price items: " + e.getMessage());
+            return null;
+        } catch (RuntimeException e) {
+            addErrorMessage("Error creating Product: " + e);
             return null;
         }
 
@@ -217,66 +227,6 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
     }
 
 
-    /**
-     * Entify all the addons from our JAXB DTOs and add them to the {@link Product} before persisting
-     */
-    private void addAllAddOnsToProduct() {
-        Date now = Calendar.getInstance().getTime();
-        product.getAddOns().clear();
-        if ( addOns != null) {
-            for ( Product aProductAddOn : addOns ) {
-                if ( aProductAddOn != null ) {
-                    if ( aProductAddOn.isAvailable() || aProductAddOn.getAvailabilityDate().after( now ) ) {
-                        product.addAddOn(aProductAddOn);
-                    } else {
-                        throw new RuntimeException("Product AddOn " + aProductAddOn.getPartNumber() + " is no longer available. Please remove it from the list.");
-                    }
-                }
-            }
-        }
-    }
-
-    /**
-     * Utility method to grab a persistent/detached JPA entity corresponding to this JAXB DTO if one exists,
-     * otherwise return just a transient JPA entity
-     *
-     * @param priceItem
-     * @return
-     */
-    private org.broadinstitute.gpinformatics.athena.entity.products.PriceItem findEntity(PriceItem priceItem) {
-        // quite sure this is not the right way to do this, restructure as necessary
-        org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity =
-                priceItemDao.find(priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
-
-        if (entity == null) {
-            entity = dtoToEntity(priceItem);
-        }
-
-        return entity;
-    }
-
-    /**
-     * Entify all the price items from our JAXB DTOs and add them to the {@link Product} before persisting
-     */
-    private void addAllPriceItemsToProduct() throws ApplicationValidationException {
-
-        if (primaryPriceItem == null) {
-            // ApplicationValidationException is rollback=true, but we're not in a transaction at the time of this
-            // validation, I just wanted to reuse the same exception type since this is an application validation
-            throw new ApplicationValidationException("Primary price item must be entered");
-        }
-
-        product.setPrimaryPriceItem(findEntity(primaryPriceItem));
-
-        product.getOptionalPriceItems().clear();
-        if (optionalPriceItems != null) {
-            for (PriceItem priceItem : optionalPriceItems) {
-                org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity = findEntity(priceItem);
-                product.addPriceItem(entity);
-            }
-        }
-    }
-
     public Product getProduct() {
         return product;
     }
@@ -285,18 +235,26 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
         this.product = product;
     }
 
+    public String getPartNumber() {
+        return partNumber;
+    }
+
+    public void setPartNumber(String partNumber) {
+        this.partNumber = partNumber;
+    }
+
     public Integer getExpectedCycleTimeDays() {
-        return ProductUtil.convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
+        return Product.convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
     }
     public void setExpectedCycleTimeDays(final Integer expectedCycleTimeDays) {
-        product.setExpectedCycleTimeSeconds(ProductUtil.convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
+        product.setExpectedCycleTimeSeconds(Product.convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
     }
 
     public Integer getGuaranteedCycleTimeDays() {
-        return ProductUtil.convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
+        return Product.convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
     }
     public void setGuaranteedCycleTimeDays(final Integer guaranteedCycleTimeDays) {
-        product.setGuaranteedCycleTimeSeconds(ProductUtil.convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
+        product.setGuaranteedCycleTimeSeconds(Product.convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
     }
 
 
@@ -339,6 +297,24 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
     }
 
 
+    public List<MaterialType> getAllowedMaterialTypes() {
+        if (product == null) {
+            return new ArrayList<MaterialType>();
+        }
+
+        if ( allowedMaterialTypes == null ) {
+            allowedMaterialTypes = new ArrayList<MaterialType>();
+            for ( org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType materialType : product.getAllowableMaterialTypes() ) {
+                allowedMaterialTypes.add( entityToDto(materialType) );
+            }
+        }
+        return allowedMaterialTypes;
+    }
+
+    public void setAllowedMaterialTypes(List<MaterialType> allowedMaterialTypes) {
+        this.allowedMaterialTypes = allowedMaterialTypes;
+    }
+
     /**
      *
      * Used for {@link org.primefaces.component.autocomplete.AutoComplete}ing the default price item, restrict search
@@ -372,6 +348,18 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
         return searchResults;
     }
 
+    public List<MaterialType> searchMaterialTypes(String query) {
+        List<MaterialType> searchResults = materialTypeListCache.find(query);
+        // filter out material types that are already selected
+        if (allowedMaterialTypes != null) {
+            for (MaterialType materialType : allowedMaterialTypes) {
+                searchResults.remove(materialType);
+            }
+        }
+
+        return searchResults;
+    }
+
     public PriceItem getPrimaryPriceItem() {
         return primaryPriceItem;
     }
@@ -381,7 +369,9 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
     }
 
     /**
-     * Encapsulate logic for coming up with nice {@link PriceItem} labels that fit in the allotted space
+     * Encapsulate logic for coming up with nice {@link PriceItem} labels that fit in the allotted space.  It would be
+     * better to make sure the PrimeFaces p:autoComplete fields were wide enough to accommodate our PriceItem text,
+     * but the multiple=true p:autoComplete does not seem to honor size=xxx specifications.
      *
      * @param priceItem
      * @return
@@ -402,6 +392,24 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
         }
         return priceItem.getName();
     }
+
+    public String labelForMaterialType(MaterialType materialType) {
+
+        if (materialType == null) {
+            return "";
+        }
+
+        final int MAX_NAME = 45;
+
+        if (materialType.getName().length() > MAX_NAME){
+            return materialType.getName().substring(0, MAX_NAME) + "... ";
+        }
+        else if (materialType.getCategory().length() + materialType.getName().length() + 2 < MAX_NAME) {
+            return materialType.getCategory() + ": " + materialType.getName();
+        }
+        return materialType.getName();
+    }
+
 
     public String addOnLabel(Product product) {
 

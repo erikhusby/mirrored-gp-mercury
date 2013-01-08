@@ -5,6 +5,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 
 @Stateless
@@ -12,16 +14,25 @@ public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
     @Inject
     ProductOrderSampleDao dao;
 
+    /**
+     * @{inheritDoc}
+     */
     @Override
     Class getEntityClass() {
         return ProductOrderSample.class;
     }
 
+    /**
+     * @{inheritDoc}
+     */
     @Override
     String getBaseFilename() {
         return "product_order_sample_status";
     }
 
+    /**
+     * @{inheritDoc}
+     */
     @Override
     Long entityId(Object entity) {
         return ((ProductOrderSample)entity).getProductOrderSampleId();
@@ -33,15 +44,14 @@ public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
         return null;
     }
 
+    /** This entity does not make entity records. */
+    @Override
+    Collection<String> entityRecordsInRange(long startId, long endId, String etlDateStr, boolean isDelete) {
+        return Collections.EMPTY_LIST;
+    }
 
     /**
-     * Makes a data record from entity status fields, and possible the Envers revision date,
-     * in a format that matches the corresponding SqlLoader control file.
-     * @param etlDateStr date
-     * @param revDate Envers revision date
-     * @param revObject the Envers versioned entity
-     * @param isDelete indicates deleted entity
-     * @return delimited SqlLoader record, or null if entity does not support status recording
+     * @{inheritDoc}
      */
     @Override
     String entityStatusRecord(String etlDateStr, Date revDate, Object revObject, boolean isDelete) {
@@ -50,15 +60,16 @@ public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
             logger.info("Cannot export. Audited ProductOrderSample object is null.");
             return null;
         }
+
         // Skips entity changes that don't affect status (i.e. status will be null in the Envers entity).
-        if (entity.getBillingStatus() == null) {
+        if (entity.getDeliveryStatus() == null) {
             return null;
         }
 
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderSampleId(),
                 format(revDate),
-                format(entity.getBillingStatus().getDisplayName())
+                format(entity.getDeliveryStatus().getDisplayName())
         );
     }
 

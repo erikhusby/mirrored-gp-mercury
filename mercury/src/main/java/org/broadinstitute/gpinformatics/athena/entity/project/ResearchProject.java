@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
@@ -410,10 +409,6 @@ public class ResearchProject implements Serializable {
         projectFunding.add(funding);
     }
 
-    public void removeFunding(ResearchProjectFunding funding) {
-        projectFunding.remove(funding);
-    }
-
     public Status getStatus() {
         return status;
     }
@@ -424,10 +419,6 @@ public class ResearchProject implements Serializable {
 
     public List<ProductOrder> getProductOrders() {
         return productOrders;
-    }
-
-    public RoleType[] getRoleTypes() {
-        return RoleType.values();
     }
 
     public void submit() throws IOException {
@@ -477,14 +468,14 @@ public class ResearchProject implements Serializable {
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
         StringBuilder piList = new StringBuilder();
         boolean first = true;
-        for (ProjectPerson currPI : findPeopleByType(RoleType.BROAD_PI)) {
-            if (null != bspUserList.getById(currPI.getPersonId())) {
+        for (Long currPI : getBroadPIs()) {
+            if (null != bspUserList.getById(currPI)) {
                 if (!first) {
                     piList.append("\n");
                 }
-                piList.append(bspUserList.getById(currPI.getPersonId()).getFirstName())
+                piList.append(bspUserList.getById(currPI).getFirstName())
                       .append(" ")
-                      .append(bspUserList.getById(currPI.getPersonId()).getLastName());
+                      .append(bspUserList.getById(currPI).getLastName());
                 first = false;
             }
         }
@@ -513,26 +504,6 @@ public class ResearchProject implements Serializable {
 
     public String getOriginalTitle() {
         return originalTitle;
-    }
-
-    /**
-     *
-     * Provides the ability to retrieve a filtered list of associated people based on their role type
-     *
-     * @param personType
-     *
-     * @return
-     */
-    private Collection<ProjectPerson> findPeopleByType(RoleType personType) {
-        List<ProjectPerson> foundPersonList = new ArrayList<ProjectPerson>(associatedPeople.size());
-
-        for (ProjectPerson currPerson : associatedPeople) {
-            if (currPerson.getRole() == personType) {
-                foundPersonList.add(currPerson);
-            }
-        }
-
-        return foundPersonList;
     }
 
     /**

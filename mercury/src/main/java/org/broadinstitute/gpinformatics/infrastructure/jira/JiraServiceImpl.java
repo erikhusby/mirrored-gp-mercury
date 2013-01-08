@@ -4,6 +4,7 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.GenericType;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
@@ -14,8 +15,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.*;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.comment.AddCommentResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionListResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -23,9 +24,9 @@ import org.codehaus.jackson.map.ObjectMapper;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @Impl
 public class JiraServiceImpl extends AbstractJsonJerseyClientService implements JiraService {
@@ -33,8 +34,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     @Inject
     private JiraConfig jiraConfig;
 
-    @Inject
-    private Log log;
+    private final static Log log = LogFactory.getLog(JiraServiceImpl.class);
 
     private String baseUrl;
 
@@ -47,7 +47,6 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
      */
     public JiraServiceImpl(JiraConfig jiraConfig) {
         this.jiraConfig = jiraConfig;
-        log = LogFactory.getLog(JiraServiceImpl.class);
     }
 
     @Override
@@ -81,7 +80,46 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         public void setSelf(String self) {
         }
 
+        public String getKey() {
+            return key;
+        }
+
         JiraIssueData() { }
+    }
+
+    private static class JiraSearchIssueData extends JiraIssueData {
+
+        private String expand;
+        private String summary;
+        private String description;
+        private Date dueDate;
+
+        public String getSummary() {
+            return summary;
+        }
+
+        public void setSummary(String summary) {
+            this.summary = summary;
+        }
+
+        public String getDescription() {
+            return description;
+        }
+
+        public void setDescription(String description) {
+            this.description = description;
+        }
+
+        public Date getDueDate() {
+            return dueDate;
+        }
+
+        public void setDueDate(Date dueDate) {
+            this.dueDate = dueDate;
+        }
+
+        private JiraSearchIssueData() {
+        }
     }
 
     @Override
@@ -109,8 +147,48 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     @Override
-    public JiraIssue getIssue(String key) {
-        return new JiraIssue(key, this);
+    public JiraIssue getIssue(String key) throws IOException  {
+
+
+        String urlString = getBaseUrl() + "/issue/"+key;
+
+
+        WebResource webResource = getJerseyClient().resource(urlString).queryParam("fields","summary,description,duedate");
+
+        String queryResponse = webResource.get(String.class);
+
+        JiraSearchIssueData data = parseSearch(queryResponse);
+
+        JiraIssue issueResult =new JiraIssue(key, this);
+        issueResult.setDescription(data.getDescription());
+        issueResult.setSummary(data.getSummary());
+        issueResult.setDueDate(data.getDueDate());
+
+        return issueResult;
+    }
+
+    private JiraSearchIssueData parseSearch(String queryResponse) throws IOException{
+
+        JiraSearchIssueData parsedResults = new JiraSearchIssueData();
+
+        final Map root = new ObjectMapper().readValue(queryResponse,Map.class);
+        parsedResults.setKey((String)root.get("key"));
+        final Map fields  = (Map)root.get("fields");
+
+        parsedResults.setDescription((String) fields.get("description"));
+        parsedResults.setSummary((String)fields.get("summary"));
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        String dueDateValue =(String) fields.get("duedate");
+        try {
+            if(StringUtils.isNotBlank(dueDateValue)) {
+                parsedResults.setDueDate(dateFormat.parse(dueDateValue));
+            }
+        } catch (ParseException pe) {
+            log.error("Unable to parse the Due Date for Jira Issue " + parsedResults.getKey());
+        }
+
+        return parsedResults;
     }
 
     @Override
@@ -208,11 +286,26 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     @Override
-    public Map<String, CustomFieldDefinition> getCustomFields() throws IOException {
+    public Map<String, CustomFieldDefinition> getCustomFields(String... fieldNames) throws IOException {
         String urlString = getBaseUrl() + "/field";
 
         String jsonResponse = getJerseyClient().resource(urlString).get(String.class);
-        return CustomFieldJsonParser.parseCustomFields(jsonResponse);
+        Map<String, CustomFieldDefinition> customFieldDefinitionMap = CustomFieldJsonParser.parseCustomFields(jsonResponse);
+
+        if (fieldNames.length == 0) {
+            return customFieldDefinitionMap;
+        }
+
+        Set<String> fieldNamesSet = new HashSet<String>(Arrays.asList(fieldNames));
+        Map<String, CustomFieldDefinition> filteredMap = new HashMap<String, CustomFieldDefinition>();
+        for (Map.Entry<String, CustomFieldDefinition> entry : customFieldDefinitionMap.entrySet()) {
+            if (fieldNamesSet.contains(entry.getKey())) {
+                filteredMap.put(entry.getKey(), entry.getValue());
+            }
+        }
+
+        return filteredMap;
+
     }
 
     @Override
@@ -223,27 +316,39 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
     }
 
     @Override
-    public IssueTransitionResponse findAvailableTransitions(String jiraIssueKey) {
-        String urlString = getBaseUrl() + "/" + jiraIssueKey + "/transitions";
+    public IssueTransitionListResponse findAvailableTransitions(String jiraIssueKey) {
+        String urlString = getBaseUrl() + "/issue/" + jiraIssueKey + "/transitions";
 
         WebResource webResource =
                 getJerseyClient().resource(urlString).queryParam("expand", "transitions.fields");
 
-        return get(webResource, new GenericType<IssueTransitionResponse>(){});
+        return get(webResource, new GenericType<IssueTransitionListResponse>(){});
     }
 
     @Override
-    public void postNewTransition(String jiraIssueKey, IssueTransitionRequest jiraIssueTransition) throws IOException {
-        String urlString = getBaseUrl() + "/" + jiraIssueKey + "/transitions";
-        WebResource webResource = getJerseyClient().resource(urlString);
-        post(webResource, jiraIssueTransition);
+    public Transition findAvailableTransitionByName(String jiraIssueKey, String transitionName) {
+        IssueTransitionListResponse availableTransitions = findAvailableTransitions(jiraIssueKey);
+
+        for (Transition transition : availableTransitions.getTransitions()) {
+            if (transition.getName().equals(transitionName)) {
+                return transition;
+            }
+        }
+
+        return null;
     }
 
     @Override
-    public void postNewTransition(String jiraIssueKey, String transitionId) throws IOException {
-        IssueTransitionRequest jiraIssueTransition = new IssueTransitionRequest(new Transition(transitionId));
+    public void postNewTransition(String jiraIssueKey, Transition transition, String comment) throws IOException {
+        postNewTransition(jiraIssueKey, transition, null, comment);
+    }
 
-        String urlString = getBaseUrl() + "/" + jiraIssueKey + "/transitions";
+
+    @Override
+    public void postNewTransition(String jiraIssueKey, Transition transition, Collection<CustomField> customFields, String comment) throws IOException {
+        IssueTransitionRequest jiraIssueTransition = new IssueTransitionRequest(transition, customFields, comment);
+
+        String urlString = getBaseUrl() + "/issue/" + jiraIssueKey + "/transitions";
         WebResource webResource = getJerseyClient().resource(urlString);
         post(webResource, jiraIssueTransition);
     }
@@ -271,5 +376,48 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
         } catch (IOException e) {
             return false;
         }
+    }
+
+    @Override
+    public IssueFieldsResponse getIssueFields(String jiraIssueKey, Collection<CustomFieldDefinition> customFieldDefinitions) throws IOException {
+        List<String> fieldIds = new ArrayList<String>();
+
+        for (CustomFieldDefinition customFieldDefinition : customFieldDefinitions) {
+            fieldIds.add(customFieldDefinition.getJiraCustomFieldId());
+        }
+
+        String fieldArgs = StringUtils.join(fieldIds, ",");
+        String url = getBaseUrl() + "/issue/" + jiraIssueKey + "?fields=" + fieldArgs;
+        log.info(url);
+        WebResource webResource =
+                getJerseyClient().resource(getBaseUrl() + "/issue/" + jiraIssueKey).queryParam("fields", fieldArgs);
+
+        return get(webResource, new GenericType<IssueFieldsResponse>(){});
+    }
+
+    @Override
+    public String getResolution(String jiraIssueKey) throws IOException {
+        String url = getBaseUrl() + "/issue/" + jiraIssueKey;
+        log.info(url);
+        WebResource webResource =
+                getJerseyClient().resource(getBaseUrl() + "/issue/" + jiraIssueKey).queryParam("fields", "resolution");
+
+        IssueResolutionResponse issueResolutionResponse = get(webResource, new GenericType<IssueResolutionResponse>() {
+        });
+
+
+        Map<String, IssueResolutionResponse.Resolution> fields = issueResolutionResponse.getFields();
+
+        if (fields == null || fields.isEmpty()) {
+            return null;
+        }
+
+        IssueResolutionResponse.Resolution value = fields.entrySet().iterator().next().getValue();
+
+        if (value == null) {
+            return null;
+        }
+
+        return value.getName();
     }
 }

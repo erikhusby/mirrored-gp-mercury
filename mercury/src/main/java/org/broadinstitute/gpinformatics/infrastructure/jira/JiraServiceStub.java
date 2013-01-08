@@ -6,11 +6,11 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionListResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.NextTransition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 
@@ -84,7 +84,7 @@ public class JiraServiceStub implements JiraService {
     }
 
     @Override
-    public Map<String, CustomFieldDefinition> getCustomFields ( ) throws IOException {
+    public Map<String, CustomFieldDefinition> getCustomFields (String... fieldNames ) throws IOException {
         Map<String, CustomFieldDefinition> customFields = new HashMap<String, CustomFieldDefinition>();
         for (String requiredFieldName : JiraCustomFieldsUtil.REQUIRED_FIELD_NAMES) {
             customFields.put ( requiredFieldName, new CustomFieldDefinition ( "stub_custom_field_" + requiredFieldName,
@@ -100,13 +100,13 @@ public class JiraServiceStub implements JiraService {
 
 
     @Override
-    public IssueTransitionResponse findAvailableTransitions ( String jiraIssueKey ) {
+    public IssueTransitionListResponse findAvailableTransitions ( String jiraIssueKey ) {
 
-        Transition transition1 = new Transition("1","Open",new NextTransition("", "In Progress","","2"));
-        Transition transition2 = new Transition("3","Complete",new NextTransition("", "Closed","","4"));
-        Transition transition3 = new Transition("5","Cancel",new NextTransition("", "Closed","","6"));
-        Transition transition4 = new Transition("7","Start Progress",new NextTransition("", "in Progress","","8"));
-        Transition transition5 = new Transition("9","Put On Hold",new NextTransition("", "held","","10"));
+        Transition transition1 = new Transition("1","Open",new NextTransition("", "In Progress", "In Progress","","2"));
+        Transition transition2 = new Transition("3","Complete",new NextTransition("", "Closed", "Closed","","4"));
+        Transition transition3 = new Transition("5","Cancel",new NextTransition("", "Closed", "Closed","","6"));
+        Transition transition4 = new Transition("7","Start Progress",new NextTransition("", "In Progress", "In Progress","","8"));
+        Transition transition5 = new Transition("9","Put On Hold",new NextTransition("", "held", "held","","10"));
 
         List<Transition> transitions = new LinkedList<Transition>();
         transitions.add(transition1);
@@ -115,16 +115,30 @@ public class JiraServiceStub implements JiraService {
         transitions.add(transition4);
         transitions.add(transition5);
 
-        return new IssueTransitionResponse("", transitions);
+        return new IssueTransitionListResponse("", transitions);
+    }
+
+
+    @Override
+    public Transition findAvailableTransitionByName(String jiraIssueKey, String transitionName) {
+        IssueTransitionListResponse availableTransitions = findAvailableTransitions(jiraIssueKey);
+
+        for (Transition transition : availableTransitions.getTransitions()) {
+            if (transition.getName().equals(transitionName)) {
+                return transition;
+            }
+        }
+
+        return null;
     }
 
     @Override
-    public void postNewTransition ( String jiraIssueKey, IssueTransitionRequest jiraIssueTransition )
-            throws IOException {
+    public void postNewTransition(String jiraIssueKey, Transition transition, Collection<CustomField> customFields, String comment) throws IOException {
+
     }
 
     @Override
-    public void postNewTransition ( String jiraIssueKey, String transitionId ) throws IOException {
+    public void postNewTransition(String jiraIssueKey, Transition transition, String comment) throws IOException {
 
     }
 
@@ -132,5 +146,15 @@ public class JiraServiceStub implements JiraService {
     public boolean isValidUser(String username) {
         // Pretend all users are valid for test config.
         return true;
+    }
+
+    @Override
+    public IssueFieldsResponse getIssueFields(String jiraIssueKey, Collection<CustomFieldDefinition> customFieldDefinitions) throws IOException {
+        return null;
+    }
+
+    @Override
+    public String getResolution(String jiraIssueKey) throws IOException {
+        return null;  //To change body of implemented methods use File | Settings | File Templates.
     }
 }

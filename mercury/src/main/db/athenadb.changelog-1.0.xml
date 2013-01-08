@@ -915,7 +915,7 @@
     <changeSet id="GPLIM-239-2" author="mcovarr">
         <addNotNullConstraint columnName="jira_ticket_key" schemaName="athena" tableName="research_project" />
     </changeSet>
-    
+
     <changeSet id="GPLIM-229-1" author="mccrory">
       <sql>
         update product set samples_per_week = null where samples_per_week = 0;
@@ -1450,7 +1450,6 @@
         <addNotNullConstraint schemaName="athena" tableName="research_projectirb" columnName="research_project" />
     </changeSet>
 
-
     <changeSet id="GPLIM-492.1" author="mccrory">
         <preConditions onFail="WARN">
             <and>
@@ -1471,6 +1470,636 @@
         </preConditions>
         <comment>The billable_item table was superceded by billing_ledger table</comment>
         <dropTable tableName="billable_item"/>
+    </changeSet>
+
+    <!-- GPLIM-580: Entity table for material_type -->
+    <changeSet id="GPLIM-580.1" author="mccrory">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="material_type" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="material_type" schemaName="athena">
+            <column name="material_type_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar(80)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category" type="varchar(80)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="athena" tableName="material_type" columnNames="material_type_id"/>
+    </changeSet>
+
+    <!-- Audit table for the above entity table for material_type -->
+    <changeSet id="GPLIM-580.2" author="mccrory">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="material_type_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="material_type_aud" schemaName="athena">
+            <column name="material_type_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar(80)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="category" type="varchar(80)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="athena" tableName="material_type_aud" columnNames="material_type_id,rev"/>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-580.2a" author="mccrory">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_mtypes_aud_rev_id" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_mtypes_aud_rev_id"
+                  baseTableSchemaName="athena" baseTableName="material_type_aud" baseColumnNames="rev"
+                  referencedTableSchemaName="mercury" referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+
+    <!-- Join table between product and material_type -->
+    <changeSet id="GPLIM-580.3" author="mccrory">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="product_material_types" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="product_material_types" schemaName="athena">
+            <column name="product_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="material_type_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="athena" tableName="product_material_types" columnNames="product_id, material_type_id"/>
+        <addForeignKeyConstraint constraintName="fk_pd_mtypes_product_id" baseTableSchemaName="athena" baseTableName="product_material_types" baseColumnNames="product_id"
+                                 referencedTableName="product" referencedColumnNames="product_id"/>
+        <addForeignKeyConstraint constraintName="fk_pd_mtypes_material_type_id" baseTableSchemaName="athena" baseTableName="product_material_types" baseColumnNames="material_type_id"
+                                 referencedTableName="material_type" referencedColumnNames="material_type_id"/>
+    </changeSet>
+
+    <!-- Audit table for the above join table between product and material_type -->
+    <changeSet id="GPLIM-580.4" author="mccrory">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="product_material_types_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="product_material_types_aud" schemaName="athena">
+            <column name="product_id" type="int">
+            </column>
+            <column name="material_type_id" type="int">
+            </column>
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="athena" tableName="product_material_types_aud" columnNames="product_id,material_type_id,rev"/>
+        <addForeignKeyConstraint constraintName="fk_pd_mtypes_aud_rev_id"
+                  baseTableSchemaName="athena" baseTableName="product_material_types_aud" baseColumnNames="rev"
+                  referencedTableSchemaName="mercury" referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-1" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="WORK_COMPLETE_MESSAGE" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="WORK_COMPLETE_MESSAGE" schemaName="athena">
+            <column name="WORK_COMPLETE_MESSAGE_ID" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="PDO_NAME" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="COLLABORATOR_SAMPLE_ID" type="varchar(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="SAMPLE_INDEX" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="ALIQUOT_LSID" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="COMPLETED_DATE" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column name="PROCESS_DATE" type="date"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-2" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sequenceExists sequenceName="SEQ_WORK_COMPLETE" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_WORK_COMPLETE" schemaName="athena" startValue="1" incrementBy="5"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-3" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="WORK_COMPLETE_MESSAGE_AUD" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="WORK_COMPLETE_MESSAGE_AUD" schemaName="athena">
+            <column name="WORK_COMPLETE_MESSAGE_ID" type="int">
+                <constraints nullable="true"/>
+            </column>
+            <column name="PDO_NAME" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="COLLABORATOR_SAMPLE_ID" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="SAMPLE_INDEX" type="int">
+                <constraints nullable="true"/>
+            </column>
+            <column name="ALIQUOT_LSID" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="COMPLETED_DATE" type="date">
+                <constraints nullable="true"/>
+            </column>
+            <column name="PROCESS_DATE" type="date">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rev" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-4" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="MESSAGE_DATA_VALUE" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="MESSAGE_DATA_VALUE" schemaName="athena">
+            <column name="MESSAGE_DATA_VALUE_ID" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="WORK_COMPLETE_MESSAGE" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="KEY" type="varchar(100)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="VALUE" type="varchar(2000)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-4.1" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sequenceExists sequenceName="SEQ_MESSAGE_DATA_VALUE" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_MESSAGE_DATA_VALUE" schemaName="athena" startValue="1" incrementBy="50"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-5" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_work_complete_data" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_work_complete_data" baseTableSchemaName="athena"
+                                 baseTableName="MESSAGE_DATA_VALUE" baseColumnNames="WORK_COMPLETE_MESSAGE"
+                                 referencedTableName="WORK_COMPLETE_MESSAGE" referencedColumnNames="WORK_COMPLETE_MESSAGE_ID"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-6" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="MESSAGE_DATA_VALUE_AUD" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="MESSAGE_DATA_VALUE_AUD" schemaName="athena">
+            <column name="WORK_COMPLETE_MESSAGE_ID" type="int">
+                <constraints nullable="true"/>
+            </column>
+            <column name="PDO_NAME" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="COLLABORATOR_SAMPLE_ID" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="SAMPLE_INDEX" type="int">
+                <constraints nullable="true"/>
+            </column>
+            <column name="ALIQUOT_LSID" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="COMPLETED_DATE" type="date">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rev" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-7" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="product" columnName="use_automated_billing" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product">
+            <column name="use_automated_billing" type="number(1,0)"/>
+        </addColumn>
+        <addNotNullConstraint
+                tableName="product"
+                columnName="use_automated_billing"
+                defaultNullValue="0" />
+    </changeSet>
+
+    <changeSet id="GPLIM-543-8" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="product_aud" columnName="use_automated_billing" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_aud">
+            <column name="use_automated_billing" type="number(1,0)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-9" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="billing_requirement" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="billing_requirement" schemaName="athena">
+            <column name="billing_requirement_id" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="attribute" type="varchar(255)"/>
+            <column name="operator" type="varchar(30)"/>
+            <column name="value" type="float"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-10" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sequenceExists sequenceName="SEQ_BILLING_REQUIREMENT" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_BILLING_REQUIREMENT" startValue="1" schemaName="athena"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-11" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="billing_requirement_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="billing_requirement_aud" schemaName="athena">
+            <column name="billing_requirement_id" type="int"/>
+            <column name="product" type="int"/>
+            <column name="attribute" type="varchar(255)"/>
+            <column name="operator" type="varchar(30)"/>
+            <column name="value" type="float"/>
+            <column name="rev" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-12" author="pshapiro">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_billing_requirement" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_billing_requirement" baseTableSchemaName="athena"
+                                 baseTableName="billing_requirement" baseColumnNames="product"
+                                 referencedTableName="product" referencedColumnNames="product_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-13" author="pshapiro">
+        <preConditions>
+            <not>
+                <tableExists tableName="product_requirement_join_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="product_requirement_join_aud" schemaName="athena">
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product" type="int"/>
+            <column name="billing_requirement_id" type="int"/>
+        </createTable>
+        <addPrimaryKey schemaName="athena" tableName="product_requirement_join_aud" columnNames="rev, product, billing_requirement_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-581.1" author="mccrory">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sequenceExists sequenceName="SEQ_MATERIAL_TYPE" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_MATERIAL_TYPE" schemaName="athena" startValue="1" incrementBy="10"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-426.1" author="mcovarr">
+        <preConditions>
+            <columnExists columnName="billing_status" schemaName="athena" tableName="product_order_sample" />
+        </preConditions>
+        <dropColumn columnName="billing_status" schemaName="athena" tableName="product_order_sample" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-426.1_aud" author="mcovarr">
+        <preConditions>
+            <columnExists columnName="billing_status" schemaName="athena" tableName="product_order_sample_aud" />
+        </preConditions>
+        <dropColumn columnName="billing_status" schemaName="athena" tableName="product_order_sample_aud" />
+    </changeSet>
+
+    <changeSet id="GPLIM-426.2" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists columnName="delivery_status" schemaName="athena" tableName="product_order_sample" />
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_sample" schemaName="athena">
+            <column name="delivery_status" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-426.2_aud" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists columnName="delivery_status" schemaName="athena" tableName="product_order_sample_aud" />
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_sample_aud" schemaName="athena">
+            <column name="delivery_status" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-426.3" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="product_order_sample" columnName="delivery_status" defaultNullValue="NOT_STARTED" />
+    </changeSet>
+
+
+    <changeSet id="GPLIM-636.1" author="mcovarr">
+        <addColumn schemaName="athena" tableName="product_order">
+            <column name="order_status_varchar" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-636.1_aud" author="mcovarr">
+        <addColumn schemaName="athena" tableName="product_order_aud">
+            <column name="order_status_varchar" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-636.2" author="mcovarr">
+        <sql>
+            update athena.product_order set order_status_varchar = case order_status
+                when 0 then 'Draft'
+                when 1 then 'Submitted'
+                when 2 then 'Abandoned'
+                when 3 then 'Complete'
+            end
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-636.2_aud" author="mcovarr">
+        <sql>
+            update athena.product_order_aud set order_status_varchar = case order_status
+                when 0 then 'Draft'
+                when 1 then 'Submitted'
+                when 2 then 'Abandoned'
+                when 3 then 'Complete'
+            end
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-636.3" author="mcovarr">
+        <dropColumn schemaName="athena" tableName="product_order" columnName="order_status" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636.3_aud" author="mcovarr">
+        <dropColumn schemaName="athena" tableName="product_order_aud" columnName="order_status" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636.4" author="mcovarr">
+        <renameColumn schemaName="athena" tableName="product_order" oldColumnName="order_status_varchar" newColumnName="order_status" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636.4_aud" author="mcovarr">
+        <renameColumn schemaName="athena" tableName="product_order_aud" oldColumnName="order_status_varchar" newColumnName="order_status" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636.5" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="product_order" columnName="order_status" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636.6" author="mcovarr">
+        <sql>
+            ALTER TABLE athena.product_order
+            add CONSTRAINT check_order_status
+            CHECK (order_status IN ('Draft', 'Submitted', 'Abandoned', 'Complete'));
+        </sql>
+    </changeSet>
+
+
+
+    <changeSet id="GPLIM-636a.1" author="mcovarr">
+        <addColumn schemaName="athena" tableName="project_person">
+            <column name="role_varchar" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-636a.1_aud" author="mcovarr">
+        <addColumn schemaName="athena" tableName="project_person_aud">
+            <column name="role_varchar" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-636a.2" author="mcovarr">
+        <sql>
+            update athena.project_person set role_varchar = case role
+            when 0 then 'BROAD_SCIENTIST'
+            when 1 then 'EXTERNAL'
+            when 2 then 'PM_IN_CHARGE'
+            when 3 then 'PM'
+            when 4 then 'PDM'
+            when 5 then 'BROAD_PI'
+            when 6 then 'SCIENTIST'
+            when 7 then 'UNSPECIFIED'
+            end
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-636a.2_aud" author="mcovarr">
+        <sql>
+            update athena.project_person_aud set role_varchar = case role
+            when 0 then 'BROAD_SCIENTIST'
+            when 1 then 'EXTERNAL'
+            when 2 then 'PM_IN_CHARGE'
+            when 3 then 'PM'
+            when 4 then 'PDM'
+            when 5 then 'BROAD_PI'
+            when 6 then 'SCIENTIST'
+            when 7 then 'UNSPECIFIED'
+            end
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-636a.3" author="mcovarr">
+        <dropColumn schemaName="athena" tableName="project_person" columnName="role" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636a.3_aud" author="mcovarr">
+        <dropColumn schemaName="athena" tableName="project_person_aud" columnName="role" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636a.4" author="mcovarr">
+        <renameColumn schemaName="athena" tableName="project_person" oldColumnName="role_varchar" newColumnName="role" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636a.4_aud" author="mcovarr">
+        <renameColumn schemaName="athena" tableName="project_person_aud" oldColumnName="role_varchar" newColumnName="role" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636a.5" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="project_person" columnName="role" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636a.6" author="mcovarr">
+        <sql>
+            ALTER TABLE athena.project_person
+            add CONSTRAINT check_role
+            CHECK (role IN ('BROAD_SCIENTIST', 'EXTERNAL', 'PM_IN_CHARGE', 'PM', 'PDM', 'BROAD_PI', 'SCIENTIST', 'UNSPECIFIED'))
+        </sql>
+    </changeSet>
+
+
+
+    <changeSet id="GPLIM-636b.1" author="mcovarr">
+        <addColumn schemaName="athena" tableName="research_projectirb">
+            <column name="irb_type_varchar" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.1_aud" author="mcovarr">
+        <addColumn schemaName="athena" tableName="research_projectirb_aud">
+            <column name="irb_type_varchar" type="varchar(40)" />
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.2" author="mcovarr">
+        <sql>
+            update athena.research_projectirb set irb_type_varchar = case irb_type
+            when 0 then 'PARTNERS'
+            when 1 then 'FARBER'
+            when 2 then 'MIT'
+            when 3 then 'BROAD'
+            when 4 then 'OTHER'
+            end
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.2_aud" author="mcovarr">
+        <sql>
+            update athena.research_projectirb_aud set irb_type_varchar = case irb_type
+            when 0 then 'PARTNERS'
+            when 1 then 'FARBER'
+            when 2 then 'MIT'
+            when 3 then 'BROAD'
+            when 4 then 'OTHER'
+            end
+        </sql>
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.3" author="mcovarr">
+        <dropColumn schemaName="athena" tableName="research_projectirb" columnName="irb_type" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.3_aud" author="mcovarr">
+        <dropColumn schemaName="athena" tableName="research_projectirb_aud" columnName="irb_type" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.4" author="mcovarr">
+        <renameColumn schemaName="athena" tableName="research_projectirb" oldColumnName="irb_type_varchar" newColumnName="irb_type" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.4_aud" author="mcovarr">
+        <renameColumn schemaName="athena" tableName="research_projectirb_aud" oldColumnName="irb_type_varchar" newColumnName="irb_type" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.5" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="research_projectirb" columnName="irb_type" />
+    </changeSet>
+
+    <changeSet id="GPLIM-636b.6" author="mcovarr">
+        <sql>
+            ALTER TABLE athena.research_projectirb
+            add CONSTRAINT check_irb_type
+            CHECK (irb_type IN ('PARTNERS', 'FARBER', 'MIT', 'BROAD', 'OTHER'))
+        </sql>
+    </changeSet>
+    <changeSet id="GPLIM-543-14" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="WORK_COMPLETE_MESSAGE" schemaName="athena" columnName="ALIQUOT_LSID"/>
+        </preConditions>
+        <dropColumn tableName="WORK_COMPLETE_MESSAGE" columnName="ALIQUOT_LSID" schemaName="athena"/>
+        <dropColumn tableName="WORK_COMPLETE_MESSAGE_AUD" columnName="ALIQUOT_LSID" schemaName="athena"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-15" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="WORK_COMPLETE_MESSAGE" schemaName="athena" columnName="COLLABORATOR_SAMPLE_ID"/>
+        </preConditions>
+        <renameColumn tableName="WORK_COMPLETE_MESSAGE" schemaName="athena" oldColumnName="COLLABORATOR_SAMPLE_ID" newColumnName="SAMPLE_NAME"/>
+        <renameColumn tableName="WORK_COMPLETE_MESSAGE_AUD" schemaName="athena" oldColumnName="COLLABORATOR_SAMPLE_ID" newColumnName="SAMPLE_NAME"/>
     </changeSet>
 
 </databaseChangeLog>

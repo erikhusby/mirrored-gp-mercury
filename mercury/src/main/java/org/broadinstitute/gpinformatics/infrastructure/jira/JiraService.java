@@ -3,11 +3,12 @@ package org.broadinstitute.gpinformatics.infrastructure.jira;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionRequest;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionListResponse;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 
 import javax.annotation.Nonnull;
 import java.io.IOException;
@@ -47,7 +48,7 @@ public interface JiraService extends Serializable {
      * @param key the key
      * @return the issue object for the key
      */
-    JiraIssue getIssue(String key);
+    JiraIssue getIssue(String key) throws IOException ;
     /**
      * Add a publicly visible comment to the specified issue.
      * 
@@ -90,11 +91,14 @@ public interface JiraService extends Serializable {
 
     /**
      * getCustomFields returns all possible custom fields in the system for a given JIRA project
+     * @param fieldNames A vararg list of the fields to return by name, this filters the full list of custom fields.
+     *                   If no fieldNames are specified the full list is returned.
      * @return A {@link Map} of the custom fields found for the project/issuetype combination.  To make it easy to
      * reference, the field map is indexed by the field name.
      * @throws IOException
      */
-    public Map<String, CustomFieldDefinition> getCustomFields ( ) throws IOException;
+    public Map<String, CustomFieldDefinition> getCustomFields (String... fieldNames) throws IOException;
+
 
     /**
      * addLink provides a user with the ability to, tell the Jira system to create a new link to another jira ticket
@@ -136,11 +140,17 @@ public interface JiraService extends Serializable {
      */
     void addWatcher(String key, String watcherId) throws IOException;
 
-    IssueTransitionResponse findAvailableTransitions ( String jiraIssueKey );
+    IssueTransitionListResponse findAvailableTransitions ( String jiraIssueKey );
 
-    void postNewTransition( String jiraIssueKey, IssueTransitionRequest jiraIssueTransition ) throws IOException;
+    Transition findAvailableTransitionByName(String jiraIssueKey, String transitionName);
 
-    void postNewTransition ( String jiraIssueKey, String transitionId ) throws IOException;
+    void postNewTransition(String jiraIssueKey, Transition transition, String comment) throws IOException;
+
+    void postNewTransition(String jiraIssueKey, Transition transition, Collection<CustomField> customFields, String comment) throws IOException;
+
+    IssueFieldsResponse getIssueFields(String jiraIssueKey, Collection<CustomFieldDefinition> customFieldDefinitions) throws IOException;
+
+    String getResolution(String jiraIssueKey) throws IOException;
 
     /**
      * Check and see if the user is an exact match for a JIRA user, and has an active account.

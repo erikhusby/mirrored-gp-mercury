@@ -31,10 +31,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     // Each worksheet is a different product, so distribute the list of orders by product
     private final Map<Product, List<ProductOrder>> orderMap = new HashMap<Product, List<ProductOrder>>();
 
-    public final static String SAMPLE_ID_HEADING = "Sample ID";
-    public final static String ORDER_ID_HEADING = "Product Order ID";
-    public final static String WORK_COMPLETE_DATE_HEADING = "Date Completed";
-    public final static String SORT_COLUMN_HEADING = "Sort Column";
+    public static final String SAMPLE_ID_HEADING = "Sample ID";
+    public static final String ORDER_ID_HEADING = "Product Order ID";
+    public static final String WORK_COMPLETE_DATE_HEADING = "Date Completed";
+    public static final String SORT_COLUMN_HEADING = "Sort Column";
 
     public static final String[] FIXED_HEADERS = {
             SAMPLE_ID_HEADING,
@@ -60,7 +60,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     }
 
     public SampleLedgerExporter(List<ProductOrder> productOrders) {
-        super();
 
         for (ProductOrder productOrder : productOrders) {
             if (!orderMap.containsKey(productOrder.getProduct())) {
@@ -183,6 +182,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             // Write content.
             int sortOrder = 1;
             for (ProductOrder productOrder : productOrders) {
+                productOrder.loadBspData();
                 for (ProductOrderSample sample : productOrder.getSamples()) {
                     writeRow(sortedPriceItems, sortedAddOns, sample, sortOrder++);
                 }
@@ -233,7 +233,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         // per 2012-11-19 meeting not doing this
         // getWriter().writeCell(sample.getBillingStatus().getDisplayName());
 
-        Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = ProductOrderSample.getLedgerQuantities(sample);
+        Map<PriceItem, ProductOrderSample.LedgerQuantities> billCounts = sample.getLedgerQuantities();
 
         // write out for the price item columns
         for (PriceItem item : sortedPriceItems) {
