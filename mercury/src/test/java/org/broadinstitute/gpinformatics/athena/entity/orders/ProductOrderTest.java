@@ -56,6 +56,7 @@ public class ProductOrderTest {
                 .ignoreProperty("quoteId")
                 .ignoreProperty("product")
                 .ignoreProperty("comments")
+                .ignoreProperty("sampleList")
                 .build();
         tester.testBean(ProductOrder.class, configuration);
 

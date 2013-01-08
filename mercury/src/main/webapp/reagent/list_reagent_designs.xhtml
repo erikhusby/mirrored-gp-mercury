@@ -1,6 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE html>
 
+<!--
+  ~ The Broad Institute
+  ~ SOFTWARE COPYRIGHT NOTICE AGREEMENT
+  ~ This software and its documentation are copyright 2013 by the
+  ~ Broad Institute/Massachusetts Institute of Technology. All rights are reserved.
+  ~
+  ~ This software is supplied without any warranty or guaranteed support
+  ~ whatsoever. Neither the Broad Institute nor MIT can be responsible for its
+  ~ use, misuse, or functionality.
+  -->
+
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
@@ -14,12 +25,18 @@
     <ui:define name="title">Designed Reagents</ui:define>
     <ui:define name="body">
         <h:form>
+
             <div class="row">
                 <h:link value="New Reagent" outcome="edit_reagent_designs" styleClass="pull-right"/>
             </div>
-            <p:dataTable value="#{reagentDesignForm.allReagentDesigns}"
+            <div class="row">
+                <h:commandButton value="Save" id="associateBarcodes" disabled="#{!userBean.validUser}"
+                                 action="#{associateReagentsForm.associateReagent}" ajax="false" styleClass="ui-priority-primary pull-left"/>
+                <p:watermark for="associateBarcodes" value="Associate reagent with supplied barcodes."/>
+            </div>
+            <p:dataTable value="#{reagentsBean.allReagentDesigns}"
                          var="reagentDesign"
-                         sortBy="#{reagentDesignForm.reagentDesign.designName}"
+                         sortBy="#{reagentsBean.reagentDesign.designName}"
                          sortOrder="ascending">
 
                 <p:column headerText="Design Name" sortBy="#{reagentDesign.designName}"
@@ -34,6 +51,10 @@
                           sortingComparator="caseInsensitiveText">#{reagentDesign.targetSetName}</p:column>
                 <p:column headerText="Manufacturer" sortBy="#{reagentDesign.manufacturersName}"
                           sortingComparator="caseInsensitiveText">#{reagentDesign.manufacturersName}</p:column>
+                <p:column headerText="Associate Tube">
+                    <p:inputText id="manufacturersName" value="#{reagentsBean.barcodeMap[reagentDesign.designName]}"
+                                 size="20"/>
+                </p:column>
             </p:dataTable>
         </h:form>
     </ui:define>

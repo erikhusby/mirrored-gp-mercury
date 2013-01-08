@@ -25,6 +25,7 @@
                         {"bSortable": true, "sType" : "title-string"}]  // eligible for billing
                 })
             });
+
         </script>
     </stripes:layout-component>
 

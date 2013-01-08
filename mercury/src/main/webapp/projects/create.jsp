@@ -91,166 +91,166 @@
 
     <stripes:layout-component name="content">
 
-        <stripes:form beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" id="createForm" class="form-horizontal">
-        <stripes:hidden name="businessKey" value="${actionBean.researchProject.jiraTicketKey}"/>
-        <div class="form-horizontal">
-            <div class="control-group">
-                <stripes:label for="title" class="control-label">Project *</stripes:label>
-                <div class="controls">
-                        <stripes:text name="researchProject.title" id="title"  class="defaultText" title="Enter in the project name"/>
-                </div>
-            </div>
-
-            <!-- Synopsis -->
-            <div class="control-group">
-                <stripes:label for="synopsis" class="control-label">Synopsis *</stripes:label>
-
-                <div class="controls">
-                    <stripes:text id="synopsis" name="researchProject.synopsis" class="defaultText" style="width:390"
-                                  title="Enter the synopsis of the project" value="${actionBean.researchProject.synopsis}"/>
-                </div>
-            </div>
-
-            <!-- Project Managers -->
-            <div class="control-group">
-                <stripes:label for="projectManagers" class="control-label">Project Managers *</stripes:label>
-
-                <div class="controls">
-                    <stripes:text id="projectManagers" name="projectManagerList" />
-                </div>
-            </div>
-
-            <!-- Broad PIs -->
-            <div class="control-group">
-                <stripes:label for="broadPIs" class="control-label">Broad PIs</stripes:label>
-
-                <div class="controls">
-                    <stripes:text id="broadPIs" name="broadPiList" />
-                </div>
-            </div>
-
-            <!-- External Collaborators -->
-            <div class="control-group">
-                <stripes:label for="externalCollaborators" class="control-label">External Collaborators</stripes:label>
-                <div class="controls">
-                    <stripes:text id="externalCollaborators" name="externalCollaboratorList" />
-                </div>
-            </div>
-
-            <!-- Scientists -->
-            <div class="control-group">
-                <stripes:label for="scientists" class="control-label">Scientists</stripes:label>
-                <div class="controls">
-                    <stripes:text id="scientists" name="scientistList" />
-                </div>
-            </div>
-
-            <c:if test="${actionBean.researchProjectCreatorString != null}">
+        <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
+            <stripes:hidden name="businessKey" value="${actionBean.researchProject.jiraTicketKey}"/>
+            <div class="form-horizontal">
                 <div class="control-group">
-                    <stripes:label for="createdBy" class="control-label">Created By</stripes:label>
+                    <stripes:label for="title" class="control-label">Project *</stripes:label>
+                    <div class="controls">
+                            <stripes:text name="researchProject.title" id="title"  class="defaultText" title="Enter in the project name"/>
+                    </div>
+                </div>
+
+                <!-- Synopsis -->
+                <div class="control-group">
+                    <stripes:label for="synopsis" class="control-label">Synopsis *</stripes:label>
 
                     <div class="controls">
-                        <div class="form-value">
-                                ${actionBean.researchProjectCreatorString} on <fmt:formatDate
-                                value="${actionBean.researchProject.createdDate}" pattern="MM/dd/yyyy"/>
+                        <stripes:text id="synopsis" name="researchProject.synopsis" class="defaultText" style="width:390"
+                                      title="Enter the synopsis of the project" value="${actionBean.researchProject.synopsis}"/>
+                    </div>
+                </div>
+
+                <!-- Project Managers -->
+                <div class="control-group">
+                    <stripes:label for="projectManagers" class="control-label">Project Managers *</stripes:label>
+
+                    <div class="controls">
+                        <stripes:text id="projectManagers" name="projectManagerList.listOfKeys" />
+                    </div>
+                </div>
+
+                <!-- Broad PIs -->
+                <div class="control-group">
+                    <stripes:label for="broadPIs" class="control-label">Broad PIs</stripes:label>
+
+                    <div class="controls">
+                        <stripes:text id="broadPIs" name="broadPiList.listOfKeys" />
+                    </div>
+                </div>
+
+                <!-- External Collaborators -->
+                <div class="control-group">
+                    <stripes:label for="externalCollaborators" class="control-label">External Collaborators</stripes:label>
+                    <div class="controls">
+                        <stripes:text id="externalCollaborators" name="externalCollaboratorList.listOfKeys" />
+                    </div>
+                </div>
+
+                <!-- Scientists -->
+                <div class="control-group">
+                    <stripes:label for="scientists" class="control-label">Scientists</stripes:label>
+                    <div class="controls">
+                        <stripes:text id="scientists" name="scientistList.listOfKeys" />
+                    </div>
+                </div>
+
+                <c:if test="${actionBean.researchProjectCreatorString != null}">
+                    <div class="control-group">
+                        <stripes:label for="createdBy" class="control-label">Created By</stripes:label>
+
+                        <div class="controls">
+                            <div class="form-value">
+                                    ${actionBean.researchProjectCreatorString} on <fmt:formatDate
+                                    value="${actionBean.researchProject.createdDate}" pattern="MM/dd/yyyy"/>
+                            </div>
+                        </div>
+                    </div>
+                </c:if>
+
+                <div class="control-group">
+                    <stripes:label for="fundingSources" class="control-label">Funding Sources</stripes:label>
+
+                    <div class="controls">
+                        <stripes:text id="fundingSources" name="fundingSourceList.listOfKeys" />
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <stripes:label for="cohorts" class="control-label">Sample Cohorts</stripes:label>
+
+                    <div class="controls">
+                        <stripes:text id="cohorts" name="cohortsList.listOfKeys" />
+                    </div>
+                </div>
+
+
+                <div class="control-group">
+                    <stripes:label for="irbs" class="control-label">IRB/IACUC Numbers</stripes:label>
+
+                    <div class="controls">
+                        <stripes:text id="irbs" name="irbList" />
+                        <p>
+                            <stripes:checkbox id="irbNotEngaged" name="irbList"/>&nbsp;<stripes:label for="irbNotEngaged" style="display:inline;">IRB Not Engaged</stripes:label>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="control-group">
+                <div class="controls">
+                    <div class="row-fluid">
+                        <div class="span1">
+                            <stripes:submit name="save" value="Save"/>
+                        </div>
+                        <div class="span1">
+                            <c:choose>
+                                <c:when test="${actionBean.creating}">
+                                    <stripes:link href="${ctxpath}/projects/product.action?list=">Cancel</stripes:link>
+                                </c:when>
+                                <c:otherwise>
+                                    <stripes:link href="${ctxpath}/projects/project.action?view=">
+                                        <stripes:param name="businessKey" value="${actionBean.researchProject.businessKey}"/>
+                                        Cancel
+                                    </stripes:link>
+                                </c:otherwise>
+                            </c:choose>
                         </div>
                     </div>
                 </div>
-            </c:if>
-
-            <div class="control-group">
-                <stripes:label for="fundingSources" class="control-label">Funding Sources</stripes:label>
-
-                <div class="controls">
-                    <stripes:text id="fundingSources" name="fundingSourceList" />
-                </div>
             </div>
 
-            <div class="control-group">
-                <stripes:label for="cohorts" class="control-label">Sample Cohorts</stripes:label>
-
-                <div class="controls">
-                    <stripes:text id="cohorts" name="cohortsList" />
-                </div>
+            <div class="tableBar">
+                Orders
             </div>
 
-
-            <div class="control-group">
-                <stripes:label for="irbs" class="control-label">IRB/IACUC Numbers</stripes:label>
-
-                <div class="controls">
-                    <stripes:text id="irbs" name="irbList" />
-                    <p>
-                        <stripes:checkbox id="irbNotEngaged" name="irbList"/>&nbsp;<stripes:label for="irbNotEngaged" style="display:inline;">IRB Not Engaged</stripes:label>
-                    </p>
-                </div>
-            </div>
-        </div>
-
-        <div class="control-group">
-            <div class="controls">
-                <div class="row-fluid">
-                    <div class="span1">
-                        <stripes:submit name="save" value="Save"/>
-                    </div>
-                    <div class="span1">
-                        <c:choose>
-                            <c:when test="${actionBean.creating}">
-                                <stripes:link href="${ctxpath}/projects/product.action?list=">Cancel</stripes:link>
-                            </c:when>
-                            <c:otherwise>
-                                <stripes:link href="${ctxpath}/projects/project.action?view=">
-                                    <stripes:param name="businessKey" value="${actionBean.researchProject.businessKey}"/>
-                                    Cancel
-                                </stripes:link>
-                            </c:otherwise>
-                        </c:choose>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="tableBar">
-            Orders
-        </div>
-
-        <table id="orderList" class="table simple">
-            <thead>
-                <tr>
-                    <th>Name</th>
-                    <th>Order ID</th>
-                    <th>Product</th>
-                    <th>Status</th>
-                    <th>Owner</th>
-                    <th>Updated</th>
-                    <th>Samples</th>
-                </tr>
-            </thead>
-            <tbody>
-                <c:forEach items="${actionBean.researchProject.productOrders}" var="order">
+            <table id="orderList" class="table simple">
+                <thead>
                     <tr>
-                        <td>
-                            <stripes:link href="/orders/order.action" event="view">
-                                <stripes:param name="businessKey" value="${order.businessKey}"/>
-                                ${order.title}
-                            </stripes:link>
-                        </td>
-                        <td>
-                            <a class="external" target="JIRA" href="${actionBean.jiraUrl}${order.jiraTicketKey}" class="external" target="JIRA">
-                                    ${order.jiraTicketKey}
-                            </a>
-                        </td>
-                        <td>${order.title}</td>
-                        <td>${order.orderStatus}</td>
-                        <td>${actionBean.fullNameMap[order.modifiedBy]}</td>
-                        <td>
-                            <fmt:formatDate value="${order.modifiedDate}" pattern="MM/dd/yyyy"/>
-                        </td>
-                        <td>${order.pdoSampleCount}</td>
+                        <th>Name</th>
+                        <th>Order ID</th>
+                        <th>Product</th>
+                        <th>Status</th>
+                        <th>Owner</th>
+                        <th>Updated</th>
+                        <th>Samples</th>
                     </tr>
-                </c:forEach>
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    <c:forEach items="${actionBean.researchProject.productOrders}" var="order">
+                        <tr>
+                            <td>
+                                <stripes:link href="/orders/order.action" event="view">
+                                    <stripes:param name="businessKey" value="${order.businessKey}"/>
+                                    ${order.title}
+                                </stripes:link>
+                            </td>
+                            <td>
+                                <a class="external" target="JIRA" href="${actionBean.jiraUrl}${order.jiraTicketKey}" class="external" target="JIRA">
+                                        ${order.jiraTicketKey}
+                                </a>
+                            </td>
+                            <td>${order.title}</td>
+                            <td>${order.orderStatus}</td>
+                            <td>${actionBean.fullNameMap[order.modifiedBy]}</td>
+                            <td>
+                                <fmt:formatDate value="${order.modifiedDate}" pattern="MM/dd/yyyy"/>
+                            </td>
+                            <td>${order.pdoSampleCount}</td>
+                        </tr>
+                    </c:forEach>
+                </tbody>
+            </table>
         </stripes:form>
 
     </stripes:layout-component>

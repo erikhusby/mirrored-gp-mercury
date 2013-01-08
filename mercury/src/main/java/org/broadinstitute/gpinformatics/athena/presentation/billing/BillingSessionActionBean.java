@@ -65,9 +65,10 @@ public class BillingSessionActionBean extends CoreActionBean {
     private BillingSession editSession;
 
     /**
-     * Initialize the product with the passed in key for display in the form
+     * Initialize the session with the passed in key for display in the form. Creation happens from a gesture in the
+     * order list, so create is not needed here.
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {"view", "downloadTracker", "downloadQuoteItems", "bill", "endSession"})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, "downloadTracker", "downloadQuoteItems", "bill", "endSession"})
     public void init() {
         sessionKey = getContext().getRequest().getParameter("sessionKey");
         if (sessionKey != null) {
@@ -75,18 +76,18 @@ public class BillingSessionActionBean extends CoreActionBean {
         }
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = {"list"})
+    @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION})
     public void listInit() {
         billingSessions = billingSessionDao.findAll();
     }
 
     @DefaultHandler
-    @HandlesEvent("list")
+    @HandlesEvent(LIST_ACTION)
     public Resolution list() {
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
-    @HandlesEvent("view")
+    @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         return new ForwardResolution(SESSION_VIEW_PAGE);
     }
@@ -150,11 +151,10 @@ public class BillingSessionActionBean extends CoreActionBean {
             };
         } catch (Exception ex) {
             addGlobalValidationError("Got an exception trying to download the billing tracker: " + ex.getMessage());
+            return getContext().getSourcePageResolution();
         } finally {
             IOUtils.closeQuietly(outputStream);
         }
-
-        return new ForwardResolution(SESSION_VIEW_PAGE);
     }
 
     @HandlesEvent("bill")
@@ -195,9 +195,9 @@ public class BillingSessionActionBean extends CoreActionBean {
             return endSession();
         }
 
+        // If there are any errors (and there may be multiple, then need to save and go to the source page
         billingSessionDao.persist(editSession);
-
-        return new ForwardResolution(SESSION_VIEW_PAGE);
+        return getContext().getSourcePageResolution();
     }
 
     @HandlesEvent("endSession")

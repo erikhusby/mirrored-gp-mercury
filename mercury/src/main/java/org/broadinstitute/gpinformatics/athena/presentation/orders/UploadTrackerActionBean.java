@@ -203,7 +203,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
     }
 
     @DefaultHandler
-    @HandlesEvent("view")
+    @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         isPreview = false;
         return new ForwardResolution(TRACKER_PAGE);
