@@ -6,6 +6,22 @@
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Search Vessels" sectionTitle="Search">
 
+    <stripes:layout-component name="extraHead">
+        <script type="text/javascript">
+            function showResult(type) {
+                $j('#' + type + 'Div').show();
+            }
+
+            function showVisualizer(div, label) {
+                $j('#' + div).show();
+            }
+
+            function hideResult(type) {
+                $j('#' + type + 'Div').hide();
+            }
+        </script>
+    </stripes:layout-component>
+
     <stripes:layout-component name="content">
 
         <stripes:form beanclass="${actionBean.class.name}" id="searchForm" class="form-horizontal">
@@ -36,7 +52,79 @@
                 <a id="vesselAnchor" href="javascript:showResult('vessel')" style="margin-left: 20px;">show</a>
                 <a id="vesselAnchorHide" href="javascript:hideResult('vessel')" style="display:none; margin-left: 20px;">hide</a>
             </div>
-            <div id="vesselDiv" style="display:none"> </div>
+            <div id="vesselDiv" style="display:none">
+                <table id="productOrderList" class="table simple">
+                    <thead>
+                        <tr>
+                            <th width="30">Vessel Viewer</th>
+                            <th width="30">Sample List Viewer</th>
+                            <th>Label</th>
+                            <th width="80">Sample Count</th>
+                            <th>Type</th>
+                            <th width="30">PDO Count</th>
+                            <th width="30">Index Count</th>
+                            <th width="30">Lab Batch Count</th>
+                            <th width="100">Latest Event</th>
+                            <th width="120">Event Location</th>
+                            <th>Event User</th>
+                            <th width="60">Event Date</th>
+                            <th width="60">Creation Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <c:forEach items="${actionBean.foundVessels}" var="vessel">
+                            <tr>
+                                <td>
+                                    <a href="javascript:showVisualizer('vesselViewerDiv', '${vessel.label}')" style="margin-left: 20px;">show</a>
+                                </td>
+                                <td>
+                                    <a href="javascript:showVisualizer('sampleViewerDiv', '${vessel.label}')" style="margin-left: 20px;">show</a>
+                                </td>
+                                <td>
+                                    ${vessel.label}
+                                </td>
+                                <td>
+                                    ${vessel.sampleInstanceCount}
+                                </td>
+                                <td>
+                                    ${vessel.type.name}
+                                </td>
+                                <td>
+                                    get vessel transient pdo key(s)
+                                </td>
+                                <td>
+                                    get vessel transient indexes
+                                </td>
+                                <td>
+                                    ${vessel.nearestLabBatchesString}
+                                </td>
+                                <td>
+                                    ${vessel.latestEvent.labEventType.name}
+                                </td>
+                                <td>
+                                    ${vessel.latestEvent.eventLocation}
+                                </td>
+                                <td>
+                                    ${actionBean.fullNameMap[vessel.latestEvent.eventOperator]}
+                                </td>
+                                <td>
+                                    <fmt:formatDate value="${vessel.latestEvent.eventDate}" pattern="MM/dd/yyyy"/>
+                                </td>
+                                <td>
+                                    <fmt:formatDate value="${vessel.createdOn}" pattern="MM/dd/yyyy"/>
+                                </td>
+                            </tr>
+                        </c:forEach>
+                    </tbody>
+                </table>
+            </div>
+
+            <div id="vesselViewerDiv" style="display:none">
+                vess
+            </div>
+            <div id="sampleViewerDiv" style="display:none">
+                samp
+            </div>
         </c:if>
 
         <c:if test="${not empty actionBean.foundSamples}">

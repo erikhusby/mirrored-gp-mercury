@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.Rework;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.Audited;
@@ -118,6 +119,9 @@ public abstract class LabVessel implements Serializable {
 
     @OneToMany(mappedBy = "targetLabVessel")
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsTarget = new HashSet<VesselToVesselTransfer>();
+
+    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "reworkedLabVessels")
+    private Set<Rework> reworks = new HashSet<Rework>();
 
     protected LabVessel(String label) {
         createdOn = new Date();
@@ -364,6 +368,10 @@ public abstract class LabVessel implements Serializable {
         return pdoNames;
     }
 
+    public String getNearestLabBatchesString() {
+        return "need to implement getNearestLabBatchesString";
+    }
+
     public enum CONTAINER_TYPE {
         STATIC_PLATE("Plate"),
         PLATE_WELL("Plate Well"),
@@ -390,7 +398,7 @@ public abstract class LabVessel implements Serializable {
     /**
      * Returned from getAncestors and getDescendants
      */
-    static class VesselEvent {
+    public static class VesselEvent {
         private LabVessel labVessel;
         private VesselContainer vesselContainer;
         private VesselPosition position;
@@ -674,6 +682,10 @@ public abstract class LabVessel implements Serializable {
 
     public Set<BucketEntry> getBucketEntries() {
         return Collections.unmodifiableSet(bucketEntries);
+    }
+
+    public void addRework(Rework rework) {
+        reworks.add(rework);
     }
 
     /* *
