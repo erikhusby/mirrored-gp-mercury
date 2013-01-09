@@ -192,7 +192,7 @@
                 <div class="controls">
                     <div class="row-fluid">
                         <div class="span1">
-                            <stripes:submit name="save" value="Save"/>
+                            <stripes:submit name="save" value="Save" class="btn btn-primary"/>
                         </div>
                         <div class="span1">
                             <c:choose>

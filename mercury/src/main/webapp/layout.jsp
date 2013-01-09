@@ -131,7 +131,7 @@
                                data-content="${bean.userBean.bspStatus}<br/>${bean.userBean.jiraStatus}<br/>${bean.userBean.rolesString}">${bean.userBean.loginUserName}</span>
 
                             &#160;
-                            <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean"  event="signOut" title="Sign out" class="btn btn-mini">
+                            <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean"  event="signOut" title="Sign out" class="btn btn-mini" style="text-decoration: none !important">
                                 Sign out
                             </stripes:link>
                         </c:if>
