@@ -44,7 +44,7 @@ import java.util.*;
  * This handles all the needed interface processing elements
  */
 @UrlBinding("/orders/order.action")
-public class ProductOrderActionBean extends CoreActionBean {
+public class ProductOrderActionBean extends CoreActionBean implements ValidationErrorHandler {
 
     private static final String CURRENT_OBJECT = "Product Order";
     public static final String CREATE_ORDER = CoreActionBean.CREATE + CURRENT_OBJECT;
@@ -142,7 +142,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @ValidationMethod(on = "placeOrder")
     public void validateOrderPlacement(ValidationErrors errors) throws Exception {
         if (editOrder.getSamples().isEmpty()) {
-            errors.addGlobalError(new SimpleError("Order does not have anY samples"));
+            errors.addGlobalError(new SimpleError("Order does not have any samples"));
         }
 
         if (editOrder.getResearchProject() == null) {
@@ -451,5 +451,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setAddOnKeys(List<String> addOnKeys) {
         this.addOnKeys = addOnKeys;
+    }
+
+    @Override
+    public Resolution handleValidationErrors(ValidationErrors errors) throws Exception {
+        return new ForwardResolution(ORDER_CREATE_PAGE).addParameter("productOrder", productOrder);
     }
 }

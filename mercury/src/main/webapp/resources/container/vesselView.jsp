@@ -3,9 +3,9 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.VesselViewActionBean"/>
 <table>
-    <c:forEach var="row" items="${actionBean.vessel.vesselGeometry.rowNames}">
+    <c:forEach var="row" items="${actionBean.vessel.vesselGeometry.rowNames}" varStatus="rowIndex">
         <tr>
-            <c:forEach var="column" items="${actionBean.vessel.vesselGeometry.columnNames}">
+            <c:forEach var="column" items="${actionBean.vessel.vesselGeometry.columnNames}" varStatus="colIndex">
                 <td>
                         ${row}${column}<br/>
                     <c:forEach var="sample" items="${actionBean.samplesAtPosition(row, column)}">
