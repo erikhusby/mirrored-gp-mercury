@@ -59,6 +59,7 @@ public class LabBatchTest {
                 40, null, null, true, workflowName, false), new ResearchProject(101L, "Test RP", "Test synopsis",
                                                                                 false));
         productOrder.setJiraTicketKey(pdoBusinessName);
+        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         mapKeyToProductOrder.put(pdoBusinessName, productOrder);
 
         List<String> vesselSampleList = new ArrayList<String>(6);
