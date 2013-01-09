@@ -2086,6 +2086,21 @@
             CHECK (irb_type IN ('PARTNERS', 'FARBER', 'MIT', 'BROAD', 'OTHER'))
         </sql>
     </changeSet>
+    <changeSet id="GPLIM-543-14" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="WORK_COMPLETE_MESSAGE" schemaName="athena" columnName="ALIQUOT_LSID"/>
+        </preConditions>
+        <dropColumn tableName="WORK_COMPLETE_MESSAGE" columnName="ALIQUOT_LSID" schemaName="athena"/>
+        <dropColumn tableName="WORK_COMPLETE_MESSAGE_AUD" columnName="ALIQUOT_LSID" schemaName="athena"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-543-15" author="pshapiro">
+        <preConditions onFail="MARK_RAN">
+            <columnExists tableName="WORK_COMPLETE_MESSAGE" schemaName="athena" columnName="COLLABORATOR_SAMPLE_ID"/>
+        </preConditions>
+        <renameColumn tableName="WORK_COMPLETE_MESSAGE" schemaName="athena" oldColumnName="COLLABORATOR_SAMPLE_ID" newColumnName="SAMPLE_NAME"/>
+        <renameColumn tableName="WORK_COMPLETE_MESSAGE_AUD" schemaName="athena" oldColumnName="COLLABORATOR_SAMPLE_ID" newColumnName="SAMPLE_NAME"/>
+    </changeSet>
 
     <changeSet id="GPLIM-603-1" author="hrafal">
         <dropNotNullConstraint schemaName="athena" tableName="product_order" columnName="jira_ticket_key"/>

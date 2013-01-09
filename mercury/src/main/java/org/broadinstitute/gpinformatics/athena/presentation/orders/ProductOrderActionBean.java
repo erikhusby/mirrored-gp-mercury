@@ -47,8 +47,8 @@ import java.util.*;
 public class ProductOrderActionBean extends CoreActionBean {
 
     private static final String CURRENT_OBJECT = "Product Order";
-    private static final String CREATE_ORDER = CoreActionBean.CREATE + CURRENT_OBJECT;
-    private static final String EDIT_ORDER = CoreActionBean.EDIT + CURRENT_OBJECT + ": ";
+    public static final String CREATE_ORDER = CoreActionBean.CREATE + CURRENT_OBJECT;
+    public static final String EDIT_ORDER = CoreActionBean.EDIT + CURRENT_OBJECT;
 
     private static final String ORDER_CREATE_PAGE = "/orders/create.jsp";
     private static final String ORDER_LIST_PAGE = "/orders/list.jsp";
@@ -89,12 +89,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrderListEntry> allProductOrders;
 
-    @Validate(required = true, on = {"view", "edit"+6})
+    @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
     private String businessKey;
 
     @ValidateNestedProperties({
-        @Validate(field="comments", maxlength=2000, on={"save"}),
-        @Validate(field="title", required = true, maxlength=255, on={"save"})
+        @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
+        @Validate(field="title", required = true, maxlength=255, on={SAVE_ACTION})
     })
     private ProductOrder editOrder;
 
@@ -114,7 +114,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     /**
      * Initialize the product with the passed in key for display in the form
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {"view", "edit", "downloadBillingTracker", "save"})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, "downloadBillingTracker", SAVE_ACTION, "placeOrder"})
     public void init() {
         businessKey = getContext().getRequest().getParameter("businessKey");
         if (!StringUtils.isBlank(businessKey)) {
@@ -124,7 +124,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @ValidationMethod(on = "save")
+    @ValidationMethod(on = SAVE_ACTION)
     public void uniqueNameValidation(ValidationErrors errors) {
         // If the research project has no original title, then it was not fetched from hibernate, so this is a create
         // OR if this was fetched and the title has been changed
@@ -222,29 +222,29 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = {"list"})
+    @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION})
     public void listInit() {
         allProductOrders = orderListEntryDao.findProductOrderListEntries();
     }
 
     @DefaultHandler
-    @HandlesEvent("list")
+    @HandlesEvent(LIST_ACTION)
     public Resolution list() {
         return new ForwardResolution(ORDER_LIST_PAGE);
     }
 
-    @HandlesEvent("view")
+    @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         return new ForwardResolution(ORDER_VIEW_PAGE);
     }
 
-    @HandlesEvent("create")
+    @HandlesEvent(CREATE_ACTION)
     public Resolution create() {
         setSubmitString(CREATE_ORDER);
         return new ForwardResolution(ORDER_CREATE_PAGE);
     }
 
-    @HandlesEvent("edit")
+    @HandlesEvent(EDIT_ACTION)
     public Resolution edit() {
         setSubmitString(EDIT_ORDER);
         return new ForwardResolution(ORDER_CREATE_PAGE);
@@ -257,14 +257,14 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         } catch (Exception e ) {
             addGlobalValidationError(e.getMessage());
-            return null;
+            return getContext().getSourcePageResolution();
         }
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been placed");
-        return new RedirectResolution(ProductOrderActionBean.class, "view").addParameter("businessKey", editOrder.getBusinessKey());
+        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("businessKey", editOrder.getBusinessKey());
     }
 
-    @HandlesEvent("save")
+    @HandlesEvent(SAVE_ACTION)
     public Resolution save() throws Exception {
         // Since there is one project, can just use the list as the key
         ResearchProject project = projectDao.findByBusinessKey(researchProjectList);
@@ -284,21 +284,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         productOrderDao.persist(editOrder);
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been created");
-        return new RedirectResolution(ProductOrderActionBean.class, "view").addParameter("businessKey", editOrder.getBusinessKey());
+        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("businessKey", editOrder.getBusinessKey());
     }
 
     @HandlesEvent("downloadBillingTracker")
     public Resolution downloadBillingTracker() {
-        Resolution downloadResolution =
-            ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, bspUserList);
-
-        // If there is no file to download, just pass on the errors
-        if (downloadResolution == null) {
-            return new ForwardResolution(ORDER_VIEW_PAGE);
-        }
-
-        // Do the download
-        return downloadResolution;
+        return ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, bspUserList);
     }
 
     @HandlesEvent("startBilling")
@@ -307,13 +298,13 @@ public class ProductOrderActionBean extends CoreActionBean {
                 billingLedgerDao.findWithoutBillingSessionByOrderList(getSelectedProductOrderBusinessKeys());
         if ((ledgerItems == null) || (ledgerItems.isEmpty())) {
             addGlobalValidationError("There is nothing to bill");
-            return new RedirectResolution(ProductOrderActionBean.class, "list");
+            return new RedirectResolution(ProductOrderActionBean.class, LIST_ACTION);
         }
 
         BillingSession session = new BillingSession(getUserBean().getBspUser().getUserId(), ledgerItems);
         billingSessionDao.persist(session);
 
-        return new RedirectResolution(BillingSessionActionBean.class, "view")
+        return new RedirectResolution(BillingSessionActionBean.class, VIEW_ACTION)
                 .addParameter("sessionKey", session.getBusinessKey());
     }
 
@@ -400,11 +391,10 @@ public class ProductOrderActionBean extends CoreActionBean {
             };
         } catch (Exception ex) {
             actionBean.addGlobalValidationError("Got an exception trying to download the billing tracker: " + ex.getMessage());
+            return actionBean.getContext().getSourcePageResolution();
         } finally {
             IOUtils.closeQuietly(outputStream);
         }
-
-        return null;
     }
 
     public String getBusinessKey() {

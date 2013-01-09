@@ -52,18 +52,18 @@ public class ProductActionBean extends CoreActionBean {
     private List<ProductFamily> productFamilies;
     private List<Product> allProducts;
 
-    @Validate(required = true, on = {"view", "edit"})
+    @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
     private String productKey;
 
     @ValidateNestedProperties({
-        @Validate(field="productFamily.productFamilyId", required = true, maxlength=255, on={"save"}),
-        @Validate(field="productName", required = true, maxlength=255, on={"save"})
+        @Validate(field="productFamily.productFamilyId", required = true, maxlength=255, on={SAVE_ACTION}),
+        @Validate(field="productName", required = true, maxlength=255, on={SAVE_ACTION})
     })
     private Product editProduct;
 
 
     // These are the fields for catching the input tokens
-    @Validate(required = true, on = {"save"})
+    @Validate(required = true, on = {SAVE_ACTION})
     private String priceItemList = "";
 
     private String addOnList = "";
@@ -82,7 +82,7 @@ public class ProductActionBean extends CoreActionBean {
     /**
      * Initialize the product with the passed in key for display in the form
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {"view", "edit", "save", "addOnsAutocomplete"})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, SAVE_ACTION, "addOnsAutocomplete"})
     public void init() {
         productKey = getContext().getRequest().getParameter("productKey");
         if (!StringUtils.isBlank(productKey)) {
@@ -93,13 +93,13 @@ public class ProductActionBean extends CoreActionBean {
         }
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = {"create", "edit"})
+    @After(stages = LifecycleStage.BindingAndValidation, on = {CREATE_ACTION, EDIT_ACTION})
     public void setupFamilies() {
         productFamilies = productFamilyDao.findAll();
         Collections.sort(productFamilies);
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = {"list"})
+    @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION})
     public void listInit() {
         allProducts = productDao.findAll(Product.class);
     }
@@ -107,7 +107,7 @@ public class ProductActionBean extends CoreActionBean {
     /**
      * Validate information on the product being edited or created
      */
-    @ValidationMethod(on = {"save"})
+    @ValidationMethod(on = {SAVE_ACTION})
     public void validatePriceItems(ValidationErrors errors) {
         String[] duplicatePriceItems = editProduct.getDuplicatePriceItemNames();
         if (duplicatePriceItems != null) {
@@ -133,23 +133,23 @@ public class ProductActionBean extends CoreActionBean {
     }
 
     @DefaultHandler
-    @HandlesEvent("list")
+    @HandlesEvent(LIST_ACTION)
     public Resolution list() {
         return new ForwardResolution(PRODUCT_LIST_PAGE);
     }
 
-    @HandlesEvent("view")
+    @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         return new ForwardResolution(PRODUCT_VIEW_PAGE);
     }
 
-    @HandlesEvent("create")
+    @HandlesEvent(CREATE_ACTION)
     public Resolution create() {
         setSubmitString(CREATE_PRODUCT);
         return new ForwardResolution(PRODUCT_CREATE_PAGE);
     }
 
-    @HandlesEvent("edit")
+    @HandlesEvent(EDIT_ACTION)
     public Resolution edit() {
         setSubmitString(EDIT_PRODUCT);
         return new ForwardResolution(PRODUCT_CREATE_PAGE);
@@ -196,7 +196,7 @@ public class ProductActionBean extends CoreActionBean {
         return new StreamingResolution("text", new StringReader(itemList.toString()));
     }
 
-    @HandlesEvent(value = "save")
+    @HandlesEvent(value = SAVE_ACTION)
     public Resolution save() {
         populateTokenListFields();
 
@@ -204,7 +204,7 @@ public class ProductActionBean extends CoreActionBean {
 
         productDao.persist(editProduct);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been created");
-        return new RedirectResolution(ProductActionBean.class, "view").addParameter("productKey", editProduct.getPartNumber());
+        return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter("productKey", editProduct.getPartNumber());
     }
 
     private void populateTokenListFields() {

@@ -1,3 +1,4 @@
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -16,7 +17,7 @@
                         {"bSortable": true, "sType": "html"},   // ID
                         {"bSortable": true},                    // Product
                         {"bSortable": true},                    // Product Family
-                        {"bSortable": false},                   // Status
+                        {"bSortable": true},                    // Status
                         {"bSortable": true},                    // Research Project
                         {"bSortable": true},                    // Owner
                         {"bSortable": true, "sType": "date"},   // Updated
@@ -25,13 +26,14 @@
                         {"bSortable": true, "sType" : "title-string"}]  // eligible for billing
                 })
             });
+
         </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
         <p>
-            <stripes:link title="New Product Order" beanclass="${actionBean.class.name}" event="create" class="pull-right">
-                New order
+            <stripes:link title="<%=ProductOrderActionBean.CREATE_ORDER%>" beanclass="${actionBean.class.name}" event="create" class="pull-right">
+                <%=ProductOrderActionBean.CREATE_ORDER%>
             </stripes:link>
         </p>
 
@@ -86,7 +88,7 @@
                             <td>
                                 <c:choose>
                                     <c:when test="${order.draft}">
-                                        DRAFT
+                                        DRAFT<br/>
                                         (
                                             <stripes:link title="Place Order" beanclass="${actionBean.class.name}" event="placeOrder">
                                                 <stripes:param name="businessKey" value="${order.businessKey}"/>
@@ -107,7 +109,7 @@
                             <td>${order.researchProjectTitle}</td>
                             <td>${actionBean.fullNameMap[order.ownerId]}</td>
                             <td>
-                                <fmt:formatDate value="${order.updatedDate}" pattern="MM/dd/yyyy"/>
+                                <fmt:formatDate value="${order.updatedDate}"/>
                             </td>
                             <td>${order.pdoSampleCount}</td>
                             <td>

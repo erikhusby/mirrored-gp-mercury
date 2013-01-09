@@ -20,6 +20,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
@@ -27,9 +28,9 @@ import java.io.IOException;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus.Abandoned;
+import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus.Complete;
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.TransitionStates.Cancel;
-import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus.ABANDONED;
-import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus.NOT_STARTED;
+import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus.*;
 
 @Stateful
 @RequestScoped
@@ -108,11 +109,11 @@ public class ProductOrderEjb {
     /**
      * Including {@link QuoteNotFoundException} since this is an expected failure that may occur in application validation
      *
-     * @param productOrder The order to save
-     * @param productOrderSampleIds The sample ids
-     * @param addOnPartNumbers The add Ons
-     *
-     * @throws QuoteNotFoundException Quote exceptions
+
+     * @param productOrder product order
+     * @param productOrderSampleIds sample IDs
+     * @param addOnPartNumbers add-on part numbers
+     * @throws QuoteNotFoundException
      */
     public void save(
         ProductOrder productOrder, List<String> productOrderSampleIds, List<String> addOnPartNumbers)
@@ -157,7 +158,7 @@ public class ProductOrderEjb {
          * @param customFieldDefinitionMap contains the mapping from display names of fields to their JIRA IDs, needed
          *                                 to dig the old values contained in the fields out of the issueFieldsResponse
          * @param issueFieldsResponse contains the old values
-         * @return
+         * @return the update message that goes in the JIRA ticket
          */
         public String getUpdateMessage(ProductOrder productOrder, Map<String, CustomFieldDefinition> customFieldDefinitionMap, IssueFieldsResponse issueFieldsResponse) {
 
@@ -198,7 +199,7 @@ public class ProductOrderEjb {
      * Update the JIRA issue, executing the 'Developer Edit' transition to effect edits of fields that are read-only
      * on the UI.  Add a comment to the issue to indicate what was changed and by whom.
      *
-     * @param productOrder
+     * @param productOrder product order
      * @throws IOException
      */
     private void updateJiraIssue(ProductOrder productOrder) throws IOException {
@@ -250,8 +251,8 @@ public class ProductOrderEjb {
     /**
      * Allow updated quotes, products, and add-ons.
      *
-     * @param productOrder
-     * @param selectedAddOnPartNumbers
+     * @param productOrder product order
+     * @param selectedAddOnPartNumbers selected add-on part numbers
      */
     public void update(final ProductOrder productOrder, final List<String> selectedAddOnPartNumbers) throws QuoteNotFoundException {
 
@@ -289,8 +290,8 @@ public class ProductOrderEjb {
 
     }
 
-    public static class NoCancelTransitionException extends Exception {
-        public NoCancelTransitionException(String s) {
+    public static class NoTransitionException extends Exception {
+        public NoTransitionException(String s) {
             super(s);
         }
     }
@@ -301,80 +302,205 @@ public class ProductOrderEjb {
         }
     }
 
-    public static class SamplesNotAbandonableException extends Exception {
-        public SamplesNotAbandonableException(String s) {
-            super(s);
+
+    public static class SampleDeliveryStatusChangeException extends Exception {
+
+        private List<ProductOrderSample> samples;
+
+        private ProductOrderSample.DeliveryStatus targetedDeliveryStatus;
+
+        protected SampleDeliveryStatusChangeException(ProductOrderSample.DeliveryStatus targetedDeliveryStatus, List<ProductOrderSample> samples) {
+            this.targetedDeliveryStatus = targetedDeliveryStatus;
+            this.samples = samples;
+        }
+
+        protected List<ProductOrderSample> getSamples() {
+            return samples;
+        }
+
+        protected String getSampleMessage() {
+
+            List<String> sampleMessagePieces = new ArrayList<String>();
+
+            for (ProductOrderSample productOrderSample : getSamples()) {
+                sampleMessagePieces.add(
+                        productOrderSample.getSampleName() + " @ " + productOrderSample.getSamplePosition() +
+                                " : current status " + productOrderSample.getDeliveryStatus().getDisplayName());
+            }
+
+            return StringUtils.join(sampleMessagePieces, ", ");
+        }
+
+        protected ProductOrder getProductOrder() {
+            if (samples != null && samples.size() > 0) {
+                return samples.get(0).getProductOrder();
+            }
+
+            return null;
+        }
+
+        @Override
+        public String getMessage() {
+            return "Cannot transition samples to status " + targetedDeliveryStatus.getDisplayName() + ": " + getSampleMessage();
         }
     }
 
 
-    public void abandon(String jiraTicketKey) throws NoCancelTransitionException, NoSuchPDOException, SamplesNotAbandonableException {
-
+    private ProductOrder findProductOrder(String jiraTicketKey) throws NoSuchPDOException {
         ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraTicketKey);
 
         if (productOrder == null) {
             throw new NoSuchPDOException(jiraTicketKey);
         }
 
-        Set<ProductOrderSample.DeliveryStatus> abandonableDeliveryStatuses =
-                new HashSet<ProductOrderSample.DeliveryStatus>(Arrays.asList(ABANDONED, NOT_STARTED));
+        return productOrder;
+    }
 
-        List<ProductOrderSample> unabandonableSamples = new ArrayList<ProductOrderSample>();
+
+    private void transitionSamples(ProductOrder productOrder, Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
+                                   ProductOrderSample.DeliveryStatus targetStatus, Collection<ProductOrderSample> productOrderSamples) throws SampleDeliveryStatusChangeException {
+
+        Set<ProductOrderSample> sampleSet = new HashSet<ProductOrderSample>(productOrderSamples);
+
+        List<ProductOrderSample> untransitionableSamples = new ArrayList<ProductOrderSample>();
 
         for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-            if ( ! abandonableDeliveryStatuses.contains(productOrderSample.getDeliveryStatus())) {
-                unabandonableSamples.add(productOrderSample);
-                // keep looping, find all the unabandonable samples and then throw a descriptive exception
-            }
-            else {
-                productOrderSample.setDeliveryStatus(ABANDONED);
+            // if the sample name set is empty we try to transition all samples in the PDO
+            if (CollectionUtils.isEmpty(sampleSet) || sampleSet.contains(productOrderSample)) {
+                if ( ! acceptableStartingStatuses.contains(productOrderSample.getDeliveryStatus())) {
+                    untransitionableSamples.add(productOrderSample);
+                    // keep looping, find all the untransitionable samples and then throw a descriptive exception
+                } else {
+                    productOrderSample.setDeliveryStatus(targetStatus);
+                }
             }
         }
 
-        if (CollectionUtils.isNotEmpty(unabandonableSamples)) {
-            StringBuilder sb = new StringBuilder("Samples in " + productOrder.getBusinessKey() + " cannot be abandoned: ");
+        if (CollectionUtils.isNotEmpty(untransitionableSamples)) {
+            throw new SampleDeliveryStatusChangeException(targetStatus, untransitionableSamples);
+        }
+    }
 
-            List<String> sampleErrors = new ArrayList<String>();
 
-            for (ProductOrderSample productOrderSample : unabandonableSamples) {
-                sampleErrors.add(productOrderSample.getSampleName() + " @ " + productOrderSample.getSamplePosition());
-            }
 
-            sb.append(StringUtils.join(unabandonableSamples, ", "));
+    private void transitionSamplesAndUpdateTicket(String jiraTicketKey, Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
+                                                  ProductOrderSample.DeliveryStatus targetStatus, List<Integer> sampleIndices,
+                                                  List<String> sampleComments) throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
 
-            throw new SamplesNotAbandonableException(sb.toString());
+        ProductOrder productOrder = findProductOrder(jiraTicketKey);
+
+        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
+
+        List<String> messagePieces = new ArrayList<String>();
+
+        // ii = index of indices
+        for (int ii = 0; ii < sampleIndices.size(); ii++) {
+            int sampleIndex = sampleIndices.get(ii);
+
+            ProductOrderSample productOrderSample = productOrder.getSamples().get(sampleIndex);
+            // GPLIM-655 insert code here to append to sample comment history.  In the absence of this I'll just throw
+            // a comment to JIRA
+            productOrderSamples.add(productOrderSample);
+
+            messagePieces.add(productOrderSample.getSampleName() + " at index " + productOrderSample.getSamplePosition() + ": " + sampleComments.get(ii));
         }
 
+        transitionSamples(productOrder, acceptableStartingStatuses, targetStatus, productOrderSamples);
+
+        jiraService.addComment(productOrder.getJiraTicketKey(), getUserName() + " transitioned samples to status " +
+                targetStatus.getDisplayName() + ":\n" + StringUtils.join(messagePieces, "\n"));
+
+    }
+
+
+    private String getUserName() {
+        String user = userBean.getLoginUserName();
+        return user == null ? "Mercury" : user;
+    }
+
+
+    private void transitionJiraTicket(String jiraTicketKey, String [] alreadyResolvedResolutions, ProductOrder.TransitionStates transitionState, String transitionComments) throws IOException, NoTransitionException {
+        String resolution = jiraService.getResolution(jiraTicketKey);
+
+        Set<String> alreadyResolvedResolutionsSet = new HashSet<String>(Arrays.asList(alreadyResolvedResolutions));
+
+        if ( ! alreadyResolvedResolutionsSet.contains(resolution)) {
+
+            Transition transition = jiraService.findAvailableTransitionByName(jiraTicketKey, transitionState.getStateName());
+
+            if (transition == null) {
+                throw new NoTransitionException(
+                        "Cannot " + transitionState.getStateName() + " " + jiraTicketKey +
+                                " in resolution '" + resolution + "': no " + transitionState.getStateName() + " transition found");
+            }
+
+            String jiraCommentText = getUserName() + " performed " + transitionState.getStateName() + " transition on " + jiraTicketKey;
+
+            if (transitionComments != null) {
+                jiraCommentText = jiraCommentText + ": " + transitionComments;
+            }
+
+            jiraService.postNewTransition(jiraTicketKey, transition, jiraCommentText);
+        }
+    }
+
+
+    /**
+     * Abandon the whole PDO with a comment
+     *
+     * @param jiraTicketKey JIRA ticket key
+     * @param abandonComments transition comments
+     * @throws NoTransitionException
+     * @throws NoSuchPDOException
+     * @throws SampleDeliveryStatusChangeException
+     */
+    public void abandon(@Nonnull String jiraTicketKey, @Nullable String abandonComments) throws NoTransitionException, NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
+
+        ProductOrder productOrder = findProductOrder(jiraTicketKey);
+
+        // then mark PDO as abandoned
         productOrder.setOrderStatus(Abandoned);
 
-        try {
-            Set<String> ALREADY_RESOLVED = new HashSet<String>(Arrays.asList("Cancelled", "Completed"));
-            String resolution = jiraService.getResolution(jiraTicketKey);
+        transitionSamples(productOrder, EnumSet.of(ABANDONED, NOT_STARTED), ABANDONED, productOrder.getSamples());
 
-            if ( ! ALREADY_RESOLVED.contains(resolution)) {
+        // Currently not setting abandon comments into PDO comments, that seems too intrusive.  We will record the comments
+        // with the JIRA ticket.
 
-                Transition transition = jiraService.findAvailableTransitionByName(
-                        productOrder.getJiraTicketKey(), Cancel.getStateName());
-
-                if (transition == null) {
-                    throw new NoCancelTransitionException("Cannot Cancel " + jiraTicketKey + " in resolution '" + resolution + "': no Cancel transition found");
-                }
-
-                String user = userBean.getLoginUserName();
-                jiraService.postNewTransition(productOrder.getJiraTicketKey(), transition,
-                        (user == null ? "Mercury" : user) + " abandoned " + jiraTicketKey);
-            }
-
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        transitionJiraTicket(jiraTicketKey, new String[]{"Cancelled", "Complete"}, Cancel, abandonComments);
     }
 
 
-    public void complete(ProductOrder productOrder) {
+    /**
+     * Mark the whole PDO as complete, with a comment.
+     *
+     * @param jiraTicketKey
+     * @param completionComments
+     * @throws SampleDeliveryStatusChangeException
+     * @throws IOException
+     * @throws NoTransitionException
+     */
+    public void complete(@Nonnull String jiraTicketKey, @Nullable String completionComments) throws SampleDeliveryStatusChangeException, IOException, NoTransitionException, NoSuchPDOException {
 
-        // Mark PDO as complete.  Do we also update the statuses of any non-ABANDONED, non-COMPLETE samples?
+        ProductOrder productOrder = findProductOrder(jiraTicketKey);
+        productOrder.setOrderStatus(Complete);
+
+        transitionSamples(productOrder, EnumSet.of(DELIVERED, NOT_STARTED), DELIVERED, productOrder.getSamples());
+
+        // Currently not setting abandon comments into PDO comments, that seems too intrusive.  We will record the comments
+        // with the JIRA ticket.
+
+        transitionJiraTicket(jiraTicketKey, new String [] {"Cancelled", "Complete"}, ProductOrder.TransitionStates.Complete, completionComments);
     }
 
+
+
+    public void abandonSamples(@Nonnull String jiraTicketKey, List<Integer> sampleIndices, List<String> abandonmentComments) throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
+        transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(ABANDONED, NOT_STARTED), ABANDONED, sampleIndices, abandonmentComments);
+    }
+
+
+    public void completeSamples(@Nonnull String pdoKey, List<Integer> sampleIndices, List<String> completionComments) throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
+        transitionSamplesAndUpdateTicket(pdoKey, EnumSet.of(DELIVERED, NOT_STARTED), DELIVERED, sampleIndices, completionComments);
+    }
 
 }

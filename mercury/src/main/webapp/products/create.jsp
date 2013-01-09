@@ -94,7 +94,7 @@
                     <div class="controls">
                         <stripes:text id="availabilityDate" name="editProduct.availabilityDate" class="defaultText"
                             title="enter date (MM/dd/yyyy)"><fmt:formatDate
-                                value="${actionBean.editProduct.availabilityDate}" pattern="MM/dd/yyyy"/></stripes:text>
+                                value="${actionBean.editProduct.availabilityDate}" dateStyle="short"/></stripes:text>
                     </div>
                 </div>
 
@@ -103,7 +103,7 @@
                     <div class="controls">
                         <stripes:text id="discontinuedDate" name="editProduct.discontinuedDate" class="defaultText"
                             title="enter date (MM/dd/yyyy)"><fmt:formatDate
-                                value="${actionBean.editProduct.discontinuedDate}" pattern="MM/dd/yyyy"/></stripes:text>
+                                value="${actionBean.editProduct.discontinuedDate}" dateStyle="short"/></stripes:text>
                     </div>
                 </div>
 

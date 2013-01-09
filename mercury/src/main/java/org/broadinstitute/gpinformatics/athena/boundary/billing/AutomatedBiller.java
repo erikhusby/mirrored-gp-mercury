@@ -53,7 +53,7 @@ public class AutomatedBiller {
                 // FIXME: need to mark messages as processed even when an error occurs; enable this once code is debugged.
 //                workCompleteMessageDao.markMessageProcessed(message);
                 log.error(MessageFormat.format("Error while processing work complete message. PDO: {0}, Sample: {1}, Index: {2}",
-                        message.getPdoName(), message.getCollaboratorSampleId(), message.getSampleIndex()), e);
+                        message.getPdoName(), message.getSampleName(), message.getSampleIndex()), e);
             }
         }
     }
@@ -76,26 +76,30 @@ public class AutomatedBiller {
      */
     public void processMessage(WorkCompleteMessage message) {
         ProductOrder order = productOrderDao.findByBusinessKey(message.getPdoName());
-        Product product = order.getProduct();
+        if (order != null) {
+            Product product = order.getProduct();
 
-        if (isLockedOut(order)) {
-            log.debug(MessageFormat.format("Can''t auto-bill order {0} because it''s currently locked out.",
-                    order.getJiraTicketKey()));
-            // Return early to avoid marking the message as processed.
-            // TODO: This code should be wrapped in a beginLockout()/endLockout() block to avoid collisions with
-            // a mercury user starting a billing session during this process.
-            return;
-        }
+            if (isLockedOut(order)) {
+                log.error(MessageFormat.format("Can''t auto-bill order {0} because it''s currently locked out.",
+                        order.getJiraTicketKey()));
+                // Return early to avoid marking the message as processed.
+                // TODO: This code should be wrapped in a beginLockout()/endLockout() block to avoid collisions with
+                // a mercury user starting a billing session during this process.
+                return;
+            }
 
-        if (product.isUseAutomatedBilling()) {
-            if (product.getRequirement().canBill(message.getData())) {
-                List<ProductOrderSample> samples =
-                        productOrderSampleDao.findByOrderAndName(order, message.getCollaboratorSampleId());
-                ProductOrderSample sample = samples.get(message.getSampleIndex().intValue());
-                sample.autoBillSample(message.getCompletedDate(), 1);
+            if (product.isUseAutomatedBilling()) {
+                if (product.getRequirement().canBill(message.getData())) {
+                    List<ProductOrderSample> samples =
+                            productOrderSampleDao.findByOrderAndName(order, message.getSampleName());
+                    ProductOrderSample sample = samples.get(message.getSampleIndex().intValue());
+                    sample.autoBillSample(message.getCompletedDate(), 1);
+                }
+            } else {
+                log.debug(MessageFormat.format("Product {0} doesn''t support automated billing.", product.getProductName()));
             }
         } else {
-            log.debug(MessageFormat.format("Product {0} doesn''t support automated billing.", product.getProductName()));
+            log.error(MessageFormat.format("Invalid PDO key ''{0}'', no billing will occur.", message.getPdoName()));
         }
         workCompleteMessageDao.markMessageProcessed(message);
     }

@@ -43,10 +43,10 @@
                             </td>
                             <td>${actionBean.fullNameMap[session.createdBy]}</td>
                             <td>
-                                <fmt:formatDate value="${session.createdDate}" pattern="MM/dd/yyyy"/>
+                                <fmt:formatDate value="${session.createdDate}"/>
                             </td>
                             <td>
-                                <fmt:formatDate value="${session.billedDate}" pattern="MM/dd/yyyy"/>
+                                <fmt:formatDate value="${session.billedDate}"/>
                             </td>
                         </tr>
                     </c:forEach>

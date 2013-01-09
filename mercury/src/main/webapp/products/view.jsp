@@ -39,7 +39,7 @@
                 <label class="control-label label-form">Availability Date</label>
                 <div class="controls">
                     <div class="form-value">
-                        <fmt:formatDate value="${actionBean.editProduct.availabilityDate}" pattern="MM/dd/yyyy"/>
+                        <fmt:formatDate value="${actionBean.editProduct.availabilityDate}"/>
                     </div>
                 </div>
             </div>
@@ -48,7 +48,7 @@
                 <label class="control-label label-form">Discontinued Date</label>
                 <div class="controls">
                     <div class="form-value">
-                        <fmt:formatDate value="${actionBean.editProduct.discontinuedDate}" pattern="MM/dd/yyyy"/>
+                        <fmt:formatDate value="${actionBean.editProduct.discontinuedDate}"/>
                     </div>
                 </div>
             </div>
