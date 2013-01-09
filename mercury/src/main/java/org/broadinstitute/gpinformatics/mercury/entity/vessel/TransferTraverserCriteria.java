@@ -63,12 +63,17 @@ public interface TransferTraverserCriteria {
 
         public Collection<LabBatch> getNearestLabBatches() {
             int nearest = Integer.MAX_VALUE;
+            Set<LabBatch> nearestSet = new HashSet<LabBatch>();
             for (Map.Entry<Integer, Collection<LabBatch>> labBatchesForHopCount : labBatchesAtHopCount.entrySet()) {
                 if (labBatchesForHopCount.getKey() < nearest) {
                     nearest = labBatchesForHopCount.getKey();
                 }
             }
-            return labBatchesAtHopCount.get(nearest);
+            if(labBatchesAtHopCount.containsKey(nearest)) {
+                nearestSet.addAll(labBatchesAtHopCount.get(nearest));
+            }
+
+            return nearestSet;
         }
     }
 
@@ -141,12 +146,18 @@ public interface TransferTraverserCriteria {
 
         public Collection<String> getNearestProductOrders() {
             int nearest = Integer.MAX_VALUE;
+            Set<String> nearestSet = new HashSet<String>();
             for (Map.Entry<Integer, Collection<String>> posForHopCount : productOrdersAtHopCount.entrySet()) {
                 if (posForHopCount.getKey() < nearest) {
                     nearest = posForHopCount.getKey();
                 }
             }
-            return productOrdersAtHopCount.get(nearest);
+
+            if(productOrdersAtHopCount.containsKey(nearest)) {
+                nearestSet.addAll(productOrdersAtHopCount.get(nearest));
+            }
+
+            return nearestSet;
 
         }
     }

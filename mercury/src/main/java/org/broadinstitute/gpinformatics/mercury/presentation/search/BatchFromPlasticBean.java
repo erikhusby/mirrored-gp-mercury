@@ -21,7 +21,6 @@ import java.text.MessageFormat;
 import java.util.*;
 
 /**
- *
  * Backing bean for Step one of the create batch Wizard.  The main duties of this backing bean is to search for lab
  * vessels and assist in transitioning the user to the second screen to enter Jira related inforation for the Batch
  */
@@ -111,7 +110,7 @@ public class BatchFromPlasticBean extends AbstractJsfBean {
 
         List<String> barcodeList = new ArrayList<String>(splitBarcodes.length);
 
-        for(String barcode:splitBarcodes) {
+        for (String barcode : splitBarcodes) {
             barcodeList.add(barcode.trim());
         }
 
@@ -127,7 +126,8 @@ public class BatchFromPlasticBean extends AbstractJsfBean {
     }
 
     /**
-     *  Helper method to retrieve the name of a user based on that users unique BspID
+     * Helper method to retrieve the name of a user based on that users unique BspID
+     *
      * @param id
      * @return
      */
@@ -162,7 +162,7 @@ public class BatchFromPlasticBean extends AbstractJsfBean {
      */
     public void initForm() {
         if (userBean.ensureUserValid()) {
-            if(conversationData.getConversation().isTransient()) {
+            if (conversationData.getConversation().isTransient()) {
                 conversationData.beginConversation();
             }
         } else {
