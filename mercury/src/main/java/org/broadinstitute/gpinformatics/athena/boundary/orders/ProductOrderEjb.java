@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus.Abandoned;
+import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus.Complete;
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.TransitionStates.Cancel;
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus.ABANDONED;
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus.NOT_STARTED;
@@ -294,49 +295,83 @@ public class ProductOrderEjb {
     }
 
     public static class SamplesNotAbandonableException extends Exception {
-        public SamplesNotAbandonableException(String s) {
-            super(s);
+
+        private List<ProductOrderSample> unabandonableSamples = new ArrayList<ProductOrderSample>();
+
+        public SamplesNotAbandonableException(List<ProductOrderSample> unabandonableSamples) {
+            if (unabandonableSamples != null) {
+                this.unabandonableSamples = unabandonableSamples;
+            }
+        }
+
+        public List<ProductOrderSample> getUnabandonableSamples() {
+            return unabandonableSamples;
+        }
+
+        @Override
+        public String getMessage() {
+            List<String> messagePieces = new ArrayList<String>();
+
+            for (ProductOrderSample productOrderSample : getUnabandonableSamples()) {
+                messagePieces.add(
+                        productOrderSample.getSampleName() + " @ " + productOrderSample.getSamplePosition() +
+                                " : status " + productOrderSample.getDeliveryStatus().getDisplayName());
+            }
+
+            ProductOrder productOrder = unabandonableSamples.get(0).getProductOrder();
+            return "Cannot abandon samples in " + productOrder.getBusinessKey() + ": " + StringUtils.join(messagePieces, ", ");
         }
     }
 
 
-    public void abandon(String jiraTicketKey) throws NoCancelTransitionException, NoSuchPDOException, SamplesNotAbandonableException {
-
+    private ProductOrder findProductOrder(String jiraTicketKey) throws NoSuchPDOException {
         ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraTicketKey);
 
         if (productOrder == null) {
             throw new NoSuchPDOException(jiraTicketKey);
         }
 
+        return productOrder;
+    }
+
+
+
+    private void abandonSamples(ProductOrder productOrder, ProductOrderSample... productOrderSamples) throws SamplesNotAbandonableException {
+
+        Set<ProductOrderSample> sampleSet = new HashSet<ProductOrderSample>(Arrays.asList(productOrderSamples));
+
         Set<ProductOrderSample.DeliveryStatus> abandonableDeliveryStatuses =
-                new HashSet<ProductOrderSample.DeliveryStatus>(Arrays.asList(ABANDONED, NOT_STARTED));
+                EnumSet.of(ABANDONED, NOT_STARTED);
 
         List<ProductOrderSample> unabandonableSamples = new ArrayList<ProductOrderSample>();
 
         for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-            if ( ! abandonableDeliveryStatuses.contains(productOrderSample.getDeliveryStatus())) {
-                unabandonableSamples.add(productOrderSample);
-                // keep looping, find all the unabandonable samples and then throw a descriptive exception
-            }
-            else {
-                productOrderSample.setDeliveryStatus(ABANDONED);
+            // if the sample name set is empty we try to abandon all samples in the PDO
+            if (CollectionUtils.isEmpty(sampleSet) || sampleSet.contains(productOrderSample.getSampleName())) {
+                if ( ! abandonableDeliveryStatuses.contains(productOrderSample.getDeliveryStatus())) {
+                    unabandonableSamples.add(productOrderSample);
+                    // keep looping, find all the unabandonable samples and then throw a descriptive exception
+                } else {
+                    productOrderSample.setDeliveryStatus(ABANDONED);
+                }
             }
         }
 
         if (CollectionUtils.isNotEmpty(unabandonableSamples)) {
-            StringBuilder sb = new StringBuilder("Samples in " + productOrder.getBusinessKey() + " cannot be abandoned: ");
-
-            List<String> sampleErrors = new ArrayList<String>();
-
-            for (ProductOrderSample productOrderSample : unabandonableSamples) {
-                sampleErrors.add(productOrderSample.getSampleName() + " @ " + productOrderSample.getSamplePosition());
-            }
-
-            sb.append(StringUtils.join(unabandonableSamples, ", "));
-
-            throw new SamplesNotAbandonableException(sb.toString());
+            throw new SamplesNotAbandonableException(unabandonableSamples);
         }
 
+    }
+
+
+    public void abandon(String jiraTicketKey) throws NoCancelTransitionException, NoSuchPDOException, SamplesNotAbandonableException {
+
+        ProductOrder productOrder = findProductOrder(jiraTicketKey);
+
+        // try to abandon samples first (may fail if some are not in an abandonable delivery status)
+        abandonSamples(productOrder);
+
+        // then mark PDO as abandoned
         productOrder.setOrderStatus(Abandoned);
 
         try {
@@ -363,10 +398,43 @@ public class ProductOrderEjb {
     }
 
 
-    public void complete(ProductOrder productOrder) {
+    /**
+     * Choosing parameter types that I'm guessing will best map to what we're going to get from Stripes, subject to
+     * change
+     *
+     * @param jiraTicketKey
+     * @param sampleIndices
+     * @throws NoSuchPDOException
+     * @throws SamplesNotAbandonableException
+     * @throws IOException
+     */
+    public void abandonSamples(String jiraTicketKey, int... sampleIndices) throws NoSuchPDOException, SamplesNotAbandonableException, IOException {
 
-        // Mark PDO as complete.  Do we also update the statuses of any non-ABANDONED, non-COMPLETE samples?
+        ProductOrder productOrder = findProductOrder(jiraTicketKey);
+
+        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
+        for (int sampleIndex : sampleIndices) {
+            productOrderSamples.add(productOrder.getSamples().get(sampleIndex));
+        }
+
+        abandonSamples(productOrder, productOrderSamples.toArray(new ProductOrderSample[0]));
+
+        List<String> messagePieces = new ArrayList<String>();
+        for (ProductOrderSample productOrderSample : productOrderSamples) {
+            messagePieces.add(productOrderSample.getSampleName() + " @ " + productOrderSample.getSamplePosition());
+        }
+
+        jiraService.addComment(productOrder.getJiraTicketKey(), userBean.getLoginUserName() + " abandoned samples:\n" + StringUtils.join(messagePieces, "\n"));
     }
 
 
+    /**
+     * Mark PDO as complete.  Should we also update the statuses of any non-ABANDONED, non-COMPLETE samples?
+     *
+     * @param productOrder
+     */
+    public void complete(ProductOrder productOrder) {
+
+        productOrder.setOrderStatus(Complete);
+    }
 }
