@@ -43,7 +43,7 @@ public class SearchActionBean extends CoreActionBean {
     private List<LabBatch> foundBatches;
 
     private boolean hasResults = false;
-    private boolean onlyOneResult = false;
+    private boolean multipleResultTypes = false;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -55,12 +55,32 @@ public class SearchActionBean extends CoreActionBean {
     public Resolution search() throws Exception {
         List<String> searchList = cleanInputString(searchKey);
 
-        foundVessels = labVesselDao.findByListIdentifiers(searchList);
-        foundSamples = mercurySampleDao.findBySampleKeys(searchList);
-        foundPDOs = productOrderDao.findListByBusinessKeyList(searchList);
-        foundBatches = labBatchDAO.findByListIdentifier(searchList);
+        int count = 0;
+        long totalResults = 0l;
 
-        long totalResults = foundVessels.size() + foundSamples.size() + foundPDOs.size() + foundBatches.size();
+        foundVessels = labVesselDao.findByListIdentifiers(searchList);
+        if (foundVessels.size() > 0) {
+            count++;
+            totalResults += foundVessels.size();
+        }
+
+        foundSamples = mercurySampleDao.findBySampleKeys(searchList);
+        if (foundSamples.size() > 0) {
+            count++;
+            totalResults += foundSamples.size();
+        }
+
+        foundPDOs = productOrderDao.findListByBusinessKeyList(searchList);
+        if (foundPDOs.size() > 0) {
+            count++;
+            totalResults += foundPDOs.size();
+        }
+
+        foundBatches = labBatchDAO.findByListIdentifier(searchList);
+        if (foundBatches.size() > 0) {
+            count++;
+            totalResults += foundBatches.size();
+        }
 
         // If there is only one result, jump to the item's page, if it has a view page
         if (totalResults == 1) {
@@ -70,7 +90,9 @@ public class SearchActionBean extends CoreActionBean {
             }
         }
 
+        multipleResultTypes = count > 1;
         hasResults = totalResults > 0;
+
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
@@ -81,6 +103,10 @@ public class SearchActionBean extends CoreActionBean {
         }
 
         return null;
+    }
+
+    public boolean isMultipleResultTypes() {
+        return multipleResultTypes;
     }
 
     public List<LabVessel> getFoundVessels() {

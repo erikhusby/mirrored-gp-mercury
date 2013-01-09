@@ -402,14 +402,20 @@ public class ProductOrderEjb {
             // a comment to JIRA
             productOrderSamples.add(productOrderSample);
 
-            messagePieces.add(productOrderSample.getSampleName() + " @ " + productOrderSample.getSamplePosition() + " : " + sampleComments.get(ii));
+            messagePieces.add(productOrderSample.getSampleName() + " at index " + productOrderSample.getSamplePosition() + ": " + sampleComments.get(ii));
         }
 
         transitionSamples(productOrder, acceptableStartingStatuses, targetStatus, productOrderSamples);
 
-        jiraService.addComment(productOrder.getJiraTicketKey(), userBean.getLoginUserName() + " transitioned samples to status " +
-                targetStatus.getDisplayName() + " :\n" + StringUtils.join(messagePieces, "\n"));
+        jiraService.addComment(productOrder.getJiraTicketKey(), getUserName() + " transitioned samples to status " +
+                targetStatus.getDisplayName() + ":\n" + StringUtils.join(messagePieces, "\n"));
 
+    }
+
+
+    private String getUserName() {
+        String user = userBean.getLoginUserName();
+        return user == null ? "Mercury" : user;
     }
 
 
@@ -428,8 +434,7 @@ public class ProductOrderEjb {
                                 " in resolution '" + resolution + "': no " + transitionState.getStateName() + " transition found");
             }
 
-            String user = userBean.getLoginUserName();
-            String jiraCommentText = (user == null ? "Mercury" : user) + " performed " + transitionState.getStateName() + " transition on " + jiraTicketKey;
+            String jiraCommentText = getUserName() + " performed " + transitionState.getStateName() + " transition on " + jiraTicketKey;
 
             if (transitionComments != null) {
                 jiraCommentText = jiraCommentText + ": " + transitionComments;
@@ -461,7 +466,7 @@ public class ProductOrderEjb {
         // Currently not setting abandon comments into PDO comments, that seems too intrusive.  We will record the comments
         // with the JIRA ticket.
 
-        transitionJiraTicket(jiraTicketKey, new String [] {"Cancelled", "Complete"}, Cancel, abandonComments);
+        transitionJiraTicket(jiraTicketKey, new String[]{"Cancelled", "Complete"}, Cancel, abandonComments);
     }
 
 
@@ -474,9 +479,9 @@ public class ProductOrderEjb {
      * @throws IOException
      * @throws NoTransitionException
      */
-    public void complete(@Nonnull String jiraTicketKey, @Nullable String completionComments) throws SampleDeliveryStatusChangeException, IOException, NoTransitionException {
+    public void complete(@Nonnull String jiraTicketKey, @Nullable String completionComments) throws SampleDeliveryStatusChangeException, IOException, NoTransitionException, NoSuchPDOException {
 
-        ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraTicketKey);
+        ProductOrder productOrder = findProductOrder(jiraTicketKey);
         productOrder.setOrderStatus(Complete);
 
         transitionSamples(productOrder, EnumSet.of(DELIVERED, NOT_STARTED), DELIVERED, productOrder.getSamples());
@@ -495,7 +500,7 @@ public class ProductOrderEjb {
 
 
     public void completeSamples(@Nonnull String pdoKey, List<Integer> sampleIndices, List<String> completionComments) throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
-        transitionSamplesAndUpdateTicket(pdoKey, EnumSet.of(ABANDONED, NOT_STARTED), ABANDONED, sampleIndices, completionComments);
+        transitionSamplesAndUpdateTicket(pdoKey, EnumSet.of(DELIVERED, NOT_STARTED), DELIVERED, sampleIndices, completionComments);
     }
 
 }

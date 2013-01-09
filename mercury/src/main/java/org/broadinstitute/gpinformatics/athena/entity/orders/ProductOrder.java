@@ -479,10 +479,7 @@ public class ProductOrder implements Serializable {
     /**
      * Used for test purposes only.
      */
-    public void setJiraTicketKey(@Nonnull String jiraTicketKey) {
-        if (jiraTicketKey == null) {
-            throw new NullPointerException("Jira Ticket Key cannot be null");
-        }
+    public void setJiraTicketKey(String jiraTicketKey) {
         this.jiraTicketKey = jiraTicketKey;
     }
 
