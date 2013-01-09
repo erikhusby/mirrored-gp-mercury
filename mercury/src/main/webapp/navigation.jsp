@@ -38,7 +38,7 @@
                     </li>
                     <li class="divider"></li>
                     <li>
-                        <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean" tabindex="=1" event="list">Billing sessions</stripes:link>
+                        <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean" tabindex="=1" event="list">Billing Sessions</stripes:link>
                     </li>
                 </ul>
             </li>
@@ -58,7 +58,7 @@
                 <li class="dropdown">
                     <a id="adminNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span class="icon-cog"></span> Admin <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
-                        <li><a tabindex="-1" href="${ctxpath}/reagent/design.action?list">reagent design</a></li>
+                        <li><a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Design</a></li>
                     </ul>
                 </li>
             </security:authorizeBlock>
