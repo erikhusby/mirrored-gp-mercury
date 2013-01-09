@@ -53,7 +53,7 @@ public class ProductActionBean extends CoreActionBean {
     private List<Product> allProducts;
 
     @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
-    private String productKey;
+    private String product;
 
     @ValidateNestedProperties({
         @Validate(field="productFamily.productFamilyId", required = true, maxlength=255, on={SAVE_ACTION}),
@@ -84,9 +84,9 @@ public class ProductActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, SAVE_ACTION, "addOnsAutocomplete"})
     public void init() {
-        productKey = getContext().getRequest().getParameter("productKey");
-        if (!StringUtils.isBlank(productKey)) {
-            editProduct = productDao.findByBusinessKey(productKey);
+        product = getContext().getRequest().getParameter("product");
+        if (!StringUtils.isBlank(product)) {
+            editProduct = productDao.findByBusinessKey(product);
         } else {
             // This must be a create, so construct a new top level product that has nothing else set
             editProduct = new Product(Product.TOP_LEVEL_PRODUCT);
@@ -203,8 +203,8 @@ public class ProductActionBean extends CoreActionBean {
         editProduct.setProductFamily(productFamilyDao.find(editProduct.getProductFamily().getProductFamilyId()));
 
         productDao.persist(editProduct);
-        addMessage("Product \"" + editProduct.getProductName() + "\" has been saved.");
-        return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter("productKey", editProduct.getPartNumber());
+        addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
+        return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter("product", editProduct.getPartNumber());
     }
 
     private void populateTokenListFields() {
@@ -226,12 +226,12 @@ public class ProductActionBean extends CoreActionBean {
         return allProducts;
     }
 
-    public String getProductKey() {
-        return productKey;
+    public String getProduct() {
+        return product;
     }
 
-    public void setProductKey(String productKey) {
-        this.productKey = productKey;
+    public void setProduct(String product) {
+        this.product = product;
     }
 
     public List<ProductFamily> getProductFamilies() {

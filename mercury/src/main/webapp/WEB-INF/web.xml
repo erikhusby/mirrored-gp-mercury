@@ -10,39 +10,6 @@
         <param-value>Development</param-value>
     </context-param>
 
-<!--
-    <context-param>
-        <param-name>javax.faces.STATE_SAVING_METHOD</param-name>
-        <param-value>client</param-value>
-    </context-param>
--->
-
-    <context-param>
-        <param-name>javax.faces.FACELETS_SKIP_COMMENTS</param-name>
-        <param-value>true</param-value>
-    </context-param>
-
-    <context-param>
-        <param-name>javax.faces.DATETIMECONVERTER_DEFAULT_TIMEZONE_IS_SYSTEM_TIMEZONE</param-name>
-        <param-value>true</param-value>
-    </context-param>
-
-    <context-param>
-        <param-name>primefaces.THEME</param-name>
-        <param-value>bootstrap</param-value>
-    </context-param>
-
-    <servlet>
-        <servlet-name>Faces Servlet</servlet-name>
-        <servlet-class>javax.faces.webapp.FacesServlet</servlet-class>
-        <load-on-startup>1</load-on-startup>
-    </servlet>
-    <servlet-mapping>
-        <servlet-name>Faces Servlet</servlet-name>
-        <url-pattern>*.xhtml</url-pattern>
-    </servlet-mapping>
-
-
     <!-- BEGIN for JBoss AS 7 -->
 
     <!-- JAX-RS -->
@@ -55,7 +22,6 @@
         <servlet-name>javax.ws.rs.core.Application</servlet-name>
         <url-pattern>/rest/*</url-pattern>
     </servlet-mapping>
-
 
     <!-- Stripes -->
     <servlet>
@@ -128,6 +94,12 @@
         </form-login-config>
     </login-config>
 
+    <!-- jsp-config>
+        <taglib>
+            <taglib-uri>http://mercury.broadinstitute.org/authorization</taglib-uri>
+            <taglib-location>/WEB-INF/classes/META-INF/mercurysecurity.tld</taglib-location>
+        </taglib>
+    </jsp-config -->
 
     <filter>
         <filter-name>AuthorizationFilter</filter-name>
@@ -135,7 +107,7 @@
 
         <init-param>
             <param-name>error_page</param-name>
-            <param-value>/security/authorization_error.xhtml</param-value>
+            <param-value>/security/authorization_error.jsp</param-value>
         </init-param>
     </filter>
 
@@ -175,24 +147,14 @@
         <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
 
-    <filter>
-        <filter-name>PrimeFaces FileUpload Filter</filter-name>
-        <filter-class>org.primefaces.webapp.filter.FileUploadFilter</filter-class>
-    </filter>
-
-    <filter-mapping>
-        <filter-name>PrimeFaces FileUpload Filter</filter-name>
-        <servlet-name>Faces Servlet</servlet-name>
-    </filter-mapping>
-
     <filter-mapping>
         <filter-name>AuthorizationFilter</filter-name>
-        <url-pattern>*.xhtml</url-pattern>
+        <servlet-name>StripesDispatcher</servlet-name>
         <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
     <filter-mapping>
         <filter-name>AuthorizationFilter</filter-name>
-        <servlet-name>StripesDispatcher</servlet-name>
+        <url-pattern>*.jsp</url-pattern>
         <dispatcher>REQUEST</dispatcher>
     </filter-mapping>
 
@@ -212,4 +174,5 @@
        <exception-type>java.lang.Exception</exception-type>
        <location>/error.jsp</location>
     </error-page>
+
 </web-app>

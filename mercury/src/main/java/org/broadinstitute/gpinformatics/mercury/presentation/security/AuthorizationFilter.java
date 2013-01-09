@@ -2,12 +2,14 @@ package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.login.UserLogin;
 
 import javax.inject.Inject;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * AuthorizationFilter is a ServletFilter used to assist the Mercury application with validating whether a users
@@ -23,8 +25,6 @@ public class AuthorizationFilter implements Filter {
 
     @Inject
     AuthorizationManager authManager;
-
-    public static final String LOGIN_PAGE = "/security/security.action";
 
     public static final String TARGET_PAGE_ATTRIBUTE = "targeted_page";
 
@@ -81,17 +81,17 @@ public class AuthorizationFilter implements Filter {
                     requestedUrl.append("?").append(request.getQueryString());
                 }
                 request.getSession().setAttribute(TARGET_PAGE_ATTRIBUTE, requestedUrl.toString());
-                redirectTo(request, servletResponse, LOGIN_PAGE);
+                redirectTo(request, servletResponse, SecurityActionBean.LOGIN_PAGE);
                 return;
             }
         }
 
         // FIXME: With this code enabled, the URLs don't get updated in the browser after
         // the redirect.  Need to debug and then re-enable.  This is bug GPLIM-100.
-        if (false && pageUri.equals(LOGIN_PAGE) && request.getRemoteUser() != null) {
+        if (false && pageUri.equals(SecurityActionBean.LOGIN_PAGE) && request.getRemoteUser() != null) {
             // Already logged in user is trying to view the login page.  Redirect to the role default page.
             UserLogin.UserRole role = UserLogin.UserRole.fromRequest(request);
-            redirectTo(request, servletResponse, role.landingPage + "?faces-redirect=true");
+            redirectTo(request, servletResponse, role.landingPage);
 
             return;
         }
@@ -113,11 +113,18 @@ public class AuthorizationFilter implements Filter {
         filterConfig.getServletContext().getRequestDispatcher(errorPage).forward(request, response);
     }
 
+    /**
+     * Pages to ignore from the authorization filter.
+     *
+     * @param path
+     * @return
+     */
     private static boolean excludeFromFilter(String path) {
-        return path.startsWith("/javax.faces.resource") ||
-                path.startsWith("/rest") ||
+        return path.startsWith("/rest") ||
                 path.startsWith("/ArquillianServletRunner") ||
-                path.startsWith(LOGIN_PAGE);
+                path.startsWith(SecurityActionBean.LOGIN_ACTION) ||
+                path.startsWith("/" + SecurityActionBean.LOGIN_PAGE) ||
+                path.endsWith("Mercury/");
     }
 
     @Override

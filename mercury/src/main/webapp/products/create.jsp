@@ -10,7 +10,7 @@
             $j(document).ready(
                 function () {
                     $j("#priceItem").tokenInput(
-                        "${ctxpath}/products/product.action?priceItemAutocomplete=&productKey=${actionBean.editProduct.businessKey}", {
+                        "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             searchDelay: 500,
                             minChars: 2,
                             preventDuplicates: true,
@@ -22,7 +22,7 @@
                     );
 
                     $j("#addOns").tokenInput(
-                            "${ctxpath}/products/product.action?addOnsAutocomplete=&productKey=${actionBean.editProduct.businessKey}", {
+                            "${ctxpath}/products/product.action?addOnsAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                                 searchDelay: 500,
                                 minChars: 2,
                                 <c:if test="${actionBean.addOnCompleteData != null && actionBean.addOnCompleteData != ''}">
@@ -53,7 +53,7 @@
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
             <div style="float: left; margin-right: 40px; margin-top: 5px; width: 98%">
-                <stripes:hidden name="productKey"/>
+                <stripes:hidden name="product"/>
                 <div class="control-group">
                     <stripes:label for="productFamily" name="Product Family" class="control-label"/>
                     <div class="controls">
@@ -214,7 +214,7 @@
                                     </c:when>
                                     <c:otherwise>
                                         <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                            <stripes:param name="productKey" value="${actionBean.editProduct.businessKey}"/>
+                                            <stripes:param name="product" value="${actionBean.editProduct.businessKey}"/>
                                             Cancel
                                         </stripes:link>
                                     </c:otherwise>

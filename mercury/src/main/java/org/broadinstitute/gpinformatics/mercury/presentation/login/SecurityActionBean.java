@@ -23,6 +23,8 @@ import javax.servlet.http.HttpServletRequest;
 public class SecurityActionBean extends CoreActionBean {
     private Log logger = LogFactory.getLog(SecurityActionBean.class);
 
+    public final static String LOGIN_ACTION = "/security/security.action";
+
     public final static String LOGIN_PAGE = "/security/login.jsp";
 
     private String username;
@@ -100,12 +102,12 @@ public class SecurityActionBean extends CoreActionBean {
                 previouslyTargetedPage = role.checkUrlForRoleRedirect(previouslyTargetedPage);
 
                 request.getSession().setAttribute(AuthorizationFilter.TARGET_PAGE_ATTRIBUTE, null);
-                new RedirectResolution(previouslyTargetedPage);
+                return new RedirectResolution(previouslyTargetedPage, false);
             }
         } catch (ServletException le) {
             logger.error("ServletException Retrieved: ", le);
             addGlobalValidationError("The username and password you entered is incorrect.  Please try again.");
-            targetPage = AuthorizationFilter.LOGIN_PAGE;
+            targetPage = LOGIN_PAGE;
         }
 
         return new ForwardResolution(targetPage);

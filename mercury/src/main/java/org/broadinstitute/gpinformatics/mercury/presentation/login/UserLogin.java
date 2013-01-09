@@ -94,7 +94,7 @@ public class UserLogin extends AbstractJsfBean {
         } catch (ServletException le) {
             logger.error("ServletException Retrieved: ", le);
             addErrorMessage("The username and password you entered is incorrect.  Please try again.");
-            targetPage = AuthorizationFilter.LOGIN_PAGE;
+            targetPage = SecurityActionBean.LOGIN_PAGE;
         }
         return redirect(targetPage);
     }

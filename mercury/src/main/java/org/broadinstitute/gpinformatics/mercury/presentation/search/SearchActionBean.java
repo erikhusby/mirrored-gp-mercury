@@ -102,7 +102,7 @@ public class SearchActionBean extends CoreActionBean {
     private RedirectResolution getRedirectResolution() {
         if (foundPDOs.size() > 0) {
             ProductOrder order = foundPDOs.get(0);
-            return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("businessKey", order.getBusinessKey());
+            return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("productOrder", order.getBusinessKey());
         }
 
         return null;

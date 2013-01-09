@@ -1,22 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<taglib xmlns="http://java.sun.com/xml/ns/javaee"
+<taglib xmlns="http://java.sun.com/xml/ns/j2ee"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-jsptaglibrary_2_1.xsd"
-        version="2.1">
+        xsi:schemaLocation="http://java.sun.com/xml/ns/j2ee/web-jsptaglibrary_2_0.xsd"
+        version="2.0">
 
-<description> Provides tags for use with the Mercury Stripes Security mechanism</description>
+<description>Provides tags for use with the Mercury Stripes Security mechanism</description>
     <display-name>Stripes Security Tag Library</display-name>
     <tlib-version>1.0</tlib-version>
     <short-name>authorizeBlock</short-name>
-    <uri>http://www.broadinstitute.org/Mercury/SecureTag</uri>
+    <uri>http://mercury.broadinstitute.org/Mercury/security</uri>
     <tag>
-        <description><![CDATA[<p>Wraps pieces of a jsp page that need to be authenticated.</p>]]></description>
+        <description><![CDATA[<p>Wraps pieces of a jsp page that need to be authorized by role.</p>]]></description>
         <name>authorizeBlock</name>
         <tag-class>org.broadinstitute.gpinformatics.mercury.presentation.tags.security.AuthorizeBlockStripesTag</tag-class>
         <body-content>JSP</body-content>
         <attribute>
             <description>
-                Comma separated list of groups that this block will allow access.  Using "All" will mean all groups have access
+                Comma separated list of roles that this block will allow access.  Using "All" will mean all groups have access.
             </description>
             <name>roles</name>
             <required>true</required>
@@ -25,7 +25,7 @@
         </attribute>
         <attribute>
             <description>
-                Comma separated list of groups that this block will restrict access to. restriction overrides inclusion
+                Comma separated list of roles that this block will restrict access to -- restriction overrides inclusion.
             </description>
             <name>exclusionRoles</name>
             <required>false</required>

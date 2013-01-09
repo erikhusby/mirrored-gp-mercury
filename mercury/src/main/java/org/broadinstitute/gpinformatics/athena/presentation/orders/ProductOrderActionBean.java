@@ -90,7 +90,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<ProductOrderListEntry> allProductOrders;
 
     @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
-    private String businessKey;
+    private String productOrder;
 
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
@@ -103,7 +103,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     // For the Add-ons update we need the product title
     @Validate(required = true, on = {"getAddOns"})
-    private String productKey;
+    private String product;
 
     private List<String> addOnKeys = new ArrayList<String> ();
 
@@ -116,9 +116,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, "downloadBillingTracker", SAVE_ACTION, "placeOrder"})
     public void init() {
-        businessKey = getContext().getRequest().getParameter("businessKey");
-        if (!StringUtils.isBlank(businessKey)) {
-            editOrder = productOrderDao.findByBusinessKey(businessKey);
+        productOrder = getContext().getRequest().getParameter("productOrder");
+        if (!StringUtils.isBlank(productOrder)) {
+            editOrder = productOrderDao.findByBusinessKey(productOrder);
         } else {
             editOrder = new ProductOrder(getUserBean().getBspUser());
         }
@@ -312,7 +312,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution getAddOns() throws Exception {
         JSONArray itemList = new JSONArray();
 
-        Product product = productDao.findByBusinessKey(productKey);
+        Product product = productDao.findByBusinessKey(this.product);
         for (Product addOn : product.getAddOns()) {
             JSONObject item = new JSONObject();
             item.put("key", addOn.getBusinessKey());
@@ -397,20 +397,20 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    public String getBusinessKey() {
-        return businessKey;
+    public String getProductOrder() {
+        return productOrder;
     }
 
-    public void setBusinessKey(String businessKey) {
-        this.businessKey = businessKey;
+    public void setProductOrder(String productOrder) {
+        this.productOrder = productOrder;
     }
 
-    public String getProductKey() {
-        return productKey;
+    public String getProduct() {
+        return product;
     }
 
-    public void setProductKey(String productKey) {
-        this.productKey = productKey;
+    public void setProduct(String product) {
+        this.product = product;
     }
 
     public String getResearchProjectList() {

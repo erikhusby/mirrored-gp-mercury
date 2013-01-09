@@ -21,7 +21,7 @@
 
     <p>
         <stripes:link beanclass="${actionBean.class.name}" event="create" title="<%=ResearchProjectActionBean.CREATE_PROJECT%>" class="pull-right">
-            <span class="icon-home"></span><%=ResearchProjectActionBean.CREATE_PROJECT%></stripes:link>
+            <span class="icon-briefcase"></span> <%=ResearchProjectActionBean.CREATE_PROJECT%></stripes:link>
     </p>
 
     <div class="clearfix"></div>
@@ -43,7 +43,7 @@
             <tr>
                 <td>
                     <stripes:link beanclass="${actionBean.class.name}" event="view">
-                        <stripes:param name="businessKey" value="${project.businessKey}"/>
+                        <stripes:param name="researchProject" value="${project.businessKey}"/>
                         ${project.title}
                     </stripes:link>
                 </td>

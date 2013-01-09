@@ -16,7 +16,7 @@
         <handler-class>org.broadinstitute.gpinformatics.mercury.presentation.tags.security.LoggedOutTag</handler-class>
     </tag>
     <tag>
-        <tag-name>authorizeBlock</tag-name>
+        <tag-name>xauthorizeBlock</tag-name>
         <handler-class>org.broadinstitute.gpinformatics.mercury.presentation.tags.security.AuthorizeBlockTag</handler-class>
         <attribute>
             <description>Comma separated list of groups that this block will allow access.  Using "All" will mean all groups have access</description>

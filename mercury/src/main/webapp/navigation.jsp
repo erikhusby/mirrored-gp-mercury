@@ -1,4 +1,7 @@
+<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
+<%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 <%--
   ~ The Broad Institute
   ~ SOFTWARE COPYRIGHT NOTICE AGREEMENT
@@ -14,50 +17,64 @@
     <div class="navbar-inner">
         <ul class="nav" role="navigation">
             <li class="dropdown">
-                <a id="projectNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span class="icon-home"></span> Projects <b class="caret"></b></a>
+                <a id="projectNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span class="icon-briefcase"></span> Projects <b class="caret"></b></a>
                 <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
-                    <li><a tabindex="-1" href="${ctxpath}/projects/project.action?list">list</a></li>
-                    <li><a tabindex="-1" href="${ctxpath}/projects/project.action?create">create</a></li>
+                    <li>
+                        <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" tabindex="=1" event="list">List</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" tabindex="=1" event="create">Create</stripes:link>
+                    </li>
                 </ul>
             </li>
             <li class="dropdown">
                 <a id="orderNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span class="icon-shopping-cart"></span> Orders <b class="caret"></b></a>
                 <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
-                    <li><a tabindex="-1" href="${ctxpath}/orders/order.action?list">list</a></li>
-                    <li><a tabindex="-1" href="${ctxpath}/orders/order.action?create">create</a></li>
+                    <li>
+                        <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" tabindex="=1" event="list">List</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" tabindex="=1" event="create">Create</stripes:link>
+                    </li>
                     <li class="divider"></li>
-                    <li><a tabindex="-1" href="${ctxpath}/billing/session.action?list">billing sessions</a></li>
+                    <li>
+                        <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean" tabindex="=1" event="list">Billing sessions</stripes:link>
+                    </li>
                 </ul>
             </li>
             <li class="dropdown">
                 <a id="productNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span class="icon-tags"></span> Products <b class="caret"></b></a>
                 <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
-                    <li><a tabindex="-1" href="${ctxpath}/products/product.action?list">list</a></li>
-                    <li><a tabindex="-1" href="${ctxpath}/products/product.action?create">create</a></li>
+                    <li>
+                        <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean" tabindex="=1" event="list">List</stripes:link>
+                    </li>
+                    <li>
+                        <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean" tabindex="=1" event="create">Create</stripes:link>
+                    </li>
                 </ul>
             </li>
 
-            <!--security:authorizeBlock roles="${actionBean.userBean.developerRole}"-->
+            <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
                 <li class="dropdown">
                     <a id="adminNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span class="icon-cog"></span> Admin <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
                         <li><a tabindex="-1" href="${ctxpath}/reagent/design.action?list">reagent design</a></li>
                     </ul>
                 </li>
-            <!--/security:authorizeBlock-->
+            </security:authorizeBlock>
         </ul>
 
-        <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean" style="height:35px;">
+        <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
             <ul class="nav pull-right global-search">
-                <li>
+                <li style="white-space:nowrap;">
+                    <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean">
                     <input type="text" name="searchKey" title="enter a barcode to search" class="defaultText" style="margin-top: 5px;vertical-align: top;height:14px;"/>
                     <input type="submit" name="search" value="Search" class="btn btn-mini"/>
-                </li>
-                <li style="float: none; line-height: 5px;">
-                    <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"
-                              event="view">advanced</stripes:link>
+                    &#160;
+                    <stripes:link style="display: inline; padding: 0px;" title="Click for advanced search options" beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean" event="view">advanced</stripes:link>
+                    </stripes:form>
                 </li>
             </ul>
-        </stripes:form>
+        </security:authorizeBlock>
     </div>
 </header>
