@@ -1,13 +1,18 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -369,7 +374,10 @@ public abstract class LabVessel implements Serializable {
     }
 
     public String getNearestLabBatchesString() {
-        return "need to implement getNearestLabBatchesString";
+        Collection<LabBatch> nearest = getNearestLabBatches();
+
+        LabBatch[] batchArray = nearest.toArray(new LabBatch[nearest.size()]);
+        return StringUtils.join(batchArray);
     }
 
     public enum CONTAINER_TYPE {
@@ -925,4 +933,70 @@ public abstract class LabVessel implements Serializable {
         return descendantCriteria.getLabVesselDescendants();
     }
 
+    /**
+     * This method get index information for all samples in this vessel.
+     *
+     * @return a set of strings representing all indexes in this vessel.
+     */
+    public Set<String> getIndexes() {
+        Set<String> indexes = new HashSet<String>();
+        StringBuilder indexInfo = new StringBuilder();
+        for (SampleInstance sample : getAllSamples()) {
+            for (Reagent reagent : sample.getReagents()) {
+                if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
+                    MolecularIndexReagent indexReagent = (MolecularIndexReagent) reagent;
+                    indexInfo.append(indexReagent.getMolecularIndexingScheme().getName());
+                    indexInfo.append(" - ");
+                    for (MolecularIndexingScheme.IndexPosition hint : indexReagent.getMolecularIndexingScheme().getIndexes().keySet()) {
+                        MolecularIndex index = indexReagent.getMolecularIndexingScheme().getIndexes().get(hint);
+                        indexInfo.append(index.getSequence());
+                        indexInfo.append("\n");
+                    }
+                    indexes.add(indexInfo.toString());
+                    indexInfo.delete(0, indexInfo.length());
+                }
+            }
+        }
+
+        return indexes;
+    }
+
+    public String getIndexesString() {
+        Collection<String> indexes = getIndexes();
+
+        String[] batchArray = indexes.toArray(new String[indexes.size()]);
+        return StringUtils.join(batchArray);
+    }
+
+    public Set<String> getPdoKeys() {
+        Set<String> pdoKeys = new HashSet<String>();
+        for (SampleInstance sample : getAllSamples()) {
+            pdoKeys.add(sample.getStartingSample().getProductOrderKey());
+        }
+
+        pdoKeys.remove(null);
+        return pdoKeys;
+    }
+
+    public String getPdoKeysString() {
+        Collection<String> keys = getPdoKeys();
+
+        String[] batchArray = keys.toArray(new String[keys.size()]);
+        return StringUtils.join(batchArray);
+    }
+
+    /**
+     * This method gets all sample instances for a given lab vessel. If this vessel has a container role than the
+     * samples are taken from that container.
+     *
+     * @return a set of sample instances contained in this vessel.
+     */
+    public Set<SampleInstance> getAllSamples() {
+        Set<SampleInstance> allSamples = new HashSet<SampleInstance>();
+        allSamples.addAll(getSampleInstances());
+        if (getContainerRole() != null) {
+            allSamples.addAll(getContainerRole().getSampleInstances());
+        }
+        return allSamples;
+    }
 }

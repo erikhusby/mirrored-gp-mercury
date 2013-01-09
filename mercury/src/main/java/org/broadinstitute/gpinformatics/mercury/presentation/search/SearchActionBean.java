@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This handles all the needed interface processing elements
@@ -44,6 +45,8 @@ public class SearchActionBean extends CoreActionBean {
 
     private boolean hasResults = false;
     private boolean multipleResultTypes = false;
+    private Map<String, String> getPDOKeyMap = null;
+    private Map<String, String> getIndexesMap = null;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -175,5 +178,21 @@ public class SearchActionBean extends CoreActionBean {
         }
 
         return "display:block";
+    }
+
+    public Map<String, String> getGetPDOKeyMap() {
+        if (getPDOKeyMap == null) {
+
+        }
+
+        return getPDOKeyMap;
+    }
+
+    public Map<String, String> getGetIndexesMap() {
+        if (getIndexesMap == null) {
+
+        }
+
+        return getIndexesMap;
     }
 }

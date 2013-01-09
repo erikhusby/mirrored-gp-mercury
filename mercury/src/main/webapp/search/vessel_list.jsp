@@ -72,10 +72,10 @@
                     ${vessel.type.name}
                 </td>
                 <td>
-                    get vessel transient pdo key(s)
+                    ${vessel.getPdoKeysString}
                 </td>
                 <td>
-                    get vessel transient indexes
+                    ${bean.getIndexesMap[vessel.label]}
                 </td>
                 <td>
                     ${vessel.nearestLabBatchesString}

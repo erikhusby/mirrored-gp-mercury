@@ -281,7 +281,12 @@ public class ProductActionBean extends CoreActionBean {
         }
 
         JSONArray itemList = new JSONArray();
-        String quotePriceItemId = priceListCache.findByConcatenatedKey(editProduct.getPrimaryPriceItem().getConcatenatedKey()).getId();
+        PriceItem priceItem = priceListCache.findByConcatenatedKey(editProduct.getPrimaryPriceItem().getConcatenatedKey());
+        if (priceItem == null) {
+            return "invalid key: " + editProduct.getPrimaryPriceItem().getConcatenatedKey();
+        }
+
+        String quotePriceItemId = priceItem.getId();
         itemList.put(new AutoCompleteToken(quotePriceItemId, editProduct.getPrimaryPriceItem().getDisplayName(), false).getJSONObject());
 
         return itemList.toString();
