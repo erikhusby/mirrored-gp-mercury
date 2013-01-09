@@ -107,11 +107,12 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         CollectionUtils.filter(countsEntries, new Predicate<Map.Entry<String, Long>>() {
             @Override
             public boolean evaluate(Map.Entry<String, Long> stringLongEntry) {
-                return stringLongEntry.getValue() > 1 /* temp hack for dev */ && ! stringLongEntry.getKey().equals("PDO-70");
+                String key = stringLongEntry.getKey();
+                return stringLongEntry.getValue() > 1 && key != null;
             }
         });
 
-        if (!countsEntries.isEmpty()) {
+        if ( ! countsEntries.isEmpty()) {
             List<String> strings = new ArrayList<String>();
             for (Map.Entry<String, Long> countEntry : countsEntries) {
                 strings.add(countEntry.getKey() + ": " + countEntry.getValue());
@@ -132,8 +133,8 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
         CollectionUtils.filter(productOrderListEntries, new Predicate<ProductOrderListEntry>() {
             @Override
             public boolean evaluate(ProductOrderListEntry productOrderListEntry) {
-                return productOrderListEntry.getJiraTicketKey().equals(
-                        ProductOrderListEntryDaoTest.this.order.getJiraTicketKey());
+                return productOrderListEntry.getJiraTicketKey() != null &&
+                       productOrderListEntry.getJiraTicketKey().equals(ProductOrderListEntryDaoTest.this.order.getJiraTicketKey());
             }
         });
 
