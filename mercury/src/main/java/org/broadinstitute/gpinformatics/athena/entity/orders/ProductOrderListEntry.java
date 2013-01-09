@@ -4,11 +4,19 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Non-entity used for optimizing the performance of the PDO list page.
  */
 public class ProductOrderListEntry implements Serializable {
+
+    /**
+     * Real JIRA tickets IDs for PDOs have a "PDO-" prefix followed by digits.  Draft PDOs don't have a ticket ID,
+     * Graphene tests have "PDO-" followed by arbitrary text.
+     */
+    private static final Pattern PATTERN_JIRA_TICKET = Pattern.compile("^PDO-([\\d]+)$");
 
     private Long orderId;
 
@@ -173,4 +181,35 @@ public class ProductOrderListEntry implements Serializable {
     public boolean isDraft() {
         return ProductOrder.OrderStatus.Draft == orderStatus;
     }
+
+
+    public boolean isValidJiraTicket() {
+        if (jiraTicketKey == null) {
+            return false;
+        }
+
+        return PATTERN_JIRA_TICKET.matcher(jiraTicketKey).matches();
+    }
+
+
+    /**
+     *
+     * @return the numeric portion of the JIRA ticket key if this looks like a real JIRA ticket, otherwise return null.
+     */
+    public Integer getJiraTicketNumber() {
+
+        if (jiraTicketKey == null) {
+            return null;
+        }
+
+        Matcher matcher = PATTERN_JIRA_TICKET.matcher(jiraTicketKey);
+
+        if ( ! matcher.matches() ) {
+            return null;
+        }
+
+        // pluck out the numeric portion of the JIRA ticket key and convert to Integer
+        return Integer.valueOf(matcher.group(1));
+    }
+
 }
