@@ -203,7 +203,7 @@ public class ProductActionBean extends CoreActionBean {
         editProduct.setProductFamily(productFamilyDao.find(editProduct.getProductFamily().getProductFamilyId()));
 
         productDao.persist(editProduct);
-        addMessage("Product \"" + editProduct.getProductName() + "\" has been created");
+        addMessage("Product \"" + editProduct.getProductName() + "\" has been saved.");
         return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter("productKey", editProduct.getPartNumber());
     }
 

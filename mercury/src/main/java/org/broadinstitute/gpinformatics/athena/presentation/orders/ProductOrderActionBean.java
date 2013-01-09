@@ -283,7 +283,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // save it!
         productOrderDao.persist(editOrder);
 
-        addMessage("Product Order \"" + editOrder.getTitle() + "\" has been created");
+        addMessage("Product Order \"" + editOrder.getTitle() + "\" has been saved.");
         return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("businessKey", editOrder.getBusinessKey());
     }
 
