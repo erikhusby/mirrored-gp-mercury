@@ -54,6 +54,12 @@
                         <c:choose>
                             <c:when test="${actionBean.editOrder.draft}">
                                 DRAFT
+                                (
+                                <stripes:link title="Place Order" beanclass="${actionBean.class.name}" event="placeOrder">
+                                    <stripes:param name="businessKey" value="${order.businessKey}"/>
+                                    Place Order
+                                </stripes:link>
+                                )
                             </c:when>
                             <c:otherwise>
                                 <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">

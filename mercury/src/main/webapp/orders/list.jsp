@@ -88,7 +88,7 @@
                             <td>
                                 <c:choose>
                                     <c:when test="${order.draft}">
-                                        DRAFT
+                                        DRAFT<br/>
                                         (
                                             <stripes:link title="Place Order" beanclass="${actionBean.class.name}" event="placeOrder">
                                                 <stripes:param name="businessKey" value="${order.businessKey}"/>
