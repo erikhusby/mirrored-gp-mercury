@@ -1,4 +1,5 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -28,8 +29,9 @@
                 <label class="control-label label-form">Project</label>
 
                 <div class="controls">
-                    <div class="form-value">${actionBean.researchProject.title}</div>
-                    (<stripes:link target="tableau" href="${actionBean.tableauLink}" class="external">Pass Report</stripes:link>)
+                    <div class="form-value">${actionBean.researchProject.title}
+                        (<stripes:link target="tableau" href="${actionBean.tableauLink}" class="external">Pass Report</stripes:link>)
+                    </div>
                 </div>
             </div>
 
@@ -154,6 +156,13 @@
         <div class="tableBar">
             Orders
         </div>
+
+        <stripes:link title="Create product with research project ${actionBean.researchProject.title}"
+                      beanclass="<%=ProductOrderActionBean.class.getName()%>" event="create" class="pull-right">
+            <span class="icon-home"></span> <%=ProductOrderActionBean.CREATE_ORDER%>
+            <stripes:param name="businessKey" value="${actionBean.researchProject.businessKey}"/>
+        </stripes:link>
+
 
         <table id="orderList" class="table simple">
             <thead>

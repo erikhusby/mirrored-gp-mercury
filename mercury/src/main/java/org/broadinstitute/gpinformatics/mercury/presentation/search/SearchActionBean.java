@@ -168,4 +168,12 @@ public class SearchActionBean extends CoreActionBean {
     public boolean isHasResults() {
         return hasResults;
     }
+
+    public String getResultTypeStyle() {
+        if (multipleResultTypes) {
+            return "display:none";
+        }
+
+        return "display:block";
+    }
 }
