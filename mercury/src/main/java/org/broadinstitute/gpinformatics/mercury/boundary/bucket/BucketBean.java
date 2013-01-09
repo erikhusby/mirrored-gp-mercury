@@ -175,7 +175,10 @@ public class BucketBean {
         Set<BucketEntry> bucketEntrySet = buildBatchListByVessels(vesselsToBatch, workingBucket);
 
         LabBatch bucketBatch = startBucketDrain(bucketEntrySet, operator, batchInitiationLocation, false);
-        batchEjb.batchToJira(operator, batchTicket, bucketBatch);
+//        batchEjb.batchToJira(operator, batchTicket, bucketBatch);
+        batchEjb.jiraBatchNotification(bucketBatch);
+
+
     }
 
     /**
@@ -230,7 +233,8 @@ public class BucketBean {
      * @param workingBucket
      */
     @DaoFree
-    public LabBatch startDBFree(@Nonnull String operator, final int numberOfBatchSamples, @Nonnull Bucket workingBucket) {
+    public LabBatch startDBFree(@Nonnull String operator, final int numberOfBatchSamples,
+                                @Nonnull Bucket workingBucket) {
         Set<BucketEntry> bucketEntrySet = buildBatchListBySize(numberOfBatchSamples, workingBucket);
 //        return startBucketDrain(bucketEntrySet, operator, LabEvent.UI_EVENT_LOCATION, true);
         return startBucketDrain(bucketEntrySet, operator, null, true);
@@ -256,6 +260,7 @@ public class BucketBean {
         bucketBatch = startDBFree(operator, numberOfBatchSamples, workingBucket);
 
         batchEjb.batchToJira(operator, batchTicket, bucketBatch);
+        batchEjb.jiraBatchNotification(bucketBatch);
     }
 
     /**
@@ -324,15 +329,14 @@ public class BucketBean {
          *
          * Create (if necessary) a new batch
          */
-
-        //TODO SGM: Create a new Batch, if necessary.  Add a batch parameter to the argument list
-
         LabBatch bucketBatch = startBucketDrain(bucketEntries, operator, batchInitiationLocation, false);
 
         batchEjb.batchToJira(operator,
                 bucketBatch.getJiraTicket() != null ? bucketBatch.getJiraTicket().getTicketName() :
                         batchTicket,
                 bucketBatch);
+        batchEjb.jiraBatchNotification(bucketBatch);
+
 
     }
 
@@ -353,76 +357,51 @@ public class BucketBean {
         LabBatch bucketBatch = null;
         Set<LabVessel> batchVessels = new HashSet<LabVessel>();
 
-        List<LabBatch> trackBatches = null;
-
-        boolean allHaveBatch = true;
-
-        List<LabVessel> vesselList = new ArrayList<LabVessel>(bucketEntries.size());
-
         for (BucketEntry currEntry : bucketEntries) {
-            vesselList.add(currEntry.getLabVessel());
+            batchVessels.add(currEntry.getLabVessel());
+
         }
 
-        if (autoBatch) {
-            //TODO SGM Remove batch magic
-            for (BucketEntry currEntry : bucketEntries) {
-                batchVessels.add(currEntry.getLabVessel());
+        if (!batchVessels.isEmpty()) {
+            for (LabBatch currBatch : batchVessels.iterator().next().getNearestLabBatches()) {
 
-                Collection<LabBatch> nearestBatches = currEntry.getLabVessel().getNearestLabBatches();
-                if (nearestBatches != null) {
-
-                    if (trackBatches == null) {
-                        trackBatches = new LinkedList<LabBatch>();
-                    }
-
-                    List<LabBatch> currBatchList = new LinkedList<LabBatch>(nearestBatches);
-
-                    Collections.sort(currBatchList, LabBatch.byDate);
-
-                    trackBatches.add(currBatchList.get(currBatchList.size() - 1));
-                } else {
-                    allHaveBatch = false;
-                }
-            }
-
-            /*
-                If the tubes being pulled from the Bucket are all from one LabBatch,  just update that LabBatch and move
-                forward.
-
-                otherwise (no previous batch, multiple lab batches, existing batch with samples that are not in an
-                existing batch) create a new Lab Batch.
-             */
-            //TODO SGM Remove batch magic
-            if (allHaveBatch && trackBatches != null && trackBatches.size() == 1) {
-                bucketBatch = trackBatches.get(0);
-            } else {
-                bucketBatch = new LabBatch(LabBatch
-                        .generateBatchName(CreateFields.IssueType.EXOME_EXPRESS.getJiraName(),
-                                LabVessel.extractPdoKeyList(batchVessels)),
-                        batchVessels);
-            }
-        } else {
-            for (LabBatch currBatch : vesselList.get(0).getNearestLabBatches()) {
-                if (currBatch.getStartingLabVessels().containsAll(vesselList)) {
+                if (LabBatch.isCommonBatch(currBatch, batchVessels)) {
                     bucketBatch = currBatch;
-                    break;
                 }
+
             }
         }
+        /*
+            If the tubes being pulled from the Bucket are all from one LabBatch,  just update that LabBatch and move
+            forward.
+
+            otherwise (no previous batch, multiple lab batches, existing batch with samples that are not in an
+            existing batch) create a new Lab Batch.
+         */
+        if (bucketBatch == null) {
+
+            //TODO SGM  Should use logic in LabBatchEJB
+
+            bucketBatch = new LabBatch(LabBatch.generateBatchName(CreateFields.IssueType.EXOME_EXPRESS.getJiraName(),
+                    LabVessel.extractPdoKeyList(batchVessels)),
+                    batchVessels);
+        }
+
 
 
         //TODO SGM:  Temporarily removing until after March.  auto drain will not create or associate Batches and Events
 /*
         Set<LabEvent> eventList = new HashSet<LabEvent>();
         eventList.addAll(labEventFactory.buildFromBatchRequests(bucketEntries, operator, bucketBatch,
-                batchInitiationLocation,
-                LabEventType.SHEARING_BUCKET_EXIT));
+                                                                batchInitiationLocation,
+                                                                LabEventType.SHEARING_BUCKET_EXIT));
 
         bucketBatch.addLabEvents(eventList);
 */
 
 
         removeEntries(bucketEntries);
+
         logger.info("Size of entries to remove is " + bucketEntries.size());
         return bucketBatch;
     }

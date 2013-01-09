@@ -10,6 +10,6 @@ TRAILING NULLCOLS
  product_order_sample_id,
  product_order_id,
  sample_name,
- delivery_status CONSTANT 'none',
+ delivery_status,
  sample_position
 )

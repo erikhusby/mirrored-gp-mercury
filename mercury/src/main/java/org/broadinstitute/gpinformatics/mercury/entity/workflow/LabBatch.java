@@ -101,6 +101,15 @@ public class LabBatch {
         createdOn = new Date();
     }
 
+    public LabBatch(String batchName, Set<LabVessel> startingLabVessels, String batchDescription, Date dueDate,
+                    String important) {
+
+        this(batchName, startingLabVessels);
+        this.batchDescription = batchDescription;
+        this.dueDate = dueDate;
+        this.important = important;
+    }
+
     protected LabBatch() {
     }
 
@@ -142,10 +151,6 @@ public class LabBatch {
 
     public String getBatchName() {
         return batchName;
-    }
-
-    public void setBatchName(String batchName) {
-        this.batchName = batchName;
     }
 
     public void setJiraTicket(JiraTicket jiraTicket) {
@@ -321,5 +326,16 @@ public class LabBatch {
         hashCodeBuilder.append(isActive).append(batchName).append(jiraTicket).append(getStartingVesselsArray());
 
         return hashCodeBuilder.hashCode();
+    }
+
+    public static boolean isCommonBatch(LabBatch targetBatch, Collection<LabVessel> batchSet) {
+
+        boolean result = false;
+
+        if(targetBatch.getStartingLabVessels().containsAll(batchSet)) {
+            result = true;
+        }
+
+        return result;
     }
 }

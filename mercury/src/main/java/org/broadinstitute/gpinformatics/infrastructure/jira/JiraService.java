@@ -13,10 +13,13 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Tra
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Map;
 
 public interface JiraService extends Serializable {
+
+    SimpleDateFormat JIRA_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
     /**
      * Create an issue with a project prefix specified by projectPrefix; i.e. for this method projectPrefix would be 'TP' and not 'TP-5' for
@@ -144,11 +147,13 @@ public interface JiraService extends Serializable {
 
     Transition findAvailableTransitionByName(String jiraIssueKey, String transitionName);
 
-    void postNewTransition(String jiraIssueKey, Transition transition) throws IOException;
+    void postNewTransition(String jiraIssueKey, Transition transition, String comment) throws IOException;
 
     void postNewTransition(String jiraIssueKey, Transition transition, Collection<CustomField> customFields, String comment) throws IOException;
 
     IssueFieldsResponse getIssueFields(String jiraIssueKey, Collection<CustomFieldDefinition> customFieldDefinitions) throws IOException;
+
+    String getResolution(String jiraIssueKey) throws IOException;
 
     /**
      * Check and see if the user is an exact match for a JIRA user, and has an active account.
@@ -156,4 +161,6 @@ public interface JiraService extends Serializable {
      * @return true if user is valid to use in JIRA API calls.
      */
     boolean isValidUser(String username);
+
+    JiraIssue getIssueInfo(String key, String... fields) throws IOException;
 }

@@ -28,6 +28,7 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <quantType>PICO</quantType>
+                <numberOfRepeats>1</numberOfRepeats>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Preflight Normalization</name>
@@ -42,6 +43,7 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <numberOfRepeats>1</numberOfRepeats>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>

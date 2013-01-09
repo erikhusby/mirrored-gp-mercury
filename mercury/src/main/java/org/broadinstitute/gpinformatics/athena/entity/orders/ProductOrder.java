@@ -70,6 +70,7 @@ public class ProductOrder implements Serializable {
     @OneToOne
     private Product product;
 
+    @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus = OrderStatus.Draft;
 
     /** Alphanumeric Id */
@@ -816,7 +817,8 @@ public class ProductOrder implements Serializable {
     public enum OrderStatus implements StatusType {
         Draft,
         Submitted,
-        Closed;
+        Abandoned,
+        Complete;
 
         @Override
         public String getDisplayName() {
@@ -824,7 +826,7 @@ public class ProductOrder implements Serializable {
         }
     }
 
-    private enum TransitionStates {
+    public enum TransitionStates {
         Complete("Complete"),
         Cancel("Cancel"),
         StartProgress("Start Progress"),

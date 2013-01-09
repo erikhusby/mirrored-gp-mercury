@@ -1,11 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
@@ -49,8 +49,6 @@ public class ProductOrderSample implements Serializable {
 
     public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile("SM-[A-Z1-9]{4,6}");
 
-    static final IllegalStateException ILLEGAL_STATE_EXCEPTION = new IllegalStateException("Sample data not available");
-
     @Index(name = "ix_pos_sample_name")
     @Column(nullable = false)
     private String sampleName;      // This is the name of the BSP or Non-BSP sample.
@@ -67,6 +65,25 @@ public class ProductOrderSample implements Serializable {
 
     @Column(name="SAMPLE_POSITION", updatable = false, insertable = false, nullable=false)
     private Integer samplePosition;
+
+    public static enum DeliveryStatus implements StatusType {
+        NOT_STARTED("Not Started"),
+        DELIVERED("Delivered"),
+        ABANDONED("Abandoned");
+
+        private String displayName;
+
+        DeliveryStatus(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+    }
+
+    @Enumerated(EnumType.STRING)
+    private DeliveryStatus deliveryStatus = DeliveryStatus.NOT_STARTED;
 
     @Transient
     private BSPSampleDTO bspDTO = BSPSampleDTO.DUMMY;
@@ -156,6 +173,14 @@ public class ProductOrderSample implements Serializable {
         return productOrderSampleId;
     }
 
+    public DeliveryStatus getDeliveryStatus() {
+        return deliveryStatus;
+    }
+
+    public void setDeliveryStatus(DeliveryStatus deliveryStatus) {
+        this.deliveryStatus = deliveryStatus;
+    }
+
     public void setBspDTO(@Nonnull BSPSampleDTO bspDTO) {
         if (bspDTO == null) {
             throw new NullPointerException("BSP Sample DTO cannot be null");
@@ -234,12 +259,14 @@ public class ProductOrderSample implements Serializable {
     List<PriceItem> getBillablePriceItems() {
         List<PriceItem> items = new ArrayList<PriceItem>();
         items.add(getProductOrder().getProduct().getPrimaryPriceItem());
-        String sampleMaterialType = getBspDTO().getMaterialType();
+        org.broadinstitute.bsp.client.sample.MaterialType materialTypeObject = getBspDTO().getMaterialTypeObject();
         Set<Product> productAddOns = productOrder.getProduct().getAddOns();
-        if (!StringUtils.isEmpty(sampleMaterialType) && !productAddOns.isEmpty()) {
+        if (materialTypeObject != null && !productAddOns.isEmpty()) {
+            MaterialType sampleMaterialType =
+                    new MaterialType(materialTypeObject.getCategory(), materialTypeObject.getName());
             for (Product addOn : productAddOns) {
                 for (MaterialType materialType : addOn.getAllowableMaterialTypes()) {
-                    if (materialType.getName().equalsIgnoreCase(sampleMaterialType)) {
+                    if (materialType.equals(sampleMaterialType)) {
                         items.add(addOn.getPrimaryPriceItem());
                         // Skip to the next add-on.
                         break;

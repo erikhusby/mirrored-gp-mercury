@@ -410,9 +410,13 @@ public class SamplesPicoEndToEndTest {
         }
         System.out.println();
         int positionIndex = 0;
+        int maxPositionIndex = labVesselBean.getLabVesselPositionBeans().size() - 1;
         for (String rowName : vesselGeometry.getRowNames()) {
             System.out.print(rowName + " ");
             for (String columnName : vesselGeometry.getColumnNames()) {
+                if(positionIndex > maxPositionIndex) {
+                    break;
+                }
                 LabVesselPositionBean labVesselPositionBean = labVesselBean.getLabVesselPositionBeans().get(
                         positionIndex);
                 String starter = labVesselPositionBean.getLabVesselBean().getStarter();

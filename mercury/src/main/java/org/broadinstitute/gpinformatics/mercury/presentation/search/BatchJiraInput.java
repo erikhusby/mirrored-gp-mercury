@@ -18,7 +18,6 @@ import java.util.List;
 import java.util.Set;
 
 /**
- *
  * Backing Bean for the second page in the Batch input.  This been bears the responsibility of assisting in processing
  * the Jira related data for the newly created batch
  *
@@ -64,8 +63,9 @@ public class BatchJiraInput extends AbstractJsfBean {
 
     /**
      * Event Toggle for every time a user choose a Jira input method
-     *
+     * <p/>
      * TODO SGM:  This may be one extra method that is not needed.  Revisit how to consolidate input type check after demo
+     *
      * @param event
      */
     public void updateTicketUsage(AjaxBehaviorEvent event) {
@@ -130,6 +130,7 @@ public class BatchJiraInput extends AbstractJsfBean {
 
     /**
      * Supports the submission for the page.  Will forward to confirmation page on success
+     *
      * @return
      */
     public String createBatch() {
@@ -145,7 +146,7 @@ public class BatchJiraInput extends AbstractJsfBean {
             */
 
             batchObject =
-                    labBatchEjb.createLabBatch(vesselSet,userBean.getBspUser().getUsername(),
+                    labBatchEjb.createLabBatch(vesselSet, userBean.getBspUser().getUsername(),
                             jiraTicketId.trim());
         } else {
 
@@ -153,10 +154,7 @@ public class BatchJiraInput extends AbstractJsfBean {
                 If a new ticket is to be created, pass the description, summary, due date and important info in a batch
                 object acting as a DTO
              */
-            batchObject = new LabBatch(batchName.trim(), vesselSet);
-            batchObject.setBatchDescription(batchDescription);
-            batchObject.setDueDate(batchDueDate);
-            batchObject.setImportant(batchImportantInfo);
+            batchObject = new LabBatch(batchName.trim(), vesselSet, batchDescription, batchDueDate, batchImportantInfo);
 
             labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername());
         }
@@ -168,7 +166,7 @@ public class BatchJiraInput extends AbstractJsfBean {
         conversationData.setBatchObject(batchObject);
 
         conversationData.endConversation();
-        return redirect("/search/batch_confirm","labBatch="+batchObject.getBatchName());
+        return redirect("/search/batch_confirm", "labBatch=" + batchObject.getBatchName());
     }
 
 }

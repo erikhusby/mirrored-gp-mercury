@@ -52,10 +52,9 @@ public class LabBatchEjb {
     /**
      * Alternate create lab batch method to allow a user to define the vessels for use by their barcode
      *
-     *
-     * @param reporter   The User that is attempting to create the batch
+     * @param reporter       The User that is attempting to create the batch
      * @param labVesselNames The plastic ware that the newly created lab batch will represent
-     * @param jiraTicket Optional parameter that represents an existing Jira Ticket that refers to this batch
+     * @param jiraTicket     Optional parameter that represents an existing Jira Ticket that refers to this batch
      * @return
      */
     public LabBatch createLabBatch(@Nonnull String reporter, @Nonnull Set<String> labVesselNames,
@@ -88,6 +87,9 @@ public class LabBatchEjb {
 
         batchToJira(reporter, jiraTicket, batchObject);
 
+        jiraBatchNotification(batchObject);
+
+
         return batchObject;
     }
 
@@ -111,11 +113,12 @@ public class LabBatchEjb {
 
         batchToJira(reporter, null, batchObject);
 
+        jiraBatchNotification(batchObject);
+
         return batchObject;
     }
 
     /**
-     *
      * @param batchObject
      * @param jiraTicket
      */
@@ -126,8 +129,8 @@ public class LabBatchEjb {
             JiraIssue jiraIssue = jiraService.getIssue(jiraTicket);
 
             ticket = jiraTicketDao.fetchByName(jiraTicket);
-            if(ticket == null) {
-                ticket =new JiraTicket(jiraService, jiraIssue.getKey());
+            if (ticket == null) {
+                ticket = new JiraTicket(jiraService, jiraIssue.getKey());
             }
 
             batchObject.setBatchDescription(jiraIssue.getDescription());
@@ -177,7 +180,9 @@ public class LabBatchEjb {
             logger.error("Error attempting to create Lab Batch in Jira", ioe);
             throw new InformaticsServiceException("Error attempting to create Lab Batch in Jira", ioe);
         }
+    }
 
+    public void jiraBatchNotification(LabBatch newBatch) {
         for (String pdo : LabVessel.extractPdoKeyList(newBatch.getStartingLabVessels())) {
             try {
                 jiraService.addLink(AddIssueLinkRequest.LinkType.Related, pdo, newBatch.getJiraTicket().getTicketName(),
@@ -185,7 +190,7 @@ public class LabBatchEjb {
                         newBatch.getJiraTicket().getTicketName() +
                         " " + newBatch.getBatchName(), Visibility.Type.role,
                         Visibility.Value.QA_Jira_Users);
-            } catch (IOException ioe) {
+            } catch (Exception ioe) {
                 logger.error("Error attempting to link Batch " + newBatch.getJiraTicket().getTicketName() + " to Product order " + pdo,
                         ioe);
             }

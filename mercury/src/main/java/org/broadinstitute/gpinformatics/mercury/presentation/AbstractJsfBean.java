@@ -21,6 +21,7 @@ public abstract class AbstractJsfBean {
 
     /**
      * Global redirect helper to preserve the usage of View params between page requests
+     *
      * @param result
      * @return
      */
@@ -29,7 +30,6 @@ public abstract class AbstractJsfBean {
     }
 
     /**
-     *
      * Extends the basic options of the {@link #redirect(String, String...)} method to allow users to add
      * 1->many parameters to the URL
      *
@@ -38,13 +38,13 @@ public abstract class AbstractJsfBean {
      * @return
      */
     public String redirect(String result, String... params) {
-        String initialResult = redirect(result);
+        StringBuilder initialResult = new StringBuilder(redirect(result));
 
-        for(String param:params) {
-            initialResult = initialResult + "&" + param;
+        for (String param : params) {
+            initialResult.append("&") .append(param);
         }
 
-        return initialResult;
+        return initialResult.toString();
     }
 
     /**
@@ -89,10 +89,11 @@ public abstract class AbstractJsfBean {
      *
      * @param clientId The client ID
      * @param severity The message notification level
-     * @param summary The displayed message on the web page
-     * @param detail The detailed information of the message
+     * @param summary  The displayed message on the web page
+     * @param detail   The detailed information of the message
      */
-    protected static void addMessage(@Nullable String clientId, FacesMessage.Severity severity, String summary, String detail) {
+    protected static void addMessage(@Nullable String clientId, FacesMessage.Severity severity, String summary,
+                                     String detail) {
         FacesContext context = FacesContext.getCurrentInstance();
         context.addMessage(clientId, new FacesMessage(severity, summary, detail));
     }
@@ -102,8 +103,8 @@ public abstract class AbstractJsfBean {
      * used judiciously, as most messages are global and the client ID should be null.
      *
      * @param clientId The client ID
-     * @param summary The displayed message on the web page
-     * @param detail The detailed information of the message
+     * @param summary  The displayed message on the web page
+     * @param detail   The detailed information of the message
      */
     protected void addInfoMessage(String clientId, String summary, String detail) {
         addMessage(clientId, FacesMessage.SEVERITY_INFO, summary, detail);
@@ -113,8 +114,8 @@ public abstract class AbstractJsfBean {
      * Adds a WARN severity level FacesMessage to the context assigning it to the client ID.
      *
      * @param clientId The client ID
-     * @param summary The displayed message on the web page
-     * @param detail The detailed information of the message
+     * @param summary  The displayed message on the web page
+     * @param detail   The detailed information of the message
      */
     protected void addWarnMessage(String clientId, String summary, String detail) {
         addMessage(clientId, FacesMessage.SEVERITY_WARN, summary, detail);
@@ -124,8 +125,8 @@ public abstract class AbstractJsfBean {
      * Adds an ERROR severity level FacesMessage to the context assigning it to the client ID.
      *
      * @param clientId The client ID
-     * @param summary The displayed message on the web page
-     * @param detail The detailed information of the message
+     * @param summary  The displayed message on the web page
+     * @param detail   The detailed information of the message
      */
     protected void addErrorMessage(String clientId, String summary, String detail) {
         addMessage(clientId, FacesMessage.SEVERITY_ERROR, summary, detail);
@@ -135,8 +136,8 @@ public abstract class AbstractJsfBean {
      * Adds a FATAL severity level FacesMessage to the context assigning it to the client ID.
      *
      * @param clientId The client ID
-     * @param summary The displayed message on the web page
-     * @param detail The detailed information of the message
+     * @param summary  The displayed message on the web page
+     * @param detail   The detailed information of the message
      */
     protected void addFatalMessage(String clientId, String summary, String detail) {
         addMessage(clientId, FacesMessage.SEVERITY_FATAL, summary, detail);
@@ -147,9 +148,9 @@ public abstract class AbstractJsfBean {
      * duplicate because it's called just after an item is added. If we had the item that was just added,
      * we could do a simpler search.
      *
-     * @param objects The list of items in the autocomplete
+     * @param objects     The list of items in the autocomplete
      * @param componentId The id of the component
-     * @param <T> The correct object
+     * @param <T>         The correct object
      */
     public <T> void removeDuplicates(List<T> objects, String componentId) {
 
