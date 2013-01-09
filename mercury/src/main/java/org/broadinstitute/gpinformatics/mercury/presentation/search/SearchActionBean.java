@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * This handles all the needed interface processing elements
@@ -44,6 +45,8 @@ public class SearchActionBean extends CoreActionBean {
 
     private boolean hasResults = false;
     private boolean multipleResultTypes = false;
+    private Map<String, String> getPDOKeyMap = null;
+    private Map<String, String> getIndexesMap = null;
 
     @DefaultHandler
     @HandlesEvent(VIEW_ACTION)
@@ -99,7 +102,7 @@ public class SearchActionBean extends CoreActionBean {
     private RedirectResolution getRedirectResolution() {
         if (foundPDOs.size() > 0) {
             ProductOrder order = foundPDOs.get(0);
-            return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("businessKey", order.getBusinessKey());
+            return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("productOrder", order.getBusinessKey());
         }
 
         return null;
@@ -167,5 +170,29 @@ public class SearchActionBean extends CoreActionBean {
 
     public boolean isHasResults() {
         return hasResults;
+    }
+
+    public String getResultTypeStyle() {
+        if (multipleResultTypes) {
+            return "display:none";
+        }
+
+        return "display:block";
+    }
+
+    public Map<String, String> getGetPDOKeyMap() {
+        if (getPDOKeyMap == null) {
+
+        }
+
+        return getPDOKeyMap;
+    }
+
+    public Map<String, String> getIndexesMap() {
+        if (getIndexesMap == null) {
+
+        }
+
+        return getIndexesMap;
     }
 }

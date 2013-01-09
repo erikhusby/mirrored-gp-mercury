@@ -43,7 +43,7 @@
                     <tr>
                         <td>
                             <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                <stripes:param name="productKey" value="${product.businessKey}"/>
+                                <stripes:param name="product" value="${product.businessKey}"/>
                                 ${product.partNumber}
                             </stripes:link>
                         </td>

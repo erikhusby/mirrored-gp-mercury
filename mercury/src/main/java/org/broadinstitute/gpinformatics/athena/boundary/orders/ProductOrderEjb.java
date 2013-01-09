@@ -346,6 +346,15 @@ public class ProductOrderEjb {
     }
 
 
+    /**
+     * Utility method to find PDO by JIRA ticket key and throw exception if it is not found
+     *
+     * @param jiraTicketKey JIRA ticket key
+     *
+     * @return {@link ProductOrder}
+     *
+     * @throws NoSuchPDOException
+     */
     private ProductOrder findProductOrder(String jiraTicketKey) throws NoSuchPDOException {
         ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraTicketKey);
 
@@ -357,6 +366,16 @@ public class ProductOrderEjb {
     }
 
 
+    /**
+     * Transition the delivery statuses of the specified samples in the DB.
+     *
+     * @param productOrder PDO containing the samples in question
+     * @param acceptableStartingStatuses a Set of {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus}es
+     *                                   in which samples are allowed to be in before undergoing this transition
+     * @param targetStatus the status into which the samples will be transitioned
+     * @param productOrderSamples the samples in question
+     * @throws SampleDeliveryStatusChangeException thrown if any samples are found to not be in an acceptable starting status
+     */
     private void transitionSamples(ProductOrder productOrder, Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
                                    ProductOrderSample.DeliveryStatus targetStatus, Collection<ProductOrderSample> productOrderSamples) throws SampleDeliveryStatusChangeException {
 
@@ -382,7 +401,20 @@ public class ProductOrderEjb {
     }
 
 
-
+    /**
+     * Transition the specified samples to the specified target status, adding a comment to the JIRA ticket, does NOT
+     * transition the JIRA ticket status as this is called from sample transition methods only and not whole PDO transition
+     * methods.  Per GPLIM-655 we need to update per-sample comments too, but not currently doing that.
+     *
+     * @param jiraTicketKey JIRA ticket key
+     * @param acceptableStartingStatuses acceptable statuses for samples to be found in
+     * @param targetStatus status to change samples to
+     * @param sampleIndices zero-based indices of samples in the PDO to update
+     * @param sampleComments comments associated with each sample per update.
+     * @throws NoSuchPDOException
+     * @throws SampleDeliveryStatusChangeException
+     * @throws IOException
+     */
     private void transitionSamplesAndUpdateTicket(String jiraTicketKey, Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
                                                   ProductOrderSample.DeliveryStatus targetStatus, List<Integer> sampleIndices,
                                                   List<String> sampleComments) throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
@@ -413,12 +445,28 @@ public class ProductOrderEjb {
     }
 
 
+    /**
+     * Returns the name of the currently logged-in user or 'Mercury' if no logged in user (e.g. in a fixup test context)
+     *
+     * @return
+     */
     private String getUserName() {
         String user = userBean.getLoginUserName();
         return user == null ? "Mercury" : user;
     }
 
 
+    /**
+     * Transition the specified JIRA ticket using the specified transition, adding the specified comment.
+     *
+     * @param jiraTicketKey JIRA ticket key
+     * @param alreadyResolvedResolutions if a JIRA ticket is found to already be in any of these states, do not do anything
+     * @param transitionState the transition to use
+     * @param transitionComments comments to include as part of the transition, will be appended to the JIRA ticket
+     *
+     * @throws IOException
+     * @throws NoTransitionException Thrown if the specified transition is not available on the specified issue
+     */
     private void transitionJiraTicket(String jiraTicketKey, String [] alreadyResolvedResolutions, ProductOrder.TransitionStates transitionState, String transitionComments) throws IOException, NoTransitionException {
         String resolution = jiraService.getResolution(jiraTicketKey);
 
@@ -466,15 +514,16 @@ public class ProductOrderEjb {
         // Currently not setting abandon comments into PDO comments, that seems too intrusive.  We will record the comments
         // with the JIRA ticket.
 
-        transitionJiraTicket(jiraTicketKey, new String[]{"Cancelled", "Complete"}, Cancel, abandonComments);
+        transitionJiraTicket(jiraTicketKey, new String[] {"Cancelled"}, Cancel, abandonComments);
     }
 
 
     /**
      * Mark the whole PDO as complete, with a comment.
      *
-     * @param jiraTicketKey
-     * @param completionComments
+     * @param jiraTicketKey JIRA ticket key of the PDO in question
+     * @param completionComments comments to include in the JIRA ticket
+     *
      * @throws SampleDeliveryStatusChangeException
      * @throws IOException
      * @throws NoTransitionException
@@ -489,18 +538,39 @@ public class ProductOrderEjb {
         // Currently not setting abandon comments into PDO comments, that seems too intrusive.  We will record the comments
         // with the JIRA ticket.
 
-        transitionJiraTicket(jiraTicketKey, new String [] {"Cancelled", "Complete"}, ProductOrder.TransitionStates.Complete, completionComments);
+        transitionJiraTicket(jiraTicketKey, new String [] {"Complete"}, ProductOrder.TransitionStates.Complete, completionComments);
     }
 
 
-
+    /**
+     * Sample abandonment method with parameter types guessed as appropriate for use with Stripes
+     *
+     * @param jiraTicketKey JIRA ticket key of the PDO in question
+     * @param sampleIndices zero-based indices of the samples to abandon
+     * @param abandonmentComments comments to include with the abandonment of the samples.  Currently these comments go
+     *                            only in the JIRA ticket, with GPLIM-655 they will also be added to the per-sample history
+     * @throws IOException
+     * @throws SampleDeliveryStatusChangeException
+     * @throws NoSuchPDOException
+     */
     public void abandonSamples(@Nonnull String jiraTicketKey, List<Integer> sampleIndices, List<String> abandonmentComments) throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
         transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(ABANDONED, NOT_STARTED), ABANDONED, sampleIndices, abandonmentComments);
     }
 
 
-    public void completeSamples(@Nonnull String pdoKey, List<Integer> sampleIndices, List<String> completionComments) throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
-        transitionSamplesAndUpdateTicket(pdoKey, EnumSet.of(DELIVERED, NOT_STARTED), DELIVERED, sampleIndices, completionComments);
+    /**
+     * Sample completion method with parameter types guessed as appropriate for use with Stripes
+     *
+     * @param jiraTicketKey JIRA ticket key of the PDO in question
+     * @param sampleIndices zero-based indices of the samples to complete
+     * @param completionComments comments to include with the completion of the samples.  Currently these comments go
+     *                            only in the JIRA ticket, with GPLIM-655 they will also be added to the per-sample history
+     * @throws IOException
+     * @throws SampleDeliveryStatusChangeException
+     * @throws NoSuchPDOException
+     */
+    public void completeSamples(@Nonnull String jiraTicketKey, List<Integer> sampleIndices, List<String> completionComments) throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
+        transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DELIVERED, NOT_STARTED), DELIVERED, sampleIndices, completionComments);
     }
 
 }

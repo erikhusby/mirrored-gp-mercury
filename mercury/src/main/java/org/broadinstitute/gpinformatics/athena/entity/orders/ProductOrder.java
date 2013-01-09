@@ -777,23 +777,6 @@ public class ProductOrder implements Serializable {
         return counts.sampleValidation();
     }
 
-    /**
-     * closeProductOrder allows a user to set the Jira ticket associated with this product order into a "Billed" state
-     *
-     * @throws IOException
-     */
-    public void closeProductOrder() throws IOException {
-        if (StringUtils.isEmpty(jiraTicketKey)) {
-            throw new IllegalStateException("A jira Ticket has not been created.");
-        }
-        JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
-        JiraIssue issue = jiraService.getIssue(jiraTicketKey);
-        IssueTransitionListResponse transitions = issue.findAvailableTransitions();
-
-        Transition transition = transitions.getTransitionByName(TransitionStates.Complete.getStateName());
-
-        issue.postNewTransition(transition);
-    }
 
     /**
      * @return true if all samples are of BSP Format. Note:
@@ -876,7 +859,7 @@ public class ProductOrder implements Serializable {
     }
 
     public enum TransitionStates {
-        Complete("Complete"),
+        Complete("Order Complete"),
         Cancel("Cancel"),
         StartProgress("Start Progress"),
         PutOnHold("Put On Hold"),

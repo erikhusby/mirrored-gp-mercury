@@ -33,7 +33,7 @@
     <stripes:layout-component name="content">
         <p>
             <stripes:link title="<%=ProductOrderActionBean.CREATE_ORDER%>" beanclass="${actionBean.class.name}" event="create" class="pull-right">
-                <%=ProductOrderActionBean.CREATE_ORDER%>
+                <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.CREATE_ORDER%>
             </stripes:link>
         </p>
 
@@ -81,7 +81,7 @@
                             </td>
                             <td>
                                 <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                    <stripes:param name="businessKey" value="${order.businessKey}"/>
+                                    <stripes:param name="productOrder" value="${order.businessKey}"/>
                                     ${order.title}
                                 </stripes:link>
                             </td>
@@ -91,7 +91,7 @@
                                         DRAFT<br/>
                                         (
                                             <stripes:link title="Place Order" beanclass="${actionBean.class.name}" event="placeOrder">
-                                                <stripes:param name="businessKey" value="${order.businessKey}"/>
+                                                <stripes:param name="productOrder" value="${order.businessKey}"/>
                                                 Place Order
                                             </stripes:link>
                                         )

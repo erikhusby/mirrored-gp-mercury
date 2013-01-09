@@ -63,7 +63,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private FundingListBean fundingList;
 
     @Validate(required = true, on={EDIT_ACTION, VIEW_ACTION})
-    private String businessKey;
+    private String researchProject;
 
     @ValidateNestedProperties({
             @Validate(field = "title", maxlength = 4000, on = {SAVE_ACTION}),
@@ -126,9 +126,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION})
     public void init() {
-        businessKey = getContext().getRequest().getParameter("businessKey");
-        if (!StringUtils.isBlank(businessKey)) {
-            editResearchProject = researchProjectDao.findByBusinessKey(businessKey);
+        researchProject = getContext().getRequest().getParameter("researchProject");
+        if (!StringUtils.isBlank(researchProject)) {
+            editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
         } else {
             editResearchProject = new ResearchProject(getUserBean().getBspUser());
         }
@@ -201,7 +201,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
         researchProjectDao.persist(editResearchProject);
         addMessage("The research project '" + editResearchProject.getTitle() + "' has been saved.");
-        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION).addParameter("businessKey", editResearchProject.getBusinessKey());
+        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION).addParameter("researchProject", editResearchProject.getBusinessKey());
     }
 
     private void populateTokenListFields() {
@@ -245,7 +245,20 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return bspUserList.getCsvFullNameList(editResearchProject.getScientists());
     }
 
-    public ResearchProject getResearchProject() {
+    /**
+     * The string paramater name of the business key.
+     *
+     * @return
+     */
+    public String getResearchProject() {
+        return researchProject;
+    }
+
+    public void setResearchProject(String researchProject) {
+        this.researchProject = researchProject;
+    }
+
+    public ResearchProject getEditResearchProject() {
         return editResearchProject;
     }
 

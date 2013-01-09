@@ -77,6 +77,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
         try {
             ret = setJsonMimeTypes(webResource).post(responseGenericType, baos.toString());
         } catch (UniformInterfaceException e) {
+            //TODO SGM:  Change to a more defined exception to give the option to set in throws or even catch
             throw new RuntimeException(e.getResponse().getEntity(String.class), e);
         }
 
@@ -104,6 +105,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
         try {
             setJsonMimeTypes(webResource).post(baos.toString());
         } catch (UniformInterfaceException e) {
+            //TODO SGM:  Change to a more defined exception to give the option to set in throws or even catch
             throw new RuntimeException(e.getResponse().getEntity(String.class), e);
         }
     }
@@ -125,6 +127,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
         try {
             setJsonMimeTypes(webResource).put(baos.toString());
         } catch (UniformInterfaceException e) {
+            //TODO SGM:  Change to a more defined exception to give the option to set in throws or even catch
             throw new RuntimeException(e.getResponse().getEntity(String.class), e);
         }
     }
@@ -143,6 +146,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
         try {
             return setJsonMimeTypes(webResource).get(genericType);
         } catch (UniformInterfaceException e) {
+            //TODO SGM:  Change to a more defined exception to give the option to set in throws or even catch
             throw new RuntimeException(e.getResponse().getEntity(String.class), e);
         }
     }

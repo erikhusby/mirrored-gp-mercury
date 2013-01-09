@@ -33,7 +33,7 @@
             <p>
                 <stripes:link title="Click to edit ${actionBean.editOrder.title}"
                     beanclass="${actionBean.class.name}" event="edit" class="pull-right">
-                    <span class="icon-home"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
+                    <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
                     <stripes:param name="businessKey" value="${actionBean.editOrder.businessKey}"/>
                 </stripes:link>
             </p>

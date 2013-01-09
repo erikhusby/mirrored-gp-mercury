@@ -27,6 +27,6 @@ public class LabBatchConverter extends AbstractConverter {
 
     @Override
     public String getAsString(FacesContext facesContext, UIComponent uiComponent, Object o) {
-        return o==null?"":((LabBatch) o).getBatchName();
+        return o == null ? "" : ((LabBatch) o).getBatchName();
     }
 }
