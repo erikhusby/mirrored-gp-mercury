@@ -54,11 +54,9 @@ public class CustomFieldJsonParser {
             String fieldName = (String)fieldProperties.get(NAME);
             Boolean required = (Boolean)fieldProperties.get(REQUIRED);
 
-//            if (fieldId.startsWith(CUSTOMFIELD)) {
             if (StringUtils.isNotBlank(fieldName)) {
                 customFields.put(fieldName, new CustomFieldDefinition(fieldId, fieldName, required));
             }
-//            }
         }
         return customFields;
     }
