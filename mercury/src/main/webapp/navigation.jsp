@@ -71,7 +71,7 @@
                     <input type="text" name="searchKey" title="enter a barcode to search" class="defaultText" style="margin-top: 5px;vertical-align: top;height:14px;"/>
                     <input type="submit" name="search" value="Search" class="btn btn-mini"/>
                     &#160;
-                    <stripes:link style="display: inline; padding: 0px;" title="Click for advanced search options" beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean" event="view">advanced</stripes:link>
+                    <stripes:link style="display: inline; padding: 0px;" title="Click for advanced search options" beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean" event="view">Advanced</stripes:link>
                     </stripes:form>
                 </li>
             </ul>

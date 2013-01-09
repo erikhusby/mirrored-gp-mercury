@@ -116,7 +116,7 @@
                     <div class="brand" style="display:inline;">
                         <img src="${ctxpath}/images/broad_logo.png" alt="Broad Institute"/>
                         <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean"
-                           style="padding-left: 30px;text-decoration: none; font-variant: small-caps; font-size: 3em">
+                           style="padding-left: 30px;text-decoration: none; font-variant: small-caps; font-size: 2.2em;">
                             <img src="${ctxpath}/images/mercury_helmet_${bean.buildInfoBean.deployment}.png" alt="Mercury Helmet" width="40" height="30"/> Mercury</stripes:link>
                     </div>
                     <div id="navbarForm" class="nav pull-right">
@@ -131,7 +131,7 @@
                                data-content="${bean.userBean.bspStatus}<br/>${bean.userBean.jiraStatus}<br/>${bean.userBean.rolesString}">${bean.userBean.loginUserName}</span>
 
                             &#160;
-                            <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean"  event="signOut" title="Sign out" class="btn btn-mini">
+                            <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean"  event="signOut" title="Sign out" class="btn btn-mini" style="text-decoration: none !important">
                                 Sign out
                             </stripes:link>
                         </c:if>

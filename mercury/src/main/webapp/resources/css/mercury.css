@@ -13,10 +13,6 @@ body { padding-bottom: 40px; padding-top: 5px; font-size: 12px; }
 footer { font-size: 10px; text-align: center; padding-top: 20px; }
 section { margin-left: 2%; margin-right: 2% }
 
-ul.DTTT_dropdown.dropdown-menu li {
-  position: relative; }
-a.DTTT {}
-
 /* Override Bootstrap's opinion that links should not be underlined. */
 a { text-decoration: underline; color: #0088CC; }
 a.external {background-image:url("/Mercury/images/external-link.gif");background-position:right center;background-repeat:no-repeat;display:inline;padding:0 20px 0 0;}
@@ -24,6 +20,11 @@ a.external {background-image:url("/Mercury/images/external-link.gif");background
 h1, h2, h3, h4, h5 {color: #644436;}
 
 label, input, button, select, textarea { font-size: 12px }
+
+ul.DTTT_dropdown.dropdown-menu li { position: relative; }
+.DTTT_button_copy  { text-decoration: none !important }
+.DTTT_button_csv  { text-decoration: none !important }
+.DTTT_button_print  { text-decoration: none !important }
 
 /* DataTables sorting CSS */
 table.table thead .sorting,
