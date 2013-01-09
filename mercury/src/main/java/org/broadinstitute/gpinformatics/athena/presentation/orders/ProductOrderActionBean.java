@@ -455,6 +455,6 @@ public class ProductOrderActionBean extends CoreActionBean implements Validation
 
     @Override
     public Resolution handleValidationErrors(ValidationErrors errors) throws Exception {
-        return new ForwardResolution(ORDER_CREATE_PAGE).addParameter("productOrder", productOrder);
+        return new RedirectResolution(ORDER_CREATE_PAGE).addParameter("productOrder", productOrder);
     }
 }
