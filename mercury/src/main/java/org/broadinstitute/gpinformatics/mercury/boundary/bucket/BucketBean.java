@@ -184,7 +184,10 @@ public class BucketBean {
         Set<BucketEntry> bucketEntrySet = buildBatchListByVessels(vesselsToBatch, workingBucket);
 
         LabBatch bucketBatch = startDBFree(bucketEntrySet, operator, batchInitiationLocation);
-        batchEjb.batchToJira(operator, batchTicket, bucketBatch);
+//        batchEjb.batchToJira(operator, batchTicket, bucketBatch);
+        batchEjb.jiraBatchNotification(bucketBatch);
+
+
     }
 
     public Set<BucketEntry> buildBatchListByVessels(Collection<LabVessel> vesselsToBatch, Bucket workingBucket) {
@@ -257,6 +260,7 @@ public class BucketBean {
         bucketBatch = startDBFree(bucketEntrySet, operator, LabEvent.UI_EVENT_LOCATION);
 
         batchEjb.batchToJira(operator, batchTicket, bucketBatch);
+        batchEjb.jiraBatchNotification(bucketBatch);
     }
 
     public Set<BucketEntry> buildBatchListBySize(int numberOfBatchSamples, Bucket workingBucket) {
@@ -320,6 +324,7 @@ public class BucketBean {
         LabBatch bucketBatch = startDBFree(bucketEntries, operator, batchInitiationLocation);
 
         batchEjb.batchToJira(operator, batchTicket, bucketBatch);
+        batchEjb.jiraBatchNotification(bucketBatch);
 
     }
 

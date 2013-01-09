@@ -91,6 +91,9 @@ public class LabBatchEjb {
 
         batchToJira(reporter, jiraTicket, batchObject);
 
+        jiraBatchNotification(batchObject);
+
+
         return batchObject;
     }
 
@@ -113,6 +116,8 @@ public class LabBatchEjb {
         labBatchDao.persist(batchObject);
 
         batchToJira(reporter, null, batchObject);
+
+        jiraBatchNotification(batchObject);
 
         return batchObject;
     }
@@ -181,7 +186,9 @@ public class LabBatchEjb {
             logger.error("Error attempting to create Lab Batch in Jira", ioe);
             throw new InformaticsServiceException("Error attempting to create Lab Batch in Jira", ioe);
         }
+    }
 
+    public void jiraBatchNotification(LabBatch newBatch) {
         for (String pdo : LabVessel.extractPdoKeyList(newBatch.getStartingLabVessels())) {
             try {
                 jiraService.addLink(AddIssueLinkRequest.LinkType.Related, pdo, newBatch.getJiraTicket().getTicketName(),
