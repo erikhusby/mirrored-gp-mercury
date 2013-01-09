@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,7 +13,9 @@ import java.util.List;
  * A step in a process
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class WorkflowStepDef {
+public class WorkflowStepDef implements Serializable {
+
+    private static final long serialVersionUID = 20130101L;
 
     enum QuantType {
         PICO,
@@ -101,6 +104,8 @@ public class WorkflowStepDef {
     private OutputCategory outputCategory;
     /** The type of output, e.g. enriched */
     private OutputType outputType;
+    /** How many times the message is repeated, e.g. a transfer to duplicate Pico plates has an original transfer, and one repeat */
+    private Integer numberOfRepeats = 0;
 
     private transient WorkflowProcessDefVersion processDefVersion;
 
@@ -155,5 +160,9 @@ public class WorkflowStepDef {
 
     public void setProcessDefVersion ( WorkflowProcessDefVersion processDefVersion ) {
         this.processDefVersion = processDefVersion;
+    }
+
+    public Integer getNumberOfRepeats() {
+        return numberOfRepeats;
     }
 }

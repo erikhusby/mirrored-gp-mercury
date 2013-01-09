@@ -327,4 +327,15 @@ public class LabBatch {
 
         return hashCodeBuilder.hashCode();
     }
+
+    public static boolean isCommonBatch(LabBatch targetBatch, Collection<LabVessel> batchSet) {
+
+        boolean result = false;
+
+        if(targetBatch.getStartingLabVessels().containsAll(batchSet)) {
+            result = true;
+        }
+
+        return result;
+    }
 }

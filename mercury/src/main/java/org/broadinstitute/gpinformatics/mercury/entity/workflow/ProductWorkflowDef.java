@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -19,18 +20,20 @@ import java.util.Set;
  * The workflow definition for a product, composed of processes
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class ProductWorkflowDef {
+public class ProductWorkflowDef implements Serializable {
+
+    private static final long serialVersionUID = 20130101L;
 
     /** e.g. Exome Express */
     private String name;
 
     /** List of versions */
-    List<ProductWorkflowDefVersion> productWorkflowDefVersions = new ArrayList<ProductWorkflowDefVersion>();
+    private List<ProductWorkflowDefVersion> productWorkflowDefVersions = new ArrayList<ProductWorkflowDefVersion>();
 
     /** Transient list of versions, in descending order of effective date */
     private transient ArrayList<ProductWorkflowDefVersion> workflowVersionsDescEffDate;
     private transient Map<String, ProductWorkflowDefVersion> productDefVersionsByVersion =
-        new HashMap<String, ProductWorkflowDefVersion>();
+            new HashMap<String, ProductWorkflowDefVersion>();
 
     public ProductWorkflowDef(String name) {
         this.name = name;
@@ -50,6 +53,12 @@ public class ProductWorkflowDef {
         this.productDefVersionsByVersion.put ( productWorkflowDefVersion.getVersion (), productWorkflowDefVersion );
     }
 
+    /**
+     * Determine whether the given next event is valid for the given lab vessel.
+     * @param labVessel vessel, typically with event history
+     * @param nextEventTypeName the event that the lab intends to do next
+     * @return list of errors, empty if event is valid
+     */
     public List<String> validate(LabVessel labVessel, String nextEventTypeName) {
         List<String> errors = new ArrayList<String>();
         ProductWorkflowDefVersion effectiveWorkflowDef = getEffectiveVersion();
@@ -66,7 +75,7 @@ public class ProductWorkflowDef {
             for (ProductWorkflowDefVersion.LabEventNode predecessorNode : labEventNode.getPredecessors()) {
                 validPredecessorEventNames.add(predecessorNode.getLabEventType().getName());
                 // todo jmt recurse
-                if(predecessorNode.isOptional()) {
+                if(predecessorNode.getStepDef().isOptional()) {
                     start = predecessorNode.getPredecessors().isEmpty();
                     for (ProductWorkflowDefVersion.LabEventNode predPredEventNode : predecessorNode.getPredecessors()) {
                         validPredecessorEventNames.add(predPredEventNode.getLabEventType().getName());
@@ -75,15 +84,15 @@ public class ProductWorkflowDef {
             }
 
             found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
-                    found, labVessel.getTransfersFrom());
+                    found, labVessel.getTransfersFrom(), labEventNode);
 
             if (!found) {
                 found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
-                        found, labVessel.getTransfersTo());
+                        found, labVessel.getTransfersTo(), labEventNode);
             }
             if(!found) {
                 found = validateTransfers(nextEventTypeName, errors, validPredecessorEventNames, labVessel, actualEventNames,
-                        found, labVessel.getInPlaceEvents());
+                        found, labVessel.getInPlaceEvents(), labEventNode);
             }
             if(!found && !start) {
                 errors.add("Vessel " + labVessel.getLabCentricName() + " has actual events " + actualEventNames +
@@ -94,15 +103,15 @@ public class ProductWorkflowDef {
     }
 
     private boolean validateTransfers(String nextEventTypeName, List<String> errors, Set<String> validPredecessorEventNames,
-            LabVessel labVessel, Set<String> actualEventNames, boolean found, Set<LabEvent> transfers) {
+            LabVessel labVessel, Set<String> actualEventNames, boolean found, Set<LabEvent> transfers,
+            ProductWorkflowDefVersion.LabEventNode labEventNode) {
         for (LabEvent labEvent : transfers) {
             String actualEventName = labEvent.getLabEventType().getName();
             actualEventNames.add(actualEventName);
-/*
-            if(actualEventName.equals(nextEventTypeName)) {
-                errors.add("For vessel " + labVessel.getLabCentricName() + ", event " + nextEventTypeName + " has already occurred");
+            if(actualEventName.equals(nextEventTypeName) && labEventNode.getStepDef().getNumberOfRepeats() == 0) {
+                errors.add("For vessel " + labVessel.getLabCentricName() + ", event " + nextEventTypeName +
+                        " has already occurred");
             }
-*/
             if(validPredecessorEventNames.contains(actualEventName)) {
                 found = true;
                 break;

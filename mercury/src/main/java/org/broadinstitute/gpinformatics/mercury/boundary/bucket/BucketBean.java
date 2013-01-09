@@ -331,33 +331,23 @@ public class BucketBean {
     @DaoFree
     private LabBatch startDBFree(Collection<BucketEntry> bucketEntries, String operator,
                                  String batchInitiationLocation) {
-        LabBatch bucketBatch;
+        LabBatch bucketBatch = null;
         Set<LabVessel> batchVessels = new HashSet<LabVessel>();
-
-        List<LabBatch> trackBatches = null;
-
-        boolean allHaveBatch = true;
 
         for (BucketEntry currEntry : bucketEntries) {
             batchVessels.add(currEntry.getLabVessel());
 
-            Collection<LabBatch> nearestBatches = currEntry.getLabVessel().getNearestLabBatches() ;
-            if (nearestBatches !=null ) {
-
-                if (trackBatches == null) {
-                    trackBatches = new LinkedList<LabBatch>();
-                }
-
-                List<LabBatch> currBatchList = new LinkedList<LabBatch>(nearestBatches);
-
-                Collections.sort(currBatchList, LabBatch.byDate);
-
-                trackBatches.add(currBatchList.get(currBatchList.size() - 1));
-            } else {
-                allHaveBatch = false;
-            }
         }
 
+        if(!batchVessels.isEmpty()) {
+            for(LabBatch currBatch:batchVessels.iterator().next().getNearestLabBatches()) {
+
+                if(LabBatch.isCommonBatch(currBatch, batchVessels)) {
+                    bucketBatch = currBatch;
+                }
+
+            }
+        }
         /*
             If the tubes being pulled from the Bucket are all from one LabBatch,  just update that LabBatch and move
             forward.
@@ -365,9 +355,10 @@ public class BucketBean {
             otherwise (no previous batch, multiple lab batches, existing batch with samples that are not in an
             existing batch) create a new Lab Batch.
          */
-        if (allHaveBatch && trackBatches != null && trackBatches.size() == 1) {
-            bucketBatch = trackBatches.get(0);
-        } else {
+        if (bucketBatch == null) {
+
+            //TODO SGM  Should use logic in LabBatchEJB
+
             bucketBatch = new LabBatch(LabBatch.generateBatchName(CreateFields.IssueType.EXOME_EXPRESS.getJiraName(),
                                                                   LabVessel.extractPdoKeyList(batchVessels)),
                                        batchVessels);
