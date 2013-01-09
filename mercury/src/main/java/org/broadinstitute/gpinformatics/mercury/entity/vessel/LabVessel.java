@@ -376,9 +376,21 @@ public abstract class LabVessel implements Serializable {
 
     public String getNearestLabBatchesString() {
         Collection<LabBatch> nearest = getNearestLabBatches();
+        if ((nearest == null) || nearest.isEmpty()) {
+            return "";
+        }
 
         LabBatch[] batchArray = nearest.toArray(new LabBatch[nearest.size()]);
         return StringUtils.join(batchArray);
+    }
+
+    public int getNearestLabBatchesCount() {
+        Collection<LabBatch> nearest = getNearestLabBatches();
+        if (nearest == null) {
+            return 0;
+        }
+
+        return nearest.size();
     }
 
     public enum CONTAINER_TYPE {
@@ -969,9 +981,21 @@ public abstract class LabVessel implements Serializable {
 
     public String getIndexesString() {
         Collection<String> indexes = getIndexes();
+        if ((indexes == null) || indexes.isEmpty()) {
+            return "";
+        }
 
         String[] batchArray = indexes.toArray(new String[indexes.size()]);
         return StringUtils.join(batchArray);
+    }
+
+    public int getIndexesCount() {
+        Collection<String> indexes = getIndexes();
+        if ((indexes == null) || indexes.isEmpty()) {
+            return 0;
+        }
+
+        return indexes.size();
     }
 
     public Set<String> getPdoKeys() {
@@ -989,6 +1013,15 @@ public abstract class LabVessel implements Serializable {
 
         String[] batchArray = keys.toArray(new String[keys.size()]);
         return StringUtils.join(batchArray);
+    }
+
+    public int getPdoKeysCount() {
+        Collection<String> keys = getPdoKeys();
+        if (keys == null) {
+            return 0;
+        }
+
+        return keys.size();
     }
 
     /**

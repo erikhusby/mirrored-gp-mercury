@@ -188,7 +188,7 @@ public class SearchActionBean extends CoreActionBean {
         return getPDOKeyMap;
     }
 
-    public Map<String, String> getGetIndexesMap() {
+    public Map<String, String> getIndexesMap() {
         if (getIndexesMap == null) {
 
         }

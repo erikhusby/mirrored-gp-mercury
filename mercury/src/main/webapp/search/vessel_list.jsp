@@ -72,13 +72,13 @@
                     ${vessel.type.name}
                 </td>
                 <td>
-                    ${vessel.getPdoKeysString}
+                    ${vessel.pdoKeysCount}
                 </td>
                 <td>
-                    ${bean.getIndexesMap[vessel.label]}
+                    ${vessel.indexesCount}
                 </td>
                 <td>
-                    ${vessel.nearestLabBatchesString}
+                    ${vessel.nearestLabBatchesCount}
                 </td>
                 <td>
                     ${vessel.latestEvent.labEventType.name}
