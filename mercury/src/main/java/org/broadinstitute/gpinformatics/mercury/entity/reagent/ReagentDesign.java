@@ -35,19 +35,6 @@ public class ReagentDesign {
     @OneToMany(mappedBy = "reagentDesign")
     private Set<DesignedReagent> designedReagents = new HashSet<DesignedReagent>();
 
-    @Transient
-    private String originalName;   // This is used for edit to keep track of changes to the object.
-
-    // Initialize our transient data after the object has been loaded from the database.
-    @PostLoad
-    private void initialize() {
-        originalName = designName;
-    }
-
-    public String getOriginalName() {
-        return originalName;
-    }
-
     /**
      * For JPA
      */
