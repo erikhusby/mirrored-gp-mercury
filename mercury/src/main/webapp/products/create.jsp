@@ -52,7 +52,7 @@
     <stripes:layout-component name="content">
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
-            <div style="float: left; margin-right: 40px; margin-top: 5px; width: 98%">
+            <div class="form-horizontal">
                 <stripes:hidden name="product"/>
                 <div class="control-group">
                     <stripes:label for="productFamily" name="Product Family" class="control-label"/>
@@ -204,10 +204,10 @@
                 <div class="control-group">
                     <div class="controls">
                         <div class="row-fluid">
-                            <div class="span2">
+                            <div class="span1">
                                 <stripes:submit name="save" value="Save" class="btn btn-primary"/>
                             </div>
-                            <div class="offset">
+                            <div class="span1">
                                 <c:choose>
                                     <c:when test="${actionBean.creating}">
                                         <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>

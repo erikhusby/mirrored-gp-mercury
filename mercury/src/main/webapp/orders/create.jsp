@@ -115,8 +115,8 @@
 
     <stripes:layout-component name="content">
 
-        <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
-            <div style="float: left; margin-right: 40px; margin-top: 5px;">
+        <stripes:form beanclass="${actionBean.class.name}" id="createForm">
+            <div class="form-horizontal span6">
                 <stripes:hidden name="businessKey"/>
                 <stripes:hidden name="submitString"/>
                 <div class="control-group">
@@ -198,7 +198,7 @@
                             <div class="span2">
                                 <stripes:submit name="save" value="Save" class="btn btn-primary"/>
                             </div>
-                            <div class="offset">
+                            <div class="span1">
                                 <c:choose>
                                     <c:when test="${actionBean.creating}">
                                         <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
@@ -216,7 +216,7 @@
                 </div>
             </div>
 
-            <div style="float: left; width: 600px;" class="help-block">
+            <div class="help-block span4">
                 Enter samples names in this box, one per line. When you save the order, the view page will show
                 all sample details.
                 <br/>
