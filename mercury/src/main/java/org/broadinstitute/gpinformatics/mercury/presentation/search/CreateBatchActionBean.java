@@ -34,8 +34,8 @@ public class CreateBatchActionBean extends CoreActionBean {
     public static final String CONFIRM_ACTION = "confirm";
     public static final String SEARCH_ACTION = "search";
 
-    public final String existingJiraTicketValue = "existingTicket";
-    public final String newJiraTicketValue = "newTicket";
+    public static final String EXISTING_TICKET = "existingTicket";
+    public static final String NEW_TICKET = "newTicket";
 
 
     @Inject
@@ -53,8 +53,7 @@ public class CreateBatchActionBean extends CoreActionBean {
     @Inject
     private JiraLink jiraLink;
 
-
-    @Validate(required = true, on = {SEARCH_ACTION}, field = "searchKey", minlength = 1)
+    @Validate(required = true, on = {SEARCH_ACTION}, field = "searchKey")
     private String searchKey;
 
     private String batchLabel;
@@ -67,17 +66,17 @@ public class CreateBatchActionBean extends CoreActionBean {
     private List<LabVessel> selectedBatchVessels;
 
     @Validate(required = true, on = {CREATE_BATCH_ACTION}, field = "jiraInputType")
-    private String jiraInputType;
+    private String jiraInputType = EXISTING_TICKET;
 
     @Validate(required = true, on = {CREATE_BATCH_ACTION},
-            expression = "jiraInputType == existingJiraTicketValue",
-            field = "jiraTicketId", minlength = 1)
+              expression = "jiraInputType == EXISTING_TICKET",
+              field = "jiraTicketId")
     private String jiraTicketId;
 
     private String important;
     private String description;
     @Validate(required = true, on = {CREATE_BATCH_ACTION},
-            expression = "jiraInputType != existingJiraTicketValue", field = "summary", minlength = 1)
+            expression = "jiraInputType != EXISTING_TICKET", field = "summary")
     private String summary;
     private Date dueDate;
 
@@ -106,7 +105,7 @@ public class CreateBatchActionBean extends CoreActionBean {
     /**
      * Supports the submission for the page.  Will forward to confirmation page on success
      *
-     * @return
+     * @return The resolution
      */
     @HandlesEvent(CREATE_BATCH_ACTION)
     public Resolution createBatch() throws Exception {
@@ -144,7 +143,7 @@ public class CreateBatchActionBean extends CoreActionBean {
     }
 
     private boolean isUseExistingTicket() {
-        return jiraInputType.equals(existingJiraTicketValue);
+        return jiraInputType.equals(EXISTING_TICKET);
     }
 
     @HandlesEvent(SEARCH_ACTION)
@@ -201,11 +200,11 @@ public class CreateBatchActionBean extends CoreActionBean {
     }
 
     public String getExistingJiraTicketValue() {
-        return existingJiraTicketValue;
+        return EXISTING_TICKET;
     }
 
     public String getNewJiraTicketValue() {
-        return newJiraTicketValue;
+        return NEW_TICKET;
     }
 
     public String getJiraInputType() {
