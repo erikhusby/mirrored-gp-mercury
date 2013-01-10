@@ -45,7 +45,7 @@
                     <td valign="top">
                         <div class="control-group">
                             <div class="controls">
-                                <stripes:radio value="${actionBean.existingJiraTicketValue}" checked="true"
+                                <stripes:radio value="${actionBean.existingJiraTicketValue}"
                                                name="jiraInputType"
                                                onclick="javascript:showResult('jiraId');hideResult('newTicket');"/>
                                 Use Existing Jira Ticket
