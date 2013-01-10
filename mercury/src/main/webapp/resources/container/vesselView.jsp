@@ -43,10 +43,10 @@
 
         if (currentCheckValue == undefined) {
             $j('.' + sectionClass).removeAttr('checked');
-            $j('.' + sectionClass).updateCheckCount();
+            $j('.vvCheckedCount').updateCheckCount();
         } else {
             $j('.' + sectionClass).attr('checked', currentCheckValue);
-            $j('.' + sectionClass).updateCheckCount();
+            $j('.vvCheckedCount').updateCheckCount();
         }
     }
 </script>
@@ -55,11 +55,12 @@
     <!-- Need a row of checkboxes for select all and then each select all column box -->
     <tr>
         <th width="40">
-            <span id="count" class="vvCheckedCount"></span><input type="checkbox" class="vvCheckAll" style="float:right;"/>
+            <span id="vvCheckedCount" class="vvCheckedCount"></span><input type="checkbox" class="vvCheckAll" style="float:right;"/>
         </th>
 
         <c:forEach var="column" items="${actionBean.vessel.vesselGeometry.columnNames}" varStatus="colStatus">
             <th>
+                ${column}
                 <input id="col-${colStatus.index}-head" type="checkbox" style="float:none;" onchange="sectionCheck('col-' + ${colStatus.index})"/>
             </th>
         </c:forEach>
@@ -67,6 +68,7 @@
     <c:forEach var="row" items="${actionBean.vessel.vesselGeometry.rowNames}" varStatus="rowStatus">
         <tr>
             <th style="text-align: center">
+                ${row}
                 <input id="row-${rowStatus.index}-head" type="checkbox" style="float: right;" onchange="sectionCheck('row-' + ${rowStatus.index})"/>
             </th>
             <c:forEach var="column" items="${actionBean.vessel.vesselGeometry.columnNames}" varStatus="colStatus">
@@ -78,7 +80,7 @@
                     </div>
                     <div class="vvInfo">
                         <c:forEach var="sample" items="${actionBean.samplesAtPosition(row, column)}">
-                            ${sample.startingSample.sampleKey}<br/>
+                            ${sample.startingSample.sampleKey}
                         </c:forEach>
                     </div>
                 </td>

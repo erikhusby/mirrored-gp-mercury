@@ -14,10 +14,11 @@
         </p>
 
         <div class="form-horizontal">
+
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Product Family</label>
+                <label class="control-label label-form">Part Number</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editProduct.productFamily.name}</div>
+                    <div class="form-value">${actionBean.editProduct.partNumber} (<a href="Product Descriptions.pdf">Product Descriptions PDF</a>)</div>
                 </div>
             </div>
 
@@ -29,9 +30,9 @@
             </div>
 
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Part Number</label>
+                <label class="control-label label-form">Product Family</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editProduct.partNumber}</div>
+                    <div class="form-value">${actionBean.editProduct.productFamily.name}</div>
                 </div>
             </div>
 
@@ -113,14 +114,7 @@
                 <label class="control-label label-form">PDM Orderable Only</label>
                 <div class="controls">
                     <div class="form-value">
-                        <c:choose>
-                            <c:when test="${actionBean.editProduct.pdmOrderableOnly}">
-                                <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
-                            </c:when>
-                            <c:otherwise>
-                                No
-                            </c:otherwise>
-                        </c:choose>
+                        ${actionBean.editProduct.pdmOrderableOnly ? "Yes" : "No"}
                     </div>
                 </div>
             </div>
@@ -173,9 +167,6 @@
                         <td>${addOnProduct.productFamily.name}</td>
                         <td>
                             ${addOnProduct.primaryPriceItem.displayName}
-                            <c:if test="${addOnProduct.available}">
-                                <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
-                            </c:if>
                         </td>
                     </tr>
                 </c:forEach>
