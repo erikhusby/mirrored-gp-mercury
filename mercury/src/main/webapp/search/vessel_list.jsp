@@ -28,7 +28,7 @@
         <thead>
         <tr>
             <th width="40">
-                <input for="count" type="checkbox" class="vessel-checkAll"/><span id="count" class="vessel-checkedCount"></span>
+                <input type="checkbox" class="vessel-checkAll"/><span id="count" class="vessel-checkedCount"></span>
             </th>
             <th width="30">Vessel Viewer</th>
             <th width="30">Sample List Viewer</th>
