@@ -11,11 +11,24 @@ import org.hibernate.envers.Audited;
 import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Entity
 @Audited
 @Table(schema = "mercury")
 public class JiraTicket {
+
+    /**
+     * Real JIRA tickets IDs for PDOs have a "PDO-" prefix followed by digits.  Draft PDOs don't have a ticket ID,
+     * Graphene tests have "PDO-" followed by arbitrary text.  There are groups to capture both the prefix and
+     * the issue number.
+     */
+    public static final Pattern PATTERN = Pattern.compile("^([A-Z]+)-([\\d]+)$");
+
+    public static final int PATTERN_GROUP_PREFIX = 1;
+
+    public static final int PATTERN_GROUP_NUMBER = 2;
 
     private String ticketName;
 
