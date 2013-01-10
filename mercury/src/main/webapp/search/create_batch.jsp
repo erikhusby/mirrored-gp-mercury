@@ -18,12 +18,9 @@
         </script>
     </stripes:layout-component>
     <stripes:layout-component name="content">
-
-
         <stripes:form beanclass="${actionBean.class.name}" id="searchForm" class="form-horizontal">
             <table>
                 <tr>
-
                     <td>
                         <div class="form-horizontal">
                             <div class="control-group" style="margin-bottom:5px;">
