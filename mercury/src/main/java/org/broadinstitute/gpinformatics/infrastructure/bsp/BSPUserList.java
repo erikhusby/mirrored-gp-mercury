@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import clover.org.apache.commons.lang.StringUtils;
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,11 +43,9 @@ public class BSPUserList extends AbstractCache implements Serializable {
      * @return list of bsp users, sorted by lastname, firstname, username, email.
      */
     public Map<Long, BspUser> getUsers() {
-
         if (users == null) {
             refreshCache();
         }
-
         return users;
     }
 
@@ -85,7 +83,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
     public List<BspUser> find(String query) {
         if (StringUtils.isBlank(query)) {
             // no query string supplied
-            return new ArrayList<BspUser>();
+            return Collections.emptyList();
         }
 
         String[] lowerQueryItems = query.toLowerCase().split("\\s");
@@ -104,23 +102,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
             }
         }
 
-        return getSortedUserList(results);
-    }
-
-    private List<BspUser> getSortedUserList(List<BspUser> rawUsers) {
-        Collections.sort(rawUsers, new Comparator<BspUser>() {
-            @Override
-            public int compare(BspUser o1, BspUser o2) {
-                CompareToBuilder builder = new CompareToBuilder();
-                builder.append(o1.getLastName(), o2.getLastName());
-                builder.append(o1.getFirstName(), o2.getFirstName());
-                builder.append(o1.getUsername(), o2.getUsername());
-                builder.append(o1.getEmail(), o2.getEmail());
-                return builder.build();
-            }
-        });
-
-        return ImmutableList.copyOf(rawUsers);
+        return results;
     }
 
     private static boolean anyFieldMatches(String lowerQuery, BspUser user) {
@@ -154,7 +136,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
 
             if (!serverValid) {
                 // BSP is down
-                if (getUsers() != null) {
+                if (users != null) {
                     return;
                 } else {
                     rawUsers = new ArrayList<BspUser>();
@@ -165,23 +147,31 @@ public class BSPUserList extends AbstractCache implements Serializable {
                 addQADudeUsers(rawUsers);
             }
 
-            users = new HashMap<Long, BspUser>();
+            Collections.sort(rawUsers, new Comparator<BspUser>() {
+                @Override
+                public int compare(BspUser o1, BspUser o2) {
+                    // FIXME: need to figure out what the correct sort criteria are.
+                    CompareToBuilder builder = new CompareToBuilder();
+                    builder.append(o1.getLastName(), o2.getLastName());
+                    builder.append(o1.getFirstName(), o2.getFirstName());
+                    builder.append(o1.getUsername(), o2.getUsername());
+                    builder.append(o1.getEmail(), o2.getEmail());
+                    return builder.build();
+                }
+            });
+
+            // Use a LinkedHashMap since (1) it preserves the insertion order of its elements, so
+            // our entries stay sorted and (2) it has lower overhead than a TreeMap.
+            Map<Long, BspUser> userMap = new LinkedHashMap<Long, BspUser>(rawUsers.size());
             for (BspUser user : rawUsers) {
-                users.put(user.getUserId(), user);
+                userMap.put(user.getUserId(), user);
             }
+
+            users = ImmutableMap.copyOf(userMap);
 
         } catch (Exception ex) {
             logger.error("Could not refresh the user list", ex);
         }
-    }
-
-    public Map<Long, String> getFullNameMap() {
-        Map<Long, String> fullNameMap = new HashMap<Long, String>();
-        for (BspUser user : getUsers().values()) {
-            fullNameMap.put(user.getUserId(), getUserFullName(user.getUserId()));
-        }
-
-        return fullNameMap;
     }
 
     public static class QADudeUser extends BspUser {
@@ -213,29 +203,6 @@ public class BSPUserList extends AbstractCache implements Serializable {
     }
 
     /**
-     * Passin a list of user IDs and get back a comma separated list of user ful names.
-     *
-     * @param userIds list of user IDs
-     *
-     * @return string representation of named users in CSV format
-     */
-    public String getCsvFullNameList(Long[] userIds) {
-        String listString = "";
-        if (userIds != null) {
-            String[] nameList = new String[userIds.length];
-            int i = 0;
-            for (Long id : userIds) {
-                BspUser user = getById(id);
-                nameList[i++] = user.getFirstName() + " " + user.getLastName();
-            }
-
-            listString = org.apache.commons.lang3.StringUtils.join(nameList, ", ");
-        }
-
-        return listString;
-    }
-
-    /**
      * Create a list of SelectItems for use in the JSF UI.  The first element in the list is a dummy value, 'Any'.
      * @param users the list of bsp users
      * @return the list of select items for the users.
@@ -258,14 +225,5 @@ public class BSPUserList extends AbstractCache implements Serializable {
         }
 
         return items;
-    }
-
-    public String getUserFullName(long userId) {
-        BspUser bspUser = getById(userId);
-        if (bspUser == null) {
-            return "(Unknown user: " + userId + ")";
-        }
-
-        return bspUser.getFirstName() + " " + bspUser.getLastName();
     }
 }

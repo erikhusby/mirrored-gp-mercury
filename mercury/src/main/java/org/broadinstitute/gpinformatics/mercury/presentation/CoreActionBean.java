@@ -17,8 +17,10 @@ import net.sourceforge.stripes.validation.LocalizableError;
 import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.ValidationError;
 import net.sourceforge.stripes.validation.ValidationErrors;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.BuildInfoBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
@@ -27,7 +29,6 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Map;
 
 /*
  * This class is a core class to extend Stripes actions from, providing some basic functionality for
@@ -62,12 +63,6 @@ public class CoreActionBean implements ActionBean {
 
     @Inject
     private BuildInfoBean buildInfoBean;
-
-    // The full name map and the user stuff after this are here to allow any action bean to deal with full names.
-    // Ideally, mercury would just have simple, quick access to its user list. Instead, we have a singleton cache
-    // of users. Since they are singletons, injecting here does not have huge impact. The full name map is only
-    // instituted when needed for lists that may access many names
-    private Map<Long, String> fullNameMap;
 
     @Inject
     private UserBean userBean;
@@ -287,20 +282,40 @@ public class CoreActionBean implements ActionBean {
         return submitString != null && submitString.startsWith(CREATE);
     }
 
-    /**
-     * @return This returns a map of names by the BSP id, which is stored on objects throughout the model. This map
-     * allows JSPs to easily get at the full names for display.
-     */
-    public Map<Long, String> getFullNameMap() {
-        if (fullNameMap == null) {
-            fullNameMap = bspUserList.getFullNameMap();
+    public String getUserFullName(long userId) {
+        BspUser bspUser = bspUserList.getById(userId);
+        if (bspUser == null) {
+            return "(Unknown user: " + userId + ")";
         }
 
-        return fullNameMap;
+        return bspUser.getFirstName() + " " + bspUser.getLastName();
     }
 
     /**
-     * Set HTTP response headers appropiately for a file download
+     * Given a list of user IDs, return a comma separated list of full user names.
+     *
+     * @param userIds list of user IDs
+     * @return string representation of named users in CSV format
+     */
+    // Argument type must be Long, not long, to work with Stripes.
+    public String getUserListString(Long[] userIds) {
+        String userListString = "";
+
+        if (userIds != null) {
+            String[] nameList = new String[userIds.length];
+            int i = 0;
+            for (long userId : userIds) {
+                nameList[i++] = getUserFullName(userId);
+            }
+
+            userListString = StringUtils.join(nameList, ", ");
+        }
+
+        return userListString;
+    }
+
+    /**
+     * Set HTTP response headers appropriately for a file download
      * (as opposed to a normal HTTP response).
      *
      * The content type may be null, in which case we default it

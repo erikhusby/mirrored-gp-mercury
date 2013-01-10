@@ -3,7 +3,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="View Product" sectionTitle="View Product: ${actionBean.editProduct.productName}">
+<stripes:layout-render name="/layout.jsp" pageTitle="Details for #{actionBean.editProduct.partNumber}" sectionTitle="Details for #{actionBean.editProduct.partNumber}">
 
     <stripes:layout-component name="content">
         <p>
@@ -142,7 +142,7 @@
         </div>
 
         <div class="tableBar">
-            Add Ons
+            Add-ons
         </div>
 
         <table id="addOnList" class="table simple">
