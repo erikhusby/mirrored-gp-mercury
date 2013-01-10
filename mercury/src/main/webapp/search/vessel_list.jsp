@@ -5,14 +5,15 @@
     <%-- Where in the hosting page to set the id the user chooses --%>
     <%--@elvariable id="vessels" type="java.util.Collection"--%>
     <%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"--%>
+    <%--@elvariable id="showCheckboxes" type="java.lang.Boolean"--%>
 
     <script type="text/javascript">
         $(document).ready(function () {
             $j('.vessel-checkbox').enableCheckboxRangeSelection({
-                checkAllClass: 'vessel-checkAll',
-                countDisplayClass: 'vessel-checkedCount',
-                checkboxClass: 'vessel-checkbox'});
-            });
+                checkAllClass:'vessel-checkAll',
+                countDisplayClass:'vessel-checkedCount',
+                checkboxClass:'vessel-checkbox'});
+        });
 
         function showVesselVisualizer(label) {
             $j('#viewerDiv').load('${ctxpath}/view/vesselView.action?vesselLabel=' + label);
@@ -28,9 +29,12 @@
     <table id="productOrderList" class="table simple">
         <thead>
         <tr>
-            <th width="40">
-                <input type="checkbox" class="vessel-checkAll"/><span id="count" class="vessel-checkedCount"></span>
-            </th>
+            <c:if test="${showCheckboxes}">
+                <th width="40">
+
+                    <input type="checkbox" class="vessel-checkAll"/><span id="count" class="vessel-checkedCount"></span>
+                </th>
+            </c:if>
             <th width="30">Vessel Viewer</th>
             <th width="30">Sample List Viewer</th>
             <th>Label</th>
@@ -49,10 +53,14 @@
         <tbody>
         <c:forEach items="${vessels}" var="vessel">
             <tr>
-                <td>
-                    <stripes:checkbox class="vessel-checkbox" name="selectedProductOrderBusinessKeys" value="${vessel.label}"/>
-                </td>
+                <c:if test="${showCheckboxes}">
+                    <td>
 
+                        <stripes:checkbox class="vessel-checkbox" name="selectedProductOrderBusinessKeys"
+                                          value="${vessel.label}"/>
+
+                    </td>
+                </c:if>
                 <td>
                     <a href="javascript:showVesselVisualizer('${vessel.label}')">
                         <img width="30" height="30" name="" title="show plate view" src="${ctxpath}/images/plate.png"/>
@@ -64,31 +72,31 @@
                     </a>
                 </td>
                 <td>
-                    ${vessel.label}
+                        ${vessel.label}
                 </td>
                 <td>
-                    ${vessel.sampleInstanceCount}
+                        ${vessel.sampleInstanceCount}
                 </td>
                 <td>
-                    ${vessel.type.name}
+                        ${vessel.type.name}
                 </td>
                 <td>
-                    ${vessel.pdoKeysCount}
+                        ${vessel.pdoKeysCount}
                 </td>
                 <td>
-                    ${vessel.indexesCount}
+                        ${vessel.indexesCount}
                 </td>
                 <td>
-                    ${vessel.nearestLabBatchesCount}
+                        ${vessel.nearestLabBatchesCount}
                 </td>
                 <td>
-                    ${vessel.latestEvent.labEventType.name}
+                        ${vessel.latestEvent.labEventType.name}
                 </td>
                 <td>
-                    ${vessel.latestEvent.eventLocation}
+                        ${vessel.latestEvent.eventLocation}
                 </td>
                 <td>
-                    ${bean.fullNameMap[vessel.latestEvent.eventOperator]}
+                        ${bean.fullNameMap[vessel.latestEvent.eventOperator]}
                 </td>
                 <td>
                     <fmt:formatDate value="${vessel.latestEvent.eventDate}" pattern="MM/dd/yyyy"/>
@@ -101,5 +109,5 @@
         </tbody>
     </table>
 
-    <div id="viewerDiv" style="display:none"> </div>
+    <div id="viewerDiv" style="display:none"></div>
 </stripes:layout-definition>
