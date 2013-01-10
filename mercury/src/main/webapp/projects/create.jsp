@@ -211,47 +211,6 @@
                 </div>
             </div>
 
-            <div class="tableBar">
-                Orders
-            </div>
-
-            <table id="orderList" class="table simple">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Order ID</th>
-                        <th>Product</th>
-                        <th>Status</th>
-                        <th>Owner</th>
-                        <th>Updated</th>
-                        <th>Samples</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <c:forEach items="${actionBean.editResearchProject.productOrders}" var="order">
-                        <tr>
-                            <td>
-                                <stripes:link href="/orders/order.action" event="view">
-                                    <stripes:param name="businessKey" value="${order.businessKey}"/>
-                                    ${order.title}
-                                </stripes:link>
-                            </td>
-                            <td>
-                                <a class="external" target="JIRA" href="${actionBean.jiraUrl}${order.jiraTicketKey}" class="external" target="JIRA">
-                                        ${order.jiraTicketKey}
-                                </a>
-                            </td>
-                            <td>${order.title}</td>
-                            <td>${order.orderStatus}</td>
-                            <td>${actionBean.fullNameMap[order.modifiedBy]}</td>
-                            <td>
-                                <fmt:formatDate value="${order.modifiedDate}" pattern="MM/dd/yyyy"/>
-                            </td>
-                            <td>${order.pdoSampleCount}</td>
-                        </tr>
-                    </c:forEach>
-                </tbody>
-            </table>
         </stripes:form>
 
     </stripes:layout-component>

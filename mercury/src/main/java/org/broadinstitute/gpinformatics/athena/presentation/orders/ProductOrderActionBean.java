@@ -89,7 +89,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrderListEntry> allProductOrders;
 
-    @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
+    @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION, SAVE_ACTION})
     private String productOrder;
 
     @ValidateNestedProperties({
@@ -142,7 +142,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @ValidationMethod(on = "placeOrder")
     public void validateOrderPlacement(ValidationErrors errors) throws Exception {
         if (editOrder.getSamples().isEmpty()) {
-            errors.addGlobalError(new SimpleError("Order does not have anY samples"));
+            errors.addGlobalError(new SimpleError("Order does not have any samples"));
         }
 
         if (editOrder.getResearchProject() == null) {
@@ -253,26 +253,37 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("placeOrder")
     public Resolution placeOrder() {
         try {
+            setUserInfo();
             editOrder.submitProductOrder();
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+
+            // save it!
+            productOrderDao.persist(editOrder);
         } catch (Exception e ) {
             addGlobalValidationError(e.getMessage());
             return getContext().getSourcePageResolution();
         }
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been placed");
-        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("businessKey", editOrder.getBusinessKey());
+        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("productOrder", editOrder.getBusinessKey());
+    }
+
+    private void setUserInfo() {
+        if (editOrder.getCreatedBy() == -1) {
+            editOrder.setCreatedBy(getUserBean().getBspUser().getUserId());
+        }
+        editOrder.setModifiedBy(getUserBean().getBspUser().getUserId());
     }
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() throws Exception {
-        // Since there is one project, can just use the list as the key
+
+        // Update the modified by (and created by if it was invalid when created
+        setUserInfo();
+
+        // set the project, product and addOns for the order
         ResearchProject project = projectDao.findByBusinessKey(researchProjectList);
-
-        // Since there is one product, can just use the list as the key
         Product product = productDao.findByPartNumber(productList);
-
-        // update the addons from the keys
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
         editOrder.updateData(project, product, addOnProducts);
 
@@ -284,7 +295,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         productOrderDao.persist(editOrder);
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been saved.");
-        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("businessKey", editOrder.getBusinessKey());
+        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("productOrder", editOrder.getBusinessKey());
     }
 
     @HandlesEvent("downloadBillingTracker")
@@ -451,5 +462,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setAddOnKeys(List<String> addOnKeys) {
         this.addOnKeys = addOnKeys;
+    }
+
+    public String getSaveButtonText() {
+        return ((editOrder != null) && editOrder.isDraft()) ? "Save Draft" : "Save";
     }
 }
