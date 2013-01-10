@@ -65,7 +65,7 @@
                 <label class="control-label label-form">Project Managers</label>
 
                 <div class="controls">
-                    <div class="form-value">${actionBean.managersListString}</div>
+                    <div class="form-value">${actionBean.getUserListString(actionBean.editResearchProject.projectManagers)}</div>
                 </div>
             </div>
 
@@ -74,7 +74,7 @@
                 <label class="control-label label-form">Broad PIs</label>
 
                 <div class="controls">
-                    <div class="form-value">${actionBean.broadPIsListString}</div>
+                    <div class="form-value">${actionBean.getUserListString(actionBean.editResearchProject.broadPIs)}</div>
                 </div>
             </div>
 
@@ -83,7 +83,7 @@
                 <label class="control-label label-form">External Collaborators</label>
 
                 <div class="controls">
-                    <div class="form-value">${actionBean.externalCollaboratorsListString}</div>
+                    <div class="form-value">${actionBean.getUserListString(actionBean.editResearchProject.externalCollaborators)}</div>
                 </div>
             </div>
 
@@ -92,7 +92,7 @@
                 <label class="control-label label-form">Scientists</label>
 
                 <div class="controls">
-                    <div class="form-value">${actionBean.scientistsListString}</div>
+                    <div class="form-value">${actionBean.getUserListString(actionBean.editResearchProject.scientists)}</div>
                 </div>
             </div>
 
@@ -102,7 +102,8 @@
 
                 <div class="controls">
                     <div class="form-value">
-                        ${actionBean.researchProjectCreatorString} on <fmt:formatDate value="${actionBean.editResearchProject.createdDate}"/>
+                        ${actionBean.getUserFullName(actionBean.editResearchProject.createdBy)}
+                            on <fmt:formatDate value="${actionBean.editResearchProject.createdDate}"/>
                     </div>
                 </div>
             </div>
@@ -192,7 +193,7 @@
                         </td>
                         <td>${order.title}</td>
                         <td>${order.orderStatus}</td>
-                        <td>${actionBean.fullNameMap[order.modifiedBy]}</td>
+                        <td>${actionBean.getUserFullName(order.modifiedBy)}</td>
                         <td>
                             <fmt:formatDate value="${order.modifiedDate}" pattern="MM/dd/yyyy"/>
                         </td>

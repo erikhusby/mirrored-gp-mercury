@@ -225,27 +225,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     /**
-     * Get a comma separated list of all the project managers for the current project.
-     *
-     * @return string of the list of project managers
-     */
-    public String getManagersListString() {
-        return bspUserList.getCsvFullNameList(editResearchProject.getProjectManagers());
-    }
-
-    public String getBroadPIsListString() {
-        return bspUserList.getCsvFullNameList(editResearchProject.getBroadPIs());
-    }
-
-    public String getExternalCollaboratorsListString() {
-        return bspUserList.getCsvFullNameList(editResearchProject.getExternalCollaborators());
-    }
-
-    public String getScientistsListString() {
-        return bspUserList.getCsvFullNameList(editResearchProject.getScientists());
-    }
-
-    /**
      * The string paramater name of the business key.
      *
      * @return
@@ -262,20 +241,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return editResearchProject;
     }
 
-    /**
-     * Get the full name of the creator of the project.
-     *
-     * @return name of the Creator
-     */
-    public String getResearchProjectCreatorString() {
-        return bspUserList.getUserFullName(editResearchProject.getCreatedBy());
-    }
-
     public String getCohortsListString() {
+        // FIXME: fix to use function calls in JSP.
         return cohortListBean.getCohortListString(editResearchProject.getCohortIds());
     }
 
     public String getFundingSourcesListString() {
+        // FIXME: fix to use function calls in JSP.
         return fundingList.getFundingListString(editResearchProject.getFundingIds());
     }
 

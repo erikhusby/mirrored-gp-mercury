@@ -17,8 +17,10 @@ import net.sourceforge.stripes.validation.LocalizableError;
 import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.ValidationError;
 import net.sourceforge.stripes.validation.ValidationErrors;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.BuildInfoBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
@@ -287,20 +289,40 @@ public class CoreActionBean implements ActionBean {
         return submitString != null && submitString.startsWith(CREATE);
     }
 
-    /**
-     * @return This returns a map of names by the BSP id, which is stored on objects throughout the model. This map
-     * allows JSPs to easily get at the full names for display.
-     */
-    public Map<Long, String> getFullNameMap() {
-        if (fullNameMap == null) {
-            fullNameMap = bspUserList.getFullNameMap();
+    public String getUserFullName(long userId) {
+        BspUser bspUser = bspUserList.getById(userId);
+        if (bspUser == null) {
+            return "(Unknown user: " + userId + ")";
         }
 
-        return fullNameMap;
+        return bspUser.getFirstName() + " " + bspUser.getLastName();
     }
 
     /**
-     * Set HTTP response headers appropiately for a file download
+     * Given a list of user IDs, return a comma separated list of full user names.
+     *
+     * @param userIds list of user IDs
+     * @return string representation of named users in CSV format
+     */
+    // Argument type must be Long, not long, to work with Stripes.
+    public String getUserListString(Long[] userIds) {
+        String userListString = "";
+
+        if (userIds != null) {
+            String[] nameList = new String[userIds.length];
+            int i = 0;
+            for (long userId : userIds) {
+                nameList[i++] = getUserFullName(userId);
+            }
+
+            userListString = StringUtils.join(nameList, ", ");
+        }
+
+        return userListString;
+    }
+
+    /**
+     * Set HTTP response headers appropriately for a file download
      * (as opposed to a normal HTTP response).
      *
      * The content type may be null, in which case we default it

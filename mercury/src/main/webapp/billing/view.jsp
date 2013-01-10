@@ -55,7 +55,7 @@
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Created By</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.fullNameMap[actionBean.editSession.createdBy]}</div>
+                    <div class="form-value">${actionBean.getUserFullName(actionBean.editSession.createdBy)}</div>
                 </div>
             </div>
 
