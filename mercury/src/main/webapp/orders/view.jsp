@@ -35,7 +35,7 @@
             <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
 
             <div class="actionButtons">
-                <stripes:submit name="placeOrder" value="Place Order"/>
+                <stripes:submit name="placeOrder" value="Place Order" class="btn"/>
             </div>
         </stripes:form>
 
@@ -65,9 +65,7 @@
                                 DRAFT
                             </c:when>
                             <c:otherwise>
-                                <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">
-                                        ${actionBean.editOrder.jiraTicketKey}
-                                </a>
+                                <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">${actionBean.editOrder.jiraTicketKey}</a>
                             </c:otherwise>
                         </c:choose>
                     </div>
@@ -125,12 +123,15 @@
                 </div>
             </div>
 
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Number of Lanes</label>
-                <div class="controls">
-                    <div class="form-value">${actionBean.editOrder.count}</div>
+            <c:if test="${actionBean.editOrder.product.productFamily.supportsNumberOfLanes}">
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Number of Lanes</label>
+
+                    <div class="controls">
+                        <div class="form-value">${actionBean.editOrder.count}</div>
+                    </div>
                 </div>
-            </div>
+            </c:if>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Comments</label>

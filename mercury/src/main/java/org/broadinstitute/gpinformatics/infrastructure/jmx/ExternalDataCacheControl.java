@@ -21,7 +21,7 @@ public class ExternalDataCacheControl extends AbstractCacheControl {
     private int maxCacheSize = MAX_SIZE;
 
     @Override
-    @Schedule(minute = "*/15", hour = "*")
+    @Schedule(minute = "*/2", hour = "*")
     public void invalidateCache() {
         for (AbstractCache cache : caches) {
             cache.refreshCache();

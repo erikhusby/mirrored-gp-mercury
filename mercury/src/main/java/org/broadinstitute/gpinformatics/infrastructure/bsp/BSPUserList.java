@@ -44,8 +44,8 @@ public class BSPUserList extends AbstractCache implements Serializable {
      */
     public Map<Long, BspUser> getUsers() {
 
-        if ((users == null) || shouldReFresh(deployment) ) {
-            doRefresh();
+        if (users == null) {
+            refreshCache();
         }
 
         return users;
@@ -56,7 +56,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
      * @return if found, the user, otherwise null
      */
     public BspUser getById(long id) {
-        return users.get(id);
+        return getUsers().get(id);
     }
 
     /**
@@ -144,22 +144,17 @@ public class BSPUserList extends AbstractCache implements Serializable {
     @Inject
     public BSPUserList(BSPManagerFactory bspManagerFactory) {
         this.bspManagerFactory = bspManagerFactory;
-        doRefresh();
     }
 
     @Override
     public synchronized void refreshCache() {
-            setNeedsRefresh(true);
-    }
-
-    private void doRefresh() {
         try {
             List<BspUser> rawUsers = bspManagerFactory.createUserManager().getUsers();
             serverValid = rawUsers != null;
 
             if (!serverValid) {
                 // BSP is down
-                if (users != null) {
+                if (getUsers() != null) {
                     return;
                 } else {
                     rawUsers = new ArrayList<BspUser>();
@@ -175,7 +170,6 @@ public class BSPUserList extends AbstractCache implements Serializable {
                 users.put(user.getUserId(), user);
             }
 
-            setNeedsRefresh(false);
         } catch (Exception ex) {
             logger.error("Could not refresh the user list", ex);
         }
@@ -183,7 +177,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
 
     public Map<Long, String> getFullNameMap() {
         Map<Long, String> fullNameMap = new HashMap<Long, String>();
-        for (BspUser user : users.values()) {
+        for (BspUser user : getUsers().values()) {
             fullNameMap.put(user.getUserId(), getUserFullName(user.getUserId()));
         }
 
