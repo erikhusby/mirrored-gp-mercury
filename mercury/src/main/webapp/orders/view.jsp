@@ -123,12 +123,15 @@
                 </div>
             </div>
 
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Number of Lanes</label>
-                <div class="controls">
-                    <div class="form-value">${actionBean.editOrder.count}</div>
+            <c:if test="${actionBean.editOrder.product.productFamily.supportsNumberOfLanes}">
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Number of Lanes</label>
+
+                    <div class="controls">
+                        <div class="form-value">${actionBean.editOrder.count}</div>
+                    </div>
                 </div>
-            </div>
+            </c:if>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Comments</label>
