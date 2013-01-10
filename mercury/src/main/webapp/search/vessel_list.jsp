@@ -96,7 +96,7 @@
                         ${vessel.latestEvent.eventLocation}
                 </td>
                 <td>
-                        ${bean.userFullName(vessel.latestEvent.eventOperator)}
+                        ${bean.getUserFullName(vessel.latestEvent.eventOperator)}
                 </td>
                 <td>
                     <fmt:formatDate value="${vessel.latestEvent.eventDate}" pattern="MM/dd/yyyy"/>

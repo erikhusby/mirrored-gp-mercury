@@ -55,7 +55,7 @@
                         ${batch.latestEvent.eventLocation}
                 </td>
                 <td>
-                        ${bean.fullNameMap[batch.latestEvent.eventOperator]}
+                        ${bean.getUserFullName(batch.latestEvent.eventOperator)}
                 </td>
                 <td>
                     <fmt:formatDate value="${batch.latestEvent.eventDate}" pattern="MM/dd/yyyy"/>
