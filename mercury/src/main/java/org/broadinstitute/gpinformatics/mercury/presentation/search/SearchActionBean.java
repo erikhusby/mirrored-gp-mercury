@@ -158,7 +158,7 @@ public class SearchActionBean extends CoreActionBean {
      *
      * @return A list of all the keys from the searchKey string.
      */
-    private static List<String> cleanInputString(String searchKey) {
+    public static List<String> cleanInputString(String searchKey) {
         searchKey = searchKey.replaceAll("\\n", ",");
         String[] keys = searchKey.split(",");
         int index = 0;

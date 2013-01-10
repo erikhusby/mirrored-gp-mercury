@@ -16,7 +16,7 @@
                             </c:if>
                             searchDelay: 500,
                             minChars: 2, tokenLimit: 1, preventDuplicates: true
-                        })
+                        });
             });
         </script>
     </stripes:layout-component>

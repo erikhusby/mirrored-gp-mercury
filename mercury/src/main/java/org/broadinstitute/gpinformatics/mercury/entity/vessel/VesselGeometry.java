@@ -118,6 +118,4 @@ public enum VesselGeometry {
             }
         };
     }
-
-
 }
