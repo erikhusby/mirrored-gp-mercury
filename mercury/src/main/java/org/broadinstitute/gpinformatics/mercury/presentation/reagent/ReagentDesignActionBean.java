@@ -16,8 +16,10 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import net.sourceforge.stripes.validation.ValidationState;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
@@ -53,9 +55,14 @@ public class ReagentDesignActionBean extends CoreActionBean {
     @Inject
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
 
+    @Inject
+    private LabVesselDao labVesselDao;
+
     @ValidateNestedProperties({
-            @Validate(field = "designName", label = "Design Name",required = true, maxlength = 255, on = {SAVE_ACTION}),
-            @Validate(field = "targetSetName", label = "Target Set Name", required = true, maxlength = 2000, on = {SAVE_ACTION}),
+            @Validate(field = "designName", label = "Design Name", required = true, maxlength = 255,
+                    on = {SAVE_ACTION}),
+            @Validate(field = "targetSetName", label = "Target Set Name", required = true, maxlength = 2000,
+                    on = {SAVE_ACTION}),
             @Validate(field = "reagentType", label = "Reagent Type", required = true, on = {SAVE_ACTION})
     })
     private ReagentDesign editReagentDesign;
@@ -143,15 +150,16 @@ public class ReagentDesignActionBean extends CoreActionBean {
     }
 
     @ValidationMethod(on = SAVE_ACTION)
-    public void validateReagent(){
-        if (isCreating()){
+    public void validateReagent() {
+        if (isCreating()) {
             ReagentDesign d = reagentDesignDao.findByBusinessKey(editReagentDesign.getBusinessKey());
-            if (d!=null){
+            if (d != null) {
                 addValidationError("designName", String.format("Name \"%s\" is already in use.",
                         editReagentDesign.getBusinessKey()));
             }
         }
     }
+
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
         try {
@@ -166,13 +174,11 @@ public class ReagentDesignActionBean extends CoreActionBean {
     }
 
 
-    @ValidationMethod(on = {BARCODE_REAGENT_ACTION})
+    @ValidationMethod(on = {BARCODE_REAGENT_ACTION}, when = ValidationState.ALWAYS)
     public void checkBarcodeUsed() {
-        List<String> barcodeList = Arrays.asList(barcode.trim().split("\\W"));
-        for (String barcodeItem : barcodeList) {
-            if (allBarcodes.contains(barcodeItem)) {
-                addValidationError("barcode", "Barcode is already in use.");
-            }
+        final List<LabVessel> byListIdentifiers = labVesselDao.findByListIdentifiers(barcodeAsList());
+            for (LabVessel barcodeItem : byListIdentifiers) {
+            addValidationError("barcode", String.format("Barcode \"%s\" is already in use.", barcodeItem.getLabel()));
         }
     }
 
@@ -181,9 +187,8 @@ public class ReagentDesignActionBean extends CoreActionBean {
         List<TwoDBarcodedTube> twoDBarcodedTubeList = new ArrayList<TwoDBarcodedTube>();
         String savedChanges = "";
 
-        List<String> barcodeList = Arrays.asList(barcode.trim().split("\\W"));
-        savedChanges += editReagentDesign.getBusinessKey() + " " + barcodeList.toString() + ")\n";
-        for (String barcodeItem : barcodeList) {
+        savedChanges += editReagentDesign.getBusinessKey() + " " + barcode + ")\n";
+        for (String barcodeItem : barcodeAsList()) {
             DesignedReagent reagent = new DesignedReagent(editReagentDesign);
             TwoDBarcodedTube twoDee = new TwoDBarcodedTube(barcodeItem);
             twoDee.addReagent(reagent);
@@ -199,6 +204,9 @@ public class ReagentDesignActionBean extends CoreActionBean {
                 .addParameter("reagentDesign", reagentDesign);
     }
 
+    private List<String> barcodeAsList() {
+        return Arrays.asList(barcode.trim().split("\\W"));
+    }
 
     public String getQ() {
         return q;

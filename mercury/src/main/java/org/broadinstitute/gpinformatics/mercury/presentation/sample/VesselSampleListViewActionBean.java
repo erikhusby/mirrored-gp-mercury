@@ -24,10 +24,10 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-@UrlBinding(value = "/view/sampleListView.action")
-public class SampleListViewActionBean extends CoreActionBean {
+@UrlBinding(value = "/view/vesselSampleListView.action")
+public class VesselSampleListViewActionBean extends CoreActionBean {
 
-    private static final String VIEW_PAGE = "/resources/sample/sampleListView.jsp";
+    private static final String VIEW_PAGE = "/resources/sample/vesselSampleListView.jsp";
 
     @Inject
     private LabVesselDao labVesselDao;

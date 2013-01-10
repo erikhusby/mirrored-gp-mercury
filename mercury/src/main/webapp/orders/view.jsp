@@ -188,9 +188,9 @@
                             <td width="50">${sample.bspDTO.volume}</td>
                             <td width="50">${sample.bspDTO.concentration}</td>
                             <td width="70">${sample.bspDTO.total}</td>
-                            <td width="60">
+                            <td width="60" style="text-align: center">
                                 <c:if test="${sample.bspDTO.hasFingerprint}">
-                                    <stripes:image name="" alt="Yes" src="/images/check.png"/>
+                                    <img src="${ctxpath}/images/check.png" title="Yes"/>
                                 </c:if>
                             </td>
                             <td width="70">&#160;</td>
