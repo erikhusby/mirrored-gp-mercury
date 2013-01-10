@@ -73,7 +73,9 @@ public class PriceListCache extends AbstractCache implements Serializable {
 
             // if fails, use previous cache entry (even if it's null)
             if (rawPriceList == null) {
-                priceList = new PriceList();
+                if (priceList == null) {
+                    priceList = new PriceList();
+                }
                 return;
             }
 
