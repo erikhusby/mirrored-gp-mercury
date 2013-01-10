@@ -44,8 +44,8 @@ public class BSPUserList extends AbstractCache implements Serializable {
      */
     public Map<Long, BspUser> getUsers() {
 
-        if ((users == null) || shouldReFresh(deployment) ) {
-            doRefresh();
+        if (users == null) {
+            refreshCache();
         }
 
         return users;
@@ -144,15 +144,10 @@ public class BSPUserList extends AbstractCache implements Serializable {
     @Inject
     public BSPUserList(BSPManagerFactory bspManagerFactory) {
         this.bspManagerFactory = bspManagerFactory;
-        doRefresh();
     }
 
     @Override
     public synchronized void refreshCache() {
-            setNeedsRefresh(true);
-    }
-
-    private void doRefresh() {
         try {
             List<BspUser> rawUsers = bspManagerFactory.createUserManager().getUsers();
             serverValid = rawUsers != null;
@@ -175,7 +170,6 @@ public class BSPUserList extends AbstractCache implements Serializable {
                 users.put(user.getUserId(), user);
             }
 
-            setNeedsRefresh(false);
         } catch (Exception ex) {
             logger.error("Could not refresh the user list", ex);
         }

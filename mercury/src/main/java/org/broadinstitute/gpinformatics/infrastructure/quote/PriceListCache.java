@@ -50,7 +50,6 @@ public class PriceListCache extends AbstractCache implements Serializable {
     @Inject
     public PriceListCache(PMBQuoteService quoteService) {
         this.quoteService = quoteService;
-        doRefresh();
     }
 
     /**
@@ -59,8 +58,8 @@ public class PriceListCache extends AbstractCache implements Serializable {
      * @return The full price list
      */
     public PriceList getPriceList() {
-        if ((priceList == null) || shouldReFresh(deployment)) {
-                doRefresh();
+        if (priceList == null) {
+            refreshCache();
         }
         return priceList;
     }
@@ -69,10 +68,6 @@ public class PriceListCache extends AbstractCache implements Serializable {
 
     @Override
     public synchronized void refreshCache() {
-        setNeedsRefresh(true);
-    }
-
-    private void doRefresh() {
         try {
             PriceList rawPriceList = quoteService.getAllPriceItems();
 
@@ -82,7 +77,6 @@ public class PriceListCache extends AbstractCache implements Serializable {
             }
 
             priceList = rawPriceList;
-            setNeedsRefresh(false);
         } catch (Exception ex) {
             logger.error("Could not refresh the price item list", ex);
         }
