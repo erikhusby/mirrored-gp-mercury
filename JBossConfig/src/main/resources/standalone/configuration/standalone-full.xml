@@ -382,6 +382,9 @@
             <coordinator-environment default-timeout="300"/>
         </subsystem>
         <subsystem xmlns="urn:jboss:domain:web:1.1" default-virtual-server="default-host" native="false">
+            <configuration>
+                <jsp-configuration development="true"/>
+            </configuration>
             <connector name="http" protocol="HTTP/1.1" scheme="http" socket-binding="http"/>
             <virtual-server name="default-host" enable-welcome-root="true">
                 <alias name="localhost"/>
