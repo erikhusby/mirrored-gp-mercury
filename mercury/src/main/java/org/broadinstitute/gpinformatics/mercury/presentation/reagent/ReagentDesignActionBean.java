@@ -54,14 +54,14 @@ public class ReagentDesignActionBean extends CoreActionBean {
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
 
     @ValidateNestedProperties({
-            @Validate(field = "designName", required = true, maxlength = 255, on = {SAVE_ACTION}),
-            @Validate(field = "targetSetName", required = true, maxlength = 2000, on = {SAVE_ACTION}),
-            @Validate(field = "reagentType", required = true, on = {SAVE_ACTION})
+            @Validate(field = "designName", label = "Design Name",required = true, maxlength = 255, on = {SAVE_ACTION}),
+            @Validate(field = "targetSetName", label = "Target Set Name", required = true, maxlength = 2000, on = {SAVE_ACTION}),
+            @Validate(field = "reagentType", label = "Reagent Type", required = true, on = {SAVE_ACTION})
     })
-    private ReagentDesign reagentDesign;
+    private ReagentDesign editReagentDesign;
 
     @Validate(required = true, on = {EDIT_ACTION})
-    private String businessKey;
+    private String reagentDesign;
 
     private Collection<ReagentDesign> allReagentDesigns;
 
@@ -78,11 +78,11 @@ public class ReagentDesignActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
-        businessKey = getContext().getRequest().getParameter("businessKey");
-        if (!StringUtils.isBlank(businessKey)) {
-            reagentDesign = reagentDesignDao.findByBusinessKey(businessKey);
+        reagentDesign = getContext().getRequest().getParameter("reagentDesign");
+        if (!StringUtils.isBlank(reagentDesign)) {
+            editReagentDesign = reagentDesignDao.findByBusinessKey(reagentDesign);
         } else {
-            reagentDesign = new ReagentDesign();
+            editReagentDesign = new ReagentDesign();
         }
 
         List<LabVessel> labVessels;
@@ -90,7 +90,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
         allReagentDesigns = reagentDesignDao.findAll();
 
 //        for (ReagentDesign rd : allReagentDesigns) {
-//            labVessels = labVesselDao.findByReagent(rd.getBusinessKey());
+//            labVessels = labVesselDao.findByReagent(rd.getReagentDesign());
 //            List<String> barcodes = new ArrayList<String>();
 //            for (LabVessel labVessel : labVessels) {
 //                if (!labVessel.getLabel().isEmpty()) {
@@ -99,7 +99,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
 //                }
 //            }
 //
-//            getBarcodeMap().put(rd.getBusinessKey(), StringUtils.join(barcodes, ", "));
+//            getBarcodeMap().put(rd.getReagentDesign(), StringUtils.join(barcodes, ", "));
 //        }
 
     }
@@ -117,9 +117,9 @@ public class ReagentDesignActionBean extends CoreActionBean {
     }
 
     public String getReagentDesignCompleteData() throws Exception {
-        if (!StringUtils.isBlank(getBusinessKey())) {
+        if (!StringUtils.isBlank(getReagentDesign())) {
             return ReagentDesignTokenInput
-                    .getReagentDesignCompleteData(reagentDesignDao, getBusinessKey());
+                    .getReagentDesignCompleteData(reagentDesignDao, getReagentDesign());
         }
         return "";
     }
@@ -145,23 +145,23 @@ public class ReagentDesignActionBean extends CoreActionBean {
     @ValidationMethod(on = SAVE_ACTION)
     public void validateReagent(){
         if (isCreating()){
-            ReagentDesign d = reagentDesignDao.findByBusinessKey(reagentDesign.getBusinessKey());
+            ReagentDesign d = reagentDesignDao.findByBusinessKey(editReagentDesign.getBusinessKey());
             if (d!=null){
                 addValidationError("designName", String.format("Name \"%s\" is already in use.",
-                        reagentDesign.getBusinessKey()));
+                        editReagentDesign.getBusinessKey()));
             }
         }
     }
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
         try {
-            reagentDesignDao.persist(reagentDesign);
+            reagentDesignDao.persist(editReagentDesign);
         } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
             return new ForwardResolution(getContext().getSourcePage());
         }
 
-        addMessage(getSubmitString() + " '" + reagentDesign.getBusinessKey() + "' was successful");
+        addMessage(getSubmitString() + " '" + editReagentDesign.getBusinessKey() + "' was successful");
         return new RedirectResolution(ReagentDesignActionBean.class, LIST_ACTION);
     }
 
@@ -182,9 +182,9 @@ public class ReagentDesignActionBean extends CoreActionBean {
         String savedChanges = "";
 
         List<String> barcodeList = Arrays.asList(barcode.trim().split("\\W"));
-        savedChanges += reagentDesign.getBusinessKey() + " " + barcodeList.toString() + ")\n";
+        savedChanges += editReagentDesign.getBusinessKey() + " " + barcodeList.toString() + ")\n";
         for (String barcodeItem : barcodeList) {
-            DesignedReagent reagent = new DesignedReagent(reagentDesign);
+            DesignedReagent reagent = new DesignedReagent(editReagentDesign);
             TwoDBarcodedTube twoDee = new TwoDBarcodedTube(barcodeItem);
             twoDee.addReagent(reagent);
             twoDBarcodedTubeList.add(twoDee);
@@ -196,7 +196,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
                 String.format("%s tubes initialized with reagents: %s.", twoDBarcodedTubeList.size(), savedChanges));
 
         return new RedirectResolution(ReagentDesignActionBean.class, LIST_ACTION)
-                .addParameter("businessKey", businessKey);
+                .addParameter("reagentDesign", reagentDesign);
     }
 
 
@@ -212,20 +212,20 @@ public class ReagentDesignActionBean extends CoreActionBean {
         return allReagentDesigns;
     }
 
-    public String getBusinessKey() {
-        return businessKey;
-    }
-
-    public void setBusinessKey(String businessKey) {
-        this.businessKey = businessKey;
-    }
-
-    public ReagentDesign getReagentDesign() {
+    public String getReagentDesign() {
         return reagentDesign;
     }
 
-    public void setReagentDesign(ReagentDesign reagentDesign) {
+    public void setReagentDesign(String reagentDesign) {
         this.reagentDesign = reagentDesign;
+    }
+
+    public ReagentDesign getEditReagentDesign() {
+        return editReagentDesign;
+    }
+
+    public void setEditReagentDesign(ReagentDesign editReagentDesign) {
+        this.editReagentDesign = editReagentDesign;
     }
 
     public void setBarcodeMap(Map<String, String> barcodeMap) {

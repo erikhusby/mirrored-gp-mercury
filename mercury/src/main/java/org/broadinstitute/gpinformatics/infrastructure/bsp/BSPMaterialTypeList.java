@@ -41,7 +41,6 @@ public class BSPMaterialTypeList extends AbstractCache implements Serializable {
     @Inject
     public BSPMaterialTypeList(BSPManagerFactory bspManagerFactory) {
         this.bspManagerFactory = bspManagerFactory;
-        doRefresh();
     }
 
     public boolean isServerValid() {
@@ -53,8 +52,8 @@ public class BSPMaterialTypeList extends AbstractCache implements Serializable {
      */
     public List<MaterialType> getMaterialTypes() {
 
-        if ((materialTypes == null) || shouldReFresh(deployment) ) {
-                doRefresh();
+        if (materialTypes == null ) {
+            refreshCache();
         }
 
         return materialTypes;
@@ -118,10 +117,6 @@ public class BSPMaterialTypeList extends AbstractCache implements Serializable {
 
     @Override
     public synchronized void refreshCache() {
-            setNeedsRefresh(true);
-    }
-
-    private void doRefresh() {
         try {
             List<MaterialType> materialTypeList = bspManagerFactory.createSampleManager().getMaterialTypes();
             serverValid = materialTypeList != null;
@@ -145,7 +140,6 @@ public class BSPMaterialTypeList extends AbstractCache implements Serializable {
             });
 
             materialTypes = ImmutableList.copyOf(materialTypeList);
-            setNeedsRefresh(false);
         } catch (Exception ex) {
             logger.error("Could not refresh the material type list", ex);
         }

@@ -3,15 +3,15 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="List Products" sectionTitle="List Products">
+<stripes:layout-render name="/layout.jsp" pageTitle="Products" sectionTitle="Products">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
                 $j('#productList').dataTable( {
                     "oTableTools": ttExportDefines,
-                    "aaSorting": [[1,'asc']],
+                    "aaSorting": [[0,'asc']],
                     "aoColumns": [
-                        {"bSortable": true, "sType": "html"},
+                        {"bSortable": true, "sType": "title-string"},
                         {"bSortable": true},
                         {"bSortable": true},
                         {"bSortable": true, "sType" : "title-string"}]
@@ -35,14 +35,14 @@
                     <th>Part Number</th>
                     <th>Product Name</th>
                     <th>Product Family</th>
-                    <th>Is Available</th>
+                    <th>Is Available?</th>
                 </tr>
             </thead>
             <tbody>
                 <c:forEach items="${actionBean.allProducts}" var="product">
                     <tr>
                         <td>
-                            <stripes:link beanclass="${actionBean.class.name}" event="view">
+                            <stripes:link beanclass="${actionBean.class.name}" event="view" title="${product.businessKey}">
                                 <stripes:param name="product" value="${product.businessKey}"/>
                                 ${product.partNumber}
                             </stripes:link>

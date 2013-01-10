@@ -4,13 +4,13 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.ReagentDesignActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.submitString}"
-                       sectionTitle="${actionBean.submitString} ${actionBean.reagentDesign.designName}">
+                       sectionTitle="${actionBean.submitString} ${actionBean.editReagentDesign.designName}">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {
                 $j("#reagentDesign").tokenInput(
-                        "${ctxpath}/reagent/design.action?reagentListAutocomplete=&businessKey=${actionBean.reagentDesign.businessKey}", {
+                        "${ctxpath}/reagent/design.action?reagentListAutocomplete=&reagentDesign=${actionBean.editReagentDesign.businessKey}", {
                             <c:if test="${actionBean.reagentDesignCompleteData != null && actionBean.reagentDesignCompleteData != ''}">
                             prePopulate: ${actionBean.reagentDesignCompleteData},
                             </c:if>
@@ -36,7 +36,7 @@
             <div class="control-group">
                 <stripes:label for="reagentDesign" name="Available Reagents *" class="control-label"/>
                 <div class="controls">
-                    <stripes:text id="reagentDesign" name="businessKey"
+                    <stripes:text id="reagentDesign" name="reagentDesign"
                                   class="defaultText" title="Type to search for matching reagent"/>
                 </div>
             </div>

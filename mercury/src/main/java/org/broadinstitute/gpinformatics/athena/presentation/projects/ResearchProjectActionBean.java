@@ -39,7 +39,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     private static final int IRB_NAME_MAX_LENGTH = 250;
 
-    private static final String CURRENT_OBJECT = "Project";
+    private static final String CURRENT_OBJECT = "Research Project";
     public static final String CREATE_PROJECT = CoreActionBean.CREATE + CURRENT_OBJECT;
     public static final String EDIT_PROJECT = CoreActionBean.EDIT + CURRENT_OBJECT;
 
