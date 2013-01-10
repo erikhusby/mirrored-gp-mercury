@@ -156,6 +156,8 @@
                     <div id="batchDiv">
                 </c:otherwise>
             </c:choose>
+            <stripes:layout-render name="/resources/batch/batchListView.jsp" batches="${actionBean.foundBatches}"
+                                   bean="${actionBean}" showCheckboxes="false"/>
             </div>
         </c:if>
     </stripes:layout-component>
