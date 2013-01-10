@@ -9,7 +9,7 @@
     }
 </script>
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.SampleListViewActionBean"/>
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.VesselSampleListViewActionBean"/>
 
 <table id="sampleListView" class="table simple">
     <thead>
