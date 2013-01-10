@@ -88,11 +88,7 @@ public class PriceListCache extends AbstractCache implements Serializable {
      * @return the price items
      */
     public Collection<PriceItem> getPriceItems() {
-        if (priceList != null) {
-            return priceList.getPriceItems();
-        }
-
-        return Collections.emptyList();
+        return getPriceList().getPriceItems();
     }
 
     /**
