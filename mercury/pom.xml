@@ -1435,6 +1435,7 @@
             <version>2.2.7.Final</version>
             <scope>compile</scope>
         </dependency>
+
     </dependencies>
 
     <build>

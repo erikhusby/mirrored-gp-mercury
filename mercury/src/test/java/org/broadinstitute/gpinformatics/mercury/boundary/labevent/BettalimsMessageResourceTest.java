@@ -144,7 +144,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);
 
-        String jiraTicketKey="PD0-MsgTest" + testPrefix;
+        String jiraTicketKey="PDO-MsgTest" + testPrefix;
         List<ProductOrderSample> productOrderSamples=new ArrayList<ProductOrderSample>();
         Map<String,TwoDBarcodedTube> mapBarcodeToTube=new LinkedHashMap<String,TwoDBarcodedTube>();
         for (int rackPosition=1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {
@@ -175,6 +175,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         ProductOrder productOrder=new ProductOrder(101L, "Messaging Test " + testPrefix, productOrderSamples, "GSP-123",
                 exomeExpressProduct, researchProject);
         productOrder.setJiraTicketKey(jiraTicketKey);
+        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         productOrderDao.persist(productOrder);
         productOrderDao.flush();
         productOrderDao.clear();

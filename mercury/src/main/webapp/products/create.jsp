@@ -10,7 +10,7 @@
             $j(document).ready(
                 function () {
                     $j("#priceItem").tokenInput(
-                        "${ctxpath}/products/product.action?priceItemAutocomplete=&productKey=${actionBean.editProduct.businessKey}", {
+                        "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             searchDelay: 500,
                             minChars: 2,
                             preventDuplicates: true,
@@ -22,7 +22,7 @@
                     );
 
                     $j("#addOns").tokenInput(
-                            "${ctxpath}/products/product.action?addOnsAutocomplete=&productKey=${actionBean.editProduct.businessKey}", {
+                            "${ctxpath}/products/product.action?addOnsAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                                 searchDelay: 500,
                                 minChars: 2,
                                 <c:if test="${actionBean.addOnCompleteData != null && actionBean.addOnCompleteData != ''}">
@@ -52,8 +52,8 @@
     <stripes:layout-component name="content">
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
-            <div style="float: left; margin-right: 40px; margin-top: 5px; width: 98%">
-                <stripes:hidden name="productKey"/>
+            <div class="form-horizontal">
+                <stripes:hidden name="product"/>
                 <div class="control-group">
                     <stripes:label for="productFamily" name="Product Family" class="control-label"/>
                     <div class="controls">
@@ -204,17 +204,17 @@
                 <div class="control-group">
                     <div class="controls">
                         <div class="row-fluid">
-                            <div class="span2">
-                                <stripes:submit name="save" value="Save"/>
+                            <div class="span1">
+                                <stripes:submit name="save" value="Save" class="btn btn-primary"/>
                             </div>
-                            <div class="offset">
+                            <div class="span1">
                                 <c:choose>
                                     <c:when test="${actionBean.creating}">
                                         <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
                                     </c:when>
                                     <c:otherwise>
                                         <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                            <stripes:param name="productKey" value="${actionBean.editProduct.businessKey}"/>
+                                            <stripes:param name="product" value="${actionBean.editProduct.businessKey}"/>
                                             Cancel
                                         </stripes:link>
                                     </c:otherwise>

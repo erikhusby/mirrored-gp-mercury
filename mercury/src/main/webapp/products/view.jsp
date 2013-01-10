@@ -8,8 +8,8 @@
     <stripes:layout-component name="content">
         <p>
             <stripes:link title="Click to edit ${actionBean.editProduct.productName}" href="${ctxpath}/products/product.action?edit" class="pull-right">
-                <span class="icon-home"></span> Edit product
-                <stripes:param name="productKey" value="${actionBean.editProduct.partNumber}"/>
+                <span class="icon-tags"></span> Edit product
+                <stripes:param name="product" value="${actionBean.editProduct.partNumber}"/>
             </stripes:link>
         </p>
 
@@ -165,7 +165,7 @@
                     <tr>
                         <td>
                             <stripes:link href="/products/product.action" event="view">
-                                <stripes:param name="productKey" value="${addOnProduct.businessKey}"/>
+                                <stripes:param name="product" value="${addOnProduct.businessKey}"/>
                                 ${addOnProduct.partNumber}
                             </stripes:link>
                         </td>

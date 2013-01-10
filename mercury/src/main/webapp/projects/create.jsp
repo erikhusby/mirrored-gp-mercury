@@ -3,7 +3,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Edit Research Project" sectionTitle="Edit Project: ${actionBean.researchProject.title}">
+<stripes:layout-render name="/layout.jsp" pageTitle="Edit Research Project" sectionTitle="Edit Research Project: ${actionBean.editResearchProject.title}">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(
@@ -92,12 +92,13 @@
     <stripes:layout-component name="content">
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
-            <stripes:hidden name="businessKey" value="${actionBean.researchProject.jiraTicketKey}"/>
+            <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
             <div class="form-horizontal">
                 <div class="control-group">
                     <stripes:label for="title" class="control-label">Project *</stripes:label>
                     <div class="controls">
-                            <stripes:text name="researchProject.title" id="title"  class="defaultText" title="Enter in the project name"/>
+                            <stripes:text name="editResearchProject.title" value="${actionBean.editResearchProject.title}"
+                                          id="title"  class="defaultText" title="Enter in the project name"/>
                     </div>
                 </div>
 
@@ -106,8 +107,8 @@
                     <stripes:label for="synopsis" class="control-label">Synopsis *</stripes:label>
 
                     <div class="controls">
-                        <stripes:text id="synopsis" name="researchProject.synopsis" class="defaultText" style="width:390"
-                                      title="Enter the synopsis of the project" value="${actionBean.researchProject.synopsis}"/>
+                        <stripes:text id="synopsis" name="editResearchProject.synopsis" class="defaultText" style="width:390"
+                                      title="Enter the synopsis of the project" value="${actionBean.editResearchProject.synopsis}"/>
                     </div>
                 </div>
 
@@ -152,7 +153,7 @@
                         <div class="controls">
                             <div class="form-value">
                                     ${actionBean.researchProjectCreatorString} on <fmt:formatDate
-                                    value="${actionBean.researchProject.createdDate}"/>
+                                    value="${actionBean.editResearchProject.createdDate}"/>
                             </div>
                         </div>
                     </div>
@@ -185,22 +186,30 @@
                         </p>
                     </div>
                 </div>
+
+                <div class="control-group">
+                    <label id="j_idt130" class="ui-outputlabel control-label" for="irbNotes">IRB Notes</label>
+                    <div class="controls">
+                        <stripes:text id="irbNotes" class="defaultText" title="Enter notes about the above IRBs" name="editResearchProject.irbNotes" value="${actionBean.editResearchProject.irbNotes}" maxlength="250" />
+                    </div>
+                </div>
+
             </div>
 
             <div class="control-group">
                 <div class="controls">
                     <div class="row-fluid">
                         <div class="span1">
-                            <stripes:submit name="save" value="Save"/>
+                            <stripes:submit name="save" value="Save" class="btn btn-primary"/>
                         </div>
                         <div class="span1">
                             <c:choose>
                                 <c:when test="${actionBean.creating}">
-                                    <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
+                                    <stripes:link href="${ctxpath}/projects/product.action?list=">Cancel</stripes:link>
                                 </c:when>
                                 <c:otherwise>
                                     <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                        <stripes:param name="businessKey" value="${actionBean.researchProject.businessKey}"/>
+                                        <stripes:param name="researchProject" value="${actionBean.editResearchProject.businessKey}"/>
                                         Cancel
                                     </stripes:link>
                                 </c:otherwise>
@@ -210,47 +219,6 @@
                 </div>
             </div>
 
-            <div class="tableBar">
-                Orders
-            </div>
-
-            <table id="orderList" class="table simple">
-                <thead>
-                    <tr>
-                        <th>Name</th>
-                        <th>Order ID</th>
-                        <th>Product</th>
-                        <th>Status</th>
-                        <th>Owner</th>
-                        <th>Updated</th>
-                        <th>Samples</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <c:forEach items="${actionBean.researchProject.productOrders}" var="order">
-                        <tr>
-                            <td>
-                                <stripes:link href="/orders/order.action" event="view">
-                                    <stripes:param name="businessKey" value="${order.businessKey}"/>
-                                    ${order.title}
-                                </stripes:link>
-                            </td>
-                            <td>
-                                <a class="external" target="JIRA" href="${actionBean.jiraUrl}${order.jiraTicketKey}" class="external" target="JIRA">
-                                        ${order.jiraTicketKey}
-                                </a>
-                            </td>
-                            <td>${order.title}</td>
-                            <td>${order.orderStatus}</td>
-                            <td>${actionBean.fullNameMap[order.modifiedBy]}</td>
-                            <td>
-                                <fmt:formatDate value="${order.modifiedDate}" dateStyle="short"/>
-                            </td>
-                            <td>${order.pdoSampleCount}</td>
-                        </tr>
-                    </c:forEach>
-                </tbody>
-            </table>
         </stripes:form>
 
     </stripes:layout-component>

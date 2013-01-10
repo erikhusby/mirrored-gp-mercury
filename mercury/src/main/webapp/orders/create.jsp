@@ -67,7 +67,7 @@
                 }
 
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getAddOns=&productKey=" + productKey,
+                    url: "${ctxpath}/orders/order.action?getAddOns=&product=" + productKey,
                     dataType: 'json',
                     success: setupCheckboxes
                 });
@@ -115,9 +115,9 @@
 
     <stripes:layout-component name="content">
 
-        <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
-            <div style="float: left; margin-right: 40px; margin-top: 5px;">
-                <stripes:hidden name="businessKey"/>
+        <stripes:form beanclass="${actionBean.class.name}" id="createForm">
+            <div class="form-horizontal span6">
+                <stripes:hidden name="productOrder"/>
                 <stripes:hidden name="submitString"/>
                 <div class="control-group">
                     <stripes:label for="orderName" name="Name" class="control-label"/>
@@ -193,30 +193,25 @@
                 </div>
 
                 <div class="control-group">
-                    <div class="controls">
-                        <div class="row-fluid">
-                            <div class="span2">
-                                <stripes:submit name="save" value="Save"/>
-                            </div>
-                            <div class="offset">
-                                <c:choose>
-                                    <c:when test="${actionBean.creating}">
-                                        <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
-                                    </c:when>
-                                    <c:otherwise>
-                                        <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                            <stripes:param name="businessKey" value="${actionBean.editOrder.businessKey}"/>
-                                            Cancel
-                                        </stripes:link>
-                                    </c:otherwise>
-                                </c:choose>
-                            </div>
-                        </div>
+                    <div class="control-label">&nbsp;</div>
+                    <div class="controls actionButtons">
+                        <stripes:submit name="save" value="${actionBean.saveButtonText}" class="btn btn-primary"/>
+                        <c:choose>
+                            <c:when test="${actionBean.creating}">
+                                <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
+                            </c:when>
+                            <c:otherwise>
+                                <stripes:link beanclass="${actionBean.class.name}" event="view">
+                                    <stripes:param name="businessKey" value="${actionBean.editOrder.businessKey}"/>
+                                    Cancel
+                                </stripes:link>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
             </div>
 
-            <div style="float: left; width: 600px;" class="help-block">
+            <div class="help-block span4">
                 Enter samples names in this box, one per line. When you save the order, the view page will show
                 all sample details.
                 <br/>

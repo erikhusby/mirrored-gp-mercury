@@ -23,7 +23,7 @@
     <stripes:layout-component name="content">
         <p>
             <stripes:link title="New Product" beanclass="${actionBean.class.name}" event="create" class="pull-right">
-                New product
+                <span class="icon-tags"></span> New Product
             </stripes:link>
         </p>
 
@@ -43,7 +43,7 @@
                     <tr>
                         <td>
                             <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                <stripes:param name="productKey" value="${product.businessKey}"/>
+                                <stripes:param name="product" value="${product.businessKey}"/>
                                 ${product.partNumber}
                             </stripes:link>
                         </td>

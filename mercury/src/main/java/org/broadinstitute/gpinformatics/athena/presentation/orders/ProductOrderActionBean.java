@@ -89,8 +89,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrderListEntry> allProductOrders;
 
-    @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
-    private String businessKey;
+    @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION, SAVE_ACTION})
+    private String productOrder;
 
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
@@ -103,7 +103,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     // For the Add-ons update we need the product title
     @Validate(required = true, on = {"getAddOns"})
-    private String productKey;
+    private String product;
 
     private List<String> addOnKeys = new ArrayList<String> ();
 
@@ -116,9 +116,9 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, "downloadBillingTracker", SAVE_ACTION, "placeOrder"})
     public void init() {
-        businessKey = getContext().getRequest().getParameter("businessKey");
-        if (!StringUtils.isBlank(businessKey)) {
-            editOrder = productOrderDao.findByBusinessKey(businessKey);
+        productOrder = getContext().getRequest().getParameter("productOrder");
+        if (!StringUtils.isBlank(productOrder)) {
+            editOrder = productOrderDao.findByBusinessKey(productOrder);
         } else {
             editOrder = new ProductOrder(getUserBean().getBspUser());
         }
@@ -142,7 +142,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @ValidationMethod(on = "placeOrder")
     public void validateOrderPlacement(ValidationErrors errors) throws Exception {
         if (editOrder.getSamples().isEmpty()) {
-            errors.addGlobalError(new SimpleError("Order does not have anY samples"));
+            errors.addGlobalError(new SimpleError("Order does not have any samples"));
         }
 
         if (editOrder.getResearchProject() == null) {
@@ -253,26 +253,37 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("placeOrder")
     public Resolution placeOrder() {
         try {
+            setUserInfo();
             editOrder.submitProductOrder();
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+
+            // save it!
+            productOrderDao.persist(editOrder);
         } catch (Exception e ) {
             addGlobalValidationError(e.getMessage());
             return getContext().getSourcePageResolution();
         }
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been placed");
-        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("businessKey", editOrder.getBusinessKey());
+        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("productOrder", editOrder.getBusinessKey());
+    }
+
+    private void setUserInfo() {
+        if (editOrder.getCreatedBy() == -1) {
+            editOrder.setCreatedBy(getUserBean().getBspUser().getUserId());
+        }
+        editOrder.setModifiedBy(getUserBean().getBspUser().getUserId());
     }
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() throws Exception {
-        // Since there is one project, can just use the list as the key
+
+        // Update the modified by (and created by if it was invalid when created
+        setUserInfo();
+
+        // set the project, product and addOns for the order
         ResearchProject project = projectDao.findByBusinessKey(researchProjectList);
-
-        // Since there is one product, can just use the list as the key
         Product product = productDao.findByPartNumber(productList);
-
-        // update the addons from the keys
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
         editOrder.updateData(project, product, addOnProducts);
 
@@ -283,8 +294,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         // save it!
         productOrderDao.persist(editOrder);
 
-        addMessage("Product Order \"" + editOrder.getTitle() + "\" has been created");
-        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("businessKey", editOrder.getBusinessKey());
+        addMessage("Product Order \"" + editOrder.getTitle() + "\" has been saved.");
+        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("productOrder", editOrder.getBusinessKey());
     }
 
     @HandlesEvent("downloadBillingTracker")
@@ -312,7 +323,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution getAddOns() throws Exception {
         JSONArray itemList = new JSONArray();
 
-        Product product = productDao.findByBusinessKey(productKey);
+        Product product = productDao.findByBusinessKey(this.product);
         for (Product addOn : product.getAddOns()) {
             JSONObject item = new JSONObject();
             item.put("key", addOn.getBusinessKey());
@@ -397,20 +408,20 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    public String getBusinessKey() {
-        return businessKey;
+    public String getProductOrder() {
+        return productOrder;
     }
 
-    public void setBusinessKey(String businessKey) {
-        this.businessKey = businessKey;
+    public void setProductOrder(String productOrder) {
+        this.productOrder = productOrder;
     }
 
-    public String getProductKey() {
-        return productKey;
+    public String getProduct() {
+        return product;
     }
 
-    public void setProductKey(String productKey) {
-        this.productKey = productKey;
+    public void setProduct(String product) {
+        this.product = product;
     }
 
     public String getResearchProjectList() {
@@ -451,5 +462,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setAddOnKeys(List<String> addOnKeys) {
         this.addOnKeys = addOnKeys;
+    }
+
+    public String getSaveButtonText() {
+        return ((editOrder != null) && editOrder.isDraft()) ? "Save Draft" : "Save";
     }
 }

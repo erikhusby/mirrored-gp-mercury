@@ -30,13 +30,22 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-            <p>
-                <stripes:link title="Click to edit ${actionBean.editOrder.title}"
-                    beanclass="${actionBean.class.name}" event="edit" class="pull-right">
-                    <span class="icon-home"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
-                    <stripes:param name="businessKey" value="${actionBean.editOrder.businessKey}"/>
-                </stripes:link>
-            </p>
+
+        <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
+            <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+
+            <div class="actionButtons">
+                <stripes:submit name="placeOrder" value="Place Order"/>
+            </div>
+        </stripes:form>
+
+        <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+            beanclass="${actionBean.class.name}" event="edit" class="pull-right">
+            <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
+            <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+        </stripes:link>
+
+        <div style="both:clear"> </div>
 
         <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
 
@@ -54,12 +63,6 @@
                         <c:choose>
                             <c:when test="${actionBean.editOrder.draft}">
                                 DRAFT
-                                (
-                                <stripes:link title="Place Order" beanclass="${actionBean.class.name}" event="placeOrder">
-                                    <stripes:param name="businessKey" value="${order.businessKey}"/>
-                                    Place Order
-                                </stripes:link>
-                                )
                             </c:when>
                             <c:otherwise>
                                 <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">
@@ -79,7 +82,7 @@
                             <stripes:link title="Research Project"
                                           beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
                                           event="view">
-                                <stripes:param name="businessKey" value="${actionBean.editOrder.researchProject.businessKey}"/>
+                                <stripes:param name="project" value="${actionBean.editOrder.researchProject.businessKey}"/>
                                 ${actionBean.editOrder.researchProject.title}
                             </stripes:link>
                             (<a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.researchProject.jiraTicketKey}" class="external" target="JIRA">

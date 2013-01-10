@@ -1,10 +1,11 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="View Research Project" sectionTitle="View Project: ${actionBean.researchProject.title}">
+<stripes:layout-render name="/layout.jsp" pageTitle="View Research Project" sectionTitle="View Project: ${actionBean.editResearchProject.title}">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function () {
@@ -17,9 +18,9 @@
 
     <stripes:layout-component name="content">
         <p>
-            <stripes:link title="Click to edit ${actionBean.researchProject.title}" beanclass="${actionBean.class.name}" event="edit" class="pull-right">
-                <span class="icon-home"></span> <%=ResearchProjectActionBean.EDIT_PROJECT%>
-                <stripes:param name="businessKey" value="${actionBean.researchProject.businessKey}"/>
+            <stripes:link title="Click to edit ${actionBean.editResearchProject.title}" beanclass="${actionBean.class.name}" event="edit" class="pull-right">
+                <span class="icon-briefcase"></span> <%=ResearchProjectActionBean.EDIT_PROJECT%>
+                <stripes:param name="researchProject" value="${actionBean.editResearchProject.businessKey}"/>
             </stripes:link>
         </p>
 
@@ -28,8 +29,9 @@
                 <label class="control-label label-form">Project</label>
 
                 <div class="controls">
-                    <div class="form-value">${actionBean.researchProject.title}</div>
-                    (<stripes:link target="tableau" href="${actionBean.tableauLink}" class="external">Pass Report</stripes:link>)
+                    <div class="form-value">${actionBean.editResearchProject.title}
+                        (<stripes:link target="tableau" href="${actionBean.tableauLink}" class="external">Pass Report</stripes:link>)
+                    </div>
                 </div>
             </div>
 
@@ -38,11 +40,11 @@
 
                 <div class="controls">
                     <div class="form-value">
-                        <c:if test="${actionBean.researchProject.jiraTicketKey != null}">
+                        <c:if test="${actionBean.editResearchProject.jiraTicketKey != null}">
                             <stripes:link target="JIRA"
-                                          href="${actionBean.jiraUrl}${actionBean.researchProject.jiraTicketKey}"
+                                          href="${actionBean.jiraUrl}${actionBean.editResearchProject.jiraTicketKey}"
                                           class="external">
-                                ${actionBean.researchProject.jiraTicketKey}
+                                ${actionBean.editResearchProject.jiraTicketKey}
                             </stripes:link>
                         </c:if>
                     </div>
@@ -54,7 +56,7 @@
                 <label class="control-label label-form">Synopsis</label>
 
                 <div class="controls">
-                    <div class="form-value">${actionBean.researchProject.synopsis}</div>
+                    <div class="form-value">${actionBean.editResearchProject.synopsis}</div>
                 </div>
             </div>
 
@@ -100,7 +102,7 @@
 
                 <div class="controls">
                     <div class="form-value">
-                        ${actionBean.researchProjectCreatorString} on <fmt:formatDate value="${actionBean.researchProject.createdDate}"/>
+                        ${actionBean.researchProjectCreatorString} on <fmt:formatDate value="${actionBean.editResearchProject.createdDate}"/>
                     </div>
                 </div>
             </div>
@@ -127,7 +129,7 @@
 
                 <div class="controls">
                     <div class="form-value">
-                        <c:forEach items="${actionBean.researchProject.irbNumbers}" var="irb">
+                        <c:forEach items="${actionBean.editResearchProject.irbNumbers}" var="irb">
                                 ${irb}
                         </c:forEach>
                     </div>
@@ -139,7 +141,7 @@
                 <div class="controls">
                     <div class="form-value">
                         <c:choose>
-                            <c:when test="${actionBean.researchProject.irbNotEngaged}">
+                            <c:when test="${actionBean.editResearchProject.irbNotEngaged}">
                                 <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
                             </c:when>
                             <c:otherwise>
@@ -155,6 +157,13 @@
             Orders
         </div>
 
+        <stripes:link title="Create product with research project ${actionBean.editResearchProject.title}"
+                      beanclass="<%=ProductOrderActionBean.class.getName()%>" event="create" class="pull-right">
+            <span class="icon-tags"></span> <%=ProductOrderActionBean.CREATE_ORDER%>
+            <stripes:param name="productOrder" value="${actionBean.editResearchProject.businessKey}"/>
+        </stripes:link>
+
+
         <table id="orderList" class="table simple">
             <thead>
                 <tr>
@@ -168,7 +177,7 @@
                 </tr>
             </thead>
             <tbody>
-                <c:forEach items="${actionBean.researchProject.productOrders}" var="order">
+                <c:forEach items="${actionBean.editResearchProject.productOrders}" var="order">
                     <tr>
                         <td>
                             <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" event="view">
@@ -185,7 +194,7 @@
                         <td>${order.orderStatus}</td>
                         <td>${actionBean.fullNameMap[order.modifiedBy]}</td>
                         <td>
-                            <fmt:formatDate value="${order.modifiedDate}"/>
+                            <fmt:formatDate value="${order.modifiedDate}" pattern="MM/dd/yyyy"/>
                         </td>
                         <td>${order.pdoSampleCount}</td>
                     </tr>
