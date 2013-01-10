@@ -56,7 +56,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
      * @return if found, the user, otherwise null
      */
     public BspUser getById(long id) {
-        return users.get(id);
+        return getUsers().get(id);
     }
 
     /**
@@ -154,7 +154,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
 
             if (!serverValid) {
                 // BSP is down
-                if (users != null) {
+                if (getUsers() != null) {
                     return;
                 } else {
                     rawUsers = new ArrayList<BspUser>();
@@ -177,7 +177,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
 
     public Map<Long, String> getFullNameMap() {
         Map<Long, String> fullNameMap = new HashMap<Long, String>();
-        for (BspUser user : users.values()) {
+        for (BspUser user : getUsers().values()) {
             fullNameMap.put(user.getUserId(), getUserFullName(user.getUserId()));
         }
 
