@@ -4,6 +4,7 @@ import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
@@ -48,6 +49,10 @@ public class CreateBatchActionBean extends CoreActionBean {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private JiraLink jiraLink;
+
 
     @Validate(required = true, on = {SEARCH_ACTION}, field = "searchKey", minlength = 1)
     private String searchKey;
@@ -266,4 +271,18 @@ public class CreateBatchActionBean extends CoreActionBean {
     public void setJiraTicketId(String jiraTicketId) {
         this.jiraTicketId = jiraTicketId;
     }
+
+    /**
+     * Get the fully qualified Jira URL.
+     *
+     * @return URL string
+     */
+    public String getJiraUrl() {
+        if (jiraLink == null) {
+            return "";
+        }
+        return jiraLink.browseUrl();
+    }
+
+
 }

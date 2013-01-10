@@ -110,74 +110,18 @@
                 </tr>
                 </c:if>
             </table>
-            <%--</stripes:form>--%>
-
 
             <c:if test="${not actionBean.resultsAvailable}">
                 No Results Found
             </c:if>
 
-            <%--<stripes:form beanclass="${actionBean.class.name}" id="createBatchForm" class="form-horizontal">--%>
-
             <c:if test="${not empty actionBean.foundVessels}">
                 <div class="tableBar">
                     Found ${fn:length(actionBean.foundVessels)} Vessels
-                        <%--<a id="vesselAnchor" href="javascript:showResult('vesselDiv')" style="margin-left: 20px;">show</a>--%>
-                        <%--<a id="vesselAnchorHide" href="javascript:hideResult('vesselDiv')"--%>
-                        <%--style="display:none; margin-left: 20px;">hide</a>--%>
                 </div>
-                <%--<div id="vesselDiv" style="display:none">--%>
                 <div id="vesselDiv">
                     <stripes:layout-render name="/search/vessel_list.jsp" vessels="${actionBean.foundVessels}"
-                                           bean="${actionBean}"/>
-
-                        <%--<table id="productOrderList" class="table simple">--%>
-                        <%--<thead>--%>
-                        <%--<tr>--%>
-                        <%--<th width="40">--%>
-                        <%--<input for="count" type="checkbox" class="checkAll"/><span id="count"--%>
-                        <%--class="checkedCount"></span>--%>
-                        <%--</th>--%>
-                        <%--<th>Sample Details</th>--%>
-                        <%--<th>Sample #</th>--%>
-                        <%--<th>Label</th>--%>
-                        <%--<th>Type</th>--%>
-                        <%--<th>Lab Batches</th>--%>
-                        <%--<th>Latest Event</th>--%>
-                        <%--<th>Event User</th>--%>
-                        <%--<th>Event Date</th>--%>
-                        <%--<th>Creation Date</th>--%>
-                        <%--</tr>--%>
-                        <%--</thead>--%>
-                        <%--<tbody>--%>
-                        <%--<c:forEach items="${actionBean.foundVessels}" var="vessel">--%>
-                        <%--<tr>--%>
-                        <%--<td width="40">--%>
-                        <%--<stripes:checkbox class="shiftCheckbox" name="selectedBatchVesselLabels"--%>
-                        <%--value="${vessel.label}"/>--%>
-                        <%--</td>--%>
-                        <%--<td>--%>
-
-                        <%--</td>--%>
-                        <%--<td>${vessel.sampleInstanceCount}</td>--%>
-                        <%--<td>${vessel.label}</td>--%>
-                        <%--<td>${vessel.type.name}</td>--%>
-                        <%--<td>--%>
-                        <%--<c:forEach items="${vessel.nearestLabBatches}" var="batch">--%>
-                        <%--${batch.batchName}--%>
-                        <%--</c:forEach>--%>
-                        <%--</td>--%>
-                        <%--<td>${vessel.latestEvent.labEventType.name}</td>--%>
-                        <%--<td>${vessel.latestEvent.labEventType.name}</td>--%>
-                        <%--<td>--%>
-                        <%--<fmt:formatDate value="${vessel.latestEvent.eventDate}" pattern="MM/dd/yyyy"/>--%>
-                        <%--</td>--%>
-                        <%--<td><fmt:formatDate value="${vessel.createdOn}" pattern="MM/dd/yyyy"/></td>--%>
-                        <%--</tr>--%>
-                        <%--</c:forEach>--%>
-                        <%--</tbody>--%>
-                        <%--</table>--%>
-
+                                           bean="${actionBean}" showCheckboxes="true"/>
                 </div>
             </c:if>
         </stripes:form>
