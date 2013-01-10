@@ -15,7 +15,7 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.reagent.ReagentDesignActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.submitString}"
-                       sectionTitle="${actionBean.submitString} ${actionBean.reagentDesign.designName}">
+                       sectionTitle="${actionBean.submitString} ${actionBean.editReagentDesign.designName}">
 
     <stripes:layout-component name="extraHead">
 
@@ -24,14 +24,14 @@
     <stripes:layout-component name="content">
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
-            <stripes:hidden name="businessKey" value="${actionBean.reagentDesign.businessKey}"/>
+            <stripes:hidden name="reagentDesign" value="${actionBean.editReagentDesign.businessKey}"/>
             <stripes:hidden name="submitString" value="${actionBean.submitString}"/>
 
             <div class="control-group">
                 <stripes:label for="designName" name="Name *" class="control-label"/>
                 <div class="controls">
                             <stripes:text id="designName" readonly="${! actionBean.creating}"
-                                          name="reagentDesign.designName"
+                                          name="editReagentDesign.designName"
                                           class="defaultText"
                                           title="Enter the name of the reagent design"/>
 
@@ -41,7 +41,7 @@
             <div class="control-group">
                 <stripes:label for="targetSetName" name="Target Set Name" class="control-label"/>
                 <div class="controls">
-                    <stripes:text id="targetSetName" name="reagentDesign.targetSetName" class="defaultText"
+                    <stripes:text id="targetSetName" name="editReagentDesign.targetSetName" class="defaultText"
                                   title="Enter the name of the target set."/>
                 </div>
             </div>
@@ -49,7 +49,7 @@
             <div class="control-group">
                 <stripes:label for="manufacturersName" name="Manufacturer" class="control-label"/>
                 <div class="controls">
-                    <stripes:text id="manufacturersName" name="reagentDesign.manufacturersName" class="defaultText"
+                    <stripes:text id="manufacturersName" name="editReagentDesign.manufacturersName" class="defaultText"
                                   title="Enter the name of the manufacturer."/>
                 </div>
             </div>
@@ -57,12 +57,12 @@
             <div class="control-group">
                 <stripes:label for="reagentType" name="Reagent Type *" class="control-label"/>
                 <div class="controls">
-                    <stripes:select name="reagentDesign.reagentType"  disabled="${!actionBean.creating}" id="reagentType">
+                    <stripes:select name="editReagentDesign.reagentType"  disabled="${!actionBean.creating}" id="reagentType">
                         <stripes:option value="">Select a Reagent Type</stripes:option>
                         <stripes:options-enumeration
                                 enum="org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign.ReagentType"/>
                     </stripes:select>
-                    <stripes:hidden name="reagentDesign.reagentType" value="${actionBean.reagentDesign.reagentType}"/>
+                    <stripes:hidden name="editReagentDesign.reagentType" value="${actionBean.editReagentDesign.reagentType}"/>
                 </div>
             </div>
 
@@ -88,8 +88,8 @@
                                 </c:when>
                                 <c:otherwise>
                                     <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                        <stripes:param name="businessKey"
-                                                       value="${actionBean.reagentDesign.businessKey}"/>
+                                        <stripes:param name="reagentDesign"
+                                                       value="${actionBean.editReagentDesign.businessKey}"/>
                                         Cancel
                                     </stripes:link>
                                 </c:otherwise>
