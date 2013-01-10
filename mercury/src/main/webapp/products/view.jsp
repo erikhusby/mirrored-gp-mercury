@@ -142,7 +142,7 @@
         </div>
 
         <div class="tableBar">
-            Add Ons
+            Add-ons
         </div>
 
         <table id="addOnList" class="table simple">
