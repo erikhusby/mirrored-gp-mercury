@@ -14,10 +14,11 @@
         </p>
 
         <div class="form-horizontal">
+
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Product Family</label>
+                <label class="control-label label-form">Part Number</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editProduct.productFamily.name}</div>
+                    <div class="form-value">${actionBean.editProduct.partNumber} (<a href="Product Descriptions.pdf">Product Descriptions PDF</a>)</div>
                 </div>
             </div>
 
@@ -29,9 +30,9 @@
             </div>
 
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Part Number</label>
+                <label class="control-label label-form">Product Family</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editProduct.partNumber}</div>
+                    <div class="form-value">${actionBean.editProduct.productFamily.name}</div>
                 </div>
             </div>
 
