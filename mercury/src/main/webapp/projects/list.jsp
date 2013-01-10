@@ -56,7 +56,7 @@
                     ${project.status}
                 </td>
                 <td>
-                    ${actionBean.fullNameMap[project.createdBy]}
+                    ${actionBean.getUserFullName(project.createdBy)}
                 </td>
                 <td>
                     <fmt:formatDate value="${project.modifiedDate}" pattern="MM/dd/yyyy HH:mm"/>
