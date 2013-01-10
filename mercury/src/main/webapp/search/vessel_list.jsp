@@ -21,7 +21,7 @@
         }
 
         function showSampleVisualizer(label) {
-            $j('#viewerDiv').load('${ctxpath}/view/sampleView.action?vesselLabel=' + label);
+            $j('#viewerDiv').load('${ctxpath}/view/sampleListView.action?vesselLabel=' + label);
             $j('#viewerDiv').show();
         }
 
