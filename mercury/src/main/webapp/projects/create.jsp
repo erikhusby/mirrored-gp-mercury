@@ -3,7 +3,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Edit Research Project" sectionTitle="Edit Project: ${actionBean.editResearchProject.title}">
+<stripes:layout-render name="/layout.jsp" pageTitle="Edit Research Project" sectionTitle="Edit Research Project: ${actionBean.editResearchProject.title}">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(
@@ -186,6 +186,14 @@
                         </p>
                     </div>
                 </div>
+
+                <div class="control-group">
+                    <label id="j_idt130" class="ui-outputlabel control-label" for="irbNotes">IRB Notes</label>
+                    <div class="controls">
+                        <stripes:text id="irbNotes" class="defaultText" title="Enter notes about the above IRBs" name="editResearchProject.irbNotes" value="${actionBean.editResearchProject.irbNotes}" maxlength="250" />
+                    </div>
+                </div>
+
             </div>
 
             <div class="control-group">
