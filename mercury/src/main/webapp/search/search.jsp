@@ -107,6 +107,8 @@
                     <div id="sampleDiv">
                 </c:otherwise>
             </c:choose>
+            <stripes:layout-render name="/resources/sample/sampleListView.jsp" samples="${actionBean.foundSamples}"
+                                   bean="${actionBean}" showCheckboxes="false"/>
             </div>
         </c:if>
 
