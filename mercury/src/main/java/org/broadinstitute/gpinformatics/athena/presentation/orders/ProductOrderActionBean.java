@@ -44,7 +44,7 @@ import java.util.*;
  * This handles all the needed interface processing elements
  */
 @UrlBinding("/orders/order.action")
-public class ProductOrderActionBean extends CoreActionBean implements ValidationErrorHandler {
+public class ProductOrderActionBean extends CoreActionBean {
 
     private static final String CURRENT_OBJECT = "Product Order";
     public static final String CREATE_ORDER = CoreActionBean.CREATE + CURRENT_OBJECT;
@@ -89,7 +89,7 @@ public class ProductOrderActionBean extends CoreActionBean implements Validation
 
     private List<ProductOrderListEntry> allProductOrders;
 
-    @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
+    @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION, SAVE_ACTION})
     private String productOrder;
 
     @ValidateNestedProperties({
@@ -253,26 +253,37 @@ public class ProductOrderActionBean extends CoreActionBean implements Validation
     @HandlesEvent("placeOrder")
     public Resolution placeOrder() {
         try {
+            setUserInfo();
             editOrder.submitProductOrder();
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+
+            // save it!
+            productOrderDao.persist(editOrder);
         } catch (Exception e ) {
             addGlobalValidationError(e.getMessage());
             return getContext().getSourcePageResolution();
         }
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been placed");
-        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("businessKey", editOrder.getBusinessKey());
+        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("productOrder", editOrder.getBusinessKey());
+    }
+
+    private void setUserInfo() {
+        if (editOrder.getCreatedBy() == -1) {
+            editOrder.setCreatedBy(getUserBean().getBspUser().getUserId());
+        }
+        editOrder.setModifiedBy(getUserBean().getBspUser().getUserId());
     }
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() throws Exception {
-        // Since there is one project, can just use the list as the key
+
+        // Update the modified by (and created by if it was invalid when created
+        setUserInfo();
+
+        // set the project, product and addOns for the order
         ResearchProject project = projectDao.findByBusinessKey(researchProjectList);
-
-        // Since there is one product, can just use the list as the key
         Product product = productDao.findByPartNumber(productList);
-
-        // update the addons from the keys
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
         editOrder.updateData(project, product, addOnProducts);
 
@@ -284,7 +295,7 @@ public class ProductOrderActionBean extends CoreActionBean implements Validation
         productOrderDao.persist(editOrder);
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been saved.");
-        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("businessKey", editOrder.getBusinessKey());
+        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("productOrder", editOrder.getBusinessKey());
     }
 
     @HandlesEvent("downloadBillingTracker")
@@ -453,8 +464,7 @@ public class ProductOrderActionBean extends CoreActionBean implements Validation
         this.addOnKeys = addOnKeys;
     }
 
-    @Override
-    public Resolution handleValidationErrors(ValidationErrors errors) throws Exception {
-        return new RedirectResolution(ORDER_CREATE_PAGE).addParameter("productOrder", productOrder);
+    public String getSaveButtonText() {
+        return ((editOrder != null) && editOrder.isDraft()) ? "Save Draft" : "Save";
     }
 }

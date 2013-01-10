@@ -88,13 +88,7 @@
                             <td>
                                 <c:choose>
                                     <c:when test="${order.draft}">
-                                        DRAFT<br/>
-                                        (
-                                            <stripes:link title="Place Order" beanclass="${actionBean.class.name}" event="placeOrder">
-                                                <stripes:param name="productOrder" value="${order.businessKey}"/>
-                                                Place Order
-                                            </stripes:link>
-                                        )
+                                        DRAFT
                                     </c:when>
                                     <c:otherwise>
                                         <a target="JIRA" href="${actionBean.jiraUrl}${order.jiraTicketKey}" class="external" target="JIRA">
