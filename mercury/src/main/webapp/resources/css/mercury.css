@@ -26,6 +26,8 @@ ul.DTTT_dropdown.dropdown-menu li { position: relative; }
 .DTTT_button_csv  { text-decoration: none !important }
 .DTTT_button_print  { text-decoration: none !important }
 
+.dropdown-menu a { text-decoration: none !important }
+
 /* DataTables sorting CSS */
 table.table thead .sorting,
 table.table thead .sorting_asc,

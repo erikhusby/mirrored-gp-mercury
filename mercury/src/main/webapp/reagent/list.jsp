@@ -62,7 +62,7 @@
                     <tr>
                         <td>
                             <stripes:link beanclass="${actionBean.class.name}" event="edit">
-                                <stripes:param name="businessKey" value="${design.businessKey}"/>
+                                <stripes:param name="reagentDesign" value="${design.businessKey}"/>
                                 ${design.designName}
                             </stripes:link>
                         </td>

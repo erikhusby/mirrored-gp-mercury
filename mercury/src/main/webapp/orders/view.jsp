@@ -35,7 +35,7 @@
             <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
 
             <div class="actionButtons">
-                <stripes:submit name="placeOrder" value="Place Order"/>
+                <stripes:submit name="placeOrder" value="Place Order" class="btn"/>
             </div>
         </stripes:form>
 
@@ -65,9 +65,7 @@
                                 DRAFT
                             </c:when>
                             <c:otherwise>
-                                <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">
-                                        ${actionBean.editOrder.jiraTicketKey}
-                                </a>
+                                <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">${actionBean.editOrder.jiraTicketKey}</a>
                             </c:otherwise>
                         </c:choose>
                     </div>
