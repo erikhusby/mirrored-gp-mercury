@@ -4,7 +4,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="View Product Order" sectionTitle="View Product Order: ${actionBean.editOrder.title}">
+<stripes:layout-render name="/layout.jsp" pageTitle="View Product Order" sectionTitle="View Product Order">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
@@ -188,9 +188,9 @@
                             <td width="50">${sample.bspDTO.volume}</td>
                             <td width="50">${sample.bspDTO.concentration}</td>
                             <td width="70">${sample.bspDTO.total}</td>
-                            <td width="60">
+                            <td width="60" style="text-align: center">
                                 <c:if test="${sample.bspDTO.hasFingerprint}">
-                                    <stripes:image name="" alt="Yes" src="/images/check.png"/>
+                                    <img src="${ctxpath}/images/check.png" title="Yes"/>
                                 </c:if>
                             </td>
                             <td width="70">&#160;</td>

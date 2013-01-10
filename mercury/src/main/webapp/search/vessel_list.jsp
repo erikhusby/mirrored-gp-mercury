@@ -21,7 +21,7 @@
         }
 
         function showSampleVisualizer(label) {
-            $j('#viewerDiv').load('${ctxpath}/view/sampleView.action?vesselLabel=' + label);
+            $j('#viewerDiv').load('${ctxpath}/view/vesselSampleListView.action?vesselLabel=' + label);
             $j('#viewerDiv').show();
         }
 
@@ -56,7 +56,7 @@
                 <c:if test="${showCheckboxes}">
                     <td>
 
-                        <stripes:checkbox class="vessel-checkbox" name="selectedProductOrderBusinessKeys"
+                        <stripes:checkbox class="vessel-checkbox" name="selectedVesselLabels"
                                           value="${vessel.label}"/>
 
                     </td>

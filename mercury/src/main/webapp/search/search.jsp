@@ -107,6 +107,8 @@
                     <div id="sampleDiv">
                 </c:otherwise>
             </c:choose>
+            <stripes:layout-render name="/resources/sample/sampleListView.jsp" samples="${actionBean.foundSamples}"
+                                   bean="${actionBean}" showCheckboxes="false"/>
             </div>
         </c:if>
 
@@ -129,6 +131,8 @@
                     <div id="pdoDiv">
                 </c:otherwise>
             </c:choose>
+            <stripes:layout-render name="/resources/orders/pdoListView.jsp" pdos="${actionBean.foundPDOs}"
+                                   bean="${actionBean}" showCheckboxes="false"/>
             </div>
         </c:if>
 
