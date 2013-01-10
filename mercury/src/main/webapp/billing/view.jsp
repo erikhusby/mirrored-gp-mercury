@@ -1,3 +1,4 @@
+<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -28,20 +29,21 @@
         <stripes:form action="/billing/session.action" id="orderForm" class="form-horizontal">
             <stripes:hidden name="sessionKey" value="${actionBean.sessionKey}"/>
 
-            <%--security:authorizeBlock roles="${actionBean.userBean.developerRole}, ${actionBean.userBean.billingManagerRole}">--%>
+            <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.BillingManager.name}%>">
                 <c:if test="${actionBean.editSession.billedDate == null}">
-                    <stripes:submit name="bill" value="Bill Work in Broad Quotes" style="margin-right:30px;"/>
+                    <stripes:submit name="bill" value="Bill Work in Broad Quotes" class="btn" style="margin-right:30px;"/>
                 </c:if>
-            <%--/security:authorizeBlock>--%>
+            </security:authorizeBlock>
 
-            <stripes:submit name="downloadTracker" value="Download Tracker" style="margin-right:30px;"/>
-            <stripes:submit name="downloadQuoteItems" value="Download Quote Items" style="margin-right:30px;"/>
+            <stripes:submit name="downloadTracker" value="Download Tracker" class="btn" style="margin-right:30px;"/>
+            <stripes:submit name="downloadQuoteItems" value="Download Quote Items" class="btn" style="margin-right:30px;"/>
 
-            <%--security:authorizeBlock roles="${actionBean.userBean.developerRole}, ${actionBean.userBean.billingManagerRole}">--%>
+
+            <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.BillingManager.name}%>">
                 <c:if test="${actionBean.editSession.billedDate == null}">
-                    <stripes:submit name="endSession" value="End Billing Session" style="margin-right:15px;px;"/>
+                    <stripes:submit name="endSession" value="End Billing Session" class="btn" style="margin-right:15px;px;"/>
                 </c:if>
-            <%--/security:authorizeBlock>--%>
+            </security:authorizeBlock>
 
             <div style="margin-top:10px;" class="view-control-group control-group">
                 <label class="control-label label-form">ID</label>

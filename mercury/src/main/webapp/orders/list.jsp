@@ -1,4 +1,5 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -10,7 +11,7 @@
             $j(document).ready(function() {
                 $j('#productOrderList').dataTable( {
                     "oTableTools": ttExportDefines,
-                    "aaSorting": [[7,'desc']],
+                    "aaSorting": [[8,'desc']],
                     "aoColumns": [
                         {"bSortable": false},                   // checkbox
                         {"bSortable": true, "sType": "html"},   // Name
@@ -41,17 +42,18 @@
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
             <div class="actionButtons">
-                <%--security:authorizeBlock roles="${actionBean.userBean.developerRole}, ${actionBean.userBean.billingManagerRole}">--%>
-                    <stripes:submit name="startBilling" value="Start Billing Session" style="margin-right:30px;"/>
-                <%--/security:authorizeBlock>--%>
 
-                <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" style="margin-right:5px;"/>
+                <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.BillingManager.name}%>">
+                    <stripes:submit name="startBilling" value="Start Billing Session" class="btn" style="margin-right:30px;"/>
+                </security:authorizeBlock>
 
-                <%--security:authorizeBlock roles="${actionBean.userBean.developerRole}, ${actionBean.userBean.productManagerRole}">--%>
+                <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn" style="margin-right:5px;"/>
+
+                <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
                     <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean" event="view">
                         Upload Billing Tracker
                     </stripes:link>
-                <%--/security:authorizeBlock>--%>
+                </security:authorizeBlock>
             </div>
 
             <table id="productOrderList" class="table simple">
