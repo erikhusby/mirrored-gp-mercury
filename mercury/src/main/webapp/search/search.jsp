@@ -129,6 +129,8 @@
                     <div id="pdoDiv">
                 </c:otherwise>
             </c:choose>
+            <stripes:layout-render name="/resources/orders/pdoListView.jsp" pdos="${actionBean.foundPDOs}"
+                                   bean="${actionBean}" showCheckboxes="false"/>
             </div>
         </c:if>
 
