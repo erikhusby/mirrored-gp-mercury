@@ -27,7 +27,11 @@ import java.util.Set;
 @UrlBinding("/search/create_batch.action")
 public class CreateBatchActionBean extends CoreActionBean {
     private static final String BATCH_CREATE_PAGE = "/search/create_batch.jsp";
-    private static final String BATCH_CONFIRM_PAGE = "/search/confirm_batch.jsp";
+    private static final String BATCH_CONFIRM_PAGE = "/search/batch_confirm.jsp";
+    public static final String CREATE_BATCH_ACTION = "createBatch";
+    public static final String VIEW_ACTION = "view";
+    public static final String CONFIRM_ACTION = "confirm";
+    public static final String SEARCH_ACTION = "search";
 
     public final String existingJiraTicketValue = "existingTicket";
     public final String newJiraTicketValue = "newTicket";
@@ -45,7 +49,7 @@ public class CreateBatchActionBean extends CoreActionBean {
     @Inject
     private UserBean userBean;
 
-    @Validate(required = true, on = "search")
+    @Validate(required = true, on = {SEARCH_ACTION}, field = "searchKey", minlength = 1)
     private String searchKey;
 
     private String batchLabel;
@@ -54,33 +58,44 @@ public class CreateBatchActionBean extends CoreActionBean {
     private List<LabVessel> foundVessels = null;
     private boolean resultsAvailable = false;
 
-    private List<String> selectedBatchVesselLabels;
+    private List<String> selectedVesselLabels;
     private List<LabVessel> selectedBatchVessels;
 
+    @Validate(required = true, on = {CREATE_BATCH_ACTION}, field = "jiraInputType")
     private String jiraInputType;
 
+    @Validate(required = true, on = {CREATE_BATCH_ACTION},
+            expression = "jiraInputType == existingJiraTicketValue",
+            field = "jiraTicketId", minlength = 1)
     private String jiraTicketId;
 
     private String important;
     private String description;
+    @Validate(required = true, on = {CREATE_BATCH_ACTION},
+            expression = "jiraInputType != existingJiraTicketValue", field = "summary", minlength = 1)
     private String summary;
     private Date dueDate;
 
     /**
      * Initialize the product with the passed in key for display in the form
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {"confirm"})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {CONFIRM_ACTION})
     public void init() {
         batchLabel = getContext().getRequest().getParameter("batchLabel");
         if (StringUtils.isNotBlank(batchLabel)) {
-            batch= labBatchDAO.findByBusinessKey(batchLabel);
+            batch = labBatchDAO.findByBusinessKey(batchLabel);
         }
     }
 
     @DefaultHandler
-    @HandlesEvent("view")
+    @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         return new ForwardResolution(BATCH_CREATE_PAGE);
+    }
+
+    @HandlesEvent(CONFIRM_ACTION)
+    public Resolution confirm() {
+        return new ForwardResolution(BATCH_CONFIRM_PAGE);
     }
 
     /**
@@ -88,12 +103,12 @@ public class CreateBatchActionBean extends CoreActionBean {
      *
      * @return
      */
-    @HandlesEvent("createBatch")
+    @HandlesEvent(CREATE_BATCH_ACTION)
     public Resolution createBatch() throws Exception {
         LabBatch batchObject;
 
         Set<LabVessel> vesselSet =
-                new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedBatchVesselLabels));
+                new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
 
         if (isUseExistingTicket()) {
             /*
@@ -115,11 +130,11 @@ public class CreateBatchActionBean extends CoreActionBean {
             labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername());
         }
 
-        addMessage(MessageFormat.format("Lab batch ''{0}'' has been created",
-                batchObject.getJiraTicket().getTicketName()));
+        addMessage(MessageFormat.format("Lab batch ''{0}'' has been ''{1}''.",
+                batchObject.getJiraTicket().getTicketName(), isUseExistingTicket()?"assigned":"created"));
 
         //Forward
-        return new RedirectResolution(CreateBatchActionBean.class, "confirm")
+        return new RedirectResolution(CreateBatchActionBean.class, CONFIRM_ACTION)
                 .addParameter("batchLabel", batchObject.getBatchName());
     }
 
@@ -127,7 +142,7 @@ public class CreateBatchActionBean extends CoreActionBean {
         return jiraInputType.equals(existingJiraTicketValue);
     }
 
-    @HandlesEvent("search")
+    @HandlesEvent(SEARCH_ACTION)
     public Resolution search() throws Exception {
         List<String> searchList = SearchActionBean.cleanInputString(searchKey);
 
@@ -164,12 +179,12 @@ public class CreateBatchActionBean extends CoreActionBean {
         this.resultsAvailable = resultsAvailable;
     }
 
-    public List<String> getSelectedBatchVesselLabels() {
-        return selectedBatchVesselLabels;
+    public List<String> getSelectedVesselLabels() {
+        return selectedVesselLabels;
     }
 
-    public void setSelectedBatchVesselLabels(List<String> selectedBatchVesselLabels) {
-        this.selectedBatchVesselLabels = selectedBatchVesselLabels;
+    public void setSelectedVesselLabels(List<String> selectedVesselLabels) {
+        this.selectedVesselLabels = selectedVesselLabels;
     }
 
     public List<LabVessel> getSelectedBatchVessels() {

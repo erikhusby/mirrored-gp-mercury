@@ -8,12 +8,12 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Create Batches from Vessels" sectionTitle="Search">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
-            function showResult(div) {
-                $("." + div).show();
+            function showResult(type) {
+                $j('#' + type + 'Div').show();
             }
 
-            function hideResult(div) {
-                $("." + div).hide();
+            function hideResult(type) {
+                $j('#' + type + 'Div').hide();
             }
         </script>
     </stripes:layout-component>
@@ -21,7 +21,7 @@
         <stripes:form beanclass="${actionBean.class.name}" id="searchForm" class="form-horizontal">
             <table>
                 <tr>
-                    <td>
+                    <td valign="top">
                         <div class="form-horizontal">
                             <div class="control-group" style="margin-bottom:5px;">
                                 <stripes:label for="barcode" class="control-label"
@@ -40,15 +40,24 @@
                             </div>
                         </div>
                     </td>
-                </tr>
-                <c:if test="${not empty actionBean.foundVessels}">
-                    <tr>
-                        <td>
-                            <stripes:radio value="${actionBean.existingJiraTicketValue}"
-                                           name="jiraInputType">Use Existing Jira Ticket</stripes:radio>
-                            <stripes:radio value="${actionBean.newJiraTicketValue}"
-                                           name="jiraInputType">Create a New Jira Ticket</stripes:radio>
-                        </td>
+
+                    <c:if test="${not empty actionBean.foundVessels}">
+                    <td valign="top">
+                        <div class="control-group">
+                            <div class="controls">
+                                <stripes:radio value="${actionBean.existingJiraTicketValue}" checked="true"
+                                               name="jiraInputType"
+                                               onclick="javascript:showResult('jiraId');hideResult('newTicket');"/>
+                                Use Existing Jira Ticket
+                            </div>
+                            <div class="controls">
+                                <stripes:radio value="${actionBean.newJiraTicketValue}"
+                                               name="jiraInputType"
+                                               onclick="javascript:showResult('newTicket');hideResult('jiraId');"/>
+                                Create a New Jira Ticket
+                            </div>
+                        </div>
+
                         <div id="jiraIdDiv">
                             <div class="control-group">
                                 <stripes:label for="jiraTicketId" name="Jira Ticket Key" class="control-label"/>
@@ -58,7 +67,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="newTicketDIv" style="display: none;">
+                        <div id="newTicketDiv" style="display: none;">
                             <div class="control-group">
                                 <stripes:label for="summary" name="Summary" class="control-label"/>
                                 <div class="controls">
@@ -87,13 +96,18 @@
                                 <stripes:label for="dueDate" name="Availability Date" class="control-label"/>
                                 <div class="controls">
                                     <stripes:text id="dueDate" name="dueDate" class="defaultText"
-                                        title="enter date (MM/dd/yyyy)"><fmt:formatDate
+                                                  title="enter date (MM/dd/yyyy)"><fmt:formatDate
                                             value="${actionBean.dueDate}" dateStyle="short"/></stripes:text>
                                 </div>
                             </div>
                         </div>
-                        <stripes:submit name="createBatch" value="Create Batcfh" class="btn btn-primary"/>
-                    </tr>
+                        <div class="control-group">
+                            <div class="controls" style="margin-left: 80px;">
+                                <stripes:submit name="createBatch" value="Create Batcfh"/>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
                 </c:if>
             </table>
             <%--</stripes:form>--%>
@@ -114,65 +128,58 @@
                 </div>
                 <%--<div id="vesselDiv" style="display:none">--%>
                 <div id="vesselDiv">
+                    <stripes:layout-render name="/search/vessel_list.jsp" vessels="${actionBean.foundVessels}"
+                                           bean="${actionBean}"/>
 
-                    <table id="productOrderList" class="table simple">
-                        <thead>
-                        <tr>
-                            <th width="40">
-                                <input for="count" type="checkbox" class="checkAll"/><span id="count"
-                                                                                           class="checkedCount"></span>
-                            </th>
-                            <th>Sample Details</th>
-                            <th>Sample #</th>
-                            <th>Label</th>
-                            <th>Type</th>
-                            <th>Lab Batches</th>
-                            <th>Latest Event</th>
-                            <th>Event User</th>
-                            <th>Event Date</th>
-                            <th>Creation Date</th>
-                        </tr>
-                        </thead>
-                        <tbody>
-                        <c:forEach items="${actionBean.foundVessels}" var="vessel">
-                            <tr>
-                                <td width="40">
-                                    <stripes:checkbox class="shiftCheckbox" name="selectedBatchVesselLabels"
-                                                      value="${vessel.label}"/>
-                                </td>
-                                <td>
+                        <%--<table id="productOrderList" class="table simple">--%>
+                        <%--<thead>--%>
+                        <%--<tr>--%>
+                        <%--<th width="40">--%>
+                        <%--<input for="count" type="checkbox" class="checkAll"/><span id="count"--%>
+                        <%--class="checkedCount"></span>--%>
+                        <%--</th>--%>
+                        <%--<th>Sample Details</th>--%>
+                        <%--<th>Sample #</th>--%>
+                        <%--<th>Label</th>--%>
+                        <%--<th>Type</th>--%>
+                        <%--<th>Lab Batches</th>--%>
+                        <%--<th>Latest Event</th>--%>
+                        <%--<th>Event User</th>--%>
+                        <%--<th>Event Date</th>--%>
+                        <%--<th>Creation Date</th>--%>
+                        <%--</tr>--%>
+                        <%--</thead>--%>
+                        <%--<tbody>--%>
+                        <%--<c:forEach items="${actionBean.foundVessels}" var="vessel">--%>
+                        <%--<tr>--%>
+                        <%--<td width="40">--%>
+                        <%--<stripes:checkbox class="shiftCheckbox" name="selectedBatchVesselLabels"--%>
+                        <%--value="${vessel.label}"/>--%>
+                        <%--</td>--%>
+                        <%--<td>--%>
 
-                                </td>
-                                <td>${vessel.sampleInstanceCount}</td>
-                                <td>${vessel.label}</td>
-                                <td>${vessel.type.name}</td>
-                                <td>
-                                    <c:forEach items="${vessel.nearestLabBatches}" var="batch">
-                                        ${batch.batchName}
-                                    </c:forEach>
-                                </td>
-                                <td>${vessel.latestEvent.labEventType.name}</td>
-                                <td>${vessel.latestEvent.labEventType.name}</td>
-                                <td>
-                                    <fmt:formatDate value="${vessel.latestEvent.eventDate}" pattern="MM/dd/yyyy"/>
-                                </td>
-                                <td><fmt:formatDate value="${vessel.createdOn}" pattern="MM/dd/yyyy"/></td>
-                            </tr>
-                        </c:forEach>
-                        </tbody>
-                    </table>
+                        <%--</td>--%>
+                        <%--<td>${vessel.sampleInstanceCount}</td>--%>
+                        <%--<td>${vessel.label}</td>--%>
+                        <%--<td>${vessel.type.name}</td>--%>
+                        <%--<td>--%>
+                        <%--<c:forEach items="${vessel.nearestLabBatches}" var="batch">--%>
+                        <%--${batch.batchName}--%>
+                        <%--</c:forEach>--%>
+                        <%--</td>--%>
+                        <%--<td>${vessel.latestEvent.labEventType.name}</td>--%>
+                        <%--<td>${vessel.latestEvent.labEventType.name}</td>--%>
+                        <%--<td>--%>
+                        <%--<fmt:formatDate value="${vessel.latestEvent.eventDate}" pattern="MM/dd/yyyy"/>--%>
+                        <%--</td>--%>
+                        <%--<td><fmt:formatDate value="${vessel.createdOn}" pattern="MM/dd/yyyy"/></td>--%>
+                        <%--</tr>--%>
+                        <%--</c:forEach>--%>
+                        <%--</tbody>--%>
+                        <%--</table>--%>
 
                 </div>
-
-                <div class="control-group">
-                    <div class="controls" style="margin-left: 80px;">
-                        <stripes:submit name="createBatch" value="Create Batch"/>
-                    </div>
-                </div>
-
             </c:if>
         </stripes:form>
-
-
     </stripes:layout-component>
 </stripes:layout-render>

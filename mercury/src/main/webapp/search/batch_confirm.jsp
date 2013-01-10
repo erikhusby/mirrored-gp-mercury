@@ -2,18 +2,49 @@
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 
 <stripes:useActionBean var="actionBean"
-                       beanclass=[Path to Action bean class]/>
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle=[Short Title Name Here] sectionTitle=[Section Title name Here>
+<stripes:layout-render name="/layout.jsp" pageTitle="Batch Creation Confirmation" sectionTitle="Search">
 
-<stripes:layout-component name="extraHead">
-    <script type="text/javascript">
+    <stripes:layout-component name="extraHead">
+        <script type="text/javascript">
 
-    </script>
-</stripes:layout-component>
+        </script>
+    </stripes:layout-component>
 
-<stripes:layout-component name="content">
+    <stripes:layout-component name="content">
 
 
-</stripes:layout-component>
+        <div class="view-control-group control-group">
+            <label class="control-label label-form">Batch Name</label>
+
+            <div class="controls">
+                <div class="form-value">${actionBean.batch.batchName}</div>
+            </div>
+        </div>
+        <div class="view-control-group control-group">
+            <label class="control-label label-form">Summary</label>
+
+            <div class="controls">
+                <div class="form-value">${actionBean.batch.jiraTicket.jiraDetails.summary}</div>
+            </div>
+        </div>
+        <div class="view-control-group control-group">
+            <label class="control-label label-form">Description</label>
+
+            <div class="controls">
+                <div class="form-value">${actionBean.batch.jiraTicket.jiraDetails.description}</div>
+            </div>
+        </div>
+        <div class="view-control-group control-group">
+            <label class="control-label label-form">Due Date</label>
+
+            <div class="controls">
+                <div class="form-value">${actionBean.batch.jiraTicket.jiraDetails.dueDate}</div>
+            </div>
+        </div>
+
+        <stripes:layout-render name="/search/vessel_list.jsp" vessels="${actionBean.batch.startingLabVesselsList}" bean="${actionBean}"/>
+
+    </stripes:layout-component>
 </stripes:layout-render>

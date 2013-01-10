@@ -49,7 +49,7 @@
         <c:forEach items="${vessels}" var="vessel">
             <tr>
                 <td>
-                    <stripes:checkbox class="vessel-checkbox" name="selectedProductOrderBusinessKeys" value="${vessel.label}"/>
+                    <stripes:checkbox class="vessel-checkbox" name="selectedVesselLabels" value="${vessel.label}"/>
                 </td>
 
                 <td>
