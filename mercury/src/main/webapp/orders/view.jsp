@@ -65,9 +65,7 @@
                                 DRAFT
                             </c:when>
                             <c:otherwise>
-                                <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">
-                                        ${actionBean.editOrder.jiraTicketKey}
-                                </a>
+                                <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">${actionBean.editOrder.jiraTicketKey}</a>
                             </c:otherwise>
                         </c:choose>
                     </div>
