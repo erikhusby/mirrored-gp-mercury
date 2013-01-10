@@ -35,7 +35,7 @@
             <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
 
             <div class="actionButtons">
-                <stripes:submit name="placeOrder" value="Place Order"/>
+                <stripes:submit name="placeOrder" value="Place Order" class="btn"/>
             </div>
         </stripes:form>
 
