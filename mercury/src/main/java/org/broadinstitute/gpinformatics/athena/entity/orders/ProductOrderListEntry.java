@@ -1,22 +1,16 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 
 import java.io.Serializable;
 import java.util.Date;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Non-entity used for optimizing the performance of the PDO list page.
  */
 public class ProductOrderListEntry implements Serializable {
-
-    /**
-     * Real JIRA tickets IDs for PDOs have a "PDO-" prefix followed by digits.  Draft PDOs don't have a ticket ID,
-     * Graphene tests have "PDO-" followed by arbitrary text.
-     */
-    private static final Pattern PATTERN_JIRA_TICKET = Pattern.compile("^PDO-([\\d]+)$");
 
     private Long orderId;
 
@@ -188,7 +182,7 @@ public class ProductOrderListEntry implements Serializable {
             return false;
         }
 
-        return PATTERN_JIRA_TICKET.matcher(jiraTicketKey).matches();
+        return JiraTicket.PATTERN.matcher(jiraTicketKey).matches();
     }
 
 
@@ -202,14 +196,15 @@ public class ProductOrderListEntry implements Serializable {
             return null;
         }
 
-        Matcher matcher = PATTERN_JIRA_TICKET.matcher(jiraTicketKey);
+        Matcher matcher = JiraTicket.PATTERN.matcher(jiraTicketKey);
 
-        if ( ! matcher.matches() ) {
+        if ( ! matcher.matches() || ! "PDO".equals(matcher.group(JiraTicket.PATTERN_GROUP_PREFIX))) {
             return null;
         }
 
         // pluck out the numeric portion of the JIRA ticket key and convert to Integer
-        return Integer.valueOf(matcher.group(1));
+        return Integer.valueOf(matcher.group(JiraTicket.PATTERN_GROUP_NUMBER));
     }
+
 
 }

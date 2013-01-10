@@ -10,7 +10,7 @@
             $j(document).ready(function() {
                 $j('#productOrderList').dataTable( {
                     "oTableTools": ttExportDefines,
-                    "aaSorting": [[2,'desc']],
+                    "aaSorting": [[7,'desc']],
                     "aoColumns": [
                         {"bSortable": false},                   // checkbox
                         {"bSortable": true, "sType": "html"},   // Name
