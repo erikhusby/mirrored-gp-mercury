@@ -113,14 +113,7 @@
                 <label class="control-label label-form">PDM Orderable Only</label>
                 <div class="controls">
                     <div class="form-value">
-                        <c:choose>
-                            <c:when test="${actionBean.editProduct.pdmOrderableOnly}">
-                                <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
-                            </c:when>
-                            <c:otherwise>
-                                No
-                            </c:otherwise>
-                        </c:choose>
+                        ${actionBean.editProduct.pdmOrderableOnly ? "Yes" : "No"}
                     </div>
                 </div>
             </div>
@@ -173,9 +166,6 @@
                         <td>${addOnProduct.productFamily.name}</td>
                         <td>
                             ${addOnProduct.primaryPriceItem.displayName}
-                            <c:if test="${addOnProduct.available}">
-                                <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
-                            </c:if>
                         </td>
                     </tr>
                 </c:forEach>

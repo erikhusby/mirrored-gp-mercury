@@ -14,13 +14,14 @@
                 checkboxClass: 'vessel-checkbox'});
             });
 
-        function showVesselVisualizer(div, label) {
-            $j('#' + div).load('${ctxpath}/view/vesselView.action?vesselLabel=' + label);
-            $j('#' + div).show();
+        function showVesselVisualizer(label) {
+            $j('#viewerDiv').load('${ctxpath}/view/vesselView.action?vesselLabel=' + label);
+            $j('#viewerDiv').show();
         }
 
-        function showSampleVisualizer(div, label) {
-            $j('#' + div).show();
+        function showSampleVisualizer(label) {
+            $j('#viewerDiv').load('${ctxpath}/view/sampleView.action?vesselLabel=' + label);
+            $j('#viewerDiv').show();
         }
 
     </script>
@@ -53,12 +54,12 @@
                 </td>
 
                 <td>
-                    <a href="javascript:showVesselVisualizer('vesselViewerDiv', '${vessel.label}')">
+                    <a href="javascript:showVesselVisualizer('${vessel.label}')">
                         <img width="30" height="30" name="" title="show plate view" src="${ctxpath}/images/plate.png"/>
                     </a>
                 </td>
                 <td>
-                    <a href="javascript:showSampleVisualizer('sampleViewerDiv', '${vessel.label}')">
+                    <a href="javascript:showSampleVisualizer('${vessel.label}')">
                         <img width="30" height="30" name="" title="show sample list" src="${ctxpath}/images/list.png"/>
                     </a>
                 </td>
@@ -100,8 +101,5 @@
         </tbody>
     </table>
 
-    <div id="vesselViewerDiv" style="display:none">
-    </div>
-    <div id="sampleViewerDiv" style="display:none">
-    </div>
+    <div id="viewerDiv" style="display:none"> </div>
 </stripes:layout-definition>
