@@ -29,7 +29,6 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
-import java.util.Map;
 
 /*
  * This class is a core class to extend Stripes actions from, providing some basic functionality for
@@ -64,12 +63,6 @@ public class CoreActionBean implements ActionBean {
 
     @Inject
     private BuildInfoBean buildInfoBean;
-
-    // The full name map and the user stuff after this are here to allow any action bean to deal with full names.
-    // Ideally, mercury would just have simple, quick access to its user list. Instead, we have a singleton cache
-    // of users. Since they are singletons, injecting here does not have huge impact. The full name map is only
-    // instituted when needed for lists that may access many names
-    private Map<Long, String> fullNameMap;
 
     @Inject
     private UserBean userBean;
