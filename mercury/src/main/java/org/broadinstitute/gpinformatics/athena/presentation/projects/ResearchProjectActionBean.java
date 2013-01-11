@@ -228,7 +228,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     /**
-     * The string paramater name of the business key.
+     * The string parameter name of the business key.
      *
      * @return
      */
