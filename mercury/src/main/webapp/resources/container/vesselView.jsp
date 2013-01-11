@@ -5,23 +5,31 @@
 
 <style type="text/css">
     .vvCell {
-        margin-top: 3px;
+        padding: 2px;
+        vertical-align: top;
+        height: 100px;
+    }
+
+    .vvWell {
         background-color: #e3e3e3;
         border-radius: 20px;
-        border-style: solid;
-        border-width: 1px;
-        height: 50px;
-        vertical-align: top;
+        height: 100%;
     }
 
     .vvInfo {
-        margin: 8px;
+        padding-left: 5px;
+        padding-right: 5px;
+        padding-bottom: 5px;
+        font-size: x-small;
     }
 
     .vvName {
+        border-top-left-radius: 20px;
+        border-top-right-radius: 20px;
         padding-bottom: 3px;
         text-decoration: underline;
         text-align: center;
+        background-color: #bfbfbf;
     }
 
     .vvTable th {
@@ -35,19 +43,22 @@
         $j('.vvCheckbox').enableCheckboxRangeSelection({
             checkAllClass: 'vvCheckAll',
             countDisplayClass: 'vvCheckedCount',
-            checkboxClass: 'vvCheckbox'});
+            checkboxClass: 'vvCheckbox'
+        });
     });
 
     function sectionCheck(sectionClass) {
         var currentCheckValue = $j('#' + sectionClass + '-head').attr('checked');
 
+        // Set all the col or row classes to the opposite of the current state desired by the header checkbox
         if (currentCheckValue == undefined) {
-            $j('.' + sectionClass).removeAttr('checked');
-            $j('.vvCheckedCount').updateCheckCount();
-        } else {
             $j('.' + sectionClass).attr('checked', currentCheckValue);
-            $j('.vvCheckedCount').updateCheckCount();
+        } else {
+            $j('.' + sectionClass).removeAttr('checked');
         }
+
+        // NOW, do a click to set to the proper choice AND so that it updates the count appropriately
+        $j('.' + sectionClass).click();
     }
 </script>
 
@@ -73,15 +84,17 @@
             </th>
             <c:forEach var="column" items="${actionBean.vessel.vesselGeometry.columnNames}" varStatus="colStatus">
                 <td class="vvCell">
-                    <div class="vvName">
-                        <input type="checkbox" class="vvCheckbox row-${rowStatus.index} col-${colStatus.index}" style="float:none;"
-                                          name="vesselLabel" value="${actionBean.vessel.label}"/>
-                        ${row}${column}
-                    </div>
-                    <div class="vvInfo">
-                        <c:forEach var="sample" items="${actionBean.samplesAtPosition(row, column)}">
-                            ${sample.startingSample.sampleKey}
-                        </c:forEach>
+                    <div class="vvWell">
+                        <div class="vvName">
+                            <input type="checkbox" class="vvCheckbox row-${rowStatus.index} col-${colStatus.index}" style="float:none;"
+                                              name="vesselLabel" value="${actionBean.vessel.label}"/>
+                            ${row}${column}
+                        </div>
+                        <div class="vvInfo">
+                            <c:forEach var="sample" items="${actionBean.samplesAtPosition(row, column)}">
+                                ${sample.startingSample.sampleKey}
+                            </c:forEach>
+                        </div>
                     </div>
                 </td>
             </c:forEach>
