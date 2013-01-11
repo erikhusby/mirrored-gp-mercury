@@ -216,6 +216,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         editResearchProject.populateIrbs(IrbConverter.getIrbs(irbList));
     }
 
+    @HandlesEvent("view")
     public Resolution view() {
         return new ForwardResolution(PROJECT_VIEW_PAGE);
     }
