@@ -64,13 +64,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private FundingListBean fundingList;
 
-    @Validate(required = true, on={EDIT_ACTION, VIEW_ACTION})
+    @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION})
     private String researchProject;
 
     @ValidateNestedProperties({
-            @Validate(field = "title", maxlength = 4000, on = {SAVE_ACTION}),
-            @Validate(field = "synopsis", maxlength = 4000, on = {SAVE_ACTION}),
-            @Validate(field = "comments", maxlength = 2000, on = {SAVE_ACTION})
+            @Validate(field = "title", label = "Project", required = true, maxlength = 4000, on = {SAVE_ACTION}),
+            @Validate(field = "synopsis", label = "Synopsis", required = true, maxlength = 4000, on = {SAVE_ACTION}),
+            @Validate(field = "irbNotes", label = "IRB Notes", required = false, maxlength = 255, on = {SAVE_ACTION}),
+            @Validate(field = "comments", label = "Comments", maxlength = 2000, on = {SAVE_ACTION})
     })
     private ResearchProject editResearchProject;
 
@@ -93,6 +94,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private Map<String, Long> projectOrderCounts;
 
     // These are the fields for catching the input tokens
+    @Validate(required = true, label = "Project Managers", on = {SAVE_ACTION})
     @Inject
     private UserTokenInput projectManagerList;
 
