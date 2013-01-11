@@ -6,13 +6,16 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @UrlBinding(value = "/view/plasticHistoryView.action")
 public class PlasticHistoryViewActionBean extends CoreActionBean {
@@ -21,10 +24,22 @@ public class PlasticHistoryViewActionBean extends CoreActionBean {
     private MercurySampleDao mercurySampleDao;
     @Inject
     private LabVesselDao labVesselDao;
+    @Inject
+    private LabBatchDAO labBatchDAO;
 
     private static final String VIEW_PAGE = "/resources/sample/plasticHistoryView.jsp";
 
     private String sampleKey;
+
+    private String batchKey;
+
+    public String getBatchKey() {
+        return batchKey;
+    }
+
+    public void setBatchKey(String batchKey) {
+        this.batchKey = batchKey;
+    }
 
     public String getSampleKey() {
         return sampleKey;
@@ -45,16 +60,24 @@ public class PlasticHistoryViewActionBean extends CoreActionBean {
      *
      * @return a list of vessels that represents the plastic history of the selected sample.
      */
-    public List<LabVessel> getPlasticHistory() {
-        List<LabVessel> targetVessels = new ArrayList<LabVessel>();
-        MercurySample selectedSample = mercurySampleDao.findBySampleKey(sampleKey);
-        if (selectedSample != null) {
-            List<LabVessel> vessels = labVesselDao.findBySampleKey(selectedSample.getSampleKey());
-
-            for (LabVessel vessel : vessels) {
-                targetVessels.addAll(vessel.getDescendantVessels());
+    public Set<LabVessel> getPlasticHistory() {
+        Set<LabVessel> targetVessels = new HashSet<LabVessel>();
+        if (sampleKey != null) {
+            MercurySample selectedSample = mercurySampleDao.findBySampleKey(sampleKey);
+            if (selectedSample != null) {
+                List<LabVessel> vessels = labVesselDao.findBySampleKey(selectedSample.getSampleKey());
+                for (LabVessel vessel : vessels) {
+                    targetVessels.addAll(vessel.getDescendantVessels());
+                }
             }
-
+        } else if (batchKey != null) {
+            LabBatch batch = labBatchDAO.findByBusinessKey(batchKey);
+            if (batch != null) {
+                Set<LabVessel> vessels = batch.getStartingLabVessels();
+                for (LabVessel vessel : vessels) {
+                    targetVessels.addAll(vessel.getDescendantVessels());
+                }
+            }
         }
         return targetVessels;
     }

@@ -117,7 +117,7 @@
                             <td>${order.productFamilyName}</td>
                             <td>${order.orderStatus}</td>
                             <td>${order.researchProjectTitle}</td>
-                            <td>${actionBean.fullNameMap[order.ownerId]}</td>
+                            <td>${actionBean.getUserFullName(order.ownerId)}</td>
                             <td>
                                 <fmt:formatDate value="${order.updatedDate}"/>
                             </td>

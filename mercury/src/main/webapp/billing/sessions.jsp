@@ -41,7 +41,7 @@
                                     ${session.businessKey}
                                 </stripes:link>
                             </td>
-                            <td>${actionBean.fullNameMap[session.createdBy]}</td>
+                            <td>${actionBean.getUserFullName(session.createdBy)}</td>
                             <td>
                                 <fmt:formatDate value="${session.createdDate}"/>
                             </td>

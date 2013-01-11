@@ -146,14 +146,14 @@
                     </div>
                 </div>
 
-                <c:if test="${actionBean.researchProjectCreatorString != null}">
+                <c:if test="${!actionBean.creating}">
                     <div class="control-group">
                         <stripes:label for="createdBy" class="control-label">Created By</stripes:label>
 
                         <div class="controls">
                             <div class="form-value">
-                                    ${actionBean.researchProjectCreatorString} on <fmt:formatDate
-                                    value="${actionBean.editResearchProject.createdDate}"/>
+                                    ${actionBean.getUserFullName(actionBean.editResearchProject.createdBy)}
+                                on <fmt:formatDate value="${actionBean.editResearchProject.createdDate}"/>
                             </div>
                         </div>
                     </div>

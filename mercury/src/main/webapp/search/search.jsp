@@ -107,6 +107,8 @@
                     <div id="sampleDiv">
                 </c:otherwise>
             </c:choose>
+            <stripes:layout-render name="/resources/sample/sampleListView.jsp" samples="${actionBean.foundSamples}"
+                                   bean="${actionBean}" showCheckboxes="false"/>
             </div>
         </c:if>
 
@@ -154,6 +156,8 @@
                     <div id="batchDiv">
                 </c:otherwise>
             </c:choose>
+            <stripes:layout-render name="/resources/batch/batchListView.jsp" batches="${actionBean.foundBatches}"
+                                   bean="${actionBean}" showCheckboxes="false"/>
             </div>
         </c:if>
     </stripes:layout-component>
