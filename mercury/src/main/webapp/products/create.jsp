@@ -1,3 +1,4 @@
+<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -105,8 +106,6 @@
                     <div class="controls">
                         <stripes:text id="availabilityDate" name="editProduct.availabilityDate" class="defaultText"
                             title="Enter date (MM/dd/yyyy)" value="${actionBean.editProduct.availabilityDate}" formatPattern="MM/dd/yyyy" />
-
-                    </div>
                 </div>
 
                 <div class="control-group">
@@ -208,35 +207,37 @@
                     </div>
                 </div>
 
-                <div class="control-group">
-                    <stripes:label for="useAutomatedBilling" class="control-label">
-                        Billing
-                    </stripes:label>
-                    <div class="controls">
-                        <stripes:checkbox id="useAutomatedBilling" name="editProduct.useAutomatedBilling" onchange="updateBillingRules()" style="margin-top: 10px;"/>
-                        <stripes:label for="useAutomatedBilling" class="control-label" style="width:auto;">
-                            Automated
+                <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+                    <div class="control-group">
+                        <stripes:label for="useAutomatedBilling" class="control-label">
+                            Billing
                         </stripes:label>
+                        <div class="controls">
+                            <stripes:checkbox id="useAutomatedBilling" name="editProduct.useAutomatedBilling" onchange="updateBillingRules()" style="margin-top: 10px;"/>
+                            <stripes:label for="useAutomatedBilling" class="control-label" style="width:auto;">
+                                Automated
+                            </stripes:label>
+                        </div>
+
+                        <div id="billingRules" style="clear:both;" class="controls">
+                            <stripes:label for="requirementsAttribute" class="control-label" style="width: auto; margin-right:5px;">
+                                Bill When
+                            </stripes:label>
+
+                            <stripes:text id="requirementsAttribute" name="editProduct.requirement.attribute"
+                                          class="defaultText" title="Attribute to compare"/>
+                            &#160;
+
+                            <stripes:select style="width:50px;" name="editProduct.requirement.operator">
+                                <stripes:options-enumeration enum="org.broadinstitute.gpinformatics.athena.entity.products.BillingRequirement.Operator" label="label"/>
+                            </stripes:select>
+                            &#160;
+
+                            <stripes:text id="requirementsValue" name="editProduct.requirement.value"
+                                          class="defaultText" title="Value to compare"/>
+                        </div>
                     </div>
-
-                    <div id="billingRules" style="clear:both;" class="controls">
-                        <stripes:label for="requirementsAttribute" class="control-label" style="width: auto; margin-right:5px;">
-                            Bill When
-                        </stripes:label>
-
-                        <stripes:text id="requirementsAttribute" name="editProduct.requirement.attribute"
-                                      class="defaultText" title="Attribute to compare"/>
-                        &#160;
-
-                        <stripes:select style="width:50px;" name="editProduct.requirement.operator">
-                            <stripes:options-enumeration enum="org.broadinstitute.gpinformatics.athena.entity.products.BillingRequirement.Operator" label="label"/>
-                        </stripes:select>
-                        &#160;
-
-                        <stripes:text id="requirementsValue" name="editProduct.requirement.value"
-                                      class="defaultText" title="Value to compare"/>
-                    </div>
-                </div>
+                </security:authorizeBlock>
 
                 <div class="control-group">
                     <div class="controls">

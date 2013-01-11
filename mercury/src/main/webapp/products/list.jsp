@@ -1,4 +1,5 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
@@ -21,12 +22,13 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <p>
-            <stripes:link title="New Product" beanclass="${actionBean.class.name}" event="create" class="pull-right">
-                <span class="icon-tags"></span> New Product
-            </stripes:link>
-        </p>
-
+        <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
+            <p>
+                <stripes:link title="New Product" beanclass="${actionBean.class.name}" event="create" class="pull-right">
+                    <span class="icon-tags"></span> New Product
+                </stripes:link>
+            </p>
+        </security:authorizeBlock>
         <div class="clearfix"></div>
 
         <table id="productList" class="table simple">

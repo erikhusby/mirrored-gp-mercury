@@ -17,9 +17,7 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.submitString}"
                        sectionTitle="${actionBean.submitString} ${actionBean.editReagentDesign.designName}">
 
-    <stripes:layout-component name="extraHead">
-
-    </stripes:layout-component>
+    <stripes:layout-component name="extraHead"></stripes:layout-component>
 
     <stripes:layout-component name="content">
 
@@ -78,7 +76,7 @@
                                     <c:set var="saveAction" value="Update"/>
                                 </c:otherwise>
                             </c:choose>
-                            <stripes:submit name="save" value="${saveAction}"/>
+                            <stripes:submit name="save" class="btn btn-primary" value="${saveAction}"/>
                         </div>
                         <div class="offset">
                             <c:choose>

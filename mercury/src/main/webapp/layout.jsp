@@ -43,7 +43,10 @@
 
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.tokeninput-1.6.0.js"></script>
 
+
         <link rel="Shortcut Icon" type="image/x-icon" href="${ctxpath}/favicon.ico"/>
+
+        <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Carrois+Gothic+SC"/>
         <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/css/bootstrap.css"/>
         <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/scripts/DataTables-1.9.4/media/css/jquery.dataTables.css"/>
         <link rel="stylesheet" type="text/css" href="${ctxpath}/resources/scripts/DataTables-1.9.4/extras/TableTools/media/css/TableTools.css"/>

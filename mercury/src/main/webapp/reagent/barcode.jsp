@@ -45,11 +45,10 @@
                 <div class="controls">
                     <div class="row-fluid">
                         <div class="span2">
-                            <stripes:submit name="barcodeReagent" value="Save"/>
+                            <stripes:submit name="barcodeReagent" class="btn btn-primary" value="Save"/>
                         </div>
                         <div class="offset">
-                            <stripes:link beanclass="${actionBean.class.name}"
-                                          event="list">Cancel</stripes:link>
+                            <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
                         </div>
                     </div>
                 </div>
