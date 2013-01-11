@@ -1,3 +1,4 @@
+<%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib prefix="stripes" uri="http://stripes.sourceforge.net/stripes.tld" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <stripes:useActionBean var="actionBean"
@@ -41,9 +42,9 @@
 <script type="text/javascript">
     $(document).ready(function () {
         $j('.vvCheckbox').enableCheckboxRangeSelection({
-            checkAllClass: 'vvCheckAll',
-            countDisplayClass: 'vvCheckedCount',
-            checkboxClass: 'vvCheckbox'
+            checkAllClass:'vvCheckAll',
+            countDisplayClass:'vvCheckedCount',
+            checkboxClass:'vvCheckbox'
         });
     });
 
@@ -60,37 +61,54 @@
         // NOW, do a click to set to the proper choice AND so that it updates the count appropriately
         $j('.' + sectionClass).click();
     }
-</script>
 
+    function showHeatMapOptions() {
+        $j('#heatMapDiv').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
+        $j('#heatMapDiv').load('${ctxpath}/view/heatMap.action?jqueryClass=.vvInfo');
+        $j('#heatMapDiv').show();
+    }
+</script>
+<a href="javascript:showHeatMapOptions()">Add Heat Map</a>
+
+<div id="heatMapDiv"></div>
 <table cellspacing="5" class="vvTable">
     <!-- Need a row of checkboxes for select all and then each select all column box -->
     <tr>
         <th width="40">
-            <span id="vvCheckedCount" class="vvCheckedCount"></span><input type="checkbox" class="vvCheckAll" style="float:right;"/>
+            <span id="vvCheckedCount" class="vvCheckedCount"></span><input type="checkbox" class="vvCheckAll"
+                                                                           style="float:right;"/>
         </th>
 
         <c:forEach var="column" items="${actionBean.vessel.vesselGeometry.columnNames}" varStatus="colStatus">
             <th>
-                ${column}
-                <input id="col-${colStatus.index}-head" type="checkbox" style="float:none;" onchange="sectionCheck('col-' + ${colStatus.index})"/>
+                    ${column}
+                <input id="col-${colStatus.index}-head" type="checkbox" style="float:none;"
+                       onchange="sectionCheck('col-' + ${colStatus.index})"/>
             </th>
         </c:forEach>
     </tr>
     <c:forEach var="row" items="${actionBean.vessel.vesselGeometry.rowNames}" varStatus="rowStatus">
         <tr>
             <th style="text-align: center">
-                ${row}
-                <input id="row-${rowStatus.index}-head" type="checkbox" style="float: right;" onchange="sectionCheck('row-' + ${rowStatus.index})"/>
+                    ${row}
+                <input id="row-${rowStatus.index}-head" type="checkbox" style="float: right;"
+                       onchange="sectionCheck('row-' + ${rowStatus.index})"/>
             </th>
             <c:forEach var="column" items="${actionBean.vessel.vesselGeometry.columnNames}" varStatus="colStatus">
                 <td class="vvCell">
                     <div class="vvWell">
                         <div class="vvName">
-                            <input type="checkbox" class="vvCheckbox row-${rowStatus.index} col-${colStatus.index}" style="float:none;"
-                                              name="vesselLabel" value="${actionBean.vessel.label}"/>
-                            ${row}${column}
+                            <input type="checkbox" class="vvCheckbox row-${rowStatus.index} col-${colStatus.index}"
+                                   style="float:none;"
+                                   name="vesselLabel" value="${actionBean.vessel.label}"/>
+                                ${row}${column}
                         </div>
                         <div class="vvInfo">
+                            <div style="display:none">
+                                <!-- this is just here to do the demo heatmap we need to figure out how to
+                                add values for heatmapping dynamically-->
+                                    ${rowStatus.index * 12 + colStatus.index}
+                            </div>
                             <c:forEach var="sample" items="${actionBean.samplesAtPosition(row, column)}">
                                 ${sample.startingSample.sampleKey}
                             </c:forEach>
