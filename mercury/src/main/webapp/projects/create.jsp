@@ -92,6 +92,7 @@
     <stripes:layout-component name="content">
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
+            <stripes:hidden name="submitString"/>
             <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
             <div class="form-horizontal">
                 <div class="control-group">
@@ -205,7 +206,7 @@
                         <div class="span1">
                             <c:choose>
                                 <c:when test="${actionBean.creating}">
-                                    <stripes:link href="${ctxpath}/projects/product.action?list=">Cancel</stripes:link>
+                                    <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
                                 </c:when>
                                 <c:otherwise>
                                     <stripes:link beanclass="${actionBean.class.name}" event="view">
