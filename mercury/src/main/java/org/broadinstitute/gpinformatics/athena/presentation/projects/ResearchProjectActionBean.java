@@ -34,9 +34,9 @@ import java.util.Map;
  *
  * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
  */
-@UrlBinding(ResearchProjectActionBean.RESEARCH_PROJECT_URL_BINDING)
+@UrlBinding(ResearchProjectActionBean.ACTIONBEAN_URL_BINDING)
 public class ResearchProjectActionBean extends CoreActionBean {
-    public static final String RESEARCH_PROJECT_URL_BINDING = "/projects/project.action";
+    public static final String ACTIONBEAN_URL_BINDING = "/projects/project.action";
     public static final String RESEARCH_PROJECT_PARAMETER = "researchProject";
 
     private static final int IRB_NAME_MAX_LENGTH = 250;

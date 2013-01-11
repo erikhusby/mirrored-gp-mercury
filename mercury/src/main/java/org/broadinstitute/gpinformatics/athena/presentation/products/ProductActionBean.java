@@ -26,8 +26,10 @@ import java.util.List;
 /**
  * This class supports all the actions done on products
  */
-@UrlBinding("/products/product.action")
+@UrlBinding(ProductActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductActionBean extends CoreActionBean {
+    public static final String ACTIONBEAN_URL_BINDING = "/products/product.action";
+    public static final String PRODUCT_PARAMETER = "product";
 
     private static final String CREATE_PRODUCT = CoreActionBean.CREATE + " New Product";
     private static final String EDIT_PRODUCT = CoreActionBean.EDIT + " Product: ";
@@ -84,7 +86,7 @@ public class ProductActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, SAVE_ACTION, "addOnsAutocomplete"})
     public void init() {
-        product = getContext().getRequest().getParameter("product");
+        product = getContext().getRequest().getParameter(PRODUCT_PARAMETER);
         if (!StringUtils.isBlank(product)) {
             editProduct = productDao.findByBusinessKey(product);
         } else {
@@ -204,7 +206,7 @@ public class ProductActionBean extends CoreActionBean {
 
         productDao.persist(editProduct);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
-        return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter("product", editProduct.getPartNumber());
+        return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter(PRODUCT_PARAMETER, editProduct.getPartNumber());
     }
 
     private void populateTokenListFields() {
