@@ -16,11 +16,13 @@
         });
 
         function showVesselVisualizer(label) {
+            $j('#viewerDiv').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
             $j('#viewerDiv').load('${ctxpath}/view/vesselView.action?vesselLabel=' + label);
             $j('#viewerDiv').show();
         }
 
         function showSampleVisualizer(label) {
+            $j('#viewerDiv').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
             $j('#viewerDiv').load('${ctxpath}/view/vesselSampleListView.action?vesselLabel=' + label);
             $j('#viewerDiv').show();
         }
