@@ -108,7 +108,7 @@
                     <stripes:label for="synopsis" class="control-label">Synopsis *</stripes:label>
 
                     <div class="controls">
-                        <stripes:text id="synopsis" name="editResearchProject.synopsis" class="defaultText" style="width:390"
+                        <stripes:textarea id="synopsis" rows="5" cols="100" name="editResearchProject.synopsis" class="defaultText" style="width:390"
                                       title="Enter the synopsis of the project" value="${actionBean.editResearchProject.synopsis}"/>
                     </div>
                 </div>
