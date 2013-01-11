@@ -52,6 +52,7 @@
     <stripes:layout-component name="content">
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
+            <stripes:hidden name="submitString"/>
             <div class="form-horizontal">
                 <stripes:hidden name="product"/>
                 <div class="control-group">
