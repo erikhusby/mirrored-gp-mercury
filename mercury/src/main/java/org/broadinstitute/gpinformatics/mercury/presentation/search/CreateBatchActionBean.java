@@ -25,7 +25,7 @@ import java.util.Set;
  *         Date: 1/8/13
  *         Time: 3:54 PM
  */
-@UrlBinding("/search/create_batch.action")
+@UrlBinding("/search/CreateBatch.action")
 public class CreateBatchActionBean extends CoreActionBean {
     private static final String BATCH_CREATE_PAGE = "/search/create_batch.jsp";
     private static final String BATCH_CONFIRM_PAGE = "/search/batch_confirm.jsp";
@@ -53,7 +53,7 @@ public class CreateBatchActionBean extends CoreActionBean {
     @Inject
     private JiraLink jiraLink;
 
-    @Validate(required = true, on = {SEARCH_ACTION}, field = "searchKey")
+    @Validate(required = true, on = {SEARCH_ACTION})
     private String searchKey;
 
     private String batchLabel;
@@ -65,18 +65,17 @@ public class CreateBatchActionBean extends CoreActionBean {
     private List<String> selectedVesselLabels;
     private List<LabVessel> selectedBatchVessels;
 
-    @Validate(required = true, on = {CREATE_BATCH_ACTION}, field = "jiraInputType")
+    @Validate(required = true, on = {CREATE_BATCH_ACTION})
     private String jiraInputType = EXISTING_TICKET;
 
     @Validate(required = true, on = {CREATE_BATCH_ACTION},
-              expression = "jiraInputType == EXISTING_TICKET",
-              field = "jiraTicketId")
+              expression = "jiraInputType == EXISTING_TICKET")
     private String jiraTicketId;
 
     private String important;
     private String description;
     @Validate(required = true, on = {CREATE_BATCH_ACTION},
-            expression = "jiraInputType != EXISTING_TICKET", field = "summary")
+            expression = "jiraInputType != EXISTING_TICKET")
     private String summary;
     private Date dueDate;
 
