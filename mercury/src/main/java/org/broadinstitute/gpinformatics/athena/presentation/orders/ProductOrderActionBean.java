@@ -91,12 +91,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrderListEntry> allProductOrders;
 
-    @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION, SAVE_ACTION})
+    @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
     private String productOrder;
 
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
-        @Validate(field="title", required = true, maxlength=255, on={SAVE_ACTION})
+        @Validate(field="title", required = true, maxlength=255, on={SAVE_ACTION}, label = "Name")
     })
     private ProductOrder editOrder;
 
