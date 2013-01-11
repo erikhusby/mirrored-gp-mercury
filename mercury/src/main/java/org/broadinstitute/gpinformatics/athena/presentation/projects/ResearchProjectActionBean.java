@@ -94,7 +94,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private Map<String, Long> projectOrderCounts;
 
     // These are the fields for catching the input tokens
-    @Validate(required = true, label = "Project Managers", on = {SAVE_ACTION})
+    @Validate(expression = "this!=null || !editResearchProject.projectManagers.isEmpty", label = "Project Managers", on = {SAVE_ACTION})
     @Inject
     private UserTokenInput projectManagerList;
 
