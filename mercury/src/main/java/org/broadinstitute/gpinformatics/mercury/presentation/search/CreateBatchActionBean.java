@@ -25,10 +25,14 @@ import java.util.Set;
  *         Date: 1/8/13
  *         Time: 3:54 PM
  */
-@UrlBinding("/search/CreateBatch.action")
+@UrlBinding(CreateBatchActionBean.ACTIONBEAN_URL_BINDING)
 public class CreateBatchActionBean extends CoreActionBean {
+    public static final String ACTIONBEAN_URL_BINDING = "/batch/create.action";
+
     private static final String BATCH_CREATE_PAGE = "/search/create_batch.jsp";
+
     private static final String BATCH_CONFIRM_PAGE = "/search/batch_confirm.jsp";
+
     public static final String CREATE_BATCH_ACTION = "createBatch";
     public static final String VIEW_ACTION = "view";
     public static final String CONFIRM_ACTION = "confirm";

@@ -52,6 +52,7 @@
     <stripes:layout-component name="content">
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
+            <stripes:hidden name="submitString"/>
             <div class="form-horizontal">
                 <stripes:hidden name="product"/>
                 <div class="control-group">
@@ -103,8 +104,8 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="availabilityDate" name="editProduct.availabilityDate" class="defaultText"
-                            title="enter date (MM/dd/yyyy)"><fmt:formatDate
-                                value="${actionBean.editProduct.availabilityDate}" dateStyle="short"/></stripes:text>
+                            title="Enter date (MM/dd/yyyy)" value="${actionBean.editProduct.availabilityDate}" formatPattern="MM/dd/yyyy" />
+
                     </div>
                 </div>
 
@@ -113,9 +114,9 @@
                         Discontinued Date
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="discontinuedDate" name="editProduct.discontinuedDate" class="defaultText"
-                            title="enter date (MM/dd/yyyy)"><fmt:formatDate
-                                value="${actionBean.editProduct.discontinuedDate}" dateStyle="short"/></stripes:text>
+                        <stripes:text id="discontinuedDate" name="editProduct.discontinuedDate" class="defaultText" title="Enter date (MM/dd/yyyy)"
+                                      value="${actionBean.editProduct.discontinuedDate}" formatPattern="MM/dd/yyyy" />
+
                     </div>
                 </div>
 
