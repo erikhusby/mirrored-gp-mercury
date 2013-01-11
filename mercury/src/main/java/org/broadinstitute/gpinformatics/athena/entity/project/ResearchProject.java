@@ -163,6 +163,9 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         this.createdBy = creator;
         this.modifiedBy = creator;
         this.irbNotEngaged = irbNotEngaged;
+        if (creator != null) {
+            addPerson(RoleType.PM, creator);
+        }
     }
 
     // Getters
