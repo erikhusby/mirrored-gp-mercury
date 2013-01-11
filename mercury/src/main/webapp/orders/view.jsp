@@ -1,4 +1,5 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -41,11 +42,13 @@
             </div>
         </stripes:form>
 
+        <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
         <stripes:link title="Click to edit ${actionBean.editOrder.title}"
             beanclass="${actionBean.class.name}" event="edit" class="pull-right">
             <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
             <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
         </stripes:link>
+        </security:authorizeBlock>
 
         <div style="both:clear"> </div>
 

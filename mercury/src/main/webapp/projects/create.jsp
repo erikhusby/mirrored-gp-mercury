@@ -92,6 +92,7 @@
     <stripes:layout-component name="content">
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
+            <stripes:hidden name="submitString"/>
             <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
             <div class="form-horizontal">
                 <div class="control-group">
@@ -107,7 +108,7 @@
                     <stripes:label for="synopsis" class="control-label">Synopsis *</stripes:label>
 
                     <div class="controls">
-                        <stripes:text id="synopsis" name="editResearchProject.synopsis" class="defaultText" style="width:390"
+                        <stripes:textarea id="synopsis" rows="5" cols="100" name="editResearchProject.synopsis" class="defaultText" style="width:390"
                                       title="Enter the synopsis of the project" value="${actionBean.editResearchProject.synopsis}"/>
                     </div>
                 </div>
@@ -182,7 +183,7 @@
                     <div class="controls">
                         <stripes:text id="irbs" name="irbList" />
                         <p>
-                            <stripes:checkbox id="irbNotEngaged" name="irbList"/>&nbsp;<stripes:label for="irbNotEngaged" style="display:inline;">IRB Not Engaged</stripes:label>
+                            <stripes:checkbox id="irbNotEngaged" name="editResearchProject.irbNotEngaged"/>&nbsp;<stripes:label for="irbNotEngaged" style="display:inline;">IRB Not Engaged</stripes:label>
                         </p>
                     </div>
                 </div>
@@ -205,7 +206,7 @@
                         <div class="span1">
                             <c:choose>
                                 <c:when test="${actionBean.creating}">
-                                    <stripes:link href="${ctxpath}/projects/product.action?list=">Cancel</stripes:link>
+                                    <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
                                 </c:when>
                                 <c:otherwise>
                                     <stripes:link beanclass="${actionBean.class.name}" event="view">

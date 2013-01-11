@@ -1,3 +1,4 @@
+<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -6,12 +7,14 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Details for #{actionBean.editProduct.partNumber}" sectionTitle="Details for #{actionBean.editProduct.partNumber}">
 
     <stripes:layout-component name="content">
-        <p>
-            <stripes:link title="Click to edit ${actionBean.editProduct.productName}" href="${ctxpath}/products/product.action?edit" class="pull-right">
-                <span class="icon-tags"></span> Edit product
-                <stripes:param name="product" value="${actionBean.editProduct.partNumber}"/>
-            </stripes:link>
-        </p>
+        <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
+            <p>
+                <stripes:link title="Click to edit ${actionBean.editProduct.productName}" href="${ctxpath}/products/product.action?edit" class="pull-right">
+                    <span class="icon-tags"></span> Edit product
+                    <stripes:param name="product" value="${actionBean.editProduct.partNumber}"/>
+                </stripes:link>
+            </p>
+        </security:authorizeBlock>
 
         <div class="form-horizontal">
 
@@ -119,6 +122,7 @@
                 </div>
             </div>
 
+            <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Billing</label>
                 <div class="controls">
@@ -139,6 +143,8 @@
                     </div>
                 </div>
             </c:if>
+            </security:authorizeBlock>
+
         </div>
 
         <div class="tableBar">

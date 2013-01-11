@@ -152,7 +152,16 @@
                     </div>
                 </div>
             </div>
+
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">IRB Notes</label>
+
+                <div class="controls">
+                    <div class="form-value">${actionBean.editResearchProject.irbNotes}</div>
+                </div>
+            </div>
         </div>
+
 
         <div class="tableBar">
             Orders

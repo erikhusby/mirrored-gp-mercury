@@ -17,7 +17,7 @@ section { margin-left: 2%; margin-right: 2% }
 a { text-decoration: underline; color: #0088CC; }
 a.external {background-image:url("/Mercury/images/external-link.gif");background-position:right center;background-repeat:no-repeat;display:inline;padding:0 20px 0 0;}
 
-h1, h2, h3, h4, h5 {color: #644436;}
+h1, h2, h3, h4, h5 {font-family: 'Carrois Gothic SC', sans-serif; color: #644436;}
 
 label, input, button, select, textarea { font-size: 12px }
 
