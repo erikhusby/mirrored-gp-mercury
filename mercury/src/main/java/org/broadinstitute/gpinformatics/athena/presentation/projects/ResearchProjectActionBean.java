@@ -34,8 +34,10 @@ import java.util.Map;
  *
  * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
  */
-@UrlBinding("/projects/project.action")
+@UrlBinding(ResearchProjectActionBean.RESEARCH_PROJECT_URL_BINDING)
 public class ResearchProjectActionBean extends CoreActionBean {
+    public static final String RESEARCH_PROJECT_URL_BINDING = "/projects/project.action";
+    public static final String RESEARCH_PROJECT_PARAMETER = "researchProject";
 
     private static final int IRB_NAME_MAX_LENGTH = 250;
 
@@ -126,7 +128,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION})
     public void init() {
-        researchProject = getContext().getRequest().getParameter("researchProject");
+        researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
             editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
         } else {
@@ -201,7 +203,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
         researchProjectDao.persist(editResearchProject);
         addMessage("The research project '" + editResearchProject.getTitle() + "' has been saved.");
-        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION).addParameter("researchProject", editResearchProject.getBusinessKey());
+        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION).addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
     }
 
     private void populateTokenListFields() {

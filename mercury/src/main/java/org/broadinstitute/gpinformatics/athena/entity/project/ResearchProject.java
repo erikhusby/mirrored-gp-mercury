@@ -9,6 +9,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfig;
@@ -499,7 +500,10 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         MercuryConfig mercuryConfig = ServiceAccessUtility.getBean(MercuryConfig.class);
         CustomField mercuryUrlField = new CustomField(
                 submissionFields, RequiredSubmissionFields.MERCURY_URL,
-                mercuryConfig.getUrl() + "projects/view.xhtml?researchProject=" + jiraTicketKey);
+                mercuryConfig.getUrl() + ResearchProjectActionBean.RESEARCH_PROJECT_URL_BINDING + "/?" +
+                        ResearchProjectActionBean.VIEW_ACTION + "&" +
+                        ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER + "=" + jiraTicketKey);
+
         issue.updateIssue(Collections.singleton(mercuryUrlField));
     }
 
