@@ -43,8 +43,10 @@ import java.util.*;
 /**
  * This handles all the needed interface processing elements
  */
-@UrlBinding("/orders/order.action")
+@UrlBinding(ProductOrderActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductOrderActionBean extends CoreActionBean {
+    public static final String ACTIONBEAN_URL_BINDING = "/orders/order.action";
+    public static final String PRODUCT_ORDER_PARAMETER = "productOrder";
 
     private static final String CURRENT_OBJECT = "Product Order";
     public static final String CREATE_ORDER = CoreActionBean.CREATE + CURRENT_OBJECT;
@@ -116,7 +118,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, "downloadBillingTracker", SAVE_ACTION, "placeOrder"})
     public void init() {
-        productOrder = getContext().getRequest().getParameter("productOrder");
+        productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
         } else {
@@ -265,7 +267,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been placed");
-        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("productOrder", editOrder.getBusinessKey());
+        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER, editOrder.getBusinessKey());
     }
 
     private void setUserInfo() {
@@ -295,7 +297,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         productOrderDao.persist(editOrder);
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been saved.");
-        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("productOrder", editOrder.getBusinessKey());
+        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER, editOrder.getBusinessKey());
     }
 
     @HandlesEvent("downloadBillingTracker")

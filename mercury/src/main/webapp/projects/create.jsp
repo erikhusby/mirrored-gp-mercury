@@ -182,7 +182,7 @@
                     <div class="controls">
                         <stripes:text id="irbs" name="irbList" />
                         <p>
-                            <stripes:checkbox id="irbNotEngaged" name="irbList"/>&nbsp;<stripes:label for="irbNotEngaged" style="display:inline;">IRB Not Engaged</stripes:label>
+                            <stripes:checkbox id="irbNotEngaged" name="editResearchProject.irbNotEngaged"/>&nbsp;<stripes:label for="irbNotEngaged" style="display:inline;">IRB Not Engaged</stripes:label>
                         </p>
                     </div>
                 </div>

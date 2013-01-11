@@ -500,7 +500,7 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         MercuryConfig mercuryConfig = ServiceAccessUtility.getBean(MercuryConfig.class);
         CustomField mercuryUrlField = new CustomField(
                 submissionFields, RequiredSubmissionFields.MERCURY_URL,
-                mercuryConfig.getUrl() + ResearchProjectActionBean.RESEARCH_PROJECT_URL_BINDING + "/?" +
+                mercuryConfig.getUrl() + ResearchProjectActionBean.ACTIONBEAN_URL_BINDING + "?" +
                         ResearchProjectActionBean.VIEW_ACTION + "&" +
                         ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER + "=" + jiraTicketKey);
 
