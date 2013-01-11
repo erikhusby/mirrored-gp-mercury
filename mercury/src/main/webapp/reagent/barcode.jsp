@@ -36,7 +36,7 @@
             <div class="control-group">
                 <stripes:label for="reagentDesign" name="Available Reagents *" class="control-label"/>
                 <div class="controls">
-                    <stripes:text id="reagentDesign" name="reagentDesign"
+                    <stripes:text id="reagentDesign" name="reagentDesign" size="50"
                                   class="defaultText" title="Type to search for matching reagent"/>
                 </div>
             </div>
