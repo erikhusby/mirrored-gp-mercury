@@ -111,8 +111,8 @@ public class ProductWorkflowDef {
         return found;
     }
 
-    public ProductWorkflowDefVersion getEffectiveVersion() {
-        // Sort by descending effective date
+    /** Returns a list of all product defs sorted by decreasing effective date. */
+    public List<ProductWorkflowDefVersion> getWorkflowVersionsDescEffDate() {
         if (workflowVersionsDescEffDate == null) {
             workflowVersionsDescEffDate = new ArrayList<ProductWorkflowDefVersion>(productWorkflowDefVersions);
             Collections.sort(workflowVersionsDescEffDate, new Comparator<ProductWorkflowDefVersion>() {
@@ -122,11 +122,17 @@ public class ProductWorkflowDef {
                 }
             });
         }
+        return workflowVersionsDescEffDate;
+    }
 
-        Date now = new Date();
+    public ProductWorkflowDefVersion getEffectiveVersion() {
+        return getEffectiveVersion(new Date());
+    }
+
+    public ProductWorkflowDefVersion getEffectiveVersion(Date eventDate) {
         ProductWorkflowDefVersion mostRecentEffWorkflowVersion = null;
-        for (ProductWorkflowDefVersion productWorkflowDefVersion : workflowVersionsDescEffDate) {
-            if(productWorkflowDefVersion.getEffectiveDate().before(now)) {
+        for (ProductWorkflowDefVersion productWorkflowDefVersion : getWorkflowVersionsDescEffDate()) {
+            if(productWorkflowDefVersion.getEffectiveDate().before(eventDate)) {
                 mostRecentEffWorkflowVersion = productWorkflowDefVersion;
                 break;
             }

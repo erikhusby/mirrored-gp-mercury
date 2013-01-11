@@ -254,6 +254,10 @@ public class LabEvent {
         return vesselToVesselTransfers;
     }
 
+    public Long getLabEventId() {
+        return labEventId;
+    }
+
     /**
      * An "override" of the {@link org.broadinstitute.gpinformatics.mercury.entity.project.BasicProjectPlan} effectively says "From
      * this point forward in the transfer graph, consider all work

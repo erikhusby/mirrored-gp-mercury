@@ -48,7 +48,7 @@ public class ProductEtl  extends GenericEntityEtl {
      * @{inheritDoc}
      */
     @Override
-    String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         Product entity = dao.findById(Product.class, entityId);
         if (entity == null) {
             logger.info("Cannot export.  Product having id " + entityId + " no longer exists.");

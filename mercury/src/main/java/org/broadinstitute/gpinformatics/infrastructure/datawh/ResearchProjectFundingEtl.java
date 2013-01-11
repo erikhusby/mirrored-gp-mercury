@@ -36,7 +36,7 @@ public class ResearchProjectFundingEtl  extends GenericEntityEtl {
     }
 
     @Override
-    String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         ResearchProjectFunding entity = dao.getEntityManager().find(ResearchProjectFunding.class, entityId);
         if (entity == null) {
             logger.info("Cannot export.  ResearchProjectFunding having id " + entityId + " no longer exists.");

@@ -245,6 +245,10 @@ public class LabBatch {
         return batchName;
     }
 
+    public Long getLabBatchId() {
+        return labBatchId;
+    }
+
     /**
      * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
      * for Product orders

@@ -14,6 +14,7 @@ import java.util.*;
 
 abstract public class GenericEntityEtl {
     Logger logger = Logger.getLogger(this.getClass());
+    public static final String UNDEFINED_VALUE = "undefined";
 
     @Inject
     private AuditReaderDao auditReaderDao;
@@ -41,12 +42,13 @@ abstract public class GenericEntityEtl {
     /**
      * Makes a data record from selected entity fields, in a format that matches the corresponding
      * SqlLoader control file.
+     *
      * @param etlDateStr date
      * @param isDelete indicates deleted entity
      * @param entityId look up this entity
      * @return delimited SqlLoader record
      */
-    abstract String entityRecord(String etlDateStr, boolean isDelete, Long entityId);
+    abstract Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId);
 
     /**
      * Returns sqlLoader data records for entities having id in the given range.
@@ -146,8 +148,9 @@ abstract public class GenericEntityEtl {
                 changedEntityIds.removeAll(deletedEntityIds);
 
                 for (Long entityId : changedEntityIds) {
-                    String record = entityRecord(etlDateStr, false, entityId);
-                    dataFile.write(record);
+                    for (String record : entityRecord(etlDateStr, false, entityId)) {
+                        dataFile.write(record);
+                    }
                 }
 
             } else {
@@ -182,10 +185,7 @@ abstract public class GenericEntityEtl {
 
         try {
             // Writes the records.
-            //   for (String record : entityRecordsInRange(startId, endId, etlDateStr, false)) {
-
-            Collection<String> list = entityRecordsInRange(startId, endId, etlDateStr, false);
-            for (String record : list) {
+            for (String record : entityRecordsInRange(startId, endId, etlDateStr, false)) {
                 dataFile.write(record);
             }
         } catch (IOException e) {
@@ -268,7 +268,7 @@ abstract public class GenericEntityEtl {
     }
 
     /** Class to wrap/manage writing to the data file. */
-    private class DataFile {
+    protected class DataFile {
         private final String filename;
         private BufferedWriter writer = null;
         private int lineCount = 0;
@@ -301,4 +301,15 @@ abstract public class GenericEntityEtl {
             IOUtils.closeQuietly(writer);
         }
     }
+
+    /** Calculates a 64-bit Java hashCode on String. */
+    public static long hash(String string) {
+        long h = 1125899906842597L; // prime
+        int len = string.length();
+        for (int i = 0; i < len; i++) {
+            h = 31*h + string.charAt(i);
+        }
+        return h;
+    }
+
 }

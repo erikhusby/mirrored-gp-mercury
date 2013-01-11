@@ -48,7 +48,7 @@ public class PriceItemEtl  extends GenericEntityEtl {
      * @{inheritDoc}
      */
     @Override
-    String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         PriceItem entity = dao.findById(PriceItem.class, entityId);
         if (entity == null) {
             logger.info("Cannot export. PriceItem having id " + entityId + " no longer exists.");

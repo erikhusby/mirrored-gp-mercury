@@ -19,6 +19,10 @@ CURSOR im_rp_funding_cur IS SELECT * FROM im_research_project_funding WHERE is_d
 CURSOR im_rp_irb_cur IS SELECT * FROM im_research_project_irb WHERE is_delete = 'F';
 CURSOR im_rp_person_cur IS SELECT * FROM im_research_project_person WHERE is_delete = 'F';
 CURSOR im_rp_status_cur IS SELECT * FROM im_research_project_status WHERE is_delete = 'F';
+CURSOR im_jira_ticket_cur IS SELECT * FROM im_jira_ticket WHERE is_delete = 'F';
+CURSOR im_lab_batch IS SELECT * FROM im_lab_batch WHERE is_delete = 'F';
+CURSOR im_event_type IS SELECT * FROM im_event_type WHERE is_delete = 'F';
+CURSOR im_event_fact IS SELECT * FROM im_event_fact WHERE is_delete = 'F';
 
 errmsg VARCHAR2(255);
 
@@ -83,6 +87,11 @@ WHERE product_order_sample_id IN (
   SELECT product_order_sample_id FROM im_product_order_sample WHERE is_delete = 'T'
 );
 
+DELETE FROM event_fact
+WHERE event_fact_id IN (
+  SELECT event_fact_id FROM im_event_fact WHERE is_delete = 'T'
+);
+
 -- Level 1 (independent tables)
 
 DELETE FROM research_project
@@ -98,6 +107,21 @@ WHERE price_item_id IN (
 DELETE FROM product
 WHERE product_id IN (
   SELECT product_id FROM im_product WHERE is_delete = 'T'
+);
+
+DELETE FROM jira_ticket
+WHERE jira_ticket_id IN (
+  SELECT jira_ticket_id FROM im_jira_ticket WHERE is_delete = 'T'
+);
+
+DELETE FROM lab_batch
+WHERE lab_batch_id IN (
+  SELECT lab_batch_id FROM im_lab_batch WHERE is_delete = 'T'
+);
+
+DELETE FROM event_type
+WHERE event_type_id IN (
+  SELECT event_type_id FROM im_event_type WHERE is_delete = 'T'
 );
 
 COMMIT;
@@ -196,6 +220,105 @@ FOR new IN im_product_cur LOOP
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
     DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_product.dat line '||new.line_number||'  '||errmsg);
+    CONTINUE;
+  END;
+
+FOR new IN im_jira_ticket_cur LOOP
+  BEGIN
+    UPDATE jira_ticket SET
+      jira_ticket_id = new.jira_ticket_id,
+      jira_ticket_name = new.jira_ticket_name,
+      etl_date = new.etl_date
+    WHERE jira_ticket_id = new.jira_ticket_id;
+
+    INSERT INTO jira_ticket (
+      jira_ticket_id,
+      jira_ticket_name,
+      etl_date
+    ) 
+    SELECT
+      new.jira_ticket_id,
+      new.jira_ticket_name,
+      new.etl_date
+    FROM DUAL WHERE NOT EXISTS (
+      SELECT 1 FROM jira_ticket
+      WHERE jira_ticket_id = new.jira_ticket_id
+    );
+  EXCEPTION WHEN OTHERS THEN 
+    errmsg := SQLERRM;
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_jira_ticket.dat line '||new.line_number||'  '||errmsg);
+    CONTINUE;
+  END;
+
+FOR new IN im_lab_batch_cur LOOP
+  BEGIN
+    UPDATE lab_batch SET
+      lab_batch_id = new.lab_batch_id,
+      batch_name = new.batch_name,
+      is_active = new.is_active,
+      created_on = new.created_on,
+      etl_date = new.etl_date
+    WHERE lab_batch_id = new.lab_batch_id;
+
+    INSERT INTO lab_batch (
+      lab_batch_id,
+      batch_name,
+      is_active,
+      created_on,
+      etl_date
+    ) 
+    SELECT
+      new.lab_batch_id,
+      new.batch_name,
+      new.is_active,
+      new.created_on,
+      new.etl_date
+    FROM DUAL WHERE NOT EXISTS (
+      SELECT 1 FROM lab_batch
+      WHERE lab_batch_id = new.lab_batch_id
+    );
+  EXCEPTION WHEN OTHERS THEN 
+    errmsg := SQLERRM;
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_lab_batch.dat line '||new.line_number||'  '||errmsg);
+    CONTINUE;
+  END;
+
+FOR new IN im_event_type_cur LOOP
+  BEGIN
+    UPDATE event_type SET
+      event_type_id = new.event_type_id,
+      event_type = new.event_type,
+      product_name = new.product_name,
+      product_version = new.product_version,
+      process_name = new.process_name,
+      process_version = new.process_version,
+      etl_date = new.etl_date
+    WHERE event_type_id = new.event_type_id;
+
+    INSERT INTO event_type (
+      event_type_id,
+      event_type,
+      product_name,
+      product_version,
+      process_name,
+      process_version,
+      etl_date
+    ) 
+    SELECT
+      event_type_id = new.event_type_id,
+      event_type = new.event_type,
+      product_name = new.product_name,
+      product_version = new.product_version,
+      process_name = new.process_name,
+      process_version = new.process_version,
+      new.etl_date
+    FROM DUAL WHERE NOT EXISTS (
+      SELECT 1 FROM event_type
+      WHERE event_type_id = new.event_type_id
+    );
+  EXCEPTION WHEN OTHERS THEN 
+    errmsg := SQLERRM;
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_event_type.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 
@@ -537,6 +660,43 @@ FOR new IN im_po_sample_cur LOOP
   END;
 
 END LOOP;
+
+
+FOR new IN im_event_fact_cur LOOP
+  BEGIN
+    UPDATE event_fact SET
+      event_fact_id = new.event_fact_id,
+      event_type_id = new.event_type_id,
+      jira_ticket_id = new.jira_ticket_id,
+      lab_batch_id = new.lab_batch_id,
+      start_date = new.start_date,
+      etl_date = new.etl_date
+    WHERE event_fact_id = new.event_fact_id;
+
+    INSERT INTO event_fact (
+      event_fact_id,
+      event_type_id,
+      jira_ticket_id,
+      lab_batch_id,
+      start_date,
+      etl_date
+    ) 
+    SELECT
+      event_fact_id = new.event_fact_id,
+      event_type_id = new.event_type_id,
+      jira_ticket_id = new.jira_ticket_id,
+      lab_batch_id = new.lab_batch_id,
+      start_date = new.start_date,
+      new.etl_date
+    FROM DUAL WHERE NOT EXISTS (
+      SELECT 1 FROM event_fact
+      WHERE event_fact_id = new.event_fact_id
+    );
+  EXCEPTION WHEN OTHERS THEN 
+    errmsg := SQLERRM;
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_event_fact.dat line '||new.line_number||'  '||errmsg);
+    CONTINUE;
+  END;
 
 
 

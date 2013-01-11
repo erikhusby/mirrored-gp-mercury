@@ -5,6 +5,8 @@ DROP INDEX research_project_irb_idx1;
 DROP INDEX product_order_idx1;
 DROP INDEX product_order_idx2;
 DROP INDEX product_order_sample_idx1;
+DROP INDEX event_fact_idx1;
+DROP INDEX event_fact_idx2;
 
 ALTER TABLE research_project_status DROP CONSTRAINT fk_rp_status_rpid;
 ALTER TABLE research_project_person DROP CONSTRAINT fk_rp_person_rpid;
@@ -18,6 +20,9 @@ ALTER TABLE product_order_sample DROP CONSTRAINT fk_pos_poid;
 ALTER TABLE product_order_sample_status DROP CONSTRAINT fk_po_sample_b_s_po_sid;
 ALTER TABLE product_order_add_on DROP CONSTRAINT fk_po_add_on_prodid;
 ALTER TABLE product_order_add_on DROP CONSTRAINT fk_po_add_on_poid;
+ALTER TABLE event_fact DROP CONSTRAINT fk_event_lab_batch;
+ALTER TABLE event_fact DROP CONSTRAINT fk_event_jira_ticket;
+ALTER TABLE event_fact DROP CONSTRAINT fk_event_event_type;
 
 DROP TABLE product_order_add_on;
 DROP TABLE product_order_sample_status;
@@ -32,6 +37,10 @@ DROP TABLE research_project_status;
 DROP TABLE research_project;
 DROP TABLE price_item;
 DROP TABLE product;
+DROP TABLE jira_ticket;
+DROP TABLE lab_batch;
+DROP TABLE event_type;
+DROP TABLE event_fact;
 
 
 CREATE TABLE product (
@@ -189,6 +198,42 @@ CREATE TABLE product_order_add_on (
 );
 
 
+
+CREATE TABLE jira_ticket (
+  jira_ticket_id NUMERIC(19) NOT NULL PRIMARY KEY,
+  jira_ticket_name VARCHAR2(255) NOT NULL
+);
+
+CREATE TABLE lab_batch (
+  lab_batch_id NUMERIC(19) NOT NULL PRIMARY KEY,
+  batch_name VARCHAR2(255) NOT NULL,
+  is_active VARCHAR2(1) NOT NULL CHECK is_active IN ('T','F'),
+  created_on DATE NOT NULL
+);
+
+CREATE TABLE event_type (
+  event_type_id NUMERIC(19) NOT NULL PRIMARY KEY,
+  event_type VARCHAR2(80) NOT NULL,
+  product_name VARCHAR2(255) NOT NULL,
+  product_version VARCHAR2(40) NOT NULL,
+  process_name VARCHAR2(255) NOT NULL,
+  process_version VARCHAR2(40) NOT NULL
+);
+
+CREATE TABLE event_fact (
+  event_fact_id NUMERIC(19) NOT NULL PRIMARY KEY,
+  event_type_id NUMERIC(19) NOT NULL,
+  jira_ticket_id NUMERIC(19) NOT NULL,
+  lab_batch_id NUMERIC(19),
+  start_date DATE NOT NULL,
+  CONSTRAINT fk_event_lab_batch FOREIGN KEY (lab_batch_id) REFERENCES lab_batch(lab_batch_id),
+  CONSTRAINT fk_event_jira_ticket FOREIGN KEY (jira_ticket_id) REFERENCES jira_ticket(jira_ticket_id),
+  CONSTRAINT fk_event_event_type FOREIGN KEY (event_type_id) REFERENCES event_type(event_type_id)
+);
+
+CREATE INDEX event_fact_idx1 ON event_fact(start_date);
+CREATE INDEX event_fact_idx2 ON event_fact(event_type_id);
+
 -- Import tables
 DROP TABLE im_product_order_add_on;
 DROP TABLE im_product_order_sample_stat;
@@ -203,6 +248,10 @@ DROP TABLE im_research_project;
 DROP TABLE im_research_project_status;
 DROP TABLE im_price_item;
 DROP TABLE im_product;
+DROP TABLE im_jira_ticket;
+DROP TABLE im_lab_batch;
+DROP TABLE im_event_type;
+DROP TABLE im_event_fact;
 
 
 CREATE TABLE im_product (
@@ -349,6 +398,48 @@ CREATE TABLE im_product_order_add_on (
   product_order_add_on_id NUMERIC(19) NOT NULL,
   product_order_id NUMERIC(19),
   product_id NUMERIC(19)
+);
+
+CREATE TABLE im_jira_ticket (
+  line_number NUMERIC(9) NOT NULL,
+  etl_date DATE NOT NULL,
+  is_delete CHAR(1) NOT NULL,
+  jira_ticket_id NUMERIC(19) NOT NULL,
+  jira_ticket_name VARCHAR2(255)
+);
+
+CREATE TABLE im_lab_batch (
+  line_number NUMERIC(9) NOT NULL,
+  etl_date DATE NOT NULL,
+  is_delete CHAR(1) NOT NULL,
+  lab_batch_id NUMERIC(19) NOT NULL,
+  batch_name VARCHAR2(255),
+  is_active CHAR(1),
+  created_on DATE
+);
+
+CREATE TABLE im_event_type (
+  line_number NUMERIC(9) NOT NULL,
+  etl_date DATE NOT NULL,
+  is_delete CHAR(1) NOT NULL,
+  event_type_id NUMERIC(19) NOT NULL,
+  product_name VARCHAR2(255),
+  product_version VARCHAR2(40),
+  process_name VARCHAR2(255),
+  process_version VARCHAR2(40)
+);
+
+CREATE TABLE im_event_fact (
+  line_number NUMERIC(9) NOT NULL,
+  etl_date DATE NOT NULL,
+  is_delete CHAR(1) NOT NULL,
+  event_fact_id NUMERIC(19) NOT NULL,
+  lab_batch_id NUMERIC(19),
+  jira_ticket_id NUMERIC(19),
+  event_type_id NUMERIC(19),
+  start_date DATE,
+  event_type VARCHAR2(80),
+  event_location VARCHAR2(80)
 );
 
 COMMIT;

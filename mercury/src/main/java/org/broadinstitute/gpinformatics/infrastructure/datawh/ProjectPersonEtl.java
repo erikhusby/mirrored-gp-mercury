@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson;
 import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson_;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -54,7 +53,7 @@ public class ProjectPersonEtl  extends GenericEntityEtl {
      * @{inheritDoc}
      */
     @Override
-    String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         ProjectPerson entity = dao.getEntityManager().find(ProjectPerson.class, entityId);
         if (entity == null) {
             logger.info("Cannot export.  ProjectPerson having id " + entityId + " no longer exists.");

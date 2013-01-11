@@ -29,6 +29,7 @@ import java.util.logging.Logger;
  * LabVessels with a VesselContainer role (racks and plates), and VesselToVessel and VesselToSection transfers
  * apply to containees (tubes and wells).
  */
+
 @Entity
 @Audited
 @Table(schema = "mercury", uniqueConstraints = @UniqueConstraint(columnNames = {"label"}))
@@ -789,6 +790,11 @@ public abstract class LabVessel implements Serializable {
     public void addAllSamples(Set<MercurySample> mercurySamples) {
         this.mercurySamples.addAll(mercurySamples);
     }
+
+    public Long getLabVesselId() {
+        return labVesselId;
+    }
+
 
     @Override
     public boolean equals(Object o) {

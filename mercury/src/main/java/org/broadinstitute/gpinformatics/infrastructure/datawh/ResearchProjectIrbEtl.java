@@ -48,7 +48,7 @@ public class ResearchProjectIrbEtl  extends GenericEntityEtl {
      * @{inheritDoc}
      */
     @Override
-    String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         ResearchProjectIRB entity = dao.getEntityManager().find(ResearchProjectIRB.class, entityId);
         if (entity == null) {
             logger.info("Cannot export. ResearchProjectIRB having id " + entityId + " no longer exists.");
