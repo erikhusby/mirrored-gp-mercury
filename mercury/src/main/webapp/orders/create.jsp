@@ -122,7 +122,7 @@
                 <div class="control-group">
                     <stripes:label for="orderName" name="Name" class="control-label"/>
                     <div class="controls">
-                        <stripes:text id="orderName" name="editOrder.title" class="defaultText"
+                        <stripes:text disabled="${!actionBean.editOrder.draft}" id="orderName" name="editOrder.title" class="defaultText"
                             title="Enter the name of the new order"/>
                     </div>
                 </div>
@@ -148,7 +148,7 @@
                 <div class="control-group">
                     <stripes:label for="researchProject" name="Research Project" class="control-label"/>
                     <div class="controls">
-                        <stripes:text id="researchProject" name="researchProjectList" class="defaultText"
+                        <stripes:text disabled="${!actionBean.editOrder.draft}" id="researchProject" name="researchProjectList" class="defaultText"
                             title="Enter the research project for this order"/>
                     </div>
                 </div>
@@ -179,7 +179,7 @@
                 <div class="control-group">
                     <stripes:label for="numberOfLanes" name="Number of Lanes" class="control-label"/>
                     <div class="controls">
-                        <stripes:text id="numberOfLanes" name="editOrder.count" class="defaultText"
+                        <stripes:text disabled="${!actionBean.editOrder.draft}" id="numberOfLanes" name="editOrder.count" class="defaultText"
                             title="Enter Number of Lanes"/>
                     </div>
                 </div>
@@ -187,7 +187,7 @@
                 <div class="control-group">
                     <stripes:label for="comments" name="Comments" class="control-label"/>
                     <div class="controls">
-                        <stripes:textarea id="comments" name="editOrder.comments" class="defaultText"
+                        <stripes:textarea disabled="${!actionBean.editOrder.draft}" id="comments" name="editOrder.comments" class="defaultText"
                             title="Enter comments" cols="50" rows="3"/>
                     </div>
                 </div>
@@ -216,7 +216,7 @@
                 all sample details.
                 <br/>
                 <br/>
-                <stripes:textarea class="controlledText" id="samplesToAdd" name="editOrder.sampleList" rows="15" cols="120"/>
+                <stripes:textarea disabled="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="editOrder.sampleList" rows="15" cols="120"/>
             </div>
         </stripes:form>
 
