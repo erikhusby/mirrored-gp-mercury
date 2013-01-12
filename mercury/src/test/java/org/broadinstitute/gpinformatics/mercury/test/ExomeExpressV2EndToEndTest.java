@@ -37,7 +37,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -47,8 +46,8 @@ import java.util.Map;
 public class ExomeExpressV2EndToEndTest {
 
     public static List<String> RACK_COLUMNS = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
-                                                            "12");
-    public static List<String> RACK_ROWS    = Arrays.asList("A", "B", "C", "D", "E", "F", "G", "H");
+            "12");
+    public static List<String> RACK_ROWS = Arrays.asList("A", "B", "C", "D", "E", "F", "G", "H");
 
     @Test
     public void test() {
@@ -86,7 +85,7 @@ public class ExomeExpressV2EndToEndTest {
         ProductOrder productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
                 40, null, null, true, "Exome Express", false), new ResearchProject(101L, "Test RP", "Test synopsis",
-                                                                                   false));
+                false));
         String jiraTicketKey = "PD0-1";
         productOrder1.setJiraTicketKey(jiraTicketKey);
 
@@ -146,7 +145,8 @@ public class ExomeExpressV2EndToEndTest {
         Collection<LabVessel> vessels = labEvent.getTargetLabVessels();
         //                new LinkedList<LabVessel>(mapBarcodeToTube.values());
 
-        bucketBean.add(productOrder1.getBusinessKey(), vessels, shearingBucket, testActor, "");
+        bucketBean.add(productOrder1
+                .getBusinessKey(), vessels, shearingBucket, testActor, "", LabEventType.SHEARING_BUCKET);
 
         /*
                 LabEventTest.ExomeExpressShearingEntityBuilder exExShearingEntityBuilder =
@@ -166,7 +166,7 @@ public class ExomeExpressV2EndToEndTest {
 
         LabEvent covarisEvent = labEventFactory.buildFromBettaLimsRackToPlateDbFree(covarisxfer, buildTubeFormation(
                 mapBarcodeToTube, rackBarcode, barcodesByRackPositions), new StaticPlate("NormPlate",
-                                                                                                          StaticPlate.PlateType.Eppendorf96));
+                StaticPlate.PlateType.Eppendorf96));
 
         ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
                 productOrder1.getProduct().getWorkflowName());
@@ -177,9 +177,9 @@ public class ExomeExpressV2EndToEndTest {
         Assert.assertTrue(bucketToVessels.keySet().size() == 1);
 
         Assert.assertEquals(shearingBucket.getBucketDefinitionName(),
-                            bucketToVessels.keySet().iterator().next().getName());
+                bucketToVessels.keySet().iterator().next().getName());
 
-        bucketBean.startDBFree(testActor, labEvent.getTargetLabVessels(),shearingBucket,labEvent.getEventLocation());
+        bucketBean.startDBFree(testActor, labEvent.getTargetLabVessels(), shearingBucket, labEvent.getEventLocation());
 
 
         //        // todo plates vs tubes?
@@ -227,7 +227,6 @@ public class ExomeExpressV2EndToEndTest {
      * @param mapBarcodeToTubes    source tubes
      * @param barcode              barcode Barcode
      * @param barcodeByPositionMap JAXB list of tube barcodes
-     *
      * @return entity
      */
     private TubeFormation buildTubeFormation(Map<String, TwoDBarcodedTube> mapBarcodeToTubes, String barcode,

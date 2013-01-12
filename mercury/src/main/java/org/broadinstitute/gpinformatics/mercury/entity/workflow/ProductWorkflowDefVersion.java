@@ -158,25 +158,52 @@ public class ProductWorkflowDefVersion implements Serializable {
 
     /**
      * Based on the name of an event type, determine if the known previous workflow step is a bucket
+     *
      * @param eventTypeName Event name associated with workflow process step
      * @return true if the step before the one associated with with the given event name is defined as a bucket by the
-     * workflow
+     *         workflow
      */
     public boolean isPreviousStepBucket(String eventTypeName) {
         WorkflowStepDef previousStep = getPreviousStep(eventTypeName);
 
-        return OrmUtil.proxySafeIsInstance ( previousStep, WorkflowBucketDef.class );
+        return OrmUtil.proxySafeIsInstance(previousStep, WorkflowBucketDef.class);
+    }
+
+    /**
+     * Based on the name of an event type, determine if the known next workflow step is a bucket
+     *
+     * @param eventTypeName Event name associated with workflow process step
+     * @return true if the step after the one associated with with the given event name is defined as a bucket by the
+     *         workflow
+     */
+    public boolean isNextStepBucket(String eventTypeName) {
+        WorkflowStepDef nextStep = getNextStep(eventTypeName);
+
+        return OrmUtil.proxySafeIsInstance(nextStep, WorkflowBucketDef.class);
     }
 
     /**
      * Based on an event type name which is associated with a particular workflow process step, this method will return
-     * the configured workflow step which is defined as the given event types' predecessor
+     * the configured workflow step which is defined as the given event types' immediate predecessor
+     *
      * @param eventTypeName Event name associated with workflow process step
      * @return an instance of a {@link WorkflowStepDef} that is associated with the step that is defined as the given
-     * event types' predecessor
+     *         event types' predecessor
      */
     public WorkflowStepDef getPreviousStep(String eventTypeName) {
         return findStepByEventType(eventTypeName).getPredecessors().get(0).getStepDef();
+    }
+
+    /**
+     * Based on an event type name which is associated witha  particular workflow process step, this method will return
+     * the configured workflow step which is defined as the given event types' immediate Successor
+     *
+     * @param eventTypeName Event name associated with workflow process step
+     * @return an instance of a {@link WorkflowStepDef} that is associated with the step that is defined as the given
+     *         event types' immediate predecessor
+     */
+    public WorkflowStepDef getNextStep(String eventTypeName) {
+        return findStepByEventType(eventTypeName).getSuccessors().get(0).getStepDef();
     }
 
     @Override

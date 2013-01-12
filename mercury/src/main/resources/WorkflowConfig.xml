@@ -11,7 +11,6 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <entryMaterialType>GENOMIC_DNA</entryMaterialType>
-                <batchJiraProjectType></batchJiraProjectType>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Preflight Cleanup</name>
@@ -40,6 +39,57 @@
             <workflowStepDefs>
                 <name>Preflight Post Norm Pico Setup</name>
                 <labEventTypes>PREFLIGHT_POST_NORM_PICO_SETUP</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <numberOfRepeats>1</numberOfRepeats>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Pico/Plating</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Pico/Plating Bucket</name>
+                <labEventTypes>PICO_PLATING_BUCKET</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <entryMaterialType>GENOMIC_DNA</entryMaterialType>
+                <batchJiraProjectType>LCSET</batchJiraProjectType>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pico/Plating QC</name>
+                <labEventTypes>PICO_PLATING_QC</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <quantType>PICO</quantType>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pico/Plating Setup</name>
+                <labEventTypes>PICO_DILUTION_TRANSFER</labEventTypes>
+                <labEventTypes>PICO_BUFFER_ADDITION</labEventTypes>
+                <labEventTypes>PICO_MICROFLUOR_TRANSFER</labEventTypes>
+                <labEventTypes>PICO_STANDARDS_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <quantType>PICO</quantType>
+                <numberOfRepeats>1</numberOfRepeats>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pico/Plating Normalization</name>
+                <labEventTypes>SAMPLES_NORMALIZATION_TRANSFER</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pico/Plating Post Norm Pico Setup</name>
+                <labEventTypes>PICO_PLATING_POST_NORM_PICO</labEventTypes>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -413,7 +463,7 @@
             <version>1.0</version>
             <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
             <!--<workflowProcessDefs>Extraction</workflowProcessDefs>-->
-            <!--<workflowProcessDefs>Preflight</workflowProcessDefs>-->
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>
             <workflowProcessDefs>Hybrid Selection</workflowProcessDefs>

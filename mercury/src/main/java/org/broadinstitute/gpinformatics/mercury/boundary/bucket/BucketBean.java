@@ -59,18 +59,20 @@ public class BucketBean {
      * <p/>
      * TODO SGM Rethink the return.  Doesn't seem to add any value
      *
+     *
      * @param vessel
      * @param productOrder
      * @param operator
+     * @param eventType
      * @return
      */
     public BucketEntry add(@Nonnull LabVessel vessel, @Nonnull String productOrder, @Nonnull Bucket bucket,
-                           @Nonnull String operator) {
+                           @Nonnull String operator, LabEventType eventType) {
 
         BucketEntry newEntry = bucket.addEntry(productOrder, vessel);
 
         //TODO SGM: Event type is incorrect. Should be the next step
-        labEventFactory.createFromBatchItems(productOrder, vessel, 1L, operator, LabEventType.SHEARING_BUCKET_ENTRY,
+        labEventFactory.createFromBatchItems(productOrder, vessel, 1L, operator, eventType,
                 LabEvent.UI_EVENT_LOCATION);
         try {
             jiraService.addComment(productOrder, vessel.getLabCentricName() +
@@ -91,9 +93,10 @@ public class BucketBean {
      * @param bucket
      * @param operator
      * @param labEventLocation
+     * @param eventType
      */
     public void add(@Nonnull String productOrder, @Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
-                    @Nonnull String operator, @Nonnull String labEventLocation) {
+                    @Nonnull String operator, @Nonnull String labEventLocation, LabEventType eventType) {
 
         List<BucketEntry> listOfNewEntries = new LinkedList<BucketEntry>();
 
@@ -107,7 +110,7 @@ public class BucketBean {
 
         Set<LabEvent> eventList = new HashSet<LabEvent>();
         eventList.addAll(labEventFactory.buildFromBatchRequests(listOfNewEntries, operator, null, labEventLocation,
-                LabEventType.SHEARING_BUCKET_EXIT));
+                eventType));
 
         for (String pdo : pdoKeyToVesselMap.keySet()) {
             try {
@@ -120,9 +123,7 @@ public class BucketBean {
                              bucket.getBucketDefinitionName(), ioe);
             }
         }
-
     }
-
 
     /**
      * A pared down version of
@@ -236,8 +237,7 @@ public class BucketBean {
     public LabBatch startDBFree(@Nonnull String operator, final int numberOfBatchSamples,
                                 @Nonnull Bucket workingBucket) {
         Set<BucketEntry> bucketEntrySet = buildBatchListBySize(numberOfBatchSamples, workingBucket);
-//        return startBucketDrain(bucketEntrySet, operator, LabEvent.UI_EVENT_LOCATION, true);
-        return startBucketDrain(bucketEntrySet, operator, null, true);
+        return startBucketDrain(bucketEntrySet, operator, LabEvent.UI_EVENT_LOCATION, true);
     }
 
     /**
@@ -331,13 +331,10 @@ public class BucketBean {
          */
         LabBatch bucketBatch = startBucketDrain(bucketEntries, operator, batchInitiationLocation, false);
 
-        batchEjb.batchToJira(operator,
-                bucketBatch.getJiraTicket() != null ? bucketBatch.getJiraTicket().getTicketName() :
-                        batchTicket,
-                bucketBatch);
+        if (bucketBatch.getJiraTicket() == null) {
+            batchEjb.batchToJira(operator, batchTicket, bucketBatch);
+        }
         batchEjb.jiraBatchNotification(bucketBatch);
-
-
     }
 
     /**
@@ -386,19 +383,6 @@ public class BucketBean {
                     LabVessel.extractPdoKeyList(batchVessels)),
                     batchVessels);
         }
-
-
-
-        //TODO SGM:  Temporarily removing until after March.  auto drain will not create or associate Batches and Events
-/*
-        Set<LabEvent> eventList = new HashSet<LabEvent>();
-        eventList.addAll(labEventFactory.buildFromBatchRequests(bucketEntries, operator, bucketBatch,
-                                                                batchInitiationLocation,
-                                                                LabEventType.SHEARING_BUCKET_EXIT));
-
-        bucketBatch.addLabEvents(eventList);
-*/
-
 
         removeEntries(bucketEntries);
 

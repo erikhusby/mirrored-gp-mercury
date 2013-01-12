@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
 import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketEntryDao;
@@ -10,12 +9,10 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedT
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -31,7 +28,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static junit.framework.Assert.assertTrue;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 /**
  * @author Scott Matthews
@@ -120,18 +116,18 @@ public class BucketBeanTest extends ContainerTest {
         Assert.assertTrue( bucket.getBucketEntries ().isEmpty());
 
         BucketEntry testEntry1 = resource.add (new TwoDBarcodedTube ( twoDBarcode1 ), poBusinessKey1, bucket,
-                                               howieTest );
+                                               howieTest, LabEventType.SHEARING_BUCKET);
 
         Assert.assertEquals(1, bucket.getBucketEntries ().size());
         Assert.assertTrue ( bucket.contains ( testEntry1 ) );
 
 
         BucketEntry testEntry2 = resource.add (new TwoDBarcodedTube ( twoDBarcode2 ), poBusinessKey1, bucket,
-                                               howieTest );
+                                               howieTest, LabEventType.SHEARING_BUCKET);
         BucketEntry testEntry3 = resource.add (new TwoDBarcodedTube ( twoDBarcode3 ), poBusinessKey2, bucket,
-                                               howieTest );
+                                               howieTest, LabEventType.SHEARING_BUCKET);
         BucketEntry testEntry4 = resource.add (new TwoDBarcodedTube ( twoDBarcode4 ), poBusinessKey3, bucket,
-                                               howieTest );
+                                               howieTest, LabEventType.SHEARING_BUCKET);
 
         Assert.assertTrue( bucket.contains ( testEntry2 ));
         Assert.assertTrue( bucket.contains ( testEntry3 ));
@@ -194,7 +190,7 @@ public class BucketBeanTest extends ContainerTest {
         Assert.assertTrue(bucket.getBucketEntries().isEmpty());
 
         BucketEntry testEntry1 = resource.add (new TwoDBarcodedTube ( twoDBarcode1 ), poBusinessKey1, bucket,
-                                               howieTest );
+                                               howieTest, LabEventType.SHEARING_BUCKET);
 
         Assert.assertEquals(1,bucket.getBucketEntries().size());
         Assert.assertTrue ( bucket.contains ( testEntry1 ) );
@@ -212,7 +208,7 @@ public class BucketBeanTest extends ContainerTest {
                                               new TwoDBarcodedTube(twoDBarcode3), new TwoDBarcodedTube(twoDBarcode4)));
 
 
-        resource.add ( poBusinessKey1, bucketCreateBatch, bucket, howieTest, "Superman" );
+        resource.add ( poBusinessKey1, bucketCreateBatch, bucket, howieTest, "Superman", LabEventType.SHEARING_BUCKET);
 
         bucketDao.flush ();
         bucketDao.clear ();
@@ -307,7 +303,7 @@ public class BucketBeanTest extends ContainerTest {
         Assert.assertTrue(bucket.getBucketEntries().isEmpty());
 
         BucketEntry testEntry1 = resource.add (new TwoDBarcodedTube ( twoDBarcode1 ), poBusinessKey1, bucket,
-                                               howieTest );
+                                               howieTest, LabEventType.SHEARING_BUCKET);
 
         Assert.assertEquals(1,bucket.getBucketEntries().size());
         Assert.assertTrue ( bucket.contains ( testEntry1 ) );
@@ -322,7 +318,7 @@ public class BucketBeanTest extends ContainerTest {
                                                  new TwoDBarcodedTube(twoDBarcode3),
                                                  new TwoDBarcodedTube(twoDBarcode4)) ) ;
 
-        resource.add ( poBusinessKey1, bucketCreateBatch, bucket, howieTest, "Superman"  );
+        resource.add ( poBusinessKey1, bucketCreateBatch, bucket, howieTest, "Superman", LabEventType.SHEARING_BUCKET);
 
         bucketDao.flush ();
         bucketDao.clear ();

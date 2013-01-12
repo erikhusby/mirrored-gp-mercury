@@ -376,8 +376,6 @@ public class LabEventHandler implements Serializable {
             if (productOrders != null && !productOrders.isEmpty()) {
                 ProductWorkflowDefVersion workflowDef = getWorkflowVersion(productOrders.iterator().next());
 
-                //TODO SGM consider Null Case for Workflow Dev
-
                 if (workflowDef != null &&
                     workflowDef.isPreviousStepBucket(labEvent.getLabEventType().getName())) {
                     workingBucketName = /*bucketDao.findByName(*/workflowDef.getPreviousStep(
@@ -386,7 +384,6 @@ public class LabEventHandler implements Serializable {
                         workingBucketName = workflowDef.getPreviousStep(
                                 labEvent.getLabEventType().getName());
                     }
-
                 }
             }
 
@@ -395,7 +392,6 @@ public class LabEventHandler implements Serializable {
                     bucketVessels.put(workingBucketName, new LinkedList<LabVessel>());
                     if (bucketVessels.keySet().size() > 1) {
                         LOG.warn("Samples are coming from multiple Buckets");
-    //                        throw new IllegalStateException("Samples are coming from multiple Buckets");
                     }
                 }
                 bucketVessels.get(workingBucketName).add(currVessel);
@@ -403,7 +399,4 @@ public class LabEventHandler implements Serializable {
         }
         return bucketVessels;
     }
-
-
-
 }

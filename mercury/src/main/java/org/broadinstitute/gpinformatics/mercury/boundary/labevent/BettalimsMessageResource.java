@@ -86,21 +86,20 @@ public class BettalimsMessageResource {
 //    @Resource(name = "mail/broadsmtp")
     private Session mailSession;
 
-//    @Inject
-//    private BucketDao bucketDao;
-//
-//    @Inject
-//    private WorkflowLoader workflowLoader;
-//
-//    @Inject
-//    private AthenaClientService athenaClientService;
+    @Inject
+    private BucketDao bucketDao;
+
+    @Inject
+    private BucketBean bucketBean;
+
+    @Inject
+    private BSPUserList bspUserList;
 
     @Inject
     private BettalimsConnector bettalimsConnector;
 
     @Inject
     private ThriftService thriftService;
-
 
     /**
      * Accepts a message from (typically) a liquid handling deck.  We unmarshal ourselves, rather than letting JAX-RS
@@ -383,8 +382,6 @@ public class BettalimsMessageResource {
         for (LabEvent labEvent : labEvents) {
             labEventHandler.processEvent(labEvent);
 
-//          TODO SGM  Commenting to revisit after GPLIM-517
-
             Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels =
                     labEventHandler.itemizeBucketItems(labEvent);
 
@@ -401,6 +398,8 @@ public class BettalimsMessageResource {
                                  workingBucket,
                                  labEvent.getEventLocation());
             }
+
+            //TODO SGM: if the next step in the workflow is a bucket, call bucketBean.add()
         }
     }
 

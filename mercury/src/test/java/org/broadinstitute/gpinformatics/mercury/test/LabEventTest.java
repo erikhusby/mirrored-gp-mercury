@@ -196,6 +196,93 @@ public class LabEventTest {
 //        Controller.stopCPURecording();
     }
 
+
+    /**
+     * Build object graph for Hybrid Selection messages, verify chain of events.
+     */
+/*
+    @Test(groups = {DATABASE_FREE})
+    public void testExomeExpress() {
+//        Controller.startCPURecording(true);
+
+        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
+        ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
+                "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
+                40, null, null, true, "Hybrid Selection", false), new ResearchProject(101L, "Test RP", "Test synopsis",
+                false));
+        String jiraTicketKey = "PD0-1";
+        productOrder.setJiraTicketKey(jiraTicketKey);
+        mapKeyToProductOrder.put(jiraTicketKey, productOrder);
+
+        // starting rack
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
+        for (int rackPosition = 1; rackPosition <= NUM_POSITIONS_IN_RACK; rackPosition++) {
+            String barcode = "R" + rackPosition;
+            String bspStock = "SM-" + rackPosition;
+            productOrderSamples.add(new ProductOrderSample(bspStock));
+            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
+            bspAliquot.addSample(new MercurySample(jiraTicketKey, bspStock));
+            mapBarcodeToTube.put(barcode, bspAliquot);
+        }
+
+        // Messaging
+        BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
+        LabEventFactory labEventFactory = new LabEventFactory();
+        labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
+        LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance());
+
+        PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(bettaLimsMessageFactory,
+                labEventFactory, labEventHandler,
+                mapBarcodeToTube).invoke();
+
+        ExomeExpressShearingEntityBuilder shearingEntityBuilder = new ExomeExpressShearingEntityBuilder(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
+                bettaLimsMessageFactory, labEventFactory, labEventHandler, preFlightEntityBuilder.getRackBarcode()).invoke();
+
+        LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
+                bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
+                shearingEntityBuilder.getShearingPlate(), NUM_POSITIONS_IN_RACK).invoke();
+
+        HybridSelectionEntityBuilder hybridSelectionEntityBuilder = new HybridSelectionEntityBuilder(
+                bettaLimsMessageFactory, labEventFactory, labEventHandler,
+                libraryConstructionEntityBuilder.getPondRegRack(),
+                libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
+
+        QtpEntityBuilder qtpEntityBuilder = new QtpEntityBuilder(bettaLimsMessageFactory, labEventFactory,
+                labEventHandler,
+                hybridSelectionEntityBuilder.getNormCatchRack(),
+                hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
+                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+                hybridSelectionEntityBuilder
+                        .getMapBarcodeToNormCatchTubes());
+        qtpEntityBuilder.invoke();
+
+        IlluminaSequencingRunFactory illuminaSequencingRunFactory = new IlluminaSequencingRunFactory();
+        IlluminaSequencingRun illuminaSequencingRun;
+        try {
+            illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
+                    qtpEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode(), "Run1", new Date(), "SL-HAL",
+                    File.createTempFile("RunDir", ".txt").getAbsolutePath(), null),
+                    qtpEntityBuilder.getIlluminaFlowcell());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
+        ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
+        stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
+                TransferTraverserCriteria.TraversalDirection.Descendants);
+        List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
+        Assert.assertEquals(labEventNames.size(), 13, "Wrong number of transfers");
+
+        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().iterator().next(),
+                qtpEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
+
+//        Controller.stopCPURecording();
+    }
+*/
+
     /**
      * Build object graph for Whole Genome Shotgun messages, verify chain of events.
      */
@@ -899,7 +986,6 @@ public class LabEventTest {
 //            shearingPlate = (StaticPlate) shearingTransferEventEntity.getTargetLabVessels().iterator().next();
 //            Assert.assertEquals(shearingPlate.getSampleInstances().size(), mapBarcodeToTube.size(),
 //                                "Wrong number of sample instances");
-//
 
 
             // Covaris Load
@@ -955,11 +1041,11 @@ public class LabEventTest {
         private final List<String> tubeBarcodeList;
         private final String testPrefix;
         private final String rackBarcode;
-        //        private       String                  shearPlateBarcode;
+                private       String                  shearPlateBarcode;
         private String shearCleanPlateBarcode;
         private String covarisRackBarCode;
 
-        //        private PlateTransferEventType plateToShearTubeTransferEventJaxb;
+                private PlateTransferEventType plateToShearTubeTransferEventJaxb;
         private PlateTransferEventType CovarisLoadEventJaxb;
         private PlateTransferEventType postShearingTransferCleanupEventJaxb;
         private PlateTransferEventType shearingQcEventJaxb;
@@ -973,9 +1059,9 @@ public class LabEventTest {
             this.rackBarcode = rackBarcode;
         }
 //
-//        public PlateTransferEventType getPlateToShearTubeTransferEventJaxb() {
-//            return plateToShearTubeTransferEventJaxb;
-//        }
+        public PlateTransferEventType getPlateToShearTubeTransferEventJaxb() {
+            return plateToShearTubeTransferEventJaxb;
+        }
 
         public PlateTransferEventType getCovarisLoadEventJaxb() {
             return CovarisLoadEventJaxb;
@@ -993,9 +1079,9 @@ public class LabEventTest {
             return shearingQcEventJaxb;
         }
 
-//        public String getShearPlateBarcode() {
-//            return shearPlateBarcode;
-//        }
+        public String getShearPlateBarcode() {
+            return shearPlateBarcode;
+        }
 
         public String getShearCleanPlateBarcode() {
             return shearCleanPlateBarcode;
@@ -1006,6 +1092,9 @@ public class LabEventTest {
         }
 
         public ExomeExpressShearingJaxbBuilder invoke() {
+
+            //TODO SGM:  Put Plating to tubes back in.  Rack to plate.  Covaris loaded becomes plate to plate
+
 //            shearPlateBarcode = "PlateToShearTubes" + testPrefix;
 //            plateToShearTubeTransferEventJaxb = bettaLimsMessageFactory.buildRackToPlate("PlatingToShearingTubes",
 //                                                                                              rackBarcode,
