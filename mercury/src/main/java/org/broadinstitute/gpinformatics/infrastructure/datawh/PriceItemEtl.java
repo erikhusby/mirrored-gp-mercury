@@ -49,13 +49,14 @@ public class PriceItemEtl  extends GenericEntityEtl {
      */
     @Override
     Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+        Collection<String> recordList = new ArrayList<String>();
         PriceItem entity = dao.findById(PriceItem.class, entityId);
-        if (entity == null) {
-            logger.info("Cannot export. PriceItem having id " + entityId + " no longer exists.");
-            return null;
+        if (entity != null) {
+	    recordList.add(entityRecord(etlDateStr, isDelete, entity));
+	} else {
+            logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
         }
-
-        return entityRecord(etlDateStr, isDelete, entity);
+        return recordList;
     }
 
     /**
@@ -64,7 +65,7 @@ public class PriceItemEtl  extends GenericEntityEtl {
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();
-        List<PriceItem> entityList = dao.findAll(PriceItem.class,
+        List<PriceItem> entityList = dao.findAll(getEntityClass(),
                 new GenericDao.GenericDaoCallback<PriceItem>() {
                     @Override
                     public void callback(CriteriaQuery<PriceItem> cq, Root<PriceItem> root) {

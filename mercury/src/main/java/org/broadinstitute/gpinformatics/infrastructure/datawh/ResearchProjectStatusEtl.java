@@ -41,7 +41,7 @@ public class ResearchProjectStatusEtl extends GenericEntityEtl {
     /** This class does not make entity records. */
     @Override
     Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
-        return null;
+        return Collections.EMPTY_LIST;
     }
 
     /** This class does not make entity records. */

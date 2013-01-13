@@ -5,8 +5,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
 
 /**
  * This entity etl class is a bit different than others, because WorkflowConfig is not being persisted
@@ -118,19 +120,19 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
     }
 
     /**
-     * @{inheritDoc}
+     * Unused method since we've overridden the caller.
      */
     @Override
     Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
-        return null;
+        return Collections.EMPTY_LIST;
     }
 
     /**
-     * @{inheritDoc}
+     * Unused method since we've overridden the caller.
      */
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
-        return null;
+        return Collections.EMPTY_LIST;
     }
 
 
@@ -145,6 +147,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
         } finally {
             dataFile.close();
         }
+
     }
 
 

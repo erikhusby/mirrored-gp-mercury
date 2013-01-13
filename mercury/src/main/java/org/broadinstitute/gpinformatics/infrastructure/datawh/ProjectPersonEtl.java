@@ -54,12 +54,14 @@ public class ProjectPersonEtl  extends GenericEntityEtl {
      */
     @Override
     Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
-        ProjectPerson entity = dao.getEntityManager().find(ProjectPerson.class, entityId);
-        if (entity == null) {
-            logger.info("Cannot export.  ProjectPerson having id " + entityId + " no longer exists.");
-            return null;
+        Collection<String> recordList = new ArrayList<String>();
+        ProjectPerson entity = dao.findById(ProjectPerson.class, entityId);
+        if (entity != null) {
+	    recordList.add(entityRecord(etlDateStr, isDelete, entity));
+	} else {
+            logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
         }
-        return entityRecord(etlDateStr, isDelete, entity);
+        return recordList;
     }
 
     /**
@@ -68,7 +70,7 @@ public class ProjectPersonEtl  extends GenericEntityEtl {
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();
-        List<ProjectPerson> entityList = dao.findAll(ProjectPerson.class,
+        List<ProjectPerson> entityList = dao.findAll(getEntityClass(),
                 new GenericDao.GenericDaoCallback<ProjectPerson>() {
                     @Override
                     public void callback(CriteriaQuery<ProjectPerson> cq, Root<ProjectPerson> root) {

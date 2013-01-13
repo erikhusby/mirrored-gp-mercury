@@ -1,9 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn_;
+
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -16,16 +17,16 @@ import java.util.Date;
 import java.util.List;
 
 @Stateless
-public class ProductOrderAddOnEtl extends GenericEntityEtl {
+public class LabVesselEtl extends GenericEntityEtl {
     @Inject
-    ProductOrderDao dao;
+    LabVesselDao dao;
 
     /**
      * @{inheritDoc}
      */
     @Override
     Class getEntityClass() {
-        return ProductOrderAddOn.class;
+        return LabVessel.class;
     }
 
     /**
@@ -33,7 +34,7 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl {
      */
     @Override
     String getBaseFilename() {
-        return "product_order_add_on";
+        return "lab_vessel";
     }
 
     /**
@@ -41,7 +42,7 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl {
      */
     @Override
     Long entityId(Object entity) {
-        return ((ProductOrderAddOn)entity).getProductOrderAddOnId();
+        return ((LabVessel)entity).getLabVesselId();
     }
 
     /**
@@ -50,7 +51,7 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl {
     @Override
     Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         Collection<String> recordList = new ArrayList<String>();
-        ProductOrderAddOn entity = dao.findById(ProductOrderAddOn.class, entityId);
+        LabVessel entity = dao.findById(LabVessel.class, entityId);
         if (entity != null) {
 	    recordList.add(entityRecord(etlDateStr, isDelete, entity));
 	} else {
@@ -65,17 +66,17 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl {
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();
-        List<ProductOrderAddOn> entityList = dao.findAll(getEntityClass(),
-                new GenericDao.GenericDaoCallback<ProductOrderAddOn>() {
+        List<LabVessel> entityList = dao.findAll(getEntityClass(),
+                new GenericDao.GenericDaoCallback<LabVessel>() {
                     @Override
-                    public void callback(CriteriaQuery<ProductOrderAddOn> cq, Root<ProductOrderAddOn> root) {
+                    public void callback(CriteriaQuery<LabVessel> cq, Root<LabVessel> root) {
                         if (startId > 0 || endId < Long.MAX_VALUE) {
                             CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-                            cq.where(cb.between(root.get(ProductOrderAddOn_.productOrderAddOnId), startId, endId));
+                            cq.where(cb.between(root.get(LabVessel_.labVesselId), startId, endId));
                         }
                     }
                 });
-        for (ProductOrderAddOn entity : entityList) {
+        for (LabVessel entity : entityList) {
             recordList.add(entityRecord(etlDateStr, isDelete, entity));
         }
         return recordList;
@@ -86,11 +87,11 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl {
      * @param entity Mercury Entity
      * @return delimited SqlLoader record
      */
-    String entityRecord(String etlDateStr, boolean isDelete, ProductOrderAddOn entity) {
+    String entityRecord(String etlDateStr, boolean isDelete, LabVessel entity) {
         return genericRecord(etlDateStr, isDelete,
-                entity.getProductOrderAddOnId(),
-                format(entity.getProductOrder() != null ? entity.getProductOrder().getProductOrderId() : null),
-                format(entity.getAddOn().getProductId())
+                entity.getLabVesselId(),
+                format(entity.getLabel()),
+                format(entity.getType().getName())
         );
     }
 

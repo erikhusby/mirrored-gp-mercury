@@ -1,25 +1,26 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import com.sun.tools.javac.resources.version;
-import junit.framework.Assert;
+import org.apache.commons.collections.map.LRUMap;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.hibernate.metamodel.binding.SingularAssociationAttributeBinding;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
+import javax.persistence.metamodel.SingularAttribute;
 import java.util.*;
 
 @Stateless
@@ -62,12 +63,14 @@ public class EventEtl extends GenericEntityEtl {
      */
     @Override
     Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+        Collection<String> recordList = new ArrayList<String>();
         LabEvent entity = dao.findById(LabEvent.class, entityId);
-        if (entity == null) {
-            logger.info("Cannot export.  LabEvent having id " + entityId + " no longer exists.");
-            return null;
+        if (entity != null) {
+            recordList.addAll(entityRecord(etlDateStr, isDelete, entity));
+        } else {
+            logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
         }
-        return entityRecord(etlDateStr, isDelete, entity);
+        return recordList;
     }
 
     /**
@@ -76,10 +79,10 @@ public class EventEtl extends GenericEntityEtl {
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();
-        List<LabEvent> entityList = dao.findAll(LabEvent.class,
-                new GenericDao.GenericDaoCallback<Product>() {
+        List<LabEvent> entityList = dao.findAll(getEntityClass(),
+                new GenericDao.GenericDaoCallback<LabEvent>() {
                     @Override
-                    public void callback(CriteriaQuery<Product> cq, Root<Product> root) {
+                    public void callback(CriteriaQuery<LabEvent> cq, Root<LabEvent> root) {
                         if (startId > 0 || endId < Long.MAX_VALUE) {
                             CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
                             cq.where(cb.between(root.get(LabEvent_.labEventId), startId, endId));
@@ -117,12 +120,17 @@ public class EventEtl extends GenericEntityEtl {
                 Set<SampleInstance> sampleInstances = vessel.getSampleInstances();
                 for (SampleInstance si : sampleInstances) {
                     MercurySample sample = si.getStartingSample();
+                    if (sample == null) {
+                        logger.warn("Cannot find starting sample for sampleInstance " + si.toString());
+                        continue;
+                    }
                     String sampleKey = sample.getSampleKey();
+                    long workflowConfigId = lookupWorkflowConfigId(eventName, sample, entity.getEventDate());
 
                     records.add(genericRecord(etlDateStr, isDelete,
                             entity.getLabEventId(),
                             format(eventName),
-                            format(lookupWorkflowConfigId(sample, entity.getEventDate())),
+                            format(workflowConfigId),
                             format(ticketName),
                             format(sampleKey),
                             format(labBatchId),
@@ -172,18 +180,26 @@ public class EventEtl extends GenericEntityEtl {
         }
     }
 
-    /** Returns the id of the relevant WorkflowConfig denormalized record. */
-    long lookupWorkflowConfigId(String eventName, MercurySample sample, Date eventDate) {
-        if (sample == null) {
-            logger.debug("Cannot lookup workflow for null sample");
-            return 0L;
-        }
+    private final int CONFIG_ID_CACHE_SIZE = 4;
+    private LRUMap configIdCache = (LRUMap)Collections.synchronizedMap(new LRUMap(CONFIG_ID_CACHE_SIZE));
 
+    /** Returns the id of the relevant WorkflowConfig denormalized record.
+     * @return 0 if no id found
+     */
+    long lookupWorkflowConfigId(String eventName, MercurySample sample, Date eventDate) {
         String productOrderKey = sample.getProductOrderKey();
         if (productOrderKey == null) {
             logger.debug("Sample " + sample.getSampleKey() + " has null productOrderKey");
             return 0L;
         }
+
+        // Checks for a cache hit.
+        String cacheKey = eventName + productOrderKey + eventDate.toString();
+        Long id = (Long)configIdCache.get(cacheKey);
+        if (id != null) {
+            return id;
+        }
+
         ProductOrder productOrder = pdoDao.findByBusinessKey(productOrderKey);
         if (productOrder == null) {
             logger.debug("Product " + productOrderKey + " has no entity");
@@ -191,19 +207,20 @@ public class EventEtl extends GenericEntityEtl {
         }
         String workflowName = productOrder.getProduct().getWorkflowName();
         if (workflowName == null) {
-            logger.debug("Product " + productOrderKey + " has no workflow");
+            logger.debug("Product " + productOrderKey + " has no workflow name");
             return 0L;
         }
 
-        SortedSet<WorkflowConfigDenorm> set = eventToWorkflowList.get(eventName);
-        for (WorkflowConfigDenorm denorm : set) {
+        // Iterates on the sorted set of event names to find a match having latest effective date.
+        for (WorkflowConfigDenorm denorm : eventToWorkflowList.get(eventName)) {
             if (workflowName.equals(denorm.getProductWorkflowName())
                     && eventDate.after(denorm.getEffectiveDate())) {
-                return denorm.getWorkflowConfigDenormId();
+                id = denorm.getWorkflowConfigDenormId();
+                configIdCache.put(cacheKey, id);
+                return id;
             }
         }
-
-        return 0;
+        return 0L;
     }
 
     /** This entity does not make status records. */

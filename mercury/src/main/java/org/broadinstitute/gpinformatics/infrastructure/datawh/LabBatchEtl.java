@@ -1,9 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch_;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -16,16 +16,16 @@ import java.util.Date;
 import java.util.List;
 
 @Stateless
-public class ProductOrderAddOnEtl extends GenericEntityEtl {
+public class LabBatchEtl extends GenericEntityEtl {
     @Inject
-    ProductOrderDao dao;
+    LabBatchDAO dao;
 
     /**
      * @{inheritDoc}
      */
     @Override
     Class getEntityClass() {
-        return ProductOrderAddOn.class;
+        return LabBatch.class;
     }
 
     /**
@@ -33,7 +33,7 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl {
      */
     @Override
     String getBaseFilename() {
-        return "product_order_add_on";
+        return "lab_batch";
     }
 
     /**
@@ -41,7 +41,7 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl {
      */
     @Override
     Long entityId(Object entity) {
-        return ((ProductOrderAddOn)entity).getProductOrderAddOnId();
+        return ((LabBatch)entity).getLabBatchId();
     }
 
     /**
@@ -50,7 +50,7 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl {
     @Override
     Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         Collection<String> recordList = new ArrayList<String>();
-        ProductOrderAddOn entity = dao.findById(ProductOrderAddOn.class, entityId);
+        LabBatch entity = dao.findById(LabBatch.class, entityId);
         if (entity != null) {
 	    recordList.add(entityRecord(etlDateStr, isDelete, entity));
 	} else {
@@ -65,17 +65,17 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl {
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();
-        List<ProductOrderAddOn> entityList = dao.findAll(getEntityClass(),
-                new GenericDao.GenericDaoCallback<ProductOrderAddOn>() {
+        List<LabBatch> entityList = dao.findAll(getEntityClass(),
+                new GenericDao.GenericDaoCallback<LabBatch>() {
                     @Override
-                    public void callback(CriteriaQuery<ProductOrderAddOn> cq, Root<ProductOrderAddOn> root) {
+                    public void callback(CriteriaQuery<LabBatch> cq, Root<LabBatch> root) {
                         if (startId > 0 || endId < Long.MAX_VALUE) {
                             CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-                            cq.where(cb.between(root.get(ProductOrderAddOn_.productOrderAddOnId), startId, endId));
+                            cq.where(cb.between(root.get(LabBatch_.labBatchId), startId, endId));
                         }
                     }
                 });
-        for (ProductOrderAddOn entity : entityList) {
+        for (LabBatch entity : entityList) {
             recordList.add(entityRecord(etlDateStr, isDelete, entity));
         }
         return recordList;
@@ -86,11 +86,15 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl {
      * @param entity Mercury Entity
      * @return delimited SqlLoader record
      */
-    String entityRecord(String etlDateStr, boolean isDelete, ProductOrderAddOn entity) {
+    String entityRecord(String etlDateStr, boolean isDelete, LabBatch entity) {
         return genericRecord(etlDateStr, isDelete,
-                entity.getProductOrderAddOnId(),
-                format(entity.getProductOrder() != null ? entity.getProductOrder().getProductOrderId() : null),
-                format(entity.getAddOn().getProductId())
+                entity.getLabBatchId(),
+                format(entity.getBatchName()),
+                format(entity.getActive()),
+                format(entity.getCreatedOn()),
+                format(entity.getDueDate()),
+                format(entity.getImportant()),
+                format(entity.getJiraTicket() != null ? entity.getJiraTicket().getTicketName() : null)
         );
     }
 
