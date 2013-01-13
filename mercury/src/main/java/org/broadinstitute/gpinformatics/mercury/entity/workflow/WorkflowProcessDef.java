@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlID;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -15,7 +16,9 @@ import java.util.Map;
  * A lab process, or team, e.g. QTP
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class WorkflowProcessDef {
+public class WorkflowProcessDef implements Serializable {
+
+    private static final long serialVersionUID = 20130101L;
 
     @XmlID
     private String name;

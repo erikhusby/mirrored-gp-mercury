@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -14,7 +15,9 @@ import java.util.Map;
  * Represents a specific version of a workflow process definition
  */
 @XmlAccessorType(XmlAccessType.FIELD)
-public class WorkflowProcessDefVersion {
+public class WorkflowProcessDefVersion implements Serializable {
+    private static final long serialVersionUID = 20130101L;
+
     private String version;
     private Date effectiveDate;
     /** Process graphs tend to be straight lines, with one or two optional steps (e.g. Normalization is optional in QTP,

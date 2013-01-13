@@ -369,6 +369,9 @@
                                         <include>org/broadinstitute/gpinformatics/mercury/boundary/Namespaces.java</include>
                                         <include>org/broadinstitute/gpinformatics/mercury/boundary/labevent/*Bean.java</include>
                                     </includes>
+                                    <excludes>
+                                        <exclude>org/broadinstitute/gpinformatics/mercury/boundary/labevent/BettalimsMessageBean.java</exclude>
+                                    </excludes>
                                     <transformSchemas>
                                         <!--
                                             Each schema element defines:
@@ -707,7 +710,7 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.19:1521:gpinfprd</database.url>
+                <database.url>jdbc:oracle:thin:@192.168.195.8:1521:gpinfprd</database.url>
                 <mercury.password>guest</mercury.password>
                 <athena.password>guest</athena.password>
             </properties>

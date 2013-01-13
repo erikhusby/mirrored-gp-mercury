@@ -7,10 +7,10 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueL
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionListResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 
+import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.Date;
+import java.util.*;
 
 public class JiraIssue implements Serializable {
 
@@ -18,6 +18,8 @@ public class JiraIssue implements Serializable {
 
     private String summary;
     private String description;
+
+    private Map<String, Object> extraFields = new HashMap<String, Object>();
 
     private Date dueDate;
 
@@ -32,28 +34,86 @@ public class JiraIssue implements Serializable {
         return key;
     }
 
-    public String getSummary() {
+    public String getSummary() throws IOException{
+
+        if(summary == null) {
+            JiraIssue tempIssue = jiraService.getIssueInfo(key,null);
+            summary = tempIssue.getSummary();
+            description = tempIssue.getDescription();
+            dueDate = tempIssue.getDueDate();
+        }
         return summary;
     }
 
-    public void setSummary(String summary) {
+    public void setSummary(@Nonnull String summary) {
         this.summary = summary;
     }
 
-    public String getDescription() {
+    public String getDescription() throws IOException {
+
+        if(description == null && summary == null) {
+            JiraIssue tempIssue = jiraService.getIssueInfo(key, null);
+            summary = tempIssue.getSummary();
+            description = tempIssue.getDescription();
+            dueDate = tempIssue.getDueDate();
+        }
+
         return description;
     }
 
-    public void setDescription(String description) {
+    public void setDescription(@Nonnull String description) {
         this.description = description;
     }
 
-    public Date getDueDate() {
+    public Date getDueDate() throws IOException {
+
+        if(dueDate == null && summary == null) {
+            JiraIssue tempIssue = jiraService.getIssueInfo(key, null);
+            summary = tempIssue.getSummary();
+            description = tempIssue.getDescription();
+            dueDate = tempIssue.getDueDate();
+        }
+
         return dueDate;
     }
 
-    public void setDueDate(Date dueDate) {
+    public void setDueDate(@Nonnull Date dueDate) {
         this.dueDate = dueDate;
+    }
+
+    public Object getFieldValue(@Nonnull String fieldName) throws IOException{
+
+        Object foundValue = null;
+
+        if(!extraFields.containsKey(fieldName)) {
+            JiraIssue tempIssue = jiraService.getIssueInfo(key, fieldName);
+            extraFields.put(fieldName,tempIssue.getFieldValue(fieldName));
+            summary = tempIssue.getSummary();
+            description = tempIssue.getDescription();
+            dueDate = tempIssue.getDueDate();
+        }
+        foundValue = extraFields.get(fieldName);
+        return foundValue;
+    }
+
+    public Map<String, Object> getFieldValues(@Nonnull String... fieldNames) throws IOException{
+
+        if(!extraFields.keySet().containsAll(Arrays.asList(fieldNames))) {
+
+            JiraIssue tempIssue = jiraService.getIssueInfo(key, fieldNames);
+            extraFields= tempIssue.getFieldValues(fieldNames);
+
+            summary = tempIssue.getSummary();
+            description = tempIssue.getDescription();
+            dueDate = tempIssue.getDueDate();
+        }
+
+        return extraFields;
+    }
+
+    public <TV> void addFieldValue(String filedName, TV value) {
+
+        extraFields.put(filedName, value);
     }
 
     /**
