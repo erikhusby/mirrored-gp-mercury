@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -47,6 +49,8 @@ import java.util.*;
 public class ProductOrder implements Serializable {
     private static final String JIRA_SUBJECT_PREFIX = "Product order for ";
 
+    public static final String DRAFT_PREFIX = "Draft-";
+
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT_ORDER", schema = "athena", sequenceName = "SEQ_PRODUCT_ORDER")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_ORDER")
@@ -80,8 +84,8 @@ public class ProductOrder implements Serializable {
     @Column(length = 2000)
     private String comments;
 
-    /** Reference to the Jira Ticket created when the order is submitted */
-    @Column(name = "JIRA_TICKET_KEY", nullable = false)
+    /** Reference to the Jira Ticket created when the order is placed. Null means that the order is a draft */
+    @Column(name = "JIRA_TICKET_KEY", nullable = true)
     private String jiraTicketKey;
 
     @Column(name = "count")
@@ -109,7 +113,27 @@ public class ProductOrder implements Serializable {
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
     private Set<ProductOrderAddOn> addOns = new HashSet<ProductOrderAddOn>();
 
+    @Transient
+    private String originalTitle;   // This is used for edit to keep track of changes to the object.
+
+    @Transient
+    private String sampleList;
+
+    // Initialize our transient data after the object has been loaded from the database.
+    @PostLoad
+    private void initialize() {
+        originalTitle = title;
+    }
+
+    /**
+     * @return The business key is the jira ticket key when this is not a draft, otherwise it is the DRAFT_KEY plus the
+     * internal database id.
+     */
     public String getBusinessKey() {
+        if (jiraTicketKey == null) {
+            return DRAFT_PREFIX + productOrderId;
+        }
+
         return jiraTicketKey;
     }
 
@@ -137,6 +161,13 @@ public class ProductOrder implements Serializable {
 
     public void setCount(int count) {
         this.count = count;
+    }
+
+    public void updateData(ResearchProject project, Product product, List<Product> addOnProducts) {
+        setAddons(addOnProducts);
+        setProduct(product);
+        setResearchProject(project);
+        updateSamplesFromList();
     }
 
     /**
@@ -311,6 +342,13 @@ public class ProductOrder implements Serializable {
     /**
      * Constructor called when creating a new ProductOrder.
      */
+    public ProductOrder(@Nonnull BspUser createdBy) {
+        this(createdBy.getUserId(), "", new ArrayList<ProductOrderSample>(), "", null, null);
+    }
+
+    /**
+     * Constructor called when creating a new ProductOrder.
+     */
     public ProductOrder(@Nonnull BspUser createdBy, ResearchProject researchProject) {
         this(createdBy.getUserId(), "", new ArrayList<ProductOrderSample>(), "", null, researchProject);
     }
@@ -441,10 +479,7 @@ public class ProductOrder implements Serializable {
     /**
      * Used for test purposes only.
      */
-    public void setJiraTicketKey(@Nonnull String jiraTicketKey) {
-        if (jiraTicketKey == null) {
-            throw new NullPointerException("Jira Ticket Key cannot be null");
-        }
+    public void setJiraTicketKey(String jiraTicketKey) {
         this.jiraTicketKey = jiraTicketKey;
     }
 
@@ -670,6 +705,20 @@ public class ProductOrder implements Serializable {
     }
 
     /**
+     * @return The order is a draft while it is not 'placed,' which is the state of having a jira ticket
+     */
+    public boolean isDraft() {
+        return OrderStatus.Draft == orderStatus;
+    }
+
+    /**
+     * @return The order is a draft while it is not 'placed,' which is the state of having a jira ticket
+     */
+    public boolean isAbandoned() {
+        return OrderStatus.Abandoned == orderStatus;
+    }
+
+    /**
      * submitProductOrder encapsulates the set of steps necessary to finalize the submission of a product order.
      * This mainly deals with jira ticket creation.  This method will:
      * <ul>
@@ -728,23 +777,6 @@ public class ProductOrder implements Serializable {
         return counts.sampleValidation();
     }
 
-    /**
-     * closeProductOrder allows a user to set the Jira ticket associated with this product order into a "Billed" state
-     *
-     * @throws IOException
-     */
-    public void closeProductOrder() throws IOException {
-        if (StringUtils.isEmpty(jiraTicketKey)) {
-            throw new IllegalStateException("A jira Ticket has not been created.");
-        }
-        JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
-        JiraIssue issue = jiraService.getIssue(jiraTicketKey);
-        IssueTransitionListResponse transitions = issue.findAvailableTransitions();
-
-        Transition transition = transitions.getTransitionByName(TransitionStates.Complete.getStateName());
-
-        issue.postNewTransition(transition);
-    }
 
     /**
      * @return true if all samples are of BSP Format. Note:
@@ -827,7 +859,7 @@ public class ProductOrder implements Serializable {
     }
 
     public enum TransitionStates {
-        Complete("Complete"),
+        Complete("Order Complete"),
         Cancel("Cancel"),
         StartProgress("Start Progress"),
         PutOnHold("Put On Hold"),
@@ -845,24 +877,23 @@ public class ProductOrder implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public boolean equals(Object other) {
 
-        ProductOrder that = (ProductOrder) o;
+        if ((this == other)) {
+            return true;
+        }
 
-        if (researchProject != null ? !researchProject.equals(that.getResearchProject()) : that.getResearchProject() != null)
+        if (!(other instanceof ProductOrder)) {
             return false;
-        if (title != null ? !title.equals(that.getTitle()) : that.getTitle() != null) return false;
+        }
 
-        return true;
+        ProductOrder castOther = (ProductOrder) other;
+        return new EqualsBuilder().append(getBusinessKey(), castOther.getBusinessKey()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        int result = title != null ? title.hashCode() : 0;
-        result = 31 * result + (researchProject != null ? researchProject.hashCode() : 0);
-        return result;
+        return new HashCodeBuilder().append(getBusinessKey()).toHashCode();
     }
 
     public boolean hasJiraTicketKey() {
@@ -871,5 +902,34 @@ public class ProductOrder implements Serializable {
 
     public Integer getPdoSampleCount() {
         return pdoSampleCount;
+    }
+
+    public String getOriginalTitle() {
+        return originalTitle;
+    }
+
+    public String getSampleList() {
+        if (sampleList == null) {
+            sampleList = "";
+            for (ProductOrderSample sample : samples) {
+                sampleList += sample.getSampleName() + "\n";
+            }
+        }
+
+        return sampleList;
+    }
+
+    public void updateSamplesFromList() {
+        samples.clear();
+
+        if (!StringUtils.isBlank(sampleList)) {
+            for (String sampleName : sampleList.trim().split("\n")) {
+                samples.add(new ProductOrderSample(sampleName.trim()));
+            }
+        }
+    }
+
+    public void setSampleList(String sampleList) {
+        this.sampleList = sampleList;
     }
 }

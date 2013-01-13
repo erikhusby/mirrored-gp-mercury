@@ -250,6 +250,14 @@ public class ProductOrderSample implements Serializable {
         return builder.toString();
     }
 
+    public String getStripBspName() {
+        if ((sampleName.length() > 3) && isInBspFormat(sampleName)) {
+            return sampleName.substring(3);
+        }
+
+        return sampleName;
+    }
+
     /**
      * Given a sample, compute its billable price items based on its material type.  We assume that all add-ons
      * in the sample's order's product that can accept the sample's material type are required, in addition to the

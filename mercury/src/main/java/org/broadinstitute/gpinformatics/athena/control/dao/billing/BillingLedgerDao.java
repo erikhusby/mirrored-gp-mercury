@@ -69,7 +69,7 @@ public class BillingLedgerDao extends GenericDao {
         // choose the appropriate predicate depending on whether we are passed ProductOrder entities or business keys
         Predicate orderInPredicate;
         if (orders != null) {
-            orderInPredicate = orderSample.get(ProductOrderSample_.productOrder).in(orders);
+            orderInPredicate = orderSample.get(ProductOrderSample_.productOrder).in((Object[])orders);
         } else {
             Join<ProductOrderSample, ProductOrder> productOrderSampleProductOrderJoin = orderSample.join(ProductOrderSample_.productOrder);
             orderInPredicate = productOrderSampleProductOrderJoin.get(ProductOrder_.jiraTicketKey).in(productOrderBusinessKeys);

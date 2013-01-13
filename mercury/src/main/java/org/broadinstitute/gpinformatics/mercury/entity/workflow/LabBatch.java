@@ -189,6 +189,25 @@ public class LabBatch {
         this.labEvents.addAll(labEvents);
     }
 
+    private List<LabEvent> getAllEventsSortedByDate() {
+        Map<Date, LabEvent> sortedTreeMap = new TreeMap<Date, LabEvent>();
+        for (LabEvent event : getLabEvents()) {
+            sortedTreeMap.put(event.getEventDate(), event);
+        }
+        return new ArrayList<LabEvent>(sortedTreeMap.values());
+    }
+
+    public LabEvent getLatestEvent() {
+        LabEvent event = null;
+        List<LabEvent> eventsList = getAllEventsSortedByDate();
+
+        int size = eventsList.size();
+        if (size > 0) {
+            event = eventsList.get(size - 1);
+        }
+        return event;
+    }
+
     public Date getCreatedOn() {
         return createdOn;
     }
@@ -336,7 +355,7 @@ public class LabBatch {
 
         boolean result = false;
 
-        if(targetBatch.getStartingLabVessels().containsAll(batchSet)) {
+        if (targetBatch.getStartingLabVessels().containsAll(batchSet)) {
             result = true;
         }
 
