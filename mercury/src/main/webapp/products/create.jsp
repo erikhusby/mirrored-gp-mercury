@@ -10,12 +10,12 @@
         <script type="text/javascript">
             $j(document).ready(
                 function () {
-                    $j("#priceItem").tokenInput(
+                    $j("#primaryPriceItem").tokenInput(
                         "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             searchDelay: 500,
                             preventDuplicates: true,
-                            <c:if test="${actionBean.priceItemCompleteData != null && actionBean.priceItemCompleteData != ''}">
-                                prePopulate: ${actionBean.priceItemCompleteData},
+                            <c:if test="${actionBean.primaryPriceItemCompleteData != null && actionBean.primaryPriceItemCompleteData != ''}">
+                                prePopulate: ${actionBean.primaryPriceItemCompleteData},
                             </c:if>
                             tokenLimit: 1
                         }
@@ -187,11 +187,11 @@
                 </div>
 
                 <div class="control-group">
-                    <stripes:label for="priceItem" class="control-label">
+                    <stripes:label for="primaryPriceItem" class="control-label">
                         Primary Price Item
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="priceItem" name="priceItemList"
+                        <stripes:text id="primaryPriceItem" name="primaryPriceItemList"
                             class="defaultText" title="Type to search for matching price items"/>
                     </div>
                 </div>

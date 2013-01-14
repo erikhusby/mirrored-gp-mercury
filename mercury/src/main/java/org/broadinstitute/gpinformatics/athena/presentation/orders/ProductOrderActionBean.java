@@ -6,6 +6,7 @@ import net.sourceforge.stripes.validation.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
@@ -88,6 +89,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private BillingLedgerDao billingLedgerDao;
+
+    @Inject
+    private ProductOrderEjb productOrderEjb;
 
     private List<ProductOrderListEntry> allProductOrders;
 
@@ -290,7 +294,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         editOrder.updateData(project, product, addOnProducts);
 
         if (editOrder.isDraft()) {
+            // mlc isDraft checks if the status is Draft and if so, we set it to Draft again?
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
+        }
+        else {
+            productOrderEjb.updateJiraIssue(editOrder);
         }
 
         // save it!
@@ -302,7 +310,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("downloadBillingTracker")
     public Resolution downloadBillingTracker() {
-        return ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, bspUserList);
+        Resolution resolution = ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, bspUserList);
+        if (hasErrors()) {
+            // Need to regenerate the list so it's displayed along with the errors.
+            listInit();
+        }
+        return resolution;
     }
 
     @HandlesEvent("startBilling")
@@ -357,8 +370,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         return editOrder;
     }
 
-    public void setEditOrder(ProductOrder order) {
-        this.editOrder = order;
+    public void setEditOrder(ProductOrder editOrder) {
+        this.editOrder = editOrder;
     }
 
     public String getQuoteUrl() {
@@ -383,7 +396,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             final File tempFile = File.createTempFile(filename, ".xls");
             outputStream = new FileOutputStream(tempFile);
 
-            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(productOrderList);
+            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(bspUserList, productOrderList);
             sampleLedgerExporter.writeToStream(outputStream);
             IOUtils.closeQuietly(outputStream);
 
