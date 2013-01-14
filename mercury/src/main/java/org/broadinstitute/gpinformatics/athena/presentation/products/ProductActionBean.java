@@ -58,7 +58,7 @@ public class ProductActionBean extends CoreActionBean {
     private String product;
 
     @ValidateNestedProperties({
-        @Validate(field="productFamily.productFamilyId", required = true, maxlength=255, on={SAVE_ACTION}),
+        @Validate(field="productFamily.productFamilyId", label="Product Family", required = true, maxlength=255, on={SAVE_ACTION}),
         @Validate(field="productName", required = true, maxlength=255, on={SAVE_ACTION})
     })
     private Product editProduct;
