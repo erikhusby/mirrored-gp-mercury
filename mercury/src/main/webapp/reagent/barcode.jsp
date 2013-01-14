@@ -15,7 +15,7 @@
                             prePopulate: ${actionBean.reagentDesignCompleteData},
                             </c:if>
                             searchDelay: 500,
-                            minChars: 2, tokenLimit: 1, preventDuplicates: true
+                            tokenLimit: 1, preventDuplicates: true
                         });
             });
         </script>
