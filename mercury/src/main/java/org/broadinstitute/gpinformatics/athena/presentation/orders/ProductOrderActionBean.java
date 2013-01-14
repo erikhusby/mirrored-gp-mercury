@@ -32,6 +32,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -39,6 +40,7 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.text.MessageFormat;
 import java.util.*;
 
 /**
@@ -93,6 +95,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private ProductOrderEjb productOrderEjb;
 
+    @Inject
+    private UserBean userBean;
+
     private List<ProductOrderListEntry> allProductOrders;
 
     @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
@@ -126,6 +131,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
         } else {
+            // This is only used for save, when creating a new product order.
             editOrder = new ProductOrder(getUserBean().getBspUser());
         }
     }
@@ -177,13 +183,16 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
-    public void validateOrderSelection(ValidationErrors errors) {
+    public void validateOrderSelection() {
+        String validatingFor = getContext().getEventName().equals("startBilling") ? "billing session" :
+                "tracker download";
+
         if (!getUserBean().isValidBspUser()) {
-            errors.addGlobalError(new SimpleError("This requires that you be a valid bsp user "));
+            addGlobalValidationError("A valid bsp user is needed to start a " + validatingFor);
         }
 
         if ((selectedProductOrderBusinessKeys == null) || selectedProductOrderBusinessKeys.isEmpty()) {
-            errors.addGlobalError(new SimpleError("Please select at least one product order"));
+            addGlobalValidationError("You must select at least one product order to start a " + validatingFor);
         } else {
             Set<Product> products = new HashSet<Product> ();
             selectedProductOrders =
@@ -201,9 +210,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             for (Product product : products) {
                 String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
                 if (duplicatePriceItems != null) {
-                    errors.addGlobalError(new SimpleError(
-                        "The Product " + product.getPartNumber() + " has duplicate price items: " +
-                        StringUtils.join(duplicatePriceItems, ", ")));
+                    addGlobalValidationError(
+                            "The Product " + product.getPartNumber() + " has duplicate price items: " +
+                            StringUtils.join(duplicatePriceItems, ", "));
                 }
             }
 
@@ -217,13 +226,13 @@ public class ProductOrderActionBean extends CoreActionBean {
 
                 String lockedOutString = StringUtils.join(lockedOutOrderStrings.toArray(), ", ");
 
-                errors.addGlobalError(new SimpleError(
-                    "The following orders are locked out by active billing sessions: " + lockedOutString));
+                addGlobalValidationError(
+                        "The following orders are locked out by active billing sessions: " + lockedOutString);
             }
         }
 
         // If there are errors, will reload the page, so need to fetch the list
-        if (errors.size() > 0) {
+        if (hasErrors()) {
             listInit();
         }
     }
@@ -231,6 +240,12 @@ public class ProductOrderActionBean extends CoreActionBean {
     @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION})
     public void listInit() {
         allProductOrders = orderListEntryDao.findProductOrderListEntries();
+    }
+
+    private void validateUser(String validatingFor) {
+        if (!userBean.ensureUserValid()) {
+            addGlobalValidationError(MessageFormat.format(UserBean.LOGIN_WARNING, validatingFor + " an order"));
+        }
     }
 
     @DefaultHandler
@@ -241,6 +256,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
+        if (editOrder.isDraft()) {
+            validateUser("place");
+        }
         return new ForwardResolution(ORDER_VIEW_PAGE);
     }
 
@@ -252,6 +270,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent(EDIT_ACTION)
     public Resolution edit() {
+        validateUser("edit");
         setSubmitString(EDIT_ORDER);
         return new ForwardResolution(ORDER_CREATE_PAGE);
     }
@@ -296,8 +315,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (editOrder.isDraft()) {
             // mlc isDraft checks if the status is Draft and if so, we set it to Draft again?
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
-        }
-        else {
+        } else {
             productOrderEjb.updateJiraIssue(editOrder);
         }
 
@@ -481,5 +499,22 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getSaveButtonText() {
         return ((editOrder == null) || editOrder.isDraft()) ? "Save Draft" : "Save";
+    }
+
+    /**
+     * @return true if Place Order is a valid operation.
+     */
+    public boolean getCanPlaceOrder() {
+        // User must be logged into JIRA to place an order.
+        return userBean.isValidUser();
+    }
+
+    /**
+     * @return true if Save is a valid operation.
+     */
+    public boolean getCanSave() {
+        // Unless we're in draft mode, or creating a new order, user must be logged into JIRA to
+        // change fields in an order.
+        return editOrder.isDraft() || isCreating() || userBean.isValidUser();
     }
 }

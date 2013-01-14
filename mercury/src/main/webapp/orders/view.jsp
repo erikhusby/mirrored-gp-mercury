@@ -37,7 +37,7 @@
 
             <div class="actionButtons">
                 <c:if test="${actionBean.editOrder.draft}">
-                    <stripes:submit name="placeOrder" value="Place Order" class="btn"/>
+                    <stripes:submit name="placeOrder" value="Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
                 </c:if>
             </div>
         </stripes:form>
