@@ -357,8 +357,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         return editOrder;
     }
 
-    public void setEditOrder(ProductOrder order) {
-        this.editOrder = order;
+    public void setEditOrder(ProductOrder editOrder) {
+        this.editOrder = editOrder;
     }
 
     public String getQuoteUrl() {
@@ -383,7 +383,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             final File tempFile = File.createTempFile(filename, ".xls");
             outputStream = new FileOutputStream(tempFile);
 
-            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(productOrderList);
+            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(bspUserList, productOrderList);
             sampleLedgerExporter.writeToStream(outputStream);
             IOUtils.closeQuietly(outputStream);
 
