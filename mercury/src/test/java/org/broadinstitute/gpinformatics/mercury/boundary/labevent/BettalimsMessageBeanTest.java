@@ -38,12 +38,17 @@ public class BettalimsMessageBeanTest {
                 LabEventType.POST_SHEARING_TRANSFER_CLEANUP.getName(), "x", "y");
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
         bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
+        String message = marshalMessage(bettaLIMSMessage);
+        sendJmsMessage(message);
+    }
+
+    public static String marshalMessage(BettaLIMSMessage bettaLIMSMessage) {
         try {
             JAXBContext jaxbContext = JAXBContext.newInstance(BettaLIMSMessage.class);
             Marshaller marshaller = jaxbContext.createMarshaller();
             StringWriter stringWriter = new StringWriter();
             marshaller.marshal(bettaLIMSMessage, stringWriter);
-            sendJmsMessage(stringWriter.toString());
+            return stringWriter.toString();
         } catch (JAXBException e) {
             throw new RuntimeException(e);
         }

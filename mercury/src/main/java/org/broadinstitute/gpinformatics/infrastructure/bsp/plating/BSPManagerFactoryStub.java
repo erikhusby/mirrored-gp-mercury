@@ -79,7 +79,7 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
                 testList.add(jwalshUsr);
 
                 BspUser hrafalUsr = new BspUser();
-                hrafalUsr.setUserId(QA_DUDE_USER_ID + 100);
+                hrafalUsr.setUserId(QA_DUDE_USER_ID + 101);
                 hrafalUsr.setUsername("hrafal");
                 hrafalUsr.setFirstName("Howard");
                 hrafalUsr.setLastName("Rafal");

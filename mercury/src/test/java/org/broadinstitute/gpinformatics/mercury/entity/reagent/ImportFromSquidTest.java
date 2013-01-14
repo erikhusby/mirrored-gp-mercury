@@ -307,6 +307,7 @@ public class ImportFromSquidTest extends ContainerTest {
                         researchProject = researchProjectDao.findByBusinessKey(jiraTicketKey);
                         ProductOrder productOrder = new ProductOrder(1701L, lcSet, productOrderSamples, "BSP-123", product, researchProject);
                         productOrder.setJiraTicketKey(lcSet);
+                        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
                         productOrderDao.persist(productOrder);
                         productOrderDao.clear();
                     }

@@ -369,6 +369,9 @@
                                         <include>org/broadinstitute/gpinformatics/mercury/boundary/Namespaces.java</include>
                                         <include>org/broadinstitute/gpinformatics/mercury/boundary/labevent/*Bean.java</include>
                                     </includes>
+                                    <excludes>
+                                        <exclude>org/broadinstitute/gpinformatics/mercury/boundary/labevent/BettalimsMessageBean.java</exclude>
+                                    </excludes>
                                     <transformSchemas>
                                         <!--
                                             Each schema element defines:
@@ -638,14 +641,14 @@
 
 
         <profile>
-            <id>CLOUD28</id>
+            <id>CLOUD19</id>
             <properties>
                 <!--  Oracle Dev database -->
                 <database>oracle</database>
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.28:1521:gpinfprd</database.url>
+                <database.url>jdbc:oracle:thin:@192.168.195.19:1521:gpinfprd</database.url>
                 <mercury.password>guest</mercury.password>
                 <athena.password>guest</athena.password>
             </properties>
@@ -676,7 +679,7 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.3:1521:gpinfprd</database.url>
+                <database.url>jdbc:oracle:thin:@192.168.195.32:1521:gpinfprd</database.url>
                 <mercury.password>guest</mercury.password>
                 <athena.password>guest</athena.password>
             </properties>
@@ -1146,6 +1149,17 @@
             <version>1.0.0.Alpha1-SNAPSHOT</version>
         </dependency>
 -->
+        <dependency>
+            <groupId>net.sourceforge.stripes</groupId>
+            <artifactId>stripes</artifactId>
+            <version>1.5.7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.samaxes.stripes</groupId>
+            <artifactId>stripes-injection-enricher</artifactId>
+            <version>1.0.2</version>
+        </dependency>
 
         <dependency>
             <groupId>commons-collections</groupId>
@@ -1421,6 +1435,7 @@
             <version>2.2.7.Final</version>
             <scope>compile</scope>
         </dependency>
+
     </dependencies>
 
     <build>

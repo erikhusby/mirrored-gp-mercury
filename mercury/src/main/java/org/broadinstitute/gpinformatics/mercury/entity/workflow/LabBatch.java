@@ -101,6 +101,15 @@ public class LabBatch {
         createdOn = new Date();
     }
 
+    public LabBatch(String batchName, Set<LabVessel> startingLabVessels, String batchDescription, Date dueDate,
+                    String important) {
+
+        this(batchName, startingLabVessels);
+        this.batchDescription = batchDescription;
+        this.dueDate = dueDate;
+        this.important = important;
+    }
+
     protected LabBatch() {
     }
 
@@ -144,10 +153,6 @@ public class LabBatch {
         return batchName;
     }
 
-    public void setBatchName(String batchName) {
-        this.batchName = batchName;
-    }
-
     public void setJiraTicket(JiraTicket jiraTicket) {
         this.jiraTicket = jiraTicket;
         jiraTicket.setLabBatch(this);
@@ -182,6 +187,25 @@ public class LabBatch {
 
     public void addLabEvents(Set<LabEvent> labEvents) {
         this.labEvents.addAll(labEvents);
+    }
+
+    private List<LabEvent> getAllEventsSortedByDate() {
+        Map<Date, LabEvent> sortedTreeMap = new TreeMap<Date, LabEvent>();
+        for (LabEvent event : getLabEvents()) {
+            sortedTreeMap.put(event.getEventDate(), event);
+        }
+        return new ArrayList<LabEvent>(sortedTreeMap.values());
+    }
+
+    public LabEvent getLatestEvent() {
+        LabEvent event = null;
+        List<LabEvent> eventsList = getAllEventsSortedByDate();
+
+        int size = eventsList.size();
+        if (size > 0) {
+            event = eventsList.get(size - 1);
+        }
+        return event;
     }
 
     public Date getCreatedOn() {
@@ -321,5 +345,16 @@ public class LabBatch {
         hashCodeBuilder.append(isActive).append(batchName).append(jiraTicket).append(getStartingVesselsArray());
 
         return hashCodeBuilder.hashCode();
+    }
+
+    public static boolean isCommonBatch(LabBatch targetBatch, Collection<LabVessel> batchSet) {
+
+        boolean result = false;
+
+        if (targetBatch.getStartingLabVessels().containsAll(batchSet)) {
+            result = true;
+        }
+
+        return result;
     }
 }

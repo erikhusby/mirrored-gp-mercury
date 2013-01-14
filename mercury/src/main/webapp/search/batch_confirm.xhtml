@@ -36,7 +36,7 @@
                     <label class="control-label label-form">Batch Ticket</label>
 
                     <div class="controls">
-                        <div class="control-label label-form">
+                        <div class="form-value">
                             <h:outputLink target="JIRA"
                                           value="#{jiraLink.browseUrl(batchConfirm.foundBatch.jiraTicket.ticketName)}"
                                           class="external">
@@ -46,31 +46,37 @@
                     </div>
                 </div>
 
-                <p:panel id="jiraDetails" rendered="#{batchConfirm.jiraInfoFound}">
-                    <div class="row-fluid">
-                        <label class="control-label label-form">Batch name</label>
+            <p:panel id="jiraDetails" rendered="#{batchConfirm.jiraInfoFound}">
+                <div class="row-fluid">
+                    <label class="control-label label-form">Batch name</label>
 
-                        <div class="controls">
-                            <div class="form-value">#{batchConfirm.jiraIssue.summary}</div>
+                    <div class="controls">
+                        <div class="form-value">
+                            <h:outputText value="#{batchConfirm.jiraIssue.summary}"/>
                         </div>
                     </div>
+                </div>
 
-                    <div class="row-fluid">
-                        <label class="control-label label-form">Batch Description</label>
+                <div class="row-fluid">
+                    <label class="control-label label-form">Batch Description</label>
 
-                        <div class="controls">
-                            <div class="form-value">#{batchConfirm.jiraIssue.description}</div>
+                    <div class="controls">
+                        <div class="form-value">
+                            <h:outputText value="#{batchConfirm.jiraIssue.description}"/>
                         </div>
                     </div>
+                </div>
 
-                    <div class="row-fluid">
-                        <label class="control-label label-form">Batch Due Date</label>
+                <div class="row-fluid">
+                    <label class="control-label label-form">Batch Due Date</label>
 
-                        <div class="controls">
-                            <div class="form-value"><h:outputText value="#{batchConfirm.jiraIssue.dueDate}" /></div>
+                    <div class="controls">
+                        <div class="form-value">
+                            <h:outputText value="#{batchConfirm.jiraIssue.dueDate}" />
                         </div>
                     </div>
-                </p:panel>
+                </div>
+            </p:panel>
 
 
                 <p:panel id="searchResultPanel">

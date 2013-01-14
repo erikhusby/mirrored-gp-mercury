@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -12,9 +13,7 @@ import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.*;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * Queries for the research project.
@@ -94,4 +93,22 @@ public class ResearchProjectDao extends GenericDao {
 
         return projectOrderCounts;
     }
+
+    public Collection<ResearchProject> searchProjects(String searchText) {
+        List<ResearchProject> allProjects = findAllResearchProjects();
+        SortedSet<ResearchProject> list = new TreeSet<ResearchProject>();
+        String[] searchWords = searchText.split("\\s");
+
+        for (ResearchProject project : allProjects) {
+            for (String searchWord : searchWords) {
+                if (StringUtils.containsIgnoreCase(project.getTitle(), searchWord)) {
+                    list.add(project);
+                    break;
+                }
+            }
+        }
+
+        return list;
+    }
+
 }

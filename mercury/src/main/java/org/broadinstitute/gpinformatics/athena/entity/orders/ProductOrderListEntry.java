@@ -1,14 +1,18 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.regex.Matcher;
 
 /**
  * Non-entity used for optimizing the performance of the PDO list page.
  */
 public class ProductOrderListEntry implements Serializable {
+
+    private Long orderId;
 
     private String title;
 
@@ -36,6 +40,7 @@ public class ProductOrderListEntry implements Serializable {
     /**
      * Version of the constructor called by the non-ledger aware first pass query
      *
+     * @param orderId
      * @param title
      * @param jiraTicketKey
      * @param orderStatus
@@ -45,9 +50,10 @@ public class ProductOrderListEntry implements Serializable {
      * @param ownerId
      * @param updatedDate
      */
-    public ProductOrderListEntry(String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
+    public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
                                  String productName, String productFamilyName, String researchProjectTitle, Long ownerId,
                                  Date updatedDate, Integer pdoSampleCount) {
+        this.orderId = orderId;
         this.title = title;
         this.jiraTicketKey = jiraTicketKey;
         this.orderStatus = orderStatus;
@@ -64,11 +70,13 @@ public class ProductOrderListEntry implements Serializable {
      * Version of the constructor called by the ledger-aware second pass query.  These objects are essentially merged
      * into the objects from the first query.
      *
+     * @param orderId
      * @param jiraTicketKey
      * @param billingSessionId
      * @param unbilledLedgerEntryCount
      */
-    public ProductOrderListEntry(String jiraTicketKey, Long billingSessionId, Long unbilledLedgerEntryCount) {
+    public ProductOrderListEntry(Long orderId, String jiraTicketKey, Long billingSessionId, Long unbilledLedgerEntryCount) {
+        this.orderId = orderId;
         this.jiraTicketKey = jiraTicketKey;
         this.billingSessionId = billingSessionId;
         this.unbilledLedgerEntryCount = unbilledLedgerEntryCount;
@@ -84,6 +92,10 @@ public class ProductOrderListEntry implements Serializable {
     }
 
     public String getBusinessKey() {
+        if (jiraTicketKey == null) {
+            return ProductOrder.DRAFT_PREFIX + orderId;
+        }
+
         return getJiraTicketKey();
     }
 
@@ -159,4 +171,40 @@ public class ProductOrderListEntry implements Serializable {
     public int hashCode() {
         return jiraTicketKey != null ? jiraTicketKey.hashCode() : 0;
     }
+
+    public boolean isDraft() {
+        return ProductOrder.OrderStatus.Draft == orderStatus;
+    }
+
+
+    public boolean isValidJiraTicket() {
+        if (jiraTicketKey == null) {
+            return false;
+        }
+
+        return JiraTicket.PATTERN.matcher(jiraTicketKey).matches();
+    }
+
+
+    /**
+     *
+     * @return the numeric portion of the JIRA ticket key if this looks like a real JIRA ticket, otherwise return null.
+     */
+    public Integer getJiraTicketNumber() {
+
+        if (jiraTicketKey == null) {
+            return null;
+        }
+
+        Matcher matcher = JiraTicket.PATTERN.matcher(jiraTicketKey);
+
+        if ( ! matcher.matches() || ! "PDO".equals(matcher.group(JiraTicket.PATTERN_GROUP_PREFIX))) {
+            return null;
+        }
+
+        // pluck out the numeric portion of the JIRA ticket key and convert to Integer
+        return Integer.valueOf(matcher.group(JiraTicket.PATTERN_GROUP_NUMBER));
+    }
+
+
 }

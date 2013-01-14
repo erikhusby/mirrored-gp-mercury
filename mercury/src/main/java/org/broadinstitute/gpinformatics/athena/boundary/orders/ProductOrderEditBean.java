@@ -19,6 +19,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean.VIEW_ACTION;
+
 @ManagedBean(name = "pdoEditBean")
 @ViewScoped
 /**
@@ -145,6 +147,6 @@ public class ProductOrderEditBean extends AbstractJsfBean implements Serializabl
         // not sure why I need to explicitly add the productOrder parameter; the superclass
         // redirect alone which does includeViewParams=true does not include the productOrder view param that this
         // page received from the view page
-        return redirect("view") + "&productOrder=" + productOrder.getBusinessKey();
+        return redirect(VIEW_ACTION) + "&productOrder=" + productOrder.getBusinessKey();
     }
 }
