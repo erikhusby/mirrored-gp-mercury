@@ -76,6 +76,13 @@
             </div>
 
             <div class="view-control-group control-group">
+                <label class="control-label label-form">Status</label>
+                <div class="controls">
+                    <div class="form-value">${actionBean.editOrder.orderStatus}</div>
+                </div>
+            </div>
+
+            <div class="view-control-group control-group">
                 <label class="control-label label-form">Research Project</label>
                 <div class="controls">
                     <div class="form-value">
