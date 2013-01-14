@@ -103,6 +103,7 @@ public class BillingSessionActionBean extends CoreActionBean {
             ProductOrderActionBean.getTrackerForOrders(this, productOrders, bspUserList);
 
         // If there is no file to download, just pass on the errors
+        // FIXME: this logic is bogus, getTrackerForOrders doesn't return null on error.
         if (downloadResolution == null) {
             return new ForwardResolution(SESSION_VIEW_PAGE);
         }

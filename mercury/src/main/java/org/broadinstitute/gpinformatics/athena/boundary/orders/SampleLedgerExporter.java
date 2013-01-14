@@ -53,13 +53,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     private static final int ERRORS_WIDTH = 259 * 100;
     private static final int COMMENTS_WIDTH = 259 * 60;
 
-    private BSPUserList bspUserList;
+    private final BSPUserList bspUserList;
 
-    public SampleLedgerExporter(ProductOrder... productOrders) {
-        this(Arrays.asList(productOrders));
-    }
-
-    public SampleLedgerExporter(List<ProductOrder> productOrders) {
+    public SampleLedgerExporter(BSPUserList bspUserList, List<ProductOrder> productOrders) {
+        this.bspUserList = bspUserList;
 
         for (ProductOrder productOrder : productOrders) {
             if (!orderMap.containsKey(productOrder.getProduct())) {
@@ -71,7 +68,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     }
 
     public SampleLedgerExporter(List<String> pdoBusinessKeys, BSPUserList bspUserList, ProductOrderDao productOrderDao) {
-        this(productOrderDao.findListByBusinessKeyList(pdoBusinessKeys, Product, ResearchProject, Samples));
+        this(bspUserList, productOrderDao.findListByBusinessKeyList(pdoBusinessKeys, Product, ResearchProject, Samples));
     }
 
     private String getBspFullName(long id) {

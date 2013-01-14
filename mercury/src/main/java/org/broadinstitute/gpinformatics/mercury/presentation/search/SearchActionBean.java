@@ -47,8 +47,6 @@ public class SearchActionBean extends CoreActionBean {
     public static final String EXISTING_TICKET = "existingTicket";
     public static final String NEW_TICKET = "newTicket";
 
-
-
     @Inject
     private LabBatchEjb labBatchEjb;
     @Inject
@@ -93,7 +91,6 @@ public class SearchActionBean extends CoreActionBean {
     private String description;
     private String summary;
     private Date dueDate;
-
 
     /**
      * Initialize the product with the passed in key for display in the form
@@ -162,15 +159,18 @@ public class SearchActionBean extends CoreActionBean {
     public void createBatchValidation(ValidationErrors errors) {
 
         if(selectedVesselLabels == null || selectedVesselLabels.isEmpty()) {
+            doBatchSearch();
             errors.add("selectedVesselLabels", new SimpleError("At least one vessel must be selected to create a batch"));
         }
 
         if(jiraInputType.equals(EXISTING_TICKET)) {
             if(StringUtils.isBlank(jiraTicketId)) {
+                doBatchSearch();
                 errors.add("jiraTicketId",new SimpleError("An existing Jira ticket key is required"));
             }
         } else {
             if(StringUtils.isBlank(summary)) {
+                doBatchSearch();
                 errors.add("summary", new SimpleError("You must provide at least a summary to create a Jira Ticket"));
             }
         }
@@ -178,6 +178,11 @@ public class SearchActionBean extends CoreActionBean {
 
     @HandlesEvent(SEARCH_BATCH_CANDIDATES_ACTION)
     public Resolution searchForBatchCandidates() throws Exception {
+        doBatchSearch();
+        return new ForwardResolution(BATCH_CREATE_PAGE);
+    }
+
+    private void doBatchSearch() {
         List<String> searchList = SearchActionBean.cleanInputString(searchKey);
 
         foundVessels = labVesselDao.findByListIdentifiers(searchList);
@@ -189,7 +194,6 @@ public class SearchActionBean extends CoreActionBean {
         long totalResults = foundVessels.size();
 
         resultsAvailable = totalResults > 0;
-        return new ForwardResolution(BATCH_CREATE_PAGE);
     }
 
 

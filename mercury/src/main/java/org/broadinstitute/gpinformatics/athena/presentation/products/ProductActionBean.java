@@ -58,7 +58,7 @@ public class ProductActionBean extends CoreActionBean {
     private String product;
 
     @ValidateNestedProperties({
-        @Validate(field="productFamily.productFamilyId", required = true, maxlength=255, on={SAVE_ACTION}),
+        @Validate(field="productFamily.productFamilyId", label="Product Family", required = true, maxlength=255, on={SAVE_ACTION}),
         @Validate(field="productName", required = true, maxlength=255, on={SAVE_ACTION})
     })
     private Product editProduct;
@@ -66,7 +66,7 @@ public class ProductActionBean extends CoreActionBean {
 
     // These are the fields for catching the input tokens
     @Validate(required = true, on = {SAVE_ACTION})
-    private String priceItemList = "";
+    private String primaryPriceItemList = "";
 
     private String addOnList = "";
 
@@ -213,7 +213,7 @@ public class ProductActionBean extends CoreActionBean {
         editProduct.getAddOns().clear();
         editProduct.getAddOns().addAll(getAddOns());
 
-        editProduct.setPrimaryPriceItem(getPriceItem());
+        editProduct.setPrimaryPriceItem(getPrimaryPriceItem());
     }
 
     public Product getEditProduct() {
@@ -249,8 +249,8 @@ public class ProductActionBean extends CoreActionBean {
         return productDao.findByPartNumbers(addOnIdList);
     }
 
-    public org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getPriceItem() {
-        PriceItem priceItem = priceListCache.findById(Long.valueOf(priceItemList));
+    public org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getPrimaryPriceItem() {
+        PriceItem priceItem = priceListCache.findById(Long.valueOf(primaryPriceItemList));
 
         org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity =
                 priceItemDao.find(priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
@@ -277,7 +277,7 @@ public class ProductActionBean extends CoreActionBean {
         return itemList.toString();
     }
 
-    public String getPriceItemCompleteData() throws Exception {
+    public String getPrimaryPriceItemCompleteData() throws Exception {
         if ((editProduct == null) || (editProduct.getPrimaryPriceItem() == null)) {
             return "";
         }
@@ -294,12 +294,12 @@ public class ProductActionBean extends CoreActionBean {
         return itemList.toString();
     }
 
-    public String getPriceItemList() {
-        return priceItemList;
+    public String getPrimaryPriceItemList() {
+        return primaryPriceItemList;
     }
 
-    public void setPriceItemList(String priceItemList) {
-        this.priceItemList = priceItemList;
+    public void setPrimaryPriceItemList(String primaryPriceItemList) {
+        this.primaryPriceItemList = primaryPriceItemList;
     }
 
     public String getAddOnList() {
