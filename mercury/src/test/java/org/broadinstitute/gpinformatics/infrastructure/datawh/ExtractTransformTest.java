@@ -106,7 +106,7 @@ public class ExtractTransformTest extends Arquillian {
 
     /**  Mathematically excludes changes by setting last ETL version impossibly high. */
     public void testNoChanges() {
-        extractTransform.writeLastEtlRun(datafileDir, Long.MAX_VALUE - 1);
+        extractTransform.writeLastEtlRun(Long.MAX_VALUE - 1);
         Assert.assertEquals(0, extractTransform.incrementalEtl());
         Assert.assertTrue(ExtractTransform.getIncrementalRunStartTime() >= 0);
     }
@@ -130,10 +130,10 @@ public class ExtractTransformTest extends Arquillian {
         long endRev = auditReaderDao.currentRevNumber(now);
         if (endRev == 0) return;
         long startRev = Math.max(0, endRev - 2000);
-        extractTransform.writeLastEtlRun(datafileDir, startRev);
+        extractTransform.writeLastEtlRun(startRev);
         int recordCount = extractTransform.incrementalEtl();
         Assert.assertTrue(recordCount > 0);
-        Assert.assertEquals(endRev, extractTransform.readLastEtlRun(datafileDir));
+        Assert.assertEquals(endRev, extractTransform.readLastEtlRun());
 
         long etlMsec = extractTransform.getIncrementalRunStartTime();
         String readyFilename = ExtractTransform.fullDateFormat.format(new Date(etlMsec)) + ExtractTransform.READY_FILE_SUFFIX;
@@ -261,7 +261,8 @@ public class ExtractTransformTest extends Arquillian {
 
     /** Passes a non-existent directory for the last run file. */
     public void testInvalidLastEtlBadDir() {
-        Assert.assertEquals(0L, extractTransform.readLastEtlRun(badDataDir));
+        extractTransform.setDatafileDir(badDataDir);
+        Assert.assertEquals(0L, extractTransform.readLastEtlRun());
     }
 
     /** Writes an unparsable timestamp. */
@@ -271,7 +272,7 @@ public class ExtractTransformTest extends Arquillian {
         fw.write("abcedfg");
         fw.close();
 
-        Assert.assertEquals(0L, extractTransform.readLastEtlRun(datafileDir));
+        Assert.assertEquals(0L, extractTransform.readLastEtlRun());
     }
 
     /** Takes the mutex, ETL cannot run. */

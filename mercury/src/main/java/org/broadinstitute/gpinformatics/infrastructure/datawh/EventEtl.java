@@ -181,7 +181,8 @@ public class EventEtl extends GenericEntityEtl {
     }
 
     private final int CONFIG_ID_CACHE_SIZE = 4;
-    private LRUMap configIdCache = (LRUMap)Collections.synchronizedMap(new LRUMap(CONFIG_ID_CACHE_SIZE));
+    private LRUMap configIdCache = new LRUMap(CONFIG_ID_CACHE_SIZE);
+    private final Object cacheMutex = new Object();
 
     /** Returns the id of the relevant WorkflowConfig denormalized record.
      * @return 0 if no id found
@@ -195,9 +196,11 @@ public class EventEtl extends GenericEntityEtl {
 
         // Checks for a cache hit.
         String cacheKey = eventName + productOrderKey + eventDate.toString();
-        Long id = (Long)configIdCache.get(cacheKey);
-        if (id != null) {
-            return id;
+        synchronized(configIdCache) {
+            Long id = (Long)configIdCache.get(cacheKey);
+            if (id != null) {
+                return id;
+            }
         }
 
         ProductOrder productOrder = pdoDao.findByBusinessKey(productOrderKey);
@@ -215,8 +218,10 @@ public class EventEtl extends GenericEntityEtl {
         for (WorkflowConfigDenorm denorm : eventToWorkflowList.get(eventName)) {
             if (workflowName.equals(denorm.getProductWorkflowName())
                     && eventDate.after(denorm.getEffectiveDate())) {
-                id = denorm.getWorkflowConfigDenormId();
-                configIdCache.put(cacheKey, id);
+                Long id = denorm.getWorkflowConfigDenormId();
+                synchronized(configIdCache) {
+                    configIdCache.put(cacheKey, id);
+                }
                 return id;
             }
         }
