@@ -37,7 +37,7 @@ public class CreateBatchActionBean extends CoreActionBean {
     private static final String BATCH_CONFIRM_PAGE = "/search/batch_confirm.jsp";
 
     public static final String CREATE_BATCH_ACTION = "createBatch";
-    public static final String VIEW_ACTION = "view";
+    public static final String VIEW_ACTION = "startBatch";
     public static final String CONFIRM_ACTION = "confirm";
     public static final String SEARCH_ACTION = "search";
 

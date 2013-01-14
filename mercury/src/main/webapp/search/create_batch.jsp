@@ -3,7 +3,7 @@
 <%@ taglib prefix="str" uri="http://stripes.sourceforge.net/stripes-dynattr.tld" %>
 
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"/>
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Create Batches from Vessels" sectionTitle="Search">
     <stripes:layout-component name="extraHead">
@@ -35,7 +35,7 @@
 
                             <div class="control-group">
                                 <div class="controls" style="margin-left: 80px;">
-                                    <stripes:submit name="search" value="Search"/>
+                                    <stripes:submit name="searchBatchCandidates" value="Search"/>
                                 </div>
                             </div>
                         </div>

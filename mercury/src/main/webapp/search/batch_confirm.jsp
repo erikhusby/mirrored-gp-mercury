@@ -2,7 +2,7 @@
 <%@ taglib prefix='fn' uri='http://java.sun.com/jsp/jstl/functions' %>
 
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"/>
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Batch Creation Confirmation" sectionTitle="Search">
 
@@ -32,7 +32,7 @@
                 <label class="control-label label-form">Batch Name</label>
 
                 <div class="controls">
-                    <div class="form-value">${actionBean.batch.batchName}</div>
+                    <div class="form-value">${actionBean.batch.jiraTicket.jiraDetails.summary}</div>
                 </div>
             </div>
 
