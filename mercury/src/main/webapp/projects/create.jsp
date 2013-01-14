@@ -10,6 +10,7 @@
                     function () {
                         $j("#projectManagers").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                    hintText: "Type a Project Manager name",
                                     searchDelay: 500,
                                     <c:if test="${actionBean.projectManagerCompleteData != null && actionBean.projectManagerCompleteData != ''}">
                                         prePopulate: ${actionBean.projectManagerCompleteData},
@@ -20,6 +21,7 @@
 
                         $j("#scientists").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                    hintText: "Type a Scientist name",
                                     searchDelay: 500,
                                     <c:if test="${actionBean.scientistCompleteData != null && actionBean.scientistCompleteData != ''}">
                                         prePopulate: ${actionBean.scientistCompleteData},
@@ -30,6 +32,7 @@
 
                         $j("#externalCollaborators").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                    hintText: "Type a Collaborator name",
                                     searchDelay: 500,
                                     <c:if test="${actionBean.externalCollaboratorCompleteData != null && actionBean.externalCollaboratorCompleteData != ''}">
                                         prePopulate: ${actionBean.externalCollaboratorCompleteData},
@@ -40,6 +43,7 @@
 
                         $j("#broadPIs").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                    hintText: "Type a Broad PI",
                                     searchDelay: 500,
                                     <c:if test="${actionBean.broadPICompleteData != null && actionBean.broadPICompleteData != ''}">
                                         prePopulate: ${actionBean.broadPICompleteData},
@@ -60,6 +64,7 @@
 
                         $j("#cohorts").tokenInput(
                                 "${ctxpath}/projects/project.action?cohortAutocomplete=", {
+                                    hintText: "Type a Sample Cohort name",
                                     searchDelay: 500,
                                     <c:if test="${actionBean.cohortsCompleteData != null && actionBean.cohortsCompleteData != ''}">
                                         prePopulate: ${actionBean.cohortsCompleteData},
@@ -70,6 +75,7 @@
 
                         $j("#irbs").tokenInput(
                                 "${ctxpath}/projects/project.action?irbAutocomplete=", {
+                                    hintText: "Type an IRB Number",
                                     searchDelay: 500,
                                     <c:if test="${actionBean.irbsCompleteData != null && actionBean.irbsCompleteData != ''}">
                                         prePopulate: ${actionBean.irbsCompleteData},
@@ -84,7 +90,7 @@
 
     <stripes:layout-component name="content">
 
-        <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
+        <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal" focus="editResearchProject.title">
             <stripes:hidden name="submitString"/>
             <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
             <div class="form-horizontal">
@@ -92,7 +98,7 @@
                     <stripes:label for="title" class="control-label">Project *</stripes:label>
                     <div class="controls">
                             <stripes:text name="editResearchProject.title" value="${actionBean.editResearchProject.title}"
-                                          id="title"  class="defaultText" title="Enter in the project name"  maxlength="255"/>
+                                          id="title"  class="defaultText" title="Enter the project name"  maxlength="255"/>
                     </div>
                 </div>
 
@@ -174,7 +180,7 @@
                     <stripes:label for="irbs" class="control-label">IRB/IACUC Numbers</stripes:label>
 
                     <div class="controls">
-                        <stripes:text id="irbs" name="irbList" />
+                        <stripes:text id="irbs" name="irbList" title="Enter the IRB Number" class="defaultText"/>
                         <p>
                             <stripes:checkbox id="irbNotEngaged" name="editResearchProject.irbNotEngaged"/>&nbsp;<stripes:label for="irbNotEngaged" style="display:inline;">IRB Not Engaged</stripes:label>
                         </p>
