@@ -130,11 +130,16 @@ public class BillingLedger {
 
         BillingLedger castOther = (BillingLedger) other;
         return new EqualsBuilder()
-                .append(ledgerId, castOther.ledgerId).isEquals();
+                .append(productOrderSample, castOther.getProductOrderSample())
+                .append(priceItem, castOther.getPriceItem())
+                .append(billingSession, castOther.getBillingSession()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(ledgerId).toHashCode();
+        return new HashCodeBuilder()
+                .append(productOrderSample)
+                .append(priceItem)
+                .append(billingSession).toHashCode();
     }
 }
