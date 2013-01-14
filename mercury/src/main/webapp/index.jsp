@@ -8,14 +8,14 @@
 
         <div class="row-fluid" style="width:800px; margin:0 auto;">
             <div class="span3">
-                <h3 style="min-height: 80px;">Research projects</h3>
+                <h3 style="min-height: 80px;">Research Projects</h3>
 
                 <p>Review and manage all your research projects.</p>
 
                 <p><a class="btn" style="text-decoration: none !important" href="${ctxpath}/projects/project.action?list=">View details &#187;</a></p>
             </div>
             <div class="span3">
-                <h3 style="min-height: 80px;">Product orders</h3>
+                <h3 style="min-height: 80px;">Product Orders</h3>
 
                 <p>Create or manage all your product orders.</p>
 
