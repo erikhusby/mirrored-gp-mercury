@@ -13,7 +13,6 @@
                     $j("#priceItem").tokenInput(
                         "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             searchDelay: 500,
-                            minChars: 2,
                             preventDuplicates: true,
                             <c:if test="${actionBean.priceItemCompleteData != null && actionBean.priceItemCompleteData != ''}">
                                 prePopulate: ${actionBean.priceItemCompleteData},
@@ -25,7 +24,6 @@
                     $j("#addOns").tokenInput(
                             "${ctxpath}/products/product.action?addOnsAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                                 searchDelay: 500,
-                                minChars: 2,
                                 <c:if test="${actionBean.addOnCompleteData != null && actionBean.addOnCompleteData != ''}">
                                     prePopulate: ${actionBean.addOnCompleteData},
                                 </c:if>

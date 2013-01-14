@@ -44,7 +44,7 @@
             </div>
         </stripes:form>
 
-        <c:if test="${not actionBean.hasResults}">
+        <c:if test="${not actionBean.resultsAvailable}">
             No Results Found
         </c:if>
 

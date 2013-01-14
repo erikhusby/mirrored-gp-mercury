@@ -60,7 +60,7 @@
                     <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
                         <li><a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Design</a></li>
                         <li>
-                            <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean" tabindex="1" event="view">Create Batch</stripes:link>
+                            <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean" tabindex="1" event="startBatch">Create Batch</stripes:link>
                         </li>
                     </ul>
                 </li>

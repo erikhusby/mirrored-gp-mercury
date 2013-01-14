@@ -136,7 +136,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
 
             if (!serverValid) {
                 // BSP is down
-                if (users != null) {
+                if (getUsers() != null) {
                     return;
                 } else {
                     rawUsers = new ArrayList<BspUser>();

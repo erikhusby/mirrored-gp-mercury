@@ -11,7 +11,6 @@
                         $j("#projectManagers").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
-                                    minChars: 2,
                                     <c:if test="${actionBean.projectManagerCompleteData != null && actionBean.projectManagerCompleteData != ''}">
                                         prePopulate: ${actionBean.projectManagerCompleteData},
                                     </c:if>
@@ -22,7 +21,6 @@
                         $j("#scientists").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
-                                    minChars: 2,
                                     <c:if test="${actionBean.scientistCompleteData != null && actionBean.scientistCompleteData != ''}">
                                         prePopulate: ${actionBean.scientistCompleteData},
                                     </c:if>
@@ -33,7 +31,6 @@
                         $j("#externalCollaborators").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
-                                    minChars: 2,
                                     <c:if test="${actionBean.externalCollaboratorCompleteData != null && actionBean.externalCollaboratorCompleteData != ''}">
                                         prePopulate: ${actionBean.externalCollaboratorCompleteData},
                                     </c:if>
@@ -44,7 +41,6 @@
                         $j("#broadPIs").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     searchDelay: 500,
-                                    minChars: 2,
                                     <c:if test="${actionBean.broadPICompleteData != null && actionBean.broadPICompleteData != ''}">
                                         prePopulate: ${actionBean.broadPICompleteData},
                                     </c:if>
@@ -55,7 +51,6 @@
                         $j("#fundingSources").tokenInput(
                                 "${ctxpath}/projects/project.action?fundingAutocomplete=", {
                                     searchDelay: 500,
-                                    minChars: 2,
                                     <c:if test="${actionBean.fundingSourcesCompleteData != null && actionBean.fundingSourcesCompleteData != ''}">
                                         prePopulate: ${actionBean.fundingSourcesCompleteData},
                                     </c:if>
@@ -66,7 +61,6 @@
                         $j("#cohorts").tokenInput(
                                 "${ctxpath}/projects/project.action?cohortAutocomplete=", {
                                     searchDelay: 500,
-                                    minChars: 2,
                                     <c:if test="${actionBean.cohortsCompleteData != null && actionBean.cohortsCompleteData != ''}">
                                         prePopulate: ${actionBean.cohortsCompleteData},
                                     </c:if>
@@ -77,7 +71,6 @@
                         $j("#irbs").tokenInput(
                                 "${ctxpath}/projects/project.action?irbAutocomplete=", {
                                     searchDelay: 500,
-                                    minChars: 1,
                                     <c:if test="${actionBean.irbsCompleteData != null && actionBean.irbsCompleteData != ''}">
                                         prePopulate: ${actionBean.irbsCompleteData},
                                     </c:if>

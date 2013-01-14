@@ -30,7 +30,6 @@
                     $j("#researchProject").tokenInput(
                         "${ctxpath}/projects/project.action?autocomplete=", {
                             searchDelay: 2000,
-                            minChars: 2,
                             <c:if test="${actionBean.projectCompleteData != null && actionBean.projectCompleteData != ''}">
                                 prePopulate: ${actionBean.projectCompleteData},
                             </c:if>
@@ -41,7 +40,6 @@
                     $j("#product").tokenInput(
                         "${ctxpath}/products/product.action?autocomplete=", {
                             searchDelay: 2000,
-                            minChars: 2,
                             onAdd: updateAddOnCheckboxes,
                             onDelete: updateAddOnCheckboxes,
                             <c:if test="${actionBean.productCompleteData != null && actionBean.productCompleteData != ''}">
