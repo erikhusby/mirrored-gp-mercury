@@ -41,7 +41,7 @@ public class BillingSession {
 
     // Do NOT cascade removes because we want the ledger items to stay, but just have their billing session removed.
     @OneToMany(mappedBy = "billingSession", cascade = {CascadeType.PERSIST})
-    private Set<BillingLedger> billingLedgerItems;
+    private List<BillingLedger> billingLedgerItems;
 
     BillingSession() {}
 
@@ -52,7 +52,7 @@ public class BillingSession {
             ledgerItem.setBillingSession(this);
         }
 
-        billingLedgerItems = new HashSet<BillingLedger>(ledgerItems);
+        billingLedgerItems = new ArrayList<BillingLedger>(ledgerItems);
     }
 
     public Date getCreatedDate() {
