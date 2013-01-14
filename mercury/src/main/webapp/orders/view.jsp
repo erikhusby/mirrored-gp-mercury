@@ -42,13 +42,11 @@
             </div>
         </stripes:form>
 
-        <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
         <stripes:link title="Click to edit ${actionBean.editOrder.title}"
             beanclass="${actionBean.class.name}" event="edit" class="pull-right">
             <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
             <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
         </stripes:link>
-        </security:authorizeBlock>
 
         <div style="both:clear"> </div>
 
