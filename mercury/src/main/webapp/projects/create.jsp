@@ -95,7 +95,7 @@
             <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
             <div class="form-horizontal">
                 <div class="control-group">
-                    <stripes:label for="title" class="control-label">Project *</stripes:label>
+                    <stripes:label for="title" class="control-label">Name *</stripes:label>
                     <div class="controls">
                             <stripes:text name="editResearchProject.title" value="${actionBean.editResearchProject.title}"
                                           id="title"  class="defaultText" title="Enter the project name"  maxlength="255"/>

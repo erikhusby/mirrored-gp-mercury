@@ -67,7 +67,7 @@
                 <stripes:hidden name="product"/>
                 <div class="control-group">
                     <stripes:label for="productFamily" class="control-label">
-                        Product Family
+                        Product Family *
                     </stripes:label>
                     <div class="controls">
                         <stripes:select name="editProduct.productFamily.productFamilyId" id="productFamily">
@@ -80,7 +80,7 @@
 
                 <div class="control-group">
                     <stripes:label for="productName" class="control-label">
-                        Product Name
+                        Product Name *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="productName" name="editProduct.productName" class="defaultText"
@@ -90,7 +90,7 @@
 
                 <div class="control-group">
                     <stripes:label for="description" class="control-label">
-                        Product Description
+                        Product Description *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="description" name="editProduct.description" class="defaultText"
@@ -100,7 +100,7 @@
 
                 <div class="control-group">
                     <stripes:label for="partNumber" class="control-label">
-                        Part Number
+                        Part Number *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="partNumber" name="editProduct.partNumber" class="defaultText"
@@ -110,7 +110,7 @@
 
                 <div class="control-group">
                     <stripes:label for="availabilityDate" class="control-label">
-                        Availability Date
+                        Availability Date *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="availabilityDate" name="editProduct.availabilityDate" class="defaultText"
@@ -199,7 +199,7 @@
 
                 <div class="control-group">
                     <stripes:label for="primaryPriceItem" class="control-label">
-                        Primary Price Item
+                        Primary Price Item *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="primaryPriceItem" name="primaryPriceItemList"
