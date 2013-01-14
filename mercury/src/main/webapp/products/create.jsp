@@ -21,6 +21,17 @@
                         }
                     );
 
+                    $j("#optionalPriceItems").tokenInput(
+                            "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
+                                searchDelay: 500,
+                                preventDuplicates: true,
+                                <c:if test="${actionBean.optionalPriceItemsCompleteData != null && actionBean.optionalPriceItemsCompleteData != ''}">
+                                prePopulate: ${actionBean.optionalPriceItemsCompleteData},
+                                </c:if>
+                                tokenLimit: 50
+                            }
+                    );
+
                     $j("#addOns").tokenInput(
                             "${ctxpath}/products/product.action?addOnsAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                                 searchDelay: 500,
@@ -196,7 +207,18 @@
                     </div>
                 </div>
 
-                <div class="control-group">
+                    <div class="control-group">
+                        <stripes:label for="optionalPriceItems" class="control-label">
+                            Optional Price Items
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:text id="optionalPriceItems" name="optionalPriceItemsList"
+                                          class="defaultText" title="Type to search for matching price items"/>
+                        </div>
+                    </div>
+
+
+                    <div class="control-group">
                     <stripes:label for="addOns" class="control-label">
                         Add-ons
                     </stripes:label>

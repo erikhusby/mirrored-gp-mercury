@@ -18,10 +18,7 @@ import org.json.JSONException;
 
 import javax.inject.Inject;
 import java.io.StringReader;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class supports all the actions done on products
@@ -67,6 +64,8 @@ public class ProductActionBean extends CoreActionBean {
     // These are the fields for catching the input tokens
     @Validate(required = true, on = {SAVE_ACTION})
     private String primaryPriceItemList = "";
+
+    private String optionalPriceItemsList = "";
 
     private String addOnList = "";
 
@@ -214,6 +213,9 @@ public class ProductActionBean extends CoreActionBean {
         editProduct.getAddOns().addAll(getAddOns());
 
         editProduct.setPrimaryPriceItem(getPrimaryPriceItem());
+
+        editProduct.getOptionalPriceItems().clear();
+        editProduct.getOptionalPriceItems().addAll(getOptionalPriceItems());
     }
 
     public Product getEditProduct() {
@@ -264,6 +266,36 @@ public class ProductActionBean extends CoreActionBean {
         return entity;
     }
 
+
+    public List<org.broadinstitute.gpinformatics.athena.entity.products.PriceItem> getOptionalPriceItems() {
+
+        List<org.broadinstitute.gpinformatics.athena.entity.products.PriceItem> optionalPriceItems =
+                new ArrayList<org.broadinstitute.gpinformatics.athena.entity.products.PriceItem>();
+
+        if ( ! StringUtils.isBlank(optionalPriceItemsList)) {
+
+            List<String> priceItemIdList = Arrays.asList(optionalPriceItemsList.split(","));
+
+            for (String priceItemId : priceItemIdList) {
+
+                PriceItem priceItem = priceListCache.findById(Long.valueOf(priceItemId));
+
+                org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity =
+                        priceItemDao.find(priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
+
+                // If we don't have this price item, this will add it.
+                if (entity == null) {
+                    entity = new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
+                            priceItem.getId(), priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
+                }
+
+                optionalPriceItems.add(entity);
+            }
+        }
+
+        return optionalPriceItems;
+    }
+
     public String getAddOnCompleteData() throws Exception {
         if (editProduct == null) {
             return "";
@@ -294,12 +326,40 @@ public class ProductActionBean extends CoreActionBean {
         return itemList.toString();
     }
 
+
+    public String getOptionalPriceItemsCompleteData() throws Exception {
+        if ((editProduct == null) || (editProduct.getOptionalPriceItems() == null) || (editProduct.getOptionalPriceItems().isEmpty())) {
+            return "";
+        }
+
+        JSONArray itemList = new JSONArray();
+
+        for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItemEntity : editProduct.getOptionalPriceItems()) {
+            PriceItem priceItem = priceListCache.findByConcatenatedKey(priceItemEntity.getConcatenatedKey());
+            if (priceItem == null) {
+                return "invalid key: " + priceItemEntity.getConcatenatedKey();
+            }
+            String quotePriceItemId = priceItem.getId();
+            itemList.put(new AutoCompleteToken(quotePriceItemId, priceItemEntity.getDisplayName(), false).getJSONObject());
+        }
+
+        return itemList.toString();
+    }
+
     public String getPrimaryPriceItemList() {
         return primaryPriceItemList;
     }
 
     public void setPrimaryPriceItemList(String primaryPriceItemList) {
         this.primaryPriceItemList = primaryPriceItemList;
+    }
+
+    public String getOptionalPriceItemsList() {
+        return optionalPriceItemsList;
+    }
+
+    public void setOptionalPriceItemsList(String optionalPriceItemsList) {
+        this.optionalPriceItemsList = optionalPriceItemsList;
     }
 
     public String getAddOnList() {
