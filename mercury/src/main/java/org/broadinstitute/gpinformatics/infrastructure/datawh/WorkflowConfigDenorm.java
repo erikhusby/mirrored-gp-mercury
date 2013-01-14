@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
 
@@ -98,6 +99,7 @@ public class WorkflowConfigDenorm {
         if (workflowConfig == null) {
             return list;
         }
+
         for (ProductWorkflowDef pwd : workflowConfig.getProductWorkflowDefs()) {
             String productWorkflowName = pwd.getName();
             Date pwdvEndDate = null;
@@ -113,6 +115,7 @@ public class WorkflowConfigDenorm {
                         // Net effective date is the later of the two start dates, capped by end date.
                         // Records having inconsistent date (wpdv start after pwdv end) are not kept.
                         Date wpdvStartDate = wpdv.getEffectiveDate();
+
                         if (pwdvEndDate != null && wpdvStartDate.after(pwdvEndDate)) {
                             continue;
                         }
@@ -121,6 +124,7 @@ public class WorkflowConfigDenorm {
 
                         for (WorkflowStepDef wsd : wpdv.getWorkflowStepDefs()) {
                             String workflowStepName = wsd.getName();
+
                             for (LabEventType eventType : wsd.getLabEventTypes()) {
                                 String workflowStepEventName = eventType.getName();
 

@@ -40,6 +40,8 @@ public class ExtractTransformTest extends Arquillian {
     final String PRODUCT_ORDER_SAMPLE_FILENAME = "product_order_sample.dat";
     final String RESEARCH_PROJECT_CLASSNAME = "org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject";
     final String RESEARCH_PROJECT_FILENAME = "research_project.dat";
+    final String WORKFLOW_CONFIG_CLASSNAME = "org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig";
+    final String WORKFLOW_CONFIG_FILENAME = "workflow_config.dat";
 
     @Inject
     private ExtractTransform extractTransform;
@@ -125,11 +127,11 @@ public class ExtractTransformTest extends Arquillian {
                 extractTransform.backfillEtl("ProductOrderSample", 0, Long.MAX_VALUE));
     }
 
-    /** Normal ETL.  Picks up the last 2000 (or fewer) audits. */
+    /** Normal ETL.  Picks up the last 10 (or fewer) audits. */
     public void testNormalEtl() throws Exception {
         long endRev = auditReaderDao.currentRevNumber(now);
         if (endRev == 0) return;
-        long startRev = Math.max(0, endRev - 2000);
+        long startRev = Math.max(0, endRev - 10);
         extractTransform.writeLastEtlRun(startRev);
         int recordCount = extractTransform.incrementalEtl();
         Assert.assertTrue(recordCount > 0);
@@ -183,6 +185,43 @@ public class ExtractTransformTest extends Arquillian {
                 String content = IOUtils.toString(reader);
                 IOUtils.closeQuietly(reader);
                 Assert.assertTrue(content.contains("," + entity.getProductOrderSampleId() + ","));
+            }
+            if (filename.endsWith("_is_ready")) {
+                //should only have found one _is_ready file
+                Assert.assertFalse(foundIsReadyFile);
+                foundIsReadyFile = true;
+            }
+        }
+        Assert.assertTrue(foundDataFile);
+        Assert.assertTrue(foundIsReadyFile);
+    }
+
+    /** Backfill ETL for WorkflowConfig. */
+    public void testBackfillEtlWorkflowConfig() throws Exception {
+        final long msecStart = System.currentTimeMillis();
+
+        Assert.assertEquals(Response.Status.NO_CONTENT, extractTransform.backfillEtl(WORKFLOW_CONFIG_CLASSNAME, 0, 0));
+
+        final long msecEnd = System.currentTimeMillis() + 1000;
+
+        // Verifies there is only one .dat file and one _is_ready file, both having
+        // a datetime in the expected range.
+        File[] filelist = getDirFiles(datafileDir, msecStart, msecEnd);
+        boolean foundDataFile = false;
+        boolean foundIsReadyFile = false;
+        for (File file : filelist) {
+            String filename = file.getName();
+            if (filename.endsWith(".dat")) {
+                //should only have found one dat file
+                Assert.assertFalse(foundDataFile);
+                Assert.assertTrue(filename.endsWith(WORKFLOW_CONFIG_FILENAME));
+                foundDataFile = true;
+
+                // verifies non-empty .dat file
+                Reader reader = new FileReader(file);
+                String content = IOUtils.toString(reader);
+                IOUtils.closeQuietly(reader);
+                Assert.assertTrue(content.contains(","));
             }
             if (filename.endsWith("_is_ready")) {
                 //should only have found one _is_ready file

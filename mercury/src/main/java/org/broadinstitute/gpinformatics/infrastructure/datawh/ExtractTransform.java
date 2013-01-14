@@ -98,7 +98,7 @@ public class ExtractTransform {
     /**
      * JEE auto-schedules incremental ETL.
      */
-    @Schedule(hour="*", minute="*/3", persistent=false)
+    @Schedule(hour="*", minute="*/15", persistent=false)
     private void scheduledEtl() {
         initConfig();
         incrementalEtl();
@@ -189,7 +189,7 @@ public class ExtractTransform {
             recordCount += productOrderEtl.doEtl(lastRev, etlRev, etlDateStr);
             recordCount += productOrderStatusEtl.doEtl(lastRev, etlRev, etlDateStr);
             recordCount += productOrderAddOnEtl.doEtl(lastRev, etlRev, etlDateStr);
-
+            // event datamart
             recordCount += labBatchEtl.doEtl(lastRev, etlRev, etlDateStr);
             recordCount += labVesselEtl.doEtl(lastRev, etlRev, etlDateStr);
             recordCount += workflowConfigEtl.doEtl(lastRev, etlRev, etlDateStr);
@@ -266,7 +266,7 @@ public class ExtractTransform {
         recordCount += productOrderEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
         recordCount += productOrderStatusEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
         recordCount += productOrderAddOnEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-
+        // event datamart
         recordCount += labBatchEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
         recordCount += labVesselEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
         recordCount += workflowConfigEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);

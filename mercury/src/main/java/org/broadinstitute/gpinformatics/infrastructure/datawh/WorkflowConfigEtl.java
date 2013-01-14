@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.ejb.Stateless;
@@ -36,7 +37,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
     LabEventDao dao;
 
     @Inject
-    WorkflowConfig workflowConfig;
+    WorkflowLoader workflowLoader;
 
     /**
      * @{inheritDoc}
@@ -73,14 +74,19 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
     }
 
     /**
-     * @{inheritDoc}
+     * Does an etl of workflow config if the current version has changed since last etl.
+     * Keeps a hash of the config contents in a file to know when there was a change.
+     * @param lastRev ignored
+     * @param etlRev ignored
+     * @param etlDateStr used in the sqlloader filename
+     * @return number of records exported
      */
     @Override
     public int doEtl(long lastRev, long etlRev, String etlDateStr) {
 
         // Gets the flattened version of workflow config, calculates its hash, compares to the
         // previously exported one's hash, and if different, exports the new version.
-        Collection<WorkflowConfigDenorm> flatConfig = WorkflowConfigDenorm.parse(workflowConfig);
+        Collection<WorkflowConfigDenorm> flatConfig = WorkflowConfigDenorm.parse(workflowLoader.load());
         long currentHashValue = hash(flatConfig);
         long previousHashValue = readWorkflowConfigHash();
         if (currentHashValue == previousHashValue) {
@@ -99,7 +105,12 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
     }
 
     /**
-     * @{inheritDoc}
+     * Does an unconditional etl of workflow config.
+     * @param entityClass this class
+     * @param startId ignored
+     * @param endId ignored
+     * @param etlDateStr used in the sqlloader filenam
+     * @return number of records exported
      */
     @Override
     public int doBackfillEtl(Class entityClass, long startId, long endId, String etlDateStr) {
@@ -112,7 +123,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
         DataFile dataFile = new DataFile(filename);
 
         // Exports all flattened records and updates the hash.
-        Collection<WorkflowConfigDenorm> flatConfig = WorkflowConfigDenorm.parse(workflowConfig);
+        Collection<WorkflowConfigDenorm> flatConfig = WorkflowConfigDenorm.parse(workflowLoader.load());
         exportWorkflowConfigSteps(flatConfig, dataFile, etlDateStr);
         writeWorkflowConfigHash(hash(flatConfig));
 
