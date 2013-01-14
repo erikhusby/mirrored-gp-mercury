@@ -20,7 +20,7 @@
                 <img src="${ctxpath}/images/mercury_logo.png" alt="Broad Institute" style="float: left;"/>
             </div>
             <div class="span9">
-                <stripes:form id="form" action="/security/security.action" class="form-horizontal" focus="">
+                <stripes:form id="form" action="/security/security.action" class="form-horizontal">
                     <div class="control-group">
                         <div class="controls">
                             <p>Please enter your Broad Username and Password.</p>
