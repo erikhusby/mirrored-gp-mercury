@@ -49,7 +49,9 @@
                         }
                     );
 
-                    updateAddOnCheckboxes();
+                    <c:if test="${!actionBean.creating}">
+                        updateAddOnCheckboxes();
+                    </c:if>
                 }
             );
 
