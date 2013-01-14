@@ -77,6 +77,7 @@ public class ProductOrderSample implements Serializable {
             this.displayName = displayName;
         }
 
+        @Override
         public String getDisplayName() {
             return displayName;
         }
