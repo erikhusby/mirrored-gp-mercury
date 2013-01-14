@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
-import javax.enterprise.context.SessionScoped;
+import javax.enterprise.context.ApplicationScoped;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.New;
 import javax.enterprise.inject.Produces;
@@ -17,10 +17,9 @@ public class BSPCohortSearchServiceProducer {
     @Inject
     private Deployment deployment;
 
-
     @Produces
     @Default
-    @SessionScoped
+    @ApplicationScoped
     public BSPCohortSearchService produce(@New BSPCohortSearchServiceStub stub, @New BSPCohortSearchServiceImpl impl) {
 
         if ( deployment == STUBBY )
