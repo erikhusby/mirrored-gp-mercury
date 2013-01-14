@@ -20,7 +20,7 @@
                 <img src="${ctxpath}/images/mercury_logo.png" alt="Broad Institute" style="float: left;"/>
             </div>
             <div class="span9">
-                <stripes:form id="form" action="/security/security.action" class="form-horizontal">
+                <stripes:form id="form" action="/security/security.action" class="form-horizontal" focus="">
                     <div class="control-group">
                         <div class="controls">
                             <p>Please enter your Broad Username and Password.</p>
@@ -31,7 +31,6 @@
 
                         <label class="ui-outputlabel control-label" for="username">Username *</label>
                         <div class="controls">
-                            <p:focus />
                             <stripes:text id="username" name="username" value="${actionBean.username}" />
                         </div>
                     </div>

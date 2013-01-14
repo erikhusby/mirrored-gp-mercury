@@ -6,7 +6,6 @@
 
 <stripes:layout-definition>
 
-    <?xml version="1.0" encoding="UTF-8"?>
     <!--
     ~ The Broad Institute
     ~ SOFTWARE COPYRIGHT NOTICE AGREEMENT
@@ -23,6 +22,7 @@
 
     <head>
         <meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
         <meta http-equiv="Content-Language" content="en"/>
 
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery-1.8.3.min.js"></script>
