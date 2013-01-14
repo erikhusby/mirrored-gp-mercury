@@ -310,7 +310,12 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("downloadBillingTracker")
     public Resolution downloadBillingTracker() {
-        return ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, bspUserList);
+        Resolution resolution = ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, bspUserList);
+        if (hasErrors()) {
+            // Need to regenerate the list so it's displayed along with the errors.
+            listInit();
+        }
+        return resolution;
     }
 
     @HandlesEvent("startBilling")
