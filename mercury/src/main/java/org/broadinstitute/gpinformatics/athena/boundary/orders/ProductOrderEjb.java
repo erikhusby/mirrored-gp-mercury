@@ -202,7 +202,10 @@ public class ProductOrderEjb {
      * @param productOrder product order
      * @throws IOException
      */
-    private void updateJiraIssue(ProductOrder productOrder) throws IOException {
+    public void updateJiraIssue(ProductOrder productOrder) throws IOException, QuoteNotFoundException {
+
+        validateQuote(productOrder);
+
         Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(), "Developer Edit");
 
         PDOUpdateField [] pdoUpdateFields = new PDOUpdateField[] {
@@ -255,8 +258,6 @@ public class ProductOrderEjb {
      * @param selectedAddOnPartNumbers selected add-on part numbers
      */
     public void update(final ProductOrder productOrder, final List<String> selectedAddOnPartNumbers) throws QuoteNotFoundException {
-
-        validateQuote(productOrder);
 
         // update JIRA ticket with new quote
         // GPLIM-488
