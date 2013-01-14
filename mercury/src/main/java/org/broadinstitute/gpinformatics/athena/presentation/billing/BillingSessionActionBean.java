@@ -182,7 +182,11 @@ public class BillingSessionActionBean extends CoreActionBean {
                     sessionKey);
 
                 item.setBillingMessages(BillingSession.SUCCESS);
-                addMessage("Sent to quote server " + message);
+
+                String workUrl = new QuoteLink().quoteUrl(quote.getAlphanumericId());
+
+                String link = "<a href=\"" + workUrl + "\">click here</a>";
+                addMessage("Sent to quote server: " + link + " and choose the Work tab to see the value");
             } catch (Exception ex) {
                 // Any exceptions in sending to the quote server will just be reported and will continue on to the next one
                 item.setBillingMessages(ex.getMessage());
@@ -198,7 +202,7 @@ public class BillingSessionActionBean extends CoreActionBean {
 
         // If there are any errors (and there may be multiple, then need to save and go to the source page
         billingSessionDao.persist(editSession);
-        return getContext().getSourcePageResolution();
+        return new ForwardResolution(BillingSessionActionBean.class, VIEW_ACTION).addParameter("sessionKey", editSession.getBusinessKey());
     }
 
     @HandlesEvent("endSession")

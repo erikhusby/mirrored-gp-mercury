@@ -109,7 +109,7 @@
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Primary Price Items</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editProduct.primaryPriceItem.category} : ${actionBean.editProduct.primaryPriceItem.name}</div>
+                    <div class="form-value">${actionBean.editProduct.primaryPriceItem.displayName}</div>
                 </div>
             </div>
 
