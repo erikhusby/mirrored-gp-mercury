@@ -116,6 +116,7 @@ public class LibraryBean {
     @JsonProperty
     private String productFamily;
 
+    @JsonProperty
     private String rootSample;
 
     @JsonProperty
@@ -447,7 +448,7 @@ public class LibraryBean {
         return materialType;
     }
 
-    public boolean isGssrSample() {
+    public boolean getIsGssrSample() {
         return isGssrSample;
     }
 

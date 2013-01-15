@@ -37,7 +37,7 @@ public class LibraryBeanTest {
 
         assertEquals(libraryBean.getPrimaryDisease(),bspDto.getPrimaryDisease());
         assertEquals(libraryBean.getLsid(),bspDto.getSampleLsid());
-        assertFalse(libraryBean.isGssrSample());
+        assertFalse(libraryBean.getIsGssrSample());
         assertEquals(libraryBean.getMaterialType(),bspDto.getMaterialType());
         assertEquals(libraryBean.getCollaboratorSampleId(),bspCollabSampleId);
         assertEquals(libraryBean.getSpecies(),bspDto.getOrganism());
@@ -46,7 +46,7 @@ public class LibraryBeanTest {
         // new up sans bsp DTO to confirm gssr fields work
         libraryBean = new LibraryBean(gssrLsid,gssrMaterialType,gssrCollabSampleId,gssrOrganism,gssrSpecies,gssrStrain,gssrParticipant,null);
         assertEquals(libraryBean.getLsid(),gssrLsid);
-        assertTrue(libraryBean.isGssrSample());
+        assertTrue(libraryBean.getIsGssrSample());
         assertEquals(libraryBean.getMaterialType(),gssrMaterialType);
         assertEquals(libraryBean.getCollaboratorSampleId(),gssrCollabSampleId);
         assertEquals(libraryBean.getSpecies(),gssrOrganism + ":" + gssrSpecies + ":" + gssrStrain);

@@ -117,6 +117,8 @@ public class IlluminaRunResourceTest extends Arquillian {
                 .accept(MediaType.APPLICATION_JSON).get(String.class);
         assertFalse(rawJson.contains("@")); // might see this if you use XmlAttribute instead of XmlElement
         assertTrue(rawJson.contains("null")); // KT and others like to see field names present w/ null values instead of missing entirely
+        assertFalse(rawJson.contains("\"gssrSample\""));
+        assertTrue(rawJson.contains("\"rootSample\""));
 
         assertNotNull(run);
         assertEquals(run.getName(),RUN_NAME);
@@ -279,7 +281,7 @@ public class IlluminaRunResourceTest extends Arquillian {
                 assertEquals(libBean.doAggregation().booleanValue(),zLib.aggregate);
 
 
-                if (libBean.isGssrSample()) {
+                if (libBean.getIsGssrSample()) {
                     assertEquals(libBean.getSpecies(),zLib.getOrganism() + ":" + zLib.getSpecies() + ":" + zLib.getStrain());
                 }
                 else {
