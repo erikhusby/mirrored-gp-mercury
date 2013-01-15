@@ -19,7 +19,7 @@ public class Graph implements Serializable {
     /** Random access to edges */
     private Map<String, Edge> mapIdToEdge = new HashMap<String, Edge>();
     /** Avoid visiting an event twice */
-    private Set<Long> visitedEventIds = new HashSet<Long>();
+    private Set<String> visitedEventIds = new HashSet<String>();
 
     public Map<String, Vertex> getMapIdToVertex() {
         return mapIdToVertex;
@@ -29,7 +29,7 @@ public class Graph implements Serializable {
         return mapIdToEdge;
     }
 
-    public Set<Long> getVisitedEventIds() {
+    public Set<String> getVisitedEventIds() {
         return visitedEventIds;
     }
 
