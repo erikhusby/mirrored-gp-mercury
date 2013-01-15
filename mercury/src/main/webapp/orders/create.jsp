@@ -149,7 +149,7 @@
 
                 <div class="control-group">
                     <stripes:label for="researchProject" class="control-label">
-                        Research Project *
+                        Research Project <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
                         <stripes:text readonly="${!actionBean.editOrder.draft}" id="researchProject" name="researchProjectList" class="defaultText"
@@ -159,7 +159,7 @@
 
                 <div class="control-group">
                     <stripes:label for="product" class="control-label">
-                        Product *
+                        Product <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="product" name="productList" class="defaultText"
@@ -176,7 +176,7 @@
 
                 <div class="control-group">
                     <stripes:label for="quote" class="control-label">
-                        Quote *
+                        Quote <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="quote" name="editOrder.quoteId" class="defaultText"

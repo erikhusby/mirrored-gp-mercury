@@ -21,7 +21,7 @@ public class QuoteLink {
         return quoteConfig.getUrl() + QUOTE_DETAILS + quoteId;
     }
 
-    public String workUrl(String quoteId) {
-        return quoteConfig.getUrl() + QUOTE_DETAILS + quoteId + "&selectWorkTab=true";
+    public String workUrl(String quoteId, String workId) {
+        return quoteConfig.getUrl() + QUOTE_DETAILS + quoteId + "&selectWorkTab=true&workId=" + workId;
     }
 }

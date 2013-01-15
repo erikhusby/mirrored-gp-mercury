@@ -137,7 +137,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @ValidationMethod(on = SAVE_ACTION)
-    public void uniqueNameValidation(ValidationErrors errors) {
+    public void saveValidations() throws Exception {
         // If the research project has no original title, then it was not fetched from hibernate, so this is a create
         // OR if this was fetched and the title has been changed
         if ((editOrder.getOriginalTitle() == null) ||
@@ -146,31 +146,41 @@ public class ProductOrderActionBean extends CoreActionBean {
             // Check if there is an existing research project and error out if it already exists
             ProductOrder existingOrder = productOrderDao.findByTitle(editOrder.getTitle());
             if (existingOrder != null) {
-                errors.add("title", new SimpleError("A product order already exists with this name."));
+                addValidationError("title", "A product order already exists with this name.");
             }
+        }
+
+        // Whether we are draft or not, we should populate the proper edit fields for validation.
+        updateTokenInputFields();
+
+        // If this is not a draft, some fields are required
+        if (!editOrder.isDraft()) {
+            validatePlacedOrder();
         }
     }
 
     @ValidationMethod(on = "placeOrder")
-    public void validateOrderPlacement() throws Exception {
+    public void validatePlacedOrder() throws Exception {
         if (editOrder.getSamples().isEmpty()) {
             addGlobalValidationError("Order does not have any samples");
         }
 
+        String placeOrderString = "Cannot place order ''" + editOrder.getBusinessKey();
+
         if (editOrder.getResearchProject() == null) {
-            addGlobalValidationError("Cannot place order ''" + editOrder.getBusinessKey() + "'' because it does not have a research project");
+            addGlobalValidationError(placeOrderString + "'' because it does not have a research project");
         }
 
         if (editOrder.getQuoteId() == null) {
-            addGlobalValidationError("Cannot place order ''" + editOrder.getBusinessKey() + "'' because it does not have a quote specified");
+            addGlobalValidationError(placeOrderString + "'' because it does not have a quote specified");
         }
 
         if (editOrder.getProduct() == null) {
-            addGlobalValidationError("Cannot place order ''" + editOrder.getBusinessKey() + "'' because it does not have a product");
+            addGlobalValidationError(placeOrderString + "'' because it does not have a product");
         }
 
-        if (editOrder.getProduct() == null) {
-            addGlobalValidationError("Cannot place order ''" + editOrder.getCount() + "'' because it does not have a specified number of lanes");
+        if (editOrder.getCount() < 1) {
+            addGlobalValidationError(placeOrderString  + "'' because it does not have a specified number of lanes");
         }
 
         try {
@@ -301,12 +311,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Update the modified by and created by, if necessary.
         editOrder.prepareToSave(userBean.getBspUser());
 
-        // set the project, product and addOns for the order
-        ResearchProject project = projectDao.findByBusinessKey(researchProjectList);
-        Product product = productDao.findByPartNumber(productList);
-        List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
-        editOrder.updateData(project, product, addOnProducts);
-
         if (editOrder.isDraft()) {
             // mlc isDraft checks if the status is Draft and if so, we set it to Draft again?
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
@@ -319,6 +323,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been saved.");
         return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER, editOrder.getBusinessKey());
+    }
+
+    private void updateTokenInputFields() {
+        // set the project, product and addOns for the order
+        ResearchProject project = projectDao.findByBusinessKey(researchProjectList);
+        Product product = productDao.findByPartNumber(productList);
+        List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
+        editOrder.updateData(project, product, addOnProducts);
     }
 
     @HandlesEvent("downloadBillingTracker")
