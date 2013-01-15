@@ -19,6 +19,8 @@ a.external {background-image:url("/Mercury/images/external-link.gif");background
 
 h1, h2, h3, h4, h5 {font-family: 'Carrois Gothic SC', sans-serif; color: #644436;}
 
+select > option:nth-child(even) { background-color:#fafafa; }
+
 label, input, button, select, textarea { font-size: 12px }
 
 ul.DTTT_dropdown.dropdown-menu li { position: relative; }

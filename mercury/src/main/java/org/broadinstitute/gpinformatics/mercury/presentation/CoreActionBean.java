@@ -79,7 +79,7 @@ public class CoreActionBean implements ActionBean {
      */
     @Override
     public CoreActionBeanContext getContext() {
-        return this.context;
+        return context;
     }
 
     /**
@@ -97,11 +97,13 @@ public class CoreActionBean implements ActionBean {
     public void getErrorAndMessage() {
         if (context != null) {
             ValidationError error = (ValidationError) context.getRequest().getAttribute(FLASH_ERROR);
-            if (error != null)
+            if (error != null) {
                 context.getValidationErrors().addGlobalError(error);
+            }
             Message message = (Message) context.getRequest().getAttribute(FLASH_MESSAGE);
-            if (message != null)
+            if (message != null) {
                 context.getMessages().add(message);
+            }
         }
     }
 
@@ -129,7 +131,6 @@ public class CoreActionBean implements ActionBean {
     /**
      * @return Resolution
      */
-    @SuppressWarnings("unchecked")
     protected Resolution getSourcePageResolution() {
         Resolution res;
         try {
@@ -142,7 +143,7 @@ public class CoreActionBean implements ActionBean {
         }
 
         if (res instanceof OnwardResolution) {
-            return ((ForwardResolution) res).addParameters(getContext().getRequest().getParameterMap());
+            return ((OnwardResolution<?>) res).addParameters(getContext().getRequest().getParameterMap());
         }
         return res;
     }
@@ -196,7 +197,7 @@ public class CoreActionBean implements ActionBean {
      * @param errorMessage The message to put into a SimpleError
      */
     public void addGlobalValidationError(String errorMessage) {
-        getContext().getValidationErrors().add(ValidationErrors.GLOBAL_ERROR, new SimpleError(errorMessage));
+        getContext().getValidationErrors().addGlobalError(new SimpleError(errorMessage));
     }
 
     /**
@@ -332,8 +333,7 @@ public class CoreActionBean implements ActionBean {
      * @param contentType The MIME type of the response or null.
      * @param fileName The name of the downloaded file or null.
      */
-    public void setFileDownloadHeaders(String contentType,
-        String fileName) {
+    public void setFileDownloadHeaders(String contentType, String fileName) {
         // Some applications also muck with the character encoding
         // and cache control headers on file download, but it
         // doesn't seem that we need this.
