@@ -351,9 +351,9 @@ public abstract class LabVessel implements Serializable {
 
     public Set<LabEvent> getInPlaceEvents() {
         Set<LabEvent> totalInPlaceEventsSet = new HashSet<LabEvent>();
-//        for (VesselContainer<?> vesselContainer : getContainers()) {
-//            totalInPlaceEventsSet.addAll(vesselContainer.g);
-//        }
+        for (LabVessel vesselContainer : containers) {
+            totalInPlaceEventsSet.addAll(vesselContainer.getInPlaceEvents());
+        }
         totalInPlaceEventsSet.addAll(inPlaceLabEvents);
         return totalInPlaceEventsSet;
     }

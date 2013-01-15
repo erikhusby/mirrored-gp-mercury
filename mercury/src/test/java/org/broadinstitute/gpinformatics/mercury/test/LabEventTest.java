@@ -240,7 +240,6 @@ public class LabEventTest {
                 mapBarcodeToTube, rackBarcode).invoke();
 
         ExomeExpressShearingEntityBuilder shearingEntityBuilder =
-//                new ExomeExpressShearingEntityBuilder(mapBarcodeToTube, pplatingEntityBuilder.getNormTubeFormation(),
                 new ExomeExpressShearingEntityBuilder(pplatingEntityBuilder.getNormBarcodeToTubeMap(),
                         pplatingEntityBuilder.getNormTubeFormation(), bettaLimsMessageFactory, labEventFactory,
                         labEventHandler, pplatingEntityBuilder.getNormalizationBarcode()).invoke();
@@ -1287,6 +1286,7 @@ public class LabEventTest {
             LabEvent shearingBucketEntity =
                     labEventFactory.buildFromBettaLimsRackEventDbFree(
                             exomeExpressShearingJaxbBuilder.getExExShearingBucket(), null, mapBarcodeToTube, null);
+            labEventHandler.processEvent(shearingBucketEntity);
 
             // ShearingTransfer
             validateWorkflow("PlatingToShearingTubes", mapBarcodeToTube.values());
