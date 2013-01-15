@@ -105,7 +105,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
-        @Validate(field="title", required = true, maxlength=255, on={SAVE_ACTION}, label = "Name")
+        @Validate(field="title", required = true, maxlength=255, on={SAVE_ACTION}, label = "Name"),
+        @Validate(field="count", on={SAVE_ACTION}, label="Number of Lanes")
     })
     private ProductOrder editOrder;
 
