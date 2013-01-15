@@ -13,7 +13,7 @@ import java.util.Collections;
 
 
 /**
- * Simple test of the research project without any database connection
+ * Simple test of the research project without any database connection.
  */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ResearchProjectTest {
@@ -24,28 +24,26 @@ public class ResearchProjectTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        researchProject  = AthenaClientServiceStub.createDummyResearchProject ();
+        researchProject  = AthenaClientServiceStub.createDummyResearchProject();
     }
 
     @Test
     public void manageRPTest() {
         Assert.assertNotNull(researchProject.getPeople(RoleType.SCIENTIST));
-        Assert.assertTrue(researchProject.getPeople(RoleType.PM).length == 0);
+        // A new RP is initialized with the creator as its PM.
+        Assert.assertTrue(researchProject.getPeople(RoleType.PM).length == 1);
 
-        researchProject.addPerson(RoleType.PM, 333L);
-        Assert.assertNotNull(researchProject.getPeople(RoleType.PM));
-
-        //Add a collection
+        // Add a collection.
         ResearchProjectCohort collection = new ResearchProjectCohort(researchProject, "BSPCollection");
         researchProject.addCohort(collection);
         Assert.assertTrue(researchProject.getCohortIds().length == 1);
 
-        // Add a second and check size
+        // Add a second and check size.
         collection = new ResearchProjectCohort(researchProject, "AlxCollection2");
         researchProject.addCohort(collection);
         Assert.assertTrue(researchProject.getCohortIds().length == 2);
 
-        // remove second and check size
+        // Remove second and check size.
         researchProject.removeCohort(collection);
         Assert.assertTrue(researchProject.getCohortIds().length == 1);
 
@@ -72,10 +70,8 @@ public class ResearchProjectTest {
         try {
             researchProject.setJiraTicketKey(null);
             Assert.fail();
-        } catch(NullPointerException npe) {
-            /*
-            Ensuring Null is thrown for setting null
-             */
+        } catch (NullPointerException npe) {
+            // Ensuring Null is thrown for setting null.
         } finally {
             researchProject.setJiraTicketKey(RESEARCH_PROJ_JIRA_KEY);
         }

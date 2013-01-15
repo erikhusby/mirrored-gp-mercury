@@ -23,7 +23,7 @@ public class BillingSessionDao extends GenericDao {
         return findAll(BillingSession.class);
     }
 
-    public Object findByBusinessKey(@Nonnull String businessKey) {
+    public BillingSession findByBusinessKey(@Nonnull String businessKey) {
 
         if (!businessKey.startsWith(BillingSession.ID_PREFIX)) {
             throw new IllegalArgumentException("Business key must start with: " + BillingSession.ID_PREFIX);

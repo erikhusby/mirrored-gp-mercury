@@ -17,6 +17,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -31,6 +34,6 @@ public class ReagentDesignDao extends GenericDao {
     }
 
     public ReagentDesign findByBusinessKey(String value) {
-        return findSingle(ReagentDesign.class, ReagentDesign_.reagentDesign, value);
+        return findSingle(ReagentDesign.class, ReagentDesign_.designName, value);
     }
 }

@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.Collections;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SampleLedgerExporterTest {
@@ -17,7 +18,7 @@ public class SampleLedgerExporterTest {
     void testExport() throws IOException {
 
         SampleLedgerExporter exporter =
-                new SampleLedgerExporter(AthenaClientServiceStub.createDummyProductOrder());
+                new SampleLedgerExporter(null, Collections.singletonList(AthenaClientServiceStub.createDummyProductOrder()));
 
         File test = File.createTempFile("SampleLedgerExporterTest", ".xls");
         OutputStream outputStream = null;

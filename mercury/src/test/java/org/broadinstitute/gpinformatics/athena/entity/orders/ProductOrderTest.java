@@ -46,7 +46,9 @@ public class ProductOrderTest {
 
         BeanTester tester = new BeanTester();
         // Current;y ProductOrder is equivalent based only on RP and title.
-        Configuration configuration = new ConfigurationBuilder().ignoreProperty("samples")
+        Configuration configuration = new ConfigurationBuilder()
+                .ignoreProperty("samples")
+                .ignoreProperty("title")
                 .ignoreProperty("jiraTicketKey")
                 .ignoreProperty("orderStatus")
                 .ignoreProperty("count")
@@ -55,8 +57,9 @@ public class ProductOrderTest {
                 .ignoreProperty("modifiedDate")
                 .ignoreProperty("quoteId")
                 .ignoreProperty("product")
+                .ignoreProperty("researchProject")
                 .ignoreProperty("comments")
-                .build();
+                .ignoreProperty("sampleList").build();
         tester.testBean(ProductOrder.class, configuration);
 
         class ProductOrderFactory implements EquivalentFactory<ProductOrder> {

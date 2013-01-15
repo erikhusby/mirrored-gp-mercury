@@ -1,8 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import net.sourceforge.stripes.validation.SimpleError;
+import net.sourceforge.stripes.validation.ValidationErrors;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
@@ -12,16 +13,23 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 
-import java.io.*;
-import java.util.*;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
-/**
- * 
- */
 public class BillingTrackerImporter {
 
-    private static final Log logger = LogFactory.getLog(BillingTrackerImporter.class);
     private ProductOrderDao productOrderDao;
+
+    private ValidationErrors validationErrors;
+
+    public BillingTrackerImporter(ProductOrderDao productOrderDao, ValidationErrors validationErrors) {
+        this(productOrderDao);
+        this.validationErrors = validationErrors;
+    }
 
     public BillingTrackerImporter(ProductOrderDao productOrderDao) {
         this.productOrderDao = productOrderDao;
@@ -38,6 +46,9 @@ public class BillingTrackerImporter {
             workbook = WorkbookFactory.create(inputStream);
 
             checkSampleOrdering(workbook);
+            if (!validationErrors.isEmpty()) {
+                return null;
+            }
 
             int numberOfSheets = workbook.getNumberOfSheets();
             for (int i = 0; i < numberOfSheets; i++) {
@@ -48,8 +59,11 @@ public class BillingTrackerImporter {
                 List<TrackerColumnInfo> trackerHeaderList = BillingTrackerUtils.parseTrackerSheetHeader(sheet.getRow(0), productPartNumberStr);
 
                 // Get a map (by PDOId) of a map of OrderBillSummaryStat objects (by BillableRef) for this sheet.
-                Map<String, Map<BillableRef, OrderBillSummaryStat>> sheetSummaryMap =
-                        parseSheetForSummaryMap(sheet, trackerHeaderList);
+                Map<String, Map<BillableRef, OrderBillSummaryStat>> sheetSummaryMap = parseSheetForSummaryMap(sheet, trackerHeaderList);
+                if (!validationErrors.isEmpty()) {
+                    return null;
+                }
+
                 trackerSummaryMap.put(productPartNumberStr, sheetSummaryMap);
 
             }
@@ -87,22 +101,27 @@ public class BillingTrackerImporter {
                 }
 
                 if (!BillingTrackerUtils.isNonNullNumericCell( sortCell)) {
-                    throw new RuntimeException("Row " + (row.getRowNum() + 1) +
-                                               " of spreadsheet tab " + productPartNumberStr
-                                               + " has a non-numeric value is the " +
-                                               SampleLedgerExporter.SORT_COLUMN_HEADING
-                                               + " cell. Please correct and ensure the spreadsheet is ordered by the " +
-                                               SampleLedgerExporter.SORT_COLUMN_HEADING + " column heading.");
+                    String error =
+                            "Row " + (row.getRowNum() + 1) + " of spreadsheet tab " + productPartNumberStr +
+                            " has a non-numeric value is the " + SampleLedgerExporter.SORT_COLUMN_HEADING +
+                            " cell. Please correct and ensure the spreadsheet is ordered by the " +
+                            SampleLedgerExporter.SORT_COLUMN_HEADING + " column heading.";
+                    addError(error);
+                    return;
                 }
+
                 double sortCellVal = sortCell.getNumericCellValue();
 
                 String currentSampleName = row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS).getStringCellValue();
                 if (!(String.valueOf(sortCellVal)).equals(String.valueOf(expectedSortColValue))) {
-                    throw new RuntimeException("Sample " + currentSampleName + " on row " + (row.getRowNum() + 1) +
-                                               " of spreadsheet tab " + productPartNumberStr
-                                               + " is not in the expected position. Please re-order the spreadsheet by the "
-                                               + SampleLedgerExporter.SORT_COLUMN_HEADING + " column heading.");
+                    String error = "Sample " + currentSampleName + " on row " + (row.getRowNum() + 1) +
+                                   " of spreadsheet tab " + productPartNumberStr +
+                                   " is not in the expected position. Please re-order the spreadsheet by the " +
+                                   SampleLedgerExporter.SORT_COLUMN_HEADING + " column heading.";
+                    addError(error);
+                    return;
                 }
+
                 expectedSortColValue = expectedSortColValue + 1;
             }
 
@@ -157,9 +176,10 @@ public class BillingTrackerImporter {
                 // Find the order in the DB
                 productOrder = productOrderDao.findByBusinessKey(currentPdoId);
                 if (productOrder == null) {
-                    throw new RuntimeException("Product Order " + currentPdoId + " on row " + (row.getRowNum() + 1) +
-                                               " of sheet " + primaryProductPartNumber
-                                               + " is not found in the database.");
+                    String error = "Product Order " + currentPdoId + " on row " + (row.getRowNum() + 1) +
+                               " of sheet " + primaryProductPartNumber + " is not found in the database.";
+                    addError(error);
+                    return null;
                 }
 
                 product = productOrder.getProduct();
@@ -173,21 +193,30 @@ public class BillingTrackerImporter {
             // TODO hmc We are assuming ( for now ) that the order is the same
             // in the spreadsheet as returned in the productOrder !
             if (sampleIndexInOrder >= samples.size()) {
-                throw new RuntimeException("Sample " + currentSampleName + " on row " +  (row.getRowNum() + 1 ) +
+                String error = "Sample " + currentSampleName + " on row " +  (row.getRowNum() + 1 ) +
                         " of spreadsheet "  + primaryProductPartNumber +
                         " is not in the expected position. The Order <" + productOrder.getTitle() + " (Id: " + currentPdoId +
-                        ")> has only " + samples.size() + " samples." );
+                        ")> has only " + samples.size() + " samples.";
+                addError(error);
+                return null;
             }
 
             ProductOrderSample productOrderSample = samples.get(sampleIndexInOrder);
             if (!productOrderSample.getSampleName().equals(currentSampleName)) {
-                throw new RuntimeException("Sample " + currentSampleName + " on row " + (row.getRowNum() + 1) +
+                String error = "Sample " + currentSampleName + " on row " + (row.getRowNum() + 1) +
                                            " of spreadsheet " + primaryProductPartNumber +
                                            " is in different position than expected. Expected value from Order is "
-                                           + productOrderSample.getSampleName());
+                                           + productOrderSample.getSampleName();
+                addError(error);
+                return null;
             }
 
-            parseRowForSummaryMap(row, pdoSummaryStatsMap, trackerColumnInfos, product, productOrderSample, priceItemMap);
+            String error = parseRowForSummaryMap(row, pdoSummaryStatsMap, trackerColumnInfos, product, productOrderSample, priceItemMap);
+            if (!StringUtils.isBlank(error)) {
+                addError(error);
+                return null;
+            }
+
             sheetSummaryMap.put(rowPdoIdStr, pdoSummaryStatsMap);
 
             sampleIndexInOrder++;
@@ -196,7 +225,15 @@ public class BillingTrackerImporter {
         return sheetSummaryMap;
     }
 
-    private static void parseRowForSummaryMap(
+    private void addError(String error) {
+        if (validationErrors == null) {
+            throw new RuntimeException(error);
+        } else {
+            validationErrors.addGlobalError(new SimpleError(error));
+        }
+    }
+
+    private static String parseRowForSummaryMap(
             Row row, Map<BillableRef, OrderBillSummaryStat> pdoSummaryStatsMap,
             List<TrackerColumnInfo> trackerColumnInfos, Product product, ProductOrderSample productOrderSample,
             Map<TrackerColumnInfo, PriceItem> priceItemMap) {
@@ -220,11 +257,10 @@ public class BillingTrackerImporter {
                 // Check billedQuantity parsed against that which is already billed for this POS and PriceItem - should match
                 ProductOrderSample.LedgerQuantities quantities = billCounts.get(priceItem);
                 if ((quantities != null) && (quantities.getBilled() != previouslyBilledQuantity)) {
-                    throw new RuntimeException(
-                            String.format("Found a different billed quantity '%f' in the database for sample in %s in %s, price item '%s', in Product sheet %s. " +
+                    return String.format("Found a different billed quantity '%f' in the database for sample in %s in %s, price item '%s', in Product sheet %s. " +
                                     "The billed quantity in the spreadsheet is '%f', please download a recent copy of the BillingTracker spreadsheet.",
                                     quantities.getBilled(), row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
-                                billableRef.getPriceItemName(), product.getPartNumber(), previouslyBilledQuantity ));
+                                billableRef.getPriceItemName(), product.getPartNumber(), previouslyBilledQuantity );
                 }
             }
 
@@ -233,20 +269,20 @@ public class BillingTrackerImporter {
             if ( BillingTrackerUtils.isNonNullNumericCell(newQuantityCell)) {
                 newQuantity = newQuantityCell.getNumericCellValue();
                 if (newQuantity < 0) {
-                    throw new RuntimeException(
-                            String.format("Found negative new quantity '%f' for sample %s in %s, price item '%s', in Product sheet %s",
+                    return String.format("Found negative new quantity '%f' for sample %s in %s, price item '%s', in Product sheet %s",
                                 newQuantity, row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
-                                billableRef.getPriceItemName(), product.getPartNumber()));
+                                billableRef.getPriceItemName(), product.getPartNumber());
                 }
+
                 double delta = newQuantity - previouslyBilledQuantity;
 
                 if ( delta != 0 ) {
 
                     Cell cell = row.getCell(BillingTrackerUtils.WORK_COMPLETE_DATE_COL_POS);
                     if (cell == null || cell.getDateCellValue() == null) {
-                        throw new RuntimeException(String.format("Found empty %s value for updated sample %s in %s, price item '%s', in Product sheet %s",
+                        return String.format("Found empty %s value for updated sample %s in %s, price item '%s', in Product sheet %s",
                                 SampleLedgerExporter.WORK_COMPLETE_DATE_HEADING, row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
-                                billableRef.getPriceItemName(), product.getPartNumber()));
+                                billableRef.getPriceItemName(), product.getPartNumber());
                     }
 
                     OrderBillSummaryStat orderBillSummaryStat = pdoSummaryStatsMap.get(billableRef);
@@ -260,5 +296,7 @@ public class BillingTrackerImporter {
                 }
             }
         }
+
+        return "";
     }
 }

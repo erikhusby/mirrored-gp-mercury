@@ -128,6 +128,7 @@ public class LabEventTest {
                 false));
         String jiraTicketKey = "PD0-1";
         productOrder.setJiraTicketKey(jiraTicketKey);
+        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         mapKeyToProductOrder.put(jiraTicketKey, productOrder);
 
         // starting rack
@@ -302,6 +303,7 @@ public class LabEventTest {
                 "Test synopsis", false));
         String jiraTicketKey = "PD0-2";
         productOrder.setJiraTicketKey(jiraTicketKey);
+        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         mapKeyToProductOrder.put(jiraTicketKey, productOrder);
 
         // starting rack

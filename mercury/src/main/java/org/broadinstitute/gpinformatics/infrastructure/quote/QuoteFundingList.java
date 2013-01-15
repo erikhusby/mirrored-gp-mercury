@@ -39,7 +39,6 @@ public class QuoteFundingList extends AbstractCache {
     @Inject
     public QuoteFundingList(PMBQuoteService quoteService) {
         this.quoteService = quoteService;
-        doRefresh();
     }
 
     /**
@@ -47,8 +46,8 @@ public class QuoteFundingList extends AbstractCache {
      */
     public Set<Funding> getFunding() {
         // any time the funding is null but we are asking for it, try and retrieve it again
-        if ((fundingList == null) ||  shouldReFresh(deployment)) {
-                doRefresh();
+        if (fundingList == null) {
+            refreshCache();
         }
 
         return fundingList;
@@ -59,7 +58,7 @@ public class QuoteFundingList extends AbstractCache {
      *
      * @return if found, the cohort, otherwise null
      */
-    public Funding getById(String fundingTypeAndName) {
+    public Funding getById(final String fundingTypeAndName) {
         if (getFunding() != null) {
             for (Funding funding : getFunding()) {
                 if (funding.getDisplayName().equals(fundingTypeAndName)) {
@@ -68,7 +67,13 @@ public class QuoteFundingList extends AbstractCache {
             }
         }
 
-        return null;
+        // In case of error, return a placeholder object to show to the user.
+        return new Funding() {
+            @Override
+            public String getDisplayName() {
+                return "Unknown Funding: " + fundingTypeAndName;
+            }
+        };
     }
 
     /**
@@ -113,10 +118,6 @@ public class QuoteFundingList extends AbstractCache {
     }
 
     public synchronized void refreshCache() {
-            setNeedsRefresh(true);
-    }
-
-    private void doRefresh() {
         try {
             Set<Funding> rawFunding = quoteService.getAllFundingSources();
 
@@ -126,7 +127,6 @@ public class QuoteFundingList extends AbstractCache {
             }
 
             fundingList = ImmutableSet.copyOf(rawFunding);
-            setNeedsRefresh(false);
         } catch (Exception ex) {
             logger.error("Could not refresh the funding list", ex);
         }

@@ -28,6 +28,10 @@ public class BspLink {
         }
     }
 
+    public String sampleSearchUrl() {
+        return bspConfig.getUrl(SEARCH_SAMPLE);
+    }
+
     public boolean isInBspFormat(String sampleId) {
         return ProductOrderSample.isInBspFormat(sampleId);
     }

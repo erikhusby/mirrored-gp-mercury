@@ -89,6 +89,7 @@ public class ExomeExpressV2EndToEndTest {
                 false));
         String jiraTicketKey = "PD0-1";
         productOrder1.setJiraTicketKey(jiraTicketKey);
+        productOrder1.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
         List<String> shearingTubeBarcodes = new ArrayList<String>()/*Arrays.asList("SH1", "SH2", "SH3")*/;
         Map<String, String> barcodesByRackPositions = new HashMap<String, String>();
