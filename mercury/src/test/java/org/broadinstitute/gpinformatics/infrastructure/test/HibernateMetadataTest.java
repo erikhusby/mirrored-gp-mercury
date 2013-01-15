@@ -21,16 +21,13 @@ import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import javax.persistence.metamodel.EntityType;
-import javax.persistence.metamodel.Metamodel;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Set;
 
 public class HibernateMetadataTest extends ContainerTest {
 
-@PersistenceContext(unitName = "mercury_pu")
-private EntityManager entityManager;
+    @PersistenceContext(unitName = "mercury_pu")
+    private EntityManager entityManager;
 
     /**
      * Method to allow user to ignore certain classes in the testEverything method
@@ -39,8 +36,8 @@ private EntityManager entityManager;
      * return className.endsWith("GenoTypingExportGeneric")
      *
      * @param className the name of the class to ignore
-     * @return
      *
+     * @return
      */
     public Boolean ignoreClass(String className) {
         return Boolean.FALSE;
