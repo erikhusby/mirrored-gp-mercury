@@ -182,7 +182,7 @@
     </body>
 
     <footer>
-        <p>Copyright © 2012 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or
+        <p>Copyright © 2012-2013 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or
             disclosure is permitted.<br/>
             Genomics Platform. ${bean.buildInfoBean.buildInformation}. Deployment
             - ${bean.buildInfoBean.deployment}.</p>
