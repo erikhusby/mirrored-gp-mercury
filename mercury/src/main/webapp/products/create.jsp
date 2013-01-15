@@ -42,6 +42,19 @@
                             }
                     );
 
+
+                    $j("#materialTypes").tokenInput(
+                            "${ctxpath}/products/product.action?materialTypesAutocomplete=&product=${actionBean.editProduct.businessKey}", {
+                                searchDelay: 500,
+                                minChars: 2,
+                                <c:if test="${actionBean.materialTypeCompleteData != null && actionBean.materialTypeCompleteData != ''}">
+                                    prePopulate: ${actionBean.materialTypeCompleteData},
+                                </c:if>
+                                preventDuplicates: true
+                            }
+                    );
+
+
                     $j("#availabilityDate").datepicker();
                     $j("#discontinuedDate").datepicker();
 
@@ -67,7 +80,7 @@
                 <stripes:hidden name="product"/>
                 <div class="control-group">
                     <stripes:label for="productFamily" class="control-label">
-                        Product Family
+                        Product Family *
                     </stripes:label>
                     <div class="controls">
                         <stripes:select name="editProduct.productFamily.productFamilyId" id="productFamily">
@@ -80,7 +93,7 @@
 
                 <div class="control-group">
                     <stripes:label for="productName" class="control-label">
-                        Product Name
+                        Product Name *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="productName" name="editProduct.productName" class="defaultText"
@@ -90,7 +103,7 @@
 
                 <div class="control-group">
                     <stripes:label for="description" class="control-label">
-                        Product Description
+                        Product Description *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="description" name="editProduct.description" class="defaultText"
@@ -100,7 +113,7 @@
 
                 <div class="control-group">
                     <stripes:label for="partNumber" class="control-label">
-                        Part Number
+                        Part Number *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="partNumber" name="editProduct.partNumber" class="defaultText"
@@ -110,7 +123,7 @@
 
                 <div class="control-group">
                     <stripes:label for="availabilityDate" class="control-label">
-                        Availability Date
+                        Availability Date *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="availabilityDate" name="editProduct.availabilityDate" class="defaultText"
@@ -199,7 +212,7 @@
 
                 <div class="control-group">
                     <stripes:label for="primaryPriceItem" class="control-label">
-                        Primary Price Item
+                        Primary Price Item *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="primaryPriceItem" name="primaryPriceItemList"
@@ -227,7 +240,15 @@
                     </div>
                 </div>
 
+                <div class="control-group">
+                    <stripes:label for="materialTypes" name="MaterialTypes" class="control-label"/>
+                 	<div class="controls">
+                       	<stripes:text id="materialTypes" name="materialTypeList"/>
+                    </div>
+                </div>
+
                 <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+
                     <div class="control-group">
                         <stripes:label for="useAutomatedBilling" class="control-label">
                             Billing

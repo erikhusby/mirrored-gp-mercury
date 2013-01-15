@@ -95,7 +95,7 @@
             <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
             <div class="form-horizontal">
                 <div class="control-group">
-                    <stripes:label for="title" class="control-label">Project *</stripes:label>
+                    <stripes:label for="title" class="control-label">Name *</stripes:label>
                     <div class="controls">
                             <stripes:text name="editResearchProject.title" value="${actionBean.editResearchProject.title}"
                                           id="title"  class="defaultText" title="Enter the project name"  maxlength="255"/>
@@ -200,7 +200,7 @@
                 <div class="controls">
                     <div class="row-fluid">
                         <div class="span1">
-                            <stripes:submit name="save" value="Save" class="btn btn-primary"/>
+                            <stripes:submit name="save" value="Save" disabled="${!actionBean.canSave}" class="btn btn-primary"/>
                         </div>
                         <div class="span1">
                             <c:choose>

@@ -17,7 +17,9 @@
                 <stripes:hidden id="authId" name="pageAuthorization.authorizationId" value="${actionBean.pageAuthorization.authorizationId}"/>
 
                 <div class="control-group">
-                    <stripes:label for="pathName" name="Path Name" class="control-label"/>
+                    <stripes:label for="pathName" class="control-label">
+                        Path Name
+                    </stripes:label>
                     <div class="controls">
                         <stripes:text id="pathName" name="pageAuthorization.pagePath" class="defaultText"
                                       title="Enter the path name" value="${actionBean.pageAuthorization.pagePath}"/>
@@ -31,7 +33,9 @@
                     <div class="controls">
                         <c:forEach items="${actionBean.pageAuthorization.roleList}" var="role" varStatus="i">
                             <stripes:checkbox id="role-${i.step}" name="pageAuthorization.roleList" checked="${actionBean.pageAuthorization.roleAccess}"/>
-                            <stripes:label for="role-${i.step}" name="${role}"/>
+                            <stripes:label for="role-${i.step}">
+                                ${role}
+                            </stripes:label>
                         </c:forEach>
                     </div>
                 </div>
