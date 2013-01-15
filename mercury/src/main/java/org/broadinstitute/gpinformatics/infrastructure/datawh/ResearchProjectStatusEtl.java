@@ -11,6 +11,7 @@ import java.util.Date;
 
 @Stateless
 public class ResearchProjectStatusEtl extends GenericEntityEtl {
+
     @Inject
     ResearchProjectDao dao;
 

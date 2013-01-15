@@ -17,6 +17,7 @@ import java.util.List;
 
 @Stateless
 public class LabBatchEtl extends GenericEntityEtl {
+
     @Inject
     LabBatchDAO dao;
 

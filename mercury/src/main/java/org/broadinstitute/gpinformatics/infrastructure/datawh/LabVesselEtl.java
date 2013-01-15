@@ -18,6 +18,7 @@ import java.util.List;
 
 @Stateless
 public class LabVesselEtl extends GenericEntityEtl {
+
     @Inject
     LabVesselDao dao;
 

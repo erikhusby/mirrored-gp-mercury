@@ -13,18 +13,17 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
-import org.hibernate.metamodel.binding.SingularAssociationAttributeBinding;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Root;
-import javax.persistence.metamodel.SingularAttribute;
 import java.util.*;
 
 @Stateless
 public class EventEtl extends GenericEntityEtl {
+
     @Inject
     LabEventDao dao;
 
@@ -190,7 +189,7 @@ public class EventEtl extends GenericEntityEtl {
     long lookupWorkflowConfigId(String eventName, MercurySample sample, Date eventDate) {
         String productOrderKey = sample.getProductOrderKey();
         if (productOrderKey == null) {
-            logger.debug("Sample " + sample.getSampleKey() + " has null productOrderKey");
+            logger.warn("Sample " + sample.getSampleKey() + " has null productOrderKey");
             return 0L;
         }
 
@@ -199,25 +198,25 @@ public class EventEtl extends GenericEntityEtl {
         synchronized(configIdCache) {
             Long id = (Long)configIdCache.get(cacheKey);
             if (id != null) {
+                logger.debug("Workflow config id cache hit on " + id);
                 return id;
             }
         }
 
         ProductOrder productOrder = pdoDao.findByBusinessKey(productOrderKey);
         if (productOrder == null) {
-            logger.debug("Product " + productOrderKey + " has no entity");
+            logger.warn("Product " + productOrderKey + " has no entity");
             return 0L;
         }
         String workflowName = productOrder.getProduct().getWorkflowName();
         if (workflowName == null) {
-            logger.debug("Product " + productOrderKey + " has no workflow name");
+            logger.warn("Product " + productOrderKey + " has no workflow name");
             return 0L;
         }
 
         // Iterates on the sorted set of event names to find a match having latest effective date.
         for (WorkflowConfigDenorm denorm : eventToWorkflowList.get(eventName)) {
-            if (workflowName.equals(denorm.getProductWorkflowName())
-                    && eventDate.after(denorm.getEffectiveDate())) {
+            if (workflowName.equals(denorm.getProductWorkflowName()) && eventDate.after(denorm.getEffectiveDate())) {
                 Long id = denorm.getWorkflowConfigDenormId();
                 synchronized(configIdCache) {
                     configIdCache.put(cacheKey, id);
@@ -225,6 +224,7 @@ public class EventEtl extends GenericEntityEtl {
                 return id;
             }
         }
+        logger.warn("No denormalized workflow config for workflow " + workflowName + ", eventName " + eventName + ", date " + eventDate.toString());
         return 0L;
     }
 

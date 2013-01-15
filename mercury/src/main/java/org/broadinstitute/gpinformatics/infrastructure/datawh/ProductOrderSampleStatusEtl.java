@@ -11,6 +11,7 @@ import java.util.Date;
 
 @Stateless
 public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
+
     @Inject
     ProductOrderSampleDao dao;
 

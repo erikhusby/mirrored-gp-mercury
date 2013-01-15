@@ -17,6 +17,7 @@ import java.util.List;
 
 @Stateless
 public class ResearchProjectIrbEtl  extends GenericEntityEtl {
+
     @Inject
     ResearchProjectDao dao;
 

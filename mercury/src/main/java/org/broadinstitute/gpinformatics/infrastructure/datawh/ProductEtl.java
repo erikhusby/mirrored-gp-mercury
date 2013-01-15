@@ -17,6 +17,7 @@ import java.util.List;
 
 @Stateless
 public class ProductEtl  extends GenericEntityEtl {
+
     @Inject
     ProductDao dao;
 

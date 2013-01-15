@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
@@ -30,14 +29,12 @@ import java.util.Date;
  */
 @Stateless
 public class WorkflowConfigEtl extends GenericEntityEtl {
-    /** Name of the file that contains the hash of the last exported workflow config data. */
-    public static final String LAST_WF_CONFIG_HASH_FILE = "last_wf_config_hash";
-
-    @Inject
-    LabEventDao dao;
 
     @Inject
     WorkflowLoader workflowLoader;
+
+    /** Name of the file that contains the hash of the last exported workflow config data. */
+    public static final String LAST_WF_CONFIG_HASH_FILE = "last_wf_config_hash";
 
     /**
      * @{inheritDoc}
@@ -146,7 +143,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
         return Collections.EMPTY_LIST;
     }
 
-
+    /** Writes the denormalized config records to a sqlLoader file */
     void exportWorkflowConfigSteps(Collection<WorkflowConfigDenorm>flatConfig, DataFile dataFile, String etlDateStr) {
         try {
             for (WorkflowConfigDenorm wcstep : flatConfig) {
@@ -160,7 +157,6 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
         }
 
     }
-
 
     /**
      * Makes a data record from an entity, in a format that matches the corresponding SqlLoader control file.

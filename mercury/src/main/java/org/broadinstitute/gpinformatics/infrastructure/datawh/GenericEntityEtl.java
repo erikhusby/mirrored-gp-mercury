@@ -17,7 +17,7 @@ abstract public class GenericEntityEtl {
     public static final String UNDEFINED_VALUE = "undefined";
 
     @Inject
-    private AuditReaderDao auditReaderDao;
+    AuditReaderDao auditReaderDao;
 
     /**
      * Specifies the class entity handled by the overriding etl.
