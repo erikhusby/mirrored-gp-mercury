@@ -492,4 +492,9 @@ public class Product implements Serializable, Comparable<Product> {
     public String getDisplayName() {
         return productName + " [" + partNumber + "]";
     }
+
+    public boolean getSupportsNumberOfLanes() {
+        return getProductFamily().isSupportsNumberOfLanes();
+    }
+
 }

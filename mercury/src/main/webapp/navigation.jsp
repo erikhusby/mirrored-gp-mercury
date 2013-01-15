@@ -69,13 +69,13 @@
         </ul>
 
         <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
-            <ul class="nav pull-right global-search">
+            <ul class="nav pull-right global-search navbar-search">
                 <li style="white-space:nowrap;">
                     <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean">
-                    <input type="text" name="searchKey" title="Enter a PDO, Sample or Barcode" class="defaultText" style="margin-top: 5px;vertical-align: top;height:14px;"/>
-                    <input type="submit" name="search" value="Search" class="btn btn-mini"/>
-                    &#160;
-                    <stripes:link style="display: inline; padding: 0px;" title="Click for advanced search options" beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean" event="view">Advanced</stripes:link>
+                       <input type="search"  data-type="search" name="searchKey" title="Enter a PDO, Sample or Barcode" class="defaultText search-query ui-input-text ui-body-null" style="margin-top: 5px;vertical-align: top;height:14px;"/>
+                       <input type="submit" name="search" value="Search" class="btn btn-mini"/>
+                       &#160;
+                       <stripes:link style="display: inline; padding: 0px;" title="Click for advanced search options" beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean" event="view">Advanced</stripes:link>
                     </stripes:form>
                 </li>
             </ul>

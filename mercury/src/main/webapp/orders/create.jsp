@@ -40,8 +40,8 @@
                     $j("#product").tokenInput(
                         "${ctxpath}/products/product.action?autocomplete=", {
                             searchDelay: 2000,
-                            onAdd: updateAddOnCheckboxes,
-                            onDelete: updateAddOnCheckboxes,
+                            onAdd: updateUIForProductChoice,
+                            onDelete: updateUIForProductChoice,
                             <c:if test="${actionBean.productCompleteData != null && actionBean.productCompleteData != ''}">
                                 prePopulate: ${actionBean.productCompleteData},
                             </c:if>
@@ -50,7 +50,7 @@
                     );
 
                     <c:if test="${!actionBean.creating}">
-                        updateAddOnCheckboxes();
+                        updateUIForProductChoice();
                     </c:if>
                 }
             );
@@ -60,7 +60,7 @@
                 addOn['${addOnProduct.addOn.businessKey}'] = true;
             </c:forEach>
 
-            function updateAddOnCheckboxes() {
+            function updateUIForProductChoice() {
                 var productKey = $j("#product").val();
                 if ((productKey == null) || (productKey == "")) {
                     $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
@@ -71,7 +71,25 @@
                     dataType: 'json',
                     success: setupCheckboxes
                 });
+
+                $j.ajax({
+                    url: "${ctxpath}/orders/order.action?getSupportsNumberOfLanes=&product=" + productKey,
+                    dataType: 'json',
+                    success: adjustNumberOfLanesVisibility
+                });
             }
+
+
+            function adjustNumberOfLanesVisibility(data) {
+                var numberOfLanesDiv = $j("#numberOfLanesDiv")
+                if (data["supports"]) {
+                    numberOfLanesDiv.fadeIn()
+                }
+                else {
+                    numberOfLanesDiv.fadeOut();
+                }
+            }
+
 
             function setupCheckboxes(data) {
                 var productTitle = $j("#product").val();
@@ -186,7 +204,7 @@
                     </div>
                 </div>
 
-                <div class="control-group">
+                <div id="numberOfLanesDiv" class="control-group">
                     <stripes:label for="numberOfLanes" class="control-label">
                         Number of Lanes
                     </stripes:label>
