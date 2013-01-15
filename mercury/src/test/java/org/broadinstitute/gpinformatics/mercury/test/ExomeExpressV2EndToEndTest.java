@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProduc
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -129,6 +130,8 @@ public class ExomeExpressV2EndToEndTest {
         // Create JIRA ticket configured in bucket (There is a ticket for an LCSet but none for the extraction/pico work)
         // BSP registers batch in Mercury
         // BSP Manual messaging for extractions, various batches
+
+//        PlateEventType
 
         //May Happen in BSP Before bucket
         //        PlateTransferEventType plateTransferEventType = exexJaxbBuilder.getPlateToShearTubeTransferEventJaxb();

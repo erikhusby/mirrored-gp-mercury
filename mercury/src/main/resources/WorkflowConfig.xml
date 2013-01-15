@@ -54,8 +54,7 @@
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Pico/Plating Bucket</name>
                 <labEventTypes>PICO_PLATING_BUCKET</labEventTypes>
-                <!--TODO SGM: Temporarily setting optional for initial test case purposes-->
-                <optional>true</optional>
+                <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <entryMaterialType>GENOMIC_DNA</entryMaterialType>
@@ -141,8 +140,7 @@
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Shearing Bucket</name>
                 <labEventTypes>SHEARING_BUCKET</labEventTypes>
-                <!--TODO SGM: Temporarily setting optional for initial test case purposes-->
-                <optional>true</optional>
+                <optional>false</optional>
                 <entryPoint>true</entryPoint>
                 <reEntryPoint>true</reEntryPoint>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>

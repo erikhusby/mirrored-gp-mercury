@@ -827,16 +827,25 @@ public class LabEventTest {
 
         public PicoPlatingEntityBuider invoke() {
 
-            PicoPlatingJaxbBuilder jaxbBuilder = new PicoPlatingJaxbBuilder(rackBarcode, new ArrayList<String>(mapBarcodeToTube
-                    .keySet()), "", bettaLimsMessageFactory);
+            PicoPlatingJaxbBuilder jaxbBuilder =
+                    new PicoPlatingJaxbBuilder(rackBarcode, new ArrayList<String>(mapBarcodeToTube
+                            .keySet()), "", bettaLimsMessageFactory);
             jaxbBuilder.invoke();
 
+            validateWorkflow(LabEventType.PICO_PLATING_BUCKET.getName(), mapBarcodeToTube.values());
+            LabEvent picoPlatingBucket =
+                    labEventFactory.buildFromBettaLimsRackEventDbFree(jaxbBuilder.getPicoPlatingBucket(),
+                            null, mapBarcodeToTube,null);
+            labEventHandler.processEvent(picoPlatingBucket);
+            TubeFormation initialTubeFormation = (TubeFormation) picoPlatingBucket.getInPlaceLabVessel();
+
             validateWorkflow(LabEventType.PICO_PLATING_QC.getName(), mapBarcodeToTube.values());
-            LabEvent picoQcEntity = labEventFactory
-                    .buildFromBettaLimsRackToPlateDbFree(jaxbBuilder.getPicoPlatingQc(), mapBarcodeToTube, null, null);
+            LabEvent picoQcEntity =
+                    labEventFactory.buildFromBettaLimsRackToPlateDbFree(jaxbBuilder
+                            .getPicoPlatingQc(), mapBarcodeToTube, initialTubeFormation.getRacksOfTubes().iterator()
+                            .next(), null);
             labEventHandler.processEvent(picoQcEntity);
 
-            TubeFormation initialTubeFormation = (TubeFormation) picoQcEntity.getSourceLabVessels().iterator().next();
             StaticPlate picoQcPlate = (StaticPlate) picoQcEntity.getTargetLabVessels().iterator().next();
             Assert.assertEquals(picoQcPlate.getSampleInstances().size(), mapBarcodeToTube.values().size());
 
@@ -929,6 +938,7 @@ public class LabEventTest {
         private final List<String> tubeBarcodes;
         private String rackBarcode;
 
+        private PlateEventType picoPlatingBucket;
         private PlateTransferEventType picoPlatingQc;
         private PlateTransferEventType picoPlatingSetup1;
         private PlateTransferEventType picoPlatingSetup2;
@@ -936,6 +946,7 @@ public class LabEventTest {
         private PlateTransferEventType picoPlatingSetup4;
         private PlateTransferEventType picoPlatingNormalizaion;
         private PlateTransferEventType picoPlatingPostNormSetup;
+
 
         private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
         private String picoPlatingQcBarcode;
@@ -1007,8 +1018,15 @@ public class LabEventTest {
             return picoPlateNormBarcodes;
         }
 
+        public PlateEventType getPicoPlatingBucket() {
+            return picoPlatingBucket;
+        }
+
         public PicoPlatingJaxbBuilder invoke() {
 
+            picoPlatingBucket = this.bettaLimsMessageFactory
+                    .buildRackEvent(LabEventType.PICO_PLATING_BUCKET.getName(), rackBarcode, tubeBarcodes);
+            addMessage(messageList, bettaLimsMessageFactory, picoPlatingBucket);
 
             picoPlatingQcBarcode = LabEventType.PICO_PLATING_QC.getName() + testPrefix;
             picoPlatingQc = this.bettaLimsMessageFactory.buildRackToPlate(LabEventType.PICO_PLATING_QC.getName(),
@@ -1257,9 +1275,16 @@ public class LabEventTest {
             ExomeExpressShearingJaxbBuilder exomeExpressShearingJaxbBuilder = new ExomeExpressShearingJaxbBuilder(
                     bettaLimsMessageFactory, new ArrayList<String>(mapBarcodeToTube.keySet()), "", rackBarcode)
                     .invoke();
+
+
             this.shearPlateBarcode = exomeExpressShearingJaxbBuilder.getShearPlateBarcode();
             this.shearCleanPlateBarcode = exomeExpressShearingJaxbBuilder.getShearCleanPlateBarcode();
             this.covarisPlateBarcode = exomeExpressShearingJaxbBuilder.getCovarisRackBarCode();
+
+            validateWorkflow(LabEventType.SHEARING_BUCKET.getName(), mapBarcodeToTube.values());
+            LabEvent shearingBucketEntity =
+                    labEventFactory.buildFromBettaLimsRackEventDbFree(
+                            exomeExpressShearingJaxbBuilder.getExExShearingBucket(), null, mapBarcodeToTube, null);
 
             // ShearingTransfer
             validateWorkflow("PlatingToShearingTubes", mapBarcodeToTube.values());
@@ -1329,6 +1354,7 @@ public class LabEventTest {
         private String shearCleanPlateBarcode;
         private String covarisRackBarCode;
 
+        private PlateEventType exExShearingBucket;
         private PlateTransferEventType plateToShearTubeTransferEventJaxb;
         private PlateTransferEventType CovarisLoadEventJaxb;
         private PlateTransferEventType postShearingTransferCleanupEventJaxb;
@@ -1376,7 +1402,16 @@ public class LabEventTest {
             return messageList;
         }
 
+        public PlateEventType getExExShearingBucket() {
+            return exExShearingBucket;
+        }
+
         public ExomeExpressShearingJaxbBuilder invoke() {
+
+            exExShearingBucket =
+                    bettaLimsMessageFactory
+                            .buildRackEvent(LabEventType.SHEARING_BUCKET.getName(), rackBarcode, tubeBarcodeList);
+            addMessage(messageList, bettaLimsMessageFactory, exExShearingBucket);
 
             shearPlateBarcode = "PlateToShearTubes" + testPrefix;
             plateToShearTubeTransferEventJaxb =
