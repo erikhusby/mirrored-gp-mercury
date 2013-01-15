@@ -25,10 +25,7 @@ import org.json.JSONException;
 import javax.inject.Inject;
 import java.io.StringReader;
 import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This class is for research projects action bean / web page.
@@ -95,7 +92,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private Map<String, Long> projectOrderCounts;
 
     // These are the fields for catching the input tokens
-    @Validate(expression = "this!=null || !editResearchProject.projectManagers.isEmpty", label = "Project Managers", on = {SAVE_ACTION})
+    @ValidateNestedProperties({
+            @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
+    })
     @Inject
     private UserTokenInput projectManagerList;
 

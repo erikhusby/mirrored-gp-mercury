@@ -1,5 +1,5 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
-<stripes:layout-render name="/layout.jsp" pageTitle="Mercury">
+<stripes:layout-render name="/layout.jsp">
     <stripes:layout-component name="content">
         <div class="hero-unit" style="width:900px; margin:0 auto; background-image: url('${ctxpath}/images/labhero.jpg'); background-size: 100%;">
             <p style="font-size: 28px;">Mercury allows you to manage a variety of project and lab oriented activities.  Just select an item below, or navigate directly to

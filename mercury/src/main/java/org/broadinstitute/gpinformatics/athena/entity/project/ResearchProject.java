@@ -611,4 +611,15 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         builder.append(title, that.getTitle());
         return builder.build();
     }
+
+    /**
+     * Compare by the ResearchProject by the title (case insensitive).
+     */
+    public static final Comparator<ResearchProject> BY_TITLE = new Comparator<ResearchProject>() {
+        @Override
+        public int compare(ResearchProject lhs, ResearchProject rhs) {
+            return lhs.getTitle().toLowerCase().compareTo(
+                    rhs.getTitle().toLowerCase());
+        }
+    };
 }

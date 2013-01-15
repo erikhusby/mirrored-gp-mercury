@@ -375,6 +375,17 @@ public class ProductOrderActionBean extends CoreActionBean {
         return new StreamingResolution("text", new StringReader(itemList.toString()));
     }
 
+    @HandlesEvent("getSupportsNumberOfLanes")
+    public Resolution getSupportsNumberOfLanes() throws Exception {
+
+        Product product = productDao.findByBusinessKey(this.product);
+
+        JSONObject item = new JSONObject();
+        item.put("supports", product.getSupportsNumberOfLanes());
+
+        return new StreamingResolution("text", new StringReader(item.toString()));
+    }
+
     public List<String> getSelectedProductOrderBusinessKeys() {
         return selectedProductOrderBusinessKeys;
     }
