@@ -113,10 +113,10 @@ public class BillingSessionActionBean extends CoreActionBean {
     }
 
     /**
-     * This does the download and returns the proper resolution for download, if succesful. If not,
+     * This does the download and returns the proper resolution for download, if successful. If not,
      * then it returns null.
      *
-     * @return The resolution for th download
+     * @return The resolution for the download
      */
     @HandlesEvent("downloadQuoteItems")
     public Resolution downloadQuoteItems() {
@@ -152,7 +152,7 @@ public class BillingSessionActionBean extends CoreActionBean {
             };
         } catch (Exception ex) {
             addGlobalValidationError("Got an exception trying to download the billing tracker: " + ex.getMessage());
-            return getContext().getSourcePageResolution();
+            return getSourcePageResolution();
         } finally {
             IOUtils.closeQuietly(outputStream);
         }
@@ -163,7 +163,6 @@ public class BillingSessionActionBean extends CoreActionBean {
 
         boolean errorsInBilling = false;
 
-        String sessionKey =  editSession.getBusinessKey();
         for (QuoteImportItem item : editSession.getUnBilledQuoteImportItems()) {
 
             Quote quote = new Quote();

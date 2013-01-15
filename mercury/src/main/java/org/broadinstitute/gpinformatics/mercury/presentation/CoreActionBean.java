@@ -29,6 +29,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Locale;
 
 /*
  * This class is a core class to extend Stripes actions from, providing some basic functionality for
@@ -131,7 +132,7 @@ public class CoreActionBean implements ActionBean {
     /**
      * @return Resolution
      */
-    protected Resolution getSourcePageResolution() {
+    public Resolution getSourcePageResolution() {
         Resolution res;
         try {
             res = getContext().getSourcePageResolution();
@@ -190,6 +191,20 @@ public class CoreActionBean implements ActionBean {
         getContext().getValidationErrors().add(field, new SimpleError(errorMessage));
     }
 
+    /**
+     * Add an error that must be included literally in the response, without any formatting.  This should
+     * only be used in the case where the message may contain characters that will cause MessageFormat.format
+     * to generate errors.
+     * @param message the message to include.
+     */
+    public void addLiteralErrorMessage(final String message) {
+        getContext().getValidationErrors().addGlobalError(new SimpleError(null, null) {
+            @Override
+            public String getMessage(Locale locale) {
+                return message;
+            }
+        });
+    }
 
     /**
      * Convenience method for adding a SimpleError to the context.
