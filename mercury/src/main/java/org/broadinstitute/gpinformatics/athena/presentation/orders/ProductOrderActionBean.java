@@ -113,7 +113,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<ProductOrder> selectedProductOrders;
 
     // For the Add-ons update we need the product title
-    @Validate(required = true, on = {"getAddOns"})
+    @Validate(required = true, on = {"getAddOns", "getSupportsNumberOfLanes"})
     private String product;
 
     private List<String> addOnKeys = new ArrayList<String> ();
@@ -361,6 +361,18 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         return new StreamingResolution("text", new StringReader(itemList.toString()));
+    }
+
+
+    @HandlesEvent("getSupportsNumberOfLanes")
+    public Resolution getSupportsNumberOfLanes() throws Exception {
+
+        Product product = productDao.findByBusinessKey(this.product);
+
+        JSONObject item = new JSONObject();
+        item.put("supports", product.getSupportsNumberOfLanes());
+
+        return new StreamingResolution("text", new StringReader(item.toString()));
     }
 
     public List<String> getSelectedProductOrderBusinessKeys() {
