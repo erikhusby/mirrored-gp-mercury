@@ -209,7 +209,9 @@
                 <div class="control-group">
                     <div class="control-label">&nbsp;</div>
                     <div class="controls actionButtons">
-                        <stripes:submit name="save" value="${actionBean.saveButtonText}" style="margin-right: 10px;" class="btn btn-primary"/>
+                        <stripes:submit name="save" value="${actionBean.saveButtonText}"
+                                        disabled="${!actionBean.canSave}"
+                                        style="margin-right: 10px;" class="btn btn-primary"/>
                         <c:choose>
                             <c:when test="${actionBean.creating}">
                                 <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>

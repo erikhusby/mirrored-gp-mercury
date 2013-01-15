@@ -18,12 +18,14 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserT
 import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
 import org.json.JSONException;
 
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.StringReader;
+import java.text.MessageFormat;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -113,6 +115,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private CohortTokenInput cohortsList;
 
+    @Inject
+    private UserBean userBean;
+
     private String irbList = "";
 
     /**
@@ -134,7 +139,11 @@ public class ResearchProjectActionBean extends CoreActionBean {
         if (!StringUtils.isBlank(researchProject)) {
             editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
         } else {
-            editResearchProject = new ResearchProject(getUserBean().getBspUser());
+            if (getUserBean().isValidBspUser()) {
+                editResearchProject = new ResearchProject(getUserBean().getBspUser());
+            } else {
+                editResearchProject = new ResearchProject();
+            }
         }
     }
 
@@ -181,13 +190,22 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return new ForwardResolution(PROJECT_LIST_PAGE);
     }
 
+    private void validateUser(String validatingFor) {
+        if (!userBean.ensureUserValid()) {
+            addGlobalValidationError(MessageFormat.format(UserBean.LOGIN_WARNING, validatingFor + " a research project"));
+        }
+    }
 
+    @HandlesEvent(CREATE_ACTION)
     public Resolution create() {
+        validateUser("create");
         setSubmitString(CREATE_PROJECT);
         return new ForwardResolution(PROJECT_CREATE_PAGE);
     }
 
+    @HandlesEvent(EDIT_ACTION)
     public Resolution edit() {
+        validateUser("edit");
         setSubmitString(EDIT_PROJECT);
         return new ForwardResolution(PROJECT_CREATE_PAGE);
     }
@@ -407,5 +425,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public String getTableauLink() {
         return tableauLink.passReportUrl(editResearchProject.getTitle());
+    }
+
+    /**
+     * @return true if Save is a valid operation.
+     */
+    public boolean getCanSave() {
+        // User must be logged into JIRA to create or edit a Research Project.
+        return userBean.isValidUser();
     }
 }
