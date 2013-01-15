@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -906,10 +907,8 @@ public class ProductOrder implements Serializable {
     public void updateSamplesFromList() {
         samples.clear();
 
-        if (!StringUtils.isBlank(sampleList)) {
-            for (String sampleName : sampleList.trim().split("\n")) {
-                samples.add(new ProductOrderSample(sampleName.trim()));
-            }
+        for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleList)) {
+            samples.add(new ProductOrderSample(sampleName.trim()));
         }
     }
 
