@@ -132,7 +132,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
         } else {
             // This is only used for save, when creating a new product order.
-            editOrder = new ProductOrder(getUserBean().getBspUser());
+            editOrder = new ProductOrder();
         }
     }
 
@@ -279,7 +279,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("placeOrder")
     public Resolution placeOrder() {
         try {
-            setUserInfo();
+            editOrder.prepareToSave(userBean.getBspUser());
             editOrder.submitProductOrder();
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
@@ -295,18 +295,11 @@ public class ProductOrderActionBean extends CoreActionBean {
         return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER, editOrder.getBusinessKey());
     }
 
-    private void setUserInfo() {
-        if (editOrder.getCreatedBy() == -1) {
-            editOrder.setCreatedBy(getUserBean().getBspUser().getUserId());
-        }
-        editOrder.setModifiedBy(getUserBean().getBspUser().getUserId());
-    }
-
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() throws Exception {
 
-        // Update the modified by (and created by if it was invalid when created
-        setUserInfo();
+        // Update the modified by and created by, if necessary.
+        editOrder.prepareToSave(userBean.getBspUser());
 
         // set the project, product and addOns for the order
         ResearchProject project = projectDao.findByBusinessKey(researchProjectList);

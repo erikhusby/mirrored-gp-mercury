@@ -163,13 +163,13 @@ public class ProductOrderFixupTest extends Arquillian {
         }
 
         BspUser bspUser = bspUsers.get(0);
-        if ( ! "Elizabeth".equals(bspUser.getFirstName()) || ! "Nickerson".equals(bspUser.getLastName())) {
+        if (!bspUser.getFirstName().equals("Elizabeth") || !bspUser.getLastName().equals("Nickerson")) {
             throw new RuntimeException("Wrong person found: " + bspUser);
         }
 
         for (String jiraKey : jiraKeys) {
             ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraKey);
-            productOrder.setCreatedBy(bspUser.getUserId());
+            productOrder.prepareToSave(bspUser);
 
             productOrderDao.persist(productOrder);
         }
