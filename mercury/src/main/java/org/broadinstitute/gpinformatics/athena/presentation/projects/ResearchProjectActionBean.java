@@ -124,7 +124,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION})
     public void listInit() {
         allResearchProjects = researchProjectDao.findAllResearchProjects();
-        Collections.sort(allResearchProjects, ResearchProject.BY_TITLE); // default sort order
     }
 
     /**

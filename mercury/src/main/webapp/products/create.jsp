@@ -96,7 +96,7 @@
                         Product Name *
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="productName" name="editProduct.productName" class="defaultText"
+                        <stripes:text id="productName" name="editProduct.productName" class="defaultText input-xxlarge"
                             title="Enter the name of the new product"/>
                     </div>
                 </div>
@@ -106,7 +106,7 @@
                         Product Description *
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="description" name="editProduct.description" class="defaultText"
+                        <stripes:text id="description" name="editProduct.description" class="defaultText input-xxlarge"
                             title="Enter the description of the new product"/>
                     </div>
                 </div>
@@ -116,7 +116,7 @@
                         Part Number *
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="partNumber" name="editProduct.partNumber" class="defaultText"
+                        <stripes:text id="partNumber" name="editProduct.partNumber" class="defaultText input-xxlarge"
                             title="Enter the part number of the new product"/>
                     </div>
                 </div>
@@ -146,7 +146,7 @@
                         Deliverables
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="deliverables" name="editProduct.deliverables" class="defaultText"
+                        <stripes:text id="deliverables" name="editProduct.deliverables" class="defaultText input-xxlarge"
                             title="Enter the deliverables for this product"/>
                     </div>
                 </div>
@@ -156,7 +156,7 @@
                         Input Requirements
                     </stripes:label>
                     <div class="controls">
-                        <stripes:textarea id="inputRequirements" name="editProduct.inputRequirements" class="defaultText"
+                        <stripes:textarea id="inputRequirements" name="editProduct.inputRequirements" class="defaultText input-xxlarge textarea"
                             title="Enter the input requirements for this product" cols="50" rows="3"
                             value="${actionBean.editProduct.inputRequirements}"/>
                     </div>

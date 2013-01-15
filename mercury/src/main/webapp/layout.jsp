@@ -44,6 +44,7 @@
         <script type="text/javascript" src="${ctxpath}/resources/scripts/json.js"></script>
 
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.tokeninput-1.6.0.js"></script>
+        <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.autosize-min.js"></script>
 
 
         <link rel="Shortcut Icon" type="image/x-icon" href="${ctxpath}/favicon.ico"/>
@@ -88,6 +89,10 @@
 
                 // Default date range selector (if there is a dateRangeDiv, the action bean will HAVE to have this
                 $j('#dateRangeDiv').dateRangeSelector();
+            });
+
+            $j(function(){
+                $j('.textarea').autosize();
             });
 
             function clearOnFocus(srcc) {

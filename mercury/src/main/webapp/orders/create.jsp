@@ -142,7 +142,7 @@
                         Name *
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="orderName" name="editOrder.title" class="defaultText"
+                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="orderName" name="editOrder.title" class="defaultText input-xxlarge"
                             title="Enter the name of the new order"/>
                     </div>
                 </div>
@@ -219,7 +219,7 @@
                         Comments
                     </stripes:label>
                     <div class="controls">
-                        <stripes:textarea readonly="${!actionBean.editOrder.draft}" id="comments" name="editOrder.comments" class="defaultText"
+                        <stripes:textarea readonly="${!actionBean.editOrder.draft}" id="comments" name="editOrder.comments" class="defaultText input-xxlarge textarea"
                             title="Enter comments" cols="50" rows="3"/>
                     </div>
                 </div>
