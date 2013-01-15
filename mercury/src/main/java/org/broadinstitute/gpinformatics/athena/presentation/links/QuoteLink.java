@@ -20,4 +20,8 @@ public class QuoteLink {
     public String quoteUrl(String quoteId) {
         return quoteConfig.getUrl() + QUOTE_DETAILS + quoteId;
     }
+
+    public String workUrl(String quoteId) {
+        return quoteConfig.getUrl() + QUOTE_DETAILS + quoteId + "&selectWorkTab=true";
+    }
 }
