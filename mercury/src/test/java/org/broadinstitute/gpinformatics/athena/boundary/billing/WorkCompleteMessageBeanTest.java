@@ -28,7 +28,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
 public class WorkCompleteMessageBeanTest extends ContainerTest{
 
     public static final String TEST_PDO_NAME = "PDO-xxx";
@@ -58,11 +57,17 @@ public class WorkCompleteMessageBeanTest extends ContainerTest{
 
         utx.begin();
 
-        WorkCompleteMessageBean workCompleteMessageBean = new WorkCompleteMessageBean(workCompleteMessageDao);
-        workCompleteMessageBean.onMessage(createMessage());
+        try {
+            WorkCompleteMessageBean workCompleteMessageBean = new WorkCompleteMessageBean(workCompleteMessageDao);
+            workCompleteMessageBean.onMessage(createMessage());
 
-        workCompleteMessageDao.flush();
-        workCompleteMessageDao.clear();
+            workCompleteMessageDao.flush();
+            workCompleteMessageDao.clear();
+        } catch (Exception e) {
+            // Make sure we rollback if this code fails, otherwise we can cause other tests to fail.
+            utx.rollback();
+            throw e;
+        }
     }
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)

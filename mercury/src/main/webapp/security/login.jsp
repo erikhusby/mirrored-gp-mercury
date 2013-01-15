@@ -31,7 +31,6 @@
 
                         <label class="ui-outputlabel control-label" for="username">Username *</label>
                         <div class="controls">
-                            <p:focus />
                             <stripes:text id="username" name="username" value="${actionBean.username}" />
                         </div>
                     </div>

@@ -97,10 +97,10 @@
                                 <c:choose>
                                     <%-- draft PDO --%>
                                     <c:when test="${order.draft}">
-                                        <span title="-1">DRAFT</span>
+                                        &nbsp;
                                     </c:when>
                                     <%-- Graphene-generated PDO --%>
-                                    <c:when test="${ ! order.validJiraTicket}">
+                                    <c:when test="${!order.validJiraTicket}">
                                         <a target="JIRA" title="0">
                                                 ${order.jiraTicketKey}
                                         </a>

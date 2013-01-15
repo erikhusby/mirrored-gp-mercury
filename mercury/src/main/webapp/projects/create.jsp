@@ -10,8 +10,8 @@
                     function () {
                         $j("#projectManagers").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                    hintText: "Type a Project Manager name",
                                     searchDelay: 500,
-                                    minChars: 2,
                                     <c:if test="${actionBean.projectManagerCompleteData != null && actionBean.projectManagerCompleteData != ''}">
                                         prePopulate: ${actionBean.projectManagerCompleteData},
                                     </c:if>
@@ -21,8 +21,8 @@
 
                         $j("#scientists").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                    hintText: "Type a Scientist name",
                                     searchDelay: 500,
-                                    minChars: 2,
                                     <c:if test="${actionBean.scientistCompleteData != null && actionBean.scientistCompleteData != ''}">
                                         prePopulate: ${actionBean.scientistCompleteData},
                                     </c:if>
@@ -32,8 +32,8 @@
 
                         $j("#externalCollaborators").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                    hintText: "Type a Collaborator name",
                                     searchDelay: 500,
-                                    minChars: 2,
                                     <c:if test="${actionBean.externalCollaboratorCompleteData != null && actionBean.externalCollaboratorCompleteData != ''}">
                                         prePopulate: ${actionBean.externalCollaboratorCompleteData},
                                     </c:if>
@@ -43,8 +43,8 @@
 
                         $j("#broadPIs").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                    hintText: "Type a Broad PI",
                                     searchDelay: 500,
-                                    minChars: 2,
                                     <c:if test="${actionBean.broadPICompleteData != null && actionBean.broadPICompleteData != ''}">
                                         prePopulate: ${actionBean.broadPICompleteData},
                                     </c:if>
@@ -55,7 +55,6 @@
                         $j("#fundingSources").tokenInput(
                                 "${ctxpath}/projects/project.action?fundingAutocomplete=", {
                                     searchDelay: 500,
-                                    minChars: 2,
                                     <c:if test="${actionBean.fundingSourcesCompleteData != null && actionBean.fundingSourcesCompleteData != ''}">
                                         prePopulate: ${actionBean.fundingSourcesCompleteData},
                                     </c:if>
@@ -65,8 +64,8 @@
 
                         $j("#cohorts").tokenInput(
                                 "${ctxpath}/projects/project.action?cohortAutocomplete=", {
+                                    hintText: "Type a Sample Cohort name",
                                     searchDelay: 500,
-                                    minChars: 2,
                                     <c:if test="${actionBean.cohortsCompleteData != null && actionBean.cohortsCompleteData != ''}">
                                         prePopulate: ${actionBean.cohortsCompleteData},
                                     </c:if>
@@ -76,8 +75,8 @@
 
                         $j("#irbs").tokenInput(
                                 "${ctxpath}/projects/project.action?irbAutocomplete=", {
+                                    hintText: "Type an IRB Number",
                                     searchDelay: 500,
-                                    minChars: 1,
                                     <c:if test="${actionBean.irbsCompleteData != null && actionBean.irbsCompleteData != ''}">
                                         prePopulate: ${actionBean.irbsCompleteData},
                                     </c:if>
@@ -91,15 +90,15 @@
 
     <stripes:layout-component name="content">
 
-        <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
+        <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal" focus="editResearchProject.title">
             <stripes:hidden name="submitString"/>
             <stripes:hidden name="researchProject" value="${actionBean.editResearchProject.jiraTicketKey}"/>
             <div class="form-horizontal">
                 <div class="control-group">
-                    <stripes:label for="title" class="control-label">Project *</stripes:label>
+                    <stripes:label for="title" class="control-label">Name *</stripes:label>
                     <div class="controls">
                             <stripes:text name="editResearchProject.title" value="${actionBean.editResearchProject.title}"
-                                          id="title"  class="defaultText" title="Enter in the project name"  maxlength="255"/>
+                                          id="title"  class="defaultText" title="Enter the project name"  maxlength="255"/>
                     </div>
                 </div>
 
@@ -181,7 +180,7 @@
                     <stripes:label for="irbs" class="control-label">IRB/IACUC Numbers</stripes:label>
 
                     <div class="controls">
-                        <stripes:text id="irbs" name="irbList" />
+                        <stripes:text id="irbs" name="irbList" title="Enter the IRB Number" class="defaultText"/>
                         <p>
                             <stripes:checkbox id="irbNotEngaged" name="editResearchProject.irbNotEngaged"/>&nbsp;<stripes:label for="irbNotEngaged" style="display:inline;">IRB Not Engaged</stripes:label>
                         </p>
@@ -201,7 +200,7 @@
                 <div class="controls">
                     <div class="row-fluid">
                         <div class="span1">
-                            <stripes:submit name="save" value="Save" class="btn btn-primary"/>
+                            <stripes:submit name="save" value="Save" disabled="${!actionBean.canSave}" class="btn btn-primary"/>
                         </div>
                         <div class="span1">
                             <c:choose>

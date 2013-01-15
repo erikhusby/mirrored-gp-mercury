@@ -30,7 +30,6 @@
                     $j("#researchProject").tokenInput(
                         "${ctxpath}/projects/project.action?autocomplete=", {
                             searchDelay: 2000,
-                            minChars: 2,
                             <c:if test="${actionBean.projectCompleteData != null && actionBean.projectCompleteData != ''}">
                                 prePopulate: ${actionBean.projectCompleteData},
                             </c:if>
@@ -41,7 +40,6 @@
                     $j("#product").tokenInput(
                         "${ctxpath}/products/product.action?autocomplete=", {
                             searchDelay: 2000,
-                            minChars: 2,
                             onAdd: updateAddOnCheckboxes,
                             onDelete: updateAddOnCheckboxes,
                             <c:if test="${actionBean.productCompleteData != null && actionBean.productCompleteData != ''}">
@@ -51,7 +49,9 @@
                         }
                     );
 
-                    updateAddOnCheckboxes();
+                    <c:if test="${!actionBean.creating}">
+                        updateAddOnCheckboxes();
+                    </c:if>
                 }
             );
 
@@ -120,9 +120,11 @@
                 <stripes:hidden name="productOrder"/>
                 <stripes:hidden name="submitString"/>
                 <div class="control-group">
-                    <stripes:label for="orderName" name="Name" class="control-label"/>
+                    <stripes:label for="orderName" class="control-label">
+                        Name *
+                    </stripes:label>
                     <div class="controls">
-                        <stripes:text disabled="${!actionBean.editOrder.draft}" id="orderName" name="editOrder.title" class="defaultText"
+                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="orderName" name="editOrder.title" class="defaultText"
                             title="Enter the name of the new order"/>
                     </div>
                 </div>
@@ -146,15 +148,19 @@
                 </div>
 
                 <div class="control-group">
-                    <stripes:label for="researchProject" name="Research Project" class="control-label"/>
+                    <stripes:label for="researchProject" class="control-label">
+                        Research Project *
+                    </stripes:label>
                     <div class="controls">
-                        <stripes:text disabled="${!actionBean.editOrder.draft}" id="researchProject" name="researchProjectList" class="defaultText"
+                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="researchProject" name="researchProjectList" class="defaultText"
                             title="Enter the research project for this order"/>
                     </div>
                 </div>
 
                 <div class="control-group">
-                    <stripes:label for="product" name="Product" class="control-label"/>
+                    <stripes:label for="product" class="control-label">
+                        Product *
+                    </stripes:label>
                     <div class="controls">
                         <stripes:text id="product" name="productList" class="defaultText"
                             title="Enter the product name for this order"/>
@@ -162,12 +168,16 @@
                 </div>
 
                 <div class="control-group">
-                    <stripes:label for="selectedAddOns" name="Add-ons" class="control-label"/>
+                    <stripes:label for="selectedAddOns" class="control-label">
+                        Add-ons
+                    </stripes:label>
                     <div id="addOnCheckboxes" class="controls controls-text"> </div>
                 </div>
 
                 <div class="control-group">
-                    <stripes:label for="quote" name="Quote" class="control-label"/>
+                    <stripes:label for="quote" class="control-label">
+                        Quote *
+                    </stripes:label>
                     <div class="controls">
                         <stripes:text id="quote" name="editOrder.quoteId" class="defaultText"
                                       onchange="updateFundsRemaining"
@@ -177,17 +187,21 @@
                 </div>
 
                 <div class="control-group">
-                    <stripes:label for="numberOfLanes" name="Number of Lanes" class="control-label"/>
+                    <stripes:label for="numberOfLanes" class="control-label">
+                        Number of Lanes
+                    </stripes:label>
                     <div class="controls">
-                        <stripes:text disabled="${!actionBean.editOrder.draft}" id="numberOfLanes" name="editOrder.count" class="defaultText"
+                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="numberOfLanes" name="editOrder.count" class="defaultText"
                             title="Enter Number of Lanes"/>
                     </div>
                 </div>
 
                 <div class="control-group">
-                    <stripes:label for="comments" name="Comments" class="control-label"/>
+                    <stripes:label for="comments" class="control-label">
+                        Comments
+                    </stripes:label>
                     <div class="controls">
-                        <stripes:textarea disabled="${!actionBean.editOrder.draft}" id="comments" name="editOrder.comments" class="defaultText"
+                        <stripes:textarea readonly="${!actionBean.editOrder.draft}" id="comments" name="editOrder.comments" class="defaultText"
                             title="Enter comments" cols="50" rows="3"/>
                     </div>
                 </div>
@@ -195,7 +209,9 @@
                 <div class="control-group">
                     <div class="control-label">&nbsp;</div>
                     <div class="controls actionButtons">
-                        <stripes:submit name="save" value="${actionBean.saveButtonText}" style="margin-right: 10px;" class="btn btn-primary"/>
+                        <stripes:submit name="save" value="${actionBean.saveButtonText}"
+                                        disabled="${!actionBean.canSave}"
+                                        style="margin-right: 10px;" class="btn btn-primary"/>
                         <c:choose>
                             <c:when test="${actionBean.creating}">
                                 <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
@@ -216,7 +232,7 @@
                 all sample details.
                 <br/>
                 <br/>
-                <stripes:textarea disabled="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="editOrder.sampleList" rows="15" cols="120"/>
+                <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="editOrder.sampleList" rows="15" cols="120"/>
             </div>
         </stripes:form>
 

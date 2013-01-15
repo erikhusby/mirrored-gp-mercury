@@ -60,7 +60,7 @@
                     <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
                         <li><a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Design</a></li>
                         <li>
-                            <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean" tabindex="1" event="view">Create Batch</stripes:link>
+                            <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean" tabindex="1" event="startBatch">Create Batch</stripes:link>
                         </li>
                     </ul>
                 </li>
@@ -72,7 +72,7 @@
             <ul class="nav pull-right global-search">
                 <li style="white-space:nowrap;">
                     <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean">
-                    <input type="text" name="searchKey" title="Enter a barcode to search" class="defaultText" style="margin-top: 5px;vertical-align: top;height:14px;"/>
+                    <input type="text" name="searchKey" title="Enter a PDO, Sample or Barcode" class="defaultText" style="margin-top: 5px;vertical-align: top;height:14px;"/>
                     <input type="submit" name="search" value="Search" class="btn btn-mini"/>
                     &#160;
                     <stripes:link style="display: inline; padding: 0px;" title="Click for advanced search options" beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean" event="view">Advanced</stripes:link>

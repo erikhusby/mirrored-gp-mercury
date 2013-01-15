@@ -191,7 +191,7 @@
                     <tr>
                         <td>
                             <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" event="view">
-                                <stripes:param name="businessKey" value="${order.businessKey}"/>
+                                <stripes:param name="productOrder" value="${order.businessKey}"/>
                                 ${order.title}
                             </stripes:link>
                         </td>

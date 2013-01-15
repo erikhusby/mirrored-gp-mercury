@@ -109,7 +109,7 @@
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Primary Price Items</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editProduct.primaryPriceItem.category} : ${actionBean.editProduct.primaryPriceItem.name}</div>
+                    <div class="form-value">${actionBean.editProduct.primaryPriceItem.displayName}</div>
                 </div>
             </div>
 
@@ -200,5 +200,26 @@
                 </c:forEach>
             </tbody>
         </table>
+
+        <div class="tableBar">
+            Material Types
+        </div>
+        <table id="allowedMaterialTypes" class="table table-striped table-bordered">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Name</th>
+                </tr>
+            </thead>
+            <tbody>
+                <c:forEach items="${actionBean.editProduct.allowableMaterialTypes}" var="allowableMaterialType">
+                    <tr>
+                        <td>${allowableMaterialType.category}</td>
+                        <td>${allowableMaterialType.name}</td>
+                    </tr>
+                </c:forEach>
+            </tbody>
+        </table>
+
     </stripes:layout-component>
 </stripes:layout-render>

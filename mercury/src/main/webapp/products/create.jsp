@@ -10,28 +10,50 @@
         <script type="text/javascript">
             $j(document).ready(
                 function () {
-                    $j("#priceItem").tokenInput(
+                    $j("#primaryPriceItem").tokenInput(
                         "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             searchDelay: 500,
-                            minChars: 2,
                             preventDuplicates: true,
-                            <c:if test="${actionBean.priceItemCompleteData != null && actionBean.priceItemCompleteData != ''}">
-                                prePopulate: ${actionBean.priceItemCompleteData},
+                            <c:if test="${actionBean.primaryPriceItemCompleteData != null && actionBean.primaryPriceItemCompleteData != ''}">
+                                prePopulate: ${actionBean.primaryPriceItemCompleteData},
                             </c:if>
                             tokenLimit: 1
                         }
                     );
 
+                    $j("#optionalPriceItems").tokenInput(
+                            "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
+                                searchDelay: 500,
+                                preventDuplicates: true,
+                                <c:if test="${actionBean.optionalPriceItemsCompleteData != null && actionBean.optionalPriceItemsCompleteData != ''}">
+                                prePopulate: ${actionBean.optionalPriceItemsCompleteData},
+                                </c:if>
+                                tokenLimit: 50
+                            }
+                    );
+
                     $j("#addOns").tokenInput(
                             "${ctxpath}/products/product.action?addOnsAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                                 searchDelay: 500,
-                                minChars: 2,
                                 <c:if test="${actionBean.addOnCompleteData != null && actionBean.addOnCompleteData != ''}">
                                     prePopulate: ${actionBean.addOnCompleteData},
                                 </c:if>
                                 preventDuplicates: true
                             }
                     );
+
+
+                    $j("#materialTypes").tokenInput(
+                            "${ctxpath}/products/product.action?materialTypesAutocomplete=&product=${actionBean.editProduct.businessKey}", {
+                                searchDelay: 500,
+                                minChars: 2,
+                                <c:if test="${actionBean.materialTypeCompleteData != null && actionBean.materialTypeCompleteData != ''}">
+                                    prePopulate: ${actionBean.materialTypeCompleteData},
+                                </c:if>
+                                preventDuplicates: true
+                            }
+                    );
+
 
                     $j("#availabilityDate").datepicker();
                     $j("#discontinuedDate").datepicker();
@@ -58,7 +80,7 @@
                 <stripes:hidden name="product"/>
                 <div class="control-group">
                     <stripes:label for="productFamily" class="control-label">
-                        Product Family
+                        Product Family *
                     </stripes:label>
                     <div class="controls">
                         <stripes:select name="editProduct.productFamily.productFamilyId" id="productFamily">
@@ -71,7 +93,7 @@
 
                 <div class="control-group">
                     <stripes:label for="productName" class="control-label">
-                        Product Name
+                        Product Name *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="productName" name="editProduct.productName" class="defaultText"
@@ -81,7 +103,7 @@
 
                 <div class="control-group">
                     <stripes:label for="description" class="control-label">
-                        Product Description
+                        Product Description *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="description" name="editProduct.description" class="defaultText"
@@ -91,7 +113,7 @@
 
                 <div class="control-group">
                     <stripes:label for="partNumber" class="control-label">
-                        Part Number
+                        Part Number *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="partNumber" name="editProduct.partNumber" class="defaultText"
@@ -101,7 +123,7 @@
 
                 <div class="control-group">
                     <stripes:label for="availabilityDate" class="control-label">
-                        Availability Date
+                        Availability Date *
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="availabilityDate" name="editProduct.availabilityDate" class="defaultText"
@@ -189,16 +211,27 @@
                 </div>
 
                 <div class="control-group">
-                    <stripes:label for="priceItem" class="control-label">
-                        Primary Price Item
+                    <stripes:label for="primaryPriceItem" class="control-label">
+                        Primary Price Item *
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="priceItem" name="priceItemList"
+                        <stripes:text id="primaryPriceItem" name="primaryPriceItemList"
                             class="defaultText" title="Type to search for matching price items"/>
                     </div>
                 </div>
 
-                <div class="control-group">
+                    <div class="control-group">
+                        <stripes:label for="optionalPriceItems" class="control-label">
+                            Optional Price Items
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:text id="optionalPriceItems" name="optionalPriceItemsList"
+                                          class="defaultText" title="Type to search for matching price items"/>
+                        </div>
+                    </div>
+
+
+                    <div class="control-group">
                     <stripes:label for="addOns" class="control-label">
                         Add-ons
                     </stripes:label>
@@ -207,7 +240,15 @@
                     </div>
                 </div>
 
+                <div class="control-group">
+                    <stripes:label for="materialTypes" name="MaterialTypes" class="control-label"/>
+                 	<div class="controls">
+                       	<stripes:text id="materialTypes" name="materialTypeList"/>
+                    </div>
+                </div>
+
                 <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+
                     <div class="control-group">
                         <stripes:label for="useAutomatedBilling" class="control-label">
                             Billing

@@ -103,6 +103,7 @@ public class BillingSessionActionBean extends CoreActionBean {
             ProductOrderActionBean.getTrackerForOrders(this, productOrders, bspUserList);
 
         // If there is no file to download, just pass on the errors
+        // FIXME: this logic is bogus, getTrackerForOrders doesn't return null on error.
         if (downloadResolution == null) {
             return new ForwardResolution(SESSION_VIEW_PAGE);
         }
@@ -181,7 +182,11 @@ public class BillingSessionActionBean extends CoreActionBean {
                     sessionKey);
 
                 item.setBillingMessages(BillingSession.SUCCESS);
-                addMessage("Sent to quote server " + message);
+
+                String workUrl = quoteLink.workUrl(quote.getAlphanumericId());
+
+                String link = "<a href=\"" + workUrl + "\">click here</a>";
+                addMessage("Sent to quote server: " + link + " to see the value");
             } catch (Exception ex) {
                 // Any exceptions in sending to the quote server will just be reported and will continue on to the next one
                 item.setBillingMessages(ex.getMessage());
@@ -197,7 +202,7 @@ public class BillingSessionActionBean extends CoreActionBean {
 
         // If there are any errors (and there may be multiple, then need to save and go to the source page
         billingSessionDao.persist(editSession);
-        return getContext().getSourcePageResolution();
+        return new ForwardResolution(BillingSessionActionBean.class, VIEW_ACTION).addParameter("sessionKey", editSession.getBusinessKey());
     }
 
     @HandlesEvent("endSession")

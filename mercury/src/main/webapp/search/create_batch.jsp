@@ -3,7 +3,7 @@
 <%@ taglib prefix="str" uri="http://stripes.sourceforge.net/stripes-dynattr.tld" %>
 
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"/>
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Create Batches from Vessels" sectionTitle="Search">
     <stripes:layout-component name="extraHead">
@@ -29,13 +29,13 @@
                                 <div class="controls" style="margin-left: 80px;">
                                     <stripes:textarea rows="5" cols="80" name="searchKey" id="name"
                                                       title="Enter the value to search"
-                                                      style="font-size: x-small; width:auto;" class="defaultText"/>
+                                                      style="width:auto;" class="defaultText"/>
                                 </div>
                             </div>
 
                             <div class="control-group">
                                 <div class="controls" style="margin-left: 80px;">
-                                    <stripes:submit name="search" value="Search"/>
+                                    <stripes:submit name="searchBatchCandidates" value="Search"/>
                                 </div>
                             </div>
                         </div>
@@ -63,7 +63,7 @@
                                 <stripes:label for="jiraTicketId" name="Jira Ticket Key" class="control-label"/>
                                 <div class="controls">
                                     <stripes:text name="jiraTicketId" class="defaultText"
-                                                  title="Enter an existing batch ticket"/>
+                                                  title="Enter an existing batch ticket" id="jiraTicketId"/>
                                 </div>
                             </div>
                         </div>
@@ -72,7 +72,7 @@
                                 <stripes:label for="summary" name="Summary" class="control-label"/>
                                 <div class="controls">
                                     <stripes:text name="summary" class="defaultText"
-                                                  title="Enter a summary for a new batch ticket"/>
+                                                  title="Enter a summary for a new batch ticket" id="summary" value="${actionBean.summary}"/>
                                 </div>
                             </div>
 
@@ -80,7 +80,7 @@
                                 <stripes:label for="description" name="Description" class="control-label"/>
                                 <div class="controls">
                                     <stripes:textarea name="description" class="defaultText"
-                                                      title="Enter a description for a new batch ticket"/>
+                                                      title="Enter a description for a new batch ticket" id="description" value="${actionBean.description}"/>
                                 </div>
                             </div>
 
@@ -88,7 +88,7 @@
                                 <stripes:label for="important" name="Important Information" class="control-label"/>
                                 <div class="controls">
                                     <stripes:textarea name="important" class="defaultText"
-                                                      title="Enter important info for a new batch ticket"/>
+                                                      title="Enter important info for a new batch ticket" id="important" value="${actionBean.important}"/>
                                 </div>
                             </div>
 
@@ -96,7 +96,7 @@
                                 <stripes:label for="dueDate" name="Availability Date" class="control-label"/>
                                 <div class="controls">
                                     <stripes:text id="dueDate" name="dueDate" class="defaultText"
-                                                  title="enter date (MM/dd/yyyy)"><fmt:formatDate
+                                                  title="enter date (MM/dd/yyyy)" value="${actionBean.dueDate}"><fmt:formatDate
                                             value="${actionBean.dueDate}" dateStyle="short"/></stripes:text>
                                 </div>
                             </div>

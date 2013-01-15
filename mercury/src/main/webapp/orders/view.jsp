@@ -37,18 +37,16 @@
 
             <div class="actionButtons">
                 <c:if test="${actionBean.editOrder.draft}">
-                    <stripes:submit name="placeOrder" value="Place Order" class="btn"/>
+                    <stripes:submit name="placeOrder" value="Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
                 </c:if>
             </div>
         </stripes:form>
 
-        <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
         <stripes:link title="Click to edit ${actionBean.editOrder.title}"
             beanclass="${actionBean.class.name}" event="edit" class="pull-right">
             <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
             <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
         </stripes:link>
-        </security:authorizeBlock>
 
         <div style="both:clear"> </div>
 
@@ -74,6 +72,13 @@
                             </c:otherwise>
                         </c:choose>
                     </div>
+                </div>
+            </div>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Status</label>
+                <div class="controls">
+                    <div class="form-value">${actionBean.editOrder.orderStatus}</div>
                 </div>
             </div>
 

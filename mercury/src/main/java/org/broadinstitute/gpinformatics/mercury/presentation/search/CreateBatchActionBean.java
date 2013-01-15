@@ -2,7 +2,10 @@ package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.Validate;
+import net.sourceforge.stripes.validation.ValidationErrors;
+import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -34,7 +37,7 @@ public class CreateBatchActionBean extends CoreActionBean {
     private static final String BATCH_CONFIRM_PAGE = "/search/batch_confirm.jsp";
 
     public static final String CREATE_BATCH_ACTION = "createBatch";
-    public static final String VIEW_ACTION = "view";
+    public static final String VIEW_ACTION = "startBatch";
     public static final String CONFIRM_ACTION = "confirm";
     public static final String SEARCH_ACTION = "search";
 
@@ -72,14 +75,10 @@ public class CreateBatchActionBean extends CoreActionBean {
     @Validate(required = true, on = {CREATE_BATCH_ACTION})
     private String jiraInputType = EXISTING_TICKET;
 
-    @Validate(required = true, on = {CREATE_BATCH_ACTION},
-              expression = "jiraInputType == EXISTING_TICKET")
     private String jiraTicketId;
 
     private String important;
     private String description;
-    @Validate(required = true, on = {CREATE_BATCH_ACTION},
-            expression = "jiraInputType != EXISTING_TICKET")
     private String summary;
     private Date dueDate;
 
@@ -103,6 +102,25 @@ public class CreateBatchActionBean extends CoreActionBean {
     @HandlesEvent(CONFIRM_ACTION)
     public Resolution confirm() {
         return new ForwardResolution(BATCH_CONFIRM_PAGE);
+    }
+
+    @ValidationMethod(on = CREATE_BATCH_ACTION)
+    public void createBatchValidation(ValidationErrors errors) {
+
+
+        if(selectedVesselLabels == null || selectedVesselLabels.isEmpty()) {
+            errors.add("selectedVesselLabels", new SimpleError("At least one vessel must be selected to create a batch"));
+        }
+
+        if(jiraInputType.equals(EXISTING_TICKET)) {
+            if(StringUtils.isBlank(jiraTicketId)) {
+                errors.add("jiraTicketId",new SimpleError("An existing Jira ticket key is required"));
+            }
+        } else {
+            if(StringUtils.isBlank(summary)) {
+                errors.add("summary", new SimpleError("You must provide at least a summary to create a Jira Ticket"));
+            }
+        }
     }
 
     /**
