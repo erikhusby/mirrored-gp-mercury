@@ -80,6 +80,9 @@ public class ProductOrderContainerTest extends Arquillian {
 
         Assert.assertEquals(3, testOrder.getActiveSampleCount());
 
+        BspUser bspUser = new BspUser();
+        bspUser.setUserId(TEST_CREATOR);
+        testOrder.prepareToSave(bspUser);
         testOrder.submitProductOrder();
 
 //        testOrder.closeProductOrder();
