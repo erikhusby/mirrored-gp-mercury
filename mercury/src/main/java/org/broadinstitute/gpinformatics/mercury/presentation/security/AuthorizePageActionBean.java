@@ -92,12 +92,12 @@ public class AuthorizePageActionBean extends CoreActionBean {
             } else {
                 authorizationService.addRolesToPage(pageAuthorization.getPagePath(), pageAuthorization.getRoleList());
             }
-        } catch (Exception e ) {
+        } catch (Exception e) {
             addGlobalValidationError(e.getMessage());
-            return getContext().getSourcePageResolution();
+            return getSourcePageResolution();
         }
 
-        addMessage("Athorization for \"" + pageAuthorization.getPagePath() + "\" has been saved");
+        addMessage("Authorization for \"" + pageAuthorization.getPagePath() + "\" has been saved");
         return new RedirectResolution(AuthorizePageActionBean.class, LIST_ACTION);
     }
 

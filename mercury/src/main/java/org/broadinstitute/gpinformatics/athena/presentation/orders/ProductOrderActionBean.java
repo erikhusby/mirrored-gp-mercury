@@ -152,33 +152,33 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @ValidationMethod(on = "placeOrder")
-    public void validateOrderPlacement(ValidationErrors errors) throws Exception {
+    public void validateOrderPlacement() throws Exception {
         if (editOrder.getSamples().isEmpty()) {
-            errors.addGlobalError(new SimpleError("Order does not have any samples"));
+            addGlobalValidationError("Order does not have any samples");
         }
 
         if (editOrder.getResearchProject() == null) {
-            errors.addGlobalError(new SimpleError("Cannot place order '" + editOrder.getBusinessKey() + "' because it does not have a research project"));
+            addGlobalValidationError("Cannot place order ''" + editOrder.getBusinessKey() + "'' because it does not have a research project");
         }
 
         if (editOrder.getQuoteId() == null) {
-            errors.addGlobalError(new SimpleError("Cannot place order '" + editOrder.getBusinessKey() + "' because it does not have a quote specified"));
+            addGlobalValidationError("Cannot place order ''" + editOrder.getBusinessKey() + "'' because it does not have a quote specified");
         }
 
         if (editOrder.getProduct() == null) {
-            errors.addGlobalError(new SimpleError("Cannot place order '" + editOrder.getBusinessKey() + "' because it does not have a product"));
+            addGlobalValidationError("Cannot place order ''" + editOrder.getBusinessKey() + "'' because it does not have a product");
         }
 
         if (editOrder.getProduct() == null) {
-            errors.addGlobalError(new SimpleError("Cannot place order '" + editOrder.getCount() + "' because it does not have a specified number of lanes"));
+            addGlobalValidationError("Cannot place order ''" + editOrder.getCount() + "'' because it does not have a specified number of lanes");
         }
 
         try {
             quoteService.getQuoteByAlphaId(editOrder.getQuoteId());
         } catch (QuoteServerException ex) {
-            errors.addGlobalError(new SimpleError("The quote id " + editOrder.getQuoteId() + " is not valid: " + ex.getMessage()));
+            addGlobalValidationError("The quote id " + editOrder.getQuoteId() + " is not valid: " + ex.getMessage());
         } catch (QuoteNotFoundException ex) {
-            errors.addGlobalError(new SimpleError("The quote id " + editOrder.getQuoteId() + " is not found"));
+            addGlobalValidationError("The quote id " + editOrder.getQuoteId() + " is not found");
         }
     }
 
@@ -216,7 +216,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
             }
 
-            // If there are locked out orders, then do not allow the session to start
+            // If there are locked out orders, then do not allow the session to start.
+            // TODO: It looks like this could be done by traversing the entity tree, e.g. ProductOrder -> ProductOrderSample -> BusinessLedger.
             Set<BillingLedger> lockedOutOrders = billingLedgerDao.findLockedOutByOrderList(getSelectedProductOrderBusinessKeys());
             if (!lockedOutOrders.isEmpty()) {
                 Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());
@@ -224,7 +225,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                     lockedOutOrderStrings.add(ledger.getProductOrderSample().getProductOrder().getTitle());
                 }
 
-                String lockedOutString = StringUtils.join(lockedOutOrderStrings.toArray(), ", ");
+                String lockedOutString = StringUtils.join(lockedOutOrderStrings, ", ");
 
                 addGlobalValidationError(
                         "The following orders are locked out by active billing sessions: " + lockedOutString);
@@ -284,9 +285,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             // save it!
             productOrderDao.persist(editOrder);
-        } catch (Exception e ) {
-            addGlobalValidationError(e.getMessage());
-            return getContext().getSourcePageResolution();
+        } catch (Exception e) {
+            // Need to quote the message contents to prevent errors.
+            addLiteralErrorMessage(e.getMessage());
+            return getSourcePageResolution();
         }
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been placed");
@@ -435,7 +437,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             };
         } catch (Exception ex) {
             actionBean.addGlobalValidationError("Got an exception trying to download the billing tracker: " + ex.getMessage());
-            return actionBean.getContext().getSourcePageResolution();
+            return actionBean.getSourcePageResolution();
         } finally {
             IOUtils.closeQuietly(outputStream);
         }
