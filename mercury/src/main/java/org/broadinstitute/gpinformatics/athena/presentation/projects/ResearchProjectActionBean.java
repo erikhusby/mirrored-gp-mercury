@@ -221,6 +221,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
             return new ForwardResolution(getContext().getSourcePage());
         }
 
+        // Set the modified by and date
+        editResearchProject.recordModification(userBean.getBspUser().getUserId());
+
         researchProjectDao.persist(editResearchProject);
         addMessage("The research project '" + editResearchProject.getTitle() + "' has been saved.");
         return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION).addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
@@ -248,9 +251,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     /**
-     * The string parameter name of the business key.
-     *
-     * @return
+     * @return The string parameter name of the business key.
      */
     public String getResearchProject() {
         return researchProject;
