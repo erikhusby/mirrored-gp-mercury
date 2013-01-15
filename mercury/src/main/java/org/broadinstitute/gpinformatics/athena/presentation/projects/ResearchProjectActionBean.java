@@ -93,7 +93,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     // These are the fields for catching the input tokens
     @ValidateNestedProperties({
-            @Validate(field = "Project Managers", label = "Project Managers", required = true, on = {SAVE_ACTION})
+            @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
     })
     @Inject
     private UserTokenInput projectManagerList;
