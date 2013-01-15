@@ -54,7 +54,8 @@
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Pico/Plating Bucket</name>
                 <labEventTypes>PICO_PLATING_BUCKET</labEventTypes>
-                <optional>false</optional>
+                <!--TODO SGM: Temporarily setting optional for initial test case purposes-->
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <entryMaterialType>GENOMIC_DNA</entryMaterialType>
@@ -140,12 +141,12 @@
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Shearing Bucket</name>
                 <labEventTypes>SHEARING_BUCKET</labEventTypes>
-                <optional>false</optional>
+                <!--TODO SGM: Temporarily setting optional for initial test case purposes-->
+                <optional>true</optional>
                 <entryPoint>true</entryPoint>
                 <reEntryPoint>true</reEntryPoint>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
             </workflowStepDefs>
-<!--
             <workflowStepDefs>
                 <name>Plating to Shearing Tubes</name>
                 <labEventTypes>PLATING_TO_SHEARING_TUBES</labEventTypes>
@@ -153,7 +154,6 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
             </workflowStepDefs>
--->
             <workflowStepDefs>
                 <name>Covaris Loaded</name>
                 <labEventTypes>COVARIS_LOADED</labEventTypes>
