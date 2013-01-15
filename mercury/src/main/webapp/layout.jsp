@@ -114,7 +114,7 @@
                 }
             }
         </script>
-        <title>Mercury | ${pageTitle}</title>
+        <title>Mercury ${pageTitle}</title>
 
         <stripes:layout-component name="extraHead"/>
     </head>
