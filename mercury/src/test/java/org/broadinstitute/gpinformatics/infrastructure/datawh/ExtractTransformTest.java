@@ -38,9 +38,9 @@ public class ExtractTransformTest extends Arquillian {
     private final Date now = new Date();
     private final String nowMsec = String.valueOf(now.getTime());
     private String badDataDir = datafileDir + nowMsec;
-    static final String PRODUCT_ORDER_SAMPLE_CLASSNAME = "org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample";
+    static final String PRODUCT_ORDER_SAMPLE_CLASSNAME =   ProductOrderSample.class.getName();
     static final String PRODUCT_ORDER_SAMPLE_FILENAME = "product_order_sample.dat";
-    static final String RESEARCH_PROJECT_CLASSNAME = "org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject";
+    static final String RESEARCH_PROJECT_CLASSNAME = ResearchProject.class.getName();
     static final String RESEARCH_PROJECT_FILENAME = "research_project.dat";
 
     @Inject
@@ -82,7 +82,7 @@ public class ExtractTransformTest extends Arquillian {
                         || filename.equals(ExtractTransform.LAST_ETL_FILE);
             }
         };
-        for (File file : new File (dir).listFiles(filter)) {
+        for (File file : new File(dir).listFiles(filter)) {
             FileUtils.deleteQuietly(file);
         }
     }
