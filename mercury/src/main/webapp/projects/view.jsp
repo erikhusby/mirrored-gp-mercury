@@ -163,16 +163,15 @@
         </div>
 
 
-        <div class="tableBar">
+        <div class="tableBar" style="margin-bottom: 10px;">
             Orders
+
+            <stripes:link title="Create product with research project ${actionBean.editResearchProject.title}"
+                          beanclass="<%=ProductOrderActionBean.class.getName()%>" event="create" class="pull-right">
+                <span class="icon-tags"></span> <%=ProductOrderActionBean.CREATE_ORDER%>
+                <stripes:param name="productOrder" value="${actionBean.editResearchProject.businessKey}"/>
+            </stripes:link>
         </div>
-
-        <stripes:link title="Create product with research project ${actionBean.editResearchProject.title}"
-                      beanclass="<%=ProductOrderActionBean.class.getName()%>" event="create" class="pull-right">
-            <span class="icon-tags"></span> <%=ProductOrderActionBean.CREATE_ORDER%>
-            <stripes:param name="productOrder" value="${actionBean.editResearchProject.businessKey}"/>
-        </stripes:link>
-
 
         <table id="orderList" class="table simple">
             <thead>
