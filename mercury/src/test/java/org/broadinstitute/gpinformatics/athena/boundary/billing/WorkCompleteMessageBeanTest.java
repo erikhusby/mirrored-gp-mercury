@@ -80,7 +80,7 @@ public class WorkCompleteMessageBeanTest extends ContainerTest{
         utx.rollback();
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void testOnMessage() throws Exception {
         List<WorkCompleteMessage> messages = workCompleteMessageDao.getNewMessages();
         Assert.assertTrue("Should be at least one message in new message queue", !messages.isEmpty());
@@ -95,7 +95,7 @@ public class WorkCompleteMessageBeanTest extends ContainerTest{
         Assert.assertTrue("Should find our message in message queue", found);
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void testOnMessageReadBack() throws Exception {
         AutomatedBiller automatedBiller = new AutomatedBiller(workCompleteMessageDao, productOrderSampleDao, productOrderDao, billingLedgerDao);
         automatedBiller.processMessages();
