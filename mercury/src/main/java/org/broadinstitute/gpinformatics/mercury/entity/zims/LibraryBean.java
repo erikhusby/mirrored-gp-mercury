@@ -138,6 +138,10 @@ public class LibraryBean {
     private String collaboratorSampleId;
 
     @JsonProperty
+    /** name that the collaborator gave to the participant */
+    private String collaboratorParticipantId;
+
+    @JsonProperty
     private String materialType;
 
     @JsonProperty
@@ -169,7 +173,7 @@ public class LibraryBean {
         this.materialType = gssrMaterialType;
         this.collaboratorSampleId = gssrCollaboratorSampleId;
         this.species = gssrOrganism + ":" + gssrSpecies + ":" + gssrStrain;
-        this.participantId = gssrIndividual;
+        this.collaboratorParticipantId = gssrIndividual;
         overrideSampleFieldsFromBSP(bspSampleDTO);
     }
 
@@ -289,6 +293,7 @@ public class LibraryBean {
             this.participantId = bspSampleDTO.getPatientId();
             this.population = bspSampleDTO.getPopulation();
             this.race = bspSampleDTO.getRace();
+            this.collaboratorParticipantId = bspSampleDTO.getCollaboratorParticipantId();
             isGssrSample = false;
         }
         else {
@@ -455,6 +460,10 @@ public class LibraryBean {
     // todo arz db-free test
     public String getPopulation() {
         return population;
+    }
+
+    private String getCollaboratorParticipantId() {
+        return collaboratorParticipantId;
     }
 
     public String getRace() {
