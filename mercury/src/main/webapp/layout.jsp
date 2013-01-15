@@ -114,7 +114,7 @@
                 }
             }
         </script>
-        <title>Mercury ${pageTitle}</title>
+        <title>Mercury <c:if test="${pageTitle != null}">${pageTitle}</c:if></title>
 
         <stripes:layout-component name="extraHead"/>
     </head>
