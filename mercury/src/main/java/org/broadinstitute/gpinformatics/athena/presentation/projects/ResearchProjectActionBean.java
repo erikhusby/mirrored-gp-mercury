@@ -18,24 +18,24 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserT
 import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.StringReader;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.text.MessageFormat;
+import java.util.*;
 
 /**
  * This class is for research projects action bean / web page.
  *
  * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
  */
-@UrlBinding("/projects/project.action")
+@UrlBinding(ResearchProjectActionBean.ACTIONBEAN_URL_BINDING)
 public class ResearchProjectActionBean extends CoreActionBean {
+    public static final String ACTIONBEAN_URL_BINDING = "/projects/project.action";
+    public static final String RESEARCH_PROJECT_PARAMETER = "researchProject";
 
     private static final int IRB_NAME_MAX_LENGTH = 250;
 
@@ -62,13 +62,14 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private FundingListBean fundingList;
 
-    @Validate(required = true, on={EDIT_ACTION, VIEW_ACTION})
+    @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION})
     private String researchProject;
 
     @ValidateNestedProperties({
-            @Validate(field = "title", maxlength = 4000, on = {SAVE_ACTION}),
-            @Validate(field = "synopsis", maxlength = 4000, on = {SAVE_ACTION}),
-            @Validate(field = "comments", maxlength = 2000, on = {SAVE_ACTION})
+            @Validate(field = "title", label = "Project", required = true, maxlength = 4000, on = {SAVE_ACTION}),
+            @Validate(field = "synopsis", label = "Synopsis", required = true, maxlength = 4000, on = {SAVE_ACTION}),
+            @Validate(field = "irbNotes", label = "IRB Notes", required = false, maxlength = 255, on = {SAVE_ACTION}),
+            @Validate(field = "comments", label = "Comments", maxlength = 2000, on = {SAVE_ACTION})
     })
     private ResearchProject editResearchProject;
 
@@ -91,6 +92,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private Map<String, Long> projectOrderCounts;
 
     // These are the fields for catching the input tokens
+    @ValidateNestedProperties({
+            @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
+    })
     @Inject
     private UserTokenInput projectManagerList;
 
@@ -109,6 +113,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private CohortTokenInput cohortsList;
 
+    @Inject
+    private UserBean userBean;
+
     private String irbList = "";
 
     /**
@@ -126,11 +133,15 @@ public class ResearchProjectActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION})
     public void init() {
-        researchProject = getContext().getRequest().getParameter("researchProject");
+        researchProject = getContext().getRequest().getParameter(RESEARCH_PROJECT_PARAMETER);
         if (!StringUtils.isBlank(researchProject)) {
             editResearchProject = researchProjectDao.findByBusinessKey(researchProject);
         } else {
-            editResearchProject = new ResearchProject(getUserBean().getBspUser());
+            if (getUserBean().isValidBspUser()) {
+                editResearchProject = new ResearchProject(getUserBean().getBspUser());
+            } else {
+                editResearchProject = new ResearchProject();
+            }
         }
     }
 
@@ -171,19 +182,28 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return Arrays.asList(ResearchProject.Status.values());
     }
 
-    @Default
+    @DefaultHandler
     @HandlesEvent(LIST_ACTION)
     public Resolution list() {
         return new ForwardResolution(PROJECT_LIST_PAGE);
     }
 
+    private void validateUser(String validatingFor) {
+        if (!userBean.ensureUserValid()) {
+            addGlobalValidationError(MessageFormat.format(UserBean.LOGIN_WARNING, validatingFor + " a research project"));
+        }
+    }
 
+    @HandlesEvent(CREATE_ACTION)
     public Resolution create() {
+        validateUser("create");
         setSubmitString(CREATE_PROJECT);
         return new ForwardResolution(PROJECT_CREATE_PAGE);
     }
 
+    @HandlesEvent(EDIT_ACTION)
     public Resolution edit() {
+        validateUser("edit");
         setSubmitString(EDIT_PROJECT);
         return new ForwardResolution(PROJECT_CREATE_PAGE);
     }
@@ -199,9 +219,26 @@ public class ResearchProjectActionBean extends CoreActionBean {
             return new ForwardResolution(getContext().getSourcePage());
         }
 
-        researchProjectDao.persist(editResearchProject);
-        addMessage("The research project '" + editResearchProject.getTitle() + "' has been saved.");
-        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION).addParameter("researchProject", editResearchProject.getBusinessKey());
+        // Set the modified by and date
+        editResearchProject.recordModification(userBean.getBspUser().getUserId());
+
+        try {
+            researchProjectDao.persist(editResearchProject);
+
+            // TODO: Force as much work here as possible to catch conditions where we would want to close the JIRA ticket?
+            // researchProjectDao.flush();
+            addMessage("The research project '" + editResearchProject.getTitle() + "' has been saved.");
+        } catch (RuntimeException e) {
+            if (researchProject == null) {
+                // only reset Jira ticket info when creating a project, new projects don't have business key passed in
+                editResearchProject.rollbackPersist();
+            }
+
+            // TODO: close already-created JIRA ticket, should we redirect to the page with a Stripes error?
+            throw e;
+        }
+
+        return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION).addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
     }
 
     private void populateTokenListFields() {
@@ -216,6 +253,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         editResearchProject.populateIrbs(IrbConverter.getIrbs(irbList));
     }
 
+    @HandlesEvent("view")
     public Resolution view() {
         return new ForwardResolution(PROJECT_VIEW_PAGE);
     }
@@ -225,9 +263,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     /**
-     * The string paramater name of the business key.
-     *
-     * @return
+     * @return The string parameter name of the business key.
      */
     public String getResearchProject() {
         return researchProject;
@@ -402,5 +438,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     public String getTableauLink() {
         return tableauLink.passReportUrl(editResearchProject.getTitle());
+    }
+
+    /**
+     * @return true if Save is a valid operation.
+     */
+    public boolean getCanSave() {
+        // User must be logged into JIRA to create or edit a Research Project.
+        return userBean.isValidUser();
     }
 }

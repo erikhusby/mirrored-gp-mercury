@@ -77,6 +77,20 @@ public class BSPMaterialTypeList extends AbstractCache implements Serializable {
         return null;
     }
 
+    public List<MaterialType> getByFullNames(List<String> fullNames) {
+        List<MaterialType> results = new ArrayList<MaterialType>();
+        if ( fullNames != null) {
+            for (String fullName : fullNames) {
+                MaterialType materialType = getByFullName( fullName );
+                if ( materialType != null ) {
+                    results.add( materialType );
+                }
+            }
+        }
+        return results;
+    }
+
+
     /**
      * Returns a list of BSP material types for the given category, or null if no material type exists with that category.
      * Comparison ignores case.

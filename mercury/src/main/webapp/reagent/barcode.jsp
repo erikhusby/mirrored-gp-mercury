@@ -15,7 +15,7 @@
                             prePopulate: ${actionBean.reagentDesignCompleteData},
                             </c:if>
                             searchDelay: 500,
-                            minChars: 2, tokenLimit: 1, preventDuplicates: true
+                            tokenLimit: 1, preventDuplicates: true
                         });
             });
         </script>
@@ -36,7 +36,7 @@
             <div class="control-group">
                 <stripes:label for="reagentDesign" name="Available Reagents *" class="control-label"/>
                 <div class="controls">
-                    <stripes:text id="reagentDesign" name="reagentDesign"
+                    <stripes:text id="reagentDesign" name="reagentDesign" size="50"
                                   class="defaultText" title="Type to search for matching reagent"/>
                 </div>
             </div>
@@ -45,11 +45,10 @@
                 <div class="controls">
                     <div class="row-fluid">
                         <div class="span2">
-                            <stripes:submit name="barcodeReagent" value="Save"/>
+                            <stripes:submit name="barcodeReagent" class="btn btn-primary" value="Save"/>
                         </div>
                         <div class="offset">
-                            <stripes:link beanclass="${actionBean.class.name}"
-                                          event="list">Cancel</stripes:link>
+                            <stripes:link beanclass="${actionBean.class.name}" event="list">Cancel</stripes:link>
                         </div>
                     </div>
                 </div>

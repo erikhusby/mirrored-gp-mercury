@@ -6,6 +6,7 @@ import net.sourceforge.stripes.validation.*;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
@@ -31,6 +32,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundExcept
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -38,13 +40,16 @@ import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.*;
+import java.text.MessageFormat;
 import java.util.*;
 
 /**
  * This handles all the needed interface processing elements
  */
-@UrlBinding("/orders/order.action")
+@UrlBinding(ProductOrderActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductOrderActionBean extends CoreActionBean {
+    public static final String ACTIONBEAN_URL_BINDING = "/orders/order.action";
+    public static final String PRODUCT_ORDER_PARAMETER = "productOrder";
 
     private static final String CURRENT_OBJECT = "Product Order";
     public static final String CREATE_ORDER = CoreActionBean.CREATE + CURRENT_OBJECT;
@@ -87,22 +92,27 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private BillingLedgerDao billingLedgerDao;
 
+    @Inject
+    private ProductOrderEjb productOrderEjb;
+
+    @Inject
+    private UserBean userBean;
+
     private List<ProductOrderListEntry> allProductOrders;
 
-    @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION, SAVE_ACTION})
+    @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
     private String productOrder;
 
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
-        @Validate(field="title", required = true, maxlength=255, on={SAVE_ACTION})
+        @Validate(field="title", required = true, maxlength=255, on={SAVE_ACTION}, label = "Name"),
+        @Validate(field="count", on={SAVE_ACTION}, label="Number of Lanes")
     })
     private ProductOrder editOrder;
 
     private List<String> selectedProductOrderBusinessKeys;
     private List<ProductOrder> selectedProductOrders;
 
-    // For the Add-ons update we need the product title
-    @Validate(required = true, on = {"getAddOns"})
     private String product;
 
     private List<String> addOnKeys = new ArrayList<String> ();
@@ -114,18 +124,19 @@ public class ProductOrderActionBean extends CoreActionBean {
     /**
      * Initialize the product with the passed in key for display in the form
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, "downloadBillingTracker", SAVE_ACTION, "placeOrder"})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {CREATE_ACTION, VIEW_ACTION, EDIT_ACTION, "downloadBillingTracker", SAVE_ACTION, "placeOrder"})
     public void init() {
-        productOrder = getContext().getRequest().getParameter("productOrder");
+        productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
         } else {
-            editOrder = new ProductOrder(getUserBean().getBspUser());
+            // This is only used for save, when creating a new product order.
+            editOrder = new ProductOrder();
         }
     }
 
     @ValidationMethod(on = SAVE_ACTION)
-    public void uniqueNameValidation(ValidationErrors errors) {
+    public void saveValidations() throws Exception {
         // If the research project has no original title, then it was not fetched from hibernate, so this is a create
         // OR if this was fetched and the title has been changed
         if ((editOrder.getOriginalTitle() == null) ||
@@ -134,50 +145,63 @@ public class ProductOrderActionBean extends CoreActionBean {
             // Check if there is an existing research project and error out if it already exists
             ProductOrder existingOrder = productOrderDao.findByTitle(editOrder.getTitle());
             if (existingOrder != null) {
-                errors.add("title", new SimpleError("A product order already exists with this name."));
+                addValidationError("title", "A product order already exists with this name.");
             }
+        }
+
+        // Whether we are draft or not, we should populate the proper edit fields for validation.
+        updateTokenInputFields();
+
+        // If this is not a draft, some fields are required
+        if (!editOrder.isDraft()) {
+            validatePlacedOrder();
         }
     }
 
     @ValidationMethod(on = "placeOrder")
-    public void validateOrderPlacement(ValidationErrors errors) throws Exception {
+    public void validatePlacedOrder() throws Exception {
         if (editOrder.getSamples().isEmpty()) {
-            errors.addGlobalError(new SimpleError("Order does not have any samples"));
+            addGlobalValidationError("Order does not have any samples");
         }
 
+        String placeOrderString = "Cannot place order ''" + editOrder.getBusinessKey();
+
         if (editOrder.getResearchProject() == null) {
-            errors.addGlobalError(new SimpleError("Cannot place order '" + editOrder.getBusinessKey() + "' because it does not have a research project"));
+            addGlobalValidationError(placeOrderString + "'' because it does not have a research project");
         }
 
         if (editOrder.getQuoteId() == null) {
-            errors.addGlobalError(new SimpleError("Cannot place order '" + editOrder.getBusinessKey() + "' because it does not have a quote specified"));
+            addGlobalValidationError(placeOrderString + "'' because it does not have a quote specified");
         }
 
         if (editOrder.getProduct() == null) {
-            errors.addGlobalError(new SimpleError("Cannot place order '" + editOrder.getBusinessKey() + "' because it does not have a product"));
+            addGlobalValidationError(placeOrderString + "'' because it does not have a product");
         }
 
-        if (editOrder.getProduct() == null) {
-            errors.addGlobalError(new SimpleError("Cannot place order '" + editOrder.getCount() + "' because it does not have a specified number of lanes"));
+        if (editOrder.getCount() < 1) {
+            addGlobalValidationError(placeOrderString  + "'' because it does not have a specified number of lanes");
         }
 
         try {
             quoteService.getQuoteByAlphaId(editOrder.getQuoteId());
         } catch (QuoteServerException ex) {
-            errors.addGlobalError(new SimpleError("The quote id " + editOrder.getQuoteId() + " is not valid: " + ex.getMessage()));
+            addGlobalValidationError("The quote id " + editOrder.getQuoteId() + " is not valid: " + ex.getMessage());
         } catch (QuoteNotFoundException ex) {
-            errors.addGlobalError(new SimpleError("The quote id " + editOrder.getQuoteId() + " is not found"));
+            addGlobalValidationError("The quote id " + editOrder.getQuoteId() + " is not found");
         }
     }
 
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
-    public void validateOrderSelection(ValidationErrors errors) {
+    public void validateOrderSelection() {
+        String validatingFor = getContext().getEventName().equals("startBilling") ? "billing session" :
+                "tracker download";
+
         if (!getUserBean().isValidBspUser()) {
-            errors.addGlobalError(new SimpleError("This requires that you be a valid bsp user "));
+            addGlobalValidationError("A valid bsp user is needed to start a " + validatingFor);
         }
 
         if ((selectedProductOrderBusinessKeys == null) || selectedProductOrderBusinessKeys.isEmpty()) {
-            errors.addGlobalError(new SimpleError("Please select at least one product order"));
+            addGlobalValidationError("You must select at least one product order to start a " + validatingFor);
         } else {
             Set<Product> products = new HashSet<Product> ();
             selectedProductOrders =
@@ -195,13 +219,14 @@ public class ProductOrderActionBean extends CoreActionBean {
             for (Product product : products) {
                 String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
                 if (duplicatePriceItems != null) {
-                    errors.addGlobalError(new SimpleError(
-                        "The Product " + product.getPartNumber() + " has duplicate price items: " +
-                        StringUtils.join(duplicatePriceItems, ", ")));
+                    addGlobalValidationError(
+                            "The Product " + product.getPartNumber() + " has duplicate price items: " +
+                            StringUtils.join(duplicatePriceItems, ", "));
                 }
             }
 
-            // If there are locked out orders, then do not allow the session to start
+            // If there are locked out orders, then do not allow the session to start.
+            // TODO: It looks like this could be done by traversing the entity tree, e.g. ProductOrder -> ProductOrderSample -> BusinessLedger.
             Set<BillingLedger> lockedOutOrders = billingLedgerDao.findLockedOutByOrderList(getSelectedProductOrderBusinessKeys());
             if (!lockedOutOrders.isEmpty()) {
                 Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());
@@ -209,15 +234,15 @@ public class ProductOrderActionBean extends CoreActionBean {
                     lockedOutOrderStrings.add(ledger.getProductOrderSample().getProductOrder().getTitle());
                 }
 
-                String lockedOutString = StringUtils.join(lockedOutOrderStrings.toArray(), ", ");
+                String lockedOutString = StringUtils.join(lockedOutOrderStrings, ", ");
 
-                errors.addGlobalError(new SimpleError(
-                    "The following orders are locked out by active billing sessions: " + lockedOutString));
+                addGlobalValidationError(
+                        "The following orders are locked out by active billing sessions: " + lockedOutString);
             }
         }
 
         // If there are errors, will reload the page, so need to fetch the list
-        if (errors.size() > 0) {
+        if (hasErrors()) {
             listInit();
         }
     }
@@ -225,6 +250,12 @@ public class ProductOrderActionBean extends CoreActionBean {
     @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION})
     public void listInit() {
         allProductOrders = orderListEntryDao.findProductOrderListEntries();
+    }
+
+    private void validateUser(String validatingFor) {
+        if (!userBean.ensureUserValid()) {
+            addGlobalValidationError(MessageFormat.format(UserBean.LOGIN_WARNING, validatingFor + " an order"));
+        }
     }
 
     @DefaultHandler
@@ -235,6 +266,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
+        if (editOrder.isDraft()) {
+            validateUser("place");
+        }
         return new ForwardResolution(ORDER_VIEW_PAGE);
     }
 
@@ -246,6 +280,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent(EDIT_ACTION)
     public Resolution edit() {
+        validateUser("edit");
         setSubmitString(EDIT_ORDER);
         return new ForwardResolution(ORDER_CREATE_PAGE);
     }
@@ -253,54 +288,58 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("placeOrder")
     public Resolution placeOrder() {
         try {
-            setUserInfo();
+            editOrder.prepareToSave(userBean.getBspUser());
             editOrder.submitProductOrder();
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             // save it!
             productOrderDao.persist(editOrder);
-        } catch (Exception e ) {
-            addGlobalValidationError(e.getMessage());
-            return getContext().getSourcePageResolution();
+        } catch (Exception e) {
+            // Need to quote the message contents to prevent errors.
+            addLiteralErrorMessage(e.getMessage());
+            return getSourcePageResolution();
         }
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been placed");
-        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("productOrder", editOrder.getBusinessKey());
-    }
-
-    private void setUserInfo() {
-        if (editOrder.getCreatedBy() == -1) {
-            editOrder.setCreatedBy(getUserBean().getBspUser().getUserId());
-        }
-        editOrder.setModifiedBy(getUserBean().getBspUser().getUserId());
+        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER, editOrder.getBusinessKey());
     }
 
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() throws Exception {
 
-        // Update the modified by (and created by if it was invalid when created
-        setUserInfo();
-
-        // set the project, product and addOns for the order
-        ResearchProject project = projectDao.findByBusinessKey(researchProjectList);
-        Product product = productDao.findByPartNumber(productList);
-        List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
-        editOrder.updateData(project, product, addOnProducts);
+        // Update the modified by and created by, if necessary.
+        editOrder.prepareToSave(userBean.getBspUser());
 
         if (editOrder.isDraft()) {
+            // mlc isDraft checks if the status is Draft and if so, we set it to Draft again?
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Draft);
+        } else {
+            productOrderEjb.updateJiraIssue(editOrder);
         }
 
         // save it!
         productOrderDao.persist(editOrder);
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been saved.");
-        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter("productOrder", editOrder.getBusinessKey());
+        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER, editOrder.getBusinessKey());
+    }
+
+    private void updateTokenInputFields() {
+        // set the project, product and addOns for the order
+        ResearchProject project = projectDao.findByBusinessKey(researchProjectList);
+        Product product = productDao.findByPartNumber(productList);
+        List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
+        editOrder.updateData(project, product, addOnProducts);
     }
 
     @HandlesEvent("downloadBillingTracker")
     public Resolution downloadBillingTracker() {
-        return ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, bspUserList);
+        Resolution resolution = ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, bspUserList);
+        if (hasErrors()) {
+            // Need to regenerate the list so it's displayed along with the errors.
+            listInit();
+        }
+        return resolution;
     }
 
     @HandlesEvent("startBilling")
@@ -323,16 +362,29 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution getAddOns() throws Exception {
         JSONArray itemList = new JSONArray();
 
-        Product product = productDao.findByBusinessKey(this.product);
-        for (Product addOn : product.getAddOns()) {
-            JSONObject item = new JSONObject();
-            item.put("key", addOn.getBusinessKey());
-            item.put("value", addOn.getProductName());
+        if (product != null) {
+            Product product = productDao.findByBusinessKey(this.product);
+            for (Product addOn : product.getAddOns()) {
+                JSONObject item = new JSONObject();
+                item.put("key", addOn.getBusinessKey());
+                item.put("value", addOn.getProductName());
 
-            itemList.put(item);
+                itemList.put(item);
+            }
         }
 
         return new StreamingResolution("text", new StringReader(itemList.toString()));
+    }
+
+    @HandlesEvent("getSupportsNumberOfLanes")
+    public Resolution getSupportsNumberOfLanes() throws Exception {
+
+        Product product = productDao.findByBusinessKey(this.product);
+
+        JSONObject item = new JSONObject();
+        item.put("supports", product.getSupportsNumberOfLanes());
+
+        return new StreamingResolution("text", new StringReader(item.toString()));
     }
 
     public List<String> getSelectedProductOrderBusinessKeys() {
@@ -355,8 +407,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         return editOrder;
     }
 
-    public void setEditOrder(ProductOrder order) {
-        this.editOrder = order;
+    public void setEditOrder(ProductOrder editOrder) {
+        this.editOrder = editOrder;
     }
 
     public String getQuoteUrl() {
@@ -381,7 +433,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             final File tempFile = File.createTempFile(filename, ".xls");
             outputStream = new FileOutputStream(tempFile);
 
-            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(productOrderList);
+            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(bspUserList, productOrderList);
             sampleLedgerExporter.writeToStream(outputStream);
             IOUtils.closeQuietly(outputStream);
 
@@ -402,7 +454,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             };
         } catch (Exception ex) {
             actionBean.addGlobalValidationError("Got an exception trying to download the billing tracker: " + ex.getMessage());
-            return actionBean.getContext().getSourcePageResolution();
+            return actionBean.getSourcePageResolution();
         } finally {
             IOUtils.closeQuietly(outputStream);
         }
@@ -466,5 +518,22 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getSaveButtonText() {
         return ((editOrder == null) || editOrder.isDraft()) ? "Save Draft" : "Save";
+    }
+
+    /**
+     * @return true if Place Order is a valid operation.
+     */
+    public boolean getCanPlaceOrder() {
+        // User must be logged into JIRA to place an order.
+        return userBean.isValidUser();
+    }
+
+    /**
+     * @return true if Save is a valid operation.
+     */
+    public boolean getCanSave() {
+        // Unless we're in draft mode, or creating a new order, user must be logged into JIRA to
+        // change fields in an order.
+        return editOrder.isDraft() || isCreating() || userBean.isValidUser();
     }
 }

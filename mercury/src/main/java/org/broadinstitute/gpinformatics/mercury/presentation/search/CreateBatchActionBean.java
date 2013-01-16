@@ -2,7 +2,10 @@ package org.broadinstitute.gpinformatics.mercury.presentation.search;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.Validate;
+import net.sourceforge.stripes.validation.ValidationErrors;
+import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -25,12 +28,16 @@ import java.util.Set;
  *         Date: 1/8/13
  *         Time: 3:54 PM
  */
-@UrlBinding("/search/create_batch.action")
+@UrlBinding(CreateBatchActionBean.ACTIONBEAN_URL_BINDING)
 public class CreateBatchActionBean extends CoreActionBean {
+    public static final String ACTIONBEAN_URL_BINDING = "/batch/create.action";
+
     private static final String BATCH_CREATE_PAGE = "/search/create_batch.jsp";
+
     private static final String BATCH_CONFIRM_PAGE = "/search/batch_confirm.jsp";
+
     public static final String CREATE_BATCH_ACTION = "createBatch";
-    public static final String VIEW_ACTION = "view";
+    public static final String VIEW_ACTION = "startBatch";
     public static final String CONFIRM_ACTION = "confirm";
     public static final String SEARCH_ACTION = "search";
 
@@ -53,7 +60,7 @@ public class CreateBatchActionBean extends CoreActionBean {
     @Inject
     private JiraLink jiraLink;
 
-    @Validate(required = true, on = {SEARCH_ACTION}, field = "searchKey")
+    @Validate(required = true, on = {SEARCH_ACTION})
     private String searchKey;
 
     private String batchLabel;
@@ -65,18 +72,13 @@ public class CreateBatchActionBean extends CoreActionBean {
     private List<String> selectedVesselLabels;
     private List<LabVessel> selectedBatchVessels;
 
-    @Validate(required = true, on = {CREATE_BATCH_ACTION}, field = "jiraInputType")
+    @Validate(required = true, on = {CREATE_BATCH_ACTION})
     private String jiraInputType = EXISTING_TICKET;
 
-    @Validate(required = true, on = {CREATE_BATCH_ACTION},
-              expression = "jiraInputType == EXISTING_TICKET",
-              field = "jiraTicketId")
     private String jiraTicketId;
 
     private String important;
     private String description;
-    @Validate(required = true, on = {CREATE_BATCH_ACTION},
-            expression = "jiraInputType != EXISTING_TICKET", field = "summary")
     private String summary;
     private Date dueDate;
 
@@ -100,6 +102,25 @@ public class CreateBatchActionBean extends CoreActionBean {
     @HandlesEvent(CONFIRM_ACTION)
     public Resolution confirm() {
         return new ForwardResolution(BATCH_CONFIRM_PAGE);
+    }
+
+    @ValidationMethod(on = CREATE_BATCH_ACTION)
+    public void createBatchValidation(ValidationErrors errors) {
+
+
+        if(selectedVesselLabels == null || selectedVesselLabels.isEmpty()) {
+            errors.add("selectedVesselLabels", new SimpleError("At least one vessel must be selected to create a batch"));
+        }
+
+        if(jiraInputType.equals(EXISTING_TICKET)) {
+            if(StringUtils.isBlank(jiraTicketId)) {
+                errors.add("jiraTicketId",new SimpleError("An existing Jira ticket key is required"));
+            }
+        } else {
+            if(StringUtils.isBlank(summary)) {
+                errors.add("summary", new SimpleError("You must provide at least a summary to create a Jira Ticket"));
+            }
+        }
     }
 
     /**

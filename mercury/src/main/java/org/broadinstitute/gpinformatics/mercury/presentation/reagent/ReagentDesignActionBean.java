@@ -62,8 +62,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
             @Validate(field = "designName", label = "Design Name", required = true, maxlength = 255,
                     on = {SAVE_ACTION}),
             @Validate(field = "targetSetName", label = "Target Set Name", required = true, maxlength = 2000,
-                    on = {SAVE_ACTION}),
-            @Validate(field = "reagentType", label = "Reagent Type", required = true, on = {SAVE_ACTION})
+                    on = {SAVE_ACTION})
     })
     private ReagentDesign editReagentDesign;
 
@@ -92,22 +91,8 @@ public class ReagentDesignActionBean extends CoreActionBean {
             editReagentDesign = new ReagentDesign();
         }
 
-        List<LabVessel> labVessels;
         allBarcodes = new ArrayList<String>();
         allReagentDesigns = reagentDesignDao.findAll();
-
-//        for (ReagentDesign rd : allReagentDesigns) {
-//            labVessels = labVesselDao.findByReagent(rd.getReagentDesign());
-//            List<String> barcodes = new ArrayList<String>();
-//            for (LabVessel labVessel : labVessels) {
-//                if (!labVessel.getLabel().isEmpty()) {
-//                    barcodes.add(labVessel.getLabel());
-//                    allBarcodes.add(labVessel.getLabel());
-//                }
-//            }
-//
-//            getBarcodeMap().put(rd.getReagentDesign(), StringUtils.join(barcodes, ", "));
-//        }
 
     }
 
@@ -149,12 +134,16 @@ public class ReagentDesignActionBean extends CoreActionBean {
         return new ForwardResolution(REAGENT_CREATE_PAGE);
     }
 
-    @ValidationMethod(on = SAVE_ACTION)
+    @ValidationMethod(on = SAVE_ACTION, when = ValidationState.ALWAYS)
     public void validateReagent() {
         if (isCreating()) {
+            if (editReagentDesign.getReagentType() == null) {
+                addValidationError("editReagentDesign.reagentType", "Reagent Type is a required field.");
+            }
+
             ReagentDesign d = reagentDesignDao.findByBusinessKey(editReagentDesign.getBusinessKey());
             if (d != null) {
-                addValidationError("designName", String.format("Name \"%s\" is already in use.",
+                addValidationError("editReagentDesign.designName", String.format("Name \"%s\" is already in use.",
                         editReagentDesign.getBusinessKey()));
             }
         }
@@ -177,7 +166,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
     @ValidationMethod(on = {BARCODE_REAGENT_ACTION}, when = ValidationState.ALWAYS)
     public void checkBarcodeUsed() {
         final List<LabVessel> byListIdentifiers = labVesselDao.findByListIdentifiers(barcodeAsList());
-            for (LabVessel barcodeItem : byListIdentifiers) {
+        for (LabVessel barcodeItem : byListIdentifiers) {
             addValidationError("barcode", String.format("Barcode \"%s\" is already in use.", barcodeItem.getLabel()));
         }
     }

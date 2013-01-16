@@ -152,18 +152,26 @@
                     </div>
                 </div>
             </div>
+
+            <div class="control-group view-control-group">
+                <label class="control-label label-form">IRB Notes</label>
+
+                <div class="controls">
+                    <div class="form-value">${actionBean.editResearchProject.irbNotes}</div>
+                </div>
+            </div>
         </div>
 
-        <div class="tableBar">
+
+        <div class="tableBar" style="margin-bottom: 10px;">
             Orders
+
+            <stripes:link title="Create product with research project ${actionBean.editResearchProject.title}"
+                          beanclass="<%=ProductOrderActionBean.class.getName()%>" event="create" class="pull-right">
+                <span class="icon-tags"></span> <%=ProductOrderActionBean.CREATE_ORDER%>
+                <stripes:param name="productOrder" value="${actionBean.editResearchProject.businessKey}"/>
+            </stripes:link>
         </div>
-
-        <stripes:link title="Create product with research project ${actionBean.editResearchProject.title}"
-                      beanclass="<%=ProductOrderActionBean.class.getName()%>" event="create" class="pull-right">
-            <span class="icon-tags"></span> <%=ProductOrderActionBean.CREATE_ORDER%>
-            <stripes:param name="productOrder" value="${actionBean.editResearchProject.businessKey}"/>
-        </stripes:link>
-
 
         <table id="orderList" class="table simple">
             <thead>
@@ -182,7 +190,7 @@
                     <tr>
                         <td>
                             <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" event="view">
-                                <stripes:param name="businessKey" value="${order.businessKey}"/>
+                                <stripes:param name="productOrder" value="${order.businessKey}"/>
                                 ${order.title}
                             </stripes:link>
                         </td>

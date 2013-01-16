@@ -50,14 +50,14 @@
 
             <div class="control-group">
                 <div class="controls">
-                    <stripes:submit name="preview" value="Preview Tracker"/>
+                    <stripes:submit class="btn" name="preview" value="Preview Tracker"/>
                 </div>
             </div>
 
             <c:if test="${actionBean.isPreview}">
                 <div class="borderHeader">
                     Summary of Tracker
-                    <stripes:submit class="actionButtons" style="margin-left:20px;" name="upload" value="Do Upload"/>
+                    <stripes:submit class="actionButtons btn btn-primary" style="margin-left:20px;" name="upload" value="Do Upload"/>
                 </div>
 
                 <table id="uploadPreviewTable" class="table simple">

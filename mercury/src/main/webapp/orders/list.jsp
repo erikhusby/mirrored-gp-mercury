@@ -79,7 +79,9 @@
                     <c:forEach items="${actionBean.allProductOrders}" var="order">
                         <tr>
                             <td>
-                                <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderBusinessKeys" value="${order.businessKey}"/>
+                                <c:if test="${!order.draft}">
+                                    <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderBusinessKeys" value="${order.businessKey}"/>
+                                </c:if>
                             </td>
                             <td>
                                 <stripes:link beanclass="${actionBean.class.name}" event="view">
@@ -95,10 +97,10 @@
                                 <c:choose>
                                     <%-- draft PDO --%>
                                     <c:when test="${order.draft}">
-                                        <span title="-1">DRAFT</span>
+                                        &nbsp;
                                     </c:when>
                                     <%-- Graphene-generated PDO --%>
-                                    <c:when test="${ ! order.validJiraTicket}">
+                                    <c:when test="${!order.validJiraTicket}">
                                         <a target="JIRA" title="0">
                                                 ${order.jiraTicketKey}
                                         </a>

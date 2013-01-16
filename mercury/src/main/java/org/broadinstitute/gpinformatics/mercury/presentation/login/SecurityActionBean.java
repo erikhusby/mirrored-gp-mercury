@@ -113,8 +113,19 @@ public class SecurityActionBean extends CoreActionBean {
         return new ForwardResolution(targetPage);
     }
 
+    /**
+     * Logout and invalidate the HTTP session.
+     *
+     * @return
+     */
     public Resolution signOut() {
-        getContext().invalidateSession();
+        try {
+            getContext().invalidateSession();
+            getContext().getRequest().logout();
+        } catch (ServletException se) {
+            logger.error("Problem logging out", se);
+        }
+
         return new RedirectResolution("/");
     }
 

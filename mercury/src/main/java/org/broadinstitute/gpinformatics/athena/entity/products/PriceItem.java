@@ -144,6 +144,9 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
     }
 
     public String getDisplayName() {
-        return category + " : " + name;
+        if (category != null) {
+            return category + " : " + name;
+        }
+        return name;
     }
 }

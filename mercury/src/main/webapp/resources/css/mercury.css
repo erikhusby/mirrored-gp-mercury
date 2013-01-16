@@ -17,7 +17,9 @@ section { margin-left: 2%; margin-right: 2% }
 a { text-decoration: underline; color: #0088CC; }
 a.external {background-image:url("/Mercury/images/external-link.gif");background-position:right center;background-repeat:no-repeat;display:inline;padding:0 20px 0 0;}
 
-h1, h2, h3, h4, h5 {color: #644436;}
+h1, h2, h3, h4, h5 {font-family: 'Carrois Gothic SC', sans-serif; color: #644436;}
+
+select > option:nth-child(even) { background-color:#fafafa; }
 
 label, input, button, select, textarea { font-size: 12px }
 
@@ -25,6 +27,7 @@ ul.DTTT_dropdown.dropdown-menu li { position: relative; }
 .DTTT_button_copy  { text-decoration: none !important }
 .DTTT_button_csv  { text-decoration: none !important }
 .DTTT_button_print  { text-decoration: none !important }
+.DTTT { float: right; }
 
 .dropdown-menu a { text-decoration: none !important }
 
@@ -42,7 +45,8 @@ table.table thead .sorting_desc { background: url('/Mercury/images/arrow_up.gif'
 table.table thead .sorting_asc_disabled { background: url('/Mercury/images/sort_asc_disabled.png') no-repeat center right; }
 table.table thead .sorting_desc_disabled { background: url('/Mercury/images/sort_desc_disabled.png') no-repeat center right; }
 
-.dataTables_filter input { font-size: small; height: 14px; }
+.dataTables_filter input { font-size: small; height: 14px;}
+.dataTables_filter { float: left !important; text-align: left !important; }
 
 /* SIMPLE (HIGHTLIGHTS ROW W/ MOUSE)***************** */
 table.simple thead tr { text-align: left; border-radius: 3px;-moz-border-radius: 3px; -webkit-border-radius: 3px; -khtml-border-radius: 3px;}
@@ -57,7 +61,7 @@ table.simple td,table.simple th { spacing: 10px ; border-right: 1px solid #ccc; 
 
 table.nocol tbody td,table.nocol tbody th { border-left: none; border-right: none; }
 
-.page-header { border-bottom: 1px solid #EEEEEE; font-size: 2em; font-variant: small-caps; margin: 0 0 10px; padding-bottom: 0;}
+.page-header { border-bottom: 1px solid #EEEEEE; font-size: 2em; font-family: 'Carrois Gothic SC', sans-serif; margin: 0 0 10px; padding-bottom: 0;}
 
 .twocolumn {-moz-column-count:2;-webkit-column-count:2;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
 .threecolumn {-moz-column-count:3;-webkit-column-count:3;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
@@ -72,7 +76,7 @@ input[type="text"].defaultTextActive, .defaultTextActive { font-size: 12px; colo
 input[type='checkbox'].checkAll { margin-left: -8px; }
 
 /* multi-check box count indicator */
-.checkedCount { font-size:xx-small; vertical-align: super; margin-left: 2px; width: 25px; }
+.checkedCount { font-size: 12px; vertical-align: super; margin-left: 2px; width: 25px; }
 
 .form-horizontal .view-control-group { margin-bottom: 5px; }
 .form-horizontal .view-control-group .controls { margin-top: 5px; }

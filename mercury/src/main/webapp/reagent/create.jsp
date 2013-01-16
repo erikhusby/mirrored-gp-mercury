@@ -17,9 +17,7 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.submitString}"
                        sectionTitle="${actionBean.submitString} ${actionBean.editReagentDesign.designName}">
 
-    <stripes:layout-component name="extraHead">
-
-    </stripes:layout-component>
+    <stripes:layout-component name="extraHead"></stripes:layout-component>
 
     <stripes:layout-component name="content">
 
@@ -28,7 +26,9 @@
             <stripes:hidden name="submitString" value="${actionBean.submitString}"/>
 
             <div class="control-group">
-                <stripes:label for="designName" name="Name *" class="control-label"/>
+                <stripes:label for="designName" class="control-label">
+                    Name *
+                </stripes:label>
                 <div class="controls">
                             <stripes:text id="designName" readonly="${! actionBean.creating}"
                                           name="editReagentDesign.designName"
@@ -39,7 +39,9 @@
             </div>
 
             <div class="control-group">
-                <stripes:label for="targetSetName" name="Target Set Name" class="control-label"/>
+                <stripes:label for="targetSetName" class="control-label">
+                    Target Set Name
+                </stripes:label>
                 <div class="controls">
                     <stripes:text id="targetSetName" name="editReagentDesign.targetSetName" class="defaultText"
                                   title="Enter the name of the target set."/>
@@ -47,7 +49,9 @@
             </div>
 
             <div class="control-group">
-                <stripes:label for="manufacturersName" name="Manufacturer" class="control-label"/>
+                <stripes:label for="manufacturersName" class="control-label">
+                    Manufacturer
+                </stripes:label>
                 <div class="controls">
                     <stripes:text id="manufacturersName" name="editReagentDesign.manufacturersName" class="defaultText"
                                   title="Enter the name of the manufacturer."/>
@@ -55,7 +59,9 @@
             </div>
 
             <div class="control-group">
-                <stripes:label for="reagentType" name="Reagent Type *" class="control-label"/>
+                <stripes:label for="reagentType" class="control-label">
+                    Reagent Type *
+                </stripes:label>
                 <div class="controls">
                     <stripes:select name="editReagentDesign.reagentType"  disabled="${!actionBean.creating}" id="reagentType">
                         <stripes:option value="">Select a Reagent Type</stripes:option>
@@ -78,7 +84,7 @@
                                     <c:set var="saveAction" value="Update"/>
                                 </c:otherwise>
                             </c:choose>
-                            <stripes:submit name="save" value="${saveAction}"/>
+                            <stripes:submit name="save" class="btn btn-primary" value="${saveAction}"/>
                         </div>
                         <div class="offset">
                             <c:choose>

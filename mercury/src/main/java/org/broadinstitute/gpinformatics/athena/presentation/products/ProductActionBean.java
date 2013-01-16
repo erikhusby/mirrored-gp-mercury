@@ -4,12 +4,16 @@ import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.*;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPMaterialTypeList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -18,16 +22,15 @@ import org.json.JSONException;
 
 import javax.inject.Inject;
 import java.io.StringReader;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * This class supports all the actions done on products
  */
-@UrlBinding("/products/product.action")
+@UrlBinding(ProductActionBean.ACTIONBEAN_URL_BINDING)
 public class ProductActionBean extends CoreActionBean {
+    public static final String ACTIONBEAN_URL_BINDING = "/products/product.action";
+    public static final String PRODUCT_PARAMETER = "product";
 
     private static final String CREATE_PRODUCT = CoreActionBean.CREATE + " New Product";
     private static final String EDIT_PRODUCT = CoreActionBean.EDIT + " Product: ";
@@ -48,6 +51,9 @@ public class ProductActionBean extends CoreActionBean {
     @Inject
     private PriceListCache priceListCache;
 
+    @Inject
+    private BSPMaterialTypeList materialTypeListCache;
+
     // Data needed for displaying the view
     private List<ProductFamily> productFamilies;
     private List<Product> allProducts;
@@ -56,7 +62,7 @@ public class ProductActionBean extends CoreActionBean {
     private String product;
 
     @ValidateNestedProperties({
-        @Validate(field="productFamily.productFamilyId", required = true, maxlength=255, on={SAVE_ACTION}),
+        @Validate(field="productFamily.productFamilyId", label="Product Family", required = true, maxlength=255, on={SAVE_ACTION}),
         @Validate(field="productName", required = true, maxlength=255, on={SAVE_ACTION})
     })
     private Product editProduct;
@@ -64,9 +70,16 @@ public class ProductActionBean extends CoreActionBean {
 
     // These are the fields for catching the input tokens
     @Validate(required = true, on = {SAVE_ACTION})
-    private String priceItemList = "";
+    private String primaryPriceItemList = "";
+
+    private String optionalPriceItemsList = "";
 
     private String addOnList = "";
+
+    private String materialTypeList = "";
+
+    private Log logger = LogFactory.getLog(ProductActionBean.class);
+
 
     // The search query
     private String q;
@@ -82,9 +95,9 @@ public class ProductActionBean extends CoreActionBean {
     /**
      * Initialize the product with the passed in key for display in the form
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, SAVE_ACTION, "addOnsAutocomplete"})
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {VIEW_ACTION, EDIT_ACTION, CREATE_ACTION, SAVE_ACTION, "addOnsAutocomplete", "materialTypesAutocomplete"})
     public void init() {
-        product = getContext().getRequest().getParameter("product");
+        product = getContext().getRequest().getParameter(PRODUCT_PARAMETER);
         if (!StringUtils.isBlank(product)) {
             editProduct = productDao.findByBusinessKey(product);
         } else {
@@ -93,7 +106,10 @@ public class ProductActionBean extends CoreActionBean {
         }
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = {CREATE_ACTION, EDIT_ACTION})
+    /**
+     * Need to get this for setting up create and edit and for any errors on save
+     */
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {CREATE_ACTION, EDIT_ACTION, SAVE_ACTION})
     public void setupFamilies() {
         productFamilies = productFamilyDao.findAll();
         Collections.sort(productFamilies);
@@ -196,6 +212,21 @@ public class ProductActionBean extends CoreActionBean {
         return new StreamingResolution("text", new StringReader(itemList.toString()));
     }
 
+    /* This method retrieves all possible material types */
+    @HandlesEvent("materialTypesAutocomplete")
+    public Resolution materialTypesAutocomplete() throws Exception {
+        JSONArray itemList = new JSONArray();
+        if ( materialTypeListCache != null ) {
+            for (org.broadinstitute.bsp.client.sample.MaterialType bspMaterialType :  materialTypeListCache.find( getQ() )) {
+                itemList.put(new AutoCompleteToken(bspMaterialType.getFullName(), bspMaterialType.getFullName(), false)
+                        .getJSONObject());
+            }
+        } else {
+             logger.error("Material Types Cache not available (in null) on ProductActionBean.");
+        }
+        return new StreamingResolution("text", new StringReader(itemList.toString()));
+    }
+
     @HandlesEvent(value = SAVE_ACTION)
     public Resolution save() {
         populateTokenListFields();
@@ -204,14 +235,21 @@ public class ProductActionBean extends CoreActionBean {
 
         productDao.persist(editProduct);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
-        return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter("product", editProduct.getPartNumber());
+        return new RedirectResolution(ProductActionBean.class, VIEW_ACTION).addParameter(PRODUCT_PARAMETER,
+                editProduct.getPartNumber());
     }
 
     private void populateTokenListFields() {
         editProduct.getAddOns().clear();
         editProduct.getAddOns().addAll(getAddOns());
 
-        editProduct.setPrimaryPriceItem(getPriceItem());
+        editProduct.setPrimaryPriceItem(getPrimaryPriceItem());
+
+        editProduct.getAllowableMaterialTypes().clear();
+        editProduct.getAllowableMaterialTypes().addAll( getMaterialTypes() );
+
+        editProduct.getOptionalPriceItems().clear();
+        editProduct.getOptionalPriceItems().addAll(getOptionalPriceItems());
     }
 
     public Product getEditProduct() {
@@ -247,8 +285,8 @@ public class ProductActionBean extends CoreActionBean {
         return productDao.findByPartNumbers(addOnIdList);
     }
 
-    public org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getPriceItem() {
-        PriceItem priceItem = priceListCache.findById(Long.valueOf(priceItemList));
+    public org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getPrimaryPriceItem() {
+        PriceItem priceItem = priceListCache.findById(Long.valueOf(primaryPriceItemList));
 
         org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity =
                 priceItemDao.find(priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
@@ -260,6 +298,74 @@ public class ProductActionBean extends CoreActionBean {
         }
 
         return entity;
+    }
+
+    public List<MaterialType> getMaterialTypes() {
+        if (StringUtils.isBlank(materialTypeList)) {
+            return Collections.emptyList();
+        }
+
+        // Split up the comma separted MaterialTypes Ids into a List
+        List<String> materialTypeIds = Arrays.asList(materialTypeList.split(","));
+
+        //Get the list of DTOs from the cache.
+        List<org.broadinstitute.bsp.client.sample.MaterialType> materialTypeDtoList =
+                materialTypeListCache.getByFullNames( materialTypeIds );
+
+        // Convert the Dtos to Entities.
+        List<MaterialType> materialTypeEntities = convertDtosToEntities(materialTypeDtoList);
+
+        return materialTypeEntities;
+    }
+
+
+    private List<MaterialType> convertDtosToEntities(
+            List<org.broadinstitute.bsp.client.sample.MaterialType> materialTypeDtos) {
+
+        List<MaterialType>  materialTypeEntities =
+                new ArrayList<MaterialType>();
+
+        if ( materialTypeDtos != null ) {
+            for ( org.broadinstitute.bsp.client.sample.MaterialType materialTypeDto : materialTypeDtos ) {
+                MaterialType materialTypeEntity =
+                        new MaterialType( materialTypeDto.getCategory(), materialTypeDto.getName() );
+                    materialTypeEntity.setFullName( materialTypeDto.getFullName() );
+                materialTypeEntities.add( materialTypeEntity );
+            }
+        }
+
+        return materialTypeEntities;
+    }
+
+
+
+    public List<org.broadinstitute.gpinformatics.athena.entity.products.PriceItem> getOptionalPriceItems() {
+
+        List<org.broadinstitute.gpinformatics.athena.entity.products.PriceItem> optionalPriceItems =
+                new ArrayList<org.broadinstitute.gpinformatics.athena.entity.products.PriceItem>();
+
+        if ( ! StringUtils.isBlank(optionalPriceItemsList)) {
+
+            List<String> priceItemIdList = Arrays.asList(optionalPriceItemsList.split(","));
+
+            for (String priceItemId : priceItemIdList) {
+
+                PriceItem priceItem = priceListCache.findById(Long.valueOf(priceItemId));
+
+                org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity =
+                        priceItemDao.find(priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
+
+                // If we don't have this price item, this will add it.
+                if (entity == null) {
+                    entity = new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
+                            priceItem.getId(), priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
+                }
+
+                optionalPriceItems.add(entity);
+            }
+        }
+
+        return optionalPriceItems;
     }
 
     public String getAddOnCompleteData() throws Exception {
@@ -275,7 +381,7 @@ public class ProductActionBean extends CoreActionBean {
         return itemList.toString();
     }
 
-    public String getPriceItemCompleteData() throws Exception {
+    public String getPrimaryPriceItemCompleteData() throws Exception {
         if ((editProduct == null) || (editProduct.getPrimaryPriceItem() == null)) {
             return "";
         }
@@ -292,12 +398,57 @@ public class ProductActionBean extends CoreActionBean {
         return itemList.toString();
     }
 
-    public String getPriceItemList() {
-        return priceItemList;
+
+    public String getOptionalPriceItemsCompleteData() throws Exception {
+        if ((editProduct == null) || (editProduct.getOptionalPriceItems() == null) || (editProduct.getOptionalPriceItems().isEmpty())) {
+            return "";
+        }
+
+        JSONArray itemList = new JSONArray();
+
+        for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItemEntity : editProduct.getOptionalPriceItems()) {
+            PriceItem priceItem = priceListCache.findByConcatenatedKey(priceItemEntity.getConcatenatedKey());
+            if (priceItem == null) {
+                return "invalid key: " + priceItemEntity.getConcatenatedKey();
+            }
+            String quotePriceItemId = priceItem.getId();
+            itemList.put(new AutoCompleteToken(quotePriceItemId, priceItemEntity.getDisplayName(), false).getJSONObject());
+        }
+
+        return itemList.toString();
     }
 
-    public void setPriceItemList(String priceItemList) {
-        this.priceItemList = priceItemList;
+    public String getPrimaryPriceItemList() {
+        return primaryPriceItemList;
+    }
+
+    /* This method retrieves any material types already set on the product and
+     * returns a JsonArray as a string
+     */
+    public String getMaterialTypeCompleteData() throws Exception {
+        if ((editProduct == null) || (editProduct.getAllowableMaterialTypes() == null)) {
+            return "";
+        }
+
+        JSONArray itemList = new JSONArray();
+        Set<MaterialType> materialTypes =  editProduct.getAllowableMaterialTypes();
+        for ( MaterialType materialType : materialTypes ) {
+            String idName = materialType.getCategory() + ":" + materialType.getName();
+            itemList.put(new AutoCompleteToken(idName, idName, false).getJSONObject());
+        }
+        return itemList.toString();
+    }
+
+    public void setPrimaryPriceItemList(String primaryPriceItemList) {
+        this.primaryPriceItemList = primaryPriceItemList;
+    }
+
+    public String getOptionalPriceItemsList() {
+        return optionalPriceItemsList;
+    }
+
+    public void setOptionalPriceItemsList(String optionalPriceItemsList) {
+        this.optionalPriceItemsList = optionalPriceItemsList;
     }
 
     public String getAddOnList() {
@@ -306,5 +457,13 @@ public class ProductActionBean extends CoreActionBean {
 
     public void setAddOnList(String addOnList) {
         this.addOnList = addOnList;
+    }
+
+    public String getMaterialTypeList() {
+        return materialTypeList;
+    }
+
+    public void setMaterialTypeList(String materialTypeList) {
+        this.materialTypeList = materialTypeList;
     }
 }

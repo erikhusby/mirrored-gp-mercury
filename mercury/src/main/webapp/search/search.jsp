@@ -44,7 +44,7 @@
             </div>
         </stripes:form>
 
-        <c:if test="${not actionBean.hasResults}">
+        <c:if test="${not actionBean.resultsAvailable}">
             No Results Found
         </c:if>
 
@@ -60,8 +60,6 @@
                         <a id="vesselAnchorHide" href="javascript:hideResult('vessel')"
                            style="display:none; margin-left: 10px;">hide</a>
                     </c:if>
-                    <stripes:submit style="margin-left: 10px;margin-bottom:5px;" name="createBatch"
-                                    value="Create Batch"/>
 
                     <div class="pull-right">
                         <img alt="show plate view" width="20" height="20" name="" title="show plate view"
