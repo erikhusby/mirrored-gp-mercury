@@ -246,8 +246,16 @@
             </div>
 
             <div class="help-block span4">
-                Enter samples names in this box, one per line. When you save the order, the view page will show
-                all sample details.
+                <c:choose>
+                    <c:when test="${actionBean.editOrder.draft}">
+                        Enter samples names in this box, one per line. When you save the order, the view page will show
+                        all sample details.
+                    </c:when>
+                    <c:otherwise>
+                        This is the list of samples. Since this order has already been placed, the list of samples cannot
+                        be changed.
+                    </c:otherwise>
+                </c:choose>
                 <br/>
                 <br/>
                 <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="editOrder.sampleList" rows="15" cols="120"/>
