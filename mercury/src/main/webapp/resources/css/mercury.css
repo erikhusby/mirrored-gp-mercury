@@ -50,6 +50,9 @@ table.table thead .sorting_desc_disabled { background: url('/Mercury/images/sort
 .dataTables_filter input { font-size: small; height: 14px;}
 .dataTables_filter { float: left !important; text-align: left !important; }
 
+/* highlight error */
+input.error, select.error, textarea.error { background-color: #F2DEDE; border: 1px #8b0000 solid; }
+
 /* SIMPLE (HIGHTLIGHTS ROW W/ MOUSE)***************** */
 table.simple thead tr { text-align: left; border-radius: 3px;-moz-border-radius: 3px; -webkit-border-radius: 3px; -khtml-border-radius: 3px;}
 table.simple thead th { background: url("/Mercury/images/simple-th-background.png") repeat-x scroll 50% 50% #CCCCCC;}

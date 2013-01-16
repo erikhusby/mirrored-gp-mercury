@@ -36,17 +36,25 @@
 
             <div class="actionButtons">
                 <c:if test="${actionBean.editOrder.draft}">
-                    <stripes:submit name="placeOrder" value="Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
-                    <stripes:submit name="validate" value="Validate" style="margin-left: 5px;" class="btn"/>
+                    <stripes:submit name="placeOrder" value="Validate and Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
+                    <stripes:submit name="validate" value="Validate Only" style="margin-left: 5px;" class="btn"/>
+                    &#160;
+                    <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+                                  beanclass="${actionBean.class.name}" event="edit" class="btn" style="text-decoration: none !important;">
+                        <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
+                        <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                    </stripes:link>
                 </c:if>
-
-                <stripes:link title="Click to edit ${actionBean.editOrder.title}"
-                              beanclass="${actionBean.class.name}" event="edit" class="pull-right">
-                    <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
-                    <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-                </stripes:link>
             </div>
         </stripes:form>
+
+        <c:if test="${!actionBean.editOrder.draft}">
+            <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+                beanclass="${actionBean.class.name}" event="edit" class="pull-right">
+                <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
+                <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+            </stripes:link>
+        </c:if>
 
         <div style="both:clear"> </div>
 
@@ -78,7 +86,11 @@
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Status</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editOrder.orderStatus}</div>
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrder.draft}"><span class="label label-info"></c:if>
+                            ${actionBean.editOrder.orderStatus}
+                        <c:if test="${actionBean.editOrder.draft}"></span></c:if>
+                    </div>
                 </div>
             </div>
 

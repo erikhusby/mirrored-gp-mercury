@@ -78,7 +78,7 @@ public class AuthorizeBlockStripesTag extends TagSupport {
 
             // exclusion tag check to skip the jsp code block
             if (!exclusionRoles.isEmpty()) {
-                for (String role : roles) {
+                for (String role : exclusionRoles) {
                     if (request.isUserInRole(role) || role.equals(ALLOW_ALL_ROLES)) {
                         // use has a role that should be skipped or "All" roles to be excluded (?)
                         return SKIP_BODY;

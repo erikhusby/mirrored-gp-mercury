@@ -532,7 +532,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public String getSaveButtonText() {
-        return ((editOrder == null) || editOrder.isDraft()) ? "Save Draft" : "Save";
+        return ((editOrder == null) || editOrder.isDraft()) ? "Save and Preview" : "Save";
     }
 
     /**
