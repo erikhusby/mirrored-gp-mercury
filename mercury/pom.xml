@@ -1437,6 +1437,21 @@
         </dependency>
 
         <dependency>
+            <groupId>org.jboss.as</groupId>
+            <artifactId>jboss-as-ejb-client-bom</artifactId>
+            <version>7.1.1.Final</version>
+            <type>pom</type>
+        </dependency>
+        <!--
+        <dependency>
+            <groupId>org.jboss.as</groupId>
+            <artifactId>jboss-as-jms-client-bom</artifactId>
+            <version>7.1.1.Final</version>
+            <type>pom</type>
+        </dependency>
+-->
+
+        <dependency>
             <groupId>com.jgraph</groupId>
             <artifactId>jgraphx</artifactId>
             <version>1.4.0.9</version>

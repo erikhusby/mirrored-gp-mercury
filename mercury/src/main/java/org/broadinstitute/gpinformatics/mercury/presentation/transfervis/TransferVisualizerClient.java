@@ -14,19 +14,17 @@ import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVis
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 
+import javax.naming.Context;
+import javax.naming.InitialContext;
+import javax.naming.NamingException;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.io.Serializable;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.rmi.AccessException;
-import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
 
@@ -76,6 +74,7 @@ public class TransferVisualizerClient {
     public enum SearchType {
         SEARCH_PLATE("Plate Barcode"),
         SEARCH_TUBE("Tube Barcode"),
+        SEARCH_CONTAINER("Container Barcode"),
         SEARCH_GSSR_SAMPLE("GSSR Sample"),
         SEARCH_LIBRARY_NAME("Library Name");
 
@@ -541,25 +540,30 @@ public class TransferVisualizerClient {
 
     private static TransferVisualizer getServer() {
         try {
-            String serverAddress = System.getProperty(JNLP_SERVER_ADDRESS);
-            if(serverAddress == null) {
-                throw new RuntimeException("Set property " + JNLP_SERVER_ADDRESS);
-            }
-            URL url = new URL(serverAddress);
-            String rmiPort = System.getProperty(JNLP_RMI_PORT);
-            if(rmiPort == null) {
-                throw new RuntimeException("Set property " + JNLP_RMI_PORT);
-            }
-            Registry registry = LocateRegistry.getRegistry(url.getHost(),
-                    Integer.parseInt(rmiPort));
-            return (TransferVisualizer) registry.lookup(TransferVisualizer.serviceName);
-        } catch (AccessException e) {
-            throw new RuntimeException(e);
-        } catch (RemoteException e) {
-            throw new RuntimeException(e);
-        } catch (NotBoundException e) {
-            throw new RuntimeException(e);
-        } catch (MalformedURLException e) {
+            final Hashtable jndiProperties = new Hashtable();
+            jndiProperties.put(Context.URL_PKG_PREFIXES, "org.jboss.ejb.client.naming");
+            final Context context = new InitialContext(jndiProperties);
+            // The app name is the application name of the deployed EJBs. This is typically the ear name
+            // without the .ear suffix. However, the application name could be overridden in the application.xml of the
+            // EJB deployment on the server.
+            // Since we haven't deployed the application as a .ear, the app name for us will be an empty string
+            final String appName = "";
+            // This is the module name of the deployed EJBs on the server. This is typically the jar name of the
+            // EJB deployment, without the .jar suffix, but can be overridden via the ejb-jar.xml
+            // In this example, we have deployed the EJBs in a jboss-as-ejb-remote-app.jar, so the module name is
+            // jboss-as-ejb-remote-app
+            final String moduleName = "Mercury-1.15-SNAPSHOT";
+            // AS7 allows each deployment to have an (optional) distinct name. We haven't specified a distinct name for
+            // our EJB deployment, so this is an empty string
+            final String distinctName = "";
+            // The EJB name which by default is the simple class name of the bean implementation class
+            final String beanName = TransferEntityGrapher.class.getSimpleName();
+            // the remote view fully qualified class name
+            final String viewClassName = TransferVisualizer.class.getName();
+            // let's do the lookup (notice the ?stateful string as the last part of the jndi name for stateful bean lookup)
+            String name = "ejb:" + appName + "/" + moduleName + "/" + distinctName + "/" + beanName + "!" + viewClassName + "?stateful";
+            return (TransferVisualizer) context.lookup(name);
+        } catch (NamingException e) {
             throw new RuntimeException(e);
         }
     }
@@ -591,6 +595,9 @@ public class TransferVisualizerClient {
                 break;
             case SEARCH_TUBE:
                 graph = transferVisualizer.forTube(barcode, alternativeIds);
+                break;
+            case SEARCH_CONTAINER:
+                graph = transferVisualizer.forContainer(barcode, alternativeIds);
                 break;
 //            case SEARCH_GSSR_SAMPLE:
 //                graph = transferVisualizer.forGssrBarcode(barcode, alternativeIds);

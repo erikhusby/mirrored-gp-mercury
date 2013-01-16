@@ -5,26 +5,25 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Edge;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Vertex;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.CherryPickTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
+import javax.ejb.Remote;
+import javax.ejb.Stateful;
 import javax.inject.Inject;
-import java.rmi.AccessException;
-import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
-import java.rmi.server.UnicastRemoteObject;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -42,15 +41,20 @@ import java.util.Set;
  * entities and transfers, until reach a limit on the amount of work in one invocation.  The user can
  * click "More Transfers" to expand part of the graph.
  */
+@Stateful
+@Remote(TransferVisualizer.class)
 public class TransferEntityGrapher implements TransferVisualizer {
 
-    private static final int MAX_NUM_VESSELS_PER_REQUEST = 25;
+    private static final int MAX_NUM_VESSELS_PER_REQUEST = 50;
 
     @Inject
     private StaticPlateDAO staticPlateDAO;
 
     @Inject
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
+
+    @Inject
+    private LabVesselDao labVesselDao;
 
     @Inject
     private BSPUserList bspUserList;
@@ -94,47 +98,31 @@ public class TransferEntityGrapher implements TransferVisualizer {
     }
 
     /**
-     * Start the RMI server
-     *
-     * @return constructed server
-     */
-    public static TransferVisualizer init() {
-        try {
-            TransferVisualizer transferVisualizer = (TransferVisualizer) UnicastRemoteObject.exportObject(new TransferEntityGrapher(), 0);
-            Registry registry = LocateRegistry.createRegistry(9345);
-            registry.rebind(TransferVisualizer.serviceName, transferVisualizer);
-            return transferVisualizer;
-        } catch (AccessException e) {
-            throw new RuntimeException(e);
-        } catch (RemoteException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    /**
-     * For testing
-     *
-     * @param args not used
-     */
-    public static void main(String[] args) {
-        TransferEntityGrapher.init();
-    }
-
-    /**
      * Build a graph, staring with a plate barcode
      * @param plateBarcode plate the user is searching on
      * @param alternativeIds which IDs to include in the vertices
      * @return vertices and edges
      */
     @Override
-    public Graph forPlate(String plateBarcode, List<AlternativeId> alternativeIds) throws RemoteException {
+    public Graph forPlate(String plateBarcode, List<AlternativeId> alternativeIds) {
         Graph graph = new Graph();
-        try {
-            StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
-            startWithPlate(plate, graph, alternativeIds);
-            return graph;
-        } finally {
+        StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        startWithPlate(plate, graph, alternativeIds);
+        return graph;
+    }
+
+    @Override
+    public Graph forContainer(String containerBarcode, List<AlternativeId> alternativeIds) {
+        Graph graph = new Graph();
+        LabVessel labVessel = labVesselDao.findByIdentifier(containerBarcode);
+        if(labVessel == null) {
+            graph.setMessage("No container was found with that barcode");
+        } else if(OrmUtil.proxySafeIsInstance(labVessel, VesselContainerEmbedder.class)) {
+            startWithContainer(labVessel.getContainerRole(), graph, alternativeIds);
+        } else {
+            graph.setMessage("The barcode is not attached to a container");
         }
+        return graph;
     }
 
     private void startWithPlate(StaticPlate plate, Graph graph, List<AlternativeId> alternativeIds) {
@@ -166,7 +154,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
      * @return vertices and edges
      */
     @Override
-    public Graph forTube(String tubeBarcode, List<AlternativeId> alternativeIds) throws RemoteException {
+    public Graph forTube(String tubeBarcode, List<AlternativeId> alternativeIds) {
         Graph graph = new Graph();
         TwoDBarcodedTube receptacle = twoDBarcodedTubeDAO.findByBarcode(tubeBarcode);
         startWithTube(receptacle, graph, alternativeIds);
@@ -186,9 +174,20 @@ public class TransferEntityGrapher implements TransferVisualizer {
             Queue<Vessel> vesselQueue = new LinkedList<Vessel>();
 
             for (VesselContainer vesselContainer : receptacle.getContainers()) {
-                vesselQueue.add(new RackVessel((TubeFormation) vesselContainer.getEmbedder()));
+                vesselQueue.add(new RackVessel(vesselContainer));
             }
             vesselQueue.add(new ReceptacleVessel(receptacle));
+            processQueue(vesselQueue, graph, alternativeIds);
+        }
+    }
+
+    public void startWithContainer(VesselContainer vesselContainer, Graph graph, List<AlternativeId> alternativeIds) {
+        if (vesselContainer == null) {
+            graph.setMessage("No container was found with that barcode");
+        } else {
+            Queue<Vessel> vesselQueue = new LinkedList<Vessel>();
+
+            vesselQueue.add(new RackVessel(vesselContainer));
             processQueue(vesselQueue, graph, alternativeIds);
         }
     }
@@ -270,7 +269,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
      * @throws java.rmi.RemoteException
      */
     @Override
-    public Map<String, List<String>> getIdsForTube(String tubeBarcode) throws RemoteException {
+    public Map<String, List<String>> getIdsForTube(String tubeBarcode) /*throws RemoteException*/ {
         try {
             TwoDBarcodedTube receptacle = twoDBarcodedTubeDAO.findByBarcode(tubeBarcode);
             return getAlternativeIds(receptacle, Arrays.asList(AlternativeId.values()));
@@ -289,7 +288,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
         label.append("<html>");
         String eventTypeName = stationEvent.getLabEventType().getName();
 //        if (!ReceptacleTransferEvent.TRANSFER_EVENT.equals(eventTypeName)) {
-//            label.append(eventTypeName);
+            label.append(eventTypeName);
 //            if (stationEvent instanceof PlateTransferEvent) {
 //                PlateTransferEvent plateTransferEvent = (PlateTransferEvent) stationEvent;
 //                label.append("<br/>");
@@ -297,7 +296,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
 //                label.append(" to ");
 //                label.append(plateTransferEvent.getSectionLayout());
 //            }
-//            label.append("<br/>");
+            label.append("<br/>");
 //        }
         String labMachineName = stationEvent.getEventLocation();
         if (!labMachineName.contains("Unknown")) {
@@ -471,16 +470,14 @@ public class TransferEntityGrapher implements TransferVisualizer {
         if(receptacle.getContainers().size() > 1) {
             Iterator<VesselContainer<?>> iterator = receptacle.getContainers().iterator();
             VesselContainer<?> sourceContainer = iterator.next();
-            RackVessel sourceRackVessel = new RackVessel(OrmUtil.proxySafeCast(sourceContainer.getEmbedder(),
-                    TubeFormation.class));
+            RackVessel sourceRackVessel = new RackVessel(sourceContainer);
             if (sourceRackVessel.render(graph, alternativeIds)) {
                 vesselQueue.add(sourceRackVessel);
                 numVesselsAddedReturn++;
             }
             while(iterator.hasNext()) {
                 VesselContainer<?> destinationContainer = iterator.next();
-                RackVessel destinationRackVessel = new RackVessel(OrmUtil.proxySafeCast(
-                        destinationContainer.getEmbedder(), TubeFormation.class));
+                RackVessel destinationRackVessel = new RackVessel(destinationContainer);
                 if (destinationRackVessel.render(graph, alternativeIds)) {
                     vesselQueue.add(destinationRackVessel);
                     numVesselsAddedReturn++;
@@ -513,10 +510,10 @@ public class TransferEntityGrapher implements TransferVisualizer {
 
     private class RackVessel extends Vessel {
 
-        private TubeFormation tubeFormation;
+        private VesselContainer vesselContainer;
 
-        private RackVessel(TubeFormation tubeFormation) {
-            this.tubeFormation = tubeFormation;
+        private RackVessel(VesselContainer vesselContainer) {
+            this.vesselContainer = vesselContainer;
         }
 
         @Override
@@ -524,33 +521,33 @@ public class TransferEntityGrapher implements TransferVisualizer {
 //            System.out.println("Rendering rack " + wellMap.getPlate().getBarcode());
             boolean newVertex = false;
 //            Plate rack = tubeFormation.getPlate();
-            Vertex rackVertex = graph.getMapIdToVertex().get(tubeFormation.getLabel());
+            String label = vesselContainer.getEmbedder().getLabel();
+            Vertex rackVertex = graph.getMapIdToVertex().get(label);
             if (rackVertex == null) {
                 newVertex = true;
                 // Create a child vertex for each tube, and position it correctly within the rack
                 int maxRowNumber = 0;
                 int maxColumnNumber = 0;
                 // todo jmt set these based on the actual layout of tubes
-                VesselGeometry vesselGeometry = tubeFormation.getRackType().getVesselGeometry();
+                VesselGeometry vesselGeometry = vesselContainer.getEmbedder().getVesselGeometry();
                 maxRowNumber = vesselGeometry.getRowNames().length;
                 maxColumnNumber = vesselGeometry.getColumnNames().length;
 
-                rackVertex = new Vertex(tubeFormation.getLabel(), IdType.WELL_MAP_ID_TYPE.toString(),
-                        tubeFormation.getRackType().getDisplayName() + " : " +
-                                tubeFormation.getRacksOfTubes().iterator().next().getLabel(),
+                // todo jmt fix rack type
+                rackVertex = new Vertex(label, IdType.WELL_MAP_ID_TYPE.toString(),
+                        /*vesselContainer.getRackType().getDisplayName() +*/ " : " +
+                                vesselContainer.getEmbedder().getLabCentricName(),
                         maxRowNumber, maxColumnNumber);
-                for (Map.Entry<VesselPosition, TwoDBarcodedTube> vesselPositionTwoDBarcodedTubeEntry :
-                        tubeFormation.getContainerRole().getMapPositionToVessel().entrySet()) {
-                    TwoDBarcodedTube receptacle = vesselPositionTwoDBarcodedTubeEntry.getValue();
-                    String barcode = receptacle.getLabel();
-                    Vertex tubeVertex = new Vertex(barcode + "|" + tubeFormation.getLabel(),
-                            IdType.TUBE_IN_RACK_ID_TYPE.toString(), barcode);
+                for (VesselPosition vesselPosition : vesselGeometry.getVesselPositions()) {
+                    LabVessel receptacle = vesselContainer.getVesselAtPosition(vesselPosition);
+                    String barcode = receptacle == null ? vesselPosition.name() : receptacle.getLabel();
+                    Vertex tubeVertex = new Vertex(barcode + "|" + label, IdType.TUBE_IN_RACK_ID_TYPE.toString(), barcode);
                     tubeVertex.setParentVertex(rackVertex);
 
                     tubeVertex.setAlternativeIds(getAlternativeIds(receptacle, alternativeIds));
 //                    addLibraryTypeToDetails(receptacle, tubeVertex);
                     // need way to get from geometry to VesselPositions and vice versa
-                    VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPositionTwoDBarcodedTubeEntry.getKey());
+                    VesselGeometry.RowColumn rowColumn = vesselGeometry.getRowColumnForVesselPosition(vesselPosition);
                     rackVertex.getChildVertices()[rowColumn.getRow() - 1][rowColumn.getColumn() - 1] = tubeVertex;
                     // map as child|parent and as child, the latter for tube to tube transfers
                     graph.getMapIdToVertex().put(barcode, tubeVertex);
@@ -566,14 +563,16 @@ public class TransferEntityGrapher implements TransferVisualizer {
         @Override
         public int renderEdges(Graph graph, Queue<Vessel> vesselQueue, List<AlternativeId> alternativeIds) {
             int numVesselsAdded = 0;
-            Set<SectionTransfer> sectionTransfersThisAsSource = tubeFormation.getContainerRole().getSectionTransfersFrom();
-            Set<SectionTransfer> sectionTransfersThisAsTarget = tubeFormation.getContainerRole().getSectionTransfersTo();
+            Set<SectionTransfer> sectionTransfersThisAsSource = vesselContainer.getSectionTransfersFrom();
+            Set<SectionTransfer> sectionTransfersThisAsTarget = vesselContainer.getSectionTransfersTo();
             numVesselsAdded += renderSectionTransfers(graph, vesselQueue, alternativeIds, sectionTransfersThisAsSource,
                     sectionTransfersThisAsTarget);
+            numVesselsAdded += renderCherryPickTransfers(graph, vesselQueue, alternativeIds, vesselContainer.getCherryPickTransfersFrom());
+            numVesselsAdded += renderCherryPickTransfers(graph, vesselQueue, alternativeIds, vesselContainer.getCherryPickTransfersTo());
 
             // Render any transfers from the rack tubes
-            for (Map.Entry<VesselPosition, TwoDBarcodedTube> vesselPositionTwoDBarcodedTubeEntry :
-                    tubeFormation.getContainerRole().getMapPositionToVessel().entrySet()) {
+            for (Object o : vesselContainer.getMapPositionToVessel().entrySet()) {
+                Map.Entry<VesselPosition, LabVessel> vesselPositionTwoDBarcodedTubeEntry = (Map.Entry<VesselPosition, LabVessel>) o;
                 numVesselsAdded += renderReceptacleEdges(vesselPositionTwoDBarcodedTubeEntry.getValue(),
                         graph, vesselQueue, alternativeIds);
             }
@@ -680,7 +679,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
 //            if (receptacle.getCurrentContent() != null /*&& receptacle.getCurrentContent().getTypeId() != null*/) {
 //                contentTypeName = receptacle.getCurrentContent().getLibraryTypeName();
 //            }
-            return new StringBuilder().append("Tube : ").append(receptacle.getLabel()).append("<br/>").append(contentTypeName).toString();
+            return "Tube : " + receptacle.getLabel() + "<br/>" + contentTypeName;
         }
     }
 
@@ -689,20 +688,47 @@ public class TransferEntityGrapher implements TransferVisualizer {
             Set<SectionTransfer> sourceSectionTransfers, Set<SectionTransfer> targetSectionTransfers) {
         int numVesselsAdded = 0;
         for (SectionTransfer sourceSectionTransfer : sourceSectionTransfers) {
-            LabVessel embedder = sourceSectionTransfer.getTargetVesselContainer().getEmbedder();
-            numVesselsAdded = renderEmbedder(graph, vesselQueue, alternativeIds, numVesselsAdded, embedder);
+            numVesselsAdded += renderEmbedder(graph, vesselQueue, alternativeIds,
+                    sourceSectionTransfer.getTargetVesselContainer().getEmbedder());
             renderEdge(graph, sourceSectionTransfer);
         }
 
         for (SectionTransfer targetSectionTransfer : targetSectionTransfers) {
-            LabVessel embedder = targetSectionTransfer.getSourceVesselContainer().getEmbedder();
-            numVesselsAdded = renderEmbedder(graph, vesselQueue, alternativeIds, numVesselsAdded, embedder);
+            numVesselsAdded += renderEmbedder(graph, vesselQueue, alternativeIds,
+                    targetSectionTransfer.getSourceVesselContainer().getEmbedder());
             renderEdge(graph, targetSectionTransfer);
         }
         return numVesselsAdded;
     }
 
-    private int renderEmbedder(Graph graph, Queue<Vessel> vesselQueue, List<AlternativeId> alternativeIds, int numVesselsAdded, LabVessel embedder) {
+    private int renderCherryPickTransfers(Graph graph, Queue<Vessel> vesselQueue, List<AlternativeId> alternativeIds,
+            Set<CherryPickTransfer> cherryPickTransfers) {
+        int numVesselsAdded = 0;
+        for (CherryPickTransfer cherryPickTransfer : cherryPickTransfers) {
+            String eventId = cherryPickTransfer.getKey();
+            if(graph.getVisitedEventIds().add(eventId)) {
+                numVesselsAdded += renderEmbedder(graph, vesselQueue, alternativeIds,
+                        cherryPickTransfer.getTargetVesselContainer().getEmbedder());
+                numVesselsAdded += renderEmbedder(graph, vesselQueue, alternativeIds,
+                        cherryPickTransfer.getSourceVesselContainer().getEmbedder());
+
+                Vertex sourceReceptacleVertex = graph.getMapIdToVertex().get(
+                        cherryPickTransfer.getSourceVesselContainer().getVesselAtPosition(cherryPickTransfer.getSourcePosition()).getLabel() + "|" +
+                        cherryPickTransfer.getSourceVesselContainer().getEmbedder().getLabel());
+                LabVessel vesselAtPosition = cherryPickTransfer.getTargetVesselContainer().getVesselAtPosition(cherryPickTransfer.getTargetPosition());
+                Vertex destinationReceptacleVertex = graph.getMapIdToVertex().get(
+                        (vesselAtPosition == null ? cherryPickTransfer.getTargetPosition() : vesselAtPosition.getLabel()) + "|" +
+                        cherryPickTransfer.getTargetVesselContainer().getEmbedder().getLabel());
+                graph.getMapIdToEdge().put(eventId, new Edge(buildEdgeLabel(cherryPickTransfer.getLabEvent()),
+                        sourceReceptacleVertex, destinationReceptacleVertex));
+            }
+        }
+
+        return numVesselsAdded;
+    }
+
+    private int renderEmbedder(Graph graph, Queue<Vessel> vesselQueue, List<AlternativeId> alternativeIds, LabVessel embedder) {
+        int numVesselsAdded = 0;
         switch (embedder.getType()) {
             case STATIC_PLATE:
                 PlateVessel plateVessel = new PlateVessel(OrmUtil.proxySafeCast(
@@ -713,8 +739,9 @@ public class TransferEntityGrapher implements TransferVisualizer {
                 }
                 break;
             case TUBE_FORMATION:
-                RackVessel rackVessel = new RackVessel(OrmUtil.proxySafeCast(
-                        embedder, TubeFormation.class));
+            case STRIP_TUBE:
+            case FLOWCELL:
+                RackVessel rackVessel = new RackVessel(embedder.getContainerRole());
                 if(rackVessel.render(graph, alternativeIds)) {
                     vesselQueue.add(rackVessel);
                     numVesselsAdded++;

@@ -53,7 +53,8 @@ public enum VesselGeometry {
     STRIP_TUBE(
             "1x8",
             new String[]{""},
-            new String[]{"TUBE1", "TUBE2", "TUBE3", "TUBE4", "TUBE5", "TUBE6", "TUBE7", "TUBE8"}),
+            new String[]{"TUBE1", "TUBE2", "TUBE3", "TUBE4", "TUBE5", "TUBE6", "TUBE7", "TUBE8"},
+            new VesselPosition[]{VesselPosition.TUBE1, VesselPosition.TUBE2, VesselPosition.TUBE3, VesselPosition.TUBE4, VesselPosition.TUBE5, VesselPosition.TUBE6, VesselPosition.TUBE7, VesselPosition.TUBE8}),
 
     STRIP_TUBE_WELL(
             "1x1",
@@ -63,7 +64,8 @@ public enum VesselGeometry {
     FLOWCELL(
             "1x8",
             new String[]{""},
-            new String[]{"LANE1", "LANE2", "LANE3", "LANE4", "LANE5", "LANE6", "LANE7", "LANE8"});
+            new String[]{"LANE1", "LANE2", "LANE3", "LANE4", "LANE5", "LANE6", "LANE7", "LANE8"},
+            new VesselPosition[]{VesselPosition.LANE1, VesselPosition.LANE2, VesselPosition.LANE3, VesselPosition.LANE4, VesselPosition.LANE5, VesselPosition.LANE6, VesselPosition.LANE7, VesselPosition.LANE8});
 
     private final String name;
     private final String[] columnNames;

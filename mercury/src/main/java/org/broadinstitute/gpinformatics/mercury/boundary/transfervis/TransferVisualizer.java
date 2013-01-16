@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.boundary.transfervis;
 
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
 
-import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +10,7 @@ import java.util.Map;
 /**
  * RMI server for TransferVisualizer
  */
-public interface TransferVisualizer extends Remote {
+public interface TransferVisualizer {
     String serviceName = "TransferVisualizer";
 
     enum AlternativeId {
@@ -33,6 +32,8 @@ public interface TransferVisualizer extends Remote {
     Graph forPlate(String plateBarcode, List<AlternativeId> alternativeIds) throws RemoteException;
 
     Graph forTube(String tubeBarcode, List<AlternativeId> alternativeIds) throws RemoteException;
+
+    Graph forContainer(String containerBarcode, List<AlternativeId> alternativeIds) throws RemoteException;
 
 //    Graph forGssrBarcode(String gssrBarcode, List<AlternativeId> alternativeIds) throws RemoteException;
 
