@@ -574,18 +574,18 @@ public class LabEventTest {
         bettaLimsMessageFactory.advanceTime();
     }
 
-    private static void validateWorkflow(String nextEventTypeName, Collection<? extends LabVessel> tubes) {
+    static void validateWorkflow(String nextEventTypeName, Collection<? extends LabVessel> tubes) {
         List<LabVessel> labVessels = new ArrayList<LabVessel>(tubes);
         validateWorkflow(nextEventTypeName, labVessels);
     }
 
-    private static void validateWorkflow(String nextEventTypeName, LabVessel labVessel) {
+    static void validateWorkflow(String nextEventTypeName, LabVessel labVessel) {
         List<LabVessel> labVessels = new ArrayList<LabVessel>();
         labVessels.add(labVessel);
         validateWorkflow(nextEventTypeName, labVessels);
     }
 
-    private static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
+    static void validateWorkflow(String nextEventTypeName, List<LabVessel> labVessels) {
         WorkflowLoader workflowLoader = new WorkflowLoader();
         WorkflowConfig workflowConfig = workflowLoader.load();
         for (LabVessel labVessel : labVessels) {
@@ -816,6 +816,10 @@ public class LabEventTest {
             return normalizationBarcode;
         }
 
+        public void addKeyToProductOrder(String key, ProductOrder orderToMap) {
+            mapKeyToProductOrder.put(key, orderToMap);
+        }
+
         public PicoPlatingEntityBuider(BettaLimsMessageFactory bettaLimsMessageFactory, LabEventFactory labEventFactory,
                                        LabEventHandler labEventHandler, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
                                        String rackBarcode) {
@@ -824,6 +828,14 @@ public class LabEventTest {
             this.labEventHandler = labEventHandler;
             this.mapBarcodeToTube = mapBarcodeToTube;
             this.rackBarcode = rackBarcode;
+        }
+
+        public PicoPlatingEntityBuider(BettaLimsMessageFactory bettaLimsMessageFactory, LabEventFactory labEventFactory,
+                                       LabEventHandler labEventHandler, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
+                                       String rackBarcode, Map<String, ProductOrder> keyToProductOrderMap) {
+            this(bettaLimsMessageFactory, labEventFactory,labEventHandler, mapBarcodeToTube, rackBarcode);
+
+           mapKeyToProductOrder = keyToProductOrderMap;
         }
 
         public PicoPlatingEntityBuider invoke() {

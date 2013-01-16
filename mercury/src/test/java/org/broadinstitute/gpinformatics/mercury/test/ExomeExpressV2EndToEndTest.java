@@ -133,57 +133,70 @@ public class ExomeExpressV2EndToEndTest {
         // BSP Manual messaging for extractions, various batches
 
 //        PlateEventType
+        /*
+            BSP Pico Work.
+            Rack of tubes "Taken out of" bucket.  Run through all pico steps.  Awaits final
+          */
 
-        //May Happen in BSP Before bucket
-        //        PlateTransferEventType plateTransferEventType = exexJaxbBuilder.getPlateToShearTubeTransferEventJaxb();
-        PlateTransferEventType plateTransferEventType = bettaLimsMessageFactory.buildPlateToRack(
-                "PlatingToShearingTubes", "NormPlate", "CovarisRack", shearingTubeBarcodes);
-        Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes = new HashMap<String, TwoDBarcodedTube>();
-        RackOfTubes targetRackOfTubes = null;
-        LabEvent labEvent = labEventFactory.buildFromBettaLimsPlateToRackDbFree(plateTransferEventType, new StaticPlate(
-                "NormPlate", StaticPlate.PlateType.Eppendorf96), mapBarcodeToTargetTubes, targetRackOfTubes);
+        Map<String, ProductOrder> keyToPoMap = new HashMap<String, ProductOrder>();
+        keyToPoMap.put(productOrder1.getBusinessKey(), productOrder1);
+
+        //TODO SGM:  DO not use Entity Builder.  Specifically use Jaxb.... OR Make this entity builder add to mapKeyToProductOrder.  Yeah, do that!!!!
+        LabEventTest.PicoPlatingEntityBuider pplatingEntityBuilder =
+                new LabEventTest.PicoPlatingEntityBuider(bettaLimsMessageFactory,
+                labEventFactory, leHandler, mapBarcodeToTube, rackBarcode, keyToPoMap).invoke();
+
+
         // Bucket for Shearing - enters from workflow?
+        /*
+            TODO SGM:  Make labEventHandler put this in the bucket automatically
 
         Bucket shearingBucket = new Bucket(new WorkflowBucketDef("Shearing Bucket"));
-
-        Collection<LabVessel> vessels = labEvent.getTargetLabVessels();
+        Collection<LabVessel> vessels = new ArrayList<LabVessel>(pplatingEntityBuilder.getNormBarcodeToTubeMap().values());
         //                new LinkedList<LabVessel>(mapBarcodeToTube.values());
 
         bucketBean.add(productOrder1
                 .getBusinessKey(), vessels, shearingBucket, testActor, "", LabEventType.SHEARING_BUCKET);
 
-        /*
-                LabEventTest.ExomeExpressShearingEntityBuilder exExShearingEntityBuilder =
-                        new LabEventTest.ExomeExpressShearingEntityBuilder(mapBarcodeToTube,
-                                                                           buildTubeFormation(mapBarcodeToTube,rackBarcode ,barcodesByRackPositions),
-                                                                           bettaLimsMessageFactory, labEventFactory, leHandler,
-                                                                           rackBarcode );
-                exExShearingEntityBuilder.addProductOrderToMap(productOrder1);
-                exExShearingEntityBuilder.invoke();
         */
 
-        LabEventTest.ExomeExpressShearingJaxbBuilder exexJaxbBuilder = new LabEventTest.ExomeExpressShearingJaxbBuilder(
-                bettaLimsMessageFactory, shearingTubeBarcodes, "", rackBarcode);
+
+        LabEventTest.ExomeExpressShearingJaxbBuilder exexJaxbBuilder =
+                new LabEventTest.ExomeExpressShearingJaxbBuilder(bettaLimsMessageFactory, shearingTubeBarcodes, "",
+                        rackBarcode);
         exexJaxbBuilder.invoke();
 
-        PlateTransferEventType covarisxfer = exexJaxbBuilder.getCovarisLoadEventJaxb();
 
-        LabEvent covarisEvent = labEventFactory.buildFromBettaLimsRackToPlateDbFree(covarisxfer, buildTubeFormation(
-                mapBarcodeToTube, rackBarcode, barcodesByRackPositions), new StaticPlate("NormPlate",
-                StaticPlate.PlateType.Eppendorf96));
+
+        LabEventTest.validateWorkflow(LabEventType.PLATING_TO_SHEARING_TUBES.getName(),
+                pplatingEntityBuilder.getNormTubeFormation());
+        PlateTransferEventType plateToShearXfer = exexJaxbBuilder.getPlateToShearTubeTransferEventJaxb();
+        LabEvent pToShearEvent = labEventFactory.buildFromBettaLimsRackToPlateDbFree(plateToShearXfer,
+                pplatingEntityBuilder.getNormTubeFormation(),
+                new StaticPlate("CovarisPlate", StaticPlate.PlateType.Eppendorf96));
+        leHandler.processEvent(pToShearEvent);
+        LabEventTest.validateWorkflow(LabEventType.COVARIS_LOADED.getName(),
+                pToShearEvent.getTargetLabVessels());
+
+
+        // When the above event is executed, the items should be removed from the bucket.
+        PlateTransferEventType covarisxfer = exexJaxbBuilder.getCovarisLoadEventJaxb();
+        LabEvent covarisEvent = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(covarisxfer,
+                (StaticPlate) pToShearEvent.getTargetLabVessels().iterator().next(),
+                new StaticPlate("NormPlate", StaticPlate.PlateType.Eppendorf96));
+
+
 
         ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
                 productOrder1.getProduct().getWorkflowName());
         ProductWorkflowDefVersion productWorkflowDefVersion = productWorkflowDef.getEffectiveVersion();
-
         Map<WorkflowStepDef, Collection<LabVessel>> bucketToVessels = leHandler.itemizeBucketItems(covarisEvent);
-
         Assert.assertTrue(bucketToVessels.keySet().size() == 1);
+//        Assert.assertEquals(shearingBucket.getBucketDefinitionName(),
+//                bucketToVessels.keySet().iterator().next().getName());
 
-        Assert.assertEquals(shearingBucket.getBucketDefinitionName(),
-                bucketToVessels.keySet().iterator().next().getName());
 
-        bucketBean.startDBFree(testActor, labEvent.getTargetLabVessels(), shearingBucket, labEvent.getEventLocation());
+//        bucketBean.startDBFree(testActor, labEvent.getTargetLabVessels(), shearingBucket, labEvent.getEventLocation());
 
 
         //        // todo plates vs tubes?
