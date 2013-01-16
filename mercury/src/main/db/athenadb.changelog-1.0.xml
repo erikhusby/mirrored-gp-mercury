@@ -2144,4 +2144,8 @@
         <dropNotNullConstraint schemaName="athena" tableName="product_order_add_on_aud" columnName="product_order"/>
     </changeSet>
 
+    <changeSet id="GPLIM-794" author="mcovarr">
+        <addNotNullConstraint schemaName="athena" tableName="product" columnName="part_number" />
+    </changeSet>
+
 </databaseChangeLog>
