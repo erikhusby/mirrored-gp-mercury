@@ -258,7 +258,7 @@
                 </c:choose>
                 <br/>
                 <br/>
-                <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="editOrder.sampleList" rows="15" cols="120"/>
+                <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="sampleList" rows="15" cols="120"/>
             </div>
         </stripes:form>
 

@@ -112,9 +112,6 @@ public class ProductOrder implements Serializable {
     @Transient
     private String originalTitle;   // This is used for edit to keep track of changes to the object.
 
-    @Transient
-    private String sampleList;
-
     // Initialize our transient data after the object has been loaded from the database.
     @PostLoad
     private void initialize() {
@@ -159,11 +156,11 @@ public class ProductOrder implements Serializable {
         this.count = count;
     }
 
-    public void updateData(ResearchProject project, Product product, List<Product> addOnProducts) {
+    public void updateData(ResearchProject project, Product product, List<Product> addOnProducts, List<ProductOrderSample> samples) {
         setAddons(addOnProducts);
         setProduct(product);
         setResearchProject(project);
-        updateSamplesFromList();
+        setSamples(samples);
     }
 
     /**
@@ -891,28 +888,5 @@ public class ProductOrder implements Serializable {
 
     public String getOriginalTitle() {
         return originalTitle;
-    }
-
-    public String getSampleList() {
-        if (sampleList == null) {
-            sampleList = "";
-            for (ProductOrderSample sample : samples) {
-                sampleList += sample.getSampleName() + "\n";
-            }
-        }
-
-        return sampleList;
-    }
-
-    public void updateSamplesFromList() {
-        samples.clear();
-
-        for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleList)) {
-            samples.add(new ProductOrderSample(sampleName.trim()));
-        }
-    }
-
-    public void setSampleList(String sampleList) {
-        this.sampleList = sampleList;
     }
 }
