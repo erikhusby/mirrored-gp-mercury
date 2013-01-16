@@ -16,8 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionListResponse;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
+import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -66,7 +65,7 @@ public class ProductOrder implements Serializable {
 
     /** Unique title for the order */
     @Column(unique = true)
-    private String title;
+    private String title = "";
 
     @ManyToOne
     private ResearchProject researchProject;
@@ -78,7 +77,7 @@ public class ProductOrder implements Serializable {
     private OrderStatus orderStatus = OrderStatus.Draft;
 
     /** Alphanumeric Id */
-    private String quoteId;
+    private String quoteId = "";
 
     /** Additional comments of the order */
     @Column(length = 2000)
@@ -103,9 +102,6 @@ public class ProductOrder implements Serializable {
     @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
     @AuditJoinTable(name = "product_order_sample_join_aud")
     private List<ProductOrderSample> samples = Collections.emptyList();
-
-    @Transient
-    private String sampleBillingSummary;
 
     @Transient
     private final SampleCounts counts = new SampleCounts();
@@ -334,16 +330,9 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * Default no-arg constructor
+     * Default no-arg constructor, also used when creating a new ProductOrder.
      */
-    ProductOrder() {
-    }
-
-    /**
-     * Constructor called when creating a new ProductOrder.
-     */
-    public ProductOrder(@Nonnull BspUser createdBy) {
-        this(createdBy.getUserId(), "", new ArrayList<ProductOrderSample>(), "", null, null);
+    public ProductOrder() {
     }
 
     /**
@@ -359,14 +348,27 @@ public class ProductOrder implements Serializable {
     public ProductOrder(@Nonnull Long creatorId, @Nonnull String title, List<ProductOrderSample> samples, String quoteId,
                         Product product, ResearchProject researchProject) {
         createdBy = creatorId;
-        createdDate = new Date();
-        modifiedBy = createdBy;
-        modifiedDate = createdDate;
         this.title = title;
         setSamples(samples);
         this.quoteId = quoteId;
         this.product = product;
         this.researchProject = researchProject;
+    }
+
+    /**
+     * Call this method before saving changes to the database.  It updates the modified date and modified user,
+     * and sets the create date and create user if these haven't been set yet.
+     * @param user the user doing the save operation.
+     */
+    public void prepareToSave(BspUser user) {
+        Date now = new Date();
+        long userId = user.getUserId();
+        if (createdBy == null) {
+            createdBy = userId;
+            createdDate = now;
+        }
+        modifiedBy = userId;
+        modifiedDate = now;
     }
 
     public String getTitle() {
@@ -455,7 +457,7 @@ public class ProductOrder implements Serializable {
 
     public void setSamples(List<ProductOrderSample> samples) {
         this.samples = samples;
-        int samplePos=0;
+        int samplePos = 0;
         if (samples != null) {
             for (ProductOrderSample sample : samples) {
                 sample.setProductOrder(this);
@@ -463,7 +465,6 @@ public class ProductOrder implements Serializable {
             }
         }
         counts.invalidate();
-        sampleBillingSummary = null;
     }
 
     /**
@@ -487,32 +488,16 @@ public class ProductOrder implements Serializable {
         return createdDate;
     }
 
-    public void setCreatedDate(Date createdDate) {
-        this.createdDate = createdDate;
-    }
-
     public long getCreatedBy() {
         return createdBy;
-    }
-
-    public void setCreatedBy(Long createdBy) {
-        this.createdBy = createdBy;
     }
 
     public Date getModifiedDate() {
         return modifiedDate;
     }
 
-    public void setModifiedDate(Date modifiedDate) {
-        this.modifiedDate = modifiedDate;
-    }
-
     public long getModifiedBy() {
         return modifiedBy;
-    }
-
-    public void setModifiedBy(long modifiedBy) {
-        this.modifiedBy = modifiedBy;
     }
 
     /**
@@ -751,13 +736,13 @@ public class ProductOrder implements Serializable {
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
 
         JiraIssue issue = jiraService.createIssue(
-                fetchJiraProject().getKeyPrefix(), bspUserList.getById(createdBy).getUsername(),
+                fetchJiraProject().getKeyPrefix(), bspUserList.getById(modifiedBy).getUsername(),
                 fetchJiraIssueType(), title, comments == null ? "" : comments, listOfFields);
 
         jiraTicketKey = issue.getKey();
         issue.addLink(researchProject.getJiraTicketKey());
 
-        issue.addWatcher(bspUserList.getById(createdBy).getUsername());
+        issue.addWatcher(bspUserList.getById(modifiedBy).getUsername());
 
         issue.addComment(StringUtils.join(getSampleSummaryComments(), "\n"));
         issue.addComment(StringUtils.join(getSampleValidationComments(), "\n"));
@@ -922,10 +907,8 @@ public class ProductOrder implements Serializable {
     public void updateSamplesFromList() {
         samples.clear();
 
-        if (!StringUtils.isBlank(sampleList)) {
-            for (String sampleName : sampleList.trim().split("\n")) {
-                samples.add(new ProductOrderSample(sampleName.trim()));
-            }
+        for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleList)) {
+            samples.add(new ProductOrderSample(sampleName.trim()));
         }
     }
 

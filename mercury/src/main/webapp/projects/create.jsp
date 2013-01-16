@@ -98,7 +98,7 @@
                     <stripes:label for="title" class="control-label">Name *</stripes:label>
                     <div class="controls">
                             <stripes:text name="editResearchProject.title" value="${actionBean.editResearchProject.title}"
-                                          id="title"  class="defaultText" title="Enter the project name"  maxlength="255"/>
+                                          id="title"  class="defaultText input-xxlarge" title="Enter the project name"  maxlength="255"/>
                     </div>
                 </div>
 
@@ -107,7 +107,7 @@
                     <stripes:label for="synopsis" class="control-label">Synopsis *</stripes:label>
 
                     <div class="controls">
-                        <stripes:textarea id="synopsis" rows="5" cols="100" name="editResearchProject.synopsis" class="defaultText" style="width:390"
+                        <stripes:textarea id="synopsis" rows="5" cols="100" name="editResearchProject.synopsis" class="defaultText textarea input-xxlarge"
                                       title="Enter the synopsis of the project" value="${actionBean.editResearchProject.synopsis}"/>
                     </div>
                 </div>
@@ -190,7 +190,7 @@
                 <div class="control-group">
                     <label id="j_idt130" class="ui-outputlabel control-label" for="irbNotes">IRB Notes</label>
                     <div class="controls">
-                        <stripes:text id="irbNotes" class="defaultText" title="Enter notes about the above IRBs" name="editResearchProject.irbNotes" value="${actionBean.editResearchProject.irbNotes}" maxlength="255" />
+                        <stripes:text id="irbNotes" class="defaultText input-xxlarge" title="Enter notes about the above IRBs" name="editResearchProject.irbNotes" value="${actionBean.editResearchProject.irbNotes}" maxlength="255" />
                     </div>
                 </div>
 

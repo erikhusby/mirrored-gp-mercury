@@ -222,7 +222,7 @@ public class EventEtl extends GenericEntityEtl {
         synchronized (configIdCache) {
             Long id = (Long) configIdCache.get(cacheKey);
             if (id != null) {
-                logger.info("xxx Workflow config id cache hit on " + id);
+                logger.debug("Workflow config id cache hit on " + id);
                 return id;
             }
         }

@@ -40,8 +40,8 @@
                     $j("#product").tokenInput(
                         "${ctxpath}/products/product.action?autocomplete=", {
                             searchDelay: 2000,
-                            onAdd: updateAddOnCheckboxes,
-                            onDelete: updateAddOnCheckboxes,
+                            onAdd: updateUIForProductChoice,
+                            onDelete: updateUIForProductChoice,
                             <c:if test="${actionBean.productCompleteData != null && actionBean.productCompleteData != ''}">
                                 prePopulate: ${actionBean.productCompleteData},
                             </c:if>
@@ -50,7 +50,7 @@
                     );
 
                     <c:if test="${!actionBean.creating}">
-                        updateAddOnCheckboxes();
+                        updateUIForProductChoice();
                     </c:if>
                 }
             );
@@ -60,7 +60,7 @@
                 addOn['${addOnProduct.addOn.businessKey}'] = true;
             </c:forEach>
 
-            function updateAddOnCheckboxes() {
+            function updateUIForProductChoice() {
                 var productKey = $j("#product").val();
                 if ((productKey == null) || (productKey == "")) {
                     $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
@@ -71,7 +71,25 @@
                     dataType: 'json',
                     success: setupCheckboxes
                 });
+
+                $j.ajax({
+                    url: "${ctxpath}/orders/order.action?getSupportsNumberOfLanes=&product=" + productKey,
+                    dataType: 'json',
+                    success: adjustNumberOfLanesVisibility
+                });
             }
+
+
+            function adjustNumberOfLanesVisibility(data) {
+                var numberOfLanesDiv = $j("#numberOfLanesDiv")
+                if (data["supports"]) {
+                    numberOfLanesDiv.fadeIn()
+                }
+                else {
+                    numberOfLanesDiv.fadeOut();
+                }
+            }
+
 
             function setupCheckboxes(data) {
                 var productTitle = $j("#product").val();
@@ -124,7 +142,7 @@
                         Name *
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="orderName" name="editOrder.title" class="defaultText"
+                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="orderName" name="editOrder.title" class="defaultText input-xlarge"
                             title="Enter the name of the new order"/>
                     </div>
                 </div>
@@ -149,7 +167,7 @@
 
                 <div class="control-group">
                     <stripes:label for="researchProject" class="control-label">
-                        Research Project *
+                        Research Project <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
                         <stripes:text readonly="${!actionBean.editOrder.draft}" id="researchProject" name="researchProjectList" class="defaultText"
@@ -159,7 +177,7 @@
 
                 <div class="control-group">
                     <stripes:label for="product" class="control-label">
-                        Product *
+                        Product <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="product" name="productList" class="defaultText"
@@ -176,7 +194,7 @@
 
                 <div class="control-group">
                     <stripes:label for="quote" class="control-label">
-                        Quote *
+                        Quote <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="quote" name="editOrder.quoteId" class="defaultText"
@@ -186,7 +204,7 @@
                     </div>
                 </div>
 
-                <div class="control-group">
+                <div id="numberOfLanesDiv" class="control-group">
                     <stripes:label for="numberOfLanes" class="control-label">
                         Number of Lanes
                     </stripes:label>
@@ -201,7 +219,7 @@
                         Comments
                     </stripes:label>
                     <div class="controls">
-                        <stripes:textarea readonly="${!actionBean.editOrder.draft}" id="comments" name="editOrder.comments" class="defaultText"
+                        <stripes:textarea readonly="${!actionBean.editOrder.draft}" id="comments" name="editOrder.comments" class="defaultText input-xlarge textarea"
                             title="Enter comments" cols="50" rows="3"/>
                     </div>
                 </div>

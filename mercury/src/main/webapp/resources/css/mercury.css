@@ -19,6 +19,8 @@ a.external {background-image:url("/Mercury/images/external-link.gif");background
 
 h1, h2, h3, h4, h5 {font-family: 'Carrois Gothic SC', sans-serif; color: #644436;}
 
+select > option:nth-child(even) { background-color:#fafafa; }
+
 label, input, button, select, textarea { font-size: 12px }
 
 ul.DTTT_dropdown.dropdown-menu li { position: relative; }
@@ -46,11 +48,14 @@ table.table thead .sorting_desc_disabled { background: url('/Mercury/images/sort
 .dataTables_filter input { font-size: small; height: 14px;}
 .dataTables_filter { float: left !important; text-align: left !important; }
 
+/* highlight error */
+input.error, select.error, textarea.error { background-color: #F2DEDE; border: 1px #8b0000 solid; }
+
 /* SIMPLE (HIGHTLIGHTS ROW W/ MOUSE)***************** */
 table.simple thead tr { text-align: left; border-radius: 3px;-moz-border-radius: 3px; -webkit-border-radius: 3px; -khtml-border-radius: 3px;}
-table.simple thead th { background: url("/Mercury/images/simple-th-background.png") repeat-x scroll 50% 50% #CCCCCC;}
-table.simple th.sorting_asc { background-color: #dddddd; }
-table.simple th.sorting_desc { background-color: #dddddd; }
+table.simple thead tr { background: url("/Mercury/images/simple-th-background.png") repeat-x scroll 50% 50% #CCCCCC }
+table.simple th.sorting_asc { border-bottom: 2px solid #2F4F4F; }
+table.simple th.sorting_desc { border-bottom: 2px solid #2F4F4F; }
 table.simple tr.even { background-color: #fff; }
 table.simple tr.odd { background-color: #f5f5f5; }
 table.simple { border: 1px solid #ccc; border-collapse: collapse; }
@@ -59,7 +64,7 @@ table.simple td,table.simple th { spacing: 10px ; border-right: 1px solid #ccc; 
 
 table.nocol tbody td,table.nocol tbody th { border-left: none; border-right: none; }
 
-.page-header { border-bottom: 1px solid #EEEEEE; font-size: 2em; font-variant: small-caps; margin: 0 0 10px; padding-bottom: 0;}
+.page-header { border-bottom: 1px solid #EEEEEE; font-size: 2em; font-family: 'Carrois Gothic SC', sans-serif; margin: 0 0 10px; padding-bottom: 0;}
 
 .twocolumn {-moz-column-count:2;-webkit-column-count:2;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
 .threecolumn {-moz-column-count:3;-webkit-column-count:3;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
@@ -74,7 +79,7 @@ input[type="text"].defaultTextActive, .defaultTextActive { font-size: 12px; colo
 input[type='checkbox'].checkAll { margin-left: -8px; }
 
 /* multi-check box count indicator */
-.checkedCount { font-size:xx-small; vertical-align: super; margin-left: 2px; width: 25px; }
+.checkedCount { font-size: 12px; vertical-align: super; margin-left: 2px; width: 25px; }
 
 .form-horizontal .view-control-group { margin-bottom: 5px; }
 .form-horizontal .view-control-group .controls { margin-top: 5px; }

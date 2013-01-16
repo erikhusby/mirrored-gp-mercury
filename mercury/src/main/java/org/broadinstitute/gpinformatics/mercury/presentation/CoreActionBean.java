@@ -29,6 +29,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Locale;
 
 /*
  * This class is a core class to extend Stripes actions from, providing some basic functionality for
@@ -79,7 +80,7 @@ public class CoreActionBean implements ActionBean {
      */
     @Override
     public CoreActionBeanContext getContext() {
-        return this.context;
+        return context;
     }
 
     /**
@@ -97,11 +98,13 @@ public class CoreActionBean implements ActionBean {
     public void getErrorAndMessage() {
         if (context != null) {
             ValidationError error = (ValidationError) context.getRequest().getAttribute(FLASH_ERROR);
-            if (error != null)
+            if (error != null) {
                 context.getValidationErrors().addGlobalError(error);
+            }
             Message message = (Message) context.getRequest().getAttribute(FLASH_MESSAGE);
-            if (message != null)
+            if (message != null) {
                 context.getMessages().add(message);
+            }
         }
     }
 
@@ -129,8 +132,7 @@ public class CoreActionBean implements ActionBean {
     /**
      * @return Resolution
      */
-    @SuppressWarnings("unchecked")
-    protected Resolution getSourcePageResolution() {
+    public Resolution getSourcePageResolution() {
         Resolution res;
         try {
             res = getContext().getSourcePageResolution();
@@ -142,7 +144,7 @@ public class CoreActionBean implements ActionBean {
         }
 
         if (res instanceof OnwardResolution) {
-            return ((ForwardResolution) res).addParameters(getContext().getRequest().getParameterMap());
+            return ((OnwardResolution<?>) res).addParameters(getContext().getRequest().getParameterMap());
         }
         return res;
     }
@@ -189,6 +191,20 @@ public class CoreActionBean implements ActionBean {
         getContext().getValidationErrors().add(field, new SimpleError(errorMessage));
     }
 
+    /**
+     * Add an error that must be included literally in the response, without any formatting.  This should
+     * only be used in the case where the message may contain characters that will cause MessageFormat.format
+     * to generate errors.
+     * @param message the message to include.
+     */
+    public void addLiteralErrorMessage(final String message) {
+        getContext().getValidationErrors().addGlobalError(new SimpleError(null, null) {
+            @Override
+            public String getMessage(Locale locale) {
+                return message;
+            }
+        });
+    }
 
     /**
      * Convenience method for adding a SimpleError to the context.
@@ -196,7 +212,7 @@ public class CoreActionBean implements ActionBean {
      * @param errorMessage The message to put into a SimpleError
      */
     public void addGlobalValidationError(String errorMessage) {
-        getContext().getValidationErrors().add(ValidationErrors.GLOBAL_ERROR, new SimpleError(errorMessage));
+        getContext().getValidationErrors().addGlobalError(new SimpleError(errorMessage));
     }
 
     /**
@@ -332,8 +348,7 @@ public class CoreActionBean implements ActionBean {
      * @param contentType The MIME type of the response or null.
      * @param fileName The name of the downloaded file or null.
      */
-    public void setFileDownloadHeaders(String contentType,
-        String fileName) {
+    public void setFileDownloadHeaders(String contentType, String fileName) {
         // Some applications also muck with the character encoding
         // and cache control headers on file download, but it
         // doesn't seem that we need this.

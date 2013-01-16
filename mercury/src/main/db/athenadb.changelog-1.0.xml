@@ -2121,4 +2121,27 @@
     <changeSet id="GPLIM-603-5" author="hrafal">
         <dropNotNullConstraint schemaName="athena" tableName="product_order" columnName="research_project"/>
     </changeSet>
+
+    <!-- This changeSet needs to run on QA only -->
+    <changeSet id="GPLIM-760.1" author="mccrory">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="oracle" />
+            <sqlCheck expectedResult="1">select count(*) from ALL_CONSTRAINTS
+                      where table_name = 'PRODUCT_ORDER_ADD_ON_AUD'
+                      and constraint_name = 'SYS_C0010334' and owner = 'ATHENA'</sqlCheck>
+        </preConditions>
+        <dropNotNullConstraint schemaName="athena" tableName="product_order_add_on_aud" columnName="add_on"/>
+    </changeSet>
+
+    <!-- This changeSet needs to run on QA only -->
+    <changeSet id="GPLIM-760.2" author="mccrory">
+        <preConditions onFail="MARK_RAN">
+            <dbms type="oracle" />
+            <sqlCheck expectedResult="1">select count(*) from ALL_CONSTRAINTS
+                      where table_name = 'PRODUCT_ORDER_ADD_ON_AUD'
+                      and constraint_name = 'SYS_C0010335' and owner = 'ATHENA'</sqlCheck>
+        </preConditions>
+        <dropNotNullConstraint schemaName="athena" tableName="product_order_add_on_aud" columnName="product_order"/>
+    </changeSet>
+
 </databaseChangeLog>

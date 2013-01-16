@@ -1,11 +1,13 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -36,12 +38,13 @@ public class ExtractTransformTest extends Arquillian {
     private final Date now = new Date();
     private final String nowMsec = String.valueOf(now.getTime());
     private String badDataDir = datafileDir + nowMsec;
-    final String PRODUCT_ORDER_SAMPLE_CLASSNAME = "org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample";
-    final String PRODUCT_ORDER_SAMPLE_FILENAME = "product_order_sample.dat";
-    final String RESEARCH_PROJECT_CLASSNAME = "org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject";
-    final String RESEARCH_PROJECT_FILENAME = "research_project.dat";
-    final String WORKFLOW_CONFIG_CLASSNAME = "org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig";
+    static final String PRODUCT_ORDER_SAMPLE_CLASSNAME =   ProductOrderSample.class.getName();
+    static final String PRODUCT_ORDER_SAMPLE_FILENAME = "product_order_sample.dat";
+    static final String RESEARCH_PROJECT_CLASSNAME = ResearchProject.class.getName();
+    static final String RESEARCH_PROJECT_FILENAME = "research_project.dat";
+    final String WORKFLOW_CONFIG_CLASSNAME = WorkflowConfig.class.getName();
     final String WORKFLOW_CONFIG_FILENAME = "workflow_config.dat";
+
 
     @Inject
     private ExtractTransform extractTransform;
@@ -61,7 +64,7 @@ public class ExtractTransformTest extends Arquillian {
 
     @BeforeMethod
     public void beforeMethod() throws Exception {
-        extractTransform.setDatafileDir(datafileDir);
+        ExtractTransform.setDatafileDir(datafileDir);
         deleteEtlFiles(datafileDir);
     }
 
@@ -71,7 +74,7 @@ public class ExtractTransformTest extends Arquillian {
     }
 
     /** Deletes all the files written by these tests including .dat, isReady, and lastEtlRun files. */
-    private void deleteEtlFiles(final String dir) {
+    private static void deleteEtlFiles(String dir) {
         // Uses current year month day to determine whether to delete a file.
         final String yyyymmdd = (new SimpleDateFormat("yyyyMMdd")).format(new Date());
         FilenameFilter filter = new FilenameFilter() {
@@ -82,25 +85,25 @@ public class ExtractTransformTest extends Arquillian {
                         || filename.equals(ExtractTransform.LAST_ETL_FILE);
             }
         };
-        for (File file : new File (dir).listFiles(filter)) {
-            file.delete();
+        for (File file : new File(dir).listFiles(filter)) {
+            FileUtils.deleteQuietly(file);
         }
     }
 
 
     /** Passes a blank and a non-existent directory for datafiles. */
     public void testInvalidDir() {
-        extractTransform.setDatafileDir(null);
+        ExtractTransform.setDatafileDir(null);
         Assert.assertEquals(-1, extractTransform.incrementalEtl());
         Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR,
                 extractTransform.backfillEtl(PRODUCT_ORDER_SAMPLE_CLASSNAME, 0, Long.MAX_VALUE));
 
-        extractTransform.setDatafileDir("");
+        ExtractTransform.setDatafileDir("");
         Assert.assertEquals(-1, extractTransform.incrementalEtl());
         Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR,
                 extractTransform.backfillEtl(PRODUCT_ORDER_SAMPLE_CLASSNAME, 0, Long.MAX_VALUE));
 
-        extractTransform.setDatafileDir(badDataDir);
+        ExtractTransform.setDatafileDir(badDataDir);
         Assert.assertEquals(-1, extractTransform.incrementalEtl());
         Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR,
                 extractTransform.backfillEtl(PRODUCT_ORDER_SAMPLE_CLASSNAME, 0, Long.MAX_VALUE));
@@ -121,8 +124,8 @@ public class ExtractTransformTest extends Arquillian {
                 extractTransform.backfillEtl(PRODUCT_ORDER_SAMPLE_CLASSNAME, 1000, 999));
     }
 
-    /** Must supply fully qualified classname */
-    public void testInvalidClassname() {
+    /** Must supply fully qualified class name */
+    public void testInvalidClassName() {
         Assert.assertEquals(Response.Status.NOT_FOUND,
                 extractTransform.backfillEtl("ProductOrderSample", 0, Long.MAX_VALUE));
     }
@@ -146,7 +149,7 @@ public class ExtractTransformTest extends Arquillian {
     public void testBackfillEtlRange() throws Exception {
         // Selects an entity to ETL, or skips the test if there's none available.
         List<ProductOrderSample> list = auditReaderDao.findAll(ProductOrderSample.class, 1, 3);
-        if (list.size() == 0) {
+        if (list.isEmpty()) {
             return;
         }
         ProductOrderSample entity = null;
@@ -156,16 +159,17 @@ public class ExtractTransformTest extends Arquillian {
                 break;
             }
         }
+        Assert.assertNotNull(entity);
         // ETLs a range of entity ids that includes the known entity id.
         long startId = entity.getProductOrderSampleId() -  1;
         long endId = entity.getProductOrderSampleId() +  1;
 
-        final long msecStart = System.currentTimeMillis();
+        long msecStart = System.currentTimeMillis();
 
         Assert.assertEquals(Response.Status.NO_CONTENT,
                 extractTransform.backfillEtl(PRODUCT_ORDER_SAMPLE_CLASSNAME, startId, endId));
 
-        final long msecEnd = System.currentTimeMillis() + 1000;
+        long msecEnd = System.currentTimeMillis() + 1000;
 
         // Verifies there is only one .dat file and one _is_ready file, both having
         // a datetime in the expected range.
@@ -181,9 +185,7 @@ public class ExtractTransformTest extends Arquillian {
                 foundDataFile = true;
 
                 // verifies that the entity id is present in the .dat file
-                Reader reader = new FileReader(file);
-                String content = IOUtils.toString(reader);
-                IOUtils.closeQuietly(reader);
+                String content = FileUtils.readFileToString(file);
                 Assert.assertTrue(content.contains("," + entity.getProductOrderSampleId() + ","));
             }
             if (filename.endsWith("_is_ready")) {
@@ -236,7 +238,7 @@ public class ExtractTransformTest extends Arquillian {
     /** Backfill ETL for default range. */
     public void testBackfillEtl() throws Exception {
         // Skips the test if there's no entities available.
-        if (auditReaderDao.findAll(ResearchProject.class, 1, 1).size() == 0) {
+        if (auditReaderDao.findAll(ResearchProject.class, 1, 1).isEmpty()) {
             return;
         }
 
@@ -245,7 +247,7 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertEquals(Response.Status.NO_CONTENT,
                 extractTransform.backfillEtl(RESEARCH_PROJECT_CLASSNAME, 0, Long.MAX_VALUE));
 
-        final long msecEnd = System.currentTimeMillis() + 1000;
+        long msecEnd = System.currentTimeMillis() + 1000;
 
         // Verifies there is only one .dat file and one _is_ready file, both having
         // a datetime in the expected range.
@@ -261,10 +263,8 @@ public class ExtractTransformTest extends Arquillian {
                 foundDataFile = true;
 
                 // data file should have at least one record in it
-                Reader reader = new FileReader(file);
-                List<String> content = IOUtils.readLines(reader);
-                IOUtils.closeQuietly(reader);
-                Assert.assertTrue(content.size() > 0);
+                List<String> content = FileUtils.readLines(file);
+                Assert.assertTrue(!content.isEmpty());
             }
             if (filename.endsWith("_is_ready")) {
                 //should only have found one _is_ready file
@@ -306,10 +306,8 @@ public class ExtractTransformTest extends Arquillian {
 
     /** Writes an unparsable timestamp. */
     public void testReadLastEtlUnparsable() throws IOException {
-        File file = new File (datafileDir, ExtractTransform.LAST_ETL_FILE);
-        FileWriter fw = new FileWriter(file, false);
-        fw.write("abcedfg");
-        fw.close();
+        File file = new File(datafileDir, ExtractTransform.LAST_ETL_FILE);
+        FileUtils.write(file, "abcedfg");
 
         Assert.assertEquals(0L, extractTransform.readLastEtlRun());
     }

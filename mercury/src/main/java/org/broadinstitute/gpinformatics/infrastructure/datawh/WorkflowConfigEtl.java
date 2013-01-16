@@ -170,7 +170,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
     String entityRecord(String etlDateStr, boolean isDelete, WorkflowConfigDenorm entity) {
         return genericRecord(etlDateStr, isDelete,
                 entity.getWorkflowConfigDenormId(),
-                entity.getEffectiveDate(),
+                entity.getEffectiveDateStr(),
                 entity.getProductWorkflowName(),
                 entity.getProductWorkflowVersion(),
                 entity.getWorkflowProcessName(),

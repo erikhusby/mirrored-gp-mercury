@@ -24,12 +24,19 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import javax.inject.Inject;
 import java.text.MessageFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 
 /**
  * This handles all the needed interface processing elements
  */
 @UrlBinding("/search/all.action")
 public class SearchActionBean extends CoreActionBean {
+
+    private static final String SEPARATOR = ",";
+    private static final Pattern SPLIT_PATTERN = Pattern.compile("[" + SEPARATOR + "\\s]+");
+
+    /** Automatically convert known BSP IDs (SM-, SP-) to uppercase. */
+    private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
 
     private static final String SESSION_LIST_PAGE = "/search/search.jsp";
     public static final String ACTIONBEAN_URL_BINDING = "/search/all.action";
@@ -299,20 +306,43 @@ public class SearchActionBean extends CoreActionBean {
         this.foundBatches = foundBatches;
     }
 
+    public static List<String> cleanInputString(String searchKey) {
+        return cleanInputString(searchKey, false);
+    }
+
+    public static List<String> cleanInputStringForSamples(String searchKey) {
+        return cleanInputString(searchKey, true);
+    }
+
     /**
      * This method takes a list of search keys turns newlines into commas and splits the individual search keys into
      * a list.
      *
      * @return A list of all the keys from the searchKey string.
      */
-    public static List<String> cleanInputString(String searchKey) {
-        searchKey = searchKey.replaceAll("\\n", ",");
-        String[] keys = searchKey.split(",");
-        int index = 0;
-        for (String key : keys) {
-            keys[index++] = key.trim();
+    private static List<String> cleanInputString(String searchKey, boolean includeSampleFixup) {
+        if (searchKey == null) {
+            return Collections.emptyList();
         }
-        return Arrays.asList(keys);
+
+        String[] valueArray =  SPLIT_PATTERN.split(searchKey, 0);
+        if (valueArray.length == 1 && valueArray[0].isEmpty()) {
+            // Handle empty string case.
+            valueArray = new String[0];
+        }
+
+        List<String> sampleIds = new ArrayList<String>(valueArray.length);
+        for (String value : valueArray) {
+            if (!StringUtils.isBlank(value)) {
+                value = value.trim();
+                if (includeSampleFixup && UPPERCASE_PATTERN.matcher(value).matches()) {
+                    value = value.toUpperCase();
+                }
+                sampleIds.add(value);
+            }
+        }
+
+        return sampleIds;
     }
 
     public boolean isResultsAvailable() {

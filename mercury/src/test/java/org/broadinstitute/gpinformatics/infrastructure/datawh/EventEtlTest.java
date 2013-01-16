@@ -2,31 +2,24 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
-import org.easymock.EasyMock;
-import org.testng.annotations.*;
+import org.testng.annotations.BeforeMethod;
+import org.testng.annotations.Test;
 
-import javax.xml.bind.JAXBContext;
-import javax.xml.bind.JAXBElement;
-import javax.xml.bind.JAXBException;
-import javax.xml.bind.Marshaller;
-import javax.xml.namespace.QName;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import static org.easymock.EasyMock.*;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class EventEtlTest {
@@ -101,12 +94,12 @@ public class EventEtlTest {
         // a calculated hash value based on the contents of the WorkflowConfig elements.
         assertEquals(eventEtl.lookupWorkflowConfigId("No such event", sample1, new Date(MSEC_DATES[0] + 1000)), 0L);
         assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", sample1, new Date(MSEC_DATES[0] - 1000)), 0L);
-        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", sample1, new Date(MSEC_DATES[0] + 1000)), 2651125055212072504L);
-        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", sample1, new Date(MSEC_DATES[1] + 1000)), 5966136721487221510L);
-        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", sample1, new Date(MSEC_DATES[2] + 1000)), 9072110851951012154L);
+        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", sample1, new Date(MSEC_DATES[0] + 1000)), -3820907449895214598L);
+        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", sample1, new Date(MSEC_DATES[1] + 1000)), -7175333637954737190L);
+        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", sample1, new Date(MSEC_DATES[2] + 1000)), 4622114345093982745L);
         // (check log for cache hit on next one)
-        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", sample2, new Date(MSEC_DATES[2] + 1000)), 9072110851951012154L);
-        assertEquals(eventEtl.lookupWorkflowConfigId("SageCleanup", sample3, new Date(MSEC_DATES[2] + 1000)), -6810598698865887191L);
+        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", sample2, new Date(MSEC_DATES[2] + 1000)), 4622114345093982745L);
+        assertEquals(eventEtl.lookupWorkflowConfigId("SageCleanup", sample3, new Date(MSEC_DATES[2] + 1000)), -6067216737971651861L);
 
         verify(labEventDao, pdoDao, auditReaderDao, sample1, sample2, sample3);
     }

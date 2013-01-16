@@ -22,14 +22,10 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.StringReader;
 import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This class is for research projects action bean / web page.
@@ -96,7 +92,9 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private Map<String, Long> projectOrderCounts;
 
     // These are the fields for catching the input tokens
-    @Validate(expression = "this!=null || !editResearchProject.projectManagers.isEmpty", label = "Project Managers", on = {SAVE_ACTION})
+    @ValidateNestedProperties({
+            @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
+    })
     @Inject
     private UserTokenInput projectManagerList;
 
@@ -184,7 +182,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return Arrays.asList(ResearchProject.Status.values());
     }
 
-    @Default
+    @DefaultHandler
     @HandlesEvent(LIST_ACTION)
     public Resolution list() {
         return new ForwardResolution(PROJECT_LIST_PAGE);
@@ -221,8 +219,25 @@ public class ResearchProjectActionBean extends CoreActionBean {
             return new ForwardResolution(getContext().getSourcePage());
         }
 
-        researchProjectDao.persist(editResearchProject);
-        addMessage("The research project '" + editResearchProject.getTitle() + "' has been saved.");
+        // Set the modified by and date
+        editResearchProject.recordModification(userBean.getBspUser().getUserId());
+
+        try {
+            researchProjectDao.persist(editResearchProject);
+
+            // TODO: Force as much work here as possible to catch conditions where we would want to close the JIRA ticket?
+            // researchProjectDao.flush();
+            addMessage("The research project '" + editResearchProject.getTitle() + "' has been saved.");
+        } catch (RuntimeException e) {
+            if (researchProject == null) {
+                // only reset Jira ticket info when creating a project, new projects don't have business key passed in
+                editResearchProject.rollbackPersist();
+            }
+
+            // TODO: close already-created JIRA ticket, should we redirect to the page with a Stripes error?
+            throw e;
+        }
+
         return new RedirectResolution(ResearchProjectActionBean.class, VIEW_ACTION).addParameter(RESEARCH_PROJECT_PARAMETER, editResearchProject.getBusinessKey());
     }
 
@@ -248,9 +263,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     /**
-     * The string parameter name of the business key.
-     *
-     * @return
+     * @return The string parameter name of the business key.
      */
     public String getResearchProject() {
         return researchProject;

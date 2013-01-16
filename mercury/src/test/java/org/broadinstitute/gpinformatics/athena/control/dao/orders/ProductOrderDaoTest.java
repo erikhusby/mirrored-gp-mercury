@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectResourceTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -46,7 +47,7 @@ public class ProductOrderDaoTest extends ContainerTest {
     private UserTransaction utx;
 
     private final String testResearchProjectKey = "TestResearchProject_" + UUID.randomUUID();
-    private final static String testProductOrderKeyPrefix = "DRAFT-";
+    private static final String testProductOrderKeyPrefix = "DRAFT-";
 
     ProductOrder order;
 
@@ -70,6 +71,9 @@ public class ProductOrderDaoTest extends ContainerTest {
             researchProjectDao.persist(researchProject);
         }
         order = createTestProductOrder(researchProjectDao, productDao);
+        BspUser testUser = new BspUser();
+        testUser.setUserId(TEST_CREATOR_ID);
+        order.prepareToSave(testUser);
         productOrderDao.persist(order);
         productOrderDao.flush();
         productOrderDao.clear();

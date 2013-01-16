@@ -11,19 +11,18 @@
             $j(document).ready(function() {
                 $j('#sampleData').dataTable( {
                     "oTableTools": ttExportDefines,
-                    "aaSorting": [[0,'asc']],
                     "aoColumns": [
-                        {"bSortable": true, "sType": "html"},   // ID
-                        {"bSortable": true},                    // Participant ID
-                        {"bSortable": true},                    // Volume
-                        {"bSortable": true},                    // Concentration
-                        {"bSortable": true},                    // Yield Amount
-                        {"bSortable": true, "sType" : "title-string"},   // FP Status
-                        {"bSortable": true},                    // Eligible
-                        {"bSortable": true},                    // Billed
-                        {"bSortable": true},                    // Abandoned
-                        {"bSortable": true},                    // Price Item 1
-                        {"bSortable": true},                    // Price Item 2
+                        {"bSortable": false, "sType": "html"},   // ID
+                        {"bSortable": false},                    // Participant ID
+                        {"bSortable": false},                    // Volume
+                        {"bSortable": false},                    // Concentration
+                        {"bSortable": false},                    // Yield Amount
+                        {"bSortable": false, "sType" : "title-string"},   // FP Status
+                        {"bSortable": false},                    // Eligible
+                        {"bSortable": false},                    // Billed
+                        {"bSortable": false},                    // Abandoned
+                        {"bSortable": false},                    // Price Item 1
+                        {"bSortable": false},                    // Price Item 2
                         {"bSortable": false}]                   // Comment
                 })
             });
@@ -39,14 +38,24 @@
                 <c:if test="${actionBean.editOrder.draft}">
                     <stripes:submit name="placeOrder" value="Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
                 </c:if>
+
+                <c:if test="${actionBean.editOrder.draft}">
+                <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+                              beanclass="${actionBean.class.name}" event="edit" class="btn" style="text-decoration: none !important;">
+                    <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
+                    <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                </stripes:link>
+                </c:if>
             </div>
         </stripes:form>
 
+        <c:if test="${!actionBean.editOrder.draft}">
         <stripes:link title="Click to edit ${actionBean.editOrder.title}"
             beanclass="${actionBean.class.name}" event="edit" class="pull-right">
             <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
             <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
         </stripes:link>
+        </c:if>
 
         <div style="both:clear"> </div>
 
@@ -78,7 +87,11 @@
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Status</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editOrder.orderStatus}</div>
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrder.draft}"><span class="label label-info"></c:if>
+                        ${actionBean.editOrder.orderStatus}
+                        <c:if test="${actionBean.editOrder.draft}"></span></c:if>
+                    </div>
                 </div>
             </div>
 

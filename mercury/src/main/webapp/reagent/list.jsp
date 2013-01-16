@@ -20,7 +20,7 @@
             $j(document).ready(function() {
                 $j('#reagentList').dataTable( {
                     "oTableTools": ttExportDefines,
-                    "aaSorting": [[1,'asc']],
+                    "aaSorting": [[0,'asc']],
                     "aoColumns": [
                         {"bSortable": true, "sType": "html"},
                         {"bSortable": true},

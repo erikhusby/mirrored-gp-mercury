@@ -44,6 +44,7 @@
         <script type="text/javascript" src="${ctxpath}/resources/scripts/json.js"></script>
 
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.tokeninput-1.6.0.js"></script>
+        <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.autosize-min.js"></script>
 
 
         <link rel="Shortcut Icon" type="image/x-icon" href="${ctxpath}/favicon.ico"/>
@@ -90,6 +91,10 @@
                 $j('#dateRangeDiv').dateRangeSelector();
             });
 
+            $j(function(){
+                $j('.textarea').autosize();
+            });
+
             function clearOnFocus(srcc) {
                 if ($j(this).val() == $j(this)[0].title) {
                     $j(this).removeClass("defaultTextActive");
@@ -114,7 +119,7 @@
                 }
             }
         </script>
-        <title>Mercury ${pageTitle}</title>
+        <title>Mercury <c:if test="${pageTitle != null}">${pageTitle}</c:if></title>
 
         <stripes:layout-component name="extraHead"/>
     </head>
@@ -124,7 +129,7 @@
             <div class="brand" style="display:inline;">
                 <img src="${ctxpath}/images/broad_logo.png" alt="Broad Institute"/>
                 <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean"
-                              style="padding-left: 30px;text-decoration: none; font-variant: small-caps; font-size: 2.2em;">
+                              style="padding-left: 30px;text-decoration: none; font-family: 'Carrois Gothic SC', sans-serif; font-size: 2.2em;">
                     <img src="${ctxpath}/images/mercury_helmet_${bean.buildInfoBean.deployment}.png"
                          alt="Mercury Helmet" width="40" height="30"/> Mercury</stripes:link>
             </div>
@@ -182,7 +187,7 @@
     </body>
 
     <footer>
-        <p>Copyright © 2012 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or
+        <p>Copyright © 2012-2013 Eli and Edythe L. Broad Institute. All rights reserved. No unauthorized use or
             disclosure is permitted.<br/>
             Genomics Platform. ${bean.buildInfoBean.buildInformation}. Deployment
             - ${bean.buildInfoBean.deployment}.</p>

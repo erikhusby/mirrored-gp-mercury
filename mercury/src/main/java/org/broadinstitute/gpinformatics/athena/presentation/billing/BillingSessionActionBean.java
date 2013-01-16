@@ -113,10 +113,10 @@ public class BillingSessionActionBean extends CoreActionBean {
     }
 
     /**
-     * This does the download and returns the proper resolution for download, if succesful. If not,
+     * This does the download and returns the proper resolution for download, if successful. If not,
      * then it returns null.
      *
-     * @return The resolution for th download
+     * @return The resolution for the download
      */
     @HandlesEvent("downloadQuoteItems")
     public Resolution downloadQuoteItems() {
@@ -152,7 +152,7 @@ public class BillingSessionActionBean extends CoreActionBean {
             };
         } catch (Exception ex) {
             addGlobalValidationError("Got an exception trying to download the billing tracker: " + ex.getMessage());
-            return getContext().getSourcePageResolution();
+            return getSourcePageResolution();
         } finally {
             IOUtils.closeQuietly(outputStream);
         }
@@ -163,7 +163,6 @@ public class BillingSessionActionBean extends CoreActionBean {
 
         boolean errorsInBilling = false;
 
-        String sessionKey =  editSession.getBusinessKey();
         for (QuoteImportItem item : editSession.getUnBilledQuoteImportItems()) {
 
             Quote quote = new Quote();
@@ -183,9 +182,9 @@ public class BillingSessionActionBean extends CoreActionBean {
 
                 item.setBillingMessages(BillingSession.SUCCESS);
 
-                String workUrl = quoteLink.workUrl(quote.getAlphanumericId());
+                String workUrl = quoteLink.workUrl(quote.getAlphanumericId(), message);
 
-                String link = "<a href=\"" + workUrl + "\">click here</a>";
+                String link = "<a href=\"" + workUrl + "\" target=\"QUOTE\">click here</a>";
                 addMessage("Sent to quote server: " + link + " to see the value");
             } catch (Exception ex) {
                 // Any exceptions in sending to the quote server will just be reported and will continue on to the next one
