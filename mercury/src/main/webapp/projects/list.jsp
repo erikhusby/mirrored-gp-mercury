@@ -11,7 +11,16 @@
             $j(document).ready(function () {
                 $j('.shiftCheckbox').enableCheckboxRangeSelection();
                 $j('#projectsTable').dataTable({
-                    "oTableTools": ttExportDefines
+                    "oTableTools": ttExportDefines,
+                    "aaSorting": [[4,'desc']],
+                    "aoColumns": [
+                        {"bSortable": true, "sType": "html"},   // Name
+                        {"bSortable": true, "sType": "title-jira"},   // ID
+                        {"bSortable": true},                    // Status
+                        {"bSortable": true},                    // Owner
+                        {"bSortable": true, "sType": "date"},   // Updated
+                        {"bSortable": true, "sType": "numeric"} // Count
+                    ]
                 })
             });
         </script>
@@ -48,7 +57,7 @@
                     </stripes:link>
                 </td>
                 <td>
-                    <a class="external" target="JIRA" href="${actionBean.jiraUrl}${project.jiraTicketKey}" class="external" target="JIRA">
+                    <a class="external" target="JIRA" href="${actionBean.jiraUrl}${project.jiraTicketKey}" class="external" target="JIRA" title="${project.jiraTicketKey}">
                             ${project.jiraTicketKey}
                     </a>
                 </td>

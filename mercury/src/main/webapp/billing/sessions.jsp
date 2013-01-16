@@ -11,10 +11,10 @@
                     "oTableTools": ttExportDefines,
                     "aaSorting": [[2,'desc']],
                     "aoColumns": [
-                        {"bSortable": true},                   // ID
-                        {"bSortable": true},                   // Created By
-                        {"bSortable": true, "sType": "date"},  // Created Date
-                        {"bSortable": true, "sType": "date"}]  // Billed Date
+                        {"bSortable": true, "sType": "title-jira"}, // ID
+                        {"bSortable": true},                        // Created By
+                        {"bSortable": true, "sType": "date"},       // Created Date
+                        {"bSortable": true, "sType": "date"}]       // Billed Date
                 })
             });
         </script>
@@ -36,7 +36,7 @@
                     <c:forEach items="${actionBean.billingSessions}" var="session">
                         <tr>
                             <td>
-                                <stripes:link href="/billing/session.action" event="view">
+                                <stripes:link href="/billing/session.action" event="view" title="${session.businessKey}">
                                     <stripes:param name="sessionKey" value="${session.businessKey}"/>
                                     ${session.businessKey}
                                 </stripes:link>
