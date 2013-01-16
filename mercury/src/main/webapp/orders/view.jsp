@@ -87,7 +87,11 @@
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Status</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editOrder.orderStatus}</div>
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrder.draft}"><span class="label label-info"></c:if>
+                        ${actionBean.editOrder.orderStatus}
+                        <c:if test="${actionBean.editOrder.draft}"></span></c:if>
+                    </div>
                 </div>
             </div>
 
