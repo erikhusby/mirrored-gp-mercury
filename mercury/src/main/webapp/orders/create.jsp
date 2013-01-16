@@ -51,6 +51,7 @@
 
                     <c:if test="${!actionBean.creating}">
                         updateUIForProductChoice();
+                        updateFundsRemaining();
                     </c:if>
                 }
             );
@@ -67,13 +68,13 @@
                 }
 
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getAddOns=&product=" + productKey,
+                    url: "${ctxpath}/orders/order.action?getAddOns=&productOrder=" + productKey,
                     dataType: 'json',
                     success: setupCheckboxes
                 });
 
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getSupportsNumberOfLanes=&product=" + productKey,
+                    url: "${ctxpath}/orders/order.action?getSupportsNumberOfLanes=&productOrder=" + productKey,
                     dataType: 'json',
                     success: adjustNumberOfLanesVisibility
                 });
@@ -118,15 +119,14 @@
             function updateFundsRemaining() {
                 var quoteIdentifier = $j("#quote").val();
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getQuoteFunding&quoteIdentifier=" + quoteIdentifier,
+                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier,
                     dataType: 'json',
-                    data: data,
                     success: updateFunds
                 });
             }
 
             function updateFunds(data) {
-                $j("#fundsRemaining").text(data.fundsRemaining);
+                $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
             }
         </script>
     </stripes:layout-component>

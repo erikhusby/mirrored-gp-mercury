@@ -65,6 +65,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     private QuoteService quoteService;
 
     @Inject
+    private ProductOrderUtil productOrderUtil;
+
+    @Inject
     private ProductOrderListEntryDao orderListEntryDao;
 
     @Inject
@@ -116,6 +119,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<String> selectedProductOrderBusinessKeys;
     private List<ProductOrder> selectedProductOrders;
+
+    private String quoteIdentifier;
 
     private String product;
 
@@ -260,6 +265,20 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!userBean.ensureUserValid()) {
             addGlobalValidationError(MessageFormat.format(UserBean.LOGIN_WARNING, validatingFor + " an order"));
         }
+    }
+
+    @HandlesEvent("getQuoteFunding")
+    public Resolution getQuoteFunding() throws Exception {
+
+        JSONObject item = new JSONObject();
+        item.put("key", quoteIdentifier);
+
+        if (quoteIdentifier != null) {
+            String fundsRemaining = productOrderUtil.getFundsRemaining(quoteIdentifier);
+            item.put("fundsRemaining", fundsRemaining);
+        }
+
+        return new StreamingResolution("text", new StringReader(item.toString()));
     }
 
     @DefaultHandler
@@ -575,5 +594,13 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setSampleList(String sampleList) {
         this.sampleList = sampleList;
+    }
+
+    public String getQuoteIdentifier() {
+        return quoteIdentifier;
+    }
+
+    public void setQuoteIdentifier(String quoteIdentifier) {
+        this.quoteIdentifier = quoteIdentifier;
     }
 }

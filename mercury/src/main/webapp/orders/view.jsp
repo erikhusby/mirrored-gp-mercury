@@ -24,8 +24,23 @@
                         {"bSortable": false},                    // Price Item 1
                         {"bSortable": false},                    // Price Item 2
                         {"bSortable": false}]                   // Comment
-                })
+                });
+
+                updateFundsRemaining();
             });
+
+            function updateFundsRemaining() {
+                var quoteIdentifier = $j("#quote").val();
+                $j.ajax({
+                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${actionBean.editOrder.quoteId}",
+                    dataType: 'json',
+                    success: updateFunds
+                });
+            }
+
+            function updateFunds(data) {
+                $j("#fundsRemaining").text(' <span>Funds Remaining: ' + data.fundsRemaining + '</span>');
+            }
         </script>
     </stripes:layout-component>
 
@@ -37,7 +52,7 @@
             <div class="actionButtons">
                 <c:if test="${actionBean.editOrder.draft}">
                     <stripes:submit name="placeOrder" value="Validate and Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
-                    <stripes:submit name="validate" value="Validate Only" style="margin-left: 5px;" class="btn"/>
+                    <stripes:submit name="validate" value="Validate" style="margin-left: 5px;" class="btn"/>
                     &#160;
                     <stripes:link title="Click to edit ${actionBean.editOrder.title}"
                                   beanclass="${actionBean.class.name}" event="edit" class="btn" style="text-decoration: none !important;">
@@ -141,6 +156,7 @@
                         <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
                             ${actionBean.editOrder.quoteId}
                         </a>
+                        <div id="fundsRemaining"> </div>
                     </div>
                 </div>
             </div>
