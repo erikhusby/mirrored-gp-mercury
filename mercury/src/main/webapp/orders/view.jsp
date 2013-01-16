@@ -38,14 +38,24 @@
                 <c:if test="${actionBean.editOrder.draft}">
                     <stripes:submit name="placeOrder" value="Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
                 </c:if>
+
+                <c:if test="${actionBean.editOrder.draft}">
+                <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+                              beanclass="${actionBean.class.name}" event="edit" class="btn" style="text-decoration: none !important;">
+                    <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
+                    <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                </stripes:link>
+                </c:if>
             </div>
         </stripes:form>
 
+        <c:if test="${!actionBean.editOrder.draft}">
         <stripes:link title="Click to edit ${actionBean.editOrder.title}"
             beanclass="${actionBean.class.name}" event="edit" class="pull-right">
             <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
             <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
         </stripes:link>
+        </c:if>
 
         <div style="both:clear"> </div>
 
