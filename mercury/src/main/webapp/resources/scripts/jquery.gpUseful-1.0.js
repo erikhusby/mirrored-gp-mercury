@@ -156,17 +156,85 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
         return ((a < b) ? 1 : ((a > b) ? -1 : 0));
     },
 
-    "title-numeric-pre": function ( a ) {
-        var x = a.match(/title="*(-?[0-9\.]+)/)[1];
-        return parseFloat( x );
+    "title-jira-pre": function ( a ) {
+        var matchingArray = a.match(/title="(.*?)"/);
+        if (matchingArray == null) {
+            return '';
+        }
+
+        if (matchingArray.length < 2) {
+            return '';
+        }
+
+        return matchingArray[1].toUpperCase();
     },
 
-    "title-numeric-asc": function ( a, b ) {
-        return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+    "title-jira-asc": function ( a, b ) {
+
+        // JIRA ticket regexp
+        var re = /^([A-Z]+)-(\d+)$/;
+
+        var aMatchingArray = a.match(re);
+        var bMatchingArray = b.match(re);
+
+        var aMatchFail = (aMatchingArray == null || aMatchingArray.length < 3);
+        var bMatchFail = (bMatchingArray == null || bMatchingArray.length < 3);
+
+        // do a simple lexical compare if both fail
+        if (aMatchFail && bMatchFail) {
+            return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+        }
+        else if (aMatchFail) {
+            return -1;
+        }
+        else if (bMatchFail) {
+            return 1;
+        }
+
+        var aProject = aMatchingArray[1];
+        var bProject = bMatchingArray[1];
+        if (aProject != bProject) {
+            return ((aProject < bProject) ? -1 : ((aProject > bProject) ? 1 : 0));
+        }
+
+        var aIssue = parseFloat(aMatchingArray[2]);
+        var bIssue = parseFloat(bMatchingArray[2]);
+
+        return ((aIssue < bIssue) ? -1 : ((aIssue > bIssue) ? 1 : 0));
     },
 
-    "title-numeric-desc": function ( a, b ) {
-        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+    "title-jira-desc": function ( a, b ) {
+
+        // JIRA ticket regexp
+        var re = /^([A-Z]+)-(\d+)$/;
+
+        var aMatchingArray = a.match(re);
+        var bMatchingArray = b.match(re);
+
+        var aMatchFail = (aMatchingArray == null || aMatchingArray.length < 3);
+        var bMatchFail = (bMatchingArray == null || bMatchingArray.length < 3);
+
+        // do a simple lexical compare if both fail
+        if (aMatchFail && bMatchFail) {
+            return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+        }
+        else if (aMatchFail) {
+            return 1;
+        }
+        else if (bMatchFail) {
+            return -1;
+        }
+
+        var aProject = aMatchingArray[1];
+        var bProject = bMatchingArray[1];
+        if (aProject != bProject) {
+            return ((aProject < bProject) ? 1 : ((aProject > bProject) ? -1 : 0));
+        }
+
+        var aIssue = parseFloat(aMatchingArray[2]);
+        var bIssue = parseFloat(bMatchingArray[2]);
+
+        return ((aIssue < bIssue) ? 1 : ((aIssue > bIssue) ? -1 : 0));
     }
 });
 

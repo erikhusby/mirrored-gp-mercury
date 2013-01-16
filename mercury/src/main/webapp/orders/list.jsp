@@ -15,7 +15,7 @@
                     "aoColumns": [
                         {"bSortable": false},                   // checkbox
                         {"bSortable": true, "sType": "html"},   // Name
-                        {"bSortable": true, "sType": "title-numeric"},   // ID
+                        {"bSortable": true, "sType": "title-jira"},   // ID
                         {"bSortable": true},                    // Product
                         {"bSortable": true},                    // Product Family
                         {"bSortable": true},                    // Status
@@ -97,17 +97,10 @@
                                 <c:choose>
                                     <%-- draft PDO --%>
                                     <c:when test="${order.draft}">
-                                        &nbsp;
+                                        <span title="DRAFT">&nbsp;</span>
                                     </c:when>
-                                    <%-- Graphene-generated PDO --%>
-                                    <c:when test="${!order.validJiraTicket}">
-                                        <a target="JIRA" title="0">
-                                                ${order.jiraTicketKey}
-                                        </a>
-                                    </c:when>
-                                    <%-- appears to be a real PDO --%>
                                     <c:otherwise>
-                                        <a target="JIRA" title="${order.jiraTicketNumber}"
+                                        <a target="JIRA" title="${order.jiraTicketKey}"
                                            href="${actionBean.jiraUrl}${order.jiraTicketKey}" class="external"
                                            target="JIRA">
                                                 ${order.jiraTicketKey}
