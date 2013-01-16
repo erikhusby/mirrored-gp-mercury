@@ -138,7 +138,7 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertEquals(endRev, extractTransform.readLastEtlRun());
 
         long etlMsec = extractTransform.getIncrementalRunStartTime();
-        String readyFilename = ExtractTransform.fullDateFormat.format(new Date(etlMsec)) + ExtractTransform.READY_FILE_SUFFIX;
+        String readyFilename = ExtractTransform.secTimestampFormat.format(new Date(etlMsec)) + ExtractTransform.READY_FILE_SUFFIX;
         Assert.assertTrue((new File(datafileDir, readyFilename)).exists());
     }
 
@@ -278,8 +278,8 @@ public class ExtractTransformTest extends Arquillian {
 
     /** Returns all files in the given directory, having filename timestamp in the given range. */
     private File[] getDirFiles(String directoryName, long msecStart, long msecEnd) {
-        final long yyyymmddHHMMSSstart = Long.parseLong(ExtractTransform.fullDateFormat.format(new Date(msecStart)));
-        final long yyyymmddHHMMSSend = Long.parseLong(ExtractTransform.fullDateFormat.format(new Date(msecEnd)));
+        final long yyyymmddHHMMSSstart = Long.parseLong(ExtractTransform.secTimestampFormat.format(new Date(msecStart)));
+        final long yyyymmddHHMMSSend = Long.parseLong(ExtractTransform.secTimestampFormat.format(new Date(msecEnd)));
         File dir = new File (directoryName);
         File[] list = dir.listFiles(new FilenameFilter() {
             @Override

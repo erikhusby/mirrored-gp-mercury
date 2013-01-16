@@ -40,7 +40,8 @@ public class ExtractTransform {
     /** This filename matches what cron job expects. */
     public static final String READY_FILE_SUFFIX = "_is_ready";
     /** This date format matches what cron job expects in filenames, and in SqlLoader data files. */
-    public static final SimpleDateFormat fullDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+    public static final SimpleDateFormat secTimestampFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+    public static final SimpleDateFormat mSecTimestampFormat = new SimpleDateFormat("yyyyMMddHHmmss");
     /** Name of file that contains the mSec time of the last etl run. */
     public static final String LAST_ETL_FILE = "last_etl_run";
     /** Name of subdirectory under configured ETL root dir where new sqlLoader files are put. */
@@ -160,7 +161,7 @@ public class ExtractTransform {
 
             // The same etl_date is used for all DW data processed by one ETL run.
             final Date etlDate = new Date();
-            final String etlDateStr = fullDateFormat.format(etlDate);
+            final String etlDateStr = secTimestampFormat.format(etlDate);
             incrementalRunStartTime = etlDate.getTime();
 
             final long lastRev = readLastEtlRun();
@@ -230,7 +231,7 @@ public class ExtractTransform {
         }
 
         final Date etlDate = new Date();
-        final String etlDateStr = fullDateFormat.format(etlDate);
+        final String etlDateStr = secTimestampFormat.format(etlDate);
 
         Class entityClass;
         try {

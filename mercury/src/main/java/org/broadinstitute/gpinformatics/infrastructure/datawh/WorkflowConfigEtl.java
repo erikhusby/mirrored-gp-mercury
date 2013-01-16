@@ -30,8 +30,12 @@ import java.util.Date;
 @Stateless
 public class WorkflowConfigEtl extends GenericEntityEtl {
 
+    private WorkflowLoader workflowLoader;
+
     @Inject
-    WorkflowLoader workflowLoader;
+    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
+	this.workflowLoader = workflowLoader;
+    }
 
     /** Name of the file that contains the hash of the last exported workflow config data. */
     public static final String LAST_WF_CONFIG_HASH_FILE = "last_wf_config_hash";

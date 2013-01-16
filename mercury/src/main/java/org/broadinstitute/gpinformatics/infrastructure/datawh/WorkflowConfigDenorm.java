@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
 
@@ -11,6 +12,8 @@ import java.util.Date;
  * Represents the flattened workflowConfig record, used for ETL of WorkflowConfig.
  */
 public class WorkflowConfigDenorm {
+    private static final Logger logger = Logger.getLogger(WorkflowConfigDenorm.class);
+
     private final long workflowConfigDenormId;
     private final Date effectiveDate;
     private final String productWorkflowName;
@@ -77,13 +80,18 @@ public class WorkflowConfigDenorm {
                                    String workflowProcessName, String workflowProcessVersion, String workflowStepName,
                                    String workflowStepEventName) {
 
-        return GenericEntityEtl.hash(effectiveDate.toString() +
+        long id = GenericEntityEtl.hash(effectiveDate.toString() +
                 productWorkflowName +
                 productWorkflowVersion +
                 workflowProcessName +
                 workflowProcessVersion +
                 workflowStepName +
                 workflowStepEventName);
+        // Uncomment this to get the denorm ids used in unit test.
+        //logger.info("id=" + id + ", " + ExtractTransform.secTimestampFormat.format(effectiveDate) + ", " + productWorkflowName +
+        //        ", " + productWorkflowVersion + ", " + workflowProcessName + ", " + workflowProcessVersion +
+        //        ", " + workflowStepName + ", " + workflowStepEventName);
+        return id;
     }
 
     /**
@@ -116,6 +124,11 @@ public class WorkflowConfigDenorm {
                         Date wpdvStartDate = wpdv.getEffectiveDate();
 
                         if (pwdvEndDate != null && wpdvStartDate.after(pwdvEndDate)) {
+                            logger.debug("Useless workflow config element: ProductWorkflowName "
+                                    + productWorkflowName + " version " + productWorkflowVersion + " starts (" +
+                                    ExtractTransform.secTimestampFormat.format(wpdvStartDate) + ") after WorkflowProcessDef "
+                                    + workflowProcessName + " version " + wpdv.getVersion() + " ends (" +
+                                    ExtractTransform.secTimestampFormat.format(pwdvEndDate) + ")");
                             continue;
                         }
                         Date netEffectiveDate = wpdvStartDate.after(pwdvStartDate) ? wpdvStartDate : pwdvStartDate;

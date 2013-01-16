@@ -16,8 +16,12 @@ abstract public class GenericEntityEtl {
     Logger logger = Logger.getLogger(this.getClass());
     public static final String UNDEFINED_VALUE = "undefined";
 
+    private AuditReaderDao auditReaderDao;
+
     @Inject
-    AuditReaderDao auditReaderDao;
+    public void setAuditReaderDao(AuditReaderDao auditReaderDao) {
+	this.auditReaderDao = auditReaderDao;
+    }
 
     /**
      * Specifies the class entity handled by the overriding etl.
@@ -233,7 +237,7 @@ abstract public class GenericEntityEtl {
      * @param date the date to format
      */
     public static String format(Date date) {
-        return (date != null ? ExtractTransform.fullDateFormat.format(date) : "");
+        return (date != null ? ExtractTransform.secTimestampFormat.format(date) : "");
     }
 
     /**

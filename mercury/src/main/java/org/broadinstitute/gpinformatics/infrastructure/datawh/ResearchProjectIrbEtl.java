@@ -18,8 +18,12 @@ import java.util.List;
 @Stateless
 public class ResearchProjectIrbEtl  extends GenericEntityEtl {
 
+    private ResearchProjectDao dao;
+
     @Inject
-    ResearchProjectDao dao;
+    public void setResearchProjectDao(ResearchProjectDao dao) {
+	this.dao = dao;
+    }
 
     /**
      * @{inheritDoc}

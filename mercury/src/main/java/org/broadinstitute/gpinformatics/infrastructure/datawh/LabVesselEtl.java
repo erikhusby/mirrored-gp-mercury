@@ -19,8 +19,12 @@ import java.util.List;
 @Stateless
 public class LabVesselEtl extends GenericEntityEtl {
 
+    private LabVesselDao dao;
+
     @Inject
-    LabVesselDao dao;
+    public void setLabVesselDao(LabVesselDao dao) {
+	this.dao = dao;
+    }
 
     /**
      * @{inheritDoc}

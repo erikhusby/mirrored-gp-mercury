@@ -18,8 +18,12 @@ import java.util.List;
 @Stateless
 public class ProductEtl  extends GenericEntityEtl {
 
+    private ProductDao dao;
+
     @Inject
-    ProductDao dao;
+    public void setProductDao(ProductDao dao) {
+	this.dao = dao;
+    }
 
     /**
      * @{inheritDoc}

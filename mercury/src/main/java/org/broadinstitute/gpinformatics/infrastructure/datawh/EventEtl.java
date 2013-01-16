@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
@@ -24,14 +25,25 @@ import java.util.*;
 @Stateless
 public class EventEtl extends GenericEntityEtl {
 
-    @Inject
-    LabEventDao dao;
+    private LabEventDao dao;
+    private ProductOrderDao pdoDao;
+    private WorkflowLoader workflowLoader;
 
     @Inject
-    ProductOrderDao pdoDao;
+    public void setLabEventDao(LabEventDao dao) {
+        this.dao = dao;
+    }
 
     @Inject
-    WorkflowConfig workflowConfig;
+    public void setProductOrderDao(ProductOrderDao pdoDao) {
+        this.pdoDao = pdoDao;
+    }
+
+    @Inject
+    public void setWorkflowLoader(WorkflowLoader workflowLoader) {
+        this.workflowLoader = workflowLoader;
+        initWorkflowConfigDenorm();
+    }
 
     /**
      * @{inheritDoc}
@@ -54,7 +66,7 @@ public class EventEtl extends GenericEntityEtl {
      */
     @Override
     Long entityId(Object entity) {
-        return ((LabEvent)entity).getLabEventId();
+        return ((LabEvent) entity).getLabEventId();
     }
 
     /**
@@ -96,6 +108,7 @@ public class EventEtl extends GenericEntityEtl {
 
     /**
      * Makes a data record from an entity, in a format that matches the corresponding SqlLoader control file.
+     *
      * @param entity Mercury Entity
      * @return delimited SqlLoader record
      */
@@ -106,8 +119,6 @@ public class EventEtl extends GenericEntityEtl {
         String eventName = (labBatch != null && entity.getLabEventType() != null)
                 ? entity.getLabEventType().getName() : null;
         Long labBatchId = labBatch != null ? labBatch.getLabBatchId() : null;
-        JiraTicket ticket = labBatch != null ? labBatch.getJiraTicket() : null;
-        String ticketName = ticket != null ? ticket.getTicketName() : null;
 
         Set<LabVessel> vessels = entity.getTargetLabVessels();
         if (vessels != null) {
@@ -124,66 +135,79 @@ public class EventEtl extends GenericEntityEtl {
                         continue;
                     }
                     String sampleKey = sample.getSampleKey();
+                    String productOrderKey = sample.getProductOrderKey();
+
                     long workflowConfigId = lookupWorkflowConfigId(eventName, sample, entity.getEventDate());
 
                     records.add(genericRecord(etlDateStr, isDelete,
                             entity.getLabEventId(),
                             format(eventName),
                             format(workflowConfigId),
-                            format(ticketName),
+                            format(productOrderKey),
                             format(sampleKey),
                             format(labBatchId),
                             format(entity.getEventLocation()),
                             format(vessel.getLabVesselId()),
-                            format(entity.getEventDate())
+                            format(ExtractTransform.mSecTimestampFormat.format(entity.getEventDate()))
                     ));
                 }
             }
-        };
-        // Makes at least one record for the event.
+        }
+        // Makes at least one record for the event if the vessel-sample chain is broken.
         if (records.size() == 0) {
             records.add(genericRecord(etlDateStr, isDelete,
                     entity.getLabEventId(),
                     format(eventName),
-                    format((Long)null),
-                    format(ticketName),
+                    format((Long) null),
                     format((String)null),
+                    format((String) null),
                     format(labBatchId),
                     format(entity.getEventLocation()),
-                    format((String)null),
-                    format(entity.getEventDate())
+                    format((String) null),
+                    format(ExtractTransform.mSecTimestampFormat.format(entity.getEventDate()))
             ));
         }
         return records;
     }
 
-    /** Maps event name to a list of possible workflow records which must be resolved by desired date. */
-    private Map<String, SortedSet<WorkflowConfigDenorm>> eventToWorkflowList = new HashMap<String, SortedSet<WorkflowConfigDenorm>>();
 
-    /** Builds maps of event name to a list of possible workflow records. */
+    Map<String, List<WorkflowConfigDenorm>> mapEventToWorkflows = null;
+
+    /**
+     * Builds 1:N mapping of event name to denorm workflow configs that contain that event name.
+     */
     void initWorkflowConfigDenorm() {
+        mapEventToWorkflows = new HashMap<String, List<WorkflowConfigDenorm>>();
+        WorkflowConfig workflowConfig = workflowLoader.load();
         Collection<WorkflowConfigDenorm> configs = WorkflowConfigDenorm.parse(workflowConfig);
         for (WorkflowConfigDenorm config : configs) {
-            SortedSet<WorkflowConfigDenorm> workflows = eventToWorkflowList.get(config.getWorkflowStepEventName());
+            List<WorkflowConfigDenorm> workflows = mapEventToWorkflows.get(config.getWorkflowStepEventName());
             if (workflows == null) {
-                workflows = new TreeSet<WorkflowConfigDenorm>(new Comparator<WorkflowConfigDenorm>() {
-                    // The denorm configs are sorted by descending effective date.
-                    @Override
-                    public int compare(WorkflowConfigDenorm o1, WorkflowConfigDenorm o2) {
-                        return o2.getEffectiveDate().compareTo(o1.getEffectiveDate());
-                    }
-                });
-                eventToWorkflowList.put(config.getWorkflowStepEventName(), workflows);
+                workflows = new ArrayList<WorkflowConfigDenorm>();
+                mapEventToWorkflows.put(config.getWorkflowStepEventName(), workflows);
             }
             workflows.add(config);
         }
+
+        // Sorts each of the workflow lists by descending effective date for easier lookup by date.
+        for (List<WorkflowConfigDenorm> workflowList : mapEventToWorkflows.values()) {
+            Collections.sort(workflowList, new Comparator<WorkflowConfigDenorm>() {
+                @Override
+                public int compare(WorkflowConfigDenorm o1, WorkflowConfigDenorm o2) {
+                    return o2.getEffectiveDate().compareTo(o1.getEffectiveDate());
+                }
+            });
+        }
     }
+
 
     private final int CONFIG_ID_CACHE_SIZE = 4;
     private LRUMap configIdCache = new LRUMap(CONFIG_ID_CACHE_SIZE);
     private final Object cacheMutex = new Object();
 
-    /** Returns the id of the relevant WorkflowConfig denormalized record.
+    /**
+     * Returns the id of the relevant WorkflowConfig denormalized record.
+     *
      * @return 0 if no id found
      */
     long lookupWorkflowConfigId(String eventName, MercurySample sample, Date eventDate) {
@@ -195,10 +219,10 @@ public class EventEtl extends GenericEntityEtl {
 
         // Checks for a cache hit.
         String cacheKey = eventName + productOrderKey + eventDate.toString();
-        synchronized(configIdCache) {
-            Long id = (Long)configIdCache.get(cacheKey);
+        synchronized (configIdCache) {
+            Long id = (Long) configIdCache.get(cacheKey);
             if (id != null) {
-                logger.debug("Workflow config id cache hit on " + id);
+                logger.info("xxx Workflow config id cache hit on " + id);
                 return id;
             }
         }
@@ -214,27 +238,38 @@ public class EventEtl extends GenericEntityEtl {
             return 0L;
         }
 
-        // Iterates on the sorted set of event names to find a match having latest effective date.
-        for (WorkflowConfigDenorm denorm : eventToWorkflowList.get(eventName)) {
+        // Iterates on the sorted list of workflow configs to find a match having latest effective date.
+        List<WorkflowConfigDenorm> denormConfigs = mapEventToWorkflows.get(eventName);
+        if (denormConfigs == null) {
+            logger.warn("No WorkflowConfig records have event " + eventName);
+            return 0L;
+        }
+
+        for (WorkflowConfigDenorm denorm : denormConfigs) {
             if (workflowName.equals(denorm.getProductWorkflowName()) && eventDate.after(denorm.getEffectiveDate())) {
                 Long id = denorm.getWorkflowConfigDenormId();
-                synchronized(configIdCache) {
+                synchronized (configIdCache) {
                     configIdCache.put(cacheKey, id);
                 }
                 return id;
             }
         }
-        logger.warn("No denormalized workflow config for workflow " + workflowName + ", eventName " + eventName + ", date " + eventDate.toString());
+        logger.warn("No denormalized workflow config for product " + workflowName + " having eventName " + eventName
+                + " on date " + eventDate.toString());
         return 0L;
     }
 
-    /** This entity does not make status records. */
+    /**
+     * This entity does not make status records.
+     */
     @Override
     String entityStatusRecord(String etlDateStr, Date revDate, Object entity, boolean isDelete) {
         return null;
     }
 
-    /** This entity does support add/modify records via primary key. */
+    /**
+     * This entity does support add/modify records via primary key.
+     */
     @Override
     boolean isEntityEtl() {
         return true;

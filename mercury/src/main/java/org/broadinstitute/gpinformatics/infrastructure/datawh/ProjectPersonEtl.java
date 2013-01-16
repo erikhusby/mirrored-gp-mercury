@@ -20,11 +20,18 @@ import java.util.List;
 @Stateless
 public class ProjectPersonEtl  extends GenericEntityEtl {
 
-    @Inject
-    ResearchProjectDao dao;
+    private ResearchProjectDao dao;
+    private BSPUserList userList;
 
     @Inject
-    BSPUserList userList;
+    public void setResearchProjectDao(ResearchProjectDao dao) {
+	this.dao = dao;
+    }
+
+    @Inject
+    public void setBSPUserList(BSPUserList userList) {
+	this.userList = userList;
+    }
 
     /**
      * @{inheritDoc}

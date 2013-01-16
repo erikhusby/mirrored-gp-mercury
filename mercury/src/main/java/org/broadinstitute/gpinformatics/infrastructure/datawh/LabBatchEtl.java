@@ -18,8 +18,12 @@ import java.util.List;
 @Stateless
 public class LabBatchEtl extends GenericEntityEtl {
 
+    private LabBatchDAO dao;
+
     @Inject
-    LabBatchDAO dao;
+    public void setLabBatchDAO(LabBatchDAO dao) {
+	this.dao = dao;
+    }
 
     /**
      * @{inheritDoc}
