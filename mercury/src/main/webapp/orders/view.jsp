@@ -37,15 +37,16 @@
             <div class="actionButtons">
                 <c:if test="${actionBean.editOrder.draft}">
                     <stripes:submit name="placeOrder" value="Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
+                    <stripes:submit name="validate" value="Validate" style="margin-left: 5px;" class="btn"/>
                 </c:if>
+
+                <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+                              beanclass="${actionBean.class.name}" event="edit" class="pull-right">
+                    <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
+                    <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                </stripes:link>
             </div>
         </stripes:form>
-
-        <stripes:link title="Click to edit ${actionBean.editOrder.title}"
-            beanclass="${actionBean.class.name}" event="edit" class="pull-right">
-            <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
-            <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-        </stripes:link>
 
         <div style="both:clear"> </div>
 
@@ -64,7 +65,7 @@
                     <div class="form-value">
                         <c:choose>
                             <c:when test="${actionBean.editOrder.draft}">
-                                DRAFT
+                                &nbsp;
                             </c:when>
                             <c:otherwise>
                                 <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">${actionBean.editOrder.jiraTicketKey}</a>

@@ -122,9 +122,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String productList;
 
     /**
-     * Initialize the product with the passed in key for display in the form
+     * Initialize the product with the passed in key for display in the form or create it, if not specified
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {CREATE_ACTION, VIEW_ACTION, EDIT_ACTION, "downloadBillingTracker", SAVE_ACTION, "placeOrder"})
+    @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
@@ -159,7 +159,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @ValidationMethod(on = "placeOrder")
-    public void validatePlacedOrder() throws Exception {
+    public void validatePlacedOrder() {
         if (editOrder.getSamples().isEmpty()) {
             addGlobalValidationError("Order does not have any samples");
         }
@@ -302,6 +302,17 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been placed");
         return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER, editOrder.getBusinessKey());
+    }
+
+    @HandlesEvent("validate")
+    public Resolution validate() {
+        validatePlacedOrder();
+
+        if (getContext().getValidationErrors().isEmpty()) {
+            addMessage("Draft Order is valid and ready to be placed");
+        }
+
+        return getSourcePageResolution();
     }
 
     @HandlesEvent(SAVE_ACTION)
