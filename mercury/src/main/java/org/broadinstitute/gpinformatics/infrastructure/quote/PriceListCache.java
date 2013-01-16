@@ -1,16 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -26,11 +25,12 @@ public class PriceListCache extends AbstractCache implements Serializable {
     
     private PriceList priceList;
 
-    @Inject
     private PMBQuoteService quoteService;
 
     @Inject
-    private Log logger;
+    private Deployment deployment;
+
+    private Log logger = LogFactory.getLog(PriceListCache.class);
 
     public PriceListCache() {}
 
@@ -41,10 +41,15 @@ public class PriceListCache extends AbstractCache implements Serializable {
      */
     public PriceListCache(PriceList priceList) {
         if (priceList == null) {
-             throw new NullPointerException("priceList cannot be null."); 
+             throw new NullPointerException("priceList cannot be null.");
         }
 
         this.priceList = priceList;
+    }
+
+    @Inject
+    public PriceListCache(PMBQuoteService quoteService) {
+        this.quoteService = quoteService;
     }
 
     /**
@@ -56,9 +61,10 @@ public class PriceListCache extends AbstractCache implements Serializable {
         if (priceList == null) {
             refreshCache();
         }
-
         return priceList;
     }
+
+
 
     @Override
     public synchronized void refreshCache() {
@@ -67,12 +73,15 @@ public class PriceListCache extends AbstractCache implements Serializable {
 
             // if fails, use previous cache entry (even if it's null)
             if (rawPriceList == null) {
+                if (priceList == null) {
+                    priceList = new PriceList();
+                }
                 return;
             }
 
             priceList = rawPriceList;
         } catch (Exception ex) {
-            logger.debug("Could not refresh the price item list", ex);
+            logger.error("Could not refresh the price item list", ex);
         }
     }
 
@@ -155,6 +164,16 @@ public class PriceListCache extends AbstractCache implements Serializable {
                 priceItem.getPlatformName() + '|' + priceItem.getCategoryName() + '|' + priceItem.getName();
 
             if (concatenatedKey.equals(currentKey)) {
+                return priceItem;
+            }
+        }
+
+        return null;
+    }
+
+    public PriceItem findById(Long priceItemId) {
+        for (PriceItem priceItem : getPriceList().getPriceItems()) {
+            if (priceItem.getId().equals(priceItemId.toString())) {
                 return priceItem;
             }
         }

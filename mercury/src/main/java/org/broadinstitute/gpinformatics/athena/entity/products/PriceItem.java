@@ -8,7 +8,6 @@ import org.hibernate.envers.Audited;
 import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.Comparator;
 
 
 /**
@@ -19,12 +18,13 @@ import java.util.Comparator;
 @Entity
 @Audited
 @Table(schema = "athena",
+        name = "PRICE_ITEM",
         uniqueConstraints = {
         @UniqueConstraint(columnNames = {"platform", "category", "name"})
 })
 public class PriceItem implements Serializable, Comparable<PriceItem> {
 
-    // constants currently used by real price items in the quote server
+    // Constants currently used by real price items in the quote server.
     public static final String PLATFORM_GENOMICS = "Genomics Platform";
     public static final String CATEGORY_EXOME_SEQUENCING_ANALYSIS = "Exome Sequencing Analysis";
     public static final String NAME_EXOME_EXPRESS = "Exome Express";
@@ -37,36 +37,22 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
     @Column(nullable = false)
     private String platform;
 
-    // there are null categories
+    // There are null categories.
     private String category;
 
     @Column(nullable = false)
     private String name;
 
-    // we are currently recording this and it certainly exists on the quote server, but it's possible we might
-    // stop recording it at some point since our having a copy of it doesn't seem all that useful at the moment
+    // We are currently recording this and it certainly exists on the quote server, but it's possible we might
+    // stop recording it at some point since our having a copy of it doesn't seem all that useful at the moment.
     private String quoteServerId;
 
-
-    // The @Transient fields below are "owned" by the quote server, what we hold in this class are just cached copies
+    // The @Transient fields below are "owned" by the quote server, what we hold in this class are just cached copies.
     @Transient
     private String price;
 
     @Transient
     private String units;
-
-    private static final Comparator<PriceItem> PRICE_ITEM_COMPARATOR = new Comparator<PriceItem>() {
-        @Override
-        public int compare(PriceItem priceItem, PriceItem priceItem1) {
-            CompareToBuilder builder = new CompareToBuilder();
-            builder.append(priceItem.getPlatform(), priceItem1.getPlatform());
-            builder.append(priceItem.getCategory(), priceItem1.getCategory());
-            builder.append(priceItem.getName(), priceItem1.getName());
-
-            return builder.build();
-        }
-    };
-
 
     /**
      * Package visible constructor for JPA
@@ -79,7 +65,6 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
         this.category = category;
         this.name = name;
     }
-
 
     public Long getPriceItemId() {
         return priceItemId;
@@ -103,8 +88,6 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
 
     /**
      * Quote server holds price data, we would set this into the entity as a transient property
-     *
-     * @param price
      */
     public void setPrice(String price) {
         this.price = price;
@@ -114,11 +97,8 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
         return units;
     }
 
-
     /**
      * Quote server holds units data, we would set this into the entity as a transient property
-     *
-     * @param units
      */
     public void setUnits(String units) {
         this.units = units;
@@ -130,7 +110,12 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
 
     @Override
     public int compareTo(PriceItem that) {
-        return PRICE_ITEM_COMPARATOR.compare(this, that);
+        CompareToBuilder builder = new CompareToBuilder();
+        builder.append(platform, that.getPlatform());
+        builder.append(category, that.getCategory());
+        builder.append(name, that.getName());
+
+        return builder.build();
     }
 
     @Override
@@ -144,14 +129,24 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
 
         PriceItem priceItem = (PriceItem) o;
 
-        return new EqualsBuilder().append(category, priceItem.category)
-                .append(name, priceItem.name)
-                .append(platform, priceItem.platform).build();
+        return new EqualsBuilder().append(category, priceItem.getCategory())
+                .append(name, priceItem.getName())
+                .append(platform, priceItem.getPlatform()).build();
     }
 
     @Override
     public int hashCode() {
-        return new HashCodeBuilder().append(platform).append(category).append(name).hashCode();
+        return new HashCodeBuilder().append(category).append(name).append(platform).hashCode();
     }
 
+    public String getConcatenatedKey() {
+        return platform + '|' + category + '|' + name;
+    }
+
+    public String getDisplayName() {
+        if (category != null) {
+            return category + " : " + name;
+        }
+        return name;
+    }
 }

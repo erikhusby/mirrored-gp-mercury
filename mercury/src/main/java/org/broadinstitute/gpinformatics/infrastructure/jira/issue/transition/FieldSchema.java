@@ -8,30 +8,51 @@ package org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition;
 public class FieldSchema {
 
     private String type;
+    private String system;
     private String items;
     private String custom;
     private String customId;
 
-    public FieldSchema ( String typeIn, String itemsIn, String customIn, String customIdIn ) {
-        type = typeIn;
-        items = itemsIn;
-        custom = customIn;
-        customId = customIdIn;
+    public FieldSchema() {
     }
 
-    public String getType ( ) {
+    public String getType() {
         return type;
     }
 
-    public String getItems ( ) {
+    public void setType(String type) {
+        this.type = type;
+    }
+
+    public String getSystem() {
+        return system;
+    }
+
+    public void setSystem(String system) {
+        this.system = system;
+    }
+
+    public String getItems() {
         return items;
     }
 
-    public String getCustom ( ) {
+    public void setItems(String items) {
+        this.items = items;
+    }
+
+    public String getCustom() {
         return custom;
     }
 
-    public String getCustomId ( ) {
+    public void setCustom(String custom) {
+        this.custom = custom;
+    }
+
+    public String getCustomId() {
         return customId;
+    }
+
+    public void setCustomId(String customId) {
+        this.customId = customId;
     }
 }

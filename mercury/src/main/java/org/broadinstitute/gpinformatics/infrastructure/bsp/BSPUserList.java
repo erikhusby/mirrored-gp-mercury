@@ -1,14 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
-import javax.annotation.PostConstruct;
 import javax.enterprise.context.ApplicationScoped;
 import javax.faces.model.SelectItem;
 import javax.inject.Inject;
@@ -23,16 +24,14 @@ import java.util.*;
 @Named
 @ApplicationScoped
 public class BSPUserList extends AbstractCache implements Serializable {
-
-    @Inject
-    private Log logger;
+    private static final Log logger = LogFactory.getLog(BSPUserList.class);
 
     @Inject
     private Deployment deployment;
 
     private BSPManagerFactory bspManagerFactory;
 
-    private List<BspUser> users;
+    private Map<Long, BspUser> users;
 
     private boolean serverValid;
 
@@ -43,12 +42,10 @@ public class BSPUserList extends AbstractCache implements Serializable {
     /**
      * @return list of bsp users, sorted by lastname, firstname, username, email.
      */
-    public List<BspUser> getUsers() {
-
+    public Map<Long, BspUser> getUsers() {
         if (users == null) {
             refreshCache();
         }
-
         return users;
     }
 
@@ -57,14 +54,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
      * @return if found, the user, otherwise null
      */
     public BspUser getById(long id) {
-        // Could improve performance here by storing users in a TreeMap.  Wait until performance becomes
-        // an issue, then fix.
-        for (BspUser user : users) {
-            if (user.getUserId() == id) {
-                return user;
-            }
-        }
-        return null;
+        return getUsers().get(id);
     }
 
     /**
@@ -75,7 +65,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
      * @return the BSP user or null
      */
     public BspUser getByUsername(String username) {
-        for (BspUser user : users) {
+        for (BspUser user : getUsers().values()) {
             if (user.getUsername().equalsIgnoreCase(username)) {
                 return user;
             }
@@ -84,15 +74,21 @@ public class BSPUserList extends AbstractCache implements Serializable {
     }
 
     /**
-     * Returns a list of users whose first name, last name, or username match the given query.
+     * Returns a list of users whose first name, last name, or username match the given query.  If the query is
+     * null then it will return an empty list.
      *
      * @param query the query string to match on
      * @return a list of matching users
      */
     public List<BspUser> find(String query) {
+        if (StringUtils.isBlank(query)) {
+            // no query string supplied
+            return Collections.emptyList();
+        }
+
         String[] lowerQueryItems = query.toLowerCase().split("\\s");
         List<BspUser> results = new ArrayList<BspUser>();
-        for (BspUser user : users) {
+        for (BspUser user : getUsers().values()) {
             boolean eachItemMatchesSomething = true;
             for (String lowerQuery : lowerQueryItems) {
                 // If none of the fields match this item, then all items are not matched
@@ -128,16 +124,9 @@ public class BSPUserList extends AbstractCache implements Serializable {
     }
 
     @Inject
-    // MLC constructor injection appears to be required to get a BSPManagerFactory injected???
     public BSPUserList(BSPManagerFactory bspManagerFactory) {
         this.bspManagerFactory = bspManagerFactory;
-        refreshCache();
     }
-
-//    @PostConstruct
-//    private void postConstruct() {
-//        refreshCache();
-//    }
 
     @Override
     public synchronized void refreshCache() {
@@ -147,11 +136,9 @@ public class BSPUserList extends AbstractCache implements Serializable {
 
             if (!serverValid) {
                 // BSP is down
-                if (users != null) {
-                    // I have the old set of users, which will include QADude, if needed, so just return.
+                if (getUsers() != null) {
                     return;
                 } else {
-                    // set raw users empty so that we can add qa dude and copy just that
                     rawUsers = new ArrayList<BspUser>();
                 }
             }
@@ -173,9 +160,17 @@ public class BSPUserList extends AbstractCache implements Serializable {
                 }
             });
 
-            users = ImmutableList.copyOf(rawUsers);
+            // Use a LinkedHashMap since (1) it preserves the insertion order of its elements, so
+            // our entries stay sorted and (2) it has lower overhead than a TreeMap.
+            Map<Long, BspUser> userMap = new LinkedHashMap<Long, BspUser>(rawUsers.size());
+            for (BspUser user : rawUsers) {
+                userMap.put(user.getUserId(), user);
+            }
+
+            users = ImmutableMap.copyOf(userMap);
+
         } catch (Exception ex) {
-            logger.debug("Could not refresh the user list", ex);
+            logger.error("Could not refresh the user list", ex);
         }
     }
 
@@ -213,7 +208,6 @@ public class BSPUserList extends AbstractCache implements Serializable {
      * @return the list of select items for the users.
      */
     public static List<SelectItem> createSelectItems(Set<BspUser> users) {
-
         // order the users by last name so the SelectItem generator below will create items in a predictable order
         // per GPLIM-401
         List<BspUser> bspUserList = new ArrayList<BspUser>(users);

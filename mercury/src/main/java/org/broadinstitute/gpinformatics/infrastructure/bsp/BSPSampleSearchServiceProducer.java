@@ -34,9 +34,8 @@ public class BSPSampleSearchServiceProducer {
     }
 
 
-
     /**
-     * Creates a BSPCohortSearchServiceImpl with plain old new operator for container-free testing,
+     * Creates a BSPSampleSearchService with plain old new operator for container-free testing,
      * not a managed bean!
      *
      * @return

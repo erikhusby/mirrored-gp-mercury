@@ -1,5 +1,24 @@
 
-DROP TABLE billable_item;
+DROP INDEX research_project_fund_idx1;
+DROP INDEX research_project_cohort_idx1;
+DROP INDEX research_project_irb_idx1;
+DROP INDEX product_order_idx1;
+DROP INDEX product_order_idx2;
+DROP INDEX product_order_sample_idx1;
+
+ALTER TABLE research_project_status DROP CONSTRAINT fk_rp_status_rpid;
+ALTER TABLE research_project_person DROP CONSTRAINT fk_rp_person_rpid;
+ALTER TABLE research_project_funding DROP CONSTRAINT fk_rp_funding_rpid;
+ALTER TABLE research_project_cohort DROP CONSTRAINT fk_rp_cohort_rpid;
+ALTER TABLE research_project_irb DROP CONSTRAINT fk_rp_irb_rpid;
+ALTER TABLE product_order DROP CONSTRAINT fk_po_rpid;
+ALTER TABLE product_order DROP CONSTRAINT fk_po_productid;
+ALTER TABLE product_order_status DROP CONSTRAINT fk_po_status_poid;
+ALTER TABLE product_order_sample DROP CONSTRAINT fk_pos_poid;
+ALTER TABLE product_order_sample_status DROP CONSTRAINT fk_po_sample_b_s_po_sid;
+ALTER TABLE product_order_add_on DROP CONSTRAINT fk_po_add_on_prodid;
+ALTER TABLE product_order_add_on DROP CONSTRAINT fk_po_add_on_poid;
+
 DROP TABLE product_order_add_on;
 DROP TABLE product_order_sample_status;
 DROP TABLE product_order_sample;
@@ -139,7 +158,8 @@ CREATE TABLE product_order_sample (
   product_order_sample_id NUMERIC(19) PRIMARY KEY NOT NULL,
   product_order_id NUMERIC(19) NOT NULL,
   sample_name VARCHAR2(255),
-  billing_status VARCHAR2(40) NOT NULL,
+  delivery_status VARCHAR2(40) NOT NULL,
+  sample_position NUMERIC(19) NOT NULL,
   etl_date DATE NOT NULL,
   CONSTRAINT fk_pos_poid FOREIGN KEY (product_order_id)
     REFERENCES product_order(product_order_id)
@@ -150,7 +170,7 @@ CREATE INDEX product_order_sample_idx1 ON product_order_sample(product_order_id)
 CREATE TABLE product_order_sample_status (
   product_order_sample_id NUMERIC(19) NOT NULL,
   status_date DATE NOT NULL,
-  billing_status VARCHAR2(40) NOT NULL,
+  delivery_status VARCHAR2(40) NOT NULL,
   etl_date DATE NOT NULL,
   CONSTRAINT fk_po_sample_b_s_po_sid FOREIGN KEY (product_order_sample_id)
     REFERENCES product_order_sample(product_order_sample_id),
@@ -168,23 +188,8 @@ CREATE TABLE product_order_add_on (
     REFERENCES product_order(product_order_id)
 );
 
-CREATE TABLE billable_item (
-  billable_item_id NUMERIC(19) NOT NULL PRIMARY KEY,
-  product_order_sample_id NUMERIC(19) NOT NULL,
-  price_item_id NUMERIC(19) NOT NULL,
-  item_count NUMERIC(19) NOT NULL,
-  etl_date DATE NOT NULL,
-  CONSTRAINT fk_po_billable_item_po_sid FOREIGN KEY (product_order_sample_id)
-    REFERENCES product_order_sample(product_order_sample_id),
-  CONSTRAINT fk_po_billable_item_piid FOREIGN KEY (price_item_id)
-    REFERENCES  price_item(price_item_id)
-);
-
-CREATE INDEX billable_item_idx1 ON billable_item (product_order_sample_id, price_item_id);
-
 
 -- Import tables
-DROP TABLE im_billable_item;
 DROP TABLE im_product_order_add_on;
 DROP TABLE im_product_order_sample_stat;
 DROP TABLE im_product_order_sample;
@@ -307,7 +312,7 @@ CREATE TABLE im_product_order (
   jira_ticket_key VARCHAR2(255)
 );
 
-CREATE TABLE im_product_order_status 
+CREATE TABLE im_product_order_status (
   line_number NUMERIC(9) NOT NULL,
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL,
@@ -322,7 +327,8 @@ CREATE TABLE im_product_order_sample_stat (
   is_delete CHAR(1) NOT NULL,
   product_order_sample_id NUMERIC(19) NOT NULL,
   status_date DATE,
-  billing_status VARCHAR2(40)
+  delivery_status VARCHAR2(40),
+  sample_position NUMERIC(19)
 );
 
 
@@ -333,7 +339,7 @@ CREATE TABLE im_product_order_sample (
   product_order_sample_id NUMERIC(19) NOT NULL,
   product_order_id NUMERIC(19),
   sample_name VARCHAR2(255),
-  billing_status VARCHAR2(40)
+  delivery_status VARCHAR2(40)
 );
 
 CREATE TABLE im_product_order_add_on (
@@ -343,16 +349,6 @@ CREATE TABLE im_product_order_add_on (
   product_order_add_on_id NUMERIC(19) NOT NULL,
   product_order_id NUMERIC(19),
   product_id NUMERIC(19)
-);
-
-CREATE TABLE im_billable_item (
-  line_number NUMERIC(9) NOT NULL,
-  etl_date DATE NOT NULL,
-  is_delete CHAR(1) NOT NULL,
-  billable_item_id NUMERIC(19) NOT NULL,
-  product_order_sample_id NUMERIC(19),
-  price_item_id NUMERIC(19),
-  item_count NUMERIC(19)
 );
 
 COMMIT;

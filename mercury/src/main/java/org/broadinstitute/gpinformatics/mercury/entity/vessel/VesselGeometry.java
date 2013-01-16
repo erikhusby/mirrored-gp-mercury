@@ -121,6 +121,14 @@ public enum VesselGeometry {
         return columnNames;
     }
 
+    public int getColumnCount() {
+        return columnNames.length;
+    }
+
+    public int getRowCount() {
+        return rowNames.length;
+    }
+
     public String[] getRowNames() {
         return rowNames;
     }

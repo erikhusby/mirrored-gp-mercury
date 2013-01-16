@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.primefaces.model.SelectableDataModel;
 
-import javax.enterprise.context.ConversationScoped;
 import javax.faces.model.ListDataModel;
 import java.io.Serializable;
 import java.util.List;
@@ -11,13 +10,13 @@ import java.util.List;
 /**
  *
  */
-@ConversationScoped
 public class ProductOrderListModel extends ListDataModel<ProductOrderListEntry> implements SelectableDataModel<ProductOrderListEntry>, Serializable {
 
-    public ProductOrderListModel() {
-    }
-
     private List<ProductOrderListEntry> filteredValues;
+
+    public ProductOrderListModel(List<ProductOrderListEntry> productOrderListEntries) {
+        super(productOrderListEntries);
+    }
 
     @Override
     public Object getRowKey(ProductOrderListEntry order) {

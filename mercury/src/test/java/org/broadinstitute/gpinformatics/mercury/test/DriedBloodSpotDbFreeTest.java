@@ -25,7 +25,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -37,13 +39,15 @@ import java.util.Set;
  */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class DriedBloodSpotDbFreeTest {
+    private final SimpleDateFormat timestampFormat = new SimpleDateFormat("MMddHHmmss");
 
     public void testEndToEnd() {
         // import batch and tubes
+        String timestamp = timestampFormat.format(new Date());
         LabBatchResource labBatchResource = new LabBatchResource();
         List<TubeBean> tubeBeans = new ArrayList<TubeBean>();
         for(int rackPosition = 1; rackPosition <= 96; rackPosition++) {
-            String barcode = "SM-FTA" + rackPosition;
+            String barcode = "SM-FTA" + rackPosition + timestamp;
             tubeBeans.add(new TubeBean(barcode, null, null));
         }
 
@@ -54,38 +58,33 @@ public class DriedBloodSpotDbFreeTest {
                 mapBarcodeToTube, mapSampleToSample/*, null*/);
 
         DriedBloodSpotJaxbBuilder driedBloodSpotJaxbBuilder = new DriedBloodSpotJaxbBuilder(
-                new ArrayList<String>(mapBarcodeToTube.keySet()), labBatch.getBatchName());
+                new ArrayList<String>(mapBarcodeToTube.keySet()), labBatch.getBatchName(), timestamp);
         driedBloodSpotJaxbBuilder.buildJaxb();
         DriedBloodSpotEntityBuilder driedBloodSpotEntityBuilder = new DriedBloodSpotEntityBuilder(
                 driedBloodSpotJaxbBuilder, labBatch, mapBarcodeToTube);
         driedBloodSpotEntityBuilder.buildEntities();
 
         LabEventResource labEventResource = new LabEventResource();
-        List<LabEventBean> labEventBeans =
-                labEventResource.buildLabEventBeans(new ArrayList<LabEvent>(labBatch.getLabEvents()),
-                                                    new LabEventFactory.LabEventRefDataFetcher() {
-                                                       @Override
-                                                       public BspUser getOperator(
-                                                               String userId) {
-                                                           BSPUserList testList = new BSPUserList(
-                                                                   BSPManagerFactoryProducer.stubInstance());
-                                                           return testList.getByUsername(userId);
-                                                       }
+        List<LabEventBean> labEventBeans = labEventResource.buildLabEventBeans(
+                new ArrayList<LabEvent>(labBatch.getLabEvents()),
+                new LabEventFactory.LabEventRefDataFetcher() {
+                   @Override
+                   public BspUser getOperator(String userId) {
+                       BSPUserList testList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
+                       return testList.getByUsername(userId);
+                   }
 
-                                                       @Override
-                                                       public BspUser getOperator(
-                                                               Long bspUserId) {
-                                                           BSPUserList testList = new BSPUserList(
-                                                                   BSPManagerFactoryProducer.stubInstance());
-                                                           return testList.getById(bspUserId);
-                                                       }
+                   @Override
+                   public BspUser getOperator(Long bspUserId) {
+                       BSPUserList testList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
+                       return testList.getById(bspUserId);
+                   }
 
-                                                       @Override
-                                                       public LabBatch getLabBatch(
-                                                               String labBatchName) {
-                                                           return null;
-                                                       }
-                                                   });
+                   @Override
+                   public LabBatch getLabBatch(String labBatchName) {
+                       return null;
+                   }
+               });
 //        Assert.assertEquals("Wrong number of messages", 10, labEventBeans.size());
     }
 
@@ -101,17 +100,20 @@ public class DriedBloodSpotDbFreeTest {
         private PlateTransferEventType dbsFinalTransferJaxb;
         private List<String> ftaPaperBarcodes;
         private String labBatchId;
+        private String timestamp;
 
-        public DriedBloodSpotJaxbBuilder(List<String> ftaPaperBarcodes, String labBatchId) {
+        public DriedBloodSpotJaxbBuilder(List<String> ftaPaperBarcodes, String labBatchId, String timestamp) {
             this.ftaPaperBarcodes = ftaPaperBarcodes;
             this.labBatchId = labBatchId;
+            this.timestamp = timestamp;
         }
 
         public void buildJaxb() {
             BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
 
-            String incubationPlateBarcode = "DBSIncPlate";
+            String incubationPlateBarcode = "DBSIncPlate" + timestamp;
             BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+            bettaLIMSMessage.setMode(LabEventFactory.MODE_MERCURY);
             int paperNum = 1;
             for (String ftaPaperBarcode : ftaPaperBarcodes) {
                 // DBSSamplePunch receptacle -> plate A01 etc.
@@ -132,57 +134,37 @@ public class DriedBloodSpotDbFreeTest {
             reagentType.setKitType("Incubation Mix");
             reagentType.setBarcode("IncubationMix1234");
             incubationMixJaxb.getReagent().add(reagentType);
-            BettaLIMSMessage bettaLIMSMessage2 = new BettaLIMSMessage();
-            bettaLIMSMessage2.getPlateEvent().add(incubationMixJaxb);
-            messageList.add(bettaLIMSMessage2);
-            bettaLimsMessageFactory.advanceTime();
+            LabEventTest.addMessage(messageList, bettaLimsMessageFactory, incubationMixJaxb);
 
             // DBSLysisBuffer plateEvent
             lysisBufferJaxb = bettaLimsMessageFactory.buildPlateEvent("DBSLysisBuffer", incubationPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage3 = new BettaLIMSMessage();
-            bettaLIMSMessage3.getPlateEvent().add(lysisBufferJaxb);
-            messageList.add(bettaLIMSMessage3);
-            bettaLimsMessageFactory.advanceTime();
+            LabEventTest.addMessage(messageList, bettaLimsMessageFactory, lysisBufferJaxb);
 
             // DBSMagneticResin plateEVent
             magneticResinJaxb = bettaLimsMessageFactory.buildPlateEvent("DBSMagneticResin", incubationPlateBarcode);
-            BettaLIMSMessage bettaLIMSMessage4 = new BettaLIMSMessage();
-            bettaLIMSMessage4.getPlateEvent().add(magneticResinJaxb);
-            messageList.add(bettaLIMSMessage4);
-            bettaLimsMessageFactory.advanceTime();
+            LabEventTest.addMessage(messageList, bettaLimsMessageFactory, magneticResinJaxb);
 
-            String firstPurificationBarcode = "DBS1stPur";
+            String firstPurificationBarcode = "DBS1stPur" + timestamp;
             // DBS1stPurification plate -> plate
             dbs1stPurificationJaxb = bettaLimsMessageFactory.buildPlateToPlate("DBS1stPurification", incubationPlateBarcode, firstPurificationBarcode);
-            BettaLIMSMessage bettaLIMSMessage5 = new BettaLIMSMessage();
-            bettaLIMSMessage5.getPlateEvent().add(dbs1stPurificationJaxb);
-            messageList.add(bettaLIMSMessage5);
-            bettaLimsMessageFactory.advanceTime();
+            LabEventTest.addMessage(messageList, bettaLimsMessageFactory, dbs1stPurificationJaxb);
 
             // DBSWashBuffer plateEvent
             dbsWashBufferJaxb = bettaLimsMessageFactory.buildPlateEvent("DBSWashBuffer", firstPurificationBarcode);
-            BettaLIMSMessage bettaLIMSMessage6 = new BettaLIMSMessage();
-            bettaLIMSMessage6.getPlateEvent().add(dbsWashBufferJaxb);
-            messageList.add(bettaLIMSMessage6);
-            bettaLimsMessageFactory.advanceTime();
+            LabEventTest.addMessage(messageList, bettaLimsMessageFactory, dbsWashBufferJaxb);
 
             // DBSElutionBuffer plateEvent
             dbsElutionBufferJaxb = bettaLimsMessageFactory.buildPlateEvent("DBSElutionBuffer", firstPurificationBarcode);
-            BettaLIMSMessage bettaLIMSMessage8 = new BettaLIMSMessage();
-            bettaLIMSMessage8.getPlateEvent().add(dbsElutionBufferJaxb);
-            messageList.add(bettaLIMSMessage8);
-            bettaLimsMessageFactory.advanceTime();
+            LabEventTest.addMessage(messageList, bettaLimsMessageFactory, dbsElutionBufferJaxb);
 
             // DBSFinalTransfer plate -> rack
             List<String> finalTubeBarcodes = new ArrayList<String>();
             for(int i = 0; i < ftaPaperBarcodes.size(); i++) {
-                finalTubeBarcodes.add("DBSFinal" + i);
+                finalTubeBarcodes.add("DBSFinal" + i + timestamp);
             }
-            dbsFinalTransferJaxb = bettaLimsMessageFactory.buildPlateToRack("DBSFinalTransfer", firstPurificationBarcode, "DBSFinal", finalTubeBarcodes);
-            BettaLIMSMessage bettaLIMSMessage9 = new BettaLIMSMessage();
-            bettaLIMSMessage9.getPlateEvent().add(dbsFinalTransferJaxb);
-            messageList.add(bettaLIMSMessage9);
-            bettaLimsMessageFactory.advanceTime();
+            dbsFinalTransferJaxb = bettaLimsMessageFactory.buildPlateToRack("DBSFinalTransfer", firstPurificationBarcode,
+                    "DBSFinal" + timestamp, finalTubeBarcodes);
+            LabEventTest.addMessage(messageList, bettaLimsMessageFactory, dbsFinalTransferJaxb);
         }
 
         public List<BettaLIMSMessage> getMessageList() {
@@ -239,20 +221,15 @@ public class DriedBloodSpotDbFreeTest {
             driedBloodSpotJaxbBuilder.buildJaxb();
             LabEventFactory labEventFactory = new LabEventFactory();
             labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
-
                 @Override
                 public BspUser getOperator ( String userId ) {
-
-
                     return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
                 }
 
                 @Override
                 public BspUser getOperator ( Long bspUserId ) {
-                    BspUser testUser =new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
-                    return testUser;
+                    return new BSPUserList.QADudeUser("Test", BSPManagerFactoryStub.QA_DUDE_USER_ID);
                 }
-
 
                 @Override
                 public LabBatch getLabBatch(String labBatchName) {

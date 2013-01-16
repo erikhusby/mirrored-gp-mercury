@@ -69,7 +69,7 @@ public class BillingLedgerDao extends GenericDao {
         // choose the appropriate predicate depending on whether we are passed ProductOrder entities or business keys
         Predicate orderInPredicate;
         if (orders != null) {
-            orderInPredicate = orderSample.get(ProductOrderSample_.productOrder).in(orders);
+            orderInPredicate = orderSample.get(ProductOrderSample_.productOrder).in((Object[])orders);
         } else {
             Join<ProductOrderSample, ProductOrder> productOrderSampleProductOrderJoin = orderSample.join(ProductOrderSample_.productOrder);
             orderInPredicate = productOrderSampleProductOrderJoin.get(ProductOrder_.jiraTicketKey).in(productOrderBusinessKeys);
@@ -98,7 +98,8 @@ public class BillingLedgerDao extends GenericDao {
         criteriaQuery.where(fullPredicate);
 
         try {
-            return new HashSet<BillingLedger>(getEntityManager().createQuery(criteriaQuery).getResultList());
+            List<BillingLedger> billingLedgerList = getEntityManager().createQuery(criteriaQuery).getResultList();
+                return new HashSet<BillingLedger>(billingLedgerList);
         } catch (NoResultException ignored) {
             return Collections.emptySet();
         }
@@ -144,8 +145,9 @@ public class BillingLedgerDao extends GenericDao {
         while (!ledgerItems.isEmpty()) {
             BillingLedger item = ledgerItems.iterator().next();
             ledgerItems.remove(item);
-//            item.getProductOrderSample().getBillableItems().remove( item );
+//            item.getProductOrderSample().getLedgerItems().remove( item );
             remove(item);
         }
     }
+
 }

@@ -1,0 +1,99 @@
+/*
+ * The Broad Institute
+ * SOFTWARE COPYRIGHT NOTICE AGREEMENT
+ * This software and its documentation are copyright 2012 by the
+ * Broad Institute/Massachusetts Institute of Technology. All rights are
+ * reserved.
+ *
+ * This software is supplied without any warranty or guaranteed support
+ * whatsoever. Neither the Broad Institute nor MIT can be responsible for its
+ * use, misuse, or functionality.
+ */
+body { padding-bottom: 40px; padding-top: 5px; font-size: 12px; }
+footer { font-size: 10px; text-align: center; padding-top: 20px; }
+section { margin-left: 2%; margin-right: 2% }
+
+/* Override Bootstrap's opinion that links should not be underlined. */
+a { text-decoration: underline; color: #0088CC; }
+a.external {background-image:url("/Mercury/images/external-link.gif");background-position:right center;background-repeat:no-repeat;display:inline;padding:0 20px 0 0;}
+
+h1, h2, h3, h4, h5 {font-family: 'Carrois Gothic SC', sans-serif; color: #644436;}
+
+select > option:nth-child(even) { background-color:#fafafa; }
+
+label, input, button, select, textarea { font-size: 12px }
+
+ul.DTTT_dropdown.dropdown-menu li { position: relative; }
+.DTTT_button_copy  { text-decoration: none !important }
+.DTTT_button_csv  { text-decoration: none !important }
+.DTTT_button_print  { text-decoration: none !important }
+.DTTT { float: right; }
+
+.dropdown-menu a { text-decoration: none !important }
+
+/* DataTables sorting CSS */
+table.table thead .sorting,
+table.table thead .sorting_asc,
+table.table thead .sorting_desc,
+table.table thead .sorting_asc_disabled,
+table.table thead .sorting_desc_disabled { cursor: pointer; *cursor: hand; }
+
+table.table thead .sorting { background: url('/Mercury/images/arrow_off.gif') no-repeat center right; }
+table.table thead .sorting_asc { background: url('/Mercury/images/arrow_down.gif') no-repeat center right; }
+table.table thead .sorting_desc { background: url('/Mercury/images/arrow_up.gif') no-repeat center right; }
+
+table.table thead .sorting_asc_disabled { background: url('/Mercury/images/sort_asc_disabled.png') no-repeat center right; }
+table.table thead .sorting_desc_disabled { background: url('/Mercury/images/sort_desc_disabled.png') no-repeat center right; }
+
+.dataTables_filter input { font-size: small; height: 14px;}
+.dataTables_filter { float: left !important; text-align: left !important; }
+
+/* SIMPLE (HIGHTLIGHTS ROW W/ MOUSE)***************** */
+table.simple thead tr { text-align: left; border-radius: 3px;-moz-border-radius: 3px; -webkit-border-radius: 3px; -khtml-border-radius: 3px;}
+table.simple thead th { background: url("/Mercury/images/simple-th-background.png") repeat-x scroll 50% 50% #CCCCCC;}
+table.simple th.sorting_asc { background-color: #dddddd; }
+table.simple th.sorting_desc { background-color: #dddddd; }
+table.simple tr.even { background-color: #fff; }
+table.simple tr.odd { background-color: #f5f5f5; }
+table.simple { border: 1px solid #ccc; border-collapse: collapse; }
+table.simple tr:hover td { background-color: #def; }
+table.simple td,table.simple th { spacing: 10px ; border-right: 1px solid #ccc; border-bottom: 1px dotted #dfdfdf; padding: 2px; }
+
+table.nocol tbody td,table.nocol tbody th { border-left: none; border-right: none; }
+
+.page-header { border-bottom: 1px solid #EEEEEE; font-size: 2em; font-family: 'Carrois Gothic SC', sans-serif; margin: 0 0 10px; padding-bottom: 0;}
+
+.twocolumn {-moz-column-count:2;-webkit-column-count:2;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
+.threecolumn {-moz-column-count:3;-webkit-column-count:3;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
+.fourcolumn {-moz-column-count:4;-webkit-column-count:4;-moz-column-gap:2em;-webkit-column-gap:2em;-moz-column-rule-style:solid;-moz-column-rule-color:#fff;-moz-column-rule-width:2px;-webkit-column-rule-style:solid;-webkit-column-rule-color:#fff;-webkit-column-rule-width:2px}
+
+input[type="text"].defaultText, .defaultText { }
+input[type="text"].defaultTextActive, .defaultTextActive { font-size: 12px; color: #A1A1A1; }
+
+/* jquery date picker */
+.ui-datepicker-trigger { width: 19px; height: 19px; vertical-align: top; margin-top: 2px; }
+
+input[type='checkbox'].checkAll { margin-left: -8px; }
+
+/* multi-check box count indicator */
+.checkedCount { font-size: 12px; vertical-align: super; margin-left: 2px; width: 25px; }
+
+.form-horizontal .view-control-group { margin-bottom: 5px; }
+.form-horizontal .view-control-group .controls { margin-top: 5px; }
+.controls-text { margin-top: 5px; }
+
+.tableBar { border-bottom: 2px solid #644436; }
+.borderHeader { font-size: 16px; border-bottom: 2px solid #644436; margin-top: 15px; padding-bottom: 3px; }
+
+textarea.controlledText { width: 550px; }
+
+.label-form { color: #909090; }
+
+.actionButtons { align:left; margin-bottom: 10px; }
+
+.form-search input[type='checkbox'],
+.form-inline input[type='checkbox'],
+.form-horizontal input[type='checkbox'] { float: left; margin-right: 5px; vertical-align: middle; }
+
+.global-search { list-style-type: none; margin-top: 5px;vertical-align: top;height:14px; }
+.global-search li { margin-top: 1px; }

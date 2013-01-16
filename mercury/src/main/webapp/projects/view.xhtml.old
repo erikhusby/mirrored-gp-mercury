@@ -1,0 +1,220 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:p="http://primefaces.org/ui">
+<head/>
+<body>
+
+<h:link outcome="/security/login" value="Athena"/>
+&gt;
+<h:link outcome="list" value="Research Projects"/>
+&gt;
+#{researchProjectDetail.project.title}
+
+<ui:composition template="/layout.xhtml">
+<ui:define name="title">View Research Project</ui:define>
+<ui:define name="metadata">
+    <f:metadata>
+        <f:viewParam name="researchProject" value="#{researchProjectDetail.project}"
+                     converter="#{researchProjectConverter}"/>
+    </f:metadata>
+</ui:define>
+
+<ui:define name="body">
+<p:layout style="min-width:800px;min-height:800px;">
+    <p:layoutUnit position="north" resizable="true">
+            <div class="row">
+                <h:link value="Edit Project" outcome="create?includeViewParams=true" styleClass="pull-right"/>
+            </div>
+
+            <div class="row">
+                <div class="form-value" style="float:right">
+                    <h:outputLink target="passReport" class="external"
+                                  value="#{tableauLink.passReportUrl(researchProjectDetail.project.title)}">
+                        <h:outputText value="PASS Report"/>
+                    </h:outputLink>
+                </div>
+            </div>
+
+            <!-- Name -->
+            <h:form styleClass="form-horizontal form-readonly">
+                <div class="control-group">
+                    <label class="control-label label-form">Project</label>
+
+                    <div class="controls">
+                        <div class="form-value">#{researchProjectDetail.project.title}</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label label-form">ID</label>
+
+                    <div class="controls">
+                        <div class="form-value">
+                            <h:outputLink target="JIRA" rendered="#{researchProjectDetail.project.hasJiraTicketKey()}"
+                                          value="#{jiraLink.browseUrl(researchProjectDetail.project.jiraTicketKey)}"
+                                          class="external">
+                                <h:outputText value="#{researchProjectDetail.project.jiraTicketKey}"/>
+                            </h:outputLink>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Synopsis -->
+                <div class="control-group">
+                    <label class="control-label label-form">Synopsis</label>
+
+                    <div class="controls">
+                        <div class="form-value">#{researchProjectDetail.project.synopsis}</div>
+                    </div>
+                </div>
+
+                <!-- Project Managers -->
+                <div class="control-group">
+                    <label class="control-label label-form">Project Managers</label>
+
+                    <div class="controls">
+                        <div class="form-value">#{userListBean.getUserListString(researchProjectDetail.project.projectManagers)}</div>
+                    </div>
+                </div>
+
+                <!-- Broad PIs -->
+                <div class="control-group">
+                    <label class="control-label label-form">Broad PIs</label>
+
+                    <div class="controls">
+                        <div class="form-value">#{userListBean.getUserListString(researchProjectDetail.project.broadPIs)}</div>
+                    </div>
+                </div>
+
+                <!-- Scientists -->
+                <div class="control-group">
+                    <label class="control-label label-form">Sponsoring Scientists</label>
+
+                    <div class="controls">
+                        <div class="form-value">#{userListBean.getUserListString(researchProjectDetail.project.scientists)}</div>
+                    </div>
+                </div>
+
+                <!-- External Collaborators -->
+                <div class="control-group">
+                    <label class="control-label label-form">External Collaborators</label>
+
+                    <div class="controls">
+                        <div class="form-value">#{userListBean.getUserListString(researchProjectDetail.project.externalCollaborators)}</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label label-form">Created</label>
+
+                    <div class="controls">
+                        <div class="form-value">
+                            By #{userListBean.getUserFullName(researchProjectDetail.project.createdBy)} on
+                            <h:outputText value="#{researchProjectDetail.project.createdDate}">
+                                <f:convertDateTime type="date"/>
+                            </h:outputText>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label label-form">Funding Sources</label>
+
+                    <div class="controls">
+                        <div class="form-value">#{fundingListBean.getFundingListString(researchProjectDetail.project.fundingIds)}</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label label-form">Sample Cohorts</label>
+
+                    <div class="controls">
+                        <div class="form-value">#{cohortListBean.getCohortListString(researchProjectDetail.project.cohortIds)}</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label label-form">IRB Not Engaged</label>
+
+                    <div class="controls">
+
+                        <div class="form-value">
+                            <p:selectBooleanCheckbox id="irbEngaged"
+                                                     value="#{researchProjectDetail.project.irbNotEngaged}"
+                                                     disabled="true"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label label-form">IRB/IACUC</label>
+
+                    <div class="controls">
+                        <div class="form-value">#{researchProjectDetail.irbStrings}</div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <label class="control-label label-form">IRB/IACUC Notes</label>
+
+                    <div class="controls">
+                        <div class="form-value">#{researchProjectDetail.project.irbNotes}</div>
+                    </div>
+                </div>
+
+            </h:form>
+
+        </p:layoutUnit>
+
+
+    <p:layoutUnit position="center" resizable="true">
+    <br/>
+
+    <h:form>
+        <p:commandButton value="Add Order" action="/orders/create?faces-redirect=true&amp;includeViewParams=true"
+                         ajax="false" styleClass="btn"/>
+    </h:form>
+
+    <h:form>
+        <p:dataTable id="orderData" value="#{researchProjectDetail.project.productOrders}" var="order">
+            <f:facet name="header">
+                Orders
+            </f:facet>
+
+            <p:column headerText="Name">
+                <h:link outcome="/orders/view" value="#{order.title}">
+                    <f:param name="productOrder" value="#{order.businessKey}"/>
+                </h:link>
+            </p:column>
+            <p:column headerText="Order ID">
+                <h:outputLink target="JIRA" value="#{jiraLink.browseUrl(order.jiraTicketKey)}"
+                              class="external" rendered="#{order.hasJiraTicketKey()}">
+                    <h:outputText value="#{order.jiraTicketKey}"/>
+                </h:outputLink>
+            </p:column>
+            <p:column headerText="Product">
+                #{order.product.productName}
+            </p:column>
+            <p:column headerText="Status" sortBy="#{order.title}">
+                #{order.orderStatus}
+            </p:column>
+            <p:column headerText="Owner">
+                #{userListBean.getUserFullName(order.createdBy)}
+            </p:column>
+            <p:column headerText="Updated">
+                #{order.modifiedDate}
+            </p:column>
+        </p:dataTable>
+    </h:form>
+
+</p:layoutUnit>
+</p:layout>
+</ui:define>
+</ui:composition>
+</body>
+</html>

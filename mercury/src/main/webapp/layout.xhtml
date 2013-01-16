@@ -10,9 +10,10 @@
   ~ whatsoever. Neither the Broad Institute nor MIT can be responsible for its
   ~ use, misuse, or functionality.
   -->
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
-<html xmlns="http://www.w3.org/1999/xhtml"
+<html lang="en"
+      xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:ui="http://java.sun.com/jsf/facelets"
       xmlns:f="http://java.sun.com/jsf/core"
@@ -32,9 +33,14 @@
 <f:view contentType="text/html">
     <ui:insert name="metadata"/>
     <h:head>
-        <h:outputStylesheet library="css" name="bootstrap.css"/>
-        <h:outputStylesheet library="css" name="primefaces_bootstrap_fixes.css"/>
-        <h:outputStylesheet library="css" name="styles.css"/>
+        <!-- Target our stylesheets in relation to PrimeFaces's to make sure they're in a consistent order even when
+             rendering after a failed validation during postback. Cannot use h:outputStylesheet becaue it doesn't render
+             any actual markup: http://blog.primefaces.org/?p=1433 -->
+        <f:facet name="middle">
+            <link type="text/css" rel="stylesheet" href="#{request.contextPath}/resources/css/bootstrap.css"/>
+            <link type="text/css" rel="stylesheet" href="#{request.contextPath}/resources/css/primefaces_bootstrap_fixes.css"/>
+            <link type="text/css" rel="stylesheet" href="#{request.contextPath}/resources/css/styles.css"/>
+        </f:facet>
         <link rel="shortcut icon" type="image/x-icon" href="#{request.contextPath}/favicon.ico"/>
         <title>Mercury | <ui:insert name="title"/></title>
         <ui:insert name="head"/>
@@ -49,7 +55,7 @@
             }};</script>
     </h:head>
     <h:body>
-        <div class="navbar">
+        <header class="navbar">
             <div class="navbar-inner">
                 <div class="container-fluid">
                     <div class="row-fluid">
@@ -73,17 +79,19 @@
                                         <h:outputText value="#{userBean.rolesString}"/>
                                     </div>
                                 </pe:tooltip>
-                                &nbsp;
+                                &#160;
                                 <p:commandButton action="#{logoutHandler.logout}" value="Sign out" styleClass="btn btn-mini"/>
                             </security:isLoggedIn>
                         </h:form>
                     </div>
                 </div>
             </div>
-            <div class="row-fluid">
-                <ui:include src="navigation.xhtml"/>
-            </div>
-        </div>
+            <nav class="row-fluid">
+                <security:isLoggedIn>
+                    <ui:include src="navigation.xhtml"/>
+                </security:isLoggedIn>
+            </nav>
+        </header>
 
         <div class="container-fluid">
             <p:ajaxStatus id="ajaxStatus" styleClass="span2 offset5">
@@ -120,7 +128,7 @@
             <p:dialog modal="false" widgetVar="statusDialog" draggable="false" closable="false" maximizable="false" resizable="false" minimizable="false">
                 <p:outputPanel>
                     <p:graphicImage url="/images/spinner.gif" alt="Please wait" />
-                    <h:outputText style="color: black; padding-left: 15px; padding-right: 15px;" value="Please&nbsp;wait..." />
+                    <h:outputText style="color: black; padding-left: 15px; padding-right: 15px;" value="Please&#160;wait..." />
                 </p:outputPanel>
             </p:dialog>
 

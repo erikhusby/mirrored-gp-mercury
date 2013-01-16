@@ -6,6 +6,7 @@ import org.apache.commons.collections15.Predicate;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
@@ -16,7 +17,10 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.List;
+import java.util.UUID;
 
 import static org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDaoTest.DateSpec.*;
 
@@ -69,13 +73,16 @@ public class ProductDaoTest extends ContainerTest {
 
         final int DAYS = 24 * 60 * 60;
 
+        final Calendar yesterday = Calendar.getInstance();
+        yesterday.add(Calendar.DATE, -1);
+
         Product product = new Product(
                 "Test Data",                               // product name
                 metagenomicsProductFamily,                 // product family
                 "test data ",                              // description
                 "PN-ProductDaoTest-" + UUID.randomUUID(),  // part number
-                Calendar.getInstance().getTime(),          // availability date
-                Calendar.getInstance().getTime(),          // discontinued date
+                yesterday.getTime(),                       // availability date
+                null,                                      // discontinued date
                 3 * DAYS,                                  // expected cycle time
                 4 * DAYS,                                  // guaranteed cycle time
                 192,                                       // samples per week
@@ -97,6 +104,11 @@ public class ProductDaoTest extends ContainerTest {
 
         product.setPrimaryPriceItem(priceItem1);
         product.addPriceItem(priceItem2);
+
+        MaterialType materialType1 = new MaterialType("DNA", "DNA Genomic");
+        product.addAllowableMaterialType(materialType1);
+        MaterialType materialType2 = new MaterialType("DNA", "DNA Somatic");
+        product.addAllowableMaterialType(materialType2);
 
         return product;
     }
@@ -212,7 +224,8 @@ public class ProductDaoTest extends ContainerTest {
         dao.persist(notTopLevelProduct);
         dao.flush();
 
-        final List<Product> products = dao.findProducts(ProductDao.TopLevelOnly.YES);
+        final List<Product> products =
+                dao.findProducts(ProductDao.Availability.CURRENT_OR_FUTURE, ProductDao.TopLevelOnly.YES, ProductDao.IncludePDMOnly.NO);
         Assert.assertNotNull(products);
 
         // make sure our top level is in there and our not top level is not
@@ -245,7 +258,7 @@ public class ProductDaoTest extends ContainerTest {
         dao.persist(product);
         dao.flush();
 
-        List<Product> products = dao.findProducts(ProductDao.AvailableOnly.YES);
+        List<Product> products = dao.findProducts(ProductDao.Availability.CURRENT, ProductDao.TopLevelOnly.NO, ProductDao.IncludePDMOnly.NO);
         // filter out non test data
         CollectionUtils.filter(products, new Predicate<Product>() {
             @Override
@@ -277,7 +290,8 @@ public class ProductDaoTest extends ContainerTest {
         dao.persist(notPDMOnlyProduct);
         dao.flush();
 
-        final List<Product> products = dao.findProducts(ProductDao.IncludePDMOnly.NO);
+        final List<Product> products =
+                dao.findProducts(ProductDao.Availability.CURRENT_OR_FUTURE, ProductDao.TopLevelOnly.NO, ProductDao.IncludePDMOnly.NO);
         Assert.assertNotNull(products);
 
         // make sure our top level is in there and our not top level is not
@@ -307,6 +321,9 @@ public class ProductDaoTest extends ContainerTest {
 
         Product foundProduct = dao.findByPartNumber(product.getPartNumber());
         Assert.assertNotNull(foundProduct, "Product not found!");
+
+        Assert.assertNotNull( foundProduct.getAllowableMaterialTypes());
+        Assert.assertEquals(2, foundProduct.getAllowableMaterialTypes().size(), "expected 2 material types");
 
         Product nonexistentProduct = dao.findByPartNumber("NONEXISTENT PART!!!");
         Assert.assertNull(nonexistentProduct, "Unexpectedly found product that shouldn't exist!");

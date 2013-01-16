@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.jmx;
 
 import javax.ejb.Schedule;
 import javax.ejb.Singleton;
+import javax.ejb.Startup;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -10,6 +11,7 @@ import java.util.List;
  * and override refreshCache().
  */
 @Singleton
+@Startup
 public class ExternalDataCacheControl extends AbstractCacheControl {
 
     private final List<AbstractCache> caches = new ArrayList<AbstractCache>();

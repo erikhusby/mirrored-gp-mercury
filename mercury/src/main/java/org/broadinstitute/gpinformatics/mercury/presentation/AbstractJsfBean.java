@@ -19,8 +19,32 @@ public abstract class AbstractJsfBean {
 
     private static final BusinessKeySorter businessKeySorter = new BusinessKeySorter();
 
+    /**
+     * Global redirect helper to preserve the usage of View params between page requests
+     *
+     * @param result
+     * @return
+     */
     public String redirect(String result) {
         return result + "?faces-redirect=true&includeViewParams=true";
+    }
+
+    /**
+     * Extends the basic options of the {@link #redirect(String, String...)} method to allow users to add
+     * 1->many parameters to the URL
+     *
+     * @param result
+     * @param params
+     * @return
+     */
+    public String redirect(String result, String... params) {
+        StringBuilder initialResult = new StringBuilder(redirect(result));
+
+        for (String param : params) {
+            initialResult.append("&") .append(param);
+        }
+
+        return initialResult.toString();
     }
 
     /**
@@ -65,10 +89,11 @@ public abstract class AbstractJsfBean {
      *
      * @param clientId The client ID
      * @param severity The message notification level
-     * @param summary The displayed message on the web page
-     * @param detail The detailed information of the message
+     * @param summary  The displayed message on the web page
+     * @param detail   The detailed information of the message
      */
-    protected static void addMessage(@Nullable String clientId, FacesMessage.Severity severity, String summary, String detail) {
+    protected static void addMessage(@Nullable String clientId, FacesMessage.Severity severity, String summary,
+                                     String detail) {
         FacesContext context = FacesContext.getCurrentInstance();
         context.addMessage(clientId, new FacesMessage(severity, summary, detail));
     }
@@ -78,8 +103,8 @@ public abstract class AbstractJsfBean {
      * used judiciously, as most messages are global and the client ID should be null.
      *
      * @param clientId The client ID
-     * @param summary The displayed message on the web page
-     * @param detail The detailed information of the message
+     * @param summary  The displayed message on the web page
+     * @param detail   The detailed information of the message
      */
     protected void addInfoMessage(String clientId, String summary, String detail) {
         addMessage(clientId, FacesMessage.SEVERITY_INFO, summary, detail);
@@ -89,8 +114,8 @@ public abstract class AbstractJsfBean {
      * Adds a WARN severity level FacesMessage to the context assigning it to the client ID.
      *
      * @param clientId The client ID
-     * @param summary The displayed message on the web page
-     * @param detail The detailed information of the message
+     * @param summary  The displayed message on the web page
+     * @param detail   The detailed information of the message
      */
     protected void addWarnMessage(String clientId, String summary, String detail) {
         addMessage(clientId, FacesMessage.SEVERITY_WARN, summary, detail);
@@ -100,8 +125,8 @@ public abstract class AbstractJsfBean {
      * Adds an ERROR severity level FacesMessage to the context assigning it to the client ID.
      *
      * @param clientId The client ID
-     * @param summary The displayed message on the web page
-     * @param detail The detailed information of the message
+     * @param summary  The displayed message on the web page
+     * @param detail   The detailed information of the message
      */
     protected void addErrorMessage(String clientId, String summary, String detail) {
         addMessage(clientId, FacesMessage.SEVERITY_ERROR, summary, detail);
@@ -111,8 +136,8 @@ public abstract class AbstractJsfBean {
      * Adds a FATAL severity level FacesMessage to the context assigning it to the client ID.
      *
      * @param clientId The client ID
-     * @param summary The displayed message on the web page
-     * @param detail The detailed information of the message
+     * @param summary  The displayed message on the web page
+     * @param detail   The detailed information of the message
      */
     protected void addFatalMessage(String clientId, String summary, String detail) {
         addMessage(clientId, FacesMessage.SEVERITY_FATAL, summary, detail);
@@ -120,44 +145,39 @@ public abstract class AbstractJsfBean {
 
     /**
      * This is a service for autocomplete removal of duplicates. It assumes that there will only be one
-     * duplicate because it is what was just selected. If we had what was just selected, we could just look
-     * for two of those and remove one.
+     * duplicate because it's called just after an item is added. If we had the item that was just added,
+     * we could do a simpler search.
      *
-     * @param objects The list of items in the autocomplete
+     * @param objects     The list of items in the autocomplete
      * @param componentId The id of the component
-     * @param <T> The correct object
+     * @param <T>         The correct object
      */
     public <T> void removeDuplicates(List<T> objects, String componentId) {
 
-        // The users ARE THE ACTUAL MEMBERS that back the autocomplete lists
-        Set<T> uniqueObjects = new HashSet<T>();
+        // The objects ARE THE ACTUAL MEMBERS that back the autocomplete lists.
+        Set<T> seenObjects = new HashSet<T>();
 
-        // Since this is called after a single add, at most there is one duplicate
-        T duplicate = null;
         for (T object : objects) {
-            if (!uniqueObjects.add(object)) {
-                duplicate = object;
+            if (!seenObjects.add(object)) {
+                // Since this is called after every add, there can only be one duplicate.
+                objects.remove(object);
+
+                String name;
+                if (object instanceof BspUser) {
+                    // We do not own BSP User, so special case this.
+                    BspUser user = (BspUser) object;
+                    name = user.getFirstName() + " " + user.getLastName();
+                } else if (object instanceof Displayable) {
+                    Displayable displayable = (Displayable) object;
+                    name = displayable.getDisplayName();
+                } else {
+                    name = object.toString();
+                }
+
+                String message = name + " was already in the list";
+                addInfoMessage(componentId, "Duplicate item removed.", message);
+                return;
             }
-        }
-
-        if (duplicate != null) {
-            objects.clear();
-            objects.addAll(uniqueObjects);
-
-            String name;
-            if (duplicate instanceof BspUser) {
-                // We do not own BSP User, so special case this.
-                BspUser user = (BspUser) duplicate;
-                name = user.getFirstName() + " " + user.getLastName();
-            } else if (duplicate instanceof Displayable) {
-                Displayable displayable = (Displayable) duplicate;
-                name = displayable.getDisplayName();
-            } else {
-                name = duplicate.toString();
-            }
-
-            String message = name + " was already in the list";
-            addInfoMessage(componentId, "Duplicate item removed.", message);
         }
     }
 

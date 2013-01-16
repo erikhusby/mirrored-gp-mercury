@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
-
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
+import org.hibernate.envers.AuditJoinTable;
+import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
@@ -19,6 +21,10 @@ import java.util.*;
 @Table(schema = "athena",
         uniqueConstraints = @UniqueConstraint(columnNames = {"partNumber"}))
 public class Product implements Serializable, Comparable<Product> {
+    private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
+
+    public static final boolean TOP_LEVEL_PRODUCT = true;
+    public static final boolean CHILD_PRODUCT = false;
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")
@@ -27,7 +33,7 @@ public class Product implements Serializable, Comparable<Product> {
 
     private String productName;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST}, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, cascade = {CascadeType.PERSIST}, optional = false)
     private ProductFamily productFamily;
 
     @Column(length = 2000)
@@ -63,22 +69,58 @@ public class Product implements Serializable, Comparable<Product> {
      */
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "athena", name = "PRODUCT_OPT_PRICE_ITEMS")
-    private Set<PriceItem> optionalPriceItems = new HashSet<PriceItem>();
+    private final Set<PriceItem> optionalPriceItems = new HashSet<PriceItem>();
 
     @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinTable(schema = "athena")
-    private Set<Product> addOns = new HashSet<Product>();
+    private final Set<Product> addOns = new HashSet<Product>();
 
     private String workflowName;
 
     private boolean pdmOrderableOnly;
 
+    @Transient
+    private String originalPartNumber;   // This is used for edit to keep track of changes to the object.
+
+    public static final String DEFAULT_WORKFLOW_NAME = "";
+    public static final Boolean DEFAULT_TOP_LEVEL = Boolean.TRUE;
+
+    // Initialize our transient data after the object has been loaded from the database.
+    @PostLoad
+    private void initialize() {
+        originalPartNumber = partNumber;
+    }
+
+    /** True if this product/add-on supports automated billing. */
+    @Column(name = "USE_AUTOMATED_BILLING", nullable = false)
+    private boolean useAutomatedBilling;
+
+    /** To determine if this product can be billed, the following criteria must be true. */
+    // Note that for now, there will only be one requirement. We use OneToMany to allow for lazy loading of the
+    // requirement.
+    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @JoinColumn(name = "product", nullable = false)
+    @AuditJoinTable(name = "product_requirement_join_aud")
+    private List<BillingRequirement> requirements;
+
+    /**
+     * Allowable Material Types for the product.
+     */
+    @ManyToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @JoinTable(schema = "athena", name = "PRODUCT_MATERIAL_TYPES",
+            joinColumns=@JoinColumn(name="PRODUCT_ID"),
+            inverseJoinColumns=@JoinColumn(name="MATERIAL_TYPE_ID")
+    )
+    private Set<MaterialType> allowableMaterialTypes = new HashSet<MaterialType>();
+
     /**
      * JPA package visible no arg constructor
-     *
-     * @return
      */
     Product() {}
+
+    public Product(boolean topLevelProduct) {
+        this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, null, false);
+    }
 
     public Product(String productName,
                    ProductFamily productFamily,
@@ -173,44 +215,47 @@ public class Product implements Serializable, Comparable<Product> {
         return primaryPriceItem;
     }
 
-    public void setPrimaryPriceItem(PriceItem defaultPriceItem) {
-        this.primaryPriceItem = defaultPriceItem;
+    public void setPrimaryPriceItem(PriceItem primaryPriceItem) {
+        this.primaryPriceItem = primaryPriceItem;
     }
 
     public Set<PriceItem> getOptionalPriceItems() {
         return optionalPriceItems;
     }
 
+    public Set<MaterialType> getAllowableMaterialTypes() {
+        return allowableMaterialTypes;
+    }
 
-    public void setProductName(final String productName) {
+    public void setProductName(String productName) {
         this.productName = productName;
     }
 
-    public void setProductFamily(final ProductFamily productFamily) {
+    public void setProductFamily(ProductFamily productFamily) {
         this.productFamily = productFamily;
     }
 
-    public void setDescription(final String description) {
+    public void setDescription(String description) {
         this.description = description;
     }
 
-    public void setAvailabilityDate(final Date availabilityDate) {
+    public void setAvailabilityDate(Date availabilityDate) {
         this.availabilityDate = availabilityDate;
     }
 
-    public void setDiscontinuedDate(final Date discontinuedDate) {
+    public void setDiscontinuedDate(Date discontinuedDate) {
         this.discontinuedDate = discontinuedDate;
     }
 
-    public void setExpectedCycleTimeSeconds(final Integer expectedCycleTimeSeconds) {
+    public void setExpectedCycleTimeSeconds(Integer expectedCycleTimeSeconds) {
         this.expectedCycleTimeSeconds = expectedCycleTimeSeconds;
     }
 
-    public void setGuaranteedCycleTimeSeconds(final Integer guaranteedCycleTimeSeconds) {
+    public void setGuaranteedCycleTimeSeconds(Integer guaranteedCycleTimeSeconds) {
         this.guaranteedCycleTimeSeconds = guaranteedCycleTimeSeconds;
     }
 
-    public void setSamplesPerWeek(final Integer samplesPerWeek) {
+    public void setSamplesPerWeek(Integer samplesPerWeek) {
         this.samplesPerWeek = samplesPerWeek;
     }
 
@@ -218,41 +263,40 @@ public class Product implements Serializable, Comparable<Product> {
         return minimumOrderSize;
     }
 
-    public void setMinimumOrderSize(final Integer minimumOrderSize) {
+    public void setMinimumOrderSize(Integer minimumOrderSize) {
         this.minimumOrderSize = minimumOrderSize;
     }
 
-    public void setInputRequirements(final String inputRequirements) {
+    public void setInputRequirements(String inputRequirements) {
         this.inputRequirements = inputRequirements;
     }
 
-    public void setDeliverables(final String deliverables) {
+    public void setDeliverables(String deliverables) {
         this.deliverables = deliverables;
     }
 
-    public void setTopLevelProduct(final boolean topLevelProduct) {
+    public void setTopLevelProduct(boolean topLevelProduct) {
         this.topLevelProduct = topLevelProduct;
     }
 
-    public void setWorkflowName(final String workflowName) {
+    public void setWorkflowName(String workflowName) {
         this.workflowName = workflowName;
     }
 
     public void addPriceItem(PriceItem priceItem) {
-
         optionalPriceItems.add(priceItem);
+    }
 
+    public void addAllowableMaterialType(MaterialType materialType) {
+        allowableMaterialTypes.add(materialType);
     }
 
     public Set<Product> getAddOns() {
         return addOns;
     }
 
-
     public void addAddOn(Product addOn) {
-
         addOns.add(addOn);
-
     }
 
     public String getWorkflowName() {
@@ -265,6 +309,23 @@ public class Product implements Serializable, Comparable<Product> {
 
     public void setPdmOrderableOnly(boolean pdmOrderableOnly) {
         this.pdmOrderableOnly = pdmOrderableOnly;
+    }
+
+    public boolean isUseAutomatedBilling() {
+        return useAutomatedBilling;
+    }
+
+    public void setUseAutomatedBilling(boolean useAutomatedBilling) {
+        this.useAutomatedBilling = useAutomatedBilling;
+    }
+
+    public BillingRequirement getRequirement() {
+        if (requirements == null) {
+            requirements = Collections.singletonList(new BillingRequirement());
+        } else if (requirements.isEmpty()) {
+            requirements.add(new BillingRequirement());
+        }
+        return requirements.get(0);
     }
 
     public boolean isAvailable() {
@@ -299,7 +360,7 @@ public class Product implements Serializable, Comparable<Product> {
 
         Product product = (Product) o;
 
-        if (partNumber != null ? !partNumber.equals(product.partNumber) : product.partNumber != null) return false;
+        if (partNumber != null ? !partNumber.equals(product.getPartNumber()) : product.getPartNumber() != null) return false;
 
         return true;
     }
@@ -316,7 +377,7 @@ public class Product implements Serializable, Comparable<Product> {
     @Override
     public int compareTo(Product that) {
         CompareToBuilder builder = new CompareToBuilder();
-        builder.append(this.getPartNumber(), that.getPartNumber());
+        builder.append(getPartNumber(), that.getPartNumber());
         return builder.build();
     }
 
@@ -351,8 +412,10 @@ public class Product implements Serializable, Comparable<Product> {
     }
 
     private void addProductDuplicates(List<String> duplicates, Set<String> priceItemNames) {
-        // No price items yet, so can just add it
-        priceItemNames.add(primaryPriceItem.getName());
+        if (primaryPriceItem != null) {
+            // No price items yet, so can just add it
+            priceItemNames.add(primaryPriceItem.getName());
+        }
 
         for (PriceItem optionalPriceItem : optionalPriceItems) {
             if (!priceItemNames.add(optionalPriceItem.getName())) {
@@ -360,4 +423,78 @@ public class Product implements Serializable, Comparable<Product> {
             }
         }
     }
+
+    public Integer getExpectedCycleTimeDays() {
+        return convertCycleTimeSecondsToDays(getExpectedCycleTimeSeconds()) ;
+    }
+    public void setExpectedCycleTimeDays(final Integer expectedCycleTimeDays) {
+        setExpectedCycleTimeSeconds(convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
+    }
+
+    public Integer getGuaranteedCycleTimeDays() {
+        return convertCycleTimeSecondsToDays(getGuaranteedCycleTimeSeconds()) ;
+    }
+    public void setGuaranteedCycleTimeDays(final Integer guaranteedCycleTimeDays) {
+        setGuaranteedCycleTimeSeconds(convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
+    }
+
+    /**
+     * Converts cycle times from days to seconds.
+     * @return the number of seconds.
+     */
+    public static int convertCycleTimeDaysToSeconds(Integer cycleTimeDays) {
+        return (cycleTimeDays == null) ? 0 : cycleTimeDays * ONE_DAY_IN_SECONDS;
+    }
+
+    /**
+     * Converts cycle times from seconds to days.
+     * This method rounds down to the nearest day
+     *
+     * @param cycleTimeSeconds The cycle time in seconds
+     *
+     * @return the number of days.
+     */
+    public static Integer convertCycleTimeSecondsToDays(Integer cycleTimeSeconds) {
+        Integer cycleTimeDays = null;
+        if ((cycleTimeSeconds != null) && cycleTimeSeconds >= ONE_DAY_IN_SECONDS) {
+            cycleTimeDays =  (cycleTimeSeconds - (cycleTimeSeconds % ONE_DAY_IN_SECONDS)) / ONE_DAY_IN_SECONDS;
+        }
+        return cycleTimeDays;
+    }
+
+    public String getProductLabel() {
+
+        if (getProductName() == null) {
+            return "";
+        }
+
+        final int MAX_NAME = 45;
+
+        if (getProductName().length() > MAX_NAME){
+            return getProductName().substring(0, MAX_NAME) + "... ";
+        } else if ( getProductName().length() + getPartNumber().length() < MAX_NAME ){
+            return getProductName() + " : " + getPartNumber();
+        }
+
+        return getProductName();
+    }
+
+    public String getOriginalPartNumber() {
+        return originalPartNumber;
+    }
+
+
+    public static Product makeEmptyProduct() {
+        return new Product(null, null, null, null, null, null, null,
+                null, null, null, null, null, DEFAULT_TOP_LEVEL, DEFAULT_WORKFLOW_NAME, false);
+    }
+
+    public String getDisplayName() {
+        return productName + " [" + partNumber + "]";
+    }
+
+    public boolean getSupportsNumberOfLanes() {
+        return getProductFamily().isSupportsNumberOfLanes();
+    }
+
 }

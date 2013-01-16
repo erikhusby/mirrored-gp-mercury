@@ -5,6 +5,8 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 
 @Stateless
@@ -12,16 +14,25 @@ public class ProductOrderStatusEtl extends GenericEntityEtl {
     @Inject
     ProductOrderDao dao;
 
+    /**
+     * @{inheritDoc}
+     */
     @Override
     Class getEntityClass() {
         return ProductOrder.class;
     }
 
+    /**
+     * @{inheritDoc}
+     */
     @Override
     String getBaseFilename() {
         return "product_order_status";
     }
 
+    /**
+     * @{inheritDoc}
+     */
     @Override
     Long entityId(Object entity) {
         return ((ProductOrder)entity).getProductOrderId();
@@ -33,15 +44,14 @@ public class ProductOrderStatusEtl extends GenericEntityEtl {
         return null;
     }
 
+    /** This entity etl does not make entity records. */
+    @Override
+    Collection<String> entityRecordsInRange(long startId, long endId, String etlDateStr, boolean isDelete) {
+        return Collections.EMPTY_LIST;
+    }
 
     /**
-     * Makes a data record from entity status fields, and possible the Envers revision date,
-     * in a format that matches the corresponding SqlLoader control file.
-     * @param etlDateStr date
-     * @param revDate Envers revision date
-     * @param revObject the Envers versioned entity
-     * @param isDelete indicates deleted entity
-     * @return delimited SqlLoader record, or null if entity does not support status recording
+     * @{inheritDoc}
      */
     @Override
     String entityStatusRecord(String etlDateStr, Date revDate, Object revObject, boolean isDelete) {

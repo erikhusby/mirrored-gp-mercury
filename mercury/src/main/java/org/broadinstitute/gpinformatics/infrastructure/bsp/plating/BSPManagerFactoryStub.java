@@ -1,12 +1,19 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp.plating;
 
 import org.broadinstitute.bsp.client.container.ContainerManager;
+import org.broadinstitute.bsp.client.response.RecentSampleKitResponse;
+import org.broadinstitute.bsp.client.response.SampleKitResponse;
+import org.broadinstitute.bsp.client.response.SampleResponse;
+import org.broadinstitute.bsp.client.sample.MaterialType;
+import org.broadinstitute.bsp.client.sample.Sample;
+import org.broadinstitute.bsp.client.sample.SampleManager;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.bsp.client.users.UserManager;
 import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -72,7 +79,7 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
                 testList.add(jwalshUsr);
 
                 BspUser hrafalUsr = new BspUser();
-                hrafalUsr.setUserId(QA_DUDE_USER_ID + 100);
+                hrafalUsr.setUserId(QA_DUDE_USER_ID + 101);
                 hrafalUsr.setUsername("hrafal");
                 hrafalUsr.setFirstName("Howard");
                 hrafalUsr.setLastName("Rafal");
@@ -85,4 +92,50 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
 
         return mgr;  //To change body of implemented methods use File | Settings | File Templates.
     }
+
+    public SampleManager createSampleManager() {
+
+        SampleManager sampleManager = new SampleManager() {
+
+            @Override
+            public SampleKitResponse getSampleKit(String s) {
+                throw new IllegalStateException("Not Yet Implemented");
+            }
+
+            @Override
+            public SampleResponse updateSample(Sample sample) {
+                throw new IllegalStateException("Not Yet Implemented");
+            }
+
+            @Override
+            public SampleResponse getSample(String s) {
+                throw new IllegalStateException("Not Yet Implemented");
+            }
+
+            @Override
+            public RecentSampleKitResponse getRecentlyUpdatedKits(String s) {
+                throw new IllegalStateException("Not Yet Implemented");
+            }
+
+            @Override
+            public List<MaterialType> getMaterialTypes() {
+                List<MaterialType> materialTypes = new ArrayList<MaterialType>();
+
+                materialTypes.add( new MaterialType("Cells:Pellet frozen") );
+                materialTypes.add( new MaterialType("DNA:DNA Genomic") );
+                materialTypes.add( new MaterialType("DNA:DNA Library External") );
+                materialTypes.add( new MaterialType("DNA:Viral Hybrid") );
+                materialTypes.add( new MaterialType("RNA:Total RNA") );
+                return  materialTypes;
+
+            }
+
+            @Override
+            public Boolean participantHasBeenSubmitted(String s, String s1) {
+                throw new IllegalStateException("Not Yet Implemented");
+            }
+        };
+        return sampleManager;
+    }
+
 }

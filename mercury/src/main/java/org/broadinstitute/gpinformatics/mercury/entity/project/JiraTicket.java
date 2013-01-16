@@ -11,11 +11,24 @@ import org.hibernate.envers.Audited;
 import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.io.IOException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Entity
 @Audited
 @Table(schema = "mercury")
 public class JiraTicket {
+
+    /**
+     * Real JIRA tickets IDs for PDOs have a "PDO-" prefix followed by digits.  Draft PDOs don't have a ticket ID,
+     * Graphene tests have "PDO-" followed by arbitrary text.  There are groups to capture both the prefix and
+     * the issue number.
+     */
+    public static final Pattern PATTERN = Pattern.compile("^([A-Z]+)-([\\d]+)$");
+
+    public static final int PATTERN_GROUP_PREFIX = 1;
+
+    public static final int PATTERN_GROUP_NUMBER = 2;
 
     private String ticketName;
 
@@ -34,24 +47,20 @@ public class JiraTicket {
     private String browserUrl;
 
     @Transient
-    private final JiraService jiraService;
+    private JiraService jiraService;
 
-    public JiraTicket() {
+    JiraTicket() {
         jiraService = ServiceAccessUtility.getBean(JiraService.class);
     }
 
-    public JiraTicket(JiraIssue issue) {
-        this(issue.getKey());
-    }
-
-    public JiraTicket(@Nonnull String ticketId) {
-        this();
+    public JiraTicket(@Nonnull JiraService jiraService, @Nonnull String ticketId) {
         if (ticketId == null) {
             throw new NullPointerException("ticketId cannot be null.");
         }
         this.ticketId = ticketId;
-        ticketName = ticketId;
-        this.browserUrl = jiraService.createTicketUrl(ticketName);
+        this.ticketName = ticketId;
+        this.jiraService = jiraService;
+        this.browserUrl = this.jiraService.createTicketUrl(ticketName);
     }
 
     /**
@@ -66,7 +75,11 @@ public class JiraTicket {
     public String getTicketName() {
         return ticketName;
     }
-    
+
+    public String getTicketId() {
+        return ticketId;
+    }
+
     /**
      * Because we're going to be calling this inline all over the
      * place, in performance-sensitive sections of code like
@@ -81,6 +94,11 @@ public class JiraTicket {
         } catch(IOException e) {
             throw new RuntimeException("Could not log message '" + text + "' to jira ticket " + ticketName + ".  Is the jira server okay?",e);
         }
+    }
+
+
+    public JiraIssue getJiraDetails() throws IOException{
+        return jiraService.getIssue(ticketId);
     }
 
     /**

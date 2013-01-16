@@ -128,11 +128,45 @@ find ${NEW_DIR}/ -name \*_is_ready | sort | sed -e 's!.*/!!;s!_is_ready!!' | whi
 do
 
     # Deletes existing sqlplus output/log files in case this is a re-run of etl dat files.
+    if [ -e ${ERROR_DIR}/${TIMESTAMP}_sqlplus_prep.log ]; then
+	rm ${ERROR_DIR}/${TIMESTAMP}_sqlplus_prep.log
+    fi
+    if [ -e ${NEW_DIR}/${TIMESTAMP}_sqlplus_prep.start ]; then
+	rm ${NEW_DIR}/${TIMESTAMP}_sqlplus_prep.start
+    fi
     if [ -e ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log ]; then
 	rm ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log
     fi
     if [ -e ${NEW_DIR}/${TIMESTAMP}_sqlplus.start ]; then
 	rm ${NEW_DIR}/${TIMESTAMP}_sqlplus.start
+    fi
+
+
+    # Truncates all of the import tables before each set of import files is processed.
+    #
+    echo "Running sqlPlus to truncate import tables"
+    (sqlplus -L -S "${USERNAME}/${PASSWORD}@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=${DB_SERVER})(PORT=${DB_PORT})))(CONNECT_DATA=(SERVER=DEDICATED)(SID=${DB_SID})))\"" | grep -v ${TIMESTAMP}) <<!
+    set pagesize 0 heading off feedback off verify off echo off trimspool on serveroutput on linesize 511
+    spool ${NEW_DIR}/${TIMESTAMP}_sqlplus_prep.start;
+    select to_char(${TIMESTAMP}) from dual;
+    spool off;
+    spool ${ERROR_DIR}/${TIMESTAMP}_sqlplus_prep.log;
+    exec prep_import;
+    quit;
+!
+
+    # Uses "sqlplus_prep.start" file to know if sqlplus actually ran because sqlplus return code is unreliable.
+    if [ ! -e ${NEW_DIR}/${TIMESTAMP}_sqlplus_prep.start ]; then
+	echo "SqlPlus prep_import failed to run." | tee /dev/stderr
+	exit 1
+    fi
+    rm ${NEW_DIR}/${TIMESTAMP}_sqlplus_prep.start
+
+    if [ -s ${ERROR_DIR}/${TIMESTAMP}_sqlplus_prep.log ]; then
+	    echo "There were problems running merge_prep.  See ${ERROR_DIR}/${TIMESTAMP}_sqlplus_prep.log" | tee /dev/stderr
+    else
+	# removes the zero-length file
+	rm ${ERROR_DIR}/${TIMESTAMP}_sqlplus_prep.log
     fi
 
 
@@ -168,7 +202,7 @@ do
 	esac
 
         # Moves the data file to done.
-	mv ${DAT_FILE} ${DONE_DIR}
+	mv -f ${DAT_FILE} ${DONE_DIR}
     done
 
     # If there are any remaining unprocessed dat files having TIMESTAMP, assume
@@ -178,24 +212,25 @@ do
 
     if [ -n "${UNPROCESSED_FILE}" ]; then
 	echo "Unprocessed files were found.  Resetting processed files back to new and quitting." | tee /dev/stderr
-	mv ${DONE_DIR}/${TIMESTAMP}*.dat ${NEW_DIR}
+	mv -f ${DONE_DIR}/${TIMESTAMP}*.dat ${NEW_DIR}
         exit 1
     fi
 
     # Invokes load_merge stored procedure and waits for it to finish.
     echo "Running sqlPlus to merge new data"
     (sqlplus -L -S "${USERNAME}/${PASSWORD}@\"(DESCRIPTION=(ADDRESS_LIST=(ADDRESS=(PROTOCOL=TCP)(HOST=${DB_SERVER})(PORT=${DB_PORT})))(CONNECT_DATA=(SERVER=DEDICATED)(SID=${DB_SID})))\"" | grep -v ${TIMESTAMP}) <<!
-set pagesize 0 heading off feedback off verify off echo off trimspool on serveroutput on linesize 511
-spool ${NEW_DIR}/${TIMESTAMP}_sqlplus.start;
-select to_char(${TIMESTAMP}) from dual;
-spool off;
-spool ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log;
-exec merge_import;
-quit;
+    set pagesize 0 heading off feedback off verify off echo off trimspool on serveroutput on linesize 511
+    spool ${NEW_DIR}/${TIMESTAMP}_sqlplus.start;
+    select to_char(${TIMESTAMP}) from dual;
+    spool off;
+    spool ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log;
+    exec merge_import;
+    quit;
 !
+
     if [ ! -e ${NEW_DIR}/${TIMESTAMP}_sqlplus.start ]; then
         echo "SqlPlus failed to run.  Resetting processed files back to new and quitting." | tee /dev/stderr
-	mv ${DONE_DIR}/${TIMESTAMP}*.dat ${NEW_DIR}
+	mv -f ${DONE_DIR}/${TIMESTAMP}*.dat ${NEW_DIR}
         exit 1
     fi
     rm ${NEW_DIR}/${TIMESTAMP}_sqlplus.start
@@ -206,6 +241,6 @@ quit;
         # removes the zero-length file
         rm ${ERROR_DIR}/${TIMESTAMP}_sqlplus.log
     fi
-    mv ${NEW_DIR}/${TIMESTAMP}_is_ready ${DONE_DIR}
+    mv -f ${NEW_DIR}/${TIMESTAMP}_is_ready ${DONE_DIR}
 
 done

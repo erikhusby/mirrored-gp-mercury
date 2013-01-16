@@ -44,6 +44,7 @@ import java.util.Map;
  */
 public class ImportFromSquidTest extends ContainerTest {
 
+    public static final String TEST_MERCURY_URL = "http://localhost:8080/Mercury";
     @PersistenceContext(unitName = "squid_pu")
     private EntityManager entityManager;
 
@@ -292,7 +293,7 @@ public class ImportFromSquidTest extends ContainerTest {
                         // Use a web service, rather than just calling persist on a DAO, because a constraint
                         // violation invalidates the EntityManager.  The web service gets a fresh EntityManager for
                         // each request.
-                        response = Client.create().resource("http://localhost:8080/Mercury/rest/labbatch")
+                        response = Client.create().resource(TEST_MERCURY_URL + "/rest/labbatch")
                                 .type(MediaType.APPLICATION_XML_TYPE)
                                 .accept(MediaType.APPLICATION_XML)
                                 .entity(labBatch)
@@ -306,6 +307,7 @@ public class ImportFromSquidTest extends ContainerTest {
                         researchProject = researchProjectDao.findByBusinessKey(jiraTicketKey);
                         ProductOrder productOrder = new ProductOrder(1701L, lcSet, productOrderSamples, "BSP-123", product, researchProject);
                         productOrder.setJiraTicketKey(lcSet);
+                        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
                         productOrderDao.persist(productOrder);
                         productOrderDao.clear();
                     }
@@ -364,7 +366,7 @@ public class ImportFromSquidTest extends ContainerTest {
             String barcode = (String) columns[0];
             String designName = (String) columns[1];
             if(!previousDesignName.equals(designName)) {
-                reagentDesign = new ReagentDesign(designName, ReagentDesign.REAGENT_TYPE.BAIT);
+                reagentDesign = new ReagentDesign(designName, ReagentDesign.ReagentType.BAIT);
                 previousDesignName = designName;
             }
             TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(barcode);
@@ -411,7 +413,7 @@ public class ImportFromSquidTest extends ContainerTest {
             String vendorDesignName = (String) columns[1];
             String barcode = (String) columns[2];
             if(!previousDesignName.equals(designName)) {
-                reagentDesign = new ReagentDesign(designName, ReagentDesign.REAGENT_TYPE.CAT);
+                reagentDesign = new ReagentDesign(designName, ReagentDesign.ReagentType.CAT);
                 reagentDesign.setManufacturersName(vendorDesignName);
                 previousDesignName = designName;
             }

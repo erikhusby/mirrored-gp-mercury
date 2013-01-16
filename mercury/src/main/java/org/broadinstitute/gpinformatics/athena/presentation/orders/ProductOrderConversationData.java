@@ -42,4 +42,9 @@ public class ProductOrderConversationData implements Serializable {
         }
     }
 
+
+    public void endConversation() {
+        conversation.end();
+    }
+
 }

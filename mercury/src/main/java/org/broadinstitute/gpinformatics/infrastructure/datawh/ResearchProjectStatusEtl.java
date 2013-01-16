@@ -5,6 +5,8 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 
 @Stateless
@@ -12,36 +14,44 @@ public class ResearchProjectStatusEtl extends GenericEntityEtl {
     @Inject
     ResearchProjectDao dao;
 
+    /**
+     * @{inheritDoc}
+     */
     @Override
     Class getEntityClass() {
         return ResearchProject.class;
     }
 
+    /**
+     * @{inheritDoc}
+     */
     @Override
     String getBaseFilename() {
         return "research_project_status";
     }
 
+    /**
+     * @{inheritDoc}
+     */
     @Override
     Long entityId(Object entity) {
         return ((ResearchProject)entity).getResearchProjectId();
     }
 
-    /** This entity does not make entity records. */
+    /** This class does not make entity records. */
     @Override
     String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         return null;
     }
 
+    /** This class does not make entity records. */
+    @Override
+    Collection<String> entityRecordsInRange(long startId, long endId, String etlDateStr, boolean isDelete) {
+        return Collections.EMPTY_LIST;
+    }
 
     /**
-     * Makes a data record from entity status fields, and possible the Envers revision date,
-     * in a format that matches the corresponding SqlLoader control file.
-     * @param etlDateStr date
-     * @param revDate Envers revision date
-     * @param revObject the Envers versioned entity
-     * @param isDelete indicates deleted entity
-     * @return delimited SqlLoader record, or null if entity does not support status recording
+     * @{inheritDoc}
      */
     @Override
     String entityStatusRecord(String etlDateStr, Date revDate, Object revObject, boolean isDelete) {

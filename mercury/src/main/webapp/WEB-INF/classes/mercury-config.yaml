@@ -12,6 +12,9 @@ app:
     QA:
       url:      http://pmbridgedev.broadinstitute.org:8081/Mercury/
 
+    RC:
+      url:      http://mercuryrc.broadinstitute.org:8082/Mercury/
+
     PROD:
       url:      http://mercury.broadinstitute.org/Mercury/
 
@@ -81,8 +84,6 @@ jira:
       host:     labopsjira.broadinstitute.org
 #      port:     8020
       urlBase:      https://labopsjira.broadinstitute.org
-
-
 
 
 pmbridge:
@@ -158,15 +159,12 @@ thrift:
       port: 9090
 
 
-
+# rename to wsMsgStore
 deckMsgs:
 
     DEV:
 
         messageStoreDirRoot: /seq/lims/mercury/dev
-#        jmsHost:
-#        jmsPort:
-#        jmsQueue:
 
     QA:
 
@@ -176,6 +174,35 @@ deckMsgs:
 
         messageStoreDirRoot: /seq/lims/mercury/prod
 
+bettaLimsServer:
+    DEV:
+        wsHost: node115
+        wsPort: 9998
+        #14009
+        jmsHost: node115
+        jmsPort: 61616
+        jmsQueue: broad.queue.bettalims.thompson
+
+    TEST:
+        wsHost: node115
+        wsPort: 9997
+        jmsHost: node115
+        jmsPort: 61616
+        jmsQueue: broad.queue.bettalims.test
+
+    QA:
+        wsHost: vbettalimsqa
+        wsPort: 9998
+        jmsHost: node115
+        jmsPort: 61616
+        jmsQueue: broad.queue.bettalims.qa
+
+    PROD:
+        wsHost: seqlims
+        wsPort: 9998
+        jmsHost: seqlims
+        jmsPort: 61616
+        jmsQueue: broad.queue.bettalims
 
 datawhEtl:
 
@@ -190,6 +217,16 @@ datawhEtl:
     PROD:
 
         datawhEtlDirRoot: /seq/lims/datawh/prod
+
+
+tableau:
+
+    PROD:
+
+        trustedTicketServer: https://tableau-dev.broadinstitute.org
+        username: lab\tableau-test
+        reportUrls:
+            - {name: PASS, url: "/views/PMBPASSSampleDashboard/PMBridgeSamplesDashboard?:embed=yes&Research%20Project="}
 
 
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
@@ -210,6 +247,8 @@ mercury:
       thrift:   QA
       deckMsgs: DEV
       datawhEtl: DEV
+      bettaLimsServer: DEV
+      tableau:  PROD
 
 
     TEST:
@@ -224,6 +263,9 @@ mercury:
       thrift:   TEST
       deckMsgs: DEV
       datawhEtl: DEV
+      bettaLimsServer: TEST
+      tableau:  PROD
+
 
     QA:
 
@@ -237,11 +279,13 @@ mercury:
       thrift:   QA
       deckMsgs: QA
       datawhEtl: QA
+      bettaLimsServer: QA
+      tableau:  PROD
 
 
     RC:
 
-      app:      QA
+      app:      RC
       bsp:      QA
       gap:      QA
       jira:     TEST
@@ -251,6 +295,8 @@ mercury:
       thrift:   QA
       deckMsgs: QA
       datawhEtl: QA
+      bettaLimsServer: QA
+      tableau:  PROD
 
 
     PROD:
@@ -265,4 +311,5 @@ mercury:
       thrift:   PROD
       deckMsgs: PROD
       datawhEtl: PROD
-
+      bettaLimsServer: PROD
+      tableau:  PROD

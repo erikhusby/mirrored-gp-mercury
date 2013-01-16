@@ -29,20 +29,17 @@ public class CreateBillingData extends ContainerTest {
 
             userTransaction.begin();
 
-            final String pdoBusinessKey = "PDO-72";
+            String pdoBusinessKey = "PDO-72";
             ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoBusinessKey);
 
-            BillingSession billingSession = new BillingSession(11144L);
-
             Set<BillingLedger> billingLedgers = new HashSet<BillingLedger>();
-
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
                 if (productOrderSample.getSampleName().contains("A")) {
                     billingLedgers.add(new BillingLedger(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(), new Date(), 0.5));
                 }
             }
 
-            billingSession.setBillingLedgerItems(billingLedgers);
+            BillingSession billingSession = new BillingSession(11144L, billingLedgers);
             productOrderDao.persist(billingSession);
 
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {

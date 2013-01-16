@@ -1,0 +1,150 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>Mercury</groupId>
+  <artifactId>JBossConfig</artifactId>
+  <version>1.0-SNAPSHOT</version>
+  <packaging>jar</packaging>
+
+  <name>JBossConfig</name>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+      <oracle.version>6-11.2.0.1.0</oracle.version>
+      <postgresql.version>9.1-901.jdbc4</postgresql.version>
+      <crowdJass.version>1.3.1.4</crowdJass.version>
+  </properties>
+
+<repositories>
+    <repository>
+        <id>Prodinfo</id>
+        <name>Prodinfo Maven Repository</name>
+        <url>http://prodinfosvn.broadinstitute.org:8000/m2-repository</url>
+    </repository>
+</repositories>
+
+  <dependencies>
+      <dependency>
+          <groupId>com.oracle</groupId>
+          <artifactId>ojdbc</artifactId>
+          <version>${oracle.version}</version>
+      </dependency>
+      <dependency>
+          <groupId>postgresql</groupId>
+          <artifactId>postgresql</artifactId>
+          <version>${postgresql.version}</version>
+      </dependency>
+
+      <dependency>
+          <groupId>com.atlassian.crowd.application</groupId>
+          <artifactId>CrowdJaasLoginModule</artifactId>
+          <version>${crowdJass.version}</version>
+      </dependency>
+  </dependencies>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>src/main/resources/modules</directory>
+                <filtering>true</filtering>
+                <targetPath>${project.build.directory}/modules</targetPath>
+            </resource>
+            <resource>
+                <directory>src/main/resources/standalone</directory>
+                <targetPath>${project.build.directory}/standalone</targetPath>
+            </resource>
+        </resources>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>2.6</version>
+                <configuration>
+                    <nonFilteredFileExtensions>
+                        <nonFilteredFileExtension>jar</nonFilteredFileExtension>
+                    </nonFilteredFileExtensions>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <version>2.6</version>
+                <executions>
+                    <execution>
+                        <id>CrowdJass</id>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.atlassian.crowd.application</groupId>
+                                    <artifactId>CrowdJaasLoginModule</artifactId>
+                                    <version>${crowdJass.version}</version>
+                                    <outputDirectory>${project.build.directory}/modules/com/atlassian/crowd/main</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>com.oracle</groupId>
+                                    <artifactId>ojdbc</artifactId>
+                                    <version>${oracle.version}</version>
+                                    <outputDirectory>${project.build.directory}/modules/com/oracle/main</outputDirectory>
+                                </artifactItem>
+                                <artifactItem>
+                                    <groupId>postgresql</groupId>
+                                    <artifactId>postgresql</artifactId>
+                                    <version>${postgresql.version}</version>
+                                    <outputDirectory>${project.build.directory}/modules/org/postgresql/main</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-antrun-plugin</artifactId>
+                <version>1.7</version>
+                <executions>
+                    <execution>
+                        <id>Update JBoss</id>
+                        <phase>install</phase>
+                        <goals>
+                            <goal>run</goal>
+                        </goals>
+                        <configuration>
+                            <target>
+                                <property environment="env"/>
+                                <fail unless="env.JBOSS_HOME" message="Please define the environment variable JBOSS_HOME"/>
+                                <!-- Copy the modules -->
+                                <echo message="Copying modules"/>
+                                <copy todir="${env.JBOSS_HOME}/modules" overwrite="true" verbose="true">
+                                    <fileset dir="${project.build.directory}/modules"/>
+                                </copy>
+                                <echo message="Updating standalone configuration"/>
+                                <copy todir="${env.JBOSS_HOME}/standalone" overwrite="true" verbose="true">
+                                    <fileset dir="${project.build.directory}/standalone"/>
+                                </copy>
+                                <echo>
+
+Your JBoss has been updated with the Mercury configurations.
+
+It is recommended that you increase the memory settings, in particular PERMGEN.
+Put the heap to at lease 1G.
+
+Edit ${env.JBOSS_HOME}/bin/standalone.conf and change the JAVA_OPS.
+
+Change the value of jboss.server.default.conf to be standalone-full.xml
+
+                                </echo>
+                            </target>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

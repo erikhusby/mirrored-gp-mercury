@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.products;
 
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.presentation.products.ProductForm;
+import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.jsf.TableData;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 
@@ -12,9 +12,9 @@ import javax.enterprise.context.RequestScoped;
 import javax.faces.context.FacesContext;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 @Named("productView")
 @RequestScoped
@@ -35,7 +35,13 @@ public class ProductViewBean extends AbstractJsfBean {
      * Store price items in conversation scope to support p:dataTable sorting.
      */
     @ConversationScoped public static class PriceItemTableData extends TableData<PriceItem> {}
-    @Inject private PriceItemTableData priceItemData;
+    @Inject private PriceItemTableData optionalPriceItemData;
+
+    /**
+     * Store material types in conversation scope to support p:dataTable sorting.
+     */
+    @ConversationScoped public static class MaterialTypeTableData extends TableData<MaterialType> {}
+    @Inject private MaterialTypeTableData allowedMaterialTypeData;
 
     @Inject
     private FacesContext facesContext;
@@ -43,42 +49,50 @@ public class ProductViewBean extends AbstractJsfBean {
     @Inject
     private Conversation conversation;
 
-    public void initView() {
-        if (!facesContext.isPostback() && shouldRenderForm()) {
-            addOnData.setValues(new ArrayList<Product>(product.getAddOns()));
-            Collections.sort(addOnData.getValues());
-            priceItemData.setValues(new ArrayList<PriceItem>(product.getOptionalPriceItems()));
-            Collections.sort(priceItemData.getValues());
-            if (conversation.isTransient()) {
-                conversation.begin();
-            }
-        }
-    }
+    public void onPreRenderView() {
 
-    public void onPreRenderView() throws IOException {
-        if (! shouldRenderForm()) {
+        if (! facesContext.isPostback()) {
+            if (product != null) {
+                List<Product> addOnList = new ArrayList<Product>(product.getAddOns());
+                Collections.sort(addOnList);
+                addOnData.setValues(addOnList);
+
+                List<PriceItem> priceItemList = new ArrayList<PriceItem>(product.getOptionalPriceItems());
+                Collections.sort(priceItemList);
+                optionalPriceItemData.setValues(priceItemList);
+
+                List<MaterialType> materialTypeList = new ArrayList<MaterialType>(product.getAllowableMaterialTypes());
+                Collections.sort(materialTypeList);
+                allowedMaterialTypeData.setValues(materialTypeList);
+
+
+                if (conversation.isTransient()) {
+                    conversation.begin();
+                }
+            } else {
                 addErrorMessage("No product with this part number exists.");
                 facesContext.renderResponse();
+            }
         }
     }
 
     // TODO: create and use secondsToDaysConverter
     public Integer getExpectedCycleTimeDays() {
-        return ProductForm.convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
+        return Product.convertCycleTimeSecondsToDays(product.getExpectedCycleTimeSeconds()) ;
     }
     public void setExpectedCycleTimeDays(final Integer expectedCycleTimeDays) {
-        product.setExpectedCycleTimeSeconds(ProductForm.convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
+        product.setExpectedCycleTimeSeconds(Product.convertCycleTimeDaysToSeconds(expectedCycleTimeDays));
     }
 
     public Integer getGuaranteedCycleTimeDays() {
-        return ProductForm.convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
+        return Product.convertCycleTimeSecondsToDays(product.getGuaranteedCycleTimeSeconds()) ;
     }
     public void setGuaranteedCycleTimeDays(final Integer guaranteedCycleTimeDays) {
-        product.setGuaranteedCycleTimeSeconds(ProductForm.convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
+        product.setGuaranteedCycleTimeSeconds(Product.convertCycleTimeDaysToSeconds(guaranteedCycleTimeDays));
     }
 
     public boolean shouldRenderForm() {
-        if (!facesContext.isPostback()) {
+        if (! facesContext.isPostback()) {
             return product != null;
         } else {
             return true;
@@ -101,11 +115,20 @@ public class ProductViewBean extends AbstractJsfBean {
         this.addOnData = addOnData;
     }
 
-    public PriceItemTableData getPriceItemData() {
-        return priceItemData;
+    public PriceItemTableData getOptionalPriceItemData() {
+        return optionalPriceItemData;
     }
 
-    public void setPriceItemData(PriceItemTableData priceItemData) {
-        this.priceItemData = priceItemData;
+    public void setOptionalPriceItemData(PriceItemTableData optionalPriceItemData) {
+        this.optionalPriceItemData = optionalPriceItemData;
+    }
+
+
+    public MaterialTypeTableData getAllowedMaterialTypeData() {
+        return allowedMaterialTypeData;
+    }
+
+    public void setAllowedMaterialTypeData(MaterialTypeTableData allowedMaterialTypeData) {
+        this.allowedMaterialTypeData = allowedMaterialTypeData;
     }
 }

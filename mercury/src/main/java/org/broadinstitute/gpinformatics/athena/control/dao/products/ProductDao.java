@@ -1,19 +1,24 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.products;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.TypedQuery;
+import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.List;
 
 @Stateful
 @RequestScoped
@@ -24,12 +29,16 @@ import java.util.*;
  */
 public class ProductDao extends GenericDao implements Serializable {
 
+    @Inject
+    private UserBean userBean;
+
     /**
      * Preferring strong types to booleans
      */
-    public enum AvailableOnly {
-        YES,
-        NO
+    public enum Availability {
+        ALL,
+        CURRENT,
+        CURRENT_OR_FUTURE
     }
 
     public enum TopLevelOnly {
@@ -42,55 +51,16 @@ public class ProductDao extends GenericDao implements Serializable {
         NO
     }
 
-    public List<Product> findProducts() {
-        return findProducts(AvailableOnly.NO, TopLevelOnly.NO, IncludePDMOnly.YES);
-    }
-
-    public List<Product> findProducts(AvailableOnly availableOnly) {
-        return findProducts(availableOnly, TopLevelOnly.NO, IncludePDMOnly.YES);
-    }
-
-    public List<Product> findProducts(TopLevelOnly topLevelOnly) {
-        return findProducts(AvailableOnly.NO, topLevelOnly, IncludePDMOnly.YES);
-    }
-
-    public List<Product> findProducts(IncludePDMOnly includePDMOnly) {
-        return findProducts(AvailableOnly.NO, TopLevelOnly.NO, includePDMOnly);
-    }
-
-    public Product findByBusinessKey(String key) {
-        return findByPartNumber(key);
-    }
-
-    public SortedSet<String> getProductNames() {
-        CriteriaBuilder cb = getCriteriaBuilder();
-
-        CriteriaQuery<Object> cq = cb.createQuery();
-        Root<Product> productRoot = cq.from(Product.class);
-        CriteriaQuery<Object> select = cq.select(productRoot.get(Product_.productName));
-        select.distinct(true);
-
-        TypedQuery<Object> typedQuery = getEntityManager().createQuery(select);
-        List<Object> listActual = typedQuery.getResultList();
-
-        SortedSet<String> productNames = new TreeSet<String>();
-        for (Object result : listActual) {
-            productNames.add((String) result);
-        }
-
-        return productNames;
-    }
-
     /**
      * General purpose product finder method
      *
-     * @param availableOnly Do we only want to get available products
+     * @param availability Do we only want to get available products
      * @param topLevelOnly Do we only want to get top level products
      * @param includePDMOnly Do we only want PDM products
      *
      * @return The chosen products
      */
-    public List<Product> findProducts(@Nonnull AvailableOnly availableOnly,
+    public List<Product> findProducts(@Nonnull Availability availability,
                                       @Nonnull TopLevelOnly topLevelOnly,
                                       @Nonnull IncludePDMOnly includePDMOnly) {
         CriteriaBuilder cb = getCriteriaBuilder();
@@ -100,17 +70,31 @@ public class ProductDao extends GenericDao implements Serializable {
 
         Root<Product> product = cq.from(Product.class);
 
-        if (availableOnly == AvailableOnly.YES) {
-            // there is an availability date
-            predicateList.add(cb.isNotNull(product.get(Product_.availabilityDate)));
-            // and it is in the past
-            predicateList.add(cb.lessThan(product.get(Product_.availabilityDate), Calendar.getInstance().getTime()));
 
-            // and the discontinued date is null or in the future
-            predicateList.add(
-                cb.or( cb.isNull(product.get(Product_.discontinuedDate)),
-                       cb.greaterThan(product.get(Product_.discontinuedDate), Calendar.getInstance().getTime()))
-            );
+        switch (availability) {
+
+            case CURRENT:
+                // there is an availability date
+                predicateList.add(cb.isNotNull(product.get(Product_.availabilityDate)));
+                // and it is in the past
+                predicateList.add(cb.lessThan(product.get(Product_.availabilityDate), Calendar.getInstance().getTime()));
+
+                // fall through to get the discontinued date!
+
+            case CURRENT_OR_FUTURE:
+
+                // the discontinued date is null or in the future
+                predicateList.add(
+                        cb.or( cb.isNull(product.get(Product_.discontinuedDate)),
+                                cb.greaterThan(product.get(Product_.discontinuedDate), Calendar.getInstance().getTime()))
+                );
+
+                break;
+
+            case ALL:
+            default:
+                break;
+
         }
 
         if (topLevelOnly == TopLevelOnly.YES) {
@@ -137,5 +121,106 @@ public class ProductDao extends GenericDao implements Serializable {
      */
     public Product findByPartNumber(String partNumber) {
         return findSingle(Product.class, Product_.partNumber, partNumber);
+    }
+
+
+    /**
+     * Find a Product by part number, eagerly fetching the Product Family.
+     *
+     * @param partNumber
+     * @return
+     */
+    public Product findByPartNumberEagerProductFamily(String partNumber) {
+        // mlc temporarily changed Product to EAGER fetch its ProductFamily until I get fetch profiles working
+        return findByPartNumber(partNumber);
+    }
+
+
+    public Product findByBusinessKey(String key) {
+        return findByPartNumber(key);
+    }
+
+
+    public List<Product> findByPartNumbers(List<String> partNumbers) {
+        return findListByList(Product.class, Product_.partNumber, partNumbers);
+    }
+
+
+    /**
+     * Products suitable for use as top-level products in a product order.
+     *
+     * @return The products
+     */
+    public List<Product> findTopLevelProductsForProductOrder() {
+        boolean includePDMProducts = userBean.isPDMUser() || userBean.isDeveloperUser();
+        return findProducts(
+                 Availability.CURRENT,
+                 TopLevelOnly.YES,
+                 includePDMProducts ? IncludePDMOnly.YES : IncludePDMOnly.NO);
+    }
+
+    public List<Product> findProductsForProductList() {
+        // everybody can see everything
+        return findProducts(Availability.ALL, TopLevelOnly.NO, IncludePDMOnly.YES);
+    }
+
+    /**
+     * Case insensitive search in product names and part numbers on tokenized search words split by whitespace.
+     *
+     * @param searchText The search text
+     * @param products The products to look in
+     *
+     * @return The matching products
+     */
+    private List<Product> findInProducts(String searchText, List<Product> products) {
+        List<Product> list = new ArrayList<Product>();
+        String[] searchWords = searchText.split("\\s");
+
+        Collections.sort(products);
+
+        for (Product product : products) {
+            for (String searchWord : searchWords) {
+                if (StringUtils.containsIgnoreCase(product.getProductName(), searchWord) ||
+                        StringUtils.containsIgnoreCase(product.getPartNumber(), searchWord)) {
+                    list.add(product);
+                    break;
+                }
+            }
+        }
+        return list;
+    }
+
+    /**
+     * Support finding products for product ordering, sensitive to the user's role as PDM (or pseudo-PDM developer).
+     * Only available and top-level products will be returned.  Case insensitive search on tokenized search words
+     * split by whitespace.
+     *
+     * @param searchText The text to search
+     *
+     * @return The products in the db that matches
+     */
+    public List<Product> searchProducts(String searchText) {
+        return findInProducts(searchText, findTopLevelProductsForProductOrder());
+    }
+
+    /**
+     * Support finding add-on products for product definition, disallowing the top-level product as a search result
+     *
+     *
+     * @param searchText The text to search
+     *
+     * @return The products in the db that matches
+     */
+    public List<Product> searchProductsForAddonsInProductEdit(Product topLevelProduct, String searchText) {
+        List<Product> products = findProducts(
+                ProductDao.Availability.CURRENT_OR_FUTURE,
+                ProductDao.TopLevelOnly.NO,
+                ProductDao.IncludePDMOnly.NO);
+
+        // remove top level product from the list if it's showing up there
+        products.remove(topLevelProduct);
+
+        return findInProducts(searchText, products);
+
     }
 }

@@ -1,72 +1,40 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
-import org.apache.poi.util.IOUtils;
-import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderListModel;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
-import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.DuplicateTitleException;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.NoSamplesException;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
-import org.broadinstitute.gpinformatics.athena.presentation.converter.ProductOrderConverter;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.mercury.presentation.AbstractJsfBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.primefaces.event.SelectEvent;
 
 import javax.annotation.Nonnull;
-import javax.enterprise.context.Conversation;
 import javax.enterprise.context.RequestScoped;
-import javax.faces.application.FacesMessage;
 import javax.faces.component.UIInput;
 import javax.faces.context.FacesContext;
-import javax.faces.model.SelectItem;
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.*;
+import java.io.IOException;
 import java.text.MessageFormat;
-import java.text.NumberFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean.VIEW_ACTION;
+
 /**
- * Class for creating a product order, or editing a draft product order.
+ * Class for creating a product order
  */
 @Named
 @RequestScoped
 public class ProductOrderForm extends AbstractJsfBean {
 
     @Inject
-    ProductOrderDetail productOrderDetail;
-
-    @Inject
-    ProductOrderConverter orderConverter;
-
-    @Inject
-    ProductDao productDao;
-
-    @Inject
-    BillingLedgerDao ledgerDao;
-
-    @Inject
-    BillingSessionDao billingSessionDao;
-
-    @Inject
-    private QuoteService quoteService;
+    private ProductOrderDetail productOrderDetail;
 
     @Inject
     private FacesContext facesContext;
@@ -77,26 +45,16 @@ public class ProductOrderForm extends AbstractJsfBean {
     @Inject
     private UserBean userBean;
 
-    @Inject
-    private BSPUserList bspUserList;
-
-    @Inject
-    private ProductOrderListEntryDao productOrderListEntryDao;
-
-    @Inject ProductOrderDao productOrderDao;
-
     private List<String> selectedAddOnPartNumbers = new ArrayList<String>();
 
-    @Inject private Log logger;
+    @Inject
+    private Log logger;
 
     @Inject
-    private Conversation conversation;
+    private ProductOrderEjb productOrderEjb;
 
-    /** All product orders, now conversation scoped */
     @Inject
-    private ProductOrderListModel allProductOrders;
-
-    private ProductOrderListEntry[] selectedProductOrders;
+    private ProductOrderUtil productOrderUtil;
 
     /**
      * This is required to get the editIdsCache value in the case where we want to skip the process
@@ -118,42 +76,13 @@ public class ProductOrderForm extends AbstractJsfBean {
     /** Automatically convert known BSP IDs (SM-, SP-) to uppercase. */
     private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
 
-    public void initView() {
-        if (!facesContext.isPostback()) {
-            if (conversation.isTransient()) {
-                allProductOrders.setWrappedData(productOrderListEntryDao.findProductOrderListEntries());
-                conversation.begin();
-            }
+
+    public void initForm() {
+        if (userBean.ensureUserValid()) {
+            conversationData.beginConversation(productOrderDetail.getProductOrder());
+        } else {
+            addErrorMessage(MessageFormat.format(UserBean.LOGIN_WARNING, "create an order"));
         }
-    }
-
-    /**
-     * Returns a list of all product orders.
-     *
-     * @return list of all product orders
-     */
-    public ProductOrderListModel getAllProductOrders() {
-        return allProductOrders;
-    }
-
-    /**
-     * Returns a list of SelectItems for all people who are owners of research projects.
-     *
-     * @return list of research project owners
-     */
-    public List<SelectItem> getAllProjectOwners() {
-        Set<BspUser> owners = new HashSet<BspUser>();
-        for (ProductOrderListEntry order : getAllProductOrders()) {
-            Long createdBy = order.getOwnerId();
-            if (createdBy != null) {
-                BspUser bspUser = bspUserList.getById(createdBy);
-                if (bspUser != null) {
-                    owners.add(bspUser);
-                }
-            }
-        }
-
-        return BSPUserList.createSelectItems(owners);
     }
 
     public UIInput getEditIdsCacheBinding() {
@@ -177,23 +106,15 @@ public class ProductOrderForm extends AbstractJsfBean {
     }
 
     public String getFundsRemaining() {
-        String quoteId = productOrderDetail.getProductOrder().getQuoteId();
-        if (!StringUtils.isBlank(quoteId)) {
-            try {
-                Quote quote = quoteService.getQuoteFromQuoteServer(quoteId);
-                String fundsRemainingString = quote.getQuoteFunding().getFundsRemaining();
-                try {
-                    double fundsRemaining = Double.parseDouble(fundsRemainingString);
-                    return NumberFormat.getCurrencyInstance().format(fundsRemaining);
-                } catch (NumberFormatException e) {
-                    return fundsRemainingString;
-                }
-            } catch (Exception e) {
-                String errorMessage = MessageFormat.format("The Quote ID ''{0}'' is invalid.", quoteId);
-                addErrorMessage("quote", errorMessage, errorMessage + ": " + e);
-            }
+        ProductOrder productOrder = productOrderDetail.getProductOrder();
+        try {
+            return productOrderUtil.getFundsRemaining(productOrder);
+        } catch (QuoteNotFoundException e) {
+            String errorMessage = MessageFormat.format("The Quote ID ''{0}'' is invalid.", productOrder.getQuoteId());
+            logger.error(errorMessage);
+            addErrorMessage("quote", errorMessage, errorMessage + ": " + e);
+            return "";
         }
-        return "";
     }
 
     /**
@@ -288,15 +209,6 @@ public class ProductOrderForm extends AbstractJsfBean {
         return MessageFormat.format("The Product ''{0}'' has no Add-ons.", getProduct().getProductName());
     }
 
-    public Set<Product> getSelectedProducts() {
-        Set<Product> productSet = new HashSet<Product>();
-        for (ProductOrderListEntry productOrder : selectedProductOrders) {
-            ProductOrder order = orderConverter.getAsObject(facesContext, null, productOrder.getBusinessKey());
-            productSet.add(order.getProduct());
-        }
-
-        return productSet;
-    }
 
     /**
      * Class that contains operations specific to the sample list samplesDialog.
@@ -368,183 +280,41 @@ public class ProductOrderForm extends AbstractJsfBean {
         productOrderDetail.load();
     }
 
+
     // FIXME: handle db store errors, JIRA server errors.
     public String save() throws IOException {
 
+        ProductOrder productOrder = productOrderDetail.getProductOrder();
+
+        final String BASE_ERROR_TEXT = "Error saving Product Order: ";
+
         try {
 
-            ProductOrder order = productOrderDetail.getProductOrder();
-
-            if (productOrderDao.findByTitle(order.getTitle()) != null) {
-                addErrorMessage("Product order with this title already exists, please choose a different title");
-                return null;
-            }
-
-            order.setSamples(convertTextToOrderSamples(getEditIdsCache()));
-
-            // Validations.
-            if (order.getSamples().isEmpty()) {
-                // FIXME: instead of doing this here, it can be done as a validator on the hidden editIDsCache field.
-                String message = "You must add at least one sample before placing an order.";
-                addErrorMessage(message);
-                return null;
-            }
-
-            order.updateAddOnProducts(getSelectedAddOnProducts());
-
-            // DRAFT orders not yet supported; force state of new PDOs to Submitted.
-            order.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-            String action = order.isInDB() ? "modified" : "created";
-            order.submitProductOrder();
-            productOrderDao.persist(order);
+            productOrderEjb.save(productOrder, convertTextToList(getEditIdsCache()), getSelectedAddOnPartNumbers());
 
             addInfoMessage(
-                    MessageFormat.format("Product Order ''{0}'' ({1}) has been {2}.",
-                            order.getTitle(), order.getJiraTicketKey(), action));
-            return redirect("view");
+                    MessageFormat.format("Product Order ''{0}'' ({1}) has been created.",
+                            productOrder.getTitle(), productOrder.getJiraTicketKey()));
+            conversationData.endConversation();
+            return redirect(VIEW_ACTION);
+
+        } catch (QuoteNotFoundException e) {
+            logger.error(e);
+            addErrorMessage(BASE_ERROR_TEXT + "Invalid Quote ID: " + productOrder.getQuoteId());
+            return null;
+        } catch (DuplicateTitleException e) {
+            logger.error(e);
+            addErrorMessage(BASE_ERROR_TEXT + "Product Order title already in use, must be unique: " + productOrder.getTitle());
+            return null;
+        } catch (NoSamplesException e) {
+            logger.error(e);
+            addErrorMessage(BASE_ERROR_TEXT + "You must add at least one sample before placing an order");
+            return null;
         } catch (Exception e) {
             logger.error(e);
             addErrorMessage("Error saving Product Order: " + e.getMessage());
             return null;
         }
-    }
-
-    private List<Product> getSelectedAddOnProducts() {
-        if (getSelectedAddOnPartNumbers().isEmpty()) {
-            return new ArrayList<Product>();
-        }
-
-        return productDao.findListByList(Product.class, Product_.partNumber, getSelectedAddOnPartNumbers());
-    }
-
-    public void initForm() {
-        if (userBean.ensureUserValid()) {
-            conversationData.beginConversation(productOrderDetail.getProductOrder());
-        } else {
-            addErrorMessage(MessageFormat.format(UserBean.LOGIN_WARNING, "create an order"));
-        }
-    }
-
-    public ProductOrderListEntry[] getSelectedProductOrders() {
-        return selectedProductOrders;
-    }
-
-    public void setSelectedProductOrders(ProductOrderListEntry[] selectedProductOrders) {
-        this.selectedProductOrders = selectedProductOrders;
-    }
-
-    public String startBillingSession() {
-
-        Set<BillingLedger> ledgerItems = validateOrderSelection("billing session");
-        if (ledgerItems == null) {
-            return null;
-        }
-
-        if (ledgerItems.isEmpty()) {
-            addErrorMessage("There is nothing to bill");
-            return null;
-        }
-
-        BillingSession session = new BillingSession(userBean.getBspUser().getUserId());
-        session.setBillingLedgerItems(ledgerItems);
-        billingSessionDao.persist(session);
-
-        return redirect("/billing/view") + "&billingSession=" + session.getBusinessKey();
-    }
-
-    private List<String> getSelectedProductOrderBusinessKeys() {
-
-        List<String> businessKeys = new ArrayList<String>();
-        for (ProductOrderListEntry productOrderListEntry : selectedProductOrders) {
-            businessKeys.add(productOrderListEntry.getBusinessKey());
-        }
-
-        return businessKeys;
-    }
-
-    private Set<BillingLedger> validateOrderSelection(String validatingFor) {
-        if (!userBean.isValidBspUser()) {
-            addErrorMessage("A valid bsp user is needed to start a " + validatingFor);
-            return null;
-        }
-
-        if ((selectedProductOrders == null) || (selectedProductOrders.length == 0)) {
-            addErrorMessage("Product orders must be selected for a " + validatingFor + " to be started");
-            return null;
-        }
-
-        // Go through each products and report invalid duplicate price item names
-        Set<Product> products = getSelectedProducts();
-        for (Product product : products) {
-            String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
-            if (duplicatePriceItems != null) {
-                addErrorMessage("The Product " + product.getPartNumber() +
-                                " has duplicate price items: " + StringUtils.join(duplicatePriceItems, ", "));
-                return null;
-            }
-        }
-
-        // If there are locked out orders, then do not allow the session to start
-        Set<BillingLedger> lockedOutOrders = ledgerDao.findLockedOutByOrderList(getSelectedProductOrderBusinessKeys());
-        if (!lockedOutOrders.isEmpty()) {
-            Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());
-            for (BillingLedger ledger : lockedOutOrders) {
-                lockedOutOrderStrings.add(ledger.getProductOrderSample().getProductOrder().getTitle());
-            }
-
-            String lockedOutString = StringUtils.join(lockedOutOrderStrings.toArray(), ", ");
-            addErrorMessage("The following orders are locked out by active billing sessions: " + lockedOutString);
-            return null;
-        }
-
-        return ledgerDao.findWithoutBillingSessionByOrderList(getSelectedProductOrderBusinessKeys());
-    }
-
-    public String downloadBillingTracker() {
-
-        // Do order validation
-        Set<BillingLedger> previouslyUpdatedItems = validateOrderSelection("tracker download");
-        if (previouslyUpdatedItems == null) {
-            return null;
-        }
-
-        return getTrackerForOrders(getSelectedProductOrderBusinessKeys(), bspUserList, ledgerDao, productOrderDao);
-    }
-
-    public static String getTrackerForOrders(
-            List<String> pdoBusinessKeys,
-            BSPUserList bspUserList,
-            BillingLedgerDao ledgerDao,
-            ProductOrderDao productOrderDao) {
-
-        OutputStream outputStream = null;
-        File tempFile = null;
-        InputStream inputStream = null;
-
-        try {
-            String filename =
-                    "BillingTracker-" + AbstractSpreadsheetExporter.DATE_FORMAT.format(Calendar.getInstance().getTime());
-
-            tempFile = File.createTempFile(filename, "xls");
-            outputStream = new FileOutputStream(tempFile);
-
-            SampleLedgerExporter sampleLedgerExporter = new SampleLedgerExporter(pdoBusinessKeys, bspUserList, productOrderDao);
-            sampleLedgerExporter.writeToStream(outputStream);
-            IOUtils.closeQuietly(outputStream);
-            inputStream = new FileInputStream(tempFile);
-
-            // This copies the inputStream as a faces download with the file name specified.
-            AbstractSpreadsheetExporter.copyForDownload(inputStream, filename + ".xls");
-        } catch (Exception ex) {
-            String message = "Got an exception trying to download the billing tracker: " + ex.getMessage();
-            AbstractJsfBean.addMessage(null, FacesMessage.SEVERITY_ERROR, message, message);
-        } finally {
-            IOUtils.closeQuietly(outputStream);
-            IOUtils.closeQuietly(inputStream);
-            FileUtils.deleteQuietly(tempFile);
-        }
-
-        return null;
     }
 
 

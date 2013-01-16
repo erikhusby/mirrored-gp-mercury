@@ -12,6 +12,8 @@ import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -147,16 +149,6 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
         forceResponseMimeTypes(client, MediaType.APPLICATION_XML_TYPE);
     }
 
-    /**
-     * Asks the GAP quote server for basic information about a quote.
-     *
-     * @param id Alphanumeric ID for the quote
-     * @return If the quote exists the return value will be a quote object. Otherwise null.
-     */
-    @Override
-    public Quote getQuoteFromQuoteServer(String id) throws QuoteServerException, QuoteNotFoundException {
-        return getSingleQuoteById(id, url(Endpoint.SINGLE_QUOTE));
-    }
 
     @Override
     public PriceList getAllPriceItems() throws QuoteServerException, QuoteNotFoundException {
@@ -227,11 +219,13 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
             return (null);
         }
 
-        WebResource resource = getJerseyClient().resource(url + id);
+        final String ENCODING = "UTF-8";
 
         try {
+            WebResource resource = getJerseyClient().resource(url + URLEncoder.encode(id, ENCODING));
+
             Quotes quotes = resource.accept(MediaType.APPLICATION_XML).get(Quotes.class);
-            if (CollectionUtils.isEmpty(quotes.getQuotes())) {
+            if (! CollectionUtils.isEmpty(quotes.getQuotes())) {
                 quote = quotes.getQuotes().get(0);
             } else {
                 throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);
@@ -240,6 +234,8 @@ public class QuoteServiceImpl extends AbstractJerseyClientService implements Quo
             throw new QuoteNotFoundException("Could not find quote " + id + " at " + url);
         } catch (ClientHandlerException e) {
             throw new QuoteServerException("Could not communicate with quote server at " + url, e);
+        } catch (UnsupportedEncodingException e) {
+            throw new RuntimeException("URL encoding not supported: '" + ENCODING + "'", e);
         }
 
         return quote;

@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -14,12 +16,11 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionResponse;
+import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 import org.hibernate.envers.NotAudited;
-import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
@@ -47,6 +48,8 @@ import java.util.*;
 public class ProductOrder implements Serializable {
     private static final String JIRA_SUBJECT_PREFIX = "Product order for ";
 
+    public static final String DRAFT_PREFIX = "Draft-";
+
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT_ORDER", schema = "athena", sequenceName = "SEQ_PRODUCT_ORDER")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_PRODUCT_ORDER")
@@ -62,7 +65,7 @@ public class ProductOrder implements Serializable {
 
     /** Unique title for the order */
     @Column(unique = true)
-    private String title;
+    private String title = "";
 
     @ManyToOne
     private ResearchProject researchProject;
@@ -70,17 +73,18 @@ public class ProductOrder implements Serializable {
     @OneToOne
     private Product product;
 
+    @Enumerated(EnumType.STRING)
     private OrderStatus orderStatus = OrderStatus.Draft;
 
     /** Alphanumeric Id */
-    private String quoteId;
+    private String quoteId = "";
 
     /** Additional comments of the order */
     @Column(length = 2000)
     private String comments;
 
-    /** Reference to the Jira Ticket created when the order is submitted */
-    @Column(name = "JIRA_TICKET_KEY", nullable = false)
+    /** Reference to the Jira Ticket created when the order is placed. Null means that the order is a draft */
+    @Column(name = "JIRA_TICKET_KEY", nullable = true)
     private String jiraTicketKey;
 
     @Column(name = "count")
@@ -100,15 +104,32 @@ public class ProductOrder implements Serializable {
     private List<ProductOrderSample> samples = Collections.emptyList();
 
     @Transient
-    private String sampleBillingSummary;
-
-    @Transient
     private final SampleCounts counts = new SampleCounts();
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, mappedBy = "productOrder", orphanRemoval = true)
     private Set<ProductOrderAddOn> addOns = new HashSet<ProductOrderAddOn>();
 
+    @Transient
+    private String originalTitle;   // This is used for edit to keep track of changes to the object.
+
+    @Transient
+    private String sampleList;
+
+    // Initialize our transient data after the object has been loaded from the database.
+    @PostLoad
+    private void initialize() {
+        originalTitle = title;
+    }
+
+    /**
+     * @return The business key is the jira ticket key when this is not a draft, otherwise it is the DRAFT_KEY plus the
+     * internal database id.
+     */
     public String getBusinessKey() {
+        if (jiraTicketKey == null) {
+            return DRAFT_PREFIX + productOrderId;
+        }
+
         return jiraTicketKey;
     }
 
@@ -136,6 +157,13 @@ public class ProductOrder implements Serializable {
 
     public void setCount(int count) {
         this.count = count;
+    }
+
+    public void updateData(ResearchProject project, Product product, List<Product> addOnProducts) {
+        setAddons(addOnProducts);
+        setProduct(product);
+        setResearchProject(project);
+        updateSamplesFromList();
     }
 
     /**
@@ -302,9 +330,9 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * Default no-arg constructor
+     * Default no-arg constructor, also used when creating a new ProductOrder.
      */
-    ProductOrder() {
+    public ProductOrder() {
     }
 
     /**
@@ -320,14 +348,27 @@ public class ProductOrder implements Serializable {
     public ProductOrder(@Nonnull Long creatorId, @Nonnull String title, List<ProductOrderSample> samples, String quoteId,
                         Product product, ResearchProject researchProject) {
         createdBy = creatorId;
-        createdDate = new Date();
-        modifiedBy = createdBy;
-        modifiedDate = createdDate;
         this.title = title;
         setSamples(samples);
         this.quoteId = quoteId;
         this.product = product;
         this.researchProject = researchProject;
+    }
+
+    /**
+     * Call this method before saving changes to the database.  It updates the modified date and modified user,
+     * and sets the create date and create user if these haven't been set yet.
+     * @param user the user doing the save operation.
+     */
+    public void prepareToSave(BspUser user) {
+        Date now = new Date();
+        long userId = user.getUserId();
+        if (createdBy == null) {
+            createdBy = userId;
+            createdDate = now;
+        }
+        modifiedBy = userId;
+        modifiedDate = now;
     }
 
     public String getTitle() {
@@ -354,9 +395,21 @@ public class ProductOrder implements Serializable {
         }
     }
 
-    public void setAddOns(Set<ProductOrderAddOn> addOns) {
-        this.addOns = addOns;
+    public void setProductOrderAddOns(Set<ProductOrderAddOn> addOns) {
+        this.addOns.clear();
+        this.addOns.addAll(addOns);
     }
+
+
+    public void setAddons(List<Product> addOns) {
+        this.addOns.clear();
+
+        for (Product product : addOns) {
+            ProductOrderAddOn productOrderAddOn = new ProductOrderAddOn(product, this);
+            this.addOns.add(productOrderAddOn);
+        }
+    }
+
 
     public ResearchProject getResearchProject() {
         return researchProject;
@@ -404,13 +457,14 @@ public class ProductOrder implements Serializable {
 
     public void setSamples(List<ProductOrderSample> samples) {
         this.samples = samples;
+        int samplePos = 0;
         if (samples != null) {
             for (ProductOrderSample sample : samples) {
                 sample.setProductOrder(this);
+                sample.setSamplePosition( samplePos++ );
             }
         }
         counts.invalidate();
-        sampleBillingSummary = null;
     }
 
     /**
@@ -426,19 +480,12 @@ public class ProductOrder implements Serializable {
     /**
      * Used for test purposes only.
      */
-    public void setJiraTicketKey(@Nonnull String jiraTicketKey) {
-        if (jiraTicketKey == null) {
-            throw new NullPointerException("Jira Ticket Key cannot be null");
-        }
+    public void setJiraTicketKey(String jiraTicketKey) {
         this.jiraTicketKey = jiraTicketKey;
     }
 
     public Date getCreatedDate() {
         return createdDate;
-    }
-
-    public void setCreatedDate(Date createdDate) {
-        this.createdDate = createdDate;
     }
 
     public long getCreatedBy() {
@@ -449,16 +496,8 @@ public class ProductOrder implements Serializable {
         return modifiedDate;
     }
 
-    public void setModifiedDate(Date modifiedDate) {
-        this.modifiedDate = modifiedDate;
-    }
-
     public long getModifiedBy() {
         return modifiedBy;
-    }
-
-    public void setModifiedBy(long modifiedBy) {
-        this.modifiedBy = modifiedBy;
     }
 
     /**
@@ -556,77 +595,28 @@ public class ProductOrder implements Serializable {
 
     public int getTumorCount() {
         counts.generateCounts();
-        Integer count = counts.sampleTypeCounts.get(BSPSampleDTO.TUMOR_IND);
+        Integer count = counts.sampleTypeCounts.get(ProductOrderSample.TUMOR_IND);
         return count == null ? 0 : count;
     }
 
     public int getNormalCount() {
         counts.generateCounts();
-        Integer count = counts.sampleTypeCounts.get(BSPSampleDTO.NORMAL_IND);
+        Integer count = counts.sampleTypeCounts.get(ProductOrderSample.NORMAL_IND);
         return count == null ? 0 : count;
     }
 
     public int getFemaleCount() {
         counts.generateCounts();
-        Integer count = counts.genderCounts.get(BSPSampleDTO.FEMALE_IND);
+        Integer count = counts.genderCounts.get(ProductOrderSample.FEMALE_IND);
         return count == null ? 0 : count;
     }
 
     public int getMaleCount() {
         counts.generateCounts();
-        Integer count = counts.genderCounts.get(BSPSampleDTO.MALE_IND);
+        Integer count = counts.genderCounts.get(ProductOrderSample.MALE_IND);
         return count == null ? 0 : count;
     }
 
-    /**
-     * getBilledNotBilledCounts calculates both how many samples registered to this product have been billed and how
-     * many samples have not been billed
-     *
-     * @return an instance of a BilledNotBilledCounts object which exposes both the Billed counts and the not billed
-     *         counts
-     */
-    public BilledNotBilledCounts getBilledNotBilledCounts() {
-        return new BilledNotBilledCounts(getBillingStatusCount(BillingStatus.Billed),
-                getBillingStatusCount(BillingStatus.NotYetBilled));
-    }
-
-    /**
-     * getElligibleForBillingCounts calculates how many samples are eligible to be billed
-     *
-     * @return a count of all samples registered to this product order that are eligible for billing
-     */
-    public int getElligibleForBillingCounts() {
-        return getBillingStatusCount(BillingStatus.EligibleForBilling);
-    }
-
-    /**
-     * getNotBillableCounts calculates how many samples have not been billed
-     *
-     * @return a count of all samples registered to this product order that have not been billed
-     */
-    public int getNotBillableCounts() {
-        return getBillingStatusCount(BillingStatus.NotBillable);
-    }
-
-    /**
-     * getBillingStatusCount calculates how many samples registered to this product order have a billing status that
-     * matches targetStatus
-     *
-     * @param targetStatus an instance of a BillingStatus enum for which the user wishes to compare against the list
-     *                     of Product Order Samples registered to this Product Order
-     * @return a count of all samples that have a billing status that matches the given billing status
-     */
-    private int getBillingStatusCount(BillingStatus targetStatus) {
-        int statusCount = 0;
-
-        for (ProductOrderSample sample : samples) {
-            if (targetStatus == sample.getBillingStatus()) {
-                statusCount++;
-            }
-        }
-
-        return statusCount;
-    }
 
     /**
      * getFingerprintCount calculates how many samples registered to this product order have a fingerprint associated
@@ -700,6 +690,20 @@ public class ProductOrder implements Serializable {
     }
 
     /**
+     * @return The order is a draft while it is not 'placed,' which is the state of having a jira ticket
+     */
+    public boolean isDraft() {
+        return OrderStatus.Draft == orderStatus;
+    }
+
+    /**
+     * @return The order is a draft while it is not 'placed,' which is the state of having a jira ticket
+     */
+    public boolean isAbandoned() {
+        return OrderStatus.Abandoned == orderStatus;
+    }
+
+    /**
      * submitProductOrder encapsulates the set of steps necessary to finalize the submission of a product order.
      * This mainly deals with jira ticket creation.  This method will:
      * <ul>
@@ -732,13 +736,13 @@ public class ProductOrder implements Serializable {
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
 
         JiraIssue issue = jiraService.createIssue(
-                fetchJiraProject().getKeyPrefix(), bspUserList.getById(createdBy).getUsername(),
+                fetchJiraProject().getKeyPrefix(), bspUserList.getById(modifiedBy).getUsername(),
                 fetchJiraIssueType(), title, comments == null ? "" : comments, listOfFields);
 
         jiraTicketKey = issue.getKey();
         issue.addLink(researchProject.getJiraTicketKey());
 
-        issue.addWatcher(bspUserList.getById(createdBy).getUsername());
+        issue.addWatcher(bspUserList.getById(modifiedBy).getUsername());
 
         issue.addComment(StringUtils.join(getSampleSummaryComments(), "\n"));
         issue.addComment(StringUtils.join(getSampleValidationComments(), "\n"));
@@ -758,23 +762,6 @@ public class ProductOrder implements Serializable {
         return counts.sampleValidation();
     }
 
-    /**
-     * closeProductOrder allows a user to set the Jira ticket associated with this product order into a "Billed" state
-     *
-     * @throws IOException
-     */
-    public void closeProductOrder() throws IOException {
-        if (StringUtils.isEmpty(jiraTicketKey)) {
-            throw new IllegalStateException("A jira Ticket has not been created.");
-        }
-        JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
-        JiraIssue issue = jiraService.getIssue(jiraTicketKey);
-        IssueTransitionResponse transitions = issue.findAvailableTransitions();
-
-        String transitionId = transitions.getTransitionId(TransitionStates.Complete.getStateName());
-
-        issue.postNewTransition(transitionId);
-    }
 
     /**
      * @return true if all samples are of BSP Format. Note:
@@ -821,27 +808,6 @@ public class ProductOrder implements Serializable {
         return CreateFields.IssueType.PRODUCT_ORDER;
     }
 
-    public String getSampleBillingSummary() {
-        if (sampleBillingSummary == null) {
-            if (samples != null) {
-                Map<BillingStatus, Integer> totals = new EnumMap<BillingStatus, Integer>(BillingStatus.class);
-                for (ProductOrderSample sample : samples) {
-                    Integer total = totals.get(sample.getBillingStatus());
-                    if (total == null) {
-                        total = 0;
-                    }
-                    totals.put(sample.getBillingStatus(), ++total);
-                }
-                StringBuilder sb = new StringBuilder();
-                for (Map.Entry<BillingStatus, Integer> entry : totals.entrySet()) {
-                    sb.append(MessageFormat.format("{0}: {1} ", entry.getKey().getDisplayName(), entry.getValue()));
-                }
-                sampleBillingSummary = sb.toString();
-            }
-        }
-        return sampleBillingSummary;
-    }
-
     /**
      * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
      * for Product orders
@@ -868,7 +834,8 @@ public class ProductOrder implements Serializable {
     public enum OrderStatus implements StatusType {
         Draft,
         Submitted,
-        Closed;
+        Abandoned,
+        Complete;
 
         @Override
         public String getDisplayName() {
@@ -876,11 +843,12 @@ public class ProductOrder implements Serializable {
         }
     }
 
-    private enum TransitionStates {
-        Complete("Complete"),
+    public enum TransitionStates {
+        Complete("Order Complete"),
         Cancel("Cancel"),
         StartProgress("Start Progress"),
-        PutOnHold("Put On Hold");
+        PutOnHold("Put On Hold"),
+        DeveloperEdit("Developer Edit");
 
         private final String stateName;
 
@@ -894,24 +862,23 @@ public class ProductOrder implements Serializable {
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+    public boolean equals(Object other) {
 
-        ProductOrder that = (ProductOrder) o;
+        if ((this == other)) {
+            return true;
+        }
 
-        if (researchProject != null ? !researchProject.equals(that.getResearchProject()) : that.getResearchProject() != null)
+        if (!(other instanceof ProductOrder)) {
             return false;
-        if (title != null ? !title.equals(that.getTitle()) : that.getTitle() != null) return false;
+        }
 
-        return true;
+        ProductOrder castOther = (ProductOrder) other;
+        return new EqualsBuilder().append(getBusinessKey(), castOther.getBusinessKey()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        int result = title != null ? title.hashCode() : 0;
-        result = 31 * result + (researchProject != null ? researchProject.hashCode() : 0);
-        return result;
+        return new HashCodeBuilder().append(getBusinessKey()).toHashCode();
     }
 
     public boolean hasJiraTicketKey() {
@@ -920,5 +887,32 @@ public class ProductOrder implements Serializable {
 
     public Integer getPdoSampleCount() {
         return pdoSampleCount;
+    }
+
+    public String getOriginalTitle() {
+        return originalTitle;
+    }
+
+    public String getSampleList() {
+        if (sampleList == null) {
+            sampleList = "";
+            for (ProductOrderSample sample : samples) {
+                sampleList += sample.getSampleName() + "\n";
+            }
+        }
+
+        return sampleList;
+    }
+
+    public void updateSamplesFromList() {
+        samples.clear();
+
+        for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleList)) {
+            samples.add(new ProductOrderSample(sampleName.trim()));
+        }
+    }
+
+    public void setSampleList(String sampleList) {
+        this.sampleList = sampleList;
     }
 }

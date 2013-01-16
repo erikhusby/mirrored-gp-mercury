@@ -43,7 +43,7 @@ public class JiraServiceTest {
 
             Map<String, CustomFieldDefinition> requiredFields=
                     service.getRequiredFields(new CreateFields.Project(
-                            CreateFields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix()),
+                            CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix()),
                                               CreateFields.IssueType.WHOLE_EXOME_HYBSEL );
 
             Collection<CustomField> customFieldList = new LinkedList<CustomField>();
@@ -59,7 +59,7 @@ public class JiraServiceTest {
 
 
             JiraIssue jiraIssue =
-                    service.createIssue(CreateFields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix(), null,
+                    service.createIssue(CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix(), null,
                             CreateFields.IssueType.WHOLE_EXOME_HYBSEL,
                             "Summary created from Mercury", "Description created from Mercury",
                             customFieldList);
@@ -171,7 +171,7 @@ public class JiraServiceTest {
         setUp();
         Map<String, CustomFieldDefinition> customFields = null;
         customFields = service.getRequiredFields(new CreateFields.Project(
-                CreateFields.ProjectType.LCSET_PROJECT_PREFIX.getKeyPrefix()),
+                CreateFields.ProjectType.LCSET_PROJECT.getKeyPrefix()),
                                                  CreateFields.IssueType.WHOLE_EXOME_HYBSEL );
         Assert.assertFalse(customFields.isEmpty());
         boolean foundLanesRequestedField = false;

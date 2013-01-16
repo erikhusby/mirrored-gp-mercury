@@ -38,7 +38,7 @@ public class DriedBloodSpotDbTest extends ContainerTest {
         client.addFilter(new LoggingFilter(System.out));
 
         DriedBloodSpotDbFreeTest.DriedBloodSpotJaxbBuilder driedBloodSpotJaxbBuilder =
-                new DriedBloodSpotDbFreeTest.DriedBloodSpotJaxbBuilder(ftaPaperBarcodes, batchId);
+                new DriedBloodSpotDbFreeTest.DriedBloodSpotJaxbBuilder(ftaPaperBarcodes, batchId, timestamp);
         driedBloodSpotJaxbBuilder.buildJaxb();
 
         SamplesPicoDbTest.createBatch(baseUrl, client, batchId, ftaPaperBarcodes);

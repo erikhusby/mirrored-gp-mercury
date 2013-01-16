@@ -3,10 +3,12 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BasePlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReagentType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
@@ -44,6 +46,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import java.io.Serializable;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -57,11 +60,12 @@ import java.util.Set;
 import java.util.regex.Pattern;
 
 /**
- * Creates Lab Event entities from BettaLIMS JAXB beans
+ * Creates Lab Event entities from BettaLIMS JAXB beans.  Implements Serializable because it's used by a Stateful
+ * session bean.
  */
 @SuppressWarnings({"FeatureEnvy", "OverlyCoupledClass", "serial", "CloneableClassWithoutClone",
         "ClassExtendsConcreteCollection", "OverlyComplexClass", "ClassWithTooManyMethods", "ClassWithTooManyFields"})
-public class LabEventFactory {
+public class LabEventFactory implements Serializable {
 
     /**
      * Section for all wells in a 96 well plate
@@ -91,6 +95,8 @@ public class LabEventFactory {
      * Pattern that groups non-zero trailing digits
      */
     private static final Pattern LEADING_ZERO_PATTERN            = Pattern.compile ( "^0+(?!$)" );
+    /** For test messages, the message router uses the bettaLIMSMessage.mode attribute */
+    public static final String MODE_MERCURY = "Mercury";
 
     @Inject
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDao;
@@ -98,7 +104,9 @@ public class LabEventFactory {
     @Inject
     private StaticPlateDAO staticPlateDAO;
 
-    private transient BSPUserList bspUserList;
+    //TODO SGM  remove inject here
+    @Inject
+    private BSPUserList bspUserList;
 
     @Inject
     private TubeFormationDao tubeFormationDao;
@@ -121,9 +129,11 @@ public class LabEventFactory {
     @Inject
     private GenericReagentDao genericReagentDao;
 
+    //TODO SGM Remove default constructor
     public LabEventFactory () {
     }
 
+    //TODO SGM Make inject constructor.  Replace test cases with this and a BSPUserList initialized with test people.
     public LabEventFactory ( BSPUserList userList ) {
         this.bspUserList = userList;
     }
@@ -260,12 +270,18 @@ public class LabEventFactory {
             persistLabEvent ( uniqueEvents, labEvent, true );
             labEvents.add ( labEvent );
         }
-        for ( ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage
-                .getReceptaclePlateTransferEvent() ) {
+        for ( ReceptaclePlateTransferEvent receptaclePlateTransferEvent :
+                bettaLIMSMessage.getReceptaclePlateTransferEvent() ) {
             LabEvent labEvent = buildFromBettaLims ( receptaclePlateTransferEvent );
             persistLabEvent ( uniqueEvents, labEvent, true );
             labEvents.add ( labEvent );
         }
+        for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
+            LabEvent labEvent = buildFromBettaLims(receptacleEventType);
+            persistLabEvent ( uniqueEvents, labEvent, true );
+            labEvents.add(labEvent);
+        }
+
         return labEvents;
     }
 
@@ -374,6 +390,7 @@ public class LabEventFactory {
      * @param targetRackOfTubes entity
      * @return entity
      */
+    @DaoFree
     public LabEvent buildCherryPickRackToRackDbFree(PlateCherryPickEvent plateCherryPickEvent,
             Map<String, TubeFormation> mapBarcodeToSourceTubeFormation,
             Map<String, RackOfTubes> mapBarcodeToSourceRackOfTubes,
@@ -420,6 +437,7 @@ public class LabEventFactory {
      * @param mapBarcodeToSourceRackOfTubes
      * @return entity
      */
+    @DaoFree
     public LabEvent buildCherryPickRackToStripTubeDbFree(PlateCherryPickEvent plateCherryPickEvent,
             Map<String, TubeFormation> mapBarcodeToSourceTubeFormation,
             Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube,
@@ -622,6 +640,7 @@ public class LabEventFactory {
      *
      * @return entity
      */
+    @DaoFree
     public LabEvent buildFromBettaLimsRackToPlateDbFree ( PlateTransferEventType plateTransferEvent,
             Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes,
             RackOfTubes sourceRackOfTubes,
@@ -651,6 +670,7 @@ public class LabEventFactory {
      *
      * @return entity
      */
+    @DaoFree
     public LabEvent buildFromBettaLimsRackToPlateDbFree ( PlateTransferEventType plateTransferEvent,
                                                           TubeFormation tubeFormation, StaticPlate targetPlate ) {
         LabEvent labEvent = constructReferenceData ( plateTransferEvent, labEventRefDataFetcher );
@@ -706,6 +726,7 @@ public class LabEventFactory {
      * @return entity
      */
     // todo jmt combine following four methods?
+    @DaoFree
     public LabEvent buildFromBettaLimsRackToRackDbFree(PlateTransferEventType plateTransferEvent,
             TubeFormation sourceTubeFormation,
             Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes, RackOfTubes targetRackOfTubes) {
@@ -731,6 +752,7 @@ public class LabEventFactory {
      * @return entity
      */
     // todo jmt revisit uses of this
+    @DaoFree
     public LabEvent buildFromBettaLimsRackToRackDbFree ( PlateTransferEventType plateTransferEvent,
             Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes,
             RackOfTubes sourceRackOfTubes,
@@ -760,6 +782,7 @@ public class LabEventFactory {
      * @return entity
      */
     // todo jmt revisit uses of this
+    @DaoFree
     public LabEvent buildFromBettaLimsRackToRackDbFree ( PlateTransferEventType plateTransferEvent,
             Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes,
             RackOfTubes rackOfTubes,
@@ -784,6 +807,7 @@ public class LabEventFactory {
      *
      * @return entity
      */
+    @DaoFree
     public LabEvent buildFromBettaLimsRackToRackDbFree(
             PlateTransferEventType plateTransferEvent,
             TubeFormation sourceTubeFormation,
@@ -795,6 +819,7 @@ public class LabEventFactory {
         return labEvent;
     }
 
+    @DaoFree
     public LabEvent buildFromBettaLimsPlateToRackDbFree(PlateTransferEventType plateTransferEvent,
             StaticPlate sourcePlate,
             Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes, RackOfTubes targetRackOfTubes) {
@@ -808,6 +833,7 @@ public class LabEventFactory {
         return labEvent;
     }
 
+    @DaoFree
     public LabEvent buildFromBettaLimsPlateEventDbFree ( PlateEventType plateEvent, StaticPlate plate ) {
         LabEvent labEvent = constructReferenceData ( plateEvent, labEventRefDataFetcher );
         if ( plate == null ) {
@@ -831,6 +857,7 @@ public class LabEventFactory {
         }
     }
 
+    @DaoFree
     public LabEvent buildFromBettaLimsRackEventDbFree(PlateEventType plateEvent, TubeFormation tubeFormation,
             Map<String, TwoDBarcodedTube> mapBarcodeToTubes, RackOfTubes rackOfTubes) {
         LabEvent labEvent = constructReferenceData ( plateEvent, labEventRefDataFetcher );
@@ -842,6 +869,7 @@ public class LabEventFactory {
         return labEvent;
     }
 
+    @DaoFree
     public LabEvent buildFromBettaLimsPlateToPlateDbFree ( PlateTransferEventType plateTransferEvent,
                                                            StaticPlate sourcePlate, StaticPlate targetPlate ) {
         LabEvent labEvent = constructReferenceData ( plateTransferEvent, labEventRefDataFetcher );
@@ -857,6 +885,7 @@ public class LabEventFactory {
         return labEvent;
     }
 
+    @DaoFree
     public LabEvent buildFromBettaLimsPlateToPlateDbFree ( PlateTransferEventType plateTransferEvent,
                                                            StripTube sourceStripTube,
                                                            IlluminaFlowcell targetFlowcell ) {
@@ -874,6 +903,7 @@ public class LabEventFactory {
         return labEvent;
     }
 
+    @DaoFree
     public LabEvent buildVesselToSectionDbFree ( ReceptaclePlateTransferEvent receptaclePlateTransferEvent,
                                                  TwoDBarcodedTube sourceTube, StaticPlate targetPlate,
                                                  String targetSection ) {
@@ -908,9 +938,32 @@ public class LabEventFactory {
      * @return entity
      */
     public LabEvent buildFromBettaLims ( ReceptaclePlateTransferEvent receptaclePlateTransferEvent ) {
-        return buildVesselToSectionDbFree ( receptaclePlateTransferEvent, twoDBarcodedTubeDao.findByBarcode (
-                receptaclePlateTransferEvent.getSourceReceptacle ().getBarcode () ), staticPlateDAO.findByBarcode (
-                receptaclePlateTransferEvent.getDestinationPlate ().getBarcode () ), SECTION_ALL_96 );
+        return buildVesselToSectionDbFree ( receptaclePlateTransferEvent,
+                twoDBarcodedTubeDao.findByBarcode (receptaclePlateTransferEvent.getSourceReceptacle ().getBarcode () ),
+                staticPlateDAO.findByBarcode (receptaclePlateTransferEvent.getDestinationPlate ().getBarcode () ),
+                SECTION_ALL_96 );
+    }
+
+    public LabEvent buildFromBettaLims(ReceptacleEventType receptacleEventType) {
+        return buildReceptacleEventDbFree(receptacleEventType, twoDBarcodedTubeDao.findByBarcode(
+                receptacleEventType.getReceptacle().getBarcode()));
+    }
+
+    /**
+     * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
+     * lab event entity for an in-place event on a tube.
+     * @param receptacleEventType JAXB
+     * @param twoDBarcodedTube from database
+     * @return lab event entity
+     */
+    @DaoFree
+    private LabEvent buildReceptacleEventDbFree(ReceptacleEventType receptacleEventType, TwoDBarcodedTube twoDBarcodedTube) {
+        LabEvent labEvent = constructReferenceData ( receptacleEventType, labEventRefDataFetcher );
+        if(twoDBarcodedTube == null) {
+            throw new RuntimeException("Source tube not found for " + receptacleEventType.getReceptacle().getBarcode());
+        }
+        labEvent.setInPlaceLabVessel(twoDBarcodedTube);
+        return labEvent;
     }
 
     public LabEvent constructReferenceData ( StationEventType stationEventType,
@@ -924,11 +977,12 @@ public class LabEventFactory {
             throw new RuntimeException ( "Unexpected event type " + stationEventType.getEventType () );
         }
 
-        Long operator = labEventRefDataFetcher.getOperator( stationEventType.getOperator () ).getUserId();
-
-        if ( operator == null ) {
+        BspUser bspUser = labEventRefDataFetcher.getOperator(stationEventType.getOperator());
+        if ( bspUser == null ) {
             throw new RuntimeException ( "Failed to find operator " + stationEventType.getOperator () );
         }
+        Long operator = bspUser.getUserId();
+
         Long disambiguator = stationEventType.getDisambiguator ();
         if ( disambiguator == null ) {
             disambiguator = 1L;

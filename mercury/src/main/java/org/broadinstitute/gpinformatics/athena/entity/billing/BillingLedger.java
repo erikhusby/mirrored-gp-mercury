@@ -8,7 +8,6 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.persistence.*;
 import java.util.Date;
 
@@ -51,35 +50,22 @@ public class BillingLedger {
 
     BillingLedger() {}
 
-    public BillingLedger(@Nonnull ProductOrderSample productOrderSample, @Nonnull PriceItem priceItem, @Nonnull Date workCompleteDate, double quantity) {
+    public BillingLedger(@Nonnull ProductOrderSample productOrderSample,
+                         @Nonnull PriceItem priceItem,
+                         @Nonnull Date workCompleteDate,
+                         double quantity) {
         this.productOrderSample = productOrderSample;
         this.priceItem = priceItem;
         this.quantity = quantity;
         this.workCompleteDate = workCompleteDate;
     }
 
-    public Long getLedgerId() {
-        return ledgerId;
-    }
-
-    public void setLedgerId(Long ledgerId) {
-        this.ledgerId = ledgerId;
-    }
-
     public ProductOrderSample getProductOrderSample() {
         return productOrderSample;
     }
 
-    public void setProductOrderSample(ProductOrderSample productOrderSample) {
-        this.productOrderSample = productOrderSample;
-    }
-
     public PriceItem getPriceItem() {
         return priceItem;
-    }
-
-    public void setPriceItem(PriceItem priceItem) {
-        this.priceItem = priceItem;
     }
 
     public double getQuantity() {
@@ -94,7 +80,7 @@ public class BillingLedger {
         return billingSession;
     }
 
-    public void setBillingSession(@Nullable BillingSession billingSession) {
+    public void setBillingSession(BillingSession billingSession) {
         this.billingSession = billingSession;
     }
 
@@ -102,25 +88,43 @@ public class BillingLedger {
         return workCompleteDate;
     }
 
-    public void setWorkCompleteDate(@Nullable Date workCompleteDate) {
-        this.workCompleteDate = workCompleteDate;
-    }
-
     public String getBillingMessage() {
         return billingMessage;
     }
 
-    public void setBillingMessage(@Nullable String billingMessage) {
+    public void setBillingMessage(String billingMessage) {
         this.billingMessage = billingMessage;
+    }
+
+    /**
+     * A ledger item is billed if either its message is the success status or the session has been billed. The
+     * isBillingSessionBilled method is probably not needed, since all should be success, but I don't want to
+     * have to fix the db if some do not have success (HBR)
+     *
+     * @return true if item was billed
+     */
+    public boolean isBilled() {
+        return isBillingSessionBilled() || (billingMessage != null && billingMessage.equals(BillingSession.SUCCESS));
+    }
+
+    /**
+     * @return If the billing session is billed, then this item is part of a fully, and successfully billed session.
+     */
+    private boolean isBillingSessionBilled() {
+        return (billingSession != null) && (billingSession.getBilledDate() != null);
+    }
+
+    public void removeFromSession() {
+        billingSession = null;
     }
 
     @Override
     public boolean equals(Object other) {
-        if ( (this == other ) ) {
+        if (this == other) {
             return true;
         }
 
-        if ( !(other instanceof BillingLedger) ) {
+        if (!(other instanceof BillingLedger)) {
             return false;
         }
 

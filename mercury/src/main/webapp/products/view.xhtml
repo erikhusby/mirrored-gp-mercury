@@ -1,7 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html
-        PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<!DOCTYPE html>
 
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
@@ -23,7 +21,6 @@
         <f:metadata>
             <f:viewParam name="product" value="#{productView.product}" converter="#{productConverter}" valueChangeListener="#{productConverter.updateModel}"/>
             <f:event type="preRenderView" listener="#{productView.onPreRenderView}"/>
-            <f:event type="preRenderView" listener="#{productView.initView}"/>
         </f:metadata>
     </ui:define>
     <ui:define name="body">
@@ -147,7 +144,6 @@
                 </div>
             </div>
 
-
             <p:dataTable value="#{productView.addOnData.values}" var="addOn" >
                 <f:facet name="header">
                     <h:outputText value="Add-ons" />
@@ -178,7 +174,7 @@
 
             <p/>
 
-            <p:dataTable value="#{productView.priceItemData.values}" var="priceItem" >
+            <p:dataTable value="#{productView.optionalPriceItemData.values}" var="priceItem" >
                 <f:facet name="header">
                     <h:outputText value="Optional Price Items" />
                 </f:facet>
@@ -201,6 +197,47 @@
                     <h:outputText value="#{priceItem.name}"/>
                 </p:column>
             </p:dataTable>
+
+
+            <p:dataTable value="#{productView.allowedMaterialTypeData.values}" var="materialType" >
+                <f:facet name="header">
+                    <h:outputText value="Allowed Material Types" />
+                </f:facet>
+                <p:column sortBy="#{materialType.category}">
+                    <f:facet name="header">
+                        <h:outputText value="Material Category"/>
+                    </f:facet>
+                    <h:outputText value="#{materialType.category}"/>
+                </p:column>
+                <p:column sortBy="#{materialType.name}">
+                    <f:facet name="header">
+                        <h:outputText value="Material Name"/>
+                    </f:facet>
+                    <h:outputText value="#{materialType.name}"/>
+                </p:column>
+            </p:dataTable>
+
+
+            <security:authorizeBlock roles="#{userBean.developerRole}">
+                <div class="control-group" style="margin-top: 20px">
+                    <label class="control-label label-form">Use Automated Billing?</label>
+                    <div class="controls">
+                        <div class="form-value">#{productView.product.useAutomatedBilling ? "Yes" : "No"}</div>
+                    </div>
+                </div>
+
+                <p:outputPanel rendered="#{productView.product.useAutomatedBilling}">
+                    <div class="control-group">
+                        <label class="control-label label-form">Bill When</label>
+                        <div class="controls">
+                            <div class="form-value">#{productView.product.requirement.attribute}&#160;
+                                #{productView.product.requirement.operator.label}&#160;
+                                #{productView.product.requirement.value}
+                            </div>
+                        </div>
+                    </div>
+                </p:outputPanel>
+            </security:authorizeBlock>
 
         </h:form>
 

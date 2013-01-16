@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
-        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<!DOCTYPE html>
+
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:h="http://java.sun.com/jsf/html"
       xmlns:cc="http://java.sun.com/jsf/composite"
       xmlns:p="http://primefaces.org/ui"
       xmlns:f="http://java.sun.com/jsf/core"
         >
-
 
 <cc:interface>
     <cc:attribute name="barcode" required="true"/>
@@ -18,7 +17,7 @@
     <p:panel id="gridPanel">
         <p:dataGrid id="containerGrid" var="well" columns="#{containerBean.columns}" emptyMessage=""
                     rows="#{containerBean.columns * containerBean.rows}" value="#{containerBean.geometry}"
-                    styleClass="ui-container" rendered="#{containerBean.geometry.size() > 1}">
+                    styleClass="ui-container">
 
             <f:facet name="header">
                 Sample Layout for #{containerBean.barcode}

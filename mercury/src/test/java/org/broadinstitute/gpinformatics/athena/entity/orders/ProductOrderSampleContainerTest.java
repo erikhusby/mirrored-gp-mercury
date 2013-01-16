@@ -57,10 +57,10 @@ public class ProductOrderSampleContainerTest extends ContainerTest {
             Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_COLLAB_PID, bspDTO.getCollaboratorParticipantId());
             Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_MAT_TYPE, bspDTO.getMaterialType());
             Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_DNA, String.valueOf(bspDTO.getTotal()));
-            Assert.assertEquals(BSPSampleDTO.NORMAL_IND, bspDTO.getSampleType());
+            Assert.assertEquals(ProductOrderSample.NORMAL_IND, bspDTO.getSampleType());
             Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_DISEASE, bspDTO.getPrimaryDisease());
-            Assert.assertEquals(BSPSampleDTO.MALE_IND, bspDTO.getGender());
-            Assert.assertEquals(BSPSampleDTO.ACTIVE_IND, bspDTO.getStockType());
+            Assert.assertEquals(ProductOrderSample.MALE_IND, bspDTO.getGender());
+            Assert.assertEquals(ProductOrderSample.ACTIVE_IND, bspDTO.getStockType());
             Assert.assertEquals(BSPSampleSearchServiceStub.SM_1P3XN_FP, bspDTO.getFingerprint());
 
         } catch (IllegalStateException ise) {

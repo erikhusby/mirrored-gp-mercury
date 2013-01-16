@@ -2,7 +2,7 @@
 .idea
 .clover
 target
-SequeL.iml
+*.iml
 out
 .DS_Store
 .surefire-*

@@ -6,12 +6,12 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.authentication.PageA
 import org.broadinstitute.gpinformatics.mercury.entity.authentication.AuthorizedRole;
 import org.broadinstitute.gpinformatics.mercury.entity.authentication.PageAuthorization;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 /**
  * AuthenticationService is intended to support the front end Authorization process through this service.
@@ -108,6 +108,24 @@ public class AuthorizationService {
      */
     public PageAuthorization findByPage(String pagePath) {
         return authorizationDao.findPageAuthorizationByPage(pagePath);
+    }
+
+    /**
+     * findByPage retrieves the registered authorization entity for a given presentation resource.  A user of this
+     * method will gain access to the the defined roles associated with a registered protected resource
+     *
+     * @param authorizationId The internal id
+     *
+     * @return The page authorization that matches
+     */
+    public PageAuthorization findById(@Nonnull Long authorizationId) {
+        for (PageAuthorization authorization : getAllAuthorizedPages()) {
+            if (authorizationId.equals(authorization.getAuthorizationId())) {
+                return authorization;
+            }
+        }
+
+        return null;
     }
 
     /**
