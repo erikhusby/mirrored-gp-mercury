@@ -53,9 +53,9 @@ input.error, select.error, textarea.error { background-color: #F2DEDE; border: 1
 
 /* SIMPLE (HIGHTLIGHTS ROW W/ MOUSE)***************** */
 table.simple thead tr { text-align: left; border-radius: 3px;-moz-border-radius: 3px; -webkit-border-radius: 3px; -khtml-border-radius: 3px;}
-table.simple thead th { background: url("/Mercury/images/simple-th-background.png") repeat-x scroll 50% 50% #CCCCCC;}
-table.simple th.sorting_asc { background-color: #dddddd; }
-table.simple th.sorting_desc { background-color: #dddddd; }
+table.simple thead tr { background: url("/Mercury/images/simple-th-background.png") repeat-x scroll 50% 50% #CCCCCC }
+table.simple th.sorting_asc { border-bottom: 2px solid #2F4F4F; }
+table.simple th.sorting_desc { border-bottom: 2px solid #2F4F4F; }
 table.simple tr.even { background-color: #fff; }
 table.simple tr.odd { background-color: #f5f5f5; }
 table.simple { border: 1px solid #ccc; border-collapse: collapse; }
