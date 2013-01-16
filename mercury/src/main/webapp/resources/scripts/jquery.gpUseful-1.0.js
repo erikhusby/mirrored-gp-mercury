@@ -157,6 +157,8 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
     },
 
     "title-jira-pre": function ( a ) {
+        // if there is no title attribute simply return the empty string.  if there is a title attribute, uppercase its
+        // value and return that
         var matchingArray = a.match(/title="(.*?)"/);
         if (matchingArray == null) {
             return '';
@@ -203,7 +205,10 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
         return ((aIssue < bIssue) ? -1 : ((aIssue > bIssue) ? 1 : 0));
     },
 
+
     "title-jira-desc": function ( a, b ) {
+        // this function is purely the negation of title-jira-asc, if we can figure out how to call that and
+        // negate its result we should do that
 
         // JIRA ticket regexp
         var re = /^([A-Z]+)-(\d+)$/;
