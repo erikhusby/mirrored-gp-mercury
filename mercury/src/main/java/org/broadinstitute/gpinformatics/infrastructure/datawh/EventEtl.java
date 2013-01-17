@@ -136,14 +136,23 @@ public class EventEtl extends GenericEntityEtl {
                     }
                     String sampleKey = sample.getSampleKey();
                     String productOrderKey = sample.getProductOrderKey();
+                    if (productOrderKey == null) {
+                        logger.warn("Sample " + sample.getSampleKey() + " has null productOrderKey");
+                        continue;
+                    }
+                    ProductOrder productOrder = pdoDao.findByBusinessKey(productOrderKey);
+                    if (productOrder == null) {
+                        logger.warn("Product " + productOrderKey + " has no entity");
+                        continue;
+                    }
 
-                    long workflowConfigId = lookupWorkflowConfigId(eventName, sample, entity.getEventDate());
+                    long workflowConfigId = lookupWorkflowConfigId(eventName, productOrder, entity.getEventDate());
 
                     records.add(genericRecord(etlDateStr, isDelete,
                             entity.getLabEventId(),
                             format(eventName),
                             format(workflowConfigId),
-                            format(productOrderKey),
+                            format(productOrder.getProductOrderId()),
                             format(sampleKey),
                             format(labBatchId),
                             format(entity.getEventLocation()),
@@ -210,15 +219,10 @@ public class EventEtl extends GenericEntityEtl {
      *
      * @return 0 if no id found
      */
-    long lookupWorkflowConfigId(String eventName, MercurySample sample, Date eventDate) {
-        String productOrderKey = sample.getProductOrderKey();
-        if (productOrderKey == null) {
-            logger.warn("Sample " + sample.getSampleKey() + " has null productOrderKey");
-            return 0L;
-        }
+    long lookupWorkflowConfigId(String eventName, ProductOrder productOrder, Date eventDate) {
 
         // Checks for a cache hit.
-        String cacheKey = eventName + productOrderKey + eventDate.toString();
+        String cacheKey = eventName + productOrder.getBusinessKey() + eventDate.toString();
         synchronized (configIdCache) {
             Long id = (Long) configIdCache.get(cacheKey);
             if (id != null) {
@@ -227,14 +231,9 @@ public class EventEtl extends GenericEntityEtl {
             }
         }
 
-        ProductOrder productOrder = pdoDao.findByBusinessKey(productOrderKey);
-        if (productOrder == null) {
-            logger.warn("Product " + productOrderKey + " has no entity");
-            return 0L;
-        }
         String workflowName = productOrder.getProduct().getWorkflowName();
         if (workflowName == null) {
-            logger.warn("Product " + productOrderKey + " has no workflow name");
+            logger.warn("Product " + productOrder.getBusinessKey() + " has no workflow name");
             return 0L;
         }
 

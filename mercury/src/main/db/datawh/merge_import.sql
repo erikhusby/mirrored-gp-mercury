@@ -21,7 +21,8 @@ CURSOR im_rp_person_cur IS SELECT * FROM im_research_project_person WHERE is_del
 CURSOR im_rp_status_cur IS SELECT * FROM im_research_project_status WHERE is_delete = 'F';
 CURSOR im_jira_ticket_cur IS SELECT * FROM im_jira_ticket WHERE is_delete = 'F';
 CURSOR im_lab_batch IS SELECT * FROM im_lab_batch WHERE is_delete = 'F';
-CURSOR im_event_type IS SELECT * FROM im_event_type WHERE is_delete = 'F';
+CURSOR im_lab_vessel IS SELECT * FROM im_lab_vessel WHERE is_delete = 'F';
+CURSOR im_workflow_config IS SELECT * FROM im_workflow_config WHERE is_delete = 'F';
 CURSOR im_event_fact IS SELECT * FROM im_event_fact WHERE is_delete = 'F';
 
 errmsg VARCHAR2(255);
@@ -87,9 +88,10 @@ WHERE product_order_sample_id IN (
   SELECT product_order_sample_id FROM im_product_order_sample WHERE is_delete = 'T'
 );
 
+-- Different: not a delete on the pk
 DELETE FROM event_fact
-WHERE event_fact_id IN (
-  SELECT event_fact_id FROM im_event_fact WHERE is_delete = 'T'
+WHERE lab_event_id IN (
+  SELECT DISTINCT lab_event_id FROM im_event_fact WHERE is_delete = 'T'
 );
 
 -- Level 1 (independent tables)
@@ -119,9 +121,14 @@ WHERE lab_batch_id IN (
   SELECT lab_batch_id FROM im_lab_batch WHERE is_delete = 'T'
 );
 
-DELETE FROM event_type
-WHERE event_type_id IN (
-  SELECT event_type_id FROM im_event_type WHERE is_delete = 'T'
+DELETE FROM lab_vessel
+WHERE lab_vessel_id IN (
+  SELECT lab_vessel_id FROM im_lab_vessel WHERE is_delete = 'T'
+);
+
+DELETE FROM workflow_config
+WHERE workflow_config_id IN (
+  SELECT workflow_config_id FROM im_workflow_config WHERE is_delete = 'T'
 );
 
 COMMIT;
@@ -223,30 +230,33 @@ FOR new IN im_product_cur LOOP
     CONTINUE;
   END;
 
-FOR new IN im_jira_ticket_cur LOOP
+FOR new IN im_lab_vessel_cur LOOP
   BEGIN
-    UPDATE jira_ticket SET
-      jira_ticket_id = new.jira_ticket_id,
-      jira_ticket_name = new.jira_ticket_name,
+    UPDATE lab_vessel SET
+      lab_vessel_id = new.lab_vessel_id,
+      label = new.label,
+      lab_vessel_type = new.lab_vessel_type,
       etl_date = new.etl_date
-    WHERE jira_ticket_id = new.jira_ticket_id;
+    WHERE lab_vessel_id = new.lab_vessel_id;
 
-    INSERT INTO jira_ticket (
-      jira_ticket_id,
-      jira_ticket_name,
+    INSERT INTO lab_vessel (
+      lab_vessel_id,
+      label,
+      lab_vessel_type,
       etl_date
     ) 
     SELECT
-      new.jira_ticket_id,
-      new.jira_ticket_name,
+      new.lab_vessel_id,
+      new.label,
+      new.lab_vessel_type,
       new.etl_date
     FROM DUAL WHERE NOT EXISTS (
-      SELECT 1 FROM jira_ticket
-      WHERE jira_ticket_id = new.jira_ticket_id
+      SELECT 1 FROM lab_vessel
+      WHERE lab_vessel_id = new.lab_vessel_id
     );
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_jira_ticket.dat line '||new.line_number||'  '||errmsg);
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_lab_vessel.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 
@@ -257,6 +267,8 @@ FOR new IN im_lab_batch_cur LOOP
       batch_name = new.batch_name,
       is_active = new.is_active,
       created_on = new.created_on,
+      due_date = new.due_date,
+      is_important = new.is_important,
       etl_date = new.etl_date
     WHERE lab_batch_id = new.lab_batch_id;
 
@@ -265,6 +277,8 @@ FOR new IN im_lab_batch_cur LOOP
       batch_name,
       is_active,
       created_on,
+      due_date,
+      is_important,
       etl_date
     ) 
     SELECT
@@ -272,6 +286,8 @@ FOR new IN im_lab_batch_cur LOOP
       new.batch_name,
       new.is_active,
       new.created_on,
+      new.due_date,
+      new.is_important,
       new.etl_date
     FROM DUAL WHERE NOT EXISTS (
       SELECT 1 FROM lab_batch
@@ -283,42 +299,48 @@ FOR new IN im_lab_batch_cur LOOP
     CONTINUE;
   END;
 
-FOR new IN im_event_type_cur LOOP
+FOR new IN im_workflow_config_cur LOOP
   BEGIN
-    UPDATE event_type SET
-      event_type_id = new.event_type_id,
-      event_type = new.event_type,
-      product_name = new.product_name,
-      product_version = new.product_version,
+    UPDATE workflow_config SET
+      workflow_config_id = new.workflow_config_id,
+      effective_date = new.effective_date,
+      workflow_name = new.workflow_name,
+      workflow_version = new.workflow_version,
       process_name = new.process_name,
       process_version = new.process_version,
+      step_name = new.step_name,
+      event_name = new.event_name,
       etl_date = new.etl_date
-    WHERE event_type_id = new.event_type_id;
+    WHERE workflow_config_id = new.workflow_config_id;
 
-    INSERT INTO event_type (
-      event_type_id,
-      event_type,
-      product_name,
-      product_version,
+    INSERT INTO workflow_config (
+      workflow_config_id,
+      effective_date,
+      workflow_name,
+      workflow_version,
       process_name,
       process_version,
+      step_name,
+      event_name,
       etl_date
     ) 
     SELECT
-      event_type_id = new.event_type_id,
-      event_type = new.event_type,
-      product_name = new.product_name,
-      product_version = new.product_version,
+      workflow_config_id = new.workflow_config_id,
+      effective_date = new.effective_date,
+      workflow_name = new.workflow_name,
+      workflow_version = new.workflow_version,
       process_name = new.process_name,
       process_version = new.process_version,
+      step_name = new.step_name,
+      event_name = new.event_name,
       new.etl_date
     FROM DUAL WHERE NOT EXISTS (
-      SELECT 1 FROM event_type
-      WHERE event_type_id = new.event_type_id
+      SELECT 1 FROM workflow_config
+      WHERE workflow_config_id = new.workflow_config_id
     );
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_event_type.dat line '||new.line_number||'  '||errmsg);
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_workflow_config.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 
@@ -661,32 +683,37 @@ FOR new IN im_po_sample_cur LOOP
 
 END LOOP;
 
+-- Needed for idempotent repeatable merge
+UPDATE im_event_fact SET event_fact_id = event_fact_id_seq.nextval WHERE event_fact_id IS NULL;
 
 FOR new IN im_event_fact_cur LOOP
   BEGIN
-    UPDATE event_fact SET
-      event_fact_id = new.event_fact_id,
-      event_type_id = new.event_type_id,
-      jira_ticket_id = new.jira_ticket_id,
-      lab_batch_id = new.lab_batch_id,
-      start_date = new.start_date,
-      etl_date = new.etl_date
-    WHERE event_fact_id = new.event_fact_id;
+    -- No update is possible due to lack of common unique key
 
     INSERT INTO event_fact (
       event_fact_id,
-      event_type_id,
-      jira_ticket_id,
+      lab_event_id,
+      event_name,
+      workflow_config_id,
+      product_order_id,
+      sample_key,
       lab_batch_id,
-      start_date,
+      station_name,
+      lab_vessel_id,
+      event_date,
       etl_date
     ) 
     SELECT
-      event_fact_id = new.event_fact_id,
-      event_type_id = new.event_type_id,
-      jira_ticket_id = new.jira_ticket_id,
-      lab_batch_id = new.lab_batch_id,
-      start_date = new.start_date,
+      new.event_fact_id,
+      new.lab_event_id,
+      new.event_name,
+      new.workflow_config_id,
+      new.product_order_id,
+      new.sample_key,
+      new.lab_batch_id,
+      new.station_name,
+      new.lab_vessel_id,
+      new.event_date,
       new.etl_date
     FROM DUAL WHERE NOT EXISTS (
       SELECT 1 FROM event_fact

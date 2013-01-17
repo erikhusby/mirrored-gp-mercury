@@ -6,7 +6,6 @@ DROP INDEX product_order_idx1;
 DROP INDEX product_order_idx2;
 DROP INDEX product_order_sample_idx1;
 DROP INDEX event_fact_idx1;
-DROP INDEX event_fact_idx2;
 
 ALTER TABLE research_project_status DROP CONSTRAINT fk_rp_status_rpid;
 ALTER TABLE research_project_person DROP CONSTRAINT fk_rp_person_rpid;
@@ -21,8 +20,9 @@ ALTER TABLE product_order_sample_status DROP CONSTRAINT fk_po_sample_b_s_po_sid;
 ALTER TABLE product_order_add_on DROP CONSTRAINT fk_po_add_on_prodid;
 ALTER TABLE product_order_add_on DROP CONSTRAINT fk_po_add_on_poid;
 ALTER TABLE event_fact DROP CONSTRAINT fk_event_lab_batch;
-ALTER TABLE event_fact DROP CONSTRAINT fk_event_jira_ticket;
-ALTER TABLE event_fact DROP CONSTRAINT fk_event_event_type;
+ALTER TABLE event_fact DROP CONSTRAINT fk_event_lab_vessel;
+ALTER TABLE event_fact DROP CONSTRAINT fk_event_workflow_config;
+ALTER TABLE event_fact DROP CONSTRAINT fk_event_pdo;
 
 DROP TABLE product_order_add_on;
 DROP TABLE product_order_sample_status;
@@ -37,9 +37,9 @@ DROP TABLE research_project_status;
 DROP TABLE research_project;
 DROP TABLE price_item;
 DROP TABLE product;
-DROP TABLE jira_ticket;
 DROP TABLE lab_batch;
-DROP TABLE event_type;
+DROP TABLE lab_vessel;
+DROP TABLE workflow_config;
 DROP TABLE event_fact;
 
 
@@ -209,32 +209,39 @@ CREATE TABLE lab_batch (
   is_active VARCHAR2(1) NOT NULL CHECK is_active IN ('T','F'),
   created_on DATE NOT NULL
   due_date DATE,
-  is_important CHAR(1) NOT NULL DEFAULT 'F' CHECK is_important IN ('T','F'),
-  jira_ticket_key VARCHAR2(255)
+  is_important CHAR(1) NOT NULL DEFAULT 'F' CHECK is_important IN ('T','F')
 );
 
-CREATE TABLE event_type (
-  event_type_id NUMERIC(19) NOT NULL PRIMARY KEY,
-  event_type VARCHAR2(80) NOT NULL,
-  product_name VARCHAR2(255) NOT NULL,
-  product_version VARCHAR2(40) NOT NULL,
+CREATE TABLE workflow_config (
+  workflow_config_id NUMERIC(19) NOT NULL PRIMARY KEY,
+  effective_date DATE NOT NULL,
+  workflow_name VARCHAR2(255) NOT NULL,
+  workflow_version VARCHAR2(40) NOT NULL,
   process_name VARCHAR2(255) NOT NULL,
-  process_version VARCHAR2(40) NOT NULL
+  process_version VARCHAR2(40) NOT NULL,
+  step_name VARCHAR2(255) NOT NULL,
+  event_name VARCHAR2(255) NOT NULL
 );
 
 CREATE TABLE event_fact (
-  event_fact_id NUMERIC(19) NOT NULL PRIMARY KEY,
-  event_type_id NUMERIC(19) NOT NULL,
-  jira_ticket_id NUMERIC(19) NOT NULL,
+  event_fact_id NUMERIC(28) NOT NULL PRIMARY KEY,
+  lab_event_id NUMERIC(19) NOT NULL,
+  event_name VARCHAR2(255) NOT NULL,
+  workflow_config_id NUMERIC(19),
+  product_order_id NUMERIC(19),
+  sample_key  VARCHAR(40),
   lab_batch_id NUMERIC(19),
-  start_date DATE NOT NULL,
+  station_name VARCHAR2(255),
+  lab_vessel_id NUMERIC(19),
+  event_date DATE NOT NULL,
+  CONSTRAINT fk_event_lab_vessel FOREIGN KEY (lab_vessel_id) REFERENCES lab_vessel(lab_vessel_id),
   CONSTRAINT fk_event_lab_batch FOREIGN KEY (lab_batch_id) REFERENCES lab_batch(lab_batch_id),
-  CONSTRAINT fk_event_jira_ticket FOREIGN KEY (jira_ticket_id) REFERENCES jira_ticket(jira_ticket_id),
-  CONSTRAINT fk_event_event_type FOREIGN KEY (event_type_id) REFERENCES event_type(event_type_id)
+  CONSTRAINT fk_event_pdo FOREIGN KEY (product_order_id) REFERENCES product_order.product_order_id,
+  CONSTRAINT fk_event_workflow_config FOREIGN KEY (workflow_config_id) REFERENCES workflow_config(workflow_config_id)
 );
 
-CREATE INDEX event_fact_idx1 ON event_fact(start_date);
-CREATE INDEX event_fact_idx2 ON event_fact(event_type_id);
+CREATE INDEX event_fact_idx1 ON event_fact(event_date);
+CREATE SEQUENCE event_fact_id_seq start with 1;
 
 -- Import tables
 DROP TABLE im_product_order_add_on;
@@ -419,8 +426,7 @@ CREATE TABLE im_lab_batch (
   is_active CHAR(1),
   created_on DATE,
   due_date DATE,
-  is_important CHAR(1),
-  jira_ticket_key VARCHAR2(255)
+  is_important CHAR(1)
 );
 
 CREATE TABLE im_workflow_config (
@@ -428,24 +434,30 @@ CREATE TABLE im_workflow_config (
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL,
   workflow_config_id NUMERIC(19) NOT NULL,
-xxx
-  product_name VARCHAR2(255),
-  product_version VARCHAR2(40),
+  effective_date DATE,
+  workflow_name VARCHAR2(255),
+  workflow_version VARCHAR2(40),
   process_name VARCHAR2(255),
-  process_version VARCHAR2(40)
+  process_version VARCHAR2(40),
+  step_name VARCHAR2(255),
+  event_name VARCHAR2(255)
 );
 
 CREATE TABLE im_event_fact (
   line_number NUMERIC(9) NOT NULL,
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL,
-  event_fact_id NUMERIC(19) NOT NULL,
+  lab_event_id NUMERIC(19) NOT NULL,
+  event_name VARCHAR2(255),
+  workflow_config_id NUMERIC(19),
+  product_order_id NUMERIC(19),
+  sample_key  VARCHAR(40),
   lab_batch_id NUMERIC(19),
-  jira_ticket_id NUMERIC(19),
-  event_type_id NUMERIC(19),
-  start_date DATE,
-  event_type VARCHAR2(80),
-  event_location VARCHAR2(80)
+  station_name VARCHAR2(255),
+  lab_vessel_id NUMERIC(19),
+  event_date DATE,
+  event_fact_id NUMERIC(19) --this gets populated by merge_import.sql
 );
+
 
 COMMIT;

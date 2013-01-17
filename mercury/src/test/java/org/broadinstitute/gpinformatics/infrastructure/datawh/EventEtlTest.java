@@ -28,33 +28,18 @@ public class EventEtlTest {
     static final long[] MSEC_DATES = new long[]{1357016400000L, 1357016400000L + 86400000L, 1357016400000L + 2 * 86400000L};
 
     private EventEtl eventEtl;
-    private LabEventDao labEventDao;
-    private ProductOrderDao pdoDao;
-    private AuditReaderDao auditReaderDao;
     private WorkflowLoader workflowLoader;
     private WorkflowConfig workflowConfig = buildWorkflowConfig();
-    private MercurySample sample1;
-    private MercurySample sample2;
-    private MercurySample sample3;
 
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() throws Exception {
-        labEventDao = createMock(LabEventDao.class);
-        pdoDao = createMock(ProductOrderDao.class);
-        auditReaderDao = createMock(AuditReaderDao.class);
-        sample1 = createMock(MercurySample.class);
-        sample2 = createMock(MercurySample.class);
-        sample3 = createMock(MercurySample.class);
 
         workflowLoader = createMock(WorkflowLoader.class);
         expect(workflowLoader.load()).andReturn(workflowConfig);
         replay(workflowLoader);
 
         eventEtl = new EventEtl();
-        eventEtl.setLabEventDao(labEventDao);
-        eventEtl.setProductOrderDao(pdoDao);
-        eventEtl.setAuditReaderDao(auditReaderDao);
         eventEtl.setWorkflowLoader(workflowLoader);
         // Should have at least 4 event names in WorkflowConfig.
         assertTrue(eventEtl.mapEventToWorkflows.size() > 4);
@@ -82,26 +67,17 @@ public class EventEtlTest {
         ProductOrder pdo2 = new ProductOrder(0L, null, null, null, product2, null);
         ProductOrder pdo3 = new ProductOrder(0L, null, null, null, product3, null);
 
-        expect(sample1.getProductOrderKey()).andReturn(pdo1.getBusinessKey()).times(5);
-        expect(sample2.getProductOrderKey()).andReturn(pdo2.getBusinessKey()).times(1);
-        expect(sample3.getProductOrderKey()).andReturn(pdo3.getBusinessKey()).times(1);
-        expect(pdoDao.findByBusinessKey(pdo1.getBusinessKey())).andReturn(pdo1).times(5);
-        //not called due to cache hit: expect(pdoDao.findByBusinessKey(pdo2.getBusinessKey())).andReturn(pdo2).times(1);
-        expect(pdoDao.findByBusinessKey(pdo3.getBusinessKey())).andReturn(pdo3).times(1);
-        replay(labEventDao, pdoDao, auditReaderDao, sample1, sample2, sample3);
-
         // Does a variety of workflow config lookups.  The ugly long expected value is the WorkflowConfigDenorm id,
         // a calculated hash value based on the contents of the WorkflowConfig elements.
-        assertEquals(eventEtl.lookupWorkflowConfigId("No such event", sample1, new Date(MSEC_DATES[0] + 1000)), 0L);
-        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", sample1, new Date(MSEC_DATES[0] - 1000)), 0L);
-        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", sample1, new Date(MSEC_DATES[0] + 1000)), -3820907449895214598L);
-        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", sample1, new Date(MSEC_DATES[1] + 1000)), -7175333637954737190L);
-        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", sample1, new Date(MSEC_DATES[2] + 1000)), 4622114345093982745L);
+        assertEquals(eventEtl.lookupWorkflowConfigId("No such event", pdo1, new Date(MSEC_DATES[0] + 1000)), 0L);
+        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[0] - 1000)), 0L);
+        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[0] + 1000)), -3820907449895214598L);
+        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[1] + 1000)), -7175333637954737190L);
+        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[2] + 1000)), 4622114345093982745L);
         // (check log for cache hit on next one)
-        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", sample2, new Date(MSEC_DATES[2] + 1000)), 4622114345093982745L);
-        assertEquals(eventEtl.lookupWorkflowConfigId("SageCleanup", sample3, new Date(MSEC_DATES[2] + 1000)), -6067216737971651861L);
+        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo2, new Date(MSEC_DATES[2] + 1000)), 4622114345093982745L);
+        assertEquals(eventEtl.lookupWorkflowConfigId("SageCleanup", pdo3, new Date(MSEC_DATES[2] + 1000)), -6067216737971651861L);
 
-        verify(labEventDao, pdoDao, auditReaderDao, sample1, sample2, sample3);
     }
 
 
