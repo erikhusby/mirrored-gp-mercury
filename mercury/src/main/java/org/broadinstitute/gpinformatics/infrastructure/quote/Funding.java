@@ -4,11 +4,17 @@ import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.DateAdapter;
+import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
+import org.w3c.dom.Document;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 import java.util.Date;
+import java.util.*;
+import java.util.Set;
 
 @XmlRootElement(name = "Funding")
 public class Funding implements Displayable {
@@ -183,5 +189,48 @@ public class Funding implements Displayable {
     @Override
     public int hashCode() {
         return new HashCodeBuilder().append(costObject).append(purchaseOrderNumber).append(fundingType).toHashCode();
+    }
+
+    public static Set<Funding> getFundingSet(Document response) {
+        Set<Funding> fundingSet = new HashSet<Funding>();
+
+        NodeList rowNodes = response.getElementsByTagName("rowData");
+        for (int i = 0; i < rowNodes.getLength(); i++) {
+            Node node = rowNodes.item(i);
+
+            NodeList entries = node.getChildNodes();
+
+            Map<String, String> nameValueAttributes = new HashMap<String, String> (rowNodes.getLength());
+            for (int j = 0; j < rowNodes.getLength(); j++) {
+                Node entry = entries.item(j);
+
+                // the first to nodes are the name and value for mapping
+                NodeList entryNodes = entry.getChildNodes();
+                nameValueAttributes.put(entryNodes.item(0).getTextContent(), entryNodes.item(1).getTextContent());
+            }
+
+            // Assign all the values to this new funding
+            try {
+                Funding funding = new Funding();
+                funding.setBroadName(nameValueAttributes.get("BROAD_NAME"));
+                funding.setCommonName(nameValueAttributes.get("COMMON_NAME"));
+                funding.setCostObject(nameValueAttributes.get("COST_OBJECT_NAME"));
+                funding.setFundingType(nameValueAttributes.get("FUNDING_TYPRE"));
+                funding.setGrantDescription(nameValueAttributes.get("GRANT_DESC"));
+                funding.setGrantEndDate(DateUtils.parseDate(nameValueAttributes.get("GRANT_END")));
+                funding.setGrantNumber(nameValueAttributes.get("GRANT_NUM"));
+                funding.setGrantStartDate(DateUtils.parseDate(nameValueAttributes.get("GRANT_START")));
+                funding.setGrantStatus(nameValueAttributes.get("GRANT_STATUS"));
+                funding.setInstitute(nameValueAttributes.get("NAME"));
+                funding.setPurchaseOrderNumber(nameValueAttributes.get("PO_NUMBER"));
+                funding.setSponsorName(nameValueAttributes.get("SPONSOR_NAME"));
+
+                fundingSet.add(funding);
+            } catch (Exception ex) {
+                // Ignoring this one piece of funding
+            }
+        }
+
+        return fundingSet;
     }
 }
