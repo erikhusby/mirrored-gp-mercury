@@ -21,7 +21,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     private String listOfKeys = "";
 
     /** A cache of the key list as a list of tokens. */
-    private List<TOKEN_OBJECT> tokenObjects;
+    private List<TOKEN_OBJECT> tokenObjects = Collections.emptyList();
 
     /** A cache of the result of calling generateCompleteData. */
     private String completeDataCache;
