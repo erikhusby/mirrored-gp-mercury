@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.InvalidMolecularStateException;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.PartiallyProcessedLabEventCache;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -23,10 +24,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map;
+import java.util.*;
 
 // Implements Serializable because it's used by a Stateful session bean.
 public class LabEventHandler implements Serializable {
@@ -167,10 +165,10 @@ public class LabEventHandler implements Serializable {
                 workingBucket = new Bucket(workingBucketIdentifier);
             }
 
-            bucketBean.start(bspUserList.getById(labEvent.getEventOperator()).getUsername(),
-                             labEvent.getTargetLabVessels(),
-                             workingBucket,
-                             labEvent.getEventLocation());
+            Set<LabVessel> eventVessels = labEvent.getTargetVesselTubes();
+
+            bucketBean.start(bspUserList.getById(labEvent.getEventOperator()).getUsername(), eventVessels,
+                    workingBucket, labEvent.getEventLocation());
         }
 
         Map<WorkflowStepDef, Collection<LabVessel>> bucketVesselCandidates = itemizeBucketCandidates(labEvent);
@@ -182,10 +180,10 @@ public class LabEventHandler implements Serializable {
                 workingBucket = new Bucket(workingBucketIdentifier);
             }
 
+            Set<LabVessel> eventVessels = labEvent.getTargetVesselTubes();
 
-            bucketBean.add(labEvent.getTargetLabVessels(), workingBucket,
-                    bspUserList.getById(labEvent.getEventOperator()).getUsername(), labEvent
-                    .getEventLocation(), labEvent.getLabEventType());
+            bucketBean.add(eventVessels, workingBucket, bspUserList.getById(labEvent.getEventOperator()).getUsername(),
+                    labEvent.getEventLocation(), workingBucketIdentifier.getLabEventTypes().iterator().next());
         }
 
         return HANDLER_RESPONSE.OK;

@@ -1063,6 +1063,8 @@ public class LabEventFactory implements Serializable {
         LabEvent bucketMoveEvent = new LabEvent ( eventType, new Date (), eventLocation, disambiguator, operatorInfo );
 
         bucketMoveEvent.setProductOrderId ( pdoKey );
+
+        //TODO SGM: add to container.
         batchItem.addInPlaceEvent(bucketMoveEvent);
 
         //TODO SGM: If LabVessel has a batch waiting to be associated with an event, add it here

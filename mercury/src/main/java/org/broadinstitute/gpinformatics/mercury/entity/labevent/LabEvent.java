@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.envers.Audited;
 import javax.persistence.CascadeType;
@@ -150,6 +151,11 @@ public class LabEvent {
         this.setEventOperator(operator);
     }
 
+    /**
+     * getTargetVessels will give to the caller the set of vessels that are on the receiving end of a recorded event
+     *
+     * @return set of LabVessels
+     */
     public Set<LabVessel> getTargetLabVessels() {
         Set<LabVessel> targetLabVessels = new HashSet<LabVessel>();
         for (SectionTransfer sectionTransfer : sectionTransfers) {
@@ -167,6 +173,26 @@ public class LabEvent {
 
         return targetLabVessels;
     }
+
+    /**
+     * getTargetVesselTubes
+     *
+     * @return
+     */
+    public Set<LabVessel> getTargetVesselTubes() {
+        Set<LabVessel> eventVessels = new HashSet<LabVessel>();
+        for(LabVessel targetVessel: this.getTargetLabVessels()) {
+            if(targetVessel.getContainerRole() != null &&
+               targetVessel instanceof TubeFormation) {
+                eventVessels.addAll(targetVessel.getContainerRole().getContainedVessels());
+            } else {
+                eventVessels.add(targetVessel);
+            }
+        }
+        return eventVessels;
+    }
+
+
 
     /**
      * For transfer events, this returns the sources
