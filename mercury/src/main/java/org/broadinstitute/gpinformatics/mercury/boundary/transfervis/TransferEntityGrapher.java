@@ -385,9 +385,9 @@ public class TransferEntityGrapher implements TransferVisualizer {
                     } else {
                         bspUser = bspUserList.getById(plateEvent.getEventOperator());
                     }
-                    plateVertex.getDetails().add(new StringBuilder().append(plateEvent.getLabEventType().getName()).append(", ").
-                            append(plateEvent.getEventLocation()).append(", ").append(plateEvent.getEventDate()).append(", ").
-                            append(bspUser.getFirstName()).append(" ").append(bspUser.getLastName()).toString());
+                    plateVertex.getDetails().add(plateEvent.getLabEventType().getName() + ", " +
+                            plateEvent.getEventLocation() + ", " + plateEvent.getEventDate() + ", " +
+                            (bspUser == null ? "" : bspUser.getFirstName() + " " + bspUser.getLastName()));
                 }
                 graph.getMapIdToVertex().put(plateVertex.getId(), plateVertex);
                 plateVertex.setHasMoreEdges(true);
