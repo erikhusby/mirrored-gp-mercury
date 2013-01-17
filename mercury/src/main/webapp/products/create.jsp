@@ -106,8 +106,8 @@
                         Product Description *
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="description" name="editProduct.description" class="defaultText input-xxlarge"
-                            title="Enter the description of the new product"/>
+                        <stripes:textarea id="description" name="editProduct.description" class="defaultText input-xxlarge textarea"
+                            title="Enter the description of the new product" cols="50" rows="3"/>
                     </div>
                 </div>
 
@@ -127,7 +127,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="availabilityDate" name="editProduct.availabilityDate" class="defaultText"
-                            title="Enter date (MM/dd/yyyy)" value="${actionBean.editProduct.availabilityDate}" formatPattern="MM/dd/yyyy" />
+                            title="Enter date (MM/dd/yyyy)" formatPattern="MM/dd/yyyy" />
                 </div>
 
                 <div class="control-group">
@@ -136,7 +136,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="discontinuedDate" name="editProduct.discontinuedDate" class="defaultText" title="Enter date (MM/dd/yyyy)"
-                                      value="${actionBean.editProduct.discontinuedDate}" formatPattern="MM/dd/yyyy" />
+                                      formatPattern="MM/dd/yyyy" />
 
                     </div>
                 </div>
@@ -146,8 +146,8 @@
                         Deliverables
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="deliverables" name="editProduct.deliverables" class="defaultText input-xxlarge"
-                            title="Enter the deliverables for this product"/>
+                        <stripes:textarea id="deliverables" name="editProduct.deliverables" class="defaultText input-xxlarge textarea"
+                            title="Enter the deliverables for this product" cols="50" rows="3"/>
                     </div>
                 </div>
 
@@ -157,8 +157,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:textarea id="inputRequirements" name="editProduct.inputRequirements" class="defaultText input-xxlarge textarea"
-                            title="Enter the input requirements for this product" cols="50" rows="3"
-                            value="${actionBean.editProduct.inputRequirements}"/>
+                            title="Enter the input requirements for this product" cols="50" rows="3"/>
                     </div>
                 </div>
 
