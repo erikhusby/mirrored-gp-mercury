@@ -375,4 +375,15 @@ public class CoreActionBean implements ActionBean {
     public Resolution createTextResolution(String text) {
         return new StreamingResolution("text", new StringReader(text));
     }
+
+    /**
+     * Call this method from code where we want to map an empty result to a valid javascript empty string.
+     * Without this change, the inserted text is missing.
+     */
+    public String ensureStringResult(String s) {
+        if (s.isEmpty()) {
+            return "''";
+        }
+        return s;
+    }
 }

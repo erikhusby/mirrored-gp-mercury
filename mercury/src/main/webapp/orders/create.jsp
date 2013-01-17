@@ -29,7 +29,7 @@
 
                     $j("#researchProject").tokenInput(
                             "${ctxpath}/projects/project.action?autocomplete=", {
-                                prePopulate: ${actionBean.projectCompleteData},
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.projectCompleteData)},
                                 tokenLimit: 1
                             }
                     );
@@ -38,7 +38,7 @@
                             "${ctxpath}/products/product.action?autocomplete=", {
                                 onAdd: updateUIForProductChoice,
                                 onDelete: updateUIForProductChoice,
-                                prePopulate: ${actionBean.productCompleteData},
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.productCompleteData)},
                                 tokenLimit: 1
                             }
                     );
