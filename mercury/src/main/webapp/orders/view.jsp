@@ -39,7 +39,11 @@
             }
 
             function updateFunds(data) {
-                $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
+                if (data.fundsRemaining) {
+                    $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
+                } else {
+                    $j("#fundsRemaining").text('Error: ' + data.error);
+                }
             }
         </script>
     </stripes:layout-component>
