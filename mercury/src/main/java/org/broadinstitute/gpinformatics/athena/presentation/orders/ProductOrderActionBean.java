@@ -289,8 +289,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
 
-        returnStringStream = new StringReader(item.toString());
-        return new StreamingResolution("text", returnStringStream);
+        return createTextResolution(item.toString());
     }
 
     @DefaultHandler
@@ -419,7 +418,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
 
-        return new StreamingResolution("text", new StringReader(itemList.toString()));
+        return createTextResolution(itemList.toString());
     }
 
     @HandlesEvent("getSupportsNumberOfLanes")
@@ -430,7 +429,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         JSONObject item = new JSONObject();
             item.put("supports", product.getSupportsNumberOfLanes());
 
-        return new StreamingResolution("text", new StringReader(item.toString()));
+        return createTextResolution(item.toString());
     }
 
     public List<String> getSelectedProductOrderBusinessKeys() {
