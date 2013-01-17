@@ -1,8 +1,10 @@
-package org.broadinstitute.gpinformatics.mercury.entity.sample;
+package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 // todo jmt this should be in control, or deleted
 
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
