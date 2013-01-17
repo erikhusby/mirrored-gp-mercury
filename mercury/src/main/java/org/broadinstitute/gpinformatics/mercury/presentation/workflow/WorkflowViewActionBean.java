@@ -106,7 +106,7 @@ public class WorkflowViewActionBean extends CoreActionBean {
                 if (type.equals(latestEventType)) {
                     return "latest";
                 } else {
-                    return "current";
+                    return "latest";
                 }
             }
         }

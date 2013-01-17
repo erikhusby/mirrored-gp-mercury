@@ -71,21 +71,31 @@
                     </td>
                 </c:if>
                 <td>
-                    <a href="javascript:showVesselVisualizer('${vessel.label}')">
-                        <img width="30" height="30" name="" title="show plate view" src="${ctxpath}/images/plate.png"/>
-                    </a>
+                    <c:if test="${vessel.sampleInstanceCount > 0 }">
+                        <a href="javascript:showVesselVisualizer('${vessel.label}')">
+                            <img width="30" height="30" name="" title="show plate view"
+                                 src="${ctxpath}/images/plate.png"/>
+                        </a>
+                    </c:if>
                 </td>
                 <td>
-                    <a href="javascript:showSampleVisualizer('${vessel.label}')">
-                        <img width="30" height="30" name="" title="show sample list" src="${ctxpath}/images/list.png"/>
-                    </a>
+                    <c:if test="${vessel.sampleInstanceCount > 0 }">
+                        <a href="javascript:showSampleVisualizer('${vessel.label}')">
+                            <img width="30" height="30" name="" title="show sample list"
+                                 src="${ctxpath}/images/list.png"/>
+                        </a>
+                    </c:if>
                 </td>
+
                 <td>
-                    <a href="javascript:showWorkflowVisualizer('${vessel.label}')">
-                        <img width="30" height="30" name="" title="show workflow view"
-                             src="${ctxpath}/images/list.png"/>
-                    </a>
+                    <c:if test="${vessel.sampleInstanceCount > 0 }">
+                        <a href="javascript:showWorkflowVisualizer('${vessel.label}')">
+                            <img width="30" height="30" name="" title="show workflow view"
+                                 src="${ctxpath}/images/list.png"/>
+                        </a>
+                    </c:if>
                 </td>
+
                 <td>
                         ${vessel.label}
                 </td>
