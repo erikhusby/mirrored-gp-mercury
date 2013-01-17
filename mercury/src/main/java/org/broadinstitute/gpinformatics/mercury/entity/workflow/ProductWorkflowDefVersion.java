@@ -182,6 +182,37 @@ public class ProductWorkflowDefVersion implements Serializable {
         return OrmUtil.proxySafeIsInstance(nextStep, WorkflowBucketDef.class);
     }
 
+    public boolean isNextNonDeadBranchStepBucket(String eventTypeName) {
+         WorkflowStepDef nextStep = getNextNonDeadBranchStep(eventTypeName);
+
+         return OrmUtil.proxySafeIsInstance(nextStep, WorkflowBucketDef.class);
+     }
+
+    public boolean isStepDeadBranch(String eventTypeName) {
+
+        LabEventNode stepNode =findStepByEventType(eventTypeName);
+
+        WorkflowStepDef step = null;
+        boolean result = false;
+        if(stepNode != null) {
+             step = stepNode.getStepDef();
+            result = step.isDeadEndBranch();
+        }
+
+        return result;
+    }
+
+
+    public WorkflowStepDef getNextNonDeadBranchStep(String eventTypeName) {
+        WorkflowStepDef nextStep = getNextStep(eventTypeName);
+        while(nextStep != null &&
+              nextStep.isDeadEndBranch()) {
+            WorkflowStepDef tempStep = getNextStep(nextStep.getLabEventTypes().get(nextStep.getLabEventTypes().size()-1).getName());
+            nextStep = tempStep;
+        }
+        return nextStep;
+    }
+
     /**
      * Based on an event type name which is associated with a particular workflow process step, this method will return
      * the configured workflow step which is defined as the given event types' immediate predecessor

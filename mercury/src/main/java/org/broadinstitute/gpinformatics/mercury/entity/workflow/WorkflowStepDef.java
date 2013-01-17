@@ -100,6 +100,7 @@ public class WorkflowStepDef implements Serializable {
     private QuantType quantType;
     /** How long we expect to spend in this step */
     private Integer expectedCycleTimeMinutes;
+    /** Identifies if this step could create a Jira ticket, and the type of ticket that should be created */
     private String batchJiraProjectType;
     /** The category of output, e.g. library */
     private OutputCategory outputCategory;
@@ -107,6 +108,9 @@ public class WorkflowStepDef implements Serializable {
     private OutputType outputType;
     /** How many times the message is repeated, e.g. a transfer to duplicate Pico plates has an original transfer, and one repeat */
     private Integer numberOfRepeats = 0;
+    /** Determines whether the current workflow step is on a path that does not lead towards the ned of the current
+     * process */
+    private boolean deadEndBranch = false;
 
     private transient WorkflowProcessDefVersion processDefVersion;
 
@@ -169,5 +173,9 @@ public class WorkflowStepDef implements Serializable {
 
     public Integer getNumberOfRepeats() {
         return numberOfRepeats;
+    }
+
+    public boolean isDeadEndBranch() {
+        return deadEndBranch;
     }
 }

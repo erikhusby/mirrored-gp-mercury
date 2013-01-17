@@ -165,7 +165,7 @@ public class LabEventHandler implements Serializable {
                 workingBucket = new Bucket(workingBucketIdentifier);
             }
 
-            Set<LabVessel> eventVessels = labEvent.getTargetVesselTubes();
+            Set<LabVessel> eventVessels = labEvent.getSourceVesselTubes();
 
             bucketBean.start(bspUserList.getById(labEvent.getEventOperator()).getUsername(), eventVessels,
                     workingBucket, labEvent.getEventLocation());
@@ -432,12 +432,8 @@ public class LabEventHandler implements Serializable {
 
                 if (workflowDef != null &&
                     workflowDef.isPreviousStepBucket(labEvent.getLabEventType().getName())) {
-                    workingBucketName = /*bucketDao.findByName(*/workflowDef.getPreviousStep(
-                            labEvent.getLabEventType().getName())/*)*/;
-                    if (workingBucketName == null) {
-                        workingBucketName = workflowDef.getPreviousStep(
-                                labEvent.getLabEventType().getName());
-                    }
+                    workingBucketName = workflowDef.getPreviousStep(
+                            labEvent.getLabEventType().getName());
                 }
             }
 
@@ -471,13 +467,10 @@ public class LabEventHandler implements Serializable {
                 ProductWorkflowDefVersion workflowDef = getWorkflowVersion(productOrders.iterator().next());
 
                 if (workflowDef != null &&
-                    workflowDef.isNextStepBucket(labEvent.getLabEventType().getName())) {
-                    workingBucketName = workflowDef.getNextStep(
+                    !workflowDef.isStepDeadBranch(labEvent.getLabEventType().getName()) &&
+                    workflowDef.isNextNonDeadBranchStepBucket(labEvent.getLabEventType().getName())) {
+                    workingBucketName = workflowDef.getNextNonDeadBranchStep(
                             labEvent.getLabEventType().getName());
-                    if (workingBucketName == null) {
-                        workingBucketName = workflowDef.getNextStep(
-                                labEvent.getLabEventType().getName());
-                    }
                 }
             }
 

@@ -79,6 +79,7 @@
                 <reEntryPoint>false</reEntryPoint>
                 <quantType>PICO</quantType>
                 <numberOfRepeats>1</numberOfRepeats>
+                <deadEndBranch>true</deadEndBranch>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Pico/Plating Normalization</name>
@@ -94,6 +95,7 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <numberOfRepeats>1</numberOfRepeats>
+                <deadEndBranch>true</deadEndBranch>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>

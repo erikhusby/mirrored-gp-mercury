@@ -286,6 +286,8 @@ public class LabEventTest {
         BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
         EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket")))
                 .andReturn(new MockBucket(new WorkflowStepDef("Shearing Bucket"), jiraTicketKey));
+        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket")))
+                .andReturn(new MockBucket(new WorkflowStepDef("Shearing Bucket"), jiraTicketKey));
         EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Pico/Plating Bucket")))
                 .andReturn(new MockBucket(new WorkflowStepDef("Pico/Plating Bucket"), jiraTicketKey));
         BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);

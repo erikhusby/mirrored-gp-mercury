@@ -192,6 +192,18 @@ public class LabEvent {
         return eventVessels;
     }
 
+    public Set<LabVessel> getSourceVesselTubes() {
+        Set<LabVessel> eventVessels = new HashSet<LabVessel>();
+        for(LabVessel sourceVessel: this.getSourceLabVessels()) {
+            if(sourceVessel.getContainerRole() != null &&
+               sourceVessel instanceof TubeFormation) {
+                eventVessels.addAll(sourceVessel.getContainerRole().getContainedVessels());
+            } else {
+                eventVessels.add(sourceVessel);
+            }
+        }
+        return eventVessels;
+    }
 
 
     /**
