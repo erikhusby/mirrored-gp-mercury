@@ -144,7 +144,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         String testPrefix = testPrefixDateFormat.format(new Date());
 //        Controller.startCPURecording(true);
 
-        String jiraTicketKey="PD0-MsgTest" + testPrefix;
+        String jiraTicketKey="PDO-MsgTest" + testPrefix;
         List<ProductOrderSample> productOrderSamples=new ArrayList<ProductOrderSample>();
         Map<String,TwoDBarcodedTube> mapBarcodeToTube=new LinkedHashMap<String,TwoDBarcodedTube>();
         for (int rackPosition=1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {
@@ -175,6 +175,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         ProductOrder productOrder=new ProductOrder(101L, "Messaging Test " + testPrefix, productOrderSamples, "GSP-123",
                 exomeExpressProduct, researchProject);
         productOrder.setJiraTicketKey(jiraTicketKey);
+        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         productOrderDao.persist(productOrder);
         productOrderDao.flush();
         productOrderDao.clear();
@@ -238,8 +239,8 @@ public class BettalimsMessageResourceTest extends Arquillian {
             sendMessage(bettaLIMSMessage);
         }
 //        Controller.stopCPURecording();
-        TwoDBarcodedTube pooltube=twoDBarcodedTubeDAO.findByBarcode(qtpJaxbBuilder.getPoolTubeBarcode());
-        Assert.assertEquals(pooltube.getSampleInstances().size(), LabEventTest.NUM_POSITIONS_IN_RACK,
+        TwoDBarcodedTube poolTube = twoDBarcodedTubeDAO.findByBarcode(qtpJaxbBuilder.getPoolTubeBarcode());
+        Assert.assertEquals(poolTube.getSampleInstances().size(), LabEventTest.NUM_POSITIONS_IN_RACK,
                 "Wrong number of sample instances");
 
         String runName="TestRun" + testPrefix;
@@ -253,14 +254,25 @@ public class BettalimsMessageResourceTest extends Arquillian {
     }
 
     private void sendMessage(BettaLIMSMessage bettaLIMSMessage) {
+        // In JVM
         bettalimsMessageResource.processMessage(bettaLIMSMessage);
         twoDBarcodedTubeDAO.flush();
         twoDBarcodedTubeDAO.clear();
+
+        // JAX-RS
 //        String response = Client.create().resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/bettalimsmessage")
 //                .type(MediaType.APPLICATION_XML_TYPE)
 //                .accept(MediaType.APPLICATION_XML)
 //                .entity(bettaLIMSMessage)
 //                .post(String.class);
+
+        // JMS
+//        BettalimsMessageBeanTest.sendJmsMessage(BettalimsMessageBeanTest.marshalMessage(bettaLIMSMessage));
+//        try {
+//            Thread.sleep(2000L);
+//        } catch (InterruptedException e) {
+//            throw new RuntimeException(e);
+//        }
     }
 
     @Test(enabled=false, groups=EXTERNAL_INTEGRATION, dataProvider=Arquillian.ARQUILLIAN_DATA_PROVIDER)

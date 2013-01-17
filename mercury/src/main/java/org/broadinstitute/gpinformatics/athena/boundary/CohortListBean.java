@@ -54,5 +54,9 @@ public class CohortListBean {
 
         return cohortListString;
     }
+
+    public Cohort getCohortById(String cohortId) {
+        return cohortList.getById(cohortId);
+    }
 }
 

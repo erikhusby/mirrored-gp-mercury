@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import static org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean.VIEW_ACTION;
 
 @ManagedBean
 @ViewScoped
@@ -218,7 +219,7 @@ public class ProductCreateEditBean extends AbstractJsfBean implements Serializab
         }
 
         addInfoMessage("Product \"" + product.getProductName() + "\" has been " + (creating ? "created." : "updated."));
-        return redirect("view") + addProductParam();
+        return redirect(VIEW_ACTION) + addProductParam();
     }
 
 

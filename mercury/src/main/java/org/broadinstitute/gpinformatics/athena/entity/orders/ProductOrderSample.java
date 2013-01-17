@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.logging.Log;
@@ -78,6 +77,7 @@ public class ProductOrderSample implements Serializable {
             this.displayName = displayName;
         }
 
+        @Override
         public String getDisplayName() {
             return displayName;
         }
@@ -178,6 +178,10 @@ public class ProductOrderSample implements Serializable {
         return deliveryStatus;
     }
 
+    public void setDeliveryStatus(DeliveryStatus deliveryStatus) {
+        this.deliveryStatus = deliveryStatus;
+    }
+
     public void setBspDTO(@Nonnull BSPSampleDTO bspDTO) {
         if (bspDTO == null) {
             throw new NullPointerException("BSP Sample DTO cannot be null");
@@ -247,6 +251,14 @@ public class ProductOrderSample implements Serializable {
         return builder.toString();
     }
 
+    public String getStripBspName() {
+        if ((sampleName.length() > 3) && isInBspFormat(sampleName)) {
+            return sampleName.substring(3);
+        }
+
+        return sampleName;
+    }
+
     /**
      * Given a sample, compute its billable price items based on its material type.  We assume that all add-ons
      * in the sample's order's product that can accept the sample's material type are required, in addition to the
@@ -256,12 +268,14 @@ public class ProductOrderSample implements Serializable {
     List<PriceItem> getBillablePriceItems() {
         List<PriceItem> items = new ArrayList<PriceItem>();
         items.add(getProductOrder().getProduct().getPrimaryPriceItem());
-        String sampleMaterialType = getBspDTO().getMaterialType();
+        org.broadinstitute.bsp.client.sample.MaterialType materialTypeObject = getBspDTO().getMaterialTypeObject();
         Set<Product> productAddOns = productOrder.getProduct().getAddOns();
-        if (!StringUtils.isEmpty(sampleMaterialType) && !productAddOns.isEmpty()) {
+        if (materialTypeObject != null && !productAddOns.isEmpty()) {
+            MaterialType sampleMaterialType =
+                    new MaterialType(materialTypeObject.getCategory(), materialTypeObject.getName());
             for (Product addOn : productAddOns) {
                 for (MaterialType materialType : addOn.getAllowableMaterialTypes()) {
-                    if (materialType.getName().equalsIgnoreCase(sampleMaterialType)) {
+                    if (materialType.equals(sampleMaterialType)) {
                         items.add(addOn.getPrimaryPriceItem());
                         // Skip to the next add-on.
                         break;

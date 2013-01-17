@@ -87,7 +87,7 @@ public class ProductOrderEtl extends GenericEntityEtl {
     String entityRecord(String etlDateStr, boolean isDelete, ProductOrder entity) {
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderId(),
-                format(entity.getResearchProject().getResearchProjectId()),
+                format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null),
                 format(entity.getProduct() != null ? entity.getProduct().getProductId() : null),
                 format(entity.getOrderStatus().getDisplayName()),
                 format(entity.getCreatedDate()),

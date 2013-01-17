@@ -20,4 +20,8 @@ public class JiraLink {
     public String browseUrl(String jiraTicketKey) {
         return jiraConfig.getUrlBase() + BROWSE + jiraTicketKey;
     }
+
+    public String browseUrl() {
+        return jiraConfig.getUrlBase() + BROWSE;
+    }
 }

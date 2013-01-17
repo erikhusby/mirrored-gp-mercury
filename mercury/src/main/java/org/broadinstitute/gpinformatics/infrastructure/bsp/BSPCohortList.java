@@ -39,17 +39,15 @@ public class BSPCohortList extends AbstractCache {
     @Inject
     public BSPCohortList(BSPCohortSearchService cohortSearchService) {
         this.cohortSearchService = cohortSearchService;
-        doRefresh();
     }
 
     /**
      * @return list of bsp users, sorted by cohortId.
      */
     public Set<Cohort> getCohorts() {
-        if ((cohortList == null) ||  shouldReFresh(deployment)) {
-                doRefresh();
+        if (cohortList == null) {
+            refreshCache();
         }
-
         return cohortList;
     }
 
@@ -144,10 +142,6 @@ public class BSPCohortList extends AbstractCache {
 
     @Override
     public synchronized void refreshCache() {
-            setNeedsRefresh(true);
-    }
-
-    private void doRefresh() {
         try {
             Set<Cohort> rawCohorts = cohortSearchService.getAllCohorts();
 
@@ -157,7 +151,6 @@ public class BSPCohortList extends AbstractCache {
             }
 
             cohortList = ImmutableSet.copyOf(rawCohorts);
-            setNeedsRefresh(false);
         } catch (Exception ex) {
             logger.error("Could not refresh the cohort list", ex);
         }

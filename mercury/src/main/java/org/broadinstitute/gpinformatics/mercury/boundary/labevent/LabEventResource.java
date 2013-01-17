@@ -202,8 +202,10 @@ public class LabEventResource {
                 while (positionNames.hasNext()) {
                     String positionName  =  positionNames.next();
                     LabVessel labVessel = (LabVessel) vesselContainer.getMapPositionToVessel().get(VesselPosition.getByName(positionName));
-                    labVesselBean.getLabVesselPositionBeans().add(new LabVesselPositionBean(
-                            positionName, buildLabVesselBean(labVessel)));
+                    if (labVessel != null) {
+                        labVesselBean.getLabVesselPositionBeans().add(new LabVesselPositionBean(
+                                positionName, buildLabVesselBean(labVessel)));
+                    }
                 }
             } else {
                 Set<Map.Entry<VesselPosition, LabVessel>> entrySet = vesselContainer.getMapPositionToVessel().entrySet();

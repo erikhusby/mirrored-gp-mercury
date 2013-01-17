@@ -24,6 +24,8 @@ import java.text.MessageFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 
+import static org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean.VIEW_ACTION;
+
 /**
  * Class for creating a product order
  */
@@ -107,7 +109,7 @@ public class ProductOrderForm extends AbstractJsfBean {
         ProductOrder productOrder = productOrderDetail.getProductOrder();
         try {
             return productOrderUtil.getFundsRemaining(productOrder);
-        } catch (QuoteNotFoundException e) {
+        } catch (Exception e) {
             String errorMessage = MessageFormat.format("The Quote ID ''{0}'' is invalid.", productOrder.getQuoteId());
             logger.error(errorMessage);
             addErrorMessage("quote", errorMessage, errorMessage + ": " + e);
@@ -294,7 +296,7 @@ public class ProductOrderForm extends AbstractJsfBean {
                     MessageFormat.format("Product Order ''{0}'' ({1}) has been created.",
                             productOrder.getTitle(), productOrder.getJiraTicketKey()));
             conversationData.endConversation();
-            return redirect("view");
+            return redirect(VIEW_ACTION);
 
         } catch (QuoteNotFoundException e) {
             logger.error(e);

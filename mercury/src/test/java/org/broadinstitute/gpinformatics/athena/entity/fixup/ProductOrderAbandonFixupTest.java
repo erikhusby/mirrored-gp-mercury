@@ -10,6 +10,8 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
+import java.io.IOException;
+
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 public class ProductOrderAbandonFixupTest extends Arquillian {
@@ -34,13 +36,16 @@ public class ProductOrderAbandonFixupTest extends Arquillian {
 
         for (String pdo : pdos) {
             try {
-                productOrderEjb.abandon(pdo);
-            } catch (ProductOrderEjb.NoCancelTransitionException e) {
-                log.error("No Cancel transition found for " + pdo + ": " + e.getMessage(), e);
+                productOrderEjb.abandon(pdo, "Abandoned by ProductOrderAbandonFixupTest");
+            } catch (ProductOrderEjb.NoTransitionException e) {
+                log.error(e.getMessage(), e);
             } catch (ProductOrderEjb.NoSuchPDOException e) {
-                log.error("No such PDO found in DB: " + pdo);
+                log.error("No such PDO found in DB: " + pdo, e);
+            } catch (ProductOrderEjb.SampleDeliveryStatusChangeException e) {
+                log.error(e.getMessage(), e);
+            } catch (IOException e) {
+                log.error(e.getMessage(), e);
             }
         }
-
     }
 }

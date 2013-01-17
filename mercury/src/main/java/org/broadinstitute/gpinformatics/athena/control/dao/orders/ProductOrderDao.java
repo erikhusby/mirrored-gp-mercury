@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.*;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
@@ -75,6 +76,11 @@ public class ProductOrderDao extends GenericDao {
      * @return The matching order
      */
     public ProductOrder findByBusinessKey(String key) {
+        if (key.startsWith(ProductOrder.DRAFT_PREFIX)) {
+            Long idPartOfKey = Long.parseLong(key.substring(BillingSession.ID_PREFIX.length() + 1));
+            return findSingle(ProductOrder.class, ProductOrder_.productOrderId, idPartOfKey);
+        }
+
         return findSingle(ProductOrder.class, ProductOrder_.jiraTicketKey, key);
     }
 

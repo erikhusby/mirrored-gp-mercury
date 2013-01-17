@@ -41,7 +41,6 @@ public class BSPMaterialTypeList extends AbstractCache implements Serializable {
     @Inject
     public BSPMaterialTypeList(BSPManagerFactory bspManagerFactory) {
         this.bspManagerFactory = bspManagerFactory;
-        doRefresh();
     }
 
     public boolean isServerValid() {
@@ -53,8 +52,8 @@ public class BSPMaterialTypeList extends AbstractCache implements Serializable {
      */
     public List<MaterialType> getMaterialTypes() {
 
-        if ((materialTypes == null) || shouldReFresh(deployment) ) {
-                doRefresh();
+        if (materialTypes == null ) {
+            refreshCache();
         }
 
         return materialTypes;
@@ -77,6 +76,20 @@ public class BSPMaterialTypeList extends AbstractCache implements Serializable {
         }
         return null;
     }
+
+    public List<MaterialType> getByFullNames(List<String> fullNames) {
+        List<MaterialType> results = new ArrayList<MaterialType>();
+        if ( fullNames != null) {
+            for (String fullName : fullNames) {
+                MaterialType materialType = getByFullName( fullName );
+                if ( materialType != null ) {
+                    results.add( materialType );
+                }
+            }
+        }
+        return results;
+    }
+
 
     /**
      * Returns a list of BSP material types for the given category, or null if no material type exists with that category.
@@ -118,10 +131,6 @@ public class BSPMaterialTypeList extends AbstractCache implements Serializable {
 
     @Override
     public synchronized void refreshCache() {
-            setNeedsRefresh(true);
-    }
-
-    private void doRefresh() {
         try {
             List<MaterialType> materialTypeList = bspManagerFactory.createSampleManager().getMaterialTypes();
             serverValid = materialTypeList != null;
@@ -145,7 +154,6 @@ public class BSPMaterialTypeList extends AbstractCache implements Serializable {
             });
 
             materialTypes = ImmutableList.copyOf(materialTypeList);
-            setNeedsRefresh(false);
         } catch (Exception ex) {
             logger.error("Could not refresh the material type list", ex);
         }

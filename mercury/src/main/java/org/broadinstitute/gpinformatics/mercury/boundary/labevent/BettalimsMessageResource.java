@@ -25,11 +25,18 @@ import org.xml.sax.XMLReader;
 import org.xml.sax.helpers.XMLFilterImpl;
 import org.xml.sax.helpers.XMLReaderFactory;
 
+import javax.annotation.Resource;
 import javax.ejb.Stateful;
 import javax.ejb.TransactionAttribute;
 import javax.ejb.TransactionAttributeType;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Session;
+import javax.mail.Transport;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -73,6 +80,9 @@ public class BettalimsMessageResource {
     @Inject
     private WsMessageStore wsMessageStore;
 
+//    @Resource(name = "mail/broadsmtp")
+    private Session mailSession;
+
 //    @Inject
 //    private BucketDao bucketDao;
 //
@@ -101,7 +111,7 @@ public class BettalimsMessageResource {
      */
     @POST
     @Consumes({MediaType.APPLICATION_XML})
-    public Response processMessage(String message) {
+    public Response processMessage(String message) throws ResourceException {
         try {
             storeAndProcess(message);
         } catch (Exception e) {
@@ -175,8 +185,47 @@ public class BettalimsMessageResource {
         } catch (Exception e) {
             wsMessageStore.recordError(message, now, e);
             LOG.error("Failed to process run", e);
+//            notifySupport(e);
             throw e;
         }
+    }
+
+    private void notifySupport(Exception e) {
+        if (mailSession != null) {
+            try {
+                // Create the message object
+                Message message = new MimeMessage(mailSession);
+
+                // Adjust the recipients. Here we have only one
+                // recipient. The recipient's address must be
+                // an object of the InternetAddress class.
+                message.setRecipients(Message.RecipientType.TO,
+                        InternetAddress.parse("limsoddities@broadinstitute.org", false));
+
+                // Set the message's subject
+                message.setSubject("[Mercury] Failed to process message");
+
+                // Insert the message's body
+                message.setText(e.getMessage());
+
+                // This is not mandatory, however, it is a good
+                // practice to indicate the software which
+                // constructed the message.
+                message.setHeader("X-Mailer", "My Mailer");
+
+                // Adjust the date of sending the message
+                Date timeStamp = new Date();
+                message.setSentDate(timeStamp);
+
+                // Use the 'send' static method of the Transport
+                // class to send the message
+                Transport.send(message);
+            } catch (MessagingException msgException) {
+                LOG.error("Failed to send email", msgException);
+                // Don't rethrow, we don't want to obscure the original exception
+            }
+        }
+
     }
 
     /**

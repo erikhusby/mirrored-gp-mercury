@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -35,7 +36,9 @@ public class ProductFixupTest extends Arquillian {
     public void addExomeExpressWorkflowName() {
 
         Product exExProduct = productDao.findByPartNumber("P-EX-0002");
-        exExProduct.setWorkflowName("Exome Express");
+        if(StringUtils.isBlank(exExProduct.getWorkflowName())) {
+            exExProduct.setWorkflowName("Exome Express");
+        }
 
         productDao.persist(exExProduct);
     }
@@ -44,7 +47,9 @@ public class ProductFixupTest extends Arquillian {
     public void addHybridSelectionWorkflowName() {
 
         Product hybSelProject = productDao.findByPartNumber("P-EX-0001");
-        hybSelProject.setWorkflowName("Hybrid Selection");
+        if(StringUtils.isBlank(hybSelProject.getWorkflowName())) {
+            hybSelProject.setWorkflowName("Hybrid Selection");
+        }
 
         productDao.persist(hybSelProject);
     }
@@ -53,7 +58,9 @@ public class ProductFixupTest extends Arquillian {
     public void addWholeGenomeWorkflowName() {
 
         Product wholeGenomeProduct = productDao.findByPartNumber("P-WG-0002");
-        wholeGenomeProduct.setWorkflowName("Whole Genome");
+        if(StringUtils.isBlank(wholeGenomeProduct.getWorkflowName())) {
+            wholeGenomeProduct.setWorkflowName("Whole Genome");
+        }
 
         productDao.persist(wholeGenomeProduct);
     }
