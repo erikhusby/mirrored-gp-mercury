@@ -160,7 +160,7 @@
                         <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
                             ${actionBean.editOrder.quoteId}
                         </a>
-                        <span id="fundsRemaining"> </span>
+                        <span id="fundsRemaining" style="margin-left: 20px;"> </span>
                     </div>
                 </div>
             </div>
