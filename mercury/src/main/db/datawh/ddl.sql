@@ -198,17 +198,20 @@ CREATE TABLE product_order_add_on (
 );
 
 
-
-CREATE TABLE jira_ticket (
-  jira_ticket_id NUMERIC(19) NOT NULL PRIMARY KEY,
-  jira_ticket_name VARCHAR2(255) NOT NULL
+CREATE TABLE lab_vessel (
+  lab_vessel_id NUMERIC(19) NOT NULL PRIMARY KEY,
+  label VARCHAR2(40) NOT NULL,
+  lab_vessel_type VARCHAR2(40) NOT NULL
 );
 
 CREATE TABLE lab_batch (
   lab_batch_id NUMERIC(19) NOT NULL PRIMARY KEY,
-  batch_name VARCHAR2(255) NOT NULL,
+  batch_name VARCHAR2(40) NOT NULL,
   is_active VARCHAR2(1) NOT NULL CHECK is_active IN ('T','F'),
   created_on DATE NOT NULL
+  due_date DATE,
+  is_important CHAR(1) NOT NULL DEFAULT 'F' CHECK is_important IN ('T','F'),
+  jira_ticket_key VARCHAR2(255)
 );
 
 CREATE TABLE event_type (
@@ -248,9 +251,9 @@ DROP TABLE im_research_project;
 DROP TABLE im_research_project_status;
 DROP TABLE im_price_item;
 DROP TABLE im_product;
-DROP TABLE im_jira_ticket;
+DROP TABLE im_lab_vessel;
 DROP TABLE im_lab_batch;
-DROP TABLE im_event_type;
+DROP TABLE im_workflow_config;
 DROP TABLE im_event_fact;
 
 
@@ -400,12 +403,13 @@ CREATE TABLE im_product_order_add_on (
   product_id NUMERIC(19)
 );
 
-CREATE TABLE im_jira_ticket (
+CREATE TABLE im_lab_vessel (
   line_number NUMERIC(9) NOT NULL,
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL,
-  jira_ticket_id NUMERIC(19) NOT NULL,
-  jira_ticket_name VARCHAR2(255)
+  lab_vessel_id NUMERIC(19) NOT NULL,
+  label VARCHAR2(40),
+  lab_vessel_type VARCHAR2(40)
 );
 
 CREATE TABLE im_lab_batch (
@@ -413,16 +417,20 @@ CREATE TABLE im_lab_batch (
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL,
   lab_batch_id NUMERIC(19) NOT NULL,
-  batch_name VARCHAR2(255),
+  batch_name VARCHAR2(40),
   is_active CHAR(1),
-  created_on DATE
+  created_on DATE,
+  due_date DATE,
+  is_important CHAR(1),
+  jira_ticket_key VARCHAR2(255)
 );
 
-CREATE TABLE im_event_type (
+CREATE TABLE im_workflow_config (
   line_number NUMERIC(9) NOT NULL,
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL,
-  event_type_id NUMERIC(19) NOT NULL,
+  workflow_config_id NUMERIC(19) NOT NULL,
+xxx
   product_name VARCHAR2(255),
   product_version VARCHAR2(40),
   process_name VARCHAR2(255),
