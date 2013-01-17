@@ -76,8 +76,8 @@ public class ResearchProjectDao extends GenericDao {
         Join<ResearchProject, ProductOrder> orders =
                 researchProjectRoot.join(ResearchProject_.productOrders, JoinType.LEFT);
 
-        Expression countExpression = cb.count(orders.get(ProductOrder_.productOrderId));
-        Path businessKeyPath = researchProjectRoot.get(ResearchProject_.jiraTicketKey);
+        Expression<Long> countExpression = cb.count(orders.get(ProductOrder_.productOrderId));
+        Path<String> businessKeyPath = researchProjectRoot.get(ResearchProject_.jiraTicketKey);
         CriteriaQuery<Object> select = criteriaQuery.multiselect(countExpression, businessKeyPath);
 
         select.groupBy(businessKeyPath);
