@@ -68,13 +68,13 @@
                 }
 
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getAddOns=&productOrder=" + productKey,
+                    url: "${ctxpath}/orders/order.action?getAddOns=&product=" + productKey,
                     dataType: 'json',
                     success: setupCheckboxes
                 });
 
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getSupportsNumberOfLanes=&productOrder=" + productKey,
+                    url: "${ctxpath}/orders/order.action?getSupportsNumberOfLanes=&product=" + productKey,
                     dataType: 'json',
                     success: adjustNumberOfLanesVisibility
                 });
@@ -126,7 +126,11 @@
             }
 
             function updateFunds(data) {
-                $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
+                if (data.fundsRemaining) {
+                    $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
+                } else {
+                    $j("#fundsRemaining").text('Error: ' + data.error);
+                }
             }
         </script>
     </stripes:layout-component>
@@ -198,7 +202,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="quote" name="editOrder.quoteId" class="defaultText"
-                                      onchange="updateFundsRemaining"
+                                      onchange="updateFundsRemaining()"
                                       title="Enter the Quote ID for this order"/>
                         <div id="fundsRemaining"> </div>
                     </div>

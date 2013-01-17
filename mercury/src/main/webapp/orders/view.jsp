@@ -39,7 +39,7 @@
             }
 
             function updateFunds(data) {
-                $j("#fundsRemaining").text(' <span>Funds Remaining: ' + data.fundsRemaining + '</span>');
+                $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
             }
         </script>
     </stripes:layout-component>
@@ -156,7 +156,7 @@
                         <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
                             ${actionBean.editOrder.quoteId}
                         </a>
-                        <div id="fundsRemaining"> </div>
+                        <span id="fundsRemaining"> </span>
                     </div>
                 </div>
             </div>

@@ -268,17 +268,29 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @HandlesEvent("getQuoteFunding")
-    public Resolution getQuoteFunding() throws Exception {
+    public Resolution getQuoteFunding() {
+
+        StringReader returnStringStream;
 
         JSONObject item = new JSONObject();
-        item.put("key", quoteIdentifier);
 
-        if (quoteIdentifier != null) {
-            String fundsRemaining = productOrderUtil.getFundsRemaining(quoteIdentifier);
-            item.put("fundsRemaining", fundsRemaining);
+        try {
+            item.put("key", quoteIdentifier);
+            if (quoteIdentifier != null) {
+                String fundsRemaining = productOrderUtil.getFundsRemaining(quoteIdentifier);
+                item.put("fundsRemaining", fundsRemaining);
+            }
+
+        } catch (Exception ex) {
+            try {
+                item.put("error", ex.getMessage());
+            } catch (Exception ex1) {
+                // Don't really care if this gets an exception
+            }
         }
 
-        return new StreamingResolution("text", new StringReader(item.toString()));
+        returnStringStream = new StringReader(item.toString());
+        return new StreamingResolution("text", returnStringStream);
     }
 
     @DefaultHandler
@@ -416,7 +428,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         Product product = productDao.findByBusinessKey(this.product);
 
         JSONObject item = new JSONObject();
-        item.put("supports", product.getSupportsNumberOfLanes());
+            item.put("supports", product.getSupportsNumberOfLanes());
 
         return new StreamingResolution("text", new StringReader(item.toString()));
     }
