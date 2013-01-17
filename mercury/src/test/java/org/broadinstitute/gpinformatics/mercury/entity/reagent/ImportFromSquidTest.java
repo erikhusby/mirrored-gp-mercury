@@ -25,8 +25,11 @@ import javax.persistence.Query;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
@@ -37,7 +40,7 @@ import java.util.Map;
  * A Test to import molecular indexes and LCSETs from Squid.  This prepares an empty database to accept messages.  This must
  * be in the same package as MolecularIndexingScheme, because it uses package visible methods on that class.
  * Use the following VM options: -Xmx1G -XX:MaxPermSize=128M -Dorg.jboss.remoting-jmx.timeout=3000
- * As of August 2012, the test takes about 35 minutes to run.
+ * As of January 2013, the test takes about 35 minutes to run.
  * This test requires an XA-datasource, or the following in the <system-properties> element in standalone.xml
  *         <property name="com.arjuna.ats.arjuna.allowMultipleLastResources" value="true"/>
  * For XA in Postgres, in data/postgresql.conf, set max_prepared_transactions = 10
@@ -67,6 +70,9 @@ public class ImportFromSquidTest extends ContainerTest {
 
     @Inject
     private ProductOrderDao productOrderDao;
+
+    public static final String XML_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
+    private SimpleDateFormat xmlDateFormat = new SimpleDateFormat(XML_DATE_FORMAT);
 
 /*
     @SuppressWarnings("CdiInjectionPointsInspection")
@@ -150,9 +156,9 @@ public class ImportFromSquidTest extends ContainerTest {
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION, dependsOnMethods = {"testImportIndexingSchemes"})
     public void testImportIndexPlates() {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
-                "     p.barcode as plate_barcode, " +
-                "     wd.NAME as well_name, " +
-                "     mis.NAME as scheme_name " +
+                "     p.barcode AS plate_barcode, " +
+                "     wd.NAME AS well_name, " +
+                "     mis.NAME AS scheme_name " +
                 "FROM " +
                 "     plate_seq_sample_identifier pssi " +
                 "     INNER JOIN plate p " +
@@ -190,7 +196,7 @@ public class ImportFromSquidTest extends ContainerTest {
                 staticPlate = new StaticPlate(plateBarcode, StaticPlate.PlateType.IndexedAdapterPlate96);
             }
             VesselPosition vesselPosition = VesselPosition.getByName(wellName);
-            PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
+            final PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
             MolecularIndexingScheme molecularIndexingScheme = mapNameToScheme.get(indexingSchemeName);
             if (molecularIndexingScheme == null) {
                 System.out.println("Fetching scheme " + indexingSchemeName);
@@ -226,12 +232,12 @@ public class ImportFromSquidTest extends ContainerTest {
 
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                 "    DISTINCT  " +
-                "    l.KEY as lcsetKey, " +
-                "    lwd.NAME as workflowName, " +
+                "    l.KEY AS lcsetKey, " +
+                "    lwd.NAME AS workflowName, " +
                 "    r.barcode AS tube_barcode, " +
                 "    ls.barcode AS sample_barcode, " +
-                "    ls.lsid as sampleLsid, " +
-                "    wd.name as wellName, " +
+                "    ls.lsid AS sampleLsid, " +
+                "    wd.name AS wellName, " +
                 "    wrmd.product_order_name " +
                 "FROM " +
                 "    lcset l " +
@@ -345,7 +351,7 @@ public class ImportFromSquidTest extends ContainerTest {
      */
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testCreateBaits() {
-        Query nativeQuery = entityManager.createNativeQuery("SELECT distinct " +
+        Query nativeQuery = entityManager.createNativeQuery("SELECT DISTINCT " +
                 "    r.barcode, " +
                 "    hbd.design_name " +
                 "FROM " +
@@ -450,95 +456,135 @@ public class ImportFromSquidTest extends ContainerTest {
      */
     @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testFindMessageFilesForLcSet() {
-        Query nativeQuery = entityManager.createNativeQuery("SELECT " +
-                "    DISTINCT  " +
-                "    l.key, " +
-                "    se.start_time, " +
-                "    set1.name " +
-                "FROM " +
-                "    lcset l " +
-                "    INNER JOIN lab_workflow lw " +
-                "        ON   lw.lcset_id = l.lcset_id " +
-                "    INNER JOIN lab_workflow_workflow_reg lwwr " +
-                "        ON   lwwr.lab_workflow_id = lw.lab_workflow_id " +
-                "    INNER JOIN lab_workflow_registration lwr " +
-                "        ON   lwr.lab_workflow_registration_id = lwwr.lab_workflow_registration_id " +
-                "    INNER JOIN station_event se " +
-                "        ON   se.station_event_id = lwr.station_event_id " +
-                "    INNER JOIN station_event_type set1 " +
-                "        ON   set1.station_event_type_id = se.station_event_type_id " +
-                "WHERE " +
-                "    l.\"KEY\" IN ('LCSET-2425', 'LCSET-2489', 'LCSET-2490', 'LCSET-2491', 'LCSET-2492', 'LCSET-2501', " +
-                "    'LCSET-2502', 'LCSET-2507', 'LCSET-2508', 'LCSET-2509', 'LCSET-2519') " +
-                "ORDER BY " +
-                "    1, " +
-                "    2 ");
-        List<?> resultList = nativeQuery.getResultList();
-        File inboxDirectory = new File("C:/Temp/seq/lims/bettalims/production/inbox");
-        String previousLcSset = "";
+        try {
+            Query nativeQuery = entityManager.createNativeQuery("SELECT " +
+                    "    DISTINCT  " +
+                    "    l.key, " +
+                    "    min(se.start_time), " +
+                    "    set1.name " +
+                    "FROM " +
+                    "    lcset l " +
+                    "    INNER JOIN lab_workflow lw " +
+                    "        ON   lw.lcset_id = l.lcset_id " +
+                    "    INNER JOIN lab_workflow_workflow_reg lwwr " +
+                    "        ON   lwwr.lab_workflow_id = lw.lab_workflow_id " +
+                    "    INNER JOIN lab_workflow_registration lwr " +
+                    "        ON   lwr.lab_workflow_registration_id = lwwr.lab_workflow_registration_id " +
+                    "    INNER JOIN station_event se " +
+                    "        ON   se.station_event_id = lwr.station_event_id " +
+                    "    INNER JOIN station_event_type set1 " +
+                    "        ON   set1.station_event_type_id = se.station_event_type_id " +
+                    "WHERE " +
+                    "    l.\"KEY\" IN ('LCSET-2425', 'LCSET-2489', 'LCSET-2490', 'LCSET-2491', 'LCSET-2492', 'LCSET-2501', " +
+                    "    'LCSET-2502', 'LCSET-2507', 'LCSET-2508', 'LCSET-2509', 'LCSET-2519') " +
+                    "GROUP BY " +
+                    "    l.key, " +
+                    "    set1.name " +
+                    "ORDER BY " +
+                    "    1, " +
+                    "    2 ");
+            List<?> resultList = nativeQuery.getResultList();
+            File inboxDirectory = new File("C:/Temp/seq/lims/bettalims/production/inbox");
+            String previousLcSset = "";
 
-        for (Object o : resultList) {
-            Object[] columns = (Object[]) o;
-            String lcSet = (String) columns[0];
-            Date startTime = (Date) columns[1];
-            String eventName = (String) columns[2];
+            for (Object o : resultList) {
+                Object[] columns = (Object[]) o;
+                String lcSet = (String) columns[0];
+                Date startTime = (Date) columns[1];
+                String eventName = (String) columns[2];
 
-            if(!lcSet.equals(previousLcSset)) {
-                System.out.println("# "+ lcSet);
-                previousLcSset = lcSet;
-            }
-            GregorianCalendar gregorianCalendar = new GregorianCalendar();
-            gregorianCalendar.setTime(startTime);
-            int year = gregorianCalendar.get(Calendar.YEAR);
-            int month = gregorianCalendar.get(Calendar.MONTH) + 1;
-            int day = gregorianCalendar.get(Calendar.DAY_OF_MONTH);
-            int hour = gregorianCalendar.get(Calendar.HOUR_OF_DAY);
-            int minute = gregorianCalendar.get(Calendar.MINUTE);
-            int second = gregorianCalendar.get(Calendar.SECOND);
-            String yearMonthDay = String.format("%d%02d%02d", year, month, day);
-            File dayDirectory = new File(inboxDirectory, yearMonthDay);
-            if(dayDirectory.list() == null) {
-                throw new RuntimeException("Failed to find directory " + dayDirectory.getName());
-            }
-            boolean added = false;
-            for (String fileName : dayDirectory.list()) {
-                added = doesMessageMatch(hour, fileName, yearMonthDay, dayDirectory, eventName);
-                if(added) {
-                    break;
+                if(!lcSet.equals(previousLcSset)) {
+                    System.out.println("# "+ lcSet);
+                    previousLcSset = lcSet;
+                }
+                GregorianCalendar gregorianCalendar = new GregorianCalendar();
+                gregorianCalendar.setTime(startTime);
+                int year = gregorianCalendar.get(Calendar.YEAR);
+                int month = gregorianCalendar.get(Calendar.MONTH) + 1;
+                int day = gregorianCalendar.get(Calendar.DAY_OF_MONTH);
+                int hour = gregorianCalendar.get(Calendar.HOUR_OF_DAY);
+                int minute = gregorianCalendar.get(Calendar.MINUTE);
+                int second = gregorianCalendar.get(Calendar.SECOND);
+                String yearMonthDay = String.format("%d%02d%02d", year, month, day);
+                String dateString = xmlDateFormat.format(startTime);
+
+                File dayDirectory = new File(inboxDirectory, yearMonthDay);
+                String[] messageFileList = dayDirectory.list();
+                if(messageFileList == null) {
+                    throw new RuntimeException("Failed to find directory " + dayDirectory.getName());
+                }
+                Collections.sort(Arrays.asList(messageFileList));
+                boolean found = false;
+                for (String fileName : messageFileList) {
+                    File messageFile = new File(dayDirectory, fileName);
+                    String message = FileUtils.readFileToString(messageFile);
+                    // Strip tube and flowcell transfer dates are assigned on the server, so they may not match
+                    // what's in the file, hence we have to do a lenient check against the file name
+                    if(eventName.equals("StripTubeBTransfer") || eventName.equals("FlowcellTransfer")) {
+                        if(fileName.startsWith(yearMonthDay + "_" + String.format("%02d%02d", hour, minute)) ||
+                                fileName.startsWith(yearMonthDay + "_" + String.format("%02d%02d", hour, minute + 1)) ||
+                                fileName.startsWith(yearMonthDay + "_" + String.format("%02d", hour)) ||
+                                fileName.startsWith(yearMonthDay + "_" + String.format("%02d", hour + 1))) {
+                            System.out.println("#" + eventName);
+                            System.out.println(messageFile.getCanonicalPath());
+                            found = true;
+                            break;
+                        }
+                    } else if(message.contains(eventName) && message.contains(dateString)) {
+                        System.out.println("#" + eventName);
+                        System.out.println(messageFile.getCanonicalPath());
+                        found = true;
+                        break;
+                    }
+                }
+                if(!found) {
+                    System.out.println("#Failed to find file for " + lcSet + " " + eventName + " " + startTime);
                 }
             }
-            if(!added) {
-                System.out.println("#Failed to find file for " + lcSet + " " + eventName + " " + startTime);
-            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
     }
 
-    /**
-     * Determines whether a message file matches a station event
-     * @param hour hour of station event
-     * @param fileName name of message file
-     * @param yearMonthDay year, month and day of message file
-     * @param dayDirectory directory holding message file
-     * @param eventName station event type
-     * @return true if message file matches station event
+    /*
+SELECT
+	lqr.run_name,
+	lqr.run_date,
+	lqt.quant_type_name,
+	lq.quant_value,
+	NULL,
+	r.barcode
+FROM
+	library_quant_run lqr
+	INNER JOIN library_quant_type lqt
+		ON   lqt.quant_type_id = lqr.quant_type_id
+	INNER JOIN library_quant lq
+		ON   lq.quant_run_id = lqr.run_id
+	INNER JOIN receptacle r
+		ON   r.receptacle_id = lq.receptacle_id
+WHERE
+	lq.is_archived = 'N'
+UNION ALL
+SELECT
+	qr.run_name,
+	qr.run_date,
+	'QPCR',
+	qrl.concentration,
+	qrl.status,
+	r.barcode
+FROM
+	qpcr_run qr
+	INNER JOIN qpcr_run_library qrl
+		ON   qrl.qpcr_run_id = qr.qpcr_run_id
+	INNER JOIN seq_content sc
+		ON   sc.seq_content_id = qrl.seq_content_id
+	INNER JOIN seq_content_descr_set scds
+		ON   scds.seq_content_id = sc.seq_content_id
+	INNER JOIN seq_content sc2
+		ON   sc2.seq_content_id = scds.seq_content_id
+	INNER JOIN receptacle r
+		ON   r.receptacle_id = sc2.receptacle_id
+
+		493,677 rows
      */
-    private boolean doesMessageMatch(int hour, String fileName, String yearMonthDay, File dayDirectory, String eventName) {
-        String significantTime = String.format("%02d", hour);
-        // Message files can have times up to an hour later than the event time, perhaps due to incorrect deck clocks
-        String significantTimePlus1Hour = String.format("%02d", hour + 1);
-        if(fileName.startsWith(yearMonthDay + "_" + significantTime) ||
-                fileName.startsWith(yearMonthDay + "_" + significantTimePlus1Hour)) {
-            try {
-                File messageFile = new File(dayDirectory, fileName);
-                String message = FileUtils.readFileToString(messageFile);
-                if(message.contains(eventName)) {
-                    System.out.println(messageFile.getCanonicalPath());
-                    return true;
-                }
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
-        }
-        return false;
-    }
 }
