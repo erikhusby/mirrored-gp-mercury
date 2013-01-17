@@ -17,7 +17,7 @@ public class BSPSampleDTO {
     public static final String ACTIVE_IND = "Active Stock";
 
 
-    private final String patientId;
+    private String patientId;
 
     private String stockSample;
 
@@ -102,19 +102,12 @@ public class BSPSampleDTO {
         this.stockSample = stockSample;
         this.rootSample = rootSample;
         this.aliquotSample = aliquotSample;
-        this.patientId = patientId;
-        this.collaboratorsSampleName = collaboratorsSampleName;
         this.collection = collection;
-
         this.volume = safeParseDouble(volume);
         this.concentration = safeParseDouble(concentration);
-        this.organism = organism;
-        this.sampleLsid = sampleLsid;
         this.collaboratorParticipantId = collaboratorParticipantId;
-        this.materialType = materialType;
         this.total = safeParseDouble(total);
         this.sampleType = sampleType;
-        this.primaryDisease = primaryDisease;
         this.gender = gender;
         this.stockType = stockType;
         this.fingerprint = fingerprint;
@@ -294,5 +287,4 @@ public class BSPSampleDTO {
     public String getRace() {
         return race;
     }
-}
 }
