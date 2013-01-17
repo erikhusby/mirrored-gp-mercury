@@ -188,7 +188,7 @@
         <athena.password>athena_local</athena.password>
         <database.delimiterType>normal</database.delimiterType>
 
-        <mercury.rc.ip>must be specified.</mercury.rc.ip>
+        <mercury.rc.ip>192.168.195.41</mercury.rc.ip>
 
     </properties>
 
