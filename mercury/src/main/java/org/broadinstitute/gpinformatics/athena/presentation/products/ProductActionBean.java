@@ -63,13 +63,14 @@ public class ProductActionBean extends CoreActionBean {
 
     @ValidateNestedProperties({
         @Validate(field="productFamily.productFamilyId", label="Product Family", required = true, maxlength=255, on={SAVE_ACTION}),
-        @Validate(field="productName", required = true, maxlength=255, on={SAVE_ACTION})
+        @Validate(field="productName", required = true, maxlength=255, on={SAVE_ACTION}),
+        @Validate(field="partNumber", required = true, maxlength=255, on={SAVE_ACTION}, label="Part Number")
     })
     private Product editProduct;
 
 
     // These are the fields for catching the input tokens
-    @Validate(required = true, on = {SAVE_ACTION})
+    @Validate(required = true, on = {SAVE_ACTION}, label="Primary Price Item")
     private String primaryPriceItemList = "";
 
     private String optionalPriceItemsList = "";

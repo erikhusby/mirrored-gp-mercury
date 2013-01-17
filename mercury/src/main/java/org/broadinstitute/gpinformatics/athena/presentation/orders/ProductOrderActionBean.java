@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
@@ -33,6 +34,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -61,6 +63,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private QuoteService quoteService;
+
+    @Inject
+    private ProductOrderUtil productOrderUtil;
 
     @Inject
     private ProductOrderListEntryDao orderListEntryDao;
@@ -100,6 +105,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrderListEntry> allProductOrders;
 
+    private String sampleList;
+
     @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
     private String productOrder;
 
@@ -113,6 +120,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<String> selectedProductOrderBusinessKeys;
     private List<ProductOrder> selectedProductOrders;
 
+    private String quoteIdentifier;
+
     private String product;
 
     private List<String> addOnKeys = new ArrayList<String> ();
@@ -122,9 +131,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String productList;
 
     /**
-     * Initialize the product with the passed in key for display in the form
+     * Initialize the product with the passed in key for display in the form or create it, if not specified
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {CREATE_ACTION, VIEW_ACTION, EDIT_ACTION, "downloadBillingTracker", SAVE_ACTION, "placeOrder"})
+    @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
@@ -159,7 +168,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @ValidationMethod(on = "placeOrder")
-    public void validatePlacedOrder() throws Exception {
+    public void validatePlacedOrder() {
         if (editOrder.getSamples().isEmpty()) {
             addGlobalValidationError("Order does not have any samples");
         }
@@ -258,6 +267,32 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    @HandlesEvent("getQuoteFunding")
+    public Resolution getQuoteFunding() {
+
+        StringReader returnStringStream;
+
+        JSONObject item = new JSONObject();
+
+        try {
+            item.put("key", quoteIdentifier);
+            if (quoteIdentifier != null) {
+                String fundsRemaining = productOrderUtil.getFundsRemaining(quoteIdentifier);
+                item.put("fundsRemaining", fundsRemaining);
+            }
+
+        } catch (Exception ex) {
+            try {
+                item.put("error", ex.getMessage());
+            } catch (Exception ex1) {
+                // Don't really care if this gets an exception
+            }
+        }
+
+        returnStringStream = new StringReader(item.toString());
+        return new StreamingResolution("text", returnStringStream);
+    }
+
     @DefaultHandler
     @HandlesEvent(LIST_ACTION)
     public Resolution list() {
@@ -304,6 +339,17 @@ public class ProductOrderActionBean extends CoreActionBean {
         return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER, editOrder.getBusinessKey());
     }
 
+    @HandlesEvent("validate")
+    public Resolution validate() {
+        validatePlacedOrder();
+
+        if (getContext().getValidationErrors().isEmpty()) {
+            addMessage("Draft Order is valid and ready to be placed");
+        }
+
+        return getSourcePageResolution();
+    }
+
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() throws Exception {
 
@@ -329,7 +375,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         ResearchProject project = projectDao.findByBusinessKey(researchProjectList);
         Product product = productDao.findByPartNumber(productList);
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
-        editOrder.updateData(project, product, addOnProducts);
+        editOrder.updateData(project, product, addOnProducts, getSamplesAsList());
     }
 
     @HandlesEvent("downloadBillingTracker")
@@ -382,7 +428,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         Product product = productDao.findByBusinessKey(this.product);
 
         JSONObject item = new JSONObject();
-        item.put("supports", product.getSupportsNumberOfLanes());
+            item.put("supports", product.getSupportsNumberOfLanes());
 
         return new StreamingResolution("text", new StringReader(item.toString()));
     }
@@ -535,5 +581,38 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Unless we're in draft mode, or creating a new order, user must be logged into JIRA to
         // change fields in an order.
         return editOrder.isDraft() || isCreating() || userBean.isValidUser();
+    }
+
+
+    public String getSampleList() {
+        if (sampleList == null) {
+            sampleList = "";
+            for (ProductOrderSample sample : getEditOrder().getSamples()) {
+                sampleList += sample.getSampleName() + "\n";
+            }
+        }
+
+        return sampleList;
+    }
+
+    public List<ProductOrderSample> getSamplesAsList() {
+        List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
+        for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleList)) {
+            samples.add(new ProductOrderSample(sampleName));
+        }
+
+        return samples;
+    }
+
+    public void setSampleList(String sampleList) {
+        this.sampleList = sampleList;
+    }
+
+    public String getQuoteIdentifier() {
+        return quoteIdentifier;
+    }
+
+    public void setQuoteIdentifier(String quoteIdentifier) {
+        this.quoteIdentifier = quoteIdentifier;
     }
 }

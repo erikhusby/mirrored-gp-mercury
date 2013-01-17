@@ -51,6 +51,7 @@
 
                     <c:if test="${!actionBean.creating}">
                         updateUIForProductChoice();
+                        updateFundsRemaining();
                     </c:if>
                 }
             );
@@ -118,15 +119,18 @@
             function updateFundsRemaining() {
                 var quoteIdentifier = $j("#quote").val();
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getQuoteFunding&quoteIdentifier=" + quoteIdentifier,
+                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier,
                     dataType: 'json',
-                    data: data,
                     success: updateFunds
                 });
             }
 
             function updateFunds(data) {
-                $j("#fundsRemaining").text(data.fundsRemaining);
+                if (data.fundsRemaining) {
+                    $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
+                } else {
+                    $j("#fundsRemaining").text('Error: ' + data.error);
+                }
             }
         </script>
     </stripes:layout-component>
@@ -198,7 +202,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="quote" name="editOrder.quoteId" class="defaultText"
-                                      onchange="updateFundsRemaining"
+                                      onchange="updateFundsRemaining()"
                                       title="Enter the Quote ID for this order"/>
                         <div id="fundsRemaining"> </div>
                     </div>
@@ -246,11 +250,19 @@
             </div>
 
             <div class="help-block span4">
-                Enter samples names in this box, one per line. When you save the order, the view page will show
-                all sample details.
+                <c:choose>
+                    <c:when test="${actionBean.editOrder.draft}">
+                        Enter samples names in this box, one per line. When you save the order, the view page will show
+                        all sample details.
+                    </c:when>
+                    <c:otherwise>
+                        This is the list of samples. Since this order has already been placed, the list of samples cannot
+                        be changed.
+                    </c:otherwise>
+                </c:choose>
                 <br/>
                 <br/>
-                <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="editOrder.sampleList" rows="15" cols="120"/>
+                <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="sampleList" rows="15" cols="120"/>
             </div>
         </stripes:form>
 

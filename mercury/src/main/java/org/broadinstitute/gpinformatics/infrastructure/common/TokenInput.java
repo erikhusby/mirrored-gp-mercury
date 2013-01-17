@@ -36,11 +36,19 @@ public abstract class TokenInput<TOKEN_OBJECT> {
 
         List<TOKEN_OBJECT> tokenObjects = new ArrayList<TOKEN_OBJECT>();
         for (String key : keys) {
-            tokenObjects.add(getById(key));
+            tokenObjects.add(getById(key.trim()));
         }
 
         return tokenObjects;
     }
 
     protected abstract TOKEN_OBJECT getById(String key);
+
+    public void setup(Long[] longIds) {
+        listOfKeys = StringUtils.join(longIds, ", ");
+    }
+
+    public void setup(String[] longIds) {
+        listOfKeys = StringUtils.join(longIds, ", ");
+    }
 }

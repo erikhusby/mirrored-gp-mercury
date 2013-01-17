@@ -109,7 +109,7 @@ public class ProductOrderForm extends AbstractJsfBean {
         ProductOrder productOrder = productOrderDetail.getProductOrder();
         try {
             return productOrderUtil.getFundsRemaining(productOrder);
-        } catch (QuoteNotFoundException e) {
+        } catch (Exception e) {
             String errorMessage = MessageFormat.format("The Quote ID ''{0}'' is invalid.", productOrder.getQuoteId());
             logger.error(errorMessage);
             addErrorMessage("quote", errorMessage, errorMessage + ": " + e);
