@@ -1823,6 +1823,8 @@ public class LabEventTest {
             denatureRack = (TubeFormation) denatureEntity.getTargetLabVessels().iterator().next();
             Set<SampleInstance> denaturedSampleInstances = denatureRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(denaturedSampleInstances.size(), normCatchRack.getSampleInstances().size(), "Wrong number of denatured samples");
+            Assert.assertEquals(denatureRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances().size(),
+                    normCatchRack.getSampleInstances().size(), "Wrong number of denatured samples");
 
             // StripTubeBTransfer
             validateWorkflow("StripTubeBTransfer", denatureRack);
