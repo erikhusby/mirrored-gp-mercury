@@ -10,7 +10,9 @@ import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
@@ -19,11 +21,19 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapT
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.*;
@@ -35,9 +45,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
+import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import javax.annotation.Nonnull;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -146,7 +159,29 @@ public class LabEventTest {
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-        LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance());
+
+        LabBatchEjb labBatchEJB = new LabBatchEjb();
+        labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
+        labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+
+        LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
+        labBatchEJB.setTubeDAO(tubeDao);
+
+        JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
+        labBatchEJB.setJiraTicketDao(mockJira);
+
+        LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
+        labBatchEJB.setLabBatchDao(labBatchDAO);
+
+
+        BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
+        BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
+        EasyMock.replay(mockBucketDao, labBatchDAO, tubeDao, mockJira);
+
+        LabEventHandler labEventHandler =
+                new LabEventHandler(new WorkflowLoader(), AthenaClientProducer
+                        .stubInstance(), bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer
+                        .stubInstance()));
 
         PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(bettaLimsMessageFactory,
                 labEventFactory, labEventHandler,
@@ -232,8 +267,32 @@ public class LabEventTest {
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-        LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer
-                .stubInstance());
+
+        LabBatchEjb labBatchEJB = new LabBatchEjb();
+        labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
+        labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+
+        LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
+        labBatchEJB.setTubeDAO(tubeDao);
+
+        JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
+        labBatchEJB.setJiraTicketDao(mockJira);
+
+        LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
+        labBatchEJB.setLabBatchDao(labBatchDAO);
+
+
+
+        BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
+        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket")))
+                .andReturn(new MockBucket(new WorkflowStepDef("Shearing Bucket"), jiraTicketKey));
+        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Pico/Plating Bucket")))
+                .andReturn(new MockBucket(new WorkflowStepDef("Pico/Plating Bucket"), jiraTicketKey));
+        BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
+        EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
+        LabEventHandler labEventHandler =
+                new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(), bucketBeanEJB,
+                        mockBucketDao, new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
 
         PicoPlatingEntityBuider pplatingEntityBuilder = new PicoPlatingEntityBuider(bettaLimsMessageFactory,
                 labEventFactory, labEventHandler,
@@ -285,6 +344,7 @@ public class LabEventTest {
         Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().iterator().next(),
                 qtpEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
 
+        EasyMock.verify(mockBucketDao);
 //        Controller.stopCPURecording();
     }
 
@@ -318,7 +378,29 @@ public class LabEventTest {
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-        LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance());
+
+        LabBatchEjb labBatchEJB = new LabBatchEjb();
+        labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
+        labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+
+        LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
+        labBatchEJB.setTubeDAO(tubeDao);
+
+        JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
+        labBatchEJB.setJiraTicketDao(mockJira);
+
+        LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
+        labBatchEJB.setLabBatchDao(labBatchDAO);
+
+
+        BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
+        BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
+        EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
+
+        LabEventHandler labEventHandler =
+                new LabEventHandler(new WorkflowLoader(), AthenaClientProducer
+                        .stubInstance(), bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer
+                        .stubInstance()));
 
         PreFlightEntityBuilder preFlightEntityBuilder = new PreFlightEntityBuilder(bettaLimsMessageFactory,
                 labEventFactory, labEventHandler,
@@ -427,7 +509,27 @@ public class LabEventTest {
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         LabEventFactory labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-        LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance());
+
+        LabBatchEjb labBatchEJB = new LabBatchEjb();
+        labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
+        labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+
+        LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
+        labBatchEJB.setTubeDAO(tubeDao);
+
+        JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
+        labBatchEJB.setJiraTicketDao(mockJira);
+
+        LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
+        labBatchEJB.setLabBatchDao(labBatchDAO);
+
+
+        BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
+        BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
+        EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
+
+        LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(), bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer
+                .stubInstance()));
         BuildIndexPlate buildIndexPlate = new BuildIndexPlate("IndexPlate").invoke();
         FluidigmMessagesBuilder fluidigmMessagesBuilder = new FluidigmMessagesBuilder("", bettaLimsMessageFactory,
                 labEventFactory, labEventHandler,
@@ -845,12 +947,14 @@ public class LabEventTest {
                             .keySet()), "", bettaLimsMessageFactory);
             jaxbBuilder.invoke();
 
+
             validateWorkflow(LabEventType.PICO_PLATING_BUCKET.getName(), mapBarcodeToTube.values());
             LabEvent picoPlatingBucket =
                     labEventFactory.buildFromBettaLimsRackEventDbFree(jaxbBuilder.getPicoPlatingBucket(),
                             null, mapBarcodeToTube,null);
             labEventHandler.processEvent(picoPlatingBucket);
             TubeFormation initialTubeFormation = (TubeFormation) picoPlatingBucket.getInPlaceLabVessel();
+
 
             validateWorkflow(LabEventType.PICO_PLATING_QC.getName(), mapBarcodeToTube.values());
             LabEvent picoQcEntity =
@@ -1294,11 +1398,11 @@ public class LabEventTest {
             this.shearCleanPlateBarcode = exomeExpressShearingJaxbBuilder.getShearCleanPlateBarcode();
             this.covarisPlateBarcode = exomeExpressShearingJaxbBuilder.getCovarisRackBarCode();
 
-            validateWorkflow(LabEventType.SHEARING_BUCKET.getName(), mapBarcodeToTube.values());
-            LabEvent shearingBucketEntity =
-                    labEventFactory.buildFromBettaLimsRackEventDbFree(
-                            exomeExpressShearingJaxbBuilder.getExExShearingBucket(), null, mapBarcodeToTube, null);
-            labEventHandler.processEvent(shearingBucketEntity);
+//            validateWorkflow(LabEventType.SHEARING_BUCKET.getName(), mapBarcodeToTube.values());
+//            LabEvent shearingBucketEntity =
+//                    labEventFactory.buildFromBettaLimsRackEventDbFree(
+//                            exomeExpressShearingJaxbBuilder.getExExShearingBucket(), null, mapBarcodeToTube, null);
+//            labEventHandler.processEvent(shearingBucketEntity);
 
             // ShearingTransfer
             validateWorkflow("PlatingToShearingTubes", mapBarcodeToTube.values());
@@ -2403,6 +2507,24 @@ public class LabEventTest {
             addMessage(messageList, bettaLimsMessageFactory, flowcellTransferJaxb);
 
             return this;
+        }
+    }
+
+
+    public static class MockBucket extends Bucket {
+
+        private final String testProductOrder;
+
+
+        public MockBucket(@Nonnull WorkflowStepDef bucketDef, String testProductOrder) {
+            super(bucketDef);
+            this.testProductOrder = testProductOrder;
+        }
+
+        @Override
+        public BucketEntry findEntry(@Nonnull LabVessel entryVessel) {
+            addEntry(new BucketEntry(entryVessel, testProductOrder, this));
+            return super.findEntry(entryVessel);
         }
     }
 }

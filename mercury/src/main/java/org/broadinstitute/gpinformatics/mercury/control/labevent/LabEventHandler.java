@@ -8,17 +8,17 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServic
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Billable;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.InvalidMolecularStateException;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.PartiallyProcessedLabEventCache;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -47,23 +47,30 @@ public class LabEventHandler implements Serializable {
     @Inject
     QuoteService quoteService;
 
-    @Inject
     WorkflowLoader workflowLoader;
 
-    @Inject
     AthenaClientService athenaClientService;
 
-    @Inject
     private BSPUserList bspUserList;
+
+    private BucketBean bucketBean;
+
+    private BucketDao bucketDao;
+
 
     private static final Log LOG = LogFactory.getLog(LabEventHandler.class);
 
-    public LabEventHandler() {
+    LabEventHandler() {
     }
 
-    public LabEventHandler(WorkflowLoader workflowLoader, AthenaClientService clientService) {
+    @Inject
+    public LabEventHandler(WorkflowLoader workflowLoader, AthenaClientService clientService, BucketBean bucketBean,
+                           BucketDao bucketDao, BSPUserList bspUserList) {
         this.workflowLoader = workflowLoader;
         this.athenaClientService = clientService;
+        this.bucketBean = bucketBean;
+        this.bucketDao = bucketDao;
+        this.bspUserList = bspUserList;
     }
 
     public HANDLER_RESPONSE processEvent(LabEvent labEvent) {
@@ -146,6 +153,41 @@ public class LabEventHandler implements Serializable {
         } catch (InvalidMolecularStateException e) {
             return HANDLER_RESPONSE.ERROR;
         }
+
+        Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels = itemizeBucketItems(labEvent);
+
+        for(WorkflowStepDef bucketDef:bucketVessels.keySet()) {
+            WorkflowStepDef workingBucketIdentifier = bucketDef;
+            Bucket workingBucket = bucketDao.findByName(workingBucketIdentifier.getName());
+            if(workingBucket == null) {
+
+                //TODO SGM, JMT:  this check should probably be part of the pre process Validation call from the decks
+                LOG.error("Bucket " +workingBucketIdentifier.getName() +
+                          " is expected to have vessels but no instance of the bucket can be found.");
+                workingBucket = new Bucket(workingBucketIdentifier);
+            }
+
+            bucketBean.start(bspUserList.getById(labEvent.getEventOperator()).getUsername(),
+                             labEvent.getTargetLabVessels(),
+                             workingBucket,
+                             labEvent.getEventLocation());
+        }
+
+        Map<WorkflowStepDef, Collection<LabVessel>> bucketVesselCandidates = itemizeBucketCandidates(labEvent);
+
+        for(WorkflowStepDef bucketDef:bucketVesselCandidates.keySet()) {
+            WorkflowStepDef workingBucketIdentifier = bucketDef;
+            Bucket workingBucket = bucketDao.findByName(workingBucketIdentifier.getName());
+            if(workingBucket == null) {
+                workingBucket = new Bucket(workingBucketIdentifier);
+            }
+
+
+            bucketBean.add(labEvent.getTargetLabVessels(), workingBucket,
+                    bspUserList.getById(labEvent.getEventOperator()).getUsername(), labEvent
+                    .getEventLocation(), labEvent.getLabEventType());
+        }
+
         return HANDLER_RESPONSE.OK;
 
     }
@@ -349,6 +391,14 @@ public class LabEventHandler implements Serializable {
                                  " sent on " + event.getEventDate());
     }
 
+    /**
+     * getWorkflowVersion will, based on the BusinessKey of a product order, find the defined Workflow Version.  It
+     * does this by querying to the "Athena" side of Mercury for the ProductOrder Definition and looks up the
+     * workflow definition based on the workflow name defined on the ProductOrder
+     *
+     * @param productOrderKey Business Key for a preiously defined product order
+     * @return Workflow Definition for the defined workflow for the product order represented by productOrderKey
+     */
     public ProductWorkflowDefVersion getWorkflowVersion(String productOrderKey) {
         WorkflowConfig workflowConfig = workflowLoader.load();
 
@@ -365,11 +415,17 @@ public class LabEventHandler implements Serializable {
         return versionResult;
     }
 
-
+    /**
+     * Takes all the target Vessels for the given labEvent and determines, based on the workflow step, which of them
+     * should be coming from a bucket
+     *
+     * @param labEvent
+     * @return A Map, indexed by a bucket workflow step,
+     */
     public Map<WorkflowStepDef, Collection<LabVessel>> itemizeBucketItems(LabEvent labEvent) {
         Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels = new HashMap<WorkflowStepDef, Collection<LabVessel>>();
 
-        for (LabVessel currVessel : labEvent.getAllLabVessels()) {
+        for (LabVessel currVessel : labEvent.getTargetLabVessels()) {
 
             Collection<String> productOrders = currVessel.getNearestProductOrders();
             WorkflowStepDef workingBucketName =null;
@@ -399,4 +455,46 @@ public class LabEventHandler implements Serializable {
         }
         return bucketVessels;
     }
+
+    /**
+     *
+     * @param labEvent
+     * @return
+     */
+    public Map<WorkflowStepDef, Collection<LabVessel>> itemizeBucketCandidates(LabEvent labEvent) {
+        Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels =
+                new HashMap<WorkflowStepDef, Collection<LabVessel>>();
+
+        for (LabVessel currVessel : labEvent.getTargetLabVessels()) {
+
+            Collection<String> productOrders = currVessel.getNearestProductOrders();
+            WorkflowStepDef workingBucketName =null;
+            if (productOrders != null && !productOrders.isEmpty()) {
+                ProductWorkflowDefVersion workflowDef = getWorkflowVersion(productOrders.iterator().next());
+
+                if (workflowDef != null &&
+                    workflowDef.isNextStepBucket(labEvent.getLabEventType().getName())) {
+                    workingBucketName = workflowDef.getNextStep(
+                            labEvent.getLabEventType().getName());
+                    if (workingBucketName == null) {
+                        workingBucketName = workflowDef.getNextStep(
+                                labEvent.getLabEventType().getName());
+                    }
+                }
+            }
+
+            if (workingBucketName != null) {
+                if (!bucketVessels.containsKey(workingBucketName)) {
+                    bucketVessels.put(workingBucketName, new LinkedList<LabVessel>());
+                    if (bucketVessels.keySet().size() > 1) {
+                        LOG.warn("Samples are coming from multiple Buckets");
+                    }
+                }
+                bucketVessels.get(workingBucketName).add(currVessel);
+            }
+        }
+        return bucketVessels;
+    }
+
+
 }

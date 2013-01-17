@@ -10,13 +10,16 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProduc
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -26,11 +29,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
+import org.easymock.EasyMock;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -53,15 +53,49 @@ public class ExomeExpressV2EndToEndTest {
     @Test
     public void test() {
 
-        LabEventHandler leHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance());
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
         LabEventFactory labEventFactory = new LabEventFactory(testUserList);
+
+        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
+        ProductOrder productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
+                "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
+                40, null, null, true, "Exome Express", false), new ResearchProject(101L, "Test RP", "Test synopsis",
+                false));
+        String jiraTicketKey = "PD0-1";
+        productOrder1.setJiraTicketKey(jiraTicketKey);
+        productOrder1.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+
+
+        LabBatchEjb labBatchEJB = new LabBatchEjb();
+        labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
+        labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+
+        LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
+        labBatchEJB.setTubeDAO(tubeDao);
+
+        JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
+        labBatchEJB.setJiraTicketDao(mockJira);
+
+        LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
+        labBatchEJB.setLabBatchDao(labBatchDAO);
+
+
+        BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
+        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq(LabEventType.SHEARING_BUCKET.getName())))
+                .andReturn(new LabEventTest.MockBucket(new WorkflowStepDef(LabEventType.SHEARING_BUCKET.getName()), jiraTicketKey));
+        BucketBean bucketBean = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
+        EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
+
         final String testActor = "hrafal";
 
-        BucketBean bucketBean = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance());
+        LabEventHandler leHandler =
+                new LabEventHandler(new WorkflowLoader(), AthenaClientProducer
+                        .stubInstance(), bucketBean, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer
+                        .stubInstance()));
+
 
         // Bucket for Shearing - enters from workflow?
         WorkflowLoader workflowLoader = new WorkflowLoader();
@@ -82,14 +116,6 @@ public class ExomeExpressV2EndToEndTest {
         // Create Product Order (key lab personnel and PDMs are notified)
         //        ProductOrder productOrder1 = AthenaClientServiceStub.createDummyProductOrder();
 
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
-        ProductOrder productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
-                "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, "Exome Express", false), new ResearchProject(101L, "Test RP", "Test synopsis",
-                false));
-        String jiraTicketKey = "PD0-1";
-        productOrder1.setJiraTicketKey(jiraTicketKey);
-        productOrder1.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
         List<String> shearingTubeBarcodes = new ArrayList<String>()/*Arrays.asList("SH1", "SH2", "SH3")*/;
         Map<String, String> barcodesByRackPositions = new HashMap<String, String>();
@@ -236,6 +262,9 @@ public class ExomeExpressV2EndToEndTest {
         // Billing
         // Submissions
         // Reporting
+
+        EasyMock.verify(mapBarcodeToTube);
+
     }
 
     /**

@@ -28,29 +28,22 @@ import java.util.*;
 //@RequestScoped
 public class BucketBean {
 
-    @Inject
     private LabEventFactory labEventFactory;
 
-    @Inject
     JiraService jiraService;
 
-    @Inject
-    LabBatchResource batchResource;
-
-    @Inject
     LabBatchEjb batchEjb;
-
-    @Inject
-    JiraTicketDao jiraTicketDao;
 
     private final static Log logger = LogFactory.getLog(BucketBean.class);
 
     public BucketBean() {
     }
 
-    public BucketBean(LabEventFactory labEventFactoryIn, JiraService testjiraService) {
+    @Inject
+    public BucketBean(LabEventFactory labEventFactoryIn, JiraService testjiraService, LabBatchEjb batchEjb) {
         this.labEventFactory = labEventFactoryIn;
-        jiraService = testjiraService;
+        this.jiraService = testjiraService;
+        this.batchEjb = batchEjb;
     }
 
     /**
@@ -59,28 +52,36 @@ public class BucketBean {
      * <p/>
      * TODO SGM Rethink the return.  Doesn't seem to add any value
      *
-     *
      * @param vessel
-     * @param productOrder
      * @param operator
      * @param eventType
+     * @param eventLocation
      * @return
      */
-    public BucketEntry add(@Nonnull LabVessel vessel, @Nonnull String productOrder, @Nonnull Bucket bucket,
-                           @Nonnull String operator, LabEventType eventType) {
+    public BucketEntry add(@Nonnull LabVessel vessel, @Nonnull Bucket bucket, @Nonnull String operator,
+                           LabEventType eventType, String eventLocation) {
 
-        BucketEntry newEntry = bucket.addEntry(productOrder, vessel);
+        Collection<String> productOrderBusinessKeys = vessel.getNearestProductOrders();
 
-        //TODO SGM: Event type is incorrect. Should be the next step
-        labEventFactory.createFromBatchItems(productOrder, vessel, 1L, operator, eventType,
-                LabEvent.UI_EVENT_LOCATION);
+        if (productOrderBusinessKeys.size() > 1) {
+            logger.error("Vessel " + vessel.getLabel() +
+                         " has more than one PDO's associated with it, Using the first found: " +
+                         StringUtils.join(productOrderBusinessKeys, ", "));
+        }
+
+        BucketEntry newEntry = bucket.addEntry(productOrderBusinessKeys.iterator().next(), vessel);
+
+        //TODO SGM:  Revamp, not working for end to end
+        labEventFactory.createFromBatchItems(productOrderBusinessKeys.iterator().next(), vessel, 1L, operator,
+                eventType, eventLocation);
         try {
-            jiraService.addComment(productOrder, vessel.getLabCentricName() +
-                                                 " added to bucket " + bucket.getBucketDefinitionName());
+            jiraService.addComment(productOrderBusinessKeys.iterator().next(), vessel.getLabCentricName() +
+                                                                               " added to bucket " + bucket
+                    .getBucketDefinitionName());
         } catch (IOException ioe) {
             logger.error("error attempting to add a jira comment for adding " +
-                         productOrder + ":" + vessel.getLabCentricName() + " to bucket " +
-                         bucket.getBucketDefinitionName(), ioe);
+                         productOrderBusinessKeys.iterator().next() + ":" + vessel.getLabCentricName() +
+                         " to bucket " + bucket.getBucketDefinitionName(), ioe);
         }
         return newEntry;
     }
@@ -88,27 +89,37 @@ public class BucketBean {
     /**
      * adds a pre-defined collection of {@link LabVessel}s to a given bucket
      *
-     * @param productOrder
      * @param entriesToAdd
      * @param bucket
      * @param operator
      * @param labEventLocation
      * @param eventType
      */
-    public void add(@Nonnull String productOrder, @Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
+    public void add(@Nonnull Collection<LabVessel> entriesToAdd, @Nonnull Bucket bucket,
                     @Nonnull String operator, @Nonnull String labEventLocation, LabEventType eventType) {
 
         List<BucketEntry> listOfNewEntries = new LinkedList<BucketEntry>();
-
-        for (LabVessel currVessel : entriesToAdd) {
-            listOfNewEntries.add(bucket.addEntry(productOrder, currVessel));
-        }
-
         Map<String, Collection<LabVessel>> pdoKeyToVesselMap = new HashMap<String, Collection<LabVessel>>();
 
-        pdoKeyToVesselMap.put(productOrder, entriesToAdd);
+        for (LabVessel currVessel : entriesToAdd) {
+            Collection<String> productOrderBusinessKeys = currVessel.getNearestProductOrders();
+
+            if (productOrderBusinessKeys.size() > 1) {
+                logger.error("Vessel " + currVessel.getLabel() +
+                             " has more than one PDO's associated with it, Using the first found: " +
+                             StringUtils.join(productOrderBusinessKeys, ", "));
+            }
+            listOfNewEntries.add(bucket.addEntry(productOrderBusinessKeys.iterator().next(), currVessel));
+
+            if (!pdoKeyToVesselMap.containsKey(productOrderBusinessKeys.iterator().next())) {
+                pdoKeyToVesselMap.put(productOrderBusinessKeys.iterator().next(), new LinkedList<LabVessel>());
+            }
+            pdoKeyToVesselMap.get(productOrderBusinessKeys.iterator().next()).add(currVessel);
+        }
 
         Set<LabEvent> eventList = new HashSet<LabEvent>();
+
+        //TODO SGM: Revamp.  Not working for End to End  Pass in Latest Batch?
         eventList.addAll(labEventFactory.buildFromBatchRequests(listOfNewEntries, operator, null, labEventLocation,
                 eventType));
 
@@ -176,7 +187,11 @@ public class BucketBean {
         Set<BucketEntry> bucketEntrySet = buildBatchListByVessels(vesselsToBatch, workingBucket);
 
         LabBatch bucketBatch = startBucketDrain(bucketEntrySet, operator, batchInitiationLocation, false);
-//        batchEjb.batchToJira(operator, batchTicket, bucketBatch);
+
+        if(bucketBatch.getJiraTicket() == null) {
+            batchEjb.batchToJira(operator, batchTicket, bucketBatch);
+        }
+
         batchEjb.jiraBatchNotification(bucketBatch);
 
 

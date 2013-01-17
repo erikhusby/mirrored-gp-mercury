@@ -382,24 +382,6 @@ public class BettalimsMessageResource {
         for (LabEvent labEvent : labEvents) {
             labEventHandler.processEvent(labEvent);
 
-            Map<WorkflowStepDef, Collection<LabVessel>> bucketVessels =
-                    labEventHandler.itemizeBucketItems(labEvent);
-
-            if(bucketVessels.keySet().size() ==1) {
-
-                WorkflowStepDef workingBucketIdentifier = bucketVessels.keySet().iterator().next();
-                Bucket workingBucket = bucketDao.findByName(workingBucketIdentifier.getName());
-                if(workingBucket == null) {
-                    workingBucket = new Bucket(workingBucketIdentifier);
-                }
-
-                bucketBean.start(bspUserList.getById(labEvent.getEventOperator()).getUsername(),
-                                 labEvent.getAllLabVessels(),
-                                 workingBucket,
-                                 labEvent.getEventLocation());
-            }
-
-            //TODO SGM: if the next step in the workflow is a bucket, call bucketBean.add()
         }
     }
 

@@ -115,19 +115,19 @@ public class BucketBeanTest extends ContainerTest {
         Assert.assertNotNull( bucket.getBucketEntries ());
         Assert.assertTrue( bucket.getBucketEntries ().isEmpty());
 
-        BucketEntry testEntry1 = resource.add (new TwoDBarcodedTube ( twoDBarcode1 ), poBusinessKey1, bucket,
-                                               howieTest, LabEventType.SHEARING_BUCKET);
+        BucketEntry testEntry1 = resource.add (new TwoDBarcodedTube ( twoDBarcode1 ), bucket,
+                                               howieTest, LabEventType.SHEARING_BUCKET, LabEvent.UI_EVENT_LOCATION);
 
         Assert.assertEquals(1, bucket.getBucketEntries ().size());
         Assert.assertTrue ( bucket.contains ( testEntry1 ) );
 
 
-        BucketEntry testEntry2 = resource.add (new TwoDBarcodedTube ( twoDBarcode2 ), poBusinessKey1, bucket,
-                                               howieTest, LabEventType.SHEARING_BUCKET);
-        BucketEntry testEntry3 = resource.add (new TwoDBarcodedTube ( twoDBarcode3 ), poBusinessKey2, bucket,
-                                               howieTest, LabEventType.SHEARING_BUCKET);
-        BucketEntry testEntry4 = resource.add (new TwoDBarcodedTube ( twoDBarcode4 ), poBusinessKey3, bucket,
-                                               howieTest, LabEventType.SHEARING_BUCKET);
+        BucketEntry testEntry2 = resource.add (new TwoDBarcodedTube ( twoDBarcode2 ), bucket,
+                                               howieTest, LabEventType.SHEARING_BUCKET, LabEvent.UI_EVENT_LOCATION);
+        BucketEntry testEntry3 = resource.add (new TwoDBarcodedTube ( twoDBarcode3 ), bucket,
+                                               howieTest, LabEventType.SHEARING_BUCKET, LabEvent.UI_EVENT_LOCATION);
+        BucketEntry testEntry4 = resource.add (new TwoDBarcodedTube ( twoDBarcode4 ), bucket,
+                                               howieTest, LabEventType.SHEARING_BUCKET, LabEvent.UI_EVENT_LOCATION);
 
         Assert.assertTrue( bucket.contains ( testEntry2 ));
         Assert.assertTrue( bucket.contains ( testEntry3 ));
@@ -189,8 +189,8 @@ public class BucketBeanTest extends ContainerTest {
         Assert.assertNotNull(bucket.getBucketEntries());
         Assert.assertTrue(bucket.getBucketEntries().isEmpty());
 
-        BucketEntry testEntry1 = resource.add (new TwoDBarcodedTube ( twoDBarcode1 ), poBusinessKey1, bucket,
-                                               howieTest, LabEventType.SHEARING_BUCKET);
+        BucketEntry testEntry1 = resource.add (new TwoDBarcodedTube ( twoDBarcode1 ), bucket,
+                                               howieTest, LabEventType.SHEARING_BUCKET, LabEvent.UI_EVENT_LOCATION);
 
         Assert.assertEquals(1,bucket.getBucketEntries().size());
         Assert.assertTrue ( bucket.contains ( testEntry1 ) );
@@ -208,7 +208,7 @@ public class BucketBeanTest extends ContainerTest {
                                               new TwoDBarcodedTube(twoDBarcode3), new TwoDBarcodedTube(twoDBarcode4)));
 
 
-        resource.add ( poBusinessKey1, bucketCreateBatch, bucket, howieTest, "Superman", LabEventType.SHEARING_BUCKET);
+        resource.add (bucketCreateBatch, bucket, howieTest, "Superman", LabEventType.SHEARING_BUCKET);
 
         bucketDao.flush ();
         bucketDao.clear ();
@@ -302,8 +302,8 @@ public class BucketBeanTest extends ContainerTest {
         Assert.assertNotNull(bucket.getBucketEntries());
         Assert.assertTrue(bucket.getBucketEntries().isEmpty());
 
-        BucketEntry testEntry1 = resource.add (new TwoDBarcodedTube ( twoDBarcode1 ), poBusinessKey1, bucket,
-                                               howieTest, LabEventType.SHEARING_BUCKET);
+        BucketEntry testEntry1 = resource.add (new TwoDBarcodedTube ( twoDBarcode1 ), bucket,
+                                               howieTest, LabEventType.SHEARING_BUCKET, LabEvent.UI_EVENT_LOCATION);
 
         Assert.assertEquals(1,bucket.getBucketEntries().size());
         Assert.assertTrue ( bucket.contains ( testEntry1 ) );
@@ -318,7 +318,7 @@ public class BucketBeanTest extends ContainerTest {
                                                  new TwoDBarcodedTube(twoDBarcode3),
                                                  new TwoDBarcodedTube(twoDBarcode4)) ) ;
 
-        resource.add ( poBusinessKey1, bucketCreateBatch, bucket, howieTest, "Superman", LabEventType.SHEARING_BUCKET);
+        resource.add (bucketCreateBatch, bucket, howieTest, "Superman", LabEventType.SHEARING_BUCKET);
 
         bucketDao.flush ();
         bucketDao.clear ();

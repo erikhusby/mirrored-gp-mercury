@@ -191,7 +191,14 @@ public class ProductWorkflowDefVersion implements Serializable {
      *         event types' predecessor
      */
     public WorkflowStepDef getPreviousStep(String eventTypeName) {
-        return findStepByEventType(eventTypeName).getPredecessors().get(0).getStepDef();
+
+        WorkflowStepDef foundStep = null;
+        if(!(findStepByEventType(eventTypeName) == null) &&
+           !findStepByEventType(eventTypeName).getPredecessors().isEmpty()) {
+            foundStep = findStepByEventType(eventTypeName).getPredecessors().get(0).getStepDef();
+        }
+
+        return foundStep;
     }
 
     /**
@@ -203,7 +210,16 @@ public class ProductWorkflowDefVersion implements Serializable {
      *         event types' immediate predecessor
      */
     public WorkflowStepDef getNextStep(String eventTypeName) {
-        return findStepByEventType(eventTypeName).getSuccessors().get(0).getStepDef();
+
+        WorkflowStepDef foundStep = null;
+
+        if(!(findStepByEventType(eventTypeName) == null) &&
+           !findStepByEventType(eventTypeName).getSuccessors().isEmpty()) {
+
+            foundStep = findStepByEventType(eventTypeName).getSuccessors().get(0).getStepDef();
+
+        }
+        return foundStep;
     }
 
     @Override
