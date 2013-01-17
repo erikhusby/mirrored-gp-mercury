@@ -11,7 +11,6 @@
                         $j("#projectManagers").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Project Manager name",
-                                    searchDelay: 500,
                                     prePopulate: ${actionBean.projectManagerList.completeData},
                                     preventDuplicates: true
                                 }
@@ -20,7 +19,6 @@
                         $j("#scientists").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Scientist name",
-                                    searchDelay: 500,
                                     prePopulate: ${actionBean.scientistList.completeData},
                                     preventDuplicates: true
                                 }
@@ -29,7 +27,6 @@
                         $j("#externalCollaborators").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Collaborator name",
-                                    searchDelay: 500,
                                     prePopulate: ${actionBean.externalCollaboratorList.completeData},
                                     preventDuplicates: true
                                 }
@@ -38,7 +35,6 @@
                         $j("#broadPIs").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Broad PI",
-                                    searchDelay: 500,
                                     prePopulate: ${actionBean.broadPiList.completeData},
                                     preventDuplicates: true
                                 }
@@ -46,7 +42,6 @@
 
                         $j("#fundingSources").tokenInput(
                                 "${ctxpath}/projects/project.action?fundingAutocomplete=", {
-                                    searchDelay: 500,
                                     prePopulate: ${actionBean.fundingSourceList.completeData},
                                     preventDuplicates: true
                                 }
@@ -55,7 +50,6 @@
                         $j("#cohorts").tokenInput(
                                 "${ctxpath}/projects/project.action?cohortAutocomplete=", {
                                     hintText: "Type a Sample Cohort name",
-                                    searchDelay: 500,
                                     prePopulate: ${actionBean.cohortsList.completeData},
                                     preventDuplicates: true
                                 }
@@ -64,7 +58,6 @@
                         $j("#irbs").tokenInput(
                                 "${ctxpath}/projects/project.action?irbAutocomplete=", {
                                     hintText: "Type an IRB Number",
-                                    searchDelay: 500,
                                     prePopulate: ${actionBean.irbsCompleteData},
                                     preventDuplicates: true
                                 }

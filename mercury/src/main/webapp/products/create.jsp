@@ -12,7 +12,6 @@
                 function () {
                     $j("#primaryPriceItem").tokenInput(
                         "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
-                            searchDelay: 500,
                             preventDuplicates: true,
                             <c:if test="${actionBean.primaryPriceItemCompleteData != null && actionBean.primaryPriceItemCompleteData != ''}">
                                 prePopulate: ${actionBean.primaryPriceItemCompleteData},
@@ -23,7 +22,6 @@
 
                     $j("#optionalPriceItems").tokenInput(
                             "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
-                                searchDelay: 500,
                                 preventDuplicates: true,
                                 <c:if test="${actionBean.optionalPriceItemsCompleteData != null && actionBean.optionalPriceItemsCompleteData != ''}">
                                 prePopulate: ${actionBean.optionalPriceItemsCompleteData},
@@ -34,7 +32,6 @@
 
                     $j("#addOns").tokenInput(
                             "${ctxpath}/products/product.action?addOnsAutocomplete=&product=${actionBean.editProduct.businessKey}", {
-                                searchDelay: 500,
                                 <c:if test="${actionBean.addOnCompleteData != null && actionBean.addOnCompleteData != ''}">
                                     prePopulate: ${actionBean.addOnCompleteData},
                                 </c:if>
@@ -45,8 +42,6 @@
 
                     $j("#materialTypes").tokenInput(
                             "${ctxpath}/products/product.action?materialTypesAutocomplete=&product=${actionBean.editProduct.businessKey}", {
-                                searchDelay: 500,
-                                minChars: 2,
                                 <c:if test="${actionBean.materialTypeCompleteData != null && actionBean.materialTypeCompleteData != ''}">
                                     prePopulate: ${actionBean.materialTypeCompleteData},
                                 </c:if>
