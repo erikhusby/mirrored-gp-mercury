@@ -39,11 +39,11 @@ public class CohortTokenInput extends TokenInput<Cohort> {
         return itemList.toString();
     }
 
-    public static String getCohortCompleteData(CohortListBean cohortListBean, String[] cohortIds) throws JSONException {
+    public String getCohortCompleteData() throws JSONException {
+
         JSONArray itemList = new JSONArray();
-        for (String cohortId : cohortIds) {
-            Cohort cohort = cohortListBean.getCohortById(cohortId);
-            itemList.put(new AutoCompleteToken(cohortId, cohort.getDisplayName(), false).getJSONObject());
+        for (Cohort cohort : getTokenObjects()) {
+            itemList.put(new AutoCompleteToken(cohort.getCohortId(), cohort.getDisplayName(), false).getJSONObject());
         }
 
         return itemList.toString();

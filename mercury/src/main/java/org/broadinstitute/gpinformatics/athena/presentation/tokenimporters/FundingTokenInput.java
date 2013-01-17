@@ -35,18 +35,17 @@ public class FundingTokenInput extends TokenInput<Funding> {
         JSONArray itemList = new JSONArray();
         for (Funding funding : fundingList) {
             String fullName = funding.getDisplayName();
-            itemList.put(new AutoCompleteToken(String.valueOf(funding.getDisplayName()), fullName, false).getJSONObject());
+            itemList.put(new AutoCompleteToken(funding.getDisplayName(), fullName, false).getJSONObject());
         }
 
         return itemList.toString();
     }
 
-    public static String getFundingCompleteData(FundingListBean fundingList, String[] fundingIds) throws JSONException {
+    public String getFundingCompleteData() throws JSONException {
 
         JSONArray itemList = new JSONArray();
-        for (String fundingId : fundingIds) {
-            Funding funding = fundingList.getById(fundingId);
-            itemList.put(new AutoCompleteToken(fundingId, funding.getDisplayName(), false).getJSONObject());
+        for (Funding funding : getTokenObjects()) {
+            itemList.put(new AutoCompleteToken(funding.getDisplayName(), funding.getDisplayName(), false).getJSONObject());
         }
 
         return itemList.toString();

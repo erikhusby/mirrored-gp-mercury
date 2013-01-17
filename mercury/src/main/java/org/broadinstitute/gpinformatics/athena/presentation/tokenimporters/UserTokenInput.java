@@ -43,11 +43,10 @@ public class UserTokenInput extends TokenInput<BspUser> {
         return itemList.toString();
     }
 
-    public static String getUserCompleteData(BSPUserList bspUserList, Long[] userIds) throws JSONException {
+    public String getUserCompleteData() throws JSONException {
 
         JSONArray itemList = new JSONArray();
-        for (Long userId : userIds) {
-            BspUser bspUser = bspUserList.getById(userId);
+        for (BspUser bspUser : getTokenObjects()) {
             createAutocomplete(itemList, bspUser);
         }
 

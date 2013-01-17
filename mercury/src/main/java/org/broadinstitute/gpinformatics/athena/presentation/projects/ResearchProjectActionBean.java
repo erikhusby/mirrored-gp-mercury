@@ -93,7 +93,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     // These are the fields for catching the input tokens
     @ValidateNestedProperties({
-            @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
+        @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
     })
     @Inject
     private UserTokenInput projectManagerList;
@@ -198,6 +198,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution create() {
         validateUser("create");
         setSubmitString(CREATE_PROJECT);
+        populateTokenListsFromObjectData();
         return new ForwardResolution(PROJECT_CREATE_PAGE);
     }
 
@@ -205,7 +206,21 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution edit() {
         validateUser("edit");
         setSubmitString(EDIT_PROJECT);
+        populateTokenListsFromObjectData();
         return new ForwardResolution(PROJECT_CREATE_PAGE);
+    }
+
+    /**
+     * For the prepopulate to work on opening create and edit page, we need to take values from the editOrder. After,
+     * the pages have the values passed in.
+     */
+    private void populateTokenListsFromObjectData() {
+        projectManagerList.setup(editResearchProject.getProjectManagers());
+        scientistList.setup(editResearchProject.getScientists());
+        externalCollaboratorList.setup(editResearchProject.getExternalCollaborators());
+        broadPiList.setup(editResearchProject.getBroadPIs());
+        fundingSourceList.setup(editResearchProject.getFundingIds());
+        cohortsList.setup(editResearchProject.getCohortIds());
     }
 
     public Resolution save() throws Exception {
@@ -344,32 +359,67 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     // Complete Data getters are for the prepoulates on the create.jsp
+    String broadPiCompleteData = null;
     public String getBroadPICompleteData() throws Exception {
-        return UserTokenInput.getUserCompleteData(bspUserList, editResearchProject.getBroadPIs());
+        if (broadPiCompleteData == null) {
+            broadPiCompleteData = getBroadPiList().getUserCompleteData();
+        }
+
+        return broadPiCompleteData;
     }
 
+    String externalCollaboratorCompleteData = null;
     public String getExternalCollaboratorCompleteData() throws Exception {
-        return UserTokenInput.getUserCompleteData(bspUserList, editResearchProject.getExternalCollaborators());
+        if (externalCollaboratorCompleteData == null) {
+            externalCollaboratorCompleteData = getExternalCollaboratorList().getUserCompleteData();
+        }
+
+        return externalCollaboratorCompleteData;
     }
 
+    String scientistCompleteData = null;
     public String getScientistCompleteData() throws Exception {
-        return UserTokenInput.getUserCompleteData(bspUserList, editResearchProject.getScientists());
+        if (scientistCompleteData == null) {
+            scientistCompleteData = getScientistList().getUserCompleteData();
+        }
+
+        return scientistCompleteData;
     }
 
+    String projectManagerCompleteData = null;
     public String getProjectManagerCompleteData() throws Exception {
-        return UserTokenInput.getUserCompleteData(bspUserList, editResearchProject.getProjectManagers());
+        if (projectManagerCompleteData == null) {
+            projectManagerCompleteData = getProjectManagerList().getUserCompleteData();
+        }
+
+        return projectManagerCompleteData;
     }
 
+    String fundingCompleteData;
     public String getFundingSourcesCompleteData() throws Exception {
-        return FundingTokenInput.getFundingCompleteData(fundingList, editResearchProject.getFundingIds());
+        if (fundingCompleteData == null) {
+            fundingCompleteData = fundingSourceList.getFundingCompleteData();
+        }
+
+        return fundingCompleteData;
     }
 
+    String cohortCompleteData = null;
     public String getCohortsCompleteData() throws Exception {
-        return CohortTokenInput.getCohortCompleteData(cohortListBean, editResearchProject.getCohortIds());
+        if (cohortCompleteData == null) {
+            cohortCompleteData = cohortsList.getCohortCompleteData();
+        }
+
+        return cohortCompleteData;
     }
 
+    String irbCompleteData = null;
     public String getIrbsCompleteData() throws Exception {
-        return IrbConverter.getIrbCompleteData(editResearchProject.getIrbNumbers());
+        if (irbCompleteData == null) {
+            irbCompleteData =  IrbConverter.getIrbCompleteData(editResearchProject.getIrbNumbers());
+        }
+
+        return irbCompleteData;
     }
 
     public String getIrbList() {
