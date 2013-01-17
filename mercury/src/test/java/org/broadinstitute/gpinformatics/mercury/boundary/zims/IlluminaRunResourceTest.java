@@ -162,7 +162,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         assertEquals(runBean.getFlowcellBarcode(),thriftRun.getFlowcellBarcode());
         assertEquals(runBean.getSequencer(),thriftRun.getSequencer());
         assertEquals(runBean.getSequencerModel(),thriftRun.getSequencerModel());
-        assertEquals(runBean.getPairedRun(),thriftRun.isPairedRun());
+        assertEquals(runBean.getPairedRun().booleanValue(),thriftRun.isPairedRun());
 
         doReadAssertions(thriftRun,runBean);
 

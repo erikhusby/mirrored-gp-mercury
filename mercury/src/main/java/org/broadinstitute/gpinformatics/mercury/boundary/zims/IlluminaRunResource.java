@@ -70,8 +70,9 @@ public class IlluminaRunResource implements Serializable {
             runBean = getRun(thriftService,runName);
         }
         catch(Throwable t) {
-            LOG.error("Failed while running pipeline query for run " + runName,t);
-            runBean.setError(t.getMessage());
+            String message = "Failed while running pipeline query for run " + runName;
+            LOG.error(message,t);
+            runBean.setError(message + ": " + t.getMessage());
         }
 
         return runBean;

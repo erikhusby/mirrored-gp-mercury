@@ -87,7 +87,7 @@ public class ZimsIlluminaRun {
         return reads;
     }
 
-    public boolean getPairedRun() {
+    public Boolean getPairedRun() {
         return isPaired;
     }
 
