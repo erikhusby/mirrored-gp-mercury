@@ -1,8 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 
-import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
-import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -18,35 +17,33 @@ import java.util.List;
 public class CohortTokenInput extends TokenInput<Cohort> {
 
     @Inject
-    private CohortListBean cohortListBean;
+    private BSPCohortList cohortList;
 
     public CohortTokenInput() {
-        super();
     }
 
     @Override
     protected Cohort getById(String cohort) {
-        return cohortListBean.getCohortById(cohort);
+        return cohortList.getById(cohort);
     }
 
-    public static String getJsonString(CohortListBean cohortListBean, String query) throws JSONException {
-        List<Cohort> cohorts = cohortListBean.searchActiveCohort(query);
+    public String getJsonString(String query) throws JSONException {
+        List<Cohort> cohorts = cohortList.findActive(query);
 
         JSONArray itemList = new JSONArray();
         for (Cohort cohort : cohorts) {
-            itemList.put(new AutoCompleteToken(cohort.getCohortId(), cohort.getDisplayName(), false).getJSONObject());
+            itemList.put(getJSONObject(cohort.getCohortId(), cohort.getDisplayName(), false));
         }
         return itemList.toString();
     }
 
-    public String getCohortCompleteData() throws JSONException {
-
+    @Override
+    public String generateCompleteData() throws JSONException {
         JSONArray itemList = new JSONArray();
         for (Cohort cohort : getTokenObjects()) {
-            itemList.put(new AutoCompleteToken(cohort.getCohortId(), cohort.getDisplayName(), false).getJSONObject());
+            itemList.put(getJSONObject(cohort.getCohortId(), cohort.getDisplayName(), false));
         }
 
         return itemList.toString();
-
     }
 }

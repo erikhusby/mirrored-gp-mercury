@@ -12,9 +12,7 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Project Manager name",
                                     searchDelay: 500,
-                                    <c:if test="${actionBean.projectManagerCompleteData != null && actionBean.projectManagerCompleteData != ''}">
-                                        prePopulate: ${actionBean.projectManagerCompleteData},
-                                    </c:if>
+                                    prePopulate: ${actionBean.projectManagerList.completeData},
                                     preventDuplicates: true
                                 }
                         );
@@ -23,9 +21,7 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Scientist name",
                                     searchDelay: 500,
-                                    <c:if test="${actionBean.scientistCompleteData != null && actionBean.scientistCompleteData != ''}">
-                                        prePopulate: ${actionBean.scientistCompleteData},
-                                    </c:if>
+                                    prePopulate: ${actionBean.scientistList.completeData},
                                     preventDuplicates: true
                                 }
                         );
@@ -34,9 +30,7 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Collaborator name",
                                     searchDelay: 500,
-                                    <c:if test="${actionBean.externalCollaboratorCompleteData != null && actionBean.externalCollaboratorCompleteData != ''}">
-                                        prePopulate: ${actionBean.externalCollaboratorCompleteData},
-                                    </c:if>
+                                    prePopulate: ${actionBean.externalCollaboratorList.completeData},
                                     preventDuplicates: true
                                 }
                         );
@@ -45,9 +39,7 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Broad PI",
                                     searchDelay: 500,
-                                    <c:if test="${actionBean.broadPICompleteData != null && actionBean.broadPICompleteData != ''}">
-                                        prePopulate: ${actionBean.broadPICompleteData},
-                                    </c:if>
+                                    prePopulate: ${actionBean.broadPiList.completeData},
                                     preventDuplicates: true
                                 }
                         );
@@ -55,9 +47,7 @@
                         $j("#fundingSources").tokenInput(
                                 "${ctxpath}/projects/project.action?fundingAutocomplete=", {
                                     searchDelay: 500,
-                                    <c:if test="${actionBean.fundingSourcesCompleteData != null && actionBean.fundingSourcesCompleteData != ''}">
-                                        prePopulate: ${actionBean.fundingSourcesCompleteData},
-                                    </c:if>
+                                    prePopulate: ${actionBean.fundingSourceList.completeData},
                                     preventDuplicates: true
                                 }
                         );
@@ -66,9 +56,7 @@
                                 "${ctxpath}/projects/project.action?cohortAutocomplete=", {
                                     hintText: "Type a Sample Cohort name",
                                     searchDelay: 500,
-                                    <c:if test="${actionBean.cohortsCompleteData != null && actionBean.cohortsCompleteData != ''}">
-                                        prePopulate: ${actionBean.cohortsCompleteData},
-                                    </c:if>
+                                    prePopulate: ${actionBean.cohortsList.completeData},
                                     preventDuplicates: true
                                 }
                         );
@@ -77,9 +65,7 @@
                                 "${ctxpath}/projects/project.action?irbAutocomplete=", {
                                     hintText: "Type an IRB Number",
                                     searchDelay: 500,
-                                    <c:if test="${actionBean.irbsCompleteData != null && actionBean.irbsCompleteData != ''}">
-                                        prePopulate: ${actionBean.irbsCompleteData},
-                                    </c:if>
+                                    prePopulate: ${actionBean.irbsCompleteData},
                                     preventDuplicates: true
                                 }
                         );

@@ -11,7 +11,6 @@
 
 package org.broadinstitute.gpinformatics.mercury.presentation.tokenimporters;
 
-import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
@@ -19,7 +18,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign_;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import javax.inject.Inject;
 import java.util.List;
 
 /**
@@ -27,18 +25,8 @@ import java.util.List;
  *
  * @author hrafal
  */
-public class ReagentDesignTokenInput extends TokenInput<ReagentDesign> {
-    @Inject
-    private ReagentDesignDao reagentDesignDao;
-
-    public ReagentDesignTokenInput() {
-        super();
-    }
-
-    @Override
-    protected ReagentDesign getById(String reagentId) {
-        return reagentDesignDao.findByBusinessKey(reagentId);
-    }
+// FIXME: update this code and its caller to use TokenInput<> instead.
+public class ReagentDesignTokenInput {
 
     @SuppressWarnings("unchecked")
     public static String getJsonString(ReagentDesignDao reagentDesignDao, String query) throws JSONException {
@@ -47,9 +35,8 @@ public class ReagentDesignTokenInput extends TokenInput<ReagentDesign> {
 
         JSONArray itemList = new JSONArray();
         for (ReagentDesign reagentDesign : reagentDesignList) {
-            itemList.put(new AutoCompleteToken(String.valueOf(reagentDesign.getBusinessKey()),
-                    reagentDesign.getBusinessKey() + " (" + reagentDesign.getTargetSetName() + ")", false)
-                    .getJSONObject());
+            itemList.put(TokenInput.getJSONObject(reagentDesign.getBusinessKey(),
+                    reagentDesign.getBusinessKey() + " (" + reagentDesign.getTargetSetName() + ")", false));
         }
 
         return itemList.toString();
@@ -62,7 +49,7 @@ public class ReagentDesignTokenInput extends TokenInput<ReagentDesign> {
 
         ReagentDesign reagentDesign = reagentDesignDao.findByBusinessKey(reagentDesignId);
         if (reagentDesign != null) {
-            itemList.put(new AutoCompleteToken(reagentDesignId, reagentDesign.getBusinessKey(), false).getJSONObject());
+            itemList.put(TokenInput.getJSONObject(reagentDesignId, reagentDesign.getBusinessKey(), false));
         }
 
         return itemList.toString();
