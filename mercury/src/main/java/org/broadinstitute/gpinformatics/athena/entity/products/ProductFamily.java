@@ -54,7 +54,7 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
     }
 
     public boolean isSupportsNumberOfLanes() {
-        return name.equals(SEQUENCE_ONLY_NAME);
+        return SEQUENCE_ONLY_NAME.equals(name);
     }
 
     public Long getProductFamilyId() {
