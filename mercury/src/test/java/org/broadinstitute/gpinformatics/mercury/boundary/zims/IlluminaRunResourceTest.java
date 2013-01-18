@@ -93,12 +93,33 @@ public class IlluminaRunResourceTest extends Arquillian {
     }
 
     /**
-     * Does the same test as {@link #test_zims_in_container()},
-     * but does it over http, which means it's actually checking
-     * that various annotations like {@link javax.xml.bind.annotation.XmlAttribute}
-     * are applied properly in {@link LibraryBean}.
-     * @param baseUrl
+     * Ensures that error handling makes it all the way through
+     * out to HTTP
      */
+    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void test_error_handling(@ArquillianResource URL baseUrl) throws Exception {
+        String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
+
+        DefaultClientConfig clientConfig = new DefaultClientConfig();
+        clientConfig.getFeatures().put(JSONConfiguration.FEATURE_POJO_MAPPING, Boolean.TRUE);
+
+
+        ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
+                .queryParam("runName", null)
+                .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
+        assertNotNull(run);
+        assertNotNull(run.getError());
+    }
+
+
+    /**
+    * Does the same test as {@link #test_zims_in_container()},
+    * but does it over http, which means it's actually checking
+    * that various annotations like {@link javax.xml.bind.annotation.XmlAttribute}
+    * are applied properly in {@link LibraryBean}.
+    * @param baseUrl
+    */
     @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void test_zims_over_http(@ArquillianResource URL baseUrl) throws Exception {
