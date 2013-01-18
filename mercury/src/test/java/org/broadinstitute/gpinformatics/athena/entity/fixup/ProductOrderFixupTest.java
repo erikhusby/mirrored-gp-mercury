@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
@@ -19,7 +20,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.util.*;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -39,9 +40,10 @@ public class ProductOrderFixupTest extends Arquillian {
     @Inject
     private BSPUserList bspUserList;
 
+    // When you run this on prod, change to PROD and prod
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(PROD, "prod");
+        return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
     /**
@@ -176,4 +178,78 @@ public class ProductOrderFixupTest extends Arquillian {
 
     }
 
+    @Test(enabled = false)
+    public void removeSamplesFromPDO300() {
+        List<String> samplesToRemove = Arrays.asList(
+                "SM-3SFP5",
+                "SM-3SFPA",
+                "SM-3SDFV",
+                "SM-3SDIE",
+                "SM-3SDI2",
+                "SM-3SJCZ",
+                "SM-3SJCV",
+                "SM-3SDIT",
+                "SM-3SDIA",
+                "SM-3SJCR",
+                "SM-3SFP2",
+                "SM-3SDTO",
+                "SM-3SDT5",
+                "SM-3SJD1",
+                "SM-3SDIO",
+                "SM-3SFPD",
+                "SM-3SJCQ",
+                "SM-3SJCO",
+                "SM-3SJCT",
+                "SM-3SDTB",
+                "SM-3SJD3",
+                "SM-3SFP1",
+                "SM-3SFP3",
+                "SM-3SFOX");
+
+        String pdo="PDO-300";
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
+
+        List<ProductOrderSample> sampleList = productOrder.getSamples();
+
+        Iterator<ProductOrderSample> sampleIterator = sampleList.iterator();
+        while (sampleIterator.hasNext()) {
+            ProductOrderSample sample = sampleIterator.next();
+
+            if (samplesToRemove.contains(sample.getSampleName())) {
+                sampleIterator.remove();
+            }
+        }
+
+        productOrderDao.persist(productOrder);
+    }
+
+    @Test(enabled = false)
+    public void removeSamplesFromDevTest() {
+        List<String> samplesToRemove = Arrays.asList(
+                "SM-3DV29",
+                "SM-3DV2A",
+                "SM-3DV2B",
+                "SM-3DV2C",
+                "SM-3DV2D",
+                "SM-3DV2E",
+                "SM-3DV2F");
+
+        String pdo="PDO-49";
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
+
+        List<ProductOrderSample> sampleList = productOrder.getSamples();
+
+        Iterator<ProductOrderSample> sampleIterator = sampleList.iterator();
+        while (sampleIterator.hasNext()) {
+            ProductOrderSample sample = sampleIterator.next();
+
+            if (samplesToRemove.contains(sample.getSampleName())) {
+                sampleIterator.remove();
+            }
+        }
+
+        productOrderDao.persist(productOrder);
+    }
 }

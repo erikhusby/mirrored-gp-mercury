@@ -44,6 +44,7 @@ CREATE TABLE product (
   guaranteed_cycle_time_sec NUMERIC(19),
   samples_per_week NUMERIC(19),
   is_top_level_product CHAR(1) CHECK (is_top_level_product IN ('T','F')),
+  workflow_name VARCHAR2(255),
   product_family_name VARCHAR2(255),
   etl_date DATE NOT NULL
 );
@@ -217,6 +218,7 @@ CREATE TABLE im_product (
   guaranteed_cycle_time_sec NUMERIC(19),
   samples_per_week NUMERIC(19),
   is_top_level_product CHAR(1),
+  workflow_name VARCHAR2(255),
   product_family_name VARCHAR2(255)
 );
 
@@ -325,8 +327,7 @@ CREATE TABLE im_product_order_sample_stat (
   is_delete CHAR(1) NOT NULL,
   product_order_sample_id NUMERIC(19) NOT NULL,
   status_date DATE,
-  delivery_status VARCHAR2(40),
-  sample_position NUMERIC(19)
+  delivery_status VARCHAR2(40)
 );
 
 
@@ -337,7 +338,8 @@ CREATE TABLE im_product_order_sample (
   product_order_sample_id NUMERIC(19) NOT NULL,
   product_order_id NUMERIC(19),
   sample_name VARCHAR2(255),
-  delivery_status VARCHAR2(40)
+  delivery_status VARCHAR2(40),
+  sample_position NUMERIC(19)
 );
 
 CREATE TABLE im_product_order_add_on (

@@ -94,8 +94,7 @@
                                 </c:when>
                                 <c:otherwise>
                                     <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                        <stripes:param name="reagentDesign"
-                                                       value="${actionBean.editReagentDesign.businessKey}"/>
+                                        <stripes:param name="reagentDesign" value="${actionBean.reagentDesign}"/>
                                         Cancel
                                     </stripes:link>
                                 </c:otherwise>
