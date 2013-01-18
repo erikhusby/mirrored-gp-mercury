@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -41,7 +40,7 @@ public class ProductOrderFixupTest extends Arquillian {
     @Inject
     private BSPUserList bspUserList;
 
-    // When you run this on prod
+    // When you run this on prod, change to PROD and prod
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
