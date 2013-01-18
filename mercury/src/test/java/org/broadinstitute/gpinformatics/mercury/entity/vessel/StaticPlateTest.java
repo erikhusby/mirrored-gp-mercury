@@ -7,6 +7,7 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.*;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes.RackType.Matrix96;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection.ALL96;
@@ -22,14 +23,15 @@ import static org.hamcrest.collection.IsCollectionContaining.hasItem;
  */
 public class StaticPlateTest {
 
+    private TwoDBarcodedTube tube;
+    private TubeFormation tubeRack;
     private StaticPlate plate1;
     private StaticPlate plate2;
     private StaticPlate plate3;
-    private TubeFormation tubeRack;
 
-    @BeforeMethod
+    @BeforeMethod(groups = DATABASE_FREE)
     public void setup() {
-        TwoDBarcodedTube tube = new TwoDBarcodedTube("tube");
+        tube = new TwoDBarcodedTube("tube");
         Map<VesselPosition, TwoDBarcodedTube> positionMap = new HashMap<VesselPosition, TwoDBarcodedTube>();
         positionMap.put(A01, tube);
         tubeRack = new TubeFormation(positionMap, Matrix96);
@@ -53,18 +55,18 @@ public class StaticPlateTest {
         return event;
     }
 
-    @Test
+    @Test(groups = DATABASE_FREE)
     public void testGetImmediatePlateParentsNoParents() throws Exception {
         assertThat(plate1.getImmediatePlateParents().size(), is(0));
     }
 
-    @Test
+    @Test(groups = DATABASE_FREE)
     public void testGetImmediatePlateParentsSingle() {
         addTransfer(plate1, plate2);
         assertThat(plate2.getImmediatePlateParents(), equalTo(Arrays.asList(plate1)));
     }
 
-    @Test
+    @Test(groups = DATABASE_FREE)
     public void testGetImmediatePlateParentsMultiple() {
         addTransfer(plate1, plate3);
         addTransfer(plate2, plate3);
@@ -75,15 +77,30 @@ public class StaticPlateTest {
         assertThat(parents, hasItem(plate2));
     }
 
-    @Test
+    @Test(groups = DATABASE_FREE)
     public void testGetImmediatePlateParentsMixed() {
         addTransfer(tubeRack, plate3);
         addTransfer(plate1, plate3);
         addTransfer(plate2, plate3);
 
         List<StaticPlate> parents = plate3.getImmediatePlateParents();
-        assertThat(parents.size(), equalTo(2));
+        assertThat(parents.size(), is(2));
         assertThat(parents, hasItem(plate1));
         assertThat(parents, hasItem(plate2));
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testGetNearestTubeAncestorsNone() {
+        assertThat(plate1.getNearestTubeAncestors().size(), is(0));
+    }
+
+    @Test(groups = DATABASE_FREE, enabled = false)
+    public void testGetNearestTubeAncestorsSingle() {
+        addTransfer(tubeRack, plate1);
+        List<VesselAndPosition> ancestors = plate1.getNearestTubeAncestors();
+        assertThat(ancestors.size(), is(1));
+        VesselAndPosition vesselAndPosition = ancestors.get(0);
+        assertThat(vesselAndPosition.getPosition(), is(A01));
+        assertThat((TwoDBarcodedTube) vesselAndPosition.getVessel(), is(tube));
     }
 }

@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -14,11 +15,9 @@ import java.util.List;
  */
 public class LimsQueries {
 
-    @Inject
     private StaticPlateDAO staticPlateDAO;
 
-    public LimsQueries() {}
-
+    @Inject
     public LimsQueries(StaticPlateDAO staticPlateDAO) {
         this.staticPlateDAO = staticPlateDAO;
     }
@@ -37,5 +36,10 @@ public class LimsQueries {
             parentPlateBarcodes.add(parent.getLabel());
         }
         return parentPlateBarcodes;
+    }
+
+    public List<WellAndSourceTubeType> fetchSourceTubesForPlate(String plateBarcode) {
+        List<WellAndSourceTubeType> tubes = new ArrayList<WellAndSourceTubeType>();
+        return tubes;
     }
 }

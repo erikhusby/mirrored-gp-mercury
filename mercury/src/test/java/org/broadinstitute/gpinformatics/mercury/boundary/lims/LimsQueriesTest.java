@@ -38,7 +38,7 @@ public class LimsQueriesTest {
 
     private StaticPlate plate3;
 
-    @BeforeMethod
+    @BeforeMethod(groups = DATABASE_FREE)
     public void setup() {
         Map<VesselPosition, TwoDBarcodedTube> positionMap = new HashMap<VesselPosition, TwoDBarcodedTube>();
         positionMap.put(A01, new TwoDBarcodedTube("tube"));

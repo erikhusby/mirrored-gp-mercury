@@ -101,6 +101,18 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         return parents;
     }
 
+    /**
+     * Returns a list of the most immediate tube ancestors for each well. The "distance" from this plate across upstream
+     * plate transfers is not relevant; all upstream branches are traversed until either a tube is found or the branch
+     * ends.
+     *
+     * @return all nearest tube ancestors
+     */
+    public List<VesselAndPosition> getNearestTubeAncestors() {
+        List<VesselAndPosition> tubes = new ArrayList<VesselAndPosition>();
+        return tubes;
+    }
+
     @Override
     public VesselGeometry getVesselGeometry() {
         return plateType.getVesselGeometry();
