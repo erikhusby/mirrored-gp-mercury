@@ -148,6 +148,20 @@ public class ProductOrderEjb {
         private final String newValue;
         private final CustomField.SubmissionField field;
 
+        private boolean plural;
+
+        private boolean showValueChangeInComment;
+
+        public enum ShowValueChangeInComment {
+            YES,
+            NO
+        }
+
+        public enum Plural {
+            YES,
+            NO
+        }
+
         /**
          * Return the update message appropriate for this field.  If there are no changes this will return the empty
          * string, otherwise a string of the form "Product was updated from 'Old Product' to 'New Product'"
@@ -176,15 +190,21 @@ public class ProductOrderEjb {
             }
 
             if (!previousValue.equals(newValue)) {
-                return displayName + " was updated from '" + previousValue + "' to '" + newValue + "'\n";
+                return displayName + (plural ? " have " : " has ") + "been updated" + (showValueChangeInComment ? " from '" + previousValue + "' to '" + newValue + "'" : "") + ".\n";
             }
             return "";
         }
 
-        public PDOUpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull String newValue) {
+        public PDOUpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull String newValue, Plural plural, ShowValueChangeInComment showValueChangeInComment) {
             this.field = field;
-            displayName = field.getFieldName();
+            this.displayName = field.getFieldName();
             this.newValue = newValue;
+            this.plural = plural == Plural.YES;
+            this.showValueChangeInComment = showValueChangeInComment == ShowValueChangeInComment.YES;
+        }
+
+        public PDOUpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull String newValue) {
+            this(field, newValue, Plural.NO, ShowValueChangeInComment.YES);
         }
     }
 
@@ -206,7 +226,8 @@ public class ProductOrderEjb {
         PDOUpdateField [] pdoUpdateFields = new PDOUpdateField[] {
             new PDOUpdateField(ProductOrder.RequiredSubmissionFields.PRODUCT, productOrder.getProduct().getProductName()),
             new PDOUpdateField(ProductOrder.RequiredSubmissionFields.PRODUCT_FAMILY, productOrder.getProduct().getProductFamily().getName()),
-            new PDOUpdateField(ProductOrder.RequiredSubmissionFields.QUOTE_ID, productOrder.getQuoteId())
+            new PDOUpdateField(ProductOrder.RequiredSubmissionFields.QUOTE_ID, productOrder.getQuoteId()),
+            new PDOUpdateField(ProductOrder.RequiredSubmissionFields.SAMPLE_IDS, productOrder.getSampleString(), PDOUpdateField.Plural.YES, PDOUpdateField.ShowValueChangeInComment.NO)
         };
 
         String[] customFieldNames = new String[pdoUpdateFields.length];

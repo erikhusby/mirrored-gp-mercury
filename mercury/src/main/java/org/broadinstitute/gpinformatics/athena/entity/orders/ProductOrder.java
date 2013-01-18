@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.apache.commons.collections15.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -560,6 +561,10 @@ public class ProductOrder implements Serializable {
         return names;
     }
 
+    public String getSampleString() {
+        return StringUtils.join(getSampleNames(), '\n');
+    }
+
     /**
      * getTotalSampleCount exposes how many samples are registered to this product order
      *
@@ -730,8 +735,7 @@ public class ProductOrder implements Serializable {
         if (quoteId != null && !quoteId.isEmpty()) {
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.QUOTE_ID, quoteId));
         }
-        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.SAMPLE_IDS,
-                StringUtils.join(getSampleNames(), '\n')));
+        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.SAMPLE_IDS, getSampleString()));
 
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
 
