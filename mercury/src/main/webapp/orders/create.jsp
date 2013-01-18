@@ -234,7 +234,7 @@
                             </c:when>
                             <c:otherwise>
                                 <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                    <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                                    <stripes:param name="productOrder" value="${actionBean.productOrder}"/>
                                     Cancel
                                 </stripes:link>
                             </c:otherwise>
