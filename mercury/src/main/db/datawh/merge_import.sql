@@ -160,7 +160,7 @@ FOR new IN im_product_cur LOOP
       guaranteed_cycle_time_sec = new.guaranteed_cycle_time_sec,
       samples_per_week = new.samples_per_week,
       is_top_level_product = new.is_top_level_product,
-      workflow_name = new.workflow_name,
+      product_family_name = new.product_family_name,
       etl_date = new.etl_date
     WHERE product_id = new.product_id;
 
@@ -174,7 +174,7 @@ FOR new IN im_product_cur LOOP
       guaranteed_cycle_time_sec,
       samples_per_week,
       is_top_level_product,
-      workflow_name,
+      product_family_name,
       etl_date
     ) 
     SELECT
@@ -187,7 +187,7 @@ FOR new IN im_product_cur LOOP
       new.guaranteed_cycle_time_sec,
       new.samples_per_week,
       new.is_top_level_product,
-      new.workflow_name,
+      new.product_family_name,
       new.etl_date
     FROM DUAL WHERE NOT EXISTS (
       SELECT 1 FROM product

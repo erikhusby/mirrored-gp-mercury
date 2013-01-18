@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <version>1.15-SNAPSHOT</version>
+    <version>1.16-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -842,6 +842,7 @@
                 <testResources>
                     <testResource>
                         <directory>src/test/resources</directory>
+                        <filtering>true</filtering>
                     </testResource>
                     <testResource>
                         <directory>src/test/resources-rc</directory>
