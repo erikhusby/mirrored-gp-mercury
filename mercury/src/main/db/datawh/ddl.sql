@@ -44,6 +44,7 @@ CREATE TABLE product (
   guaranteed_cycle_time_sec NUMERIC(19),
   samples_per_week NUMERIC(19),
   is_top_level_product CHAR(1) CHECK (is_top_level_product IN ('T','F')),
+  workflow_name VARCHAR2(255),
   product_family_name VARCHAR2(255),
   etl_date DATE NOT NULL
 );
@@ -217,6 +218,7 @@ CREATE TABLE im_product (
   guaranteed_cycle_time_sec NUMERIC(19),
   samples_per_week NUMERIC(19),
   is_top_level_product CHAR(1),
+  workflow_name VARCHAR2(255),
   product_family_name VARCHAR2(255)
 );
 

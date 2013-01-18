@@ -16,5 +16,6 @@ TRAILING NULLCOLS
  guaranteed_cycle_time_sec,
  samples_per_week,
  is_top_level_product,
+ workflow_name,
  product_family_name
 )
