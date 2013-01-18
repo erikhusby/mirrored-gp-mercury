@@ -2518,6 +2518,10 @@ public class LabEventTest {
 
         private final String testProductOrder;
 
+        public MockBucket(@Nonnull String bucketDefinitionIn, String testProductOrder) {
+            super(bucketDefinitionIn);
+            this.testProductOrder = testProductOrder;
+        }
 
         public MockBucket(@Nonnull WorkflowStepDef bucketDef, String testProductOrder) {
             super(bucketDef);
