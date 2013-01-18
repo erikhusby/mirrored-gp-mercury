@@ -123,7 +123,7 @@ public class AuthorizationFilter implements Filter {
         return path.startsWith("/rest") ||
                 path.startsWith("/ArquillianServletRunner") ||
                 path.startsWith(SecurityActionBean.LOGIN_ACTION) ||
-                path.startsWith("/" + SecurityActionBean.LOGIN_PAGE) ||
+                path.endsWith(SecurityActionBean.LOGIN_PAGE) ||
                 path.endsWith("Mercury/");
     }
 
