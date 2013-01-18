@@ -50,4 +50,9 @@ public class LimsQueriesTest {
         assertThat(parents, hasItem("plate1"));
         assertThat(parents, hasItem("plate2"));
     }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchSourceTubesForPlate() {
+
+    }
 }

@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
@@ -47,7 +48,11 @@ public class LimsQueries {
 
     public Map<String, Boolean> fetchParentRackContentsForPlate(String plateBarcode) {
         Map<String, Boolean> map = new HashMap<String, Boolean>();
-        // TODO: implement using StaticPlate.getHasRackContentByWell()
+        StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        Map<VesselPosition, Boolean> hasRackContentByWell = plate.getHasRackContentByWell();
+        for (Map.Entry<VesselPosition, Boolean> entry : hasRackContentByWell.entrySet()) {
+            map.put(entry.getKey().name(), entry.getValue());
+        }
         return map;
     }
 

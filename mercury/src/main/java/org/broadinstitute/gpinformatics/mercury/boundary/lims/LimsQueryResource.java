@@ -33,21 +33,21 @@ public class LimsQueryResource {
     private ThriftService thriftService;
 
     @Inject
+    private LimsQueries limsQueries;
+
+    @Inject
     private LimsQueryResourceResponseFactory responseFactory;
 
     @Inject
-    private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
-
-    @Inject
-    private StaticPlateDAO staticPlateDAO;
+    private MercuryOrSquidRouter mercuryOrSquidRouter;
 
     public LimsQueryResource() {}
 
-    public LimsQueryResource(ThriftService thriftService, LimsQueryResourceResponseFactory responseFactory, TwoDBarcodedTubeDAO twoDBarcodedTubeDAO, StaticPlateDAO staticPlateDAO) {
+    public LimsQueryResource(ThriftService thriftService, LimsQueries limsQueries, LimsQueryResourceResponseFactory responseFactory, MercuryOrSquidRouter mercuryOrSquidRouter) {
         this.thriftService = thriftService;
+        this.limsQueries = limsQueries;
         this.responseFactory = responseFactory;
-        this.twoDBarcodedTubeDAO = twoDBarcodedTubeDAO;
-        this.staticPlateDAO = staticPlateDAO;
+        this.mercuryOrSquidRouter = mercuryOrSquidRouter;
     }
 
     @GET
@@ -112,11 +112,25 @@ public class LimsQueryResource {
 
     // TODO round 3: bool checkReceptaclesInTask(1:list<string> tubeBarcodes, 2:string taskName) throws(1:NotFoundException details)
 
+    /**
+     * Returns the plate barcodes of the plates that have been transferred directly into the given plate. Returns an
+     * empty list if the given plate is not found in either Mercury or Squid.
+     *
+     * @param plateBarcode    the barcode of the plate to query
+     * @return the immediate plate parents, or an empty list if the given plate isn't found
+     */
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/findImmediatePlateParents")
     public List<String> findImmediatePlateParents(@QueryParam("plateBarcode") String plateBarcode) {
-        return thriftService.findImmediatePlateParents(plateBarcode);
+        switch (mercuryOrSquidRouter.routeForPlate(plateBarcode)) {
+            case MERCURY:
+                return limsQueries.findImmediatePlateParents(plateBarcode);
+            case SQUID:
+                return thriftService.findImmediatePlateParents(plateBarcode);
+            default:
+                throw new RuntimeException("Unable to route findImmediatePlateParents for plate: " + plateBarcode);
+        }
     }
 
     @GET
@@ -170,24 +184,15 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchParentRackContentsForPlate")
     public Map<String, Boolean> fetchParentRackContentsForPlate(@QueryParam("plateBarcode") String plateBarcode) {
-        Map<String, Boolean> map;
-        try {
-            map = thriftService.fetchParentRackContentsForPlate(plateBarcode);
-        } catch (RuntimeException e) {
-            map = null;
+        Map<String, Boolean> result = null;
+        switch (mercuryOrSquidRouter.routeForPlate(plateBarcode)) {
+            case MERCURY:
+                return limsQueries.fetchParentRackContentsForPlate(plateBarcode);
+            case SQUID:
+                return thriftService.fetchParentRackContentsForPlate(plateBarcode);
+            default:
+                throw new RuntimeException("Unable to route fetchParentRackContentsForPlate for plate: " + plateBarcode);
         }
-
-        Map<String, Boolean> mercuryMap = null;
-        StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
-        if (plate != null) {
-            mercuryMap = new HashMap<String, Boolean>();
-            // TODO
-        }
-
-        if (map == null && mercuryMap == null) {
-            throw new RuntimeException("Plate not found for barcode: " + plateBarcode);
-        }
-        return map != null ? map : mercuryMap;
     }
 
     // TODO round 3: TZamboniRun fetchSingleLane(1:string runName, 2:i16 laneNumber) throws (1:TZIMSException details)
