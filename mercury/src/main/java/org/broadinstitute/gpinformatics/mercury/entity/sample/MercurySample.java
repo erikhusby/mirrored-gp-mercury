@@ -3,16 +3,13 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.RapSheet;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.RapSheetEntry;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
+import org.jboss.netty.handler.codec.oneone.OneToOneDecoder;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
-import javax.persistence.SequenceGenerator;
-import javax.persistence.Table;
-import javax.persistence.Transient;
+import javax.persistence.*;
 
 /**
  * Represents Mercury's view of a sample.  Sample information is held in another system (initially Athena),
@@ -24,14 +21,17 @@ import javax.persistence.Transient;
 public class MercurySample {
 
     @Id
-    @SequenceGenerator(name="SEQ_MERCURY_SAMPLE", schema = "mercury", sequenceName="SEQ_MERCURY_SAMPLE")
-    @GeneratedValue(strategy= GenerationType.SEQUENCE, generator="SEQ_MERCURY_SAMPLE")
+    @SequenceGenerator(name = "SEQ_MERCURY_SAMPLE", schema = "mercury", sequenceName = "SEQ_MERCURY_SAMPLE")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MERCURY_SAMPLE")
     private Long mercurySampleId;
 
     private String productOrderKey;
 
     @Index(name = "ix_ms_sample_key")
     private String sampleKey;
+
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "sample")
+    private RapSheet rapSheet;
 
     @Transient
     private BSPSampleDTO bspSampleDTO;
@@ -47,7 +47,24 @@ public class MercurySample {
         this.bspSampleDTO = bspSampleDTO;
     }
 
-    /** For JPA */
+    public void addRapSheetEntry(RapSheetEntry.EntryType entryType, String comment) {
+        getRapSheet().addRapSheetEntry(entryType, comment);
+    }
+
+    public RapSheet getRapSheet() {
+        if (rapSheet == null) {
+            rapSheet = new RapSheet();
+        }
+        return rapSheet;
+    }
+
+    public void setRapSheet(RapSheet rapSheet) {
+        this.rapSheet = rapSheet;
+    }
+
+    /**
+     * For JPA
+     */
     MercurySample() {
     }
 

@@ -52,9 +52,9 @@ public class LabEventTest {
     public static final int NUM_POSITIONS_IN_RACK = 96;
 
     public static final String POND_REGISTRATION_TUBE_PREFIX = "PondReg";
-    private static Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
+    protected static Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
 
-    private final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher =
+    protected final LabEventFactory.LabEventRefDataFetcher labEventRefDataFetcher =
             new LabEventFactory.LabEventRefDataFetcher() {
 
                 @Override
