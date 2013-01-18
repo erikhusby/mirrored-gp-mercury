@@ -245,18 +245,17 @@
 
             <div class="help-block span4">
                 <c:choose>
-                    <c:when test="${actionBean.editOrder.draft}">
+                    <c:when test="${actionBean.allowSampleListEdit}">
                         Enter samples names in this box, one per line. When you save the order, the view page will show
                         all sample details.
                     </c:when>
                     <c:otherwise>
-                        This is the list of samples. Since this order has already been placed, the list of samples cannot
-                        be changed.
+                        Sample list edit is disabled for non-DRAFT orders with previously uploaded work.
                     </c:otherwise>
                 </c:choose>
                 <br/>
                 <br/>
-                <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="sampleList" rows="15" cols="120"/>
+                <stripes:textarea readonly="${!actionBean.allowSampleListEdit}" class="controlledText" id="samplesToAdd" name="sampleList" rows="15" cols="120"/>
             </div>
         </stripes:form>
 

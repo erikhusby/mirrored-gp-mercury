@@ -423,13 +423,16 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getSupportsNumberOfLanes")
     public Resolution getSupportsNumberOfLanes() throws Exception {
-
-        Product product = productDao.findByBusinessKey(this.product);
-
+        boolean lanesSupported = true;
         JSONObject item = new JSONObject();
-            item.put("supports", product.getSupportsNumberOfLanes());
 
-        return createTextResolution(item.toString());
+        if ( this.product != null ) {
+            Product product = productDao.findByBusinessKey(this.product);
+            lanesSupported =  product.getSupportsNumberOfLanes();
+        }
+        item.put("supports", lanesSupported);
+
+        return new StreamingResolution("text", new StringReader(item.toString()));
     }
 
     public List<String> getSelectedProductOrderBusinessKeys() {
@@ -614,4 +617,15 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setQuoteIdentifier(String quoteIdentifier) {
         this.quoteIdentifier = quoteIdentifier;
     }
+
+    /**
+     * Sample list edit should be enabled if this is a DRAFT order or this is a non-DRAFT order with no billing
+     * ledger entries.
+     *
+     * @return
+     */
+    public boolean getAllowSampleListEdit() {
+        return editOrder.isDraft() || billingLedgerDao.findByOrderList(new ProductOrder[] {editOrder}).size() == 0;
+    }
+
 }
