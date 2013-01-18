@@ -227,32 +227,15 @@ public class ProductOrderFixupTest extends Arquillian {
     @Test(enabled = false)
     public void removeSamplesFromDevTest() {
         List<String> samplesToRemove = Arrays.asList(
-                "SM-3SFP5",
-                "SM-3SFPA",
-                "SM-3SDFV",
-                "SM-3SDIE",
-                "SM-3SDI2",
-                "SM-3SJCZ",
-                "SM-3SJCV",
-                "SM-3SDIT",
-                "SM-3SDIA",
-                "SM-3SJCR",
-                "SM-3SFP2",
-                "SM-3SDTO",
-                "SM-3SDT5",
-                "SM-3SJD1",
-                "SM-3SDIO",
-                "SM-3SFPD",
-                "SM-3SJCQ",
-                "SM-3SJCO",
-                "SM-3SJCT",
-                "SM-3SDTB",
-                "SM-3SJD3",
-                "SM-3SFP1",
-                "SM-3SFP3",
-                "SM-3SFOX");
+                "SM-3DV29",
+                "SM-3DV2A",
+                "SM-3DV2B",
+                "SM-3DV2C",
+                "SM-3DV2D",
+                "SM-3DV2E",
+                "SM-3DV2F");
 
-        String pdo="PDO-490";
+        String pdo="PDO-49";
 
         ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
 
