@@ -2,13 +2,11 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -34,11 +32,13 @@ public class MercuryOrSquidRouter {
     public enum MercuryOrSquid { MERCURY, SQUID }
 
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
+    private StaticPlateDAO staticPlateDAO;
     private ProductOrderDao productOrderDao;
 
     @Inject
-    public MercuryOrSquidRouter(TwoDBarcodedTubeDAO twoDBarcodedTubeDAO, ProductOrderDao productOrderDao) {
+    public MercuryOrSquidRouter(TwoDBarcodedTubeDAO twoDBarcodedTubeDAO, StaticPlateDAO staticPlateDAO, ProductOrderDao productOrderDao) {
         this.twoDBarcodedTubeDAO = twoDBarcodedTubeDAO;
+        this.staticPlateDAO = staticPlateDAO;
         this.productOrderDao = productOrderDao;
     }
 
@@ -52,7 +52,8 @@ public class MercuryOrSquidRouter {
     }
 
     public MercuryOrSquid routeForPlate(String plateBarcode) {
-        return SQUID;
+        StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        return routeForVessel(plate);
     }
 
     // TODO: figure out how to handle libraryNames for fetchLibraryDetailsByLibraryName
@@ -65,7 +66,11 @@ public class MercuryOrSquidRouter {
      */
     public MercuryOrSquid routeForTube(String tubeBarcode) {
         TwoDBarcodedTube tube = twoDBarcodedTubeDAO.findByBarcode(tubeBarcode);
-        if (tube != null) {
+        return routeForVessel(tube);
+    }
+
+    private MercuryOrSquid routeForVessel(LabVessel vessel) {
+        if (vessel != null) {
 /*
             HasProductOrderCriteria criteria = new HasProductOrderCriteria();
             tube.evaluateCriteria(criteria, Ancestors);
@@ -75,7 +80,7 @@ public class MercuryOrSquidRouter {
                 return SQUID;
             }
 */
-            for (SampleInstance sampleInstance : tube.getSampleInstances()) {
+            for (SampleInstance sampleInstance : vessel.getSampleInstances()) {
                 String productOrderKey = sampleInstance.getStartingSample().getProductOrderKey();
                 if (productOrderKey != null) {
                     ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);

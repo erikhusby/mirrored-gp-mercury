@@ -8,9 +8,8 @@ import org.testng.annotations.Test;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
-import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.*;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes.RackType.Matrix96;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection.ALL96;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabEventTestFactory.doSectionTransfer;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabEventTestFactory.makeTubeFormation;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.PlateType.*;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition.A01;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition.B02;
@@ -30,15 +29,6 @@ public class StaticPlateTest {
     private TwoDBarcodedTube tube2;
     private TwoDBarcodedTube tube3;
 
-    /** A tube formation with tube1 in A01. */
-    private TubeFormation tubeRack1;
-
-    /** A tube formation with tube2 in A01. */
-    private TubeFormation tubeRack2;
-
-    /** A tube formation with tube1 in A01, tube2 in B02, and tube3 in C03. */
-    private TubeFormation tubeRack3;
-
     private StaticPlate plate1;
     private StaticPlate plate2;
     private StaticPlate plate3;
@@ -49,30 +39,9 @@ public class StaticPlateTest {
         tube2 = new TwoDBarcodedTube("tube2");
         tube3 = new TwoDBarcodedTube("tube3");
 
-        Map<VesselPosition, TwoDBarcodedTube> positionMap1 = new HashMap<VesselPosition, TwoDBarcodedTube>();
-        positionMap1.put(A01, tube1);
-        tubeRack1 = new TubeFormation(positionMap1, Matrix96);
-
-        Map<VesselPosition, TwoDBarcodedTube> positionMap2 = new HashMap<VesselPosition, TwoDBarcodedTube>();
-        positionMap2.put(A01, tube2);
-        tubeRack2 = new TubeFormation(positionMap2, Matrix96);
-
-        Map<VesselPosition, TwoDBarcodedTube> positionMap3 = new HashMap<VesselPosition, TwoDBarcodedTube>();
-        positionMap3.put(A01, tube1);
-        positionMap3.put(B02, tube2);
-        positionMap3.put(C03, tube3);
-        tubeRack3 = new TubeFormation(positionMap3, Matrix96);
-
         plate1 = new StaticPlate("plate1", Eppendorf96);
         plate2 = new StaticPlate("plate2", Eppendorf96);
         plate3 = new StaticPlate("plate3", Eppendorf96);
-    }
-
-    private LabEvent doSectionTransfer(LabVessel source, LabVessel destination) {
-        LabEvent event = new LabEvent(A_BASE, new Date(), "StaticPlateTest", 1L, 1L);
-        event.getSectionTransfers().add(
-                new SectionTransfer(source.getContainerRole(), ALL96, destination.getContainerRole(), ALL96, event));
-        return event;
     }
 
     /*
@@ -103,7 +72,7 @@ public class StaticPlateTest {
 
     @Test(groups = DATABASE_FREE)
     public void testGetImmediatePlateParentsMixed() {
-        doSectionTransfer(tubeRack1, plate3);
+        doSectionTransfer(makeTubeFormation(tube1), plate3);
         doSectionTransfer(plate1, plate3);
         doSectionTransfer(plate2, plate3);
 
@@ -124,7 +93,7 @@ public class StaticPlateTest {
 
     @Test(groups = DATABASE_FREE)
     public void testGetHasRackContentByWell() {
-        doSectionTransfer(tubeRack1, plate1);
+        doSectionTransfer(makeTubeFormation(tube1), plate1);
         Map<VesselPosition, Boolean> hasRackContentByWell = plate1.getHasRackContentByWell();
 //        assertThat(hasRackContentByWell.size(), is(1));
 //        assertThat(hasRackContentByWell.get(A01), is(true));
@@ -141,7 +110,10 @@ public class StaticPlateTest {
 
     @Test(groups = DATABASE_FREE)
     public void testGetNearestTubeAncestorsMultipleWellsSingleAncestors() {
-        doSectionTransfer(tubeRack3, plate1);
+        TubeFormation rack = makeTubeFormation(
+                new VesselPosition[]   { A01,   B02,   C03 },
+                new TwoDBarcodedTube[] { tube1, tube2, tube3 });
+        doSectionTransfer(rack, plate1);
         List<VesselAndPosition> ancestors = plate1.getNearestTubeAncestors();
         assertThat(ancestors.size(), is(3));
         assertThat(ancestors, hasItem(new VesselAndPosition(tube1, A01)));
@@ -151,16 +123,16 @@ public class StaticPlateTest {
 
     @Test(groups = DATABASE_FREE)
     public void testGetNearestTubeAncestorsDuplicate() {
-        doSectionTransfer(tubeRack1, plate1);
-        doSectionTransfer(tubeRack1, plate1);
+        doSectionTransfer(makeTubeFormation(tube1), plate1);
+        doSectionTransfer(makeTubeFormation(tube1), plate1);
         List<VesselAndPosition> ancestors = plate1.getNearestTubeAncestors();
         assertThat(ancestors, equalTo(Arrays.asList(new VesselAndPosition(tube1, A01))));
     }
 
     @Test(groups = DATABASE_FREE)
     public void testGetNearestTubeAncestorsMultiple() {
-        doSectionTransfer(tubeRack1, plate1);
-        doSectionTransfer(tubeRack2, plate1);
+        doSectionTransfer(makeTubeFormation(tube1), plate1);
+        doSectionTransfer(makeTubeFormation(tube2), plate1);
         List<VesselAndPosition> ancestors = plate1.getNearestTubeAncestors();
         assertThat(ancestors.size(), is(2));
         assertThat(ancestors, hasItem(new VesselAndPosition(tube1, A01)));
@@ -169,8 +141,8 @@ public class StaticPlateTest {
 
     @Test(groups = DATABASE_FREE)
     public void testGetNearestTubeAncestorsDifferentBranches() {
-        doSectionTransfer(tubeRack1, plate1);
-        doSectionTransfer(tubeRack2, plate2);
+        doSectionTransfer(makeTubeFormation(tube1), plate1);
+        doSectionTransfer(makeTubeFormation(tube2), plate2);
         doSectionTransfer(plate1, plate3);
         doSectionTransfer(plate2, plate3);
         List<VesselAndPosition> ancestors = plate3.getNearestTubeAncestors();
@@ -181,8 +153,9 @@ public class StaticPlateTest {
 
     @Test(groups = DATABASE_FREE)
     public void testGetNearestTubeAncestorsIgnoringDistant() {
-        doSectionTransfer(tubeRack1, tubeRack2);
-        doSectionTransfer(tubeRack2, plate2);
+        TubeFormation rack = makeTubeFormation(tube2);
+        doSectionTransfer(makeTubeFormation(tube1), rack);
+        doSectionTransfer(rack, plate2);
         List<VesselAndPosition> ancestors = plate2.getNearestTubeAncestors();
         assertThat(ancestors, equalTo(Arrays.asList(new VesselAndPosition(tube2, A01))));
     }
@@ -227,9 +200,10 @@ public class StaticPlateTest {
 
     @Test(groups = DATABASE_FREE)
     public void testGetTransfersThroughRackTransfer() {
-        LabEvent event1 = doSectionTransfer(tubeRack1, plate1);
-        LabEvent event2 = doSectionTransfer(plate1, tubeRack2);
-        LabEvent event3 = doSectionTransfer(tubeRack2, plate2);
+        LabEvent event1 = doSectionTransfer(makeTubeFormation(tube1), plate1);
+        TubeFormation rack = makeTubeFormation(tube2);
+        LabEvent event2 = doSectionTransfer(plate1, rack);
+        LabEvent event3 = doSectionTransfer(rack, plate2);
         List<SectionTransfer> transfers = plate2.getUpstreamPlateTransfers(8);
         assertThat(transfers.size(), is(3));
         // transfers should be in order from nearest to furthest
