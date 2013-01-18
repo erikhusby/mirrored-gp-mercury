@@ -14,6 +14,9 @@ import java.io.Serializable;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.CONTAINER_TYPE.STATIC_PLATE;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalControl.ContinueTraversing;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalControl.StopTraversing;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
 
 /**
  * A traditional plate.
@@ -109,8 +112,35 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
      * @return all nearest tube ancestors
      */
     public List<VesselAndPosition> getNearestTubeAncestors() {
-        List<VesselAndPosition> tubes = new ArrayList<VesselAndPosition>();
-        return tubes;
+        final List<VesselAndPosition> vesselAndPositions = new ArrayList<VesselAndPosition>();
+        Iterator<String> positionNames = plateType.getVesselGeometry().getPositionNames();
+        while (positionNames.hasNext()) {
+            final String positionName = positionNames.next();
+            final VesselPosition vesselPosition = VesselPosition.getByName(positionName);
+            final Set<LabVessel> tubes = new HashSet<LabVessel>();
+            TransferTraverserCriteria criteria = new TransferTraverserCriteria() {
+                @Override
+                public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+                    if (OrmUtil.proxySafeIsInstance(labVessel, TwoDBarcodedTube.class)) {
+                        tubes.add(labVessel);
+                        return StopTraversing;
+                    } else {
+                        return ContinueTraversing;
+                    }
+                }
+
+                @Override
+                public void evaluateVesselInOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {}
+
+                @Override
+                public void evaluateVesselPostOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {}
+            };
+            vesselContainer.evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
+            for (LabVessel tube : tubes) {
+                vesselAndPositions.add(new VesselAndPosition(tube, vesselPosition));
+            }
+        }
+        return vesselAndPositions;
     }
 
     @Override

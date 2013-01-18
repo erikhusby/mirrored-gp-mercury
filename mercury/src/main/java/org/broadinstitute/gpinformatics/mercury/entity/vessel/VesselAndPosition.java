@@ -20,4 +20,32 @@ public class VesselAndPosition {
     public VesselPosition getPosition() {
         return position;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        VesselAndPosition that = (VesselAndPosition) o;
+
+        if (position != that.position) return false;
+        if (!vessel.equals(that.vessel)) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = vessel.hashCode();
+        result = 31 * result + position.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "VesselAndPosition{" +
+                "vessel=" + vessel +
+                ", position=" + position +
+                '}';
+    }
 }
