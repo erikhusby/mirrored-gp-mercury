@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -24,9 +26,12 @@ public class MercuryOrSquidRouter {
 
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
 
+    private ProductOrderDao productOrderDao;
+
     @Inject
-    public MercuryOrSquidRouter(TwoDBarcodedTubeDAO twoDBarcodedTubeDAO) {
+    public MercuryOrSquidRouter(TwoDBarcodedTubeDAO twoDBarcodedTubeDAO, ProductOrderDao productOrderDao) {
         this.twoDBarcodedTubeDAO = twoDBarcodedTubeDAO;
+        this.productOrderDao = productOrderDao;
     }
 
     public MercuryOrSquid routeForTubes(List<String> tubeBarcodes) {
@@ -39,6 +44,15 @@ public class MercuryOrSquidRouter {
 
     // TODO: figure out how to handle libraryNames for fetchLibraryDetailsByLibraryName
 
+    /**
+     * Determines if a tube belongs to Mercury or Squid.
+     *
+     * The current definition of "belonging" to Mercury is that any sample in the tube is associated with an
+     * Exome Express product order.
+     *
+     * @param tubeBarcode    the barcode of the tube to check
+     * @return system that should process messages/queries for the tube
+     */
     public MercuryOrSquid routeForTube(String tubeBarcode) {
         TwoDBarcodedTube tube = twoDBarcodedTubeDAO.findByBarcode(tubeBarcode);
         if (tube != null) {
@@ -52,8 +66,12 @@ public class MercuryOrSquidRouter {
             }
 */
             for (SampleInstance sampleInstance : tube.getSampleInstances()) {
-                if (sampleInstance.getStartingSample().getProductOrderKey() != null) {
-                    return MERCURY;
+                String productOrderKey = sampleInstance.getStartingSample().getProductOrderKey();
+                if (productOrderKey != null) {
+                    ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
+                    if (order != null && order.getProduct().getProductName().equals("Exome Express")) {
+                        return MERCURY;
+                    }
                 }
             }
         }
@@ -68,9 +86,13 @@ public class MercuryOrSquidRouter {
         public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
             if (labVessel != null) {
                 for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
-                    if (sampleInstance.getStartingSample().getProductOrderKey() != null) {
-                        foundAnyProductOrder = true;
-                        return TraversalControl.StopTraversing;
+                    String productOrderKey = sampleInstance.getStartingSample().getProductOrderKey();
+                    if (productOrderKey != null) {
+                        ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
+                        if (order != null && order.getProduct().getProductName().equals("Exome Express")) {
+                            foundAnyProductOrder = true;
+                            return TraversalControl.StopTraversing;
+                        }
                     }
                 }
             }
