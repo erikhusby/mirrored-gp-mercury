@@ -57,16 +57,20 @@
                 <c:if test="${actionBean.editOrder.draft}">
                     <stripes:submit name="placeOrder" value="Validate and Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
                     <stripes:submit name="validate" value="Validate" style="margin-left: 5px;" class="btn"/>
+                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
+
                     &#160;
                     <stripes:link title="Click to edit ${actionBean.editOrder.title}"
                                   beanclass="${actionBean.class.name}" event="edit" class="btn" style="text-decoration: none !important;">
                         <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
                         <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
                     </stripes:link>
+                    </security:authorizeBlock>
                 </c:if>
             </div>
         </stripes:form>
 
+        <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
         <c:if test="${!actionBean.editOrder.draft}">
             <stripes:link title="Click to edit ${actionBean.editOrder.title}"
                 beanclass="${actionBean.class.name}" event="edit" class="pull-right">
@@ -74,6 +78,7 @@
                 <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
             </stripes:link>
         </c:if>
+        </security:authorizeBlock>
 
         <div style="both:clear"> </div>
 
