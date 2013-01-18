@@ -12,9 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.RapSheetEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.ReworkBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.ReworkQueue;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.ReworkEntry;
 import org.testng.annotations.Test;
 
 import java.util.*;
@@ -82,7 +80,8 @@ public class ReworkTest extends LabEventTest {
         final List<SampleInstance> sampleInstances = samplesAtPosition(shearingPlate, "A", "1");
 
         final MercurySample startingSample = sampleInstances.iterator().next().getStartingSample();
-        startingSample.addRapSheetEntry(RapSheetEntry.EntryType.MACHINE_ERROR, "Houston, we have a problem");
+        startingSample.markForRework(ReworkEntry.ReworkReason.MACHINE_ERROR,
+                ReworkEntry.ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH,"Houston, we have a problem");
     }
 
     public List<SampleInstance> samplesAtPosition(LabVessel vessel, String rowName, String columnName) {
@@ -95,5 +94,13 @@ public class ReworkTest extends LabEventTest {
             sampleInstances = vessel.getSampleInstancesList();
         }
         return sampleInstances;
+    }
+
+    private List<MercurySample> toMercurySamples(List<SampleInstance> sampleInstances) {
+        List<MercurySample> mercurySamples = new ArrayList<MercurySample>(sampleInstances.size());
+        for (SampleInstance sampleInstance : sampleInstances) {
+            mercurySamples.add(sampleInstance.getStartingSample());
+        }
+        return mercurySamples;
     }
 }

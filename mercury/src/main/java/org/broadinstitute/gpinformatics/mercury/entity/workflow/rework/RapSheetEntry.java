@@ -19,7 +19,7 @@ import java.util.Date;
 @Entity
 @Audited
 @Table(schema = "mercury")
-public class RapSheetEntry {
+public abstract class RapSheetEntry {
     @SuppressWarnings("UnusedDeclaration")
     @Id
     @SequenceGenerator(name = "SEQ_SAMPLE_RAP_SHEET", schema = "mercury", sequenceName = "SEQ_SAMPLE_RAP_SHEET")
@@ -44,10 +44,9 @@ public class RapSheetEntry {
     public RapSheetEntry() {
     }
 
-    public RapSheetEntry(EntryType entryType, String comment, RapSheet rapSheet) {
+    public RapSheetEntry(RapSheet rapSheet, String comment) {
         this.comment = comment;
         this.rapSheet = rapSheet;
-        this.type = entryType;
     }
 
     public String getComment() {
@@ -65,30 +64,4 @@ public class RapSheetEntry {
     public void setRapSheet(RapSheet rapSheet) {
         this.rapSheet = rapSheet;
     }
-
-    public EntryType getType() {
-        return type;
-    }
-
-    public void setType(EntryType type) {
-        this.type = type;
-    }
-
-    @Enumerated
-    private EntryType type;
-
-    public static enum EntryType {
-        MACHINE_ERROR("Machine Error");
-
-        private String value;
-
-        private EntryType(String value) {
-            this.value = value;
-        }
-
-        public String getValue() {
-            return value;
-        }
-    }
-
 }

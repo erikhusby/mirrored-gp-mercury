@@ -18,6 +18,7 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Entity
@@ -40,19 +41,20 @@ public class RapSheet {
     }
 
     public RapSheet(RapSheetEntry ... rapSheetEntry) {
-        for (RapSheetEntry entry : rapSheetEntry){
-            getRapSheetEntries().add(entry);
-        }
+        rapSheetEntries=new ArrayList<RapSheetEntry>(rapSheetEntry.length);
+        Collections.addAll(rapSheetEntries, rapSheetEntry);
     }
-
-    public void addRapSheetEntry(RapSheetEntry.EntryType entryType, String comment) {
-        RapSheetEntry newEntry = new RapSheetEntry(entryType, comment, this);
-        getRapSheetEntries().add(newEntry);
-    }
-
 
     public RapSheet(MercurySample sample) {
         this.sample = sample;
+    }
+
+    public void addEntry(RapSheetEntry entry){
+        if (rapSheetEntries == null){
+            rapSheetEntries = new ArrayList<RapSheetEntry>();
+        }
+        rapSheetEntries.add(entry);
+        entry.setRapSheet(this);
     }
 
     public MercurySample getSample() {
@@ -64,9 +66,6 @@ public class RapSheet {
     }
 
     public List<RapSheetEntry> getRapSheetEntries() {
-        if (rapSheetEntries == null){
-            rapSheetEntries = new ArrayList<RapSheetEntry>();
-        }
         return rapSheetEntries;
     }
 
