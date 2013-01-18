@@ -32,15 +32,14 @@ import static org.mockito.Mockito.when;
 
 /**
  * Test of logic to route messages and queries to Mercury or Squid as appropriate.
- *
+ * <p>
  * The current logic is that vessels or batches of vessels containing any references to samples that are part of an
- * Exome Express product orders should be processed by Mercury. Everything else should go to Squid.
- *
+ * Exome Express product orders should be processed by Mercury. Everything else should go to Squid. (This definition
+ * should match the documentation for {@link MercuryOrSquidRouter}.)
+ * <p>
  * Uses Mockito instead of EasyMock because Mockito has better support for stubbing behavior. Specifically, setUp() can
  * configure mock DAOs to return the various test entities without also setting the expectation that each test will
  * fetch every test entity.
- *
- * @author breilly
  */
 public class MercuryOrSquidRouterTest {
 

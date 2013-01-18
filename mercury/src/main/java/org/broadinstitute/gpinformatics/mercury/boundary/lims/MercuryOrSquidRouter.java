@@ -18,7 +18,11 @@ import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSq
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
 
 /**
- * @author breilly
+ * Utility for routing messages and queries to Mercury or Squid as determined by the supplied sample containers.
+ * Defines the notion of a vessel belonging to either Mercury or Squid.
+ * <p>
+ * The current definition of "belonging" to Mercury is that any sample in the tube is associated with an
+ * Exome Express product order.
  */
 public class MercuryOrSquidRouter {
 
@@ -45,10 +49,7 @@ public class MercuryOrSquidRouter {
     // TODO: figure out how to handle libraryNames for fetchLibraryDetailsByLibraryName
 
     /**
-     * Determines if a tube belongs to Mercury or Squid.
-     *
-     * The current definition of "belonging" to Mercury is that any sample in the tube is associated with an
-     * Exome Express product order.
+     * Determines if a tube belongs to Mercury or Squid. See {@link MercuryOrSquid} for a description of "belongs".
      *
      * @param tubeBarcode    the barcode of the tube to check
      * @return system that should process messages/queries for the tube
