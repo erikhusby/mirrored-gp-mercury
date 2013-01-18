@@ -182,16 +182,26 @@ public class LabBatchEjb {
         }
     }
 
+    /**
+     * Isolates the logic for updating the Jira ticket associated with a batch with information on what has changed
+     * for this new batch
+     *
+     * @param newBatch
+     */
     public void jiraBatchNotification(LabBatch newBatch) {
         for (String pdo : LabVessel.extractPdoKeyList(newBatch.getStartingLabVessels())) {
             try {
-                jiraService.addLink(AddIssueLinkRequest.LinkType.Related, pdo, newBatch.getJiraTicket().getTicketName(),
-                        "New Batch Created: " +
-                        newBatch.getJiraTicket().getTicketName() +
-                        " " + newBatch.getBatchName(), Visibility.Type.role,
-                        Visibility.Value.QA_Jira_Users);
+                if (newBatch.getJiraTicket() != null) {
+                    jiraService.addLink(AddIssueLinkRequest.LinkType.Related, pdo, newBatch.getJiraTicket()
+                            .getTicketName(),
+                            "New Batch Created: " +
+                            newBatch.getJiraTicket().getTicketName() +
+                            " " + newBatch.getBatchName(), Visibility.Type.role,
+                            Visibility.Value.QA_Jira_Users);
+                }
             } catch (Exception ioe) {
-                logger.error("Error attempting to link Batch " + newBatch.getJiraTicket().getTicketName() + " to Product order " + pdo,
+                logger.error("Error attempting to link Batch " + newBatch.getJiraTicket().getTicketName()
+                             + " to Product order " + pdo,
                         ioe);
             }
         }
@@ -212,8 +222,8 @@ public class LabBatchEjb {
 
         LabVessel firstVessel = vesselIterator.next();
 
-        for(LabBatch testBatch:firstVessel.getNearestLabBatchesList()) {
-            if(testBatch.getStartingLabVessels().containsAll(batchVessels)) {
+        for (LabBatch testBatch : firstVessel.getNearestLabBatchesList()) {
+            if (testBatch.getStartingLabVessels().containsAll(batchVessels)) {
                 result = true;
                 break;
             }

@@ -124,6 +124,12 @@ public class ProductWorkflowDefVersion implements Serializable {
         }
     }
 
+    /**
+     * This method catalogues all Workflow steps found in the workflow.  The workflow steps are catalogued in
+     * a map indexed by an eventType which is affiliated with the step.  The steps are also associated with steps
+     * that are considered their successors and predecessors.  This makes it easy to navigate through the workflow
+     * when a user has at least one step
+     */
     public void buildLabEventGraph() {
         LabEventNode previousNode = null;
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
@@ -148,6 +154,11 @@ public class ProductWorkflowDefVersion implements Serializable {
         }
     }
 
+    /**
+     * This method will find the workflow step that is associated with the given Event type
+     * @param eventTypeName name of an event to use as an index to the cataloged workflow steps
+     * @return
+     */
     public LabEventNode findStepByEventType(String eventTypeName) {
         if (mapNameToLabEvent == null) {
             mapNameToLabEvent = new HashMap<String, LabEventNode>();
@@ -182,12 +193,25 @@ public class ProductWorkflowDefVersion implements Serializable {
         return OrmUtil.proxySafeIsInstance(nextStep, WorkflowBucketDef.class);
     }
 
+    /**
+     * Similar to {@link #isNextStepBucket(String)}, This method uses the ability to navigates the workflow forward to
+     * determine if the next workflow step, that is not found on a "Branch", is bucket step
+     * @param eventTypeName
+     * @return
+     */
     public boolean isNextNonDeadBranchStepBucket(String eventTypeName) {
          WorkflowStepDef nextStep = getNextNonDeadBranchStep(eventTypeName);
 
          return OrmUtil.proxySafeIsInstance(nextStep, WorkflowBucketDef.class);
-     }
+    }
 
+    /**
+     * This convenience method performs both a search of a workflow step based on an event and checks if that step
+     * is defined as being on a workflow branch that dead ends
+     *
+     * @param eventTypeName
+     * @return
+     */
     public boolean isStepDeadBranch(String eventTypeName) {
 
         LabEventNode stepNode =findStepByEventType(eventTypeName);
@@ -202,7 +226,13 @@ public class ProductWorkflowDefVersion implements Serializable {
         return result;
     }
 
-
+    /**
+     * Similar to {@link #isNextNonDeadBranchStepBucket(String)} this method navigates forward in the Workflow to find
+     * the next step that is not located on a branch of the workflow that dead ends.
+     *
+     * @param eventTypeName
+     * @return
+     */
     public WorkflowStepDef getNextNonDeadBranchStep(String eventTypeName) {
         WorkflowStepDef nextStep = getNextStep(eventTypeName);
         while(nextStep != null &&
