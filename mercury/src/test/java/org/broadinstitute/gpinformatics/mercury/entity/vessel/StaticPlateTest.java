@@ -113,6 +113,23 @@ public class StaticPlateTest {
     }
 
     /*
+     * Tests for getWellHasRackContentStatus()
+     */
+
+    @Test(groups = DATABASE_FREE)
+    public void testGetHasRackContentByWellNone() {
+        assertThat(plate1.getHasRackContentByWell().size(), is(0));
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testGetHasRackContentByWell() {
+        doSectionTransfer(tubeRack1, plate1);
+        Map<VesselPosition, Boolean> hasRackContentByWell = plate1.getHasRackContentByWell();
+        assertThat(hasRackContentByWell.size(), is(1));
+        assertThat(hasRackContentByWell.get(A01), is(true));
+    }
+
+    /*
      * Tests for getNearestTubeAncestors()
      */
 

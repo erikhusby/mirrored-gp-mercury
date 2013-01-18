@@ -104,6 +104,61 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         return parents;
     }
 
+    public static class HasRackContentByWellCriteria implements TransferTraverserCriteria {
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+            return null;  //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public void evaluateVesselInOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+            //To change body of implemented methods use File | Settings | File Templates.
+        }
+
+        @Override
+        public void evaluateVesselPostOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+            //To change body of implemented methods use File | Settings | File Templates.
+        }
+    }
+
+    public Map<VesselPosition, Boolean> getHasRackContentByWell() {
+        // TODO: limsThrift only returns true if the source tube was in a rack. Does this really matter? Should this restriction be loosened?
+        // Answer: No, this method should only report sources from a rack and has been renamed accordingly.
+        return new HashMap<VesselPosition, Boolean>();
+    }
+
+    public static class NearestTubeAncestorsCriteria implements TransferTraverserCriteria {
+
+        private Set<LabVessel> tubes = new HashSet<LabVessel>();
+        private Set<VesselAndPosition> vesselAndPositions = new LinkedHashSet<VesselAndPosition>();
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+            if (OrmUtil.proxySafeIsInstance(labVessel, TwoDBarcodedTube.class)) {
+                tubes.add(labVessel);
+//                vesselAndPositions.add(new VesselAndPosition(labVessel, vesselPosition));
+                return StopTraversing;
+            } else {
+                return ContinueTraversing;
+            }
+        }
+
+        @Override
+        public void evaluateVesselInOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {}
+
+        @Override
+        public void evaluateVesselPostOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {}
+
+        public Set<LabVessel> getTubes() {
+            return tubes;
+        }
+
+        public Set<VesselAndPosition> getVesselAndPositions() {
+            return vesselAndPositions;
+        }
+    }
+
     /**
      * Returns a list of the most immediate tube ancestors for each well. The "distance" from this plate across upstream
      * plate transfers is not relevant; all upstream branches are traversed until either a tube is found or the branch
@@ -114,33 +169,30 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
     public List<VesselAndPosition> getNearestTubeAncestors() {
         final List<VesselAndPosition> vesselAndPositions = new ArrayList<VesselAndPosition>();
         Iterator<String> positionNames = plateType.getVesselGeometry().getPositionNames();
+/*
         while (positionNames.hasNext()) {
-            final String positionName = positionNames.next();
-            final VesselPosition vesselPosition = VesselPosition.getByName(positionName);
-            final Set<LabVessel> tubes = new HashSet<LabVessel>();
-            TransferTraverserCriteria criteria = new TransferTraverserCriteria() {
-                @Override
-                public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
-                    if (OrmUtil.proxySafeIsInstance(labVessel, TwoDBarcodedTube.class)) {
-                        tubes.add(labVessel);
-                        return StopTraversing;
-                    } else {
-                        return ContinueTraversing;
-                    }
-                }
-
-                @Override
-                public void evaluateVesselInOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {}
-
-                @Override
-                public void evaluateVesselPostOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {}
-            };
+            String positionName = positionNames.next();
+            VesselPosition vesselPosition = VesselPosition.getByName(positionName);
+            NearestTubeAncestorsCriteria criteria = new NearestTubeAncestorsCriteria();
             vesselContainer.evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
-            for (LabVessel tube : tubes) {
+            for (LabVessel tube : criteria.getTubes()) {
                 vesselAndPositions.add(new VesselAndPosition(tube, vesselPosition));
             }
         }
         return vesselAndPositions;
+*/
+        NearestTubeAncestorsCriteria criteria = new NearestTubeAncestorsCriteria();
+        applyCriteriaToAllWells(criteria);
+        return new ArrayList<VesselAndPosition>(criteria.getVesselAndPositions());
+    }
+
+    private void applyCriteriaToAllWells(TransferTraverserCriteria criteria) {
+        Iterator<String> positionNames = plateType.getVesselGeometry().getPositionNames();
+        while (positionNames.hasNext()) {
+            String positionName = positionNames.next();
+            VesselPosition vesselPosition = VesselPosition.getByName(positionName);
+            vesselContainer.evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
+        }
     }
 
     @Override

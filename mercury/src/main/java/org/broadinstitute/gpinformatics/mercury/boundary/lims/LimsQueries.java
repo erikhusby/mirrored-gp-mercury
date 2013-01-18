@@ -2,11 +2,14 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Mercury-based implementations of services provided by LimsQueryResource.
@@ -38,8 +41,19 @@ public class LimsQueries {
         return parentPlateBarcodes;
     }
 
+    public Map<String, Boolean> fetchParentRackContentsForPlate(String plateBarcode) {
+        Map<String, Boolean> map = new HashMap<String, Boolean>();
+        // TODO: implement using StaticPlate.getHasRackContentByWell()
+        return map;
+    }
+
     public List<WellAndSourceTubeType> fetchSourceTubesForPlate(String plateBarcode) {
         List<WellAndSourceTubeType> tubes = new ArrayList<WellAndSourceTubeType>();
         return tubes;
+    }
+
+    public List<PlateTransferType> fetchTransfersForPlate(String plateBarcode, int depth) {
+        List<PlateTransferType> transfers = new ArrayList<PlateTransferType>();
+        return transfers;
     }
 }

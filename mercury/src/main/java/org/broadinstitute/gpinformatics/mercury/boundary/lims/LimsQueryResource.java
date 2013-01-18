@@ -153,15 +153,6 @@ public class LimsQueryResource {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/findRelatedDesignationsForAnyTube")
-    public List<String> findRelatedDesignationsForAnyTube(@QueryParam("q") List<String> tubeBarcodes) {
-        // TODO round 2: thrift proxy implementation
-        return null;
-
-    }
-
-    @GET
-    @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchUserIdForBadgeId")
     public String fetchUserIdForBadgeId(@QueryParam("badgeId") String badgeId) {
         return thriftService.fetchUserIdForBadgeId(badgeId);

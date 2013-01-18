@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import javax.annotation.Nonnull;
+
 /**
  * @author breilly
  */
@@ -8,7 +10,7 @@ public class VesselAndPosition {
     private LabVessel vessel;
     private VesselPosition position;
 
-    public VesselAndPosition(LabVessel vessel, VesselPosition position) {
+    public VesselAndPosition(@Nonnull LabVessel vessel, @Nonnull VesselPosition position) {
         this.vessel = vessel;
         this.position = position;
     }
