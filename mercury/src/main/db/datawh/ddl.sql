@@ -44,6 +44,25 @@ DROP TABLE event_fact;
 
 DROP SEQUENCE event_fact_id_seq;
 
+DROP TABLE im_product_order_add_on;
+DROP TABLE im_product_order_sample_stat;
+DROP TABLE im_product_order_sample;
+DROP TABLE im_product_order_status;
+DROP TABLE im_product_order;
+DROP TABLE im_research_project_irb;
+DROP TABLE im_research_project_cohort;
+DROP TABLE im_research_project_funding;
+DROP TABLE im_research_project_person;
+DROP TABLE im_research_project;
+DROP TABLE im_research_project_status;
+DROP TABLE im_price_item;
+DROP TABLE im_product;
+DROP TABLE im_lab_vessel;
+DROP TABLE im_lab_batch;
+DROP TABLE im_workflow_config;
+DROP TABLE im_event_fact;
+
+
 
 CREATE TABLE product (
   product_id NUMERIC(19) PRIMARY KEY NOT NULL,
@@ -250,25 +269,8 @@ CREATE TABLE event_fact (
 CREATE INDEX event_fact_idx1 ON event_fact(event_date);
 CREATE SEQUENCE event_fact_id_seq start with 1;
 
--- Import tables
-DROP TABLE im_product_order_add_on;
-DROP TABLE im_product_order_sample_stat;
-DROP TABLE im_product_order_sample;
-DROP TABLE im_product_order_status;
-DROP TABLE im_product_order;
-DROP TABLE im_research_project_irb;
-DROP TABLE im_research_project_cohort;
-DROP TABLE im_research_project_funding;
-DROP TABLE im_research_project_person;
-DROP TABLE im_research_project;
-DROP TABLE im_research_project_status;
-DROP TABLE im_price_item;
-DROP TABLE im_product;
-DROP TABLE im_lab_vessel;
-DROP TABLE im_lab_batch;
-DROP TABLE im_workflow_config;
-DROP TABLE im_event_fact;
 
+-- The import tables
 
 CREATE TABLE im_product (
   line_number NUMERIC(9) NOT NULL,
