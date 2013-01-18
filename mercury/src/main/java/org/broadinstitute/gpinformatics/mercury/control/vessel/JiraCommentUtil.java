@@ -1,7 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
-// todo jmt this should be in control, or deleted
+// todo jmt re-evaluate where this functionality belongs
 
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -10,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
@@ -74,6 +76,13 @@ public class JiraCommentUtil {
                 messageBuilder.append("\n");
             }
             ticket.addComment(messageBuilder.toString());
+//            try {
+//                JiraIssue jiraIssue = ticket.getJiraDetails();
+//                Object fieldValue = jiraIssue.getFieldValue("customfield_13169"/*"LIMS Activity Stream"*/);
+//                System.out.println(fieldValue);
+//            } catch (IOException e) {
+//                throw new RuntimeException(e);
+//            }
         }
 
     }
