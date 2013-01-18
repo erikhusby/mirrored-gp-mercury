@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.presentation.Displayable;
 import org.broadinstitute.gpinformatics.infrastructure.DateAdapter;
-import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateUtils;
 import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -12,12 +12,16 @@ import org.w3c.dom.NodeList;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlRootElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
-import java.util.Date;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.Set;
 
 @XmlRootElement(name = "Funding")
 public class Funding implements Displayable {
+
+    private static final String QUOTE_SERVER_DATE_STR = "yyyy-MM-dd hh:mm:ss.SSS";
+    public static final DateFormat QUOTE_DATE_FORMAT = new SimpleDateFormat(QUOTE_SERVER_DATE_STR);
+
 
     public static final String FUNDS_RESERVATION = "Funds Reservation";
 
@@ -192,7 +196,7 @@ public class Funding implements Displayable {
     }
 
     public static Set<Funding> getFundingSet(Document response) {
-        Set<Funding> fundingSet = new HashSet<Funding>();
+        Set<Funding> fundingSet = new TreeSet<Funding>(byDisplayName);
 
         NodeList rowNodes = response.getElementsByTagName("rowData");
         for (int i = 0; i < rowNodes.getLength(); i++) {
@@ -201,12 +205,14 @@ public class Funding implements Displayable {
             NodeList entries = node.getChildNodes();
 
             Map<String, String> nameValueAttributes = new HashMap<String, String> (rowNodes.getLength());
-            for (int j = 0; j < rowNodes.getLength(); j++) {
+            for (int j = 0; j < entries.getLength(); j++) {
                 Node entry = entries.item(j);
 
-                // the first to nodes are the name and value for mapping
-                NodeList entryNodes = entry.getChildNodes();
-                nameValueAttributes.put(entryNodes.item(0).getTextContent(), entryNodes.item(1).getTextContent());
+                // only get nodes that have children. There should be a name and value node
+                if (entry.hasChildNodes()) {
+                    NodeList entryNodes = entry.getChildNodes();
+                    nameValueAttributes.put(entryNodes.item(1).getTextContent(), entryNodes.item(3).getTextContent());
+                }
             }
 
             // Assign all the values to this new funding
@@ -215,11 +221,21 @@ public class Funding implements Displayable {
                 funding.setBroadName(nameValueAttributes.get("BROAD_NAME"));
                 funding.setCommonName(nameValueAttributes.get("COMMON_NAME"));
                 funding.setCostObject(nameValueAttributes.get("COST_OBJECT_NAME"));
-                funding.setFundingType(nameValueAttributes.get("FUNDING_TYPRE"));
                 funding.setGrantDescription(nameValueAttributes.get("GRANT_DESC"));
-                funding.setGrantEndDate(DateUtils.parseDate(nameValueAttributes.get("GRANT_END")));
+
+                String type = nameValueAttributes.get("FUNDING_TYPE").equals("FRS_NUMBER") ? FUNDS_RESERVATION : PURCHASE_ORDER;
+                funding.setFundingType(type);
+
+                String dateStr = nameValueAttributes.get("GRANT_END");
+                Date date = StringUtils.isBlank(dateStr) ? null : QUOTE_DATE_FORMAT.parse(dateStr);
+                funding.setGrantEndDate(date);
+
                 funding.setGrantNumber(nameValueAttributes.get("GRANT_NUM"));
-                funding.setGrantStartDate(DateUtils.parseDate(nameValueAttributes.get("GRANT_START")));
+
+                dateStr = nameValueAttributes.get("GRANT_START");
+                date = StringUtils.isBlank(dateStr) ? null : QUOTE_DATE_FORMAT.parse(dateStr);
+                funding.setGrantStartDate(date);
+
                 funding.setGrantStatus(nameValueAttributes.get("GRANT_STATUS"));
                 funding.setInstitute(nameValueAttributes.get("NAME"));
                 funding.setPurchaseOrderNumber(nameValueAttributes.get("PO_NUMBER"));
@@ -233,4 +249,11 @@ public class Funding implements Displayable {
 
         return fundingSet;
     }
+
+    public static final Comparator<Funding> byDisplayName = new Comparator<Funding>() {
+        @Override
+        public int compare(Funding o1, Funding o2) {
+            return o1.getDisplayName().compareTo(o2.getDisplayName());
+        }
+    };
 }
