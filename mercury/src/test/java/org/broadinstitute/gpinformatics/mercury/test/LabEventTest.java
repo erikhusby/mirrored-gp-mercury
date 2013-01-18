@@ -1407,6 +1407,7 @@ public class LabEventTest {
 //            labEventHandler.processEvent(shearingBucketEntity);
 
             // ShearingTransfer
+            //TODO SGM   SHould this validate be on the tube formation?
             validateWorkflow("PlatingToShearingTubes", mapBarcodeToTube.values());
             LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
                     exomeExpressShearingJaxbBuilder.getPlateToShearTubeTransferEventJaxb(), preflightRack, null/* shearingPlate ? */);

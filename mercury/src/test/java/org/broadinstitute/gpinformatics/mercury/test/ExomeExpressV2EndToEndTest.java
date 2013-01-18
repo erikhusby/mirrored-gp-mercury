@@ -84,8 +84,12 @@ public class ExomeExpressV2EndToEndTest {
 
 
         BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
-        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq(LabEventType.SHEARING_BUCKET.getName())))
-                .andReturn(new LabEventTest.MockBucket(new WorkflowStepDef(LabEventType.SHEARING_BUCKET.getName()), jiraTicketKey));
+        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket")))
+                .andReturn(new LabEventTest.MockBucket(new WorkflowStepDef("Shearing Bucket"), jiraTicketKey));
+        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket")))
+                .andReturn(new LabEventTest.MockBucket(new WorkflowStepDef("Shearing Bucket"), jiraTicketKey));
+        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Pico/Plating Bucket")))
+                .andReturn(new LabEventTest.MockBucket(new WorkflowStepDef("Pico/Plating Bucket"), jiraTicketKey));
         BucketBean bucketBean = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
         EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
 
@@ -167,7 +171,6 @@ public class ExomeExpressV2EndToEndTest {
         Map<String, ProductOrder> keyToPoMap = new HashMap<String, ProductOrder>();
         keyToPoMap.put(productOrder1.getBusinessKey(), productOrder1);
 
-        //TODO SGM:  DO not use Entity Builder.  Specifically use Jaxb.... OR Make this entity builder add to mapKeyToProductOrder.  Yeah, do that!!!!
         LabEventTest.PicoPlatingEntityBuider pplatingEntityBuilder =
                 new LabEventTest.PicoPlatingEntityBuider(bettaLimsMessageFactory,
                 labEventFactory, leHandler, mapBarcodeToTube, rackBarcode, keyToPoMap).invoke();
@@ -188,14 +191,15 @@ public class ExomeExpressV2EndToEndTest {
 
 
         LabEventTest.ExomeExpressShearingJaxbBuilder exexJaxbBuilder =
-                new LabEventTest.ExomeExpressShearingJaxbBuilder(bettaLimsMessageFactory, shearingTubeBarcodes, "",
-                        rackBarcode);
+                new LabEventTest.ExomeExpressShearingJaxbBuilder(bettaLimsMessageFactory,
+                        new ArrayList<String>(pplatingEntityBuilder.getNormBarcodeToTubeMap().keySet()), "",
+                        pplatingEntityBuilder.getNormalizationBarcode());
         exexJaxbBuilder.invoke();
 
 
-
+        //TODO SGM   SHould this validate be on the tube formation?
         LabEventTest.validateWorkflow(LabEventType.PLATING_TO_SHEARING_TUBES.getName(),
-                pplatingEntityBuilder.getNormTubeFormation());
+                pplatingEntityBuilder.getNormBarcodeToTubeMap().values());
         PlateTransferEventType plateToShearXfer = exexJaxbBuilder.getPlateToShearTubeTransferEventJaxb();
         LabEvent pToShearEvent = labEventFactory.buildFromBettaLimsRackToPlateDbFree(plateToShearXfer,
                 pplatingEntityBuilder.getNormTubeFormation(),
@@ -216,8 +220,8 @@ public class ExomeExpressV2EndToEndTest {
         ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
                 productOrder1.getProduct().getWorkflowName());
         ProductWorkflowDefVersion productWorkflowDefVersion = productWorkflowDef.getEffectiveVersion();
-        Map<WorkflowStepDef, Collection<LabVessel>> bucketToVessels = leHandler.itemizeBucketItems(covarisEvent);
-        Assert.assertTrue(bucketToVessels.keySet().size() == 1);
+        Map<WorkflowStepDef, Collection<LabVessel>> bucketToVessels = leHandler.itemizeBucketItems(pToShearEvent);
+        Assert.assertEquals(1, bucketToVessels.keySet().size());
 //        Assert.assertEquals(shearingBucket.getBucketDefinitionName(),
 //                bucketToVessels.keySet().iterator().next().getName());
 
@@ -263,7 +267,7 @@ public class ExomeExpressV2EndToEndTest {
         // Submissions
         // Reporting
 
-        EasyMock.verify(mapBarcodeToTube);
+        EasyMock.verify(mockBucketDao);
 
     }
 
