@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.hibernate.envers.Audited;
@@ -10,10 +11,9 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.CONTAINER_TYPE.STATIC_PLATE;
 
 /**
  * A traditional plate.
@@ -80,6 +80,25 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
 
     /** For Hibernate */
     protected StaticPlate() {
+    }
+
+    /**
+     * Returns a list of plates (in no specific order) that had material directly transferred into this plate.
+     *
+     * Note, some sense of order might be preserved if LabVessel.getTransfersTo() used a LinkedHashSet to gather the events.
+     *
+     * @return immediate plate parents
+     */
+    public List<StaticPlate> getImmediatePlateParents() {
+        List<StaticPlate> parents = new ArrayList<StaticPlate>();
+        for (LabEvent event : getTransfersTo()) {
+            for (LabVessel source : event.getSourceLabVessels()) {
+                if (source.getType() == STATIC_PLATE) {
+                    parents.add(OrmUtil.proxySafeCast(source, StaticPlate.class));
+                }
+            }
+        }
+        return parents;
     }
 
     @Override
