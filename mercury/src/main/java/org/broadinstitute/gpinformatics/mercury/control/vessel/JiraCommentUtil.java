@@ -2,6 +2,9 @@ package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 // todo jmt re-evaluate where this functionality belongs
 
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -11,9 +14,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -21,6 +27,9 @@ import java.util.Set;
  * about samples to project managers
  */
 public class JiraCommentUtil {
+
+    @Inject
+    private JiraService jiraService;
 
     /**
      * Sends an alert with the message text to every project
@@ -37,7 +46,7 @@ public class JiraCommentUtil {
      * @param  message the text of the message
      * @param vessels the containers used in the operation
      */
-    public static void postUpdate(String title,
+    public void postUpdate(String title,
                                   String message,
                                   Collection<LabVessel> vessels) {
         // keep a list of sample names for each project because we're going
@@ -75,14 +84,21 @@ public class JiraCommentUtil {
                 messageBuilder.append(message);
                 messageBuilder.append("\n");
             }
-            ticket.addComment(messageBuilder.toString());
-//            try {
-//                JiraIssue jiraIssue = ticket.getJiraDetails();
-//                Object fieldValue = jiraIssue.getFieldValue("customfield_13169"/*"LIMS Activity Stream"*/);
-//                System.out.println(fieldValue);
-//            } catch (IOException e) {
-//                throw new RuntimeException(e);
-//            }
+//            ticket.addComment(messageBuilder.toString());
+            try {
+                JiraIssue jiraIssue = ticket.getJiraDetails();
+                String fieldValue = (String) jiraIssue.getFieldValue("customfield_13169"/*"LIMS Activity Stream"*/);
+                fieldValue = new StringBuilder().append(fieldValue).append("{html}").append(message).append("{html}").toString();
+
+                Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
+                CustomField mercuryUrlField = new CustomField(
+                        submissionFields, LabBatch.RequiredSubmissionFields.LIMS_ACTIVITY_STREAM, fieldValue);
+
+                jiraIssue.updateIssue(Collections.singleton(mercuryUrlField));
+                System.out.println(fieldValue);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
 
     }
@@ -102,7 +118,7 @@ public class JiraCommentUtil {
      * @param  message the text of the message
      * @param vessel the container used in the operation
      */
-    public static void postUpdate(String title,
+    public void postUpdate(String title,
                                   String message,
                                   LabVessel vessel) {
         Collection<LabVessel> vessels = new HashSet<LabVessel>();

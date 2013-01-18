@@ -296,7 +296,9 @@ public class LabBatch {
         PROGRESS_STATUS("Progress Status", true),
 
         //List of Sample names
-        GSSR_IDS("GSSR ID(s)", true),;
+        GSSR_IDS("GSSR ID(s)", true),
+
+        LIMS_ACTIVITY_STREAM("LIMS Activity Stream", true);
 
         private final String fieldName;
         private final boolean customField;

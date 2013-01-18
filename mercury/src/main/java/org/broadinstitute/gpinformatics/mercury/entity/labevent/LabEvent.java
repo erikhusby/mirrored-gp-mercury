@@ -206,6 +206,7 @@ public class LabEvent {
         Set<LabVessel> allLabVessels = new HashSet<LabVessel>();
         allLabVessels.addAll(getSourceLabVessels());
         allLabVessels.addAll(getTargetLabVessels());
+        allLabVessels.add(inPlaceLabVessel);
         return allLabVessels;
     }
 

@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -36,24 +37,27 @@ public class LabEventHandler implements Serializable {
         ERROR /* further refine to "out of order", "bad molecular envelope", critical, warning, etc. */
     }
 
-    PartiallyProcessedLabEventCache unanchored;
+    private PartiallyProcessedLabEventCache unanchored;
 
-    PartiallyProcessedLabEventCache invalidMolecularState;
-
-    @Inject
-    Event<Billable> billableEvents;
+    private PartiallyProcessedLabEventCache invalidMolecularState;
 
     @Inject
-    QuoteService quoteService;
+    private Event<Billable> billableEvents;
 
     @Inject
-    WorkflowLoader workflowLoader;
+    private QuoteService quoteService;
 
     @Inject
-    AthenaClientService athenaClientService;
+    private WorkflowLoader workflowLoader;
+
+    @Inject
+    private AthenaClientService athenaClientService;
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private JiraCommentUtil jiraCommentUtil;
 
     private static final Log LOG = LogFactory.getLog(LabEventHandler.class);
 
@@ -131,8 +135,16 @@ public class LabEventHandler implements Serializable {
         // and leave the override processing for on-the-fly work in VesselContainer
         //processProjectPlanOverrides(labEvent, workflow);
 
-        JiraCommentUtil.postUpdate(labEvent.getLabEventType().getName() + " Event Applied", null,
-                                   labEvent.getAllLabVessels());
+        String message = "";
+        if(bspUserList != null) {
+            BspUser bspUser = bspUserList.getById(labEvent.getEventOperator());
+            if(bspUser != null) {
+                message += bspUser.getUsername() + " ran ";
+            }
+        }
+        message += labEvent.getLabEventType().getName() + " for " + labEvent.getAllLabVessels().iterator().next().getLabel() +
+                " on " + labEvent.getEventLocation() + " at " + labEvent.getEventDate();
+        jiraCommentUtil.postUpdate(message, null, labEvent.getAllLabVessels());
         try {
             labEvent.applyMolecularStateChanges();
             enqueueForPostProcessing(labEvent);

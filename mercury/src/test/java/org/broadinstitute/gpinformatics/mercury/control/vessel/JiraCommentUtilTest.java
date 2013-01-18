@@ -32,7 +32,10 @@ public class JiraCommentUtilTest extends Arquillian {
     @Inject
     private JiraService jiraService;
 
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Inject
+    private JiraCommentUtil jiraCommentUtil;
+
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testMessaging() {
         TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube("1234");
 
@@ -44,6 +47,6 @@ public class JiraCommentUtilTest extends Arquillian {
 
         List<LabVessel> labVessels = new ArrayList<LabVessel>();
         labVessels.add(twoDBarcodedTube);
-        JiraCommentUtil.postUpdate("test", "test", labVessels);
+        jiraCommentUtil.postUpdate("test", "test", labVessels);
     }
 }
