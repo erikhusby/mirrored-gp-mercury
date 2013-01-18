@@ -54,7 +54,6 @@ public class ProductOrderEjb {
     @Inject
     private UserBean userBean;
 
-
     private void validateUniqueProjectTitle(ProductOrder productOrder) throws DuplicateTitleException {
         if (productOrderDao.findByTitle(productOrder.getTitle()) != null) {
             throw new DuplicateTitleException();
@@ -70,7 +69,7 @@ public class ProductOrderEjb {
     }
 
 
-    private void setSamples(ProductOrder productOrder, List<String> sampleIds) throws NoSamplesException {
+    private static void setSamples(ProductOrder productOrder, List<String> sampleIds) throws NoSamplesException {
         if (sampleIds.isEmpty()) {
             throw new NoSamplesException();
         }
@@ -83,7 +82,7 @@ public class ProductOrderEjb {
     }
 
 
-    private void createJiraIssue(ProductOrder productOrder) {
+    private static void createJiraIssue(ProductOrder productOrder) {
         try {
             productOrder.submitProductOrder();
         } catch (IOException e) {
@@ -100,11 +99,10 @@ public class ProductOrderEjb {
     }
 
 
-    private void setStatus(ProductOrder productOrder) {
+    private static void setStatus(ProductOrder productOrder) {
         // DRAFT orders not yet supported; force state of new PDOs to Submitted.
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
     }
-
 
     /**
      * Including {@link QuoteNotFoundException} since this is an expected failure that may occur in application validation
@@ -142,13 +140,13 @@ public class ProductOrderEjb {
      * as well as tracking changes that have been made to the values of those fields relative to the existing state
      * of the PDO JIRA ticket.
      *
-     * This inner class has to be static or Weld crashes with ArrayIndexOutOfBoundsExceptions
+     * This inner class has to be static or Weld crashes with ArrayIndexOutOfBoundsExceptions.
      */
     private static class PDOUpdateField {
 
-        private String displayName;
-
-        private String newValue;
+        private final String displayName;
+        private final String newValue;
+        private final CustomField.SubmissionField field;
 
         /**
          * Return the update message appropriate for this field.  If there are no changes this will return the empty
@@ -162,35 +160,31 @@ public class ProductOrderEjb {
          */
         public String getUpdateMessage(ProductOrder productOrder, Map<String, CustomFieldDefinition> customFieldDefinitionMap, IssueFieldsResponse issueFieldsResponse) {
 
-            if ( ! customFieldDefinitionMap.containsKey(displayName)) {
-                throw new RuntimeException("Custom field '" + displayName + "' not found in issue " + productOrder.getJiraTicketKey());
+            if (!customFieldDefinitionMap.containsKey(displayName)) {
+                throw new RuntimeException(
+                        "Custom field '" + displayName + "' not found in issue " + productOrder.getJiraTicketKey());
             }
             CustomFieldDefinition customFieldDefinition = customFieldDefinitionMap.get(displayName);
 
             String previousValue = issueFieldsResponse.getFields().get(customFieldDefinition.getJiraCustomFieldId());
 
-            // this assumes all target fields are not nullable, which is currently true but may not be in the future
+            // This assumes all target fields are not nullable, which is currently true but may not be in the future.
             if (previousValue == null) {
-                throw new RuntimeException("Custom field value for '" + displayName + "' not found in issue '" + productOrder.getJiraTicketKey() + "'");
+                throw new RuntimeException(
+                        "Custom field value for '" + displayName + "' not found in issue '" + productOrder
+                                .getJiraTicketKey() + "'");
             }
 
-            if ( ! previousValue.equals(newValue)) {
+            if (!previousValue.equals(newValue)) {
                 return displayName + " was updated from '" + previousValue + "' to '" + newValue + "'\n";
             }
             return "";
         }
 
-        public PDOUpdateField(@Nonnull String displayName, @Nonnull String newValue) {
-            this.displayName = displayName;
+        public PDOUpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull String newValue) {
+            this.field = field;
+            displayName = field.getFieldName();
             this.newValue = newValue;
-        }
-
-        public String getDisplayName() {
-            return displayName;
-        }
-
-        public String getNewValue() {
-            return newValue;
         }
     }
 
@@ -206,46 +200,45 @@ public class ProductOrderEjb {
 
         validateQuote(productOrder);
 
-        Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(), "Developer Edit");
+        Transition transition = jiraService.findAvailableTransitionByName(productOrder.getJiraTicketKey(),
+                ProductOrder.TransitionStates.DeveloperEdit.getStateName());
 
         PDOUpdateField [] pdoUpdateFields = new PDOUpdateField[] {
-            new PDOUpdateField("Product", productOrder.getProduct().getProductName()),
-            new PDOUpdateField("Product Family", productOrder.getProduct().getProductFamily().getName()),
-            new PDOUpdateField("Quote ID", productOrder.getQuoteId())
+            new PDOUpdateField(ProductOrder.RequiredSubmissionFields.PRODUCT, productOrder.getProduct().getProductName()),
+            new PDOUpdateField(ProductOrder.RequiredSubmissionFields.PRODUCT_FAMILY, productOrder.getProduct().getProductFamily().getName()),
+            new PDOUpdateField(ProductOrder.RequiredSubmissionFields.QUOTE_ID, productOrder.getQuoteId())
         };
 
-        List<String> customFieldNames = new ArrayList<String>();
+        String[] customFieldNames = new String[pdoUpdateFields.length];
 
+        int i = 0;
         for (PDOUpdateField pdoUpdateField : pdoUpdateFields) {
-            customFieldNames.add(pdoUpdateField.getDisplayName());
+            customFieldNames[i++] = pdoUpdateField.displayName;
         }
 
-        Map<String, CustomFieldDefinition> customFieldDefinitions =
-                jiraService.getCustomFields(customFieldNames.toArray(new String[]{}));
+        Map<String, CustomFieldDefinition> customFieldDefinitions = jiraService.getCustomFields(customFieldNames);
 
         IssueFieldsResponse issueFieldsResponse =
                 jiraService.getIssueFields(productOrder.getJiraTicketKey(), customFieldDefinitions.values());
 
         List<CustomField> customFields = new ArrayList<CustomField>();
 
-        String updateComment = "";
+        StringBuilder updateCommentBuilder = new StringBuilder();
 
         for (PDOUpdateField pdoUpdateField : pdoUpdateFields) {
-            customFields.add(new CustomField(
-                customFieldDefinitions.get(pdoUpdateField.getDisplayName()),
-                pdoUpdateField.getNewValue(),
-                CustomField.SingleFieldType.TEXT
-            ));
+            customFields.add(new CustomField(customFieldDefinitions, pdoUpdateField.field, pdoUpdateField.newValue));
 
-            updateComment = updateComment + pdoUpdateField.getUpdateMessage(productOrder, customFieldDefinitions, issueFieldsResponse);
+            updateCommentBuilder.append(
+                    pdoUpdateField.getUpdateMessage(productOrder, customFieldDefinitions, issueFieldsResponse));
         }
+        String updateComment = updateCommentBuilder.toString();
 
-        // if we detect from the comment that nothing has changed, make a note of that (maybe the user changed
-        // something in the PDO that is not reflected in JIRA like add-ons)
+        // If we detect from the comment that nothing has changed, make a note of that (maybe the user changed
+        // something in the PDO that is not reflected in JIRA like add-ons).
 
-        String comment = "\n" + productOrder.getJiraTicketKey() + " was edited by " + userBean.getBspUser().getUsername() + "\n\n";
-
-        comment = comment + ("".equals(updateComment) ? "No JIRA Product Order fields were updated\n\n" : updateComment);
+        String comment = "\n" + productOrder.getJiraTicketKey() + " was edited by "
+                         + userBean.getLoginUserName() + "\n\n"
+                         + (updateComment.isEmpty() ? "No JIRA Product Order fields were updated\n\n" : updateComment);
 
         jiraService.postNewTransition(productOrder.getJiraTicketKey(), transition, customFields, comment);
     }
@@ -257,7 +250,7 @@ public class ProductOrderEjb {
      * @param productOrder product order
      * @param selectedAddOnPartNumbers selected add-on part numbers
      */
-    public void update(final ProductOrder productOrder, final List<String> selectedAddOnPartNumbers) throws QuoteNotFoundException {
+    public void update(ProductOrder productOrder, List<String> selectedAddOnPartNumbers) throws QuoteNotFoundException {
 
         // update JIRA ticket with new quote
         // GPLIM-488
@@ -306,9 +299,9 @@ public class ProductOrderEjb {
 
     public static class SampleDeliveryStatusChangeException extends Exception {
 
-        private List<ProductOrderSample> samples;
+        private final List<ProductOrderSample> samples;
 
-        private ProductOrderSample.DeliveryStatus targetedDeliveryStatus;
+        private final ProductOrderSample.DeliveryStatus targetedDeliveryStatus;
 
         protected SampleDeliveryStatusChangeException(ProductOrderSample.DeliveryStatus targetedDeliveryStatus, List<ProductOrderSample> samples) {
             this.targetedDeliveryStatus = targetedDeliveryStatus;
@@ -333,7 +326,7 @@ public class ProductOrderEjb {
         }
 
         protected ProductOrder getProductOrder() {
-            if (samples != null && samples.size() > 0) {
+            if (samples != null && !samples.isEmpty()) {
                 return samples.get(0).getProductOrder();
             }
 
@@ -377,8 +370,10 @@ public class ProductOrderEjb {
      * @param productOrderSamples the samples in question
      * @throws SampleDeliveryStatusChangeException thrown if any samples are found to not be in an acceptable starting status
      */
-    private void transitionSamples(ProductOrder productOrder, Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
-                                   ProductOrderSample.DeliveryStatus targetStatus, Collection<ProductOrderSample> productOrderSamples) throws SampleDeliveryStatusChangeException {
+    private static void transitionSamples(ProductOrder productOrder,
+                                          Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
+                                          ProductOrderSample.DeliveryStatus targetStatus,
+                                          Collection<ProductOrderSample> productOrderSamples) throws SampleDeliveryStatusChangeException {
 
         Set<ProductOrderSample> sampleSet = new HashSet<ProductOrderSample>(productOrderSamples);
 
