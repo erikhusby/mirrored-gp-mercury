@@ -11,6 +11,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 
 import javax.inject.Inject;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
@@ -26,10 +28,12 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTra
  */
 public class MercuryOrSquidRouter {
 
+    /** Names of products that Mercury should handle queries and messaging for. */
+    public static final Collection<String> MERCURY_PRODUCTS = Arrays.asList("Exome Express");
+
     public enum MercuryOrSquid { MERCURY, SQUID }
 
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
-
     private ProductOrderDao productOrderDao;
 
     @Inject
@@ -39,6 +43,11 @@ public class MercuryOrSquidRouter {
     }
 
     public MercuryOrSquid routeForTubes(List<String> tubeBarcodes) {
+        for (String tubeBarcode : tubeBarcodes) {
+            if (routeForTube(tubeBarcode) == MERCURY) {
+                return MERCURY;
+            }
+        }
         return SQUID;
     }
 
@@ -70,7 +79,7 @@ public class MercuryOrSquidRouter {
                 String productOrderKey = sampleInstance.getStartingSample().getProductOrderKey();
                 if (productOrderKey != null) {
                     ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
-                    if (order != null && order.getProduct().getProductName().equals("Exome Express")) {
+                    if (order != null && MERCURY_PRODUCTS.contains(order.getProduct().getProductName())) {
                         return MERCURY;
                     }
                 }
@@ -90,7 +99,7 @@ public class MercuryOrSquidRouter {
                     String productOrderKey = sampleInstance.getStartingSample().getProductOrderKey();
                     if (productOrderKey != null) {
                         ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
-                        if (order != null && order.getProduct().getProductName().equals("Exome Express")) {
+                        if (order != null && MERCURY_PRODUCTS.contains(order.getProduct().getProductName())) {
                             foundAnyProductOrder = true;
                             return TraversalControl.StopTraversing;
                         }
