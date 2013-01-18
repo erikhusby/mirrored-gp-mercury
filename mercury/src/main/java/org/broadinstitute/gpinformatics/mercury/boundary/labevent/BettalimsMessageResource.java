@@ -87,15 +87,6 @@ public class BettalimsMessageResource {
     private Session mailSession;
 
     @Inject
-    private BucketDao bucketDao;
-
-    @Inject
-    private BucketBean bucketBean;
-
-    @Inject
-    private BSPUserList bspUserList;
-
-    @Inject
     private BettalimsConnector bettalimsConnector;
 
     @Inject
