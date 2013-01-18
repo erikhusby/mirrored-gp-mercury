@@ -12,7 +12,8 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Project Manager name",
                                     prePopulate: ${actionBean.ensureStringResult(actionBean.projectManagerList.completeData)},
-                                    preventDuplicates: true
+                                    preventDuplicates: true,
+                                    resultsFormatter: formatUser
                                 }
                         );
 
@@ -20,7 +21,8 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Scientist name",
                                     prePopulate: ${actionBean.ensureStringResult(actionBean.scientistList.completeData)},
-                                    preventDuplicates: true
+                                    preventDuplicates: true,
+                                    resultsFormatter: formatUser
                                 }
                         );
 
@@ -28,7 +30,8 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Collaborator name",
                                     prePopulate: ${actionBean.ensureStringResult(actionBean.externalCollaboratorList.completeData)},
-                                    preventDuplicates: true
+                                    preventDuplicates: true,
+                                    resultsFormatter: formatUser
                                 }
                         );
 
@@ -36,14 +39,16 @@
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Broad PI",
                                     prePopulate: ${actionBean.ensureStringResult(actionBean.broadPiList.completeData)},
-                                    preventDuplicates: true
+                                    preventDuplicates: true,
+                                    resultsFormatter: formatUser
                                 }
                         );
 
                         $j("#fundingSources").tokenInput(
                                 "${ctxpath}/projects/project.action?fundingAutocomplete=", {
                                     prePopulate: ${actionBean.ensureStringResult(actionBean.fundingSourceList.completeData)},
-                                    preventDuplicates: true
+                                    preventDuplicates: true,
+                                    resultsFormatter: formatFunding
                                 }
                         );
 
@@ -51,7 +56,8 @@
                                 "${ctxpath}/projects/project.action?cohortAutocomplete=", {
                                     hintText: "Type a Sample Cohort name",
                                     prePopulate: ${actionBean.ensureStringResult(actionBean.cohortsList.completeData)},
-                                    preventDuplicates: true
+                                    preventDuplicates: true,
+                                    resultsFormatter: formatCohort
                                 }
                         );
 
@@ -64,6 +70,21 @@
                         );
                     }
             );
+
+            function formatUser(item) {
+                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
+                       "<div class=\"ac-dropdown-subtext\">" + item.username + " " + item.email + "</div></li>";
+            }
+
+            function formatFunding(item) {
+                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
+                        "<div class=\"ac-dropdown-subtext\">" + item.matchDescription + "</div></li>";
+            }
+
+            function formatCohort(item) {
+                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
+                        "<div class=\"ac-dropdown-subtext\">" + item.group + " " + item.category + "</div></li>";
+            }
         </script>
     </stripes:layout-component>
 

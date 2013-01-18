@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -53,6 +54,9 @@ public class UserTokenInput extends TokenInput<BspUser> {
 
     private static void createAutocomplete(JSONArray itemList, BspUser bspUser) throws JSONException {
         String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
-        itemList.put(getJSONObject(String.valueOf(bspUser.getUserId()), fullName, false));
+        JSONObject item = getJSONObject(String.valueOf(bspUser.getUserId()), fullName, false);
+        item.put("email", bspUser.getEmail());
+        item.put("username", bspUser.getUsername());
+        itemList.put(item);
     }
 }

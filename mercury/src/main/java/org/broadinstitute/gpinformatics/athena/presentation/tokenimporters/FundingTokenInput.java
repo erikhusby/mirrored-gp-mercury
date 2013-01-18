@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -32,8 +33,7 @@ public class FundingTokenInput extends TokenInput<Funding> {
 
         JSONArray itemList = new JSONArray();
         for (Funding funding : fundingList) {
-            String fullName = funding.getDisplayName();
-            itemList.put(getJSONObject(funding.getDisplayName(), fullName, false));
+            createAutocomplete(itemList, funding);
         }
 
         return itemList.toString();
@@ -44,9 +44,15 @@ public class FundingTokenInput extends TokenInput<Funding> {
 
         JSONArray itemList = new JSONArray();
         for (Funding funding : getTokenObjects()) {
-            itemList.put(getJSONObject(funding.getDisplayName(), funding.getDisplayName(), false));
+            createAutocomplete(itemList, funding);
         }
 
         return itemList.toString();
+    }
+
+    private void createAutocomplete(JSONArray itemList, Funding funding) throws JSONException {
+        JSONObject item = getJSONObject(funding.getDisplayName(), funding.getDisplayName(), false);
+        item.put("matchDescription", funding.getMatchDescription());
+        itemList.put(item);
     }
 }
