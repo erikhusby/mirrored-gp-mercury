@@ -18,8 +18,8 @@ import java.util.Date;
 import java.util.List;
 
 import static org.easymock.EasyMock.*;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertTrue;
+import static org.testng.Assert.*;
+
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class EventEtlTest {
@@ -69,8 +69,8 @@ public class EventEtlTest {
 
         // Does a variety of workflow config lookups.  The ugly long expected value is the WorkflowConfigDenorm id,
         // a calculated hash value based on the contents of the WorkflowConfig elements.
-        assertEquals(eventEtl.lookupWorkflowConfigId("No such event", pdo1, new Date(MSEC_DATES[0] + 1000)), 0L);
-        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[0] - 1000)), 0L);
+        assertNull(eventEtl.lookupWorkflowConfigId("No such event", pdo1, new Date(MSEC_DATES[0] + 1000)));
+        assertNull(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[0] - 1000)));
         assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[0] + 1000)), -3820907449895214598L);
         assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[1] + 1000)), -7175333637954737190L);
         assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[2] + 1000)), 4622114345093982745L);

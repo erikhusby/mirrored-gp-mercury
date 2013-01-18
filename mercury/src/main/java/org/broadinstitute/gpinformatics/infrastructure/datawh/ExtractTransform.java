@@ -41,7 +41,6 @@ public class ExtractTransform {
     public static final String READY_FILE_SUFFIX = "_is_ready";
     /** This date format matches what cron job expects in filenames, and in SqlLoader data files. */
     public static final SimpleDateFormat secTimestampFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-    public static final SimpleDateFormat mSecTimestampFormat = new SimpleDateFormat("yyyyMMddHHmmss");
     /** Name of file that contains the mSec time of the last etl run. */
     public static final String LAST_ETL_FILE = "last_etl_run";
     /** Name of subdirectory under configured ETL root dir where new sqlLoader files are put. */

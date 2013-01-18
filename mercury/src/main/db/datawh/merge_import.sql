@@ -19,11 +19,10 @@ CURSOR im_rp_funding_cur IS SELECT * FROM im_research_project_funding WHERE is_d
 CURSOR im_rp_irb_cur IS SELECT * FROM im_research_project_irb WHERE is_delete = 'F';
 CURSOR im_rp_person_cur IS SELECT * FROM im_research_project_person WHERE is_delete = 'F';
 CURSOR im_rp_status_cur IS SELECT * FROM im_research_project_status WHERE is_delete = 'F';
-CURSOR im_jira_ticket_cur IS SELECT * FROM im_jira_ticket WHERE is_delete = 'F';
-CURSOR im_lab_batch IS SELECT * FROM im_lab_batch WHERE is_delete = 'F';
-CURSOR im_lab_vessel IS SELECT * FROM im_lab_vessel WHERE is_delete = 'F';
-CURSOR im_workflow_config IS SELECT * FROM im_workflow_config WHERE is_delete = 'F';
-CURSOR im_event_fact IS SELECT * FROM im_event_fact WHERE is_delete = 'F';
+CURSOR im_lab_batch_cur IS SELECT * FROM im_lab_batch WHERE is_delete = 'F';
+CURSOR im_lab_vessel_cur IS SELECT * FROM im_lab_vessel WHERE is_delete = 'F';
+CURSOR im_workflow_config_cur IS SELECT * FROM im_workflow_config WHERE is_delete = 'F';
+CURSOR im_event_fact_cur IS SELECT * FROM im_event_fact WHERE is_delete = 'F';
 
 errmsg VARCHAR2(255);
 
@@ -109,11 +108,6 @@ WHERE price_item_id IN (
 DELETE FROM product
 WHERE product_id IN (
   SELECT product_id FROM im_product WHERE is_delete = 'T'
-);
-
-DELETE FROM jira_ticket
-WHERE jira_ticket_id IN (
-  SELECT jira_ticket_id FROM im_jira_ticket WHERE is_delete = 'T'
 );
 
 DELETE FROM lab_batch
@@ -230,6 +224,9 @@ FOR new IN im_product_cur LOOP
     CONTINUE;
   END;
 
+END LOOP;
+
+
 FOR new IN im_lab_vessel_cur LOOP
   BEGIN
     UPDATE lab_vessel SET
@@ -259,6 +256,8 @@ FOR new IN im_lab_vessel_cur LOOP
     DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_lab_vessel.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
+
+END LOOP;
 
 FOR new IN im_lab_batch_cur LOOP
   BEGIN
@@ -299,6 +298,8 @@ FOR new IN im_lab_batch_cur LOOP
     CONTINUE;
   END;
 
+END LOOP;
+
 FOR new IN im_workflow_config_cur LOOP
   BEGIN
     UPDATE workflow_config SET
@@ -325,14 +326,14 @@ FOR new IN im_workflow_config_cur LOOP
       etl_date
     ) 
     SELECT
-      workflow_config_id = new.workflow_config_id,
-      effective_date = new.effective_date,
-      workflow_name = new.workflow_name,
-      workflow_version = new.workflow_version,
-      process_name = new.process_name,
-      process_version = new.process_version,
-      step_name = new.step_name,
-      event_name = new.event_name,
+      new.workflow_config_id,
+      new.effective_date,
+      new.workflow_name,
+      new.workflow_version,
+      new.process_name,
+      new.process_version,
+      new.step_name,
+      new.event_name,
       new.etl_date
     FROM DUAL WHERE NOT EXISTS (
       SELECT 1 FROM workflow_config
@@ -725,6 +726,7 @@ FOR new IN im_event_fact_cur LOOP
     CONTINUE;
   END;
 
+END LOOP;
 
 
 --Level 3 (depends on level 2 tables)

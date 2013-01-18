@@ -42,6 +42,8 @@ DROP TABLE lab_vessel;
 DROP TABLE workflow_config;
 DROP TABLE event_fact;
 
+DROP SEQUENCE event_fact_id_seq;
+
 
 CREATE TABLE product (
   product_id NUMERIC(19) PRIMARY KEY NOT NULL,
@@ -200,16 +202,18 @@ CREATE TABLE product_order_add_on (
 CREATE TABLE lab_vessel (
   lab_vessel_id NUMERIC(19) NOT NULL PRIMARY KEY,
   label VARCHAR2(40) NOT NULL,
-  lab_vessel_type VARCHAR2(40) NOT NULL
+  lab_vessel_type VARCHAR2(40) NOT NULL,
+  etl_date DATE NOT NULL
 );
 
 CREATE TABLE lab_batch (
   lab_batch_id NUMERIC(19) NOT NULL PRIMARY KEY,
   batch_name VARCHAR2(40) NOT NULL,
-  is_active VARCHAR2(1) NOT NULL CHECK is_active IN ('T','F'),
-  created_on DATE NOT NULL
+  is_active CHAR(1) DEFAULT 'T' NOT NULL CHECK (is_active IN ('T','F')),
+  created_on DATE NOT NULL,
   due_date DATE,
-  is_important CHAR(1) NOT NULL DEFAULT 'F' CHECK is_important IN ('T','F')
+  is_important CHAR(1) DEFAULT 'F' NOT NULL CHECK (is_important IN ('T','F')),
+  etl_date DATE NOT NULL
 );
 
 CREATE TABLE workflow_config (
@@ -220,7 +224,8 @@ CREATE TABLE workflow_config (
   process_name VARCHAR2(255) NOT NULL,
   process_version VARCHAR2(40) NOT NULL,
   step_name VARCHAR2(255) NOT NULL,
-  event_name VARCHAR2(255) NOT NULL
+  event_name VARCHAR2(255) NOT NULL,
+  etl_date DATE NOT NULL
 );
 
 CREATE TABLE event_fact (
@@ -234,9 +239,10 @@ CREATE TABLE event_fact (
   station_name VARCHAR2(255),
   lab_vessel_id NUMERIC(19),
   event_date DATE NOT NULL,
+  etl_date DATE NOT NULL,
   CONSTRAINT fk_event_lab_vessel FOREIGN KEY (lab_vessel_id) REFERENCES lab_vessel(lab_vessel_id),
   CONSTRAINT fk_event_lab_batch FOREIGN KEY (lab_batch_id) REFERENCES lab_batch(lab_batch_id),
-  CONSTRAINT fk_event_pdo FOREIGN KEY (product_order_id) REFERENCES product_order.product_order_id,
+  CONSTRAINT fk_event_pdo FOREIGN KEY (product_order_id) REFERENCES product_order(product_order_id),
   CONSTRAINT fk_event_workflow_config FOREIGN KEY (workflow_config_id) REFERENCES workflow_config(workflow_config_id)
 );
 
@@ -396,7 +402,8 @@ CREATE TABLE im_product_order_sample (
   product_order_sample_id NUMERIC(19) NOT NULL,
   product_order_id NUMERIC(19),
   sample_name VARCHAR2(255),
-  delivery_status VARCHAR2(40)
+  delivery_status VARCHAR2(40),
+  sample_position NUMERIC(19) NOT NULL
 );
 
 CREATE TABLE im_product_order_add_on (

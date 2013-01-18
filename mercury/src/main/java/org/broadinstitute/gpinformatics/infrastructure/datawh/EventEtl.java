@@ -146,7 +146,7 @@ public class EventEtl extends GenericEntityEtl {
                         continue;
                     }
 
-                    long workflowConfigId = lookupWorkflowConfigId(eventName, productOrder, entity.getEventDate());
+                    Long workflowConfigId = lookupWorkflowConfigId(eventName, productOrder, entity.getEventDate());
 
                     records.add(genericRecord(etlDateStr, isDelete,
                             entity.getLabEventId(),
@@ -157,7 +157,7 @@ public class EventEtl extends GenericEntityEtl {
                             format(labBatchId),
                             format(entity.getEventLocation()),
                             format(vessel.getLabVesselId()),
-                            format(ExtractTransform.mSecTimestampFormat.format(entity.getEventDate()))
+                            format(ExtractTransform.secTimestampFormat.format(entity.getEventDate()))
                     ));
                 }
             }
@@ -173,7 +173,7 @@ public class EventEtl extends GenericEntityEtl {
                     format(labBatchId),
                     format(entity.getEventLocation()),
                     format((String) null),
-                    format(ExtractTransform.mSecTimestampFormat.format(entity.getEventDate()))
+                    format(ExtractTransform.secTimestampFormat.format(entity.getEventDate()))
             ));
         }
         return records;
@@ -217,9 +217,9 @@ public class EventEtl extends GenericEntityEtl {
     /**
      * Returns the id of the relevant WorkflowConfig denormalized record.
      *
-     * @return 0 if no id found
+     * @return null if no id found
      */
-    long lookupWorkflowConfigId(String eventName, ProductOrder productOrder, Date eventDate) {
+    Long lookupWorkflowConfigId(String eventName, ProductOrder productOrder, Date eventDate) {
 
         // Checks for a cache hit.
         String cacheKey = eventName + productOrder.getBusinessKey() + eventDate.toString();
@@ -234,14 +234,14 @@ public class EventEtl extends GenericEntityEtl {
         String workflowName = productOrder.getProduct().getWorkflowName();
         if (workflowName == null) {
             logger.warn("Product " + productOrder.getBusinessKey() + " has no workflow name");
-            return 0L;
+            return null;
         }
 
         // Iterates on the sorted list of workflow configs to find a match having latest effective date.
         List<WorkflowConfigDenorm> denormConfigs = mapEventToWorkflows.get(eventName);
         if (denormConfigs == null) {
             logger.warn("No WorkflowConfig records have event " + eventName);
-            return 0L;
+            return null;
         }
 
         for (WorkflowConfigDenorm denorm : denormConfigs) {
@@ -255,7 +255,7 @@ public class EventEtl extends GenericEntityEtl {
         }
         logger.warn("No denormalized workflow config for product " + workflowName + " having eventName " + eventName
                 + " on date " + eventDate.toString());
-        return 0L;
+        return null;
     }
 
     /**
