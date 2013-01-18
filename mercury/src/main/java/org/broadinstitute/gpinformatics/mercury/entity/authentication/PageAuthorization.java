@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.authentication;
 
+import clover.org.apache.commons.lang.StringUtils;
+
 import java.util.LinkedList;
 import java.util.List;
 
@@ -79,5 +81,9 @@ public class PageAuthorization {
     @Override
     public int hashCode() {
         return pagePath.hashCode();
+    }
+
+    public String getDisplayRoles() {
+        return StringUtils.join(getRoleList(), ", ");
     }
 }

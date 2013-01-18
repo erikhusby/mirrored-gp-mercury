@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.boundary;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
 
@@ -25,12 +24,8 @@ public class FundingListBean {
         return fundingList.find(query);
     }
 
-    public String getFundingListString(String[] fundingIds) {
-        if ((fundingIds == null) || (fundingIds.length == 0)) {
-            return "";
-        }
-
-        return StringUtils.join(fundingIds, ", ");
+    public Funding getById(String fundingId) {
+        return fundingList.getById(fundingId);
     }
 }
 

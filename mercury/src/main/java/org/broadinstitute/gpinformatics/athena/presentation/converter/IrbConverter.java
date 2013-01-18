@@ -1,7 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.presentation.converter;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.project.Irb;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
+import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
+import org.json.JSONArray;
+import org.json.JSONException;
 
 import javax.faces.component.UIComponent;
 import javax.faces.context.FacesContext;
@@ -18,6 +22,10 @@ public class IrbConverter implements Converter {
 
     @Override
     public Object getAsObject(FacesContext context, UIComponent component, String value) {
+        return getAsObject(value);
+    }
+
+    public static Object getAsObject(String value) {
         int index = value.trim().lastIndexOf(":");
 
         if (index < 1) {
@@ -41,15 +49,6 @@ public class IrbConverter implements Converter {
         return getFullIrbString(irb.getName(), irb.getIrbType().getDisplayName());
     }
 
-    private String getFullIrbString(String irbName, String irbType) {
-        String returnValue = irbName;
-        if (irbType != null) {
-            returnValue += " : " + irbType;
-        }
-
-        return returnValue;
-    }
-
     public List<Irb> completeIrbs(String query) {
         String trimmedQuery = query.trim();
 
@@ -70,6 +69,33 @@ public class IrbConverter implements Converter {
         return IRB_NAME_MAX_LENGTH;
     }
 
+    public static List<Irb> getIrbs(String irbList) {
+        if (irbList == null) {
+            return Collections.emptyList();
+        }
+
+        String[] irbArray = irbList.split(",");
+        List<Irb> irbs = new ArrayList<Irb> ();
+        for (String irb : irbArray) {
+            irbs.add((Irb) IrbConverter.getAsObject(irb.trim()));
+        }
+
+        return irbs;
+    }
+
+    public static String getJsonString(String query) throws JSONException {
+        JSONArray itemList = new JSONArray();
+
+        String trimmedQuery = query.trim();
+        if (!StringUtils.isBlank(trimmedQuery)) {
+            for (ResearchProjectIRB.IrbType type : ResearchProjectIRB.IrbType.values()) {
+                Irb irb = createIrb(trimmedQuery, type, IRB_NAME_MAX_LENGTH);
+                itemList.put(TokenInput.getJSONObject(irb.getDisplayName(), irb.getDisplayName(), false));
+            }
+        }
+        return itemList.toString();
+    }
+
     /**
      * This creates a valid IRB object out of the type.
      *
@@ -79,7 +105,7 @@ public class IrbConverter implements Converter {
      *
      * @return The irb object
      */
-    public Irb createIrb(String irbName, ResearchProjectIRB.IrbType type, int irbNameMaxLength) {
+    public static Irb createIrb(String irbName, ResearchProjectIRB.IrbType type, int irbNameMaxLength) {
 
         // If the type + the space-colon-space is longer than max length, then we cannot have a unique name.
         if (type.getDisplayName().length() + 4 > irbNameMaxLength) {
@@ -94,5 +120,23 @@ public class IrbConverter implements Converter {
         }
 
         return new Irb(returnName, type);
+    }
+
+    private static String getFullIrbString(String irbName, String irbType) {
+        String returnValue = irbName;
+        if (irbType != null) {
+            returnValue += " : " + irbType;
+        }
+
+        return returnValue;
+    }
+
+    public static String getIrbCompleteData(String[] irbNumbers) throws JSONException {
+        JSONArray itemList = new JSONArray();
+        for (String irbNumber : irbNumbers) {
+            itemList.put(TokenInput.getJSONObject(irbNumber, irbNumber, false));
+        }
+
+        return itemList.toString();
     }
 }

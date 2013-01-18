@@ -9,10 +9,7 @@ import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 
 /**
@@ -53,7 +50,6 @@ public class PriceListCache extends AbstractCache implements Serializable {
     @Inject
     public PriceListCache(PMBQuoteService quoteService) {
         this.quoteService = quoteService;
-        doRefresh();
     }
 
     /**
@@ -62,8 +58,8 @@ public class PriceListCache extends AbstractCache implements Serializable {
      * @return The full price list
      */
     public PriceList getPriceList() {
-        if ((priceList == null) || shouldReFresh(deployment)) {
-                doRefresh();
+        if (priceList == null) {
+            refreshCache();
         }
         return priceList;
     }
@@ -72,20 +68,18 @@ public class PriceListCache extends AbstractCache implements Serializable {
 
     @Override
     public synchronized void refreshCache() {
-        setNeedsRefresh(true);
-    }
-
-    private void doRefresh() {
         try {
             PriceList rawPriceList = quoteService.getAllPriceItems();
 
             // if fails, use previous cache entry (even if it's null)
             if (rawPriceList == null) {
+                if (priceList == null) {
+                    priceList = new PriceList();
+                }
                 return;
             }
 
             priceList = rawPriceList;
-            setNeedsRefresh(false);
         } catch (Exception ex) {
             logger.error("Could not refresh the price item list", ex);
         }
@@ -170,6 +164,16 @@ public class PriceListCache extends AbstractCache implements Serializable {
                 priceItem.getPlatformName() + '|' + priceItem.getCategoryName() + '|' + priceItem.getName();
 
             if (concatenatedKey.equals(currentKey)) {
+                return priceItem;
+            }
+        }
+
+        return null;
+    }
+
+    public PriceItem findById(Long priceItemId) {
+        for (PriceItem priceItem : getPriceList().getPriceItems()) {
+            if (priceItem.getId().equals(priceItemId.toString())) {
                 return priceItem;
             }
         }

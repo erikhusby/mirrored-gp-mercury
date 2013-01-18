@@ -77,6 +77,7 @@ public class ProductOrderSample implements Serializable {
             this.displayName = displayName;
         }
 
+        @Override
         public String getDisplayName() {
             return displayName;
         }
@@ -248,6 +249,14 @@ public class ProductOrderSample implements Serializable {
         }
 
         return builder.toString();
+    }
+
+    public String getStripBspName() {
+        if ((sampleName.length() > 3) && isInBspFormat(sampleName)) {
+            return sampleName.substring(3);
+        }
+
+        return sampleName;
     }
 
     /**

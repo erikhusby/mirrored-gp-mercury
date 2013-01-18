@@ -1,13 +1,20 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import clover.org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -21,8 +28,6 @@ import org.hibernate.envers.NotAudited;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * A piece of plastic or glass that holds sample, reagent or other plastic.
@@ -38,7 +43,7 @@ public abstract class LabVessel implements Serializable {
 
     //todo SGM:  create comparator for sorting Containers THEN Create getter that gets sorted containers
 
-    private final static Logger logger = Logger.getLogger(LabVessel.class.getName());
+    private final static Log logger = LogFactory.getLog(LabVessel.class);
 
     @SequenceGenerator(name = "SEQ_LAB_VESSEL", schema = "mercury", sequenceName = "SEQ_LAB_VESSEL")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_VESSEL")
@@ -197,7 +202,8 @@ public abstract class LabVessel implements Serializable {
      * @param sampleInstance
      * @return
      */
-    public LabMetric getMetric(LabMetric.MetricName metricName, MetricSearchMode searchMode, SampleInstance sampleInstance) {
+    public LabMetric getMetric(LabMetric.MetricName metricName, MetricSearchMode searchMode,
+                               SampleInstance sampleInstance) {
         throw new RuntimeException("I haven't been written yet.");
     }
 
@@ -251,7 +257,7 @@ public abstract class LabVessel implements Serializable {
 
         } catch (NumberFormatException nfe) {
             vesselContentName = label;
-            logger.log(Level.WARNING, "Could not return Base 36 version of label.  Returning original label instead");
+            logger.warn("Could not return Base 36 version of label.  Returning original label instead");
         }
 
         return vesselContentName;
@@ -361,11 +367,30 @@ public abstract class LabVessel implements Serializable {
             if (nearestPdos != null && !nearestPdos.isEmpty()) {
                 pdoNames.addAll(nearestPdos);
             } else {
-                logger.warning("Most recent PDO came up with more than one result");
+                logger.error("Unable to find at least one nearest PDO for " + currVessel.getLabel());
             }
         }
 
         return pdoNames;
+    }
+
+    public String getNearestLabBatchesString() {
+        Collection<LabBatch> nearest = getNearestLabBatches();
+        if ((nearest == null) || nearest.isEmpty()) {
+            return "";
+        }
+
+        LabBatch[] batchArray = nearest.toArray(new LabBatch[nearest.size()]);
+        return StringUtils.join(batchArray);
+    }
+
+    public int getNearestLabBatchesCount() {
+        Collection<LabBatch> nearest = getNearestLabBatches();
+        if (nearest == null) {
+            return 0;
+        }
+
+        return nearest.size();
     }
 
     public enum CONTAINER_TYPE {
@@ -438,6 +463,10 @@ public abstract class LabVessel implements Serializable {
         }
         TraversalResults traversalResults = traverseAncestors();
         return traversalResults.getSampleInstances();
+    }
+
+    public int getSampleInstanceCount() {
+        return getSampleInstances().size();
     }
 
     /**
@@ -801,15 +830,18 @@ public abstract class LabVessel implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o)
+        if (this == o) {
             return true;
-        if (!(o instanceof LabVessel))
+        }
+        if (!(o instanceof LabVessel)) {
             return false;
+        }
 
         LabVessel labVessel = (LabVessel) o;
 
-        if (label != null ? !label.equals(labVessel.label) : labVessel.label != null)
+        if (label != null ? !label.equals(labVessel.label) : labVessel.label != null) {
             return false;
+        }
 
         return true;
     }
@@ -848,7 +880,8 @@ public abstract class LabVessel implements Serializable {
     }
 
     void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
-                          TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent, int hopCount) {
+                          TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent,
+                          int hopCount) {
         transferTraverserCriteria.evaluateVesselPreOrder(this, labEvent, hopCount);
         if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
             for (VesselEvent vesselEvent : getAncestors()) {
@@ -865,7 +898,8 @@ public abstract class LabVessel implements Serializable {
     }
 
     private void evaluateVesselEvent(TransferTraverserCriteria transferTraverserCriteria,
-                                     TransferTraverserCriteria.TraversalDirection traversalDirection, int hopCount, VesselEvent vesselEvent) {
+                                     TransferTraverserCriteria.TraversalDirection traversalDirection, int hopCount,
+                                     VesselEvent vesselEvent) {
         LabVessel labVessel = vesselEvent.getLabVessel();
         if (labVessel == null) {
             vesselEvent.getVesselContainer().evaluateCriteria(vesselEvent.getPosition(),
@@ -917,4 +951,91 @@ public abstract class LabVessel implements Serializable {
         return descendantCriteria.getLabVesselDescendants();
     }
 
+    /**
+     * This method get index information for all samples in this vessel.
+     *
+     * @return a set of strings representing all indexes in this vessel.
+     */
+    public Set<String> getIndexes() {
+        Set<String> indexes = new HashSet<String>();
+        StringBuilder indexInfo = new StringBuilder();
+        for (SampleInstance sample : getAllSamples()) {
+            for (Reagent reagent : sample.getReagents()) {
+                if (OrmUtil.proxySafeIsInstance(reagent, MolecularIndexReagent.class)) {
+                    MolecularIndexReagent indexReagent = (MolecularIndexReagent) reagent;
+                    indexInfo.append(indexReagent.getMolecularIndexingScheme().getName());
+                    indexInfo.append(" - ");
+                    for (MolecularIndexingScheme.IndexPosition hint : indexReagent.getMolecularIndexingScheme().getIndexes().keySet()) {
+                        MolecularIndex index = indexReagent.getMolecularIndexingScheme().getIndexes().get(hint);
+                        indexInfo.append(index.getSequence());
+                        indexInfo.append("\n");
+                    }
+                    indexes.add(indexInfo.toString());
+                    indexInfo.delete(0, indexInfo.length());
+                }
+            }
+        }
+
+        return indexes;
+    }
+
+    public String getIndexesString() {
+        Collection<String> indexes = getIndexes();
+        if ((indexes == null) || indexes.isEmpty()) {
+            return "";
+        }
+
+        String[] batchArray = indexes.toArray(new String[indexes.size()]);
+        return StringUtils.join(batchArray);
+    }
+
+    public int getIndexesCount() {
+        Collection<String> indexes = getIndexes();
+        if ((indexes == null) || indexes.isEmpty()) {
+            return 0;
+        }
+
+        return indexes.size();
+    }
+
+    public Set<String> getPdoKeys() {
+        Set<String> pdoKeys = new HashSet<String>();
+        for (SampleInstance sample : getAllSamples()) {
+            pdoKeys.add(sample.getStartingSample().getProductOrderKey());
+        }
+
+        pdoKeys.remove(null);
+        return pdoKeys;
+    }
+
+    public String getPdoKeysString() {
+        Collection<String> keys = getPdoKeys();
+
+        String[] batchArray = keys.toArray(new String[keys.size()]);
+        return StringUtils.join(batchArray);
+    }
+
+    public int getPdoKeysCount() {
+        Collection<String> keys = getPdoKeys();
+        if (keys == null) {
+            return 0;
+        }
+
+        return keys.size();
+    }
+
+    /**
+     * This method gets all sample instances for a given lab vessel. If this vessel has a container role than the
+     * samples are taken from that container.
+     *
+     * @return a set of sample instances contained in this vessel.
+     */
+    public Set<SampleInstance> getAllSamples() {
+        Set<SampleInstance> allSamples = new HashSet<SampleInstance>();
+        allSamples.addAll(getSampleInstances());
+        if (getContainerRole() != null) {
+            allSamples.addAll(getContainerRole().getSampleInstances());
+        }
+        return allSamples;
+    }
 }

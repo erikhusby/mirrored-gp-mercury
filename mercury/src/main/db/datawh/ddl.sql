@@ -327,8 +327,7 @@ CREATE TABLE im_product_order_sample_stat (
   is_delete CHAR(1) NOT NULL,
   product_order_sample_id NUMERIC(19) NOT NULL,
   status_date DATE,
-  delivery_status VARCHAR2(40),
-  sample_position NUMERIC(19)
+  delivery_status VARCHAR2(40)
 );
 
 
@@ -339,7 +338,8 @@ CREATE TABLE im_product_order_sample (
   product_order_sample_id NUMERIC(19) NOT NULL,
   product_order_id NUMERIC(19),
   sample_name VARCHAR2(255),
-  delivery_status VARCHAR2(40)
+  delivery_status VARCHAR2(40),
+  sample_position NUMERIC(19)
 );
 
 CREATE TABLE im_product_order_add_on (

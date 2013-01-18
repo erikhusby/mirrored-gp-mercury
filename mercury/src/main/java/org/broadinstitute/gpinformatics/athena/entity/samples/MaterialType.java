@@ -24,7 +24,7 @@ import java.util.Comparator;
 public class MaterialType implements Serializable, Comparable<MaterialType> {
 
     @Id
-    @SequenceGenerator(name = "SEQ_MATERIAL_TYPE", schema = "athena", sequenceName = "SEQ_MATERIAL_TYPE")
+    @SequenceGenerator(name = "SEQ_MATERIAL_TYPE", schema = "athena", sequenceName = "SEQ_MATERIAL_TYPE", allocationSize = 10)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MATERIAL_TYPE")
     private Long materialTypeId;
 

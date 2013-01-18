@@ -13,10 +13,13 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Tra
 import javax.annotation.Nonnull;
 import java.io.IOException;
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Map;
 
 public interface JiraService extends Serializable {
+
+    SimpleDateFormat JIRA_DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd");
 
     /**
      * Create an issue with a project prefix specified by projectPrefix; i.e. for this method projectPrefix would be 'TP' and not 'TP-5' for
@@ -158,4 +161,6 @@ public interface JiraService extends Serializable {
      * @return true if user is valid to use in JIRA API calls.
      */
     boolean isValidUser(String username);
+
+    JiraIssue getIssueInfo(String key, String... fields) throws IOException;
 }

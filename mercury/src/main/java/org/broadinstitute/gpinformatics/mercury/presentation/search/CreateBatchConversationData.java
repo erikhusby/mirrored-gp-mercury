@@ -12,7 +12,7 @@ import java.util.*;
 
 @Named
 @ConversationScoped
-public class CreateBatchConversationData implements Serializable{
+public class CreateBatchConversationData implements Serializable {
 
     @Inject
     private Conversation conversation;
@@ -31,7 +31,7 @@ public class CreateBatchConversationData implements Serializable{
     }
 
     public void beginConversation() {
-        if(conversation.isTransient()) {
+        if (conversation.isTransient()) {
             conversation.begin();
         }
     }
@@ -59,7 +59,7 @@ public class CreateBatchConversationData implements Serializable{
     public List<String> getVesselLabels() {
         List<String> labels = new ArrayList<String>(selectedVessels.length);
 
-        for(LabVessel vessel: selectedVessels) {
+        for (LabVessel vessel : selectedVessels) {
             labels.add(vessel.getLabel());
         }
         return labels;

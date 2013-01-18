@@ -24,6 +24,10 @@ import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean.CREATE_ACTION;
+import static org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean.EDIT_ACTION;
+import static org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean.VIEW_ACTION;
+
 /**
  * @author breilly
  */
@@ -97,7 +101,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
             }
         } else {
             addErrorMessage(MessageFormat.format(UserBean.LOGIN_WARNING,
-                    (isCreating() ? "create" : "edit") + " a research project"));
+                    (isCreating() ? CREATE_ACTION : EDIT_ACTION) + " a research project"));
         }
     }
 
@@ -169,7 +173,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
         }
 
         addInfoMessage("The Research Project \"" + project.getTitle() + "\" has been created.");
-        return redirect("view");
+        return redirect(VIEW_ACTION);
     }
 
     private void addCollections(ResearchProject project) {
@@ -206,7 +210,7 @@ public class ResearchProjectForm extends AbstractJsfBean {
         }
 
         addInfoMessage("The Research Project \"" + project.getTitle() + "\" has been updated.");
-        return redirect("view");
+        return redirect(VIEW_ACTION);
     }
 
     public List<BspUser> getProjectManagers() {

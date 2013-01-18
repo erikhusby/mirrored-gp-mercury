@@ -10,7 +10,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.util.List;
+import java.util.Collection;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -26,7 +26,7 @@ public class BSPUserListTest extends Arquillian {
 
     @Test
     public void testGetAllUsers() throws Exception {
-        List<BspUser> users = bspUserList.getUsers();
+        Collection<BspUser> users = bspUserList.getUsers().values();
         Assert.assertNotNull(users);
         Assert.assertTrue(!users.isEmpty());
         // This is an arbitrary sanity check; the actual database has about 2k users.
@@ -35,8 +35,9 @@ public class BSPUserListTest extends Arquillian {
 
     @Test
     public void testFindUserById() throws Exception {
-        List<BspUser> users = bspUserList.getUsers();
-        BspUser user1 = users.get(0);
+        Collection<BspUser> users = bspUserList.getUsers().values();
+        Assert.assertTrue(!users.isEmpty());
+        BspUser user1 = users.iterator().next();
         BspUser user2 = bspUserList.getById(user1.getUserId());
         Assert.assertTrue(user1.equals(user2));
     }

@@ -1,9 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import clover.org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -13,7 +16,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
-import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -36,6 +38,9 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     private final Set<ProductWorkflowDef> workflowDefs = new HashSet<ProductWorkflowDef>();
     private final Collection<String> pdos;
 
+    private final static Log logger = LogFactory.getLog(LCSetJiraFieldFactory.class);
+
+
     /**
      * LCSet Field constructor.  Extracts information that is used by each of the provided factory fields so that the
      * work is only done once.
@@ -57,8 +62,13 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
             ProductOrder pdo = athenaClientService.retrieveProductOrderDetails(currPdo);
 
             if (pdo != null) {
-                workflowDefs.add(wfConfig.getWorkflowByName(pdo.getProduct().getWorkflowName()));
+                if (pdo.getProduct().getWorkflowName() != null) {
+                    workflowDefs.add(wfConfig.getWorkflowByName(pdo.getProduct().getWorkflowName()));
+                }
                 foundResearchProjectList.add(pdo.getResearchProject());
+            } else {
+                //TODO SGM: Throw an exception here (?)
+                logger.error("Unable to find a PDO for the business key of " + currPdo);
             }
         }
 
@@ -99,14 +109,13 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         if (batch.getDueDate() != null) {
 
-//            SimpleDateFormat dateFormat = new SimpleDateFormat("dd/MMM/yy");
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.DUE_DATE, dateFormat
-                    .format(batch.getDueDate())));
+            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.DUE_DATE,
+                    JiraService.JIRA_DATE_FORMAT.format(batch.getDueDate())));
         }
 
-        if(batch.getImportant() != null) {
-            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.IMPORTANT,batch.getImportant()));
+        if (batch.getImportant() != null) {
+            customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.IMPORTANT, batch
+                    .getImportant()));
         }
 
         if (!workflowDefs.isEmpty()) {

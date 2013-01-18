@@ -48,6 +48,7 @@ public class BatchConfirm extends AbstractJsfBean {
 
         try {
             jiraIssue = jiraService.getIssue(foundBatch.getJiraTicket().getTicketName());
+
         } catch (IOException ioe) {
             addErrorMessage("Unable to retrieve Summary and Description from Jira");
         }
@@ -65,7 +66,7 @@ public class BatchConfirm extends AbstractJsfBean {
         BspUser user = bspUserList.getById(id);
         String username = "";
         if (user != null) {
-            username = bspUserList.getById(id).getUsername();
+            username = user.getUsername();
         }
         return username;
     }
@@ -87,6 +88,6 @@ public class BatchConfirm extends AbstractJsfBean {
     }
 
     public boolean isJiraInfoFound() {
-        return jiraIssue!=null;
+        return jiraIssue != null;
     }
 }
