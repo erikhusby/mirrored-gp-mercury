@@ -1,11 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 
-import org.broadinstitute.gpinformatics.athena.boundary.FundingListBean;
-import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
+import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -18,37 +18,41 @@ import java.util.List;
 public class FundingTokenInput extends TokenInput<Funding> {
 
     @Inject
-    private FundingListBean fundingListBean;
+    private QuoteFundingList quoteFundingList;
 
     public FundingTokenInput() {
-        super();
     }
 
     @Override
     protected Funding getById(String fundingId) {
-        return fundingListBean.getById(fundingId);
+        return quoteFundingList.getById(fundingId);
     }
 
-    public static String getJsonString(FundingListBean fundingListBean, String query) throws JSONException {
-        List<Funding> fundingList = fundingListBean.searchFunding(query);
+    public String getJsonString(String query) throws JSONException {
+        List<Funding> fundingList = quoteFundingList.find(query);
 
         JSONArray itemList = new JSONArray();
         for (Funding funding : fundingList) {
-            String fullName = funding.getDisplayName();
-            itemList.put(new AutoCompleteToken(String.valueOf(funding.getDisplayName()), fullName, false).getJSONObject());
+            createAutocomplete(itemList, funding);
         }
 
         return itemList.toString();
     }
 
-    public static String getFundingCompleteData(FundingListBean fundingList, String[] fundingIds) throws JSONException {
+    @Override
+    public String generateCompleteData() throws JSONException {
 
         JSONArray itemList = new JSONArray();
-        for (String fundingId : fundingIds) {
-            Funding funding = fundingList.getById(fundingId);
-            itemList.put(new AutoCompleteToken(fundingId, funding.getDisplayName(), false).getJSONObject());
+        for (Funding funding : getTokenObjects()) {
+            createAutocomplete(itemList, funding);
         }
 
         return itemList.toString();
+    }
+
+    private void createAutocomplete(JSONArray itemList, Funding funding) throws JSONException {
+        JSONObject item = getJSONObject(funding.getDisplayName(), funding.getDisplayName(), false);
+        item.put("matchDescription", funding.getMatchDescription());
+        itemList.put(item);
     }
 }

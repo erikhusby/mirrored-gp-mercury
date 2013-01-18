@@ -44,6 +44,7 @@
         <script type="text/javascript" src="${ctxpath}/resources/scripts/json.js"></script>
 
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.tokeninput-1.6.0.js"></script>
+        <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.autosize-min.js"></script>
 
 
         <link rel="Shortcut Icon" type="image/x-icon" href="${ctxpath}/favicon.ico"/>
@@ -90,6 +91,10 @@
                 $j('#dateRangeDiv').dateRangeSelector();
             });
 
+            $j(function(){
+                $j('.textarea').autosize();
+            });
+
             function clearOnFocus(srcc) {
                 if ($j(this).val() == $j(this)[0].title) {
                     $j(this).removeClass("defaultTextActive");
@@ -114,7 +119,7 @@
                 }
             }
         </script>
-        <title>Mercury ${pageTitle}</title>
+        <title>Mercury <c:if test="${pageTitle != null}">${pageTitle}</c:if></title>
 
         <stripes:layout-component name="extraHead"/>
     </head>

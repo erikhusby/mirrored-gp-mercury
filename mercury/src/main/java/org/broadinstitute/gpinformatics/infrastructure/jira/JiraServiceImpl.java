@@ -160,7 +160,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         if (null != fields) {
             for (String currField : fields) {
-                issueResult.addFieldValue(currField, issueResult.getFieldValue(currField));
+                issueResult.addFieldValue(currField, data.extraFields.get(currField));
             }
         }
 

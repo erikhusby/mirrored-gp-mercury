@@ -28,6 +28,7 @@ import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRang
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringReader;
 import java.util.List;
 import java.util.Locale;
 
@@ -364,5 +365,25 @@ public class CoreActionBean implements ActionBean {
             getContext().getResponse().setContentType(contentType + "; file=" + doubleQuotedFileName);
             getContext().getResponse().setHeader("Content-Disposition", "attachment; filename=" + doubleQuotedFileName);
         }
+    }
+
+    /**
+     * Helper method to create a streaming text resolution, used to create the response from an AJAX call.
+     * @param text text to return
+     * @return the resolution.
+     */
+    public Resolution createTextResolution(String text) {
+        return new StreamingResolution("text", new StringReader(text));
+    }
+
+    /**
+     * Call this method from code where we want to map an empty result to a valid javascript empty string.
+     * Without this change, the inserted text is missing.
+     */
+    public String ensureStringResult(String s) {
+        if (s.isEmpty()) {
+            return "''";
+        }
+        return s;
     }
 }

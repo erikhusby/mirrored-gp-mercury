@@ -11,80 +11,80 @@
                         $j("#projectManagers").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Project Manager name",
-                                    searchDelay: 500,
-                                    <c:if test="${actionBean.projectManagerCompleteData != null && actionBean.projectManagerCompleteData != ''}">
-                                        prePopulate: ${actionBean.projectManagerCompleteData},
-                                    </c:if>
-                                    preventDuplicates: true
+                                    prePopulate: ${actionBean.ensureStringResult(actionBean.projectManagerList.completeData)},
+                                    preventDuplicates: true,
+                                    resultsFormatter: formatUser
                                 }
                         );
 
                         $j("#scientists").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Scientist name",
-                                    searchDelay: 500,
-                                    <c:if test="${actionBean.scientistCompleteData != null && actionBean.scientistCompleteData != ''}">
-                                        prePopulate: ${actionBean.scientistCompleteData},
-                                    </c:if>
-                                    preventDuplicates: true
+                                    prePopulate: ${actionBean.ensureStringResult(actionBean.scientistList.completeData)},
+                                    preventDuplicates: true,
+                                    resultsFormatter: formatUser
                                 }
                         );
 
                         $j("#externalCollaborators").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Collaborator name",
-                                    searchDelay: 500,
-                                    <c:if test="${actionBean.externalCollaboratorCompleteData != null && actionBean.externalCollaboratorCompleteData != ''}">
-                                        prePopulate: ${actionBean.externalCollaboratorCompleteData},
-                                    </c:if>
-                                    preventDuplicates: true
+                                    prePopulate: ${actionBean.ensureStringResult(actionBean.externalCollaboratorList.completeData)},
+                                    preventDuplicates: true,
+                                    resultsFormatter: formatUser
                                 }
                         );
 
                         $j("#broadPIs").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Broad PI",
-                                    searchDelay: 500,
-                                    <c:if test="${actionBean.broadPICompleteData != null && actionBean.broadPICompleteData != ''}">
-                                        prePopulate: ${actionBean.broadPICompleteData},
-                                    </c:if>
-                                    preventDuplicates: true
+                                    prePopulate: ${actionBean.ensureStringResult(actionBean.broadPiList.completeData)},
+                                    preventDuplicates: true,
+                                    resultsFormatter: formatUser
                                 }
                         );
 
                         $j("#fundingSources").tokenInput(
                                 "${ctxpath}/projects/project.action?fundingAutocomplete=", {
-                                    searchDelay: 500,
-                                    <c:if test="${actionBean.fundingSourcesCompleteData != null && actionBean.fundingSourcesCompleteData != ''}">
-                                        prePopulate: ${actionBean.fundingSourcesCompleteData},
-                                    </c:if>
-                                    preventDuplicates: true
+                                    prePopulate: ${actionBean.ensureStringResult(actionBean.fundingSourceList.completeData)},
+                                    preventDuplicates: true,
+                                    resultsFormatter: formatFunding
                                 }
                         );
 
                         $j("#cohorts").tokenInput(
                                 "${ctxpath}/projects/project.action?cohortAutocomplete=", {
                                     hintText: "Type a Sample Cohort name",
-                                    searchDelay: 500,
-                                    <c:if test="${actionBean.cohortsCompleteData != null && actionBean.cohortsCompleteData != ''}">
-                                        prePopulate: ${actionBean.cohortsCompleteData},
-                                    </c:if>
-                                    preventDuplicates: true
+                                    prePopulate: ${actionBean.ensureStringResult(actionBean.cohortsList.completeData)},
+                                    preventDuplicates: true,
+                                    resultsFormatter: formatCohort
                                 }
                         );
 
                         $j("#irbs").tokenInput(
                                 "${ctxpath}/projects/project.action?irbAutocomplete=", {
                                     hintText: "Type an IRB Number",
-                                    searchDelay: 500,
-                                    <c:if test="${actionBean.irbsCompleteData != null && actionBean.irbsCompleteData != ''}">
-                                        prePopulate: ${actionBean.irbsCompleteData},
-                                    </c:if>
+                                    prePopulate: ${actionBean.ensureStringResult(actionBean.irbsCompleteData)},
                                     preventDuplicates: true
                                 }
                         );
                     }
             );
+
+            function formatUser(item) {
+                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
+                       "<div class=\"ac-dropdown-subtext\">" + item.username + " " + item.email + "</div></li>";
+            }
+
+            function formatFunding(item) {
+                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
+                        "<div class=\"ac-dropdown-subtext\">" + item.matchDescription + "</div></li>";
+            }
+
+            function formatCohort(item) {
+                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
+                        "<div class=\"ac-dropdown-subtext\">" + item.group + " " + item.category + "</div></li>";
+            }
         </script>
     </stripes:layout-component>
 
@@ -98,7 +98,7 @@
                     <stripes:label for="title" class="control-label">Name *</stripes:label>
                     <div class="controls">
                             <stripes:text name="editResearchProject.title" value="${actionBean.editResearchProject.title}"
-                                          id="title"  class="defaultText" title="Enter the project name"  maxlength="255"/>
+                                          id="title"  class="defaultText input-xxlarge" title="Enter the project name"  maxlength="255"/>
                     </div>
                 </div>
 
@@ -107,7 +107,7 @@
                     <stripes:label for="synopsis" class="control-label">Synopsis *</stripes:label>
 
                     <div class="controls">
-                        <stripes:textarea id="synopsis" rows="5" cols="100" name="editResearchProject.synopsis" class="defaultText" style="width:390"
+                        <stripes:textarea id="synopsis" rows="5" cols="100" name="editResearchProject.synopsis" class="defaultText textarea input-xxlarge"
                                       title="Enter the synopsis of the project" value="${actionBean.editResearchProject.synopsis}"/>
                     </div>
                 </div>
@@ -190,7 +190,7 @@
                 <div class="control-group">
                     <label id="j_idt130" class="ui-outputlabel control-label" for="irbNotes">IRB Notes</label>
                     <div class="controls">
-                        <stripes:text id="irbNotes" class="defaultText" title="Enter notes about the above IRBs" name="editResearchProject.irbNotes" value="${actionBean.editResearchProject.irbNotes}" maxlength="255" />
+                        <stripes:text id="irbNotes" class="defaultText input-xxlarge" title="Enter notes about the above IRBs" name="editResearchProject.irbNotes" value="${actionBean.editResearchProject.irbNotes}" maxlength="255" />
                     </div>
                 </div>
 
@@ -209,7 +209,7 @@
                                 </c:when>
                                 <c:otherwise>
                                     <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                        <stripes:param name="researchProject" value="${actionBean.editResearchProject.businessKey}"/>
+                                        <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
                                         Cancel
                                     </stripes:link>
                                 </c:otherwise>

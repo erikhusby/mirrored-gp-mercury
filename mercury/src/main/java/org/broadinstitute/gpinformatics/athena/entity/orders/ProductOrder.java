@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -100,7 +101,7 @@ public class ProductOrder implements Serializable {
     @JoinColumn(name = "product_order", nullable = false)
     @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
     @AuditJoinTable(name = "product_order_sample_join_aud")
-    private List<ProductOrderSample> samples = Collections.emptyList();
+    private List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
 
     @Transient
     private final SampleCounts counts = new SampleCounts();
@@ -110,9 +111,6 @@ public class ProductOrder implements Serializable {
 
     @Transient
     private String originalTitle;   // This is used for edit to keep track of changes to the object.
-
-    @Transient
-    private String sampleList;
 
     // Initialize our transient data after the object has been loaded from the database.
     @PostLoad
@@ -158,11 +156,11 @@ public class ProductOrder implements Serializable {
         this.count = count;
     }
 
-    public void updateData(ResearchProject project, Product product, List<Product> addOnProducts) {
+    public void updateData(ResearchProject project, Product product, List<Product> addOnProducts, List<ProductOrderSample> samples) {
         setAddons(addOnProducts);
         setProduct(product);
         setResearchProject(project);
-        updateSamplesFromList();
+        setSamples(samples);
     }
 
     /**
@@ -455,14 +453,17 @@ public class ProductOrder implements Serializable {
     }
 
     public void setSamples(List<ProductOrderSample> samples) {
-        this.samples = samples;
+        this.samples.clear();
+
         int samplePos = 0;
         if (samples != null) {
             for (ProductOrderSample sample : samples) {
                 sample.setProductOrder(this);
-                sample.setSamplePosition( samplePos++ );
+                sample.setSamplePosition(samplePos++);
+                this.samples.add(sample);
             }
         }
+
         counts.invalidate();
     }
 
@@ -890,30 +891,5 @@ public class ProductOrder implements Serializable {
 
     public String getOriginalTitle() {
         return originalTitle;
-    }
-
-    public String getSampleList() {
-        if (sampleList == null) {
-            sampleList = "";
-            for (ProductOrderSample sample : samples) {
-                sampleList += sample.getSampleName() + "\n";
-            }
-        }
-
-        return sampleList;
-    }
-
-    public void updateSamplesFromList() {
-        samples.clear();
-
-        if (!StringUtils.isBlank(sampleList)) {
-            for (String sampleName : sampleList.trim().split("\n")) {
-                samples.add(new ProductOrderSample(sampleName.trim()));
-            }
-        }
-    }
-
-    public void setSampleList(String sampleList) {
-        this.sampleList = sampleList;
     }
 }

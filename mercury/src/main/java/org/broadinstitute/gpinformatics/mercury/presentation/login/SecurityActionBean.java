@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.login;
 
 import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.validation.Validate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
@@ -27,8 +28,10 @@ public class SecurityActionBean extends CoreActionBean {
 
     public final static String LOGIN_PAGE = "/security/login.jsp";
 
+    @Validate(required = true, on = {"signIn"})
     private String username;
 
+    @Validate(required = true, on = {"signIn"})
     private String password;
 
     @Inject

@@ -28,29 +28,24 @@
                     });
 
                     $j("#researchProject").tokenInput(
-                        "${ctxpath}/projects/project.action?autocomplete=", {
-                            searchDelay: 2000,
-                            <c:if test="${actionBean.projectCompleteData != null && actionBean.projectCompleteData != ''}">
-                                prePopulate: ${actionBean.projectCompleteData},
-                            </c:if>
-                            tokenLimit: 1
-                        }
+                            "${ctxpath}/projects/project.action?autocomplete=", {
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.projectCompleteData)},
+                                tokenLimit: 1
+                            }
                     );
 
                     $j("#product").tokenInput(
-                        "${ctxpath}/products/product.action?autocomplete=", {
-                            searchDelay: 2000,
-                            onAdd: updateAddOnCheckboxes,
-                            onDelete: updateAddOnCheckboxes,
-                            <c:if test="${actionBean.productCompleteData != null && actionBean.productCompleteData != ''}">
-                                prePopulate: ${actionBean.productCompleteData},
-                            </c:if>
-                            tokenLimit: 1
-                        }
+                            "${ctxpath}/products/product.action?autocomplete=", {
+                                onAdd: updateUIForProductChoice,
+                                onDelete: updateUIForProductChoice,
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.productCompleteData)},
+                                tokenLimit: 1
+                            }
                     );
 
                     <c:if test="${!actionBean.creating}">
-                        updateAddOnCheckboxes();
+                        updateUIForProductChoice();
+                        updateFundsRemaining();
                     </c:if>
                 }
             );
@@ -60,7 +55,7 @@
                 addOn['${addOnProduct.addOn.businessKey}'] = true;
             </c:forEach>
 
-            function updateAddOnCheckboxes() {
+            function updateUIForProductChoice() {
                 var productKey = $j("#product").val();
                 if ((productKey == null) || (productKey == "")) {
                     $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
@@ -71,7 +66,25 @@
                     dataType: 'json',
                     success: setupCheckboxes
                 });
+
+                $j.ajax({
+                    url: "${ctxpath}/orders/order.action?getSupportsNumberOfLanes=&product=" + productKey,
+                    dataType: 'json',
+                    success: adjustNumberOfLanesVisibility
+                });
             }
+
+
+            function adjustNumberOfLanesVisibility(data) {
+                var numberOfLanesDiv = $j("#numberOfLanesDiv")
+                if (data["supports"]) {
+                    numberOfLanesDiv.fadeIn()
+                }
+                else {
+                    numberOfLanesDiv.fadeOut();
+                }
+            }
+
 
             function setupCheckboxes(data) {
                 var productTitle = $j("#product").val();
@@ -100,15 +113,18 @@
             function updateFundsRemaining() {
                 var quoteIdentifier = $j("#quote").val();
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getQuoteFunding&quoteIdentifier=" + quoteIdentifier,
+                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier,
                     dataType: 'json',
-                    data: data,
                     success: updateFunds
                 });
             }
 
             function updateFunds(data) {
-                $j("#fundsRemaining").text(data.fundsRemaining);
+                if (data.fundsRemaining) {
+                    $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
+                } else {
+                    $j("#fundsRemaining").text('Error: ' + data.error);
+                }
             }
         </script>
     </stripes:layout-component>
@@ -124,7 +140,7 @@
                         Name *
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="orderName" name="editOrder.title" class="defaultText"
+                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="orderName" name="editOrder.title" class="defaultText input-xlarge"
                             title="Enter the name of the new order"/>
                     </div>
                 </div>
@@ -149,7 +165,7 @@
 
                 <div class="control-group">
                     <stripes:label for="researchProject" class="control-label">
-                        Research Project *
+                        Research Project <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
                         <stripes:text readonly="${!actionBean.editOrder.draft}" id="researchProject" name="researchProjectList" class="defaultText"
@@ -159,7 +175,7 @@
 
                 <div class="control-group">
                     <stripes:label for="product" class="control-label">
-                        Product *
+                        Product <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="product" name="productList" class="defaultText"
@@ -176,17 +192,17 @@
 
                 <div class="control-group">
                     <stripes:label for="quote" class="control-label">
-                        Quote *
+                        Quote <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="quote" name="editOrder.quoteId" class="defaultText"
-                                      onchange="updateFundsRemaining"
+                                      onchange="updateFundsRemaining()"
                                       title="Enter the Quote ID for this order"/>
                         <div id="fundsRemaining"> </div>
                     </div>
                 </div>
 
-                <div class="control-group">
+                <div id="numberOfLanesDiv" class="control-group">
                     <stripes:label for="numberOfLanes" class="control-label">
                         Number of Lanes
                     </stripes:label>
@@ -201,7 +217,7 @@
                         Comments
                     </stripes:label>
                     <div class="controls">
-                        <stripes:textarea readonly="${!actionBean.editOrder.draft}" id="comments" name="editOrder.comments" class="defaultText"
+                        <stripes:textarea readonly="${!actionBean.editOrder.draft}" id="comments" name="editOrder.comments" class="defaultText input-xlarge textarea"
                             title="Enter comments" cols="50" rows="3"/>
                     </div>
                 </div>
@@ -218,7 +234,7 @@
                             </c:when>
                             <c:otherwise>
                                 <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                    <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                                    <stripes:param name="productOrder" value="${actionBean.productOrder}"/>
                                     Cancel
                                 </stripes:link>
                             </c:otherwise>
@@ -228,11 +244,19 @@
             </div>
 
             <div class="help-block span4">
-                Enter samples names in this box, one per line. When you save the order, the view page will show
-                all sample details.
+                <c:choose>
+                    <c:when test="${actionBean.editOrder.draft}">
+                        Enter samples names in this box, one per line. When you save the order, the view page will show
+                        all sample details.
+                    </c:when>
+                    <c:otherwise>
+                        This is the list of samples. Since this order has already been placed, the list of samples cannot
+                        be changed.
+                    </c:otherwise>
+                </c:choose>
                 <br/>
                 <br/>
-                <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="editOrder.sampleList" rows="15" cols="120"/>
+                <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="sampleList" rows="15" cols="120"/>
             </div>
         </stripes:form>
 

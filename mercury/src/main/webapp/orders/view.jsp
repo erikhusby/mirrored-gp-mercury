@@ -11,22 +11,40 @@
             $j(document).ready(function() {
                 $j('#sampleData').dataTable( {
                     "oTableTools": ttExportDefines,
-                    "aaSorting": [[0,'asc']],
                     "aoColumns": [
-                        {"bSortable": true, "sType": "html"},   // ID
-                        {"bSortable": true},                    // Participant ID
-                        {"bSortable": true},                    // Volume
-                        {"bSortable": true},                    // Concentration
-                        {"bSortable": true},                    // Yield Amount
-                        {"bSortable": true, "sType" : "title-string"},   // FP Status
-                        {"bSortable": true},                    // Eligible
-                        {"bSortable": true},                    // Billed
-                        {"bSortable": true},                    // Abandoned
-                        {"bSortable": true},                    // Price Item 1
-                        {"bSortable": true},                    // Price Item 2
+                        {"bSortable": false, "sType": "html"},   // ID
+                        {"bSortable": false},                    // Participant ID
+                        {"bSortable": false},                    // Volume
+                        {"bSortable": false},                    // Concentration
+                        {"bSortable": false},                    // Yield Amount
+                        {"bSortable": false, "sType" : "title-string"},   // FP Status
+                        {"bSortable": false},                    // Eligible
+                        {"bSortable": false},                    // Billed
+                        {"bSortable": false},                    // Abandoned
+                        {"bSortable": false},                    // Price Item 1
+                        {"bSortable": false},                    // Price Item 2
                         {"bSortable": false}]                   // Comment
-                })
+                });
+
+                updateFundsRemaining();
             });
+
+            function updateFundsRemaining() {
+                var quoteIdentifier = $j("#quote").val();
+                $j.ajax({
+                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${actionBean.editOrder.quoteId}",
+                    dataType: 'json',
+                    success: updateFunds
+                });
+            }
+
+            function updateFunds(data) {
+                if (data.fundsRemaining) {
+                    $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
+                } else {
+                    $j("#fundsRemaining").text('Error: ' + data.error);
+                }
+            }
         </script>
     </stripes:layout-component>
 
@@ -37,16 +55,25 @@
 
             <div class="actionButtons">
                 <c:if test="${actionBean.editOrder.draft}">
-                    <stripes:submit name="placeOrder" value="Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
+                    <stripes:submit name="placeOrder" value="Validate and Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
+                    <stripes:submit name="validate" value="Validate" style="margin-left: 5px;" class="btn"/>
+                    &#160;
+                    <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+                                  beanclass="${actionBean.class.name}" event="edit" class="btn" style="text-decoration: none !important;">
+                        <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
+                        <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                    </stripes:link>
                 </c:if>
             </div>
         </stripes:form>
 
-        <stripes:link title="Click to edit ${actionBean.editOrder.title}"
-            beanclass="${actionBean.class.name}" event="edit" class="pull-right">
-            <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
-            <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-        </stripes:link>
+        <c:if test="${!actionBean.editOrder.draft}">
+            <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+                beanclass="${actionBean.class.name}" event="edit" class="pull-right">
+                <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
+                <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+            </stripes:link>
+        </c:if>
 
         <div style="both:clear"> </div>
 
@@ -65,7 +92,7 @@
                     <div class="form-value">
                         <c:choose>
                             <c:when test="${actionBean.editOrder.draft}">
-                                DRAFT
+                                &nbsp;
                             </c:when>
                             <c:otherwise>
                                 <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">${actionBean.editOrder.jiraTicketKey}</a>
@@ -78,7 +105,11 @@
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Status</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editOrder.orderStatus}</div>
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrder.draft}"><span class="label label-info"></c:if>
+                            ${actionBean.editOrder.orderStatus}
+                        <c:if test="${actionBean.editOrder.draft}"></span></c:if>
+                    </div>
                 </div>
             </div>
 
@@ -129,6 +160,7 @@
                         <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
                             ${actionBean.editOrder.quoteId}
                         </a>
+                        <span id="fundsRemaining" style="margin-left: 20px;"> </span>
                     </div>
                 </div>
             </div>

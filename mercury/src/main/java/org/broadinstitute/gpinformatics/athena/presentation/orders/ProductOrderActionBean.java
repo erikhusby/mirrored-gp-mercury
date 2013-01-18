@@ -19,6 +19,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
@@ -33,6 +34,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerExceptio
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -61,6 +63,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private QuoteService quoteService;
+
+    @Inject
+    private ProductOrderUtil productOrderUtil;
 
     @Inject
     private ProductOrderListEntryDao orderListEntryDao;
@@ -100,20 +105,23 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<ProductOrderListEntry> allProductOrders;
 
+    private String sampleList;
+
     @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
     private String productOrder;
 
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
-        @Validate(field="title", required = true, maxlength=255, on={SAVE_ACTION}, label = "Name")
+        @Validate(field="title", required = true, maxlength=255, on={SAVE_ACTION}, label = "Name"),
+        @Validate(field="count", on={SAVE_ACTION}, label="Number of Lanes")
     })
     private ProductOrder editOrder;
 
     private List<String> selectedProductOrderBusinessKeys;
     private List<ProductOrder> selectedProductOrders;
 
-    // For the Add-ons update we need the product title
-    @Validate(required = true, on = {"getAddOns"})
+    private String quoteIdentifier;
+
     private String product;
 
     private List<String> addOnKeys = new ArrayList<String> ();
@@ -123,9 +131,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String productList;
 
     /**
-     * Initialize the product with the passed in key for display in the form
+     * Initialize the product with the passed in key for display in the form or create it, if not specified
      */
-    @Before(stages = LifecycleStage.BindingAndValidation, on = {CREATE_ACTION, VIEW_ACTION, EDIT_ACTION, "downloadBillingTracker", SAVE_ACTION, "placeOrder"})
+    @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
@@ -137,7 +145,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     @ValidationMethod(on = SAVE_ACTION)
-    public void uniqueNameValidation(ValidationErrors errors) {
+    public void saveValidations() throws Exception {
         // If the research project has no original title, then it was not fetched from hibernate, so this is a create
         // OR if this was fetched and the title has been changed
         if ((editOrder.getOriginalTitle() == null) ||
@@ -146,31 +154,41 @@ public class ProductOrderActionBean extends CoreActionBean {
             // Check if there is an existing research project and error out if it already exists
             ProductOrder existingOrder = productOrderDao.findByTitle(editOrder.getTitle());
             if (existingOrder != null) {
-                errors.add("title", new SimpleError("A product order already exists with this name."));
+                addValidationError("title", "A product order already exists with this name.");
             }
+        }
+
+        // Whether we are draft or not, we should populate the proper edit fields for validation.
+        updateTokenInputFields();
+
+        // If this is not a draft, some fields are required
+        if (!editOrder.isDraft()) {
+            validatePlacedOrder();
         }
     }
 
     @ValidationMethod(on = "placeOrder")
-    public void validateOrderPlacement() throws Exception {
+    public void validatePlacedOrder() {
         if (editOrder.getSamples().isEmpty()) {
             addGlobalValidationError("Order does not have any samples");
         }
 
+        String placeOrderString = "Cannot place order ''" + editOrder.getBusinessKey();
+
         if (editOrder.getResearchProject() == null) {
-            addGlobalValidationError("Cannot place order ''" + editOrder.getBusinessKey() + "'' because it does not have a research project");
+            addGlobalValidationError(placeOrderString + "'' because it does not have a research project");
         }
 
         if (editOrder.getQuoteId() == null) {
-            addGlobalValidationError("Cannot place order ''" + editOrder.getBusinessKey() + "'' because it does not have a quote specified");
+            addGlobalValidationError(placeOrderString + "'' because it does not have a quote specified");
         }
 
         if (editOrder.getProduct() == null) {
-            addGlobalValidationError("Cannot place order ''" + editOrder.getBusinessKey() + "'' because it does not have a product");
+            addGlobalValidationError(placeOrderString + "'' because it does not have a product");
         }
 
-        if (editOrder.getProduct() == null) {
-            addGlobalValidationError("Cannot place order ''" + editOrder.getCount() + "'' because it does not have a specified number of lanes");
+        if (editOrder.getCount() < 1) {
+            addGlobalValidationError(placeOrderString  + "'' because it does not have a specified number of lanes");
         }
 
         try {
@@ -249,6 +267,31 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    @HandlesEvent("getQuoteFunding")
+    public Resolution getQuoteFunding() {
+
+        StringReader returnStringStream;
+
+        JSONObject item = new JSONObject();
+
+        try {
+            item.put("key", quoteIdentifier);
+            if (quoteIdentifier != null) {
+                String fundsRemaining = productOrderUtil.getFundsRemaining(quoteIdentifier);
+                item.put("fundsRemaining", fundsRemaining);
+            }
+
+        } catch (Exception ex) {
+            try {
+                item.put("error", ex.getMessage());
+            } catch (Exception ex1) {
+                // Don't really care if this gets an exception
+            }
+        }
+
+        return createTextResolution(item.toString());
+    }
+
     @DefaultHandler
     @HandlesEvent(LIST_ACTION)
     public Resolution list() {
@@ -295,17 +338,22 @@ public class ProductOrderActionBean extends CoreActionBean {
         return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER, editOrder.getBusinessKey());
     }
 
+    @HandlesEvent("validate")
+    public Resolution validate() {
+        validatePlacedOrder();
+
+        if (getContext().getValidationErrors().isEmpty()) {
+            addMessage("Draft Order is valid and ready to be placed");
+        }
+
+        return getSourcePageResolution();
+    }
+
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() throws Exception {
 
         // Update the modified by and created by, if necessary.
         editOrder.prepareToSave(userBean.getBspUser());
-
-        // set the project, product and addOns for the order
-        ResearchProject project = projectDao.findByBusinessKey(researchProjectList);
-        Product product = productDao.findByPartNumber(productList);
-        List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
-        editOrder.updateData(project, product, addOnProducts);
 
         if (editOrder.isDraft()) {
             // mlc isDraft checks if the status is Draft and if so, we set it to Draft again?
@@ -319,6 +367,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been saved.");
         return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER, editOrder.getBusinessKey());
+    }
+
+    private void updateTokenInputFields() {
+        // set the project, product and addOns for the order
+        ResearchProject project = projectDao.findByBusinessKey(researchProjectList);
+        Product product = productDao.findByPartNumber(productList);
+        List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
+        editOrder.updateData(project, product, addOnProducts, getSamplesAsList());
     }
 
     @HandlesEvent("downloadBillingTracker")
@@ -351,16 +407,32 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution getAddOns() throws Exception {
         JSONArray itemList = new JSONArray();
 
-        Product product = productDao.findByBusinessKey(this.product);
-        for (Product addOn : product.getAddOns()) {
-            JSONObject item = new JSONObject();
-            item.put("key", addOn.getBusinessKey());
-            item.put("value", addOn.getProductName());
+        if (product != null) {
+            Product product = productDao.findByBusinessKey(this.product);
+            for (Product addOn : product.getAddOns()) {
+                JSONObject item = new JSONObject();
+                item.put("key", addOn.getBusinessKey());
+                item.put("value", addOn.getProductName());
 
-            itemList.put(item);
+                itemList.put(item);
+            }
         }
 
-        return new StreamingResolution("text", new StringReader(itemList.toString()));
+        return createTextResolution(itemList.toString());
+    }
+
+    @HandlesEvent("getSupportsNumberOfLanes")
+    public Resolution getSupportsNumberOfLanes() throws Exception {
+        boolean lanesSupported = true;
+        JSONObject item = new JSONObject();
+
+        if ( this.product != null ) {
+            Product product = productDao.findByBusinessKey(this.product);
+            lanesSupported =  product.getSupportsNumberOfLanes();
+        }
+        item.put("supports", lanesSupported);
+
+        return new StreamingResolution("text", new StringReader(item.toString()));
     }
 
     public List<String> getSelectedProductOrderBusinessKeys() {
@@ -493,7 +565,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     public String getSaveButtonText() {
-        return ((editOrder == null) || editOrder.isDraft()) ? "Save Draft" : "Save";
+        return ((editOrder == null) || editOrder.isDraft()) ? "Save and Preview" : "Save";
     }
 
     /**
@@ -511,5 +583,38 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Unless we're in draft mode, or creating a new order, user must be logged into JIRA to
         // change fields in an order.
         return editOrder.isDraft() || isCreating() || userBean.isValidUser();
+    }
+
+
+    public String getSampleList() {
+        if (sampleList == null) {
+            sampleList = "";
+            for (ProductOrderSample sample : getEditOrder().getSamples()) {
+                sampleList += sample.getSampleName() + "\n";
+            }
+        }
+
+        return sampleList;
+    }
+
+    public List<ProductOrderSample> getSamplesAsList() {
+        List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
+        for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleList)) {
+            samples.add(new ProductOrderSample(sampleName));
+        }
+
+        return samples;
+    }
+
+    public void setSampleList(String sampleList) {
+        this.sampleList = sampleList;
+    }
+
+    public String getQuoteIdentifier() {
+        return quoteIdentifier;
+    }
+
+    public void setQuoteIdentifier(String quoteIdentifier) {
+        this.quoteIdentifier = quoteIdentifier;
     }
 }

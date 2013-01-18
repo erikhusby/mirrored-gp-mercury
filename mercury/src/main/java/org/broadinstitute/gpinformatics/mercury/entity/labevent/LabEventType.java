@@ -189,6 +189,10 @@ public enum LabEventType {
     SAMPLES_NORMALIZATION_TRANSFER("SamplesNormalizationTransfer", false, true, SystemOfRecord.MERCURY),
     SAMPLES_PLATING_TO_COVARIS("SamplesPlatingToCovaris", false, true, SystemOfRecord.MERCURY),
 
+    MRRBS_GENOMIC_TRANSFER("mRRBSGenomicTransfer", false, true, SystemOfRecord.SQUID),
+    MRRBS_INDEXING("mRRBSIndexing", false, true, SystemOfRecord.SQUID),
+    MRRBS_NORM_LIBS("mRRBSNormLibs", false, true, SystemOfRecord.SQUID),
+
     /**
      * TODO SGM  the following names are place holders.  They will be re-evaluated as development of
      */

@@ -2,7 +2,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Mercury" sectionTitle="Sign In">
+<stripes:layout-render name="/layout.jsp" pageTitle="Sign In" sectionTitle="Sign In">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {

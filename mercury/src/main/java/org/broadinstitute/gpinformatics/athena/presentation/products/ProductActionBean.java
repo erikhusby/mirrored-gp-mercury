@@ -12,8 +12,8 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamil
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
-import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPMaterialTypeList;
+import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -21,7 +21,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import javax.inject.Inject;
-import java.io.StringReader;
 import java.util.*;
 
 /**
@@ -63,13 +62,14 @@ public class ProductActionBean extends CoreActionBean {
 
     @ValidateNestedProperties({
         @Validate(field="productFamily.productFamilyId", label="Product Family", required = true, maxlength=255, on={SAVE_ACTION}),
-        @Validate(field="productName", required = true, maxlength=255, on={SAVE_ACTION})
+        @Validate(field="productName", required = true, maxlength=255, on={SAVE_ACTION}),
+        @Validate(field="partNumber", required = true, maxlength=255, on={SAVE_ACTION}, label="Part Number")
     })
     private Product editProduct;
 
 
     // These are the fields for catching the input tokens
-    @Validate(required = true, on = {SAVE_ACTION})
+    @Validate(required = true, on = {SAVE_ACTION}, label="Primary Price Item")
     private String primaryPriceItemList = "";
 
     private String optionalPriceItemsList = "";
@@ -78,8 +78,7 @@ public class ProductActionBean extends CoreActionBean {
 
     private String materialTypeList = "";
 
-    private Log logger = LogFactory.getLog(ProductActionBean.class);
-
+    private final Log logger = LogFactory.getLog(ProductActionBean.class);
 
     // The search query
     private String q;
@@ -123,7 +122,7 @@ public class ProductActionBean extends CoreActionBean {
     /**
      * Validate information on the product being edited or created
      */
-    @ValidationMethod(on = {SAVE_ACTION})
+    @ValidationMethod(on = SAVE_ACTION)
     public void validatePriceItems(ValidationErrors errors) {
         String[] duplicatePriceItems = editProduct.getDuplicatePriceItemNames();
         if (duplicatePriceItems != null) {
@@ -175,14 +174,13 @@ public class ProductActionBean extends CoreActionBean {
     public Resolution autocomplete() throws Exception {
         List<Product> products = productDao.searchProducts(getQ());
 
-        String completeString = getAutoCompleteJsonString(products);
-        return new StreamingResolution("text", new StringReader(completeString));
+        return createTextResolution(getAutoCompleteJsonString(products));
     }
 
     public static String getAutoCompleteJsonString(Collection<Product> products) throws JSONException {
         JSONArray itemList = new JSONArray();
         for (Product product : products) {
-            itemList.put(new AutoCompleteToken(product.getBusinessKey(), product.getProductName(), false).getJSONObject());
+            itemList.put(TokenInput.getJSONObject(product.getBusinessKey(), product.getProductName(), false));
         }
 
         return itemList.toString();
@@ -194,10 +192,10 @@ public class ProductActionBean extends CoreActionBean {
 
         JSONArray itemList = new JSONArray();
         for (Product addOn : addOns) {
-            itemList.put(new AutoCompleteToken(addOn.getBusinessKey(), addOn.getProductName(), false).getJSONObject());
+            itemList.put(TokenInput.getJSONObject(addOn.getBusinessKey(), addOn.getProductName(), false));
         }
 
-        return new StreamingResolution("text", new StringReader(itemList.toString()));
+        return createTextResolution(itemList.toString());
     }
 
     @HandlesEvent("priceItemAutocomplete")
@@ -206,28 +204,27 @@ public class ProductActionBean extends CoreActionBean {
 
         JSONArray itemList = new JSONArray();
         for (PriceItem priceItem : priceItems) {
-            itemList.put(new AutoCompleteToken(priceItem.getId(), priceItem.getName(), false).getJSONObject());
+            itemList.put(TokenInput.getJSONObject(priceItem.getId(), priceItem.getName(), false));
         }
 
-        return new StreamingResolution("text", new StringReader(itemList.toString()));
+        return createTextResolution(itemList.toString());
     }
 
     /* This method retrieves all possible material types */
     @HandlesEvent("materialTypesAutocomplete")
     public Resolution materialTypesAutocomplete() throws Exception {
         JSONArray itemList = new JSONArray();
-        if ( materialTypeListCache != null ) {
-            for (org.broadinstitute.bsp.client.sample.MaterialType bspMaterialType :  materialTypeListCache.find( getQ() )) {
-                itemList.put(new AutoCompleteToken(bspMaterialType.getFullName(), bspMaterialType.getFullName(), false)
-                        .getJSONObject());
+        if (materialTypeListCache != null) {
+            for (org.broadinstitute.bsp.client.sample.MaterialType bspMaterialType : materialTypeListCache.find(getQ())) {
+                itemList.put(TokenInput.getJSONObject(bspMaterialType.getFullName(), bspMaterialType.getFullName(), false));
             }
         } else {
-             logger.error("Material Types Cache not available (in null) on ProductActionBean.");
+            logger.error("Material Types Cache not available (in null) on ProductActionBean.");
         }
-        return new StreamingResolution("text", new StringReader(itemList.toString()));
+        return createTextResolution(itemList.toString());
     }
 
-    @HandlesEvent(value = SAVE_ACTION)
+    @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
         populateTokenListFields();
 
@@ -312,32 +309,27 @@ public class ProductActionBean extends CoreActionBean {
         List<org.broadinstitute.bsp.client.sample.MaterialType> materialTypeDtoList =
                 materialTypeListCache.getByFullNames( materialTypeIds );
 
-        // Convert the Dtos to Entities.
-        List<MaterialType> materialTypeEntities = convertDtosToEntities(materialTypeDtoList);
-
-        return materialTypeEntities;
+        // Convert the DTOs to Entities.
+        return convertDtosToEntities(materialTypeDtoList);
     }
 
 
-    private List<MaterialType> convertDtosToEntities(
+    private static List<MaterialType> convertDtosToEntities(
             List<org.broadinstitute.bsp.client.sample.MaterialType> materialTypeDtos) {
 
-        List<MaterialType>  materialTypeEntities =
-                new ArrayList<MaterialType>();
-
-        if ( materialTypeDtos != null ) {
-            for ( org.broadinstitute.bsp.client.sample.MaterialType materialTypeDto : materialTypeDtos ) {
+        if (materialTypeDtos != null) {
+            List<MaterialType> materialTypeEntities = new ArrayList<MaterialType>(materialTypeDtos.size());
+            for (org.broadinstitute.bsp.client.sample.MaterialType materialTypeDto : materialTypeDtos) {
                 MaterialType materialTypeEntity =
-                        new MaterialType( materialTypeDto.getCategory(), materialTypeDto.getName() );
-                    materialTypeEntity.setFullName( materialTypeDto.getFullName() );
-                materialTypeEntities.add( materialTypeEntity );
+                        new MaterialType(materialTypeDto.getCategory(), materialTypeDto.getName());
+                materialTypeEntity.setFullName(materialTypeDto.getFullName());
+                materialTypeEntities.add(materialTypeEntity);
             }
+            return materialTypeEntities;
         }
 
-        return materialTypeEntities;
+        return Collections.emptyList();
     }
-
-
 
     public List<org.broadinstitute.gpinformatics.athena.entity.products.PriceItem> getOptionalPriceItems() {
 
@@ -375,7 +367,7 @@ public class ProductActionBean extends CoreActionBean {
 
         JSONArray itemList = new JSONArray();
         for (Product product : editProduct.getAddOns()) {
-            itemList.put(new AutoCompleteToken(product.getBusinessKey(), product.getDisplayName(), false).getJSONObject());
+            itemList.put(TokenInput.getJSONObject(product.getBusinessKey(), product.getDisplayName(), false));
         }
 
         return itemList.toString();
@@ -393,7 +385,8 @@ public class ProductActionBean extends CoreActionBean {
         }
 
         String quotePriceItemId = priceItem.getId();
-        itemList.put(new AutoCompleteToken(quotePriceItemId, editProduct.getPrimaryPriceItem().getDisplayName(), false).getJSONObject());
+        itemList.put(TokenInput.getJSONObject(quotePriceItemId, editProduct.getPrimaryPriceItem().getDisplayName(),
+                false));
 
         return itemList.toString();
     }
@@ -412,7 +405,7 @@ public class ProductActionBean extends CoreActionBean {
                 return "invalid key: " + priceItemEntity.getConcatenatedKey();
             }
             String quotePriceItemId = priceItem.getId();
-            itemList.put(new AutoCompleteToken(quotePriceItemId, priceItemEntity.getDisplayName(), false).getJSONObject());
+            itemList.put(TokenInput.getJSONObject(quotePriceItemId, priceItemEntity.getDisplayName(), false));
         }
 
         return itemList.toString();
@@ -434,7 +427,7 @@ public class ProductActionBean extends CoreActionBean {
         Set<MaterialType> materialTypes =  editProduct.getAllowableMaterialTypes();
         for ( MaterialType materialType : materialTypes ) {
             String idName = materialType.getCategory() + ":" + materialType.getName();
-            itemList.put(new AutoCompleteToken(idName, idName, false).getJSONObject());
+            itemList.put(TokenInput.getJSONObject(idName, idName, false));
         }
         return itemList.toString();
     }
