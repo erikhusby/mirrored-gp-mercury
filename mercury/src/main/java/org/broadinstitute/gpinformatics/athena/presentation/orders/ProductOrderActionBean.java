@@ -617,4 +617,15 @@ public class ProductOrderActionBean extends CoreActionBean {
     public void setQuoteIdentifier(String quoteIdentifier) {
         this.quoteIdentifier = quoteIdentifier;
     }
+
+    /**
+     * Sample list edit should be enabled if this is a DRAFT order or this is a non-DRAFT order with no billing
+     * ledger entries.
+     *
+     * @return
+     */
+    public boolean getAllowSampleListEdit() {
+        return editOrder.isDraft() || billingLedgerDao.findByOrderList(new ProductOrder[] {editOrder}).size() == 0;
+    }
+
 }
