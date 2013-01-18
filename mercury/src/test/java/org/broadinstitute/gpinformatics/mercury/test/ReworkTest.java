@@ -9,15 +9,20 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProduc
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.ReworkEntry;
 import org.testng.annotations.Test;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.ReworkEntry.ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH;
+import static org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.ReworkEntry.ReworkReason.MACHINE_ERROR;
 
 /**
  * Test that samples can go partway through a workflow, be marked for rework, go to a previous
@@ -80,8 +85,8 @@ public class ReworkTest extends LabEventTest {
         final List<SampleInstance> sampleInstances = samplesAtPosition(shearingPlate, "A", "1");
 
         final MercurySample startingSample = sampleInstances.iterator().next().getStartingSample();
-        startingSample.markForRework(ReworkEntry.ReworkReason.MACHINE_ERROR,
-                ReworkEntry.ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH,"Houston, we have a problem");
+        startingSample.markForRework(MACHINE_ERROR, ONE_SAMPLE_HOLD_REST_BATCH,
+                LabEventType.SHEARING_BUCKET_ENTRY, null, "Houston, we have a problem");
     }
 
     public List<SampleInstance> samplesAtPosition(LabVessel vessel, String rowName, String columnName) {

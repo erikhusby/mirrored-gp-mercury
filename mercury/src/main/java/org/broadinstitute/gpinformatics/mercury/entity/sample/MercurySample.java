@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.RapSheet;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.ReworkEntry;
 import org.hibernate.annotations.Index;
@@ -49,8 +51,9 @@ public class MercurySample {
         this.bspSampleDTO = bspSampleDTO;
     }
 
-    public void markForRework(ReworkReason reworkReason, ReworkLevel reworkLevel, String comment) {
-        ReworkEntry rework=new ReworkEntry(reworkReason,reworkLevel,null, comment);
+    public void markForRework(ReworkReason reworkReason, ReworkLevel reworkLevel, LabEventType reworkStep,
+                              LabEvent event, String comment) {
+        ReworkEntry rework = new ReworkEntry(reworkReason, reworkLevel, reworkStep, event, comment);
         this.getRapSheet().addEntry(rework);
     }
 

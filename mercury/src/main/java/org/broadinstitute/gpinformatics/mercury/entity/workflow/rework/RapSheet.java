@@ -11,12 +11,11 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.workflow.rework;
 
-import clover.retrotranslator.edu.emory.mathcs.backport.java.util.Arrays;
-import org.apache.poi.util.ArrayUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -32,6 +31,7 @@ public class RapSheet {
     private Long rapSheetId;
 
     @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @NotNull
     private MercurySample sample;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "rapSheet")
@@ -40,8 +40,8 @@ public class RapSheet {
     public RapSheet() {
     }
 
-    public RapSheet(RapSheetEntry ... rapSheetEntry) {
-        rapSheetEntries=new ArrayList<RapSheetEntry>(rapSheetEntry.length);
+    public RapSheet(RapSheetEntry... rapSheetEntry) {
+        rapSheetEntries = new ArrayList<RapSheetEntry>(rapSheetEntry.length);
         Collections.addAll(rapSheetEntries, rapSheetEntry);
     }
 
@@ -49,8 +49,8 @@ public class RapSheet {
         this.sample = sample;
     }
 
-    public void addEntry(RapSheetEntry entry){
-        if (rapSheetEntries == null){
+    public void addEntry(RapSheetEntry entry) {
+        if (rapSheetEntries == null) {
             rapSheetEntries = new ArrayList<RapSheetEntry>();
         }
         rapSheetEntries.add(entry);

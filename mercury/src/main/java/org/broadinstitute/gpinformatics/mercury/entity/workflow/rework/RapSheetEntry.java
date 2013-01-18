@@ -14,6 +14,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow.rework;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.Date;
 
 @Entity
@@ -38,6 +39,7 @@ public abstract class RapSheetEntry {
     }
 
     @ManyToOne
+    @NotNull
     private RapSheet rapSheet;
 
 

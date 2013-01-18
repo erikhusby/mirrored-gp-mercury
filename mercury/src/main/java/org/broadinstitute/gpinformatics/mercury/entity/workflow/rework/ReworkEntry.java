@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.List;
 
 @Entity
@@ -28,23 +29,29 @@ public class ReworkEntry extends RapSheetEntry {
     private List<MercurySample> reworkedSamples;
 
     @Enumerated
+    @NotNull
     private ReworkReason reason;
 
     @Enumerated
+    @NotNull
     private ReworkLevel reworkLevel;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @NotNull
     private LabEvent labEvent;
 
+    @NotNull
     private LabEventType reworkStep;
 
     public ReworkEntry() {
     }
 
     @SuppressWarnings("UnusedDeclaration")
-    public ReworkEntry(ReworkReason reason, ReworkLevel level, LabEvent labEvent, String comments) {
+    public ReworkEntry(ReworkReason reason, ReworkLevel level, LabEventType reworkStep, LabEvent labEvent,
+                       String comments) {
         this.reason = reason;
         this.reworkLevel = level;
+        this.reworkStep = reworkStep;
         this.labEvent = labEvent;
         super.setComment(comments);
     }
