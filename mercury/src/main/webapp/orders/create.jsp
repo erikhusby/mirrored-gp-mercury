@@ -28,25 +28,19 @@
                     });
 
                     $j("#researchProject").tokenInput(
-                        "${ctxpath}/projects/project.action?autocomplete=", {
-                            searchDelay: 2000,
-                            <c:if test="${actionBean.projectCompleteData != null && actionBean.projectCompleteData != ''}">
-                                prePopulate: ${actionBean.projectCompleteData},
-                            </c:if>
-                            tokenLimit: 1
-                        }
+                            "${ctxpath}/projects/project.action?autocomplete=", {
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.projectCompleteData)},
+                                tokenLimit: 1
+                            }
                     );
 
                     $j("#product").tokenInput(
-                        "${ctxpath}/products/product.action?autocomplete=", {
-                            searchDelay: 2000,
-                            onAdd: updateUIForProductChoice,
-                            onDelete: updateUIForProductChoice,
-                            <c:if test="${actionBean.productCompleteData != null && actionBean.productCompleteData != ''}">
-                                prePopulate: ${actionBean.productCompleteData},
-                            </c:if>
-                            tokenLimit: 1
-                        }
+                            "${ctxpath}/products/product.action?autocomplete=", {
+                                onAdd: updateUIForProductChoice,
+                                onDelete: updateUIForProductChoice,
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.productCompleteData)},
+                                tokenLimit: 1
+                            }
                     );
 
                     <c:if test="${!actionBean.creating}">

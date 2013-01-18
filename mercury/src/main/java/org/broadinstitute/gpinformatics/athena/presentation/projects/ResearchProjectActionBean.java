@@ -5,7 +5,6 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.*;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
-import org.broadinstitute.gpinformatics.athena.boundary.FundingListBean;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -15,17 +14,19 @@ import org.broadinstitute.gpinformatics.athena.presentation.links.TableauLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.CohortTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.FundingTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
-import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
 import org.json.JSONException;
 
 import javax.inject.Inject;
-import java.io.StringReader;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class is for research projects action bean / web page.
@@ -58,9 +59,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     @Inject
     private CohortListBean cohortListBean;
-
-    @Inject
-    private FundingListBean fundingList;
 
     @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION})
     private String researchProject;
@@ -298,8 +296,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     public String getFundingSourcesListString() {
-        // FIXME: fix to use function calls in JSP.
-        return fundingList.getFundingListString(editResearchProject.getFundingIds());
+        String[] fundingIds = editResearchProject.getFundingIds();
+        if (fundingIds == null) {
+            return "";
+        }
+
+        return StringUtils.join(fundingIds, ", ");
     }
 
     /**
@@ -324,14 +326,13 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution autocomplete() throws Exception {
         Collection<ResearchProject> projects = researchProjectDao.searchProjects(getQ());
 
-        String completeString = getAutoCompleteJsonString(projects);
-        return new StreamingResolution("text", new StringReader(completeString));
+        return createTextResolution(getAutoCompleteJsonString(projects));
     }
 
     public static String getAutoCompleteJsonString(Collection<ResearchProject> projects) throws JSONException {
         JSONArray itemList = new JSONArray();
         for (ResearchProject project : projects) {
-            itemList.put(new AutoCompleteToken(project.getBusinessKey(), project.getTitle(), false).getJSONObject());
+            itemList.put(TokenInput.getJSONObject(project.getBusinessKey(), project.getTitle(), false));
         }
 
         return itemList.toString();
@@ -340,86 +341,28 @@ public class ResearchProjectActionBean extends CoreActionBean {
     // Autocomplete events for streaming in the appropriate data
     @HandlesEvent("usersAutocomplete")
     public Resolution usersAutocomplete() throws Exception {
-        return new StreamingResolution("text", new StringReader(UserTokenInput.getJsonString(bspUserList, getQ())));
+        return createTextResolution(UserTokenInput.getJsonString(bspUserList, getQ()));
     }
 
     @HandlesEvent("cohortAutocomplete")
     public Resolution cohortAutocomplete() throws Exception {
-        return new StreamingResolution("text", new StringReader(CohortTokenInput.getJsonString(cohortListBean, getQ())));
+        return createTextResolution(cohortsList.getJsonString(getQ()));
     }
 
     @HandlesEvent("fundingAutocomplete")
     public Resolution fundingAutocomplete() throws Exception {
-        return new StreamingResolution("text", new StringReader(FundingTokenInput.getJsonString(fundingList, getQ())));
+        return createTextResolution(fundingSourceList.getJsonString(getQ()));
     }
 
     @HandlesEvent("irbAutocomplete")
     public Resolution irbAutocomplete() throws Exception {
-        return new StreamingResolution("text", new StringReader(IrbConverter.getJsonString(getQ())));
+        return createTextResolution(IrbConverter.getJsonString(getQ()));
     }
 
-    // Complete Data getters are for the prepoulates on the create.jsp
-    String broadPiCompleteData = null;
-    public String getBroadPICompleteData() throws Exception {
-        if (broadPiCompleteData == null) {
-            broadPiCompleteData = getBroadPiList().getUserCompleteData();
-        }
+    // Complete Data getters are for the prepopulates on the create.jsp
 
-        return broadPiCompleteData;
-    }
-
-    String externalCollaboratorCompleteData = null;
-    public String getExternalCollaboratorCompleteData() throws Exception {
-        if (externalCollaboratorCompleteData == null) {
-            externalCollaboratorCompleteData = getExternalCollaboratorList().getUserCompleteData();
-        }
-
-        return externalCollaboratorCompleteData;
-    }
-
-    String scientistCompleteData = null;
-    public String getScientistCompleteData() throws Exception {
-        if (scientistCompleteData == null) {
-            scientistCompleteData = getScientistList().getUserCompleteData();
-        }
-
-        return scientistCompleteData;
-    }
-
-    String projectManagerCompleteData = null;
-    public String getProjectManagerCompleteData() throws Exception {
-        if (projectManagerCompleteData == null) {
-            projectManagerCompleteData = getProjectManagerList().getUserCompleteData();
-        }
-
-        return projectManagerCompleteData;
-    }
-
-    String fundingCompleteData;
-    public String getFundingSourcesCompleteData() throws Exception {
-        if (fundingCompleteData == null) {
-            fundingCompleteData = fundingSourceList.getFundingCompleteData();
-        }
-
-        return fundingCompleteData;
-    }
-
-    String cohortCompleteData = null;
-    public String getCohortsCompleteData() throws Exception {
-        if (cohortCompleteData == null) {
-            cohortCompleteData = cohortsList.getCohortCompleteData();
-        }
-
-        return cohortCompleteData;
-    }
-
-    String irbCompleteData = null;
     public String getIrbsCompleteData() throws Exception {
-        if (irbCompleteData == null) {
-            irbCompleteData =  IrbConverter.getIrbCompleteData(editResearchProject.getIrbNumbers());
-        }
-
-        return irbCompleteData;
+        return IrbConverter.getIrbCompleteData(editResearchProject.getIrbNumbers());
     }
 
     public String getIrbList() {
