@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -32,7 +33,7 @@ public class CohortTokenInput extends TokenInput<Cohort> {
 
         JSONArray itemList = new JSONArray();
         for (Cohort cohort : cohorts) {
-            itemList.put(getJSONObject(cohort.getCohortId(), cohort.getDisplayName(), false));
+            createAutocomplete(itemList, cohort);
         }
         return itemList.toString();
     }
@@ -41,9 +42,16 @@ public class CohortTokenInput extends TokenInput<Cohort> {
     public String generateCompleteData() throws JSONException {
         JSONArray itemList = new JSONArray();
         for (Cohort cohort : getTokenObjects()) {
-            itemList.put(getJSONObject(cohort.getCohortId(), cohort.getDisplayName(), false));
+            createAutocomplete(itemList, cohort);
         }
 
         return itemList.toString();
+    }
+
+    private void createAutocomplete(JSONArray itemList, Cohort cohort) throws JSONException {
+        JSONObject item = getJSONObject(cohort.getCohortId(), cohort.getDisplayName(), false);
+        item.put("group", cohort.getGroup());
+        item.put("category", cohort.getCategory());
+        itemList.put(item);
     }
 }

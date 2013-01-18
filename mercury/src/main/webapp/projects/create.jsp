@@ -11,66 +11,80 @@
                         $j("#projectManagers").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Project Manager name",
-                                    searchDelay: 500,
-                                    prePopulate: ${actionBean.projectManagerList.completeData},
-                                    preventDuplicates: true
+                                    prePopulate: ${actionBean.ensureStringResult(actionBean.projectManagerList.completeData)},
+                                    preventDuplicates: true,
+                                    resultsFormatter: formatUser
                                 }
                         );
 
                         $j("#scientists").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Scientist name",
-                                    searchDelay: 500,
-                                    prePopulate: ${actionBean.scientistList.completeData},
-                                    preventDuplicates: true
+                                    prePopulate: ${actionBean.ensureStringResult(actionBean.scientistList.completeData)},
+                                    preventDuplicates: true,
+                                    resultsFormatter: formatUser
                                 }
                         );
 
                         $j("#externalCollaborators").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Collaborator name",
-                                    searchDelay: 500,
-                                    prePopulate: ${actionBean.externalCollaboratorList.completeData},
-                                    preventDuplicates: true
+                                    prePopulate: ${actionBean.ensureStringResult(actionBean.externalCollaboratorList.completeData)},
+                                    preventDuplicates: true,
+                                    resultsFormatter: formatUser
                                 }
                         );
 
                         $j("#broadPIs").tokenInput(
                                 "${ctxpath}/projects/project.action?usersAutocomplete=", {
                                     hintText: "Type a Broad PI",
-                                    searchDelay: 500,
-                                    prePopulate: ${actionBean.broadPiList.completeData},
-                                    preventDuplicates: true
+                                    prePopulate: ${actionBean.ensureStringResult(actionBean.broadPiList.completeData)},
+                                    preventDuplicates: true,
+                                    resultsFormatter: formatUser
                                 }
                         );
 
                         $j("#fundingSources").tokenInput(
                                 "${ctxpath}/projects/project.action?fundingAutocomplete=", {
-                                    searchDelay: 500,
-                                    prePopulate: ${actionBean.fundingSourceList.completeData},
-                                    preventDuplicates: true
+                                    prePopulate: ${actionBean.ensureStringResult(actionBean.fundingSourceList.completeData)},
+                                    preventDuplicates: true,
+                                    resultsFormatter: formatFunding
                                 }
                         );
 
                         $j("#cohorts").tokenInput(
                                 "${ctxpath}/projects/project.action?cohortAutocomplete=", {
                                     hintText: "Type a Sample Cohort name",
-                                    searchDelay: 500,
-                                    prePopulate: ${actionBean.cohortsList.completeData},
-                                    preventDuplicates: true
+                                    prePopulate: ${actionBean.ensureStringResult(actionBean.cohortsList.completeData)},
+                                    preventDuplicates: true,
+                                    resultsFormatter: formatCohort
                                 }
                         );
 
                         $j("#irbs").tokenInput(
                                 "${ctxpath}/projects/project.action?irbAutocomplete=", {
                                     hintText: "Type an IRB Number",
-                                    searchDelay: 500,
-                                    prePopulate: ${actionBean.irbsCompleteData},
+                                    prePopulate: ${actionBean.ensureStringResult(actionBean.irbsCompleteData)},
                                     preventDuplicates: true
                                 }
                         );
                     }
             );
+
+            function formatUser(item) {
+                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
+                       "<div class=\"ac-dropdown-subtext\">" + item.username + " " + item.email + "</div></li>";
+            }
+
+            function formatFunding(item) {
+                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
+                        "<div class=\"ac-dropdown-subtext\">" + item.matchDescription + "</div></li>";
+            }
+
+            function formatCohort(item) {
+                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
+                        "<div class=\"ac-dropdown-subtext\">" + item.group + " " + item.category + "</div></li>";
+            }
         </script>
     </stripes:layout-component>
 
