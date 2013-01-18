@@ -13,12 +13,11 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow.rework;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 @Entity
@@ -37,8 +36,7 @@ public class ReworkEntry extends RapSheetEntry {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private LabEvent labEvent;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    private RapSheet rapSheet;
+    private LabEventType reworkStep;
 
     public ReworkEntry() {
     }
