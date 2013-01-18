@@ -102,6 +102,12 @@ pmbridge:
 
 quote:
 
+    DEV:
+
+      login:    rnordin@broadinstitute.org
+      password: Squ1d_us3r
+      url:      http://quotedev:8080
+
     QA:
 
       login:    rnordin@broadinstitute.org
@@ -242,7 +248,7 @@ mercury:
       gap:      DEV
       jira:     TEST
       pmbridge: DEV
-      quote:    QA
+      quote:    DEV
       squid:    DEV
       thrift:   QA
       deckMsgs: DEV

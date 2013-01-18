@@ -29,7 +29,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.tokenimporters.ReagentDesignTokenInput;
 
 import javax.inject.Inject;
-import java.io.StringReader;
 import java.util.*;
 
 /**
@@ -118,8 +117,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
 
     @HandlesEvent("reagentListAutocomplete")
     public Resolution reagentListAutocomplete() throws Exception {
-        return new StreamingResolution("text",
-                new StringReader(ReagentDesignTokenInput.getJsonString(reagentDesignDao, getQ())));
+        return createTextResolution(ReagentDesignTokenInput.getJsonString(reagentDesignDao, getQ()));
     }
 
     @HandlesEvent(EDIT_ACTION)

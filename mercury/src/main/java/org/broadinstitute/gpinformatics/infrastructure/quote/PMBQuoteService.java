@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 
+import javax.xml.parsers.ParserConfigurationException;
 import java.util.Set;
 
 /**
@@ -28,26 +29,17 @@ public interface PMBQuoteService {
 
     /**
      * Method to return all sources of funding from the quote server
-     * @return
+     * @return The set of funding objects
+     *
      * @throws QuoteServerException
      * @throws QuoteNotFoundException
      */
-    public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException;
-
-    /**
-     * Method to return a list of Quotes for a particular funding source.
-     * Any quotes that are returned from the quoteServer which have this funding source
-     * associated will be returned.
-     * @param fundingSource
-     * @return
-     * @throws QuoteServerException
-     * @throws QuoteNotFoundException
-     */
-    public Set<Quote> getQuotesInFundingSource(Funding fundingSource) throws QuoteServerException, QuoteNotFoundException;
+    public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException, ParserConfigurationException;
 
     /**
      * Method to return a list of PriceItems per Platform.
-     * @return
+     * @return The full price list
+     *
      * @throws QuoteServerException
      * @throws QuoteNotFoundException
      */

@@ -27,6 +27,12 @@
             $j('#viewerDiv').show();
         }
 
+        function showWorkflowVisualizer(label) {
+            $j('#viewerDiv').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
+            $j('#viewerDiv').load('${ctxpath}/view/workflowView.action?vesselLabel=' + label);
+            $j('#viewerDiv').show();
+        }
+
     </script>
     <table id="productOrderList" class="table simple">
         <thead>
@@ -39,6 +45,7 @@
             </c:if>
             <th width="30">Vessel Viewer</th>
             <th width="30">Sample List Viewer</th>
+            <th width="30">Workflow View</th>
             <th>Label</th>
             <th width="80">Sample Count</th>
             <th>Type</th>
@@ -64,15 +71,31 @@
                     </td>
                 </c:if>
                 <td>
-                    <a href="javascript:showVesselVisualizer('${vessel.label}')">
-                        <img width="30" height="30" name="" title="show plate view" src="${ctxpath}/images/plate.png"/>
-                    </a>
+                    <c:if test="${vessel.sampleInstanceCount > 0 }">
+                        <a href="javascript:showVesselVisualizer('${vessel.label}')">
+                            <img width="30" height="30" name="" title="show plate view"
+                                 src="${ctxpath}/images/plate.png"/>
+                        </a>
+                    </c:if>
                 </td>
                 <td>
-                    <a href="javascript:showSampleVisualizer('${vessel.label}')">
-                        <img width="30" height="30" name="" title="show sample list" src="${ctxpath}/images/list.png"/>
-                    </a>
+                    <c:if test="${vessel.sampleInstanceCount > 0 }">
+                        <a href="javascript:showSampleVisualizer('${vessel.label}')">
+                            <img width="30" height="30" name="" title="show sample list"
+                                 src="${ctxpath}/images/list.png"/>
+                        </a>
+                    </c:if>
                 </td>
+
+                <td>
+                    <c:if test="${vessel.sampleInstanceCount > 0 }">
+                        <a href="javascript:showWorkflowVisualizer('${vessel.label}')">
+                            <img width="30" height="30" name="" title="show workflow view"
+                                 src="${ctxpath}/images/list.png"/>
+                        </a>
+                    </c:if>
+                </td>
+
                 <td>
                         ${vessel.label}
                 </td>
