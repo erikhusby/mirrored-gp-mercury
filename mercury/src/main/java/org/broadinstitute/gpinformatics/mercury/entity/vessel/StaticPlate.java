@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.hibernate.envers.Audited;
 
@@ -184,6 +185,35 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         NearestTubeAncestorsCriteria criteria = new NearestTubeAncestorsCriteria();
         applyCriteriaToAllWells(criteria);
         return new ArrayList<VesselAndPosition>(criteria.getVesselAndPositions());
+    }
+
+    /**
+     * Traverses section transfer ancestors, returning section transfers up to the specified depth.
+     *
+     * Does not use a TransferTraverserCriteria because the goal is to look at the plate as a whole instead of focusing
+     * on individual wells.
+     *
+     * @param depth
+     * @return
+     */
+    public List<SectionTransfer> getUpstreamPlateTransfers(int depth) {
+        Set<SectionTransfer> sectionTransfers = new LinkedHashSet<SectionTransfer>();
+        recursePlateTransfers(sectionTransfers, vesselContainer, depth, 1);
+        return new ArrayList<SectionTransfer>(sectionTransfers);
+    }
+
+    private void recursePlateTransfers(Set<SectionTransfer> transfers, VesselContainer vesselContainer, int depth, int currentDepth) {
+        Set<SectionTransfer> sectionTransfersTo = vesselContainer.getSectionTransfersTo();
+        for (SectionTransfer sectionTransfer : sectionTransfersTo) {
+            recurseSectionTransfer(transfers, depth, currentDepth, sectionTransfer);
+        }
+    }
+
+    private void recurseSectionTransfer(Set<SectionTransfer> transfers, int depth, int currentDepth, SectionTransfer sectionTransfer) {
+        transfers.add(sectionTransfer);
+        if (currentDepth < depth) {
+            recursePlateTransfers(transfers, sectionTransfer.getSourceVesselContainer(), depth, currentDepth + 1);
+        }
     }
 
     private void applyCriteriaToAllWells(TransferTraverserCriteria criteria) {

@@ -25,6 +25,10 @@ public class LimsQueries {
         this.staticPlateDAO = staticPlateDAO;
     }
 
+    public boolean doesLimsRecognizeAllTubes(List<String> barcodes) {
+        return false;
+    }
+
     /**
      * Returns a list of plate barcodes that had material directly transferred into the plate with the given barcode.
      *
@@ -54,6 +58,7 @@ public class LimsQueries {
 
     public List<PlateTransferType> fetchTransfersForPlate(String plateBarcode, int depth) {
         List<PlateTransferType> transfers = new ArrayList<PlateTransferType>();
+        // TODO: implement using StaticPlate.getUpstreamPlateTransfers()
         return transfers;
     }
 }
