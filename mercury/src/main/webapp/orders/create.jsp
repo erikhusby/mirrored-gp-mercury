@@ -28,19 +28,22 @@
                     });
 
                     $j("#researchProject").tokenInput(
-                            "${ctxpath}/projects/project.action?autocomplete=", {
-                                prePopulate: ${actionBean.ensureStringResult(actionBean.projectCompleteData)},
-                                tokenLimit: 1
-                            }
+                        "${ctxpath}/orders/order.action?projectAutocomplete=", {
+                            hintText: "Type a project name",
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
+                            tokenLimit: 1
+                        }
                     );
 
                     $j("#product").tokenInput(
-                            "${ctxpath}/products/product.action?autocomplete=", {
-                                onAdd: updateUIForProductChoice,
-                                onDelete: updateUIForProductChoice,
-                                prePopulate: ${actionBean.ensureStringResult(actionBean.productCompleteData)},
-                                tokenLimit: 1
-                            }
+                        "${ctxpath}/orders/order.action?productAutocomplete=", {
+                            hintText: "Type a Product name or Part Number   ",
+                            onAdd: updateUIForProductChoice,
+                            onDelete: updateUIForProductChoice,
+                            resultsFormatter: formatProduct,
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
+                            tokenLimit: 1
+                        }
                     );
 
                     <c:if test="${!actionBean.creating}">
@@ -49,6 +52,10 @@
                     </c:if>
                 }
             );
+
+            function formatProduct(item) {
+                return '<li><div class="ac-dropdown-text">' + item.name + '[' + item.id + ']' + "</div></li>";
+            }
 
             var addOn = [];
             <c:forEach items="${actionBean.editOrder.addOns}" var="addOnProduct">
@@ -168,7 +175,7 @@
                         Research Project <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="researchProject" name="researchProjectList" class="defaultText"
+                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="researchProject" name="projectTokenInput.listOfKeys" class="defaultText"
                             title="Enter the research project for this order"/>
                     </div>
                 </div>
@@ -178,7 +185,7 @@
                         Product <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="product" name="productList" class="defaultText"
+                        <stripes:text id="product" name="productTokenInput.listOfKeys" class="defaultText"
                             title="Enter the product name for this order"/>
                     </div>
                 </div>

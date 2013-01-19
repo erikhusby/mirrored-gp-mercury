@@ -169,7 +169,7 @@
             <stripes:link title="Create product with research project ${actionBean.editResearchProject.title}"
                           beanclass="<%=ProductOrderActionBean.class.getName()%>" event="create" class="pull-right">
                 <span class="icon-tags"></span> <%=ProductOrderActionBean.CREATE_ORDER%>
-                <stripes:param name="productOrder" value="${actionBean.editResearchProject.businessKey}"/>
+                <stripes:param name="researchProjectKey" value="${actionBean.editResearchProject.businessKey}"/>
             </stripes:link>
         </div>
 

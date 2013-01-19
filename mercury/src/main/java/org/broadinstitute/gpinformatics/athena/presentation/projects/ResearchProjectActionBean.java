@@ -316,19 +316,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return jiraLink.browseUrl();
     }
 
-    /**
-     * Handles the autocomplete for the jQuery Token plugin.
-     *
-     * @return The ajax resolution
-     * @throws Exception
-     */
-    @HandlesEvent("autocomplete")
-    public Resolution autocomplete() throws Exception {
-        Collection<ResearchProject> projects = researchProjectDao.searchProjects(getQ());
-
-        return createTextResolution(getAutoCompleteJsonString(projects));
-    }
-
     public static String getAutoCompleteJsonString(Collection<ResearchProject> projects) throws JSONException {
         JSONArray itemList = new JSONArray();
         for (ResearchProject project : projects) {
@@ -338,10 +325,10 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return itemList.toString();
     }
 
-    // Autocomplete events for streaming in the appropriate data
+    // Autocomplete events for streaming in the appropriate data. Using project manager list (token input) but can use any one for this
     @HandlesEvent("usersAutocomplete")
     public Resolution usersAutocomplete() throws Exception {
-        return createTextResolution(UserTokenInput.getJsonString(bspUserList, getQ()));
+        return createTextResolution(projectManagerList.getJsonString(getQ()));
     }
 
     @HandlesEvent("cohortAutocomplete")
@@ -440,4 +427,5 @@ public class ResearchProjectActionBean extends CoreActionBean {
         // User must be logged into JIRA to create or edit a Research Project.
         return userBean.isValidUser();
     }
+
 }
