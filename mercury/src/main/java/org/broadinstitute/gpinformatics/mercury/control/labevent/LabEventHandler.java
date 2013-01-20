@@ -144,7 +144,9 @@ public class LabEventHandler implements Serializable {
         }
         message += labEvent.getLabEventType().getName() + " for " + labEvent.getAllLabVessels().iterator().next().getLabel() +
                 " on " + labEvent.getEventLocation() + " at " + labEvent.getEventDate();
-        jiraCommentUtil.postUpdate(message, null, labEvent.getAllLabVessels());
+        if (jiraCommentUtil != null) {
+            jiraCommentUtil.postUpdate(message, null, labEvent.getAllLabVessels());
+        }
         try {
             labEvent.applyMolecularStateChanges();
             enqueueForPostProcessing(labEvent);
