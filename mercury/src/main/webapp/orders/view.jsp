@@ -1,5 +1,7 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -119,9 +121,9 @@
                     <div class="form-value">
                         <c:if test="${actionBean.editOrder.researchProject != null}">
                             <stripes:link title="Research Project"
-                                          beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
+                                          beanclass="<%=ResearchProjectActionBean.class.getName()%>"
                                           event="view">
-                                <stripes:param name="project" value="${actionBean.editOrder.researchProject.businessKey}"/>
+                                <stripes:param name="<%=ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER%>" value="${actionBean.editOrder.researchProject.businessKey}"/>
                                 ${actionBean.editOrder.researchProject.title}
                             </stripes:link>
                             (<a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.researchProject.jiraTicketKey}" class="external" target="JIRA">

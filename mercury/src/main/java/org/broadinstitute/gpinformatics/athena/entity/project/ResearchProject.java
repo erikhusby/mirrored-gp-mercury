@@ -266,8 +266,7 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     }
 
     /**
-     * Clears the ID and JIRA ticket key. THIS METHOD MUST ONLY EVER BE CALLED BY
-     * {@link org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectManager#createResearchProject(ResearchProject)}
+     * Clears the ID and JIRA ticket key. THIS METHOD MUST ONLY EVER BE CALLED
      * IN THE CASE WHERE THE JIRA ISSUE HAS BEEN CREATED BUT THERE IS AN ERROR PERSISTING THE RESEARCH PROJECT!
      */
     public void rollbackPersist() {
