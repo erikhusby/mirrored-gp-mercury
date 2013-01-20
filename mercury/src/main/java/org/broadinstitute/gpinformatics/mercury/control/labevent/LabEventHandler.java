@@ -145,7 +145,12 @@ public class LabEventHandler implements Serializable {
         message += labEvent.getLabEventType().getName() + " for " + labEvent.getAllLabVessels().iterator().next().getLabel() +
                 " on " + labEvent.getEventLocation() + " at " + labEvent.getEventDate();
         if (jiraCommentUtil != null) {
-            jiraCommentUtil.postUpdate(message, null, labEvent.getAllLabVessels());
+            try {
+                jiraCommentUtil.postUpdate(message, labEvent.getAllLabVessels());
+            } catch (Exception e) {
+                // This is not fatal, so don't rethrow
+                LOG.error("Failed to update JIRA", e);
+            }
         }
         try {
             labEvent.applyMolecularStateChanges();

@@ -47,6 +47,6 @@ public class JiraCommentUtilTest extends Arquillian {
 
         List<LabVessel> labVessels = new ArrayList<LabVessel>();
         labVessels.add(twoDBarcodedTube);
-        jiraCommentUtil.postUpdate("test", "test", labVessels);
+        jiraCommentUtil.postUpdate("test", labVessels);
     }
 }

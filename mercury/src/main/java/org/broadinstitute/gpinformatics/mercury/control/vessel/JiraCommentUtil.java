@@ -46,15 +46,13 @@ public class JiraCommentUtil {
      * @param  message the text of the message
      * @param vessels the containers used in the operation
      */
-    public void postUpdate(String title,
-                                  String message,
-                                  Collection<LabVessel> vessels) {
+    public void postUpdate(String message,
+                Collection<LabVessel> vessels) {
         // keep a list of sample names for each project because we're going
         // to make a single message that references each sample in a project
 
         Set<JiraTicket> tickets = new HashSet<JiraTicket>();
         for (LabVessel vessel : vessels) {
-            // todo arz talk to jmt about this.  I don't think I'm doing it right.
             VesselContainer vesselContainer = vessel.getContainerRole();
             if (vesselContainer != null) {
                 for (Object o: vesselContainer.getPositions()) {
@@ -79,23 +77,16 @@ public class JiraCommentUtil {
             }
         }
         for (JiraTicket ticket : tickets) {
-            StringBuilder messageBuilder = new StringBuilder("{panel:title=" + title + "}");
-            if (message != null) {
-                messageBuilder.append(message);
-                messageBuilder.append("\n");
-            }
-//            ticket.addComment(messageBuilder.toString());
             try {
                 JiraIssue jiraIssue = ticket.getJiraDetails();
-                String fieldValue = (String) jiraIssue.getFieldValue("customfield_13169"/*"LIMS Activity Stream"*/);
-                fieldValue = new StringBuilder().append(fieldValue).append("{html}").append(message).append("{html}").toString();
-
                 Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
+                String fieldValue = (String) jiraIssue.getFieldValue(submissionFields.get("LIMS Activity Stream").getJiraCustomFieldId()); /*"customfield_13169"*/
+                fieldValue = new StringBuilder().append(fieldValue).append("{html}").append(message).append("<br/>{html}").toString();
+
                 CustomField mercuryUrlField = new CustomField(
                         submissionFields, LabBatch.RequiredSubmissionFields.LIMS_ACTIVITY_STREAM, fieldValue);
 
                 jiraIssue.updateIssue(Collections.singleton(mercuryUrlField));
-                System.out.println(fieldValue);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
@@ -118,12 +109,11 @@ public class JiraCommentUtil {
      * @param  message the text of the message
      * @param vessel the container used in the operation
      */
-    public void postUpdate(String title,
-                                  String message,
-                                  LabVessel vessel) {
+    public void postUpdate(String message,
+                LabVessel vessel) {
         Collection<LabVessel> vessels = new HashSet<LabVessel>();
         vessels.add(vessel);
-        postUpdate(title,message,vessels);
+        postUpdate(message, vessels);
         
     }
 

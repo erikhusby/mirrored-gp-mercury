@@ -907,6 +907,9 @@ public class LabEventFactory implements Serializable {
     public LabEvent buildFromBettaLimsPlateToPlateDbFree ( PlateTransferEventType plateTransferEvent,
                                                            StripTube sourceStripTube,
                                                            IlluminaFlowcell targetFlowcell ) {
+        if(sourceStripTube == null) {
+            throw new RuntimeException("Failed to find StripTube " + plateTransferEvent.getSourcePlate().getBarcode ());
+        }
         LabEvent labEvent = constructReferenceData ( plateTransferEvent, labEventRefDataFetcher );
         if ( targetFlowcell == null ) {
             // todo jmt what about MiSeq?
