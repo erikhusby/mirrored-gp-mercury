@@ -79,7 +79,6 @@
                 });
             }
 
-
             function adjustNumberOfLanesVisibility(data) {
                 var numberOfLanesDiv = $j("#numberOfLanesDiv")
                 if (data["supports"]) {
@@ -89,7 +88,6 @@
                     numberOfLanesDiv.fadeOut();
                 }
             }
-
 
             function setupCheckboxes(data) {
                 var productTitle = $j("#product").val();
