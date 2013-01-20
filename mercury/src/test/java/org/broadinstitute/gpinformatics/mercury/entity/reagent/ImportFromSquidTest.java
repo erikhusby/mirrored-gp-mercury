@@ -230,6 +230,7 @@ public class ImportFromSquidTest extends ContainerTest {
 //        mapWorkflowToPartNum.put("Hybrid Selection", "P-EX-0001");
 ////        ("180SM", "?")
 
+        // Positive and negative controls are not included in the Product Order, but are included in the LCSet
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                 "    DISTINCT  " +
                 "    l.KEY AS lcsetKey, " +
@@ -281,8 +282,8 @@ public class ImportFromSquidTest extends ContainerTest {
                 "        ON   se.station_event_id = pe.station_event_id " +
                 "    INNER JOIN station_event_type set1 " +
                 "        ON   set1.station_event_type_id = se.station_event_type_id " +
-                "WHERE " +
-                "    wrmd.product_order_name IS NOT NULL " +
+//                "WHERE " +
+//                "    wrmd.product_order_name IS NOT NULL " +
 //                "    AND lwd.name = 'Exome Express' " +
                 "ORDER BY " +
                 "    l.KEY, " +
@@ -521,10 +522,11 @@ public class ImportFromSquidTest extends ContainerTest {
                     // Strip tube and flowcell transfer dates are assigned on the server, so they may not match
                     // what's in the file, hence we have to do a lenient check against the file name
                     if(eventName.equals("StripTubeBTransfer") || eventName.equals("FlowcellTransfer")) {
-                        if(fileName.startsWith(yearMonthDay + "_" + String.format("%02d%02d", hour, minute)) ||
+                        if(message.contains(eventName) &&
+                                (fileName.startsWith(yearMonthDay + "_" + String.format("%02d%02d", hour, minute)) ||
                                 fileName.startsWith(yearMonthDay + "_" + String.format("%02d%02d", hour, minute + 1)) ||
                                 fileName.startsWith(yearMonthDay + "_" + String.format("%02d", hour)) ||
-                                fileName.startsWith(yearMonthDay + "_" + String.format("%02d", hour + 1))) {
+                                fileName.startsWith(yearMonthDay + "_" + String.format("%02d", hour + 1)))) {
                             System.out.println("#" + eventName);
                             System.out.println(messageFile.getCanonicalPath());
                             found = true;
@@ -587,4 +589,37 @@ FROM
 
 		493,677 rows
      */
+/*
+SELECT
+	DISTINCT l."KEY"
+FROM
+	work_request_material_descr wrmd
+	INNER JOIN work_request_material wrm
+		ON   wrm.work_request_material_id = wrmd.work_request_material_id
+	INNER JOIN wr_material_recep_membership wmrm
+		ON   wmrm.work_request_material_id = wrm.work_request_material_id
+	INNER JOIN receptacle r
+		ON   r.receptacle_id = wmrm.receptacle_id
+	INNER JOIN receptacle_transfer_event rte
+		ON   rte.src_receptacle_id = r.receptacle_id
+	INNER JOIN receptacle_event re
+		ON   re.station_event_id = rte.station_event_id
+	INNER JOIN station_event se
+		ON   se.station_event_id = re.station_event_id
+	INNER JOIN station_event_type set1
+		ON   set1.station_event_type_id = se.station_event_type_id
+	INNER JOIN lab_workflow_receptacle lwr
+		ON   lwr.receptacle_id = r.receptacle_id
+	INNER JOIN lab_workflow lw
+		ON   lw.lab_workflow_id = lwr.lab_workflow_id
+	INNER JOIN lcset l
+		ON   l.lcset_id = lw.lcset_id
+		     --	INNER JOIN flowcell_lane fl
+		     --		ON   fl.flowcell_lane_id = r.receptacle_id
+WHERE
+	wrmd.product_order_name IS NOT NULL
+	AND set1.name = 'StripTubeBTransfer'
+ORDER BY
+	1;
+ */
 }
