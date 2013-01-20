@@ -340,11 +340,9 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     public Long[] getPeople(RoleType role) {
         List<Long> people = new ArrayList<Long>();
 
-        if (associatedPeople != null) {
-            for (ProjectPerson projectPerson : associatedPeople) {
-                if (role == projectPerson.getRole()) {
-                    people.add(projectPerson.getPersonId());
-                }
+        for (ProjectPerson projectPerson : associatedPeople) {
+            if (role == projectPerson.getRole()) {
+                people.add(projectPerson.getPersonId());
             }
         }
 
@@ -395,19 +393,14 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     }
 
     public String[] getFundingIds() {
+        String[] fundingIds = new String[projectFunding.size()];
 
-        if (projectFunding != null) {
-            String[] fundingIds = new String[projectFunding.size()];
-
-            int i = 0;
-            for (ResearchProjectFunding fundingItem : projectFunding) {
-                fundingIds[i++] = fundingItem.getFundingId();
-            }
-
-            return fundingIds;
+        int i = 0;
+        for (ResearchProjectFunding fundingItem : projectFunding) {
+            fundingIds[i++] = fundingItem.getFundingId();
         }
 
-        return new String[0];
+        return fundingIds;
     }
 
     public void addFunding(ResearchProjectFunding funding) {
@@ -611,15 +604,4 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         builder.append(title, that.getTitle());
         return builder.build();
     }
-
-    /**
-     * Compare by the ResearchProject by the title (case insensitive).
-     */
-    public static final Comparator<ResearchProject> BY_TITLE = new Comparator<ResearchProject>() {
-        @Override
-        public int compare(ResearchProject lhs, ResearchProject rhs) {
-            return lhs.getTitle().toLowerCase().compareTo(
-                    rhs.getTitle().toLowerCase());
-        }
-    };
 }

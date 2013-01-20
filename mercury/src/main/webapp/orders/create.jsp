@@ -28,32 +28,34 @@
                     });
 
                     $j("#researchProject").tokenInput(
-                        "${ctxpath}/projects/project.action?autocomplete=", {
-                            searchDelay: 2000,
-                            <c:if test="${actionBean.projectCompleteData != null && actionBean.projectCompleteData != ''}">
-                                prePopulate: ${actionBean.projectCompleteData},
-                            </c:if>
+                        "${ctxpath}/orders/order.action?projectAutocomplete=", {
+                            hintText: "Type a project name",
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
                             tokenLimit: 1
                         }
                     );
 
                     $j("#product").tokenInput(
-                        "${ctxpath}/products/product.action?autocomplete=", {
-                            searchDelay: 2000,
+                        "${ctxpath}/orders/order.action?productAutocomplete=", {
+                            hintText: "Type a Product name or Part Number   ",
                             onAdd: updateUIForProductChoice,
                             onDelete: updateUIForProductChoice,
-                            <c:if test="${actionBean.productCompleteData != null && actionBean.productCompleteData != ''}">
-                                prePopulate: ${actionBean.productCompleteData},
-                            </c:if>
+                            resultsFormatter: formatProduct,
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
                             tokenLimit: 1
                         }
                     );
 
                     <c:if test="${!actionBean.creating}">
                         updateUIForProductChoice();
+                        updateFundsRemaining();
                     </c:if>
                 }
             );
+
+            function formatProduct(item) {
+                return '<li><div class="ac-dropdown-text">' + item.name + '[' + item.id + ']' + "</div></li>";
+            }
 
             var addOn = [];
             <c:forEach items="${actionBean.editOrder.addOns}" var="addOnProduct">
@@ -118,15 +120,18 @@
             function updateFundsRemaining() {
                 var quoteIdentifier = $j("#quote").val();
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getQuoteFunding&quoteIdentifier=" + quoteIdentifier,
+                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier,
                     dataType: 'json',
-                    data: data,
                     success: updateFunds
                 });
             }
 
             function updateFunds(data) {
-                $j("#fundsRemaining").text(data.fundsRemaining);
+                if (data.fundsRemaining) {
+                    $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
+                } else {
+                    $j("#fundsRemaining").text('Error: ' + data.error);
+                }
             }
         </script>
     </stripes:layout-component>
@@ -170,7 +175,7 @@
                         Research Project <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="researchProject" name="researchProjectList" class="defaultText"
+                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="researchProject" name="projectTokenInput.listOfKeys" class="defaultText"
                             title="Enter the research project for this order"/>
                     </div>
                 </div>
@@ -180,7 +185,7 @@
                         Product <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="product" name="productList" class="defaultText"
+                        <stripes:text id="product" name="productTokenInput.listOfKeys" class="defaultText"
                             title="Enter the product name for this order"/>
                     </div>
                 </div>
@@ -198,7 +203,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="quote" name="editOrder.quoteId" class="defaultText"
-                                      onchange="updateFundsRemaining"
+                                      onchange="updateFundsRemaining()"
                                       title="Enter the Quote ID for this order"/>
                         <div id="fundsRemaining"> </div>
                     </div>
@@ -236,7 +241,7 @@
                             </c:when>
                             <c:otherwise>
                                 <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                    <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                                    <stripes:param name="productOrder" value="${actionBean.productOrder}"/>
                                     Cancel
                                 </stripes:link>
                             </c:otherwise>
@@ -246,11 +251,19 @@
             </div>
 
             <div class="help-block span4">
-                Enter samples names in this box, one per line. When you save the order, the view page will show
-                all sample details.
+                <c:choose>
+                    <c:when test="${actionBean.editOrder.draft}">
+                        Enter samples names in this box, one per line. When you save the order, the view page will show
+                        all sample details.
+                    </c:when>
+                    <c:otherwise>
+                        This is the list of samples. Since this order has already been placed, the list of samples cannot
+                        be changed.
+                    </c:otherwise>
+                </c:choose>
                 <br/>
                 <br/>
-                <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="editOrder.sampleList" rows="15" cols="120"/>
+                <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="sampleList" rows="15" cols="120"/>
             </div>
         </stripes:form>
 

@@ -5,7 +5,6 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.*;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
-import org.broadinstitute.gpinformatics.athena.boundary.FundingListBean;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -15,17 +14,19 @@ import org.broadinstitute.gpinformatics.athena.presentation.links.TableauLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.CohortTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.FundingTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
-import org.broadinstitute.gpinformatics.infrastructure.AutoCompleteToken;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.json.JSONArray;
 import org.json.JSONException;
 
 import javax.inject.Inject;
-import java.io.StringReader;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * This class is for research projects action bean / web page.
@@ -59,9 +60,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private CohortListBean cohortListBean;
 
-    @Inject
-    private FundingListBean fundingList;
-
     @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION})
     private String researchProject;
 
@@ -93,7 +91,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     // These are the fields for catching the input tokens
     @ValidateNestedProperties({
-            @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
+        @Validate(field = "listOfKeys", label = "Project Managers", required = true, on = {SAVE_ACTION})
     })
     @Inject
     private UserTokenInput projectManagerList;
@@ -198,6 +196,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution create() {
         validateUser("create");
         setSubmitString(CREATE_PROJECT);
+        populateTokenListsFromObjectData();
         return new ForwardResolution(PROJECT_CREATE_PAGE);
     }
 
@@ -205,7 +204,21 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public Resolution edit() {
         validateUser("edit");
         setSubmitString(EDIT_PROJECT);
+        populateTokenListsFromObjectData();
         return new ForwardResolution(PROJECT_CREATE_PAGE);
+    }
+
+    /**
+     * For the prepopulate to work on opening create and edit page, we need to take values from the editOrder. After,
+     * the pages have the values passed in.
+     */
+    private void populateTokenListsFromObjectData() {
+        projectManagerList.setup(editResearchProject.getProjectManagers());
+        scientistList.setup(editResearchProject.getScientists());
+        externalCollaboratorList.setup(editResearchProject.getExternalCollaborators());
+        broadPiList.setup(editResearchProject.getBroadPIs());
+        fundingSourceList.setup(editResearchProject.getFundingIds());
+        cohortsList.setup(editResearchProject.getCohortIds());
     }
 
     public Resolution save() throws Exception {
@@ -283,8 +296,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     public String getFundingSourcesListString() {
-        // FIXME: fix to use function calls in JSP.
-        return fundingList.getFundingListString(editResearchProject.getFundingIds());
+        String[] fundingIds = editResearchProject.getFundingIds();
+        if (fundingIds == null) {
+            return "";
+        }
+
+        return StringUtils.join(fundingIds, ", ");
     }
 
     /**
@@ -299,74 +316,37 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return jiraLink.browseUrl();
     }
 
-    /**
-     * Handles the autocomplete for the jQuery Token plugin.
-     *
-     * @return The ajax resolution
-     * @throws Exception
-     */
-    @HandlesEvent("autocomplete")
-    public Resolution autocomplete() throws Exception {
-        Collection<ResearchProject> projects = researchProjectDao.searchProjects(getQ());
-
-        String completeString = getAutoCompleteJsonString(projects);
-        return new StreamingResolution("text", new StringReader(completeString));
-    }
-
     public static String getAutoCompleteJsonString(Collection<ResearchProject> projects) throws JSONException {
         JSONArray itemList = new JSONArray();
         for (ResearchProject project : projects) {
-            itemList.put(new AutoCompleteToken(project.getBusinessKey(), project.getTitle(), false).getJSONObject());
+            itemList.put(TokenInput.getJSONObject(project.getBusinessKey(), project.getTitle(), false));
         }
 
         return itemList.toString();
     }
 
-    // Autocomplete events for streaming in the appropriate data
+    // Autocomplete events for streaming in the appropriate data. Using project manager list (token input) but can use any one for this
     @HandlesEvent("usersAutocomplete")
     public Resolution usersAutocomplete() throws Exception {
-        return new StreamingResolution("text", new StringReader(UserTokenInput.getJsonString(bspUserList, getQ())));
+        return createTextResolution(projectManagerList.getJsonString(getQ()));
     }
 
     @HandlesEvent("cohortAutocomplete")
     public Resolution cohortAutocomplete() throws Exception {
-        return new StreamingResolution("text", new StringReader(CohortTokenInput.getJsonString(cohortListBean, getQ())));
+        return createTextResolution(cohortsList.getJsonString(getQ()));
     }
 
     @HandlesEvent("fundingAutocomplete")
     public Resolution fundingAutocomplete() throws Exception {
-        return new StreamingResolution("text", new StringReader(FundingTokenInput.getJsonString(fundingList, getQ())));
+        return createTextResolution(fundingSourceList.getJsonString(getQ()));
     }
 
     @HandlesEvent("irbAutocomplete")
     public Resolution irbAutocomplete() throws Exception {
-        return new StreamingResolution("text", new StringReader(IrbConverter.getJsonString(getQ())));
+        return createTextResolution(IrbConverter.getJsonString(getQ()));
     }
 
-    // Complete Data getters are for the prepoulates on the create.jsp
-    public String getBroadPICompleteData() throws Exception {
-        return UserTokenInput.getUserCompleteData(bspUserList, editResearchProject.getBroadPIs());
-    }
-
-    public String getExternalCollaboratorCompleteData() throws Exception {
-        return UserTokenInput.getUserCompleteData(bspUserList, editResearchProject.getExternalCollaborators());
-    }
-
-    public String getScientistCompleteData() throws Exception {
-        return UserTokenInput.getUserCompleteData(bspUserList, editResearchProject.getScientists());
-    }
-
-    public String getProjectManagerCompleteData() throws Exception {
-        return UserTokenInput.getUserCompleteData(bspUserList, editResearchProject.getProjectManagers());
-    }
-
-    public String getFundingSourcesCompleteData() throws Exception {
-        return FundingTokenInput.getFundingCompleteData(fundingList, editResearchProject.getFundingIds());
-    }
-
-    public String getCohortsCompleteData() throws Exception {
-        return CohortTokenInput.getCohortCompleteData(cohortListBean, editResearchProject.getCohortIds());
-    }
+    // Complete Data getters are for the prepopulates on the create.jsp
 
     public String getIrbsCompleteData() throws Exception {
         return IrbConverter.getIrbCompleteData(editResearchProject.getIrbNumbers());
@@ -447,4 +427,5 @@ public class ResearchProjectActionBean extends CoreActionBean {
         // User must be logged into JIRA to create or edit a Research Project.
         return userBean.isValidUser();
     }
+
 }
