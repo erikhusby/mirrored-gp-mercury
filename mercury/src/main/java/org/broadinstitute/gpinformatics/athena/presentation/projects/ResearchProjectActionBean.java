@@ -4,7 +4,6 @@ import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.*;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -14,6 +13,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.links.TableauLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.CohortTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.FundingTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -58,7 +58,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     private BSPUserList bspUserList;
 
     @Inject
-    private CohortListBean cohortListBean;
+    private BSPCohortList cohortList;
 
     @Validate(required = true, on = {EDIT_ACTION, VIEW_ACTION})
     private String researchProject;
@@ -291,8 +291,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     public String getCohortsListString() {
-        // FIXME: fix to use function calls in JSP.
-        return cohortListBean.getCohortListString(editResearchProject.getCohortIds());
+        return cohortList.getCohortListString(editResearchProject.getCohortIds());
     }
 
     public String getFundingSourcesListString() {

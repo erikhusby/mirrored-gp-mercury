@@ -5,11 +5,11 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfig;
@@ -435,10 +435,9 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
                 cohortNames.add(cohort.getCohortId());
             }
 
-            CohortListBean cohortListBean = ServiceAccessUtility.getBean(CohortListBean.class);
-
+            BSPCohortList cohortList = ServiceAccessUtility.getBean(BSPCohortList.class);
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.COHORTS,
-                                             cohortListBean.getCohortListString(cohortNames.toArray(
+                                             cohortList.getCohortListString(cohortNames.toArray(
                                                      new String[cohortNames.size()]))));
         }
 

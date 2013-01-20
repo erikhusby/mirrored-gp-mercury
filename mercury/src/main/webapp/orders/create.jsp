@@ -46,10 +46,8 @@
                         }
                     );
 
-                    <c:if test="${!actionBean.creating}">
-                        updateUIForProductChoice();
-                        updateFundsRemaining();
-                    </c:if>
+                    updateUIForProductChoice();
+                    updateFundsRemaining();
                 }
             );
 
