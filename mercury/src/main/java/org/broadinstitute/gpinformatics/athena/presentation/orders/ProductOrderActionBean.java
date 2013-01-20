@@ -505,7 +505,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         item.put("supports", lanesSupported);
 
-        return new StreamingResolution("text", new StringReader(item.toString()));
+        return createTextResolution(item.toString());
     }
 
     public List<String> getSelectedProductOrderBusinessKeys() {
