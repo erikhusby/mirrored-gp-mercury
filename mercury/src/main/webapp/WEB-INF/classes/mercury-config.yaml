@@ -248,7 +248,7 @@ mercury:
       gap:      DEV
       jira:     TEST
       pmbridge: DEV
-      quote:    DEV
+      quote:    QA
       squid:    DEV
       thrift:   QA
       deckMsgs: DEV

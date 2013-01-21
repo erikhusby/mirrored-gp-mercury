@@ -454,18 +454,34 @@ public class ProductOrder implements Serializable {
     }
 
     public void setSamples(List<ProductOrderSample> samples) {
-        this.samples.clear();
+        // only update samples if there are no ledger items on any samples
+        if (!hasLedgerItems()) {
+            this.samples.clear();
 
-        int samplePos = 0;
-        if (samples != null) {
-            for (ProductOrderSample sample : samples) {
-                sample.setProductOrder(this);
-                sample.setSamplePosition(samplePos++);
-                this.samples.add(sample);
+            int samplePos = 0;
+            if (samples != null) {
+                for (ProductOrderSample sample : samples) {
+                    sample.setProductOrder(this);
+                    sample.setSamplePosition(samplePos++);
+                    this.samples.add(sample);
+                }
+            }
+
+            counts.invalidate();
+        }
+    }
+
+    /**
+     * @return If any sample has ledger items, then return true. Otherwise return false
+     */
+    private boolean hasLedgerItems() {
+        for (ProductOrderSample sample : samples) {
+            if (!sample.getLedgerItems().isEmpty()) {
+                return true;
             }
         }
 
-        counts.invalidate();
+        return false;
     }
 
     /**
