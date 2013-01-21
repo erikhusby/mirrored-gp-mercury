@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedger
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
@@ -70,6 +71,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     private ProductOrderUtil productOrderUtil;
 
     @Inject
+    private ProductOrderSampleDao sampleDao;
+
+    @Inject
     private ProductOrderListEntryDao orderListEntryDao;
 
     @Inject
@@ -117,6 +121,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
     private String productOrder;
+
+    private long sampleId;
 
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
@@ -455,6 +461,39 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(itemList.toString());
     }
 
+    @HandlesEvent("getSummary")
+    public Resolution getSummary() throws Exception {
+        JSONArray itemList = new JSONArray();
+
+        List<String> comments = editOrder.getSampleSummaryComments();
+        for (String comment : comments) {
+            JSONObject item = new JSONObject();
+            item.put("comment", comment);
+
+            itemList.put(item);
+        }
+
+        return createTextResolution(itemList.toString());
+    }
+
+    @HandlesEvent("getBspData")
+    public Resolution getBspData() throws Exception {
+        JSONArray itemList = new JSONArray();
+
+        ProductOrderSample sample = sampleDao.findById(ProductOrderSample.class, sampleId);
+
+        JSONObject item = new JSONObject();
+
+        item.put("sampleId", sample.getProductOrderSampleId());
+        item.put("patientId", sample.getBspDTO().getPatientId());
+        item.put("volume", sample.getBspDTO().getVolume());
+        item.put("concentration", sample.getBspDTO().getConcentration());
+        item.put("total", sample.getBspDTO().getTotal());
+        item.put("hasFingerprint", sample.getBspDTO().getHasFingerprint());
+
+        return createTextResolution(item.toString());
+    }
+
     @HandlesEvent("getSupportsNumberOfLanes")
     public Resolution getSupportsNumberOfLanes() throws Exception {
         boolean lanesSupported = true;
@@ -466,7 +505,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         item.put("supports", lanesSupported);
 
-        return new StreamingResolution("text", new StringReader(item.toString()));
+        return createTextResolution(item.toString());
     }
 
     public List<String> getSelectedProductOrderBusinessKeys() {
@@ -652,5 +691,13 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setResearchProjectKey(String researchProjectKey) {
         this.researchProjectKey = researchProjectKey;
+    }
+
+    public long getSampleId() {
+        return sampleId;
+    }
+
+    public void setSampleId(long sampleId) {
+        this.sampleId = sampleId;
     }
 }

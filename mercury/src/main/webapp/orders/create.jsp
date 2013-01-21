@@ -46,10 +46,8 @@
                         }
                     );
 
-                    <c:if test="${!actionBean.creating}">
-                        updateUIForProductChoice();
-                        updateFundsRemaining();
-                    </c:if>
+                    updateUIForProductChoice();
+                    updateFundsRemaining();
                 }
             );
 
@@ -81,7 +79,6 @@
                 });
             }
 
-
             function adjustNumberOfLanesVisibility(data) {
                 var numberOfLanesDiv = $j("#numberOfLanesDiv")
                 if (data["supports"]) {
@@ -91,7 +88,6 @@
                     numberOfLanesDiv.fadeOut();
                 }
             }
-
 
             function setupCheckboxes(data) {
                 var productTitle = $j("#product").val();

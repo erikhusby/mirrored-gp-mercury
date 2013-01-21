@@ -22,8 +22,10 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedT
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -151,6 +153,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         String jiraTicketKey="PDO-MsgTest" + testPrefix;
         List<ProductOrderSample> productOrderSamples=new ArrayList<ProductOrderSample>();
         Map<String,TwoDBarcodedTube> mapBarcodeToTube=new LinkedHashMap<String,TwoDBarcodedTube>();
+        HashSet<LabVessel> starters = new HashSet<LabVessel>();
         for (int rackPosition=1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {
             String barcode="R" + testPrefix + rackPosition;
 
@@ -161,12 +164,14 @@ public class BettalimsMessageResourceTest extends Arquillian {
             productOrderSamples.add(new ProductOrderSample(bspStock));
 
             twoDBarcodedTubeDAO.persist(bspAliquot);
+            starters.add(bspAliquot);
         }
+        LabBatch labBatch = new LabBatch("LCSET-MsgTest-" + testPrefix, starters);
 
-        Product exomeExpressProduct=productDao.findByPartNumber("P-EX-0002");
+        Product exomeExpressProduct=productDao.findByPartNumber("P-EX-0001");
         if(exomeExpressProduct == null) {
-            exomeExpressProduct=new Product("Exome Express", productFamilyDao.find("Exome"), "Exome Express",
-                    "P-EX-0002", new Date(), null, 1814400, 1814400, 184, null, null, null, true, "Exome Express", false);
+            exomeExpressProduct=new Product("Standard Exome Sequencing", productFamilyDao.find("Exome"), "Standard Exome Sequencing",
+                    "P-EX-0001", new Date(), null, 1814400, 1814400, 184, null, null, null, true, "Hybrid Selection", false);
             exomeExpressProduct.setPrimaryPriceItem(new PriceItem("1234", PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Standard Pony"));
             productDao.persist(exomeExpressProduct);
             productDao.flush();
