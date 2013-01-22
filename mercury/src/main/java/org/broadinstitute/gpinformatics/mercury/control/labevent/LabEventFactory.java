@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
@@ -124,6 +125,9 @@ public class LabEventFactory implements Serializable {
 
     @Inject
     private IlluminaFlowcellDao illuminaFlowcellDao;
+
+    @Inject
+    private LabVesselDao labVesselDao;
 
     @Inject
     private LabEventDao labEventDao;
@@ -966,7 +970,7 @@ public class LabEventFactory implements Serializable {
     }
 
     public LabEvent buildFromBettaLims(ReceptacleEventType receptacleEventType) {
-        return buildReceptacleEventDbFree(receptacleEventType, twoDBarcodedTubeDao.findByBarcode(
+        return buildReceptacleEventDbFree(receptacleEventType, labVesselDao.findByIdentifier(
                 receptacleEventType.getReceptacle().getBarcode()));
     }
 
@@ -974,16 +978,16 @@ public class LabEventFactory implements Serializable {
      * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
      * lab event entity for an in-place event on a tube.
      * @param receptacleEventType JAXB
-     * @param twoDBarcodedTube from database
+     * @param labVessel from database
      * @return lab event entity
      */
     @DaoFree
-    private LabEvent buildReceptacleEventDbFree(ReceptacleEventType receptacleEventType, TwoDBarcodedTube twoDBarcodedTube) {
+    private LabEvent buildReceptacleEventDbFree(ReceptacleEventType receptacleEventType, LabVessel labVessel) {
         LabEvent labEvent = constructReferenceData ( receptacleEventType, labEventRefDataFetcher );
-        if(twoDBarcodedTube == null) {
+        if(labVessel == null) {
             throw new RuntimeException("Source tube not found for " + receptacleEventType.getReceptacle().getBarcode());
         }
-        labEvent.setInPlaceLabVessel(twoDBarcodedTube);
+        labEvent.setInPlaceLabVessel(labVessel);
         return labEvent;
     }
 
