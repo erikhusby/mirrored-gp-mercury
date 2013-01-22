@@ -189,15 +189,32 @@
                     </div>
                 </div>
 
-                <div class="control-group">
-                    <stripes:label for="researchProject" class="control-label">
-                        Research Project <c:if test="${not actionBean.editOrder.draft}">*</c:if>
-                    </stripes:label>
-                    <div class="controls">
-                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="researchProject" name="projectTokenInput.listOfKeys" class="defaultText"
-                            title="Enter the research project for this order"/>
-                    </div>
-                </div>
+                <c:choose>
+                    <c:when test="${actionBean.editOrder.draft}">
+                        <div class="control-group">
+                            <stripes:label for="researchProject" class="control-label">
+                                Research Project <c:if test="${not actionBean.editOrder.draft}">*</c:if>
+                            </stripes:label>
+                            <div class="controls">
+                                <stripes:text id="researchProject" name="projectTokenInput.listOfKeys"
+                                              class="defaultText"
+                                              title="Enter the research project for this order"/>
+                            </div>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="view-control-group control-group" style="margin-bottom: 20px;">
+                            <stripes:label for="researchProject" class="control-label">
+                                Research Project <c:if test="${not actionBean.editOrder.draft}">*</c:if>
+                            </stripes:label>
+                            <div class="controls">
+                                <div class="form-value">
+                                        ${actionBean.editOrder.researchProject.title}
+                                </div>
+                            </div>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
 
                 <div class="control-group">
                     <stripes:label for="product" class="control-label">
