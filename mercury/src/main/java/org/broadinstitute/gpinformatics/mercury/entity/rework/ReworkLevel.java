@@ -9,19 +9,23 @@
  * use, misuse, or functionality.
  */
 
-package org.broadinstitute.gpinformatics.mercury.entity.workflow.rework;
+package org.broadinstitute.gpinformatics.mercury.entity.rework;
 
-public enum ReworkReason {
-    MACHINE_ERROR("Machine Error"),
-    UNKNOWN_ERROR("Unknown Error");
+public enum ReworkLevel {
+    ONE_SAMPLE_HOLD_REST_BATCH("Type 1", "Rework one sample and hold up the rest of the batch."),
+    ONE_SAMPLE_RELEASE_REST_BATCH("Type 2", "Rework one sample let the rest of the batch proceed "),
+    ENTIRE_BATCH("Type 3", "Rework all samples in the batch.");
 
     private String value;
+    private String description;
 
-    ReworkReason(String value) {
+    private ReworkLevel(String value, String description) {
         this.value = value;
+        this.description = description;
     }
 
     public String getValue() {
         return value;
     }
 }
+

@@ -411,4 +411,8 @@
             <addUniqueConstraint tableName="reagent_design" columnNames="reagent_design,reagent_type"
                                  constraintName="uk_reagent_design" schemaName="mercury"/>
         </changeSet>
+    <changeSet id="GPLIM-765-01" author="dryan">
+
+    </changeSet>
+
 </databaseChangeLog>

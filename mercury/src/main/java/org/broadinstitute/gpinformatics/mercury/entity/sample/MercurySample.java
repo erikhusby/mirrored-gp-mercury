@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.RapSheet;
+import org.broadinstitute.gpinformatics.mercury.entity.rework.RapSheet;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
@@ -28,16 +28,18 @@ public class MercurySample {
     @Index(name = "ix_ms_sample_key")
     private String sampleKey;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL, mappedBy = "sample")
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private RapSheet rapSheet;
 
     @Transient
     private BSPSampleDTO bspSampleDTO;
 
+
     public MercurySample(String productOrderKey, String sampleKey) {
         this.productOrderKey = productOrderKey;
         this.sampleKey = sampleKey;
     }
+
 
     public MercurySample(String productOrderKey, String sampleKey, BSPSampleDTO bspSampleDTO) {
         this.productOrderKey = productOrderKey;

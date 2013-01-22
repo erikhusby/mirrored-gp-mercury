@@ -9,7 +9,7 @@
  * use, misuse, or functionality.
  */
 
-package org.broadinstitute.gpinformatics.mercury.entity.workflow.rework;
+package org.broadinstitute.gpinformatics.mercury.entity.rework;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -40,7 +40,7 @@ public class LabVesselComment {
     private LabVessel labVessel;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<RapSheet> rapSheets;
+    private List<RapSheetEntry> rapSheetEntries;
 
     @Temporal(TemporalType.DATE)
     private Date logDate;
@@ -48,11 +48,11 @@ public class LabVesselComment {
     public LabVesselComment() {
     }
 
-    public LabVesselComment(LabEvent labEvent, LabVessel labVessel, String comment, List<RapSheet> rapSheets) {
+    public LabVesselComment(LabEvent labEvent, LabVessel labVessel, String comment, List<RapSheetEntry> rapSheetEntries) {
         this.labEvent = labEvent;
         this.comment = comment;
         this.labVessel = labVessel;
-        this.rapSheets=rapSheets;
+        this.rapSheetEntries = rapSheetEntries;
     }
 
         @PrePersist
@@ -88,11 +88,11 @@ public class LabVesselComment {
         this.labVessel = labVessel;
     }
 
-    public List<RapSheet> getRapSheets() {
-        return rapSheets;
+    public List<RapSheetEntry> getRapSheetEntries() {
+        return rapSheetEntries;
     }
 
-    public void setRapSheets(List<RapSheet> rapSheets) {
-        this.rapSheets = rapSheets;
+    public void setRapSheetEntries(List<RapSheetEntry> rapSheetEntries) {
+        this.rapSheetEntries = rapSheetEntries;
     }
 }

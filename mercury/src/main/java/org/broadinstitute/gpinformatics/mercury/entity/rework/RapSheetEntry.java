@@ -9,20 +9,18 @@
  * use, misuse, or functionality.
  */
 
-package org.broadinstitute.gpinformatics.mercury.entity.workflow.rework;
+package org.broadinstitute.gpinformatics.mercury.entity.rework;
 
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.Date;
+import java.util.List;
 
 @Entity
 @Audited
 @Table(schema = "mercury")
-public class RapSheetEntry {
+public abstract class RapSheetEntry {
     @SuppressWarnings("UnusedDeclaration")
     @Id
     @SequenceGenerator(name = "SEQ_SAMPLE_RAP_SHEET", schema = "mercury", sequenceName = "SEQ_SAMPLE_RAP_SHEET")
@@ -33,6 +31,12 @@ public class RapSheetEntry {
     @NotNull
     private RapSheet rapSheet;
 
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private List<LabVesselComment> labVesselComment;
+
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    private LabVesselPosition labVesselPosition;
 
     public RapSheetEntry() {
     }
@@ -47,5 +51,21 @@ public class RapSheetEntry {
 
     public void setRapSheet(RapSheet rapSheet) {
         this.rapSheet = rapSheet;
+    }
+
+    public List<LabVesselComment> getLabVesselComment() {
+        return labVesselComment;
+    }
+
+    public void setLabVesselComment(List<LabVesselComment> labVesselComment) {
+        this.labVesselComment = labVesselComment;
+    }
+
+    public LabVesselPosition getLabVesselPosition() {
+        return labVesselPosition;
+    }
+
+    public void setLabVesselPosition(LabVesselPosition labVesselPosition) {
+        this.labVesselPosition = labVesselPosition;
     }
 }

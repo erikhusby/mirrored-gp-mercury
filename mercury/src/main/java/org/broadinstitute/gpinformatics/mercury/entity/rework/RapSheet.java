@@ -9,7 +9,7 @@
  * use, misuse, or functionality.
  */
 
-package org.broadinstitute.gpinformatics.mercury.entity.workflow.rework;
+package org.broadinstitute.gpinformatics.mercury.entity.rework;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -32,21 +32,14 @@ public class RapSheet {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_SAMPLE_RAP_SHEET")
     private Long rapSheetId;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    @NotNull
-    private MercurySample sample;
+    @OneToMany(mappedBy = "rapSheet")
+    private List<MercurySample> samples;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "rapSheet")
     private List<RapSheetEntry> rapSheetEntries;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "rapSheet")
     private List<ReworkEntry> reworkEntries;
-
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<LabVesselComment> labVesselComment;
-
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    private LabVesselPosition labVesselPosition;
 
     public RapSheet() {
     }
@@ -57,7 +50,7 @@ public class RapSheet {
     }
 
     public RapSheet(MercurySample sample) {
-        this.sample = sample;
+        setSample(sample);
     }
 
     public void addEntry(RapSheetEntry rapSheetEntry) {
@@ -71,12 +64,24 @@ public class RapSheet {
         rapSheetEntry.setRapSheet(this);
     }
 
-    public MercurySample getSample() {
-        return sample;
+    public void setSample(MercurySample sample) {
+        this.samples.clear();
+        this.samples.add(sample);
     }
 
-    public void setSample(MercurySample sample) {
-        this.sample = sample;
+    public void setSamples(List<MercurySample> samples) {
+        if (samples.size()>1){
+            throw new IllegalStateException("Only one sample allowed here.");
+        }
+        this.samples = samples;
+    }
+
+    public MercurySample getSample(){
+        return samples.get(0);
+    }
+
+    private List<MercurySample> getSamples() {
+        return samples;
     }
 
     public List<RapSheetEntry> getRapSheetEntries() {
@@ -90,27 +95,11 @@ public class RapSheet {
         this.rapSheetEntries = entries;
     }
 
-    public List<LabVesselComment> getLabVesselComment() {
-        return labVesselComment;
-    }
-
-    public void setLabVesselComment(List<LabVesselComment> labVesselComment) {
-        this.labVesselComment = labVesselComment;
-    }
-
     public List<ReworkEntry> getReworkEntries() {
         return reworkEntries;
     }
 
     public void setReworkEntries(List<ReworkEntry> reworkEntries) {
         this.reworkEntries = reworkEntries;
-    }
-
-    public LabVesselPosition getLabVesselPosition() {
-        return labVesselPosition;
-    }
-
-    public void setLabVesselPosition(LabVesselPosition labVesselPosition) {
-        this.labVesselPosition = labVesselPosition;
     }
 }

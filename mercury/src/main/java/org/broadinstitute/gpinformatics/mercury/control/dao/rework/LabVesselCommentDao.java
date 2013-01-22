@@ -12,8 +12,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.rework;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
-import org.broadinstitute.gpinformatics.mercury.control.rework.LabVesselCommentDto;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.LabVesselComment;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -21,8 +19,5 @@ import javax.enterprise.context.RequestScoped;
 @Stateful
 @RequestScoped
 public class LabVesselCommentDao extends GenericDao {
-    public void addComment(LabVesselCommentDto labVesselCommentDto) {
-        final LabVesselComment labVesselCommentDbFree = labVesselCommentDto.getLabVesselCommentDbFree();
-        persist(labVesselCommentDbFree);
-    }
+
 }
