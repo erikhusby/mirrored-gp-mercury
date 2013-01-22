@@ -717,6 +717,16 @@ public class ProductOrderActionBean extends CoreActionBean {
         return editOrder.isDraft() || billingLedgerDao.findByOrderList(editOrder).isEmpty();
     }
 
+    /**
+     * The logic here is currently the same as allow sample list edit, but these may both change as we snapshot
+     * quotes into ledger entries and/or support sample merging / name overwrites in the sample list
+     *
+     * @return
+     */
+    public boolean getAllowQuoteEdit() {
+        return editOrder.isDraft() || billingLedgerDao.findByOrderList(editOrder).isEmpty();
+    }
+
     public String getQ() {
         return q;
     }
