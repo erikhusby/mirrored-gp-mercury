@@ -91,7 +91,7 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
             // There should be one Order for the RNA product data
             Assert.assertEquals(1, rnaProductOrders.size());
             ProductOrder productOrder = rnaProductOrders.get(0);
-            Set<BillingLedger> ledgerSet = billingLedgerDao.findByOrderList(new ProductOrder[]{productOrder});
+            Set<BillingLedger> ledgerSet = billingLedgerDao.findByOrderList(productOrder);
             // There should be ledger entries
             Assert.assertFalse(ledgerSet.isEmpty());
             BillingLedger[] ledgerArray = ledgerSet.toArray(new BillingLedger[0]);

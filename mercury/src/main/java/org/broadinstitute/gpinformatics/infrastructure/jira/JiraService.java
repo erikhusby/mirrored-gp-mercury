@@ -100,7 +100,7 @@ public interface JiraService extends Serializable {
      * reference, the field map is indexed by the field name.
      * @throws IOException
      */
-    public Map<String, CustomFieldDefinition> getCustomFields (String... fieldNames) throws IOException;
+    public Map<String, CustomFieldDefinition> getCustomFields(String... fieldNames) throws IOException;
 
 
     /**

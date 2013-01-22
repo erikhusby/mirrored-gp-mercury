@@ -499,7 +499,7 @@ public class Product implements Serializable, Comparable<Product> {
     }
 
     public String getDisplayName() {
-        return productName + " \\[" + partNumber + "\\]";
+        return productName + " [" + partNumber + "]";
     }
 
     public boolean getSupportsNumberOfLanes() {

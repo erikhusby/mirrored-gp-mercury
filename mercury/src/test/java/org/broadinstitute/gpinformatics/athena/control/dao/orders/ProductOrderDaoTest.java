@@ -73,7 +73,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         order = createTestProductOrder(researchProjectDao, productDao);
         BspUser testUser = new BspUser();
         testUser.setUserId(TEST_CREATOR_ID);
-        order.prepareToSave(testUser);
+        order.prepareToSave(testUser, true);
         productOrderDao.persist(order);
         productOrderDao.flush();
         productOrderDao.clear();
