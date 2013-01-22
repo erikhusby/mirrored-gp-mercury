@@ -8,6 +8,7 @@ import java.util.Map;
  */
 public enum LabEventType {
     // Preflight
+
     PREFLIGHT_CLEANUP ("PreFlightCleanup", true, true, SystemOfRecord.SQUID),
     PREFLIGHT_PICO_SETUP ("PreflightPicoSetup", true, true, SystemOfRecord.SQUID),
     PREFLIGHT_NORMALIZATION("PreflightNormalization", true, true, SystemOfRecord.SQUID),
@@ -109,10 +110,14 @@ public enum LabEventType {
     JUMP_ENRICHED_LIBRARY_REGISTRATION("JumpEnrichedLibraryRegistration", false, true, SystemOfRecord.SQUID),
 
     // BSP Pico
+
+    PICO_PLATING_BUCKET("PicoPlatingBucket", true, true, SystemOfRecord.MERCURY),
+    PICO_PLATING_QC ("PicoPlatingQC", true,true, SystemOfRecord.MERCURY),
     PICO_DILUTION_TRANSFER ("PicoDilutionTransfer", true, true, SystemOfRecord.MERCURY),
     PICO_BUFFER_ADDITION("PicoBufferAddition", true, true, SystemOfRecord.MERCURY),
     PICO_MICROFLUOR_TRANSFER("PicoMicrofluorTransfer", true, true, SystemOfRecord.MERCURY),
     PICO_STANDARDS_TRANSFER ("PicoStandardsTransfer", true, true, SystemOfRecord.MERCURY),
+    PICO_PLATING_POST_NORM_PICO("PicoPlatingPostNorm", true, true, SystemOfRecord.MERCURY),
 
     // Dried Blood Spot
     DBS_SAMPLE_PUNCH ("DBSSamplePunch", false, true, SystemOfRecord.MERCURY),
@@ -184,12 +189,16 @@ public enum LabEventType {
     SAMPLES_NORMALIZATION_TRANSFER("SamplesNormalizationTransfer", false, true, SystemOfRecord.MERCURY),
     SAMPLES_PLATING_TO_COVARIS("SamplesPlatingToCovaris", false, true, SystemOfRecord.MERCURY),
 
+    MRRBS_GENOMIC_TRANSFER("mRRBSGenomicTransfer", false, true, SystemOfRecord.SQUID),
+    MRRBS_INDEXING("mRRBSIndexing", false, true, SystemOfRecord.SQUID),
+    MRRBS_NORM_LIBS("mRRBSNormLibs", false, true, SystemOfRecord.SQUID),
+
     /**
      * TODO SGM  the following names are place holders.  They will be re-evaluated as development of
      */
     SHEARING_BUCKET("ShearingBucket", true, true, SystemOfRecord.MERCURY),
-    SHEARING_BUCKET_ENTRY ("ShearingBucketEntry", true, true, SystemOfRecord.MERCURY),
-    SHEARING_BUCKET_EXIT ("ShearingBucketExit", true, true, SystemOfRecord.MERCURY),
+//    SHEARING_BUCKET_ENTRY ("ShearingBucketEntry", true, true, SystemOfRecord.MERCURY),
+//    SHEARING_BUCKET_EXIT ("ShearingBucketExit", true, true, SystemOfRecord.MERCURY),
     ;
 
     private final String name;

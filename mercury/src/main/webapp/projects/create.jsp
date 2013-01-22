@@ -82,8 +82,8 @@
             }
 
             function formatCohort(item) {
-                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
-                        "<div class=\"ac-dropdown-subtext\">" + item.group + " " + item.category + "</div></li>";
+                return '<li><div class="ac-dropdown-text">' + item.name + '</div>' +
+                        '<div class="ac-dropdown-subtext">' + item.group + ' ' + item.category + '</div></li>';
             }
         </script>
     </stripes:layout-component>
@@ -209,7 +209,7 @@
                                 </c:when>
                                 <c:otherwise>
                                     <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                        <stripes:param name="researchProject" value="${actionBean.editResearchProject.businessKey}"/>
+                                        <stripes:param name="researchProject" value="${actionBean.researchProject}"/>
                                         Cancel
                                     </stripes:link>
                                 </c:otherwise>

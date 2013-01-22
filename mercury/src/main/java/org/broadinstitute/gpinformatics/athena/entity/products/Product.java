@@ -499,13 +499,12 @@ public class Product implements Serializable, Comparable<Product> {
     }
 
     public String getDisplayName() {
-        return productName + " [" + partNumber + "]";
+        return productName + " \\[" + partNumber + "\\]";
     }
 
     public boolean getSupportsNumberOfLanes() {
         return getProductFamily().isSupportsNumberOfLanes();
     }
-
 
     public Set<RiskCriteria> getRiskCriterias() {
         return riskCriterias;
@@ -515,4 +514,33 @@ public class Product implements Serializable, Comparable<Product> {
         this.riskCriterias.add( riskCriterion );
     }
 
+    public String[] getAllowableMaterialTypeNames() {
+        String[] names = new String[allowableMaterialTypes.size()];
+        int i = 0;
+
+        for (MaterialType materialType : allowableMaterialTypes) {
+            names[i++] = materialType.getFullName();
+        }
+
+        return names;
+    }
+
+    public String[] getAddOnBusinessKeys() {
+        String[] keys = new String[addOns.size()];
+        int i = 0;
+
+        for (Product addOn : addOns) {
+            keys[i++] = addOn.getBusinessKey();
+        }
+
+        return keys;
+    }
+
+    public Long[] getPriceItemIds() {
+        if (primaryPriceItem == null) {
+            return new Long[0];
+        }
+
+        return new Long[] { primaryPriceItem.getPriceItemId() };
+    }
 }

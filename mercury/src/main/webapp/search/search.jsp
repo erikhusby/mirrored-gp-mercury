@@ -135,28 +135,30 @@
         </c:if>
 
         <c:if test="${not empty actionBean.foundBatches}">
-            <div class="tableBar" style="margin-top: 5px;">
-                Found ${fn:length(actionBean.foundBatches)} Batches
+            <stripes:form beanclass="${actionBean.class.name}" id="vesselForm" class="form-horizontal">
+                <div class="tableBar" style="margin-top: 5px;">
+                    Found ${fn:length(actionBean.foundBatches)} Batches
 
-                <c:if test="${actionBean.multipleResultTypes}">
-                    <a id="batchAnchor" href="javascript:showResult('batch')" style="margin-left: 10px;">show</a>
-                    <a id="batchAnchorHide" href="javascript:hideResult('batch')"
-                       style="display:none; margin-left: 10px;">hide</a>
-                </c:if>
-            </div>
+                    <c:if test="${actionBean.multipleResultTypes}">
+                        <a id="batchAnchor" href="javascript:showResult('batch')" style="margin-left: 10px;">show</a>
+                        <a id="batchAnchorHide" href="javascript:hideResult('batch')"
+                           style="display:none; margin-left: 10px;">hide</a>
+                    </c:if>
+                </div>
 
-            <!-- If we get here, then it is showing at least this one, SO, if there are mutliple, hide it, otherwise just show this only one -->
-            <c:choose>
-                <c:when test="${actionBean.multipleResultTypes}">
-                    <div id="batchDiv" style="display:none">
-                </c:when>
-                <c:otherwise>
-                    <div id="batchDiv">
-                </c:otherwise>
-            </c:choose>
-            <stripes:layout-render name="/resources/batch/batchListView.jsp" batches="${actionBean.foundBatches}"
-                                   bean="${actionBean}" showCheckboxes="false"/>
-            </div>
+                <!-- If we get here, then it is showing at least this one, SO, if there are mutliple, hide it, otherwise just show this only one -->
+                <c:choose>
+                    <c:when test="${actionBean.multipleResultTypes}">
+                        <div id="batchDiv" style="display:none">
+                    </c:when>
+                    <c:otherwise>
+                        <div id="batchDiv">
+                    </c:otherwise>
+                </c:choose>
+                <stripes:layout-render name="/resources/batch/batchListView.jsp" batches="${actionBean.foundBatches}"
+                                       bean="${actionBean}" showCheckboxes="true"/>
+                </div>
+            </stripes:form>
         </c:if>
     </stripes:layout-component>
 </stripes:layout-render>
