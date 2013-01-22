@@ -124,6 +124,12 @@ public class ProductWorkflowDefVersion implements Serializable {
         }
     }
 
+    /**
+     * This method catalogues all Workflow steps found in the workflow.  The workflow steps are catalogued in
+     * a map indexed by an eventType which is affiliated with the step.  The steps are also associated with steps
+     * that are considered their successors and predecessors.  This makes it easy to navigate through the workflow
+     * when a user has at least one step
+     */
     public void buildLabEventGraph() {
         LabEventNode previousNode = null;
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
@@ -148,6 +154,11 @@ public class ProductWorkflowDefVersion implements Serializable {
         }
     }
 
+    /**
+     * This method will find the workflow step that is associated with the given Event type
+     * @param eventTypeName name of an event to use as an index to the cataloged workflow steps
+     * @return
+     */
     public LabEventNode findStepByEventType(String eventTypeName) {
         if (mapNameToLabEvent == null) {
             mapNameToLabEvent = new HashMap<String, LabEventNode>();
@@ -158,25 +169,118 @@ public class ProductWorkflowDefVersion implements Serializable {
 
     /**
      * Based on the name of an event type, determine if the known previous workflow step is a bucket
+     *
      * @param eventTypeName Event name associated with workflow process step
      * @return true if the step before the one associated with with the given event name is defined as a bucket by the
-     * workflow
+     *         workflow
      */
     public boolean isPreviousStepBucket(String eventTypeName) {
         WorkflowStepDef previousStep = getPreviousStep(eventTypeName);
 
-        return OrmUtil.proxySafeIsInstance ( previousStep, WorkflowBucketDef.class );
+        return OrmUtil.proxySafeIsInstance(previousStep, WorkflowBucketDef.class);
+    }
+
+    /**
+     * Based on the name of an event type, determine if the known next workflow step is a bucket
+     *
+     * @param eventTypeName Event name associated with workflow process step
+     * @return true if the step after the one associated with with the given event name is defined as a bucket by the
+     *         workflow
+     */
+    public boolean isNextStepBucket(String eventTypeName) {
+        WorkflowStepDef nextStep = getNextStep(eventTypeName);
+
+        return OrmUtil.proxySafeIsInstance(nextStep, WorkflowBucketDef.class);
+    }
+
+    /**
+     * Similar to {@link #isNextStepBucket(String)}, This method uses the ability to navigates the workflow forward to
+     * determine if the next workflow step, that is not found on a "Branch", is bucket step
+     * @param eventTypeName
+     * @return
+     */
+    public boolean isNextNonDeadBranchStepBucket(String eventTypeName) {
+         WorkflowStepDef nextStep = getNextNonDeadBranchStep(eventTypeName);
+
+         return OrmUtil.proxySafeIsInstance(nextStep, WorkflowBucketDef.class);
+    }
+
+    /**
+     * This convenience method performs both a search of a workflow step based on an event and checks if that step
+     * is defined as being on a workflow branch that dead ends
+     *
+     * @param eventTypeName
+     * @return
+     */
+    public boolean isStepDeadBranch(String eventTypeName) {
+
+        LabEventNode stepNode =findStepByEventType(eventTypeName);
+
+        WorkflowStepDef step = null;
+        boolean result = false;
+        if(stepNode != null) {
+             step = stepNode.getStepDef();
+            result = step.isDeadEndBranch();
+        }
+
+        return result;
+    }
+
+    /**
+     * Similar to {@link #isNextNonDeadBranchStepBucket(String)} this method navigates forward in the Workflow to find
+     * the next step that is not located on a branch of the workflow that dead ends.
+     *
+     * @param eventTypeName
+     * @return
+     */
+    public WorkflowStepDef getNextNonDeadBranchStep(String eventTypeName) {
+        WorkflowStepDef nextStep = getNextStep(eventTypeName);
+        while(nextStep != null &&
+              nextStep.isDeadEndBranch()) {
+            WorkflowStepDef tempStep = getNextStep(nextStep.getLabEventTypes().get(nextStep.getLabEventTypes().size()-1).getName());
+            nextStep = tempStep;
+        }
+        return nextStep;
     }
 
     /**
      * Based on an event type name which is associated with a particular workflow process step, this method will return
-     * the configured workflow step which is defined as the given event types' predecessor
+     * the configured workflow step which is defined as the given event types' immediate predecessor
+     *
      * @param eventTypeName Event name associated with workflow process step
      * @return an instance of a {@link WorkflowStepDef} that is associated with the step that is defined as the given
-     * event types' predecessor
+     *         event types' predecessor
      */
     public WorkflowStepDef getPreviousStep(String eventTypeName) {
-        return findStepByEventType(eventTypeName).getPredecessors().get(0).getStepDef();
+
+        WorkflowStepDef foundStep = null;
+        if(!(findStepByEventType(eventTypeName) == null) &&
+           !findStepByEventType(eventTypeName).getPredecessors().isEmpty()) {
+            foundStep = findStepByEventType(eventTypeName).getPredecessors().get(0).getStepDef();
+        }
+
+        return foundStep;
+    }
+
+    /**
+     * Based on an event type name which is associated witha  particular workflow process step, this method will return
+     * the configured workflow step which is defined as the given event types' immediate Successor
+     *
+     * @param eventTypeName Event name associated with workflow process step
+     * @return an instance of a {@link WorkflowStepDef} that is associated with the step that is defined as the given
+     *         event types' immediate predecessor
+     */
+    public WorkflowStepDef getNextStep(String eventTypeName) {
+
+        WorkflowStepDef foundStep = null;
+
+        if(!(findStepByEventType(eventTypeName) == null) &&
+           !findStepByEventType(eventTypeName).getSuccessors().isEmpty()) {
+
+            foundStep = findStepByEventType(eventTypeName).getSuccessors().get(0).getStepDef();
+
+        }
+        return foundStep;
     }
 
     @Override
