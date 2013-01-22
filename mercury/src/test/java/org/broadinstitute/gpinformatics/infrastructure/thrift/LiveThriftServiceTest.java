@@ -258,7 +258,9 @@ public class LiveThriftServiceTest {
 
     @Test(groups = EXTERNAL_INTEGRATION)
     public void testFetchSourceTubesForPlate() {
-        List<WellAndSourceTube> result = thriftService.fetchSourceTubesForPlate("000009873173");
+//        List<WellAndSourceTube> result = thriftService.fetchSourceTubesForPlate("000009873173");
+//        List<WellAndSourceTube> result = thriftService.fetchSourceTubesForPlate("000001383666");
+        List<WellAndSourceTube> result = thriftService.fetchSourceTubesForPlate("000001324167");
         assertThat(result.size(), equalTo(191));
     }
 
