@@ -27,6 +27,15 @@
                             {"bSortable": false}]
                     });
 
+                    $j("#owner").tokenInput(
+                            "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                hintText: "Type a name",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
+                                tokenLimit: 1,
+                                resultsFormatter: formatUser
+                            }
+                    );
+
                     $j("#researchProject").tokenInput(
                         "${ctxpath}/orders/order.action?projectAutocomplete=", {
                             hintText: "Type a project name",
@@ -129,6 +138,11 @@
                     $j("#fundsRemaining").text('Error: ' + data.error);
                 }
             }
+
+            function formatUser(item) {
+                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
+                       "<div class=\"ac-dropdown-subtext\">" + item.username + " " + item.email + "</div></li>";
+            }
         </script>
     </stripes:layout-component>
 
@@ -163,6 +177,15 @@
                                 </c:otherwise>
                             </c:choose>
                         </div>
+                    </div>
+                </div>
+
+                <div class="control-group">
+                    <stripes:label for="owner" class="control-label">
+                        Owner *
+                    </stripes:label>
+                    <div class="controls">
+                        <stripes:text id="owner" name="owner.listOfKeys" />
                     </div>
                 </div>
 

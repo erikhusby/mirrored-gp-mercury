@@ -95,14 +95,14 @@ public class ProductOrderFixupTest extends Arquillian {
         ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraKey);
 
         // comment out until we can update a Quote on a Jira ticket, need to extend the JiraService for transitions.
-        if ( false ) {
+        if (false) {
             Map<String, CustomFieldDefinition> jiraFields = jiraService.getCustomFields();
             Set<CustomField> customFields = new HashSet<CustomField>();
 
             for (Map.Entry<String, CustomFieldDefinition> stringCustomFieldDefinitionEntry : jiraFields.entrySet()) {
                 log.info(stringCustomFieldDefinitionEntry.getKey());
                 if (stringCustomFieldDefinitionEntry.getKey().equals("Quote ID")) {
-                    CustomField quoteCustomField = new CustomField(stringCustomFieldDefinitionEntry.getValue(),newQuoteStr, CustomField.SingleFieldType.TEXT);
+                    CustomField quoteCustomField = new CustomField(stringCustomFieldDefinitionEntry.getValue(), newQuoteStr);
                     customFields.add(quoteCustomField);
                 }
             }
@@ -110,13 +110,13 @@ public class ProductOrderFixupTest extends Arquillian {
             jiraService.updateIssue(jiraKey,customFields);
         }
         log.info("Attempting to change Quote ID on product order " + productOrder.getJiraTicketKey() + " from " + productOrder.getQuoteId() + " to " +
-                newQuoteStr );
+                newQuoteStr);
         productOrder.setQuoteId(newQuoteStr);
         // The entity is already persistent, this call to persist is solely to begin and end a transaction, so the
         // change gets flushed.  This is an artifact of the test environment.
         productOrderDao.persist(productOrder);
         log.info("Changed Quote ID on product order " + productOrder.getJiraTicketKey() + " from " + productOrder.getQuoteId() + " to " +
-                newQuoteStr );
+                newQuoteStr);
     }
 
 
@@ -171,7 +171,7 @@ public class ProductOrderFixupTest extends Arquillian {
 
         for (String jiraKey : jiraKeys) {
             ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraKey);
-            productOrder.prepareToSave(bspUser);
+            productOrder.prepareToSave(bspUser, false);
 
             productOrderDao.persist(productOrder);
         }

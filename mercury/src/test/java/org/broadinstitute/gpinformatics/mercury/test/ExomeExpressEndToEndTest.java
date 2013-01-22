@@ -163,26 +163,24 @@ public class ExomeExpressEndToEndTest {
             JiraTicket jiraTicket = null;
 
             // grab the jira custom field definitions
-            final Map<String, CustomFieldDefinition> requiredFieldsMap =
+            Map<String, CustomFieldDefinition> requiredFieldsMap =
                     JiraCustomFieldsUtil.getRequiredLcSetFieldDefinitions(jiraService);
             Assert.assertFalse(requiredFieldsMap.isEmpty());
             Assert.assertEquals(requiredFieldsMap.size(), 9);
 
-            final CustomField workRequestCustomField = new CustomField(requiredFieldsMap.get(
-                    JiraCustomFieldsUtil.WORK_REQUEST_IDS), "Work Request One Billion!",
-                                                                       CustomField.SingleFieldType.TEXT);
+            CustomField workRequestCustomField = new CustomField(requiredFieldsMap.get(
+                    JiraCustomFieldsUtil.WORK_REQUEST_IDS), "Work Request One Billion!");
             // kludge: expect stock samples to have a different field name (like "BSP STOCKS") when this goes live.  until then, we'll call it GSSR.
-            final StringBuilder stockSamplesBuilder = new StringBuilder();
+            StringBuilder stockSamplesBuilder = new StringBuilder();
             for (LabVessel starter : testLabBatch.getStartingLabVessels()) {
                 stockSamplesBuilder.append(" ").append(starter.getLabel());
             }
-            final CustomField stockSamplesCustomField = new CustomField(requiredFieldsMap.get(
-                    JiraCustomFieldsUtil.GSSR_IDS), stockSamplesBuilder.toString(), CustomField.SingleFieldType.TEXT);
-            final CustomField protocolCustomField = new CustomField(requiredFieldsMap.get(
-                    JiraCustomFieldsUtil.PROTOCOL), "Protocol to take over the world",
-                                                                    CustomField.SingleFieldType.TEXT);
+            CustomField stockSamplesCustomField = new CustomField(requiredFieldsMap.get(
+                    JiraCustomFieldsUtil.GSSR_IDS), stockSamplesBuilder.toString());
+            CustomField protocolCustomField = new CustomField(requiredFieldsMap.get(
+                    JiraCustomFieldsUtil.PROTOCOL), "Protocol to take over the world");
 
-            final Collection<CustomField> allCustomFields = new HashSet<CustomField>();
+            Collection<CustomField> allCustomFields = new HashSet<CustomField>();
             allCustomFields.add(workRequestCustomField);
             allCustomFields.add(stockSamplesCustomField);
             allCustomFields.add(protocolCustomField);

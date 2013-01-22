@@ -355,12 +355,17 @@ public class ProductOrder implements Serializable {
      * Call this method before saving changes to the database.  It updates the modified date and modified user,
      * and sets the create date and create user if these haven't been set yet.
      * @param user the user doing the save operation.
+     * @param isCreating true if creating a new PDO
      */
-    public void prepareToSave(BspUser user) {
+    public void prepareToSave(BspUser user, boolean isCreating) {
         Date now = new Date();
         long userId = user.getUserId();
-        if (createdBy == null) {
-            createdBy = userId;
+        if (isCreating) {
+            // createdBy is now set in the UI.
+            if (createdBy == null) {
+                // Used by tests only.
+                createdBy = userId;
+            }
             createdDate = now;
         }
         modifiedBy = userId;
@@ -518,8 +523,17 @@ public class ProductOrder implements Serializable {
         return createdDate;
     }
 
-    public long getCreatedBy() {
+    public Long getCreatedBy() {
         return createdBy;
+    }
+
+    /**
+     * Call this method to change the 'owner' attribute of a Product Order.  We are currently storing this
+     * attribute in the created by column in the database.
+     * @param userId the owner ID
+     */
+    public void setCreatedBy(Long userId) {
+        createdBy = userId;
     }
 
     public Date getModifiedDate() {
@@ -755,26 +769,28 @@ public class ProductOrder implements Serializable {
 
         List<CustomField> listOfFields = new ArrayList<CustomField>();
 
-        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.PRODUCT_FAMILY,
+        listOfFields.add(new CustomField(submissionFields, JiraField.PRODUCT_FAMILY,
                 product.getProductFamily() == null ? "" : product.getProductFamily().getName()));
 
-        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.PRODUCT,
+        listOfFields.add(new CustomField(submissionFields, JiraField.PRODUCT,
                 product.getProductName() == null ? "" : product.getProductName()));
 
         if (quoteId != null && !quoteId.isEmpty()) {
-            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.QUOTE_ID, quoteId));
+            listOfFields.add(new CustomField(submissionFields, JiraField.QUOTE_ID, quoteId));
         }
-        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.SAMPLE_IDS, getSampleString()));
+        listOfFields.add(new CustomField(submissionFields, JiraField.SAMPLE_IDS, getSampleString()));
 
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
 
         JiraIssue issue = jiraService.createIssue(
-                fetchJiraProject().getKeyPrefix(), bspUserList.getById(modifiedBy).getUsername(),
+                fetchJiraProject().getKeyPrefix(), bspUserList.getById(createdBy).getUsername(),
                 fetchJiraIssueType(), title, comments == null ? "" : comments, listOfFields);
 
         jiraTicketKey = issue.getKey();
         issue.addLink(researchProject.getJiraTicketKey());
 
+        // Due to the way we set createdBy, it's possible that these two values will be different.
+        issue.addWatcher(bspUserList.getById(createdBy).getUsername());
         issue.addWatcher(bspUserList.getById(modifiedBy).getUsername());
 
         issue.addComment(StringUtils.join(getSampleSummaryComments(), "\n"));
@@ -842,19 +858,19 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
-     * for Product orders
+     * This is used to help create or update a PDO's Jira ticket.
      */
-    public enum RequiredSubmissionFields implements CustomField.SubmissionField {
+    public enum JiraField implements CustomField.SubmissionField {
         PRODUCT_FAMILY("Product Family"),
         PRODUCT("Product"),
         QUOTE_ID("Quote ID"),
         MERCURY_URL("Mercury URL"),
-        SAMPLE_IDS("Sample IDs");
+        SAMPLE_IDS("Sample IDs"),
+        REPORTER("Reporter");
 
         private final String fieldName;
 
-        private RequiredSubmissionFields(String fieldNameIn) {
+        private JiraField(String fieldNameIn) {
             fieldName = fieldNameIn;
         }
 

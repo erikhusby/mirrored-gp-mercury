@@ -9,9 +9,11 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.IssueFieldsResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
@@ -53,6 +55,9 @@ public class ProductOrderEjb {
 
     @Inject
     private UserBean userBean;
+
+    @Inject
+    private BSPUserList userList;
 
     private void validateUniqueProjectTitle(ProductOrder productOrder) throws DuplicateTitleException {
         if (productOrderDao.findByTitle(productOrder.getTitle()) != null) {
@@ -145,26 +150,17 @@ public class ProductOrderEjb {
     private static class PDOUpdateField {
 
         private final String displayName;
-        private final String newValue;
+        private final Object newValue;
         private final CustomField.SubmissionField field;
 
-        private boolean plural;
-
-        private boolean showValueChangeInComment;
-
-        public enum ShowValueChangeInComment {
-            YES,
-            NO
-        }
-
-        public enum Plural {
-            YES,
-            NO
-        }
+        /** True if the field being updated is a 'bulk' item.  This means that it should be shown as plural in the
+         * message, and its contents won't be shown in the message.
+         */
+        private final boolean isBulkField;
 
         /**
          * Return the update message appropriate for this field.  If there are no changes this will return the empty
-         * string, otherwise a string of the form "Product was updated from 'Old Product' to 'New Product'"
+         * string, otherwise a string of the form "Product was updated from 'Old Product' to 'New Product'".
          *
          * @param productOrder contains the new values
          * @param customFieldDefinitionMap contains the mapping from display names of fields to their JIRA IDs, needed
@@ -180,7 +176,7 @@ public class ProductOrderEjb {
             }
             CustomFieldDefinition customFieldDefinition = customFieldDefinitionMap.get(displayName);
 
-            String previousValue = issueFieldsResponse.getFields().get(customFieldDefinition.getJiraCustomFieldId());
+            Object previousValue = issueFieldsResponse.getFields().get(customFieldDefinition.getJiraCustomFieldId());
 
             // This assumes all target fields are not nullable, which is currently true but may not be in the future.
             if (previousValue == null) {
@@ -189,25 +185,32 @@ public class ProductOrderEjb {
                                 .getJiraTicketKey() + "'");
             }
 
-            if (!previousValue.equals(newValue)) {
-                return displayName + (plural ? " have " : " has ") + "been updated" + (showValueChangeInComment ? " from '" + previousValue + "' to '" + newValue + "'" : "") + ".\n";
+            Object oldValueToCompare = previousValue;
+            Object newValueToCompare = newValue;
+
+            if (newValue instanceof CreateFields.Reporter) {
+                // Need to special case Reporter type for display and comparison.
+                oldValueToCompare = ((Map<?, ?>)previousValue).get("name").toString();
+                newValueToCompare = ((CreateFields.Reporter)newValue).getName();
+            }
+            if (!oldValueToCompare.equals(newValueToCompare)) {
+                return displayName + (isBulkField ? " have " : " has ") + "been updated" +
+                       (!isBulkField ? " from '" + oldValueToCompare + "' to '" + newValueToCompare + "'" : "") + ".\n";
             }
             return "";
         }
 
-        public PDOUpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull String newValue, Plural plural, ShowValueChangeInComment showValueChangeInComment) {
+        public PDOUpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull Object newValue, boolean isBulkField) {
             this.field = field;
-            this.displayName = field.getFieldName();
+            displayName = field.getFieldName();
             this.newValue = newValue;
-            this.plural = plural == Plural.YES;
-            this.showValueChangeInComment = showValueChangeInComment == ShowValueChangeInComment.YES;
+            this.isBulkField = isBulkField;
         }
 
-        public PDOUpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull String newValue) {
-            this(field, newValue, Plural.NO, ShowValueChangeInComment.YES);
+        public PDOUpdateField(@Nonnull CustomField.SubmissionField field, @Nonnull Object newValue) {
+            this(field, newValue, false);
         }
     }
-
 
     /**
      * Update the JIRA issue, executing the 'Developer Edit' transition to effect edits of fields that are read-only
@@ -224,10 +227,12 @@ public class ProductOrderEjb {
                 ProductOrder.TransitionStates.DeveloperEdit.getStateName());
 
         PDOUpdateField [] pdoUpdateFields = new PDOUpdateField[] {
-            new PDOUpdateField(ProductOrder.RequiredSubmissionFields.PRODUCT, productOrder.getProduct().getProductName()),
-            new PDOUpdateField(ProductOrder.RequiredSubmissionFields.PRODUCT_FAMILY, productOrder.getProduct().getProductFamily().getName()),
-            new PDOUpdateField(ProductOrder.RequiredSubmissionFields.QUOTE_ID, productOrder.getQuoteId()),
-            new PDOUpdateField(ProductOrder.RequiredSubmissionFields.SAMPLE_IDS, productOrder.getSampleString(), PDOUpdateField.Plural.YES, PDOUpdateField.ShowValueChangeInComment.NO)
+                new PDOUpdateField(ProductOrder.JiraField.PRODUCT, productOrder.getProduct().getProductName()),
+                new PDOUpdateField(ProductOrder.JiraField.PRODUCT_FAMILY, productOrder.getProduct().getProductFamily().getName()),
+                new PDOUpdateField(ProductOrder.JiraField.QUOTE_ID, productOrder.getQuoteId()),
+                new PDOUpdateField(ProductOrder.JiraField.SAMPLE_IDS, productOrder.getSampleString(), true),
+                new PDOUpdateField(ProductOrder.JiraField.REPORTER,
+                        new CreateFields.Reporter(userList.getById(productOrder.getCreatedBy()).getUsername()))
         };
 
         String[] customFieldNames = new String[pdoUpdateFields.length];
@@ -246,17 +251,17 @@ public class ProductOrderEjb {
 
         StringBuilder updateCommentBuilder = new StringBuilder();
 
-        for (PDOUpdateField pdoUpdateField : pdoUpdateFields) {
-            customFields.add(new CustomField(customFieldDefinitions, pdoUpdateField.field, pdoUpdateField.newValue));
-
-            updateCommentBuilder.append(
-                    pdoUpdateField.getUpdateMessage(productOrder, customFieldDefinitions, issueFieldsResponse));
+        for (PDOUpdateField field : pdoUpdateFields) {
+            String message = field.getUpdateMessage(productOrder, customFieldDefinitions, issueFieldsResponse);
+            if (!message.isEmpty()) {
+                customFields.add(new CustomField(customFieldDefinitions, field.field, field.newValue));
+                updateCommentBuilder.append(message);
+            }
         }
         String updateComment = updateCommentBuilder.toString();
 
-        // If we detect from the comment that nothing has changed, make a note of that (maybe the user changed
-        // something in the PDO that is not reflected in JIRA like add-ons).
-
+        // If we detect from the comment that nothing has changed, make a note of that.  The user may have changed
+        // something in the PDO that is not reflected in JIRA, like add-ons.
         String comment = "\n" + productOrder.getJiraTicketKey() + " was edited by "
                          + userBean.getLoginUserName() + "\n\n"
                          + (updateComment.isEmpty() ? "No JIRA Product Order fields were updated\n\n" : updateComment);
