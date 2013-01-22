@@ -204,7 +204,6 @@ public class VesselContainer<T extends LabVessel> {
                 VesselPosition sourcePosition = cherryPickTransfer.getSourcePosition();
                 sourceVesselContainer.evaluateCriteria(sourcePosition, transferTraverserCriteria, traversalDirection,
                         cherryPickTransfer.getLabEvent(), hopCount + 1);
-                break;
             }
         }
     }
@@ -228,7 +227,6 @@ public class VesselContainer<T extends LabVessel> {
                 VesselPosition targetPosition = cherryPickTransfer.getTargetPosition();
                 targetVesselContainer.evaluateCriteria(targetPosition, transferTraverserCriteria, traversalDirection,
                         cherryPickTransfer.getLabEvent(), hopCount + 1);
-                break;
             }
         }
     }
@@ -342,7 +340,6 @@ public class VesselContainer<T extends LabVessel> {
                 VesselContainer<?> sourceVesselContainer = cherryPickTransfer.getSourceVesselContainer();
                 vesselEvents.add(new LabVessel.VesselEvent(sourceVesselContainer.getVesselAtPosition(sourcePosition),
                         sourceVesselContainer, sourcePosition, cherryPickTransfer.getLabEvent()));
-                break;
             }
 
         }
@@ -374,7 +371,6 @@ public class VesselContainer<T extends LabVessel> {
                 VesselContainer<?> targetVesselContainer = cherryPickTransfer.getTargetVesselContainer();
                 vesselEvents.add(new LabVessel.VesselEvent(targetVesselContainer.getVesselAtPosition(targetPosition),
                         targetVesselContainer, targetPosition, cherryPickTransfer.getLabEvent()));
-                break;
             }
 
         }
