@@ -95,7 +95,7 @@ public class ProductWorkflowDef implements Serializable {
                         found, labVessel.getInPlaceEvents(), labEventNode);
             }
             if(!found && !start) {
-                errors.add("Vessel " + labVessel.getLabCentricName() + " has actual events " + actualEventNames +
+                errors.add("Vessel " + labVessel.getLabCentricName() + ":" + labVessel.getType() + " has actual events " + actualEventNames +
                         ", but none are predecessors to " + nextEventTypeName + ": " + validPredecessorEventNames);
             }
         }

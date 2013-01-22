@@ -4,12 +4,18 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.hibernate.cfg.CollectionSecondPass;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
@@ -57,12 +63,24 @@ public class ProductFixupTest extends Arquillian {
     @Test(enabled = false)
     public void addWholeGenomeWorkflowName() {
 
-        Product wholeGenomeProduct = productDao.findByPartNumber("P-WG-0002");
-        if(StringUtils.isBlank(wholeGenomeProduct.getWorkflowName())) {
-            wholeGenomeProduct.setWorkflowName("Whole Genome");
+        List<Product> wgProducts = new ArrayList<Product>(3);
+
+        Product wholeGenomeProduct1 = productDao.findByPartNumber("P-WG-0001");
+        if(StringUtils.isBlank(wholeGenomeProduct1.getWorkflowName())) {
+            wholeGenomeProduct1.setWorkflowName("Whole Genome");
+        }
+        Product wholeGenomeProduct2 = productDao.findByPartNumber("P-WG-0002");
+        if(StringUtils.isBlank(wholeGenomeProduct2.getWorkflowName())) {
+            wholeGenomeProduct2.setWorkflowName("Whole Genome");
+        }
+        Product wholeGenomeProduct3 = productDao.findByPartNumber("P-WG-0003");
+        if(StringUtils.isBlank(wholeGenomeProduct3.getWorkflowName())) {
+            wholeGenomeProduct3.setWorkflowName("Whole Genome");
         }
 
-        productDao.persist(wholeGenomeProduct);
+        Collections.addAll(wgProducts, wholeGenomeProduct1, wholeGenomeProduct2, wholeGenomeProduct3);
+
+        productDao.persistAll(wgProducts);
     }
 
 
