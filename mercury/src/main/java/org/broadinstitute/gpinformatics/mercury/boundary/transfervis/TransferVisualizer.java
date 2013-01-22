@@ -45,8 +45,8 @@ public interface TransferVisualizer {
 
     enum IdType {
         PLATE_ID_TYPE,
-        WELL_MAP_ID_TYPE,
         TUBE_IN_RACK_ID_TYPE,
-        RECEPTACLE_ID_TYPE
+        RECEPTACLE_ID_TYPE,
+        CONTAINER_ID_TYPE
     }
 }
