@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Rework;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.Audited;
@@ -124,9 +123,6 @@ public abstract class LabVessel implements Serializable {
 
     @OneToMany(mappedBy = "targetLabVessel")
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsTarget = new HashSet<VesselToVesselTransfer>();
-
-    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "reworkedLabVessels")
-    private Set<Rework> reworks = new HashSet<Rework>();
 
     protected LabVessel(String label) {
         createdOn = new Date();
@@ -705,9 +701,6 @@ public abstract class LabVessel implements Serializable {
         return Collections.unmodifiableSet(bucketEntries);
     }
 
-    public void addRework(Rework rework) {
-        reworks.add(rework);
-    }
 
     /* *
      * In the context of the given WorkflowDescription, are there any

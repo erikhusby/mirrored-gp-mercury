@@ -12,14 +12,11 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.workflow.rework;
 
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.List;
 
 @Entity
 @Audited
@@ -27,7 +24,7 @@ import java.util.List;
 public class ReworkEntry extends RapSheetEntry {
     @Enumerated(EnumType.STRING)
     @NotNull
-    private ReworkReason reason;
+    private ReworkReason reworkReason;
 
     @Enumerated(EnumType.STRING)
     @NotNull
@@ -37,25 +34,22 @@ public class ReworkEntry extends RapSheetEntry {
     @Enumerated(EnumType.STRING)
     private LabEventType reworkStep;
 
-    public ReworkEntry() {
+    public ReworkEntry(ReworkReason reworkReason, ReworkLevel reworkLevel, LabEventType reworkStep){
+        this.reworkReason =reworkReason;
+        this.reworkLevel=reworkLevel;
+        this.reworkStep=reworkStep;
     }
 
-    @SuppressWarnings("UnusedDeclaration")
-    public ReworkEntry(ReworkReason reason, ReworkLevel level, LabEventType reworkStep, LabEvent labEvent,
-                       String comments) {
-        this.reason = reason;
-        this.reworkLevel = level;
-        this.reworkStep = reworkStep;
-        this.labEvent = labEvent;
-        super.setComment(comments);
+    public ReworkEntry(){
+
     }
 
-    public ReworkReason getReason() {
-        return reason;
+    public ReworkReason getReworkReason() {
+        return reworkReason;
     }
 
-    public void setReason(ReworkReason reason) {
-        this.reason = reason;
+    public void setReworkReason(ReworkReason reason) {
+        this.reworkReason = reason;
     }
 
     public ReworkLevel getReworkLevel() {
@@ -66,37 +60,11 @@ public class ReworkEntry extends RapSheetEntry {
         this.reworkLevel = reworkLevel;
     }
 
-    public static enum ReworkLevel {
-        ONE_SAMPLE_HOLD_REST_BATCH("Type 1", "Rework one sample and hold up the rest of the batch."),
-        ONE_SAMPLE_RELEASE_REST_BATCH("Type 2", "Rework one sample let the rest of the batch proceed "),
-        ENTIRE_BATCH("Type 3", "Rework all samples in the batch.");
-
-        private String value;
-        private String description;
-
-        private ReworkLevel(String value, String description) {
-            this.value = value;
-            this.description = description;
-        }
-
-        public String getValue() {
-            return value;
-        }
+    public LabEventType getReworkStep() {
+        return reworkStep;
     }
 
-    public static enum ReworkReason {
-        MACHINE_ERROR("Machine Error"),
-        UNKNOWN_ERROR("Unknown Error");
-
-        private String value;
-
-        private ReworkReason(String value) {
-            this.value = value;
-        }
-
-        public String getValue() {
-            return value;
-        }
+    public void setReworkStep(LabEventType reworkStep) {
+        this.reworkStep = reworkStep;
     }
-
 }

@@ -3,17 +3,11 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.RapSheet;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.ReworkEntry;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
-
-import static org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.ReworkEntry.ReworkLevel;
-import static org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.ReworkEntry.ReworkReason;
 
 /**
  * Represents Mercury's view of a sample.  Sample information is held in another system (initially Athena),
@@ -50,13 +44,6 @@ public class MercurySample {
         this.sampleKey = sampleKey;
         this.bspSampleDTO = bspSampleDTO;
     }
-
-    public void markForRework(ReworkReason reworkReason, ReworkLevel reworkLevel, LabEventType reworkStep,
-                              LabEvent event, String comment) {
-        ReworkEntry rework = new ReworkEntry(reworkReason, reworkLevel, reworkStep, event, comment);
-        this.getRapSheet().addEntry(rework);
-    }
-
 
     public RapSheet getRapSheet() {
         if (rapSheet == null) {

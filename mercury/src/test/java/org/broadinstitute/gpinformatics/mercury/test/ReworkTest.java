@@ -6,33 +6,41 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
-import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.control.dao.rework.LabVesselCommentDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.rework.LabVesselCommentDto;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.ReworkEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.ReworkLevel;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.ReworkReason;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import javax.inject.Inject;
+import javax.transaction.SystemException;
+import javax.transaction.UserTransaction;
+import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
-import static org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.ReworkEntry.ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH;
-import static org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.ReworkEntry.ReworkReason.MACHINE_ERROR;
 
 /**
  * Test that samples can go partway through a workflow, be marked for rework, go to a previous
  * step, and then move to completion.
  */
 public class ReworkTest extends LabEventTest {
+    @Inject
+    private LabVesselCommentDao labVesselCommentDao;
+
+    @Inject
+    private UserTransaction utx;
+
     @Test
     public void testX() {
         // Advance to Pond Pico
@@ -46,24 +54,35 @@ public class ReworkTest extends LabEventTest {
     }
 
     @BeforeTest(groups = {EXTERNAL_INTEGRATION})
-    public void beforeIntegrationTests(){
-
+    public void beforeIntegrationTests() throws  Exception {
+        if (utx == null) {
+            return;
+        }
+        utx.begin();
     }
 
     @AfterTest(groups = {EXTERNAL_INTEGRATION})
-    public void afterIntegrationTests(){
-
+    public void afterIntegrationTests() throws SystemException {
+        if (utx == null) {
+            return;
+        }
+        utx.rollback();
     }
 
     @Test(groups = {EXTERNAL_INTEGRATION})
-    public void testMarkForRework(){
-
+    public void testMarkForRework() {
+//        MercurySample sample=new MercurySampleDao().findBySampleKey("SM-01220848345");
+        LabVesselCommentDto dto=getLabVesselCommentDto();
+        labVesselCommentDao.addComment(dto);
     }
 
     @Test(groups = {DATABASE_FREE})
     public void testMarkForReworkDbFree() {
-        //        Controller.startCPURecording(true);
+        LabVesselCommentDto dto=getLabVesselCommentDto();
 
+    }
+
+    private LabVesselCommentDto getLabVesselCommentDto() {
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
@@ -90,13 +109,13 @@ public class ReworkTest extends LabEventTest {
         LabEventHandler labEventHandler =
                 new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance());
 
-        LabEventTest.PreFlightEntityBuilder preFlightEntityBuilder =
-                new LabEventTest.PreFlightEntityBuilder(bettaLimsMessageFactory,
+        PreFlightEntityBuilder preFlightEntityBuilder =
+                new PreFlightEntityBuilder(bettaLimsMessageFactory,
                         labEventFactory, labEventHandler,
                         mapBarcodeToTube).invoke();
 
-        LabEventTest.ShearingEntityBuilder shearingEntityBuilder =
-                new LabEventTest.ShearingEntityBuilder(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
+        ShearingEntityBuilder shearingEntityBuilder =
+                new ShearingEntityBuilder(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
                         bettaLimsMessageFactory, labEventFactory, labEventHandler,
                         preFlightEntityBuilder.getRackBarcode()).invoke();
 
@@ -104,8 +123,12 @@ public class ReworkTest extends LabEventTest {
         final List<SampleInstance> sampleInstances = samplesAtPosition(shearingPlate, "A", "1");
 
         final MercurySample startingSample = sampleInstances.iterator().next().getStartingSample();
-        startingSample.markForRework(MACHINE_ERROR, ONE_SAMPLE_HOLD_REST_BATCH,
-                LabEventType.SHEARING_BUCKET_ENTRY, null, "Houston, we have a problem");
+        Map<MercurySample, VesselPosition> vpMap = new HashMap<MercurySample, VesselPosition>();
+        vpMap.put(startingSample, VesselPosition.A01);
+        final ReworkEntry rapSheetEntry = new ReworkEntry(ReworkReason.MACHINE_ERROR, ReworkLevel.ENTIRE_BATCH,
+                LabEventType.SHEARING_BUCKET_ENTRY);
+        LabVesselCommentDto labVesselCommentDto = new LabVesselCommentDto(null, shearingPlate, rapSheetEntry, vpMap, "foo");
+        return labVesselCommentDto;
     }
 
     private List<SampleInstance> samplesAtPosition(LabVessel vessel, String rowName, String columnName) {
@@ -118,13 +141,5 @@ public class ReworkTest extends LabEventTest {
             sampleInstances = vessel.getSampleInstancesList();
         }
         return sampleInstances;
-    }
-
-    private List<MercurySample> toMercurySamples(List<SampleInstance> sampleInstances) {
-        List<MercurySample> mercurySamples = new ArrayList<MercurySample>(sampleInstances.size());
-        for (SampleInstance sampleInstance : sampleInstances) {
-            mercurySamples.add(sampleInstance.getStartingSample());
-        }
-        return mercurySamples;
     }
 }
