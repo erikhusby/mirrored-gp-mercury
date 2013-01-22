@@ -31,7 +31,7 @@ public class UserTokenInput extends TokenInput<BspUser> {
         return bspUserList.getById(userId);
     }
 
-    public static String getJsonString(BSPUserList bspUserList, String query) throws JSONException {
+    public String getJsonString(String query) throws JSONException {
         List<BspUser> bspUsers = bspUserList.find(query);
 
         JSONArray itemList = new JSONArray();

@@ -82,8 +82,8 @@
             }
 
             function formatCohort(item) {
-                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
-                        "<div class=\"ac-dropdown-subtext\">" + item.group + " " + item.category + "</div></li>";
+                return '<li><div class="ac-dropdown-text">' + item.name + '</div>' +
+                        '<div class="ac-dropdown-subtext">' + item.group + ' ' + item.category + '</div></li>';
             }
         </script>
     </stripes:layout-component>

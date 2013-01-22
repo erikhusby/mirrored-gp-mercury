@@ -882,7 +882,8 @@ public abstract class LabVessel implements Serializable {
     void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
                           TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent,
                           int hopCount) {
-        transferTraverserCriteria.evaluateVesselPreOrder(this, labEvent, hopCount);
+        TransferTraverserCriteria.Context context = new TransferTraverserCriteria.Context(this, labEvent, hopCount, traversalDirection);
+        transferTraverserCriteria.evaluateVesselPreOrder(context);
         if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
             for (VesselEvent vesselEvent : getAncestors()) {
                 evaluateVesselEvent(transferTraverserCriteria, traversalDirection, hopCount, vesselEvent);
@@ -894,7 +895,7 @@ public abstract class LabVessel implements Serializable {
         } else {
             throw new RuntimeException("Unknown direction " + traversalDirection.name());
         }
-        transferTraverserCriteria.evaluateVesselPostOrder(this, labEvent, hopCount);
+        transferTraverserCriteria.evaluateVesselPostOrder(context);
     }
 
     private void evaluateVesselEvent(TransferTraverserCriteria transferTraverserCriteria,

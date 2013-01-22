@@ -174,6 +174,15 @@ public class BSPUserList extends AbstractCache implements Serializable {
         }
     }
 
+    public String getUserFullName(long userId) {
+        BspUser bspUser = getById(userId);
+        if (bspUser == null) {
+            return "(Unknown user: " + userId + ")";
+        }
+
+        return bspUser.getFirstName() + " " + bspUser.getLastName();
+    }
+
     public static class QADudeUser extends BspUser {
         public QADudeUser(String type, long userId) {
             setFields(userId, "QADude" + type, "QADude", type, "qadude" + type.toLowerCase() + "@broadinstitute.org");

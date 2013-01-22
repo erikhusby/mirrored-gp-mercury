@@ -323,31 +323,31 @@ public class DateUtils {
         calendar.setTime(date);
         int offset = calendar.get(Calendar.ZONE_OFFSET)
                 + calendar.get(Calendar.DST_OFFSET);
-        StringBuffer buffer = new StringBuffer();
-        buffer.append(format.format(date));
+        StringBuilder builder = new StringBuilder();
+        builder.append(format.format(date));
         if (offset != 0) {
             // Format time zone offset from UTC,
             // E.g. "-05:00" for Eastern Standard Time.
             if (offset > 0) {
-                buffer.append('+');
+                builder.append('+');
             } else {
-                buffer.append('-');
+                builder.append('-');
                 offset = -offset;
             }
             int minutes = offset / (1000 * 60);
             int hours = minutes / 60;
             minutes = minutes % 60;
             if (hours < 10) {
-                buffer.append('0');
+                builder.append('0');
             }
-            buffer.append(hours);
-            buffer.append(':');
+            builder.append(hours);
+            builder.append(':');
             if (minutes < 10) {
-                buffer.append('0');
+                builder.append('0');
             }
-            buffer.append(minutes);
+            builder.append(minutes);
         }
-        return buffer.toString();
+        return builder.toString();
     }
 
     /**
