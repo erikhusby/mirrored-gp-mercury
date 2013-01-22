@@ -25,7 +25,8 @@ public class OrigMaterialTypeRiskCriteria extends RiskCriteria {
     public OrigMaterialTypeRiskCriteria() {
     }
 
-    public OrigMaterialTypeRiskCriteria(StringOperator stringOperator, String value) {
+    public OrigMaterialTypeRiskCriteria(String name, StringOperator stringOperator, String value) {
+        super(name);
         this.stringOperator = stringOperator;
         this.value = value;
     }
@@ -54,5 +55,38 @@ public class OrigMaterialTypeRiskCriteria extends RiskCriteria {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof OrigMaterialTypeRiskCriteria)) {
+            return false;
+        }
+        if (!super.equals(o)) {
+            return false;
+        }
+
+        final OrigMaterialTypeRiskCriteria that = (OrigMaterialTypeRiskCriteria) o;
+
+        if (stringOperator != that.stringOperator) {
+            return false;
+        }
+        if (!value.equals(that.value)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + stringOperator.hashCode();
+        result = 31 * result + value.hashCode();
+        return result;
     }
 }

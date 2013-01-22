@@ -5,6 +5,7 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import java.util.Date;
 
 /**
  * The purpose of this class is to capture any risks that
@@ -33,6 +34,9 @@ public class RiskItem {
     @JoinColumn(name = "PRODUCT_ORDER_SAMPLE")
     private ProductOrderSample productOrderSample;
 
+    @Column(name = "occurred_date")
+    private Date occurredDate;
+
     @Column(name = "REMARK")
     private String remark;
 
@@ -40,11 +44,11 @@ public class RiskItem {
     }
 
     public RiskItem(RiskCriteria riskCriteria,
-                    ProductOrderSample productOrderSample) {
+                    ProductOrderSample productOrderSample, Date occurredDate) {
         this.riskCriteria = riskCriteria;
         this.productOrderSample = productOrderSample;
+        this.occurredDate = occurredDate;
     }
-
 
     public RiskCriteria getRiskCriteria() {
         return riskCriteria;
@@ -69,4 +73,46 @@ public class RiskItem {
     public void setRemark(String remark) {
         this.remark = remark;
     }
+
+    public Date getOccurredDate() {
+        return occurredDate;
+    }
+
+    public void setOccurredDate(Date occurredDate) {
+        this.occurredDate = occurredDate;
+    }
+
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof RiskItem)) {
+            return false;
+        }
+
+        final RiskItem riskItem = (RiskItem) o;
+
+        if (!occurredDate.equals(riskItem.occurredDate)) {
+            return false;
+        }
+        if (!productOrderSample.equals(riskItem.productOrderSample)) {
+            return false;
+        }
+        if (!riskCriteria.equals(riskItem.riskCriteria)) {
+            return false;
+        }
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = riskCriteria.hashCode();
+        result = 31 * result + productOrderSample.hashCode();
+        result = 31 * result + occurredDate.hashCode();
+        return result;
+    }
+
 }

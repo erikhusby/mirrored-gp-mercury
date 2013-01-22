@@ -18,16 +18,16 @@ public enum NumericOperator {
         this.label = label;
     }
 
-    public boolean apply(Double d1, Double d2) {
+    public boolean apply(Double value, Double threshold) {
         switch (this) {
         case GREATER_THAN:
-            return d1 > d2;
+            return value > threshold;
         case GREATER_THAN_OR_EQUAL_TO:
-            return d1 >= d2;
+            return value >= threshold;
         case LESS_THAN:
-            return d1 < d2;
+            return value < threshold;
         case LESS_THAN_OR_EQUAL_TO:
-            return d1 <= d2;
+            return value <= threshold;
         }
         throw new RuntimeException();
     }

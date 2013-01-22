@@ -2343,4 +2343,18 @@
         </createTable>
     </changeSet>
 
+    <changeSet id="GPLIM-828.6" author="mccrory">
+        <addColumn schemaName="athena" tableName="risk_item">
+            <column name="occurred_date" type="TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-828.7" author="mccrory">
+        <addColumn schemaName="athena" tableName="risk_item_aud">
+            <column name="occurred_date" type="TIMESTAMP"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
