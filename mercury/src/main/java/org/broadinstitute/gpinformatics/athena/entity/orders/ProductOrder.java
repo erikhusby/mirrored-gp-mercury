@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.apache.commons.collections15.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
@@ -17,7 +16,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -455,7 +453,7 @@ public class ProductOrder implements Serializable {
 
     public void setSamples(List<ProductOrderSample> samples) {
         // only update samples if there are no ledger items on any samples or the sample list has changed
-        if (!hasLedgerItems() || sampleListHashChanged(samples)) {
+        if (!hasLedgerItems() || sampleListHasChanged(samples)) {
             this.samples.clear();
 
             int samplePos = 0;
@@ -478,7 +476,7 @@ public class ProductOrder implements Serializable {
      *
      * @return true, if the name lists are different
      */
-    private boolean sampleListHashChanged(List<ProductOrderSample> newSamples) {
+    private boolean sampleListHasChanged(List<ProductOrderSample> newSamples) {
         List<String> originalSampleNames = getSampleNames(samples);
         List<String> newSampleNames = getSampleNames(newSamples);
 
