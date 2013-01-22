@@ -454,8 +454,8 @@ public class ProductOrder implements Serializable {
     }
 
     public void setSamples(List<ProductOrderSample> samples) {
-        // only update samples if there are no ledger items on any samples
-        if (!hasLedgerItems()) {
+        // only update samples if there are no ledger items on any samples or the sample list has changed
+        if (!hasLedgerItems() || sampleListHashChanged(samples)) {
             this.samples.clear();
 
             int samplePos = 0;
@@ -469,6 +469,21 @@ public class ProductOrder implements Serializable {
 
             counts.invalidate();
         }
+    }
+
+    /**
+     * Determine if the list of samples names is exactly the same as the original list of sample names
+     *
+     * @param newSamples new sample list
+     *
+     * @return true, if the name lists are different
+     */
+    private boolean sampleListHashChanged(List<ProductOrderSample> newSamples) {
+        List<String> originalSampleNames = getSampleNames(samples);
+        List<String> newSampleNames = getSampleNames(newSamples);
+
+        // If not equals, then this has changed
+        return !newSampleNames.equals(originalSampleNames);
     }
 
     /**
@@ -569,7 +584,7 @@ public class ProductOrder implements Serializable {
      * @return the list of sample names for this order, including duplicates. in the same sequence that
      * they were entered.
      */
-    private List<String> getSampleNames() {
+    private static List<String> getSampleNames(List<ProductOrderSample> samples) {
         List<String> names = new ArrayList<String>(samples.size());
         for (ProductOrderSample productOrderSample : samples) {
             names.add(productOrderSample.getSampleName());
@@ -578,7 +593,7 @@ public class ProductOrder implements Serializable {
     }
 
     public String getSampleString() {
-        return StringUtils.join(getSampleNames(), '\n');
+        return StringUtils.join(getSampleNames(samples), '\n');
     }
 
     /**
