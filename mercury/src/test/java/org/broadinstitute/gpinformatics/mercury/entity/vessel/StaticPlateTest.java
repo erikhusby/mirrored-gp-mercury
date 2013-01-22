@@ -88,15 +88,24 @@ public class StaticPlateTest {
 
     @Test(groups = DATABASE_FREE)
     public void testGetHasRackContentByWellNone() {
-        assertThat(plate1.getHasRackContentByWell().size(), is(0));
+        Map<VesselPosition, Boolean> hasRackContentByWell = plate1.getHasRackContentByWell();
+        assertThat(hasRackContentByWell.size(), is(96));
+        for (Map.Entry<VesselPosition, Boolean> entry : hasRackContentByWell.entrySet()) {
+            assertThat("Entry for " + entry.getKey() + " has wrong value", entry.getValue(), is(false));
+        }
     }
 
     @Test(groups = DATABASE_FREE)
     public void testGetHasRackContentByWell() {
         doSectionTransfer(makeTubeFormation(tube1), plate1);
         Map<VesselPosition, Boolean> hasRackContentByWell = plate1.getHasRackContentByWell();
-//        assertThat(hasRackContentByWell.size(), is(1));
-//        assertThat(hasRackContentByWell.get(A01), is(true));
+        assertThat(hasRackContentByWell.size(), is(96));
+        assertThat(hasRackContentByWell.get(A01), is(true));
+        for (Map.Entry<VesselPosition, Boolean> entry : hasRackContentByWell.entrySet()) {
+            if (entry.getKey() != A01) {
+                assertThat("Entry for " + entry.getKey() + " has wrong value", entry.getValue(), is(false));
+            }
+        }
     }
 
     /*

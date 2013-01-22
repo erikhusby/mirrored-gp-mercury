@@ -107,26 +107,41 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
 
     public static class HasRackContentByWellCriteria implements TransferTraverserCriteria {
 
+        private Map<VesselPosition, Boolean> result = new HashMap<VesselPosition, Boolean>();
+
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            return null;  //To change body of implemented methods use File | Settings | File Templates.
+            result.put(context.getVesselPosition(), false);
+            if (context.getLabVessel() != null) {
+                if (OrmUtil.proxySafeIsInstance(context.getVesselContainer().getEmbedder(), TubeFormation.class)) {
+                    result.put(context.getVesselPosition(), true);
+                    return TraversalControl.StopTraversing;
+                }
+            }
+            return TraversalControl.ContinueTraversing;
         }
 
         @Override
-        public void evaluateVesselInOrder(Context context) {
-            //To change body of implemented methods use File | Settings | File Templates.
-        }
+        public void evaluateVesselInOrder(Context context) {}
 
         @Override
-        public void evaluateVesselPostOrder(Context context) {
-            //To change body of implemented methods use File | Settings | File Templates.
+        public void evaluateVesselPostOrder(Context context) {}
+
+        public Map<VesselPosition, Boolean> getResult() {
+            return result;
         }
     }
 
+    /**
+     * Returns, for each well position, whether or not there has been a source tube in a tube rack somewhere in the
+     * ancestry.
+     *
+     * @return
+     */
     public Map<VesselPosition, Boolean> getHasRackContentByWell() {
-        // TODO: limsThrift only returns true if the source tube was in a rack. Does this really matter? Should this restriction be loosened?
-        // Answer: No, this method should only report sources from a rack and has been renamed accordingly.
-        return new HashMap<VesselPosition, Boolean>();
+        HasRackContentByWellCriteria criteria = new HasRackContentByWellCriteria();
+        applyCriteriaToAllWells(criteria);
+        return criteria.getResult();
     }
 
     public static class NearestTubeAncestorsCriteria implements TransferTraverserCriteria {
