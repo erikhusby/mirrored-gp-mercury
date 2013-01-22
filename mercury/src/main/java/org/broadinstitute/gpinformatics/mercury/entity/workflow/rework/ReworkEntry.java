@@ -38,6 +38,7 @@ public class ReworkEntry extends RapSheetEntry {
     private LabEvent labEvent;
 
     @NotNull
+    @Enumerated(EnumType.STRING)
     private LabEventType reworkStep;
 
     public ReworkEntry() {
