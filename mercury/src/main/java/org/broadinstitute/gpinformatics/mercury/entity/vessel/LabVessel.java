@@ -137,6 +137,17 @@ public abstract class LabVessel implements Serializable {
     protected LabVessel() {
     }
 
+    private static Collection<String> getVesselNameList(Collection<LabVessel> vessels) {
+
+        List<String> vesselNames = new ArrayList<String>(vessels.size());
+
+        for (LabVessel currVessel : vessels) {
+            vesselNames.add(currVessel.getLabCentricName());
+        }
+
+        return vesselNames;
+    }
+
     /**
      * Well A01, Lane 3, Region 6 all might
      * be considered a labeled sub-section
@@ -340,7 +351,12 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Set<LabEvent> getInPlaceEvents() {
-        return inPlaceLabEvents;
+        Set<LabEvent> totalInPlaceEventsSet = new HashSet<LabEvent>();
+        for (LabVessel vesselContainer : containers) {
+            totalInPlaceEventsSet.addAll(vesselContainer.getInPlaceEvents());
+        }
+        totalInPlaceEventsSet.addAll(inPlaceLabEvents);
+        return totalInPlaceEventsSet;
     }
 
     private List<LabEvent> getAllEventsSortedByDate() {
@@ -929,6 +945,8 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Collection<String> getNearestProductOrders() {
+
+
         TransferTraverserCriteria.NearestProductOrderCriteria nearestProductOrderCriteria =
                 new TransferTraverserCriteria.NearestProductOrderCriteria();
 

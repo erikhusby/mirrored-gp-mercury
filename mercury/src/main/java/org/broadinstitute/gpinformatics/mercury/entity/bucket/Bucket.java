@@ -117,6 +117,7 @@ public class Bucket {
     public BucketEntry findEntry(@Nonnull LabVessel entryVessel) {
 
         List<BucketEntry> foundEntries = new LinkedList<BucketEntry>();
+        BucketEntry foundBucketItem = null;
 
         for(BucketEntry currEntry: bucketEntries) {
             if(currEntry.getLabVessel().equals(entryVessel)) {
@@ -125,10 +126,12 @@ public class Bucket {
         }
 
         if(foundEntries.size() > 1) {
-            throw new IllegalStateException("There are more than one entry in the bucket for the given vessel " + entryVessel.getLabel());
+            throw new IllegalStateException("There is more than one entry in the bucket for the given vessel " + entryVessel.getLabel());
         }
-
-        return foundEntries.get(0);
+        if(!foundEntries.isEmpty()) {
+            foundBucketItem = foundEntries.get(0);
+        }
+        return foundBucketItem;
 
     }
 
