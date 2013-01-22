@@ -2,7 +2,9 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
-import net.sourceforge.stripes.validation.*;
+import net.sourceforge.stripes.validation.Validate;
+import net.sourceforge.stripes.validation.ValidateNestedProperties;
+import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
@@ -14,6 +16,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedger
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
@@ -26,8 +29,8 @@ import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessi
 import org.broadinstitute.gpinformatics.athena.presentation.links.BspLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
-import org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean;
-import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
@@ -68,6 +71,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     private ProductOrderUtil productOrderUtil;
 
     @Inject
+    private ProductOrderSampleDao sampleDao;
+
+    @Inject
     private ProductOrderListEntryDao orderListEntryDao;
 
     @Inject
@@ -103,6 +109,12 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private UserBean userBean;
 
+    @Inject
+    private ProductTokenInput productTokenInput;
+
+    @Inject
+    private ProjectTokenInput projectTokenInput;
+
     private List<ProductOrderListEntry> allProductOrders;
 
     private String sampleList;
@@ -110,12 +122,17 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
     private String productOrder;
 
+    private long sampleId;
+
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
         @Validate(field="title", required = true, maxlength=255, on={SAVE_ACTION}, label = "Name"),
         @Validate(field="count", on={SAVE_ACTION}, label="Number of Lanes")
     })
     private ProductOrder editOrder;
+
+    // For create, we can also have a research project key to default
+    private String researchProjectKey;
 
     private List<String> selectedProductOrderBusinessKeys;
     private List<ProductOrder> selectedProductOrders;
@@ -126,9 +143,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<String> addOnKeys = new ArrayList<String> ();
 
-    // The token input autocomplete backing objects
-    private String researchProjectList;
-    private String productList;
+    /*
+     * The search query.
+     */
+    private String q;
 
     /**
      * Initialize the product with the passed in key for display in the form or create it, if not specified
@@ -139,6 +157,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
         } else {
+            // If this was a create with research project specified, find that.
             // This is only used for save, when creating a new product order.
             editOrder = new ProductOrder();
         }
@@ -309,6 +328,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(CREATE_ACTION)
     public Resolution create() {
         setSubmitString(CREATE_ORDER);
+        populateTokenListsFromObjectData();
         return new ForwardResolution(ORDER_CREATE_PAGE);
     }
 
@@ -316,7 +336,27 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution edit() {
         validateUser("edit");
         setSubmitString(EDIT_ORDER);
+        populateTokenListsFromObjectData();
         return new ForwardResolution(ORDER_CREATE_PAGE);
+    }
+
+    /**
+     * For the prepopulate to work on opening create and edit page, we need to take values from the editOrder. After,
+     * the pages have the values passed in.
+     */
+    private void populateTokenListsFromObjectData() {
+        String[] productKey = (editOrder.getProduct() == null) ? new String[0] : new String[] { editOrder.getProduct().getBusinessKey() };
+        productTokenInput.setup(productKey);
+
+        // If a research project key was specified then use that as the default
+        String[] projectKey;
+        if (!StringUtils.isBlank(researchProjectKey)) {
+            projectKey = new String[] { researchProjectKey };
+        } else {
+            projectKey = (editOrder.getResearchProject() == null) ? new String[0] : new String[] { editOrder.getResearchProject().getBusinessKey() };
+        }
+
+        projectTokenInput.setup(projectKey);
     }
 
     @HandlesEvent("placeOrder")
@@ -371,8 +411,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private void updateTokenInputFields() {
         // set the project, product and addOns for the order
-        ResearchProject project = projectDao.findByBusinessKey(researchProjectList);
-        Product product = productDao.findByPartNumber(productList);
+        ResearchProject project = projectDao.findByBusinessKey(projectTokenInput.getTokenObject());
+        Product product = productDao.findByPartNumber(productTokenInput.getTokenObject());
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
         editOrder.updateData(project, product, addOnProducts, getSamplesAsList());
     }
@@ -421,6 +461,39 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(itemList.toString());
     }
 
+    @HandlesEvent("getSummary")
+    public Resolution getSummary() throws Exception {
+        JSONArray itemList = new JSONArray();
+
+        List<String> comments = editOrder.getSampleSummaryComments();
+        for (String comment : comments) {
+            JSONObject item = new JSONObject();
+            item.put("comment", comment);
+
+            itemList.put(item);
+        }
+
+        return createTextResolution(itemList.toString());
+    }
+
+    @HandlesEvent("getBspData")
+    public Resolution getBspData() throws Exception {
+        JSONArray itemList = new JSONArray();
+
+        ProductOrderSample sample = sampleDao.findById(ProductOrderSample.class, sampleId);
+
+        JSONObject item = new JSONObject();
+
+        item.put("sampleId", sample.getProductOrderSampleId());
+        item.put("patientId", sample.getBspDTO().getPatientId());
+        item.put("volume", sample.getBspDTO().getVolume());
+        item.put("concentration", sample.getBspDTO().getConcentration());
+        item.put("total", sample.getBspDTO().getTotal());
+        item.put("hasFingerprint", sample.getBspDTO().getHasFingerprint());
+
+        return createTextResolution(item.toString());
+    }
+
     @HandlesEvent("getSupportsNumberOfLanes")
     public Resolution getSupportsNumberOfLanes() throws Exception {
         boolean lanesSupported = true;
@@ -432,7 +505,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         item.put("supports", lanesSupported);
 
-        return new StreamingResolution("text", new StringReader(item.toString()));
+        return createTextResolution(item.toString());
     }
 
     public List<String> getSelectedProductOrderBusinessKeys() {
@@ -524,36 +597,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.product = product;
     }
 
-    public String getResearchProjectList() {
-        return researchProjectList;
+    @HandlesEvent("projectAutocomplete")
+    public Resolution projectAutocomplete() throws Exception {
+        return createTextResolution(projectTokenInput.getJsonString(getQ()));
     }
 
-    public void setResearchProjectList(String researchProjectList) {
-        this.researchProjectList = researchProjectList;
-    }
-
-    public String getProductList() {
-        return productList;
-    }
-
-    public void setProductList(String productList) {
-        this.productList = productList;
-    }
-
-    public String getProjectCompleteData() throws Exception {
-        if ((editOrder == null) || (editOrder.getResearchProject() == null)) {
-            return "";
-        }
-
-        return ResearchProjectActionBean.getAutoCompleteJsonString(Collections.singletonList(editOrder.getResearchProject()));
-    }
-
-    public String getProductCompleteData() throws Exception {
-        if ((editOrder == null) || (editOrder.getProduct() == null)) {
-            return "";
-        }
-
-        return ProductActionBean.getAutoCompleteJsonString(Collections.singletonList(editOrder.getProduct()));
+    @HandlesEvent("productAutocomplete")
+    public Resolution productAutocomplete() throws Exception {
+        return createTextResolution(productTokenInput.getJsonString(getQ()));
     }
 
     public List<String> getAddOnKeys() {
@@ -616,5 +667,37 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setQuoteIdentifier(String quoteIdentifier) {
         this.quoteIdentifier = quoteIdentifier;
+    }
+
+    public String getQ() {
+        return q;
+    }
+
+    public void setQ(String q) {
+        this.q = q;
+    }
+
+    public ProductTokenInput getProductTokenInput() {
+        return productTokenInput;
+    }
+
+    public ProjectTokenInput getProjectTokenInput() {
+        return projectTokenInput;
+    }
+
+    public String getResearchProjectKey() {
+        return researchProjectKey;
+    }
+
+    public void setResearchProjectKey(String researchProjectKey) {
+        this.researchProjectKey = researchProjectKey;
+    }
+
+    public long getSampleId() {
+        return sampleId;
+    }
+
+    public void setSampleId(long sampleId) {
+        this.sampleId = sampleId;
     }
 }

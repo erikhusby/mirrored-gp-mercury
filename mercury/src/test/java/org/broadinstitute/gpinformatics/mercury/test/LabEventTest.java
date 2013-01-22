@@ -79,32 +79,33 @@ public class LabEventTest {
     public static class ListTransfersFromStart implements TransferTraverserCriteria {
         private int hopCount = -1;
         private final List<String> labEventNames = new ArrayList<String>();
+
         /**
          * Avoid infinite loops
          */
         private Set<LabEvent> visitedLabEvents = new HashSet<LabEvent>();
 
         @Override
-        public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
-            if (labEvent != null) {
-                if (!visitedLabEvents.add(labEvent)) {
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            if (context.getEvent() != null) {
+                if (!visitedLabEvents.add(context.getEvent())) {
                     return TraversalControl.StopTraversing;
                 }
-                if (hopCount > this.hopCount) {
-                    this.hopCount = hopCount;
-                    labEventNames.add(labEvent.getLabEventType().getName() + " into " +
-                            labEvent.getTargetLabVessels().iterator().next().getLabel());
+                if (context.getHopCount() > hopCount) {
+                    hopCount = context.getHopCount();
+                    labEventNames.add(context.getEvent().getLabEventType().getName() + " into " +
+                            context.getEvent().getTargetLabVessels().iterator().next().getLabel());
                 }
             }
             return TraversalControl.ContinueTraversing;
         }
 
         @Override
-        public void evaluateVesselInOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        public void evaluateVesselInOrder(Context context) {
         }
 
         @Override
-        public void evaluateVesselPostOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        public void evaluateVesselPostOrder(Context context) {
         }
 
         public List<String> getLabEventNames() {

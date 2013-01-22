@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
+import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
@@ -12,6 +13,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,22 +27,39 @@ public class ResearchProjectResourceTest extends ContainerTest {
     private static final long TEST_SCIENTIST_1 = 14567;
     private static final long TEST_SCIENTIST_2 = 11908;
 
+    // Transaction is used for this test just to set up data for the 'real' test
+    @Inject
+    private UserTransaction utx;
+
     @Inject
     ResearchProjectResource researchProjectResource;
 
     @Inject
-    private ResearchProjectManager researchProjectManager;
+    ResearchProjectDao researchProjectDao;
 
     private String testTitle;
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
+        }
+
+        utx.begin();
         // Only do this if the server is calling this and thus, injection worked
         if (researchProjectResource != null) {
             testTitle = "MyResearchProject_" + UUID.randomUUID();
             ResearchProject researchProject = createDummyResearchProject(testTitle);
 
-            researchProjectManager.createResearchProject(researchProject);
+            // Persist research project, which should succeed assuming all validation has been done up-front
+            try {
+                researchProjectDao.persist(researchProject);
+                researchProjectDao.flush();
+            } catch (RuntimeException e) {
+                researchProject.rollbackPersist();
+                throw e;
+            }
         }
     }
 
@@ -68,8 +87,16 @@ public class ResearchProjectResourceTest extends ContainerTest {
         // Only do this if the server is calling this and thus, injection worked
         if (researchProjectResource != null) {
             ResearchProject researchProject = researchProjectResource.findResearchProjectByTitle(testTitle);
-            researchProjectManager.deleteResearchProject(researchProject);
+            researchProjectDao.remove(researchProject);
         }
+
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
+        }
+
+        utx.rollback();
+
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
