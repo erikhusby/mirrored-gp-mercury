@@ -25,14 +25,11 @@ import java.util.List;
 @Audited
 @Table(schema = "mercury")
 public class ReworkEntry extends RapSheetEntry {
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    private List<MercurySample> reworkedSamples;
-
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     @NotNull
     private ReworkReason reason;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     @NotNull
     private ReworkLevel reworkLevel;
 
@@ -54,14 +51,6 @@ public class ReworkEntry extends RapSheetEntry {
         this.reworkStep = reworkStep;
         this.labEvent = labEvent;
         super.setComment(comments);
-    }
-
-    public List<MercurySample> getReworkedSamples() {
-        return reworkedSamples;
-    }
-
-    public void setReworkedSamples(List<MercurySample> reworkedSamples) {
-        this.reworkedSamples = reworkedSamples;
     }
 
     public ReworkReason getReason() {
