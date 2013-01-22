@@ -108,17 +108,17 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
     public static class HasRackContentByWellCriteria implements TransferTraverserCriteria {
 
         @Override
-        public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        public TraversalControl evaluateVesselPreOrder(Context context) {
             return null;  //To change body of implemented methods use File | Settings | File Templates.
         }
 
         @Override
-        public void evaluateVesselInOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        public void evaluateVesselInOrder(Context context) {
             //To change body of implemented methods use File | Settings | File Templates.
         }
 
         @Override
-        public void evaluateVesselPostOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        public void evaluateVesselPostOrder(Context context) {
             //To change body of implemented methods use File | Settings | File Templates.
         }
     }
@@ -135,10 +135,10 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         private Set<VesselAndPosition> vesselAndPositions = new LinkedHashSet<VesselAndPosition>();
 
         @Override
-        public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
-            if (OrmUtil.proxySafeIsInstance(labVessel, TwoDBarcodedTube.class)) {
-                tubes.add(labVessel);
-//                vesselAndPositions.add(new VesselAndPosition(labVessel, vesselPosition));
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), TwoDBarcodedTube.class)) {
+                tubes.add(context.getLabVessel());
+                vesselAndPositions.add(new VesselAndPosition(context.getLabVessel(), context.getVesselPosition()));
                 return StopTraversing;
             } else {
                 return ContinueTraversing;
@@ -146,10 +146,10 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         }
 
         @Override
-        public void evaluateVesselInOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {}
+        public void evaluateVesselInOrder(Context context) {}
 
         @Override
-        public void evaluateVesselPostOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {}
+        public void evaluateVesselPostOrder(Context context) {}
 
         public Set<LabVessel> getTubes() {
             return tubes;

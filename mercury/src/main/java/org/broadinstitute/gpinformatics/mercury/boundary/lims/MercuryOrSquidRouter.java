@@ -98,9 +98,9 @@ public class MercuryOrSquidRouter {
         private boolean foundAnyProductOrder = false;
 
         @Override
-        public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
-            if (labVessel != null) {
-                for (SampleInstance sampleInstance : labVessel.getSampleInstances()) {
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            if (context.getLabVessel() != null) {
+                for (SampleInstance sampleInstance : context.getLabVessel().getSampleInstances()) {
                     String productOrderKey = sampleInstance.getStartingSample().getProductOrderKey();
                     if (productOrderKey != null) {
                         ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
@@ -115,10 +115,10 @@ public class MercuryOrSquidRouter {
         }
 
         @Override
-        public void evaluateVesselInOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {}
+        public void evaluateVesselInOrder(Context context) {}
 
         @Override
-        public void evaluateVesselPostOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {}
+        public void evaluateVesselPostOrder(Context context) {}
 
         public boolean getFoundAnyProductOrder() {
             return foundAnyProductOrder;
