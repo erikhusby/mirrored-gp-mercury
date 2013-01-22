@@ -24,6 +24,7 @@ public class LabEventTestFactory {
         int i = 0;
         for (TwoDBarcodedTube tube : tubes) {
             positionMap.put(VesselPosition.values()[i], tube);
+            i++;
         }
         return new TubeFormation(positionMap, Matrix96);
     }

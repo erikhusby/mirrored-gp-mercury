@@ -1,7 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselAndPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.PlateTransferType;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.WellAndSourceTubeType;
@@ -57,13 +59,29 @@ public class LimsQueries {
     }
 
     public List<WellAndSourceTubeType> fetchSourceTubesForPlate(String plateBarcode) {
-        List<WellAndSourceTubeType> tubes = new ArrayList<WellAndSourceTubeType>();
-        return tubes;
+        List<WellAndSourceTubeType> results = new ArrayList<WellAndSourceTubeType>();
+        StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        for (VesselAndPosition vesselAndPosition : plate.getNearestTubeAncestors()) {
+            WellAndSourceTubeType result = new WellAndSourceTubeType();
+            result.setWellName(vesselAndPosition.getPosition().name());
+            result.setTubeBarcode(vesselAndPosition.getVessel().getLabel());
+            results.add(result);
+        }
+        return results;
     }
 
     public List<PlateTransferType> fetchTransfersForPlate(String plateBarcode, int depth) {
-        List<PlateTransferType> transfers = new ArrayList<PlateTransferType>();
-        // TODO: implement using StaticPlate.getUpstreamPlateTransfers()
-        return transfers;
+        List<PlateTransferType> results = new ArrayList<PlateTransferType>();
+        StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        List<SectionTransfer> transfers = plate.getUpstreamPlateTransfers(depth);
+        for (SectionTransfer transfer : transfers) {
+            PlateTransferType result = new PlateTransferType();
+            result.setSourceBarcode(transfer.getSourceVesselContainer().getEmbedder().getLabel());
+            result.setSourceSection(transfer.getSourceSection().getSectionName());
+            result.setDestinationBarcode(transfer.getTargetVesselContainer().getEmbedder().getLabel());
+            result.setDestinationSection(transfer.getTargetSection().getSectionName());
+            results.add(result);
+        }
+        return results;
     }
 }
