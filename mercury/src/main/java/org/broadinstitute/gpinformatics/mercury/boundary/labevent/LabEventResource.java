@@ -142,12 +142,12 @@ public class LabEventResource {
         private LabVessel starter;
 
         @Override
-        public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
-            if (labVessel != null) {
-                if(labVessel.getTransfersTo().isEmpty()) {
-                    for (LabBatch labBatch : labVessel.getLabBatches()) {
-                        if(labBatch.getStartingLabVessels().contains(labVessel)) {
-                            starter = labVessel;
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            if (context.getLabVessel() != null) {
+                if(context.getLabVessel().getTransfersTo().isEmpty()) {
+                    for (LabBatch labBatch : context.getLabVessel().getLabBatches()) {
+                        if(labBatch.getStartingLabVessels().contains(context.getLabVessel())) {
+                            starter = context.getLabVessel();
                             return TraversalControl.StopTraversing;
                         }
                     }
@@ -157,11 +157,11 @@ public class LabEventResource {
         }
 
         @Override
-        public void evaluateVesselInOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        public void evaluateVesselInOrder(Context context) {
         }
 
         @Override
-        public void evaluateVesselPostOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
+        public void evaluateVesselPostOrder(Context context) {
         }
 
         public LabVessel getStarter() {
