@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
+import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
@@ -29,7 +30,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
     ResearchProjectResource researchProjectResource;
 
     @Inject
-    private ResearchProjectManager researchProjectManager;
+    ResearchProjectDao researchProjectDao;
 
     private String testTitle;
 
@@ -40,7 +41,14 @@ public class ResearchProjectResourceTest extends ContainerTest {
             testTitle = "MyResearchProject_" + UUID.randomUUID();
             ResearchProject researchProject = createDummyResearchProject(testTitle);
 
-            researchProjectManager.createResearchProject(researchProject);
+            // Persist research project, which should succeed assuming all validation has been done up-front
+            try {
+                researchProjectDao.persist(researchProject);
+                researchProjectDao.flush();
+            } catch (RuntimeException e) {
+                researchProject.rollbackPersist();
+                throw e;
+            }
         }
     }
 
@@ -68,7 +76,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
         // Only do this if the server is calling this and thus, injection worked
         if (researchProjectResource != null) {
             ResearchProject researchProject = researchProjectResource.findResearchProjectByTitle(testTitle);
-            researchProjectManager.deleteResearchProject(researchProject);
+            researchProjectDao.remove(researchProject);
         }
     }
 

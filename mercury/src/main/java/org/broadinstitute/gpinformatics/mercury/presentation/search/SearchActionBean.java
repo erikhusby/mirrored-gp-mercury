@@ -35,7 +35,9 @@ public class SearchActionBean extends CoreActionBean {
     private static final String SEPARATOR = ",";
     private static final Pattern SPLIT_PATTERN = Pattern.compile("[" + SEPARATOR + "\\s]+");
 
-    /** Automatically convert known BSP IDs (SM-, SP-) to uppercase. */
+    /**
+     * Automatically convert known BSP IDs (SM-, SP-) to uppercase.
+     */
     private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
 
     private static final String SESSION_LIST_PAGE = "/search/search.jsp";
@@ -70,7 +72,7 @@ public class SearchActionBean extends CoreActionBean {
     @Inject
     private LabBatchDAO labBatchDAO;
 
-    @Validate(required = true, on = {SEARCH_ACTION,SEARCH_BATCH_CANDIDATES_ACTION})
+    @Validate(required = true, on = {SEARCH_ACTION, SEARCH_BATCH_CANDIDATES_ACTION})
     private String searchKey;
 
     private String batchLabel;
@@ -88,6 +90,7 @@ public class SearchActionBean extends CoreActionBean {
 
     private List<String> selectedVesselLabels;
     private List<LabVessel> selectedBatchVessels;
+    private List<String> selectedBatchLabels;
 
     @Validate(required = true, on = {CREATE_BATCH_ACTION})
     private String jiraInputType = EXISTING_TICKET;
@@ -165,18 +168,18 @@ public class SearchActionBean extends CoreActionBean {
     @ValidationMethod(on = CREATE_BATCH_ACTION)
     public void createBatchValidation(ValidationErrors errors) {
 
-        if(selectedVesselLabels == null || selectedVesselLabels.isEmpty()) {
+        if (selectedVesselLabels == null || selectedVesselLabels.isEmpty()) {
             doBatchSearch();
             errors.add("selectedVesselLabels", new SimpleError("At least one vessel must be selected to create a batch"));
         }
 
-        if(jiraInputType.equals(EXISTING_TICKET)) {
-            if(StringUtils.isBlank(jiraTicketId)) {
+        if (jiraInputType.equals(EXISTING_TICKET)) {
+            if (StringUtils.isBlank(jiraTicketId)) {
                 doBatchSearch();
-                errors.add("jiraTicketId",new SimpleError("An existing Jira ticket key is required"));
+                errors.add("jiraTicketId", new SimpleError("An existing Jira ticket key is required"));
             }
         } else {
-            if(StringUtils.isBlank(summary)) {
+            if (StringUtils.isBlank(summary)) {
                 doBatchSearch();
                 errors.add("summary", new SimpleError("You must provide at least a summary to create a Jira Ticket"));
             }
@@ -326,7 +329,7 @@ public class SearchActionBean extends CoreActionBean {
             return Collections.emptyList();
         }
 
-        String[] valueArray =  SPLIT_PATTERN.split(searchKey, 0);
+        String[] valueArray = SPLIT_PATTERN.split(searchKey, 0);
         if (valueArray.length == 1 && valueArray[0].isEmpty()) {
             // Handle empty string case.
             valueArray = new String[0];
@@ -374,7 +377,13 @@ public class SearchActionBean extends CoreActionBean {
         return getIndexesMap;
     }
 
+    public List<String> getSelectedBatchLabels() {
+        return selectedBatchLabels;
+    }
 
+    public void setSelectedBatchLabels(List<String> selectedBatchLabels) {
+        this.selectedBatchLabels = selectedBatchLabels;
+    }
 
     public List<String> getSelectedVesselLabels() {
         return selectedVesselLabels;

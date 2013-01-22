@@ -108,7 +108,7 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
             if (queryParameters.size() > 0)
                 queryString = StringUtils.join(queryParameters, "&");
 
-            logger.info("query string to be POSTed is '" + queryString + "'");
+            logger.trace("query string to be POSTed is '" + queryString + "'");
             
             ClientResponse clientResponse =
                     webResource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(ClientResponse.class, queryString);

@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.DB;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
-import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationListener;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;

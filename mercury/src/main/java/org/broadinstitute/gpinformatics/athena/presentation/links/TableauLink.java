@@ -4,11 +4,9 @@ import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
 
-import javax.faces.bean.RequestScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.URL;
@@ -19,13 +17,12 @@ import java.net.URLEncoder;
  * This is a bean to help the UI deal with Tableau links.
  */
 @Named
-@RequestScoped
 public class TableauLink {
     private final Logger logger = Logger.getLogger(this.getClass());
     private static final String TRUST_PATH = "/trusted/";
     private static final String PASS_REPORT_NAME = "PASS"; //the lookup key for urls in yaml config file
 
-    private static long TRUSTED_ID_LIFETIME = 10 * 1000L;  //trusted ticket is good for at least ten seconds
+    private static final long TRUSTED_ID_LIFETIME = 10 * 1000L;  //trusted ticket is good for at least ten seconds
     public static final String BAD_TABLEAU_TICKET = "-1";
 
     private String trustId = null;
@@ -40,7 +37,7 @@ public class TableauLink {
 
     /**
      * Returns a url to the tableau report.
-     * @param projectTitle
+     * @param projectTitle The title of the project
      * @return uses trusted ticketing, or normal auth path if unavailable.
      */
     public String passReportUrl(String projectTitle) {
@@ -52,7 +49,7 @@ public class TableauLink {
     }
 
     private String makeReportUrl(String trustId, String reportName, String param) {
-        return new StringBuffer()
+        return new StringBuilder()
                 .append(serverUrl())
                 .append(TRUST_PATH)
                 .append(trustId)
@@ -73,7 +70,7 @@ public class TableauLink {
         BufferedReader in = null;
         try {
             // Encodes parameters
-            StringBuffer data = new StringBuffer()
+            StringBuilder data = new StringBuilder()
                     .append(URLEncoder.encode("username", "UTF-8"))
                     .append("=")
                     .append(URLEncoder.encode(user, "UTF-8"));
