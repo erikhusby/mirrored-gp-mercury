@@ -453,7 +453,8 @@ public class ImportFromSquidTest extends ContainerTest {
      * Runs a native query against Squid to get the station events associated with a hard-coded list of LCSETs (derived
      * from a query that returns LCSETs that have Product Order associations).  For each station event, attempts to
      * find on the file system the corresponding message file.  This list of message files can be used in
-     *BettalimsMessageResourceTest.testFileList to send the messages to Mercury.
+     * BettalimsMessageResourceTest.testFileList to send the messages to Mercury.
+     * Note: later discovered that this misses many events after PoolingTransfer, because of workflow validation errors.
      */
     @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testFindMessageFilesForLcSet() {
@@ -476,8 +477,72 @@ public class ImportFromSquidTest extends ContainerTest {
                     "    INNER JOIN station_event_type set1 " +
                     "        ON   set1.station_event_type_id = se.station_event_type_id " +
                     "WHERE " +
-                    "    l.\"KEY\" IN ('LCSET-2425', 'LCSET-2489', 'LCSET-2490', 'LCSET-2491', 'LCSET-2492', 'LCSET-2501', " +
-                    "    'LCSET-2502', 'LCSET-2507', 'LCSET-2508', 'LCSET-2509', 'LCSET-2519') " +
+                    "    l.\"KEY\" IN ( " +
+                    "'LCSET-2339', " +
+                    "'LCSET-2403', " +
+                    "'LCSET-2420', " +
+                    "'LCSET-2422', " +
+                    "'LCSET-2423', " +
+                    "'LCSET-2424', " +
+                    "'LCSET-2425', " +
+                    "'LCSET-2427', " +
+                    "'LCSET-2428', " +
+                    "'LCSET-2432', " +
+                    "'LCSET-2433', " +
+                    "'LCSET-2436', " +
+                    "'LCSET-2438', " +
+                    "'LCSET-2439', " +
+                    "'LCSET-2442', " +
+                    "'LCSET-2445', " +
+                    "'LCSET-2456', " +
+                    "'LCSET-2470', " +
+                    "'LCSET-2471', " +
+                    "'LCSET-2472', " +
+                    "'LCSET-2473', " +
+                    "'LCSET-2477', " +
+                    "'LCSET-2479', " +
+                    "'LCSET-2486', " +
+                    "'LCSET-2489', " +
+                    "'LCSET-2490', " +
+                    "'LCSET-2491', " +
+                    "'LCSET-2492', " +
+                    "'LCSET-2495', " +
+                    "'LCSET-2497', " +
+                    "'LCSET-2498', " +
+                    "'LCSET-2501', " +
+                    "'LCSET-2502', " +
+                    "'LCSET-2504', " +
+                    "'LCSET-2507', " +
+                    "'LCSET-2508', " +
+                    "'LCSET-2509', " +
+                    "'LCSET-2511', " +
+                    "'LCSET-2512', " +
+                    "'LCSET-2515', " +
+                    "'LCSET-2516', " +
+                    "'LCSET-2519', " +
+                    "'LCSET-2521', " +
+                    "'LCSET-2522', " +
+                    "'LCSET-2523', " +
+                    "'LCSET-2527', " +
+                    "'LCSET-2528', " +
+                    "'LCSET-2531', " +
+                    "'LCSET-2542', " +
+                    "'LCSET-2547', " +
+                    "'LCSET-2563', " +
+                    "'LCSET-2573', " +
+                    "'LCSET-2578', " +
+                    "'LCSET-2582', " +
+                    "'LCSET-2599', " +
+                    "'LCSET-2603', " +
+                    "'LCSET-2606', " +
+                    "'LCSET-2607', " +
+                    "'LCSET-2613', " +
+                    "'LCSET-2615', " +
+                    "'LCSET-2616', " +
+                    "'LCSET-2622', " +
+                    "'LCSET-2623', " +
+                    "'LCSET-2700'" +
+                    ") " +
                     "GROUP BY " +
                     "    l.key, " +
                     "    set1.name " +
@@ -591,15 +656,28 @@ FROM
      */
 /*
 SELECT
-	DISTINCT l."KEY"
+	DISTINCT product_order_name,
+--	set1."NAME",
+	l."KEY"--,
+--	l2."KEY"
 FROM
-	work_request_material_descr wrmd
+	work_request_material_descr
 	INNER JOIN work_request_material wrm
-		ON   wrm.work_request_material_id = wrmd.work_request_material_id
+		ON   wrm.work_request_material_id = work_request_material_descr.work_request_material_id
+	INNER JOIN work_request wr
+		ON   wr.work_request_id = wrm.work_request_id
+	INNER JOIN lcset l
+		ON   l.lcset_id = wr.lcset_id
 	INNER JOIN wr_material_recep_membership wmrm
 		ON   wmrm.work_request_material_id = wrm.work_request_material_id
 	INNER JOIN receptacle r
 		ON   r.receptacle_id = wmrm.receptacle_id
+--	INNER JOIN lab_workflow_receptacle lwr
+--		ON   lwr.receptacle_id = r.receptacle_id
+--	INNER JOIN lab_workflow lw
+--		ON   lw.lab_workflow_id = lwr.lab_workflow_id
+--	INNER JOIN lcset l2
+--		ON   l2.lcset_id = lw.lcset_id
 	INNER JOIN receptacle_transfer_event rte
 		ON   rte.src_receptacle_id = r.receptacle_id
 	INNER JOIN receptacle_event re
@@ -608,18 +686,8 @@ FROM
 		ON   se.station_event_id = re.station_event_id
 	INNER JOIN station_event_type set1
 		ON   set1.station_event_type_id = se.station_event_type_id
-	INNER JOIN lab_workflow_receptacle lwr
-		ON   lwr.receptacle_id = r.receptacle_id
-	INNER JOIN lab_workflow lw
-		ON   lw.lab_workflow_id = lwr.lab_workflow_id
-	INNER JOIN lcset l
-		ON   l.lcset_id = lw.lcset_id
-		     --	INNER JOIN flowcell_lane fl
-		     --		ON   fl.flowcell_lane_id = r.receptacle_id
 WHERE
-	wrmd.product_order_name IS NOT NULL
-	AND set1.name = 'StripTubeBTransfer'
-ORDER BY
-	1;
- */
+	product_order_name IS NOT NULL
+	AND set1.name = 'StripTubeBTransfer';
+*/
 }
