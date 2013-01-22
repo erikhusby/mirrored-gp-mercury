@@ -53,7 +53,7 @@ public class ReworkTest extends LabEventTest {
         // Can rework one sample in a pool?  No.
     }
 
-    @BeforeTest(groups = {EXTERNAL_INTEGRATION})
+    @BeforeTest(enabled = false, groups = {EXTERNAL_INTEGRATION})
     public void beforeIntegrationTests() throws  Exception {
         if (utx == null) {
             return;
@@ -61,7 +61,7 @@ public class ReworkTest extends LabEventTest {
         utx.begin();
     }
 
-    @AfterTest(groups = {EXTERNAL_INTEGRATION})
+    @AfterTest(enabled = false, groups = {EXTERNAL_INTEGRATION})
     public void afterIntegrationTests() throws SystemException {
         if (utx == null) {
             return;
@@ -69,20 +69,19 @@ public class ReworkTest extends LabEventTest {
         utx.rollback();
     }
 
-    @Test(groups = {EXTERNAL_INTEGRATION})
+    @Test(enabled = false, groups = {EXTERNAL_INTEGRATION})
     public void testMarkForRework() {
-//        MercurySample sample=new MercurySampleDao().findBySampleKey("SM-01220848345");
-        LabVesselCommentDto dto=getLabVesselCommentDto();
+        LabVesselCommentDto dto= getTestLabVesselCommentDto();
         labVesselCommentDao.addComment(dto);
     }
 
     @Test(groups = {DATABASE_FREE})
     public void testMarkForReworkDbFree() {
-        LabVesselCommentDto dto=getLabVesselCommentDto();
+        LabVesselCommentDto dto= getTestLabVesselCommentDto();
 
     }
 
-    private LabVesselCommentDto getLabVesselCommentDto() {
+    private LabVesselCommentDto getTestLabVesselCommentDto() {
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
