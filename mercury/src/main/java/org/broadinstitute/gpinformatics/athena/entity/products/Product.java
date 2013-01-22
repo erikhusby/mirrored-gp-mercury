@@ -114,6 +114,15 @@ public class Product implements Serializable, Comparable<Product> {
     private Set<MaterialType> allowableMaterialTypes = new HashSet<MaterialType>();
 
     /**
+     * The onRisk criteria that are associated with the Product.
+     */
+    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @JoinColumn(name = "product", nullable = false)
+    @AuditJoinTable(name = "product_risk_criteria_join_aud")
+    private Set<RiskCriteria> riskCriterias;
+
+
+    /**
      * JPA package visible no arg constructor
      */
     Product() {}
@@ -495,6 +504,15 @@ public class Product implements Serializable, Comparable<Product> {
 
     public boolean getSupportsNumberOfLanes() {
         return getProductFamily().isSupportsNumberOfLanes();
+    }
+
+
+    public Set<RiskCriteria> getRiskCriterias() {
+        return riskCriterias;
+    }
+
+    public void addRiskCriteria(RiskCriteria riskCriterion) {
+        this.riskCriterias.add( riskCriterion );
     }
 
 }

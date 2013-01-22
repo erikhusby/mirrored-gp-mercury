@@ -66,6 +66,9 @@ public class ProductOrderSample implements Serializable {
     @Column(name="SAMPLE_POSITION", updatable = false, insertable = false, nullable=false)
     private Integer samplePosition;
 
+    @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    private Set<RiskItem> riskItems = new HashSet<RiskItem>();
+
     public static enum DeliveryStatus implements StatusType {
         NOT_STARTED("Not Started"),
         DELIVERED("Delivered"),

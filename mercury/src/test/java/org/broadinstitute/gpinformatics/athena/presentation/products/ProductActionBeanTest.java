@@ -5,6 +5,7 @@ import net.sourceforge.stripes.controller.StripesFilter;
 import net.sourceforge.stripes.mock.MockHttpSession;
 import net.sourceforge.stripes.mock.MockRoundtrip;
 import net.sourceforge.stripes.mock.MockServletContext;
+import org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
@@ -12,12 +13,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
+ * UNDER CONSTRUCTION !!!!
  * Created by IntelliJ IDEA.
  * User: mccrory
  * Date: 1/16/13
  * Time: 2:40 PM
  */
 public class ProductActionBeanTest {
+
 
 
     private static MockServletContext mockServletContext ;
@@ -34,7 +37,11 @@ public class ProductActionBeanTest {
         mockServletContext.setServlet(DispatcherServlet.class, "DispatcherServlet", null);
         mockHttpSession = new MockHttpSession( mockServletContext );
 
-        mockRoundtrip = new MockRoundtrip( mockServletContext,  )
+        mockRoundtrip = new MockRoundtrip( mockServletContext, SecurityActionBean.class, mockHttpSession );
+        mockRoundtrip.setParameter("username", "QADude");
+        mockRoundtrip.setParameter("password", "QADude");
+        mockRoundtrip.execute();
+
     }
 
     @Test

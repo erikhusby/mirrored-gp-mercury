@@ -2148,4 +2148,199 @@
         <addNotNullConstraint schemaName="athena" tableName="product" columnName="part_number" />
     </changeSet>
 
+
+    <!-- GPLIM-653 OnRisk Criteria to Product mapping -->
+
+    <changeSet id="GPLIM-653.1" author="mccrory">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="risk_criteria" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="risk_criteria" schemaName="athena">
+            <column name="risk_criteria_id" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="name" type="varchar(255)"/>
+            <column name="numeric_operator" type="varchar(30)"/>
+            <column name="numeric_value" type="float"/>
+            <column name="discriminator" type="varchar(30)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-653.2" author="mccrory">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <sequenceExists sequenceName="SEQ_RISK_CRITERIA" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_RISK_CRITERIA" startValue="1" schemaName="athena"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-653.3" author="mccrory">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="risk_criteria_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="risk_criteria_aud" schemaName="athena">
+            <column name="risk_criteria_id" type="int"/>
+            <column name="product" type="int">
+                <constraints nullable="true"/>
+            </column>
+            <column name="name" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="numeric_operator" type="varchar(30)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="numeric_value" type="float">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="discriminator" type="varchar(30)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-653.4" author="mccrory">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_risk_criteria_product" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_risk_criteria_product" baseTableSchemaName="athena"
+                                 baseTableName="risk_criteria" baseColumnNames="product"
+                                 referencedTableName="product" referencedColumnNames="product_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-653.5" author="mccrory">
+        <preConditions>
+            <not>
+                <tableExists tableName="product_risk_criteria_join_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="product_risk_criteria_join_aud" schemaName="athena">
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product" type="int"/>
+            <column name="risk_criteria_id" type="int"/>
+        </createTable>
+        <addPrimaryKey schemaName="athena" tableName="product_risk_criteria_join_aud" columnNames="rev, product, risk_criteria_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-653.6" author="mccrory">
+        <addColumn schemaName="athena" tableName="risk_criteria">
+            <column name="string_operator" type="varchar(30)"/>
+        </addColumn>
+        <addColumn schemaName="athena" tableName="risk_criteria">
+            <column name="string_value" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-653.7" author="mccrory">
+        <addColumn schemaName="athena" tableName="risk_criteria_aud">
+            <column name="string_operator" type="varchar(30)"/>
+        </addColumn>
+        <addColumn schemaName="athena" tableName="risk_criteria_aud">
+            <column name="string_value" type="varchar(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <!-- GPLIM-828 RiskItems per ProductOrderSample mapping -->
+
+    <changeSet id="GPLIM-828.1" author="mccrory">
+        <preConditions>
+            <not>
+                <tableExists tableName="risk_item" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="risk_item" schemaName="athena">
+            <column name="risk_id" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product_order_sample" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="risk_criteria_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="remark" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-828.2" author="mccrory">
+        <preConditions>
+            <not>
+                <sequenceExists sequenceName="SEQ_RISK" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createSequence sequenceName="SEQ_RISK" startValue="1" schemaName="athena"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-828.3" author="mccrory">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_risk_item_risk_criteria" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_risk_item_risk_criteria" baseTableSchemaName="athena"
+                                 baseTableName="risk_item" baseColumnNames="risk_id"
+                                 referencedTableName="risk_criteria" referencedColumnNames="risk_criteria_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-828.4" author="mccrory">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_risk_item_po_sample" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_risk_item_po_sample" baseTableSchemaName="athena"
+                                 baseTableName="risk_item" baseColumnNames="risk_id"
+                                 referencedTableName="product_order_sample" referencedColumnNames="product_order_sample_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-828.5" author="mccrory">
+        <preConditions>
+            <not>
+                <tableExists tableName="risk_item_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="risk_item_aud" schemaName="athena">
+            <column name="risk_id" type="int">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="product_order_sample" type="int">
+                <constraints nullable="true"/>
+            </column>
+            <column name="risk_criteria_id" type="int">
+                <constraints nullable="true"/>
+            </column>
+            <column name="remark" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+
 </databaseChangeLog>
