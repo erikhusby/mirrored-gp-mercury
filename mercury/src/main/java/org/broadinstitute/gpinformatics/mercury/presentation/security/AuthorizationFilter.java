@@ -2,14 +2,13 @@ package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.DB;
 import org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean;
-import org.broadinstitute.gpinformatics.mercury.presentation.login.UserLogin;
 
 import javax.inject.Inject;
 import javax.servlet.*;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.util.Map;
 
 /**
  * AuthorizationFilter is a ServletFilter used to assist the Mercury application with validating whether a users
@@ -20,6 +19,8 @@ import java.util.Map;
  */
 public class AuthorizationFilter implements Filter {
     private static Log logger = LogFactory.getLog(AuthorizationFilter.class);
+
+    public static final String HOME_PAGE = "/index.jsp";
 
     private FilterConfig filterConfig;
 
@@ -90,7 +91,7 @@ public class AuthorizationFilter implements Filter {
         // the redirect.  Need to debug and then re-enable.  This is bug GPLIM-100.
         if (false && pageUri.equals(SecurityActionBean.LOGIN_PAGE) && request.getRemoteUser() != null) {
             // Already logged in user is trying to view the login page.  Redirect to the role default page.
-            UserLogin.UserRole role = UserLogin.UserRole.fromRequest(request);
+            UserRole role = UserRole.fromRequest(request);
             redirectTo(request, servletResponse, role.landingPage);
 
             return;
@@ -123,11 +124,53 @@ public class AuthorizationFilter implements Filter {
         return path.startsWith("/rest") ||
                 path.startsWith("/ArquillianServletRunner") ||
                 path.startsWith(SecurityActionBean.LOGIN_ACTION) ||
-                path.startsWith("/" + SecurityActionBean.LOGIN_PAGE) ||
+                path.endsWith(SecurityActionBean.LOGIN_PAGE) ||
                 path.endsWith("Mercury/");
     }
 
     @Override
     public void destroy() {
+    }
+
+    public enum UserRole {
+        // Order of roles is important, if user is both PDM and PM we want to go to PDM's page.
+        PDM("/orders/list", DB.Role.PDM.name),
+        PM("/projects/list", DB.Role.PM.name),
+        OTHER("/index.jsp", "");
+
+        private static final String INDEX = HOME_PAGE;
+        private static final String MERCURY_PAGE = "/Mercury";
+
+        public static UserRole fromRequest(HttpServletRequest request) {
+            for (UserRole role : values()) {
+                if (request.isUserInRole(role.roleName)) {
+                    return role;
+                }
+            }
+            return OTHER;
+        }
+
+        public final String landingPage;
+        public final String roleName;
+
+        private UserRole(String landingPage, String roleName) {
+            this.landingPage = landingPage;
+            this.roleName = roleName;
+        }
+
+        private String checkUrlForRoleRedirect(String targetPage) {
+            StringBuilder newUrlBuilder = new StringBuilder(targetPage);
+            if (this != OTHER) {
+                if (targetPage.endsWith(MERCURY_PAGE) || targetPage.endsWith(MERCURY_PAGE + "/")) {
+                    if (targetPage.endsWith("/")) {
+                        newUrlBuilder.deleteCharAt(targetPage.lastIndexOf("/"));
+                    }
+                    newUrlBuilder.append(landingPage).append(".jsp");
+                } else if (targetPage.endsWith(INDEX) || targetPage.endsWith(INDEX + ".jsp")) {
+                    newUrlBuilder = new StringBuilder(targetPage.replace(INDEX, landingPage));
+                }
+            }
+            return newUrlBuilder.toString();
+        }
     }
 }

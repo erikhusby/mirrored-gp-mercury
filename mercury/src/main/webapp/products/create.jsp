@@ -12,48 +12,37 @@
                 function () {
                     $j("#primaryPriceItem").tokenInput(
                         "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
-                            searchDelay: 500,
-                            preventDuplicates: true,
-                            <c:if test="${actionBean.primaryPriceItemCompleteData != null && actionBean.primaryPriceItemCompleteData != ''}">
-                                prePopulate: ${actionBean.primaryPriceItemCompleteData},
-                            </c:if>
-                            tokenLimit: 1
+                            hintText: "Type a Price Item name",
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.priceItemTokenInput.completeData)},
+                            resultsFormatter: formatPriceItem,
+                            preventDuplicates: true
                         }
                     );
 
                     $j("#optionalPriceItems").tokenInput(
-                            "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
-                                searchDelay: 500,
-                                preventDuplicates: true,
-                                <c:if test="${actionBean.optionalPriceItemsCompleteData != null && actionBean.optionalPriceItemsCompleteData != ''}">
-                                prePopulate: ${actionBean.optionalPriceItemsCompleteData},
-                                </c:if>
-                                tokenLimit: 50
-                            }
+                        "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
+                            hintText: "Type a Price Item name",
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.optionalPriceItemTokenInput.completeData)},
+                            resultsFormatter: formatPriceItem,
+                            preventDuplicates: true
+                        }
                     );
 
                     $j("#addOns").tokenInput(
-                            "${ctxpath}/products/product.action?addOnsAutocomplete=&product=${actionBean.editProduct.businessKey}", {
-                                searchDelay: 500,
-                                <c:if test="${actionBean.addOnCompleteData != null && actionBean.addOnCompleteData != ''}">
-                                    prePopulate: ${actionBean.addOnCompleteData},
-                                </c:if>
-                                preventDuplicates: true
-                            }
+                        "${ctxpath}/products/product.action?addOnsAutocomplete=&product=${actionBean.editProduct.businessKey}", {
+                            hintText: "Type a Product name",
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.addOnTokenInput.completeData)},
+                            preventDuplicates: true
+                        }
                     );
-
 
                     $j("#materialTypes").tokenInput(
-                            "${ctxpath}/products/product.action?materialTypesAutocomplete=&product=${actionBean.editProduct.businessKey}", {
-                                searchDelay: 500,
-                                minChars: 2,
-                                <c:if test="${actionBean.materialTypeCompleteData != null && actionBean.materialTypeCompleteData != ''}">
-                                    prePopulate: ${actionBean.materialTypeCompleteData},
-                                </c:if>
-                                preventDuplicates: true
-                            }
+                        "${ctxpath}/products/product.action?materialTypesAutocomplete=&product=${actionBean.editProduct.businessKey}", {
+                            hintText: "Type a Material Type name",
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.materialTypeTokenInput.completeData)},
+                            preventDuplicates: true
+                        }
                     );
-
 
                     $j("#availabilityDate").datepicker();
                     $j("#discontinuedDate").datepicker();
@@ -61,6 +50,11 @@
                     updateBillingRules();
                 }
             );
+
+            function formatPriceItem(item) {
+                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
+                        "<div class=\"ac-dropdown-subtext\">" + item.platform + " " + item.category + "</div></li>";
+            }
 
             function updateBillingRules() {
                 if ($j('#useAutomatedBilling').attr('checked')) {
@@ -106,8 +100,8 @@
                         Product Description *
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="description" name="editProduct.description" class="defaultText input-xxlarge"
-                            title="Enter the description of the new product"/>
+                        <stripes:textarea id="description" name="editProduct.description" class="defaultText input-xxlarge textarea"
+                            title="Enter the description of the new product" cols="50" rows="3"/>
                     </div>
                 </div>
 
@@ -127,7 +121,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="availabilityDate" name="editProduct.availabilityDate" class="defaultText"
-                            title="Enter date (MM/dd/yyyy)" value="${actionBean.editProduct.availabilityDate}" formatPattern="MM/dd/yyyy" />
+                            title="Enter date (MM/dd/yyyy)" formatPattern="MM/dd/yyyy" />
                 </div>
 
                 <div class="control-group">
@@ -136,7 +130,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="discontinuedDate" name="editProduct.discontinuedDate" class="defaultText" title="Enter date (MM/dd/yyyy)"
-                                      value="${actionBean.editProduct.discontinuedDate}" formatPattern="MM/dd/yyyy" />
+                                      formatPattern="MM/dd/yyyy" />
 
                     </div>
                 </div>
@@ -146,8 +140,8 @@
                         Deliverables
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="deliverables" name="editProduct.deliverables" class="defaultText input-xxlarge"
-                            title="Enter the deliverables for this product"/>
+                        <stripes:textarea id="deliverables" name="editProduct.deliverables" class="defaultText input-xxlarge textarea"
+                            title="Enter the deliverables for this product" cols="50" rows="3"/>
                     </div>
                 </div>
 
@@ -157,8 +151,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:textarea id="inputRequirements" name="editProduct.inputRequirements" class="defaultText input-xxlarge textarea"
-                            title="Enter the input requirements for this product" cols="50" rows="3"
-                            value="${actionBean.editProduct.inputRequirements}"/>
+                            title="Enter the input requirements for this product" cols="50" rows="3"/>
                     </div>
                 </div>
 
@@ -215,7 +208,7 @@
                         Primary Price Item *
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="primaryPriceItem" name="primaryPriceItemList"
+                        <stripes:text id="primaryPriceItem" name="priceItemTokenInput.listOfKeys"
                             class="defaultText" title="Type to search for matching price items"/>
                     </div>
                 </div>
@@ -225,7 +218,7 @@
                             Optional Price Items
                         </stripes:label>
                         <div class="controls">
-                            <stripes:text id="optionalPriceItems" name="optionalPriceItemsList"
+                            <stripes:text id="optionalPriceItems" name="optionalPriceItemTokenInput.listOfKeys"
                                           class="defaultText" title="Type to search for matching price items"/>
                         </div>
                     </div>
@@ -236,14 +229,14 @@
                         Add-ons
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="addOns" name="addOnList"/>
+                        <stripes:text id="addOns" name="addOnTokenInput.listOfKeys"/>
                     </div>
                 </div>
 
                 <div class="control-group">
                     <stripes:label for="materialTypes" name="MaterialTypes" class="control-label"/>
                  	<div class="controls">
-                       	<stripes:text id="materialTypes" name="materialTypeList"/>
+                       	<stripes:text id="materialTypes" name="materialTypeTokenInput.listOfKeys"/>
                     </div>
                 </div>
 
@@ -293,7 +286,7 @@
                                     </c:when>
                                     <c:otherwise>
                                         <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                            <stripes:param name="product" value="${actionBean.editProduct.businessKey}"/>
+                                            <stripes:param name="product" value="${actionBean.product}"/>
                                             Cancel
                                         </stripes:link>
                                     </c:otherwise>

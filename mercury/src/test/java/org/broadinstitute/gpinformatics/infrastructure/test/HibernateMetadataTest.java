@@ -11,7 +11,6 @@
 
 package org.broadinstitute.gpinformatics.infrastructure.test;
 
-import org.apache.commons.lang3.StringUtils;
 import org.hibernate.Query;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
@@ -21,56 +20,67 @@ import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class HibernateMetadataTest extends ContainerTest {
-
     @PersistenceContext(unitName = "mercury_pu")
     private EntityManager entityManager;
 
+    // todo: make this an empty list!
+    private static final List<String> ignoredEntities = Arrays.asList(
+            "org.broadinstitute.gpinformatics.mercury.entity.workflow.Rework",
+            "rework_reworked_lab_vessels_AUD",
+            "WorkCompleteMessage_MessageDataValue_AUD",
+            "org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue_AUD",
+            "org.broadinstitute.gpinformatics.mercury.entity.workflow.Rework_AUD"
+    );
+
     /**
-     * Method to allow user to ignore certain classes in the testEverything method
-     * Default is to not ignore any classes
-     * user may implement by doing something like:
-     * return className.endsWith("GenoTypingExportGeneric")
+     * Method to allow user to ignore certain classes/entities in the testEverything method
+     * Default is to not ignore anything
      *
-     * @param className the name of the class to ignore
+     * @param entityName the name of the entity to ignore
      *
-     * @return
+     * @return true if we should ignore this entity
      */
-    public Boolean ignoreClass(String className) {
-        return Boolean.FALSE;
+    public boolean ignoreEntity(String entityName) {
+        return ignoredEntities.contains(entityName);
     }
 
     /**
-     * @throws Exception
+     * This test iterates through all JPA'd classes validates them
      */
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION, description = "Tests all the hibernate mappings")
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION, description = "Tests all the hibernate mappings")
     public void testEverything() throws Exception {
         Session session = entityManager.unwrap(Session.class);
         SessionFactory sessionFactory = session.getSessionFactory();
-        Map<String, Exception> failedClassExceptionMap = new HashMap<String, Exception>();
+        Map<String, String> failedEntityMap = new HashMap<String, String>();
         Map metadata = sessionFactory.getAllClassMetadata();
-
+        EntityPersister entityPersister;
+        String className = "";
         for (Object o : metadata.values()) {
-            String className = null;
-
             try {
-                EntityPersister persister = (EntityPersister) o;
-                className = persister.getClassMetadata().getEntityName();
-                if (!ignoreClass(className)) {
+                entityPersister = (EntityPersister) o;
+                className = entityPersister.getClassMetadata().getEntityName();
+                if (!ignoreEntity(className)) {
                     Query query = session.createQuery("from " + className + " c");
                     query.setMaxResults(10);
                     query.list();
                     session.clear();
                 }
             } catch (Exception e) {
-                failedClassExceptionMap.put(className, e);
+                failedEntityMap.put(className, e.getMessage());
             }
         }
-        Assert.assertTrue(failedClassExceptionMap.isEmpty(),
-                "Problems found with " + failedClassExceptionMap.size() + " classes: \n" + StringUtils
-                        .replace(failedClassExceptionMap.toString(), ", ", ",\n"));
+        if (!failedEntityMap.isEmpty()) {
+            String errors = "";
+            for (String key : failedEntityMap.keySet()) {
+                errors += String.format("Found problems in entity: %s\n\t%s\n", key, failedEntityMap.get(key));
+            }
+            Assert.fail(errors);
+        }
     }
 }

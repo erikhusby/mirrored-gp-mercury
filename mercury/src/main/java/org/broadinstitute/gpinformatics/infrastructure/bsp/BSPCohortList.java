@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import com.google.common.collect.ImmutableSet;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
@@ -154,5 +155,35 @@ public class BSPCohortList extends AbstractCache {
         } catch (Exception ex) {
             logger.error("Could not refresh the cohort list", ex);
         }
+    }
+
+    public String getCohortName(String cohortId) {
+        String cohortName = "";
+        if (cohortId != null) {
+            Cohort cohort = getById(cohortId);
+
+            if (cohort == null) {
+                return "(Unknown cohort: " + cohortId + ")";
+            }
+            return cohort.getName();
+        }
+
+        return cohortName;
+    }
+
+    public String getCohortListString(String[] cohortIds) {
+        String cohortListString = "";
+
+        if ((cohortIds != null) && (cohortIds.length > 0)) {
+            String[] nameList = new String[cohortIds.length];
+            int i=0;
+            for (String cohortId : cohortIds) {
+                nameList[i++] = getCohortName(cohortId);
+            }
+
+            cohortListString = StringUtils.join(nameList, ", ");
+        }
+
+        return cohortListString;
     }
 }

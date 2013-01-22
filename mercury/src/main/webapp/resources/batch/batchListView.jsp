@@ -2,6 +2,14 @@
 
 <stripes:layout-definition>
     <script type="text/javascript">
+
+        $(document).ready(function () {
+            $j('.batch-checkbox').enableCheckboxRangeSelection({
+                checkAllClass:'batch-checkAll',
+                countDisplayClass:'batch-checkedCount',
+                checkboxClass:'batch-checkbox'});
+        });
+
         function showPlasticHistoryVisualizer(batchKey) {
             $j('#plasticViewDiv').load('${ctxpath}/view/plasticHistoryView.action?batchKey=' + batchKey);
             $j('#plasticViewDiv').show();
@@ -9,10 +17,16 @@
     </script>
     <%--@elvariable id="batches" type="java.util.Collection"--%>
     <%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"--%>
+    <%--@elvariable id="showCheckboxes" type="java.lang.Boolean"--%>
 
     <table id="sampleListView" class="table simple">
         <thead>
         <tr>
+            <c:if test="${showCheckboxes}">
+                <th width="40">
+                    <input type="checkbox" class="batch-checkAll"/><span id="count" class="batch-checkedCount"></span>
+                </th>
+            </c:if>
             <th width="30">Vessel History</th>
             <th>Batch Name</th>
             <th>JIRA ID</th>
@@ -27,6 +41,14 @@
         <tbody>
         <c:forEach items="${batches}" var="batch">
             <tr>
+                <c:if test="${showCheckboxes}">
+                    <td>
+
+                        <stripes:checkbox class="batch-checkbox" name="selectedBatchLabels"
+                                          value="${batch.businessKey}"/>
+
+                    </td>
+                </c:if>
                 <td>
                     <a href="javascript:showPlasticHistoryVisualizer('${batch.businessKey}')">
                         <img width="30" height="30" name="" title="show plastic history view"

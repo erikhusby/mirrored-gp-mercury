@@ -5,11 +5,11 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfig;
@@ -266,8 +266,7 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     }
 
     /**
-     * Clears the ID and JIRA ticket key. THIS METHOD MUST ONLY EVER BE CALLED BY
-     * {@link org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectManager#createResearchProject(ResearchProject)}
+     * Clears the ID and JIRA ticket key. THIS METHOD MUST ONLY EVER BE CALLED
      * IN THE CASE WHERE THE JIRA ISSUE HAS BEEN CREATED BUT THERE IS AN ERROR PERSISTING THE RESEARCH PROJECT!
      */
     public void rollbackPersist() {
@@ -340,11 +339,9 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     public Long[] getPeople(RoleType role) {
         List<Long> people = new ArrayList<Long>();
 
-        if (associatedPeople != null) {
-            for (ProjectPerson projectPerson : associatedPeople) {
-                if (role == projectPerson.getRole()) {
-                    people.add(projectPerson.getPersonId());
-                }
+        for (ProjectPerson projectPerson : associatedPeople) {
+            if (role == projectPerson.getRole()) {
+                people.add(projectPerson.getPersonId());
             }
         }
 
@@ -395,19 +392,14 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     }
 
     public String[] getFundingIds() {
+        String[] fundingIds = new String[projectFunding.size()];
 
-        if (projectFunding != null) {
-            String[] fundingIds = new String[projectFunding.size()];
-
-            int i = 0;
-            for (ResearchProjectFunding fundingItem : projectFunding) {
-                fundingIds[i++] = fundingItem.getFundingId();
-            }
-
-            return fundingIds;
+        int i = 0;
+        for (ResearchProjectFunding fundingItem : projectFunding) {
+            fundingIds[i++] = fundingItem.getFundingId();
         }
 
-        return new String[0];
+        return fundingIds;
     }
 
     public void addFunding(ResearchProjectFunding funding) {
@@ -443,10 +435,9 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
                 cohortNames.add(cohort.getCohortId());
             }
 
-            CohortListBean cohortListBean = ServiceAccessUtility.getBean(CohortListBean.class);
-
+            BSPCohortList cohortList = ServiceAccessUtility.getBean(BSPCohortList.class);
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.COHORTS,
-                                             cohortListBean.getCohortListString(cohortNames.toArray(
+                                             cohortList.getCohortListString(cohortNames.toArray(
                                                      new String[cohortNames.size()]))));
         }
 
@@ -611,15 +602,4 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         builder.append(title, that.getTitle());
         return builder.build();
     }
-
-    /**
-     * Compare by the ResearchProject by the title (case insensitive).
-     */
-    public static final Comparator<ResearchProject> BY_TITLE = new Comparator<ResearchProject>() {
-        @Override
-        public int compare(ResearchProject lhs, ResearchProject rhs) {
-            return lhs.getTitle().toLowerCase().compareTo(
-                    rhs.getTitle().toLowerCase());
-        }
-    };
 }

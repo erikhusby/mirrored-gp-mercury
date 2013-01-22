@@ -1,5 +1,7 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject" %>
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -24,8 +26,66 @@
                         {"bSortable": false},                    // Price Item 1
                         {"bSortable": false},                    // Price Item 2
                         {"bSortable": false}]                   // Comment
-                })
+                });
+
+                updateFundsRemaining();
+
+                $j.ajax({
+                    url: "${ctxpath}/orders/order.action?getSummary=&productOrder=${actionBean.editOrder.businessKey}",
+                    dataType: 'json',
+                    success: showSummary
+                });
+
+                $j(".sampleName").each(updateBspInformation);
             });
+
+            function updateBspInformation(index, sampleIdCell) {
+                var sampleId = $j(sampleIdCell).attr('id').split("-")[1];
+
+                $j.ajax({
+                    url: "${ctxpath}/orders/order.action?getBspData=&productOrder=${actionBean.editOrder.businessKey}&sampleId=" + sampleId,
+                    dataType: 'json',
+                    success: showSample
+                });
+            }
+
+            function showSample(sampleData) {
+                var sampleId = sampleData.sampleId;
+
+                $j('#patient-' + sampleId).text(sampleData.patientId);
+                $j('#volume-' + sampleId).text(sampleData.volume);
+                $j('#concentration-' + sampleId).text(sampleData.concentration);
+                $j('#total-' + sampleId).text(sampleData.total);
+
+                if (sampleData.hasFingerprint) {
+                    $j('#fingerprint-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
+                }
+            }
+
+            function updateFundsRemaining() {
+                var quoteIdentifier = $j("#quote").val();
+                $j.ajax({
+                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${actionBean.editOrder.quoteId}",
+                    dataType: 'json',
+                    success: updateFunds
+                });
+            }
+
+            function updateFunds(data) {
+                if (data.fundsRemaining) {
+                    $j("#fundsRemaining").text('Funds Remaining: ' + data.fundsRemaining);
+                } else {
+                    $j("#fundsRemaining").text('Error: ' + data.error);
+                }
+            }
+
+            function showSummary(data) {
+                var dataList = '<ul>';
+                data.map( function(item) { dataList += '<li>' + item.comment + '</li>'} );
+                dataList += '</ul>';
+
+                $j('#summaryId').html(dataList);
+            }
         </script>
     </stripes:layout-component>
 
@@ -36,16 +96,25 @@
 
             <div class="actionButtons">
                 <c:if test="${actionBean.editOrder.draft}">
-                    <stripes:submit name="placeOrder" value="Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
+                    <stripes:submit name="placeOrder" value="Validate and Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
+                    <stripes:submit name="validate" value="Validate" style="margin-left: 5px;" class="btn"/>
+                    &#160;
+                    <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+                                  beanclass="${actionBean.class.name}" event="edit" class="btn" style="text-decoration: none !important;">
+                        <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
+                        <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                    </stripes:link>
                 </c:if>
             </div>
         </stripes:form>
 
-        <stripes:link title="Click to edit ${actionBean.editOrder.title}"
-            beanclass="${actionBean.class.name}" event="edit" class="pull-right">
-            <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
-            <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-        </stripes:link>
+        <c:if test="${!actionBean.editOrder.draft}">
+            <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+                beanclass="${actionBean.class.name}" event="edit" class="pull-right">
+                <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
+                <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+            </stripes:link>
+        </c:if>
 
         <div style="both:clear"> </div>
 
@@ -64,7 +133,7 @@
                     <div class="form-value">
                         <c:choose>
                             <c:when test="${actionBean.editOrder.draft}">
-                                DRAFT
+                                &nbsp;
                             </c:when>
                             <c:otherwise>
                                 <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">${actionBean.editOrder.jiraTicketKey}</a>
@@ -77,7 +146,11 @@
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Status</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editOrder.orderStatus}</div>
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrder.draft}"><span class="label label-info"></c:if>
+                            ${actionBean.editOrder.orderStatus}
+                        <c:if test="${actionBean.editOrder.draft}"></span></c:if>
+                    </div>
                 </div>
             </div>
 
@@ -87,9 +160,9 @@
                     <div class="form-value">
                         <c:if test="${actionBean.editOrder.researchProject != null}">
                             <stripes:link title="Research Project"
-                                          beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
+                                          beanclass="<%=ResearchProjectActionBean.class.getName()%>"
                                           event="view">
-                                <stripes:param name="project" value="${actionBean.editOrder.researchProject.businessKey}"/>
+                                <stripes:param name="<%=ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER%>" value="${actionBean.editOrder.researchProject.businessKey}"/>
                                 ${actionBean.editOrder.researchProject.title}
                             </stripes:link>
                             (<a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.researchProject.jiraTicketKey}" class="external" target="JIRA">
@@ -128,6 +201,7 @@
                         <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
                             ${actionBean.editOrder.quoteId}
                         </a>
+                        <span id="fundsRemaining" style="margin-left: 20px;"> </span>
                     </div>
                 </div>
             </div>
@@ -153,12 +227,8 @@
                 Samples
             </div>
 
-            <div class="fourcolumn">
-                <ul>
-                    <c:forEach items="${actionBean.editOrder.sampleSummaryComments}" var="comment">
-                        <li>${comment}</li>
-                    </c:forEach>
-                </ul>
+            <div id="summaryId" class="fourcolumn" style="margin-bottom:5px;">
+                <img src="${ctxpath}/images/spinner.gif"/>
             </div>
 
             <table id="sampleData" class="table simple">
@@ -181,7 +251,7 @@
                 <tbody>
                     <c:forEach items="${actionBean.editOrder.samples}" var="sample">
                         <tr>
-                            <td>
+                            <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
                                 <c:choose>
                                     <c:when test="${sample.inBspFormat}">
                                         <stripes:link class="external" target="BSP_SAMPLE" title="BSP Sample" href="${actionBean.editOrderSampleSearchUrl}${sample.stripBspName}">
@@ -193,15 +263,11 @@
                                     </c:otherwise>
                                 </c:choose>
                             </td>
-                            <td width="100">${sample.bspDTO.patientId}</td>
-                            <td width="50">${sample.bspDTO.volume}</td>
-                            <td width="50">${sample.bspDTO.concentration}</td>
-                            <td width="70">${sample.bspDTO.total}</td>
-                            <td width="60" style="text-align: center">
-                                <c:if test="${sample.bspDTO.hasFingerprint}">
-                                    <img src="${ctxpath}/images/check.png" title="Yes"/>
-                                </c:if>
-                            </td>
+                            <td id="patient-${sample.productOrderSampleId}" width="100">&nbsp;</td>
+                            <td id="volume-${sample.productOrderSampleId}" width="50">&nbsp;</td>
+                            <td id="concentration-${sample.productOrderSampleId}" width="50">&nbsp;</td>
+                            <td id="total-${sample.productOrderSampleId}" width="70">&nbsp;</td>
+                            <td id="fingerprint-${sample.productOrderSampleId}" width="60" style="text-align: center">&nbsp;</td>
                             <td width="70">&#160;</td>
                             <td width="70">&#160;</td>
                             <td width="70">&#160;</td>

@@ -127,7 +127,7 @@ if ( $j.fn.DataTable.TableTools ) {
     $j.extend( true, $j.fn.DataTable.TableTools.classes, {
         "container": "DTTT btn-group",
         "buttons": {
-            "normal": "btn",
+            "normal": "btn btn-mini",
             "disabled": "disabled"
         },
         "collection": {

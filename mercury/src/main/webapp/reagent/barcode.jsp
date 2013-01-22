@@ -11,10 +11,7 @@
             $j(document).ready(function () {
                 $j("#reagentDesign").tokenInput(
                         "${ctxpath}/reagent/design.action?reagentListAutocomplete=&reagentDesign=${actionBean.editReagentDesign.businessKey}", {
-                            <c:if test="${actionBean.reagentDesignCompleteData != null && actionBean.reagentDesignCompleteData != ''}">
-                            prePopulate: ${actionBean.reagentDesignCompleteData},
-                            </c:if>
-                            searchDelay: 500,
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.reagentDesignCompleteData)},
                             tokenLimit: 1, preventDuplicates: true
                         });
             });
