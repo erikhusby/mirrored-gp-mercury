@@ -71,12 +71,12 @@ public class EventEtlTest {
         // a calculated hash value based on the contents of the WorkflowConfig elements.
         assertNull(eventEtl.lookupWorkflowConfigId("No such event", pdo1, new Date(MSEC_DATES[0] + 1000)));
         assertNull(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[0] - 1000)));
-        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[0] + 1000)), -3820907449895214598L);
-        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[1] + 1000)), -7175333637954737190L);
-        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[2] + 1000)), 4622114345093982745L);
+        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[0] + 1000)), Long.valueOf(-3820907449895214598L));
+        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[1] + 1000)), Long.valueOf(-7175333637954737190L));
+        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[2] + 1000)), Long.valueOf(4622114345093982745L));
         // (check log for cache hit on next one)
-        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo2, new Date(MSEC_DATES[2] + 1000)), 4622114345093982745L);
-        assertEquals(eventEtl.lookupWorkflowConfigId("SageCleanup", pdo3, new Date(MSEC_DATES[2] + 1000)), -6067216737971651861L);
+        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo2, new Date(MSEC_DATES[2] + 1000)), Long.valueOf(4622114345093982745L));
+        assertEquals(eventEtl.lookupWorkflowConfigId("SageCleanup", pdo3, new Date(MSEC_DATES[2] + 1000)), Long.valueOf(-6067216737971651861L));
 
     }
 

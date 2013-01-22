@@ -11,6 +11,5 @@ TRAILING NULLCOLS
  batch_name,
  is_active,
  created_on DATE "YYYYMMDDHH24MISS",
- due_date DATE "YYYYMMDDHH24MISS",
- is_important
+ due_date DATE "YYYYMMDDHH24MISS"
 )

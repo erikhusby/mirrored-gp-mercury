@@ -115,67 +115,81 @@ public class EventEtl extends GenericEntityEtl {
     Collection<String> entityRecord(String etlDateStr, boolean isDelete, LabEvent entity) {
         Collection<String> records = new ArrayList<String>();
 
-        LabBatch labBatch = entity.getLabBatch();
-        String eventName = (labBatch != null && entity.getLabEventType() != null)
-                ? entity.getLabEventType().getName() : null;
-        Long labBatchId = labBatch != null ? labBatch.getLabBatchId() : null;
+        if (entity.getLabEventType() == null) {
+            logger.warn("Cannot ETL labEvent " + entity.getLabEventId() + " that has no LabEventType.");
+            return records;
+        }
 
-        Set<LabVessel> vessels = entity.getTargetLabVessels();
-        if (vessels != null) {
-            if (vessels.size() == 0) {
-                vessels.add(entity.getInPlaceLabVessel());
-            }
-            for (LabVessel vessel : vessels) {
+        boolean noLabBatch = entity.getLabBatch() == null;
 
-                Set<SampleInstance> sampleInstances = vessel.getSampleInstances();
-                for (SampleInstance si : sampleInstances) {
-                    MercurySample sample = si.getStartingSample();
-                    if (sample == null) {
-                        logger.warn("Cannot find starting sample for sampleInstance " + si.toString());
-                        continue;
-                    }
-                    String sampleKey = sample.getSampleKey();
-                    String productOrderKey = sample.getProductOrderKey();
-                    if (productOrderKey == null) {
-                        logger.warn("Sample " + sample.getSampleKey() + " has null productOrderKey");
-                        continue;
-                    }
-                    ProductOrder productOrder = pdoDao.findByBusinessKey(productOrderKey);
-                    if (productOrder == null) {
-                        logger.warn("Product " + productOrderKey + " has no entity");
-                        continue;
-                    }
+        Collection<LabVessel> vessels = entity.getTargetLabVessels();
+        if (vessels.size() == 0) {
+            vessels.add(entity.getInPlaceLabVessel());
+        }
+        if (vessels.size() == 0) {
+            logger.warn("Cannot ETL event " + entity.getLabEventId() + " that has no vessels.");
+            return records;
+        }
 
-                    Long workflowConfigId = lookupWorkflowConfigId(eventName, productOrder, entity.getEventDate());
+        String eventName = entity.getLabEventType().getName();
 
-                    records.add(genericRecord(etlDateStr, isDelete,
-                            entity.getLabEventId(),
-                            format(eventName),
-                            format(workflowConfigId),
-                            format(productOrder.getProductOrderId()),
-                            format(sampleKey),
-                            format(labBatchId),
-                            format(entity.getEventLocation()),
-                            format(vessel.getLabVesselId()),
-                            format(ExtractTransform.secTimestampFormat.format(entity.getEventDate()))
-                    ));
+        for (LabVessel vessel : vessels) {
+
+            Set<SampleInstance> sampleInstances = vessel.getSampleInstances();
+            for (SampleInstance si : sampleInstances) {
+
+                // Should get batch from sample instance if not on labEvent.
+                // But for now, just ETL a null lab batch.
+                Long labBatchId = noLabBatch ? null : entity.getLabBatch().getLabBatchId();
+
+                MercurySample sample = si.getStartingSample();
+                if (sample == null) {
+                    logger.warn("Cannot find starting sample for sampleInstance " + si.toString());
+                    continue;
                 }
+                String sampleKey = sample.getSampleKey();
+                String productOrderKey = sample.getProductOrderKey();
+                if (productOrderKey == null) {
+                    logger.warn("Sample " + sample.getSampleKey() + " has null productOrderKey");
+                    continue;
+                }
+                ProductOrder productOrder = pdoDao.findByBusinessKey(productOrderKey);
+                if (productOrder == null) {
+                    logger.warn("Product " + productOrderKey + " has no entity");
+                    continue;
+                }
+
+                Long workflowConfigId = lookupWorkflowConfigId(eventName, productOrder, entity.getEventDate());
+
+                records.add(genericRecord(etlDateStr, isDelete,
+                        entity.getLabEventId(),
+                        format(eventName),
+                        format(workflowConfigId),
+                        format(productOrder.getProductOrderId()),
+                        format(sampleKey),
+                        format(labBatchId),
+                        format(entity.getEventLocation()),
+                        format(vessel.getLabVesselId()),
+                        format(ExtractTransform.secTimestampFormat.format(entity.getEventDate()))
+                ));
+            }
+
+            // Makes a record for the event when there are no samples.
+            if (records.size() == 0) {
+                records.add(genericRecord(etlDateStr, isDelete,
+                        entity.getLabEventId(),
+                        format(eventName),
+                        format((Long) null),
+                        format((String) null),
+                        format((String) null),
+                        format(noLabBatch ? (Long)null : entity.getLabBatch().getLabBatchId()),
+                        format(entity.getEventLocation()),
+                        format((String) null),
+                        format(ExtractTransform.secTimestampFormat.format(entity.getEventDate()))
+                ));
             }
         }
-        // Makes at least one record for the event if the vessel-sample chain is broken.
-        if (records.size() == 0) {
-            records.add(genericRecord(etlDateStr, isDelete,
-                    entity.getLabEventId(),
-                    format(eventName),
-                    format((Long) null),
-                    format((String)null),
-                    format((String) null),
-                    format(labBatchId),
-                    format(entity.getEventLocation()),
-                    format((String) null),
-                    format(ExtractTransform.secTimestampFormat.format(entity.getEventDate()))
-            ));
-        }
+
         return records;
     }
 
@@ -221,19 +235,20 @@ public class EventEtl extends GenericEntityEtl {
      */
     Long lookupWorkflowConfigId(String eventName, ProductOrder productOrder, Date eventDate) {
 
-        // Checks for a cache hit.
+        // Checks for a cache hit, which may be a null.
         String cacheKey = eventName + productOrder.getBusinessKey() + eventDate.toString();
         synchronized (configIdCache) {
-            Long id = (Long) configIdCache.get(cacheKey);
-            if (id != null) {
-                logger.debug("Workflow config id cache hit on " + id);
-                return id;
+            if (configIdCache.containsKey(cacheKey)) {
+                return (Long) configIdCache.get(cacheKey);
             }
         }
 
         String workflowName = productOrder.getProduct().getWorkflowName();
         if (workflowName == null) {
             logger.warn("Product " + productOrder.getBusinessKey() + " has no workflow name");
+            synchronized (configIdCache) {
+                configIdCache.put(cacheKey, null);
+            }
             return null;
         }
 
@@ -241,6 +256,9 @@ public class EventEtl extends GenericEntityEtl {
         List<WorkflowConfigDenorm> denormConfigs = mapEventToWorkflows.get(eventName);
         if (denormConfigs == null) {
             logger.warn("No WorkflowConfig records have event " + eventName);
+            synchronized (configIdCache) {
+                configIdCache.put(cacheKey, null);
+            }
             return null;
         }
 
@@ -255,6 +273,9 @@ public class EventEtl extends GenericEntityEtl {
         }
         logger.warn("No denormalized workflow config for product " + workflowName + " having eventName " + eventName
                 + " on date " + eventDate.toString());
+        synchronized (configIdCache) {
+            configIdCache.put(cacheKey, null);
+        }
         return null;
     }
 

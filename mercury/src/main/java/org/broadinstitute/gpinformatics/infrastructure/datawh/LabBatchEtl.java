@@ -97,8 +97,7 @@ public class LabBatchEtl extends GenericEntityEtl {
                 format(entity.getBatchName()),
                 format(entity.getActive()),
                 format(entity.getCreatedOn()),
-                format(entity.getDueDate()),
-                format(entity.getImportant())
+                format(entity.getDueDate())
         );
     }
 

@@ -270,7 +270,6 @@ FOR new IN im_lab_batch_cur LOOP
       is_active = new.is_active,
       created_on = new.created_on,
       due_date = new.due_date,
-      is_important = new.is_important,
       etl_date = new.etl_date
     WHERE lab_batch_id = new.lab_batch_id;
 
@@ -280,7 +279,6 @@ FOR new IN im_lab_batch_cur LOOP
       is_active,
       created_on,
       due_date,
-      is_important,
       etl_date
     ) 
     SELECT
@@ -289,7 +287,6 @@ FOR new IN im_lab_batch_cur LOOP
       new.is_active,
       new.created_on,
       new.due_date,
-      new.is_important,
       new.etl_date
     FROM DUAL WHERE NOT EXISTS (
       SELECT 1 FROM lab_batch

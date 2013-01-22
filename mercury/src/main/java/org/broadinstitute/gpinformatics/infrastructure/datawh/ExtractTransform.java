@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
@@ -123,6 +124,16 @@ public class ExtractTransform {
         return Response.status(status).build();
     }
 
+    /**
+     * Runs a normal, incremental ETL to avoid waiting up to 15 minutes when testing.
+     */
+    @Path("incremental")
+    @PUT
+    public Response onDemandIncrementalEtl() {
+        initConfig();
+        incrementalEtl();
+        return Response.status(ClientResponse.Status.ACCEPTED).build();
+    }
 
     /**
      * Extracts data from operational database, transforms the data to data warehouse records,

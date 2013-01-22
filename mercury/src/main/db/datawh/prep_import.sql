@@ -18,7 +18,6 @@ execute immediate 'TRUNCATE TABLE im_research_project_funding';
 execute immediate 'TRUNCATE TABLE im_research_project_irb';
 execute immediate 'TRUNCATE TABLE im_research_project_person';
 execute immediate 'TRUNCATE TABLE im_research_project_status';
-execute immediate 'TRUNCATE TABLE im_jira_ticket';
 execute immediate 'TRUNCATE TABLE im_lab_batch';
 execute immediate 'TRUNCATE TABLE im_lab_vessel';
 execute immediate 'TRUNCATE TABLE im_workflow_config';
