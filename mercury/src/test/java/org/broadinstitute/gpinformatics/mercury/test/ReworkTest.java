@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -13,6 +14,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.testng.annotations.AfterTest;
+import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -21,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 import static org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.ReworkEntry.ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH;
 import static org.broadinstitute.gpinformatics.mercury.entity.workflow.rework.ReworkEntry.ReworkReason.MACHINE_ERROR;
 
@@ -41,8 +45,23 @@ public class ReworkTest extends LabEventTest {
         // Can rework one sample in a pool?  No.
     }
 
+    @BeforeTest(groups = {EXTERNAL_INTEGRATION})
+    public void beforeIntegrationTests(){
+
+    }
+
+    @AfterTest(groups = {EXTERNAL_INTEGRATION})
+    public void afterIntegrationTests(){
+
+    }
+
+    @Test(groups = {EXTERNAL_INTEGRATION})
+    public void testMarkForRework(){
+
+    }
+
     @Test(groups = {DATABASE_FREE})
-    public void testMarkForRework() {
+    public void testMarkForReworkDbFree() {
         //        Controller.startCPURecording(true);
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
@@ -89,7 +108,7 @@ public class ReworkTest extends LabEventTest {
                 LabEventType.SHEARING_BUCKET_ENTRY, null, "Houston, we have a problem");
     }
 
-    public List<SampleInstance> samplesAtPosition(LabVessel vessel, String rowName, String columnName) {
+    private List<SampleInstance> samplesAtPosition(LabVessel vessel, String rowName, String columnName) {
         List<SampleInstance> sampleInstances;
         VesselPosition position = VesselPosition.getByName(rowName + columnName);
         VesselContainer<?> vesselContainer = vessel.getContainerRole();

@@ -33,10 +33,6 @@ public class ReworkEntry extends RapSheetEntry {
     @NotNull
     private ReworkLevel reworkLevel;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
-    @NotNull
-    private LabEvent labEvent;
-
     @NotNull
     @Enumerated(EnumType.STRING)
     private LabEventType reworkStep;
@@ -68,14 +64,6 @@ public class ReworkEntry extends RapSheetEntry {
 
     public void setReworkLevel(ReworkLevel reworkLevel) {
         this.reworkLevel = reworkLevel;
-    }
-
-    public LabEvent getLabEvent() {
-        return labEvent;
-    }
-
-    public void setLabEvent(LabEvent labEvent) {
-        this.labEvent = labEvent;
     }
 
     public static enum ReworkLevel {
