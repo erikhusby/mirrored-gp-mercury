@@ -38,9 +38,6 @@ public class RapSheet {
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "rapSheet")
     private List<RapSheetEntry> rapSheetEntries;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "rapSheet")
-    private List<ReworkEntry> reworkEntries;
-
     public RapSheet() {
     }
 
@@ -93,13 +90,5 @@ public class RapSheet {
 
     public void setRapSheetEntries(List<RapSheetEntry> entries) {
         this.rapSheetEntries = entries;
-    }
-
-    public List<ReworkEntry> getReworkEntries() {
-        return reworkEntries;
-    }
-
-    public void setReworkEntries(List<ReworkEntry> reworkEntries) {
-        this.reworkEntries = reworkEntries;
     }
 }
