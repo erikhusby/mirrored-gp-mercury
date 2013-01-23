@@ -7,7 +7,9 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 
 /**
  * The purpose of this class is to capture any risks that
@@ -109,4 +111,8 @@ public class RiskItem {
                 .append(occurredDate).toHashCode();
     }
 
+    public String getInformation() {
+        String date = String.format("Current Time: %1$tm/%1$td/%1$tY %1$tH:%1$tM:%1$tS", occurredDate);
+        return String.format("on %s, calculated risk of %s with comment: ", date, riskCriteria.getName() + remark);
+    }
 }

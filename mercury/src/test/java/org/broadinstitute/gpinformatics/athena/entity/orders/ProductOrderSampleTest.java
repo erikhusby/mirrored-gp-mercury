@@ -2,8 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.*;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
@@ -87,10 +86,10 @@ public class ProductOrderSampleTest {
             addOn.addAllowableMaterialType(materialType);
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);
-            sample1 = new ProductOrderSample("",
+            sample1 = new ProductOrderSample("Sample1",
                     new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", BSP_MATERIAL_TYPE.getFullName(), "", "", "", "", "", "",
                             ""));
-            sample2 = new ProductOrderSample("",
+            sample2 = new ProductOrderSample("Sample2",
                     new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "XXX:XXX", "", "", "", "", "", "", ""));
             order.setSamples(Collections.singletonList(sample1));
             List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
@@ -144,9 +143,36 @@ public class ProductOrderSampleTest {
         };
     }
 
+    @DataProvider(name = "riskSample")
+    public static Object[][] makeRiskSample() {
+        TestPDOData data = new TestPDOData();
+
+        // sample 1 has risk items and sample 2 does not
+        RiskCriteria riskCriteria = new ConcentrationRiskCriteria("Concentration", NumericOperator.LESS_THAN, 250.0);
+        RiskItem riskItem = new RiskItem(riskCriteria, data.sample1, new Date());
+        riskItem.setRemark("Bad Concentration found");
+
+        data.sample1.setRiskItems(Collections.singletonList(riskItem));
+        return new Object[][] {
+            new Object[] { data.sample1 },
+            new Object[] { data.sample2 }
+        };
+    }
+
     @Test(dataProvider = "autoBillSample")
     public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<BillingLedger> billingLedgers, BillingStatus billingStatus) {
         sample.autoBillSample(completedDate, 1);
         Assert.assertEquals(sample.getBillableLedgerItems(), billingLedgers);
+    }
+
+    @Test(dataProvider = "riskSample")
+    public void testRisk(ProductOrderSample sample) {
+        if (sample.isOnRisk()) {
+            Assert.assertTrue(!sample.getRiskString().isEmpty(), "Sample: " + sample.getSampleName() +
+                    " is on risk but has no risk string");
+        } else {
+            Assert.assertTrue(sample.getRiskString().isEmpty(), "Sample: " + sample.getSampleName() +
+                    " is not on risk but has a risk string: " + sample.getRiskString());
+        }
     }
 }

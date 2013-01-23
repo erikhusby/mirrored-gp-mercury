@@ -387,4 +387,28 @@ public class ProductOrderSample implements Serializable {
                 "Added BillingLedger item for sample {0} to PDO {1} for PriceItemName: {2} - Quantity:{3}",
                 sampleName, productOrder.getBusinessKey(), priceItem.getName(), delta));
     }
+
+    /**
+     * @return If there are any risk items, then this sample is 'on risk'
+     */
+    public boolean isOnRisk() {
+        return !riskItems.isEmpty();
+    }
+
+    public String getRiskString() {
+        String riskString = "";
+
+        if (isOnRisk()) {
+            for (RiskItem riskItem : riskItems) {
+                riskString += riskItem.getInformation();
+            }
+        }
+
+        return riskString;
+    }
+
+    public void setRiskItems(Collection<RiskItem> riskItems) {
+        this.riskItems.clear();
+        this.riskItems.addAll(riskItems);
+    }
 }
