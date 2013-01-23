@@ -114,7 +114,7 @@ public class BillingLedgerDao extends GenericDao {
         return findByOrderList(orders, null, inclusion);
     }
 
-    public Set<BillingLedger> findByOrderList(@Nonnull ProductOrder[] orders) {
+    public Set<BillingLedger> findByOrderList(@Nonnull ProductOrder... orders) {
         return findByOrderList(orders, BillingSessionInclusion.ALL);
     }
 

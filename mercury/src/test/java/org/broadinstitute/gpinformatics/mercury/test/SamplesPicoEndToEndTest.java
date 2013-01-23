@@ -6,17 +6,24 @@ import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProduc
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabVesselBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabVesselPositionBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -27,6 +34,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.easymock.EasyMock;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
@@ -344,8 +352,32 @@ public class SamplesPicoEndToEndTest {
                     return labBatch;
                 }
             });
-            LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(),
-                                                                  AthenaClientProducer.stubInstance());
+
+            LabBatchEjb labBatchEJB = new LabBatchEjb();
+            labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
+            labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+
+            LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
+            labBatchEJB.setTubeDAO(tubeDao);
+
+            JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
+            labBatchEJB.setJiraTicketDao(mockJira);
+
+            LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
+            labBatchEJB.setLabBatchDao(labBatchDAO);
+
+
+
+            BucketDao mockBucketDao = EasyMock.createNiceMock(BucketDao.class);
+            BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
+            EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
+
+
+            LabEventHandler labEventHandler =
+                    new LabEventHandler(new WorkflowLoader(),
+                            AthenaClientProducer
+                                    .stubInstance(), bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer
+                            .stubInstance()));
 
             LabEvent picoDilutionTransferEntityA1 = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
                     samplesPicoJaxbBuilder.getPicoDilutionTransferJaxbA1(), mapBarcodeToTube, null, null);
@@ -392,6 +424,8 @@ public class SamplesPicoEndToEndTest {
 
             //            Assert.assertEquals("Wrong number of sample instances", mapBarcodeToTube.size(),
             //                    microfluorPlate.getSampleInstances().size());
+
+
         }
     }
 

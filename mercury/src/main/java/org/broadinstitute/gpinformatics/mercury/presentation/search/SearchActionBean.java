@@ -195,7 +195,14 @@ public class SearchActionBean extends CoreActionBean {
     private void doBatchSearch() {
         List<String> searchList = SearchActionBean.cleanInputString(searchKey);
 
+        foundVessels = new ArrayList<LabVessel>();
+
         foundVessels = labVesselDao.findByListIdentifiers(searchList);
+
+        foundVessels.addAll(labVesselDao.findByPDOKeyList(searchList));
+
+        foundVessels.addAll(labVesselDao.findBySampleKeyList(searchList));
+
 
         foundSamples = null;
         foundPDOs = null;
