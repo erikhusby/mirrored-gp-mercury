@@ -1,8 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDaoTest;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -10,32 +7,15 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
-import java.util.Collections;
-
 /**
  * @author Scott Matthews
  */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ProductOrderSampleContainerTest extends ContainerTest {
 
-    @Inject
-    private ResearchProjectDao researchProjectDao;
-
-    @Inject
-    private ProductDao productDao;
-
-
     public void testOrderSampleConstruction() {
-
-        ProductOrder productOrder = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao);
         ProductOrderSample testSample = new ProductOrderSample("SM-1P3XN");
-        testSample.setProductOrder(productOrder);
-
-        productOrder.setSamples(Collections.singletonList(testSample));
-
         Assert.assertTrue(testSample.isInBspFormat());
-
         Assert.assertTrue(testSample.needsBspMetaData());
 
         try {

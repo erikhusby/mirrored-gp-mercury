@@ -1,11 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectResourceTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderTest;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -17,7 +16,9 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.util.*;
+import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 
 /**
  *
@@ -64,16 +65,7 @@ public class ProductOrderDaoTest extends ContainerTest {
 
         utx.begin();
 
-        List<ResearchProject> projectsList = researchProjectDao.findAllResearchProjects();
-        if ((projectsList != null) && projectsList.isEmpty()) {
-            ResearchProject researchProject =
-                    ResearchProjectResourceTest.createDummyResearchProject(testResearchProjectKey);
-            researchProjectDao.persist(researchProject);
-        }
         order = createTestProductOrder(researchProjectDao, productDao);
-        BspUser testUser = new BspUser();
-        testUser.setUserId(TEST_CREATOR_ID);
-        order.prepareToSave(testUser);
         productOrderDao.persist(order);
         productOrderDao.flush();
         productOrderDao.clear();
@@ -90,39 +82,32 @@ public class ProductOrderDaoTest extends ContainerTest {
     }
 
     public static ProductOrder createTestProductOrder(ResearchProjectDao researchProjectDao, ProductDao productDao) {
-        List<String> sampleNames = new ArrayList<String>();
-        sampleNames.add(MS_1111);
-        sampleNames.add(MS_1112);
-        return createTestProductOrder(researchProjectDao, productDao, sampleNames);
+        return createTestProductOrder(researchProjectDao, productDao, MS_1111, MS_1112);
     }
 
     public static ProductOrder createTestProductOrder(ResearchProjectDao researchProjectDao, ProductDao productDao,
-                                                      List<String> sampleNames) {
+                                                      String... sampleNames) {
         // Find a research project in the DB.
-        List<ResearchProject> projectsList = researchProjectDao.findAllResearchProjects();
-        Assert.assertTrue(projectsList != null && !projectsList.isEmpty());
-        ResearchProject foundResearchProject = projectsList.get(new Random().nextInt(projectsList.size()));
+        List<ResearchProject> projects = researchProjectDao.findAllResearchProjects();
+        Assert.assertTrue(projects != null && !projects.isEmpty());
+        ResearchProject project = projects.get(new Random().nextInt(projects.size()));
 
-        Product product = null;
-        List<Product> productsList = productDao.findTopLevelProductsForProductOrder();
-        if (productsList != null && !productsList.isEmpty()) {
-            product = productsList.get(new Random().nextInt(productsList.size()));
-        }
+        List<Product> products = productDao.findTopLevelProductsForProductOrder();
+        Assert.assertTrue(products != null && !products.isEmpty());
+        Product product = products.get(new Random().nextInt(products.size()));
 
         // Try to create a Product Order and persist it.
-
-        // need all the samples in the list before calling this version of the PDO constructor!
-        List<ProductOrderSample> sampleList = new ArrayList<ProductOrderSample>();
-        for ( String sampleName : sampleNames ) {
-            sampleList.add(new ProductOrderSample(sampleName));
-        }
-
         String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
-        ProductOrder newProductOrder = new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, sampleList, "quoteId",
-                product, foundResearchProject);
+        ProductOrder order = new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle,
+                ProductOrderTest.createSampleList(sampleNames), "quoteId",
+                product, project);
 
-        newProductOrder.setJiraTicketKey(getTestProductOrderKey());
-        return newProductOrder;
+        order.setJiraTicketKey(getTestProductOrderKey());
+        BspUser testUser = new BspUser();
+        testUser.setUserId(TEST_CREATOR_ID);
+        order.prepareToSave(testUser);
+
+        return order;
     }
 
     public void testFindOrders() {

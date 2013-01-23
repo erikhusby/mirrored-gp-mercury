@@ -370,28 +370,30 @@ public class ProductOrderEjb {
     /**
      * Transition the delivery statuses of the specified samples in the DB.
      *
-     * @param productOrder PDO containing the samples in question
+     * @param order PDO containing the samples in question
      * @param acceptableStartingStatuses a Set of {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus}es
      *                                   in which samples are allowed to be in before undergoing this transition
      * @param targetStatus the status into which the samples will be transitioned
-     * @param productOrderSamples the samples in question
+     * @param samples the samples in question
      * @throws SampleDeliveryStatusChangeException thrown if any samples are found to not be in an acceptable starting status
      */
-    private void transitionSamples(ProductOrder productOrder, Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
-                                   ProductOrderSample.DeliveryStatus targetStatus, Collection<ProductOrderSample> productOrderSamples) throws SampleDeliveryStatusChangeException {
+    private static void transitionSamples(ProductOrder order,
+                                          Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
+                                          ProductOrderSample.DeliveryStatus targetStatus,
+                                          Collection<ProductOrderSample> samples) throws SampleDeliveryStatusChangeException {
 
-        Set<ProductOrderSample> sampleSet = new HashSet<ProductOrderSample>(productOrderSamples);
+        Set<ProductOrderSample> transitionSamples = new HashSet<ProductOrderSample>(samples);
 
         List<ProductOrderSample> untransitionableSamples = new ArrayList<ProductOrderSample>();
 
-        for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
-            // if the sample name set is empty we try to transition all samples in the PDO
-            if (CollectionUtils.isEmpty(sampleSet) || sampleSet.contains(productOrderSample)) {
-                if ( ! acceptableStartingStatuses.contains(productOrderSample.getDeliveryStatus())) {
-                    untransitionableSamples.add(productOrderSample);
+        for (ProductOrderSample sample : order.getSamples()) {
+            // If the transition sample set is empty we try to transition all samples in the PDO.
+            if (CollectionUtils.isEmpty(transitionSamples) || transitionSamples.contains(sample)) {
+                if (!acceptableStartingStatuses.contains(sample.getDeliveryStatus())) {
+                    untransitionableSamples.add(sample);
                     // keep looping, find all the untransitionable samples and then throw a descriptive exception
                 } else {
-                    productOrderSample.setDeliveryStatus(targetStatus);
+                    sample.setDeliveryStatus(targetStatus);
                 }
             }
         }
@@ -420,29 +422,29 @@ public class ProductOrderEjb {
                                                   ProductOrderSample.DeliveryStatus targetStatus, List<Integer> sampleIndices,
                                                   List<String> sampleComments) throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
 
-        ProductOrder productOrder = findProductOrder(jiraTicketKey);
+        ProductOrder order = findProductOrder(jiraTicketKey);
 
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
+        List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
 
         List<String> messagePieces = new ArrayList<String>();
 
         // ii = index of indices
         for (int ii = 0; ii < sampleIndices.size(); ii++) {
             int sampleIndex = sampleIndices.get(ii);
+            String sampleComment = sampleComments.get(ii);
 
-            ProductOrderSample productOrderSample = productOrder.getSamples().get(sampleIndex);
+            ProductOrderSample sample = order.getSamples().get(sampleIndex);
             // GPLIM-655 insert code here to append to sample comment history.  In the absence of this I'll just throw
             // a comment to JIRA
-            productOrderSamples.add(productOrderSample);
+            samples.add(sample);
 
-            messagePieces.add(productOrderSample.getSampleName() + " at index " + productOrderSample.getSamplePosition() + ": " + sampleComments.get(ii));
+            messagePieces.add(sample.getSampleName() + " at index " + sample.getSamplePosition() + ": " + sampleComment);
         }
 
-        transitionSamples(productOrder, acceptableStartingStatuses, targetStatus, productOrderSamples);
+        transitionSamples(order, acceptableStartingStatuses, targetStatus, samples);
 
-        jiraService.addComment(productOrder.getJiraTicketKey(), getUserName() + " transitioned samples to status " +
+        jiraService.addComment(order.getJiraTicketKey(), getUserName() + " transitioned samples to status " +
                 targetStatus.getDisplayName() + ":\n" + StringUtils.join(messagePieces, "\n"));
-
     }
 
 
@@ -468,12 +470,10 @@ public class ProductOrderEjb {
      * @throws IOException
      * @throws NoTransitionException Thrown if the specified transition is not available on the specified issue
      */
-    private void transitionJiraTicket(String jiraTicketKey, String [] alreadyResolvedResolutions, ProductOrder.TransitionStates transitionState, String transitionComments) throws IOException, NoTransitionException {
+    private void transitionJiraTicket(String jiraTicketKey, Set<String> alreadyResolvedResolutions, ProductOrder.TransitionStates transitionState, String transitionComments) throws IOException, NoTransitionException {
         String resolution = jiraService.getResolution(jiraTicketKey);
 
-        Set<String> alreadyResolvedResolutionsSet = new HashSet<String>(Arrays.asList(alreadyResolvedResolutions));
-
-        if ( ! alreadyResolvedResolutionsSet.contains(resolution)) {
+        if (!alreadyResolvedResolutions.contains(resolution)) {
 
             Transition transition = jiraService.findAvailableTransitionByName(jiraTicketKey, transitionState.getStateName());
 
@@ -515,7 +515,7 @@ public class ProductOrderEjb {
         // Currently not setting abandon comments into PDO comments, that seems too intrusive.  We will record the comments
         // with the JIRA ticket.
 
-        transitionJiraTicket(jiraTicketKey, new String[] {"Cancelled"}, Cancel, abandonComments);
+        transitionJiraTicket(jiraTicketKey, Collections.singleton("Cancelled"), Cancel, abandonComments);
     }
 
 
@@ -539,7 +539,7 @@ public class ProductOrderEjb {
         // Currently not setting abandon comments into PDO comments, that seems too intrusive.  We will record the comments
         // with the JIRA ticket.
 
-        transitionJiraTicket(jiraTicketKey, new String [] {"Complete"}, ProductOrder.TransitionStates.Complete, completionComments);
+        transitionJiraTicket(jiraTicketKey, Collections.singleton("Complete"), ProductOrder.TransitionStates.Complete, completionComments);
     }
 
 
@@ -573,5 +573,4 @@ public class ProductOrderEjb {
     public void completeSamples(@Nonnull String jiraTicketKey, List<Integer> sampleIndices, List<String> completionComments) throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
         transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DELIVERED, NOT_STARTED), DELIVERED, sampleIndices, completionComments);
     }
-
 }
