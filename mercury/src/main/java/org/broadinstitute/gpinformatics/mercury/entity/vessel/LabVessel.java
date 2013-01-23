@@ -492,6 +492,7 @@ public abstract class LabVessel implements Serializable {
     static class TraversalResults {
         private Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         private Set<Reagent> reagents = new HashSet<Reagent>();
+        private LabBatch lastEncounteredLabBatch;
 
         void add(TraversalResults traversalResults) {
             sampleInstances.addAll(traversalResults.getSampleInstances());
@@ -506,12 +507,25 @@ public abstract class LabVessel implements Serializable {
             return reagents;
         }
 
+        public LabBatch getLastEncounteredLabBatch() {
+            return lastEncounteredLabBatch;
+        }
+
         public void add(SampleInstance sampleInstance) {
             sampleInstances.add(sampleInstance);
         }
 
         public void add(Reagent reagent) {
             reagents.add(reagent);
+        }
+
+        public void add(Collection<LabBatch> labBatches) {
+            // Keeps only the last encountered lab batch.
+            // Expects that all samples in the vessel have the same batch when the vessel is not a container.
+            // It's an oversimplification that needs to be fixed when implementation of workflow/event/batch matures.
+            if (labBatches != null && labBatches.size() == 1) {
+                lastEncounteredLabBatch = labBatches.iterator().next();
+            }
         }
 
         /**
@@ -557,6 +571,7 @@ public abstract class LabVessel implements Serializable {
         for (Reagent reagent : getReagentContents()) {
             traversalResults.add(reagent);
         }
+        traversalResults.add(getLabBatches());
 
         traversalResults.completeLevel();
         return traversalResults;
