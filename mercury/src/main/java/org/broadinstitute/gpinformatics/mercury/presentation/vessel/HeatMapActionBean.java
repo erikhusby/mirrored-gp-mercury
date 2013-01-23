@@ -10,6 +10,7 @@ public class HeatMapActionBean extends CoreActionBean {
 
     private String jqueryClass;
     private String colorStyle;
+    private Boolean reverseOrder;
 
     public String getJqueryClass() {
         return jqueryClass;
@@ -19,6 +20,14 @@ public class HeatMapActionBean extends CoreActionBean {
         this.jqueryClass = jqueryClass;
     }
 
+    public void setColorStyle(String colorStyle) {
+        this.colorStyle = colorStyle;
+    }
+
+    public String getColorStyle() {
+        return colorStyle;
+    }
+
     @DefaultHandler
     public Resolution view() {
         return new ForwardResolution(VIEW_PAGE);
@@ -26,14 +35,14 @@ public class HeatMapActionBean extends CoreActionBean {
 
     @HandlesEvent(value = "applySettings")
     public Resolution applySettings() {
-        return new ForwardResolution(VIEW_PAGE);
+        return new RedirectResolution(VIEW_PAGE);
     }
 
-    public void setColorStyle(String colorStyle) {
-        this.colorStyle = colorStyle;
+    public void setReverseOrder(Boolean reverseOrder) {
+        this.reverseOrder = reverseOrder;
     }
 
-    public String getColorStyle() {
-        return colorStyle;
+    public Boolean getReverseOrder() {
+        return reverseOrder;
     }
 }
