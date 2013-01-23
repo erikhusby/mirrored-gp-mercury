@@ -4,6 +4,7 @@ import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
@@ -62,6 +63,9 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     private String sessionKey;
 
+    // parameter from quote server
+    private String billingSession;
+
     private BillingSession editSession;
 
     /**
@@ -84,6 +88,11 @@ public class BillingSessionActionBean extends CoreActionBean {
     @DefaultHandler
     @HandlesEvent(LIST_ACTION)
     public Resolution list() {
+        // If a billing session is sent, then this is coming from the quote server and it needs to be redirected to view
+        if (!StringUtils.isBlank(billingSession)) {
+            return new RedirectResolution(BillingSessionActionBean.class, VIEW_ACTION).addParameter("sessionKey", billingSession);
+        }
+
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
@@ -251,5 +260,13 @@ public class BillingSessionActionBean extends CoreActionBean {
         }
 
         return priceItemNameMap;
+    }
+
+    public String getBillingSession() {
+        return billingSession;
+    }
+
+    public void setBillingSession(String billingSession) {
+        this.billingSession = billingSession;
     }
 }

@@ -27,6 +27,15 @@
                             {"bSortable": false}]
                     });
 
+                    $j("#owner").tokenInput(
+                            "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                hintText: "Type a name",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
+                                tokenLimit: 1,
+                                resultsFormatter: formatUser
+                            }
+                    );
+
                     $j("#researchProject").tokenInput(
                         "${ctxpath}/orders/order.action?projectAutocomplete=", {
                             hintText: "Type a project name",
@@ -129,6 +138,11 @@
                     $j("#fundsRemaining").text('Error: ' + data.error);
                 }
             }
+
+            function formatUser(item) {
+                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
+                       "<div class=\"ac-dropdown-subtext\">" + item.username + " " + item.email + "</div></li>";
+            }
         </script>
     </stripes:layout-component>
 
@@ -167,14 +181,40 @@
                 </div>
 
                 <div class="control-group">
-                    <stripes:label for="researchProject" class="control-label">
-                        Research Project <c:if test="${not actionBean.editOrder.draft}">*</c:if>
+                    <stripes:label for="owner" class="control-label">
+                        Owner *
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="researchProject" name="projectTokenInput.listOfKeys" class="defaultText"
-                            title="Enter the research project for this order"/>
+                        <stripes:text id="owner" name="owner.listOfKeys" />
                     </div>
                 </div>
+
+                <c:choose>
+                    <c:when test="${actionBean.editOrder.draft}">
+                        <div class="control-group">
+                            <stripes:label for="researchProject" class="control-label">
+                                Research Project <c:if test="${not actionBean.editOrder.draft}">*</c:if>
+                            </stripes:label>
+                            <div class="controls">
+                                <stripes:text id="researchProject" name="projectTokenInput.listOfKeys"
+                                              class="defaultText"
+                                              title="Enter the research project for this order"/>
+                            </div>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="view-control-group control-group" style="margin-bottom: 20px;">
+                            <stripes:label for="researchProject" class="control-label">
+                                Research Project <c:if test="${not actionBean.editOrder.draft}">*</c:if>
+                            </stripes:label>
+                            <div class="controls">
+                                <div class="form-value">
+                                        ${actionBean.editOrder.researchProject.title}
+                                </div>
+                            </div>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
 
                 <div class="control-group">
                     <stripes:label for="product" class="control-label">
@@ -199,6 +239,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="quote" name="editOrder.quoteId" class="defaultText"
+                                      readonly="${! actionBean.allowQuoteEdit}"
                                       onchange="updateFundsRemaining()"
                                       title="Enter the Quote ID for this order"/>
                         <div id="fundsRemaining"> </div>
@@ -248,18 +289,17 @@
 
             <div class="help-block span4">
                 <c:choose>
-                    <c:when test="${actionBean.editOrder.draft}">
+                    <c:when test="${actionBean.allowSampleListEdit}">
                         Enter samples names in this box, one per line. When you save the order, the view page will show
                         all sample details.
                     </c:when>
                     <c:otherwise>
-                        This is the list of samples. Since this order has already been placed, the list of samples cannot
-                        be changed.
+                        Sample list edit is disabled for non-DRAFT orders with previously uploaded work.
                     </c:otherwise>
                 </c:choose>
                 <br/>
                 <br/>
-                <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="sampleList" rows="15" cols="120"/>
+                <stripes:textarea readonly="${!actionBean.allowSampleListEdit}" class="controlledText" id="samplesToAdd" name="sampleList" rows="15" cols="120"/>
             </div>
         </stripes:form>
 

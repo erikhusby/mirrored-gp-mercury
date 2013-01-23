@@ -20,7 +20,6 @@ import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
@@ -52,17 +51,9 @@ public class BillingLedgerDaoTest  extends ContainerTest {
     @Inject
     private UserTransaction utx;
 
-    private ProductOrder order;
-    private ProductOrder orderWithDupes;
-
-    private BillingLedger unBilledLedger1;
-
-    private String priceItemName;
-    private ProductOrderSample productOrderSample1;
-
-    private DateFormat formatter = new SimpleDateFormat("MM/dd/yy");
-    private ProductOrder[] orders = new ProductOrder[1];
-    private ProductOrder[] dupeOrders = new ProductOrder[1];
+    private static final DateFormat formatter = new SimpleDateFormat("MM/dd/yy");
+    private final ProductOrder[] orders = new ProductOrder[1];
+    private final ProductOrder[] dupeOrders = new ProductOrder[1];
 
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -75,15 +66,15 @@ public class BillingLedgerDaoTest  extends ContainerTest {
         utx.begin();
 
         PriceItem priceItem = priceItemDao.findAll().get(0);
-        priceItemName = priceItem.getName();
+        String priceItemName = priceItem.getName();
 
         //Create an order and add samples to it.
-        order = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao);
-        productOrderSample1 = order.getSamples().get(0);
+        ProductOrder order = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao);
+        ProductOrderSample productOrderSample1 = order.getSamples().get(0);
 
         //Create first ledger item
         Date date1 = formatter.parse("12/5/12");
-        unBilledLedger1 = new BillingLedger(productOrderSample1, priceItem, date1, 1);
+        BillingLedger unBilledLedger1 = new BillingLedger(productOrderSample1, priceItem, date1, 1);
 
         //Add one ledger item to sample 1
         productOrderSample1.getLedgerItems().add(unBilledLedger1);
@@ -93,11 +84,9 @@ public class BillingLedgerDaoTest  extends ContainerTest {
 
         orders[0] = order;
 
-        //Create an order (with dupes) with a list of samples containing duplicate sample names
-        List<String> sampleNames = new ArrayList<String>();
-                        sampleNames.add(ProductOrderDaoTest.MS_1111+"X");
-                        sampleNames.add(ProductOrderDaoTest.MS_1111+"X");
-        orderWithDupes = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao, sampleNames);
+        // Create an order that contains duplicate sample names.
+        ProductOrder orderWithDupes = ProductOrderDaoTest.createTestProductOrder(researchProjectDao, productDao,
+                ProductOrderDaoTest.MS_1111 + "X", ProductOrderDaoTest.MS_1111 + "X");
         ProductOrderSample productOrderSample1ForDupes = orderWithDupes.getSamples().get(0);
         ProductOrderSample productOrderSample2ForDupes = orderWithDupes.getSamples().get(1);
 
@@ -132,7 +121,7 @@ public class BillingLedgerDaoTest  extends ContainerTest {
     //
     public void testFindBillingLedgers() {
         List<BillingLedger> ledgerEntries = billingLedgerDao.findAll();
-        Assert.assertTrue("The specified order should find at one test ledger", ledgerEntries.size() > 0 ) ;
+        Assert.assertTrue("The specified order should find at one test ledger", !ledgerEntries.isEmpty()) ;
     }
 
     //
@@ -158,24 +147,19 @@ public class BillingLedgerDaoTest  extends ContainerTest {
     }
 
     public void testRemoveLedgerUpdates() {
-        {
         // test an order
         billingLedgerDao.removeLedgerItemsWithoutBillingSession(orders);
         billingLedgerDao.flush();
         //verify by trying to retieve what is pending but not yet billed should be none left
         Set<BillingLedger> ledgerEntries = billingLedgerDao.findWithoutBillingSessionByOrderList(orders);
         Assert.assertEquals("The specified order should find one test ledger", 1, ledgerEntries.size()) ;
-        }
 
-        {
         // test an order with dupes
         billingLedgerDao.removeLedgerItemsWithoutBillingSession(dupeOrders);
         billingLedgerDao.flush();
         //verify by trying to retieve what is pending but not yet billed should be none left
         Set<BillingLedger> dupeLedgerEntries = billingLedgerDao.findWithoutBillingSessionByOrderList(dupeOrders);
         Assert.assertEquals("The specified order should find one test ledger", 2, dupeLedgerEntries.size()) ;
-        }
-
     }
 
 }
