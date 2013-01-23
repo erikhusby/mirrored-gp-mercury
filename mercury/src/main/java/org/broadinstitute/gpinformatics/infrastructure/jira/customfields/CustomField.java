@@ -5,14 +5,33 @@ import java.util.Map;
 
 public class CustomField {
 
+    @Nonnull
     private final CustomFieldDefinition definition;
 
+    @Nonnull
     private final Object value;
 
-    private final SingleFieldType fieldType;
+    public static class RadioButton {
 
-    public CustomField(@Nonnull CustomFieldDefinition definition, @Nonnull Object value,
-                       @Nonnull SingleFieldType fieldType) {
+        public RadioButton() {
+        }
+
+        public RadioButton(boolean value) {
+            this.value = value;
+        }
+
+        private boolean value;
+
+        public boolean getValue() {
+            return value;
+        }
+
+        public void setValue(boolean value) {
+            this.value = value;
+        }
+    }
+
+    public CustomField(@Nonnull CustomFieldDefinition definition, @Nonnull Object value) {
         if (definition == null) {
             throw new NullPointerException("fieldDefinition cannot be null");
         }
@@ -22,7 +41,6 @@ public class CustomField {
 
         this.definition = definition;
         this.value = value;
-        this.fieldType = fieldType;
     }
 
     public interface SubmissionField {
@@ -31,16 +49,17 @@ public class CustomField {
 
     public CustomField(@Nonnull Map<String, CustomFieldDefinition> submissionFields,
                        @Nonnull SubmissionField field,
-                       @Nonnull String value) {
-        this(submissionFields.get(field.getFieldName()), value, CustomField.SingleFieldType.TEXT);
+                       @Nonnull Object value) {
+        this(submissionFields.get(field.getFieldName()), value);
     }
 
     public CustomField(@Nonnull Map<String, CustomFieldDefinition> submissionFields,
                        @Nonnull SubmissionField field,
                        boolean value) {
-        this(submissionFields.get(field.getFieldName()), value ? "Yes" : "No", SingleFieldType.RADIO_BUTTON);
+        this(submissionFields.get(field.getFieldName()), new RadioButton(value));
     }
 
+    @Nonnull
     public CustomFieldDefinition getFieldDefinition() {
         return definition;
     }
@@ -48,17 +67,5 @@ public class CustomField {
     @Nonnull
     public Object getValue() {
         return value;
-    }
-
-    @Nonnull
-    public SingleFieldType getFieldType() {
-        return fieldType;
-    }
-
-    public enum SingleFieldType {
-        TEXT,
-        NUMERIC,
-        RADIO_BUTTON,
-        SINGLE_SELECT
     }
 }

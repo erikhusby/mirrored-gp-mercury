@@ -81,14 +81,12 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.WORK_REQUEST_IDS, "N/A"));
 
-        customFields.add(new CustomField(
-                submissionFields.get(LabBatch.RequiredSubmissionFields.PROGRESS_STATUS.getFieldName()), PROGRESS_STATUS,
-                CustomField.SingleFieldType.RADIO_BUTTON));
+        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.PROGRESS_STATUS, PROGRESS_STATUS));
 
 /*
         customFields.add(new CustomField(
                 submissionFields.get(LabBatch.RequiredSubmissionFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName()),
-                LIB_QC_SEQ_REQUIRED, CustomField.SingleFieldType.SINGLE_SELECT));
+                LIB_QC_SEQ_REQUIRED));
 */
 
         StringBuilder sampleList = new StringBuilder();
@@ -101,11 +99,10 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 sampleList.toString()));
         customFields.add(new CustomField(submissionFields
                 .get(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName()),
-                Integer.valueOf(batch.getStartingLabVessels().size()), CustomField.SingleFieldType.NUMERIC));
+                batch.getStartingLabVessels().size()));
 
 //        customFields.add(new CustomField(
-//                submissionFields.get(LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName()), POOLING_STATUS,
-//                CustomField.SingleFieldType.SINGLE_SELECT));
+//                submissionFields.get(LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName()), POOLING_STATUS));
 
         if (batch.getDueDate() != null) {
 
