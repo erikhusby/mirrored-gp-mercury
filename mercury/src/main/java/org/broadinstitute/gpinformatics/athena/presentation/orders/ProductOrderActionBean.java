@@ -673,10 +673,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getSampleList() {
         if (sampleList == null) {
-            sampleList = "";
+            StringBuilder sb = new StringBuilder();
             for (ProductOrderSample sample : getEditOrder().getSamples()) {
-                sampleList += sample.getSampleName() + "\n";
+                sb.append(sample.getSampleName()).append("\n");
             }
+            sampleList = sb.toString();
         }
 
         return sampleList;
@@ -708,20 +709,20 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * Sample list edit should be enabled if this is a DRAFT order or this is a non-DRAFT order with no billing
-     * ledger entries.
+     * Sample list edit is only enabled if this is a DRAFT order.  Once an order has been placed, users must use the
+     * UI in the view PDO page to edit the samples in an order.
      *
-     * @return
+     * @return true if user can edit the sample list
      */
     public boolean getAllowSampleListEdit() {
-        return editOrder.isDraft() || billingLedgerDao.findByOrderList(editOrder).isEmpty();
+        return editOrder.isDraft();
     }
 
     /**
-     * The logic here is currently the same as allow sample list edit, but these may both change as we snapshot
-     * quotes into ledger entries and/or support sample merging / name overwrites in the sample list
+     * Quote edit is allowed if the PDO is DRAFT, or if no billing has occurred for any samples yet. This may change
+     * if we snapshot quotes into ledger entries.
      *
-     * @return
+     * @return true if user can edit the quote
      */
     public boolean getAllowQuoteEdit() {
         return editOrder.isDraft() || billingLedgerDao.findByOrderList(editOrder).isEmpty();
