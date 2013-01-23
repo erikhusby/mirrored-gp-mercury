@@ -3,9 +3,15 @@ package org.broadinstitute.gpinformatics.athena.entity.fixup;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.ConcentrationRiskCriteria;
+import org.broadinstitute.gpinformatics.athena.entity.products.NumericOperator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -30,6 +36,12 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private ProductOrderDao productOrderDao;
+
+    @Inject
+    private ProductDao productDao;
+
+    @Inject
+    private ProductOrderSampleDao productOrderSampleDao;
 
     @Inject
     JiraService jiraService;
@@ -247,6 +259,31 @@ public class ProductOrderFixupTest extends Arquillian {
 
             if (samplesToRemove.contains(sample.getSampleName())) {
                 sampleIterator.remove();
+            }
+        }
+
+        productOrderDao.persist(productOrder);
+    }
+
+    @Test(enabled = false)
+    public void setupOnRiskTestData() {
+
+        String pdo="PDO-49";
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
+
+        RiskCriteria riskCriteria = new ConcentrationRiskCriteria("Concentration", NumericOperator.LESS_THAN, 250.0);
+        productOrder.getProduct().addRiskCriteria(riskCriteria);
+        productDao.persist(productOrder.getProduct());
+
+        // Populate on risk for every other sample
+        int count = 0;
+        for (ProductOrderSample sample : productOrder.getSamples()) {
+            if ((count++ % 2) == 0) {
+                RiskItem riskItem = new RiskItem(riskCriteria, sample, new Date());
+                riskItem.setRemark("Bad Concentration found");
+                riskItem.setProductOrderSample(sample);
+                sample.setRiskItems(Collections.singletonList(riskItem));
             }
         }
 

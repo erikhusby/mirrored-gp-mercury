@@ -40,6 +40,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             SAMPLE_ID_HEADING,
             "Collaborator Sample ID",
             "Material Type",
+            "On Risk",
             "Product Name",
             ORDER_ID_HEADING,
             "Product Order Name",
@@ -49,6 +50,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             SORT_COLUMN_HEADING
     };
 
+    private static final int FIXED_HEADER_WIDTH = 259 * 15;
     private static final int VALUE_WIDTH = 259 * 25;
     private static final int ERRORS_WIDTH = 259 * 100;
     private static final int COMMENTS_WIDTH = 259 * 60;
@@ -167,6 +169,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             getWriter().nextRow();
             for (String header : FIXED_HEADERS) {
                 getWriter().writeCell(header, getFixedHeaderStyle());
+                getWriter().setColumnWidth(FIXED_HEADER_WIDTH);
             }
 
             // Get the ordered price items for the current product, add the spanning price item + product headers
@@ -201,6 +204,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         // Material type from BSP (GPLIM-422)
         getWriter().writeCell(sample.getBspDTO().getMaterialType());
+
+        // Risk Information (GPLIM-660)
+        getWriter().writeCell(sample.getRiskString(), getRiskStyle());
 
         // product name
         getWriter().writeCell(sample.getProductOrder().getProduct().getProductName());
