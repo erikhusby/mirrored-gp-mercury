@@ -120,21 +120,16 @@ public class JiraServiceStub implements JiraService {
 
     @Override
     public IssueTransitionListResponse findAvailableTransitions(String jiraIssueKey) {
+        Transition[] transitions = new Transition[] {
+                new Transition("1", "Open", new NextTransition("", "In Progress", "In Progress", "", "2")),
+                new Transition("3", "Complete", new NextTransition("", "Closed", "Closed", "", "4")),
+                new Transition("5", "Cancel", new NextTransition("", "Closed", "Closed", "", "6")),
+                new Transition("7", "Start Progress", new NextTransition("", "In Progress", "In Progress", "", "8")),
+                new Transition("9", "Put On Hold", new NextTransition("", "held", "held", "", "10")),
+                new Transition("11", "Order Complete", new NextTransition("", "Complete", "Complete", "", "12"))
+        };
 
-        Transition transition1 = new Transition("1", "Open", new NextTransition("", "In Progress", "In Progress", "", "2"));
-        Transition transition2 = new Transition("3", "Complete", new NextTransition("", "Closed", "Closed", "", "4"));
-        Transition transition3 = new Transition("5", "Cancel", new NextTransition("", "Closed", "Closed", "", "6"));
-        Transition transition4 = new Transition("7", "Start Progress", new NextTransition("", "In Progress", "In Progress", "", "8"));
-        Transition transition5 = new Transition("9", "Put On Hold", new NextTransition("", "held", "held", "", "10"));
-
-        List<Transition> transitions = new LinkedList<Transition>();
-        transitions.add(transition1);
-        transitions.add(transition2);
-        transitions.add(transition3);
-        transitions.add(transition4);
-        transitions.add(transition5);
-
-        return new IssueTransitionListResponse("", transitions);
+        return new IssueTransitionListResponse("", Arrays.asList(transitions));
     }
 
 
@@ -177,6 +172,6 @@ public class JiraServiceStub implements JiraService {
 
     @Override
     public String getResolution(String jiraIssueKey) throws IOException {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return "";
     }
 }
