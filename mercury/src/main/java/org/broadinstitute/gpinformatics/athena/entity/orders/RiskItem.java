@@ -5,6 +5,7 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import java.text.MessageFormat;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
@@ -118,7 +119,8 @@ public class RiskItem {
     }
 
     public String getInformation() {
-        String date = String.format("Current Time: %1$tm/%1$td/%1$tY %1$tH:%1$tM:%1$tS", occurredDate);
-        return String.format("on %s, calculated risk of %s with comment: ", date, riskCriteria.getName() + remark);
+        return MessageFormat.format(
+                "At {0,time} on {0,date}, calculated risk of {1} with comment: {2}",
+                occurredDate, riskCriteria.getName(), remark);
     }
 }

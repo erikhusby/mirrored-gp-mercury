@@ -265,6 +265,32 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderDao.persist(productOrder);
     }
 
+    @Test(enabled = true)
+    public void removeSamplesForGPLIM877() {
+        List<String> samplesToRemove = Arrays.asList(
+                "SM-1WJOV",
+                "SM-1WJOX",
+                "SM-1WJPC",
+                "SM-1WJPD");
+
+        String pdo="PDO-388";
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
+
+        List<ProductOrderSample> sampleList = productOrder.getSamples();
+
+        Iterator<ProductOrderSample> sampleIterator = sampleList.iterator();
+        while (sampleIterator.hasNext()) {
+            ProductOrderSample sample = sampleIterator.next();
+
+            if (samplesToRemove.contains(sample.getSampleName())) {
+                sampleIterator.remove();
+            }
+        }
+
+        productOrderDao.persist(productOrder);
+    }
+
     @Test(enabled = false)
     public void setupOnRiskTestData() {
 
@@ -283,7 +309,10 @@ public class ProductOrderFixupTest extends Arquillian {
                 RiskItem riskItem = new RiskItem(riskCriteria, sample, new Date());
                 riskItem.setRemark("Bad Concentration found");
                 riskItem.setProductOrderSample(sample);
+                // riskDao.persist(riskItem);
+
                 sample.setRiskItems(Collections.singletonList(riskItem));
+                productOrderSampleDao.persist(sample);
             }
         }
 

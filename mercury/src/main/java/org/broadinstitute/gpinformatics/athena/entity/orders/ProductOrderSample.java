@@ -396,15 +396,15 @@ public class ProductOrderSample implements Serializable {
     }
 
     public String getRiskString() {
-        String riskString = "";
+        StringBuilder riskStringBuilder = new StringBuilder();
 
         if (isOnRisk()) {
             for (RiskItem riskItem : riskItems) {
-                riskString += riskItem.getInformation();
+                riskStringBuilder.append(riskItem.getInformation());
             }
         }
 
-        return riskString;
+        return riskStringBuilder.toString();
     }
 
     public void setRiskItems(Collection<RiskItem> riskItems) {
