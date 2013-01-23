@@ -1051,10 +1051,8 @@ public class LabEventFactory implements Serializable {
 
         Set<UniqueEvent> uniqueEvents = new HashSet<UniqueEvent>();
 
-        //        for (Map.Entry<String, Collection<LabVessel>> mapEntry : entryCollection.entrySet()) {
         for (BucketEntry mapEntry : entryCollection) {
             List<LabEvent> events = new LinkedList<LabEvent>();
-            //            for (LabVessel currVessel : mapEntry.getLabVessel()) {
             LabEvent currEvent = createFromBatchItems(mapEntry.getPoBusinessKey(), mapEntry.getLabVessel(),
                                                       workCounter++, operator, eventType, eventLocation);
             if (null != batchIn) {
@@ -1063,7 +1061,6 @@ public class LabEventFactory implements Serializable {
 
             persistLabEvent(uniqueEvents, currEvent, false);
             events.add(currEvent);
-            //            }
             fullEventList.addAll(events);
         }
         return fullEventList;
@@ -1073,9 +1070,6 @@ public class LabEventFactory implements Serializable {
      *
      * Actually does the work to create an event for a given {@link LabVessel}.  Will associate the related Product '
      * Order ID to the event for reference
-     *
-     *
-     *
      *
      * @param pdoKey
      * @param batchItem
@@ -1094,7 +1088,11 @@ public class LabEventFactory implements Serializable {
         LabEvent bucketMoveEvent = new LabEvent ( eventType, new Date (), eventLocation, disambiguator, operatorInfo );
 
         bucketMoveEvent.setProductOrderId ( pdoKey );
+
+        //TODO SGM: add to container.
         batchItem.addInPlaceEvent(bucketMoveEvent);
+
+        //TODO SGM: If LabVessel has a batch waiting to be associated with an event, add it here
 
         return bucketMoveEvent;
     }

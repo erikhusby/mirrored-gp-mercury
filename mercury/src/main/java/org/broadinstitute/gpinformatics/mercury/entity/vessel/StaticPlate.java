@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.hibernate.envers.Audited;
 
@@ -10,10 +12,12 @@ import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
 import javax.persistence.Table;
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.CONTAINER_TYPE.STATIC_PLATE;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalControl.ContinueTraversing;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalControl.StopTraversing;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
 
 /**
  * A traditional plate.
@@ -81,6 +85,160 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
 
     /** For Hibernate */
     protected StaticPlate() {
+    }
+
+    /**
+     * Returns a list of plates (in no specific order) that had material directly transferred into this plate.
+     *
+     * Note, some sense of order might be preserved if LabVessel.getTransfersTo() used a LinkedHashSet to gather the events.
+     *
+     * @return immediate plate parents
+     */
+    public List<StaticPlate> getImmediatePlateParents() {
+        List<StaticPlate> parents = new ArrayList<StaticPlate>();
+        for (LabEvent event : getTransfersTo()) {
+            for (LabVessel source : event.getSourceLabVessels()) {
+                if (source.getType() == STATIC_PLATE) {
+                    parents.add(OrmUtil.proxySafeCast(source, StaticPlate.class));
+                }
+            }
+        }
+        return parents;
+    }
+
+    public static class HasRackContentByWellCriteria implements TransferTraverserCriteria {
+
+        private Map<VesselPosition, Boolean> result = new HashMap<VesselPosition, Boolean>();
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            result.put(context.getVesselPosition(), false);
+            if (context.getLabVessel() != null) {
+                if (OrmUtil.proxySafeIsInstance(context.getVesselContainer().getEmbedder(), TubeFormation.class)) {
+                    result.put(context.getVesselPosition(), true);
+                    return TraversalControl.StopTraversing;
+                }
+            }
+            return TraversalControl.ContinueTraversing;
+        }
+
+        @Override
+        public void evaluateVesselInOrder(Context context) {}
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {}
+
+        public Map<VesselPosition, Boolean> getResult() {
+            return result;
+        }
+    }
+
+    /**
+     * Returns, for each well position, whether or not there has been a source tube in a tube rack somewhere in the
+     * ancestry.
+     *
+     * @return
+     */
+    public Map<VesselPosition, Boolean> getHasRackContentByWell() {
+        HasRackContentByWellCriteria criteria = new HasRackContentByWellCriteria();
+        applyCriteriaToAllWells(criteria);
+        return criteria.getResult();
+    }
+
+    public static class NearestTubeAncestorsCriteria implements TransferTraverserCriteria {
+
+        private Set<LabVessel> tubes = new HashSet<LabVessel>();
+        private Set<VesselAndPosition> vesselAndPositions = new LinkedHashSet<VesselAndPosition>();
+
+        @Override
+        public TraversalControl evaluateVesselPreOrder(Context context) {
+            if (OrmUtil.proxySafeIsInstance(context.getLabVessel(), TwoDBarcodedTube.class)) {
+                tubes.add(context.getLabVessel());
+                vesselAndPositions.add(new VesselAndPosition(context.getLabVessel(), context.getVesselPosition()));
+                return StopTraversing;
+            } else {
+                return ContinueTraversing;
+            }
+        }
+
+        @Override
+        public void evaluateVesselInOrder(Context context) {}
+
+        @Override
+        public void evaluateVesselPostOrder(Context context) {}
+
+        public Set<LabVessel> getTubes() {
+            return tubes;
+        }
+
+        public Set<VesselAndPosition> getVesselAndPositions() {
+            return vesselAndPositions;
+        }
+    }
+
+    /**
+     * Returns a list of the most immediate tube ancestors for each well. The "distance" from this plate across upstream
+     * plate transfers is not relevant; all upstream branches are traversed until either a tube is found or the branch
+     * ends.
+     *
+     * @return all nearest tube ancestors
+     */
+    public List<VesselAndPosition> getNearestTubeAncestors() {
+        final List<VesselAndPosition> vesselAndPositions = new ArrayList<VesselAndPosition>();
+        Iterator<String> positionNames = plateType.getVesselGeometry().getPositionNames();
+/*
+        while (positionNames.hasNext()) {
+            String positionName = positionNames.next();
+            VesselPosition vesselPosition = VesselPosition.getByName(positionName);
+            NearestTubeAncestorsCriteria criteria = new NearestTubeAncestorsCriteria();
+            vesselContainer.evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
+            for (LabVessel tube : criteria.getTubes()) {
+                vesselAndPositions.add(new VesselAndPosition(tube, vesselPosition));
+            }
+        }
+        return vesselAndPositions;
+*/
+        NearestTubeAncestorsCriteria criteria = new NearestTubeAncestorsCriteria();
+        applyCriteriaToAllWells(criteria);
+        return new ArrayList<VesselAndPosition>(criteria.getVesselAndPositions());
+    }
+
+    /**
+     * Traverses section transfer ancestors, returning section transfers up to the specified depth.
+     *
+     * Does not use a TransferTraverserCriteria because the goal is to look at the plate as a whole instead of focusing
+     * on individual wells.
+     *
+     * @param depth
+     * @return
+     */
+    public List<SectionTransfer> getUpstreamPlateTransfers(int depth) {
+        Set<SectionTransfer> sectionTransfers = new LinkedHashSet<SectionTransfer>();
+        recursePlateTransfers(sectionTransfers, vesselContainer, depth, 1);
+        return new ArrayList<SectionTransfer>(sectionTransfers);
+    }
+
+    private void recursePlateTransfers(Set<SectionTransfer> transfers, VesselContainer vesselContainer, int depth, int currentDepth) {
+        Set<SectionTransfer> sectionTransfersTo = vesselContainer.getSectionTransfersTo();
+        for (SectionTransfer sectionTransfer : sectionTransfersTo) {
+            recurseSectionTransfer(transfers, depth, currentDepth, sectionTransfer);
+        }
+    }
+
+    private void recurseSectionTransfer(Set<SectionTransfer> transfers, int depth, int currentDepth, SectionTransfer sectionTransfer) {
+        transfers.add(sectionTransfer);
+        if (currentDepth < depth) {
+            recursePlateTransfers(transfers, sectionTransfer.getSourceVesselContainer(), depth, currentDepth + 1);
+        }
+    }
+
+    private void applyCriteriaToAllWells(TransferTraverserCriteria criteria) {
+        Iterator<String> positionNames = plateType.getVesselGeometry().getPositionNames();
+        while (positionNames.hasNext()) {
+            String positionName = positionNames.next();
+            VesselPosition vesselPosition = VesselPosition.getByName(positionName);
+            vesselContainer.evaluateCriteria(vesselPosition, criteria, Ancestors, null, 0);
+        }
     }
 
     @Override

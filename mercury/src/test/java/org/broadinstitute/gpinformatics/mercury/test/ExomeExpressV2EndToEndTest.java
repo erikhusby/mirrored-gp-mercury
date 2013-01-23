@@ -12,12 +12,20 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
+import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
@@ -25,21 +33,13 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
+import org.easymock.EasyMock;
 import org.testng.annotations.Test;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Test Exome Express in Mercury
@@ -47,21 +47,63 @@ import java.util.Map;
 public class ExomeExpressV2EndToEndTest {
 
     public static List<String> RACK_COLUMNS = Arrays.asList("1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11",
-                                                            "12");
-    public static List<String> RACK_ROWS    = Arrays.asList("A", "B", "C", "D", "E", "F", "G", "H");
+            "12");
+    public static List<String> RACK_ROWS = Arrays.asList("A", "B", "C", "D", "E", "F", "G", "H");
 
     @Test
     public void test() {
 
-        LabEventHandler leHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance());
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         BSPUserList testUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
 
         LabEventFactory labEventFactory = new LabEventFactory(testUserList);
+
+        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
+        ProductOrder productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
+                "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
+                40, null, null, true, "Exome Express", false), new ResearchProject(101L, "Test RP", "Test synopsis",
+                false));
+        String jiraTicketKey = "PD0-1";
+        productOrder1.setJiraTicketKey(jiraTicketKey);
+        productOrder1.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+
+
+        LabBatchEjb labBatchEJB = new LabBatchEjb();
+        labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
+        labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+
+        LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
+        labBatchEJB.setTubeDAO(tubeDao);
+
+        JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
+        labBatchEJB.setJiraTicketDao(mockJira);
+
+        LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
+        labBatchEJB.setLabBatchDao(labBatchDAO);
+
+
+//        LabEventTest.MockBucket workingShearingBucket= new LabEventTest.MockBucket("Shearing Bucket",jiraTicketKey);
+        LabEventTest.MockBucket workingPicoBucket= new LabEventTest.MockBucket("Pico/Plating Bucket",jiraTicketKey);
+        Bucket workingShearingBucket= new Bucket(new WorkflowStepDef("Shearing Bucket"));
+
+        BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
+        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket")))
+                .andReturn(workingShearingBucket);
+        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket")))
+                .andReturn(workingShearingBucket);
+        EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Pico/Plating Bucket")))
+                .andReturn(workingPicoBucket);
+        BucketBean bucketBean = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
+        EasyMock.replay(mockBucketDao, tubeDao, mockJira, labBatchDAO);
+
         final String testActor = "hrafal";
 
-        BucketBean bucketBean = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance());
+        LabEventHandler leHandler =
+                new LabEventHandler(new WorkflowLoader(), AthenaClientProducer
+                        .stubInstance(), bucketBean, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer
+                        .stubInstance()));
+
 
         // Bucket for Shearing - enters from workflow?
         WorkflowLoader workflowLoader = new WorkflowLoader();
@@ -82,14 +124,6 @@ public class ExomeExpressV2EndToEndTest {
         // Create Product Order (key lab personnel and PDMs are notified)
         //        ProductOrder productOrder1 = AthenaClientServiceStub.createDummyProductOrder();
 
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
-        ProductOrder productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
-                "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, "Exome Express", false), new ResearchProject(101L, "Test RP", "Test synopsis",
-                                                                                   false));
-        String jiraTicketKey = "PD0-1";
-        productOrder1.setJiraTicketKey(jiraTicketKey);
-        productOrder1.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
         List<String> shearingTubeBarcodes = new ArrayList<String>()/*Arrays.asList("SH1", "SH2", "SH3")*/;
         Map<String, String> barcodesByRackPositions = new HashMap<String, String>();
@@ -132,55 +166,76 @@ public class ExomeExpressV2EndToEndTest {
         // BSP registers batch in Mercury
         // BSP Manual messaging for extractions, various batches
 
-        //May Happen in BSP Before bucket
-        //        PlateTransferEventType plateTransferEventType = exexJaxbBuilder.getPlateToShearTubeTransferEventJaxb();
-        PlateTransferEventType plateTransferEventType = bettaLimsMessageFactory.buildPlateToRack(
-                "PlatingToShearingTubes", "NormPlate", "CovarisRack", shearingTubeBarcodes);
-        Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes = new HashMap<String, TwoDBarcodedTube>();
-        RackOfTubes targetRackOfTubes = null;
-        LabEvent labEvent = labEventFactory.buildFromBettaLimsPlateToRackDbFree(plateTransferEventType, new StaticPlate(
-                "NormPlate", StaticPlate.PlateType.Eppendorf96), mapBarcodeToTargetTubes, targetRackOfTubes);
+//        PlateEventType
+        /*
+            BSP Pico Work.
+            Rack of tubes "Taken out of" bucket.  Run through all pico steps.  Awaits final
+          */
+
+        Map<String, ProductOrder> keyToPoMap = new HashMap<String, ProductOrder>();
+        keyToPoMap.put(productOrder1.getBusinessKey(), productOrder1);
+
+        LabEventTest.PicoPlatingEntityBuider pplatingEntityBuilder =
+                new LabEventTest.PicoPlatingEntityBuider(bettaLimsMessageFactory,
+                labEventFactory, leHandler, mapBarcodeToTube, rackBarcode, keyToPoMap).invoke();
+
+        // Lab Event Factory should have put tubes into the Bucket after normalization
+        Assert.assertEquals(LabEventTest.NUM_POSITIONS_IN_RACK,workingShearingBucket.getBucketEntries().size());
+
         // Bucket for Shearing - enters from workflow?
 
-        Bucket shearingBucket = new Bucket(new WorkflowBucketDef("Shearing Bucket"));
-
-        Collection<LabVessel> vessels = labEvent.getTargetLabVessels();
-        //                new LinkedList<LabVessel>(mapBarcodeToTube.values());
-
-        bucketBean.add(productOrder1.getBusinessKey(), vessels, shearingBucket, testActor, "");
-
-        /*
-                LabEventTest.ExomeExpressShearingEntityBuilder exExShearingEntityBuilder =
-                        new LabEventTest.ExomeExpressShearingEntityBuilder(mapBarcodeToTube,
-                                                                           buildTubeFormation(mapBarcodeToTube,rackBarcode ,barcodesByRackPositions),
-                                                                           bettaLimsMessageFactory, labEventFactory, leHandler,
-                                                                           rackBarcode );
-                exExShearingEntityBuilder.addProductOrderToMap(productOrder1);
-                exExShearingEntityBuilder.invoke();
-        */
-
-        LabEventTest.ExomeExpressShearingJaxbBuilder exexJaxbBuilder = new LabEventTest.ExomeExpressShearingJaxbBuilder(
-                bettaLimsMessageFactory, shearingTubeBarcodes, "", rackBarcode);
+        LabEventTest.ExomeExpressShearingJaxbBuilder exexJaxbBuilder =
+                new LabEventTest.ExomeExpressShearingJaxbBuilder(bettaLimsMessageFactory,
+                        new ArrayList<String>(pplatingEntityBuilder.getNormBarcodeToTubeMap().keySet()), "",
+                        pplatingEntityBuilder.getNormalizationBarcode());
         exexJaxbBuilder.invoke();
 
+
+        //TODO SGM   SHould this validate be on the tube formation?
+        LabEventTest.validateWorkflow(LabEventType.PLATING_TO_SHEARING_TUBES.getName(),
+                pplatingEntityBuilder.getNormBarcodeToTubeMap().values());
+        PlateTransferEventType plateToShearXfer = exexJaxbBuilder.getPlateToShearTubeTransferEventJaxb();
+        LabEvent pToShearEvent = labEventFactory.buildFromBettaLimsRackToPlateDbFree(plateToShearXfer,
+                pplatingEntityBuilder.getNormTubeFormation(),
+                new StaticPlate("CovarisPlate", StaticPlate.PlateType.Eppendorf96));
+        StaticPlate shearingPlate = (StaticPlate) pToShearEvent.getTargetLabVessels().iterator().next();
+        leHandler.processEvent(pToShearEvent);
+
+
+        // Bucket should have been drained after Plating to Shearing Tubes
+        Assert.assertEquals(0,workingShearingBucket.getBucketEntries().size());
+
+
+        LabEventTest.validateWorkflow(LabEventType.COVARIS_LOADED.getName(),
+                pToShearEvent.getTargetLabVessels());
+        // When the above event is executed, the items should be removed from the bucket.
         PlateTransferEventType covarisxfer = exexJaxbBuilder.getCovarisLoadEventJaxb();
+        LabEvent covarisEvent = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(covarisxfer,
+                (StaticPlate) pToShearEvent.getTargetLabVessels().iterator().next(),
+                new StaticPlate("NormPlate", StaticPlate.PlateType.Eppendorf96));
+        leHandler.processEvent(covarisEvent);
+        StaticPlate covarisPlate = (StaticPlate) covarisEvent.getTargetLabVessels().iterator().next();
 
-        LabEvent covarisEvent = labEventFactory.buildFromBettaLimsRackToPlateDbFree(covarisxfer, buildTubeFormation(
-                mapBarcodeToTube, rackBarcode, barcodesByRackPositions), new StaticPlate("NormPlate",
-                                                                                                          StaticPlate.PlateType.Eppendorf96));
 
-        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
-                productOrder1.getProduct().getWorkflowName());
-        ProductWorkflowDefVersion productWorkflowDefVersion = productWorkflowDef.getEffectiveVersion();
+        LabEventTest.validateWorkflow(LabEventType.POST_SHEARING_TRANSFER_CLEANUP.getName(),covarisPlate);
+        LabEvent postShearingTransferCleanupEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
+                exexJaxbBuilder.getPostShearingTransferCleanupEventJaxb(), covarisPlate, null);
+        leHandler.processEvent(postShearingTransferCleanupEntity);
+        StaticPlate shearingCleanupPlate =
+                (StaticPlate) postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next();
 
-        Map<WorkflowStepDef, Collection<LabVessel>> bucketToVessels = leHandler.itemizeBucketItems(covarisEvent);
 
-        Assert.assertTrue(bucketToVessels.keySet().size() == 1);
+        LabEventTest.validateWorkflow(LabEventType.SHEARING_QC.getName(), shearingCleanupPlate);
+        LabEvent shearingQcEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
+                exexJaxbBuilder.getShearingQcEventJaxb(), shearingCleanupPlate, null);
+        leHandler.processEvent(shearingQcEntity);
 
-        Assert.assertEquals(shearingBucket.getBucketDefinitionName(),
-                            bucketToVessels.keySet().iterator().next().getName());
 
-        bucketBean.startDBFree(testActor, labEvent.getTargetLabVessels(),shearingBucket,labEvent.getEventLocation());
+        LabEventTest.LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LabEventTest.LibraryConstructionEntityBuilder(
+                bettaLimsMessageFactory, labEventFactory, leHandler,
+                shearingCleanupPlate,  postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next().getLabel(),
+                shearingPlate, LabEventTest.NUM_POSITIONS_IN_RACK).invoke();
+
 
 
         //        // todo plates vs tubes?
@@ -188,9 +243,6 @@ public class ExomeExpressV2EndToEndTest {
         //        // - Deck calls web service to validate next action against workflow and batch
         //        // Decks (BSP and Sequencing) send messages to Mercury, first message auto-drains bucket
         //
-        //        leHandler.processEvent(labEvent);
-
-        //        bucketBean.startDBFree(testActor, vessels, shearingBucket, labEvent.getEventLocation());
 
         // Various messages advance workflow (test JMS vs JAX-RS)
         // Non ExEx messages handled by BettaLIMS
@@ -208,11 +260,37 @@ public class ExomeExpressV2EndToEndTest {
         // Add library to queue for sequencing
         // Register library to MiSeq
         // Create pool group
+        LabEventTest.HybridSelectionEntityBuilder hybridSelectionEntityBuilder = new LabEventTest.HybridSelectionEntityBuilder(
+                bettaLimsMessageFactory, labEventFactory, leHandler,
+                libraryConstructionEntityBuilder.getPondRegRack(),
+                libraryConstructionEntityBuilder.getPondRegRackBarcode(),
+                libraryConstructionEntityBuilder.getPondRegTubeBarcodes()).invoke();
+
         // Pooling calculator
         // Strip Tube B
         // Create Flowcell JIRA
+        LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(bettaLimsMessageFactory, labEventFactory,
+                leHandler,
+                hybridSelectionEntityBuilder.getNormCatchRack(),
+                hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
+                hybridSelectionEntityBuilder.getNormCatchBarcodes(),
+                hybridSelectionEntityBuilder
+                        .getMapBarcodeToNormCatchTubes());
+        qtpEntityBuilder.invoke();
         // MiSeq reagent block transfer message
         // Register run
+        IlluminaSequencingRunFactory illuminaSequencingRunFactory = new IlluminaSequencingRunFactory();
+        IlluminaSequencingRun illuminaSequencingRun;
+        try {
+            illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
+                    qtpEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode(), "Run1", new Date(), "SL-HAL",
+                    File.createTempFile("RunDir", ".txt").getAbsolutePath(), null),
+                    qtpEntityBuilder.getIlluminaFlowcell());
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+
         // Analysis calls ZIMS
         // BASS?
         // View PDO details screen, including analysis progress, aggregations and sequencing metrics
@@ -220,6 +298,9 @@ public class ExomeExpressV2EndToEndTest {
         // Billing
         // Submissions
         // Reporting
+
+        EasyMock.verify(mockBucketDao);
+
     }
 
     /**
@@ -228,7 +309,6 @@ public class ExomeExpressV2EndToEndTest {
      * @param mapBarcodeToTubes    source tubes
      * @param barcode              barcode Barcode
      * @param barcodeByPositionMap JAXB list of tube barcodes
-     *
      * @return entity
      */
     private TubeFormation buildTubeFormation(Map<String, TwoDBarcodedTube> mapBarcodeToTubes, String barcode,

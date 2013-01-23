@@ -13,6 +13,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import java.util.List;
 import java.util.UUID;
 
@@ -26,6 +27,10 @@ public class ResearchProjectResourceTest extends ContainerTest {
     private static final long TEST_SCIENTIST_1 = 14567;
     private static final long TEST_SCIENTIST_2 = 11908;
 
+    // Transaction is used for this test just to set up data for the 'real' test
+    @Inject
+    private UserTransaction utx;
+
     @Inject
     ResearchProjectResource researchProjectResource;
 
@@ -36,6 +41,12 @@ public class ResearchProjectResourceTest extends ContainerTest {
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
+        }
+
+        utx.begin();
         // Only do this if the server is calling this and thus, injection worked
         if (researchProjectResource != null) {
             testTitle = "MyResearchProject_" + UUID.randomUUID();
@@ -78,6 +89,14 @@ public class ResearchProjectResourceTest extends ContainerTest {
             ResearchProject researchProject = researchProjectResource.findResearchProjectByTitle(testTitle);
             researchProjectDao.remove(researchProject);
         }
+
+        // Skip if no injections, meaning we're not running in container
+        if (utx == null) {
+            return;
+        }
+
+        utx.rollback();
+
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
