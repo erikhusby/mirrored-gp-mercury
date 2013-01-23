@@ -8,9 +8,7 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import java.text.MessageFormat;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 
 /**
  * The purpose of this class is to capture any risks that
@@ -25,7 +23,7 @@ import java.util.GregorianCalendar;
 @Table(schema = "ATHENA", name = "RISK_ITEM" )
 public class RiskItem {
     @Id
-    @SequenceGenerator(name = "SEQ_RISK", schema = "ATHENA", sequenceName = "SEQ_RISK", allocationSize = 10)
+    @SequenceGenerator(name = "SEQ_RISK", schema = "ATHENA", sequenceName = "SEQ_RISK")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_RISK")
     private Long risk_id;
 
