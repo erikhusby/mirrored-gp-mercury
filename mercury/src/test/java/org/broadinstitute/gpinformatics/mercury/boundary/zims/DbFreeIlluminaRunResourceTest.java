@@ -47,7 +47,7 @@ public class DbFreeIlluminaRunResourceTest {
         ZimsIlluminaRun runBean = new IlluminaRunResource().getRun(null);
 
         Assert.assertNotNull(runBean.getError());
-        Assert.assertEquals("runName cannot be null",runBean.getError());
+        Assert.assertTrue(runBean.getError().contains("Failed while running pipeline query for run"));
     }
 
     @Test(groups = DATABASE_FREE)
