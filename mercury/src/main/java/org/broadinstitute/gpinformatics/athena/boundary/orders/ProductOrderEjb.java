@@ -445,6 +445,7 @@ public class ProductOrderEjb {
 
         jiraService.addComment(order.getJiraTicketKey(), getUserName() + " transitioned samples to status " +
                 targetStatus.getDisplayName() + ":\n" + StringUtils.join(messagePieces, "\n"));
+
     }
 
 
