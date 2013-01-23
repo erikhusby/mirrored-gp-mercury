@@ -105,7 +105,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         order.setJiraTicketKey(getTestProductOrderKey());
         BspUser testUser = new BspUser();
         testUser.setUserId(TEST_CREATOR_ID);
-        order.prepareToSave(testUser);
+        order.prepareToSave(testUser, true);
 
         return order;
     }
