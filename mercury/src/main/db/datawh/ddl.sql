@@ -5,6 +5,7 @@ DROP INDEX research_project_irb_idx1;
 DROP INDEX product_order_idx1;
 DROP INDEX product_order_idx2;
 DROP INDEX product_order_sample_idx1;
+DROP INDEX event_fact_idx1;
 
 ALTER TABLE research_project_status DROP CONSTRAINT fk_rp_status_rpid;
 ALTER TABLE research_project_person DROP CONSTRAINT fk_rp_person_rpid;
@@ -18,6 +19,10 @@ ALTER TABLE product_order_sample DROP CONSTRAINT fk_pos_poid;
 ALTER TABLE product_order_sample_status DROP CONSTRAINT fk_po_sample_b_s_po_sid;
 ALTER TABLE product_order_add_on DROP CONSTRAINT fk_po_add_on_prodid;
 ALTER TABLE product_order_add_on DROP CONSTRAINT fk_po_add_on_poid;
+ALTER TABLE event_fact DROP CONSTRAINT fk_event_lab_batch;
+ALTER TABLE event_fact DROP CONSTRAINT fk_event_lab_vessel;
+ALTER TABLE event_fact DROP CONSTRAINT fk_event_workflow_config;
+ALTER TABLE event_fact DROP CONSTRAINT fk_event_pdo;
 
 DROP TABLE product_order_add_on;
 DROP TABLE product_order_sample_status;
@@ -32,6 +37,31 @@ DROP TABLE research_project_status;
 DROP TABLE research_project;
 DROP TABLE price_item;
 DROP TABLE product;
+DROP TABLE lab_batch;
+DROP TABLE lab_vessel;
+DROP TABLE workflow_config;
+DROP TABLE event_fact;
+
+DROP SEQUENCE event_fact_id_seq;
+
+DROP TABLE im_product_order_add_on;
+DROP TABLE im_product_order_sample_stat;
+DROP TABLE im_product_order_sample;
+DROP TABLE im_product_order_status;
+DROP TABLE im_product_order;
+DROP TABLE im_research_project_irb;
+DROP TABLE im_research_project_cohort;
+DROP TABLE im_research_project_funding;
+DROP TABLE im_research_project_person;
+DROP TABLE im_research_project;
+DROP TABLE im_research_project_status;
+DROP TABLE im_price_item;
+DROP TABLE im_product;
+DROP TABLE im_lab_vessel;
+DROP TABLE im_lab_batch;
+DROP TABLE im_workflow_config;
+DROP TABLE im_event_fact;
+
 
 
 CREATE TABLE product (
@@ -99,8 +129,7 @@ CREATE TABLE research_project_funding (
   research_project_id NUMERIC(19) NOT NULL,
   funding_id VARCHAR2(255) NOT NULL,
   etl_date DATE NOT NULL,
-  CONSTRAINT fk_rp_funding_rpid FOREIGN KEY (research_project_id)
-    REFERENCES research_project(research_project_id)
+  CONSTRAINT fk_rp_funding_rpid FOREIGN KEY (research_project_id) REFERENCES research_project(research_project_id)
 );
 CREATE INDEX research_project_fund_idx1 ON research_project_funding(research_project_id);
 
@@ -108,8 +137,7 @@ CREATE TABLE research_project_cohort (
   research_project_cohort_id NUMERIC(19) NOT NULL PRIMARY KEY,
   research_project_id NUMERIC(19) NOT NULL,
   etl_date DATE NOT NULL,
-  CONSTRAINT fk_rp_cohort_rpid FOREIGN KEY (research_project_id)
-    REFERENCES research_project(research_project_id)
+  CONSTRAINT fk_rp_cohort_rpid FOREIGN KEY (research_project_id) REFERENCES research_project(research_project_id)
 );
 CREATE INDEX research_project_cohort_idx1 ON research_project_cohort(research_project_id);
 
@@ -119,26 +147,23 @@ CREATE TABLE research_project_irb (
   research_project_irb VARCHAR2(255) NOT NULL,
   research_project_irb_type VARCHAR2(255) NOT NULL,
   etl_date DATE NOT NULL,
-  CONSTRAINT fk_rp_irb_rpid FOREIGN KEY (research_project_id)
-    REFERENCES research_project(research_project_id)
+  CONSTRAINT fk_rp_irb_rpid FOREIGN KEY (research_project_id) REFERENCES research_project(research_project_id)
 );
 CREATE INDEX research_project_irb_idx1 ON research_project_irb(research_project_id);
 
 CREATE TABLE product_order (
   product_order_id NUMERIC(19) PRIMARY KEY NOT NULL,
-  research_project_id NUMERIC(19) NOT NULL,
-  product_id NUMERIC(19) NOT NULL,
+  research_project_id NUMERIC(19),
+  product_id NUMERIC(19),
   status VARCHAR2(40) NOT NULL,
-  created_date DATE NOT NULL,
+  created_date DATE,
   modified_date DATE,
   title VARCHAR2(255),
   quote_id VARCHAR2(255),
   jira_ticket_key VARCHAR2(255),
   etl_date DATE NOT NULL,
-  CONSTRAINT fk_po_rpid FOREIGN KEY (research_project_id)
-    REFERENCES research_project(research_project_id),
-  CONSTRAINT fk_po_productid FOREIGN KEY (product_id)
-    REFERENCES product(product_id)
+  CONSTRAINT fk_po_rpid FOREIGN KEY (research_project_id) REFERENCES research_project(research_project_id),
+  CONSTRAINT fk_po_productid FOREIGN KEY (product_id) REFERENCES product(product_id)
 );
 
 CREATE INDEX product_order_idx1 ON product_order(research_project_id);
@@ -149,8 +174,7 @@ CREATE TABLE product_order_status (
   status_date DATE NOT NULL,
   status VARCHAR2(40) NOT NULL,
   etl_date DATE NOT NULL,
-  CONSTRAINT fk_po_status_poid FOREIGN KEY (product_order_id)
-    REFERENCES product_order(product_order_id),
+  CONSTRAINT fk_po_status_poid FOREIGN KEY (product_order_id) REFERENCES product_order(product_order_id),
   PRIMARY KEY (product_order_id, status_date)
 );
 
@@ -161,8 +185,7 @@ CREATE TABLE product_order_sample (
   delivery_status VARCHAR2(40) NOT NULL,
   sample_position NUMERIC(19) NOT NULL,
   etl_date DATE NOT NULL,
-  CONSTRAINT fk_pos_poid FOREIGN KEY (product_order_id)
-    REFERENCES product_order(product_order_id)
+  CONSTRAINT fk_pos_poid FOREIGN KEY (product_order_id) REFERENCES product_order(product_order_id)
 );
 
 CREATE INDEX product_order_sample_idx1 ON product_order_sample(product_order_id);
@@ -182,28 +205,62 @@ CREATE TABLE product_order_add_on (
   product_order_id NUMERIC(19) NOT NULL,
   product_id NUMERIC(19) NOT NULL,
   etl_date DATE NOT NULL,
-  CONSTRAINT fk_po_add_on_prodid FOREIGN KEY (product_id)
-    REFERENCES product(product_id),
-  CONSTRAINT fk_po_add_on_poid FOREIGN KEY (product_order_id)
-    REFERENCES product_order(product_order_id)
+  CONSTRAINT fk_po_add_on_prodid FOREIGN KEY (product_id) REFERENCES product(product_id),
+  CONSTRAINT fk_po_add_on_poid FOREIGN KEY (product_order_id) REFERENCES product_order(product_order_id)
 );
 
 
--- Import tables
-DROP TABLE im_product_order_add_on;
-DROP TABLE im_product_order_sample_stat;
-DROP TABLE im_product_order_sample;
-DROP TABLE im_product_order_status;
-DROP TABLE im_product_order;
-DROP TABLE im_research_project_irb;
-DROP TABLE im_research_project_cohort;
-DROP TABLE im_research_project_funding;
-DROP TABLE im_research_project_person;
-DROP TABLE im_research_project;
-DROP TABLE im_research_project_status;
-DROP TABLE im_price_item;
-DROP TABLE im_product;
+CREATE TABLE lab_vessel (
+  lab_vessel_id NUMERIC(19) NOT NULL PRIMARY KEY,
+  label VARCHAR2(40) NOT NULL,
+  lab_vessel_type VARCHAR2(40) NOT NULL,
+  etl_date DATE NOT NULL
+);
 
+CREATE TABLE lab_batch (
+  lab_batch_id NUMERIC(19) NOT NULL PRIMARY KEY,
+  batch_name VARCHAR2(40) NOT NULL,
+  is_active CHAR(1) DEFAULT 'T' NOT NULL CHECK (is_active IN ('T','F')),
+  created_on DATE NOT NULL,
+  due_date DATE,
+  etl_date DATE NOT NULL
+);
+
+CREATE TABLE workflow_config (
+  workflow_config_id NUMERIC(19) NOT NULL PRIMARY KEY,
+  effective_date DATE NOT NULL,
+  workflow_name VARCHAR2(255) NOT NULL,
+  workflow_version VARCHAR2(40) NOT NULL,
+  process_name VARCHAR2(255) NOT NULL,
+  process_version VARCHAR2(40) NOT NULL,
+  step_name VARCHAR2(255) NOT NULL,
+  event_name VARCHAR2(255) NOT NULL,
+  etl_date DATE NOT NULL
+);
+
+CREATE TABLE event_fact (
+  event_fact_id NUMERIC(28) NOT NULL PRIMARY KEY,
+  lab_event_id NUMERIC(19) NOT NULL,
+  event_name VARCHAR2(255) NOT NULL,
+  workflow_config_id NUMERIC(19),
+  product_order_id NUMERIC(19),
+  sample_key  VARCHAR(40),
+  lab_batch_id NUMERIC(19),
+  station_name VARCHAR2(255),
+  lab_vessel_id NUMERIC(19),
+  event_date DATE NOT NULL,
+  etl_date DATE NOT NULL,
+  CONSTRAINT fk_event_lab_vessel FOREIGN KEY (lab_vessel_id) REFERENCES lab_vessel(lab_vessel_id),
+  CONSTRAINT fk_event_lab_batch FOREIGN KEY (lab_batch_id) REFERENCES lab_batch(lab_batch_id),
+  CONSTRAINT fk_event_pdo FOREIGN KEY (product_order_id) REFERENCES product_order(product_order_id),
+  CONSTRAINT fk_event_workflow_config FOREIGN KEY (workflow_config_id) REFERENCES workflow_config(workflow_config_id)
+);
+
+CREATE INDEX event_fact_idx1 ON event_fact(event_date);
+CREATE SEQUENCE event_fact_id_seq start with 1;
+
+
+-- The import tables
 
 CREATE TABLE im_product (
   line_number NUMERIC(9) NOT NULL,
@@ -350,5 +407,56 @@ CREATE TABLE im_product_order_add_on (
   product_order_id NUMERIC(19),
   product_id NUMERIC(19)
 );
+
+CREATE TABLE im_lab_vessel (
+  line_number NUMERIC(9) NOT NULL,
+  etl_date DATE NOT NULL,
+  is_delete CHAR(1) NOT NULL,
+  lab_vessel_id NUMERIC(19) NOT NULL,
+  label VARCHAR2(40),
+  lab_vessel_type VARCHAR2(40)
+);
+
+CREATE TABLE im_lab_batch (
+  line_number NUMERIC(9) NOT NULL,
+  etl_date DATE NOT NULL,
+  is_delete CHAR(1) NOT NULL,
+  lab_batch_id NUMERIC(19) NOT NULL,
+  batch_name VARCHAR2(40),
+  is_active CHAR(1),
+  created_on DATE,
+  due_date DATE
+);
+
+CREATE TABLE im_workflow_config (
+  line_number NUMERIC(9) NOT NULL,
+  etl_date DATE NOT NULL,
+  is_delete CHAR(1) NOT NULL,
+  workflow_config_id NUMERIC(19) NOT NULL,
+  effective_date DATE,
+  workflow_name VARCHAR2(255),
+  workflow_version VARCHAR2(40),
+  process_name VARCHAR2(255),
+  process_version VARCHAR2(40),
+  step_name VARCHAR2(255),
+  event_name VARCHAR2(255)
+);
+
+CREATE TABLE im_event_fact (
+  line_number NUMERIC(9) NOT NULL,
+  etl_date DATE NOT NULL,
+  is_delete CHAR(1) NOT NULL,
+  lab_event_id NUMERIC(19) NOT NULL,
+  event_name VARCHAR2(255),
+  workflow_config_id NUMERIC(19),
+  product_order_id NUMERIC(19),
+  sample_key  VARCHAR(40),
+  lab_batch_id NUMERIC(19),
+  station_name VARCHAR2(255),
+  lab_vessel_id NUMERIC(19),
+  event_date DATE,
+  event_fact_id NUMERIC(19) --this gets populated by merge_import.sql
+);
+
 
 COMMIT;
