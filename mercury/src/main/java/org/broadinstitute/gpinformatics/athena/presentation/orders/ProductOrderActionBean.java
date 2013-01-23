@@ -289,8 +289,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
 
-        returnStringStream = new StringReader(item.toString());
-        return new StreamingResolution("text", returnStringStream);
+        return createTextResolution(item.toString());
     }
 
     @DefaultHandler
@@ -419,16 +418,19 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
 
-        return new StreamingResolution("text", new StringReader(itemList.toString()));
+        return createTextResolution(itemList.toString());
     }
 
     @HandlesEvent("getSupportsNumberOfLanes")
     public Resolution getSupportsNumberOfLanes() throws Exception {
-
-        Product product = productDao.findByBusinessKey(this.product);
-
+        boolean lanesSupported = true;
         JSONObject item = new JSONObject();
-            item.put("supports", product.getSupportsNumberOfLanes());
+
+        if ( this.product != null ) {
+            Product product = productDao.findByBusinessKey(this.product);
+            lanesSupported =  product.getSupportsNumberOfLanes();
+        }
+        item.put("supports", lanesSupported);
 
         return new StreamingResolution("text", new StringReader(item.toString()));
     }

@@ -1,19 +1,17 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientHandlerException;
-import com.sun.jersey.api.client.UniformInterfaceException;
-import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.*;
 import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+import org.w3c.dom.Document;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.MediaType;
-import java.util.HashSet;
+import javax.xml.parsers.ParserConfigurationException;
 import java.util.Set;
 
 @Impl
@@ -26,8 +24,7 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         SINGLE_QUOTE("/portal/Quote/ws/portals/private/getquotes?with_funding=true&quote_alpha_ids="),
         ALL_SEQUENCING_QUOTES("/quotes/ws/portals/private/getquotes?platform_name=DNA+Sequencing&with_funding=true"),
         ALL_QUOTES("/quotes/ws/portals/private/getquotes?with_funding=true"),
-//        ALL_PRICE_ITEMS("/quotes/ws/portals/private/get_price_list"),
-        // the URL below is what the URL above redirects to, but the test fails either way
+        ALL_FUNDINGS("/quotes/rest/sql_report/41"),
         ALL_PRICE_ITEMS("/quotes/rest/price_list/10"),
         REGISTER_WORK("/quotes/ws/portals/private/createworkitem"),
         //TODO this next enum value will be removed soon.
@@ -116,7 +113,6 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
         return quote;
     }
 
-
     /*
      * protected method to get all quote.
      * Can be overridden by mocks.
@@ -126,7 +122,6 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
      */
     @Override
     public Quotes getAllQuotes() throws QuoteServerException, QuoteNotFoundException {
-        //TODO probably best to Cache this data some how and refresh frequently async on separate thread.
         String url = url( Endpoint.ALL_QUOTES );
         WebResource resource = getJerseyClient().resource(url);
 
@@ -143,52 +138,21 @@ public class PMBQuoteServiceImpl extends AbstractJerseyClientService implements 
     }
 
     @Override
-    public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException {
-        Set<Funding> fundingSources = new HashSet<Funding>();
-        for (Quote quote : getAllQuotes().getQuotes()) {
-            if (quote.getQuoteFunding() != null) {
-                if (quote.getQuoteFunding().getFundingLevel() != null) {
-                    if (quote.getQuoteFunding().getFundingLevel().getFunding() != null) {
-                        Funding funding = quote.getQuoteFunding().getFundingLevel().getFunding();
-                        // Add it , if it has a type and a number associated with it
-                        if ((funding.getFundingType() != null) &&
-                            ((funding.getGrantNumber() != null) || (funding.getPurchaseOrderNumber() != null))) {
-                            fundingSources.add(funding);
-                        } else {
-                            String expiredState = (quote.getExpired() ? "Expired. " : "Non-Expired. ");
-                            logger.info("Ignoring quote  " + quote.getAlphanumericId()
-                                        + " because it has non-identifiable funding. " + expiredState
-                                        + " Funds Remaining: " + quote.getQuoteFunding().getFundsRemaining());
-                        }
-                    }
-                }
-            }
+    public Set<Funding> getAllFundingSources() throws QuoteServerException, QuoteNotFoundException, ParserConfigurationException {
+        String url = url( Endpoint.ALL_FUNDINGS);
+        WebResource resource = getJerseyClient().resource(url);
+
+        try {
+            GenericType<Document> document  = new GenericType<Document>() {};
+            Document doc = resource.accept(MediaType.APPLICATION_XML).get(document);
+            return Funding.getFundingSet(doc);
+        } catch (UniformInterfaceException e) {
+            throw new QuoteNotFoundException("Could not find any quotes at " + url);
+        } catch (ClientHandlerException e) {
+            throw new QuoteServerException("Could not communicate with quote server at " + url, e);
         }
-        return fundingSources;
+
     }
-
-    @Override
-    public Set<Quote> getQuotesInFundingSource(Funding fundingSource) throws QuoteServerException, QuoteNotFoundException {
-
-        HashSet<Quote> quotesByFundingSource = new HashSet<Quote>();
-
-        for (Quote quote : getAllQuotes().getQuotes()) {
-            if (quote.getQuoteFunding() != null) {
-                if (quote.getQuoteFunding().getFundingLevel() != null) {
-                    if (quote.getQuoteFunding().getFundingLevel().getFunding() != null) {
-                        Funding funding = quote.getQuoteFunding().getFundingLevel().getFunding();
-                        if ((funding.getGrantDescription() != null) && (funding.getGrantNumber() != null)) {
-                            if ( funding.equals(fundingSource)) {
-                                quotesByFundingSource.add(quote);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-        return quotesByFundingSource;
-    }
-
 
     @Override
     public PriceList getPlatformPriceItems(QuotePlatformType quotePlatformType) throws QuoteServerException, QuoteNotFoundException {

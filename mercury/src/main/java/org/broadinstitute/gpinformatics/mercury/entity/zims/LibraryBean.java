@@ -462,7 +462,7 @@ public class LibraryBean {
         return population;
     }
 
-    private String getCollaboratorParticipantId() {
+    public String getCollaboratorParticipantId() {
         return collaboratorParticipantId;
     }
 

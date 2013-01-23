@@ -286,7 +286,7 @@ public class IlluminaRunResourceTest extends Arquillian {
                 assertEquals(libBean.getProject(),zLib.getProject());
                 assertEquals(libBean.getWorkRequestId().longValue(),zLib.getWorkRequestId());
                 assertEquals(libBean.getCollaboratorSampleId(),zLib.getSampleAlias());
-                assertEquals(libBean.getParticipantId(),zLib.getIndividual());
+                assertEquals(libBean.getCollaboratorParticipantId(),zLib.getIndividual());
                 assertEquals(libBean.getAligner(),zLib.getAligner());
                 assertEquals(libBean.getAnalysisType(),zLib.getAnalysisType());
                 assertEquals(libBean.getBaitSetName(),zLib.getBaitSetName());

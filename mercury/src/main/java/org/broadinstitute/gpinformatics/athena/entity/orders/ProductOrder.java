@@ -101,7 +101,7 @@ public class ProductOrder implements Serializable {
     @JoinColumn(name = "product_order", nullable = false)
     @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
     @AuditJoinTable(name = "product_order_sample_join_aud")
-    private List<ProductOrderSample> samples = Collections.emptyList();
+    private List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
 
     @Transient
     private final SampleCounts counts = new SampleCounts();
@@ -453,14 +453,17 @@ public class ProductOrder implements Serializable {
     }
 
     public void setSamples(List<ProductOrderSample> samples) {
-        this.samples = samples;
+        this.samples.clear();
+
         int samplePos = 0;
         if (samples != null) {
             for (ProductOrderSample sample : samples) {
                 sample.setProductOrder(this);
-                sample.setSamplePosition( samplePos++ );
+                sample.setSamplePosition(samplePos++);
+                this.samples.add(sample);
             }
         }
+
         counts.invalidate();
     }
 
