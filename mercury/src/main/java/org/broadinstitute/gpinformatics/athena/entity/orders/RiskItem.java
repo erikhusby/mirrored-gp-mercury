@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
@@ -96,26 +98,18 @@ public class RiskItem {
         }
 
         final RiskItem riskItem = (RiskItem) o;
+        return new EqualsBuilder().append(occurredDate, riskItem.getOccurredDate())
+                .append(productOrderSample, riskItem.getProductOrderSample() )
+                .append(riskCriteria, riskItem.getRiskCriteria() ).isEquals();
 
-        if (!occurredDate.equals(riskItem.occurredDate)) {
-            return false;
-        }
-        if (!productOrderSample.equals(riskItem.productOrderSample)) {
-            return false;
-        }
-        if (!riskCriteria.equals(riskItem.riskCriteria)) {
-            return false;
-        }
-
-        return true;
     }
 
     @Override
     public int hashCode() {
-        int result = riskCriteria.hashCode();
-        result = 31 * result + productOrderSample.hashCode();
-        result = 31 * result + occurredDate.hashCode();
-        return result;
+        return new HashCodeBuilder()
+                .append(riskCriteria)
+                .append(productOrderSample)
+                .append(occurredDate).toHashCode();
     }
 
     public String getInformation() {

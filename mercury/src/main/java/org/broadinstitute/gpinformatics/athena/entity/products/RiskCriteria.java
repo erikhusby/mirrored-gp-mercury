@@ -4,6 +4,7 @@ import clover.org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 
 /**
@@ -33,7 +34,10 @@ public abstract class RiskCriteria {
     protected RiskCriteria() {
     }
 
-    protected RiskCriteria(String name) {
+    protected RiskCriteria(@Nonnull String name) {
+        if (StringUtils.isBlank(name)) {
+            throw new NullPointerException( "Invalid Risk Criteria: Name must be non-null.");
+        }
         this.name = name;
     }
 
@@ -45,9 +49,6 @@ public abstract class RiskCriteria {
     public abstract boolean onRisk(ProductOrderSample sample);
 
     public String getName() {
-        if (StringUtils.isBlank(name)) {
-            throw new NullPointerException( "Invalid Risk Criteria: Name must be non-null.");
-        }
         return name;
     }
 

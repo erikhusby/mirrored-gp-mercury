@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import junit.framework.Assert;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
