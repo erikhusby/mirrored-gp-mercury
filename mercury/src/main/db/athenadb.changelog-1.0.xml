@@ -2177,7 +2177,7 @@
                 <sequenceExists sequenceName="SEQ_RISK_CRITERIA" schemaName="athena"/>
             </not>
         </preConditions>
-        <createSequence sequenceName="SEQ_RISK_CRITERIA" startValue="1" schemaName="athena"/>
+        <createSequence sequenceName="SEQ_RISK_CRITERIA" startValue="1" incrementBy="50" schemaName="athena"/>
     </changeSet>
 
     <changeSet id="GPLIM-653.3" author="mccrory">
@@ -2287,10 +2287,10 @@
     <changeSet id="GPLIM-828.2" author="mccrory">
         <preConditions>
             <not>
-                <sequenceExists sequenceName="SEQ_RISK" schemaName="athena"/>
+                <sequenceExists sequenceName="SEQ_RISK_ITEM" schemaName="athena"/>
             </not>
         </preConditions>
-        <createSequence sequenceName="SEQ_RISK" startValue="1" schemaName="athena"/>
+        <createSequence sequenceName="SEQ_RISK_ITEM" startValue="1" incrementBy="50" schemaName="athena"/>
     </changeSet>
 
     <changeSet id="GPLIM-828.3" author="mccrory">
