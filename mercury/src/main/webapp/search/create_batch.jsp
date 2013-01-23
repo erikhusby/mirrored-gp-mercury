@@ -25,7 +25,7 @@
                         <div class="form-horizontal">
                             <div class="control-group" style="margin-bottom:5px;">
                                 <stripes:label for="barcode" class="control-label"
-                                               style="width: 60px;">barcode</stripes:label>
+                                               style="width: 60px;">Barcodes, PDOs or Sample names</stripes:label>
                                 <div class="controls" style="margin-left: 80px;">
                                     <stripes:textarea rows="5" cols="80" name="searchKey" id="name"
                                                       title="Enter the value to search"
