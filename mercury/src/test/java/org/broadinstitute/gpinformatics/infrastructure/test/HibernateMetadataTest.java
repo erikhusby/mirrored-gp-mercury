@@ -20,23 +20,14 @@ import org.testng.annotations.Test;
 
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class HibernateMetadataTest extends ContainerTest {
     @PersistenceContext(unitName = "mercury_pu")
     private EntityManager entityManager;
 
     // todo: make this an empty list!
-    private static final List<String> ignoredEntities = Arrays.asList(
-            "org.broadinstitute.gpinformatics.mercury.entity.workflow.Rework",
-            "rework_reworked_lab_vessels_AUD",
-            "WorkCompleteMessage_MessageDataValue_AUD",
-            "org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue_AUD",
-            "org.broadinstitute.gpinformatics.mercury.entity.workflow.Rework_AUD"
-    );
+    private static final List<String> ignoredEntities = Collections.EMPTY_LIST;// Arrays.asList( );
 
     /**
      * Method to allow user to ignore certain classes/entities in the testEverything method

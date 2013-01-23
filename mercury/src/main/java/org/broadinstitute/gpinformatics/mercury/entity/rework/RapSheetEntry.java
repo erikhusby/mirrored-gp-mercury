@@ -27,15 +27,17 @@ public abstract class RapSheetEntry {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_RAP_SHEET_ENTRY")
     private Long rapSheetEntryId;
 
-    @ManyToOne
     @NotNull
+    @ManyToOne(fetch = FetchType.LAZY,cascade = CascadeType.ALL)
     private RapSheet rapSheet;
 
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<LabVesselComment> labVesselComment;
+    @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    private LabVesselComment labVesselComment;
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @NotNull
     private LabVesselPosition labVesselPosition;
 
     public RapSheetEntry() {
@@ -53,11 +55,11 @@ public abstract class RapSheetEntry {
         this.rapSheet = rapSheet;
     }
 
-    public List<LabVesselComment> getLabVesselComment() {
+    public LabVesselComment getLabVesselComment() {
         return labVesselComment;
     }
 
-    public void setLabVesselComment(List<LabVesselComment> labVesselComment) {
+    public void setLabVesselComment(LabVesselComment labVesselComment) {
         this.labVesselComment = labVesselComment;
     }
 

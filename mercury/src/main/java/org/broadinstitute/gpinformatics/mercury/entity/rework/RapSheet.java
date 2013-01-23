@@ -28,13 +28,15 @@ import java.util.List;
 public class RapSheet {
     @SuppressWarnings("UnusedDeclaration")
     @Id
-    @SequenceGenerator(name = "SEQ_SAMPLE_RAP_SHEET", schema = "mercury", sequenceName = "SEQ_SAMPLE_RAP_SHEET")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_SAMPLE_RAP_SHEET")
+    @SequenceGenerator(name = "SEQ_RAP_SHEET", schema = "mercury", sequenceName = "SEQ_RAP_SHEET")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_RAP_SHEET")
     private Long rapSheetId;
 
-    @OneToMany(mappedBy = "rapSheet")
+    @NotNull
+    @OneToMany(mappedBy = "rapSheet", cascade = CascadeType.REFRESH, fetch = FetchType.LAZY)
     private List<MercurySample> samples;
 
+    @NotNull
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "rapSheet")
     private List<RapSheetEntry> rapSheetEntries;
 
@@ -67,13 +69,13 @@ public class RapSheet {
     }
 
     public void setSamples(List<MercurySample> samples) {
-        if (samples.size()>1){
+        if (samples.size() > 1) {
             throw new IllegalStateException("Only one sample allowed here.");
         }
         this.samples = samples;
     }
 
-    public MercurySample getSample(){
+    public MercurySample getSample() {
         return samples.get(0);
     }
 

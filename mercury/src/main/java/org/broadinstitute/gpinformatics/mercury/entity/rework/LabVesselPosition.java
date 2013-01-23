@@ -16,13 +16,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 @Entity
 @Audited
-@Table(schema = "mercury")
+@Table(schema = "mercury", name = "lv_pos")
 public class LabVesselPosition {
     @SuppressWarnings("UnusedDeclaration")
     @Id
@@ -30,9 +31,11 @@ public class LabVesselPosition {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LV_POS")
     private Long labVesselPositionId;
 
+    @NotNull
     @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private List<MercurySample> mercurySamples;
 
+    @NotNull
     @Enumerated(EnumType.STRING)
     VesselPosition vesselPosition;
 
@@ -43,7 +46,6 @@ public class LabVesselPosition {
         if (mercurySamples==null){
             mercurySamples=new ArrayList<MercurySample>();
         }
-
         return mercurySamples;
     }
 

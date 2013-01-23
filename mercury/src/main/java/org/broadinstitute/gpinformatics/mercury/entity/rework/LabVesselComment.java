@@ -17,12 +17,13 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import javax.validation.constraints.Null;
 import java.util.Date;
 import java.util.List;
 
 @Entity
 @Audited
-@Table(schema = "mercury")
+@Table(schema = "mercury", name = "lv_comment")
 public class LabVesselComment {
     @SuppressWarnings("UnusedDeclaration")
     @Id
@@ -30,34 +31,44 @@ public class LabVesselComment {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LV_COMMENT")
     private Long labVesselCommentId;
 
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @NotNull
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     protected LabEvent labEvent;
 
+    @Null
+    @Column(name = "LAB_VESSEL_COMMENT")
     private String comment;
 
+    @NotNull
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.REFRESH)
     private LabVessel labVessel;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @NotNull
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "labVesselComment")
     private List<RapSheetEntry> rapSheetEntries;
 
+    @NotNull
     @Temporal(TemporalType.DATE)
     private Date logDate;
 
     public LabVesselComment() {
     }
 
-    public LabVesselComment(LabEvent labEvent, LabVessel labVessel, String comment, List<RapSheetEntry> rapSheetEntries) {
+    public LabVesselComment(LabEvent labEvent, LabVessel labVessel, String comment,
+                            List<RapSheetEntry> rapSheetEntries) {
         this.labEvent = labEvent;
         this.comment = comment;
         this.labVessel = labVessel;
         this.rapSheetEntries = rapSheetEntries;
     }
 
-        @PrePersist
+    @PrePersist
     private void prePersist() {
         logDate = new Date();
+    }
+
+    public void setLogDate(Date logDate) {
+        this.logDate = logDate;
     }
 
     public Date getLogDate() {

@@ -27,5 +27,9 @@ public enum ReworkLevel {
     public String getValue() {
         return value;
     }
+
+    public String getDescription() {
+        return description;
+    }
 }
 

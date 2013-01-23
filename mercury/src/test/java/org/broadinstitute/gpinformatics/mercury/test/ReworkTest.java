@@ -1,11 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
+import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.rework.LabVesselCommentDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
@@ -15,6 +17,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.rework.*;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.container.test.api.RunAsClient;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.AfterTest;
 import org.testng.annotations.BeforeTest;
 import org.testng.annotations.Test;
@@ -32,12 +37,6 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EX
  * step, and then move to completion.
  */
 public class ReworkTest extends LabEventTest {
-    @Inject
-    private LabVesselCommentDao labVesselCommentDao;
-
-    @Inject
-    private UserTransaction utx;
-
     @Test
     public void testX() {
         // Advance to Pond Pico
@@ -50,26 +49,7 @@ public class ReworkTest extends LabEventTest {
         // Can rework one sample in a pool?  No.
     }
 
-    @BeforeTest(enabled = false, groups = {EXTERNAL_INTEGRATION})
-    public void beforeIntegrationTests() throws  Exception {
-        if (utx == null) {
-            return;
-        }
-        utx.begin();
-    }
 
-    @AfterTest(enabled = false, groups = {EXTERNAL_INTEGRATION})
-    public void afterIntegrationTests() throws SystemException {
-        if (utx == null) {
-            return;
-        }
-        utx.rollback();
-    }
-
-    @Test(enabled = false, groups = {EXTERNAL_INTEGRATION})
-    public void testMarkForRework() {
-        LabVesselComment lvc = getTestLabVesselComment();
-    }
 
     @Test(groups = {DATABASE_FREE})
     public void testMarkForReworkDbFree() {
