@@ -50,7 +50,7 @@ public class LibraryBeanTest {
         assertEquals(libraryBean.getMaterialType(),gssrMaterialType);
         assertEquals(libraryBean.getCollaboratorSampleId(),gssrCollabSampleId);
         assertEquals(libraryBean.getSpecies(),gssrOrganism + ":" + gssrSpecies + ":" + gssrStrain);
-        assertEquals(libraryBean.getParticipantId(),gssrParticipant);
+        assertEquals(libraryBean.getCollaboratorParticipantId(),gssrParticipant);
     }
 
     /**
