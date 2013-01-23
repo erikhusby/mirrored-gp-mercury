@@ -25,6 +25,16 @@ public class LabVesselDao extends GenericDao {
         return findListByList(LabVessel.class, LabVessel_.label, barcodes);
     }
 
+    public List<LabVessel> findBySampleKeyList(List<String> sampleKeys) {
+        List<LabVessel> resultList = new ArrayList<LabVessel>();
+
+        for(String currSample:sampleKeys) {
+            resultList.addAll(findBySampleKey(currSample));
+        }
+
+        return resultList;
+    }
+
     public List<LabVessel> findBySampleKey(String sampleKey) {
         List<LabVessel> resultList = new ArrayList<LabVessel>();
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
@@ -32,6 +42,32 @@ public class LabVesselDao extends GenericDao {
         Root<LabVessel> root = criteriaQuery.from(LabVessel.class);
         Join<LabVessel, MercurySample> labVessels = root.join(LabVessel_.mercurySamples);
         Predicate predicate = criteriaBuilder.equal(labVessels.get(MercurySample_.sampleKey), sampleKey);
+        criteriaQuery.where(predicate);
+        try {
+            resultList.addAll(getEntityManager().createQuery(criteriaQuery).getResultList());
+        } catch (NoResultException ignored) {
+            return resultList;
+        }
+        return resultList;
+    }
+
+    public List<LabVessel> findByPDOKeyList(List<String> productOrderKeys) {
+        List<LabVessel> resultList = new ArrayList<LabVessel>();
+
+        for(String currPdoKey: productOrderKeys) {
+            resultList.addAll(findByPDOKey(currPdoKey));
+        }
+
+        return resultList;
+    }
+
+    public List<LabVessel> findByPDOKey(String productOrderKey) {
+        List<LabVessel> resultList = new ArrayList<LabVessel>();
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<LabVessel> criteriaQuery = criteriaBuilder.createQuery(LabVessel.class);
+        Root<LabVessel> root = criteriaQuery.from(LabVessel.class);
+        Join<LabVessel, MercurySample> labVessels = root.join(LabVessel_.mercurySamples);
+        Predicate predicate = criteriaBuilder.equal(labVessels.get(MercurySample_.productOrderKey), productOrderKey);
         criteriaQuery.where(predicate);
         try {
             resultList.addAll(getEntityManager().createQuery(criteriaQuery).getResultList());
