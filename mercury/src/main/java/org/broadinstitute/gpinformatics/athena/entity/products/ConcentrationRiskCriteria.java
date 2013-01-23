@@ -1,7 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 
 /**
@@ -12,7 +15,7 @@ import javax.persistence.*;
  */
 @Entity
 @Table(name="risk_criteria")
-@DiscriminatorValue("NUM")
+@DiscriminatorValue("CONC")
 public class ConcentrationRiskCriteria extends RiskCriteria {
 
     @Column(name = "numeric_operator", length = 30)
@@ -25,7 +28,7 @@ public class ConcentrationRiskCriteria extends RiskCriteria {
     public ConcentrationRiskCriteria() {
     }
 
-    public ConcentrationRiskCriteria(String name, NumericOperator numericOperator, Double value) {
+    public ConcentrationRiskCriteria(@Nonnull String name, @Nonnull NumericOperator numericOperator, @Nonnull Double value) {
         super(name);
         if ( ( numericOperator == null ) || (value == null)) {
             throw new NullPointerException( "Invalid Risk Criteria: Operator and value must be non-null.");
@@ -72,22 +75,15 @@ public class ConcentrationRiskCriteria extends RiskCriteria {
         }
 
         final ConcentrationRiskCriteria that = (ConcentrationRiskCriteria) o;
-
-        if (numericOperator != that.numericOperator) {
-            return false;
-        }
-        if (value != null ? !value.equals(that.value) : that.value != null) {
-            return false;
-        }
-
-        return true;
+        return new EqualsBuilder()
+                .append(numericOperator, that.getNumericOperator())
+                .append(value, that.getValue()).isEquals();
     }
 
     @Override
     public int hashCode() {
-        int result = super.hashCode();
-        result = 31 * result + (numericOperator != null ? numericOperator.hashCode() : 0);
-        result = 31 * result + (value != null ? value.hashCode() : 0);
-        return result;
+        return new HashCodeBuilder()
+                .append(numericOperator)
+                .append(value).toHashCode();
     }
 }

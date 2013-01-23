@@ -50,7 +50,7 @@ public class ConcentrationRiskCriteriaTest {
     }
 
     @Test
-    public void test_beaniness() {
+    public void testBeaniness() {
         BeanTester tester = new BeanTester();
         Configuration configuration = new ConfigurationBuilder()
                 .ignoreProperty("risk_criteria_id")
@@ -61,11 +61,11 @@ public class ConcentrationRiskCriteriaTest {
 
     @Test
     public void testEquals() throws Exception {
-        new EqualsMethodTester().testEqualsMethod(ConcentrationRiskCriteriaTest.class,"risk_criteria_id");
+        new EqualsMethodTester().testEqualsMethod(ConcentrationRiskCriteria.class );
     }
 
     @Test
     public void testHashCode() throws Exception {
-        new HashCodeMethodTester().testHashCodeMethod(ConcentrationRiskCriteriaTest.class);
+        new HashCodeMethodTester().testHashCodeMethod(ConcentrationRiskCriteria.class);
     }
 }

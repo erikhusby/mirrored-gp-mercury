@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 
 /**
@@ -12,7 +13,7 @@ import javax.persistence.*;
  */
 @Entity
 @Table(name="risk_criteria")
-@DiscriminatorValue("STR")
+@DiscriminatorValue("ORIGMT")
 public class OrigMaterialTypeRiskCriteria extends RiskCriteria {
 
     @Column(name = "string_operator", length = 30)
@@ -25,7 +26,7 @@ public class OrigMaterialTypeRiskCriteria extends RiskCriteria {
     public OrigMaterialTypeRiskCriteria() {
     }
 
-    public OrigMaterialTypeRiskCriteria(String name, StringOperator stringOperator, String value) {
+    public OrigMaterialTypeRiskCriteria(@Nonnull String name, @Nonnull StringOperator stringOperator, @Nonnull String value) {
         super(name);
         this.stringOperator = stringOperator;
         this.value = value;
