@@ -36,8 +36,8 @@ public class ZimsIlluminaRunFactory {
 
         TransferTraverserCriteria criteria = new TransferTraverserCriteria() {
             @Override
-            public TraversalControl evaluateVesselPreOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {
-                if (hopCount > 0) {
+            public TraversalControl evaluateVesselPreOrder(Context context) {
+                if (context.getHopCount() > 0) {
                     run.addLane(new ZimsIlluminaChamber((short) 1, new ArrayList<LibraryBean>(), null, null));
                     return TraversalControl.StopTraversing;
                 }
@@ -45,10 +45,10 @@ public class ZimsIlluminaRunFactory {
             }
 
             @Override
-            public void evaluateVesselInOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {}
+            public void evaluateVesselInOrder(Context context) {}
 
             @Override
-            public void evaluateVesselPostOrder(LabVessel labVessel, LabEvent labEvent, int hopCount) {}
+            public void evaluateVesselPostOrder(Context context) {}
         };
 
         for (VesselPosition vesselPosition : flowcell.getContainerRole().getPositions()) {
