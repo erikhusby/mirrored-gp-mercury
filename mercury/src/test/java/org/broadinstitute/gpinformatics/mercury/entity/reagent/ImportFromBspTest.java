@@ -102,7 +102,8 @@ public class ImportFromBspTest extends ContainerTest {
                 "ORDER BY " +
                 "     3 ");
         List<?> resultList = nativeQuery.getResultList();
-        List<TubeBean> tubeBeans = new ArrayList<TubeBean>();
+        List<TubeBean> rootTubeBeans = new ArrayList<TubeBean>();
+        List<TubeBean> exportTubeBeans = new ArrayList<TubeBean>();
         List<String> normSourceBarcodes = new ArrayList<String>();
         List<String> normTargetBarcodes = new ArrayList<String>();
         List<String> platingTargetBarcodes = new ArrayList<String>();
@@ -115,18 +116,15 @@ public class ImportFromBspTest extends ContainerTest {
             String picoBarcode = (String) columns[3];
             String exportedSample = (String) columns[4];
             String exportedBarcode = (String) columns[5];
-            tubeBeans.add(new TubeBean(rootBarcode, rootSample, "PDO-183"));
+            rootTubeBeans.add(new TubeBean(rootBarcode, "SM-" + rootSample, "PDO-183"));
+            exportTubeBeans.add(new TubeBean(exportedBarcode, "SM-" + exportedSample, "PDO-183"));
 
             normSourceBarcodes.add(rootBarcode);
             normTargetBarcodes.add(picoBarcode);
             platingTargetBarcodes.add(exportedBarcode);
         }
-        LabBatchBean labBatchBean = new LabBatchBean("BP-JanDemo-" + testSuffix, null, tubeBeans);
-        String response = Client.create().resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/labbatch")
-                .type(MediaType.APPLICATION_XML_TYPE)
-                .accept(MediaType.APPLICATION_XML)
-                .entity(labBatchBean)
-                .post(String.class);
+        LabBatchBean labBatchBean = new LabBatchBean("BP-ROOT-" + testSuffix, null, rootTubeBeans);
+        createBatch(labBatchBean);
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
 
         PlateTransferEventType plateTransferEventType = bettaLimsMessageFactory.buildRackToRack(
@@ -144,8 +142,18 @@ public class ImportFromBspTest extends ContainerTest {
         bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
         sendMessage(bettaLIMSMessage);
 
+        labBatchBean = new LabBatchBean("BP-EXPORT-" + testSuffix, null, exportTubeBeans);
+        createBatch(labBatchBean);
         // Identify candidate samples: Flowcell -> samples -> LCSET -> PDO
 
+    }
+
+    private void createBatch(LabBatchBean labBatchBean) {
+        String response = Client.create().resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/labbatch")
+                .type(MediaType.APPLICATION_XML_TYPE)
+                .accept(MediaType.APPLICATION_XML)
+                .entity(labBatchBean)
+                .post(String.class);
     }
 
     private void sendMessage(BettaLIMSMessage bettaLIMSMessage) {
