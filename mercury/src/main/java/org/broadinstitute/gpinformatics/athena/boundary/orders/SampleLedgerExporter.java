@@ -206,7 +206,11 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell(sample.getBspDTO().getMaterialType());
 
         // Risk Information (GPLIM-660)
-        getWriter().writeCell(sample.getRiskString(), getRiskStyle());
+        if (StringUtils.isBlank(sample.getRiskString())) {
+            getWriter().writeCell(sample.getRiskString());
+        } else {
+            getWriter().writeCell(sample.getRiskString(), getRiskStyle());
+        }
 
         // product name
         getWriter().writeCell(sample.getProductOrder().getProduct().getProductName());
