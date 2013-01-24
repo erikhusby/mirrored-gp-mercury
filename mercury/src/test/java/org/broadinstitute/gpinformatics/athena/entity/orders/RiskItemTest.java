@@ -1,9 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.broadinstitute.gpinformatics.athena.entity.products.ConcentrationRiskCriteria;
-import org.broadinstitute.gpinformatics.athena.entity.products.NumericOperator;
+import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.meanbean.lang.EquivalentFactory;
 import org.meanbean.lang.Factory;
 import org.meanbean.test.*;
@@ -18,6 +18,7 @@ import java.util.Random;
  * Date: 1/22/13
  * Time: 5:00 PM
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class RiskItemTest {
 
     @Test( enabled = true)
@@ -29,8 +30,7 @@ public class RiskItemTest {
 
         class RiskCriteriaFactory implements Factory<RiskCriteria> {
             @Override public RiskCriteria create() {
-                ConcentrationRiskCriteria criterion = new ConcentrationRiskCriteria("test", NumericOperator.LESS_THAN, 100.0);
-                return criterion;
+                return new RiskCriteria(RiskCriteria.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "100.0");
             }
         }
         RiskCriteriaFactory riskCriteriaFactory = new RiskCriteriaFactory();
@@ -59,8 +59,7 @@ public class RiskItemTest {
 
         class RiskCriteriaFactory implements EquivalentFactory<RiskCriteria> {
             @Override public RiskCriteria create() {
-                ConcentrationRiskCriteria criterion = new ConcentrationRiskCriteria("test", NumericOperator.LESS_THAN, 100.0);
-                return criterion;
+                return new RiskCriteria(RiskCriteria.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "100.0");
             }
         }
         new EqualsMethodTester().testEqualsMethod(new RiskCriteriaFactory(), configuration);
@@ -72,8 +71,7 @@ public class RiskItemTest {
 
         class RiskCriteriaFactory implements EquivalentFactory<RiskCriteria> {
             @Override public RiskCriteria create() {
-                ConcentrationRiskCriteria criterion = new ConcentrationRiskCriteria("test", NumericOperator.LESS_THAN, 100.0);
-                return criterion;
+                return new RiskCriteria(RiskCriteria.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "100.0");
             }
         }
         new HashCodeMethodTester().testHashCodeMethod(new RiskCriteriaFactory());

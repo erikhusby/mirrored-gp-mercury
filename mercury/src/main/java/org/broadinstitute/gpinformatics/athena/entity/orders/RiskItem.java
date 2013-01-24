@@ -29,11 +29,13 @@ public class RiskItem {
 
     @Index(name = "IX_RISK_RISK_CRITERIA")
     @ManyToOne
-    @JoinColumn(name = "RISK_CRITERIA_ID", referencedColumnName = "RISK_CRITERIA_ID")
     private RiskCriteria riskCriteria;
 
-    @Column(name = "occurred_date")
+    @Column(name = "OCCURRED_DATE")
     private Date occurredDate;
+
+    @Column(name = "COMPARED_VALUE")
+    private String comparedValue;
 
     @Column(name = "REMARK")
     private String remark;
@@ -41,9 +43,10 @@ public class RiskItem {
     public RiskItem() {
     }
 
-    public RiskItem(RiskCriteria riskCriteria, Date occurredDate) {
+    public RiskItem(RiskCriteria riskCriteria, Date occurredDate, String comparedValue) {
         this.riskCriteria = riskCriteria;
         this.occurredDate = occurredDate;
+        this.comparedValue = comparedValue;
     }
 
     public RiskCriteria getRiskCriteria() {
@@ -70,9 +73,17 @@ public class RiskItem {
         this.occurredDate = occurredDate;
     }
 
+    public String getComparedValue() {
+        return comparedValue;
+    }
+
+    public void setComparedValue(String comparedValue) {
+        this.comparedValue = comparedValue;
+    }
+
     public String getInformation() {
         return MessageFormat.format(
-                "At {0,time} on {0,date}, calculated risk of {1} with comment: {2}",
-                occurredDate, riskCriteria.getName(), remark);
+                "At {0,time} on {0,date}, calculated risk of type {1} on value {2} with comment: {3}",
+                occurredDate, riskCriteria.getType().getLabel(), comparedValue, remark);
     }
 }

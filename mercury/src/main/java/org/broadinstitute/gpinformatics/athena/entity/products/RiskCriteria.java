@@ -15,30 +15,31 @@ import javax.persistence.*;
 @Entity
 @Audited
 @Table(schema = "ATHENA", name = "RISK_CRITERIA")
-@Inheritance(strategy=InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(
-    name="DISCRIMINATOR",
-    discriminatorType=DiscriminatorType.STRING
-)
-public abstract class RiskCriteria {
+public class RiskCriteria {
 
     @Id
     @SequenceGenerator(name = "SEQ_RISK_CRITERIA", schema = "ATHENA", sequenceName = "SEQ_RISK_CRITERIA")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_RISK_CRITERIA")
     private Long risk_criteria_id;
 
-    @Column(name = "NAME", length = 255)
-    private String name;
+    @Column(name = "type", length = 30)
+    @Enumerated(EnumType.STRING)
+    private RiskCriteriaType type;
 
+    @Column(name = "operator", length = 30)
+    @Enumerated(EnumType.STRING)
+    private Operator operator;
+
+    @Column(name = "value")
+    private String value;
 
     protected RiskCriteria() {
     }
 
-    protected RiskCriteria(@Nonnull String name) {
-        if (StringUtils.isBlank(name)) {
-            throw new NullPointerException( "Invalid Risk Criteria: Name must be non-null.");
-        }
-        this.name = name;
+    public RiskCriteria(@Nonnull RiskCriteriaType type, @Nonnull Operator operator, @Nonnull String value) {
+        this.type = type;
+        this.operator = operator;
+        this.value = value;
     }
 
     /**
@@ -46,42 +47,83 @@ public abstract class RiskCriteria {
      * @param sample name
      * @return true if the sample is on risk
      */
-    public abstract boolean onRisk(ProductOrderSample sample);
+    public boolean onRisk(ProductOrderSample sample) {
+        boolean onRiskStatus = false;
+        if ((sample != null) && (sample.getBspDTO() != null)) {
+            onRiskStatus = type.getRiskStatus(sample, operator, value);
+        }
 
-    public String getName() {
-        return name;
+        return onRiskStatus;
     }
 
-    public void setName(String attribute) {
-        this.name = attribute;
+    public Operator getOperator() {
+        return operator;
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof RiskCriteria)) {
-            return false;
-        }
-
-        final RiskCriteria that = (RiskCriteria) o;
-
-        if (name != null ? !name.equals(that.name) : that.name != null) {
-            return false;
-        }
-        if (risk_criteria_id != null ? !risk_criteria_id.equals(that.risk_criteria_id) :
-                that.risk_criteria_id != null) {
-            return false;
-        }
-
-        return true;
+    public void setOperator(Operator operator) {
+        this.operator = operator;
     }
 
-    @Override
-    public int hashCode() {
-        int result = risk_criteria_id != null ? risk_criteria_id.hashCode() : 0;
-        result = 31 * result + (name != null ? name.hashCode() : 0);
-        return result;
+    public String getValue() {
+        return value;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+
+    public RiskCriteriaType getType() {
+        return type;
+    }
+
+    public void setType(RiskCriteriaType type) {
+        this.type = type;
+    }
+
+    public enum RiskCriteriaType {
+        CONCENTRATION("Concentration", Operator.OperatorType.NUMERIC, new SampleCalculation() {
+            @Override
+            protected Object getSampleValue(ProductOrderSample sample) {
+                return sample.getBspDTO().getConcentration();
+            }
+        }),
+        FFPE("FFPE", Operator.OperatorType.BOOLEAN, new SampleCalculation() {
+            @Override
+            protected Object getSampleValue(ProductOrderSample sample) {
+                return sample.getBspDTO().getConcentration();
+            }
+        }),
+        TOTAL_DNA("Total DNA", Operator.OperatorType.NUMERIC, new SampleCalculation() {
+            @Override
+            protected Object getSampleValue(ProductOrderSample sample) {
+                return sample.getBspDTO().getTotal();
+            }
+        });
+
+        private final Operator.OperatorType operatorType;
+        private final String label;
+        private final SampleCalculation calculation;
+
+        RiskCriteriaType(String label, Operator.OperatorType operatorType, SampleCalculation calculation) {
+            this.label = label;
+            this.operatorType = operatorType;
+            this.calculation = calculation;
+        }
+
+        public String getLabel() {
+            return label;
+        }
+
+        public boolean getRiskStatus(ProductOrderSample sample, Operator operator, String value) {
+            return calculation.calculateRiskStatus(sample, operator, value);
+        }
+    }
+
+    public static abstract class SampleCalculation {
+        boolean calculateRiskStatus(ProductOrderSample sample, Operator operator, String value) {
+            return operator.apply(getSampleValue(sample).toString(), value);
+        }
+
+        protected abstract Object getSampleValue(ProductOrderSample sample);
     }
 }

@@ -9,8 +9,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.RiskItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
-import org.broadinstitute.gpinformatics.athena.entity.products.ConcentrationRiskCriteria;
-import org.broadinstitute.gpinformatics.athena.entity.products.NumericOperator;
+import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -301,16 +300,19 @@ public class ProductOrderFixupTest extends Arquillian {
         String pdo="PDO-49";
         ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
 
-        RiskCriteria riskCriteria = new ConcentrationRiskCriteria("Concentration", NumericOperator.LESS_THAN, 250.0);
+        RiskCriteria riskCriteria = new RiskCriteria(RiskCriteria.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
         productOrder.getProduct().addRiskCriteria(riskCriteria);
         productDao.persist(productOrder.getProduct());
 
         // Populate on risk for every other sample
         int count = 0;
-        RiskItem riskItem = new RiskItem(riskCriteria, new Date());
-        riskItem.setRemark("Bad Concentration found");
-        ProductOrderSample sample = productOrder.getSamples().iterator().next();
-        sample.setRiskItems(Collections.singletonList(riskItem));
-        productOrderSampleDao.persist(sample);
+        for (ProductOrderSample sample : productOrder.getSamples()) {
+            if ((count++ % 2) == 0) {
+                RiskItem riskItem = new RiskItem(riskCriteria, new Date(), "240.0");
+                riskItem.setRemark("Bad Concentration found");
+                sample.setRiskItems(Collections.singletonList(riskItem));
+                productOrderSampleDao.persist(sample);
+            }
+        }
     }
 }
