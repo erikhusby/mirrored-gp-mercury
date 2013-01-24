@@ -141,8 +141,23 @@ public class LabEventHandler implements Serializable {
         // and leave the override processing for on-the-fly work in VesselContainer
         //processProjectPlanOverrides(labEvent, workflow);
 
-        JiraCommentUtil.postUpdate(labEvent.getLabEventType().getName() + " Event Applied", null,
-                                   labEvent.getAllLabVessels());
+        String message = "";
+        if(bspUserList != null) {
+            BspUser bspUser = bspUserList.getById(labEvent.getEventOperator());
+            if(bspUser != null) {
+                message += bspUser.getUsername() + " ran ";
+            }
+        }
+        message += labEvent.getLabEventType().getName() + " for " + labEvent.getAllLabVessels().iterator().next().getLabel() +
+                " on " + labEvent.getEventLocation() + " at " + labEvent.getEventDate();
+        if (jiraCommentUtil != null) {
+            try {
+                jiraCommentUtil.postUpdate(message, labEvent.getAllLabVessels());
+            } catch (Exception e) {
+                // This is not fatal, so don't rethrow
+                LOG.error("Failed to update JIRA", e);
+            }
+        }
         try {
             labEvent.applyMolecularStateChanges();
             enqueueForPostProcessing(labEvent);
