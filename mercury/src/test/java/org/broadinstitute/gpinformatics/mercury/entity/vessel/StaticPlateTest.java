@@ -108,6 +108,27 @@ public class StaticPlateTest {
         }
     }
 
+    /**
+     * Make sure that a parallel plate transfer does not overwrite a true status from a rack transfer. This is somewhat
+     * of a regression case from an earlier implementation, but the behavior is non-deterministic. See implementation
+     * note in
+     * {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate.HasRackContentByWellCriteria#evaluateVesselPreOrder(org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.Context)}
+     * for more details.
+     */
+    @Test(groups = DATABASE_FREE)
+    public void testGetHasRackContentByWellWithParallelPlateTransfer() {
+        doSectionTransfer(makeTubeFormation(tube1), plate2);
+        doSectionTransfer(plate1, plate2);
+        Map<VesselPosition, Boolean> hasRackContentByWell = plate2.getHasRackContentByWell();
+        assertThat(hasRackContentByWell.size(), is(96));
+        assertThat(hasRackContentByWell.get(A01), is(true));
+        for (Map.Entry<VesselPosition, Boolean> entry : hasRackContentByWell.entrySet()) {
+            if (entry.getKey() != A01) {
+                assertThat("Entry for " + entry.getKey() + " has wrong value", entry.getValue(), is(false));
+            }
+        }
+    }
+
     /*
      * Tests for getNearestTubeAncestors()
      */
