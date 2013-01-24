@@ -4,6 +4,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.MolecularState;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -106,6 +107,8 @@ public class SampleInstance {
 
     private List<Reagent> reagents = new ArrayList<Reagent>();
 
+    private LabBatch labBatch;
+
     public SampleInstance(MercurySample sample,
             GSP_CONTROL_ROLE controlRole,
 //            ProjectPlan projectPlan,
@@ -205,7 +208,7 @@ public class SampleInstance {
 
     /**
      * This seems at odds with Project#getWorkflowDescription(SampleInstance)}.
-     * We already declared the expected {@link org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription} up at
+     * We already declared the expected {org.broadinstitute.gpinformatics.mercury.entity.project.WorkflowDescription} up at
      * the project, right?
      *
      * We have a history of pioneering some kind of sample prep
@@ -233,6 +236,14 @@ public class SampleInstance {
 
     public List<Reagent> getReagents() {
         return reagents;
+    }
+
+    public void setLabBatch(LabBatch labBatch) {
+        this.labBatch = labBatch;
+    }
+
+    public LabBatch getLabBatch() {
+        return labBatch;
     }
 
 }

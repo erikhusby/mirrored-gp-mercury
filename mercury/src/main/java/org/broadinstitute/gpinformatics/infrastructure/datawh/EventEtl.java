@@ -138,9 +138,8 @@ public class EventEtl extends GenericEntityEtl {
             Set<SampleInstance> sampleInstances = vessel.getSampleInstances();
             for (SampleInstance si : sampleInstances) {
 
-                // Should get batch from sample instance if not on labEvent.
-                // But for now, just ETL a null lab batch.
-                Long labBatchId = noLabBatch ? null : entity.getLabBatch().getLabBatchId();
+                LabBatch labBatch = noLabBatch ? si.getLabBatch() : entity.getLabBatch();
+                Long labBatchId = labBatch != null ? labBatch.getLabBatchId() : null;
 
                 MercurySample sample = si.getStartingSample();
                 if (sample == null) {
