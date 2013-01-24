@@ -148,23 +148,23 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     /**
      * The full constructor for fields that are not settable.
      *
-     * @param creator       The user creating the project
+     * @param createdBy       The user creating the project
      * @param title         The title (name) of the project
      * @param synopsis      A description of the project
      * @param irbNotEngaged Is this project set up for NO IRB?
      */
-    public ResearchProject(Long creator, String title, String synopsis, boolean irbNotEngaged) {
+    public ResearchProject(Long createdBy, String title, String synopsis, boolean irbNotEngaged) {
         createdDate = new Date();
         modifiedDate = createdDate;
         irbNotes = "";
 
         this.title = title;
         this.synopsis = synopsis;
-        this.createdBy = creator;
-        this.modifiedBy = creator;
+        this.createdBy = createdBy;
+        this.modifiedBy = createdBy;
         this.irbNotEngaged = irbNotEngaged;
-        if (creator != null) {
-            addPerson(RoleType.PM, creator);
+        if (createdBy != null) {
+            addPerson(RoleType.PM, createdBy);
         }
     }
 
@@ -429,16 +429,16 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         List<CustomField> listOfFields = new ArrayList<CustomField>();
 
         if (!sampleCohorts.isEmpty()) {
-            List<String> cohortNames = new ArrayList<String>();
+           String[] cohortNames = new String[sampleCohorts.size()];
 
+            int i = 0;
             for (ResearchProjectCohort cohort : sampleCohorts) {
-                cohortNames.add(cohort.getCohortId());
+                cohortNames[i++] = cohort.getCohortId();
             }
 
             BSPCohortList cohortList = ServiceAccessUtility.getBean(BSPCohortList.class);
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.COHORTS,
-                                             cohortList.getCohortListString(cohortNames.toArray(
-                                                     new String[cohortNames.size()]))));
+                                             cohortList.getCohortListString(cohortNames)));
         }
 
         if (!projectFunding.isEmpty()) {
