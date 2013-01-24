@@ -2162,7 +2162,7 @@
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="product" type="int">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
             <column name="name" type="varchar(255)"/>
             <column name="numeric_operator" type="varchar(30)"/>
@@ -2269,7 +2269,7 @@
             </not>
         </preConditions>
         <createTable tableName="risk_item" schemaName="athena">
-            <column name="risk_id" type="int">
+            <column name="risk_item_id" type="int">
                 <constraints primaryKey="true" nullable="false"/>
             </column>
             <column name="product_order_sample" type="int">
@@ -2300,7 +2300,7 @@
             </not>
         </preConditions>
         <addForeignKeyConstraint constraintName="fk_risk_item_risk_criteria" baseTableSchemaName="athena"
-                                 baseTableName="risk_item" baseColumnNames="risk_id"
+                                 baseTableName="risk_item" baseColumnNames="risk_item_id"
                                  referencedTableName="risk_criteria" referencedColumnNames="risk_criteria_id"/>
     </changeSet>
 
@@ -2311,7 +2311,7 @@
             </not>
         </preConditions>
         <addForeignKeyConstraint constraintName="fk_risk_item_po_sample" baseTableSchemaName="athena"
-                                 baseTableName="risk_item" baseColumnNames="risk_id"
+                                 baseTableName="risk_item" baseColumnNames="risk_item_id"
                                  referencedTableName="product_order_sample" referencedColumnNames="product_order_sample_id"/>
     </changeSet>
 
@@ -2322,8 +2322,8 @@
             </not>
         </preConditions>
         <createTable tableName="risk_item_aud" schemaName="athena">
-            <column name="risk_id" type="int">
-                <constraints primaryKey="true" nullable="false"/>
+            <column name="risk_item_id" type="int">
+                <constraints nullable="false"/>
             </column>
             <column name="product_order_sample" type="int">
                 <constraints nullable="true"/>
@@ -2357,4 +2357,38 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-828.1" author="hrafal">
+        <preConditions>
+            <not>
+                <tableExists tableName="po_sample_risk_join_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="po_sample_risk_join_aud" schemaName="athena">
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="product_order_sample" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="risk_item_id" type="int">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="athena" tableName="po_sample_risk_join_aud" columnNames="rev, product_order_sample, risk_item_id"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-828.2" author="pshapiro">
+        <preConditions>
+            <not>
+                <foreignKeyConstraintExists foreignKeyName="fk_po_sample_risk_join_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addForeignKeyConstraint constraintName="fk_po_sample_risk_join_aud" baseTableSchemaName="athena"
+                                 baseTableName="po_sample_risk_join_aud" baseColumnNames="rev"
+                                 referencedTableSchemaName="mercury"
+                                 referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
+    </changeSet>
 </databaseChangeLog>

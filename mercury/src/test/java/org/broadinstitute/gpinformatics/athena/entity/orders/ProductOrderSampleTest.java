@@ -149,7 +149,7 @@ public class ProductOrderSampleTest {
 
         // sample 1 has risk items and sample 2 does not
         RiskCriteria riskCriteria = new ConcentrationRiskCriteria("Concentration", NumericOperator.LESS_THAN, 250.0);
-        RiskItem riskItem = new RiskItem(riskCriteria, data.sample1, new Date());
+        RiskItem riskItem = new RiskItem(riskCriteria, new Date());
         riskItem.setRemark("Bad Concentration found");
 
         data.sample1.setRiskItems(Collections.singletonList(riskItem));

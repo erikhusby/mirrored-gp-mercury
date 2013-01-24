@@ -5,6 +5,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.RiskItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
@@ -39,6 +40,9 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private ProductDao productDao;
+
+    @Inject
+    private RiskItemDao riskItemDao;
 
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
@@ -295,7 +299,6 @@ public class ProductOrderFixupTest extends Arquillian {
     public void setupOnRiskTestData() {
 
         String pdo="PDO-49";
-
         ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
 
         RiskCriteria riskCriteria = new ConcentrationRiskCriteria("Concentration", NumericOperator.LESS_THAN, 250.0);
@@ -304,18 +307,10 @@ public class ProductOrderFixupTest extends Arquillian {
 
         // Populate on risk for every other sample
         int count = 0;
-        for (ProductOrderSample sample : productOrder.getSamples()) {
-            if ((count++ % 2) == 0) {
-                RiskItem riskItem = new RiskItem(riskCriteria, sample, new Date());
-                riskItem.setRemark("Bad Concentration found");
-                riskItem.setProductOrderSample(sample);
-                // riskDao.persist(riskItem);
-
-                sample.setRiskItems(Collections.singletonList(riskItem));
-                productOrderSampleDao.persist(sample);
-            }
-        }
-
-        productOrderDao.persist(productOrder);
+        RiskItem riskItem = new RiskItem(riskCriteria, new Date());
+        riskItem.setRemark("Bad Concentration found");
+        ProductOrderSample sample = productOrder.getSamples().iterator().next();
+        sample.setRiskItems(Collections.singletonList(riskItem));
+        productOrderSampleDao.persist(sample);
     }
 }

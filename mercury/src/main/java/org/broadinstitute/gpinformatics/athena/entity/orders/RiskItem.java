@@ -23,19 +23,14 @@ import java.util.Date;
 @Table(schema = "ATHENA", name = "RISK_ITEM" )
 public class RiskItem {
     @Id
-    @SequenceGenerator(name = "SEQ_RISK", schema = "ATHENA", sequenceName = "SEQ_RISK")
-    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_RISK")
-    private Long risk_id;
+    @SequenceGenerator(name = "SEQ_RISK_ITEM", schema = "ATHENA", sequenceName = "SEQ_RISK_ITEM")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_RISK_ITEM")
+    private Long risk_item_id;
 
     @Index(name = "IX_RISK_RISK_CRITERIA")
     @ManyToOne
-    @JoinColumn(name = "RISK_CRITERIA_ID")
+    @JoinColumn(name = "RISK_CRITERIA_ID", referencedColumnName = "RISK_CRITERIA_ID")
     private RiskCriteria riskCriteria;
-
-    @Index(name = "IX_RISK_ORDER_SAMPLE")
-    @ManyToOne
-    @JoinColumn(name = "PRODUCT_ORDER_SAMPLE")
-    private ProductOrderSample productOrderSample;
 
     @Column(name = "occurred_date")
     private Date occurredDate;
@@ -46,10 +41,8 @@ public class RiskItem {
     public RiskItem() {
     }
 
-    public RiskItem(RiskCriteria riskCriteria,
-                    ProductOrderSample productOrderSample, Date occurredDate) {
+    public RiskItem(RiskCriteria riskCriteria, Date occurredDate) {
         this.riskCriteria = riskCriteria;
-        this.productOrderSample = productOrderSample;
         this.occurredDate = occurredDate;
     }
 
@@ -59,14 +52,6 @@ public class RiskItem {
 
     public void setRiskCriteria(RiskCriteria riskCriteria) {
         this.riskCriteria = riskCriteria;
-    }
-
-    public ProductOrderSample getProductOrderSample() {
-        return productOrderSample;
-    }
-
-    public void setProductOrderSample(ProductOrderSample productOrderSample) {
-        this.productOrderSample = productOrderSample;
     }
 
     public String getRemark() {
@@ -83,31 +68,6 @@ public class RiskItem {
 
     public void setOccurredDate(Date occurredDate) {
         this.occurredDate = occurredDate;
-    }
-
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof RiskItem)) {
-            return false;
-        }
-
-        final RiskItem riskItem = (RiskItem) o;
-        return new EqualsBuilder().append(occurredDate, riskItem.getOccurredDate())
-                .append(productOrderSample, riskItem.getProductOrderSample() )
-                .append(riskCriteria, riskItem.getRiskCriteria() ).isEquals();
-
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder()
-                .append(riskCriteria)
-                .append(productOrderSample)
-                .append(occurredDate).toHashCode();
     }
 
     public String getInformation() {

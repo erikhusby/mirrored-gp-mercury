@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.hibernate.annotations.Index;
+import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -66,7 +67,9 @@ public class ProductOrderSample implements Serializable {
     @Column(name="SAMPLE_POSITION", updatable = false, insertable = false, nullable=false)
     private Integer samplePosition;
 
-    @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @JoinColumn(name = "product_order_sample", nullable = false)
+    @AuditJoinTable(name = "po_sample_risk_join_aud")
     private Set<RiskItem> riskItems = new HashSet<RiskItem>();
 
     public static enum DeliveryStatus implements StatusType {
