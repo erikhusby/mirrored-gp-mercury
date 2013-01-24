@@ -10,16 +10,14 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.annotation.Nonnull;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Concrete factory implementation specific to creating the custom and required fields for creating an LCSET ticket
@@ -30,13 +28,20 @@ import java.util.Set;
  */
 public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
-    public static final String LIB_QC_SEQ_REQUIRED = "None";
+    public static final String LIB_QC_SEQ_REQUIRED_DEFAULT = "None";
     public static final String POOLING_STATUS = "Pool w/o Positive Control";
     public static final String PROGRESS_STATUS = "On Track";
 
-    private final Set<ResearchProject> foundResearchProjectList = new HashSet<ResearchProject>();
-    private final Set<ProductWorkflowDef> workflowDefs = new HashSet<ProductWorkflowDef>();
-    private final Collection<String> pdos;
+    public static final String LIB_QC_SEQ_REQUIRED_NO = "No";
+    public static final String LIB_QC_SEQ_REQUIRED_HISEQ = "Yes - HiSeq";
+    public static final String LIB_QC_SEQ_REQUIRED_MISEQ = "Yes - MiSeq";
+
+
+
+    private final Map<String, ResearchProject> foundResearchProjectList = new HashMap<String, ResearchProject>();
+    private Map<String, Set<LabVessel>> pdoToVesselMap = new HashMap<String, Set<LabVessel>>();
+    private final Map<String,ProductWorkflowDef> workflowDefs = new HashMap<String,ProductWorkflowDef>();
+//    private final Collection<String> pdos;
 
     private final static Log logger = LogFactory.getLog(LCSetJiraFieldFactory.class);
 
@@ -56,16 +61,17 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         WorkflowLoader wfLoader = new WorkflowLoader();
         WorkflowConfig wfConfig = wfLoader.load();
 
-        pdos = LabVessel.extractPdoKeyList(batch.getStartingLabVessels());
+        pdoToVesselMap = LabVessel.extractPdoLabVesselMap(batch.getStartingLabVessels());
 
-        for (String currPdo : pdos) {
+
+        for (String currPdo : pdoToVesselMap .keySet()) {
             ProductOrder pdo = athenaClientService.retrieveProductOrderDetails(currPdo);
 
             if (pdo != null) {
                 if (pdo.getProduct().getWorkflowName() != null) {
-                    workflowDefs.add(wfConfig.getWorkflowByName(pdo.getProduct().getWorkflowName()));
+                    workflowDefs.put(currPdo, wfConfig.getWorkflowByName(pdo.getProduct().getWorkflowName()));
                 }
-                foundResearchProjectList.add(pdo.getResearchProject());
+                foundResearchProjectList.put(currPdo, pdo.getResearchProject());
             } else {
                 //TODO SGM: Throw an exception here (?)
                 logger.error("Unable to find a PDO for the business key of " + currPdo);
@@ -77,22 +83,25 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     @Override
     public Collection<CustomField> getCustomFields(Map<String, CustomFieldDefinition> submissionFields) {
 
+        //TODO SGM: Modify Field settings to Append instead of Overwriting.  This would cover associating an Existing Ticket
+
         Set<CustomField> customFields = new HashSet<CustomField>();
 
         customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.WORK_REQUEST_IDS, "N/A"));
 
-        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.PROGRESS_STATUS, PROGRESS_STATUS));
+        customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.PROGRESS_STATUS,
+                new CustomField.ValueContainer(PROGRESS_STATUS)));
 
-/*
         customFields.add(new CustomField(
                 submissionFields.get(LabBatch.RequiredSubmissionFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName()),
-                LIB_QC_SEQ_REQUIRED));
-*/
+                new CustomField.SelectOption(LIB_QC_SEQ_REQUIRED_DEFAULT)));
 
         StringBuilder sampleList = new StringBuilder();
 
         for (LabVessel currVessel : batch.getStartingLabVessels()) {
-            sampleList.append("\n").append(currVessel.getLabel());
+            for (MercurySample currSample:currVessel.getMercurySamples()) {
+                sampleList.append(currSample.getSampleKey()).append("\n");
+            }
         }
 
         customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.GSSR_IDS,
@@ -101,8 +110,11 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
                 .get(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName()),
                 batch.getStartingLabVessels().size()));
 
-//        customFields.add(new CustomField(
-//                submissionFields.get(LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName()), POOLING_STATUS));
+/*
+        customFields.add(new CustomField(
+                submissionFields.get(LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName()),
+                new CustomField.CascadingSelectList(POOLING_STATUS, LIB_QC_SEQ_REQUIRED_DEFAULT)));
+*/
 
         if (batch.getDueDate() != null) {
 
@@ -117,7 +129,7 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         if (!workflowDefs.isEmpty()) {
             String builtProtocol = "";
-            for (ProductWorkflowDef currWorkflowDef : workflowDefs) {
+            for (ProductWorkflowDef currWorkflowDef : workflowDefs.values()) {
 
                 if (StringUtils.isNotBlank(builtProtocol)) {
                     builtProtocol += ", ";
@@ -137,17 +149,16 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
     @Override
     public String generateDescription() {
 
-        String ticketDescription = "";
+        StringBuilder ticketDescription = new StringBuilder();
 
-        if (!foundResearchProjectList.isEmpty()) {
-            for (ResearchProject currRp : foundResearchProjectList) {
-                if (StringUtils.isNotBlank(ticketDescription)) {
-                    ticketDescription += "\n";
-                }
-                ticketDescription += currRp.getSynopsis();
+        for (Map.Entry<String, Set<LabVessel>> pdoKey:pdoToVesselMap.entrySet()) {
+
+            ticketDescription.append(pdoKey.getValue().size()).append(" samples ");
+            if(foundResearchProjectList.containsKey(pdoKey.getKey()) ) {
+                ticketDescription.append("from ").append(foundResearchProjectList.get(pdoKey.getKey()).getTitle()).append(" ");
             }
+            ticketDescription.append(pdoKey.getKey()).append("\n");
         }
-
-        return ticketDescription.trim();
+        return ticketDescription.toString();
     }
 }

@@ -123,14 +123,14 @@ public class LCSetJiraFieldFactoryTest {
             }
             if (currField.getFieldDefinition().getName()
                          .equals(LabBatch.RequiredSubmissionFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName())) {
-                Assert.assertEquals(((String) currField.getValue()), LCSetJiraFieldFactory.LIB_QC_SEQ_REQUIRED);
+                Assert.assertEquals(((String) currField.getValue()), LCSetJiraFieldFactory.LIB_QC_SEQ_REQUIRED_DEFAULT);
             }
             if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName())) {
                 Assert.assertEquals(testBatch.getStartingLabVessels().size(), currField.getValue());
             }
-            if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName())) {
-                Assert.assertEquals(LCSetJiraFieldFactory.POOLING_STATUS, currField.getValue());
-            }
+//            if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName())) {
+//                Assert.assertEquals(LCSetJiraFieldFactory.POOLING_STATUS, currField.getValue());
+//            }
             if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.PROGRESS_STATUS.getFieldName())) {
                 Assert.assertEquals(LCSetJiraFieldFactory.PROGRESS_STATUS, currField.getValue());
             }
