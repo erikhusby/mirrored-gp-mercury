@@ -19,10 +19,7 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 10/1/12
- * Time: 4:37 PM
+ * @author mccrory
  */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderTest {
@@ -53,6 +50,7 @@ public class ProductOrderTest {
                 .ignoreProperty("orderStatus")
                 .ignoreProperty("count")
                 .ignoreProperty("modifiedBy")
+                .ignoreProperty("createdBy")
                 .ignoreProperty("createdDate")
                 .ignoreProperty("modifiedDate")
                 .ignoreProperty("quoteId")
@@ -72,9 +70,7 @@ public class ProductOrderTest {
                         1814400, 1814400, 184, null, null, null, true, "Exome Express", false);
                 ResearchProject researchProject = new ResearchProject(ID, title, "RP title", ResearchProject.IRB_NOT_ENGAGED);
 
-                ProductOrder productOrder = new ProductOrder(ID, "PO title", sixBspSamplesNoDupes, "quoteId", product,researchProject );
-
-                return productOrder;
+                return new ProductOrder(ID, "PO title", sixBspSamplesNoDupes, "quoteId", product,researchProject );
             }
         }
 

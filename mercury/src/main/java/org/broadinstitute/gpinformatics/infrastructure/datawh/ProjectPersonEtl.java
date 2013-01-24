@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson;
 import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson_;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -20,11 +19,19 @@ import java.util.List;
 
 @Stateless
 public class ProjectPersonEtl  extends GenericEntityEtl {
-    @Inject
-    ResearchProjectDao dao;
+
+    private ResearchProjectDao dao;
+    private BSPUserList userList;
 
     @Inject
-    BSPUserList userList;
+    public void setResearchProjectDao(ResearchProjectDao dao) {
+	this.dao = dao;
+    }
+
+    @Inject
+    public void setBSPUserList(BSPUserList userList) {
+	this.userList = userList;
+    }
 
     /**
      * @{inheritDoc}
@@ -54,13 +61,15 @@ public class ProjectPersonEtl  extends GenericEntityEtl {
      * @{inheritDoc}
      */
     @Override
-    String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
-        ProjectPerson entity = dao.getEntityManager().find(ProjectPerson.class, entityId);
-        if (entity == null) {
-            logger.info("Cannot export.  ProjectPerson having id " + entityId + " no longer exists.");
-            return null;
+    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+        Collection<String> recordList = new ArrayList<String>();
+        ProjectPerson entity = dao.findById(ProjectPerson.class, entityId);
+        if (entity != null) {
+	    recordList.add(entityRecord(etlDateStr, isDelete, entity));
+	} else {
+            logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
         }
-        return entityRecord(etlDateStr, isDelete, entity);
+        return recordList;
     }
 
     /**
@@ -69,7 +78,7 @@ public class ProjectPersonEtl  extends GenericEntityEtl {
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();
-        List<ProjectPerson> entityList = dao.findAll(ProjectPerson.class,
+        List<ProjectPerson> entityList = dao.findAll(getEntityClass(),
                 new GenericDao.GenericDaoCallback<ProjectPerson>() {
                     @Override
                     public void callback(CriteriaQuery<ProjectPerson> cq, Root<ProjectPerson> root) {

@@ -47,7 +47,8 @@ public class WorkflowProcessDef implements Serializable {
         this.processDefVersionsByVersion.put ( workflowProcessDefVersion.getVersion (), workflowProcessDefVersion );
     }
 
-    public WorkflowProcessDefVersion getEffectiveVersion() {
+    /** Returns a list of all process defs sorted by decreasing effective date. */
+    public List<WorkflowProcessDefVersion> getProcessVersionsDescEffDate() {
         if (processVersionsDescEffDate == null) {
             processVersionsDescEffDate = new ArrayList<WorkflowProcessDefVersion>(workflowProcessDefVersions);
             Collections.sort(processVersionsDescEffDate, new Comparator<WorkflowProcessDefVersion>() {
@@ -57,16 +58,25 @@ public class WorkflowProcessDef implements Serializable {
                 }
             });
         }
-        Date now = new Date();
+        return processVersionsDescEffDate;
+    }
+
+    /** Returns the process def that is in effect for the given date. */
+    public WorkflowProcessDefVersion getEffectiveVersion(Date eventDate) {
         WorkflowProcessDefVersion effectiveProcessDef = null;
-        for (WorkflowProcessDefVersion workflowProcessDefVersion : processVersionsDescEffDate) {
-            if(workflowProcessDefVersion.getEffectiveDate().before(now)) {
+        for (WorkflowProcessDefVersion workflowProcessDefVersion : getProcessVersionsDescEffDate()) {
+            if(workflowProcessDefVersion.getEffectiveDate().before(eventDate)) {
                 effectiveProcessDef = workflowProcessDefVersion;
                 break;
             }
         }
         assert effectiveProcessDef != null;
         return effectiveProcessDef;
+    }
+
+    /** Returns the process def for events that happen now. */
+    public WorkflowProcessDefVersion getEffectiveVersion() {
+        return getEffectiveVersion(new Date());
     }
 
     public WorkflowProcessDefVersion getByVersion(String version) {

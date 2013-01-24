@@ -17,16 +17,16 @@ public class CustomField {
         }
 
         public RadioButton(boolean value) {
-            this.value = value;
+            this.value = value ? "Yes" : "No";
         }
 
-        private boolean value;
+        private String value;
 
-        public boolean getValue() {
+        public String getValue() {
             return value;
         }
 
-        public void setValue(boolean value) {
+        public void setValue(String value) {
             this.value = value;
         }
     }
