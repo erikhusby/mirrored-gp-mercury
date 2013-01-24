@@ -34,12 +34,14 @@
                     </a>
                 </td>
                 <td>
-                        ${pdo.businessKey}
+                    <a href="${ctxpath}/search/all.action?search=&searchKey=${pdo.businessKey}">
+                            ${pdo.businessKey}
+                    </a>
                 </td>
                 <td>
                     <stripes:link
                             beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
-                            event="view">
+                            event="view" class="external">
                         <stripes:param name="productOrder" value="${pdo.businessKey}"/>
                         ${pdo.title}
                     </stripes:link>

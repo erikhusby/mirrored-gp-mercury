@@ -112,7 +112,10 @@ public class WorkflowViewActionBean extends CoreActionBean {
     }
 
     public LabEvent getLastEventForStep(WorkflowStepDef step) {
-        return getVesselEventByType(step.getLabEventTypes().get(step.getLabEventTypes().size() - 1));
+        if (step.getLabEventTypes().size() > 0) {
+            return getVesselEventByType(step.getLabEventTypes().get(step.getLabEventTypes().size() - 1));
+        }
+        return null;
     }
 
 }

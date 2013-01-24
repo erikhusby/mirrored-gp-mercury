@@ -110,7 +110,9 @@
                                     ${rowStatus.index * 12 + colStatus.index}
                             </div>
                             <c:forEach var="sample" items="${actionBean.samplesAtPosition(row, column)}">
-                                ${sample.startingSample.sampleKey}
+                                <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.startingSample.sampleKey}">
+                                        ${sample.startingSample.sampleKey}
+                                </a>
                             </c:forEach>
                         </div>
                     </div>

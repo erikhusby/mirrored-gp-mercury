@@ -55,7 +55,7 @@
             <th width="100">Latest Event</th>
             <th width="120">Event Location</th>
             <th>Event User</th>
-            <th width="60">Event Date</th>
+            <th width="120">Event Date</th>
             <th width="60">Creation Date</th>
         </tr>
         </thead>
@@ -97,7 +97,9 @@
                 </td>
 
                 <td>
-                        ${vessel.label}
+                    <a href="${ctxpath}/search/all.action?search=&searchKey=${vessel.label}">
+                            ${vessel.label}
+                    </a>
                 </td>
                 <td>
                         ${vessel.sampleInstanceCount}
@@ -124,7 +126,7 @@
                         ${bean.getUserFullName(vessel.latestEvent.eventOperator)}
                 </td>
                 <td>
-                    <fmt:formatDate value="${vessel.latestEvent.eventDate}" pattern="MM/dd/yyyy HH:MM:SS"/>
+                    <fmt:formatDate value="${vessel.latestEvent.eventDate}" pattern="MM/dd/yyyy HH:MM:ss"/>
                 </td>
                 <td>
                     <fmt:formatDate value="${vessel.createdOn}" pattern="MM/dd/yyyy"/>

@@ -22,7 +22,9 @@
     <c:forEach items="${actionBean.mercurySamples}" var="sample">
         <tr>
             <td>
-                    ${sample.sampleKey}
+                <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.sampleKey}">
+                        ${sample.sampleKey}
+                </a>
             </td>
             <td>
                     ${actionBean.getLatestLabEvent(sample).labEventType.name}
