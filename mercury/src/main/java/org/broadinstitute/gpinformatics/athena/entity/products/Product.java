@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.hibernate.envers.AuditJoinTable;
-import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
@@ -19,7 +18,7 @@ import java.util.*;
 @Entity
 @Audited
 @Table(schema = "athena",
-        uniqueConstraints = @UniqueConstraint(columnNames = {"partNumber"}))
+        uniqueConstraints = @UniqueConstraint(columnNames = {"PART_NUMBER"}))
 public class Product implements Serializable, Comparable<Product> {
     private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 
@@ -125,7 +124,7 @@ public class Product implements Serializable, Comparable<Product> {
     /**
      * JPA package visible no arg constructor
      */
-    Product() {}
+    public Product() {}
 
     public Product(boolean topLevelProduct) {
         this(null, null, null, null, null, null, null, null, null, null, null, null, topLevelProduct, null, false);
@@ -506,12 +505,12 @@ public class Product implements Serializable, Comparable<Product> {
         return getProductFamily().isSupportsNumberOfLanes();
     }
 
-    public Set<RiskCriteria> getRiskCriterias() {
-        return riskCriterias;
+    public List<RiskCriteria> getRiskCriteriaList() {
+        return riskCriteriaList;
     }
 
     public void addRiskCriteria(RiskCriteria riskCriterion) {
-        this.riskCriterias.add( riskCriterion );
+        this.riskCriteriaList.add(riskCriterion);
     }
 
     public String[] getAllowableMaterialTypeNames() {
