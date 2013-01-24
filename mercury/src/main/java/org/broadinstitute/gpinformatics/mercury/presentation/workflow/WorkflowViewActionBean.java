@@ -7,13 +7,11 @@ import net.sourceforge.stripes.action.UrlBinding;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
@@ -30,9 +28,9 @@ public class WorkflowViewActionBean extends CoreActionBean {
     @Inject
     private LabVesselDao labVesselDao;
     @Inject
-    AthenaClientService athenaClientService;
+    private AthenaClientService athenaClientService;
     @Inject
-    WorkflowLoader workflowLoader;
+    private LabEventHandler labEventHandler;
 
     private LabVessel vessel;
 
@@ -81,7 +79,7 @@ public class WorkflowViewActionBean extends CoreActionBean {
         }
         Set<String> pdoKeys = vessel.getPdoKeys();
         for (String pdoKey : pdoKeys) {
-            ProductWorkflowDefVersion productWorkflowDefVersion = getWorkflowVersion(pdoKey);
+            ProductWorkflowDefVersion productWorkflowDefVersion = labEventHandler.getWorkflowVersion(pdoKey);
             ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(pdoKey);
             productWorkflowDefVersionMap.put(productOrder.getProduct().getProductName(), productWorkflowDefVersion);
         }
@@ -117,12 +115,4 @@ public class WorkflowViewActionBean extends CoreActionBean {
         return getVesselEventByType(step.getLabEventTypes().get(step.getLabEventTypes().size() - 1));
     }
 
-    private ProductWorkflowDefVersion getWorkflowVersion(String pdoKey) {
-        WorkflowConfig workflowConfig = workflowLoader.load();
-        ProductOrder productOrder = athenaClientService.retrieveProductOrderDetails(pdoKey);
-        ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(
-                productOrder.getProduct().getProductName());
-
-        return productWorkflowDef.getEffectiveVersion();
-    }
 }
