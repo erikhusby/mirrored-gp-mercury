@@ -124,12 +124,12 @@ public class LimsQueryResource {
     @Path("/findImmediatePlateParents")
     public List<String> findImmediatePlateParents(@QueryParam("plateBarcode") String plateBarcode) {
         switch (mercuryOrSquidRouter.routeForPlate(plateBarcode)) {
-            case MERCURY:
-                return limsQueries.findImmediatePlateParents(plateBarcode);
-            case SQUID:
-                return thriftService.findImmediatePlateParents(plateBarcode);
-            default:
-                throw new RuntimeException("Unable to route findImmediatePlateParents for plate: " + plateBarcode);
+        case MERCURY:
+            return limsQueries.findImmediatePlateParents(plateBarcode);
+        case SQUID:
+            return thriftService.findImmediatePlateParents(plateBarcode);
+        default:
+            throw new RuntimeException("Unable to route findImmediatePlateParents for plate: " + plateBarcode);
         }
     }
 
@@ -184,14 +184,13 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchParentRackContentsForPlate")
     public Map<String, Boolean> fetchParentRackContentsForPlate(@QueryParam("plateBarcode") String plateBarcode) {
-        Map<String, Boolean> result = null;
         switch (mercuryOrSquidRouter.routeForPlate(plateBarcode)) {
-            case MERCURY:
-                return limsQueries.fetchParentRackContentsForPlate(plateBarcode);
-            case SQUID:
-                return thriftService.fetchParentRackContentsForPlate(plateBarcode);
-            default:
-                throw new RuntimeException("Unable to route fetchParentRackContentsForPlate for plate: " + plateBarcode);
+        case MERCURY:
+            return limsQueries.fetchParentRackContentsForPlate(plateBarcode);
+        case SQUID:
+            return thriftService.fetchParentRackContentsForPlate(plateBarcode);
+        default:
+            throw new RuntimeException("Unable to route fetchParentRackContentsForPlate for plate: " + plateBarcode);
         }
     }
 

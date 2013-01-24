@@ -152,12 +152,12 @@ public class SearchActionBean extends CoreActionBean {
         }
 
         // If there is only one result, jump to the item's page, if it has a view page
-        if (totalResults == 1) {
+        /*  if (totalResults == 1) {
             RedirectResolution resolution = getRedirectResolution();
             if (resolution != null) {
                 return resolution;
             }
-        }
+        }*/
 
         multipleResultTypes = count > 1;
         resultsAvailable = totalResults > 0;
