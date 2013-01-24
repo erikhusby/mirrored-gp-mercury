@@ -58,8 +58,8 @@ public class LabBatchDbTest extends ContainerTest {
                 if (!visitedLabEvents.add(context.getEvent())) {
                     return TraversalControl.StopTraversing;
                 }
-                if (hopCount > this.hopCount) {
-                    this.hopCount = hopCount;
+                if (context.getHopCount() > hopCount) {
+                    hopCount = context.getHopCount();
                     labEventsList.add(context.getEvent());
 
                     // handle incoming branch transfers e.g. IndexedAdapterLigation, BaitAddition
