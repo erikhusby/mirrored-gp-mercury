@@ -66,12 +66,12 @@ public abstract class TokenInput<TOKEN_OBJECT> {
 
     protected abstract TOKEN_OBJECT getById(String key);
 
-    public void setup(Long[] longIds) {
+    public void setup(Long... longIds) {
         setListOfKeys(StringUtils.join(longIds, ", "));
     }
 
-    public void setup(String[] longIds) {
-        setListOfKeys(StringUtils.join(longIds, ", "));
+    public void setup(String... ids) {
+        setListOfKeys(StringUtils.join(ids, ", "));
     }
 
     /**

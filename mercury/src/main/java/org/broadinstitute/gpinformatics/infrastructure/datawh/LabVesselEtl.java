@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectCohort;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectCohort_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -17,12 +17,12 @@ import java.util.Date;
 import java.util.List;
 
 @Stateless
-public class ResearchProjectCohortEtl  extends GenericEntityEtl {
+public class LabVesselEtl extends GenericEntityEtl {
 
-    private ResearchProjectDao dao;
+    private LabVesselDao dao;
 
     @Inject
-    public void setResearchProjectDao(ResearchProjectDao dao) {
+    public void setLabVesselDao(LabVesselDao dao) {
 	this.dao = dao;
     }
 
@@ -31,7 +31,7 @@ public class ResearchProjectCohortEtl  extends GenericEntityEtl {
      */
     @Override
     Class getEntityClass() {
-        return ResearchProjectCohort.class;
+        return LabVessel.class;
     }
 
     /**
@@ -39,7 +39,7 @@ public class ResearchProjectCohortEtl  extends GenericEntityEtl {
      */
     @Override
     String getBaseFilename() {
-        return "research_project_cohort";
+        return "lab_vessel";
     }
 
     /**
@@ -47,7 +47,7 @@ public class ResearchProjectCohortEtl  extends GenericEntityEtl {
      */
     @Override
     Long entityId(Object entity) {
-        return ((ResearchProjectCohort)entity).getResearchProjectCohortId();
+        return ((LabVessel)entity).getLabVesselId();
     }
 
     /**
@@ -56,7 +56,7 @@ public class ResearchProjectCohortEtl  extends GenericEntityEtl {
     @Override
     Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         Collection<String> recordList = new ArrayList<String>();
-        ResearchProjectCohort entity = dao.findById(ResearchProjectCohort.class, entityId);
+        LabVessel entity = dao.findById(LabVessel.class, entityId);
         if (entity != null) {
 	    recordList.add(entityRecord(etlDateStr, isDelete, entity));
 	} else {
@@ -71,17 +71,17 @@ public class ResearchProjectCohortEtl  extends GenericEntityEtl {
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();
-        List<ResearchProjectCohort> entityList = dao.findAll(getEntityClass(),
-                new GenericDao.GenericDaoCallback<ResearchProjectCohort>() {
+        List<LabVessel> entityList = dao.findAll(getEntityClass(),
+                new GenericDao.GenericDaoCallback<LabVessel>() {
                     @Override
-                    public void callback(CriteriaQuery<ResearchProjectCohort> cq, Root<ResearchProjectCohort> root) {
+                    public void callback(CriteriaQuery<LabVessel> cq, Root<LabVessel> root) {
                         if (startId > 0 || endId < Long.MAX_VALUE) {
                             CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-                            cq.where(cb.between(root.get(ResearchProjectCohort_.researchProjectCohortId), startId, endId));
+                            cq.where(cb.between(root.get(LabVessel_.labVesselId), startId, endId));
                         }
                     }
                 });
-        for (ResearchProjectCohort entity : entityList) {
+        for (LabVessel entity : entityList) {
             recordList.add(entityRecord(etlDateStr, isDelete, entity));
         }
         return recordList;
@@ -92,10 +92,11 @@ public class ResearchProjectCohortEtl  extends GenericEntityEtl {
      * @param entity Mercury Entity
      * @return delimited SqlLoader record
      */
-    String entityRecord(String etlDateStr, boolean isDelete, ResearchProjectCohort entity) {
+    String entityRecord(String etlDateStr, boolean isDelete, LabVessel entity) {
         return genericRecord(etlDateStr, isDelete,
-                entity.getResearchProjectCohortId(),
-                format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null)
+                entity.getLabVesselId(),
+                format(entity.getLabel()),
+                format(entity.getType().getName())
         );
     }
 

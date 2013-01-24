@@ -17,8 +17,13 @@ import java.util.List;
 
 @Stateless
 public class ProductOrderEtl extends GenericEntityEtl {
+
+    private ProductOrderDao dao;
+
     @Inject
-    ProductOrderDao dao;
+    public void setProductOrderDao(ProductOrderDao dao) {
+	this.dao = dao;
+    }
 
     /**
      * @{inheritDoc}
@@ -48,13 +53,15 @@ public class ProductOrderEtl extends GenericEntityEtl {
      * @{inheritDoc}
      */
     @Override
-    String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+        Collection<String> recordList = new ArrayList<String>();
         ProductOrder entity = dao.findById(ProductOrder.class, entityId);
-        if (entity == null) {
-            logger.info("Cannot export.  ProductOrder having id " + entityId + " no longer exists.");
-            return null;
+        if (entity != null) {
+	    recordList.add(entityRecord(etlDateStr, isDelete, entity));
+	} else {
+            logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
         }
-        return entityRecord(etlDateStr, isDelete, entity);
+        return recordList;
     }
 
     /**
@@ -63,7 +70,7 @@ public class ProductOrderEtl extends GenericEntityEtl {
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();
-        List<ProductOrder> entityList = dao.findAll(ProductOrder.class,
+        List<ProductOrder> entityList = dao.findAll(getEntityClass(),
                 new GenericDao.GenericDaoCallback<ProductOrder>() {
                     @Override
                     public void callback(CriteriaQuery<ProductOrder> cq, Root<ProductOrder> root) {
