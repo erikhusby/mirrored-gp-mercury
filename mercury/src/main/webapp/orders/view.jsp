@@ -14,6 +14,7 @@
                 $j('#sampleData').dataTable( {
                     "oTableTools": ttExportDefines,
                     "aoColumns": [
+                        {"bSortable": false},                   // checkbox
                         {"bSortable": false, "sType": "html"},   // ID
                         {"bSortable": false},                    // Participant ID
                         {"bSortable": false},                    // Volume
@@ -131,6 +132,7 @@
         <div style="both:clear"> </div>
 
         <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
+            <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Name</label>
@@ -170,7 +172,7 @@
                 <label class="control-label label-form">Owner</label>
                 <div class="controls">
                     <div class="form-value">
-                        ${actionBean.getUserFullName(actionBean.editOrder.createdBy)}
+                            ${actionBean.getUserFullName(actionBean.editOrder.createdBy)}
                     </div>
                 </div>
             </div>
@@ -187,7 +189,7 @@
                                 ${actionBean.editOrder.researchProject.title}
                             </stripes:link>
                             (<a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.researchProject.jiraTicketKey}" class="external" target="JIRA">
-                                ${actionBean.editOrder.researchProject.jiraTicketKey}
+                            ${actionBean.editOrder.researchProject.jiraTicketKey}
                             </a>)
                         </c:if>
                     </div>
@@ -220,7 +222,7 @@
                 <div class="controls">
                     <div class="form-value">
                         <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
-                            ${actionBean.editOrder.quoteId}
+                                ${actionBean.editOrder.quoteId}
                         </a>
                         <span id="fundsRemaining" style="margin-left: 20px;"> </span>
                     </div>
@@ -246,6 +248,17 @@
 
             <div class="borderHeader">
                 Samples
+
+                <span class="actionButtons">
+                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
+                        <stripes:submit name="deleteSamples" value="Delete Samples" class="btn" style="margin-left:30px;"/>
+                    </security:authorizeBlock>
+
+                    <%-- Hide from users, not yet working. --%>
+                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+                        <stripes:submit name="abandonSamples" value="Abandon Samples" class="btn" style="margin-left:15px;"/>
+                    </security:authorizeBlock>
+                </span>
             </div>
 
             <div id="summaryId" class="fourcolumn" style="margin-bottom:5px;">
@@ -255,6 +268,9 @@
             <table id="sampleData" class="table simple">
                 <thead>
                     <tr>
+                        <th width="40">
+                            <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
+                        </th>
                         <th width="90">ID</th>
                         <th>Participant ID</th>
                         <th width="40">Volume</th>
@@ -272,6 +288,9 @@
                 <tbody>
                     <c:forEach items="${actionBean.editOrder.samples}" var="sample">
                         <tr>
+                            <td>
+                                <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderSampleIndices" value="${sample.samplePosition}"/>
+                            </td>
                             <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
                                 <c:choose>
                                     <c:when test="${sample.inBspFormat}">
