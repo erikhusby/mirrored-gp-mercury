@@ -14,6 +14,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.ws.rs.core.MediaType;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -33,15 +34,54 @@ public class ImportFromBspTest extends ContainerTest {
     public void testImportExportedTubes() {
         String testSuffix = testPrefixDateFormat.format(new Date());
 
+        List<String> sampleIds = new ArrayList<String>();
+        sampleIds.add("3TJ4Y");
+        sampleIds.add("3TJ4T");
+        sampleIds.add("3TJ44");
+        sampleIds.add("3TJ52");
+        sampleIds.add("3TJ4E");
+        sampleIds.add("3TJ43");
+        sampleIds.add("3TJ51");
+        sampleIds.add("3TJ4S");
+        sampleIds.add("3TJ4B");
+        sampleIds.add("3TJ4O");
+        sampleIds.add("3TJ4I");
+        sampleIds.add("3TJ4R");
+        sampleIds.add("3TJ4G");
+        sampleIds.add("3TJ4L");
+        sampleIds.add("3TJ4A");
+        sampleIds.add("3TJ4P");
+        sampleIds.add("3TJ4Z");
+        sampleIds.add("3TJ49");
+        sampleIds.add("3TJ46");
+        sampleIds.add("3TJ4W");
+        sampleIds.add("3TJ48");
+        sampleIds.add("3TJ47");
+        sampleIds.add("3TJ45");
+        sampleIds.add("3TJ4K");
+        sampleIds.add("3TJ4J");
+        sampleIds.add("3TJ4Q");
+        sampleIds.add("3TJ53");
+        sampleIds.add("3TJ4M");
+        sampleIds.add("3TJ4H");
+        sampleIds.add("3TJ4N");
+        sampleIds.add("3TJ4V");
+        sampleIds.add("3TJ4U");
+        sampleIds.add("3TJ4D");
+        sampleIds.add("3TJ4X");
+        sampleIds.add("3TJ4C");
+
         // bsp_batch_sample.product_order_id doesn't seem to be populated reliably, so have to use a list of samples in
         // where clause
+        // todo jmt, what about controls?
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
-                "     root_sample.sample_id as root_sample_id, " +
-                "     root_receptacle.external_id as root_barcode, " +
-                "     pico_sample.sample_id as pico_sample_id, " +
-                "     pico_receptacle.external_id as pico_barcode, " +
-                "     bsp_sample_export.sample_id as extract_sample_id, " +
-                "     bsp_receptacle.EXTERNAL_ID as extract_barcode " +
+                "     root_sample.sample_id AS root_sample_id, " +
+                "     root_receptacle.external_id AS root_barcode, " +
+                "     pico_sample.sample_id AS pico_sample_id, " +
+                "     pico_receptacle.external_id AS pico_barcode, " +
+                "     bsp_sample_export.sample_id AS extract_sample_id, " +
+                "     bsp_receptacle.EXTERNAL_ID AS extract_barcode, " +
+                "     export_attributes.concentration " +
                 "FROM " +
                 "     bsp_sample root_sample " +
                 "     INNER JOIN bsp_receptacle root_receptacle " +
@@ -56,51 +96,16 @@ public class ImportFromBspTest extends ContainerTest {
                 "          ON   bsp_parent_sample2.parent_sample_id = bsp_parent_sample1.sample_id " +
                 "     INNER JOIN bsp_sample_export " +
                 "          ON   bsp_sample_export.sample_id = bsp_parent_sample2.sample_id " +
-                "     INNER JOIN bsp_sample bsp_sample2 " +
-                "          ON   bsp_sample2.sample_id = bsp_parent_sample2.sample_id " +
+                "     INNER JOIN bsp_sample export_sample " +
+                "          ON   export_sample.sample_id = bsp_parent_sample2.sample_id " +
+                "     INNER JOIN bsp_sample_attributes export_attributes" +
+                "          ON   export_attributes.sample_attributes_id = export_sample.sample_attributes_id" +
                 "     INNER JOIN bsp_receptacle " +
-                "          ON   bsp_receptacle.receptacle_id = bsp_sample2.receptacle_id " +
+                "          ON   bsp_receptacle.receptacle_id = export_sample.receptacle_id " +
                 "WHERE " +
                 "     bsp_sample_export.destination = 'Sequencing' " +
-                "     AND bsp_sample_export.sample_id IN (" +
-                "'3TJ4Y'," +
-                "'3TJ4T'," +
-                "'3TJ44'," +
-                "'3TJ52'," +
-                "'3TJ4E'," +
-                "'3TJ43'," +
-                "'3TJ51'," +
-                "'3TJ4S'," +
-                "'3TJ4B'," +
-                "'3TJ4O'," +
-                "'3TJ4I'," +
-                "'3TJ4R'," +
-                "'3TJ4G'," +
-                "'3TJ4L'," +
-                "'3TJ4A'," +
-                "'3TJ4P'," +
-                "'3TJ4Z'," +
-                "'3TJ49'," +
-                "'3TJ46'," +
-                "'3TJ4W'," +
-                "'3TJ48'," +
-                "'3TJ47'," +
-                "'3TJ45'," +
-                "'3TJ4K'," +
-                "'3TJ4J'," +
-                "'3TJ4Q'," +
-                "'3TJ53'," +
-                "'3TJ4M'," +
-                "'3TJ4H'," +
-                "'3TJ4N'," +
-                "'3TJ4V'," +
-                "'3TJ4U'," +
-                "'3TJ4D'," +
-                "'3TJ4X'," +
-                "'3TJ4C'" +
-                "     ) " +
-                "ORDER BY " +
-                "     3 ");
+                "     AND bsp_sample_export.sample_id IN (:sampleList)");
+        nativeQuery.setParameter("sampleList", sampleIds);
         List<?> resultList = nativeQuery.getResultList();
         List<TubeBean> rootTubeBeans = new ArrayList<TubeBean>();
         List<TubeBean> exportTubeBeans = new ArrayList<TubeBean>();
@@ -108,6 +113,7 @@ public class ImportFromBspTest extends ContainerTest {
         List<String> normTargetBarcodes = new ArrayList<String>();
         List<String> platingTargetBarcodes = new ArrayList<String>();
 
+        String productOrderKey = "PDO-183";
         for (Object o : resultList) {
             Object[] columns = (Object[]) o;
             String rootSample = (String) columns[0];
@@ -116,8 +122,9 @@ public class ImportFromBspTest extends ContainerTest {
             String picoBarcode = (String) columns[3];
             String exportedSample = (String) columns[4];
             String exportedBarcode = (String) columns[5];
-            rootTubeBeans.add(new TubeBean(rootBarcode, "SM-" + rootSample, "PDO-183"));
-            exportTubeBeans.add(new TubeBean(exportedBarcode, "SM-" + exportedSample, "PDO-183"));
+            BigDecimal exportConcentration = (BigDecimal) columns[6];
+            rootTubeBeans.add(new TubeBean(rootBarcode, "SM-" + rootSample, productOrderKey));
+            exportTubeBeans.add(new TubeBean(exportedBarcode, "SM-" + exportedSample, productOrderKey));
 
             normSourceBarcodes.add(rootBarcode);
             normTargetBarcodes.add(picoBarcode);
@@ -154,6 +161,7 @@ public class ImportFromBspTest extends ContainerTest {
                 .accept(MediaType.APPLICATION_XML)
                 .entity(labBatchBean)
                 .post(String.class);
+        System.out.println(response);
     }
 
     private void sendMessage(BettaLIMSMessage bettaLIMSMessage) {
