@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
 import java.util.List;
+import java.util.Set;
 
 @UrlBinding(value = "/view/vesselView.action")
 public class VesselViewActionBean extends CoreActionBean {
@@ -25,6 +26,7 @@ public class VesselViewActionBean extends CoreActionBean {
     private String vesselLabel;
 
     private LabVessel vessel;
+    private SampleInstance selectedCells;
 
     public String getVesselLabel() {
         return vesselLabel;
@@ -60,5 +62,9 @@ public class VesselViewActionBean extends CoreActionBean {
             sampleInstances = vessel.getSampleInstancesList();
         }
         return sampleInstances;
+    }
+
+    public Set<SampleInstance> getSelectedCells() {
+       return this.vessel.getAllSamples();
     }
 }

@@ -51,62 +51,12 @@ public class ReworkTest extends LabEventTest {
 
 
 
-    @Test(groups = {DATABASE_FREE})
+    @Test(groups = {DATABASE_FREE},enabled=false)
     public void testMarkForReworkDbFree() {
-        LabVesselComment lvc = getTestLabVesselComment();
+//        LabVesselComment lvc = getTestLabVesselComment();
     }
 
-    private LabVesselComment getTestLabVesselComment() {
-        List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
-        ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
-                "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, "Whole Genome Shotgun", false), new ResearchProject(101L, "Test RP",
-                "Test synopsis", false));
-        String jiraTicketKey = "PD0-2";
-        productOrder.setJiraTicketKey(jiraTicketKey);
-        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-        LabEventTest.mapKeyToProductOrder.put(jiraTicketKey, productOrder);
 
-        // starting rack
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
-        for (int rackPosition = 1; rackPosition <= LabEventTest.NUM_POSITIONS_IN_RACK; rackPosition++) {
-            String barcode = "R" + rackPosition;
-            String bspStock = "SM-" + rackPosition;
-            TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
-            bspAliquot.addSample(new MercurySample(jiraTicketKey, bspStock));
-            mapBarcodeToTube.put(barcode, bspAliquot);
-        }
-
-        BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
-        LabEventFactory labEventFactory = new LabEventFactory();
-        labEventFactory.setLabEventRefDataFetcher(labEventRefDataFetcher);
-        LabEventHandler labEventHandler =
-                new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance());
-
-        PreFlightEntityBuilder preFlightEntityBuilder =
-                new PreFlightEntityBuilder(bettaLimsMessageFactory,
-                        labEventFactory, labEventHandler,
-                        mapBarcodeToTube).invoke();
-
-        ShearingEntityBuilder shearingEntityBuilder =
-                new ShearingEntityBuilder(mapBarcodeToTube, preFlightEntityBuilder.getTubeFormation(),
-                        bettaLimsMessageFactory, labEventFactory, labEventHandler,
-                        preFlightEntityBuilder.getRackBarcode()).invoke();
-
-        final StaticPlate shearingPlate = shearingEntityBuilder.getShearingPlate();
-        final List<SampleInstance> sampleInstances = samplesAtPosition(shearingPlate, "A", "1");
-
-        final MercurySample startingSample = sampleInstances.iterator().next().getStartingSample();
-        Map<MercurySample, VesselPosition> vpMap = new HashMap<MercurySample, VesselPosition>();
-        vpMap.put(startingSample, VesselPosition.A01);
-        ReworkEntry rapSheetEntry = new ReworkEntry(ReworkReason.MACHINE_ERROR, ReworkLevel.ENTIRE_BATCH,
-                LabEventType.SHEARING_BUCKET_ENTRY);
-        List<RapSheetEntry> reworkEntries=new ArrayList<RapSheetEntry>();
-
-        reworkEntries.add(rapSheetEntry);
-        return new LabVesselComment(shearingPlate.getLatestEvent(), shearingPlate, "foo", reworkEntries);
-
-    }
 
     private List<SampleInstance> samplesAtPosition(LabVessel vessel, String rowName, String columnName) {
         List<SampleInstance> sampleInstances;
