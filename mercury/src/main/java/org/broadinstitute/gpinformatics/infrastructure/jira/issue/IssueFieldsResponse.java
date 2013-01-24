@@ -13,7 +13,7 @@ public class IssueFieldsResponse implements Serializable {
 
     private String key;
 
-    private Map<String, String> fields;
+    private Map<String, Object> fields;
 
     public IssueFieldsResponse() {
     }
@@ -50,11 +50,11 @@ public class IssueFieldsResponse implements Serializable {
         this.key = key;
     }
 
-    public Map<String, String> getFields() {
+    public Map<String, Object> getFields() {
         return fields;
     }
 
-    public void setFields(Map<String, String> fields) {
+    public void setFields(Map<String, Object> fields) {
         this.fields = fields;
     }
 }

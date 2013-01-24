@@ -123,8 +123,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         WebResource webResource = getJerseyClient().resource(urlString);
 
-        JiraIssueData data = post(webResource, issueRequest, new GenericType<JiraIssueData>() {
-        });
+        JiraIssueData data = post(webResource, issueRequest, new GenericType<JiraIssueData>() { });
         return new JiraIssue(data.key, this);
     }
 
@@ -160,7 +159,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         if (null != fields) {
             for (String currField : fields) {
-                issueResult.addFieldValue(currField, issueResult.getFieldValue(currField));
+                issueResult.addFieldValue(currField, data.extraFields.get(currField));
             }
         }
 

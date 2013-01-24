@@ -27,28 +27,42 @@
                             {"bSortable": false}]
                     });
 
-                    $j("#researchProject").tokenInput(
-                            "${ctxpath}/projects/project.action?autocomplete=", {
-                                prePopulate: ${actionBean.ensureStringResult(actionBean.projectCompleteData)},
-                                tokenLimit: 1
+                    $j("#owner").tokenInput(
+                            "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                                hintText: "Type a name",
+                                prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
+                                tokenLimit: 1,
+                                resultsFormatter: formatUser
                             }
+                    );
+
+                    $j("#researchProject").tokenInput(
+                        "${ctxpath}/orders/order.action?projectAutocomplete=", {
+                            hintText: "Type a project name",
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
+                            tokenLimit: 1
+                        }
                     );
 
                     $j("#product").tokenInput(
-                            "${ctxpath}/products/product.action?autocomplete=", {
-                                onAdd: updateUIForProductChoice,
-                                onDelete: updateUIForProductChoice,
-                                prePopulate: ${actionBean.ensureStringResult(actionBean.productCompleteData)},
-                                tokenLimit: 1
-                            }
+                        "${ctxpath}/orders/order.action?productAutocomplete=", {
+                            hintText: "Type a Product name or Part Number   ",
+                            onAdd: updateUIForProductChoice,
+                            onDelete: updateUIForProductChoice,
+                            resultsFormatter: formatProduct,
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
+                            tokenLimit: 1
+                        }
                     );
 
-                    <c:if test="${!actionBean.creating}">
-                        updateUIForProductChoice();
-                        updateFundsRemaining();
-                    </c:if>
+                    updateUIForProductChoice();
+                    updateFundsRemaining();
                 }
             );
+
+            function formatProduct(item) {
+                return '<li><div class="ac-dropdown-text">' + item.name + '[' + item.id + ']' + "</div></li>";
+            }
 
             var addOn = [];
             <c:forEach items="${actionBean.editOrder.addOns}" var="addOnProduct">
@@ -74,7 +88,6 @@
                 });
             }
 
-
             function adjustNumberOfLanesVisibility(data) {
                 var numberOfLanesDiv = $j("#numberOfLanesDiv")
                 if (data["supports"]) {
@@ -84,7 +97,6 @@
                     numberOfLanesDiv.fadeOut();
                 }
             }
-
 
             function setupCheckboxes(data) {
                 var productTitle = $j("#product").val();
@@ -126,6 +138,11 @@
                     $j("#fundsRemaining").text('Error: ' + data.error);
                 }
             }
+
+            function formatUser(item) {
+                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
+                       "<div class=\"ac-dropdown-subtext\">" + item.username + " " + item.email + "</div></li>";
+            }
         </script>
     </stripes:layout-component>
 
@@ -164,21 +181,47 @@
                 </div>
 
                 <div class="control-group">
-                    <stripes:label for="researchProject" class="control-label">
-                        Research Project <c:if test="${not actionBean.editOrder.draft}">*</c:if>
+                    <stripes:label for="owner" class="control-label">
+                        Owner *
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text readonly="${!actionBean.editOrder.draft}" id="researchProject" name="researchProjectList" class="defaultText"
-                            title="Enter the research project for this order"/>
+                        <stripes:text id="owner" name="owner.listOfKeys" />
                     </div>
                 </div>
+
+                <c:choose>
+                    <c:when test="${actionBean.editOrder.draft}">
+                        <div class="control-group">
+                            <stripes:label for="researchProject" class="control-label">
+                                Research Project <c:if test="${not actionBean.editOrder.draft}">*</c:if>
+                            </stripes:label>
+                            <div class="controls">
+                                <stripes:text id="researchProject" name="projectTokenInput.listOfKeys"
+                                              class="defaultText"
+                                              title="Enter the research project for this order"/>
+                            </div>
+                        </div>
+                    </c:when>
+                    <c:otherwise>
+                        <div class="view-control-group control-group" style="margin-bottom: 20px;">
+                            <stripes:label for="researchProject" class="control-label">
+                                Research Project <c:if test="${not actionBean.editOrder.draft}">*</c:if>
+                            </stripes:label>
+                            <div class="controls">
+                                <div class="form-value">
+                                        ${actionBean.editOrder.researchProject.title}
+                                </div>
+                            </div>
+                        </div>
+                    </c:otherwise>
+                </c:choose>
 
                 <div class="control-group">
                     <stripes:label for="product" class="control-label">
                         Product <c:if test="${not actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
-                        <stripes:text id="product" name="productList" class="defaultText"
+                        <stripes:text id="product" name="productTokenInput.listOfKeys" class="defaultText"
                             title="Enter the product name for this order"/>
                     </div>
                 </div>
@@ -196,6 +239,7 @@
                     </stripes:label>
                     <div class="controls">
                         <stripes:text id="quote" name="editOrder.quoteId" class="defaultText"
+                                      readonly="${! actionBean.allowQuoteEdit}"
                                       onchange="updateFundsRemaining()"
                                       title="Enter the Quote ID for this order"/>
                         <div id="fundsRemaining"> </div>
@@ -245,18 +289,17 @@
 
             <div class="help-block span4">
                 <c:choose>
-                    <c:when test="${actionBean.editOrder.draft}">
+                    <c:when test="${actionBean.allowSampleListEdit}">
                         Enter samples names in this box, one per line. When you save the order, the view page will show
                         all sample details.
                     </c:when>
                     <c:otherwise>
-                        This is the list of samples. Since this order has already been placed, the list of samples cannot
-                        be changed.
+                        Sample list edit is disabled for non-DRAFT orders with previously uploaded work.
                     </c:otherwise>
                 </c:choose>
                 <br/>
                 <br/>
-                <stripes:textarea readonly="${!actionBean.editOrder.draft}" class="controlledText" id="samplesToAdd" name="sampleList" rows="15" cols="120"/>
+                <stripes:textarea readonly="${!actionBean.allowSampleListEdit}" class="controlledText" id="samplesToAdd" name="sampleList" rows="15" cols="120"/>
             </div>
         </stripes:form>
 

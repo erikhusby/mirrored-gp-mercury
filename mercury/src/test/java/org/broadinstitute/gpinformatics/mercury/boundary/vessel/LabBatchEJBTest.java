@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import junit.framework.Assert;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
@@ -107,7 +105,7 @@ public class LabBatchEJBTest extends ContainerTest {
         Assert.assertNotNull(testFind.getJiraTicket().getTicketName());
         Assert.assertNotNull(testFind.getStartingLabVessels());
         Assert.assertEquals(6, testFind.getStartingLabVessels().size());
-        Assert.assertEquals(batchName, testFind.getBatchName());
+        Assert.assertEquals(testFind.getBatchName(), testFind.getJiraTicket().getTicketName());
     }
 
     @Test
@@ -147,6 +145,6 @@ public class LabBatchEJBTest extends ContainerTest {
         Assert.assertNotNull(testFind.getJiraTicket().getTicketName());
         Assert.assertNotNull(testFind.getStartingLabVessels());
         Assert.assertEquals(6, testFind.getStartingLabVessels().size());
-        Assert.assertEquals(batchName, testFind.getBatchName());
+        Assert.assertEquals(testFind.getBatchName(), testFind.getJiraTicket().getTicketName());
     }
 }

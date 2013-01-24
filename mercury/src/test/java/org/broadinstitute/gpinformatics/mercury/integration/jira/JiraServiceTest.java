@@ -48,10 +48,8 @@ public class JiraServiceTest {
 
             Collection<CustomField> customFieldList = new LinkedList<CustomField>();
 
-            customFieldList.add(new CustomField(requiredFields.get("Protocol"),"test protocol",
-                                                CustomField.SingleFieldType.TEXT ));
-            customFieldList.add(new CustomField(requiredFields.get("Work Request ID(s)"),"WR 1 Billion!",
-                                                CustomField.SingleFieldType.TEXT ));
+            customFieldList.add(new CustomField(requiredFields.get("Protocol"), "test protocol"));
+            customFieldList.add(new CustomField(requiredFields.get("Work Request ID(s)"), "WR 1 Billion!"));
 
 
                     //        this.fields.customFields.add(new CustomField(new CustomFieldDefinition("customfield_10020","Protocol",true),"test protocol"));
@@ -81,11 +79,11 @@ public class JiraServiceTest {
                 service.getRequiredFields(new CreateFields.Project(CreateFields.ProjectType.Product_Ordering.getKeyPrefix()),
                                                               CreateFields.IssueType.PRODUCT_ORDER );
 
-            Assert.assertTrue(requiredFields.keySet().contains(ProductOrder.RequiredSubmissionFields.PRODUCT_FAMILY.getFieldName()));
+            Assert.assertTrue(requiredFields.keySet().contains(ProductOrder.JiraField.PRODUCT_FAMILY.getFieldName()));
 
 
-            customFieldList.add(new CustomField(requiredFields.get(ProductOrder.RequiredSubmissionFields.PRODUCT_FAMILY.getFieldName()),
-                                                "Test Exome Express", CustomField.SingleFieldType.TEXT ));
+            customFieldList.add(new CustomField(requiredFields.get(ProductOrder.JiraField.PRODUCT_FAMILY.getFieldName()),
+                                                "Test Exome Express"));
 
             JiraIssue jiraIssue =
                     service.createIssue(CreateFields.ProjectType.Product_Ordering.getKeyPrefix(), "hrafal",
@@ -110,7 +108,7 @@ public class JiraServiceTest {
 
         CustomField mercuryUrlField = new CustomField(
                 allCustomFields.get(ResearchProject.RequiredSubmissionFields.MERCURY_URL.getFieldName()),
-                "http://www.broadinstitute.org/", CustomField.SingleFieldType.TEXT);
+                "http://www.broadinstitute.org/");
         issue.updateIssue(Collections.singletonList(mercuryUrlField));
     }
 

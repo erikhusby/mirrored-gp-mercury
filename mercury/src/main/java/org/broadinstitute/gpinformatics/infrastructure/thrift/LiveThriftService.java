@@ -165,6 +165,13 @@ public class LiveThriftService implements ThriftService {
         });
     }
 
+    /**
+     * Returns a list of plates that have been transferred directly into the given plate. Returns an empty list if the
+     * given plate is not found.
+     *
+     * @param plateBarcode    the barcode of the plate to query
+     * @return the immediate plate parents, or an empty list if the given plate isn't found
+     */
     @Override
     public List<String> findImmediatePlateParents(final String plateBarcode) {
         return thriftConnection.call(new ThriftConnection.Call<List<String>>() {

@@ -12,16 +12,20 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamil
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.MaterialTypeTokenInput;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPMaterialTypeList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.json.JSONArray;
-import org.json.JSONException;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This class supports all the actions done on products
@@ -53,6 +57,18 @@ public class ProductActionBean extends CoreActionBean {
     @Inject
     private BSPMaterialTypeList materialTypeListCache;
 
+    @Inject
+    private ProductTokenInput addOnTokenInput;
+
+    @Inject
+    private PriceItemTokenInput priceItemTokenInput;
+
+    @Inject
+    private PriceItemTokenInput optionalPriceItemTokenInput;
+
+    @Inject
+    private MaterialTypeTokenInput materialTypeTokenInput;
+
     // Data needed for displaying the view
     private List<ProductFamily> productFamilies;
     private List<Product> allProducts;
@@ -66,17 +82,6 @@ public class ProductActionBean extends CoreActionBean {
         @Validate(field="partNumber", required = true, maxlength=255, on={SAVE_ACTION}, label="Part Number")
     })
     private Product editProduct;
-
-
-    // These are the fields for catching the input tokens
-    @Validate(required = true, on = {SAVE_ACTION}, label="Primary Price Item")
-    private String primaryPriceItemList = "";
-
-    private String optionalPriceItemsList = "";
-
-    private String addOnList = "";
-
-    private String materialTypeList = "";
 
     private final Log logger = LogFactory.getLog(ProductActionBean.class);
 
@@ -161,67 +166,42 @@ public class ProductActionBean extends CoreActionBean {
     @HandlesEvent(CREATE_ACTION)
     public Resolution create() {
         setSubmitString(CREATE_PRODUCT);
+        populateTokenListsFromObjectData();
         return new ForwardResolution(PRODUCT_CREATE_PAGE);
     }
 
     @HandlesEvent(EDIT_ACTION)
     public Resolution edit() {
         setSubmitString(EDIT_PRODUCT);
+        populateTokenListsFromObjectData();
         return new ForwardResolution(PRODUCT_CREATE_PAGE);
     }
 
-    @HandlesEvent("autocomplete")
-    public Resolution autocomplete() throws Exception {
-        List<Product> products = productDao.searchProducts(getQ());
-
-        return createTextResolution(getAutoCompleteJsonString(products));
-    }
-
-    public static String getAutoCompleteJsonString(Collection<Product> products) throws JSONException {
-        JSONArray itemList = new JSONArray();
-        for (Product product : products) {
-            itemList.put(TokenInput.getJSONObject(product.getBusinessKey(), product.getProductName(), false));
-        }
-
-        return itemList.toString();
+    /**
+     * For the prepopulate to work on opening create and edit page, we need to take values from the editOrder. After,
+     * the pages have the values passed in.
+     */
+    private void populateTokenListsFromObjectData() {
+        addOnTokenInput.setup(editProduct.getAddOnBusinessKeys());
+        materialTypeTokenInput.setup(editProduct.getAllowableMaterialTypeNames());
+        priceItemTokenInput.setup(editProduct.getPriceItemIds());
+        optionalPriceItemTokenInput.setup(editProduct.getPriceItemIds());
     }
 
     @HandlesEvent("addOnsAutocomplete")
     public Resolution addOnsAutocomplete() throws Exception {
-        List<Product> addOns = productDao.searchProductsForAddonsInProductEdit(editProduct, getQ());
-
-        JSONArray itemList = new JSONArray();
-        for (Product addOn : addOns) {
-            itemList.put(TokenInput.getJSONObject(addOn.getBusinessKey(), addOn.getProductName(), false));
-        }
-
-        return createTextResolution(itemList.toString());
+        return createTextResolution(addOnTokenInput.getAddOnsJsonString(editProduct, getQ()));
     }
 
     @HandlesEvent("priceItemAutocomplete")
     public Resolution priceItemAutocomplete() throws Exception {
-        List<PriceItem> priceItems = priceListCache.searchPriceItems(getQ());
-
-        JSONArray itemList = new JSONArray();
-        for (PriceItem priceItem : priceItems) {
-            itemList.put(TokenInput.getJSONObject(priceItem.getId(), priceItem.getName(), false));
-        }
-
-        return createTextResolution(itemList.toString());
+        return createTextResolution(priceItemTokenInput.getJsonString(getQ()));
     }
 
     /* This method retrieves all possible material types */
     @HandlesEvent("materialTypesAutocomplete")
     public Resolution materialTypesAutocomplete() throws Exception {
-        JSONArray itemList = new JSONArray();
-        if (materialTypeListCache != null) {
-            for (org.broadinstitute.bsp.client.sample.MaterialType bspMaterialType : materialTypeListCache.find(getQ())) {
-                itemList.put(TokenInput.getJSONObject(bspMaterialType.getFullName(), bspMaterialType.getFullName(), false));
-            }
-        } else {
-            logger.error("Material Types Cache not available (in null) on ProductActionBean.");
-        }
-        return createTextResolution(itemList.toString());
+        return createTextResolution(materialTypeTokenInput.getJsonString(getQ()));
     }
 
     @HandlesEvent(SAVE_ACTION)
@@ -238,15 +218,15 @@ public class ProductActionBean extends CoreActionBean {
 
     private void populateTokenListFields() {
         editProduct.getAddOns().clear();
-        editProduct.getAddOns().addAll(getAddOns());
+        editProduct.getAddOns().addAll(addOnTokenInput.getTokenObjects());
 
-        editProduct.setPrimaryPriceItem(getPrimaryPriceItem());
+        editProduct.setPrimaryPriceItem(priceItemTokenInput.getTokenObject());
 
         editProduct.getAllowableMaterialTypes().clear();
-        editProduct.getAllowableMaterialTypes().addAll( getMaterialTypes() );
+        editProduct.getAllowableMaterialTypes().addAll(materialTypeTokenInput.getMercuryTokenObjects());
 
         editProduct.getOptionalPriceItems().clear();
-        editProduct.getOptionalPriceItems().addAll(getOptionalPriceItems());
+        editProduct.getOptionalPriceItems().addAll(optionalPriceItemTokenInput.getMercuryTokenObjects());
     }
 
     public Product getEditProduct() {
@@ -273,47 +253,6 @@ public class ProductActionBean extends CoreActionBean {
         return productFamilies;
     }
 
-    public List<Product> getAddOns() {
-        if ((addOnList == null) || (addOnList.isEmpty())) {
-            return Collections.emptyList();
-        }
-
-        List<String> addOnIdList = Arrays.asList(addOnList.split(","));
-        return productDao.findByPartNumbers(addOnIdList);
-    }
-
-    public org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getPrimaryPriceItem() {
-        PriceItem priceItem = priceListCache.findById(Long.valueOf(primaryPriceItemList));
-
-        org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity =
-                priceItemDao.find(priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
-
-        // If we don't have this price item, this will add it.
-        if (entity == null) {
-            entity = new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
-                priceItem.getId(), priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
-        }
-
-        return entity;
-    }
-
-    public List<MaterialType> getMaterialTypes() {
-        if (StringUtils.isBlank(materialTypeList)) {
-            return Collections.emptyList();
-        }
-
-        // Split up the comma separted MaterialTypes Ids into a List
-        List<String> materialTypeIds = Arrays.asList(materialTypeList.split(","));
-
-        //Get the list of DTOs from the cache.
-        List<org.broadinstitute.bsp.client.sample.MaterialType> materialTypeDtoList =
-                materialTypeListCache.getByFullNames( materialTypeIds );
-
-        // Convert the DTOs to Entities.
-        return convertDtosToEntities(materialTypeDtoList);
-    }
-
-
     private static List<MaterialType> convertDtosToEntities(
             List<org.broadinstitute.bsp.client.sample.MaterialType> materialTypeDtos) {
 
@@ -330,91 +269,6 @@ public class ProductActionBean extends CoreActionBean {
 
         return Collections.emptyList();
     }
-
-    public List<org.broadinstitute.gpinformatics.athena.entity.products.PriceItem> getOptionalPriceItems() {
-
-        List<org.broadinstitute.gpinformatics.athena.entity.products.PriceItem> optionalPriceItems =
-                new ArrayList<org.broadinstitute.gpinformatics.athena.entity.products.PriceItem>();
-
-        if ( ! StringUtils.isBlank(optionalPriceItemsList)) {
-
-            List<String> priceItemIdList = Arrays.asList(optionalPriceItemsList.split(","));
-
-            for (String priceItemId : priceItemIdList) {
-
-                PriceItem priceItem = priceListCache.findById(Long.valueOf(priceItemId));
-
-                org.broadinstitute.gpinformatics.athena.entity.products.PriceItem entity =
-                        priceItemDao.find(priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
-
-                // If we don't have this price item, this will add it.
-                if (entity == null) {
-                    entity = new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
-                            priceItem.getId(), priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
-                }
-
-                optionalPriceItems.add(entity);
-            }
-        }
-
-        return optionalPriceItems;
-    }
-
-    public String getAddOnCompleteData() throws Exception {
-        if (editProduct == null) {
-            return "";
-        }
-
-        JSONArray itemList = new JSONArray();
-        for (Product product : editProduct.getAddOns()) {
-            itemList.put(TokenInput.getJSONObject(product.getBusinessKey(), product.getDisplayName(), false));
-        }
-
-        return itemList.toString();
-    }
-
-    public String getPrimaryPriceItemCompleteData() throws Exception {
-        if ((editProduct == null) || (editProduct.getPrimaryPriceItem() == null)) {
-            return "";
-        }
-
-        JSONArray itemList = new JSONArray();
-        PriceItem priceItem = priceListCache.findByConcatenatedKey(editProduct.getPrimaryPriceItem().getConcatenatedKey());
-        if (priceItem == null) {
-            return "invalid key: " + editProduct.getPrimaryPriceItem().getConcatenatedKey();
-        }
-
-        String quotePriceItemId = priceItem.getId();
-        itemList.put(TokenInput.getJSONObject(quotePriceItemId, editProduct.getPrimaryPriceItem().getDisplayName(),
-                false));
-
-        return itemList.toString();
-    }
-
-
-    public String getOptionalPriceItemsCompleteData() throws Exception {
-        if ((editProduct == null) || (editProduct.getOptionalPriceItems() == null) || (editProduct.getOptionalPriceItems().isEmpty())) {
-            return "";
-        }
-
-        JSONArray itemList = new JSONArray();
-
-        for (org.broadinstitute.gpinformatics.athena.entity.products.PriceItem priceItemEntity : editProduct.getOptionalPriceItems()) {
-            PriceItem priceItem = priceListCache.findByConcatenatedKey(priceItemEntity.getConcatenatedKey());
-            if (priceItem == null) {
-                return "invalid key: " + priceItemEntity.getConcatenatedKey();
-            }
-            String quotePriceItemId = priceItem.getId();
-            itemList.put(TokenInput.getJSONObject(quotePriceItemId, priceItemEntity.getDisplayName(), false));
-        }
-
-        return itemList.toString();
-    }
-
-    public String getPrimaryPriceItemList() {
-        return primaryPriceItemList;
-    }
-
     /* This method retrieves any material types already set on the product and
      * returns a JsonArray as a string
      */
@@ -432,31 +286,35 @@ public class ProductActionBean extends CoreActionBean {
         return itemList.toString();
     }
 
-    public void setPrimaryPriceItemList(String primaryPriceItemList) {
-        this.primaryPriceItemList = primaryPriceItemList;
+    public MaterialTypeTokenInput getMaterialTypeTokenInput() {
+        return materialTypeTokenInput;
     }
 
-    public String getOptionalPriceItemsList() {
-        return optionalPriceItemsList;
+    public void setMaterialTypeTokenInput(MaterialTypeTokenInput materialTypeTokenInput) {
+        this.materialTypeTokenInput = materialTypeTokenInput;
     }
 
-    public void setOptionalPriceItemsList(String optionalPriceItemsList) {
-        this.optionalPriceItemsList = optionalPriceItemsList;
+    public PriceItemTokenInput getOptionalPriceItemTokenInput() {
+        return optionalPriceItemTokenInput;
     }
 
-    public String getAddOnList() {
-        return addOnList;
+    public void setOptionalPriceItemTokenInput(PriceItemTokenInput optionalPriceItemTokenInput) {
+        this.optionalPriceItemTokenInput = optionalPriceItemTokenInput;
     }
 
-    public void setAddOnList(String addOnList) {
-        this.addOnList = addOnList;
+    public PriceItemTokenInput getPriceItemTokenInput() {
+        return priceItemTokenInput;
     }
 
-    public String getMaterialTypeList() {
-        return materialTypeList;
+    public void setPriceItemTokenInput(PriceItemTokenInput priceItemTokenInput) {
+        this.priceItemTokenInput = priceItemTokenInput;
     }
 
-    public void setMaterialTypeList(String materialTypeList) {
-        this.materialTypeList = materialTypeList;
+    public ProductTokenInput getAddOnTokenInput() {
+        return addOnTokenInput;
+    }
+
+    public void setAddOnTokenInput(ProductTokenInput addOnTokenInput) {
+        this.addOnTokenInput = addOnTokenInput;
     }
 }

@@ -2,10 +2,13 @@ package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
-import net.sourceforge.stripes.validation.*;
+import net.sourceforge.stripes.validation.Validate;
+import net.sourceforge.stripes.validation.ValidateNestedProperties;
+import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
@@ -14,6 +17,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedger
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
@@ -26,9 +30,11 @@ import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessi
 import org.broadinstitute.gpinformatics.athena.presentation.links.BspLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
-import org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean;
-import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -68,6 +74,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     private ProductOrderUtil productOrderUtil;
 
     @Inject
+    private ProductOrderSampleDao sampleDao;
+
+    @Inject
     private ProductOrderListEntryDao orderListEntryDao;
 
     @Inject
@@ -103,6 +112,15 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private UserBean userBean;
 
+    @Inject
+    private ProductTokenInput productTokenInput;
+
+    @Inject
+    private ProjectTokenInput projectTokenInput;
+
+    @Inject
+    private JiraService jiraService;
+
     private List<ProductOrderListEntry> allProductOrders;
 
     private String sampleList;
@@ -110,12 +128,17 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
     private String productOrder;
 
+    private long sampleId;
+
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
         @Validate(field="title", required = true, maxlength=255, on={SAVE_ACTION}, label = "Name"),
         @Validate(field="count", on={SAVE_ACTION}, label="Number of Lanes")
     })
     private ProductOrder editOrder;
+
+    // For create, we can also have a research project key to default
+    private String researchProjectKey;
 
     private List<String> selectedProductOrderBusinessKeys;
     private List<ProductOrder> selectedProductOrders;
@@ -126,9 +149,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<String> addOnKeys = new ArrayList<String> ();
 
-    // The token input autocomplete backing objects
-    private String researchProjectList;
-    private String productList;
+    /*
+     * The search query.
+     */
+    private String q;
+
+    /** The owner of the Product Order, stored as createdBy in ProductOrder and Reporter in JIRA */
+    @Inject
+    private UserTokenInput owner;
 
     /**
      * Initialize the product with the passed in key for display in the form or create it, if not specified
@@ -139,6 +167,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
         } else {
+            // If this was a create with research project specified, find that.
             // This is only used for save, when creating a new product order.
             editOrder = new ProductOrder();
         }
@@ -163,41 +192,57 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // If this is not a draft, some fields are required
         if (!editOrder.isDraft()) {
-            validatePlacedOrder();
+            doValidation("save");
+        } else {
+            // Even in draft, created by must be set. This can't be checked using @Validate (yet),
+            // since its value isn't set until updateTokenInputFields() has been called.
+            requireField(editOrder.getCreatedBy(), "an owner", "save");
         }
     }
 
-    @ValidationMethod(on = "placeOrder")
-    public void validatePlacedOrder() {
-        if (editOrder.getSamples().isEmpty()) {
-            addGlobalValidationError("Order does not have any samples");
-        }
+    /**
+     * Validate a required field
+     * @param value if null, field is missing
+     * @param name name of field
+     */
+    private void requireField(Object value, String name, String action) {
+        requireField(value != null, name, action);
+    }
 
-        String placeOrderString = "Cannot place order ''" + editOrder.getBusinessKey();
-
-        if (editOrder.getResearchProject() == null) {
-            addGlobalValidationError(placeOrderString + "'' because it does not have a research project");
+    /**
+     * Validate a required field
+     * @param hasValue if false, field is missing
+     * @param name name of field
+     */
+    private void requireField(boolean hasValue, String name, String action) {
+        if (!hasValue) {
+            addGlobalValidationError("Cannot {2} ''{3}'' because it does not have {4}.",
+                    action, editOrder.getBusinessKey(), name);
         }
+    }
 
-        if (editOrder.getQuoteId() == null) {
-            addGlobalValidationError(placeOrderString + "'' because it does not have a quote specified");
-        }
-
-        if (editOrder.getProduct() == null) {
-            addGlobalValidationError(placeOrderString + "'' because it does not have a product");
-        }
-
-        if (editOrder.getCount() < 1) {
-            addGlobalValidationError(placeOrderString  + "'' because it does not have a specified number of lanes");
-        }
+    private void doValidation(String action) {
+        String ownerUsername = bspUserList.getById(editOrder.getCreatedBy()).getUsername();
+        requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
+        requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
+        requireField(editOrder.getResearchProject(), "a research project", action);
+        requireField(editOrder.getQuoteId(), "a quote specified", action);
+        requireField(editOrder.getProduct(), "a product", action);
+        requireField(editOrder.getCount() > 0, "a specified number of lanes", action);
+        requireField(editOrder.getCreatedBy(), "an owner", action);
 
         try {
             quoteService.getQuoteByAlphaId(editOrder.getQuoteId());
         } catch (QuoteServerException ex) {
             addGlobalValidationError("The quote id " + editOrder.getQuoteId() + " is not valid: " + ex.getMessage());
         } catch (QuoteNotFoundException ex) {
-            addGlobalValidationError("The quote id " + editOrder.getQuoteId() + " is not found");
+            addGlobalValidationError("The quote id " + editOrder.getQuoteId() + " was not found.");
         }
+    }
+
+    @ValidationMethod(on = "placeOrder")
+    public void validatePlacedOrder() {
+        doValidation("place order");
     }
 
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
@@ -309,20 +354,43 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(CREATE_ACTION)
     public Resolution create() {
         setSubmitString(CREATE_ORDER);
+        populateTokenListsFromObjectData();
+        owner.setup(userBean.getBspUser().getUserId());
         return new ForwardResolution(ORDER_CREATE_PAGE);
     }
 
     @HandlesEvent(EDIT_ACTION)
     public Resolution edit() {
-        validateUser("edit");
+        validateUser(EDIT_ACTION);
         setSubmitString(EDIT_ORDER);
+        populateTokenListsFromObjectData();
+        owner.setup(editOrder.getCreatedBy());
         return new ForwardResolution(ORDER_CREATE_PAGE);
+    }
+
+    /**
+     * For the prepopulate to work on opening create and edit page, we need to take values from the editOrder. After,
+     * the pages have the values passed in.
+     */
+    private void populateTokenListsFromObjectData() {
+        String[] productKey = (editOrder.getProduct() == null) ? new String[0] : new String[] { editOrder.getProduct().getBusinessKey() };
+        productTokenInput.setup(productKey);
+
+        // If a research project key was specified then use that as the default
+        String[] projectKey;
+        if (!StringUtils.isBlank(researchProjectKey)) {
+            projectKey = new String[] { researchProjectKey };
+        } else {
+            projectKey = (editOrder.getResearchProject() == null) ? new String[0] : new String[] { editOrder.getResearchProject().getBusinessKey() };
+        }
+
+        projectTokenInput.setup(projectKey);
     }
 
     @HandlesEvent("placeOrder")
     public Resolution placeOrder() {
         try {
-            editOrder.prepareToSave(userBean.getBspUser());
+            editOrder.prepareToSave(userBean.getBspUser(), isCreating());
             editOrder.submitProductOrder();
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
@@ -353,7 +421,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution save() throws Exception {
 
         // Update the modified by and created by, if necessary.
-        editOrder.prepareToSave(userBean.getBspUser());
+        editOrder.prepareToSave(userBean.getBspUser(), isCreating());
 
         if (editOrder.isDraft()) {
             // mlc isDraft checks if the status is Draft and if so, we set it to Draft again?
@@ -371,10 +439,16 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private void updateTokenInputFields() {
         // set the project, product and addOns for the order
-        ResearchProject project = projectDao.findByBusinessKey(researchProjectList);
-        Product product = productDao.findByPartNumber(productList);
+        ResearchProject project = projectDao.findByBusinessKey(projectTokenInput.getTokenObject());
+        Product product = productDao.findByPartNumber(productTokenInput.getTokenObject());
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
         editOrder.updateData(project, product, addOnProducts, getSamplesAsList());
+        List<BspUser> ownerList = owner.getTokenObjects();
+        if (ownerList.isEmpty()) {
+            editOrder.setCreatedBy(null);
+        } else {
+            editOrder.setCreatedBy(ownerList.get(0).getUserId());
+        }
     }
 
     @HandlesEvent("downloadBillingTracker")
@@ -421,6 +495,39 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createTextResolution(itemList.toString());
     }
 
+    @HandlesEvent("getSummary")
+    public Resolution getSummary() throws Exception {
+        JSONArray itemList = new JSONArray();
+
+        List<String> comments = editOrder.getSampleSummaryComments();
+        for (String comment : comments) {
+            JSONObject item = new JSONObject();
+            item.put("comment", comment);
+
+            itemList.put(item);
+        }
+
+        return createTextResolution(itemList.toString());
+    }
+
+    @HandlesEvent("getBspData")
+    public Resolution getBspData() throws Exception {
+        JSONArray itemList = new JSONArray();
+
+        ProductOrderSample sample = sampleDao.findById(ProductOrderSample.class, sampleId);
+
+        JSONObject item = new JSONObject();
+
+        item.put("sampleId", sample.getProductOrderSampleId());
+        item.put("patientId", sample.getBspDTO().getPatientId());
+        item.put("volume", sample.getBspDTO().getVolume());
+        item.put("concentration", sample.getBspDTO().getConcentration());
+        item.put("total", sample.getBspDTO().getTotal());
+        item.put("hasFingerprint", sample.getBspDTO().getHasFingerprint());
+
+        return createTextResolution(item.toString());
+    }
+
     @HandlesEvent("getSupportsNumberOfLanes")
     public Resolution getSupportsNumberOfLanes() throws Exception {
         boolean lanesSupported = true;
@@ -432,7 +539,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
         item.put("supports", lanesSupported);
 
-        return new StreamingResolution("text", new StringReader(item.toString()));
+        return createTextResolution(item.toString());
     }
 
     public List<String> getSelectedProductOrderBusinessKeys() {
@@ -524,36 +631,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.product = product;
     }
 
-    public String getResearchProjectList() {
-        return researchProjectList;
+    @HandlesEvent("projectAutocomplete")
+    public Resolution projectAutocomplete() throws Exception {
+        return createTextResolution(projectTokenInput.getJsonString(getQ()));
     }
 
-    public void setResearchProjectList(String researchProjectList) {
-        this.researchProjectList = researchProjectList;
-    }
-
-    public String getProductList() {
-        return productList;
-    }
-
-    public void setProductList(String productList) {
-        this.productList = productList;
-    }
-
-    public String getProjectCompleteData() throws Exception {
-        if ((editOrder == null) || (editOrder.getResearchProject() == null)) {
-            return "";
-        }
-
-        return ResearchProjectActionBean.getAutoCompleteJsonString(Collections.singletonList(editOrder.getResearchProject()));
-    }
-
-    public String getProductCompleteData() throws Exception {
-        if ((editOrder == null) || (editOrder.getProduct() == null)) {
-            return "";
-        }
-
-        return ProductActionBean.getAutoCompleteJsonString(Collections.singletonList(editOrder.getProduct()));
+    @HandlesEvent("productAutocomplete")
+    public Resolution productAutocomplete() throws Exception {
+        return createTextResolution(productTokenInput.getJsonString(getQ()));
     }
 
     public List<String> getAddOnKeys() {
@@ -616,5 +701,61 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setQuoteIdentifier(String quoteIdentifier) {
         this.quoteIdentifier = quoteIdentifier;
+    }
+
+    public UserTokenInput getOwner() {
+        return owner;
+    }
+
+    /**
+     * Sample list edit should be enabled if this is a DRAFT order or this is a non-DRAFT order with no billing
+     * ledger entries.
+     *
+     * @return
+     */
+    public boolean getAllowSampleListEdit() {
+        return editOrder.isDraft() || billingLedgerDao.findByOrderList(editOrder).isEmpty();
+    }
+
+    /**
+     * The logic here is currently the same as allow sample list edit, but these may both change as we snapshot
+     * quotes into ledger entries and/or support sample merging / name overwrites in the sample list
+     *
+     * @return
+     */
+    public boolean getAllowQuoteEdit() {
+        return editOrder.isDraft() || billingLedgerDao.findByOrderList(editOrder).isEmpty();
+    }
+
+    public String getQ() {
+        return q;
+    }
+
+    public void setQ(String q) {
+        this.q = q;
+    }
+
+    public ProductTokenInput getProductTokenInput() {
+        return productTokenInput;
+    }
+
+    public ProjectTokenInput getProjectTokenInput() {
+        return projectTokenInput;
+    }
+
+    public String getResearchProjectKey() {
+        return researchProjectKey;
+    }
+
+    public void setResearchProjectKey(String researchProjectKey) {
+        this.researchProjectKey = researchProjectKey;
+    }
+
+    public long getSampleId() {
+        return sampleId;
+    }
+
+    public void setSampleId(long sampleId) {
+        this.sampleId = sampleId;
     }
 }

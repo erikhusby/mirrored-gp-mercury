@@ -18,17 +18,21 @@ import java.util.List;
 import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
+import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
+import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.SQUID;
 import static org.easymock.EasyMock.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
- * @author breilly
+ * Tests of LimsQueryResource's API behavior and interactions with other services.
  */
 @Test(singleThreaded = true)
 public class LimsQueryResourceUnitTest {
 
+    private MercuryOrSquidRouter mockMercuryOrSquidRouter;
     private ThriftService mockThriftService;
+    private LimsQueries mockLimsQueries;
     private LimsQueryResourceResponseFactory mockResponseFactory;
     private TwoDBarcodedTubeDAO mockTwoDBarcodedTubeDAO;
     private LimsQueryResource resource;
@@ -36,12 +40,18 @@ public class LimsQueryResourceUnitTest {
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void setUp() throws Exception {
+        mockMercuryOrSquidRouter = createMock(MercuryOrSquidRouter.class);
         mockThriftService = createMock(ThriftService.class);
+        mockLimsQueries = createMock(LimsQueries.class);
         mockResponseFactory = createMock(LimsQueryResourceResponseFactory.class);
         mockTwoDBarcodedTubeDAO = createMock(TwoDBarcodedTubeDAO.class);
         mockStaticPlateDAO = createMock(StaticPlateDAO.class);
-        resource = new LimsQueryResource(mockThriftService, mockResponseFactory, mockTwoDBarcodedTubeDAO, mockStaticPlateDAO);
+        resource = new LimsQueryResource(mockThriftService, mockLimsQueries, mockResponseFactory, mockMercuryOrSquidRouter);
     }
+
+    /*
+     * Tests for findFlowcellDesignationByTaskName
+     */
 
     @Test(groups = DATABASE_FREE)
     public void testFindFlowcellDesignationByTaskName() throws TException, TZIMSException {
@@ -71,6 +81,10 @@ public class LimsQueryResourceUnitTest {
 
         verifyAll();
     }
+
+    /*
+     * Tests for findFlowcellDesignationByReagentBlockBarcode
+     */
 
     @Test(groups = DATABASE_FREE)
     public void testFindFlowcellDesignationByReagentBlockBarcode() throws Exception {
@@ -103,15 +117,20 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
+    /*
+     * Tests for doesLimsRecognizeAllTubes
+     */
 
     @Test(groups = DATABASE_FREE)
     public void testDoesLimsRecognizeAllTubesFromSquid() throws Exception {
         expect(mockThriftService.doesSquidRecognizeAllLibraries(Arrays.asList("squid_barcode"))).andReturn(true);
-        expect(mockTwoDBarcodedTubeDAO.findByBarcodes(Arrays.asList("squid_barcode"))).andReturn(new HashMap<String, TwoDBarcodedTube>());
+//        expect(mockTwoDBarcodedTubeDAO.findByBarcodes(Arrays.asList("squid_barcode"))).andReturn(new HashMap<String, TwoDBarcodedTube>());
         replayAll();
 
         boolean result = resource.doesLimsRecognizeAllTubes(Arrays.asList("squid_barcode"));
         assertThat(result, is(true));
+
+        verifyAll();
     }
 
     // TODO: enable when Mercury implementation is complete
@@ -162,6 +181,39 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
+    /*
+     * Tests for findImmediatePlateParents
+     */
+
+    @Test(groups = DATABASE_FREE)
+    public void testFindImmediatePlateParentsFromMercury() {
+        expect(mockMercuryOrSquidRouter.routeForPlate("mercuryPlate")).andReturn(MERCURY);
+        expect(mockLimsQueries.findImmediatePlateParents("mercuryPlate")).andReturn(Arrays.asList("mp1", "mp2"));
+        replayAll();
+
+        List<String> result = resource.findImmediatePlateParents("mercuryPlate");
+        assertThat(result, equalTo(Arrays.asList("mp1", "mp2")));
+
+        verifyAll();
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFindImmediatePlateParentsFromSquid() {
+        expect(mockMercuryOrSquidRouter.routeForPlate("squidPlate")).andReturn(SQUID);
+        expect(mockThriftService.findImmediatePlateParents("squidPlate")).andReturn(Arrays.asList("sp1", "sp2"));
+        replayAll();
+
+        List<String> result = resource.findImmediatePlateParents("squidPlate");
+        assertThat(result, equalTo(Arrays.asList("sp1", "sp2")));
+
+        verifyAll();
+    }
+
+    /*
+     * Tests for fetchMaterialTypesForTubeBarcodes
+     */
+
+    @Test(groups = DATABASE_FREE)
     public void testFetchMaterialTypesForTubeBarcodes() {
         expect(mockThriftService.fetchMaterialTypesForTubeBarcodes(Arrays.asList("barcode1", "barcode2"))).andReturn(Arrays.asList("type1", "type2"));
         replayAll();
@@ -173,6 +225,10 @@ public class LimsQueryResourceUnitTest {
 
         verifyAll();
     }
+
+    /*
+     * Tests for findFlowcellDesignationByFlowcellBarcode
+     */
 
     @Test(groups = DATABASE_FREE)
     public void testFindFlowcellDesignationByFlowcellBarcode() throws Exception {
@@ -188,6 +244,44 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
+    /*
+     * Tests for fetchParentRackContentsForPlate
+     */
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchParentRackContentsForPlateFromMercury() {
+        expect(mockMercuryOrSquidRouter.routeForPlate("mercuryPlate")).andReturn(MERCURY);
+        Map<String, Boolean> map = new HashMap<String, Boolean>();
+        map.put("A01", true);
+        map.put("A02", false);
+        expect(mockLimsQueries.fetchParentRackContentsForPlate("mercuryPlate")).andReturn(map);
+        replayAll();
+
+        Map<String, Boolean> result = resource.fetchParentRackContentsForPlate("mercuryPlate");
+        assertThat(result, equalTo(map));
+
+        verifyAll();
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testFetchParentRackContentsForPlateFromSquid() {
+        expect(mockMercuryOrSquidRouter.routeForPlate("squidPlate")).andReturn(SQUID);
+        Map<String, Boolean> map = new HashMap<String, Boolean>();
+        map.put("A01", true);
+        map.put("A02", false);
+        expect(mockThriftService.fetchParentRackContentsForPlate("squidPlate")).andReturn(map);
+        replayAll();
+
+        Map<String, Boolean> result = resource.fetchParentRackContentsForPlate("squidPlate");
+        assertThat(result, equalTo(map));
+
+        verifyAll();
+    }
+
+    /*
+     * Tests for fetchQpcrForTube
+     */
+
     @Test(groups = DATABASE_FREE)
     public void testFetchQpcrForTube() throws Exception {
         expect(mockThriftService.fetchQpcrForTube("barcode")).andReturn(1.23);
@@ -198,6 +292,10 @@ public class LimsQueryResourceUnitTest {
 
         verifyAll();
     }
+
+    /*
+     * Tests for fetchQuantForTube
+     */
 
     @Test(groups = DATABASE_FREE)
     public void testFetchQuantForTube() throws Exception {
@@ -211,10 +309,10 @@ public class LimsQueryResourceUnitTest {
     }
 
     private void replayAll() {
-        replay(mockThriftService, mockResponseFactory, mockTwoDBarcodedTubeDAO, mockStaticPlateDAO);
+        replay(mockMercuryOrSquidRouter, mockThriftService, mockLimsQueries, mockResponseFactory, mockTwoDBarcodedTubeDAO, mockStaticPlateDAO);
     }
 
     private void verifyAll() {
-        verify(mockThriftService, mockResponseFactory, mockTwoDBarcodedTubeDAO, mockStaticPlateDAO);
+        verify(mockMercuryOrSquidRouter, mockThriftService, mockLimsQueries, mockResponseFactory, mockTwoDBarcodedTubeDAO, mockStaticPlateDAO);
     }
 }

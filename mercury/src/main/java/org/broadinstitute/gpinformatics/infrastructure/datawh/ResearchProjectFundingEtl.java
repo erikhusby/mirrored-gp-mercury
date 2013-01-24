@@ -17,8 +17,13 @@ import java.util.List;
 
 @Stateless
 public class ResearchProjectFundingEtl  extends GenericEntityEtl {
+
+    private ResearchProjectDao dao;
+
     @Inject
-    ResearchProjectDao dao;
+    public void setResearchProjectDao(ResearchProjectDao dao) {
+	this.dao = dao;
+    }
 
     @Override
     Class getEntityClass() {
@@ -35,14 +40,19 @@ public class ResearchProjectFundingEtl  extends GenericEntityEtl {
         return ((ResearchProjectFunding)entity).getResearchProjectFundingId();
     }
 
+    /**
+     * @{inheritDoc}
+     */
     @Override
-    String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
-        ResearchProjectFunding entity = dao.getEntityManager().find(ResearchProjectFunding.class, entityId);
-        if (entity == null) {
-            logger.info("Cannot export.  ResearchProjectFunding having id " + entityId + " no longer exists.");
-            return null;
+    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+        Collection<String> recordList = new ArrayList<String>();
+        ResearchProjectFunding entity = dao.findById(ResearchProjectFunding.class, entityId);
+        if (entity != null) {
+	    recordList.add(entityRecord(etlDateStr, isDelete, entity));
+	} else {
+            logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
         }
-        return entityRecord(etlDateStr, isDelete, entity);
+        return recordList;
     }
 
     /**
@@ -51,7 +61,7 @@ public class ResearchProjectFundingEtl  extends GenericEntityEtl {
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();
-        List<ResearchProjectFunding> entityList = dao.findAll(ResearchProjectFunding.class,
+        List<ResearchProjectFunding> entityList = dao.findAll(getEntityClass(),
                 new GenericDao.GenericDaoCallback<ResearchProjectFunding>() {
                     @Override
                     public void callback(CriteriaQuery<ResearchProjectFunding> cq, Root<ResearchProjectFunding> root) {

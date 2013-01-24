@@ -5,11 +5,11 @@ import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.boundary.CohortListBean;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfig;
@@ -148,23 +148,23 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     /**
      * The full constructor for fields that are not settable.
      *
-     * @param creator       The user creating the project
+     * @param createdBy       The user creating the project
      * @param title         The title (name) of the project
      * @param synopsis      A description of the project
      * @param irbNotEngaged Is this project set up for NO IRB?
      */
-    public ResearchProject(Long creator, String title, String synopsis, boolean irbNotEngaged) {
+    public ResearchProject(Long createdBy, String title, String synopsis, boolean irbNotEngaged) {
         createdDate = new Date();
         modifiedDate = createdDate;
         irbNotes = "";
 
         this.title = title;
         this.synopsis = synopsis;
-        this.createdBy = creator;
-        this.modifiedBy = creator;
+        this.createdBy = createdBy;
+        this.modifiedBy = createdBy;
         this.irbNotEngaged = irbNotEngaged;
-        if (creator != null) {
-            addPerson(RoleType.PM, creator);
+        if (createdBy != null) {
+            addPerson(RoleType.PM, createdBy);
         }
     }
 
@@ -266,8 +266,7 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     }
 
     /**
-     * Clears the ID and JIRA ticket key. THIS METHOD MUST ONLY EVER BE CALLED BY
-     * {@link org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectManager#createResearchProject(ResearchProject)}
+     * Clears the ID and JIRA ticket key. THIS METHOD MUST ONLY EVER BE CALLED
      * IN THE CASE WHERE THE JIRA ISSUE HAS BEEN CREATED BUT THERE IS AN ERROR PERSISTING THE RESEARCH PROJECT!
      */
     public void rollbackPersist() {
@@ -430,17 +429,16 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         List<CustomField> listOfFields = new ArrayList<CustomField>();
 
         if (!sampleCohorts.isEmpty()) {
-            List<String> cohortNames = new ArrayList<String>();
+           String[] cohortNames = new String[sampleCohorts.size()];
 
+            int i = 0;
             for (ResearchProjectCohort cohort : sampleCohorts) {
-                cohortNames.add(cohort.getCohortId());
+                cohortNames[i++] = cohort.getCohortId();
             }
 
-            CohortListBean cohortListBean = ServiceAccessUtility.getBean(CohortListBean.class);
-
+            BSPCohortList cohortList = ServiceAccessUtility.getBean(BSPCohortList.class);
             listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.COHORTS,
-                                             cohortListBean.getCohortListString(cohortNames.toArray(
-                                                     new String[cohortNames.size()]))));
+                                             cohortList.getCohortListString(cohortNames)));
         }
 
         if (!projectFunding.isEmpty()) {

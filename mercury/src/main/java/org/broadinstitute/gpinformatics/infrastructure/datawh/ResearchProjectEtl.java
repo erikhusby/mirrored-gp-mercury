@@ -18,8 +18,13 @@ import java.util.List;
 
 @Stateless
 public class ResearchProjectEtl  extends GenericEntityEtl {
+
+    private ResearchProjectDao dao;
+
     @Inject
-    ResearchProjectDao dao;
+    public void setResearchProjectDao(ResearchProjectDao dao) {
+	this.dao = dao;
+    }
 
     /**
      * @{inheritDoc}
@@ -49,13 +54,15 @@ public class ResearchProjectEtl  extends GenericEntityEtl {
      * @{inheritDoc}
      */
     @Override
-    String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+        Collection<String> recordList = new ArrayList<String>();
         ResearchProject entity = dao.findById(ResearchProject.class, entityId);
-        if (entity == null) {
-            logger.info("Cannot export.  ResearchProject having id " + entityId + " no longer exists.");
-            return null;
+        if (entity != null) {
+	    recordList.add(entityRecord(etlDateStr, isDelete, entity));
+	} else {
+            logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
         }
-        return entityRecord(etlDateStr, isDelete, entity);
+        return recordList;
     }
 
     /**
@@ -64,7 +71,7 @@ public class ResearchProjectEtl  extends GenericEntityEtl {
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();
-        List<ResearchProject> entityList = dao.findAll(ResearchProject.class,
+        List<ResearchProject> entityList = dao.findAll(getEntityClass(),
                 new GenericDao.GenericDaoCallback<ResearchProject>() {
                     @Override
                     public void callback(CriteriaQuery<ResearchProject> cq, Root<ResearchProject> root) {

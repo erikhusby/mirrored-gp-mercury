@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
 
 /**
  * This "test" is an example of how to fixup some data.  Each fix method includes the JIRA ticket ID.
@@ -41,7 +40,7 @@ public class ProductOrderFixupTest extends Arquillian {
     @Inject
     private BSPUserList bspUserList;
 
-    // When you run this on prod
+    // When you run this on prod, change to PROD and prod
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
@@ -96,14 +95,14 @@ public class ProductOrderFixupTest extends Arquillian {
         ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraKey);
 
         // comment out until we can update a Quote on a Jira ticket, need to extend the JiraService for transitions.
-        if ( false ) {
+        if (false) {
             Map<String, CustomFieldDefinition> jiraFields = jiraService.getCustomFields();
             Set<CustomField> customFields = new HashSet<CustomField>();
 
             for (Map.Entry<String, CustomFieldDefinition> stringCustomFieldDefinitionEntry : jiraFields.entrySet()) {
                 log.info(stringCustomFieldDefinitionEntry.getKey());
                 if (stringCustomFieldDefinitionEntry.getKey().equals("Quote ID")) {
-                    CustomField quoteCustomField = new CustomField(stringCustomFieldDefinitionEntry.getValue(),newQuoteStr, CustomField.SingleFieldType.TEXT);
+                    CustomField quoteCustomField = new CustomField(stringCustomFieldDefinitionEntry.getValue(), newQuoteStr);
                     customFields.add(quoteCustomField);
                 }
             }
@@ -111,13 +110,13 @@ public class ProductOrderFixupTest extends Arquillian {
             jiraService.updateIssue(jiraKey,customFields);
         }
         log.info("Attempting to change Quote ID on product order " + productOrder.getJiraTicketKey() + " from " + productOrder.getQuoteId() + " to " +
-                newQuoteStr );
+                newQuoteStr);
         productOrder.setQuoteId(newQuoteStr);
         // The entity is already persistent, this call to persist is solely to begin and end a transaction, so the
         // change gets flushed.  This is an artifact of the test environment.
         productOrderDao.persist(productOrder);
         log.info("Changed Quote ID on product order " + productOrder.getJiraTicketKey() + " from " + productOrder.getQuoteId() + " to " +
-                newQuoteStr );
+                newQuoteStr);
     }
 
 
@@ -172,7 +171,7 @@ public class ProductOrderFixupTest extends Arquillian {
 
         for (String jiraKey : jiraKeys) {
             ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraKey);
-            productOrder.prepareToSave(bspUser);
+            productOrder.prepareToSave(bspUser, false);
 
             productOrderDao.persist(productOrder);
         }
@@ -228,32 +227,15 @@ public class ProductOrderFixupTest extends Arquillian {
     @Test(enabled = false)
     public void removeSamplesFromDevTest() {
         List<String> samplesToRemove = Arrays.asList(
-                "SM-3SFP5",
-                "SM-3SFPA",
-                "SM-3SDFV",
-                "SM-3SDIE",
-                "SM-3SDI2",
-                "SM-3SJCZ",
-                "SM-3SJCV",
-                "SM-3SDIT",
-                "SM-3SDIA",
-                "SM-3SJCR",
-                "SM-3SFP2",
-                "SM-3SDTO",
-                "SM-3SDT5",
-                "SM-3SJD1",
-                "SM-3SDIO",
-                "SM-3SFPD",
-                "SM-3SJCQ",
-                "SM-3SJCO",
-                "SM-3SJCT",
-                "SM-3SDTB",
-                "SM-3SJD3",
-                "SM-3SFP1",
-                "SM-3SFP3",
-                "SM-3SFOX");
+                "SM-3DV29",
+                "SM-3DV2A",
+                "SM-3DV2B",
+                "SM-3DV2C",
+                "SM-3DV2D",
+                "SM-3DV2E",
+                "SM-3DV2F");
 
-        String pdo="PDO-490";
+        String pdo="PDO-49";
 
         ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
 

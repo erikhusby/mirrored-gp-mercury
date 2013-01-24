@@ -6,25 +6,44 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.HeatMapActionBean"/>
 
 <script type="text/javascript">
-    function applyHeatMap(component) {
+    function applyHeatMap(component, colorstyle, reverseOrder) {
         $j(component).heatcolor(
                 function () {
                     return $j("div", this).text();
                 },
                 {
                     lightness:0.50,
-                    reverseOrder:false,
-                    colorStyle:'roygbiv',
-                    maxval:96,
-                    minval:0
+                    reverseOrder:$j('#reverseOrder').is(':checked'),
+                    colorStyle:$j('input[name=colorStyle]:checked').val()
                 }
         );
     }
 </script>
 <stripes:form beanclass="${actionBean.class.name}">
+    <div>
+        <table>
+            <tr>
+                <td>
+                    <stripes:radio id="roygbiv" value="roygbiv" name="colorStyle"/>
+                </td>
+                <td>
+                    Roygbiv
+                </td>
 
-    Settings will go here for now just press the link for pretty colors
+                <td>
+                    <stripes:radio id="redtogreen" value="redtogreen" name="colorStyle"/>
+                </td>
+                <td>
+                    Red to green
+                </td>
+                <td><stripes:checkbox id="reverseOrder" name="reverseOrder"/>
+                    Reverse Color Order
+                </td>
+            </tr>
+        </table>
+    </div>
 
-    <a href="javascript:applyHeatMap('${actionBean.jqueryClass}', '${actionBean.colorStyle}')">Apply Heat Map</a>
+    <div>
+        <a href="javascript:applyHeatMap('${actionBean.jqueryClass}', '${actionBean.colorStyle}')">Apply Heat Map</a>
+    </div>
 </stripes:form>
-

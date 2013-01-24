@@ -31,6 +31,14 @@ public class WorkflowConfig {
         return productWorkflowDefs;
     }
 
+    public void setWorkflowProcessDefs(List<WorkflowProcessDef> defs) {
+        workflowProcessDefs = defs;
+    }
+
+    public void setProductWorkflowDefs(List<ProductWorkflowDef> defs) {
+        productWorkflowDefs = defs;
+    }
+
     void addWorkflowProcessDef(WorkflowProcessDef workflowProcessDef) {
         this.workflowProcessDefs.add(workflowProcessDef);
     }

@@ -11,8 +11,13 @@ import java.util.Date;
 
 @Stateless
 public class ResearchProjectStatusEtl extends GenericEntityEtl {
+
+    private ResearchProjectDao dao;
+
     @Inject
-    ResearchProjectDao dao;
+    public void setResearchProjectDao(ResearchProjectDao dao) {
+	this.dao = dao;
+    }
 
     /**
      * @{inheritDoc}
@@ -40,8 +45,8 @@ public class ResearchProjectStatusEtl extends GenericEntityEtl {
 
     /** This class does not make entity records. */
     @Override
-    String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
-        return null;
+    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+        return Collections.EMPTY_LIST;
     }
 
     /** This class does not make entity records. */
