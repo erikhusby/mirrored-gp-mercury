@@ -16,20 +16,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.ReworkActionBean"/>
 
-<script type="text/javascript">
-    function applyHeatMap(component, colorstyle, reverseOrder) {
-        $j(component).heatcolor(
-                function () {
-                    return $j("div", this).text();
-                },
-                {
-                    lightness:0.50,
-                    reverseOrder:$j('#reverseOrder').is(':checked'),
-                    colorStyle:$j('input[name=colorStyle]:checked').val()
-                }
-        );
-    }
-</script>
+
 <stripes:form beanclass="${actionBean.class.name}">
 <br/>
         <div class="control-group">

@@ -68,9 +68,9 @@
         $j('#heatMapDiv').show();
     }
     function showReworkOptions() {
-        $j('#heatMapDiv').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
-        $j('#heatMapDiv').load('${ctxpath}/view/rework.action?jqueryClass=.vvInfo');
-        $j('#heatMapDiv').show();
+        $j('#reworkDiv').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
+        $j('#reworkDiv').load('${ctxpath}/view/rework.action?jqueryClass=.vvInfo');
+        $j('#reworkDiv').show();
     }
 </script>
 <a href="javascript:showHeatMapOptions()">Add Heat Map</a><br/>
