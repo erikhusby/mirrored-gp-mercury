@@ -376,19 +376,26 @@ public abstract class LabVessel implements Serializable {
 
     public static Collection<String> extractPdoKeyList(Collection<LabVessel> labVessels) {
 
-        Set<String> pdoNames = new HashSet<String>();
+        return extractPdoLabVesselMap(labVessels).keySet();
+    }
 
-        for (LabVessel currVessel : labVessels) {
+    public static Map<String, Set<LabVessel>> extractPdoLabVesselMap(Collection<LabVessel> labVessels) {
+
+        Map<String, Set<LabVessel>> vesselByPdoMap = new HashMap<String, Set<LabVessel>>();
+
+        for(LabVessel currVessel : labVessels) {
             Collection<String> nearestPdos = currVessel.getNearestProductOrders();
 
-            if (nearestPdos != null && !nearestPdos.isEmpty()) {
-                pdoNames.addAll(nearestPdos);
-            } else {
-                logger.error("Unable to find at least one nearest PDO for " + currVessel.getLabel());
+            for(String pdoKey: nearestPdos) {
+
+                if(!vesselByPdoMap.containsKey(pdoKey)) {
+                    vesselByPdoMap.put(pdoKey, new HashSet<LabVessel>());
+                }
+                vesselByPdoMap.get(pdoKey).add(currVessel);
             }
         }
 
-        return pdoNames;
+        return vesselByPdoMap;
     }
 
     public String getNearestLabBatchesString() {

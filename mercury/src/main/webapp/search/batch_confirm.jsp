@@ -29,14 +29,6 @@
             </div>
 
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Batch Name</label>
-
-                <div class="controls">
-                    <div class="form-value">${actionBean.batch.jiraTicket.jiraDetails.summary}</div>
-                </div>
-            </div>
-
-            <div class="view-control-group control-group">
                 <label class="control-label label-form">Summary</label>
 
                 <div class="controls">
