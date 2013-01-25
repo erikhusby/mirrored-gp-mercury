@@ -56,6 +56,10 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
     }
 
     private static void createAutocomplete(JSONArray itemList, PriceItem priceItem) throws JSONException {
+        if (priceItem == null) {
+            return;
+        }
+
         JSONObject item = getJSONObject(priceItem.getId(), priceItem.getName(), false);
 
         item.put("platform", priceItem.getPlatformName());

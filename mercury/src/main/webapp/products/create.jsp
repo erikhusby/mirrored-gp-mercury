@@ -8,6 +8,18 @@
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
+
+            // The jsp loads the criteria types into an associative array by type and then operators
+            var criteriaTypeToOperatorList = [];
+            <c:forEach items="${actionBean.criteriaTypes}" var="criteriaType">
+                criteriaTypeToOperatorList['${criteriaType.label}'] = [];
+                <c:forEach items="${criteriaType.operators}" var="operator" varStatus="j">
+                    criteriaTypeToOperatorList['${criteriaType.label}'][${j.index}] = '${operator.label}';
+                </c:forEach>
+            </c:forEach>
+
+            var criteriaCount = 0;
+
             $j(document).ready(
                 function () {
                     $j("#primaryPriceItem").tokenInput(
@@ -48,6 +60,10 @@
                     $j("#discontinuedDate").datepicker();
 
                     updateBillingRules();
+
+                    <c:forEach items="${actionBean.editProduct.riskCriteriaList}" var="criterion">
+                        addCriterion('${criterion.type.label}', '${criterion.operator.label}', '${criterion.value}');
+                    </c:forEach>
                 }
             );
 
@@ -63,6 +79,74 @@
                     $j('#billingRules').hide();
                 }
             }
+
+            function removeCriterion(itemNumber) {
+                $j('#criterion-' + itemNumber).remove();
+            }
+
+            function addCriterion(criteria, operator, value) {
+                var newCriteria = '<div id="criterion-' + criteriaCount + '" class="criterionPanel">\n';
+
+                if (value == undefined) {
+                    value = '';
+                }
+
+                if (criteria == undefined) {
+                    criteria = 'Concentration'
+                }
+
+                // remove button for this item
+                newCriteria += '    <a class="btn btn-mini" style="font-size:14pt;text-decoration: none;" onclick="removeCriterion(' + criteriaCount + ')">-</a>\n';
+
+
+                // the criteria list
+                newCriteria += '    <select style="width:auto;" name="criteria[' + criteriaCount + ']">';
+
+                var operatorsLabel;
+
+                for (var criteriaLabel in criteriaTypeToOperatorList) {
+
+                    var selectedString = '';
+                    if (criteriaLabel == criteria) {
+                        selectedString = 'selected="selected"';
+                        operatorsLabel = criteriaLabel;
+                    }
+
+                    newCriteria += '        <option value="' + criteriaLabel + '" ' + selectedString + '>' + criteriaLabel + '</option>\n';
+                }
+
+                newCriteria += '    </select>\n';
+
+                // the operator for the selected item
+                newCriteria += '    <select style="width:auto;" name="options[' + criteriaCount + ']">\n';
+                newCriteria += operatorOptions(criteriaCount, operatorsLabel, operator);
+                newCriteria += '    </select>\n';
+
+                newCriteria += '    <input type="text" name=values[' + criteriaCount + ']" value="' + value + '"/>\n';
+                newCriteria += '</div>\n';
+
+                $j('#riskCriteria').append(newCriteria);
+                criteriaCount++;
+            }
+
+            function operatorOptions(criteriaCount, operatorsLabel, selectedOperator) {
+                var options = '';
+
+                var operators = criteriaTypeToOperatorList[operatorsLabel];
+                for (var i in operators) {
+                    var currentOperator = operators[i];
+
+                    var selectedString = '';
+                    if (currentOperator == selectedOperator) {
+                        selectedString = 'selected="selected"';
+                    }
+
+                    options += '        <option value="' + currentOperator + '" ' + selectedString + '>' + currentOperator + '</option>\n';
+                }
+
+                return options;
+            }
+
         </script>
     </stripes:layout-component>
 
@@ -240,6 +324,13 @@
                     </div>
                 </div>
 
+                <div class="control-group">
+                    <stripes:label for="riskCriteria" name="RiskCriteria" class="control-label"/>
+                    <div id="riskCriteria" class="controls">
+                        <a class="btn btn-mini" style="font-size:14pt;text-decoration: none;" onclick="addCriterion()">+</a>
+                    </div>
+                </div>
+
                 <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
 
                     <div class="control-group">
@@ -263,7 +354,7 @@
                             &#160;
 
                             <stripes:select style="width:50px;" name="editProduct.requirement.operator">
-                                <stripes:options-enumeration enum="org.broadinstitute.gpinformatics.athena.entity.products.BillingRequirement.Operator" label="label"/>
+                                <stripes:options-collection collection="${actionBean.getRequirementOperators}" label="label"/>
                             </stripes:select>
                             &#160;
 

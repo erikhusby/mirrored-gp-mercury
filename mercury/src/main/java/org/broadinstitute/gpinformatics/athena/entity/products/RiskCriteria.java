@@ -1,11 +1,12 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
-import clover.org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
+import java.text.MessageFormat;
+import java.util.List;
 
 /**
  * This base class represents the OnRisk criteria thresholds for a product
@@ -80,6 +81,10 @@ public class RiskCriteria {
         this.type = type;
     }
 
+    public String getDisplayString() {
+        return MessageFormat.format("{0} {1} {2}", type.getLabel(), operator.getLabel(), value);
+    }
+
     public enum RiskCriteriaType {
         CONCENTRATION("Concentration", Operator.OperatorType.NUMERIC, new SampleCalculation() {
             @Override
@@ -116,6 +121,10 @@ public class RiskCriteria {
 
         public boolean getRiskStatus(ProductOrderSample sample, Operator operator, String value) {
             return calculation.calculateRiskStatus(sample, operator, value);
+        }
+
+        public List<Operator> getOperators() {
+            return Operator.findOperatorsByType(operatorType);
         }
     }
 

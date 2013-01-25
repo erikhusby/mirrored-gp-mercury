@@ -1,5 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * This is a generic comparator used for operations AND for billing
  */
@@ -102,5 +105,16 @@ public enum Operator {
 
     public enum OperatorType {
         STRING, NUMERIC, BOOLEAN
+    }
+
+    public static List<Operator> findOperatorsByType(OperatorType type) {
+        List<Operator> operators = new ArrayList<Operator>();
+        for (Operator value : values()) {
+            if (type.equals(value.type)) {
+                operators.add(value);
+            }
+        }
+
+        return operators;
     }
 }

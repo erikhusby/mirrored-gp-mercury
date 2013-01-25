@@ -121,7 +121,6 @@ public class Product implements Serializable, Comparable<Product> {
     @AuditJoinTable(name = "product_risk_criteria_join_aud")
     private List<RiskCriteria> riskCriteriaList;
 
-
     /**
      * JPA package visible no arg constructor
      */
@@ -543,4 +542,5 @@ public class Product implements Serializable, Comparable<Product> {
 
         return new Long[] { primaryPriceItem.getPriceItemId() };
     }
+
 }

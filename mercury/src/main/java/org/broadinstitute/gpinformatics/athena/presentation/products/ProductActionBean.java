@@ -9,8 +9,10 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
+import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.MaterialTypeTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
@@ -316,5 +318,13 @@ public class ProductActionBean extends CoreActionBean {
 
     public void setAddOnTokenInput(ProductTokenInput addOnTokenInput) {
         this.addOnTokenInput = addOnTokenInput;
+    }
+
+    public List<Operator> getGetRequirementOperators() {
+        return Operator.findOperatorsByType(Operator.OperatorType.NUMERIC);
+    }
+
+    public RiskCriteria.RiskCriteriaType[] getCriteriaTypes() {
+        return RiskCriteria.RiskCriteriaType.values();
     }
 }
