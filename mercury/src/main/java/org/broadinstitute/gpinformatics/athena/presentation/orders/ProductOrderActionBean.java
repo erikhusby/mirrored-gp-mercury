@@ -35,6 +35,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Proje
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -581,7 +582,10 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
         productOrderDao.persist(editOrder);
-        addMessage("Deleted samples: {0}.", StringUtils.join(sampleNames, ","));
+        String nameList = StringUtils.join(sampleNames, ",");
+        addMessage("Deleted samples: {0}.", nameList);
+        JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
+        issue.addComment(MessageFormat.format("{0} deleted samples: {1}.", userBean.getLoginUserName(), nameList));
         return createViewResolution();
     }
 
@@ -607,7 +611,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         for (ProductOrderSample sample : samplesToAdd) {
             sampleNames.add(sample.getSampleName());
         }
-        addMessage("Added samples: {0}.", StringUtils.join(sampleNames, ","));
+        String nameList = StringUtils.join(sampleNames, ",");
+        addMessage("Added samples: {0}.", nameList);
+        JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
+        issue.addComment(MessageFormat.format("{0} added samples: {1}.", userBean.getLoginUserName(), nameList));
         return createViewResolution();
     }
 
