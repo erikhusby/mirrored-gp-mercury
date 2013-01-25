@@ -560,7 +560,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Report an error if any sample has billing data associated with it.
         for (ProductOrderSample sample : samples) {
             if (!sample.getLedgerItems().isEmpty()) {
-                addGlobalValidationError("Cannot delete sample {2} because it has a billing ledger associated with it.",
+                addGlobalValidationError("Cannot delete sample {2} because billing has started.",
                         sample.getSampleName());
             }
         }
