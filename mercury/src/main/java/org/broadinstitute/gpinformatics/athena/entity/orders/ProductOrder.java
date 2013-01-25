@@ -456,21 +456,33 @@ public class ProductOrder implements Serializable {
         return samples;
     }
 
+    private void addSamplesInternal(List<ProductOrderSample> newSamples, int samplePos) {
+        for (ProductOrderSample sample : newSamples) {
+            sample.setProductOrder(this);
+            sample.setSamplePosition(samplePos++);
+            samples.add(sample);
+        }
+        counts.invalidate();
+    }
+
     public void setSamples(List<ProductOrderSample> samples) {
+        if (samples.isEmpty()) {
+            return;
+        }
         // only update samples if there are no ledger items on any samples or the sample list has changed
         if (!hasLedgerItems() || sampleListHasChanged(samples)) {
             this.samples.clear();
 
-            int samplePos = 0;
-            if (samples != null) {
-                for (ProductOrderSample sample : samples) {
-                    sample.setProductOrder(this);
-                    sample.setSamplePosition(samplePos++);
-                    this.samples.add(sample);
-                }
-            }
+            addSamplesInternal(samples, 0);
+        }
+    }
 
-            counts.invalidate();
+    public void addSamples(List<ProductOrderSample> newSamples) {
+        if (samples.isEmpty()) {
+            setSamples(newSamples);
+        } else {
+            int samplePos = samples.get(samples.size() - 1).getSamplePosition();
+            addSamplesInternal(newSamples, samplePos);
         }
     }
 

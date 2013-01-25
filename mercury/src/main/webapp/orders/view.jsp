@@ -272,6 +272,7 @@
             <div class="borderHeader">
                 Samples
 
+                <c:if test="${!actionBean.editOrder.draft}">
                 <span class="actionButtons">
                     <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
                         <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
@@ -281,9 +282,16 @@
                     <%-- Hide from users, not yet working. --%>
                     <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
                         <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
-                                        style="margin-left:30px;" onclick="showConfirm('abandonSamples','abandon')"/>
+                                        style="margin-left:15px;" onclick="showConfirm('abandonSamples','abandon')"/>
                     </security:authorizeBlock>
                 </span>
+                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
+                        <div class="pull-right">
+                            <stripes:submit name="addSamples" value="Add Samples" class="btn" style="margin-left:30px;"/>
+                            <stripes:text size="100" name="addSamplesText" style="margin-left:15px;"/>
+                        </div>
+                    </security:authorizeBlock>
+                </c:if>
             </div>
 
             <div id="summaryId" class="fourcolumn" style="margin-bottom:5px;">
@@ -294,7 +302,9 @@
                 <thead>
                     <tr>
                         <th width="40">
-                            <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
+                            <c:if test="${!actionBean.editOrder.draft}">
+                                <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
+                            </c:if>
                         </th>
                         <th width="90">ID</th>
                         <th>Participant ID</th>
@@ -314,7 +324,9 @@
                     <c:forEach items="${actionBean.editOrder.samples}" var="sample">
                         <tr>
                             <td>
-                                <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderSampleIndices" value="${sample.samplePosition}"/>
+                                <c:if test="${!actionBean.editOrder.draft}">
+                                    <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderSampleIndices" value="${sample.samplePosition}"/>
+                                </c:if>
                             </td>
                             <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
                                 <c:choose>

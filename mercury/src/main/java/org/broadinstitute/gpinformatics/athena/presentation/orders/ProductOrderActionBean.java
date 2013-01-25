@@ -152,7 +152,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private String product;
 
-    private List<String> addOnKeys = new ArrayList<String> ();
+    private List<String> addOnKeys = new ArrayList<String>();
+
+    private String addSamplesText;
 
     /*
      * The search query.
@@ -410,7 +412,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private Resolution createViewResolution() {
-        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER, editOrder.getBusinessKey());
+        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER,
+                editOrder.getBusinessKey());
     }
 
     @HandlesEvent("validate")
@@ -449,7 +452,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         ResearchProject project = projectDao.findByBusinessKey(projectTokenInput.getTokenObject());
         Product product = productDao.findByPartNumber(productTokenInput.getTokenObject());
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
-        editOrder.updateData(project, product, addOnProducts, getSamplesAsList());
+        editOrder.updateData(project, product, addOnProducts, stringToSampleList(sampleList));
         List<BspUser> ownerList = owner.getTokenObjects();
         if (ownerList.isEmpty()) {
             editOrder.setCreatedBy(null);
@@ -585,6 +588,26 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("abandonSamples")
     public Resolution abandonSamples() throws Exception {
         productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSampleIndices);
+        List<String> sampleNames = new ArrayList<String>(selectedProductOrderSampleIndices.size());
+        for (ProductOrderSample sample : editOrder.getSamples()) {
+            if (selectedProductOrderSampleIndices.contains(sample.getSamplePosition())) {
+                sampleNames.add(sample.getSampleName());
+            }
+        }
+        addMessage("Abandoned samples: {0}.", StringUtils.join(sampleNames, ","));
+        return createViewResolution();
+    }
+
+    @HandlesEvent("addSamples")
+    public Resolution addSamples() throws Exception {
+        List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
+        editOrder.addSamples(samplesToAdd);
+        productOrderDao.persist(editOrder);
+        List<String> sampleNames = new ArrayList<String>(samplesToAdd.size());
+        for (ProductOrderSample sample : samplesToAdd) {
+            sampleNames.add(sample.getSampleName());
+        }
+        addMessage("Added samples: {0}.", StringUtils.join(sampleNames, ","));
         return createViewResolution();
     }
 
@@ -737,9 +760,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         return sampleList;
     }
 
-    public List<ProductOrderSample> getSamplesAsList() {
+    private static List<ProductOrderSample> stringToSampleList(String sampleListText) {
         List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
-        for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleList)) {
+        for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleListText)) {
             samples.add(new ProductOrderSample(sampleName));
         }
 
@@ -812,5 +835,13 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setSampleId(long sampleId) {
         this.sampleId = sampleId;
+    }
+
+    public String getAddSamplesText() {
+        return addSamplesText;
+    }
+
+    public void setAddSamplesText(String addSamplesText) {
+        this.addSamplesText = addSamplesText;
     }
 }
