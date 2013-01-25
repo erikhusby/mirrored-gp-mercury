@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -107,7 +108,6 @@ public class LCSetJiraFieldFactoryTest {
 
         Collection<CustomField> generatedFields = testBuilder.getCustomFields(jiraFieldDefs);
 
-//        Assert.assertEquals(7, generatedFields.size());
         Assert.assertEquals(6, generatedFields.size());
 
         for (CustomField currField : generatedFields) {
@@ -118,12 +118,8 @@ public class LCSetJiraFieldFactoryTest {
             if (currField.getFieldDefinition().getName()
                          .equals(LabBatch.RequiredSubmissionFields.GSSR_IDS.getFieldName())) {
                 for (LabVessel currVessel : testBatch.getStartingLabVessels()) {
-                    if(currVessel.isSampleAuthority()) {
-                        for(MercurySample currSample:currVessel.getMercurySamples()) {
-                            Assert.assertTrue(((String) currField.getValue()).contains(currSample.getSampleKey()));
-                        }
-                    } else {
-                        Assert.assertTrue(((String) currField.getValue()).contains(currVessel.getLabel()));
+                    for(SampleInstance currSample:currVessel.getSampleInstances()) {
+                        Assert.assertTrue(((String) currField.getValue()).contains(currSample.getStartingSample().getSampleKey()));
                     }
                 }
             }

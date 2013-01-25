@@ -22,7 +22,7 @@
 
     <head>
         <meta http-equiv="content-type" content="text/html; charset=iso-8859-1"/>
-        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"/>
         <meta http-equiv="Content-Language" content="en"/>
 
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery-1.8.3.min.js"></script>
@@ -61,6 +61,7 @@
 
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.gpUseful-1.0.js"></script>
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.heatcolor.0.0.1.js"></script>
+        <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.sparkline.js"></script>
 
         <script type="text/javascript"
                 src="http://prodinfojira.broadinstitute.org/jira/s/en_US-vrke9z/733/4/1.2.5/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector.js?collectorId=ad2bd4e3"></script>
@@ -91,7 +92,7 @@
                 $j('#dateRangeDiv').dateRangeSelector();
             });
 
-            $j(function(){
+            $j(function () {
                 $j('.textarea').autosize();
             });
 

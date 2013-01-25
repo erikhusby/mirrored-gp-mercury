@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
@@ -98,21 +98,20 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         StringBuilder sampleList = new StringBuilder();
 
+        int sampleCount = 0;
+
         for (LabVessel currVessel : batch.getStartingLabVessels()) {
-            if(currVessel.isSampleAuthority()) {
-                for (MercurySample currSample:currVessel.getMercurySamples()) {
-                    sampleList.append(currSample.getSampleKey()).append("\n");
-                }
-            } else {
-                sampleList.append(currVessel.getLabel()).append("\n");
+            sampleCount += currVessel.getSampleInstanceCount();
+            for (SampleInstance currSample:currVessel.getSampleInstances()) {
+                sampleList.append(currSample.getStartingSample().getSampleKey()).append("\n");
             }
         }
 
         customFields.add(new CustomField(submissionFields, LabBatch.RequiredSubmissionFields.GSSR_IDS,
                 sampleList.toString()));
+
         customFields.add(new CustomField(submissionFields
-                .get(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName()),
-                batch.getStartingLabVessels().size()));
+                .get(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName()), sampleCount ));
 
 /*
         customFields.add(new CustomField(
@@ -157,7 +156,13 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
 
         for (Map.Entry<String, Set<LabVessel>> pdoKey:pdoToVesselMap.entrySet()) {
 
-            ticketDescription.append(pdoKey.getValue().size()).append(" samples ");
+            int sampleCount = 0;
+
+            for(LabVessel currVessel: pdoKey.getValue()) {
+                sampleCount += currVessel.getSampleInstanceCount();
+            }
+
+            ticketDescription.append(sampleCount).append(" samples ");
             if(foundResearchProjectList.containsKey(pdoKey.getKey()) ) {
                 ticketDescription.append("from ").append(foundResearchProjectList.get(pdoKey.getKey()).getTitle()).append(" ");
             }

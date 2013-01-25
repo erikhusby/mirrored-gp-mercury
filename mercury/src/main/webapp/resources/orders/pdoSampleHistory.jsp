@@ -2,15 +2,27 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
-<script type="text/javascript">
-
-</script>
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.orders.ProductOrderSampleHistoryActionBean"/>
+
+<script type="text/javascript">
+    $j('.sparkline').each(function (index) {
+        $j(this).sparkline('html', { type:'bar', stackedBarColor:'blue', width:'300', height:'20', barWidth:'7',
+                    tooltipFormat:'{{offset:offset}} {{value:value}}',
+                    tooltipValueLookups:{
+                        'offset':{
+                            ${actionBean.getToolTipLookups()}
+                        }
+                    },
+                }
+        )
+    });
+</script>
 
 <table id="sampleListView" class="table simple">
     <thead>
     <tr>
+        <th width="300">History</th>
         <th>Sample Name</th>
         <th>Latest Step</th>
         <th>Latest Process</th>
@@ -21,6 +33,9 @@
     <tbody>
     <c:forEach items="${actionBean.mercurySamples}" var="sample">
         <tr>
+            <td>
+                <span class="sparkline">${actionBean.getSparklineData(sample)}</span>
+            </td>
             <td>
                 <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.sampleKey}">
                         ${sample.sampleKey}
