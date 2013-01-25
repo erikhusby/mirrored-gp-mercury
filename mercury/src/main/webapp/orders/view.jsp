@@ -1,7 +1,6 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
-<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
-<%@ page import="org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -38,6 +37,19 @@
                 });
 
                 $j(".sampleName").each(updateBspInformation);
+
+                $j("#confirmDialog").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    buttons: {
+                        OK: function () {
+                            $j("#orderSamplesForm").submit();
+                        },
+                        Cancel: function () {
+                            $j(this).dialog("close");
+                        }
+                    }
+                });
             });
 
             function updateBspInformation(index, sampleIdCell) {
@@ -87,10 +99,20 @@
 
                 $j('#summaryId').html(dataList);
             }
+
+            function showConfirm(action, actionPrompt) {
+                $j("#dialogAction").attr("name", action);
+                $j("#dialogMessage").text(actionPrompt);
+                $j("#confirmDialog").dialog("open");
+            }
         </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
+
+    <div id="confirmDialog">
+        <p>Are you sure you want to <span id="dialogMessage"></span> the selected samples?</p>
+    </div>
 
         <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
             <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
@@ -131,8 +153,9 @@
 
         <div style="both:clear"> </div>
 
-        <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
+        <stripes:form action="/orders/order.action" id="orderSamplesForm" class="form-horizontal">
             <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+            <stripes:hidden id="dialogAction" name=""/>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Name</label>
@@ -251,12 +274,14 @@
 
                 <span class="actionButtons">
                     <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
-                        <stripes:submit name="deleteSamples" value="Delete Samples" class="btn" style="margin-left:30px;"/>
+                        <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
+                                        style="margin-left:30px;" onclick="showConfirm('deleteSamples','delete')"/>
                     </security:authorizeBlock>
 
                     <%-- Hide from users, not yet working. --%>
                     <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
-                        <stripes:submit name="abandonSamples" value="Abandon Samples" class="btn" style="margin-left:15px;"/>
+                        <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
+                                        style="margin-left:30px;" onclick="showConfirm('abandonSamples','abandon')"/>
                     </security:authorizeBlock>
                 </span>
             </div>
