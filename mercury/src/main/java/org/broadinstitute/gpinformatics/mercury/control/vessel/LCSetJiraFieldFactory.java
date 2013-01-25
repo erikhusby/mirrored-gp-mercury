@@ -99,8 +99,12 @@ public class LCSetJiraFieldFactory extends AbstractBatchJiraFieldFactory {
         StringBuilder sampleList = new StringBuilder();
 
         for (LabVessel currVessel : batch.getStartingLabVessels()) {
-            for (MercurySample currSample:currVessel.getMercurySamples()) {
-                sampleList.append(currSample.getSampleKey()).append("\n");
+            if(currVessel.isSampleAuthority()) {
+                for (MercurySample currSample:currVessel.getMercurySamples()) {
+                    sampleList.append(currSample.getSampleKey()).append("\n");
+                }
+            } else {
+                sampleList.append(currVessel.getLabel()).append("\n");
             }
         }
 
