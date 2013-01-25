@@ -15,8 +15,7 @@ public enum Operator {
     EQUALS("=", OperatorType.NUMERIC),
     EXACT_MATCH("=", OperatorType.STRING),
     IS_IN("is in", OperatorType.STRING),
-    IS("is", OperatorType.BOOLEAN),
-    IS_NOT("is not", OperatorType.BOOLEAN);
+    IS("is On Risk", OperatorType.BOOLEAN);
 
     private final String label;
     private final OperatorType type;
@@ -67,8 +66,6 @@ public enum Operator {
         switch (this) {
         case IS:
             return b1 == b2;
-        case IS_NOT:
-            return b1 != b2;
         }
 
         throw new RuntimeException();
@@ -103,8 +100,16 @@ public enum Operator {
         return label;
     }
 
+    public OperatorType getType() {
+        return type;
+    }
+
     public enum OperatorType {
-        STRING, NUMERIC, BOOLEAN
+        STRING, NUMERIC, BOOLEAN;
+
+        public String getName() {
+            return name();
+        }
     }
 
     public static List<Operator> findOperatorsByType(OperatorType type) {

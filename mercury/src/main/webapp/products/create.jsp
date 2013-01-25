@@ -9,12 +9,18 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
 
+            var booleanTypes = [];
+
             // The jsp loads the criteria types into an associative array by type and then operators
             var criteriaTypeToOperatorList = [];
             <c:forEach items="${actionBean.criteriaTypes}" var="criteriaType">
                 criteriaTypeToOperatorList['${criteriaType.label}'] = [];
                 <c:forEach items="${criteriaType.operators}" var="operator" varStatus="j">
                     criteriaTypeToOperatorList['${criteriaType.label}'][${j.index}] = '${operator.label}';
+
+                    <c:if test="${operator.type == 'BOOLEAN'}">
+                        booleanTypes['${criteriaType.label}'] = true;
+                    </c:if>
                 </c:forEach>
             </c:forEach>
 
@@ -85,7 +91,7 @@
             }
 
             function addCriterion(criteria, operator, value) {
-                var newCriteria = '<div id="criterion-' + criteriaCount + '" class="criterionPanel">\n';
+                var newCriteria = '<div id="criterion-' + criteriaCount + '" style="margin-bottom:3px;" class="criterionPanel">\n';
 
                 if (value == undefined) {
                     value = '';
@@ -100,7 +106,8 @@
 
 
                 // the criteria list
-                newCriteria += '    <select style="width:auto;" name="criteria[' + criteriaCount + ']">';
+                newCriteria += '    <select id="criteriaSelect-' + criteriaCount + '" onchange="updateOperatorOptions(' + criteriaCount + ', \'' +
+                        operator + '\')" style="width:auto;" name="criteria[' + criteriaCount + ']">';
 
                 var operatorsLabel;
 
@@ -118,22 +125,37 @@
                 newCriteria += '    </select>\n';
 
                 // the operator for the selected item
-                newCriteria += '    <select style="width:auto;" name="options[' + criteriaCount + ']">\n';
+                newCriteria += '    <select id="operatorSelect-' + criteriaCount + '" style="width:auto;" name="options[' + criteriaCount + ']">\n';
                 newCriteria += operatorOptions(criteriaCount, operatorsLabel, operator);
                 newCriteria += '    </select>\n';
 
-                newCriteria += '    <input type="text" name=values[' + criteriaCount + ']" value="' + value + '"/>\n';
+                if (!booleanTypes[criteriaLabel]) {
+                    newCriteria += '    <input id="valueText-' + criteriaCount + '" type="text" name=values[' + criteriaCount + ']" value="' + value + '"/>\n';
+                }
+
                 newCriteria += '</div>\n';
 
                 $j('#riskCriteria').append(newCriteria);
                 criteriaCount++;
             }
 
-            function operatorOptions(criteriaCount, operatorsLabel, selectedOperator) {
+            function updateOperatorOptions(criteriaCount, selectedOperator) {
+                var criteriaLabel = $j('#criteriaSelect-' + criteriaCount).attr('value');
+
+                $j('#operatorSelect-' + criteriaCount).html(operatorOptions(criteriaCount, criteriaLabel, selectedOperator));
+
+                if (booleanTypes[criteriaLabel]) {
+                    $j('#valueText-' + criteriaCount).hide();
+                } else {
+                    $j('#valueText-' + criteriaCount).show();
+                }
+            }
+
+            function operatorOptions(criteriaCount, criteriaLabel, selectedOperator) {
                 var options = '';
 
-                var operators = criteriaTypeToOperatorList[operatorsLabel];
-                for (var i in operators) {
+                var operators = criteriaTypeToOperatorList[criteriaLabel];
+                for (var i= 0, max = operators.length; i < max; i++) {
                     var currentOperator = operators[i];
 
                     var selectedString = '';
@@ -326,8 +348,8 @@
 
                 <div class="control-group">
                     <stripes:label for="riskCriteria" name="RiskCriteria" class="control-label"/>
-                    <div id="riskCriteria" class="controls">
-                        <a class="btn btn-mini" style="font-size:14pt;text-decoration: none;" onclick="addCriterion()">+</a>
+                    <div id="riskCriteria" class="controls" style="margin-top: 5px;">
+                        <a class="btn btn-mini" style="margin-bottom: 3px;text-decoration: none;" onclick="addCriterion()">+</a>
                     </div>
                 </div>
 
