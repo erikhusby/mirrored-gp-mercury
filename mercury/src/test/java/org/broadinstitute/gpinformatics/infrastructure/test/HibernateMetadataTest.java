@@ -27,7 +27,9 @@ public class HibernateMetadataTest extends ContainerTest {
     private EntityManager entityManager;
 
     // todo: make this an empty list!
-    private static final List<String> ignoredEntities = Collections.EMPTY_LIST;// Arrays.asList( );
+    private static final List<String> ignoredEntities =
+            Arrays.asList("org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue_AUD",
+                    "WorkCompleteMessage_MessageDataValue_AUD");
 
     /**
      * Method to allow user to ignore certain classes/entities in the testEverything method
