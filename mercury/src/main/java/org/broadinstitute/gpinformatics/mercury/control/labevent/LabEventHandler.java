@@ -11,16 +11,18 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.Billable;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.InvalidMolecularStateException;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.PartiallyProcessedLabEventCache;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 
 import javax.enterprise.event.Event;
 import javax.inject.Inject;
@@ -142,13 +144,14 @@ public class LabEventHandler implements Serializable {
         //processProjectPlanOverrides(labEvent, workflow);
 
         String message = "";
-        if(bspUserList != null) {
+        if (bspUserList != null) {
             BspUser bspUser = bspUserList.getById(labEvent.getEventOperator());
-            if(bspUser != null) {
+            if (bspUser != null) {
                 message += bspUser.getUsername() + " ran ";
             }
         }
-        message += labEvent.getLabEventType().getName() + " for " + labEvent.getAllLabVessels().iterator().next().getLabel() +
+        message += labEvent.getLabEventType().getName() + " for <a href=\"${ctxpath}/search/all.action?search=&searchKey=" + labEvent.getAllLabVessels().iterator().next().getLabel() +
+                "\">" + labEvent.getAllLabVessels().iterator().next().getLabel() + "</a>" +
                 " on " + labEvent.getEventLocation() + " at " + labEvent.getEventDate();
         if (jiraCommentUtil != null) {
             try {
@@ -193,7 +196,7 @@ public class LabEventHandler implements Serializable {
 
                 //TODO SGM, JMT:  this check should probably be part of the pre process Validation call from the decks
                 LOG.error("Bucket " + workingBucketIdentifier.getName() +
-                          " is expected to have vessels but no instance of the bucket can be found.");
+                        " is expected to have vessels but no instance of the bucket can be found.");
                 workingBucket = new Bucket(workingBucketIdentifier);
             }
 
@@ -439,8 +442,8 @@ public class LabEventHandler implements Serializable {
         alertText.append(message).append("\n");
 
         alertText.append(event.getLabEventType().getName() + " from " +
-                         bspUserList.getById(event.getEventOperator()).getUsername() +
-                         " sent on " + event.getEventDate());
+                bspUserList.getById(event.getEventOperator()).getUsername() +
+                " sent on " + event.getEventDate());
     }
 
     /**
@@ -491,7 +494,7 @@ public class LabEventHandler implements Serializable {
                 ProductWorkflowDefVersion workflowDef = getWorkflowVersion(productOrders.iterator().next());
 
                 if (workflowDef != null &&
-                    workflowDef.isPreviousStepBucket(labEvent.getLabEventType().getName())) {
+                        workflowDef.isPreviousStepBucket(labEvent.getLabEventType().getName())) {
                     workingBucketName = workflowDef.getPreviousStep(
                             labEvent.getLabEventType().getName());
                 }
@@ -549,8 +552,8 @@ public class LabEventHandler implements Serializable {
                     workflow branch and determine if it is a bucket.
                  */
                 if (workflowDef != null &&
-                    !workflowDef.isStepDeadBranch(labEvent.getLabEventType().getName()) &&
-                    workflowDef.isNextNonDeadBranchStepBucket(labEvent.getLabEventType().getName())) {
+                        !workflowDef.isStepDeadBranch(labEvent.getLabEventType().getName()) &&
+                        workflowDef.isNextNonDeadBranchStepBucket(labEvent.getLabEventType().getName())) {
 
                     /*
                         If the next viable step is a bucket, save it for indexing it to the appropriate lab vessels
