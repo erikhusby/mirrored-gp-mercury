@@ -104,11 +104,31 @@ public enum Operator {
         return type;
     }
 
+    public static Operator findByLabel(String operatorLabel) {
+        for (Operator type : values()) {
+            if (type.getLabel().equals(operatorLabel)) {
+                return type;
+            }
+        }
+
+        return null;
+    }
+
     public enum OperatorType {
         STRING, NUMERIC, BOOLEAN;
 
         public String getName() {
             return name();
+        }
+
+        public static OperatorType findByLabel(Object operatorLabel) {
+            for (OperatorType type : values()) {
+                if (type.name().equals(operatorLabel)) {
+                    return type;
+                }
+            }
+
+            return null;
         }
     }
 

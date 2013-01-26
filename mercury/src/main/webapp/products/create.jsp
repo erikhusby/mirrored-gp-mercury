@@ -107,7 +107,7 @@
 
                 // the criteria list
                 newCriteria += '    <select id="criteriaSelect-' + criteriaCount + '" onchange="updateOperatorOptions(' + criteriaCount + ', \'' +
-                        operator + '\')" style="width:auto;" name="criteria[' + criteriaCount + ']">';
+                        operator + '\')" style="width:auto;" name="criteria">';
 
                 var operatorsLabel;
 
@@ -125,12 +125,12 @@
                 newCriteria += '    </select>\n';
 
                 // the operator for the selected item
-                newCriteria += '    <select id="operatorSelect-' + criteriaCount + '" style="width:auto;" name="options[' + criteriaCount + ']">\n';
+                newCriteria += '    <select id="operatorSelect-' + criteriaCount + '" style="padding-left:4px;padding-right:4px;width:auto;" name="operators">\n';
                 newCriteria += operatorOptions(criteriaCount, operatorsLabel, operator);
                 newCriteria += '    </select>\n';
 
                 if (!booleanTypes[criteriaLabel]) {
-                    newCriteria += '    <input id="valueText-' + criteriaCount + '" type="text" name=values[' + criteriaCount + ']" value="' + value + '"/>\n';
+                    newCriteria += '    <input id="valueText-' + criteriaCount + '" type="text" name="values" value="' + value + '"/>\n';
                 }
 
                 newCriteria += '</div>\n';

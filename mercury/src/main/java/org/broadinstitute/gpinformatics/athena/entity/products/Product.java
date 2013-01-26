@@ -543,4 +543,67 @@ public class Product implements Serializable, Comparable<Product> {
         return new Long[] { primaryPriceItem.getPriceItemId() };
     }
 
+    public void updateRiskCriteria(String[] criteria, String[] operators, String[] values) {
+
+        // The new list
+        List<RiskCriteria> newList = new ArrayList<RiskCriteria>();
+        // assume that the new list is no different than the original
+        boolean isDifferent = false;
+
+        if (criteria != null) {
+
+            // If the lengths are not the same, then these ARE different
+            if (criteria.length !=  riskCriteriaList.size()) {
+                isDifferent = true;
+            }
+
+            // Go through specified criteria and find matching existing risk criteria
+            for (int i=0; i<criteria.length; i++) {
+
+                boolean sameAsCurrent;
+                RiskCriteria currentCriteria = null;
+
+                if (riskCriteriaList.size() > i) {
+                    currentCriteria = riskCriteriaList.get(i);
+                    sameAsCurrent = currentCriteria.isSame(criteria[i], operators[i], values[i]);
+                } else {
+                    sameAsCurrent = false;
+                }
+
+                // If things are potentially the same, check if this is still the same.
+                if (!isDifferent && !sameAsCurrent) {
+                    // Not the same, so set isDifferent so we know to update the list later
+                    isDifferent = true;
+                }
+
+                if (!sameAsCurrent) {
+                    currentCriteria = findMatching(criteria[i], operators[i], values[i]);
+                    if (currentCriteria == null) {
+                        currentCriteria = new RiskCriteria(RiskCriteria.RiskCriteriaType.findByLabel(criteria[i]), Operator.findByLabel(operators[i]), values[i]);
+                    }
+                }
+
+                newList.add(currentCriteria);
+            }
+
+            if (isDifferent) {
+                riskCriteriaList.clear();
+                riskCriteriaList.addAll(newList);
+            }
+        } else {
+            if (!riskCriteriaList.isEmpty()) {
+                riskCriteriaList.clear();
+            }
+        }
+    }
+
+    private RiskCriteria findMatching(String criteriaName, String operator, String value) {
+        for (RiskCriteria criterion : riskCriteriaList) {
+            if (criterion.isSame(criteriaName, operator, value)) {
+                return criterion;
+            }
+        }
+
+        return null;
+    }
 }

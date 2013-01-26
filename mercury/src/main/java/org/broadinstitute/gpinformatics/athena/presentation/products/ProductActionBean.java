@@ -78,6 +78,11 @@ public class ProductActionBean extends CoreActionBean {
     @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
     private String product;
 
+    // Risk criteria
+    private String[] criteria;
+    private String[] operators;
+    private String[] values;
+
     @ValidateNestedProperties({
         @Validate(field="productFamily.productFamilyId", label="Product Family", required = true, maxlength=255, on={SAVE_ACTION}),
         @Validate(field="productName", required = true, maxlength=255, on={SAVE_ACTION}),
@@ -130,10 +135,10 @@ public class ProductActionBean extends CoreActionBean {
      * Validate information on the product being edited or created
      */
     @ValidationMethod(on = SAVE_ACTION)
-    public void validatePriceItems(ValidationErrors errors) {
+    public void validatePriceItems() {
         String[] duplicatePriceItems = editProduct.getDuplicatePriceItemNames();
         if (duplicatePriceItems != null) {
-            errors.addGlobalError(new SimpleError("Cannot save with duplicate price items: " + StringUtils.join(duplicatePriceItems, ", ")));
+            addGlobalValidationError("Cannot save with duplicate price items: " + StringUtils.join(duplicatePriceItems, ", "));
         }
 
         // check for existing name for create or name change on edit
@@ -142,7 +147,7 @@ public class ProductActionBean extends CoreActionBean {
 
             Product existingProduct = productDao.findByPartNumber(editProduct.getPartNumber());
             if (existingProduct != null && ! existingProduct.getProductId().equals(editProduct.getProductId())) {
-                errors.add("partNumber", new SimpleError("Part number '" + editProduct.getPartNumber() + "' is already in use"));
+                addValidationError("partNumber", "Part number '" + editProduct.getPartNumber() + "' is already in use");
             }
         }
 
@@ -150,7 +155,11 @@ public class ProductActionBean extends CoreActionBean {
         if ((editProduct.getAvailabilityDate() != null) &&
             (editProduct.getDiscontinuedDate() != null) &&
             (editProduct.getAvailabilityDate().after(editProduct.getDiscontinuedDate()))) {
-            errors.addGlobalError(new SimpleError("Availability date must precede discontinued date."));
+            addGlobalValidationError("Availability date must precede discontinued date.");
+        }
+
+        if (priceItemTokenInput.getTokenObject() == null) {
+            addValidationError("token-input-primaryPriceItem", "Primary price item is required");
         }
     }
 
@@ -211,6 +220,8 @@ public class ProductActionBean extends CoreActionBean {
         populateTokenListFields();
 
         editProduct.setProductFamily(productFamilyDao.find(editProduct.getProductFamily().getProductFamilyId()));
+
+        editProduct.updateRiskCriteria(criteria, operators, values);
 
         productDao.persist(editProduct);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");
@@ -326,5 +337,29 @@ public class ProductActionBean extends CoreActionBean {
 
     public RiskCriteria.RiskCriteriaType[] getCriteriaTypes() {
         return RiskCriteria.RiskCriteriaType.values();
+    }
+
+    public String[] getValues() {
+        return values;
+    }
+
+    public void setValues(String[] values) {
+        this.values = values;
+    }
+
+    public String[] getOperators() {
+        return operators;
+    }
+
+    public void setOperators(String[] operators) {
+        this.operators = operators;
+    }
+
+    public String[] getCriteria() {
+        return criteria;
+    }
+
+    public void setCriteria(String[] criteria) {
+        this.criteria = criteria;
     }
 }

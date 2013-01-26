@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -20,6 +21,9 @@ import java.util.List;
  */
 @Named
 public class PriceItemTokenInput extends TokenInput<PriceItem> {
+
+    @Inject
+    private PriceItemDao priceItemDao;
 
     @Inject
     private PriceListCache priceListCache;
@@ -55,8 +59,9 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
         return itemList.toString();
     }
 
-    private static void createAutocomplete(JSONArray itemList, PriceItem priceItem) throws JSONException {
+    private void createAutocomplete(JSONArray itemList, PriceItem priceItem) throws JSONException {
         if (priceItem == null) {
+            JSONObject item = getJSONObject(getListOfKeys(), "unknown price item id", false);
             return;
         }
 
@@ -78,8 +83,17 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
 
         PriceItem priceItem = priceItems.get(0);
 
-        return new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
-            priceItem.getId(), priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
+        // Find the existing mercury price item
+        org.broadinstitute.gpinformatics.athena.entity.products.PriceItem mercuryPriceItem =
+                priceItemDao.find(priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
+
+        if (mercuryPriceItem == null) {
+            mercuryPriceItem = new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
+                priceItem.getId(), priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
+            priceItemDao.persist(mercuryPriceItem);
+        }
+
+        return mercuryPriceItem;
     }
 
     public Collection<? extends org.broadinstitute.gpinformatics.athena.entity.products.PriceItem> getMercuryTokenObjects() {

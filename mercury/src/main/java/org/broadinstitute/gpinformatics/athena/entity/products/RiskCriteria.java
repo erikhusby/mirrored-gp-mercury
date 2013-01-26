@@ -85,6 +85,12 @@ public class RiskCriteria {
         return MessageFormat.format("{0} {1} {2}", type.getLabel(), operator.getLabel(), value);
     }
 
+    public boolean isSame(String criteriaName, String operator, String value) {
+        return criteriaName.equals(type.getLabel()) &&
+            operator.equals(this.operator.getLabel()) &&
+            value.equals(this.value);
+    }
+
     public enum RiskCriteriaType {
         CONCENTRATION("Concentration", Operator.OperatorType.NUMERIC, new SampleCalculation() {
             @Override
@@ -125,6 +131,16 @@ public class RiskCriteria {
 
         public List<Operator> getOperators() {
             return Operator.findOperatorsByType(operatorType);
+        }
+
+        public static RiskCriteriaType findByLabel(String criteriaName) {
+            for (RiskCriteriaType type : values()) {
+                if (type.getLabel().equals(criteriaName)) {
+                    return type;
+                }
+            }
+
+            return null;
         }
     }
 
