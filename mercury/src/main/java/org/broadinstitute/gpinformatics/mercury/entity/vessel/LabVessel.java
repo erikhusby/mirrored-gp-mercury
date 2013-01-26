@@ -209,12 +209,12 @@ public abstract class LabVessel implements Serializable {
      * only have metrics for a single container--and
      * no transfer graph.
      *
-     * @param metricName
+     * @param metricType
      * @param searchMode
      * @param sampleInstance
      * @return
      */
-    public LabMetric getMetric(LabMetric.MetricName metricName, MetricSearchMode searchMode,
+    public LabMetric getMetric(LabMetric.MetricType metricType, MetricSearchMode searchMode,
                                SampleInstance sampleInstance) {
         throw new RuntimeException("I haven't been written yet.");
     }

@@ -69,7 +69,7 @@ public class IlluminaRunChamber extends RunChamber {
 
 
     @Override
-    public LabMetric getMetric(LabMetric.MetricName metricName, MetricSearchMode searchMode, SampleInstance sampleInstance) {
+    public LabMetric getMetric(LabMetric.MetricType metricType, MetricSearchMode searchMode, SampleInstance sampleInstance) {
         throw new RuntimeException("Method not yet implemented.");
     }
 
