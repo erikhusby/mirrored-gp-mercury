@@ -35,6 +35,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Proje
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -107,6 +108,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     private BillingLedgerDao billingLedgerDao;
 
     @Inject
+    private ProductOrderSampleDao productOrderSampleDao;
+
+    @Inject
     private ProductOrderEjb productOrderEjb;
 
     @Inject
@@ -143,11 +147,15 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<String> selectedProductOrderBusinessKeys;
     private List<ProductOrder> selectedProductOrders;
 
+    private List<Integer> selectedProductOrderSampleIndices;
+
     private String quoteIdentifier;
 
     private String product;
 
-    private List<String> addOnKeys = new ArrayList<String> ();
+    private List<String> addOnKeys = new ArrayList<String>();
+
+    private String addSamplesText;
 
     /*
      * The search query.
@@ -251,11 +259,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                 "tracker download";
 
         if (!getUserBean().isValidBspUser()) {
-            addGlobalValidationError("A valid bsp user is needed to start a " + validatingFor);
+            addGlobalValidationError("A valid bsp user is needed to start a {2}", validatingFor);
         }
 
         if ((selectedProductOrderBusinessKeys == null) || selectedProductOrderBusinessKeys.isEmpty()) {
-            addGlobalValidationError("You must select at least one product order to start a " + validatingFor);
+            addGlobalValidationError("You must select at least one product order to start a {2}", validatingFor);
         } else {
             Set<Product> products = new HashSet<Product> ();
             selectedProductOrders =
@@ -274,14 +282,14 @@ public class ProductOrderActionBean extends CoreActionBean {
                 String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
                 if (duplicatePriceItems != null) {
                     addGlobalValidationError(
-                            "The Product " + product.getPartNumber() + " has duplicate price items: " +
+                            "The Product {2} has duplicate price items: {3}", product.getPartNumber(),
                             StringUtils.join(duplicatePriceItems, ", "));
                 }
             }
 
             // If there are locked out orders, then do not allow the session to start.
             // TODO: It looks like this could be done by traversing the entity tree, e.g. ProductOrder -> ProductOrderSample -> BusinessLedger.
-            Set<BillingLedger> lockedOutOrders = billingLedgerDao.findLockedOutByOrderList(getSelectedProductOrderBusinessKeys());
+            Set<BillingLedger> lockedOutOrders = billingLedgerDao.findLockedOutByOrderList(selectedProductOrderBusinessKeys);
             if (!lockedOutOrders.isEmpty()) {
                 Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());
                 for (BillingLedger ledger : lockedOutOrders) {
@@ -314,8 +322,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getQuoteFunding")
     public Resolution getQuoteFunding() {
-
-        StringReader returnStringStream;
 
         JSONObject item = new JSONObject();
 
@@ -402,8 +408,13 @@ public class ProductOrderActionBean extends CoreActionBean {
             return getSourcePageResolution();
         }
 
-        addMessage("Product Order \"" + editOrder.getTitle() + "\" has been placed");
-        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER, editOrder.getBusinessKey());
+        addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
+        return createViewResolution();
+    }
+
+    private Resolution createViewResolution() {
+        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER,
+                editOrder.getBusinessKey());
     }
 
     @HandlesEvent("validate")
@@ -434,7 +445,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         productOrderDao.persist(editOrder);
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been saved.");
-        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER, editOrder.getBusinessKey());
+        return createViewResolution();
     }
 
     private void updateTokenInputFields() {
@@ -442,7 +453,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         ResearchProject project = projectDao.findByBusinessKey(projectTokenInput.getTokenObject());
         Product product = productDao.findByPartNumber(productTokenInput.getTokenObject());
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
-        editOrder.updateData(project, product, addOnProducts, getSamplesAsList());
+        editOrder.updateData(project, product, addOnProducts, stringToSampleList(sampleList));
         List<BspUser> ownerList = owner.getTokenObjects();
         if (ownerList.isEmpty()) {
             editOrder.setCreatedBy(null);
@@ -464,7 +475,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("startBilling")
     public Resolution startBilling() {
         Set<BillingLedger> ledgerItems =
-                billingLedgerDao.findWithoutBillingSessionByOrderList(getSelectedProductOrderBusinessKeys());
+                billingLedgerDao.findWithoutBillingSessionByOrderList(selectedProductOrderBusinessKeys);
         if ((ledgerItems == null) || (ledgerItems.isEmpty())) {
             addGlobalValidationError("There is nothing to bill");
             return new RedirectResolution(ProductOrderActionBean.class, LIST_ACTION);
@@ -533,13 +544,78 @@ public class ProductOrderActionBean extends CoreActionBean {
         boolean lanesSupported = true;
         JSONObject item = new JSONObject();
 
-        if ( this.product != null ) {
+        if (this.product != null) {
             Product product = productDao.findByBusinessKey(this.product);
-            lanesSupported =  product.getSupportsNumberOfLanes();
+            lanesSupported = product.getSupportsNumberOfLanes();
         }
         item.put("supports", lanesSupported);
 
         return createTextResolution(item.toString());
+    }
+
+    @ValidationMethod(on = "deleteSamples")
+    public void validateDeleteSamples() {
+        if ((selectedProductOrderSampleIndices == null) || selectedProductOrderSampleIndices.isEmpty()) {
+            addGlobalValidationError("You must select at least one sample to delete");
+        }
+        List<ProductOrderSample> samples =
+                productOrderSampleDao.findByOrderAndIndex(editOrder, selectedProductOrderSampleIndices);
+
+        // Report an error if any sample has billing data associated with it.
+        for (ProductOrderSample sample : samples) {
+            if (!sample.getLedgerItems().isEmpty()) {
+                addGlobalValidationError("Cannot delete sample {2} because billing has started.",
+                        sample.getSampleName());
+            }
+        }
+    }
+
+    @HandlesEvent("deleteSamples")
+    public Resolution deleteSamples() throws Exception {
+        // Modify sample list, removing the requested samples.
+        List<String> sampleNames = new ArrayList<String>(selectedProductOrderSampleIndices.size());
+        for (Iterator<ProductOrderSample> samples = editOrder.getSamples().iterator(); samples.hasNext();) {
+            ProductOrderSample sample = samples.next();
+            if (selectedProductOrderSampleIndices.contains(sample.getSamplePosition())) {
+                samples.remove();
+                sampleNames.add(sample.getSampleName());
+            }
+        }
+        productOrderDao.persist(editOrder);
+        String nameList = StringUtils.join(sampleNames, ",");
+        addMessage("Deleted samples: {0}.", nameList);
+        JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
+        issue.addComment(MessageFormat.format("{0} deleted samples: {1}.", userBean.getLoginUserName(), nameList));
+        return createViewResolution();
+    }
+
+    @HandlesEvent("abandonSamples")
+    public Resolution abandonSamples() throws Exception {
+        productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSampleIndices);
+        List<String> sampleNames = new ArrayList<String>(selectedProductOrderSampleIndices.size());
+        for (ProductOrderSample sample : editOrder.getSamples()) {
+            if (selectedProductOrderSampleIndices.contains(sample.getSamplePosition())) {
+                sampleNames.add(sample.getSampleName());
+            }
+        }
+        addMessage("Abandoned samples: {0}.", StringUtils.join(sampleNames, ","));
+        return createViewResolution();
+    }
+
+    @HandlesEvent("addSamples")
+    public Resolution addSamples() throws Exception {
+        List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
+        editOrder.addSamples(samplesToAdd);
+        productOrderDao.persist(editOrder);
+        List<String> sampleNames = new ArrayList<String>(samplesToAdd.size());
+        for (ProductOrderSample sample : samplesToAdd) {
+            sampleNames.add(sample.getSampleName());
+        }
+        String nameList = StringUtils.join(sampleNames, ",");
+        addMessage("Added samples: {0}.", nameList);
+        JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
+        issue.addComment(MessageFormat.format("{0} added samples: {1}.", userBean.getLoginUserName(), nameList));
+        return createViewResolution();
     }
 
     public List<String> getSelectedProductOrderBusinessKeys() {
@@ -548,6 +624,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setSelectedProductOrderBusinessKeys(List<String> selectedProductOrderBusinessKeys) {
         this.selectedProductOrderBusinessKeys = selectedProductOrderBusinessKeys;
+    }
+
+    public List<Integer> getSelectedProductOrderSampleIndices() {
+        return selectedProductOrderSampleIndices;
+    }
+
+    public void setSelectedProductOrderSampleIndices(List<Integer> selectedProductOrderSampleIndices) {
+        this.selectedProductOrderSampleIndices = selectedProductOrderSampleIndices;
     }
 
     public List<ProductOrderListEntry> getAllProductOrders() {
@@ -673,18 +757,19 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getSampleList() {
         if (sampleList == null) {
-            sampleList = "";
+            StringBuilder sb = new StringBuilder();
             for (ProductOrderSample sample : getEditOrder().getSamples()) {
-                sampleList += sample.getSampleName() + "\n";
+                sb.append(sample.getSampleName()).append("\n");
             }
+            sampleList = sb.toString();
         }
 
         return sampleList;
     }
 
-    public List<ProductOrderSample> getSamplesAsList() {
+    private static List<ProductOrderSample> stringToSampleList(String sampleListText) {
         List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
-        for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleList)) {
+        for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleListText)) {
             samples.add(new ProductOrderSample(sampleName));
         }
 
@@ -708,20 +793,20 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * Sample list edit should be enabled if this is a DRAFT order or this is a non-DRAFT order with no billing
-     * ledger entries.
+     * Sample list edit is only enabled if this is a DRAFT order.  Once an order has been placed, users must use the
+     * UI in the view PDO page to edit the samples in an order.
      *
-     * @return
+     * @return true if user can edit the sample list
      */
     public boolean getAllowSampleListEdit() {
-        return editOrder.isDraft() || billingLedgerDao.findByOrderList(editOrder).isEmpty();
+        return editOrder.isDraft();
     }
 
     /**
-     * The logic here is currently the same as allow sample list edit, but these may both change as we snapshot
-     * quotes into ledger entries and/or support sample merging / name overwrites in the sample list
+     * Quote edit is allowed if the PDO is DRAFT, or if no billing has occurred for any samples yet. This may change
+     * if we snapshot quotes into ledger entries.
      *
-     * @return
+     * @return true if user can edit the quote
      */
     public boolean getAllowQuoteEdit() {
         return editOrder.isDraft() || billingLedgerDao.findByOrderList(editOrder).isEmpty();
@@ -757,5 +842,13 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setSampleId(long sampleId) {
         this.sampleId = sampleId;
+    }
+
+    public String getAddSamplesText() {
+        return addSamplesText;
+    }
+
+    public void setAddSamplesText(String addSamplesText) {
+        this.addSamplesText = addSamplesText;
     }
 }

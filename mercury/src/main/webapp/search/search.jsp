@@ -156,7 +156,7 @@
                     </c:otherwise>
                 </c:choose>
                 <stripes:layout-render name="/resources/batch/batchListView.jsp" batches="${actionBean.foundBatches}"
-                                       bean="${actionBean}" showCheckboxes="true"/>
+                                       bean="${actionBean}" showCheckboxes="false"/>
                 </div>
             </stripes:form>
         </c:if>

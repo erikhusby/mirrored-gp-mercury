@@ -103,7 +103,7 @@
                         </div>
                         <div class="control-group">
                             <div class="controls" style="margin-left: 80px;">
-                                <stripes:submit name="createBatch" value="Create Batcfh"/>
+                                <stripes:submit name="createBatch" value="Create Batch"/>
                             </div>
                         </div>
                     </td>

@@ -1,7 +1,6 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
-<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
-<%@ page import="org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -14,6 +13,7 @@
                 $j('#sampleData').dataTable( {
                     "oTableTools": ttExportDefines,
                     "aoColumns": [
+                        {"bSortable": false},                   // checkbox
                         {"bSortable": false, "sType": "html"},   // ID
                         {"bSortable": false},                    // Participant ID
                         {"bSortable": false},                    // Volume
@@ -37,6 +37,19 @@
                 });
 
                 $j(".sampleName").each(updateBspInformation);
+
+                $j("#confirmDialog").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    buttons: {
+                        OK: function () {
+                            $j("#orderSamplesForm").submit();
+                        },
+                        Cancel: function () {
+                            $j(this).dialog("close");
+                        }
+                    }
+                });
             });
 
             function updateBspInformation(index, sampleIdCell) {
@@ -86,10 +99,20 @@
 
                 $j('#summaryId').html(dataList);
             }
+
+            function showConfirm(action, actionPrompt) {
+                $j("#dialogAction").attr("name", action);
+                $j("#dialogMessage").text(actionPrompt);
+                $j("#confirmDialog").dialog("open");
+            }
         </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
+
+    <div id="confirmDialog">
+        <p>Are you sure you want to <span id="dialogMessage"></span> the selected samples?</p>
+    </div>
 
         <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
             <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
@@ -130,7 +153,9 @@
 
         <div style="both:clear"> </div>
 
-        <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
+        <stripes:form action="/orders/order.action" id="orderSamplesForm" class="form-horizontal">
+            <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+            <stripes:hidden id="dialogAction" name=""/>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Name</label>
@@ -170,7 +195,7 @@
                 <label class="control-label label-form">Owner</label>
                 <div class="controls">
                     <div class="form-value">
-                        ${actionBean.getUserFullName(actionBean.editOrder.createdBy)}
+                            ${actionBean.getUserFullName(actionBean.editOrder.createdBy)}
                     </div>
                 </div>
             </div>
@@ -187,7 +212,7 @@
                                 ${actionBean.editOrder.researchProject.title}
                             </stripes:link>
                             (<a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.researchProject.jiraTicketKey}" class="external" target="JIRA">
-                                ${actionBean.editOrder.researchProject.jiraTicketKey}
+                            ${actionBean.editOrder.researchProject.jiraTicketKey}
                             </a>)
                         </c:if>
                     </div>
@@ -220,7 +245,7 @@
                 <div class="controls">
                     <div class="form-value">
                         <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
-                            ${actionBean.editOrder.quoteId}
+                                ${actionBean.editOrder.quoteId}
                         </a>
                         <span id="fundsRemaining" style="margin-left: 20px;"> </span>
                     </div>
@@ -246,6 +271,27 @@
 
             <div class="borderHeader">
                 Samples
+
+                <c:if test="${!actionBean.editOrder.draft}">
+                <span class="actionButtons">
+                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
+                        <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
+                                        style="margin-left:30px;" onclick="showConfirm('deleteSamples','delete')"/>
+                    </security:authorizeBlock>
+
+                    <%-- Hide from users, not yet working. --%>
+                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+                        <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
+                                        style="margin-left:15px;" onclick="showConfirm('abandonSamples','abandon')"/>
+                    </security:authorizeBlock>
+                </span>
+                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
+                        <div class="pull-right">
+                            <stripes:submit name="addSamples" value="Add Samples" class="btn" style="margin-left:30px;"/>
+                            <stripes:text size="100" name="addSamplesText" style="margin-left:15px;"/>
+                        </div>
+                    </security:authorizeBlock>
+                </c:if>
             </div>
 
             <div id="summaryId" class="fourcolumn" style="margin-bottom:5px;">
@@ -255,6 +301,11 @@
             <table id="sampleData" class="table simple">
                 <thead>
                     <tr>
+                        <th width="40">
+                            <c:if test="${!actionBean.editOrder.draft}">
+                                <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
+                            </c:if>
+                        </th>
                         <th width="90">ID</th>
                         <th>Participant ID</th>
                         <th width="40">Volume</th>
@@ -272,6 +323,11 @@
                 <tbody>
                     <c:forEach items="${actionBean.editOrder.samples}" var="sample">
                         <tr>
+                            <td>
+                                <c:if test="${!actionBean.editOrder.draft}">
+                                    <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderSampleIndices" value="${sample.samplePosition}"/>
+                                </c:if>
+                            </td>
                             <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
                                 <c:choose>
                                     <c:when test="${sample.inBspFormat}">

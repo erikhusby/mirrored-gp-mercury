@@ -10,35 +10,33 @@ import org.codehaus.jackson.map.ObjectMapper;
 import javax.ws.rs.core.MediaType;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 
 
 /**
  * Abstract subclass of {@link AbstractJerseyClientService} with helpful methods for JSON-based RESTful web services.
  *
  */
+// FIXME: This code is not OOP, and would be better abstracted as a helper class instead of a base class.
 public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClientService {
 
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper = new ObjectMapper();
     
-    private Log logger = LogFactory.getLog(AbstractJsonJerseyClientService.class);
+    private static final Log logger = LogFactory.getLog(AbstractJsonJerseyClientService.class);
 
     /**
-     * Write a JSON representation of the bean parameter to a {@link ByteArrayOutputStream} and return.
+     * Write a JSON representation of the bean parameter to a {@link String} and return.
      *
      * @param bean
      *
      * @return
      * @throws IOException
      */
-    protected ByteArrayOutputStream writeValue(Object bean) throws IOException {
-
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-
-        objectMapper.writeValue(baos, bean);
-
-        return baos;
+    protected String writeValue(Object bean) throws IOException {
+        OutputStream outputStream = new ByteArrayOutputStream();
+        objectMapper.writeValue(outputStream, bean);
+        return outputStream.toString();
     }
-
 
     /**
      * Set the JSON MIME types for both request and response on the {@link WebResource}
@@ -48,12 +46,8 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
      * @return
      */
     protected WebResource.Builder setJsonMimeTypes(WebResource webResource) {
-        return webResource.
-                type(MediaType.APPLICATION_JSON_TYPE).
-                accept(MediaType.APPLICATION_JSON_TYPE);
-
+        return webResource.type(MediaType.APPLICATION_JSON_TYPE).accept(MediaType.APPLICATION_JSON_TYPE);
     }
-
 
     /**
      * POST a JSON representation of the requestPojo to the specified {@link WebResource} and return a POJO
@@ -67,24 +61,18 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
      * @throws IOException
      */
     protected <T> T post(WebResource webResource, Object requestPojo, GenericType<T> responseGenericType) throws IOException {
+        String request = writeValue(requestPojo);
 
-        final ByteArrayOutputStream baos = writeValue(requestPojo);
+        logger.warn("POST request: " + request);
 
-        logger.warn("POST request: " + baos.toString());
-
-
-        T ret = null;
         try {
-            ret = setJsonMimeTypes(webResource).post(responseGenericType, baos.toString());
+            T ret = setJsonMimeTypes(webResource).post(responseGenericType, request);
+            logger.debug("POST response: " + ret);
+            return ret;
         } catch (UniformInterfaceException e) {
             //TODO SGM:  Change to a more defined exception to give the option to set in throws or even catch
             throw new RuntimeException(e.getResponse().getEntity(String.class), e);
         }
-
-        logger.debug("POST response: " + ret);
-
-        return ret;
-
     }
 
     /**
@@ -97,13 +85,12 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
      * @throws IOException
      */
     protected void post(WebResource webResource, Object requestPojo) throws IOException {
+        String request = writeValue(requestPojo);
 
-        final ByteArrayOutputStream baos = writeValue(requestPojo);
-
-        logger.warn("POST request: " + baos.toString());
+        logger.warn("POST request: " + request);
 
         try {
-            setJsonMimeTypes(webResource).post(baos.toString());
+            setJsonMimeTypes(webResource).post(request);
         } catch (UniformInterfaceException e) {
             //TODO SGM:  Change to a more defined exception to give the option to set in throws or even catch
             throw new RuntimeException(e.getResponse().getEntity(String.class), e);
@@ -116,16 +103,13 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
      *
      * @param webResource
      * @param requestPojo
-     * @param responseGenericType
-     * @param <T>
-     * @return
      * @throws IOException
      */
     protected void put(WebResource webResource, Object requestPojo) throws IOException {
-        final ByteArrayOutputStream baos = writeValue(requestPojo);
-        logger.warn("PUT request: " + baos.toString());
+        String request = writeValue(requestPojo);
+        logger.warn("PUT request: " + request);
         try {
-            setJsonMimeTypes(webResource).put(baos.toString());
+            setJsonMimeTypes(webResource).put(request);
         } catch (UniformInterfaceException e) {
             //TODO SGM:  Change to a more defined exception to give the option to set in throws or even catch
             throw new RuntimeException(e.getResponse().getEntity(String.class), e);
@@ -142,7 +126,6 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
      * @return
      */
     protected <T> T get(WebResource webResource, GenericType<T> genericType) {
-
         try {
             return setJsonMimeTypes(webResource).get(genericType);
         } catch (UniformInterfaceException e) {
@@ -150,5 +133,4 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
             throw new RuntimeException(e.getResponse().getEntity(String.class), e);
         }
     }
-
 }

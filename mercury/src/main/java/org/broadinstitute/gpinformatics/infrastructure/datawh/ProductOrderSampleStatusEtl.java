@@ -11,8 +11,13 @@ import java.util.Date;
 
 @Stateless
 public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
+
+    private ProductOrderSampleDao dao;
+
     @Inject
-    ProductOrderSampleDao dao;
+    public void setProductOrderSampleDao(ProductOrderSampleDao dao) {
+	this.dao = dao;
+    }
 
     /**
      * @{inheritDoc}
@@ -40,8 +45,8 @@ public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
 
     /** This entity does not make entity records. */
     @Override
-    String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
-        return null;
+    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+        return Collections.EMPTY_LIST;
     }
 
     /** This entity does not make entity records. */
