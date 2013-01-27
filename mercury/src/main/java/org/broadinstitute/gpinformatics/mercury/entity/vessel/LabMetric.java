@@ -3,6 +3,9 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -109,12 +112,14 @@ public class LabMetric {
 
     /** The type of the value.  This could be in LabMetricRun, rather than denormalized here, but having it here allows
      * for metrics that are generated without runs */
-    private MetricType metricType;
+    @Enumerated(EnumType.STRING)
+     private MetricType metricType;
 
     /** The unit of the value */
+    @Enumerated(EnumType.STRING)
     private LabUnit labUnit;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     private LabVessel labVessel;
 
     /** For JPA */
