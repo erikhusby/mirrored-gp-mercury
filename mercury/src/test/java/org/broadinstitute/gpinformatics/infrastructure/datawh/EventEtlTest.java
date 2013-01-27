@@ -1,19 +1,17 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -63,9 +61,10 @@ public class EventEtlTest {
         product3.setProductName("Product 3");
         product3.setWorkflowName("Workflow 2");
 
-        ProductOrder pdo1 = new ProductOrder(0L, null, null, null, product1, null);
-        ProductOrder pdo2 = new ProductOrder(0L, null, null, null, product2, null);
-        ProductOrder pdo3 = new ProductOrder(0L, null, null, null, product3, null);
+        List<ProductOrderSample> emptyList = Collections.emptyList();
+        ProductOrder pdo1 = new ProductOrder(0L, "", emptyList, null, product1, null);
+        ProductOrder pdo2 = new ProductOrder(0L, "", emptyList, null, product2, null);
+        ProductOrder pdo3 = new ProductOrder(0L, "", emptyList, null, product3, null);
 
         // Does a variety of workflow config lookups.  The ugly long expected value is the WorkflowConfigDenorm id,
         // a calculated hash value based on the contents of the WorkflowConfig elements.
