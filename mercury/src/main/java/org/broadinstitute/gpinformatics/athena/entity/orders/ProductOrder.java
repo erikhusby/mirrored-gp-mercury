@@ -341,7 +341,8 @@ public class ProductOrder implements Serializable {
     /**
      * Used for test purposes only.
      */
-    public ProductOrder(@Nonnull Long creatorId, @Nonnull String title, List<ProductOrderSample> samples, String quoteId,
+    public ProductOrder(@Nonnull Long creatorId, @Nonnull String title,
+                        @Nonnull List<ProductOrderSample> samples, String quoteId,
                         Product product, ResearchProject researchProject) {
         createdBy = creatorId;
         this.title = title;
@@ -465,7 +466,7 @@ public class ProductOrder implements Serializable {
         counts.invalidate();
     }
 
-    public void setSamples(List<ProductOrderSample> samples) {
+    public void setSamples(@Nonnull List<ProductOrderSample> samples) {
         if (samples.isEmpty()) {
             return;
         }
@@ -477,7 +478,7 @@ public class ProductOrder implements Serializable {
         }
     }
 
-    public void addSamples(List<ProductOrderSample> newSamples) {
+    public void addSamples(@Nonnull List<ProductOrderSample> newSamples) {
         if (samples.isEmpty()) {
             setSamples(newSamples);
         } else {
