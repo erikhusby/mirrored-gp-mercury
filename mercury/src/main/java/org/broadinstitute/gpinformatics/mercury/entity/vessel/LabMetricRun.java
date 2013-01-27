@@ -13,6 +13,7 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -38,7 +39,7 @@ public class LabMetricRun {
     private LabMetric.MetricType metricType;
 
     @OneToMany(cascade = CascadeType.PERSIST, fetch = FetchType.LAZY, mappedBy = "labMetricRun")
-    private Set<LabMetric> labMetrics;
+    private Set<LabMetric> labMetrics = new HashSet<LabMetric>();
 
     public LabMetricRun(String runName, Date runDate, LabMetric.MetricType metricType) {
         this.runName = runName;
@@ -56,4 +57,19 @@ public class LabMetricRun {
     }
 
 
+    public String getRunName() {
+        return runName;
+    }
+
+    public Date getRunDate() {
+        return runDate;
+    }
+
+    public LabMetric.MetricType getMetricType() {
+        return metricType;
+    }
+
+    public Set<LabMetric> getLabMetrics() {
+        return labMetrics;
+    }
 }

@@ -11,6 +11,7 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -45,13 +46,21 @@ public class VesselMetricResource {
     @DaoFree
     public LabMetricRun buildLabMetricRun(VesselMetricRunBean vesselMetricRunBean,
             Map<String, LabVessel> mapBarcodeToVessel) {
+        // todo jmt pass in existing LabMetricRun, if any
+        LabMetric.MetricType metricType = LabMetric.MetricType.getByDisplayName(vesselMetricRunBean.getQuantType());
+        LabMetricRun labMetricRun = new LabMetricRun(vesselMetricRunBean.getRunName(), vesselMetricRunBean.getRunDate(),
+                metricType);
+
         for (VesselMetricBean vesselMetricBean : vesselMetricRunBean.getVesselMetricBeans()) {
             LabVessel labVessel = mapBarcodeToVessel.get(vesselMetricBean.getBarcode());
             if(labVessel == null) {
                 throw new RuntimeException("Failed to find vessel for barcode " + vesselMetricBean.getBarcode());
             }
+            LabMetric labMetric = new LabMetric(new BigDecimal(vesselMetricBean.getValue()), metricType,
+                    LabMetric.LabUnit.getByDisplayName(vesselMetricBean.getUnit()));
+            labVessel.addMetric(labMetric);
+            labMetricRun.addMetric(labMetric);
         }
-        return new LabMetricRun(vesselMetricRunBean.getRunName(), vesselMetricRunBean.getRunDate(),
-                LabMetric.MetricType.getByDisplayName(vesselMetricRunBean.getQuantType()));
+        return labMetricRun;
     }
 }

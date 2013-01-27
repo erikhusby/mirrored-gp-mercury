@@ -22,15 +22,39 @@ import java.util.Map;
 public class LabMetric {
 
     public enum LabUnit {
-        NG_PER_ML,
-        UG_PER_ML,
-        UG,
-        MG,
-        ML,
-        KBp,
-        MBp,
-        GBp,
-        BPp
+        NG_PER_UL("ng/uL"),
+        UG_PER_ML("ug/mL"),
+        UG("ug"),
+        MG("mg"),
+        ML("mL"),
+        KBp("KBp"),
+        MBp("KBp"),
+        GBp("GBp"),
+        Bp("Bp");
+
+        private String displayName;
+        private static final Map<String, LabUnit> mapNameToUnit = new HashMap<String, LabUnit>();
+        static {
+            for (LabUnit unit : LabUnit.values()) {
+                mapNameToUnit.put(unit.getDisplayName(), unit);
+            }
+        }
+
+        LabUnit(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public static LabUnit getByDisplayName(String displayName) {
+            LabUnit mappedUnit = mapNameToUnit.get(displayName);
+            if(mappedUnit == null) {
+                throw new RuntimeException("Failed to find LabUnit for name " + displayName);
+            }
+            return mappedUnit;
+        }
     }
 
     public enum MetricType {
@@ -121,6 +145,14 @@ public class LabMetric {
 
     public void setLabMetricRun(LabMetricRun labMetricRun) {
         this.labMetricRun = labMetricRun;
+    }
+
+    public LabVessel getLabVessel() {
+        return labVessel;
+    }
+
+    public void setLabVessel(LabVessel labVessel) {
+        this.labVessel = labVessel;
     }
 
     /*

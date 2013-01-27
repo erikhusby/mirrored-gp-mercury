@@ -129,6 +129,8 @@ public abstract class LabVessel implements Serializable {
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "reworkedLabVessels")
     private Set<Rework> reworks = new HashSet<Rework>();
 
+    private Set<LabMetric> labMetrics = new HashSet<LabMetric>();
+
     protected LabVessel(String label) {
         createdOn = new Date();
         this.label = label;
@@ -162,12 +164,13 @@ public abstract class LabVessel implements Serializable {
         return label;
     }
 
-    public void addMetric(LabMetric m) {
-        throw new RuntimeException("I haven't been written yet.");
+    public void addMetric(LabMetric labMetric) {
+        labMetrics.add(labMetric);
+        labMetric.setLabVessel(this);
     }
 
-    public Collection<LabMetric> getMetrics() {
-        throw new RuntimeException("I haven't been written yet.");
+    public Set<LabMetric> getMetrics() {
+        return labMetrics;
     }
 
     /**
