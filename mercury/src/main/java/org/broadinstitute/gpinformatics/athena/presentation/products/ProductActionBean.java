@@ -2,17 +2,16 @@ package org.broadinstitute.gpinformatics.athena.presentation.products;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
-import net.sourceforge.stripes.validation.*;
+import net.sourceforge.stripes.validation.Validate;
+import net.sourceforge.stripes.validation.ValidateNestedProperties;
+import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
-import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
+import org.broadinstitute.gpinformatics.athena.entity.products.*;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.MaterialTypeTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
@@ -158,7 +157,7 @@ public class ProductActionBean extends CoreActionBean {
             addGlobalValidationError("Availability date must precede discontinued date.");
         }
 
-        if (priceItemTokenInput.getTokenObject() == null) {
+        if (priceItemTokenInput.getMercuryTokenObject() == null) {
             addValidationError("token-input-primaryPriceItem", "Primary price item is required");
         }
     }
@@ -195,8 +194,9 @@ public class ProductActionBean extends CoreActionBean {
     private void populateTokenListsFromObjectData() {
         addOnTokenInput.setup(editProduct.getAddOnBusinessKeys());
         materialTypeTokenInput.setup(editProduct.getAllowableMaterialTypeNames());
-        priceItemTokenInput.setup(editProduct.getPriceItemIds());
-        optionalPriceItemTokenInput.setup(editProduct.getPriceItemIds());
+
+        priceItemTokenInput.setup(PriceItem.getPriceItemKeys(editProduct.getPrimaryPriceItem()));
+        optionalPriceItemTokenInput.setup(PriceItem.getPriceItemKeys(editProduct.getOptionalPriceItems()));
     }
 
     @HandlesEvent("addOnsAutocomplete")
@@ -233,7 +233,7 @@ public class ProductActionBean extends CoreActionBean {
         editProduct.getAddOns().clear();
         editProduct.getAddOns().addAll(addOnTokenInput.getTokenObjects());
 
-        editProduct.setPrimaryPriceItem(priceItemTokenInput.getTokenObject());
+        editProduct.setPrimaryPriceItem(priceItemTokenInput.getMercuryTokenObject());
 
         editProduct.getAllowableMaterialTypes().clear();
         editProduct.getAllowableMaterialTypes().addAll(materialTypeTokenInput.getMercuryTokenObjects());

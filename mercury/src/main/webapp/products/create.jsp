@@ -33,6 +33,7 @@
                             hintText: "Type a Price Item name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.priceItemTokenInput.completeData)},
                             resultsFormatter: formatPriceItem,
+                            tokenLimit: 1,
                             preventDuplicates: true
                         }
                     );
