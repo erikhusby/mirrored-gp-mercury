@@ -9,6 +9,8 @@ import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
@@ -25,6 +27,7 @@ import javax.persistence.Query;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -456,7 +459,7 @@ public class ImportFromSquidTest extends ContainerTest {
      * BettalimsMessageResourceTest.testFileList to send the messages to Mercury.
      * Note: later discovered that this misses many events after PoolingTransfer, because of workflow validation errors.
      */
-    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testFindMessageFilesForLcSet() {
         try {
             Query nativeQuery = entityManager.createNativeQuery("SELECT " +
@@ -611,6 +614,55 @@ public class ImportFromSquidTest extends ContainerTest {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    private void testImportQuants() {
+        Query nativeQuery = entityManager.createNativeQuery("SELECT " +
+                "     lqr.run_name, " +
+                "     lqr.run_date, " +
+                "     lqt.quant_type_name, " +
+                "     lq.quant_value, " +
+                "     r.barcode " +
+                "FROM " +
+                "     library_quant_run lqr " +
+                "     INNER JOIN library_quant_type lqt " +
+                "          ON   lqt.quant_type_id = lqr.quant_type_id " +
+                "     INNER JOIN library_quant lq " +
+                "          ON   lq.quant_run_id = lqr.run_id " +
+                "     INNER JOIN receptacle r " +
+                "          ON   r.receptacle_id = lq.receptacle_id " +
+                "WHERE " +
+                "     lq.is_archived = 'N' AND lqr.run_name = :lcSetNumber " +
+                "ORDER BY " +
+                "     1, 3");
+        nativeQuery.setParameter("lcSetNumber", "2588");
+        List<?> resultList = nativeQuery.getResultList();
+
+        ArrayList<VesselMetricBean> vesselMetricBeans = new ArrayList<VesselMetricBean>();
+        String previousQuantType = "";
+        VesselMetricRunBean vesselMetricRunBean = null;
+        for (Object o : resultList) {
+            Object[] columns = (Object[]) o;
+            String runName = (String) columns[0];
+            Date runDate = (Date) columns[1];
+            String quantTypeName = (String) columns[2];
+            BigDecimal quantValue = (BigDecimal) columns[3];
+            String barcode = (String) columns[4];
+
+            if(!quantTypeName.equals(previousQuantType)) {
+                if(!previousQuantType.isEmpty()) {
+                    ImportFromBspTest.recordMetrics(vesselMetricRunBean);
+                }
+                vesselMetricBeans.clear();
+                vesselMetricRunBean = new VesselMetricRunBean(runName, runDate, quantTypeName,
+                        vesselMetricBeans);
+                previousQuantType = quantTypeName;
+            }
+            vesselMetricBeans.add(new VesselMetricBean(barcode, quantValue.toString(), "ng/uL"));
+        }
+
+        ImportFromBspTest.recordMetrics(vesselMetricRunBean);
     }
 
     /*
