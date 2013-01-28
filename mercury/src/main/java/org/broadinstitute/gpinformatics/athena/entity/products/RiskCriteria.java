@@ -109,7 +109,7 @@ public class RiskCriteria {
         FFPE("FFPE", Operator.OperatorType.BOOLEAN, new SampleCalculation() {
             @Override
             public Object getSampleValue(ProductOrderSample sample) {
-                return sample.getBspDTO().getConcentration();
+                return sample.getBspDTO().getFfpeDerived();
             }
         }),
         MANUAL("Manual", Operator.OperatorType.BOOLEAN, new SampleCalculation() {
