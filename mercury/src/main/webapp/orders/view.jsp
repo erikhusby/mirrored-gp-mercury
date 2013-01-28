@@ -65,7 +65,7 @@
                 if (bspDataCount < 1) {
                     $j('#sampleData').dataTable( {
                         "oTableTools": ttExportDefines,
-                        "bsort": false
+                        "bSort": false
                     });
                 }
             }
@@ -302,7 +302,7 @@
                             </th>
                         </c:if>
                         <th width="90">ID</th>
-                        <th>Participant ID</th>
+                        <th width="90">Participant ID</th>
                         <th width="40">Volume</th>
                         <th width="40">Concentration</th>
                         <th width="40">Yield Amount</th>
@@ -310,8 +310,8 @@
                         <th width="100">On Risk</th>
                         <th width="40">Eligible</th>
                         <th width="40">Billed</th>
-                        <th width="40">Abandoned</th>
-                        <th width="140">Comment</th>
+                        <th width="40">Status</th>
+                        <th>Comment</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -334,15 +334,15 @@
                                     </c:otherwise>
                                 </c:choose>
                             </td>
-                            <td id="patient-${sample.productOrderSampleId}" width="100">&nbsp;</td>
-                            <td id="volume-${sample.productOrderSampleId}" width="50">&nbsp;</td>
-                            <td id="concentration-${sample.productOrderSampleId}" width="50">&nbsp;</td>
-                            <td id="total-${sample.productOrderSampleId}" width="70">&nbsp;</td>
-                            <td id="fingerprint-${sample.productOrderSampleId}" width="60" style="text-align: center">&nbsp;</td>
+                            <td id="patient-${sample.productOrderSampleId}">&nbsp;</td>
+                            <td id="volume-${sample.productOrderSampleId}">&nbsp;</td>
+                            <td id="concentration-${sample.productOrderSampleId}">&nbsp;</td>
+                            <td id="total-${sample.productOrderSampleId}">&nbsp;</td>
+                            <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center">&nbsp;</td>
                             <td>${sample.riskString}</td>
                             <td>&#160;</td>
                             <td>&#160;</td>
-                            <td width="70">${sample.deliveryStatus.displayName}</td>
+                            <td>${sample.deliveryStatus.displayName}</td>
                             <td>${sample.sampleComment}</td>
                         </tr>
                     </c:forEach>
