@@ -271,7 +271,6 @@ public class ProductOrderEjb {
         jiraService.postNewTransition(productOrder.getJiraTicketKey(), transition, customFields, comment);
     }
 
-
     /**
      * Allow updated quotes, products, and add-ons.
      *
