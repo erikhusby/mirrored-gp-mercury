@@ -31,21 +31,6 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
     @Inject
     private BSPConfig bspConfig;
 
-    enum Endpoint {
-
-        SAMPLE_SEARCH("search/runSampleSearch");
-
-        String suffixUrl;
-
-        Endpoint(String suffixUrl) {
-            this.suffixUrl = suffixUrl;
-        }
-
-        public String getSuffixUrl() {
-            return suffixUrl;
-        }
-    }
-
 
     /**
      * No arg constructor for CDI
@@ -105,8 +90,9 @@ public class BSPSampleSearchServiceImpl extends AbstractJerseyClientService impl
                 queryParameters.add("sample_ids=" + sampleID);
 
             String queryString = "";
-            if (queryParameters.size() > 0)
+            if (queryParameters.size() > 0) {
                 queryString = StringUtils.join(queryParameters, "&");
+            }
 
             logger.trace("query string to be POSTed is '" + queryString + "'");
             

@@ -2,6 +2,9 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialType;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+
+import java.util.Collections;
 
 /**
  * A simple DTO for fetching commonly used data from BSP.
@@ -61,6 +64,8 @@ public class BSPSampleDTO {
     private final String containerId;
 
     private final String sampleId;
+
+    private Boolean ffpeDerived;
 
     /**
      * Use this when no valid DTO is present, to avoid null checks
@@ -249,5 +254,18 @@ public class BSPSampleDTO {
             return null;
         }
         return new MaterialType(materialType);
+    }
+
+
+    public Boolean getFfpeDerived() {
+        if (ffpeDerived == null) {
+            BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
+            bspSampleDataFetcher.fetchFFPEDerived(Collections.singletonList(this));
+        }
+        return ffpeDerived;
+    }
+
+    public void setFfpeDerived(Boolean ffpeDerived) {
+        this.ffpeDerived = ffpeDerived;
     }
 }
