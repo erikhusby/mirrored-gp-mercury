@@ -275,7 +275,7 @@
                     </security:authorizeBlock>
 
                     <%-- Hide from users, not yet working. --%>
-                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
                         <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
                                         style="margin-left:15px;" onclick="showConfirm('abandonSamples','abandon')"/>
                     </security:authorizeBlock>

@@ -41,6 +41,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             "Collaborator Sample ID",
             "Material Type",
             "On Risk",
+            "Status",
             "Product Name",
             ORDER_ID_HEADING,
             "Product Order Name",
@@ -206,10 +207,19 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         getWriter().writeCell(sample.getBspDTO().getMaterialType());
 
         // Risk Information (GPLIM-660)
-        if (StringUtils.isBlank(sample.getRiskString())) {
-            getWriter().writeCell(sample.getRiskString());
+        String riskString = sample.getRiskString();
+        if (StringUtils.isBlank(riskString)) {
+            getWriter().writeCell(riskString);
         } else {
-            getWriter().writeCell(sample.getRiskString(), getRiskStyle());
+            getWriter().writeCell(riskString, getRiskStyle());
+        }
+
+        // Sample Status
+        ProductOrderSample.DeliveryStatus status = sample.getDeliveryStatus();
+        if (status == ProductOrderSample.DeliveryStatus.ABANDONED) {
+            getWriter().writeCell(status.getDisplayName(), getAbandonedStyle());
+        } else {
+            getWriter().writeCell(status.getDisplayName());
         }
 
         // product name
