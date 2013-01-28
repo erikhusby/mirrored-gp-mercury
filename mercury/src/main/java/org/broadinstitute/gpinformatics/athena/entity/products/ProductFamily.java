@@ -39,6 +39,7 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 
     /** Name of the Sequence Only Product Family.  Must be updated if the name is changed in the database! */
     private static final String SEQUENCE_ONLY_NAME = "Sequence Only";
+    private static final String RNA_FAMILY_NAME = "RNA";
 
     /**
      * JPA package visible constructor. Need the empty constructor so that stripes can create this when needed
@@ -91,5 +92,10 @@ public class ProductFamily implements Serializable, Comparable<ProductFamily> {
 
     public void setProductFamilyId(Long productFamilyId) {
         this.productFamilyId = productFamilyId;
+    }
+
+
+    public boolean isSupportsRIN() {
+        return RNA_FAMILY_NAME.equals(name);
     }
 }

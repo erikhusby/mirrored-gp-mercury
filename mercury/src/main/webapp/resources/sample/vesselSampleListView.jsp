@@ -38,16 +38,23 @@
                         ${position}
                 </td>
                 <td>
-                        ${actionBean.getVesselAtPosition(position).label}
+                    <a href="${ctxpath}/search/all.action?search=&searchKey=${actionBean.getVesselAtPosition(position).label}">
+                            ${actionBean.getVesselAtPosition(position).label}
+                    </a>
                 </td>
                 <td>
                         ${actionBean.getVesselAtPosition(position).type.name}
                 </td>
                 <td>
-                        ${sample.startingSample.sampleKey}
+                    <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.startingSample.sampleKey}">
+                            ${sample.startingSample.sampleKey}
+                    </a>
+
                 </td>
                 <td>
-                        ${sample.startingSample.productOrderKey}
+                    <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.startingSample.productOrderKey}">
+                            ${sample.startingSample.productOrderKey}
+                    </a>
                 </td>
                 <td>
                         ${actionBean.getIndexValueForSample(sample)}

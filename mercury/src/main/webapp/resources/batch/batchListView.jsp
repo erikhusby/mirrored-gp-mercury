@@ -11,6 +11,7 @@
         });
 
         function showPlasticHistoryVisualizer(batchKey) {
+            $j('#plasticViewDiv').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
             $j('#plasticViewDiv').load('${ctxpath}/view/plasticHistoryView.action?batchKey=' + batchKey);
             $j('#plasticViewDiv').show();
         }
@@ -56,7 +57,9 @@
                     </a>
                 </td>
                 <td>
-                        ${batch.businessKey}
+                    <a href="${ctxpath}/search/all.action?search=&searchKey=${batch.businessKey}">
+                            ${batch.businessKey}
+                    </a>
                 </td>
                 <td>
                     <stripes:link href="${batch.jiraTicket.browserUrl}">

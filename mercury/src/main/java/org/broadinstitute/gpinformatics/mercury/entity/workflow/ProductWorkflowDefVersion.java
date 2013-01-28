@@ -9,11 +9,7 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlIDREF;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A version of a product workflow definition
@@ -87,7 +83,7 @@ public class ProductWorkflowDefVersion implements Serializable {
         return workflowBucketDefs;
     }
 
-    static class LabEventNode {
+    public static class LabEventNode {
         private final LabEventType labEventType;
         private List<LabEventNode> predecessors = new ArrayList<LabEventNode>();
         private List<LabEventNode> successors = new ArrayList<LabEventNode>();
@@ -135,6 +131,8 @@ public class ProductWorkflowDefVersion implements Serializable {
         for (WorkflowProcessDef workflowProcessDef : workflowProcessDefs) {
             WorkflowProcessDefVersion effectiveProcessDef = workflowProcessDef.getEffectiveVersion();
             for (WorkflowStepDef workflowStepDef : effectiveProcessDef.getWorkflowStepDefs()) {
+                workflowStepDef.setProcessDefVersion(effectiveProcessDef);
+                workflowStepDef.setProcessDef(workflowProcessDef);
                 for (LabEventType labEventType : workflowStepDef.getLabEventTypes()) {
                     // todo jmt optional should probably be on the message, not the step
                     LabEventNode labEventNode = new LabEventNode(labEventType, workflowStepDef );

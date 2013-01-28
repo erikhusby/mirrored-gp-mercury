@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Iss
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.SimpleDateFormat;
@@ -149,7 +150,18 @@ public interface JiraService extends Serializable {
 
     void postNewTransition(String jiraIssueKey, Transition transition, String comment) throws IOException;
 
-    void postNewTransition(String jiraIssueKey, Transition transition, Collection<CustomField> customFields, String comment) throws IOException;
+
+    /**
+     * Modify fields in the JIRA issue using a transition post operation.  This is required to update some fields in
+     * JIRA.
+     * @param jiraIssueKey the issue to update
+     * @param transition the transition state to use
+     * @param customFields the fields to update
+     * @param comment a comment to add, or null if none
+     * @throws IOException
+     */
+    void postNewTransition(String jiraIssueKey, Transition transition, Collection<CustomField> customFields,
+                           @Nullable String comment) throws IOException;
 
     IssueFieldsResponse getIssueFields(String jiraIssueKey, Collection<CustomFieldDefinition> customFieldDefinitions) throws IOException;
 

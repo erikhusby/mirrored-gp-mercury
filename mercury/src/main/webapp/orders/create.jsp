@@ -294,7 +294,7 @@
                         all sample details.
                     </c:when>
                     <c:otherwise>
-                        Sample list edit is disabled for non-DRAFT orders with previously uploaded work.
+                        Sample list replacement is disabled for non-DRAFT orders.
                     </c:otherwise>
                 </c:choose>
                 <br/>

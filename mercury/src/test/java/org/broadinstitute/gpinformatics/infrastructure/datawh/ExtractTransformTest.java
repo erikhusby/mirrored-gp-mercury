@@ -1,11 +1,13 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -17,9 +19,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
-import java.io.File;
-import java.io.FilenameFilter;
-import java.io.IOException;
+import java.io.*;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -42,6 +42,9 @@ public class ExtractTransformTest extends Arquillian {
     static final String PRODUCT_ORDER_SAMPLE_FILENAME = "product_order_sample.dat";
     static final String RESEARCH_PROJECT_CLASSNAME = ResearchProject.class.getName();
     static final String RESEARCH_PROJECT_FILENAME = "research_project.dat";
+    final String WORKFLOW_CONFIG_CLASSNAME = WorkflowConfig.class.getName();
+    final String WORKFLOW_CONFIG_FILENAME = "workflow_config.dat";
+
 
     @Inject
     private ExtractTransform extractTransform;
@@ -108,7 +111,7 @@ public class ExtractTransformTest extends Arquillian {
 
     /**  Mathematically excludes changes by setting last ETL version impossibly high. */
     public void testNoChanges() {
-        extractTransform.writeLastEtlRun(datafileDir, Long.MAX_VALUE - 1);
+        extractTransform.writeLastEtlRun(Long.MAX_VALUE - 1);
         Assert.assertEquals(0, extractTransform.incrementalEtl());
         Assert.assertTrue(ExtractTransform.getIncrementalRunStartTime() >= 0);
     }
@@ -127,20 +130,18 @@ public class ExtractTransformTest extends Arquillian {
                 extractTransform.backfillEtl("ProductOrderSample", 0, Long.MAX_VALUE));
     }
 
-    /** Normal ETL.  Picks up the last 2000 (or fewer) audits. */
+    /** Normal ETL.  Picks up the last 10 (or fewer) audits. */
     public void testNormalEtl() throws Exception {
         long endRev = auditReaderDao.currentRevNumber(now);
-        if (endRev == 0) {
-            return;
-        }
-        long startRev = Math.max(0, endRev - 2000);
-        extractTransform.writeLastEtlRun(datafileDir, startRev);
+        if (endRev == 0) return;
+        long startRev = Math.max(0, endRev - 10);
+        extractTransform.writeLastEtlRun(startRev);
         int recordCount = extractTransform.incrementalEtl();
         Assert.assertTrue(recordCount > 0);
-        Assert.assertEquals(endRev, extractTransform.readLastEtlRun(datafileDir));
+        Assert.assertEquals(endRev, extractTransform.readLastEtlRun());
 
-        long etlMsec = ExtractTransform.getIncrementalRunStartTime();
-        String readyFilename = ExtractTransform.fullDateFormat.format(new Date(etlMsec)) + ExtractTransform.READY_FILE_SUFFIX;
+        long etlMsec = extractTransform.getIncrementalRunStartTime();
+        String readyFilename = ExtractTransform.secTimestampFormat.format(new Date(etlMsec)) + ExtractTransform.READY_FILE_SUFFIX;
         Assert.assertTrue((new File(datafileDir, readyFilename)).exists());
     }
 
@@ -197,6 +198,43 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertTrue(foundIsReadyFile);
     }
 
+    /** Backfill ETL for WorkflowConfig. */
+    public void testBackfillEtlWorkflowConfig() throws Exception {
+        final long msecStart = System.currentTimeMillis();
+
+        Assert.assertEquals(Response.Status.NO_CONTENT, extractTransform.backfillEtl(WORKFLOW_CONFIG_CLASSNAME, 0, 0));
+
+        final long msecEnd = System.currentTimeMillis() + 1000;
+
+        // Verifies there is only one .dat file and one _is_ready file, both having
+        // a datetime in the expected range.
+        File[] filelist = getDirFiles(datafileDir, msecStart, msecEnd);
+        boolean foundDataFile = false;
+        boolean foundIsReadyFile = false;
+        for (File file : filelist) {
+            String filename = file.getName();
+            if (filename.endsWith(".dat")) {
+                //should only have found one dat file
+                Assert.assertFalse(foundDataFile);
+                Assert.assertTrue(filename.endsWith(WORKFLOW_CONFIG_FILENAME));
+                foundDataFile = true;
+
+                // verifies non-empty .dat file
+                Reader reader = new FileReader(file);
+                String content = IOUtils.toString(reader);
+                IOUtils.closeQuietly(reader);
+                Assert.assertTrue(content.contains(","));
+            }
+            if (filename.endsWith("_is_ready")) {
+                //should only have found one _is_ready file
+                Assert.assertFalse(foundIsReadyFile);
+                foundIsReadyFile = true;
+            }
+        }
+        Assert.assertTrue(foundDataFile);
+        Assert.assertTrue(foundIsReadyFile);
+    }
+
     /** Backfill ETL for default range. */
     public void testBackfillEtl() throws Exception {
         // Skips the test if there's no entities available.
@@ -239,9 +277,9 @@ public class ExtractTransformTest extends Arquillian {
     }
 
     /** Returns all files in the given directory, having filename timestamp in the given range. */
-    private static File[] getDirFiles(String directoryName, long msecStart, long msecEnd) {
-        final long yyyymmddHHMMSSstart = Long.parseLong(ExtractTransform.fullDateFormat.format(new Date(msecStart)));
-        final long yyyymmddHHMMSSend = Long.parseLong(ExtractTransform.fullDateFormat.format(new Date(msecEnd)));
+    private File[] getDirFiles(String directoryName, long msecStart, long msecEnd) {
+        final long yyyymmddHHMMSSstart = Long.parseLong(ExtractTransform.secTimestampFormat.format(new Date(msecStart)));
+        final long yyyymmddHHMMSSend = Long.parseLong(ExtractTransform.secTimestampFormat.format(new Date(msecEnd)));
         File dir = new File (directoryName);
         File[] list = dir.listFiles(new FilenameFilter() {
             @Override
@@ -262,7 +300,8 @@ public class ExtractTransformTest extends Arquillian {
 
     /** Passes a non-existent directory for the last run file. */
     public void testInvalidLastEtlBadDir() {
-        Assert.assertEquals(0L, extractTransform.readLastEtlRun(badDataDir));
+        extractTransform.setDatafileDir(badDataDir);
+        Assert.assertEquals(0L, extractTransform.readLastEtlRun());
     }
 
     /** Writes an unparsable timestamp. */
@@ -270,7 +309,7 @@ public class ExtractTransformTest extends Arquillian {
         File file = new File(datafileDir, ExtractTransform.LAST_ETL_FILE);
         FileUtils.write(file, "abcedfg");
 
-        Assert.assertEquals(0L, extractTransform.readLastEtlRun(datafileDir));
+        Assert.assertEquals(0L, extractTransform.readLastEtlRun());
     }
 
     /** Takes the mutex, ETL cannot run. */

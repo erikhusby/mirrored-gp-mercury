@@ -16,17 +16,12 @@ import java.util.List;
 @ApplicationScoped
 public class AuditReaderDao extends GenericDao {
 
-    private static AuditReader auditReader = null;
-
     /**
      * Returns an auditReader, doing one-time init if needed.
      * @return the auditReader
      */
     private AuditReader getAuditReader() {
-        if (auditReader == null) {
-            auditReader = AuditReaderFactory.get(getEntityManager());
-        }
-        return auditReader;
+        return AuditReaderFactory.get(getEntityManager());
     }
 
     /**

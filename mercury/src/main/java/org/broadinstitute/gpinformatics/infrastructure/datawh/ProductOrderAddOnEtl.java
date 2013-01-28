@@ -17,8 +17,13 @@ import java.util.List;
 
 @Stateless
 public class ProductOrderAddOnEtl extends GenericEntityEtl {
+
+    private ProductOrderDao dao;
+
     @Inject
-    ProductOrderDao dao;
+    public void setProductOrderDao(ProductOrderDao dao) {
+	this.dao = dao;
+    }
 
     /**
      * @{inheritDoc}
@@ -48,18 +53,15 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl {
      * @{inheritDoc}
      */
     @Override
-    String entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+        Collection<String> recordList = new ArrayList<String>();
         ProductOrderAddOn entity = dao.findById(ProductOrderAddOn.class, entityId);
-        if (entity == null) {
-            logger.info("Cannot export.  ProductOrderAddOn having id " + entityId + " no longer exists.");
-            return null;
-        } else {
-            if (entity.getAddOn() == null) {
-                logger.info("Cannot export. ProductOrderAddOn having id " + entityId + " has null AddOn.");
-                return null;
-            }
+        if (entity != null) {
+	    recordList.add(entityRecord(etlDateStr, isDelete, entity));
+	} else {
+            logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
         }
-        return entityRecord(etlDateStr, isDelete, entity);
+        return recordList;
     }
 
     /**
@@ -68,7 +70,7 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl {
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();
-        List<ProductOrderAddOn> entityList = dao.findAll(ProductOrderAddOn.class,
+        List<ProductOrderAddOn> entityList = dao.findAll(getEntityClass(),
                 new GenericDao.GenericDaoCallback<ProductOrderAddOn>() {
                     @Override
                     public void callback(CriteriaQuery<ProductOrderAddOn> cq, Root<ProductOrderAddOn> root) {

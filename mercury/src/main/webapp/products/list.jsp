@@ -37,7 +37,7 @@
                     <th>Part Number</th>
                     <th>Product Name</th>
                     <th>Product Family</th>
-                    <th>Is Available?</th>
+                    <th>Available</th>
                 </tr>
             </thead>
             <tbody>
