@@ -89,10 +89,10 @@ public class RiskItem {
 
     public String getInformation() {
         String comment =
-            StringUtils.isBlank(remark) ? "no comment" : MessageFormat.format("comment: {0}", remark);
+            StringUtils.isBlank(remark) ? "" : MessageFormat.format("with comment: {0}", remark);
 
         return MessageFormat.format(
-                "At {0,time} on {0,date}, calculated ({1}) risk on value {2} with {3}",
+                "At {0,time} on {0,date}, calculated ({1}) risk on value {2} {3}",
                 occurredDate, riskCriteria.getCalculationString(), comparedValue, comment);
     }
 }
