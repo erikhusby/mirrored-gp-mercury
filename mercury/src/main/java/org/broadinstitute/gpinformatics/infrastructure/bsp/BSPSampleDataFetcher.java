@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.util.*;
 
@@ -17,9 +18,9 @@ public class BSPSampleDataFetcher {
      * New one up using the given service.
      * @param service
      */
-    public BSPSampleDataFetcher(BSPSampleSearchService service) {
+    public BSPSampleDataFetcher(@Nonnull BSPSampleSearchService service) {
         if (service == null) {
-             throw new NullPointerException("service cannot be null.");
+            throw new NullPointerException("service cannot be null.");
         }
         this.service = service;
     }
@@ -32,13 +33,11 @@ public class BSPSampleDataFetcher {
     public BSPSampleDTO fetchSingleSampleFromBSP(String sampleName) {
         if (service == null) {
             throw new RuntimeException("No BSP service has been declared.");
-        }
-        else {
-            Collection<String> sampleNames = new HashSet<String>();
-            sampleNames.add(sampleName);
-            Map<String,BSPSampleDTO> sampleNameToDTO = fetchSamplesFromBSP(sampleNames);
+        } else {
+            Map<String, BSPSampleDTO> sampleNameToDTO = fetchSamplesFromBSP(Collections.singleton(sampleName));
 
             if (sampleNameToDTO.isEmpty()) {
+                // FIXME: It looks like this exception will never be thrown, even if the sample isn't found.5
                 throw new RuntimeException("Could not find " + sampleName + " in bsp.");
             } else if (sampleNameToDTO.size() > 1) {
                 throw new RuntimeException("Found " + sampleNameToDTO.size() + " possible matches in bsp.");
@@ -53,14 +52,14 @@ public class BSPSampleDataFetcher {
      * @param sampleNames
      * @return
      */
-    public Map<String,BSPSampleDTO> fetchSamplesFromBSP(Collection<String> sampleNames) {
+    public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames) {
         if (sampleNames == null) {
             throw new NullPointerException("sampleNames cannot be null.");
         }
         if (sampleNames.isEmpty()) {
-            throw new RuntimeException("sampleNames is empty.  No samples to lookup.");
+            return Collections.emptyMap();
         }
-        Map<String,BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
+        Map<String, BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
         List<String[]> results = getBSPResponse(sampleNames);
 
         for (String[] result : results) {
