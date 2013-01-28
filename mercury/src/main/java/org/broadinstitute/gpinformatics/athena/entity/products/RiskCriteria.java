@@ -91,22 +91,36 @@ public class RiskCriteria {
             value.equals(this.value);
     }
 
+    public Object getSampleValue(ProductOrderSample sample) {
+        return type.getSampleValue(sample);
+    }
+
+    public static RiskCriteria createManual() {
+        return new RiskCriteria(RiskCriteria.RiskCriteriaType.MANUAL, Operator.IS, "");
+    }
+
     public enum RiskCriteriaType {
         CONCENTRATION("Concentration", Operator.OperatorType.NUMERIC, new SampleCalculation() {
             @Override
-            protected Object getSampleValue(ProductOrderSample sample) {
+            public Object getSampleValue(ProductOrderSample sample) {
                 return sample.getBspDTO().getConcentration();
             }
         }),
         FFPE("FFPE", Operator.OperatorType.BOOLEAN, new SampleCalculation() {
             @Override
-            protected Object getSampleValue(ProductOrderSample sample) {
+            public Object getSampleValue(ProductOrderSample sample) {
                 return sample.getBspDTO().getConcentration();
+            }
+        }),
+        MANUAL("Manual", Operator.OperatorType.BOOLEAN, new SampleCalculation() {
+            @Override
+            public Object getSampleValue(ProductOrderSample sample) {
+                return true;
             }
         }),
         TOTAL_DNA("Total DNA", Operator.OperatorType.NUMERIC, new SampleCalculation() {
             @Override
-            protected Object getSampleValue(ProductOrderSample sample) {
+            public Object getSampleValue(ProductOrderSample sample) {
                 return sample.getBspDTO().getTotal();
             }
         });
@@ -119,6 +133,10 @@ public class RiskCriteria {
             this.label = label;
             this.operatorType = operatorType;
             this.calculation = calculation;
+        }
+
+        public Object getSampleValue(ProductOrderSample sample) {
+            return calculation.getSampleValue(sample);
         }
 
         public String getLabel() {
@@ -149,6 +167,6 @@ public class RiskCriteria {
             return operator.apply(getSampleValue(sample).toString(), value);
         }
 
-        protected abstract Object getSampleValue(ProductOrderSample sample);
+        public abstract Object getSampleValue(ProductOrderSample sample);
     }
 }

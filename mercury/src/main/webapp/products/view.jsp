@@ -126,6 +126,7 @@
                 <label class="control-label label-form">Risk Criteria</label>
                 <div class="controls">
                     <div class="form-value">
+                        A sample is on risk if:<br/>
                         <c:forEach items="${actionBean.editProduct.riskCriteriaList}" var="criterion">
                             ${criterion.displayString}<br/>
                         </c:forEach>

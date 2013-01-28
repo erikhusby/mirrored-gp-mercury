@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
@@ -40,13 +38,20 @@ public class RiskItem {
     @Column(name = "REMARK")
     private String remark;
 
-    public RiskItem() {
+    RiskItem() {
     }
 
     public RiskItem(RiskCriteria riskCriteria, Date occurredDate, String comparedValue) {
         this.riskCriteria = riskCriteria;
         this.occurredDate = occurredDate;
         this.comparedValue = comparedValue;
+    }
+
+    public RiskItem(RiskCriteria riskCriteria, Date occurredDate, String comparedValue, String comment) {
+        this.riskCriteria = riskCriteria;
+        this.occurredDate = occurredDate;
+        this.comparedValue = comparedValue;
+        this.remark = comment;
     }
 
     public RiskCriteria getRiskCriteria() {

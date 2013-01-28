@@ -246,6 +246,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         } catch (QuoteNotFoundException ex) {
             addGlobalValidationError("The quote id " + editOrder.getQuoteId() + " was not found.");
         }
+
+        // Since we are only validating from view, we can persist without worry of saving something bad.
+        if (getContext().getValidationErrors().isEmpty()) {
+            editOrder.calculateAllRisk();
+            productOrderDao.persist(editOrder);
+        }
     }
 
     @ValidationMethod(on = "placeOrder")
@@ -287,8 +293,8 @@ public class ProductOrderActionBean extends CoreActionBean {
                 }
             }
 
-            // If there are locked out orders, then do not allow the session to start.
-            // TODO: It looks like this could be done by traversing the entity tree, e.g. ProductOrder -> ProductOrderSample -> BusinessLedger.
+            // If there are locked out orders, then do not allow the session to start. Using a DAO to do this is a quick
+            // way to do this without having to go through all the objects.
             Set<BillingLedger> lockedOutOrders = billingLedgerDao.findLockedOutByOrderList(selectedProductOrderBusinessKeys);
             if (!lockedOutOrders.isEmpty()) {
                 Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());

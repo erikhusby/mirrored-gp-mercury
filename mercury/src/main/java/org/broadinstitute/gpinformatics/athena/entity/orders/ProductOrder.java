@@ -162,6 +162,24 @@ public class ProductOrder implements Serializable {
         setSamples(samples);
     }
 
+    public void calculateAllRisk() {
+        calculateRisk(false);
+    }
+
+    public void calculateNewRisk() {
+        calculateRisk(true);
+    }
+
+    private void calculateRisk(boolean skipSamplesWithRisk) {
+        for (ProductOrderSample sample : samples) {
+            // If not skipping samples with risk, then always do it, otherwise only do samples with no risk items.
+            // have risk items, means that risk was calculated
+            if (!skipSamplesWithRisk || sample.getRiskItems().isEmpty()) {
+                sample.calculateRisk();
+            }
+        }
+    }
+
     /**
      * Class that encapsulates counting samples and storing the results.
      */

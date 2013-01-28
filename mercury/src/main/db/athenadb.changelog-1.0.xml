@@ -2265,10 +2265,10 @@
                 <constraints nullable="false"/>
             </column>
             <column name="risk_criteria" type="int">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
             <column name="compared_value" type="varchar(255)">
-                <constraints nullable="false"/>
+                <constraints nullable="true"/>
             </column>
             <column name="remark" type="varchar(255)">
                 <constraints nullable="true"/>

@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
@@ -71,6 +72,30 @@ public class ProductOrderSample implements Serializable {
     @JoinColumn(name = "product_order_sample", nullable = false)
     @AuditJoinTable(name = "po_sample_risk_join_aud")
     private Set<RiskItem> riskItems = new HashSet<RiskItem>();
+
+    public void calculateRisk() {
+        riskItems.clear();
+
+        // Go through each risk check on the product
+        for (RiskCriteria criterion : productOrder.getProduct().getRiskCriteriaList()) {
+            // If this is on risk, then create a risk item for it and add it in
+            if (criterion.onRisk(this)) {
+                riskItems.add(new RiskItem(criterion, new Date(), criterion.getSampleValue(this).toString()));
+            }
+        }
+
+        // If there are no risk checks that failed, then create a risk item with no criteria to represent NO RISK
+        // and this will distinguish NO RISK from never checked
+        if (riskItems.isEmpty()) {
+            riskItems.add(new RiskItem(null, new Date(), null));
+        }
+    }
+
+    public void setManualOnRisk(String comment) {
+        riskItems.clear();
+        RiskCriteria criterion = RiskCriteria.createManual();
+        riskItems.add(new RiskItem(criterion, new Date(), "", comment));
+    }
 
     public static enum DeliveryStatus implements StatusType {
         NOT_STARTED("Not Started"),
@@ -408,6 +433,10 @@ public class ProductOrderSample implements Serializable {
         }
 
         return riskStringBuilder.toString();
+    }
+
+    public Collection<RiskItem> getRiskItems() {
+        return riskItems;
     }
 
     public void setRiskItems(Collection<RiskItem> riskItems) {
