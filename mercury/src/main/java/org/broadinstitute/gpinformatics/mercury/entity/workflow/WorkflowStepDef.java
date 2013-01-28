@@ -112,7 +112,17 @@ public class WorkflowStepDef implements Serializable {
      * process */
     private boolean deadEndBranch = false;
 
+    private transient WorkflowProcessDef processDef;
+
     private transient WorkflowProcessDefVersion processDefVersion;
+
+    public void setProcessDef(WorkflowProcessDef processDef) {
+        this.processDef = processDef;
+    }
+
+    public WorkflowProcessDef getProcessDef() {
+        return processDef;
+    }
 
     public WorkflowStepDef(String name) {
         this.name = name;

@@ -8,6 +8,24 @@
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
+
+            var booleanTypes = [];
+
+            // The jsp loads the criteria types into an associative array by type and then operators
+            var criteriaTypeToOperatorList = [];
+            <c:forEach items="${actionBean.criteriaTypes}" var="criteriaType">
+                criteriaTypeToOperatorList['${criteriaType.label}'] = [];
+                <c:forEach items="${criteriaType.operators}" var="operator" varStatus="j">
+                    criteriaTypeToOperatorList['${criteriaType.label}'][${j.index}] = '${operator.label}';
+
+                    <c:if test="${operator.type == 'BOOLEAN'}">
+                        booleanTypes['${criteriaType.label}'] = true;
+                    </c:if>
+                </c:forEach>
+            </c:forEach>
+
+            var criteriaCount = 0;
+
             $j(document).ready(
                 function () {
                     $j("#primaryPriceItem").tokenInput(
@@ -15,6 +33,7 @@
                             hintText: "Type a Price Item name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.priceItemTokenInput.completeData)},
                             resultsFormatter: formatPriceItem,
+                            tokenLimit: 1,
                             preventDuplicates: true
                         }
                     );
@@ -48,6 +67,10 @@
                     $j("#discontinuedDate").datepicker();
 
                     updateBillingRules();
+
+                    <c:forEach items="${actionBean.editProduct.riskCriteriaList}" var="criterion">
+                        addCriterion('${criterion.type.label}', '${criterion.operator.label}', '${criterion.value}');
+                    </c:forEach>
                 }
             );
 
@@ -63,6 +86,90 @@
                     $j('#billingRules').hide();
                 }
             }
+
+            function removeCriterion(itemNumber) {
+                $j('#criterion-' + itemNumber).remove();
+            }
+
+            function addCriterion(criteria, operator, value) {
+                var newCriteria = '<div id="criterion-' + criteriaCount + '" style="margin-bottom:3px;" class="criterionPanel">\n';
+
+                if (value == undefined) {
+                    value = '';
+                }
+
+                if (criteria == undefined) {
+                    criteria = 'Concentration'
+                }
+
+                // remove button for this item
+                newCriteria += '    <a class="btn btn-mini" style="font-size:14pt;text-decoration: none;" onclick="removeCriterion(' + criteriaCount + ')">-</a>\n';
+
+
+                // the criteria list
+                newCriteria += '    <select id="criteriaSelect-' + criteriaCount + '" onchange="updateOperatorOptions(' + criteriaCount + ', \'' +
+                        operator + '\')" style="width:auto;" name="criteria">';
+
+                var operatorsLabel;
+
+                for (var criteriaLabel in criteriaTypeToOperatorList) {
+
+                    var selectedString = '';
+                    if (criteriaLabel == criteria) {
+                        selectedString = 'selected="selected"';
+                        operatorsLabel = criteriaLabel;
+                    }
+
+                    newCriteria += '        <option value="' + criteriaLabel + '" ' + selectedString + '>' + criteriaLabel + '</option>\n';
+                }
+
+                newCriteria += '    </select>\n';
+
+                // the operator for the selected item
+                newCriteria += '    <select id="operatorSelect-' + criteriaCount + '" style="padding-left:4px;padding-right:4px;width:auto;" name="operators">\n';
+                newCriteria += operatorOptions(criteriaCount, operatorsLabel, operator);
+                newCriteria += '    </select>\n';
+
+                if (!booleanTypes[criteriaLabel]) {
+                    newCriteria += '    <input id="valueText-' + criteriaCount + '" type="text" name="values" value="' + value + '"/>\n';
+                }
+
+                newCriteria += '</div>\n';
+
+                $j('#riskCriteria').append(newCriteria);
+                criteriaCount++;
+            }
+
+            function updateOperatorOptions(criteriaCount, selectedOperator) {
+                var criteriaLabel = $j('#criteriaSelect-' + criteriaCount).attr('value');
+
+                $j('#operatorSelect-' + criteriaCount).html(operatorOptions(criteriaCount, criteriaLabel, selectedOperator));
+
+                if (booleanTypes[criteriaLabel]) {
+                    $j('#valueText-' + criteriaCount).hide();
+                } else {
+                    $j('#valueText-' + criteriaCount).show();
+                }
+            }
+
+            function operatorOptions(criteriaCount, criteriaLabel, selectedOperator) {
+                var options = '';
+
+                var operators = criteriaTypeToOperatorList[criteriaLabel];
+                for (var i= 0, max = operators.length; i < max; i++) {
+                    var currentOperator = operators[i];
+
+                    var selectedString = '';
+                    if (currentOperator == selectedOperator) {
+                        selectedString = 'selected="selected"';
+                    }
+
+                    options += '        <option value="' + currentOperator + '" ' + selectedString + '>' + currentOperator + '</option>\n';
+                }
+
+                return options;
+            }
+
         </script>
     </stripes:layout-component>
 
@@ -240,6 +347,14 @@
                     </div>
                 </div>
 
+                <div class="control-group">
+                    <stripes:label for="riskCriteria" name="RiskCriteria" class="control-label"/>
+                    <div id="riskCriteria" class="controls" style="margin-top: 5px;">
+                        A sample is on risk if:
+                        <a class="btn btn-mini" style="margin-bottom: 3px;text-decoration: none;" onclick="addCriterion()">+</a>
+                    </div>
+                </div>
+
                 <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
 
                     <div class="control-group">
@@ -263,7 +378,7 @@
                             &#160;
 
                             <stripes:select style="width:50px;" name="editProduct.requirement.operator">
-                                <stripes:options-enumeration enum="org.broadinstitute.gpinformatics.athena.entity.products.BillingRequirement.Operator" label="label"/>
+                                <stripes:options-collection collection="${actionBean.getRequirementOperators}" label="label"/>
                             </stripes:select>
                             &#160;
 

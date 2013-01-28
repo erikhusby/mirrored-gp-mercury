@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 
+import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
@@ -8,18 +9,19 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 /**
- * This class is the user implementation of the token object
+ * This class is the user implementation of the token object. The key is the concatenated key of the price item
  *
  * @author hrafal
  */
-@Named
 public class PriceItemTokenInput extends TokenInput<PriceItem> {
+
+    @Inject
+    private PriceItemDao priceItemDao;
 
     @Inject
     private PriceListCache priceListCache;
@@ -29,8 +31,7 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
 
     @Override
     protected PriceItem getById(String key) {
-        long itemId = Long.valueOf(key);
-        return priceListCache.findById(itemId);
+        return priceListCache.findByConcatenatedKey(key);
     }
 
     public String getJsonString(String query) throws JSONException {
@@ -55,8 +56,17 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
         return itemList.toString();
     }
 
-    private static void createAutocomplete(JSONArray itemList, PriceItem priceItem) throws JSONException {
-        JSONObject item = getJSONObject(priceItem.getId(), priceItem.getName(), false);
+    private void createAutocomplete(JSONArray itemList, PriceItem priceItem) throws JSONException {
+        if (priceItem == null) {
+            JSONObject item = getJSONObject(getListOfKeys(), "unknown price item id", false);
+            itemList.put(item);
+            return;
+        }
+
+        String key = org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.makeConcatenatedKey(
+                priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
+
+        JSONObject item = getJSONObject(key, priceItem.getName(), false);
 
         item.put("platform", priceItem.getPlatformName());
 
@@ -65,17 +75,14 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
         itemList.put(item);
     }
 
-    public org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getTokenObject() {
+    public org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getMercuryTokenObject() {
         List<PriceItem> priceItems = getTokenObjects();
 
-        if ((priceItems == null) || priceItems.isEmpty()) {
-            return null;
+        if ((priceItems == null) || (priceItems.size() != 1)) {
+            throw new IllegalArgumentException("If you want to get more than one price item, use getMercuryTokenObjecs");
         }
 
-        PriceItem priceItem = priceItems.get(0);
-
-        return new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
-            priceItem.getId(), priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
+        return getMercuryPriceItem(priceItems.get(0));
     }
 
     public Collection<? extends org.broadinstitute.gpinformatics.athena.entity.products.PriceItem> getMercuryTokenObjects() {
@@ -83,13 +90,24 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
                 new ArrayList<org.broadinstitute.gpinformatics.athena.entity.products.PriceItem>();
 
         for (PriceItem priceItem : getTokenObjects()) {
-            org.broadinstitute.gpinformatics.athena.entity.products.PriceItem mercuryPriceItem =
-                    new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
-                        priceItem.getId(), priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
-
+            org.broadinstitute.gpinformatics.athena.entity.products.PriceItem mercuryPriceItem = getMercuryPriceItem(priceItem);
             mercuryTokenObjects.add(mercuryPriceItem);
         }
 
         return mercuryTokenObjects;
+    }
+
+    private org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getMercuryPriceItem(PriceItem priceItem) {
+        // Find the existing mercury price item
+        org.broadinstitute.gpinformatics.athena.entity.products.PriceItem mercuryPriceItem =
+                priceItemDao.find(priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
+
+        if (mercuryPriceItem == null) {
+            mercuryPriceItem = new org.broadinstitute.gpinformatics.athena.entity.products.PriceItem(
+                    priceItem.getId(), priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
+            priceItemDao.persist(mercuryPriceItem);
+        }
+
+        return mercuryPriceItem;
     }
 }

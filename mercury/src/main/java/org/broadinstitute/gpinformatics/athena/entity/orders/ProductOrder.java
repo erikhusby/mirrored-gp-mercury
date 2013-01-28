@@ -162,6 +162,24 @@ public class ProductOrder implements Serializable {
         setSamples(samples);
     }
 
+    public void calculateAllRisk() {
+        calculateRisk(false);
+    }
+
+    public void calculateNewRisk() {
+        calculateRisk(true);
+    }
+
+    private void calculateRisk(boolean skipSamplesWithRisk) {
+        for (ProductOrderSample sample : samples) {
+            // If not skipping samples with risk, then always do it, otherwise only do samples with no risk items.
+            // have risk items, means that risk was calculated
+            if (!skipSamplesWithRisk || sample.getRiskItems().isEmpty()) {
+                sample.calculateRisk();
+            }
+        }
+    }
+
     /**
      * Class that encapsulates counting samples and storing the results.
      */
@@ -169,6 +187,7 @@ public class ProductOrder implements Serializable {
         private static final long serialVersionUID = -6031146789417566007L;
         private boolean countsValid;
         private int totalSampleCount;
+        private int onRiskCount;
         private int bspSampleCount;
         private int receivedSampleCount;
         private int activeSampleCount;
@@ -191,10 +210,24 @@ public class ProductOrder implements Serializable {
             }
         }
 
+        private int countSamplesOnRisk() {
+            int samplesOnRisk = 0;
+
+            for (ProductOrderSample sample : samples) {
+                if (sample.isOnRisk()) {
+                    samplesOnRisk++;
+                }
+            }
+
+            return samplesOnRisk;
+        }
+
         private void generateCounts() {
             if (countsValid) {
                 return;
             }
+
+            onRiskCount = countSamplesOnRisk();
 
             loadBspData();
 
@@ -267,6 +300,8 @@ public class ProductOrder implements Serializable {
                     output.add(MessageFormat.format("Unique: {0}", uniqueSampleCount));
                     output.add(MessageFormat.format("Duplicate: {0}", (totalSampleCount - uniqueSampleCount)));
                 }
+
+                output.add(MessageFormat.format("On Risk: {0}", onRiskCount));
 
                 if (bspSampleCount == uniqueSampleCount) {
                     output.add("From BSP: All");
@@ -341,7 +376,8 @@ public class ProductOrder implements Serializable {
     /**
      * Used for test purposes only.
      */
-    public ProductOrder(@Nonnull Long creatorId, @Nonnull String title, List<ProductOrderSample> samples, String quoteId,
+    public ProductOrder(@Nonnull Long creatorId, @Nonnull String title,
+                        @Nonnull List<ProductOrderSample> samples, String quoteId,
                         Product product, ResearchProject researchProject) {
         createdBy = creatorId;
         this.title = title;
@@ -456,21 +492,33 @@ public class ProductOrder implements Serializable {
         return samples;
     }
 
-    public void setSamples(List<ProductOrderSample> samples) {
+    private void addSamplesInternal(List<ProductOrderSample> newSamples, int samplePos) {
+        for (ProductOrderSample sample : newSamples) {
+            sample.setProductOrder(this);
+            sample.setSamplePosition(samplePos++);
+            samples.add(sample);
+        }
+        counts.invalidate();
+    }
+
+    public void setSamples(@Nonnull List<ProductOrderSample> samples) {
+        if (samples.isEmpty()) {
+            return;
+        }
         // only update samples if there are no ledger items on any samples or the sample list has changed
         if (!hasLedgerItems() || sampleListHasChanged(samples)) {
             this.samples.clear();
 
-            int samplePos = 0;
-            if (samples != null) {
-                for (ProductOrderSample sample : samples) {
-                    sample.setProductOrder(this);
-                    sample.setSamplePosition(samplePos++);
-                    this.samples.add(sample);
-                }
-            }
+            addSamplesInternal(samples, 0);
+        }
+    }
 
-            counts.invalidate();
+    public void addSamples(@Nonnull List<ProductOrderSample> newSamples) {
+        if (samples.isEmpty()) {
+            setSamples(newSamples);
+        } else {
+            int samplePos = samples.get(samples.size() - 1).getSamplePosition();
+            addSamplesInternal(newSamples, samplePos);
         }
     }
 

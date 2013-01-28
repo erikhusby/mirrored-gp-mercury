@@ -112,7 +112,19 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
 
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
-            result.put(context.getVesselPosition(), false);
+
+            /*
+             * TraversalControl is somewhat advisory in that the criteria callbacks will still be called for other
+             * transfers with the same hopCount even after one of them returns StopTraversing. Therefore, we have to
+             * guard against overwriting a previously written true value. There is a test,
+             * {@link org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlateTest#testGetHasRackContentByWellWithParallelPlateTransfer()},
+             * that attempts to verify this. However, since the events are processed in a non-deterministic order, it's
+             * possible for that test to pass even with this check. Note that this may also make code coverage waver
+             * ever so slightly based on whether or not this expression evaluates to true for a particular test run.
+             */
+            if (!result.containsKey(context.getVesselPosition())) {
+                result.put(context.getVesselPosition(), false);
+            }
             if (context.getLabVessel() != null) {
                 if (OrmUtil.proxySafeIsInstance(context.getVesselContainer().getEmbedder(), TubeFormation.class)) {
                     result.put(context.getVesselPosition(), true);

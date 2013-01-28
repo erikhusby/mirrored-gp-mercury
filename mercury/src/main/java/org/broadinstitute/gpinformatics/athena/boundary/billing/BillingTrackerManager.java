@@ -40,7 +40,7 @@ public class BillingTrackerManager {
 
         Workbook workbook = WorkbookFactory.create(fis);
 
-        //TODO could use this map later on during parsing.
+        // Could use this map later on during parsing.
         Map<String, List<String>> productOrderIdMap = getUnlockedProductOrderIdsFromWorkbook(workbook);
         for (String ppnSheetName : productOrderIdMap.keySet()) {
             List<String> productOrderIds = productOrderIdMap.get(ppnSheetName);
@@ -123,7 +123,7 @@ public class BillingTrackerManager {
     private List<ProductOrder> parseSheetForBilling(Sheet sheet, List<TrackerColumnInfo> trackerColumnInfos) {
         ProductOrder productOrder = null;
         Product product = null;
-        ProductOrderSample productOrderSample = null;
+        ProductOrderSample productOrderSample;
         List<ProductOrderSample> samples = null;
         Map<TrackerColumnInfo, PriceItem> priceItemMap = null;
 
@@ -187,7 +187,8 @@ public class BillingTrackerManager {
 
             }
 
-            //TODO hmc We are assuming ( for now ) that the order is the same in the spreadsheet as returned in the productOrder !
+            // The samples in the order must be the same as the spreadsheet samples, so the size must be the same
+            assert samples != null;
             if (sampleIndexInOrder >= samples.size()) {
                 throw BillingTrackerUtils.getRuntimeException("Sample " + currentSampleName + " on row " + (row.getRowNum() + 1) +
                         " of spreadsheet " + primaryProductPartNumber +
@@ -247,7 +248,7 @@ public class BillingTrackerManager {
             if ( (billedQuantity != null ) && (newQuantity != null) ) {
 
                 //Calculate the delta, quantities are non-null here
-                double delta = newQuantity.doubleValue() - billedQuantity.doubleValue();
+                double delta = newQuantity - billedQuantity;
 
                 if (delta != 0) {
                     PriceItem priceItem = priceItemMap.get(trackerColumnInfo);
