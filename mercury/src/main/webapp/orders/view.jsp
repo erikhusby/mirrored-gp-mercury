@@ -10,23 +10,6 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
-                $j('#sampleData').dataTable( {
-                    "oTableTools": ttExportDefines,
-                    "aoColumns": [
-                        {"bSortable": false},                   // checkbox
-                        {"bSortable": false, "sType": "html"},   // ID
-                        {"bSortable": false},                    // Participant ID
-                        {"bSortable": false},                    // Volume
-                        {"bSortable": false},                    // Concentration
-                        {"bSortable": false},                    // Yield Amount
-                        {"bSortable": false, "sType" : "title-string"},   // FP Status
-                        {"bSortable": false},                    // Eligible
-                        {"bSortable": false},                    // Billed
-                        {"bSortable": false},                    // Abandoned
-                        {"bSortable": false},                    // Price Item 1
-                        {"bSortable": false},                    // Price Item 2
-                        {"bSortable": false}]                   // Comment
-                });
 
                 updateFundsRemaining();
 
@@ -36,6 +19,7 @@
                     success: showSummary
                 });
 
+                bspDataCount = $j(".sampleName").length;
                 $j(".sampleName").each(updateBspInformation);
 
                 $j("#confirmDialog").dialog({
@@ -51,6 +35,8 @@
                     }
                 });
             });
+
+            var bspDataCount = 0;
 
             function updateBspInformation(index, sampleIdCell) {
                 var sampleId = $j(sampleIdCell).attr('id').split("-")[1];
@@ -72,6 +58,15 @@
 
                 if (sampleData.hasFingerprint) {
                     $j('#fingerprint-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
+                }
+
+                bspDataCount--;
+
+                if (bspDataCount < 1) {
+                    $j('#sampleData').dataTable( {
+                        "oTableTools": ttExportDefines,
+                        "bsort": false
+                    });
                 }
             }
 
@@ -301,11 +296,11 @@
             <table id="sampleData" class="table simple">
                 <thead>
                     <tr>
-                        <th width="40">
-                            <c:if test="${!actionBean.editOrder.draft}">
+                        <c:if test="${!actionBean.editOrder.draft}">
+                            <th width="40">
                                 <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
-                            </c:if>
-                        </th>
+                            </th>
+                        </c:if>
                         <th width="90">ID</th>
                         <th>Participant ID</th>
                         <th width="40">Volume</th>
@@ -323,11 +318,11 @@
                 <tbody>
                     <c:forEach items="${actionBean.editOrder.samples}" var="sample">
                         <tr>
-                            <td>
-                                <c:if test="${!actionBean.editOrder.draft}">
+                            <c:if test="${!actionBean.editOrder.draft}">
+                                <td>
                                     <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderSampleIndices" value="${sample.samplePosition}"/>
-                                </c:if>
-                            </td>
+                                </td>
+                            </c:if>
                             <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
                                 <c:choose>
                                     <c:when test="${sample.inBspFormat}">
