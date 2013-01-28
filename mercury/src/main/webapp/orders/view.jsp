@@ -1,7 +1,6 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
-<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
-<%@ page import="org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -11,22 +10,6 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
-                $j('#sampleData').dataTable( {
-                    "oTableTools": ttExportDefines,
-                    "aoColumns": [
-                        {"bSortable": false, "sType": "html"},   // ID
-                        {"bSortable": false},                    // Participant ID
-                        {"bSortable": false},                    // Volume
-                        {"bSortable": false},                    // Concentration
-                        {"bSortable": false},                    // Yield Amount
-                        {"bSortable": false, "sType" : "title-string"},   // FP Status
-                        {"bSortable": false},                    // Eligible
-                        {"bSortable": false},                    // Billed
-                        {"bSortable": false},                    // Abandoned
-                        {"bSortable": false},                    // Price Item 1
-                        {"bSortable": false},                    // Price Item 2
-                        {"bSortable": false}]                   // Comment
-                });
 
                 updateFundsRemaining();
 
@@ -36,8 +19,24 @@
                     success: showSummary
                 });
 
+                bspDataCount = $j(".sampleName").length;
                 $j(".sampleName").each(updateBspInformation);
+
+                $j("#confirmDialog").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    buttons: {
+                        OK: function () {
+                            $j("#orderSamplesForm").submit();
+                        },
+                        Cancel: function () {
+                            $j(this).dialog("close");
+                        }
+                    }
+                });
             });
+
+            var bspDataCount = 0;
 
             function updateBspInformation(index, sampleIdCell) {
                 var sampleId = $j(sampleIdCell).attr('id').split("-")[1];
@@ -59,6 +58,15 @@
 
                 if (sampleData.hasFingerprint) {
                     $j('#fingerprint-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
+                }
+
+                bspDataCount--;
+
+                if (bspDataCount < 1) {
+                    $j('#sampleData').dataTable( {
+                        "oTableTools": ttExportDefines,
+                        "bsort": false
+                    });
                 }
             }
 
@@ -86,10 +94,20 @@
 
                 $j('#summaryId').html(dataList);
             }
+
+            function showConfirm(action, actionPrompt) {
+                $j("#dialogAction").attr("name", action);
+                $j("#dialogMessage").text(actionPrompt);
+                $j("#confirmDialog").dialog("open");
+            }
         </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
+
+    <div id="confirmDialog">
+        <p>Are you sure you want to <span id="dialogMessage"></span> the selected samples?</p>
+    </div>
 
         <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
             <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
@@ -130,7 +148,9 @@
 
         <div style="both:clear"> </div>
 
-        <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
+        <stripes:form action="/orders/order.action" id="orderSamplesForm" class="form-horizontal">
+            <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+            <stripes:hidden id="dialogAction" name=""/>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Name</label>
@@ -170,7 +190,7 @@
                 <label class="control-label label-form">Owner</label>
                 <div class="controls">
                     <div class="form-value">
-                        ${actionBean.getUserFullName(actionBean.editOrder.createdBy)}
+                            ${actionBean.getUserFullName(actionBean.editOrder.createdBy)}
                     </div>
                 </div>
             </div>
@@ -187,7 +207,7 @@
                                 ${actionBean.editOrder.researchProject.title}
                             </stripes:link>
                             (<a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.researchProject.jiraTicketKey}" class="external" target="JIRA">
-                                ${actionBean.editOrder.researchProject.jiraTicketKey}
+                            ${actionBean.editOrder.researchProject.jiraTicketKey}
                             </a>)
                         </c:if>
                     </div>
@@ -220,7 +240,7 @@
                 <div class="controls">
                     <div class="form-value">
                         <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
-                            ${actionBean.editOrder.quoteId}
+                                ${actionBean.editOrder.quoteId}
                         </a>
                         <span id="fundsRemaining" style="margin-left: 20px;"> </span>
                     </div>
@@ -246,6 +266,27 @@
 
             <div class="borderHeader">
                 Samples
+
+                <c:if test="${!actionBean.editOrder.draft}">
+                <span class="actionButtons">
+                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
+                        <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
+                                        style="margin-left:30px;" onclick="showConfirm('deleteSamples','delete')"/>
+                    </security:authorizeBlock>
+
+                    <%-- Hide from users, not yet working. --%>
+                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+                        <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
+                                        style="margin-left:15px;" onclick="showConfirm('abandonSamples','abandon')"/>
+                    </security:authorizeBlock>
+                </span>
+                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
+                        <div class="pull-right">
+                            <stripes:submit name="addSamples" value="Add Samples" class="btn" style="margin-left:30px;"/>
+                            <stripes:text size="100" name="addSamplesText" style="margin-left:15px;"/>
+                        </div>
+                    </security:authorizeBlock>
+                </c:if>
             </div>
 
             <div id="summaryId" class="fourcolumn" style="margin-bottom:5px;">
@@ -255,23 +296,32 @@
             <table id="sampleData" class="table simple">
                 <thead>
                     <tr>
+                        <c:if test="${!actionBean.editOrder.draft}">
+                            <th width="40">
+                                <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
+                            </th>
+                        </c:if>
                         <th width="90">ID</th>
                         <th>Participant ID</th>
                         <th width="40">Volume</th>
                         <th width="40">Concentration</th>
                         <th width="40">Yield Amount</th>
                         <th width="60">FP Status</th>
+                        <th width="100">On Risk</th>
                         <th width="40">Eligible</th>
                         <th width="40">Billed</th>
                         <th width="40">Abandoned</th>
-                        <th>Price Item 1</th>
-                        <th>Price Item 2</th>
                         <th width="140">Comment</th>
                     </tr>
                 </thead>
                 <tbody>
                     <c:forEach items="${actionBean.editOrder.samples}" var="sample">
                         <tr>
+                            <c:if test="${!actionBean.editOrder.draft}">
+                                <td>
+                                    <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderSampleIndices" value="${sample.samplePosition}"/>
+                                </td>
+                            </c:if>
                             <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
                                 <c:choose>
                                     <c:when test="${sample.inBspFormat}">
@@ -289,12 +339,11 @@
                             <td id="concentration-${sample.productOrderSampleId}" width="50">&nbsp;</td>
                             <td id="total-${sample.productOrderSampleId}" width="70">&nbsp;</td>
                             <td id="fingerprint-${sample.productOrderSampleId}" width="60" style="text-align: center">&nbsp;</td>
-                            <td width="70">&#160;</td>
-                            <td width="70">&#160;</td>
-                            <td width="70">&#160;</td>
-                            <td width="100">&#160;</td>
-                            <td width="100">&#160;</td>
-                            <td width="200">${sample.sampleComment}</td>
+                            <td>${sample.riskString}</td>
+                            <td>&#160;</td>
+                            <td>&#160;</td>
+                            <td>&#160;</td>
+                            <td>${sample.sampleComment}</td>
                         </tr>
                     </c:forEach>
                 </tbody>

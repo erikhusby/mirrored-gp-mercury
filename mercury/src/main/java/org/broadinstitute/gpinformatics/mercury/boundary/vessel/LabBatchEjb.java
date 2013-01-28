@@ -192,12 +192,8 @@ public class LabBatchEjb {
         for (String pdo : LabVessel.extractPdoKeyList(newBatch.getStartingLabVessels())) {
             try {
                 if (newBatch.getJiraTicket() != null) {
-                    jiraService.addLink(AddIssueLinkRequest.LinkType.Related, pdo, newBatch.getJiraTicket()
-                            .getTicketName(),
-                            "New Batch Created: " +
-                            newBatch.getJiraTicket().getTicketName() +
-                            " " + newBatch.getBatchName(), Visibility.Type.role,
-                            Visibility.Value.QA_Jira_Users);
+                    jiraService.addLink(AddIssueLinkRequest.LinkType.Parentage, pdo, newBatch.getJiraTicket()
+                            .getTicketName());
                 }
             } catch (Exception ioe) {
                 logger.error("Error attempting to link Batch " + newBatch.getJiraTicket().getTicketName()

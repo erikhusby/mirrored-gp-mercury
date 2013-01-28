@@ -8,11 +8,13 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.hibernate.annotations.Index;
+import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -65,6 +67,48 @@ public class ProductOrderSample implements Serializable {
 
     @Column(name="SAMPLE_POSITION", updatable = false, insertable = false, nullable=false)
     private Integer samplePosition;
+
+    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @JoinColumn(name = "product_order_sample", nullable = false)
+    @AuditJoinTable(name = "po_sample_risk_join_aud")
+    private Set<RiskItem> riskItems = new HashSet<RiskItem>();
+
+    /**
+     * Convert a list of ProductOrderSamples into a list of sample names.
+     * @param samples the samples to convert
+     * @return the names of the samples, in the same order as the input
+     */
+    public static List<String> getSampleNames(List<ProductOrderSample> samples) {
+        List<String> names = new ArrayList<String>(samples.size());
+        for (ProductOrderSample productOrderSample : samples) {
+            names.add(productOrderSample.getSampleName());
+        }
+        return names;
+    }
+
+    public void calculateRisk() {
+        riskItems.clear();
+
+        // Go through each risk check on the product
+        for (RiskCriteria criterion : productOrder.getProduct().getRiskCriteriaList()) {
+            // If this is on risk, then create a risk item for it and add it in
+            if (criterion.onRisk(this)) {
+                riskItems.add(new RiskItem(criterion, new Date(), criterion.getSampleValue(this).toString()));
+            }
+        }
+
+        // If there are no risk checks that failed, then create a risk item with no criteria to represent NO RISK
+        // and this will distinguish NO RISK from never checked
+        if (riskItems.isEmpty()) {
+            riskItems.add(new RiskItem(null, new Date(), null));
+        }
+    }
+
+    public void setManualOnRisk(String comment) {
+        riskItems.clear();
+        RiskCriteria criterion = RiskCriteria.createManual();
+        riskItems.add(new RiskItem(criterion, new Date(), "", comment));
+    }
 
     public static enum DeliveryStatus implements StatusType {
         NOT_STARTED("Not Started"),
@@ -383,5 +427,39 @@ public class ProductOrderSample implements Serializable {
         log.debug(MessageFormat.format(
                 "Added BillingLedger item for sample {0} to PDO {1} for PriceItemName: {2} - Quantity:{3}",
                 sampleName, productOrder.getBusinessKey(), priceItem.getName(), delta));
+    }
+
+    /**
+     * @return If there are any risk items with non-null criteria, then it is on risk
+     */
+    public boolean isOnRisk() {
+        for (RiskItem item : riskItems) {
+            if (item.getRiskCriteria() != null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public String getRiskString() {
+        StringBuilder riskStringBuilder = new StringBuilder();
+
+        if (isOnRisk()) {
+            for (RiskItem riskItem : riskItems) {
+                riskStringBuilder.append(riskItem.getInformation());
+            }
+        }
+
+        return riskStringBuilder.toString();
+    }
+
+    public Collection<RiskItem> getRiskItems() {
+        return riskItems;
+    }
+
+    public void setRiskItems(Collection<RiskItem> riskItems) {
+        this.riskItems.clear();
+        this.riskItems.addAll(riskItems);
     }
 }

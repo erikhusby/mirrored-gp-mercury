@@ -429,7 +429,7 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
         List<CustomField> listOfFields = new ArrayList<CustomField>();
 
         if (!sampleCohorts.isEmpty()) {
-           String[] cohortNames = new String[sampleCohorts.size()];
+            String[] cohortNames = new String[sampleCohorts.size()];
 
             int i = 0;
             for (ResearchProjectCohort cohort : sampleCohorts) {

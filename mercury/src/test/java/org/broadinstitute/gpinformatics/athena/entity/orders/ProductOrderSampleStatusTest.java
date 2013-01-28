@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDaoTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
@@ -98,9 +97,7 @@ public class ProductOrderSampleStatusTest extends ContainerTest {
     @Test
     public void testAbandonSamples() throws Exception {
         List<Integer> indices = Arrays.asList(1, 3, 5);
-        List<String> comments =
-                Arrays.asList("Abandoning sample uno", "And sample tres", "And sample 5 too");
-        productOrderEjb.abandonSamples(testKey, indices, comments);
+        productOrderEjb.abandonSamples(testKey, indices);
         ProductOrder order = productOrderDao.findByBusinessKey(testKey);
         Assert.assertEquals(order.getOrderStatus(), ProductOrder.OrderStatus.Draft);
         List<ProductOrderSample> samples = order.getSamples();
@@ -118,8 +115,7 @@ public class ProductOrderSampleStatusTest extends ContainerTest {
     @Test
     public void testCompleteSamples() throws Exception{
         List<Integer> indices = Arrays.asList(12, 14, 16);
-        List<String> comments = Arrays.asList("Completing sample 12", "And sample 14", "And sample 16 too");
-        productOrderEjb.completeSamples(testKey, indices, comments);
+        productOrderEjb.completeSamples(testKey, indices);
         ProductOrder order = productOrderDao.findByBusinessKey(testKey);
         Assert.assertEquals(order.getOrderStatus(), ProductOrder.OrderStatus.Draft);
         List<ProductOrderSample> samples = order.getSamples();
