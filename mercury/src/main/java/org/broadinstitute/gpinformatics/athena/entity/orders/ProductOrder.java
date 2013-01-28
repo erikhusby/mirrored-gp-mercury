@@ -170,11 +170,11 @@ public class ProductOrder implements Serializable {
         calculateRisk(true);
     }
 
-    private void calculateRisk(boolean skipSamplesWithRisk) {
+    private void calculateRisk(boolean newSamplesOnly) {
         for (ProductOrderSample sample : samples) {
             // If not skipping samples with risk, then always do it, otherwise only do samples with no risk items.
             // have risk items, means that risk was calculated
-            if (!skipSamplesWithRisk || sample.getRiskItems().isEmpty()) {
+            if (!newSamplesOnly || sample.getRiskItems().isEmpty()) {
                 sample.calculateRisk();
             }
         }
@@ -210,24 +210,10 @@ public class ProductOrder implements Serializable {
             }
         }
 
-        private int countSamplesOnRisk() {
-            int samplesOnRisk = 0;
-
-            for (ProductOrderSample sample : samples) {
-                if (sample.isOnRisk()) {
-                    samplesOnRisk++;
-                }
-            }
-
-            return samplesOnRisk;
-        }
-
         private void generateCounts() {
             if (countsValid) {
                 return;
             }
-
-            onRiskCount = countSamplesOnRisk();
 
             loadBspData();
 
@@ -237,6 +223,7 @@ public class ProductOrder implements Serializable {
             activeSampleCount = 0;
             hasFPCount = 0;
             missingBspMetaDataCount = 0;
+            onRiskCount = 0;
             stockTypeCounts.clear();
             primaryDiseaseCounts.clear();
             genderCounts.clear();
@@ -274,6 +261,10 @@ public class ProductOrder implements Serializable {
                         }
 
                         incrementCount(sampleTypeCounts, bspDTO.getSampleType());
+
+                        if (sample.isOnRisk()) {
+                            onRiskCount++;
+                        }
                     }
                 }
             }
@@ -602,11 +593,6 @@ public class ProductOrder implements Serializable {
             if (sample.needsBspMetaData()) {
                 uniqueNames.add(sample.getSampleName());
             }
-        }
-
-        if (uniqueNames.isEmpty()) {
-            // No BSP samples, nothing to do.
-            return;
         }
 
         BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
