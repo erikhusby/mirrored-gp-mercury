@@ -458,6 +458,7 @@ public class ProductOrderSample implements Serializable {
         return riskItems;
     }
 
+    // Only called from test code.
     public void setRiskItems(Collection<RiskItem> riskItems) {
         this.riskItems.clear();
         this.riskItems.addAll(riskItems);
