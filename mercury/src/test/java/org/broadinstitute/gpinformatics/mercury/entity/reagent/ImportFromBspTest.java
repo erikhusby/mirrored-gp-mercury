@@ -6,6 +6,8 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricRunBean;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
 import org.testng.annotations.Test;
@@ -112,6 +114,7 @@ public class ImportFromBspTest extends ContainerTest {
         List<String> normSourceBarcodes = new ArrayList<String>();
         List<String> normTargetBarcodes = new ArrayList<String>();
         List<String> platingTargetBarcodes = new ArrayList<String>();
+        ArrayList<VesselMetricBean> vesselMetricBeans = new ArrayList<VesselMetricBean>();
 
         String productOrderKey = "PDO-183";
         for (Object o : resultList) {
@@ -129,6 +132,7 @@ public class ImportFromBspTest extends ContainerTest {
             normSourceBarcodes.add(rootBarcode);
             normTargetBarcodes.add(picoBarcode);
             platingTargetBarcodes.add(exportedBarcode);
+            vesselMetricBeans.add(new VesselMetricBean(exportedBarcode, exportConcentration.toString(), "ng/uL"));
         }
         LabBatchBean labBatchBean = new LabBatchBean("BP-ROOT-" + testSuffix, null, rootTubeBeans);
         createBatch(labBatchBean);
@@ -153,6 +157,9 @@ public class ImportFromBspTest extends ContainerTest {
         createBatch(labBatchBean);
         // Identify candidate samples: Flowcell -> samples -> LCSET -> PDO
 
+        VesselMetricRunBean vesselMetricRunBean = new VesselMetricRunBean("BSP-PICO" + testSuffix, new Date(), "BSP Pico",
+                vesselMetricBeans);
+        recordMetrics(vesselMetricRunBean);
     }
 
     private void createBatch(LabBatchBean labBatchBean) {
@@ -160,6 +167,15 @@ public class ImportFromBspTest extends ContainerTest {
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(labBatchBean)
+                .post(String.class);
+        System.out.println(response);
+    }
+
+    public static void recordMetrics(VesselMetricRunBean vesselMetricRunBean) {
+        String response = Client.create().resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/vesselmetric")
+                .type(MediaType.APPLICATION_XML_TYPE)
+                .accept(MediaType.APPLICATION_XML)
+                .entity(vesselMetricRunBean)
                 .post(String.class);
         System.out.println(response);
     }
