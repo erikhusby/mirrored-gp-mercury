@@ -96,7 +96,7 @@ public class RiskCriteria {
     }
 
     public String getCalculationString() {
-        return MessageFormat.format("{0} {1} {2}", type.getLabel(), operator.getLabel(), value);
+        return MessageFormat.format("{0} {1} {2}", type.getLabel(), operator.getLabel(), value == null ? "" : value);
     }
 
     public enum RiskCriteriaType {
