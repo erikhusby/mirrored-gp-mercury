@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabMetricRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
@@ -28,17 +29,20 @@ public class VesselMetricResource {
     @Inject
     private LabVesselDao labVesselDao;
 
+    @Inject
+    private LabMetricRunDao labMetricRunDao;
+
     @POST
     public String uploadQuantRun(VesselMetricRunBean vesselMetricRunBean) {
         // fetch existing run and vessels
-        vesselMetricRunBean.getRunName();
-        vesselMetricRunBean.getQuantType();
         List<String> barcodes = new ArrayList<String>();
         for (VesselMetricBean vesselMetricBean : vesselMetricRunBean.getVesselMetricBeans()) {
             barcodes.add(vesselMetricBean.getBarcode());
         }
         Map<String, LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
-        buildLabMetricRun(vesselMetricRunBean, mapBarcodeToVessel);
+        LabMetricRun labMetricRun = buildLabMetricRun(vesselMetricRunBean, mapBarcodeToVessel);
+        labMetricRunDao.persist(labMetricRun);
+        labMetricRunDao.flush();
 
         return "Quant run persisted";
     }
