@@ -67,7 +67,7 @@ public class ProductOrderSample implements Serializable {
     private Integer samplePosition;
 
     public static enum DeliveryStatus implements StatusType {
-        NOT_STARTED("Not Started"),
+        NOT_STARTED(""),
         DELIVERED("Delivered"),
         ABANDONED("Abandoned");
 

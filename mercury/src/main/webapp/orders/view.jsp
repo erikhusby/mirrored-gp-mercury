@@ -291,7 +291,7 @@
                             <td id="fingerprint-${sample.productOrderSampleId}" width="60" style="text-align: center">&nbsp;</td>
                             <td width="70">&#160;</td>
                             <td width="70">&#160;</td>
-                            <td width="70">&#160;</td>
+                            <td id="abandoned-${sample.deliveryStatus.displayName}" width="70">&#160;</td>
                             <td width="100">&#160;</td>
                             <td width="100">&#160;</td>
                             <td width="200">${sample.sampleComment}</td>
