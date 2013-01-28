@@ -81,10 +81,6 @@ public class RiskCriteria {
         this.type = type;
     }
 
-    public String getDisplayString() {
-        return MessageFormat.format("{0} {1} {2}", type.getLabel(), operator.getLabel(), value);
-    }
-
     public boolean isSame(String criteriaName, String operator, String value) {
         return criteriaName.equals(type.getLabel()) &&
             operator.equals(this.operator.getLabel()) &&
@@ -97,6 +93,10 @@ public class RiskCriteria {
 
     public static RiskCriteria createManual() {
         return new RiskCriteria(RiskCriteria.RiskCriteriaType.MANUAL, Operator.IS, "");
+    }
+
+    public String getCalculationString() {
+        return MessageFormat.format("{0} {1} {2}", type.getLabel(), operator.getLabel(), value);
     }
 
     public enum RiskCriteriaType {

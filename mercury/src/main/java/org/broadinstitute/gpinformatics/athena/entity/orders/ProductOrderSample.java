@@ -417,10 +417,16 @@ public class ProductOrderSample implements Serializable {
     }
 
     /**
-     * @return If there are any risk items, then this sample is 'on risk'
+     * @return If there are any risk items with non-null criteria, then it is on risk
      */
     public boolean isOnRisk() {
-        return !riskItems.isEmpty();
+        for (RiskItem item : riskItems) {
+            if (item.getRiskCriteria() != null) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public String getRiskString() {

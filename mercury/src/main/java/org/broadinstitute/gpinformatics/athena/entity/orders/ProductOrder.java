@@ -187,6 +187,7 @@ public class ProductOrder implements Serializable {
         private static final long serialVersionUID = -6031146789417566007L;
         private boolean countsValid;
         private int totalSampleCount;
+        private int onRiskCount;
         private int bspSampleCount;
         private int receivedSampleCount;
         private int activeSampleCount;
@@ -209,10 +210,24 @@ public class ProductOrder implements Serializable {
             }
         }
 
+        private int countSamplesOnRisk() {
+            int samplesOnRisk = 0;
+
+            for (ProductOrderSample sample : samples) {
+                if (sample.isOnRisk()) {
+                    samplesOnRisk++;
+                }
+            }
+
+            return samplesOnRisk;
+        }
+
         private void generateCounts() {
             if (countsValid) {
                 return;
             }
+
+            onRiskCount = countSamplesOnRisk();
 
             loadBspData();
 
@@ -285,6 +300,8 @@ public class ProductOrder implements Serializable {
                     output.add(MessageFormat.format("Unique: {0}", uniqueSampleCount));
                     output.add(MessageFormat.format("Duplicate: {0}", (totalSampleCount - uniqueSampleCount)));
                 }
+
+                output.add(MessageFormat.format("On Risk: {0}", onRiskCount));
 
                 if (bspSampleCount == uniqueSampleCount) {
                     output.add("From BSP: All");

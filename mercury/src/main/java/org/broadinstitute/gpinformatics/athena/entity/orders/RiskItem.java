@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
@@ -87,8 +88,11 @@ public class RiskItem {
     }
 
     public String getInformation() {
+        String comment =
+            StringUtils.isBlank(remark) ? "no comment" : MessageFormat.format("comment: {0}", remark);
+
         return MessageFormat.format(
-                "At {0,time} on {0,date}, calculated risk of type {1} on value {2} with comment: {3}",
-                occurredDate, riskCriteria.getType().getLabel(), comparedValue, remark);
+                "At {0,time} on {0,date}, calculated ({1}) risk on value {2} with {3}",
+                occurredDate, riskCriteria.getCalculationString(), comparedValue, comment);
     }
 }

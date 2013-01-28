@@ -307,11 +307,10 @@
                         <th width="40">Concentration</th>
                         <th width="40">Yield Amount</th>
                         <th width="60">FP Status</th>
+                        <th width="100">On Risk</th>
                         <th width="40">Eligible</th>
                         <th width="40">Billed</th>
                         <th width="40">Abandoned</th>
-                        <th>Price Item 1</th>
-                        <th>Price Item 2</th>
                         <th width="140">Comment</th>
                     </tr>
                 </thead>
@@ -340,12 +339,11 @@
                             <td id="concentration-${sample.productOrderSampleId}" width="50">&nbsp;</td>
                             <td id="total-${sample.productOrderSampleId}" width="70">&nbsp;</td>
                             <td id="fingerprint-${sample.productOrderSampleId}" width="60" style="text-align: center">&nbsp;</td>
-                            <td width="70">&#160;</td>
-                            <td width="70">&#160;</td>
-                            <td width="70">&#160;</td>
-                            <td width="100">&#160;</td>
-                            <td width="100">&#160;</td>
-                            <td width="200">${sample.sampleComment}</td>
+                            <td>${sample.riskString}</td>
+                            <td>&#160;</td>
+                            <td>&#160;</td>
+                            <td>&#160;</td>
+                            <td>${sample.sampleComment}</td>
                         </tr>
                     </c:forEach>
                 </tbody>
