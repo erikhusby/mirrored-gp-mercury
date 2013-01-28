@@ -408,7 +408,90 @@
             </not>
 
         </preConditions>
-            <addUniqueConstraint tableName="reagent_design" columnNames="reagent_design,reagent_type"
-                                 constraintName="uk_reagent_design" schemaName="mercury"/>
-        </changeSet>
+        <addUniqueConstraint tableName="reagent_design" columnNames="reagent_design,reagent_type"
+                             constraintName="uk_reagent_design" schemaName="mercury"/>
+    </changeSet>
+    
+    <changeSet id="GPLIM-849-1" author="thompson">
+        <createTable tableName="lab_metric" schemaName="mercury">
+            <column name="lab_metric_id" type="number(19,0)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="lab_unit" type="varchar2(255)"/>
+            <column name="metric_type" type="varchar2(255)"/>
+            <column name="value" type="number(19,2)"/>
+            <column name="lab_metric_run" type="number(19,0)"/>
+            <column name="lab_vessel" type="number(19,0)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-849-2" author="thompson">
+        <createTable tableName="lab_metric_aud" schemaName="mercury">
+            <column name="lab_metric_id" type="number(19,0)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+            <column name="lab_unit" type="varchar2(255)"/>
+            <column name="metric_type" type="varchar2(255)"/>
+            <column name="value" type="number(19,2)"/>
+            <column name="lab_metric_run" type="number(19,0)"/>
+            <column name="lab_vessel" type="number(19,0)"/>
+        </createTable>
+    </changeSet>
+
+    <changeSet id="GPLIM-849-3" author="thompson">
+        <createTable tableName="lab_metric_run" schemaName="mercury">
+            <column name="lab_metric_run_id" type="number(19,0)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="metric_type" type="varchar2(255)"/>
+            <column name="run_date" type="timestamp"/>
+            <column name="run_name" type="varchar2(255)"/>
+        </createTable>
+        <addUniqueConstraint tableName="lab_metric_run" schemaName="mercury"
+                             columnNames="run_name, run_date" constraintName="uk_lmr_name_date"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-849-4" author="thompson">
+        <createTable tableName="lab_metric_run_aud" schemaName="mercury">
+            <column name="lab_metric_run_id" type="number(19,0)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints primaryKey="true"/>
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+            <column name="metric_type" type="varchar2(255)"/>
+            <column name="run_date" type="timestamp"/>
+            <column name="run_name" type="varchar2(255)"/>
+        </createTable>
+    </changeSet>
+    
+    <changeSet id="GPLIM-849-5" author="thompson">
+        <addForeignKeyConstraint baseTableName="lab_metric" baseTableSchemaName="mercury" baseColumnNames="lab_metric_run"
+                                 constraintName="fk_lm_lab_metric_run"
+                                 referencedTableName="lab_metric_run" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="lab_metric_run_id"/>
+        <addForeignKeyConstraint baseTableName="lab_metric" baseTableSchemaName="mercury" baseColumnNames="lab_vessel"
+                                 constraintName="fk_lm_lab_vessel"
+                                 referencedTableName="lab_vessel" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="lab_vessel_id"/>
+        <addForeignKeyConstraint baseTableName="lab_metric_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_lm_rev_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+        <addForeignKeyConstraint baseTableName="lab_metric_run_aud" baseTableSchemaName="mercury" baseColumnNames="rev"
+                                 constraintName="fk_lmr_rev_info"
+                                 referencedTableName="rev_info" referencedTableSchemaName="mercury"
+                                 referencedColumnNames="rev_info_id"/>
+    </changeSet>
+    
+    <changeSet id="GPLIM-849-6" author="thompson">
+        <createSequence sequenceName="SEQ_LAB_METRIC" schemaName="mercury" startValue="1" incrementBy="50"/>
+        <createSequence sequenceName="SEQ_LAB_METRIC_RUN" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+
 </databaseChangeLog>
