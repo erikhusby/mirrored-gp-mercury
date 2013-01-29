@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -13,7 +15,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaRunConfiguration;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -22,12 +25,13 @@ import javax.xml.datatype.DatatypeFactory;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
-import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.A_BASE;
+import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.*;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FLOWCELL_TYPE.EIGHT_LANE;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes.RackType.Matrix96;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection.ALL96;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition.B04;
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -42,6 +46,27 @@ public class ZimsIlluminaRunFactoryTest {
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void setUp() throws Exception {
+        ProductWorkflowDef testWorkflow = new ProductWorkflowDef("Test Workflow");
+        ProductWorkflowDefVersion productWorkflowDefVersion = new ProductWorkflowDefVersion("1", new Date());
+        testWorkflow.addProductWorkflowDefVersion(productWorkflowDefVersion);
+        WorkflowProcessDef testProcess = new WorkflowProcessDef("Test Process");
+        WorkflowProcessDefVersion testProcess1 = new WorkflowProcessDefVersion("1", new Date());
+        testProcess.addWorkflowProcessDefVersion(testProcess1);
+        WorkflowStepDef step1 = new WorkflowStepDef("Step 1");
+        step1.addLabEvent(A_BASE);
+        testProcess1.addStep(step1);
+        WorkflowStepDef step2 = new WorkflowStepDef("Step 2"); // TODO: signify that this step is important to picard
+        step2.addLabEvent(INDEXED_ADAPTER_LIGATION);
+        testProcess1.addStep(step2);
+        WorkflowStepDef step3 = new WorkflowStepDef("Step 3");
+        step3.addLabEvent(POOLING_TRANSFER);
+        testProcess1.addStep(step3);
+        productWorkflowDefVersion.addWorkflowProcessDef(testProcess);
+
+        Product testProduct = new Product("Test Product", new ProductFamily("Test Product Family"), "Test product",
+                "P-TEST-1", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None", true,
+                "Test Workflow", false);
+
         zimsIlluminaRunFactory = new ZimsIlluminaRunFactory();
         labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
@@ -102,37 +127,13 @@ public class ZimsIlluminaRunFactoryTest {
 //        assertThat(zimsIlluminaRun.getPairedRun(), is(true)); // TODO
 //        assertThat(zimsIlluminaRun.getSequencerModel(), equalTo("HiSeq")); // TODO
 //        assertThat(zimsIlluminaRun.getLanes().size(), equalTo(8));
-    }
 
-    // Helper methods
-
-    public static TubeFormation makeTubeFormation(TwoDBarcodedTube... tubes) {
-        Map<VesselPosition, TwoDBarcodedTube> positionMap = new HashMap<VesselPosition, TwoDBarcodedTube>();
-        int i = 0;
-        for (TwoDBarcodedTube tube : tubes) {
-            positionMap.put(VesselPosition.values()[i], tube);
-            i++;
+        for (ZimsIlluminaChamber lane : zimsIlluminaRun.getLanes()) {
+            if (lane.getName().equals("1")) {
+                assertThat(lane.getLibraries().size(), is(1));
+            } else {
+                assertThat(lane.getLibraries().size(), is(0));
+            }
         }
-        return new TubeFormation(positionMap, Matrix96);
     }
-
-    public static TubeFormation makeTubeFormation(VesselPosition[] positions, TwoDBarcodedTube[] tubes) {
-        assertThat("There must be at least as many positions as tubes",
-                positions.length, greaterThanOrEqualTo(tubes.length));
-        Map<VesselPosition, TwoDBarcodedTube> positionMap = new HashMap<VesselPosition, TwoDBarcodedTube>();
-        for (int i = 0; i < tubes.length; i++) {
-            TwoDBarcodedTube tube = tubes[i];
-            VesselPosition position = positions[i];
-            positionMap.put(position, tube);
-        }
-        return new TubeFormation(positionMap, Matrix96);
-    }
-
-    public static LabEvent doSectionTransfer(LabVessel source, LabVessel destination) {
-        LabEvent event = new LabEvent(A_BASE, new Date(), "StaticPlateTest", 1L, 1L);
-        event.getSectionTransfers().add(
-                new SectionTransfer(source.getContainerRole(), ALL96, destination.getContainerRole(), ALL96, event));
-        return event;
-    }
-
 }
