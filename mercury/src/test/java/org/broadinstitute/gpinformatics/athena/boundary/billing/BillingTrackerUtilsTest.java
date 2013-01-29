@@ -3,8 +3,6 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 import junit.framework.Assert;
 import junit.framework.TestCase;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
@@ -25,9 +23,8 @@ import java.util.List;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BillingTrackerUtilsTest extends TestCase {
 
-    public static final String BILLING_TRACKER_TEST_FILENAME = new String("BillingTracker-ContainerTest.xlsx");
+    public static final String BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContainerTest.xlsx";
     public static final File BILLING_TRACKER_TEST_FILE = new File("src/test/resources/testdata/" + BILLING_TRACKER_TEST_FILENAME);
-    private static final Log logger = LogFactory.getLog(BillingTrackerUtilsTest.class);
 
     @Test
     public void testHeaderParsing() throws Exception {

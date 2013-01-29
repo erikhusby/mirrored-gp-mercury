@@ -220,9 +220,9 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
      * @param bspSampleDTOs BSP DTOs whose sampleID field will be referenced for the barcode value, and which will
      *                      be filled with the ffpeDerived value returned by the FFPE webservice
      */
-    public void fetchFFPEDerived(Collection<BSPSampleDTO> bspSampleDTOs) {
+    public void fetchFFPEDerived(@Nonnull Collection<BSPSampleDTO> bspSampleDTOs) {
 
-        if (bspSampleDTOs == null || bspSampleDTOs.isEmpty()) {
+        if (bspSampleDTOs.isEmpty()) {
             return;
         }
 
