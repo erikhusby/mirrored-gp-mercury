@@ -14,14 +14,16 @@
             // The jsp loads the criteria types into an associative array by type and then operators
             var criteriaTypeToOperatorList = [];
             <c:forEach items="${actionBean.criteriaTypes}" var="criteriaType">
-                criteriaTypeToOperatorList['${criteriaType.label}'] = [];
-                <c:forEach items="${criteriaType.operators}" var="operator" varStatus="j">
-                    criteriaTypeToOperatorList['${criteriaType.label}'][${j.index}] = '${operator.label}';
+                <c:if test="${criteriaType.displayed}">
+                    criteriaTypeToOperatorList['${criteriaType.label}'] = [];
+                    <c:forEach items="${criteriaType.operators}" var="operator" varStatus="j">
+                        criteriaTypeToOperatorList['${criteriaType.label}'][${j.index}] = '${operator.label}';
 
-                    <c:if test="${operator.type == 'BOOLEAN'}">
-                        booleanTypes['${criteriaType.label}'] = true;
-                    </c:if>
-                </c:forEach>
+                        <c:if test="${operator.type == 'BOOLEAN'}">
+                            booleanTypes['${criteriaType.label}'] = true;
+                        </c:if>
+                    </c:forEach>
+                </c:if>
             </c:forEach>
 
             var criteriaCount = 0;

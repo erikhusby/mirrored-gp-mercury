@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.billing;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.meanbean.test.BeanTester;
 import org.meanbean.test.EqualsMethodTester;
 import org.meanbean.test.HashCodeMethodTester;
@@ -18,6 +19,7 @@ import java.util.Date;
  * Date: 12/7/12
  * Time: 12:51 PM
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class BillingLedgerTest {
 
 

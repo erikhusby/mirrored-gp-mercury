@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
@@ -90,6 +91,12 @@ public class RiskItem {
     public String getInformation() {
         String comment =
             StringUtils.isBlank(remark) ? "" : MessageFormat.format("with comment: {0}", remark);
+
+        if (riskCriteria.getOperator().getType() == Operator.OperatorType.BOOLEAN) {
+            return MessageFormat.format(
+                    "At {0,time} on {0,date}, calculated {1} (2)",
+                    occurredDate, riskCriteria.getCalculationString(), comment);
+        }
 
         return MessageFormat.format(
                 "At {0,time} on {0,date}, calculated ({1}) risk on value {2} {3}",

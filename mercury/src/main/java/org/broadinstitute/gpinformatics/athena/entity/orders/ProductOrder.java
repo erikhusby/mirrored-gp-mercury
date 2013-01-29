@@ -597,13 +597,22 @@ public class ProductOrder implements Serializable {
 
         BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
         Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(uniqueNames);
+
+        // the non-null DTOs which we use to look up FFPE status
+        List<BSPSampleDTO> nonNullDTOs = new ArrayList<BSPSampleDTO>();
         for (ProductOrderSample sample : getSamples()) {
             BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getSampleName());
             if (bspSampleDTO == null) {
                 bspSampleDTO = BSPSampleDTO.DUMMY;
             }
+            else {
+                nonNullDTOs.add(bspSampleDTO);
+            }
             sample.setBspDTO(bspSampleDTO);
         }
+
+        // fill out all the non-null DTOs with FFPE status in one shot
+        bspSampleDataFetcher.fetchFFPEDerived(nonNullDTOs);
     }
 
     /**
