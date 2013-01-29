@@ -73,6 +73,19 @@ public class ProductOrderSample implements Serializable {
     @AuditJoinTable(name = "po_sample_risk_join_aud")
     private Set<RiskItem> riskItems = new HashSet<RiskItem>();
 
+    /**
+     * Convert a list of ProductOrderSamples into a list of sample names.
+     * @param samples the samples to convert
+     * @return the names of the samples, in the same order as the input
+     */
+    public static List<String> getSampleNames(List<ProductOrderSample> samples) {
+        List<String> names = new ArrayList<String>(samples.size());
+        for (ProductOrderSample productOrderSample : samples) {
+            names.add(productOrderSample.getSampleName());
+        }
+        return names;
+    }
+
     public void calculateRisk() {
         riskItems.clear();
 
@@ -98,7 +111,7 @@ public class ProductOrderSample implements Serializable {
     }
 
     public static enum DeliveryStatus implements StatusType {
-        NOT_STARTED("Not Started"),
+        NOT_STARTED(""),
         DELIVERED("Delivered"),
         ABANDONED("Abandoned");
 

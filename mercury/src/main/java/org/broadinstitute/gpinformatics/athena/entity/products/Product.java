@@ -577,9 +577,9 @@ public class Product implements Serializable, Comparable<Product> {
                 }
 
                 if (!sameAsCurrent) {
-                    currentCriteria = findMatching(criteria[i], operators[i], values[i]);
+                    currentCriteria = findMatching(criteria[i], operators[i], values == null ? null : values[i]);
                     if (currentCriteria == null) {
-                        currentCriteria = new RiskCriteria(RiskCriteria.RiskCriteriaType.findByLabel(criteria[i]), Operator.findByLabel(operators[i]), values[i]);
+                        currentCriteria = new RiskCriteria(RiskCriteria.RiskCriteriaType.findByLabel(criteria[i]), Operator.findByLabel(operators[i]), values == null ? null : values[i]);
                     }
                 }
 

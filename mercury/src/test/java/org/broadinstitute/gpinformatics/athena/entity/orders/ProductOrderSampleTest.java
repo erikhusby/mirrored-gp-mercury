@@ -36,7 +36,7 @@ public class ProductOrderSampleTest {
     @Test
     public void testBeaniness() {
         Configuration configuration = new ConfigurationBuilder().ignoreProperty("productOrder").ignoreProperty("sampleComment")
-                .ignoreProperty("bspDTO").ignoreProperty("billingStatus").ignoreProperty("deliveryStatus").build();
+                .ignoreProperty("bspDTO").ignoreProperty("billingStatus").ignoreProperty("deliveryStatus").ignoreProperty("riskItems").build();
         new BeanTester().testBean(ProductOrderSample.class, configuration);
 
         class ProductOrderSampleFactory implements EquivalentFactory<ProductOrderSample> {

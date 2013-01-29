@@ -530,8 +530,8 @@ public class ProductOrder implements Serializable {
      * @return true, if the name lists are different
      */
     private boolean sampleListHasChanged(List<ProductOrderSample> newSamples) {
-        List<String> originalSampleNames = getSampleNames(samples);
-        List<String> newSampleNames = getSampleNames(newSamples);
+        List<String> originalSampleNames = ProductOrderSample.getSampleNames(samples);
+        List<String> newSampleNames = ProductOrderSample.getSampleNames(newSamples);
 
         // If not equals, then this has changed
         return !newSampleNames.equals(originalSampleNames);
@@ -653,16 +653,8 @@ public class ProductOrder implements Serializable {
      * @return the list of sample names for this order, including duplicates. in the same sequence that
      * they were entered.
      */
-    private static List<String> getSampleNames(List<ProductOrderSample> samples) {
-        List<String> names = new ArrayList<String>(samples.size());
-        for (ProductOrderSample productOrderSample : samples) {
-            names.add(productOrderSample.getSampleName());
-        }
-        return names;
-    }
-
     public String getSampleString() {
-        return StringUtils.join(getSampleNames(samples), '\n');
+        return StringUtils.join(ProductOrderSample.getSampleNames(samples), '\n');
     }
 
     /**
@@ -795,14 +787,14 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * @return The order is a draft while it is not 'placed,' which is the state of having a jira ticket
+     * @return true if order is in Draft
      */
     public boolean isDraft() {
         return OrderStatus.Draft == orderStatus;
     }
 
     /**
-     * @return The order is a draft while it is not 'placed,' which is the state of having a jira ticket
+     * @return true if order is abandoned
      */
     public boolean isAbandoned() {
         return OrderStatus.Abandoned == orderStatus;

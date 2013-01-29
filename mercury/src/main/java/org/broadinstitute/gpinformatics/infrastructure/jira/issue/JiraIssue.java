@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.IssueTransitionListResponse;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
@@ -190,6 +191,17 @@ public class JiraIssue implements Serializable {
         jiraService.postNewTransition(key, transition, null);
     }
 
+    public Map<String, CustomFieldDefinition> getCustomFields(String... fieldNames) throws IOException {
+        return jiraService.getCustomFields(fieldNames);
+    }
+
+    public void setCustomFieldUsingTransition(CustomField.SubmissionField field,
+                                              Object value, String transitionName) throws IOException {
+        Transition transition = jiraService.findAvailableTransitionByName(key, transitionName);
+        Map<String, CustomFieldDefinition> definitionMap = getCustomFields(field.getFieldName());
+        List<CustomField> customFields = Collections.singletonList(new CustomField(definitionMap, field, value));
+        jiraService.postNewTransition(key, transition, customFields, null);
+    }
 
     @Override
     public String toString() {
