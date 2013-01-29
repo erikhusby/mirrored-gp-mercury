@@ -18,7 +18,6 @@ import org.hibernate.envers.Audited;
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -53,7 +52,8 @@ public class RapSheet {
     }
 
     public void addEntry(RapSheetEntry rapSheetEntry) {
-        getRapSheetEntries().add(rapSheetEntry);
+        rapSheetEntries = new ArrayList<RapSheetEntry>();
+        rapSheetEntries.add(rapSheetEntry);
         rapSheetEntry.setRapSheet(this);
     }
 

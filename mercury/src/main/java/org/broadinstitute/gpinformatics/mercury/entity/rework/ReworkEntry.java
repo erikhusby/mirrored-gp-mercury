@@ -12,11 +12,15 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.rework;
 
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 @Entity
 @Audited
@@ -34,15 +38,20 @@ public class ReworkEntry extends RapSheetEntry {
     @Enumerated(EnumType.STRING)
     private LabEventType reworkStep;
 
-    public ReworkEntry(ReworkReason reworkReason, ReworkLevel reworkLevel, LabEventType reworkStep){
-        this.reworkReason =reworkReason;
-        this.reworkLevel=reworkLevel;
-        this.reworkStep=reworkStep;
+    public ReworkEntry(ReworkReason reworkReason, ReworkLevel reworkLevel, LabEventType reworkStep) {
+        this.reworkReason = reworkReason;
+        this.reworkLevel = reworkLevel;
+        this.reworkStep = reworkStep;
     }
 
-    public ReworkEntry(){
+    public ReworkEntry() {
 
     }
+
+    public static LabVesselComment addRework(LabEvent event, String comment, List<RapSheetEntry> rework) {
+        return new LabVesselComment(event, event.getInPlaceLabVessel(), comment, rework);
+    }
+
 
     public ReworkReason getReworkReason() {
         return reworkReason;
