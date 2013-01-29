@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.products;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -9,6 +10,7 @@ import org.testng.annotations.Test;
  * Date: 1/22/13
  * Time: 3:59 PM
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class NumericOperatorTest {
     @Test
     public void testApply() throws Exception {
@@ -27,6 +29,6 @@ public class NumericOperatorTest {
         Assert.assertEquals(Operator.GREATER_THAN, Operator.fromLabel(">") );
         Assert.assertEquals(Operator.GREATER_THAN_OR_EQUAL_TO, Operator.fromLabel(">=") );
         // Create an invalid Numeric Operator for equals to
-        Assert.assertEquals(null, Operator.fromLabel("=") );
+        Assert.assertEquals(Operator.EQUALS, Operator.fromLabel("=") );
     }
 }

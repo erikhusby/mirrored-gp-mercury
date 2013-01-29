@@ -38,6 +38,10 @@ public class RiskCriteria {
     }
 
     public RiskCriteria(@Nonnull RiskCriteriaType type, @Nonnull Operator operator, @Nonnull String value) {
+        if (!type.getOperators().contains(operator)) {
+            throw new RuntimeException("operator: " + operator.getLabel() + " is not allowed on type: " + type.getLabel());
+        }
+
         this.type = type;
         this.operator = operator;
         this.value = value;
