@@ -126,10 +126,17 @@
                 <label class="control-label label-form">Risk Criteria</label>
                 <div class="controls">
                     <div class="form-value">
-                        A sample is on risk if:<br/>
-                        <c:forEach items="${actionBean.editProduct.riskCriteriaList}" var="criterion">
-                            ${criterion.calculationString}<br/>
-                        </c:forEach>
+                        <c:choose>
+                            <c:when test="${empty actionBean.editProduct.riskCriteriaList}">
+                                No risk criteria
+                            </c:when>
+                            <c:otherwise>
+                                A sample is on risk if:<br/>
+                                <c:forEach items="${actionBean.editProduct.riskCriteriaList}" var="criterion">
+                                    ${criterion.calculationString}<br/>
+                                </c:forEach>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
             </div>
