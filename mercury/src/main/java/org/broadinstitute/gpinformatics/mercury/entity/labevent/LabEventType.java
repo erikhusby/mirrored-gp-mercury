@@ -7,8 +7,8 @@ import java.util.Map;
  * Properties common to all events of a particular message type
  */
 public enum LabEventType {
-    // Preflight
 
+    // Preflight
     PREFLIGHT_CLEANUP ("PreFlightCleanup", true, true, SystemOfRecord.SQUID),
     PREFLIGHT_PICO_SETUP ("PreflightPicoSetup", true, true, SystemOfRecord.SQUID),
     PREFLIGHT_NORMALIZATION("PreflightNormalization", true, true, SystemOfRecord.SQUID),
@@ -34,6 +34,7 @@ public enum LabEventType {
     // no longer used, needed to import past messages
     WGS_ADAPTER_LIGATION_CLEANUP ("WGSAdapterLigationCleanup", false, true, SystemOfRecord.SQUID),
     POND_ENRICHMENT ("PondEnrichment", true, true, SystemOfRecord.SQUID),
+    INDEX_P5_POND_ENRICHMENT ("IndexP5PondEnrichment", true, true, SystemOfRecord.SQUID),
     POST_POND_ENRICHMENT_THERMO_CYCLER_LOADED("PostPondEnrichmentThermoCyclerLoaded", true, true, SystemOfRecord.SQUID),
     POND_ENRICHMENT_CLEANUP ("HybSelPondEnrichmentCleanup", false, true, SystemOfRecord.SQUID),
     POND_REGISTRATION ("PondRegistration", false, true, SystemOfRecord.SQUID),
@@ -110,7 +111,6 @@ public enum LabEventType {
     JUMP_ENRICHED_LIBRARY_REGISTRATION("JumpEnrichedLibraryRegistration", false, true, SystemOfRecord.SQUID),
 
     // BSP Pico
-
     PICO_PLATING_BUCKET("PicoPlatingBucket", true, true, SystemOfRecord.MERCURY),
     PICO_PLATING_QC ("PicoPlatingQC", true,true, SystemOfRecord.MERCURY),
     PICO_DILUTION_TRANSFER ("PicoDilutionTransfer", true, true, SystemOfRecord.MERCURY),
