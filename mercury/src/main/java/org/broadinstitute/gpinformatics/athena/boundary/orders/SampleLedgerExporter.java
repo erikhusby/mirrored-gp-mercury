@@ -199,10 +199,6 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         // Sample Status
         ProductOrderSample.DeliveryStatus status = sample.getDeliveryStatus();
         getWriter().writeCell(status.getDisplayName());
-        if (status == ProductOrderSample.DeliveryStatus.ABANDONED) {
-            // FIXME: highlight entire row.
-            // getWriter.setRowStyle(...);
-        }
 
         // product name
         getWriter().writeCell(sample.getProductOrder().getProduct().getProductName());
@@ -269,6 +265,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             getWriter().writeCell(billingError, getErrorMessageStyle());
         }
 
+        if (status == ProductOrderSample.DeliveryStatus.ABANDONED) {
+            // Set the row style last, so all columns are affected.
+            getWriter().setRowStyle(getAbandonedStyle());
+        }
     }
 
     private static String getBillingError(Set<BillingLedger> billableItems) {
