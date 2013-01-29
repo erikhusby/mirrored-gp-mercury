@@ -4,9 +4,10 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.meanbean.lang.EquivalentFactory;
 import org.meanbean.lang.Factory;
-import org.meanbean.test.*;
+import org.meanbean.test.BeanTester;
+import org.meanbean.test.Configuration;
+import org.meanbean.test.ConfigurationBuilder;
 import org.testng.annotations.Test;
 
 import java.util.Date;
@@ -50,31 +51,4 @@ public class RiskItemTest {
         tester.testBean(RiskItem.class, configuration);
 
     }
-
-    @Test( enabled = true)
-    public void testEquals() throws Exception {
-        Configuration configuration = new ConfigurationBuilder()
-                .ignoreProperty("productOrderSample")
-                .build();
-
-        class RiskCriteriaFactory implements EquivalentFactory<RiskCriteria> {
-            @Override public RiskCriteria create() {
-                return new RiskCriteria(RiskCriteria.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "100.0");
-            }
-        }
-        new EqualsMethodTester().testEqualsMethod(new RiskCriteriaFactory(), configuration);
-
-    }
-
-    @Test( enabled = true)
-    public void testHashCode() throws Exception {
-
-        class RiskCriteriaFactory implements EquivalentFactory<RiskCriteria> {
-            @Override public RiskCriteria create() {
-                return new RiskCriteria(RiskCriteria.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "100.0");
-            }
-        }
-        new HashCodeMethodTester().testHashCodeMethod(new RiskCriteriaFactory());
-    }
-
 }
