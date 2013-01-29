@@ -9,11 +9,8 @@ import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedger
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedgerTest;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.jboss.arquillian.container.test.api.Deployment;
-import org.jboss.arquillian.testng.Arquillian;
-import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -23,15 +20,13 @@ import javax.transaction.UserTransaction;
 import java.io.FileInputStream;
 import java.util.*;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
+public class BillingTrackerManagerContainerTest extends ContainerTest {
 
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=true)
-public class BillingTrackerManagerContainerTest extends Arquillian {
+    public static final String BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContainerTest.xlsx";
 
-    public static final String BILLING_TRACKER_TEST_FILENAME = new String("BillingTracker-ContainerTest.xlsx");
-
-    private Log logger = LogFactory.getLog(BillingTrackerManagerContainerTest.class);
+    private static final Log logger = LogFactory.getLog(BillingTrackerManagerContainerTest.class);
 
     @Inject
     BillingTrackerManager billingTrackerManager;
@@ -41,11 +36,6 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
 
     @Inject
     private UserTransaction utx;
-
-    @Deployment
-    public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV);
-    }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
@@ -57,7 +47,6 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
         utx.begin();
     }
 
-
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
         // Skip if no injections, meaning we're not running in container
@@ -68,11 +57,10 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
         utx.rollback();
     }
 
-
-    @Test( enabled = true )
+    @Test(enabled = true)
     public void testImport() throws Exception {
 
-        FileInputStream fis=null;
+        FileInputStream fis = null;
 
         // Create a copy of the deployed test data file
         try {
@@ -94,8 +82,7 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
             Set<BillingLedger> ledgerSet = billingLedgerDao.findByOrderList(productOrder);
             // There should be ledger entries
             Assert.assertFalse(ledgerSet.isEmpty());
-            BillingLedger[] ledgerArray = ledgerSet.toArray(new BillingLedger[0]);
-            List<BillingLedger> ledgerList = Arrays.asList(ledgerArray);
+            List<BillingLedger> ledgerList = new ArrayList<BillingLedger>(ledgerSet);
             Collections.sort(ledgerList, new Comparator<BillingLedger>() {
                 @Override
                 public int compare(BillingLedger o1, BillingLedger o2) {
@@ -105,38 +92,37 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
                 }
             });
 
-            List<BillingLedger> expectedBillingLedgerList = createExpectedBillingLedgerList1();
+            BillingLedger[] expectedBillingLedgerList = createExpectedBillingLedgerList();
 
-            if ( expectedBillingLedgerList.size() != ledgerList.size() ) {
+            if (expectedBillingLedgerList.length != ledgerList.size()) {
                 // Dumping the found ledger Items to log file before failing.
-                StringBuilder stringBuilder = new StringBuilder();
-                for ( BillingLedger expBillingLedger : expectedBillingLedgerList ) {
-                    for ( BillingLedger actBillingLedger : ledgerList ) {
-                        if ( actBillingLedger.getProductOrderSample().getSampleName().equals( expBillingLedger.getProductOrderSample().getSampleName()) &&
-                                actBillingLedger.getPriceItem().getName().equals( expBillingLedger.getPriceItem().getName())  ) {
-                            logger.debug( "Found ledger item for " + expBillingLedger.getProductOrderSample().getSampleName() +
-                                    " and " + expBillingLedger.getPriceItem().getName() + " quantity " +  + expBillingLedger.getQuantity() );
+                for (BillingLedger expected : expectedBillingLedgerList) {
+                    for (BillingLedger actual : ledgerList) {
+                        if (actual.getProductOrderSample().getSampleName().equals(expected.getProductOrderSample().getSampleName()) &&
+                            actual.getPriceItem().getName().equals(expected.getPriceItem().getName())) {
+                            logger.debug(
+                                    "Found ledger item for " + expected.getProductOrderSample().getSampleName()
+                                    + " and " + expected.getPriceItem().getName() + " quantity "
+                                    + expected.getQuantity());
                             break;
                         }
                     }
                 }
-                Assert.fail( "The number of expected ledger items is different than the number of actual ledger items");
+                Assert.fail("The number of expected ledger items is different than the number of actual ledger items");
             }
 
             int i = 0;
-            for ( BillingLedger billingLedger : ledgerList ) {
-                BillingLedger expBillingLedger = expectedBillingLedgerList.get(i);
+            for (BillingLedger actual : ledgerList) {
+                BillingLedger expected = expectedBillingLedgerList[i];
 
-                Assert.assertEquals(expBillingLedger.getProductOrderSample().getSampleName(), billingLedger.getProductOrderSample().getSampleName() );
-                Assert.assertEquals(expBillingLedger.getPriceItem().getName(), billingLedger.getPriceItem().getName() );
-                Assert.assertEquals("Quantity check for " + billingLedger.getProductOrderSample().getSampleName() + " priceItem "  +
-                        billingLedger.getPriceItem().getName() + " failed",
-                        expBillingLedger.getQuantity(), billingLedger.getQuantity() );
+                Assert.assertEquals(expected.getProductOrderSample().getSampleName(),
+                        actual.getProductOrderSample().getSampleName());
+                Assert.assertEquals(expected.getPriceItem().getName(), actual.getPriceItem().getName());
+                Assert.assertEquals("Quantity check for " + actual.getProductOrderSample().getSampleName() + " priceItem "  +
+                        actual.getPriceItem().getName() + " failed",
+                        expected.getQuantity(), actual.getQuantity());
                 i++;
             }
-        } catch ( Exception e ) {
-            logger.error(e);
-            Assert.fail( e.getMessage() );
         } finally {
             IOUtils.closeQuietly(fis);
         }
@@ -144,63 +130,23 @@ public class BillingTrackerManagerContainerTest extends Arquillian {
     }
 
 
-    private BillingLedger createOneBillingLedger(String sampleName, String priceItemName, double quantity ) {
-        return BillingLedgerTest.createOneBillingLedger(sampleName, priceItemName, quantity);
+    private static BillingLedger[] createExpectedBillingLedgerList() {
+        return new BillingLedger[] {
+                // SM-3KBZD
+                BillingLedgerTest.createOneBillingLedger("SM-3KBZD", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1),
+                BillingLedgerTest.createOneBillingLedger("SM-3KBZD", "RNA Extract from FFPE", -1.5),
+                // SM-3KBZE
+                BillingLedgerTest.createOneBillingLedger("SM-3KBZE", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1),
+                BillingLedgerTest.createOneBillingLedger("SM-3KBZE", "RNA Extract from FFPE", -1.5),
+                BillingLedgerTest.createOneBillingLedger("SM-3KBZE", "Strand Specific RNA-Seq (high coverage-50M paired reads)", 1),
+                // SM-3MPJX
+                BillingLedgerTest.createOneBillingLedger("SM-3MPJX", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1),
+                BillingLedgerTest.createOneBillingLedger("SM-3MPJX", "RNA Extract from FFPE", -1.5),
+                BillingLedgerTest.createOneBillingLedger("SM-3MPJX", "Strand Specific RNA-Seq (high coverage-50M paired reads)", 1),
+                // SM-3MPJY
+                BillingLedgerTest.createOneBillingLedger("SM-3MPJY", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1),
+                BillingLedgerTest.createOneBillingLedger("SM-3MPJY", "RNA Extract from FFPE", -1.5),
+                BillingLedgerTest.createOneBillingLedger("SM-3MPJY", "Strand Specific RNA-Seq (high coverage-50M paired reads)", 1)
+        };
     }
-
-    private List<BillingLedger> createExpectedBillingLedgerList1 () {
-        List<BillingLedger> expList = new ArrayList<BillingLedger>();
-
-        //SM-3KBZD
-        {
-            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3KBZD", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1);
-            expList.add( billingLedgerExp );
-        }
-        {
-            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3KBZD", "RNA Extract from FFPE", -1.5);
-            expList.add( billingLedgerExp );
-        }
-        //SM-3KBZE
-        {
-            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3KBZE", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1);
-            expList.add( billingLedgerExp );
-        }
-        {
-            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3KBZE", "RNA Extract from FFPE", -1.5);
-            expList.add( billingLedgerExp );
-        }
-        {
-            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3KBZE", "Strand Specific RNA-Seq (high coverage-50M paired reads)", 1);
-            expList.add( billingLedgerExp );
-        }
-        //SM-3MPJX
-        {
-            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3MPJX", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1);
-            expList.add( billingLedgerExp );
-        }
-        {
-            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3MPJX", "RNA Extract from FFPE", -1.5);
-            expList.add( billingLedgerExp );
-        }
-        {
-            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3MPJX", "Strand Specific RNA-Seq (high coverage-50M paired reads)", 1);
-            expList.add( billingLedgerExp );
-        }
-        //SM-3MPJY
-        {
-            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3MPJY", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1);
-            expList.add( billingLedgerExp );
-        }
-        {
-            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3MPJY", "RNA Extract from FFPE", -1.5);
-            expList.add( billingLedgerExp );
-        }
-        {
-            BillingLedger billingLedgerExp = BillingLedgerTest.createOneBillingLedger("SM-3MPJY", "Strand Specific RNA-Seq (high coverage-50M paired reads)", 1);
-            expList.add( billingLedgerExp );
-        }
-        return expList;
-    }
-
-
 }
