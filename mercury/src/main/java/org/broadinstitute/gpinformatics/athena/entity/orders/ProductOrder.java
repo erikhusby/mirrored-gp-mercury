@@ -595,6 +595,12 @@ public class ProductOrder implements Serializable {
             }
         }
 
+        if (uniqueNames.isEmpty()) {
+            // This early return is needed to avoid making a unnecessary injection, which could cause
+            // DB Free automated tests to fail.
+            return;
+        }
+
         BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
         Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(uniqueNames);
 
@@ -604,8 +610,7 @@ public class ProductOrder implements Serializable {
             BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getSampleName());
             if (bspSampleDTO == null) {
                 bspSampleDTO = BSPSampleDTO.DUMMY;
-            }
-            else {
+            } else {
                 nonNullDTOs.add(bspSampleDTO);
             }
             sample.setBspDTO(bspSampleDTO);
