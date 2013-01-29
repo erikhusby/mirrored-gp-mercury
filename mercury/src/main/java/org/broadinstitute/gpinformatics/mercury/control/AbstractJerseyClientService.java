@@ -1,20 +1,20 @@
 package org.broadinstitute.gpinformatics.mercury.control;
 
-import com.sun.jersey.api.client.Client;
-import com.sun.jersey.api.client.ClientHandlerException;
-import com.sun.jersey.api.client.ClientRequest;
-import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.*;
 import com.sun.jersey.api.client.config.ClientConfig;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.client.filter.ClientFilter;
 import com.sun.jersey.api.client.filter.HTTPBasicAuthFilter;
 import com.sun.jersey.api.json.JSONConfiguration;
 import com.sun.jersey.client.urlconnection.HTTPSProperties;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
+import javax.annotation.Nonnull;
 import javax.net.ssl.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
-import java.io.Serializable;
+import java.io.*;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -23,6 +23,8 @@ import java.util.List;
 public abstract class AbstractJerseyClientService implements Serializable {
 
     private transient Client jerseyClient;
+
+    private static final Log logger = LogFactory.getLog(AbstractJerseyClientService.class);
 
     public AbstractJerseyClientService() {}
     
@@ -153,5 +155,85 @@ public abstract class AbstractJerseyClientService implements Serializable {
      * @param client
      */
     protected abstract void customizeClient(Client client);
-    
+
+    /**
+     * Callback for the #post method
+     */
+    public interface PostCallback {
+        /**
+         * BSP data with newlines removed, accounting for trailing tab if necessary
+         *
+         * @param bspData
+         */
+        public void callback(String [] bspData);
+    }
+
+    /**
+     * Strongly typed extra tab flag
+     */
+    public enum ExtraTab {
+        TRUE,
+        FALSE
+    }
+
+
+    /**
+     * Post method.
+     *
+     * @param urlString Base URL.
+     * @param paramString Parameter string with embedded ampersands, <b>without</b> initial question mark.
+     * @param extraTab Extra tab flag, strip a trailing tab if this is present.
+     * @param callback Callback method to feed data.
+     */
+    public void post(@Nonnull String urlString, @Nonnull String paramString, @Nonnull ExtraTab extraTab, @Nonnull PostCallback callback) {
+
+        logger.debug(String.format("URL string is '%s'", urlString));
+        WebResource webResource = getJerseyClient().resource(urlString);
+
+        try {
+
+            ClientResponse clientResponse =
+                    webResource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(ClientResponse.class, paramString);
+
+            InputStream is = clientResponse.getEntityInputStream();
+            BufferedReader rdr = new BufferedReader(new InputStreamReader(is));
+
+            if (clientResponse.getStatus() / 100 != 2) {
+                logger.error("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
+                return;
+                // throw new RuntimeException("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
+            }
+
+            // skip header line
+            rdr.readLine();
+
+            // what should be the first real data line
+            String readLine = rdr.readLine();
+
+            while (readLine != null) {
+
+                String[] bspOutput = readLine.split("\t", -1);
+
+                String[] truncatedData;
+
+                // BSP WS sometimes puts a superfluous tab at the end, if this is such a WS set extraTab = true
+                if (extraTab == ExtraTab.TRUE) {
+                    truncatedData = new String[bspOutput.length - 1];
+                    System.arraycopy(bspOutput, 0, truncatedData, 0, truncatedData.length);
+                } else {
+                    truncatedData = bspOutput;
+                }
+
+                callback.callback(truncatedData);
+
+                readLine = rdr.readLine();
+            }
+
+            is.close();
+        } catch (IOException e) {
+
+            logger.error(e);
+            return;
+        }
+    }
 }
