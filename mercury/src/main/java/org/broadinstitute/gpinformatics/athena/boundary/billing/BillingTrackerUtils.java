@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -11,30 +12,37 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 
 import java.util.*;
 
-/**
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 12/5/12
- * Time: 11:12 AM
- */
 public class BillingTrackerUtils {
 
-    private static Log logger = LogFactory.getLog(BillingTrackerUtils.class);
+    private static final Log logger = LogFactory.getLog(BillingTrackerUtils.class);
 
-    public final static String[] fixedHeaders = SampleLedgerExporter.FIXED_HEADERS;
-    final static Map<String, Integer> headerColumnIndices = new HashMap<String, Integer>();
+    public static final String SAMPLE_ID_HEADING = "Sample ID";
+    public static final String ORDER_ID_HEADING = "Product Order ID";
+    public static final String SORT_COLUMN_HEADING = "Sort Column";
+    public static final String WORK_COMPLETE_DATE_HEADING = "Date Completed";
 
-    static {
-        for (int i = 0; i < fixedHeaders.length; i++) {
-            headerColumnIndices.put(fixedHeaders[i], i);
-        }
-    }
+    public static final String[] FIXED_HEADERS = {
+            SAMPLE_ID_HEADING,
+            "Collaborator Sample ID",
+            "Material Type",
+            "On Risk",
+            "Status",
+            "Product Name",
+            ORDER_ID_HEADING,
+            "Product Order Name",
+            "Project Manager",
+            WORK_COMPLETE_DATE_HEADING,
+            "Quote ID",
+            SORT_COLUMN_HEADING
+    };
 
-    public final static int SAMPLE_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.SAMPLE_ID_HEADING);
-    public final static int PDO_ID_COL_POS = headerColumnIndices.get(SampleLedgerExporter.ORDER_ID_HEADING);
-    public  static int SORT_COLUMN_COL_POS = headerColumnIndices.get(SampleLedgerExporter.SORT_COLUMN_HEADING);
-    public final static int WORK_COMPLETE_DATE_COL_POS = headerColumnIndices.get(SampleLedgerExporter.WORK_COMPLETE_DATE_HEADING);
-    public final static int NUMBER_OF_HEADER_ROWS = 2;
+    public static final int SAMPLE_ID_COL_POS = ArrayUtils.indexOf(FIXED_HEADERS, SAMPLE_ID_HEADING);
+    public static final int PDO_ID_COL_POS = ArrayUtils.indexOf(FIXED_HEADERS, ORDER_ID_HEADING);
+    public static final int SORT_COLUMN_COL_POS = ArrayUtils.indexOf(FIXED_HEADERS,
+            SORT_COLUMN_HEADING);
+    public static final int WORK_COMPLETE_DATE_COL_POS = ArrayUtils.indexOf(FIXED_HEADERS,
+            WORK_COMPLETE_DATE_HEADING);
+    public static final int NUMBER_OF_HEADER_ROWS = 2;
 
     public static boolean isNonNullNumericCell(Cell cell) {
         return (cell != null) && (Cell.CELL_TYPE_NUMERIC == cell.getCellType());
@@ -51,13 +59,13 @@ public class BillingTrackerUtils {
 
     public static List<TrackerColumnInfo> parseTrackerSheetHeader(Row row0, String primaryProductPartNumber) {
 
-        String[] fixedHeaders = SampleLedgerExporter.FIXED_HEADERS;
+        String[] fixedHeaders = FIXED_HEADERS;
         int numFixedHeaders = fixedHeaders.length;
 
         // Check row0 header names. Should match what we write.
-        Iterator<Cell> citer = row0.cellIterator();
+        Iterator<Cell> cells = row0.cellIterator();
         for (String fixedHeader : fixedHeaders) {
-            Cell cell = citer.next();
+            Cell cell = cells.next();
             if ((cell == null) ||
                     StringUtils.isBlank(cell.getStringCellValue()) ||
                     !cell.getStringCellValue().equals(fixedHeader)) {
@@ -137,12 +145,12 @@ public class BillingTrackerUtils {
         Map<TrackerColumnInfo, PriceItem> resultMap = new HashMap<TrackerColumnInfo, PriceItem>();
 
         List<PriceItem> productPriceItems = SampleLedgerExporter.getPriceItems(product);
-        Set<Product> productAddons = product.getAddOns();
+        Set<Product> productAddOns = product.getAddOns();
 
         for (TrackerColumnInfo trackerColumnInfo : trackerColumnInfos) {
 
             PriceItem targetPriceItem = findPriceItemForTrackerColumnInfo(trackerColumnInfo, product,
-                    productPriceItems, productAddons);
+                    productPriceItems, productAddOns);
 
             resultMap.put(trackerColumnInfo, targetPriceItem);
         }
@@ -152,7 +160,7 @@ public class BillingTrackerUtils {
 
     private static PriceItem findPriceItemForTrackerColumnInfo(
             TrackerColumnInfo trackerColumnInfo, Product product, List<PriceItem> productPriceItems,
-            Set<Product> productAddons) {
+            Set<Product> productAddOns) {
 
         String parsedProductPartNumber = trackerColumnInfo.getBillableRef().getProductPartNumber();
         String parsedPriceItemName = trackerColumnInfo.getBillableRef().getPriceItemName();
@@ -167,13 +175,13 @@ public class BillingTrackerUtils {
             return targetPriceItem;
         }
 
-        // The parsed Product Part Number must be for an Addon
-        for (Product productAddon : productAddons) {
-            if (productAddon.getPartNumber().equals(parsedProductPartNumber)) {
+        // The parsed Product Part Number must be for an Add-on
+        for (Product productAddOn : productAddOns) {
+            if (productAddOn.getPartNumber().equals(parsedProductPartNumber)) {
                 PriceItem targetPriceItem =
-                        findTargetPriceItem(SampleLedgerExporter.getPriceItems(productAddon), parsedPriceItemName);
+                        findTargetPriceItem(SampleLedgerExporter.getPriceItems(productAddOn), parsedPriceItemName);
                 if (targetPriceItem == null) {
-                    throw getRuntimeException("Cannot find PriceItem for Product Addon part number  : " +
+                    throw getRuntimeException("Cannot find PriceItem for Product Add-on part number  : " +
                             parsedProductPartNumber + " and PriceItem name : " + parsedPriceItemName);
                 }
                 return targetPriceItem;

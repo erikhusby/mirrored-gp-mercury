@@ -26,7 +26,6 @@ public abstract class AbstractSpreadsheetExporter {
     private final CellStyle errorMessageStyle;
     private final CellStyle dateStyle;
     private final CellStyle riskStyle;
-    private final CellStyle abandonedStyle;
 
     private final SpreadSheetWriter writer = new SpreadSheetWriter();
 
@@ -40,10 +39,9 @@ public abstract class AbstractSpreadsheetExporter {
         billedAmountStyle = buildHeaderStyle(workbook, IndexedColors.TAN);
         preambleStyle = buildPreambleStyle(workbook);
         previouslyBilledStyle = buildColorStyle(workbook, IndexedColors.ROSE, IndexedColors.RED);
-        errorMessageStyle = buildColorStyle(workbook, IndexedColors.RED, IndexedColors.RED);
+        errorMessageStyle = buildColorStyle(workbook, IndexedColors.RED, IndexedColors.BLACK);
         dateStyle = buildDateStyle(workbook);
         riskStyle = buildColorStyle(workbook, IndexedColors.YELLOW, IndexedColors.BLACK);
-        abandonedStyle = buildColorStyle(workbook, IndexedColors.RED, IndexedColors.RED);
     }
 
     protected SpreadSheetWriter getWriter() {
@@ -60,10 +58,6 @@ public abstract class AbstractSpreadsheetExporter {
 
     protected CellStyle getRiskStyle() {
         return riskStyle;
-    }
-
-    protected CellStyle getAbandonedStyle() {
-        return abandonedStyle;
     }
 
     protected CellStyle getDateStyle() {

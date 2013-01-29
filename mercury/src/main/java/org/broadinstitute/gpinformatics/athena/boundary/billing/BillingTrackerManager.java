@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.ss.usermodel.*;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
@@ -25,8 +26,7 @@ import java.util.*;
 @RequestScoped
 public class BillingTrackerManager {
 
-    @Inject
-    private Log logger;
+    private static final Log logger = LogFactory.getLog(BillingTrackerManager.class);
 
     @Inject
     BillingLedgerDao billingLedgerDao;
@@ -86,7 +86,7 @@ public class BillingTrackerManager {
                 // Check if this PDO has any locked Ledger rows
                 Set<BillingLedger> lockedBillingLedgerSet = billingLedgerDao.findLockedOutByOrderList(
                         Collections.singletonList(pdoIdStr));
-                if (lockedBillingLedgerSet.size() > 0) {
+                if (!lockedBillingLedgerSet.isEmpty()) {
                     throw BillingTrackerUtils.getRuntimeException("Product Order " + pdoIdStr + " of sheet " + productPartNumberStr +
                             " is locked out and has " + lockedBillingLedgerSet.size() + " rows that are locked in the DB.");
                 }
@@ -98,7 +98,7 @@ public class BillingTrackerManager {
         return result;
     }
 
-    private List<String> extractOrderIdsFromSheet(Sheet sheet) {
+    private static List<String> extractOrderIdsFromSheet(Sheet sheet) {
         List<String> result = new ArrayList<String>();
 
         for (Iterator<Row> rit = sheet.rowIterator(); rit.hasNext(); ) {
@@ -235,7 +235,7 @@ public class BillingTrackerManager {
             BillableRef billableRef = trackerColumnInfos.get(billingRefIndex).getBillableRef();
 
             // There are two cells per product header cell, so we need to account for this.
-            int currentBilledPosition = BillingTrackerUtils.fixedHeaders.length + (billingRefIndex * 2);
+            int currentBilledPosition = BillingTrackerUtils.FIXED_HEADERS.length + (billingRefIndex * 2);
 
             //Get the AlreadyBilled cell and amount
             Cell billedCell = row.getCell(currentBilledPosition);
@@ -271,13 +271,14 @@ public class BillingTrackerManager {
         } // end of for each productIndex loop
     }
 
-    private Double getCellValueAsNonNullDouble(Row row, ProductOrderSample productOrderSample, Product product,
-                                               Cell cell) {
+    private static Double getCellValueAsNonNullDouble(Row row, ProductOrderSample productOrderSample, Product product,
+                                                      Cell cell) {
         Double quantity = null;
         if (BillingTrackerUtils.isNonNullNumericCell(cell)) {
             quantity = cell.getNumericCellValue();
             if (quantity == null) {
-                throw BillingTrackerUtils.getRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " + (row.getRowNum() + 1) +
+                throw BillingTrackerUtils.getRuntimeException(
+                        "Sample " + productOrderSample.getSampleName() + " on row " + (row.getRowNum() + 1) +
                         " of spreadsheet " + product.getPartNumber() +
                         " has a blank value. Please re-download the tracker to populate this.");
             }
@@ -310,7 +311,7 @@ public class BillingTrackerManager {
         }
     }
 
-    private boolean isNonNullDateCell(Cell cell) {
+    private static boolean isNonNullDateCell(Cell cell) {
         return ((cell != null) && (HSSFDateUtil.isCellDateFormatted(cell)));
     }
 
