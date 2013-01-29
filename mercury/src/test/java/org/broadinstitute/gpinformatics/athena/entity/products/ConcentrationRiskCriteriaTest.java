@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -11,6 +12,7 @@ import org.testng.annotations.Test;
  * Date: 1/22/13
  * Time: 3:19 PM
  */
+@Test(groups = TestGroups.DATABASE_FREE)
 public class ConcentrationRiskCriteriaTest {
 
     @Test
@@ -41,9 +43,9 @@ public class ConcentrationRiskCriteriaTest {
 
         // Create an invalid risk criteria
         try  {
-            concentrationRiskCriteria = new RiskCriteria(RiskCriteria.RiskCriteriaType.CONCENTRATION, Operator.IS, "25.0");
+            new RiskCriteria(RiskCriteria.RiskCriteriaType.CONCENTRATION, Operator.IS, "25.0");
             Assert.fail("Can't create a concentration Risk criterion with a boolean operator.");
-        } catch ( NullPointerException e ) {
+        } catch ( Exception e ) {
             // npe exception expected
         }
     }

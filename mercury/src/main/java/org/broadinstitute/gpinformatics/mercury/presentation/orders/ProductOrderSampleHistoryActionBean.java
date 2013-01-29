@@ -90,13 +90,7 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
             }
         }
 
-        List<ProductOrderSample> samples = pdo.getSamples();
-        List<String> sampleKeys = new ArrayList<String>();
-        for (ProductOrderSample sample : samples) {
-            sampleKeys.add(sample.getSampleName());
-        }
-
-        mercurySamples = mercurySampleDao.findBySampleKeys(sampleKeys);
+        mercurySamples = mercurySampleDao.findBySampleKeys(ProductOrderSample.getSampleNames(pdo.getSamples()));
         return new ForwardResolution(VIEW_PAGE);
     }
 
@@ -110,7 +104,7 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
                 for (LabEventType type : types) {
                     Set<LabEvent> stepEvents = labEventsByName.get(type.getName());
                     if (stepEvents != null) {
-                        Integer repeatsRemoved = stepEvents.size() - step.getNumberOfRepeats();
+                        int repeatsRemoved = stepEvents.size() - step.getNumberOfRepeats();
                         seriesString.append(repeatsRemoved);
                     } else {
                         seriesString.append("0");

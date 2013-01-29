@@ -111,7 +111,7 @@ public class ProductOrderSample implements Serializable {
     }
 
     public static enum DeliveryStatus implements StatusType {
-        NOT_STARTED("Not Started"),
+        NOT_STARTED(""),
         DELIVERED("Delivered"),
         ABANDONED("Abandoned");
 
