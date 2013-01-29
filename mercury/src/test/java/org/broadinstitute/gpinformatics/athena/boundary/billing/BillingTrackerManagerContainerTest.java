@@ -60,7 +60,6 @@ public class BillingTrackerManagerContainerTest extends ContainerTest {
     // This test is too sensitive to actual data and broke because some new ledger entries were added on prod. Need
     // to create product order and upload as part of a more complete test
     @Test(enabled = false)
-    @Test(enabled = true)
     public void testImport() throws Exception {
 
         FileInputStream fis = null;
