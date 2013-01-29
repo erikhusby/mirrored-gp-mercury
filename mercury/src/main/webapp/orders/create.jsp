@@ -1,3 +1,4 @@
+<%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -154,7 +155,7 @@
                 <stripes:hidden name="submitString"/>
                 <div class="control-group">
                     <stripes:label for="orderName" class="control-label">
-                        Name *
+                        Name <c:if test="${actionBean.editOrder.draft}">*</c:if>
                     </stripes:label>
                     <div class="controls">
                         <stripes:text readonly="${!actionBean.editOrder.draft}" id="orderName" name="editOrder.title" class="defaultText input-xlarge"
@@ -180,41 +181,51 @@
                     </div>
                 </div>
 
-                <div class="control-group">
-                    <stripes:label for="owner" class="control-label">
-                        Owner *
-                    </stripes:label>
-                    <div class="controls">
-                        <stripes:text id="owner" name="owner.listOfKeys" />
-                    </div>
+            <div class="control-group">
+                <stripes:label for="owner" class="control-label">
+                    Owner *
+                </stripes:label>
+                <div class="controls">
+                    <stripes:text id="owner" name="owner.listOfKeys" />
                 </div>
+            </div>
 
-                <c:choose>
-                    <c:when test="${actionBean.editOrder.draft}">
-                        <div class="control-group">
-                            <stripes:label for="researchProject" class="control-label">
-                                Research Project <c:if test="${not actionBean.editOrder.draft}">*</c:if>
-                            </stripes:label>
-                            <div class="controls">
-                                <stripes:text id="researchProject" name="projectTokenInput.listOfKeys"
-                                              class="defaultText"
-                                              title="Enter the research project for this order"/>
+            <c:choose>
+                <c:when test="${actionBean.editOrder.draft}">
+                    <div class="control-group">
+                        <stripes:label for="researchProject" class="control-label">
+                            Research Project
+                        </stripes:label>
+                        <div class="controls">
+                            <stripes:text
+                                    readonly="${not actionBean.editOrder.draft}"
+                                    id="researchProject" name="projectTokenInput.listOfKeys"
+                                    class="defaultText"
+                                    title="Enter the research project for this order"/>
+                        </div>
+                    </div>
+                </c:when>
+                <c:otherwise>
+                    <div class="view-control-group control-group" style="margin-bottom: 20px;">
+                        <label class="control-label">Research Project</label>
+                        <div class="controls">
+                            <div class="form-value">
+                                <stripes:hidden name="projectTokenInput.listOfKeys" value="${actionBean.editOrder.researchProject.jiraTicketKey}"/>
+                                <stripes:link title="Research Project"
+                                              beanclass="<%=ResearchProjectActionBean.class.getName()%>"
+                                              event="view">
+                                    <stripes:param name="<%=ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER%>"
+                                                   value="${actionBean.editOrder.researchProject.businessKey}"/>
+                                    ${actionBean.editOrder.researchProject.title}
+                                </stripes:link>
+                                (<a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.researchProject.jiraTicketKey}" class="external" target="JIRA">
+                                ${actionBean.editOrder.researchProject.jiraTicketKey}
+                                </a>)
                             </div>
                         </div>
-                    </c:when>
-                    <c:otherwise>
-                        <div class="view-control-group control-group" style="margin-bottom: 20px;">
-                            <stripes:label for="researchProject" class="control-label">
-                                Research Project <c:if test="${not actionBean.editOrder.draft}">*</c:if>
-                            </stripes:label>
-                            <div class="controls">
-                                <div class="form-value">
-                                        ${actionBean.editOrder.researchProject.title}
-                                </div>
-                            </div>
-                        </div>
-                    </c:otherwise>
-                </c:choose>
+                    </div>
+                </c:otherwise>
+            </c:choose>
 
                 <div class="control-group">
                     <stripes:label for="product" class="control-label">
