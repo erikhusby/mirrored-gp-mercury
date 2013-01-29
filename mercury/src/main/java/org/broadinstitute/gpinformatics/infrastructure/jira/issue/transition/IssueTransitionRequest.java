@@ -4,27 +4,27 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.UpdateFields;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
+import javax.annotation.Nullable;
 import java.util.Collection;
-
 
 @JsonSerialize(using = IssueTransitionSerializer.class)
 public class IssueTransitionRequest {
 
     // assumes we only want to update custom fields, which for the current GPLIM-488 and GPLIM-371 use cases is true
-    private UpdateFields fields = new UpdateFields();
+    private final UpdateFields fields = new UpdateFields();
 
-    private Transition transition;
+    private final Transition transition;
 
-    private String comment;
+    @Nullable
+    private final String comment;
 
-
-    public IssueTransitionRequest(Transition transition, String comment) {
+    public IssueTransitionRequest(Transition transition, @Nullable String comment) {
         this.transition = transition;
         this.comment = comment;
     }
 
 
-    public IssueTransitionRequest(Transition transition, Collection<CustomField> customFields, String comment) {
+    public IssueTransitionRequest(Transition transition, Collection<CustomField> customFields, @Nullable String comment) {
         this.transition = transition;
         if (customFields != null) {
             fields.getCustomFields().addAll(customFields);
@@ -40,6 +40,7 @@ public class IssueTransitionRequest {
         return transition;
     }
 
+    @Nullable
     public String getComment() {
         return comment;
     }

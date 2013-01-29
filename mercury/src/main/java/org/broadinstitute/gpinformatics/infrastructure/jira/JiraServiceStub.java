@@ -15,6 +15,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Nex
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Transition;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.IOException;
 import java.util.*;
 
@@ -148,7 +149,7 @@ public class JiraServiceStub implements JiraService {
 
     @Override
     public void postNewTransition(String jiraIssueKey, Transition transition, Collection<CustomField> customFields,
-                                  String comment) throws IOException {
+                                  @Nullable String comment) throws IOException {
 
     }
 
