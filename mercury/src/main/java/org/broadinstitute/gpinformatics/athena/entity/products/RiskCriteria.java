@@ -18,6 +18,9 @@ import java.util.List;
 @Table(schema = "ATHENA", name = "RISK_CRITERIA")
 public class RiskCriteria {
 
+    private static final boolean DISPLAYED = true;
+    private static final boolean NOT_DISPLAYED = false;
+
     @Id
     @SequenceGenerator(name = "SEQ_RISK_CRITERIA", schema = "ATHENA", sequenceName = "SEQ_RISK_CRITERIA")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_RISK_CRITERIA")
@@ -104,25 +107,25 @@ public class RiskCriteria {
     }
 
     public enum RiskCriteriaType {
-        CONCENTRATION("Concentration", Operator.OperatorType.NUMERIC, new SampleCalculation() {
+        CONCENTRATION("Concentration", Operator.OperatorType.NUMERIC, DISPLAYED, new SampleCalculation() {
             @Override
             public Object getSampleValue(ProductOrderSample sample) {
                 return sample.getBspDTO().getConcentration();
             }
         }),
-        FFPE("FFPE", Operator.OperatorType.BOOLEAN, new SampleCalculation() {
+        FFPE("FFPE", Operator.OperatorType.BOOLEAN, DISPLAYED, new SampleCalculation() {
             @Override
             public Object getSampleValue(ProductOrderSample sample) {
                 return sample.getBspDTO().getFfpeDerived();
             }
         }),
-        MANUAL("Manual", Operator.OperatorType.BOOLEAN, new SampleCalculation() {
+        MANUAL("Manual", Operator.OperatorType.BOOLEAN, NOT_DISPLAYED, new SampleCalculation() {
             @Override
             public Object getSampleValue(ProductOrderSample sample) {
                 return true;
             }
         }),
-        TOTAL_DNA("Total DNA", Operator.OperatorType.NUMERIC, new SampleCalculation() {
+        TOTAL_DNA("Total DNA", Operator.OperatorType.NUMERIC, DISPLAYED, new SampleCalculation() {
             @Override
             public Object getSampleValue(ProductOrderSample sample) {
                 return sample.getBspDTO().getTotal();
@@ -132,11 +135,13 @@ public class RiskCriteria {
         private final Operator.OperatorType operatorType;
         private final String label;
         private final SampleCalculation calculation;
+        private final boolean isDisplayed;
 
-        RiskCriteriaType(String label, Operator.OperatorType operatorType, SampleCalculation calculation) {
+        RiskCriteriaType(String label, Operator.OperatorType operatorType, boolean isDisplayed, SampleCalculation calculation) {
             this.label = label;
             this.operatorType = operatorType;
             this.calculation = calculation;
+            this.isDisplayed = isDisplayed;
         }
 
         public Object getSampleValue(ProductOrderSample sample) {
@@ -145,6 +150,10 @@ public class RiskCriteria {
 
         public String getLabel() {
             return label;
+        }
+
+        public boolean isDisplayed() {
+            return isDisplayed;
         }
 
         public boolean getRiskStatus(ProductOrderSample sample, Operator operator, String value) {
