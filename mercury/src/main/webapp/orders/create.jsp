@@ -125,7 +125,7 @@
 
             function updateFundsRemaining() {
                 var quoteIdentifier = $j("#quote").val();
-                if (quoteIdentifier) {
+                if ($j.trim(quoteIdentifier)) {
                     $j.ajax({
                         url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier,
                         dataType: 'json',
