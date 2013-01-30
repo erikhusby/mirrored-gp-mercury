@@ -29,9 +29,9 @@ public enum Operator {
         switch (type) {
         case NUMERIC:
             return applyTyped(d1, d2);
+        default:
+            throw new RuntimeException();
         }
-
-        throw new RuntimeException();
     }
 
     public boolean apply(String s1, String s2) {
@@ -57,18 +57,18 @@ public enum Operator {
             return s1.equalsIgnoreCase(s2);
         case IS_IN:
             return s2.toLowerCase().contains(s1.toLowerCase());
+        default:
+            throw new RuntimeException();
         }
-
-        throw new RuntimeException();
     }
 
     public boolean applyTyped(boolean b1, boolean b2) {
         switch (this) {
         case IS:
             return b1 == b2;
+        default:
+            throw new RuntimeException();
         }
-
-        throw new RuntimeException();
     }
 
     public boolean applyTyped(double d1, double d2) {
@@ -83,8 +83,9 @@ public enum Operator {
             return d1 <= d2;
         case EQUALS:
             return d1 == d2;
+        default:
+            throw new RuntimeException();
         }
-        throw new RuntimeException();
     }
 
     static Operator fromLabel(String label) {
@@ -121,21 +122,12 @@ public enum Operator {
             return name();
         }
 
-        public static OperatorType findByLabel(Object operatorLabel) {
-            for (OperatorType type : values()) {
-                if (type.name().equals(operatorLabel)) {
-                    return type;
-                }
-            }
-
-            return null;
-        }
     }
 
     public static List<Operator> findOperatorsByType(OperatorType type) {
         List<Operator> operators = new ArrayList<Operator>();
         for (Operator value : values()) {
-            if (type.equals(value.type)) {
+            if (type == value.type) {
                 operators.add(value);
             }
         }

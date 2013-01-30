@@ -93,7 +93,7 @@ public class ProductOrderSample implements Serializable {
         for (RiskCriteria criterion : productOrder.getProduct().getRiskCriteriaList()) {
             // If this is on risk, then create a risk item for it and add it in
             if (criterion.onRisk(this)) {
-                riskItems.add(new RiskItem(criterion, new Date(), criterion.getSampleValue(this).toString()));
+                riskItems.add(new RiskItem(criterion, new Date(), criterion.getValueProvider().getValue(this)));
             }
         }
 
