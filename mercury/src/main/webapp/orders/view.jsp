@@ -100,10 +100,11 @@
             }
 
             function showConfirm(action, actionPrompt) {
-                var numChecked = $("input." + options.checkboxClass + ":checked").size();
+                var numChecked = $("input.shiftCheckbox:checked").size();
                 if (numChecked) {
                     $j("#dialogAction").attr("name", action);
                     $j("#dialogMessage").text(actionPrompt);
+                    $j("#dialogNumSamples").text(numChecked);
                     $j("#confirmDialog").dialog("open");
                 }
             }
@@ -113,7 +114,7 @@
     <stripes:layout-component name="content">
 
     <div id="confirmDialog">
-        <p>Are you sure you want to <span id="dialogMessage"></span> the selected samples?</p>
+        <p>Are you sure you want to <span id="dialogMessage"></span> the <span id="dialogNumSamples"></span> selected samples?</p>
     </div>
 
         <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
