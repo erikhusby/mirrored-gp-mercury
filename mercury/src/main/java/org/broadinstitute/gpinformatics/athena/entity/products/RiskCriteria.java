@@ -99,11 +99,12 @@ public class RiskCriteria {
     }
 
     public static RiskCriteria createManual() {
-        return new RiskCriteria(RiskCriteria.RiskCriteriaType.MANUAL, Operator.IS, "");
+        // Boolean does not use the value, so just set to true so that the answer is always that the operation is true
+        return new RiskCriteria(RiskCriteria.RiskCriteriaType.MANUAL, Operator.IS, "true");
     }
 
     public String getCalculationString() {
-        return MessageFormat.format("{0} {1} {2}", type.getLabel(), operator.getLabel(), value == null ? "" : value);
+        return MessageFormat.format("{0} {1} {2}", type.getLabel(), operator.getLabel(), operator.getType() == Operator.OperatorType.BOOLEAN ? "" : value);
     }
 
     public enum RiskCriteriaType {

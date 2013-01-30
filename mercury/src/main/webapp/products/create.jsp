@@ -10,11 +10,20 @@
         <script type="text/javascript">
 
             var booleanTypes = [];
+            var defaultValues = [];
 
             // The jsp loads the criteria types into an associative array by type and then operators
             var criteriaTypeToOperatorList = [];
             <c:forEach items="${actionBean.criteriaTypes}" var="criteriaType">
                 <c:if test="${criteriaType.displayed}">
+                    <c:choose>
+                        <c:when test="${criteriaType.operators[0].type == 'BOOLEAN'}">
+                            defaultValues['${criteriaType.label}'] = 'true';
+                        </c:when>
+                        <c:otherwise>
+                            defaultValues['${criteriaType.label}'] = '';
+                        </c:otherwise>
+                    </c:choose>
                     criteriaTypeToOperatorList['${criteriaType.label}'] = [];
                     <c:forEach items="${criteriaType.operators}" var="operator" varStatus="j">
                         criteriaTypeToOperatorList['${criteriaType.label}'][${j.index}] = '${operator.label}';
@@ -96,12 +105,12 @@
             function addCriterion(criteria, operator, value) {
                 var newCriteria = '<div id="criterion-' + criteriaCount + '" style="margin-bottom:3px;" class="criterionPanel">\n';
 
-                if (value == undefined) {
-                    value = '';
-                }
-
                 if (criteria == undefined) {
                     criteria = 'Concentration'
+                }
+
+                if (value == undefined) {
+                    value = defaultValues[criteria];
                 }
 
                 // remove button for this item
@@ -146,6 +155,9 @@
                 var criteriaLabel = $j('#criteriaSelect-' + criteriaCount).attr('value');
 
                 $j('#operatorSelect-' + criteriaCount).html(operatorOptions(criteriaCount, criteriaLabel, selectedOperator));
+
+                // Set the value text
+                $j('#valueText-' + criteriaCount).attr("value", defaultValues[criteriaLabel]);
 
                 if (booleanTypes[criteriaLabel]) {
                     $j('#valueText-' + criteriaCount).hide();

@@ -201,12 +201,15 @@ public class ProductOrderSample implements Serializable {
             if (isInBspFormat()) {
                 BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
                 bspDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(getSampleName());
-            } else {
-                // not BSP format, but we still need a semblance of a BSP DTO
-                bspDTO = BSPSampleDTO.DUMMY;
+                if (bspDTO == null) {
+                    // not BSP sample exists with this name, but we still need a semblance of a BSP DTO
+                    bspDTO = BSPSampleDTO.DUMMY;
+                }
             }
+
             hasBspDTOBeenInitialized = true;
         }
+
         return bspDTO;
     }
 
@@ -230,6 +233,7 @@ public class ProductOrderSample implements Serializable {
         if (bspDTO == null) {
             throw new NullPointerException("BSP Sample DTO cannot be null");
         }
+
         this.bspDTO = bspDTO;
         hasBspDTOBeenInitialized = true;
     }
