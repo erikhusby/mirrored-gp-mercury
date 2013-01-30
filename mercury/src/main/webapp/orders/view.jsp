@@ -100,9 +100,12 @@
             }
 
             function showConfirm(action, actionPrompt) {
-                $j("#dialogAction").attr("name", action);
-                $j("#dialogMessage").text(actionPrompt);
-                $j("#confirmDialog").dialog("open");
+                var numChecked = $("input." + options.checkboxClass + ":checked").size();
+                if (numChecked) {
+                    $j("#dialogAction").attr("name", action);
+                    $j("#dialogMessage").text(actionPrompt);
+                    $j("#confirmDialog").dialog("open");
+                }
             }
         </script>
     </stripes:layout-component>
@@ -278,7 +281,6 @@
                                         style="margin-left:30px;" onclick="showConfirm('deleteSamples','delete')"/>
                     </security:authorizeBlock>
 
-                    <%-- Hide from users, not yet working. --%>
                     <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
                         <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
                                         style="margin-left:15px;" onclick="showConfirm('abandonSamples','abandon')"/>
