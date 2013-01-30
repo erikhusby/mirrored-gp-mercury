@@ -67,6 +67,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String ORDER_CREATE_PAGE = "/orders/create.jsp";
     private static final String ORDER_LIST_PAGE = "/orders/list.jsp";
     private static final String ORDER_VIEW_PAGE = "/orders/view.jsp";
+    private static final String ADD_SAMPLES_ACTION = "addSamples";
+    private static final String ABANDON_SAMPLES_ACTION = "abandonSamples";
+    private static final String DELETE_SAMPLES_ACTION = "deleteSamples";
 
     @Inject
     private QuoteService quoteService;
@@ -147,6 +150,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<String> selectedProductOrderBusinessKeys;
     private List<ProductOrder> selectedProductOrders;
 
+    @Validate(required = true, on = {ABANDON_SAMPLES_ACTION, DELETE_SAMPLES_ACTION})
     private List<Integer> selectedProductOrderSampleIndices;
 
     private String quoteIdentifier;
@@ -155,6 +159,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<String> addOnKeys = new ArrayList<String>();
 
+    @Validate(required = true, on = ADD_SAMPLES_ACTION)
     private String addSamplesText;
 
     /*
@@ -576,7 +581,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @HandlesEvent("deleteSamples")
+    @HandlesEvent(DELETE_SAMPLES_ACTION)
     public Resolution deleteSamples() throws Exception {
         // Modify sample list, removing the requested samples.
         List<String> sampleNames = new ArrayList<String>(selectedProductOrderSampleIndices.size());
@@ -598,7 +603,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createViewResolution();
     }
 
-    @HandlesEvent("abandonSamples")
+    @HandlesEvent(ABANDON_SAMPLES_ACTION)
     public Resolution abandonSamples() throws Exception {
         productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSampleIndices);
         List<String> sampleNames = new ArrayList<String>(selectedProductOrderSampleIndices.size());
@@ -611,7 +616,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createViewResolution();
     }
 
-    @HandlesEvent("addSamples")
+    @HandlesEvent(ADD_SAMPLES_ACTION)
     public Resolution addSamples() throws Exception {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
         editOrder.addSamples(samplesToAdd);
