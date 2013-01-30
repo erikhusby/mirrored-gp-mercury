@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
+import java.util.List;
 
 /**
  * This entity etl class is a bit different than others, because WorkflowConfig is not being persisted
@@ -64,26 +65,15 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
         return ((WorkflowConfigDenorm)entity).getWorkflowConfigDenormId();
     }
 
-    /** Calculates an aggregate hash of workflow config steps. */
-    private long hash(Collection<WorkflowConfigDenorm> denorms) {
-        long h = 1125899906842597L; // prime
-        for (WorkflowConfigDenorm denorm : denorms) {
-            // Reuses the existing hash of this record, which is its id.
-            h = 31*h + denorm.getWorkflowConfigDenormId();
-        }
-        return h;
-    }
-
     /**
      * Does an etl of workflow config if the current version has changed since last etl.
      * Keeps a hash of the config contents in a file to know when there was a change.
-     * @param lastRev ignored
-     * @param etlRev ignored
+     * @param revIds ignored
      * @param etlDateStr used in the sqlloader filename
      * @return number of records exported
      */
     @Override
-    public int doEtl(long lastRev, long etlRev, String etlDateStr) {
+    public int doEtl(Collection<Long> revIds, String etlDateStr) {
 
         // Gets the flattened version of workflow config, calculates its hash, compares to the
         // previously exported one's hash, and if different, exports the new version.
