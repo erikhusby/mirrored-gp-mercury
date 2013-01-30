@@ -418,6 +418,16 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createViewResolution();
     }
 
+    @HandlesEvent("deleteOrder")
+    public Resolution deleteOrder() {
+        String title = editOrder.getTitle();
+        String businessKey = editOrder.getBusinessKey();
+
+        productOrderDao.remove(editOrder);
+        addMessage("Deleted order {0} ({1})", title, businessKey);
+        return new ForwardResolution(ProductOrderActionBean.class, LIST_ACTION);
+    }
+
     private Resolution createViewResolution() {
         return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER,
                 editOrder.getBusinessKey());
@@ -557,6 +567,13 @@ public class ProductOrderActionBean extends CoreActionBean {
         item.put("supports", lanesSupported);
 
         return createTextResolution(item.toString());
+    }
+
+    @ValidationMethod(on = "deleteOrder")
+    public void validateDeleteOrder() {
+        if (!editOrder.isDraft()) {
+            addGlobalValidationError("Orders can only be deleted in draft mode");
+        }
     }
 
     @ValidationMethod(on = "deleteSamples")

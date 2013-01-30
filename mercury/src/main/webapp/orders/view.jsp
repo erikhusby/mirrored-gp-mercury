@@ -121,6 +121,7 @@
                         <stripes:submit name="placeOrder" value="Validate and Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
                         <stripes:submit name="validate" value="Validate" style="margin-left: 5px;" class="btn"/>
                     </security:authorizeBlock>
+
                     <%-- MLC GPLIM-802 says PDO edit should only be available to PDMs, i.e. not PMs. --%>
                     <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
 
@@ -132,21 +133,25 @@
                             <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
                         </stripes:link>
                     </security:authorizeBlock>
+
+                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+                        <stripes:submit name="deleteOrder" value="Delete" style="margin-left: 5px;" class="btn"/>
+                    </security:authorizeBlock>
                 </c:if>
             </div>
         </stripes:form>
 
         <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
-        <c:if test="${!actionBean.editOrder.draft}">
-            <stripes:link title="Click to edit ${actionBean.editOrder.title}"
-                beanclass="${actionBean.class.name}" event="edit" class="pull-right">
-                <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
-                <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-            </stripes:link>
-        </c:if>
+            <c:if test="${!actionBean.editOrder.draft}">
+                <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+                    beanclass="${actionBean.class.name}" event="edit" class="pull-right">
+                    <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
+                    <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                </stripes:link>
+            </c:if>
         </security:authorizeBlock>
 
-        <div style="both:clear"> </div>
+    <div style="both:clear"> </div>
 
         <stripes:form action="/orders/order.action" id="orderSamplesForm" class="form-horizontal">
             <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
