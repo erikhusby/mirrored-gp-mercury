@@ -5,6 +5,24 @@
     <%--@elvariable id="pdos" type="java.util.Collection"--%>
     <%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"--%>
     <script type="text/javascript">
+        $j(document).ready(function () {
+            $j('#pdoListView').dataTable({
+                "oTableTools":ttExportDefines,
+                "aaSorting":[
+                    [1, 'asc']
+                ],
+                "aoColumns":[
+                    {"bSortable":false},
+                    {"bSortable":true},
+                    {"bSortable":true},
+                    {"bSortable":true},
+                    {"bSortable":true, "sType":"numeric"},
+                    {"bSortable":true},
+                    {"bSortable":true, "sType":"date"}
+                ]
+            })
+        });
+
         function showPDOSampleHistory(label) {
             $j('#viewerDiv').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
             $j('#viewerDiv').load('${ctxpath}/view/pdoSampleHistory.action?businessKey=' + label);
@@ -15,7 +33,7 @@
     <table id="pdoListView" class="table simple">
         <thead>
         <tr>
-            <th>PDO Sample History</th>
+            <th width=30>Sample History</th>
             <th>PDO ID</th>
             <th>PDO Title</th>
             <th>Product</th>
