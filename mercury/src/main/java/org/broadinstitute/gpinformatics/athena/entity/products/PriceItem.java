@@ -9,7 +9,6 @@ import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Collections;
 
 
 /**
@@ -160,10 +159,6 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
         }
 
         return keys;
-    }
-
-    public static String[] getPriceItemKeys(PriceItem primaryPriceItem) {
-        return getPriceItemKeys(Collections.singletonList(primaryPriceItem));
     }
 
     public static String makeConcatenatedKey(String platform, String category, String name) {
