@@ -115,7 +115,7 @@ public class ProductOrderSample implements Serializable {
         DELIVERED("Delivered"),
         ABANDONED("Abandoned");
 
-        private String displayName;
+        private final String displayName;
 
         DeliveryStatus(String displayName) {
             this.displayName = displayName;
