@@ -23,16 +23,21 @@ public class BSPSampleDataFetcherContainerTest extends Arquillian {
     @Inject
     private BSPSampleDataFetcher bspSampleDataFetcher;
 
-    @Test
+    /**
+     * Reenable this once the BSP FFPE-derived webservice which recognizes Slide:Paraffin is deployed to dev.
+     */
+    @Test(enabled = false)
     public void testFFPE() {
         BSPSampleDTO ffpe = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-16BL4");
+        BSPSampleDTO paraffin = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-2UVBU");
         BSPSampleDTO notFFPE = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-3HM8");
 
-        List<BSPSampleDTO> dtoList = Arrays.asList(ffpe, notFFPE);
+        List<BSPSampleDTO> dtoList = Arrays.asList(ffpe, paraffin, notFFPE);
 
         bspSampleDataFetcher.fetchFFPEDerived(dtoList);
 
         Assert.assertTrue(ffpe.getFfpeDerived());
+        Assert.assertTrue(paraffin.getFfpeDerived());
         Assert.assertFalse(notFFPE.getFfpeDerived());
     }
 }
