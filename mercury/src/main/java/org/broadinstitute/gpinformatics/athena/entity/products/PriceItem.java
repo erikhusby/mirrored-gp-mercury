@@ -152,10 +152,10 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
         return name;
     }
 
-    public static String[] getPriceItemKeys(Collection<PriceItem> priceeItems) {
-        String[] keys = new String[priceeItems.size()];
+    public static String[] getPriceItemKeys(Collection<PriceItem> priceItems) {
+        String[] keys = new String[priceItems.size()];
         int i = 0;
-        for (PriceItem priceItem : priceeItems) {
+        for (PriceItem priceItem : priceItems) {
             keys[i++] = makeConcatenatedKey(priceItem.getPlatform(), priceItem.getCategory(), priceItem.getName());
         }
 

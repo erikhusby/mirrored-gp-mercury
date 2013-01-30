@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure;
 
+// todo jmt delete
 public class StubSampleMetadata implements SampleMetadata {
 
     private String alias;

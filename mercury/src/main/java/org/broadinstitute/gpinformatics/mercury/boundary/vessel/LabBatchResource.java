@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
@@ -70,6 +71,7 @@ public class LabBatchResource {
      * @param mapBarcodeToSample from database
      * @return entity
      */
+    @DaoFree
     public LabBatch buildLabBatch(LabBatchBean labBatchBean, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
             Map<MercurySample, MercurySample> mapBarcodeToSample/*, BasicProjectPlan projectPlan*/) {
         Set<LabVessel> starters = new HashSet<LabVessel>();
@@ -91,8 +93,7 @@ public class LabBatchResource {
             }
             starters.add(twoDBarcodedTube);
         }
-        LabBatch labBatch = new LabBatch(labBatchBean.getBatchId(), starters);
-        return labBatch;
+        return new LabBatch(labBatchBean.getBatchId(), starters);
     }
 
 }

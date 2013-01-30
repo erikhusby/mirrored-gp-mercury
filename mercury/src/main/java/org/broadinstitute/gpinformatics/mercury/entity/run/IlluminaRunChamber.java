@@ -57,22 +57,6 @@ public class IlluminaRunChamber extends RunChamber {
     }
 
 
-    /**
-     * Web service call to zamboni/picard
-     * @return
-     */
-    @Override
-    public Collection<LabMetric> getMetrics() {
-        //return ZamboniWebService.getMetricsForLane(...);
-        throw new RuntimeException("Method not yet implemented.");
-    }
-
-
-    @Override
-    public LabMetric getMetric(LabMetric.MetricName metricName, MetricSearchMode searchMode, SampleInstance sampleInstance) {
-        throw new RuntimeException("Method not yet implemented.");
-    }
-
     @Override
     public VesselGeometry getVesselGeometry() {
         return VesselGeometry.FLOWCELL;

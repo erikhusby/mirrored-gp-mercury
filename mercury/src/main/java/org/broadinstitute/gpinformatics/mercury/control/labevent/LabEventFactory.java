@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.control.dao.labevent.LabEventDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.GenericReagentDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.RackOfTubesDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TubeFormationDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
@@ -97,6 +98,11 @@ public class LabEventFactory implements Serializable {
     private static final Pattern LEADING_ZERO_PATTERN            = Pattern.compile ( "^0+(?!$)" );
     /** For test messages, the message router uses the bettaLIMSMessage.mode attribute */
     public static final String MODE_MERCURY = "Mercury";
+    /** Whether to create sources that are not found in the database.  Handling out of order messages requires this
+     * to be true, but when running in parallel with Squid / BettaLIMS (which can't handle out of order messages)
+     * we set this to false so Mercury fails in the same way as Squid / BettaLIMS.
+     */
+    private static final boolean CREATE_SOURCES = false;
 
     @Inject
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDao;
@@ -119,6 +125,9 @@ public class LabEventFactory implements Serializable {
 
     @Inject
     private IlluminaFlowcellDao illuminaFlowcellDao;
+
+    @Inject
+    private LabVesselDao labVesselDao;
 
     @Inject
     private LabEventDao labEventDao;
@@ -404,7 +413,7 @@ public class LabEventFactory implements Serializable {
         for ( Map.Entry<String, TubeFormation> stringVesselContainerEntry : mapBarcodeToTargetTubeFormation.entrySet() ) {
             if ( stringVesselContainerEntry.getValue () == null ) {
                 TubeFormation targetRack = buildRackDaoFree(mapBarcodeToTargetTube, targetRackOfTubes, plateCherryPickEvent.getPlate(),
-                        plateCherryPickEvent.getPositionMap());
+                        plateCherryPickEvent.getPositionMap(), false);
                 stringVesselContainerEntry.setValue ( targetRack );
             }
         }
@@ -501,11 +510,13 @@ public class LabEventFactory implements Serializable {
                 for ( PositionMapType sourcePositionMap : plateCherryPickEvent.getSourcePositionMap () ) {
                     if ( sourcePositionMap.getBarcode ().equals ( sourceRackJaxb.getBarcode () ) ) {
                         sourceTubeFormationEntity = buildRackDaoFree(mapBarcodeToSourceTube,
-                                mapBarcodeToRackOfTubes.get(sourceRackJaxb.getBarcode()), sourceRackJaxb, sourcePositionMap);
+                                mapBarcodeToRackOfTubes.get(sourceRackJaxb.getBarcode()), sourceRackJaxb, sourcePositionMap,
+                                true);
                         break;
                     }
                 }
             }
+            // todo jmt how can this be null at this point?
             if ( sourceTubeFormationEntity == null ) {
                 throw new RuntimeException ( "Failed to find source position map for " + sourceRackJaxb.getBarcode () );
             }
@@ -565,11 +576,14 @@ public class LabEventFactory implements Serializable {
                 return labEvent;
             }
             sourcePlate = staticPlateDAO.findByBarcode(plateTransferEvent.getSourcePlate().getBarcode());
-            // todo jmt log this?
             if ( sourcePlate == null ) {
-                sourcePlate = new StaticPlate ( plateTransferEvent.getSourcePlate ().getBarcode (),
-                                                StaticPlate.PlateType.getByDisplayName (
-                                                        plateTransferEvent.getSourcePlate ().getPhysType () ) );
+                if (CREATE_SOURCES) {
+                    sourcePlate = new StaticPlate ( plateTransferEvent.getSourcePlate().getBarcode(),
+                                                    StaticPlate.PlateType.getByDisplayName (
+                                                            plateTransferEvent.getSourcePlate ().getPhysType () ) );
+                } else {
+                    throw new RuntimeException("Failed to find source plate " + plateTransferEvent.getSourcePlate().getBarcode());
+                }
             }
         } else {
             sourceTubeFormation = fetchTubeFormation(plateTransferEvent.getSourcePositionMap());
@@ -577,7 +591,7 @@ public class LabEventFactory implements Serializable {
             sourceRackOfTubes = rackOfTubesDao.findByBarcode(plateTransferEvent.getSourcePlate().getBarcode());
             if ( sourceTubeFormation == null ) {
                 sourceTubeFormation = buildRackDaoFree(mapBarcodeToSourceTubes, sourceRackOfTubes, plateTransferEvent.getSourcePlate(),
-                        plateTransferEvent.getSourcePositionMap());
+                        plateTransferEvent.getSourcePositionMap(), true);
             }
         }
 
@@ -647,7 +661,7 @@ public class LabEventFactory implements Serializable {
             StaticPlate targetPlate ) {
         LabEvent labEvent = constructReferenceData ( plateTransferEvent, labEventRefDataFetcher );
         TubeFormation tubeFormation = buildRackDaoFree(mapBarcodeToSourceTubes, sourceRackOfTubes, plateTransferEvent.getSourcePlate(),
-                plateTransferEvent.getSourcePositionMap());
+                plateTransferEvent.getSourcePositionMap(), true);
         if ( targetPlate == null ) {
             targetPlate = new StaticPlate ( plateTransferEvent.getPlate ().getBarcode (),
                                             StaticPlate.PlateType.getByDisplayName (
@@ -696,11 +710,14 @@ public class LabEventFactory implements Serializable {
      * @return entity
      */
     private TubeFormation buildRackDaoFree(Map<String, TwoDBarcodedTube> mapBarcodeToTubes, RackOfTubes rackOfTubes,
-            PlateType plate, PositionMapType positionMap) {
+            PlateType plate, PositionMapType positionMap, boolean source) {
         Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube = new HashMap<VesselPosition, TwoDBarcodedTube>();
         for ( ReceptacleType receptacleType : positionMap.getReceptacle () ) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTubes.get ( receptacleType.getBarcode () );
             if ( twoDBarcodedTube == null ) {
+                if(source && !CREATE_SOURCES) {
+                    throw new RuntimeException("Failed to find tube " + receptacleType.getBarcode ());
+                }
                 twoDBarcodedTube = new TwoDBarcodedTube ( receptacleType.getBarcode () );
                 mapBarcodeToTubes.put ( receptacleType.getBarcode (), twoDBarcodedTube );
             }
@@ -733,7 +750,7 @@ public class LabEventFactory implements Serializable {
         LabEvent labEvent = constructReferenceData(plateTransferEvent, labEventRefDataFetcher);
 
         TubeFormation targetTubeFormation = buildRackDaoFree(mapBarcodeToTargetTubes, targetRackOfTubes, plateTransferEvent.getPlate(),
-                plateTransferEvent.getPositionMap());
+                plateTransferEvent.getPositionMap(), false);
 
         labEvent.getSectionTransfers().add(new SectionTransfer(
                 sourceTubeFormation.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection ()),
@@ -760,10 +777,10 @@ public class LabEventFactory implements Serializable {
             RackOfTubes targetRackOfTubes) {
         LabEvent labEvent = constructReferenceData ( plateTransferEvent, labEventRefDataFetcher );
         TubeFormation sourceTubeFormation = buildRackDaoFree ( mapBarcodeToSourceTubes, sourceRackOfTubes,
-                plateTransferEvent.getSourcePlate (), plateTransferEvent.getSourcePositionMap () );
+                plateTransferEvent.getSourcePlate (), plateTransferEvent.getSourcePositionMap (), true);
 
         TubeFormation targetTubeFormation = buildRackDaoFree(mapBarcodeToTargetTubes, targetRackOfTubes,
-                plateTransferEvent.getPlate(), plateTransferEvent.getPositionMap());
+                plateTransferEvent.getPlate(), plateTransferEvent.getPositionMap(), false);
 
         labEvent.getSectionTransfers().add(new SectionTransfer(
                 sourceTubeFormation.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection ()),
@@ -789,7 +806,7 @@ public class LabEventFactory implements Serializable {
             TubeFormation targetTubeFormation) {
         LabEvent labEvent = constructReferenceData ( plateTransferEvent, labEventRefDataFetcher );
         TubeFormation sourceTubeFormation = buildRackDaoFree ( mapBarcodeToSourceTubes, rackOfTubes,
-                plateTransferEvent.getSourcePlate (), plateTransferEvent.getSourcePositionMap () );
+                plateTransferEvent.getSourcePlate (), plateTransferEvent.getSourcePositionMap (), true);
 
         labEvent.getSectionTransfers().add(new SectionTransfer(
                 sourceTubeFormation.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection ()),
@@ -825,7 +842,7 @@ public class LabEventFactory implements Serializable {
             Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes, RackOfTubes targetRackOfTubes) {
         LabEvent labEvent = constructReferenceData ( plateTransferEvent, labEventRefDataFetcher );
         TubeFormation tubeFormation = buildRackDaoFree(mapBarcodeToTargetTubes, targetRackOfTubes, plateTransferEvent.getPlate(),
-                plateTransferEvent.getPositionMap());
+                plateTransferEvent.getPositionMap(), false);
 
         labEvent.getSectionTransfers().add(new SectionTransfer(
                 sourcePlate.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
@@ -837,8 +854,12 @@ public class LabEventFactory implements Serializable {
     public LabEvent buildFromBettaLimsPlateEventDbFree ( PlateEventType plateEvent, StaticPlate plate ) {
         LabEvent labEvent = constructReferenceData ( plateEvent, labEventRefDataFetcher );
         if ( plate == null ) {
-            plate = new StaticPlate ( plateEvent.getPlate ().getBarcode (), StaticPlate.PlateType.getByDisplayName (
-                    plateEvent.getPlate ().getPhysType () ) );
+            if(CREATE_SOURCES) {
+                plate = new StaticPlate ( plateEvent.getPlate().getBarcode(), StaticPlate.PlateType.getByDisplayName (
+                        plateEvent.getPlate ().getPhysType () ) );
+            } else {
+                throw new RuntimeException("Failed to find plate " + plateEvent.getPlate().getBarcode());
+            }
         }
 
         plate.addInPlaceEvent ( labEvent );
@@ -862,7 +883,8 @@ public class LabEventFactory implements Serializable {
             Map<String, TwoDBarcodedTube> mapBarcodeToTubes, RackOfTubes rackOfTubes) {
         LabEvent labEvent = constructReferenceData ( plateEvent, labEventRefDataFetcher );
         if ( tubeFormation == null ) {
-            tubeFormation = buildRackDaoFree(mapBarcodeToTubes, rackOfTubes, plateEvent.getPlate(), plateEvent.getPositionMap());
+            tubeFormation = buildRackDaoFree(mapBarcodeToTubes, rackOfTubes, plateEvent.getPlate(), plateEvent.getPositionMap(),
+                    true);
         }
 
         tubeFormation.addInPlaceEvent(labEvent);
@@ -889,6 +911,9 @@ public class LabEventFactory implements Serializable {
     public LabEvent buildFromBettaLimsPlateToPlateDbFree ( PlateTransferEventType plateTransferEvent,
                                                            StripTube sourceStripTube,
                                                            IlluminaFlowcell targetFlowcell ) {
+        if(sourceStripTube == null) {
+            throw new RuntimeException("Failed to find StripTube " + plateTransferEvent.getSourcePlate().getBarcode ());
+        }
         LabEvent labEvent = constructReferenceData ( plateTransferEvent, labEventRefDataFetcher );
         if ( targetFlowcell == null ) {
             // todo jmt what about MiSeq?
@@ -945,7 +970,7 @@ public class LabEventFactory implements Serializable {
     }
 
     public LabEvent buildFromBettaLims(ReceptacleEventType receptacleEventType) {
-        return buildReceptacleEventDbFree(receptacleEventType, twoDBarcodedTubeDao.findByBarcode(
+        return buildReceptacleEventDbFree(receptacleEventType, labVesselDao.findByIdentifier(
                 receptacleEventType.getReceptacle().getBarcode()));
     }
 
@@ -953,16 +978,16 @@ public class LabEventFactory implements Serializable {
      * Database free (i.e. entities have already been fetched from the database, or constructed in tests) building of
      * lab event entity for an in-place event on a tube.
      * @param receptacleEventType JAXB
-     * @param twoDBarcodedTube from database
+     * @param labVessel from database
      * @return lab event entity
      */
     @DaoFree
-    private LabEvent buildReceptacleEventDbFree(ReceptacleEventType receptacleEventType, TwoDBarcodedTube twoDBarcodedTube) {
+    private LabEvent buildReceptacleEventDbFree(ReceptacleEventType receptacleEventType, LabVessel labVessel) {
         LabEvent labEvent = constructReferenceData ( receptacleEventType, labEventRefDataFetcher );
-        if(twoDBarcodedTube == null) {
+        if(labVessel == null) {
             throw new RuntimeException("Source tube not found for " + receptacleEventType.getReceptacle().getBarcode());
         }
-        labEvent.setInPlaceLabVessel(twoDBarcodedTube);
+        labEvent.setInPlaceLabVessel(labVessel);
         return labEvent;
     }
 
