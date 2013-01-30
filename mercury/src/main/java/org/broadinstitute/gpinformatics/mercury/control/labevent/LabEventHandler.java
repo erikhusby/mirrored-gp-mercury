@@ -7,6 +7,8 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Billable;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
@@ -150,7 +152,9 @@ public class LabEventHandler implements Serializable {
                 message += bspUser.getUsername() + " ran ";
             }
         }
-        message += labEvent.getLabEventType().getName() + " for <a href=\"${ctxpath}/search/all.action?search=&searchKey=" + labEvent.getAllLabVessels().iterator().next().getLabel() +
+        MercuryConfig mercuryConfig = ServiceAccessUtility.getBean(MercuryConfig.class);
+        message += labEvent.getLabEventType().getName() + " for <a href=\"" + mercuryConfig.getUrl() +
+                "/search/all.action?search=&searchKey=" + labEvent.getAllLabVessels().iterator().next().getLabel() +
                 "\">" + labEvent.getAllLabVessels().iterator().next().getLabel() + "</a>" +
                 " on " + labEvent.getEventLocation() + " at " + labEvent.getEventDate();
         if (jiraCommentUtil != null) {
