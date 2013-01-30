@@ -592,6 +592,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         addMessage("Deleted samples: {0}.", nameList);
         JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
         issue.addComment(MessageFormat.format("{0} deleted samples: {1}.", userBean.getLoginUserName(), nameList));
+        issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
+                editOrder.getSampleString(),
+                ProductOrder.TransitionStates.DeveloperEdit.getStateName());
         return createViewResolution();
     }
 
@@ -613,14 +616,13 @@ public class ProductOrderActionBean extends CoreActionBean {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
         editOrder.addSamples(samplesToAdd);
         productOrderDao.persist(editOrder);
-        List<String> sampleNames = new ArrayList<String>(samplesToAdd.size());
-        for (ProductOrderSample sample : samplesToAdd) {
-            sampleNames.add(sample.getSampleName());
-        }
-        String nameList = StringUtils.join(sampleNames, ",");
+        String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samplesToAdd), ",");
         addMessage("Added samples: {0}.", nameList);
         JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
         issue.addComment(MessageFormat.format("{0} added samples: {1}.", userBean.getLoginUserName(), nameList));
+        issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
+                editOrder.getSampleString(),
+                ProductOrder.TransitionStates.DeveloperEdit.getStateName());
         return createViewResolution();
     }
 
@@ -763,11 +765,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getSampleList() {
         if (sampleList == null) {
-            StringBuilder sb = new StringBuilder();
-            for (ProductOrderSample sample : getEditOrder().getSamples()) {
-                sb.append(sample.getSampleName()).append("\n");
-            }
-            sampleList = sb.toString();
+            sampleList = editOrder.getSampleString();
         }
 
         return sampleList;

@@ -170,11 +170,11 @@ public class ProductOrder implements Serializable {
         calculateRisk(true);
     }
 
-    private void calculateRisk(boolean skipSamplesWithRisk) {
+    private void calculateRisk(boolean newSamplesOnly) {
         for (ProductOrderSample sample : samples) {
             // If not skipping samples with risk, then always do it, otherwise only do samples with no risk items.
             // have risk items, means that risk was calculated
-            if (!skipSamplesWithRisk || sample.getRiskItems().isEmpty()) {
+            if (!newSamplesOnly || sample.getRiskItems().isEmpty()) {
                 sample.calculateRisk();
             }
         }
@@ -210,24 +210,10 @@ public class ProductOrder implements Serializable {
             }
         }
 
-        private int countSamplesOnRisk() {
-            int samplesOnRisk = 0;
-
-            for (ProductOrderSample sample : samples) {
-                if (sample.isOnRisk()) {
-                    samplesOnRisk++;
-                }
-            }
-
-            return samplesOnRisk;
-        }
-
         private void generateCounts() {
             if (countsValid) {
                 return;
             }
-
-            onRiskCount = countSamplesOnRisk();
 
             loadBspData();
 
@@ -237,6 +223,7 @@ public class ProductOrder implements Serializable {
             activeSampleCount = 0;
             hasFPCount = 0;
             missingBspMetaDataCount = 0;
+            onRiskCount = 0;
             stockTypeCounts.clear();
             primaryDiseaseCounts.clear();
             genderCounts.clear();
@@ -274,6 +261,10 @@ public class ProductOrder implements Serializable {
                         }
 
                         incrementCount(sampleTypeCounts, bspDTO.getSampleType());
+
+                        if (sample.isOnRisk()) {
+                            onRiskCount++;
+                        }
                     }
                 }
             }
@@ -530,8 +521,8 @@ public class ProductOrder implements Serializable {
      * @return true, if the name lists are different
      */
     private boolean sampleListHasChanged(List<ProductOrderSample> newSamples) {
-        List<String> originalSampleNames = getSampleNames(samples);
-        List<String> newSampleNames = getSampleNames(newSamples);
+        List<String> originalSampleNames = ProductOrderSample.getSampleNames(samples);
+        List<String> newSampleNames = ProductOrderSample.getSampleNames(newSamples);
 
         // If not equals, then this has changed
         return !newSampleNames.equals(originalSampleNames);
@@ -605,19 +596,28 @@ public class ProductOrder implements Serializable {
         }
 
         if (uniqueNames.isEmpty()) {
-            // No BSP samples, nothing to do.
+            // This early return is needed to avoid making a unnecessary injection, which could cause
+            // DB Free automated tests to fail.
             return;
         }
 
         BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
         Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(uniqueNames);
+
+        // the non-null DTOs which we use to look up FFPE status
+        List<BSPSampleDTO> nonNullDTOs = new ArrayList<BSPSampleDTO>();
         for (ProductOrderSample sample : getSamples()) {
             BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getSampleName());
             if (bspSampleDTO == null) {
                 bspSampleDTO = BSPSampleDTO.DUMMY;
+            } else {
+                nonNullDTOs.add(bspSampleDTO);
             }
             sample.setBspDTO(bspSampleDTO);
         }
+
+        // fill out all the non-null DTOs with FFPE status in one shot
+        bspSampleDataFetcher.fetchFFPEDerived(nonNullDTOs);
     }
 
     /**
@@ -644,16 +644,8 @@ public class ProductOrder implements Serializable {
      * @return the list of sample names for this order, including duplicates. in the same sequence that
      * they were entered.
      */
-    private static List<String> getSampleNames(List<ProductOrderSample> samples) {
-        List<String> names = new ArrayList<String>(samples.size());
-        for (ProductOrderSample productOrderSample : samples) {
-            names.add(productOrderSample.getSampleName());
-        }
-        return names;
-    }
-
     public String getSampleString() {
-        return StringUtils.join(getSampleNames(samples), '\n');
+        return StringUtils.join(ProductOrderSample.getSampleNames(samples), '\n');
     }
 
     /**
@@ -786,14 +778,14 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * @return The order is a draft while it is not 'placed,' which is the state of having a jira ticket
+     * @return true if order is in Draft
      */
     public boolean isDraft() {
         return OrderStatus.Draft == orderStatus;
     }
 
     /**
-     * @return The order is a draft while it is not 'placed,' which is the state of having a jira ticket
+     * @return true if order is abandoned
      */
     public boolean isAbandoned() {
         return OrderStatus.Abandoned == orderStatus;

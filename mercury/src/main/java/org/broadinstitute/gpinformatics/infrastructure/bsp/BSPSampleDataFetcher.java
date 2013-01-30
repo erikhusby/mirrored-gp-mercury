@@ -1,25 +1,47 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.ClientResponse;
+import com.sun.jersey.api.client.WebResource;
+import com.sun.jersey.api.client.config.ClientConfig;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.mercury.control.AbstractJerseyClientService;
+
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.ws.rs.core.MediaType;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.*;
 
 /**
  * Wrapper around {@link BSPSampleSearchService} that
  * does a bit more object-ifying and type-safety.
  */
-public class BSPSampleDataFetcher {
+public class BSPSampleDataFetcher extends AbstractJerseyClientService {
     
     @Inject BSPSampleSearchService service;
 
+    @Inject BSPConfig bspConfig;
+
+    private final static Log logger = LogFactory.getLog(BSPSampleDataFetcher.class);
+
+    private static final String WS_FFPE_DERIVED = "sample/ffpeDerived";
+
     public BSPSampleDataFetcher() {}
+
 
     /**
      * New one up using the given service.
      * @param service
      */
-    public BSPSampleDataFetcher(BSPSampleSearchService service) {
+    public BSPSampleDataFetcher(@Nonnull BSPSampleSearchService service) {
         if (service == null) {
-             throw new NullPointerException("service cannot be null.");
+            throw new NullPointerException("service cannot be null.");
         }
         this.service = service;
     }
@@ -32,11 +54,8 @@ public class BSPSampleDataFetcher {
     public BSPSampleDTO fetchSingleSampleFromBSP(String sampleName) {
         if (service == null) {
             throw new RuntimeException("No BSP service has been declared.");
-        }
-        else {
-            Collection<String> sampleNames = new HashSet<String>();
-            sampleNames.add(sampleName);
-            Map<String,BSPSampleDTO> sampleNameToDTO = fetchSamplesFromBSP(sampleNames);
+        } else {
+            Map<String, BSPSampleDTO> sampleNameToDTO = fetchSamplesFromBSP(Collections.singleton(sampleName));
 
             if (sampleNameToDTO.isEmpty()) {
                 throw new RuntimeException("Could not find " + sampleName + " in bsp.");
@@ -53,14 +72,14 @@ public class BSPSampleDataFetcher {
      * @param sampleNames
      * @return
      */
-    public Map<String,BSPSampleDTO> fetchSamplesFromBSP(Collection<String> sampleNames) {
+    public Map<String, BSPSampleDTO> fetchSamplesFromBSP(@Nonnull Collection<String> sampleNames) {
         if (sampleNames == null) {
             throw new NullPointerException("sampleNames cannot be null.");
         }
         if (sampleNames.isEmpty()) {
-            throw new RuntimeException("sampleNames is empty.  No samples to lookup.");
+            return Collections.emptyMap();
         }
-        Map<String,BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
+        Map<String, BSPSampleDTO> sampleNameToDTO = new HashMap<String, BSPSampleDTO>();
         List<String[]> results = getBSPResponse(sampleNames);
 
         for (String[] result : results) {
@@ -180,4 +199,87 @@ public class BSPSampleDataFetcher {
                 BSPSampleSearchColumn.CONTAINER_ID,
                 BSPSampleSearchColumn.SAMPLE_ID);
     }
+
+
+
+    @Override
+    protected void customizeConfig(ClientConfig clientConfig) {
+        // noop
+    }
+
+
+    @Override
+    protected void customizeClient(Client client) {
+        specifyHttpAuthCredentials(client, bspConfig);
+    }
+
+
+    /**
+     * There is much copying and pasting of code from BSPSampleSearchServiceImpl into here, a refactoring is needed
+     *
+     * @param bspSampleDTOs BSP DTOs whose sampleID field will be referenced for the barcode value, and which will
+     *                      be filled with the ffpeDerived value returned by the FFPE webservice
+     */
+    public void fetchFFPEDerived(@Nonnull Collection<BSPSampleDTO> bspSampleDTOs) {
+
+        if (bspSampleDTOs.isEmpty()) {
+            return;
+        }
+
+        Map<String, BSPSampleDTO> barcodeToDTOMap = new HashMap<String, BSPSampleDTO>();
+        for (BSPSampleDTO bspSampleDTO : bspSampleDTOs) {
+            barcodeToDTOMap.put(bspSampleDTO.getSampleId(), bspSampleDTO);
+        }
+
+        String urlString = bspConfig.getWSUrl(WS_FFPE_DERIVED);
+        logger.debug(String.format("URL string is '%s'", urlString));
+        WebResource webResource = getJerseyClient().resource(urlString);
+
+        try {
+
+            String queryString = "barcodes=" + StringUtils.join(barcodeToDTOMap.keySet(), "&barcodes=");
+            ClientResponse clientResponse =
+                    webResource.type(MediaType.APPLICATION_FORM_URLENCODED_TYPE).post(ClientResponse.class, queryString);
+
+            InputStream is = clientResponse.getEntityInputStream();
+            BufferedReader rdr = new BufferedReader(new InputStreamReader(is));
+
+            if (clientResponse.getStatus() / 100 != 2) {
+                logger.error("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
+                return;
+                // throw new RuntimeException("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
+            }
+
+            // skip header line
+            String readLine = rdr.readLine();
+
+            // what should be the first real data line
+            readLine = rdr.readLine();
+
+            while (readLine != null) {
+
+                String[] bspOutput = readLine.split("\t", -1);
+
+                // BSP always seems to return 1 more field than we asked for?
+                // not this webservice, I wrote it
+                // String[] truncatedData = new String[rawBSPData.length - 1];
+
+                BSPSampleDTO bspSampleDTO = barcodeToDTOMap.get(bspOutput[0]);
+                if (bspSampleDTO == null) {
+                    throw new RuntimeException("Unrecognized return barcode: " + bspOutput[0]);
+                }
+
+                bspSampleDTO.setFfpeDerived(Boolean.valueOf(bspOutput[1]));
+
+                readLine = rdr.readLine();
+            }
+
+            is.close();
+        } catch (IOException e) {
+
+            logger.error(e);
+            return;
+        }
+    }
+
 }
