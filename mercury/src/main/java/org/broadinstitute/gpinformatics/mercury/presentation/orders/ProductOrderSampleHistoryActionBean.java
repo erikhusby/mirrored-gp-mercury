@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import javax.inject.Inject;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @UrlBinding(value = "/view/pdoSampleHistory.action")
 public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
@@ -80,24 +81,25 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
         ProductOrder pdo = athenaClientService.retrieveProductOrderDetails(businessKey);
 
         int count = 0;
-        for (WorkflowProcessDef process : productWorkflowDefVersion.getWorkflowProcessDefs()) {
-            for (WorkflowStepDef step : process.getEffectiveVersion().getWorkflowStepDefs()) {
-                List<LabEventType> types = step.getLabEventTypes();
-                for (LabEventType type : types) {
-                    indexToStepNameMap.put(count, type.getName());
-                    count++;
+        if (productWorkflowDefVersion != null) {
+            for (WorkflowProcessDef process : productWorkflowDefVersion.getWorkflowProcessDefs()) {
+                for (WorkflowStepDef step : process.getEffectiveVersion().getWorkflowStepDefs()) {
+                    List<LabEventType> types = step.getLabEventTypes();
+                    for (LabEventType type : types) {
+                        indexToStepNameMap.put(count, type.getName());
+                        count++;
+                    }
                 }
             }
+            mercurySamples = mercurySampleDao.findBySampleKeys(ProductOrderSample.getSampleNames(pdo.getSamples()));
         }
 
-        mercurySamples = mercurySampleDao.findBySampleKeys(ProductOrderSample.getSampleNames(pdo.getSamples()));
         return new ForwardResolution(VIEW_PAGE);
     }
 
     public String getSparklineData(MercurySample sample) {
         Map<String, Set<LabEvent>> labEventsByName = getAllLabEvents(sample);
         StringBuilder seriesString = new StringBuilder();
-        int count = 0;
         for (WorkflowProcessDef process : productWorkflowDefVersion.getWorkflowProcessDefs()) {
             for (WorkflowStepDef step : process.getEffectiveVersion().getWorkflowStepDefs()) {
                 List<LabEventType> types = step.getLabEventTypes();
@@ -110,8 +112,6 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
                         seriesString.append("0");
                     }
                     seriesString.append(",");
-                    indexToStepNameMap.put(count, type.getName());
-                    count++;
                 }
             }
         }
@@ -149,7 +149,6 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
     public LabEvent getLatestLabEvent(MercurySample sample) {
         LabEvent latestEvent = null;
         List<LabVessel> vessels = labVesselDao.findBySampleKey(sample.getSampleKey());
-        List<LabVessel> targetVessels = new ArrayList<LabVessel>();
 
         //check this vessels steps
         for (LabVessel vessel : vessels) {
@@ -173,6 +172,39 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
         }
 
         return latestEvent;
+    }
+
+    public LabEvent getFirstLabEvent(MercurySample sample) {
+        LabEvent latestEvent = null;
+        List<LabVessel> vessels = labVesselDao.findBySampleKey(sample.getSampleKey());
+
+        //check this vessels steps
+        for (LabVessel vessel : vessels) {
+            for (LabEvent event : vessel.getEvents()) {
+                if (latestEvent == null) {
+                    latestEvent = event;
+                } else if (((Timestamp) event.getEventDate()).before(((Timestamp) latestEvent.getEventDate()))) {
+                    latestEvent = event;
+                }
+            }
+            //check descendent steps
+            for (LabVessel descendantVessel : vessel.getDescendantVessels()) {
+                for (LabEvent event : descendantVessel.getEvents()) {
+                    if (latestEvent == null) {
+                        latestEvent = event;
+                    } else if (((Timestamp) event.getEventDate()).before(((Timestamp) latestEvent.getEventDate()))) {
+                        latestEvent = event;
+                    }
+                }
+            }
+        }
+
+        return latestEvent;
+    }
+
+    public String getDuration(MercurySample sample) {
+        Long mSecDiff = getLatestLabEvent(sample).getEventDate().getTime() - getFirstLabEvent(sample).getEventDate().getTime();
+        return String.format("%d day %d hr %d min", TimeUnit.MILLISECONDS.toDays(mSecDiff), TimeUnit.MILLISECONDS.toHours(mSecDiff), TimeUnit.MILLISECONDS.toMinutes(mSecDiff));
     }
 
     public WorkflowStepDef getLatestProcess(LabEvent event) {
