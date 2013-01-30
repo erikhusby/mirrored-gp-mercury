@@ -34,6 +34,16 @@
                         }
                     }
                 });
+
+                $j("#noneSelectedDialog").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    buttons: {
+                        OK: function () {
+                            $j(this).dialog("close");
+                        }
+                    }
+                });
             });
 
             var bspDataCount = 0;
@@ -103,9 +113,12 @@
                 var numChecked = $("input.shiftCheckbox:checked").size();
                 if (numChecked) {
                     $j("#dialogAction").attr("name", action);
-                    $j("#dialogMessage").text(actionPrompt);
+                    $j("#confirmDialogMessage").text(actionPrompt);
                     $j("#dialogNumSamples").text(numChecked);
                     $j("#confirmDialog").dialog("open");
+                } else {
+                    $j("#noneSelectedDialogMessage").text(actionPrompt);
+                    $j("#noneSelectedDialog").dialog("open");
                 }
             }
         </script>
@@ -114,7 +127,11 @@
     <stripes:layout-component name="content">
 
     <div id="confirmDialog">
-        <p>Are you sure you want to <span id="dialogMessage"></span> the <span id="dialogNumSamples"></span> selected samples?</p>
+        <p>Are you sure you want to <span id="confirmDialogMessage"></span> the <span id="dialogNumSamples"></span> selected samples?</p>
+    </div>
+
+    <div id="noneSelectedDialog">
+        <p>You must select at least one sample to <span id="noneSelectedDialogMessage"></span>.</p>
     </div>
 
         <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
