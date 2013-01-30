@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 import com.sun.jersey.api.client.Client;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
@@ -27,12 +28,12 @@ import java.util.List;
  */
 public class ImportFromBspTest extends ContainerTest {
 
-    @PersistenceContext(unitName = "gap_pu")
+//    @PersistenceContext(unitName = "gap_pu")
     private EntityManager entityManager;
 
     private final SimpleDateFormat testPrefixDateFormat=new SimpleDateFormat("MMddHHmmss");
 
-    @Test
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testImportExportedTubes() {
         String testSuffix = testPrefixDateFormat.format(new Date());
 

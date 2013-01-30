@@ -107,7 +107,7 @@ public class LabBatchDbTest extends ContainerTest {
 
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void findMessageFilesForBatch() {
         List<String> lcSets = new ArrayList<String>();
         // PDO-135, C19F5ACXX
