@@ -2,6 +2,20 @@
 
 <stripes:layout-definition>
     <script type="text/javascript">
+        $j(document).ready(function () {
+            $j('#sampleListView').dataTable({
+                "oTableTools":ttExportDefines,
+                "aaSorting":[
+                    [1, 'asc']
+                ],
+                "aoColumns":[
+                    {"bSortable":false},
+                    {"bSortable":true},
+                    {"bSortable":true}
+                ]
+            })
+        });
+
         function showPlasticHistoryVisualizer(sampleKey) {
             $j('#plasticViewDiv').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
             $j('#plasticViewDiv').load('${ctxpath}/view/plasticHistoryView.action?sampleKey=' + sampleKey);
