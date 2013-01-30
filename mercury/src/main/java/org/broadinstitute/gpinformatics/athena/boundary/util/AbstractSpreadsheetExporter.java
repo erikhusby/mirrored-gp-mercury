@@ -7,6 +7,7 @@ import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Iterator;
 
 /**
  * Wrapper for all exporters so that the writer and exporter can share some members
@@ -22,10 +23,10 @@ public abstract class AbstractSpreadsheetExporter {
     private final CellStyle billedAmountsHeaderStyle;
     private final CellStyle billedAmountStyle;
     private final CellStyle preambleStyle;
-    private final CellStyle previouslyBilledStyle;
     private final CellStyle errorMessageStyle;
     private final CellStyle dateStyle;
     private final CellStyle riskStyle;
+    private final CellStyle abandonedStyle;
 
     private final SpreadSheetWriter writer = new SpreadSheetWriter();
 
@@ -33,15 +34,15 @@ public abstract class AbstractSpreadsheetExporter {
         // SXSSFWorkbook is used to support very large spreadsheets.  SXSSF writes 100 rows at a time to a
         // temporary file, which is then copied into the output stream when all spreadsheet data has been written.
         workbook = new SXSSFWorkbook();
-        fixedHeaderStyle = buildFixedHeaderStyle(workbook);
-        priceItemProductHeaderStyle = buildPriceItemProductHeaderStyle(workbook);
-        billedAmountsHeaderStyle = buildBilledAmountsHeaderStyle(workbook);
-        billedAmountStyle = buildBilledAmountStyle(workbook);
+        fixedHeaderStyle = buildHeaderStyle(workbook, IndexedColors.LIGHT_CORNFLOWER_BLUE);
+        priceItemProductHeaderStyle = buildHeaderStyle(workbook, IndexedColors.GREY_25_PERCENT);
+        billedAmountsHeaderStyle = buildHeaderStyle(workbook, IndexedColors.LIGHT_YELLOW);
+        billedAmountStyle = buildHeaderStyle(workbook, IndexedColors.TAN);
         preambleStyle = buildPreambleStyle(workbook);
-        previouslyBilledStyle = buildPreviouslyBilledStyle(workbook);
-        errorMessageStyle = buildErrorMessageStyle(workbook);
+        errorMessageStyle = buildColorStyle(workbook, IndexedColors.RED, IndexedColors.BLACK);
         dateStyle = buildDateStyle(workbook);
-        riskStyle = buildRiskStyle(workbook);
+        riskStyle = buildColorStyle(workbook, IndexedColors.YELLOW, IndexedColors.BLACK);
+        abandonedStyle = buildColorCellStyle(workbook, IndexedColors.ROSE);
     }
 
     protected SpreadSheetWriter getWriter() {
@@ -58,6 +59,9 @@ public abstract class AbstractSpreadsheetExporter {
 
     protected CellStyle getRiskStyle() {
         return riskStyle;
+    }
+    protected CellStyle getAbandonedStyle() {
+        return abandonedStyle;
     }
 
     protected CellStyle getDateStyle() {
@@ -76,15 +80,9 @@ public abstract class AbstractSpreadsheetExporter {
         return billedAmountStyle;
     }
 
-    protected CellStyle getPreviouslyBilledStyle() {
-        return previouslyBilledStyle;
-    }
-
-
     protected Workbook getWorkbook() {
         return workbook;
     }
-
 
     protected CellStyle buildHeaderStyle(Workbook wb, IndexedColors indexedColors) {
         CellStyle style = wb.createCellStyle();
@@ -95,22 +93,6 @@ public abstract class AbstractSpreadsheetExporter {
         headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
         style.setFont(headerFont);
         return style;
-    }
-
-    protected CellStyle buildFixedHeaderStyle(Workbook wb) {
-        return buildHeaderStyle(wb, IndexedColors.LIGHT_CORNFLOWER_BLUE);
-    }
-
-    protected CellStyle buildPriceItemProductHeaderStyle(Workbook wb) {
-        return buildHeaderStyle(wb, IndexedColors.GREY_25_PERCENT);
-    }
-
-    protected CellStyle buildBilledAmountsHeaderStyle(Workbook wb) {
-        return buildHeaderStyle(wb, IndexedColors.LIGHT_YELLOW);
-    }
-
-    protected CellStyle buildBilledAmountStyle(Workbook wb) {
-        return buildHeaderStyle(wb, IndexedColors.TAN);
     }
 
     protected CellStyle buildPreambleStyle(Workbook wb) {
@@ -128,44 +110,24 @@ public abstract class AbstractSpreadsheetExporter {
         return style;
     }
 
-    protected CellStyle buildRiskStyle(Workbook wb) {
+    protected CellStyle buildColorStyle(Workbook wb, IndexedColors foregroundColor, IndexedColors fontColor) {
         CellStyle style = wb.createCellStyle();
-        style.setFillForegroundColor(IndexedColors.YELLOW.getIndex());
+        style.setFillForegroundColor(foregroundColor.getIndex());
         style.setFillPattern(CellStyle.SOLID_FOREGROUND);
         style.setAlignment(CellStyle.ALIGN_LEFT);
         style.setWrapText(true);
-        Font headerFont = wb.createFont();
-        headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
-        headerFont.setColor(IndexedColors.BLACK.getIndex());
-        style.setFont(headerFont);
+        Font font = wb.createFont();
+        font.setBoldweight(Font.BOLDWEIGHT_BOLD);
+        font.setColor(fontColor.getIndex());
+        style.setFont(font);
         return style;
     }
 
-    protected CellStyle buildErrorMessageStyle(Workbook wb) {
+    protected CellStyle buildColorCellStyle(Workbook wb, IndexedColors foregroundColor) {
         CellStyle style = wb.createCellStyle();
-        style.setFillForegroundColor(IndexedColors.RED.getIndex());
+        style.setFillForegroundColor(foregroundColor.getIndex());
         style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-        style.setAlignment(CellStyle.ALIGN_LEFT);
-        style.setWrapText(true);
-        Font headerFont = wb.createFont();
-        headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
-        headerFont.setColor(IndexedColors.RED.getIndex());
-        style.setFont(headerFont);
         return style;
-
-    }
-
-    protected CellStyle buildPreviouslyBilledStyle(Workbook wb) {
-        CellStyle style = wb.createCellStyle();
-        style.setFillForegroundColor(IndexedColors.ROSE.getIndex());
-        style.setFillPattern(CellStyle.SOLID_FOREGROUND);
-        style.setAlignment(CellStyle.ALIGN_CENTER);
-        Font headerFont = wb.createFont();
-        headerFont.setBoldweight(Font.BOLDWEIGHT_BOLD);
-        headerFont.setColor(IndexedColors.RED.getIndex());
-        style.setFont(headerFont);
-        return style;
-
     }
 
     public class SpreadSheetWriter {
@@ -248,6 +210,15 @@ public abstract class AbstractSpreadsheetExporter {
                 currentCell.setCellValue(value);
             }
             currentCell.setCellStyle(cellStyle);
+        }
+
+        public void setRowStyle(CellStyle style) {
+            // Using currentRow.setRowStyle() sets the style for all cells, including unused ones.
+            // Instead, only set the style for the cells that have content.
+            Iterator<Cell> cells = currentRow.cellIterator();
+            while (cells.hasNext()) {
+                cells.next().setCellStyle(style);
+            }
         }
     }
 }

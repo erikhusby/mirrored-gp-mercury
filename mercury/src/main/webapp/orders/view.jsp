@@ -34,6 +34,16 @@
                         }
                     }
                 });
+
+                $j("#noneSelectedDialog").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    buttons: {
+                        OK: function () {
+                            $j(this).dialog("close");
+                        }
+                    }
+                });
             });
 
             var bspDataCount = 0;
@@ -72,11 +82,15 @@
 
             function updateFundsRemaining() {
                 var quoteIdentifier = $j("#quote").val();
-                $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${actionBean.editOrder.quoteId}",
-                    dataType: 'json',
-                    success: updateFunds
-                });
+                if ($j.trim(quoteIdentifier)) {
+                    $j.ajax({
+                        url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${actionBean.editOrder.quoteId}",
+                        dataType: 'json',
+                        success: updateFunds
+                    });
+                } else {
+                    $j("#fundsRemaining").text('');
+                }
             }
 
             function updateFunds(data) {
@@ -96,9 +110,16 @@
             }
 
             function showConfirm(action, actionPrompt) {
-                $j("#dialogAction").attr("name", action);
-                $j("#dialogMessage").text(actionPrompt);
-                $j("#confirmDialog").dialog("open");
+                var numChecked = $("input.shiftCheckbox:checked").size();
+                if (numChecked) {
+                    $j("#dialogAction").attr("name", action);
+                    $j("#confirmDialogMessage").text(actionPrompt);
+                    $j("#dialogNumSamples").text(numChecked);
+                    $j("#confirmDialog").dialog("open");
+                } else {
+                    $j("#noneSelectedDialogMessage").text(actionPrompt);
+                    $j("#noneSelectedDialog").dialog("open");
+                }
             }
         </script>
     </stripes:layout-component>
@@ -106,7 +127,11 @@
     <stripes:layout-component name="content">
 
     <div id="confirmDialog">
-        <p>Are you sure you want to <span id="dialogMessage"></span> the selected samples?</p>
+        <p>Are you sure you want to <span id="confirmDialogMessage"></span> the <span id="dialogNumSamples"></span> selected samples?</p>
+    </div>
+
+    <div id="noneSelectedDialog">
+        <p>You must select at least one sample to <span id="noneSelectedDialogMessage"></span>.</p>
     </div>
 
         <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
@@ -274,8 +299,7 @@
                                         style="margin-left:30px;" onclick="showConfirm('deleteSamples','delete')"/>
                     </security:authorizeBlock>
 
-                    <%-- Hide from users, not yet working. --%>
-                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
                         <stripes:button name="abandonSamples" value="Abandon Samples" class="btn"
                                         style="margin-left:15px;" onclick="showConfirm('abandonSamples','abandon')"/>
                     </security:authorizeBlock>

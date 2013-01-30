@@ -94,7 +94,7 @@ public class RiskItem {
 
         if (riskCriteria.getOperator().getType() == Operator.OperatorType.BOOLEAN) {
             return MessageFormat.format(
-                    "At {0,time} on {0,date}, calculated {1} (2)",
+                    "At {0,time} on {0,date}, calculated {1} {2}",
                     occurredDate, riskCriteria.getCalculationString(), comment);
         }
 

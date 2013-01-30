@@ -12,8 +12,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-abstract public class GenericEntityEtl {
-    Logger logger = Logger.getLogger(this.getClass());
+public abstract class GenericEntityEtl {
+    protected final Logger logger = Logger.getLogger(getClass());
     public static final String UNDEFINED_VALUE = "undefined";
 
     private AuditReaderDao auditReaderDao;
@@ -120,7 +120,7 @@ abstract public class GenericEntityEtl {
 
             for (Object[] dataChange : dataChanges) {
                 RevisionType revType = (RevisionType) dataChange[2];
-                boolean isDelete = revType.equals(RevisionType.DEL);
+                boolean isDelete = revType == RevisionType.DEL;
                 Object entity = dataChange[0];
                 Long entityId = entityId(entity);
                 if (isDelete) {
@@ -272,10 +272,10 @@ abstract public class GenericEntityEtl {
     }
 
     /** Class to wrap/manage writing to the data file. */
-    protected class DataFile {
+    protected static class DataFile {
         private final String filename;
-        private BufferedWriter writer = null;
-        private int lineCount = 0;
+        private BufferedWriter writer;
+        private int lineCount;
 
         DataFile(String filename) {
             this.filename = filename;

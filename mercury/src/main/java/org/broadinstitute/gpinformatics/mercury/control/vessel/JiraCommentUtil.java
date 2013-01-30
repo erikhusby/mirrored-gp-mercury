@@ -1,15 +1,25 @@
-package org.broadinstitute.gpinformatics.mercury.entity.sample;
+package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
-// todo jmt this should be in control, or deleted
+// todo jmt re-evaluate where this functionality belongs
 
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
+import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
+import javax.inject.Inject;
+import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -17,6 +27,9 @@ import java.util.Set;
  * about samples to project managers
  */
 public class JiraCommentUtil {
+
+    @Inject
+    private JiraService jiraService;
 
     /**
      * Sends an alert with the message text to every project
@@ -33,15 +46,13 @@ public class JiraCommentUtil {
      * @param  message the text of the message
      * @param vessels the containers used in the operation
      */
-    public static void postUpdate(String title,
-                                  String message,
-                                  Collection<LabVessel> vessels) {
+    public void postUpdate(String message,
+                Collection<LabVessel> vessels) {
         // keep a list of sample names for each project because we're going
         // to make a single message that references each sample in a project
 
         Set<JiraTicket> tickets = new HashSet<JiraTicket>();
         for (LabVessel vessel : vessels) {
-            // todo arz talk to jmt about this.  I don't think I'm doing it right.
             VesselContainer vesselContainer = vessel.getContainerRole();
             if (vesselContainer != null) {
                 for (Object o: vesselContainer.getPositions()) {
@@ -66,12 +77,20 @@ public class JiraCommentUtil {
             }
         }
         for (JiraTicket ticket : tickets) {
-            StringBuilder messageBuilder = new StringBuilder("{panel:title=" + title + "}");
-            if (message != null) {
-                messageBuilder.append(message);
-                messageBuilder.append("\n");
+            try {
+                JiraIssue jiraIssue = ticket.getJiraDetails();
+                Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
+                String fieldValue = (String) jiraIssue.getFieldValue(submissionFields.get("LIMS Activity Stream").getJiraCustomFieldId()); /*"customfield_13169"*/
+                // todo jmt handle fieldValue null
+                fieldValue = new StringBuilder().append(fieldValue).append("{html}").append(message).append("<br/>{html}").toString();
+
+                CustomField mercuryUrlField = new CustomField(
+                        submissionFields, LabBatch.RequiredSubmissionFields.LIMS_ACTIVITY_STREAM, fieldValue);
+
+                jiraIssue.updateIssue(Collections.singleton(mercuryUrlField));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
-            ticket.addComment(messageBuilder.toString());
         }
 
     }
@@ -91,12 +110,11 @@ public class JiraCommentUtil {
      * @param  message the text of the message
      * @param vessel the container used in the operation
      */
-    public static void postUpdate(String title,
-                                  String message,
-                                  LabVessel vessel) {
+    public void postUpdate(String message,
+                LabVessel vessel) {
         Collection<LabVessel> vessels = new HashSet<LabVessel>();
         vessels.add(vessel);
-        postUpdate(title,message,vessels);
+        postUpdate(message, vessels);
         
     }
 
