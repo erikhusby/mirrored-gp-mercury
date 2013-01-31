@@ -25,6 +25,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.BspLink;
@@ -70,6 +71,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String ADD_SAMPLES_ACTION = "addSamples";
     private static final String ABANDON_SAMPLES_ACTION = "abandonSamples";
     private static final String DELETE_SAMPLES_ACTION = "deleteSamples";
+    private static final String SET_RISK = "setRisk";
 
     @Inject
     private QuoteService quoteService;
@@ -162,6 +164,15 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = ADD_SAMPLES_ACTION)
     private String addSamplesText;
 
+    @Validate(required = true, on = SET_RISK)
+    private boolean onlyNew = true;
+
+    @Validate(required = true, on = SET_RISK)
+    private boolean riskStatus = true;
+
+    @Validate(required = true, on = SET_RISK)
+    private String riskComment;
+
     /*
      * The search query.
      */
@@ -174,7 +185,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     /**
      * Initialize the product with the passed in key for display in the form or create it, if not specified
      */
-    @Before(stages = LifecycleStage.BindingAndValidation)
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {"!" + LIST_ACTION, "!getQuoteFunding"})
     public void init() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
@@ -603,6 +614,32 @@ public class ProductOrderActionBean extends CoreActionBean {
         return createViewResolution();
     }
 
+    @HandlesEvent(SET_RISK)
+    public Resolution setRisk() throws Exception {
+
+        // status true creates a manual item. false adds the success item, which is a null criterion
+        RiskCriteria criterion;
+        String value;
+
+        if (riskStatus) {
+            criterion = RiskCriteria.createManual();
+            value = "true";
+            productOrderDao.persist(criterion);
+        } else {
+            criterion = null;
+            value = null;
+        }
+
+        for (int sampleIndex : selectedProductOrderSampleIndices) {
+            editOrder.getSamples().get(sampleIndex).setManualOnRisk(criterion, value, riskComment);
+        }
+
+        productOrderDao.persist(editOrder);
+
+        addMessage("Set manual on risk for {0} samples.", selectedProductOrderSampleIndices.size());
+        return createViewResolution();
+    }
+
     @HandlesEvent(ABANDON_SAMPLES_ACTION)
     public Resolution abandonSamples() throws Exception {
         productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSampleIndices);
@@ -859,5 +896,29 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setAddSamplesText(String addSamplesText) {
         this.addSamplesText = addSamplesText;
+    }
+
+    public boolean isRiskStatus() {
+        return riskStatus;
+    }
+
+    public void setRiskStatus(boolean riskStatus) {
+        this.riskStatus = riskStatus;
+    }
+
+    public boolean isOnlyNew() {
+        return onlyNew;
+    }
+
+    public void setOnlyNew(boolean onlyNew) {
+        this.onlyNew = onlyNew;
+    }
+
+    public String getRiskComment() {
+        return riskComment;
+    }
+
+    public void setRiskComment(String riskComment) {
+        this.riskComment = riskComment;
     }
 }

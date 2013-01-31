@@ -104,10 +104,9 @@ public class ProductOrderSample implements Serializable {
         }
     }
 
-    public void setManualOnRisk(String comment) {
+    public void setManualOnRisk(RiskCriteria criterion, String value, String comment) {
         riskItems.clear();
-        RiskCriteria criterion = RiskCriteria.createManual();
-        riskItems.add(new RiskItem(criterion, new Date(), "", comment));
+        riskItems.add(new RiskItem(criterion, new Date(), value, comment));
     }
 
     public static enum DeliveryStatus implements StatusType {
