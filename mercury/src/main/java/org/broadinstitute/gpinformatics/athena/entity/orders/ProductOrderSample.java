@@ -78,7 +78,7 @@ public class ProductOrderSample implements Serializable {
      * @param samples the samples to convert
      * @return the names of the samples, in the same order as the input
      */
-    public static List<String> getSampleNames(List<ProductOrderSample> samples) {
+    public static List<String> getSampleNames(Collection<ProductOrderSample> samples) {
         List<String> names = new ArrayList<String>(samples.size());
         for (ProductOrderSample productOrderSample : samples) {
             names.add(productOrderSample.getSampleName());
@@ -242,30 +242,7 @@ public class ProductOrderSample implements Serializable {
     }
 
     public static boolean isInBspFormat(@Nonnull String sampleName) {
-        if (sampleName == null) {
-            throw new NullPointerException("Sample name cannot be null");
-        }
-
         return BSP_SAMPLE_NAME_PATTERN.matcher(sampleName).matches();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof ProductOrderSample)) {
-            return false;
-        }
-
-        ProductOrderSample that = (ProductOrderSample) o;
-        return new EqualsBuilder().append(sampleName, that.getSampleName()).append(samplePosition, that.getSamplePosition())
-                .append(productOrder, that.getProductOrder()).build();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder().append(sampleName).append(samplePosition).append(productOrder).build();
     }
 
     public Set<BillingLedger> getBillableLedgerItems() {

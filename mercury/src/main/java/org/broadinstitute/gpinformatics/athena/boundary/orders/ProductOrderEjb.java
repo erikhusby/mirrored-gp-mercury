@@ -427,7 +427,7 @@ public class ProductOrderEjb {
      * @param jiraTicketKey JIRA ticket key
      * @param acceptableStartingStatuses acceptable statuses for samples to be found in
      * @param targetStatus status to change samples to
-     * @param sampleIndices zero-based indices of samples in the PDO to update
+     * @param samples samples to change
      * @throws NoSuchPDOException
      * @throws SampleDeliveryStatusChangeException
      * @throws IOException
@@ -435,39 +435,25 @@ public class ProductOrderEjb {
     private void transitionSamplesAndUpdateTicket(String jiraTicketKey,
                                                   Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
                                                   ProductOrderSample.DeliveryStatus targetStatus,
-                                                  List<Integer> sampleIndices) throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
+                                                  Collection<ProductOrderSample> samples)
+            throws NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
 
         ProductOrder order = findProductOrder(jiraTicketKey);
 
-        List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
-
-        List<String> messagePieces = new ArrayList<String>();
-
-        // ii = index of indices
-        for (int ii = 0; ii < sampleIndices.size(); ii++) {
-            int sampleIndex = sampleIndices.get(ii);
-
-            ProductOrderSample sample = order.getSamples().get(sampleIndex);
-            // GPLIM-655 insert code here to append to sample comment history.  In the absence of this I'll just throw
-            // a comment to JIRA
-            samples.add(sample);
-
-            messagePieces.add(sample.getSampleName() + " at index " + sample.getSamplePosition());
-        }
+        // GPLIM-655 insert code here to append to sample comment history.  In the absence of this I'll just throw
+        // a comment to JIRA
 
         transitionSamples(order, acceptableStartingStatuses, targetStatus, samples);
 
         JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
 
-        issue.addComment(MessageFormat.format("{0} transitioned samples to status {1}:\n {2}",
-                getUserName(), targetStatus.getDisplayName(), StringUtils.join(messagePieces, "\n")));
-
+        issue.addComment(MessageFormat.format("{0} transitioned samples to status {1}: {2}",
+                getUserName(), targetStatus.getDisplayName(),
+                StringUtils.join(ProductOrderSample.getSampleNames(samples), ",")));
     }
 
     /**
-     * Returns the name of the currently logged-in user or 'Mercury' if no logged in user (e.g. in a fixup test context)
-     *
-     * @return
+     * @return the name of the currently logged-in user or 'Mercury' if no logged in user (e.g. in a fixup test context)
      */
     private String getUserName() {
         String user = userBean.getLoginUserName();
@@ -485,7 +471,9 @@ public class ProductOrderEjb {
      * @throws IOException
      * @throws NoTransitionException Thrown if the specified transition is not available on the specified issue
      */
-    private void transitionJiraTicket(String jiraTicketKey, Set<String> alreadyResolvedResolutions, ProductOrder.TransitionStates transitionState, String transitionComments) throws IOException, NoTransitionException {
+    private void transitionJiraTicket(String jiraTicketKey, Set<String> alreadyResolvedResolutions,
+                                      ProductOrder.TransitionStates transitionState,
+                                      String transitionComments) throws IOException, NoTransitionException {
         String resolution = jiraService.getResolution(jiraTicketKey);
 
         if (!alreadyResolvedResolutions.contains(resolution)) {
@@ -517,7 +505,8 @@ public class ProductOrderEjb {
      * @throws NoSuchPDOException
      * @throws SampleDeliveryStatusChangeException
      */
-    public void abandon(@Nonnull String jiraTicketKey, @Nullable String abandonComments) throws NoTransitionException, NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
+    public void abandon(@Nonnull String jiraTicketKey, @Nullable String abandonComments)
+            throws NoTransitionException, NoSuchPDOException, SampleDeliveryStatusChangeException, IOException {
 
         ProductOrder productOrder = findProductOrder(jiraTicketKey);
 
@@ -542,7 +531,8 @@ public class ProductOrderEjb {
      * @throws IOException
      * @throws NoTransitionException
      */
-    public void complete(@Nonnull String jiraTicketKey, @Nullable String completionComments) throws SampleDeliveryStatusChangeException, IOException, NoTransitionException, NoSuchPDOException {
+    public void complete(@Nonnull String jiraTicketKey, @Nullable String completionComments)
+            throws SampleDeliveryStatusChangeException, IOException, NoTransitionException, NoSuchPDOException {
 
         ProductOrder productOrder = findProductOrder(jiraTicketKey);
         productOrder.setOrderStatus(Complete);
@@ -561,13 +551,14 @@ public class ProductOrderEjb {
      *
      *
      * @param jiraTicketKey JIRA ticket key of the PDO in question
-     * @param sampleIndices zero-based indices of the samples to abandon
+     * @param samples the samples to abandon
      * @throws IOException
      * @throws SampleDeliveryStatusChangeException
      * @throws NoSuchPDOException
      */
-    public void abandonSamples(@Nonnull String jiraTicketKey, List<Integer> sampleIndices) throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
-        transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(ABANDONED, NOT_STARTED), ABANDONED, sampleIndices);
+    public void abandonSamples(@Nonnull String jiraTicketKey, Collection<ProductOrderSample> samples)
+            throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
+        transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(ABANDONED, NOT_STARTED), ABANDONED, samples);
     }
 
 
@@ -576,12 +567,13 @@ public class ProductOrderEjb {
      *
      *
      * @param jiraTicketKey JIRA ticket key of the PDO in question
-     * @param sampleIndices zero-based indices of the samples to complete
+     * @param samples the samples to complete
      * @throws IOException
      * @throws SampleDeliveryStatusChangeException
      * @throws NoSuchPDOException
      */
-    public void completeSamples(@Nonnull String jiraTicketKey, List<Integer> sampleIndices) throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
-        transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DELIVERED, NOT_STARTED), DELIVERED, sampleIndices);
+    public void completeSamples(@Nonnull String jiraTicketKey, Collection<ProductOrderSample> samples)
+            throws IOException, SampleDeliveryStatusChangeException, NoSuchPDOException {
+        transitionSamplesAndUpdateTicket(jiraTicketKey, EnumSet.of(DELIVERED, NOT_STARTED), DELIVERED, samples);
     }
 }
