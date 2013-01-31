@@ -125,11 +125,15 @@
 
             function updateFundsRemaining() {
                 var quoteIdentifier = $j("#quote").val();
-                $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier,
-                    dataType: 'json',
-                    success: updateFunds
-                });
+                if ($j.trim(quoteIdentifier)) {
+                    $j.ajax({
+                        url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=" + quoteIdentifier,
+                        dataType: 'json',
+                        success: updateFunds
+                    });
+                } else {
+                    $j("#fundsRemaining").text('');
+                }
             }
 
             function updateFunds(data) {

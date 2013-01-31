@@ -195,7 +195,10 @@ public class ProductActionBean extends CoreActionBean {
         addOnTokenInput.setup(editProduct.getAddOnBusinessKeys());
         materialTypeTokenInput.setup(editProduct.getAllowableMaterialTypeNames());
 
-        priceItemTokenInput.setup(PriceItem.getPriceItemKeys(editProduct.getPrimaryPriceItem()));
+        PriceItem primaryPriceItem = editProduct.getPrimaryPriceItem();
+        if (primaryPriceItem != null) {
+            priceItemTokenInput.setup(PriceItem.getPriceItemKeys(Collections.singletonList(primaryPriceItem)));
+        }
         optionalPriceItemTokenInput.setup(PriceItem.getPriceItemKeys(editProduct.getOptionalPriceItems()));
     }
 

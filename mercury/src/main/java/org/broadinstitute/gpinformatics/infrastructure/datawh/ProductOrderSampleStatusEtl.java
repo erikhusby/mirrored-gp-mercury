@@ -1,23 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 
 import javax.ejb.Stateless;
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 
 @Stateless
 public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
-
-    private ProductOrderSampleDao dao;
-
-    @Inject
-    public void setProductOrderSampleDao(ProductOrderSampleDao dao) {
-	this.dao = dao;
-    }
 
     /**
      * @{inheritDoc}
@@ -46,13 +37,13 @@ public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
     /** This entity does not make entity records. */
     @Override
     Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
-        return Collections.EMPTY_LIST;
+        return Collections.emptyList();
     }
 
     /** This entity does not make entity records. */
     @Override
     Collection<String> entityRecordsInRange(long startId, long endId, String etlDateStr, boolean isDelete) {
-        return Collections.EMPTY_LIST;
+        return Collections.emptyList();
     }
 
     /**
@@ -74,7 +65,7 @@ public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderSampleId(),
                 format(revDate),
-                format(entity.getDeliveryStatus().getDisplayName())
+                format(entity.getDeliveryStatus().name())
         );
     }
 

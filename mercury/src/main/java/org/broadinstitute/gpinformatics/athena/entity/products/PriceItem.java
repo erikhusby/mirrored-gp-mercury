@@ -9,7 +9,6 @@ import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.Collection;
-import java.util.Collections;
 
 
 /**
@@ -152,18 +151,14 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
         return name;
     }
 
-    public static String[] getPriceItemKeys(Collection<PriceItem> priceeItems) {
-        String[] keys = new String[priceeItems.size()];
+    public static String[] getPriceItemKeys(Collection<PriceItem> priceItems) {
+        String[] keys = new String[priceItems.size()];
         int i = 0;
-        for (PriceItem priceItem : priceeItems) {
+        for (PriceItem priceItem : priceItems) {
             keys[i++] = makeConcatenatedKey(priceItem.getPlatform(), priceItem.getCategory(), priceItem.getName());
         }
 
         return keys;
-    }
-
-    public static String[] getPriceItemKeys(PriceItem primaryPriceItem) {
-        return getPriceItemKeys(Collections.singletonList(primaryPriceItem));
     }
 
     public static String makeConcatenatedKey(String platform, String category, String name) {

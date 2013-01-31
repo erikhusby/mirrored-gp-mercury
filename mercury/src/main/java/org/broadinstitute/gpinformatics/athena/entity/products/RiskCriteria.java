@@ -5,6 +5,7 @@ import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
+import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.List;
 
@@ -94,8 +95,8 @@ public class RiskCriteria {
             value.equals(this.value);
     }
 
-    public Object getSampleValue(ProductOrderSample sample) {
-        return type.getSampleValue(sample);
+    public ValueProvider getValueProvider() {
+        return type.valueProvider;
     }
 
     public static RiskCriteria createManual() {
@@ -108,45 +109,42 @@ public class RiskCriteria {
     }
 
     public enum RiskCriteriaType {
-        CONCENTRATION("Concentration", Operator.OperatorType.NUMERIC, DISPLAYED, new SampleCalculation() {
+        CONCENTRATION("Concentration", Operator.OperatorType.NUMERIC, DISPLAYED, new ValueProvider() {
             @Override
-            public Object getSampleValue(ProductOrderSample sample) {
-                return sample.getBspDTO().getConcentration();
+            public String getValue(ProductOrderSample sample) {
+                return String.valueOf(sample.getBspDTO().getConcentration());
             }
         }),
-        FFPE("FFPE", Operator.OperatorType.BOOLEAN, DISPLAYED, new SampleCalculation() {
+        FFPE("FFPE", Operator.OperatorType.BOOLEAN, DISPLAYED, new ValueProvider() {
             @Override
-            public Object getSampleValue(ProductOrderSample sample) {
-                return sample.getBspDTO().getFfpeDerived();
+            public String getValue(ProductOrderSample sample) {
+                return String.valueOf(sample.getBspDTO().getFfpeDerived());
             }
         }),
-        MANUAL("Manual", Operator.OperatorType.BOOLEAN, NOT_DISPLAYED, new SampleCalculation() {
+        MANUAL("Manual", Operator.OperatorType.BOOLEAN, NOT_DISPLAYED, new ValueProvider() {
             @Override
-            public Object getSampleValue(ProductOrderSample sample) {
-                return true;
+            public String getValue(ProductOrderSample sample) {
+                // Manual is used for manually failing a sample.
+                return String.valueOf(true);
             }
         }),
-        TOTAL_DNA("Total DNA", Operator.OperatorType.NUMERIC, DISPLAYED, new SampleCalculation() {
+        TOTAL_DNA("Total DNA", Operator.OperatorType.NUMERIC, DISPLAYED, new ValueProvider() {
             @Override
-            public Object getSampleValue(ProductOrderSample sample) {
-                return sample.getBspDTO().getTotal();
+            public String getValue(ProductOrderSample sample) {
+                return String.valueOf(sample.getBspDTO().getTotal());
             }
         });
 
         private final Operator.OperatorType operatorType;
         private final String label;
-        private final SampleCalculation calculation;
+        private final ValueProvider valueProvider;
         private final boolean isDisplayed;
 
-        RiskCriteriaType(String label, Operator.OperatorType operatorType, boolean isDisplayed, SampleCalculation calculation) {
+        RiskCriteriaType(String label, Operator.OperatorType operatorType, boolean isDisplayed, ValueProvider valueProvider) {
             this.label = label;
             this.operatorType = operatorType;
-            this.calculation = calculation;
+            this.valueProvider = valueProvider;
             this.isDisplayed = isDisplayed;
-        }
-
-        public Object getSampleValue(ProductOrderSample sample) {
-            return calculation.getSampleValue(sample);
         }
 
         public String getLabel() {
@@ -158,7 +156,7 @@ public class RiskCriteria {
         }
 
         public boolean getRiskStatus(ProductOrderSample sample, Operator operator, String value) {
-            return calculation.calculateRiskStatus(sample, operator, value);
+            return operator.apply(valueProvider.getValue(sample), value);
         }
 
         public List<Operator> getOperators() {
@@ -176,11 +174,7 @@ public class RiskCriteria {
         }
     }
 
-    public static abstract class SampleCalculation {
-        boolean calculateRiskStatus(ProductOrderSample sample, Operator operator, String value) {
-            return operator.apply(getSampleValue(sample).toString(), value);
-        }
-
-        public abstract Object getSampleValue(ProductOrderSample sample);
+    public abstract static class ValueProvider implements Serializable {
+        public abstract String getValue(ProductOrderSample sample);
     }
 }

@@ -9,6 +9,56 @@
 
     <script type="text/javascript">
         $(document).ready(function () {
+            if (${showCheckboxes}) {
+                $j('#vesselList').dataTable({
+                    "oTableTools":ttExportDefines,
+                    "aaSorting":[
+                        [4, 'asc']
+                    ],
+                    "aoColumns":[
+                        {"bSortable":false},
+                        {"bSortable":false},
+                        {"bSortable":false},
+                        {"bSortable":false},
+                        {"bSortable":true},
+                        {"bSortable":true, "sType":"numeric"},
+                        {"bSortable":true},
+                        {"bSortable":true, "sType":"numeric"},
+                        {"bSortable":true, "sType":"numeric"},
+                        {"bSortable":true, "sType":"numeric"},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true, "sType":"date"},
+                        {"bSortable":true, "sType":"date"}
+                    ]
+                });
+            }
+            else {
+                $j('#vesselList').dataTable({
+                    "oTableTools":ttExportDefines,
+                    "aaSorting":[
+                        [3, 'asc']
+                    ],
+                    "aoColumns":[
+                        {"bSortable":false},
+                        {"bSortable":false},
+                        {"bSortable":false},
+                        {"bSortable":true},
+                        {"bSortable":true, "sType":"numeric"},
+                        {"bSortable":true},
+                        {"bSortable":true, "sType":"numeric"},
+                        {"bSortable":true, "sType":"numeric"},
+                        {"bSortable":true, "sType":"numeric"},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true, "sType":"date"},
+                        {"bSortable":true, "sType":"date"}
+                    ]
+                });
+            }
+
             $j('.vessel-checkbox').enableCheckboxRangeSelection({
                 checkAllClass:'vessel-checkAll',
                 countDisplayClass:'vessel-checkedCount',
@@ -34,7 +84,7 @@
         }
 
     </script>
-    <table id="productOrderList" class="table simple">
+    <table id="vesselList" class="table simple">
         <thead>
         <tr>
             <c:if test="${showCheckboxes}">

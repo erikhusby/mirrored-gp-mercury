@@ -120,14 +120,17 @@ public abstract class LabVessel implements Serializable {
     private Set<MercurySample> mercurySamples = new HashSet<MercurySample>();
 
     // todo jmt set these fields db-free
-    @OneToMany(mappedBy = "sourceVessel")
+    @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsSource = new HashSet<VesselToVesselTransfer>();
 
-    @OneToMany(mappedBy = "targetLabVessel")
+    @OneToMany(mappedBy = "targetLabVessel", cascade = CascadeType.PERSIST)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsTarget = new HashSet<VesselToVesselTransfer>();
 
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "reworkedLabVessels")
     private Set<Rework> reworks = new HashSet<Rework>();
+
+    @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
+    private Set<LabMetric> labMetrics = new HashSet<LabMetric>();
 
     protected LabVessel(String label) {
         createdOn = new Date();
@@ -162,12 +165,13 @@ public abstract class LabVessel implements Serializable {
         return label;
     }
 
-    public void addMetric(LabMetric m) {
-        throw new RuntimeException("I haven't been written yet.");
+    public void addMetric(LabMetric labMetric) {
+        labMetrics.add(labMetric);
+        labMetric.setLabVessel(this);
     }
 
-    public Collection<LabMetric> getMetrics() {
-        throw new RuntimeException("I haven't been written yet.");
+    public Set<LabMetric> getMetrics() {
+        return labMetrics;
     }
 
     /**
@@ -209,12 +213,12 @@ public abstract class LabVessel implements Serializable {
      * only have metrics for a single container--and
      * no transfer graph.
      *
-     * @param metricName
+     * @param metricType
      * @param searchMode
      * @param sampleInstance
      * @return
      */
-    public LabMetric getMetric(LabMetric.MetricName metricName, MetricSearchMode searchMode,
+    public LabMetric getMetric(LabMetric.MetricType metricType, MetricSearchMode searchMode,
                                SampleInstance sampleInstance) {
         throw new RuntimeException("I haven't been written yet.");
     }

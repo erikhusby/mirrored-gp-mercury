@@ -93,7 +93,7 @@ public class ProductOrderSample implements Serializable {
         for (RiskCriteria criterion : productOrder.getProduct().getRiskCriteriaList()) {
             // If this is on risk, then create a risk item for it and add it in
             if (criterion.onRisk(this)) {
-                riskItems.add(new RiskItem(criterion, new Date(), criterion.getSampleValue(this).toString()));
+                riskItems.add(new RiskItem(criterion, new Date(), criterion.getValueProvider().getValue(this)));
             }
         }
 
@@ -104,10 +104,9 @@ public class ProductOrderSample implements Serializable {
         }
     }
 
-    public void setManualOnRisk(String comment) {
+    public void setManualOnRisk(RiskCriteria criterion, String value, String comment) {
         riskItems.clear();
-        RiskCriteria criterion = RiskCriteria.createManual();
-        riskItems.add(new RiskItem(criterion, new Date(), "", comment));
+        riskItems.add(new RiskItem(criterion, new Date(), value, comment));
     }
 
     public static enum DeliveryStatus implements StatusType {
@@ -115,7 +114,7 @@ public class ProductOrderSample implements Serializable {
         DELIVERED("Delivered"),
         ABANDONED("Abandoned");
 
-        private String displayName;
+        private final String displayName;
 
         DeliveryStatus(String displayName) {
             this.displayName = displayName;

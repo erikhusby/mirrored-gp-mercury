@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.control.labevent;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -16,7 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.InvalidMolecular
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.PartiallyProcessedLabEventCache;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.JiraCommentUtil;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
@@ -35,19 +36,19 @@ public class LabEventHandler implements Serializable {
         ERROR /* further refine to "out of order", "bad molecular envelope", critical, warning, etc. */
     }
 
-    PartiallyProcessedLabEventCache unanchored;
+    private PartiallyProcessedLabEventCache unanchored;
 
-    PartiallyProcessedLabEventCache invalidMolecularState;
-
-    @Inject
-    Event<Billable> billableEvents;
+    private PartiallyProcessedLabEventCache invalidMolecularState;
 
     @Inject
-    QuoteService quoteService;
+    private Event<Billable> billableEvents;
 
-    WorkflowLoader workflowLoader;
+    @Inject
+    private QuoteService quoteService;
 
-    AthenaClientService athenaClientService;
+    private WorkflowLoader workflowLoader;
+
+    private AthenaClientService athenaClientService;
 
     private BSPUserList bspUserList;
 
@@ -57,6 +58,9 @@ public class LabEventHandler implements Serializable {
 
 
     private static final Log LOG = LogFactory.getLog(LabEventHandler.class);
+
+    @Inject
+    private JiraCommentUtil jiraCommentUtil;
 
     LabEventHandler() {
     }
@@ -137,8 +141,23 @@ public class LabEventHandler implements Serializable {
         // and leave the override processing for on-the-fly work in VesselContainer
         //processProjectPlanOverrides(labEvent, workflow);
 
-        JiraCommentUtil.postUpdate(labEvent.getLabEventType().getName() + " Event Applied", null,
-                labEvent.getAllLabVessels());
+        String message = "";
+        if(bspUserList != null) {
+            BspUser bspUser = bspUserList.getById(labEvent.getEventOperator());
+            if(bspUser != null) {
+                message += bspUser.getUsername() + " ran ";
+            }
+        }
+        message += labEvent.getLabEventType().getName() + " for " + labEvent.getAllLabVessels().iterator().next().getLabel() +
+                " on " + labEvent.getEventLocation() + " at " + labEvent.getEventDate();
+        if (jiraCommentUtil != null) {
+            try {
+                jiraCommentUtil.postUpdate(message, labEvent.getAllLabVessels());
+            } catch (Exception e) {
+                // This is not fatal, so don't rethrow
+                LOG.error("Failed to update JIRA", e);
+            }
+        }
         try {
             labEvent.applyMolecularStateChanges();
             enqueueForPostProcessing(labEvent);
