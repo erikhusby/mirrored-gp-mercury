@@ -14,11 +14,16 @@ import javax.annotation.Nonnull;
 import javax.net.ssl.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.MultivaluedMap;
+import javax.ws.rs.core.Response;
 import java.io.*;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
+
+import static javax.ws.rs.core.Response.Status.ACCEPTED;
+import static javax.ws.rs.core.Response.Status.OK;
 
 public abstract class AbstractJerseyClientService implements Serializable {
 
@@ -198,10 +203,14 @@ public abstract class AbstractJerseyClientService implements Serializable {
             InputStream is = clientResponse.getEntityInputStream();
             BufferedReader rdr = new BufferedReader(new InputStreamReader(is));
 
-            if (clientResponse.getStatus() / 100 != 2) {
+            Response.Status clientResponseStatus = Response.Status.fromStatusCode(clientResponse.getStatus());
+
+            // Per http://developer.yahoo.com/social/rest_api_guide/http-response-codes.html, BSP should properly be
+            // returning a 202 ACCEPTED response for this POST, but in actuality it returns a 200 OK.  I'm allowing
+            // for both in the event that the BSP server's behavior is ever corrected.
+            if (!EnumSet.of(ACCEPTED, OK).contains(clientResponseStatus)) {
                 logger.error("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
                 return;
-                // throw new RuntimeException("response code " + clientResponse.getStatus() + ": " + rdr.readLine());
             }
 
             // skip header line
