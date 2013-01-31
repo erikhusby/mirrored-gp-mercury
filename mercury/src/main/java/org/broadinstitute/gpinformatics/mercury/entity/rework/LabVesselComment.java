@@ -24,7 +24,7 @@ import java.util.List;
 @Entity
 @Audited
 @Table(schema = "mercury", name = "lv_comment")
-public class LabVesselComment<RapSheetEntryType> {
+public class LabVesselComment<T extends RapSheetEntry> {
     @SuppressWarnings("UnusedDeclaration")
     @Id
     @SequenceGenerator(name = "SEQ_LV_COMMENT", schema = "mercury", sequenceName = "SEQ_LV_COMMENT")
@@ -44,8 +44,9 @@ public class LabVesselComment<RapSheetEntryType> {
     private LabVessel labVessel;
 
     @NotNull
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "labVesselComment")
-    private List<RapSheetEntryType> rapSheetEntries;
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, targetEntity = RapSheetEntry.class,
+            mappedBy = "labVesselComment")
+    private List<T> rapSheetEntries;
 
     @NotNull
     @Temporal(TemporalType.DATE)
@@ -55,7 +56,7 @@ public class LabVesselComment<RapSheetEntryType> {
     }
 
     public LabVesselComment(LabEvent labEvent, LabVessel labVessel, String comment,
-                            List<RapSheetEntryType> rapSheetEntries) {
+                            List<T> rapSheetEntries) {
         this.labEvent = labEvent;
         this.comment = comment;
         this.labVessel = labVessel;
@@ -99,11 +100,11 @@ public class LabVesselComment<RapSheetEntryType> {
         this.labVessel = labVessel;
     }
 
-    public List<RapSheetEntryType> getRapSheetEntries() {
+    public List<T> getRapSheetEntries() {
         return rapSheetEntries;
     }
 
-    public void setRapSheetEntries(List<RapSheetEntryType> rapSheetEntries) {
+    public void setRapSheetEntries(List<T> rapSheetEntries) {
         this.rapSheetEntries = rapSheetEntries;
     }
 }
