@@ -2378,4 +2378,9 @@
                                  referencedTableSchemaName="mercury"
                                  referencedTableName="rev_info" referencedColumnNames="rev_info_id"/>
     </changeSet>
+
+    <changeSet id="GPLIM-69-1" author="hrafal">
+        <modifyDataType tableName="risk_criteria_aud" schemaName="athena" columnName="value" newDataType="varchar(255)"/>
+    </changeSet>
+
 </databaseChangeLog>

@@ -93,7 +93,7 @@ public class ProductOrderSample implements Serializable {
         for (RiskCriteria criterion : productOrder.getProduct().getRiskCriteriaList()) {
             // If this is on risk, then create a risk item for it and add it in
             if (criterion.onRisk(this)) {
-                riskItems.add(new RiskItem(criterion, new Date(), criterion.getSampleValue(this).toString()));
+                riskItems.add(new RiskItem(criterion, new Date(), criterion.getValueProvider().getValue(this)));
             }
         }
 
@@ -104,10 +104,9 @@ public class ProductOrderSample implements Serializable {
         }
     }
 
-    public void setManualOnRisk(String comment) {
+    public void setManualOnRisk(RiskCriteria criterion, String value, String comment) {
         riskItems.clear();
-        RiskCriteria criterion = RiskCriteria.createManual();
-        riskItems.add(new RiskItem(criterion, new Date(), "", comment));
+        riskItems.add(new RiskItem(criterion, new Date(), value, comment));
     }
 
     public static enum DeliveryStatus implements StatusType {
@@ -201,12 +200,15 @@ public class ProductOrderSample implements Serializable {
             if (isInBspFormat()) {
                 BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
                 bspDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(getSampleName());
-            } else {
-                // not BSP format, but we still need a semblance of a BSP DTO
-                bspDTO = BSPSampleDTO.DUMMY;
+                if (bspDTO == null) {
+                    // not BSP sample exists with this name, but we still need a semblance of a BSP DTO
+                    bspDTO = BSPSampleDTO.DUMMY;
+                }
             }
+
             hasBspDTOBeenInitialized = true;
         }
+
         return bspDTO;
     }
 
@@ -230,6 +232,7 @@ public class ProductOrderSample implements Serializable {
         if (bspDTO == null) {
             throw new NullPointerException("BSP Sample DTO cannot be null");
         }
+
         this.bspDTO = bspDTO;
         hasBspDTOBeenInitialized = true;
     }

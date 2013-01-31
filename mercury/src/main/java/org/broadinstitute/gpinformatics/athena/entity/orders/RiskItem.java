@@ -50,9 +50,7 @@ public class RiskItem {
     }
 
     public RiskItem(RiskCriteria riskCriteria, Date occurredDate, String comparedValue, String comment) {
-        this.riskCriteria = riskCriteria;
-        this.occurredDate = occurredDate;
-        this.comparedValue = comparedValue;
+        this(riskCriteria, occurredDate, comparedValue);
         this.remark = comment;
     }
 
@@ -89,6 +87,12 @@ public class RiskItem {
     }
 
     public String getInformation() {
+
+        // If the criteria is null, then set empty
+        if (riskCriteria == null) {
+            return "";
+        }
+
         String comment =
             StringUtils.isBlank(remark) ? "" : MessageFormat.format("with comment: {0}", remark);
 

@@ -6,34 +6,24 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.orders.ProductOrderSampleHistoryActionBean"/>
 <script type="text/javascript">
     $j(document).ready(function () {
-        $j('#sampleListView').dataTable({
+        $j('#pdoSampleListView').dataTable({
             "oTableTools":ttExportDefines,
             "aaSorting":[
-                [8, 'desc']
+                [4, 'asc']
             ],
             "aoColumns":[
                 {"bSortable":true, "sType":"date"},
-                // first event
                 {"bSortable":false},
-                // history
                 {"bSortable":true, "sType":"date"},
-                // last event
                 {"bSortable":true},
-                // duration
                 {"bSortable":true},
-                // sample name
                 {"bSortable":true},
-                // last step
                 {"bSortable":true},
-                // last process
                 {"bSortable":true}
-            ]                    // user
+            ]
         })
     });
 
-</script>
-
-<script type="text/javascript">
     $j('.sparkline').each(function (index) {
         $j(this).sparkline('html', { type:'bar', stackedBarColor:'blue', width:'300', height:'20', barWidth:'7',
                     tooltipFormat:'{{offset:offset}} {{value:value}}',
@@ -47,7 +37,7 @@
     });
 </script>
 
-<table id="sampleListView" class="table simple">
+<table id="pdoSampleListView" class="table simple">
     <thead>
     <tr>
         <th width="120">First Event Date</th>

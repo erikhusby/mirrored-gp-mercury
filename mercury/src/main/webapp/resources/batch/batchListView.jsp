@@ -4,6 +4,47 @@
     <script type="text/javascript">
 
         $(document).ready(function () {
+
+            if (${showCheckboxes}) {
+                $j('#batchListView').dataTable({
+                    "oTableTools":ttExportDefines,
+                    "aaSorting":[
+                        [2, 'asc']
+                    ],
+                    "aoColumns":[
+                        {"bSortable":false},
+                        {"bSortable":false},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true, "sType":"date"},
+                        {"bSortable":true, "sType":"date"}
+                    ]
+                });
+            }
+            else {
+                $j('#batchListView').dataTable({
+                    "oTableTools":ttExportDefines,
+                    "aaSorting":[
+                        [1, 'asc']
+                    ],
+                    "aoColumns":[
+                        {"bSortable":false},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true},
+                        {"bSortable":true, "sType":"date"},
+                        {"bSortable":true, "sType":"date"}
+                    ]
+                });
+            }
+
             $j('.batch-checkbox').enableCheckboxRangeSelection({
                 checkAllClass:'batch-checkAll',
                 countDisplayClass:'batch-checkedCount',
@@ -20,7 +61,7 @@
     <%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"--%>
     <%--@elvariable id="showCheckboxes" type="java.lang.Boolean"--%>
 
-    <table id="sampleListView" class="table simple">
+    <table id="batchListView" class="table simple">
         <thead>
         <tr>
             <c:if test="${showCheckboxes}">
@@ -32,11 +73,11 @@
             <th>Batch Name</th>
             <th>JIRA ID</th>
             <th>Is Active</th>
-            <th>Create Date</th>
             <th>Latest Event</th>
             <th>Event Location</th>
             <th>Event User</th>
             <th>Event Date</th>
+            <th>Create Date</th>
         </tr>
         </thead>
         <tbody>
@@ -71,9 +112,6 @@
                         ${batch.active}
                 </td>
                 <td>
-                    <fmt:formatDate value="${batch.createdOn}" pattern="MM/dd/yyyy"/>
-                </td>
-                <td>
                         ${batch.latestEvent.labEventType.name}
                 </td>
                 <td>
@@ -83,9 +121,11 @@
                         ${bean.getUserFullName(batch.latestEvent.eventOperator)}
                 </td>
                 <td>
-                    <fmt:formatDate value="${batch.latestEvent.eventDate}" pattern="MM/dd/yyyy"/>
+                    <fmt:formatDate value="${batch.latestEvent.eventDate}" pattern="MM/dd/yyyy HH:MM"/>
                 </td>
-
+                <td>
+                    <fmt:formatDate value="${batch.createdOn}" pattern="MM/dd/yyyy HH:MM"/>
+                </td>
             </tr>
         </c:forEach>
         </tbody>

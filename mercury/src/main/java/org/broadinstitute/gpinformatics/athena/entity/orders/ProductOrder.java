@@ -608,12 +608,12 @@ public class ProductOrder implements Serializable {
         List<BSPSampleDTO> nonNullDTOs = new ArrayList<BSPSampleDTO>();
         for (ProductOrderSample sample : getSamples()) {
             BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getSampleName());
-            if (bspSampleDTO == null) {
-                bspSampleDTO = BSPSampleDTO.DUMMY;
-            } else {
+
+            // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample
+            if (bspSampleDTO != null) {
+                sample.setBspDTO(bspSampleDTO);
                 nonNullDTOs.add(bspSampleDTO);
             }
-            sample.setBspDTO(bspSampleDTO);
         }
 
         // fill out all the non-null DTOs with FFPE status in one shot

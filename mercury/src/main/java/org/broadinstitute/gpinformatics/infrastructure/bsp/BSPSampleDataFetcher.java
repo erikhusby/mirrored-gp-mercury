@@ -51,7 +51,7 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
             Map<String, BSPSampleDTO> sampleNameToDTO = fetchSamplesFromBSP(Collections.singleton(sampleName));
 
             if (sampleNameToDTO.isEmpty()) {
-                throw new RuntimeException("Could not find " + sampleName + " in bsp.");
+                return null;
             } else if (sampleNameToDTO.size() > 1) {
                 throw new RuntimeException("Found " + sampleNameToDTO.size() + " possible matches in bsp.");
             } else {
