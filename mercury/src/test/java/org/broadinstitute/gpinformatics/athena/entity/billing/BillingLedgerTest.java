@@ -12,6 +12,8 @@ import org.testng.annotations.Test;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -22,8 +24,19 @@ import java.util.Date;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BillingLedgerTest {
 
+    private static final DateFormat formatter = new SimpleDateFormat("MM/dd/yy");
 
-    private DateFormat formatter = new SimpleDateFormat("MM/dd/yy");
+    private static final Map<String, ProductOrderSample> sampleMap = new HashMap<String, ProductOrderSample>();
+
+    // Use a factory to create samples, so identical samples map to the same object.
+    private static ProductOrderSample createSample(String sampleName) {
+        ProductOrderSample sample = sampleMap.get(sampleName);
+        if (sample == null) {
+            sample = new ProductOrderSample(sampleName);
+            sampleMap.put(sampleName, sample);
+        }
+        return sample;
+    }
 
     public static BillingLedger createOneBillingLedger(String sampleName, String priceItemName, double quantity ) {
         return createOneBillingLedger( sampleName, priceItemName, quantity, null );
@@ -31,18 +44,17 @@ public class BillingLedgerTest {
 
     public static BillingLedger createOneBillingLedger(String sampleName, String priceItemName, double quantity, Date workCompleteDate ) {
 
-        BillingLedger billingLedger = new BillingLedger( new ProductOrderSample(sampleName),
+        return new BillingLedger( createSample(sampleName),
                 new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, quantity );
-        return billingLedger;
     }
 
     @Test
     public void testEquals() throws Exception {
 
-        final Date date1 = formatter.parse("12/5/12");
-        final Date date2 = formatter.parse("12/6/12");
-        final String priceItemName1 = "DNA Extract from Blood";
-        final String priceItemName2 = "DNA Extract from Tissue";
+        Date date1 = formatter.parse("12/5/12");
+        Date date2 = formatter.parse("12/6/12");
+        String priceItemName1 = "DNA Extract from Blood";
+        String priceItemName2 = "DNA Extract from Tissue";
 
         BillingLedger billingLedger1 = BillingLedgerTest.createOneBillingLedger("SM-3KBZD",
                 priceItemName1, 1, date1);
@@ -71,8 +83,5 @@ public class BillingLedgerTest {
         new BeanTester().testBean(BillingLedger.class);
         new EqualsMethodTester().testEqualsMethod(BillingLedger.class, "billingMessage", "quantity");
         new HashCodeMethodTester().testHashCodeMethod(BillingLedger.class);
-
     }
-
-
 }
