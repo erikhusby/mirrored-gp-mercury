@@ -13,6 +13,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.rework;
 
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
@@ -57,15 +58,17 @@ public class RapSheet {
         rapSheetEntry.setRapSheet(this);
     }
 
-    public void addRework(ReworkReason reworkReason, ReworkLevel reworkLevel, LabEventType reworkStep) {
-        final RapSheetEntry rapSheetEntry = new ReworkEntry(reworkReason, reworkLevel, reworkStep);
-        getRapSheetEntries().add(rapSheetEntry);
-        rapSheetEntry.setRapSheet(this);
+    public ReworkEntry addRework(ReworkReason reworkReason, ReworkLevel reworkLevel, LabEventType reworkStep,VesselPosition vesselPosition, MercurySample mercurySample) {
+        LabVesselPosition labVesselPosition=new LabVesselPosition(vesselPosition,mercurySample);
+        final ReworkEntry reworkEntry = new ReworkEntry(this,reworkReason, reworkLevel, reworkStep,labVesselPosition);
+        getRapSheetEntries().add(reworkEntry);
+        this.setSample(mercurySample);
+        reworkEntry.setRapSheet(this);
+        return reworkEntry;
     }
 
     public void setSample(MercurySample sample) {
-        this.samples.clear();
-        this.samples.add(sample);
+        getSamples().add(0,sample);
     }
 
     public void setSamples(List<MercurySample> samples) {
@@ -76,10 +79,13 @@ public class RapSheet {
     }
 
     public MercurySample getSample() {
-        return samples.get(0);
+        return getSamples().get(0);
     }
 
     private List<MercurySample> getSamples() {
+        if (samples==null) {
+            samples=new ArrayList<MercurySample>(1);
+        }
         return samples;
     }
 

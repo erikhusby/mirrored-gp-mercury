@@ -24,7 +24,7 @@ import java.util.List;
 @Entity
 @Audited
 @Table(schema = "mercury", name = "lv_comment")
-public class LabVesselComment {
+public class LabVesselComment<RapSheetEntryType> {
     @SuppressWarnings("UnusedDeclaration")
     @Id
     @SequenceGenerator(name = "SEQ_LV_COMMENT", schema = "mercury", sequenceName = "SEQ_LV_COMMENT")
@@ -45,7 +45,7 @@ public class LabVesselComment {
 
     @NotNull
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY, mappedBy = "labVesselComment")
-    private List<RapSheetEntry> rapSheetEntries;
+    private List<RapSheetEntryType> rapSheetEntries;
 
     @NotNull
     @Temporal(TemporalType.DATE)
@@ -55,7 +55,7 @@ public class LabVesselComment {
     }
 
     public LabVesselComment(LabEvent labEvent, LabVessel labVessel, String comment,
-                            List<RapSheetEntry> rapSheetEntries) {
+                            List<RapSheetEntryType> rapSheetEntries) {
         this.labEvent = labEvent;
         this.comment = comment;
         this.labVessel = labVessel;
@@ -99,11 +99,11 @@ public class LabVesselComment {
         this.labVessel = labVessel;
     }
 
-    public List<RapSheetEntry> getRapSheetEntries() {
+    public List<RapSheetEntryType> getRapSheetEntries() {
         return rapSheetEntries;
     }
 
-    public void setRapSheetEntries(List<RapSheetEntry> rapSheetEntries) {
+    public void setRapSheetEntries(List<RapSheetEntryType> rapSheetEntries) {
         this.rapSheetEntries = rapSheetEntries;
     }
 }

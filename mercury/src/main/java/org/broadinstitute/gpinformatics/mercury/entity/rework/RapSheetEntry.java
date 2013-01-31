@@ -43,8 +43,9 @@ public abstract class RapSheetEntry {
     public RapSheetEntry() {
     }
 
-    public RapSheetEntry(RapSheet rapSheet) {
+    public RapSheetEntry(RapSheet rapSheet,LabVesselPosition labVesselPosition) {
         this.rapSheet = rapSheet;
+        this.labVesselPosition = labVesselPosition;
     }
 
     public RapSheet getRapSheet() {

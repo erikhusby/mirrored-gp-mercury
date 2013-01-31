@@ -38,7 +38,9 @@ public class ReworkEntry extends RapSheetEntry {
     @Enumerated(EnumType.STRING)
     private LabEventType reworkStep;
 
-    public ReworkEntry(ReworkReason reworkReason, ReworkLevel reworkLevel, LabEventType reworkStep) {
+    public ReworkEntry(RapSheet rapSheet, ReworkReason reworkReason, ReworkLevel reworkLevel, LabEventType reworkStep,
+                       LabVesselPosition labVesselPosition) {
+        super(rapSheet, labVesselPosition);
         this.reworkReason = reworkReason;
         this.reworkLevel = reworkLevel;
         this.reworkStep = reworkStep;
@@ -47,11 +49,6 @@ public class ReworkEntry extends RapSheetEntry {
     public ReworkEntry() {
 
     }
-
-    public static LabVesselComment addRework(LabEvent event, String comment, List<RapSheetEntry> rework) {
-        return new LabVesselComment(event, event.getInPlaceLabVessel(), comment, rework);
-    }
-
 
     public ReworkReason getReworkReason() {
         return reworkReason;
