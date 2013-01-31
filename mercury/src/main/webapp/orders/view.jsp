@@ -130,9 +130,8 @@
                 var numChecked = $("input.shiftCheckbox:checked").size();
                 if (numChecked) {
                     $j("#dialogAction").attr("name", "setRisk");
-                    $j("#riskDialog").dialog("open")
-                                     .dialog("option", "width", 600)
-                                     .dialog("option", "title", "Manually Update Risk (" + numChecked + " selected)");
+                    $j("#selectedCountId").text(numChecked);
+                    $j("#riskDialog").dialog("open").dialog("option", "width", 600);
                 } else {
                     $j("#noneSelectedDialogMessage").text("Update Risk");
                     $j("#noneSelectedDialog").dialog("open");
@@ -161,19 +160,13 @@
     </div>
 
     <div id="riskDialog" style="width:600px;">
+        <p>Manually Update Risk (<span id="selectedCountId"> </span> selected)</p>
         <p><span style="float:left; width:185px;">Update status to:</span>
             <input type="radio" id="onRiskDialogId" name="riskRadio" value="true" checked="checked" style="float:left;margin-right:5px;">
             <label style="float:left;width:60px;" for="onRiskDialogId">On Risk</label>
             <input type="radio" id="notOnRiskDialogId" name="riskRadio" value="false" style="float:left;margin-right:5px;">
             <label style="float:left;margin-right:10px;width:auto;" for="notOnRiskDialogId">Not On Risk</label>
-        <p style="clear:both">
-            <span style="float:left; width:185px;">Update Selected Samples:</span>
-            <input type="radio" id="allDialogId" name="sampleRadio" value="false" checked="checked" style="float:left;margin-right:5px;">
-            <label style="float:left;width:60px;" for="allDialogId">All</label>
-            <input type="radio" id="onlyNewDialogId" name="sampleRadio" value="true" style="float:left;margin-right:5px;">
-            <label style="float:left;margin-right:10px;width:auto;" for="onlyNewDialogId">Newly Added (never calculated)</label>
-        </p>
-
+            <input type="hidden" id="allDialogId" name="sampleRadio" value="false">
         <p style="clear:both">
             Comment:
         </p>
