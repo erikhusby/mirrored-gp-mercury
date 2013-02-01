@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
+import org.broadinstitute.gpinformatics.mercury.entity.rework.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.rework.ReworkLevel;
 import org.broadinstitute.gpinformatics.mercury.entity.rework.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -16,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.testng.Assert;
 import org.testng.annotations.*;
 
 import javax.inject.Inject;
@@ -84,16 +86,7 @@ public class ReworkTest extends ContainerTest {
             sampleInstances = testTube.getSampleInstancesList();
         }
 
-//        Set<MercurySample> samplesToRework = new HashSet<MercurySample>();
-//        samplesToRework.add(getRandomSample(sampleInstances).getStartingSample());
         MercurySample startingSample = getRandomSample(sampleInstances).getStartingSample();
-//        samplesToRework.add(startingSample);
-
-//        for (MercurySample mercurySample : samplesToRework) {
-//            mercurySample.reworkSample(ReworkReason.MACHINE_ERROR,
-//                    ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH, pondEntichmentEvent,
-//                    pondEntichmentEvent.getLabEventType(), testTube, vesselPosition, "");
-//        }
         startingSample.reworkSample(ReworkReason.MACHINE_ERROR,
                 ReworkLevel.ONE_SAMPLE_RELEASE_REST_BATCH, pondEntichmentEvent,
                 pondEntichmentEvent.getLabEventType(), testTube, vesselPosition, "");
@@ -101,6 +94,21 @@ public class ReworkTest extends ContainerTest {
         mercurySampleDao.persist(startingSample);
         mercurySampleDao.flush();
 
+        final ReworkEntry rapSheetEntry = (ReworkEntry)startingSample.getRapSheet().getRapSheetEntries().get(0);
+        Assert.assertNotNull(rapSheetEntry.getLabVesselComment().getLabEvent(), "Lab event is required.");
+        Assert.assertNotNull(rapSheetEntry.getLabVesselComment().getLabVessel(), "Lab Vessel is required.");
+        Assert.assertNotNull(rapSheetEntry.getLabVesselComment().getRapSheetEntries(),
+                "Rap Sheet Entries should not be null.");
+        Assert.assertFalse(rapSheetEntry.getLabVesselComment().getRapSheetEntries().isEmpty(),
+                "Should have some Rap Sheet Entries.");
+        Assert.assertTrue(rapSheetEntry.getLabVesselComment().getRapSheetEntries().get(0) instanceof ReworkEntry,
+                "Entry should be ReworkEntry.");
+
+        Assert.assertNotNull(rapSheetEntry.getReworkLevel(), "ReworkLevel cannot be null.");
+        Assert.assertNotNull(rapSheetEntry.getReworkReason(), "ReworkReason cannot be null.");
+        Assert.assertNotNull(rapSheetEntry.getReworkStep(), "getReworkStep cannot be null.");
+        Assert.assertNotNull(rapSheetEntry.getRapSheet(), "rework.getRapSheet cannot be null.");
+        Assert.assertNotNull(rapSheetEntry.getRapSheet().getSample(), "RapSheet.sample cannot be null.");
 
     }
 
