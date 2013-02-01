@@ -112,8 +112,27 @@ public class LabBatchDbTest extends ContainerTest {
         List<String> lcSets = new ArrayList<String>();
         // PDO-135, C19F5ACXX
         lcSets.add("LCSET-2519");
-        // PDO-183, D1JN1ACXX
+        // D1JNDACXX, WR 34532, LCSET-2588, PDO-183
         lcSets.add("LCSET-2588");
+        // C1E2VACXX, WR 34473, LCSET-2578, 2 samples from GBM PDO-173, 88 samples from PDO-183, 2 samples Kantoff from PDO-181
+        // C1E35ACXX, WR 34131, LCSET-2508, PDO-74
+        // C1E3NACXX, WR 34130, LCSET-2507, PDO-74
+        // C1EAAACXX, WR 34130, 34131
+        // C1EAHACXX, WR 34473, LCSET-2578, ..., WR 34474, LCSET-2582, 76 samples from PDO-183 Black Fan Anemia, 14 samples from PDO-173 GBM, 2 samples from PDO-181 Kantoff Resistance
+        // C1EE5ACXX, WR 34474, LCSET-2582, 76 samples from PDO-183 Black Fan Anemia, 14 samples from PDO-173 GBM, 2 samples from PDO-181 Kantoff Resistance
+        // C1EK8ACXX, WR 34474, LCSET-2582, 76 samples from PDO-183 Black Fan Anemia, 14 samples from PDO-173 GBM, 2 samples from PDO-181 Kantoff Resistance
+        // C1ETHACXX, WR 34033, LCSET-2492, PDO-82 TCGA Bladder Cancer Duplex Redos Batch 195, 235, Request Created - null, Product Order - null PDO-83 TCGA Head and Neck Duplex Redos Batch 107, 188, 190, 215, 54, 83, Work Request Created - null, Product Order - null PDO-84 TCGA Kidney Clear Cell Duplex Redos Batch 32, 68, 69, 70, Work Request Created - null, Product Order - null PDO-86 TCGA Low Grade Glioma Duplex Redos Batch 78, 163, Work Request Created - null, Product Order - null PDO-87 TCGA Lung Adenocarcinoma Duplex Redos Batch 119, 166, 183, 222, 232, 58
+        // C1EU9ACXX, WR 34037, 34135
+        // D1DUTACXX, WR 34271, LCSET-2519...
+        // D1J6MACXX, WR 34190, LCSET-2521, PDO-74
+        // D1JP2ACXX, WR 34130, LCSET-2507...
+        // D1JPLACXX
+        // D1JRRACXX
+        // D1JYWACXX
+        // D1K4LACXX
+        // D1K54ACXX
+        // D1K5DACXX
+        // D1K7DACXD
 
         for (String lcSet : lcSets) {
             LabBatch labBatch = labBatchDAO.findByBusinessKey(lcSet);
