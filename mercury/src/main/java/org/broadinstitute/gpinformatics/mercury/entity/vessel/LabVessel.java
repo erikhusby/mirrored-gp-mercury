@@ -233,7 +233,14 @@ public abstract class LabVessel implements Serializable {
 
     //Utility method for getting containers as a list so they can be displayed in a display table column
     public List<VesselContainer<?>> getContainerList() {
-        return new ArrayList<VesselContainer<?>>(getContainers());
+        List<VesselContainer<?>> vesselContainers = new ArrayList<VesselContainer<?>>(getContainers());
+        Collections.sort(vesselContainers, new Comparator<VesselContainer<?>>() {
+            @Override
+            public int compare(VesselContainer<?> o1, VesselContainer<?> o2) {
+                return o1.getEmbedder().getCreatedOn().compareTo(o2.getEmbedder().getCreatedOn());
+            }
+        });
+        return vesselContainers;
     }
 
     public Set<VesselContainer<?>> getContainers() {

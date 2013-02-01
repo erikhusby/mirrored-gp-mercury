@@ -1,9 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
@@ -73,5 +71,14 @@ public class CherryPickTransfer extends VesselTransfer {
 
     public LabEvent getLabEvent() {
         return labEvent;
+    }
+
+    /**
+     * Constructs a string this is likely to be unique for this transfer
+     * @return concatenation of key fields
+     */
+    public String getKey() {
+        return sourceVessel.getLabel() + "|" + sourcePosition + "|" + targetVessel.getLabel() + "|" +
+                targetPosition;
     }
 }
