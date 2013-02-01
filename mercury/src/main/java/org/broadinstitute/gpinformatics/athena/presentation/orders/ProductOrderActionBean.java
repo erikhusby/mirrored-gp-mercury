@@ -137,7 +137,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
     private String productOrder;
 
-    private long sampleId;
+    private long sampleIdForGetBspData;
 
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
@@ -153,7 +153,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<ProductOrder> selectedProductOrders;
 
     @Validate(required = true, on = {ABANDON_SAMPLES_ACTION, DELETE_SAMPLES_ACTION})
-    private List<Integer> selectedProductOrderSampleIndices;
+    private List<Long> selectedProductOrderSampleIds;
+    private List<ProductOrderSample> selectedProductOrderSamples;
 
     private String quoteIdentifier;
 
@@ -555,9 +556,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getBspData")
     public Resolution getBspData() throws Exception {
-        JSONArray itemList = new JSONArray();
-
-        ProductOrderSample sample = sampleDao.findById(ProductOrderSample.class, sampleId);
+        ProductOrderSample sample = sampleDao.findById(ProductOrderSample.class, sampleIdForGetBspData);
 
         JSONObject item = new JSONObject();
 
@@ -592,16 +591,31 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @ValidationMethod(on = "deleteSamples")
-    public void validateDeleteSamples() {
-        if ((selectedProductOrderSampleIndices == null) || selectedProductOrderSampleIndices.isEmpty()) {
-            addGlobalValidationError("You must select at least one sample to delete");
+    @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK}, priority = 0)
+    public void validateSampleListOperation() {
+        if (selectedProductOrderSampleIds != null) {
+            selectedProductOrderSamples = new ArrayList<ProductOrderSample>(selectedProductOrderSampleIds.size());
+            for (ProductOrderSample sample : editOrder.getSamples()) {
+                if (selectedProductOrderSampleIds.contains(sample.getProductOrderSampleId())) {
+                    selectedProductOrderSamples.add(sample);
+                }
+            }
+        } else {
+            selectedProductOrderSamples = Collections.emptyList();
         }
-        List<ProductOrderSample> samples =
-                productOrderSampleDao.findByOrderAndIndex(editOrder, selectedProductOrderSampleIndices);
+    }
 
+    @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION}, priority = 1)
+    public void validateDeleteOrAbandonOperation() {
+        if (selectedProductOrderSamples.isEmpty()) {
+            addGlobalValidationError("You must select at least one sample.");
+        }
+    }
+
+    @ValidationMethod(on = DELETE_SAMPLES_ACTION, priority = 2)
+    public void validateDeleteSamplesOperation() {
         // Report an error if any sample has billing data associated with it.
-        for (ProductOrderSample sample : samples) {
+        for (ProductOrderSample sample : selectedProductOrderSamples) {
             if (!sample.getLedgerItems().isEmpty()) {
                 addGlobalValidationError("Cannot delete sample {2} because billing has started.",
                         sample.getSampleName());
@@ -611,29 +625,22 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent(DELETE_SAMPLES_ACTION)
     public Resolution deleteSamples() throws Exception {
-        // Modify sample list, removing the requested samples.
-        List<String> sampleNames = new ArrayList<String>(selectedProductOrderSampleIndices.size());
-        for (Iterator<ProductOrderSample> samples = editOrder.getSamples().iterator(); samples.hasNext();) {
-            ProductOrderSample sample = samples.next();
-            if (selectedProductOrderSampleIndices.contains(sample.getSamplePosition())) {
-                samples.remove();
-                sampleNames.add(sample.getSampleName());
-            }
+        // If removeAll returns false, no samples were removed -- should never happen.
+        if (editOrder.getSamples().removeAll(selectedProductOrderSamples)) {
+            String nameList = StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ",");
+            productOrderDao.persist(editOrder);
+            addMessage("Deleted samples: {0}.", nameList);
+            JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
+            issue.addComment(MessageFormat.format("{0} deleted samples: {1}.", userBean.getLoginUserName(), nameList));
+            issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
+                    editOrder.getSampleString(),
+                    ProductOrder.TransitionStates.DeveloperEdit.getStateName());
         }
-        productOrderDao.persist(editOrder);
-        String nameList = StringUtils.join(sampleNames, ",");
-        addMessage("Deleted samples: {0}.", nameList);
-        JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
-        issue.addComment(MessageFormat.format("{0} deleted samples: {1}.", userBean.getLoginUserName(), nameList));
-        issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
-                editOrder.getSampleString(),
-                ProductOrder.TransitionStates.DeveloperEdit.getStateName());
         return createViewResolution();
     }
 
     @HandlesEvent(SET_RISK)
     public Resolution setRisk() throws Exception {
-
         // status true creates a manual item. false adds the success item, which is a null criterion
         RiskCriteria criterion;
         String value;
@@ -647,26 +654,33 @@ public class ProductOrderActionBean extends CoreActionBean {
             value = null;
         }
 
-        for (int sampleIndex : selectedProductOrderSampleIndices) {
-            editOrder.getSamples().get(sampleIndex).setManualOnRisk(criterion, value, riskComment);
+        for (ProductOrderSample sample : selectedProductOrderSamples) {
+            sample.setManualOnRisk(criterion, value, riskComment);
         }
 
         productOrderDao.persist(editOrder);
 
-        addMessage("Set manual on risk for {0} samples.", selectedProductOrderSampleIndices.size());
+        addMessage("Set manual on risk for {0} samples.", selectedProductOrderSampleIds.size());
+        JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
+        issue.addComment(MessageFormat.format("{0} set manual on risk for {1} samples.",
+                userBean.getLoginUserName(), selectedProductOrderSampleIds.size()));
         return createViewResolution();
     }
 
     @HandlesEvent(ABANDON_SAMPLES_ACTION)
     public Resolution abandonSamples() throws Exception {
-        productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSampleIndices);
-        List<String> sampleNames = new ArrayList<String>(selectedProductOrderSampleIndices.size());
-        for (ProductOrderSample sample : editOrder.getSamples()) {
-            if (selectedProductOrderSampleIndices.contains(sample.getSamplePosition())) {
-                sampleNames.add(sample.getSampleName());
+        // Handle case where user is trying to abandon samples that are already abandoned.
+        Iterator<ProductOrderSample> samples = selectedProductOrderSamples.iterator();
+        while (samples.hasNext()) {
+            ProductOrderSample sample = samples.next();
+            if (sample.getDeliveryStatus() == ProductOrderSample.DeliveryStatus.ABANDONED) {
+                samples.remove();
             }
         }
-        addMessage("Abandoned samples: {0}.", StringUtils.join(sampleNames, ","));
+        if (!selectedProductOrderSamples.isEmpty()) {
+            String nameList = StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ",");
+            productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples);
+        }
         return createViewResolution();
     }
 
@@ -693,12 +707,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.selectedProductOrderBusinessKeys = selectedProductOrderBusinessKeys;
     }
 
-    public List<Integer> getSelectedProductOrderSampleIndices() {
-        return selectedProductOrderSampleIndices;
+    public List<Long> getSelectedProductOrderSampleIds() {
+        return selectedProductOrderSampleIds;
     }
 
-    public void setSelectedProductOrderSampleIndices(List<Integer> selectedProductOrderSampleIndices) {
-        this.selectedProductOrderSampleIndices = selectedProductOrderSampleIndices;
+    public void setSelectedProductOrderSampleIds(List<Long> selectedProductOrderSampleIds) {
+        this.selectedProductOrderSampleIds = selectedProductOrderSampleIds;
     }
 
     public List<ProductOrderListEntry> getAllProductOrders() {
@@ -899,12 +913,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.researchProjectKey = researchProjectKey;
     }
 
-    public long getSampleId() {
-        return sampleId;
+    public long getSampleIdForGetBspData() {
+        return sampleIdForGetBspData;
     }
 
-    public void setSampleId(long sampleId) {
-        this.sampleId = sampleId;
+    public void setSampleIdForGetBspData(long sampleIdForGetBspData) {
+        this.sampleIdForGetBspData = sampleIdForGetBspData;
     }
 
     public String getAddSamplesText() {

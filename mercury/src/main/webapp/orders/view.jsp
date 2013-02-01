@@ -25,31 +25,49 @@
                 $j("#confirmDialog").dialog({
                     modal: true,
                     autoOpen: false,
-                    buttons: {
-                        OK: function () {
-                            $j("#orderSamplesForm").submit();
+                    buttons: [
+                        {
+                            id: "confirmOkButton",
+                            text: "OK",
+                            click: function () {
+                                $j(this).dialog("close");
+                                $j("#confirmOkButton").attr("disabled", "disabled");
+                                $j("#orderSamplesForm").submit();
+                            }
                         },
-                        Cancel: function () {
-                            $j(this).dialog("close");
+                        {
+                            text: "Cancel",
+                            click : function () {
+                                $j(this).dialog("close");
+                            }
                         }
-                    }
+                    ]
                 });
 
                 $j("#riskDialog").dialog({
                     modal: true,
                     autoOpen: false,
-                    buttons: {
-                        OK: function () {
-                            $j("#riskStatus").attr("value", $j("#onRiskDialogId").attr("checked") != undefined);
-                            $j("#onlyNew").attr("value", $j("#onlyNewDialogId").attr("checked") != undefined);
-                            $j("#riskComment").attr("value", $j("#riskCommentId").val());
+                    buttons: [
+                        {
+                            id: "riskOkButton",
+                            text: "OK",
+                            click: function () {
+                                $j(this).dialog("close");
+                                $j("#riskOkButton").attr("disabled", "disabled");
+                                $j("#riskStatus").attr("value", $j("#onRiskDialogId").attr("checked") != undefined);
+                                $j("#onlyNew").attr("value", $j("#onlyNewDialogId").attr("checked") != undefined);
+                                $j("#riskComment").attr("value", $j("#riskCommentId").val());
 
-                            $j("#orderSamplesForm").submit();
+                                $j("#orderSamplesForm").submit();
+                            }
                         },
-                        Cancel: function () {
-                            $j(this).dialog("close");
+                        {
+                            text: "Cancel",
+                            click : function () {
+                                $j(this).dialog("close");
+                            }
                         }
-                    }
+                    ]
                 });
 
                 $j("#noneSelectedDialog").dialog({
@@ -69,7 +87,7 @@
                 var sampleId = $j(sampleIdCell).attr('id').split("-")[1];
 
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getBspData=&productOrder=${actionBean.editOrder.businessKey}&sampleId=" + sampleId,
+                    url: "${ctxpath}/orders/order.action?getBspData=&productOrder=${actionBean.editOrder.businessKey}&sampleIdForGetBspData=" + sampleId,
                     dataType: 'json',
                     success: showSample
                 });
@@ -221,7 +239,7 @@
             </c:if>
         </security:authorizeBlock>
 
-    <div style="both:clear"> </div>
+        <div style="both:clear"> </div>
 
         <stripes:form action="/orders/order.action" id="orderSamplesForm" class="form-horizontal">
             <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
@@ -397,7 +415,7 @@
                         <tr>
                             <c:if test="${!actionBean.editOrder.draft}">
                                 <td>
-                                    <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderSampleIndices" value="${sample.samplePosition}"/>
+                                    <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${sample.productOrderSampleId}"/>
                                 </td>
                             </c:if>
                             <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">

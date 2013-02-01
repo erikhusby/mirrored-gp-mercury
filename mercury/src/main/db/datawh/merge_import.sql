@@ -1,7 +1,5 @@
 /*
  Does insert/update/delete to all reporting tables, using data from import tables.
- Tables are put into one of 3 groups depending on their FK dependencies.
- All tables within a grouping can be (but are not yet) processed in parallel.
 */
 CREATE OR REPLACE PROCEDURE merge_import
 IS
@@ -33,24 +31,16 @@ BEGIN
 -- Does the most dependent (FK dependency) tables first.
 ---------------------------------------------------------------------------
 
---Level 3 (depends on level 2 tables)
-
-DELETE FROM product_order_status
-WHERE product_order_id IN (
-  SELECT product_order_id FROM im_product_order_status WHERE is_delete = 'T'
+-- event_fact deletes not on the PK but on lab_event_id
+DELETE FROM event_fact
+WHERE lab_event_id IN (
+  SELECT DISTINCT lab_event_id FROM im_event_fact WHERE is_delete = 'T'
 );
 
-DELETE FROM product_order_sample_status
+UPDATE product_order_sample SET is_deleted = 'T'
 WHERE product_order_sample_id IN (
-  SELECT product_order_sample_id FROM im_product_order_sample_stat WHERE is_delete = 'T'
+  SELECT product_order_sample_id FROM im_product_order_sample WHERE is_delete = 'T'
 );
-
-DELETE FROM product_order_add_on
-WHERE product_order_add_on_id IN (
-  SELECT product_order_add_on_id FROM im_product_order_add_on WHERE is_delete = 'T'
-);
-
---Level 2 (depends only on level 1 tables)
 
 DELETE FROM research_project_status
 WHERE research_project_id IN (
@@ -77,27 +67,9 @@ WHERE research_project_irb_id IN (
   SELECT research_project_irb_id FROM im_research_project_irb WHERE is_delete = 'T'
 );
 
-DELETE FROM product_order
-WHERE product_order_id IN (
-  SELECT product_order_id FROM im_product_order WHERE is_delete = 'T'
-);
-
-DELETE FROM product_order_sample
-WHERE product_order_sample_id IN (
-  SELECT product_order_sample_id FROM im_product_order_sample WHERE is_delete = 'T'
-);
-
--- Different: not a delete on the pk
-DELETE FROM event_fact
-WHERE lab_event_id IN (
-  SELECT DISTINCT lab_event_id FROM im_event_fact WHERE is_delete = 'T'
-);
-
--- Level 1 (independent tables)
-
-DELETE FROM research_project
-WHERE research_project_id IN (
-  SELECT research_project_id FROM im_research_project WHERE is_delete = 'T'
+UPDATE product_order_add_on SET is_deleted = 'T'
+WHERE product_order_add_on_id IN (
+  SELECT product_order_add_on_id FROM im_product_order_add_on WHERE is_delete = 'T'
 );
 
 DELETE FROM price_item
@@ -105,9 +77,9 @@ WHERE price_item_id IN (
   SELECT price_item_id FROM im_price_item WHERE is_delete = 'T'
 );
 
-DELETE FROM product
-WHERE product_id IN (
-  SELECT product_id FROM im_product WHERE is_delete = 'T'
+UPDATE product_order SET is_deleted = 'T'
+WHERE product_order_id IN (
+  SELECT product_order_id FROM im_product_order WHERE is_delete = 'T'
 );
 
 DELETE FROM lab_batch
@@ -120,9 +92,14 @@ WHERE lab_vessel_id IN (
   SELECT lab_vessel_id FROM im_lab_vessel WHERE is_delete = 'T'
 );
 
-DELETE FROM workflow_config
-WHERE workflow_config_id IN (
-  SELECT workflow_config_id FROM im_workflow_config WHERE is_delete = 'T'
+DELETE FROM product
+WHERE product_id IN (
+  SELECT product_id FROM im_product WHERE is_delete = 'T'
+);
+
+DELETE FROM research_project
+WHERE research_project_id IN (
+  SELECT research_project_id FROM im_research_project WHERE is_delete = 'T'
 );
 
 COMMIT;
@@ -130,8 +107,6 @@ COMMIT;
 -----------------------------------------------------------------------------------------
 -- Updates rows when they exist in the target table, inserts rows when they do not exist.
 -----------------------------------------------------------------------------------------
-
--- Level 1 (independent tables)
 
 FOR new IN im_rp_cur LOOP
   BEGIN
@@ -348,7 +323,6 @@ FOR new IN im_workflow_config_cur LOOP
 END LOOP;
 
 
---Level 2 (depends only on level 1 tables)
 
 FOR new IN im_po_cur LOOP
   BEGIN
