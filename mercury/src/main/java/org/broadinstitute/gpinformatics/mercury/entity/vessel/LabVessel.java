@@ -376,19 +376,26 @@ public abstract class LabVessel implements Serializable {
 
     public static Collection<String> extractPdoKeyList(Collection<LabVessel> labVessels) {
 
-        Set<String> pdoNames = new HashSet<String>();
+        return extractPdoLabVesselMap(labVessels).keySet();
+    }
 
-        for (LabVessel currVessel : labVessels) {
+    public static Map<String, Set<LabVessel>> extractPdoLabVesselMap(Collection<LabVessel> labVessels) {
+
+        Map<String, Set<LabVessel>> vesselByPdoMap = new HashMap<String, Set<LabVessel>>();
+
+        for(LabVessel currVessel : labVessels) {
             Collection<String> nearestPdos = currVessel.getNearestProductOrders();
 
-            if (nearestPdos != null && !nearestPdos.isEmpty()) {
-                pdoNames.addAll(nearestPdos);
-            } else {
-                logger.error("Unable to find at least one nearest PDO for " + currVessel.getLabel());
+            for(String pdoKey: nearestPdos) {
+
+                if(!vesselByPdoMap.containsKey(pdoKey)) {
+                    vesselByPdoMap.put(pdoKey, new HashSet<LabVessel>());
+                }
+                vesselByPdoMap.get(pdoKey).add(currVessel);
             }
         }
 
-        return pdoNames;
+        return vesselByPdoMap;
     }
 
     public String getNearestLabBatchesString() {
@@ -492,10 +499,12 @@ public abstract class LabVessel implements Serializable {
     static class TraversalResults {
         private Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         private Set<Reagent> reagents = new HashSet<Reagent>();
-        private LabBatch lastEncounteredLabBatch;
+        private LabBatch lastEncounteredLabBatch = null;
 
         void add(TraversalResults traversalResults) {
             sampleInstances.addAll(traversalResults.getSampleInstances());
+            // Update here since last encountered lab batch may have been defined already, and won't be encountered again.
+            updateSampleInstanceLabBatch();
             reagents.addAll(traversalResults.getReagents());
         }
 
@@ -507,12 +516,9 @@ public abstract class LabVessel implements Serializable {
             return reagents;
         }
 
-        public LabBatch getLastEncounteredLabBatch() {
-            return lastEncounteredLabBatch;
-        }
-
         public void add(SampleInstance sampleInstance) {
             sampleInstances.add(sampleInstance);
+            updateSampleInstanceLabBatch();
         }
 
         public void add(Reagent reagent) {
@@ -520,11 +526,23 @@ public abstract class LabVessel implements Serializable {
         }
 
         public void add(Collection<LabBatch> labBatches) {
-            // Keeps only the last encountered lab batch.
-            // Expects that all samples in the vessel have the same batch when the vessel is not a container.
-            // It's an oversimplification that needs to be fixed when implementation of workflow/event/batch matures.
+            // Keeps only the last encountered lab batch.  Sample instances may or may not have been defined
+            // by this point of traversal, and if so, sets their lab batch.
+            //
+            // todo fix this oversimplification when implementation of workflow/event/batch matures.
+            // Expects that all samples in the vessel have the same batch when the vessel is not a container, i.e.
+            // there is only one lab batch for the vessel.
             if (labBatches != null && labBatches.size() == 1) {
                 lastEncounteredLabBatch = labBatches.iterator().next();
+                updateSampleInstanceLabBatch();
+            }
+        }
+
+        public void updateSampleInstanceLabBatch() {
+            if (lastEncounteredLabBatch != null) {
+                for (SampleInstance si : sampleInstances) {
+                    si.setLabBatch(lastEncounteredLabBatch);
+                }
             }
         }
 

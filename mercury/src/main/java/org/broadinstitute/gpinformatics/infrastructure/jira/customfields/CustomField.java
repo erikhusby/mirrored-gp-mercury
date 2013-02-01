@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.customfields;
 
 import javax.annotation.Nonnull;
+import java.util.List;
 import java.util.Map;
 
 public class CustomField {
@@ -11,13 +12,17 @@ public class CustomField {
     @Nonnull
     private final Object value;
 
-    public static class RadioButton {
+    public static class ValueContainer {
 
-        public RadioButton() {
+        public ValueContainer() {
         }
 
-        public RadioButton(boolean value) {
+        public ValueContainer(boolean value) {
             this.value = value ? "Yes" : "No";
+        }
+
+        public ValueContainer(String value) {
+            this.value = value;
         }
 
         private String value;
@@ -28,6 +33,40 @@ public class CustomField {
 
         public void setValue(String value) {
             this.value = value;
+        }
+    }
+
+    public static class SelectOption extends ValueContainer {
+        private String id;
+
+        public SelectOption(String value) {
+            if(value.equals("None")) {
+                this.id = "-1";
+            } else {
+                this.setValue(value);
+            }
+        }
+
+        public String getId() {
+            return id;
+        }
+    }
+
+    /**
+     * Should work with current Specs but does not:
+     * https://developer.atlassian.com/display/JIRADEV/JIRA+REST+API+Example+-+Create+Issue#JIRARESTAPIExample-CreateIssue-CascadingSelectField
+     */
+    public static class CascadingSelectList extends ValueContainer{
+
+        private final SelectOption child;
+
+        public CascadingSelectList(String parentValue, String child) {
+            this.setValue(parentValue);
+            this.child = new SelectOption(child);
+        }
+
+        public SelectOption getChild() {
+            return child;
         }
     }
 
@@ -56,7 +95,7 @@ public class CustomField {
     public CustomField(@Nonnull Map<String, CustomFieldDefinition> submissionFields,
                        @Nonnull SubmissionField field,
                        boolean value) {
-        this(submissionFields.get(field.getFieldName()), new RadioButton(value));
+        this(submissionFields.get(field.getFieldName()), new ValueContainer(value));
     }
 
     @Nonnull

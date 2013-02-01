@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.util.List;
-import java.util.Locale;
 
 /*
  * This class is a core class to extend Stripes actions from, providing some basic functionality for
@@ -178,8 +177,8 @@ public class CoreActionBean implements ActionBean {
      *
      * @param message The message to put into a SimpleMessage
      */
-    protected void addMessage(String message) {
-        getContext().getMessages().add(new SimpleMessage(message));
+    protected void addMessage(String message, Object... arguments) {
+        getContext().getMessages().add(new SimpleMessage(message, arguments));
     }
 
     /**
@@ -188,8 +187,8 @@ public class CoreActionBean implements ActionBean {
      * @param field        The form field
      * @param errorMessage The message to put into a SimpleError
      */
-    protected void addValidationError(String field, String errorMessage) {
-        getContext().getValidationErrors().add(field, new SimpleError(errorMessage));
+    protected void addValidationError(String field, String errorMessage, Object... arguments) {
+        getContext().getValidationErrors().add(field, new SimpleError(errorMessage, arguments));
     }
 
     /**
@@ -198,13 +197,8 @@ public class CoreActionBean implements ActionBean {
      * to generate errors.
      * @param message the message to include.
      */
-    public void addLiteralErrorMessage(final String message) {
-        getContext().getValidationErrors().addGlobalError(new SimpleError(null, null) {
-            @Override
-            public String getMessage(Locale locale) {
-                return message;
-            }
-        });
+    public void addLiteralErrorMessage(String message) {
+        addGlobalValidationError("{2}", message);
     }
 
     /**
@@ -362,8 +356,7 @@ public class CoreActionBean implements ActionBean {
         if (fileName == null) {
             getContext().getResponse().setContentType(contentType);
         } else {
-            String doubleQuotedFileName =
-                    "\"" + fileName + "\"";
+            String doubleQuotedFileName = '"' + fileName + '"';
             getContext().getResponse().setContentType(contentType + "; file=" + doubleQuotedFileName);
             getContext().getResponse().setHeader("Content-Disposition", "attachment; filename=" + doubleQuotedFileName);
         }
