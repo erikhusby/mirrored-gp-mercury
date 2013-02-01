@@ -64,7 +64,15 @@
 
     function showHeatMapOptions() {
         $j('#heatMapDiv').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
-        $j('#heatMapDiv').load('${ctxpath}/view/heatMap.action?jqueryClass=.pico');
+        var classes = {};
+        var classesString = '';
+        $j('div[heatmapvalue="true"]').each(function () {
+            classes[$j(this).attr("class")] = true;
+        });
+        for (var key in classes) {
+            classesString += key + ',';
+        }
+        $j('#heatMapDiv').load('${ctxpath}/view/heatMap.action?jqueryClass=' + classesString);
         $j('#heatMapDiv').show();
     }
 </script>
@@ -95,7 +103,7 @@
                        onchange="sectionCheck('row-' + ${rowStatus.index})"/>
             </th>
             <c:forEach var="column" items="${actionBean.vessel.vesselGeometry.columnNames}" varStatus="colStatus">
-                <td class="vvCell">
+                <td class="vvCell" width="120">
                     <div class="vvWell">
                         <div class="vvName">
                             <input type="checkbox" class="vvCheckbox row-${rowStatus.index} col-${colStatus.index}"
@@ -109,9 +117,14 @@
                                         ${sample.startingSample.sampleKey}
 
                                 </a>
+
+                                <div class="wellNum" heatmapvalue="true">
+                                        ${rowStatus.index * 12 + colStatus.index}
+                                    <div style="display:none">${rowStatus.index * 12 + colStatus.index}</div>
+                                </div>
                                 <c:forEach var="metric"
                                            items="${actionBean.sampleToMetricsMap.get(sample.startingSample.sampleKey)}">
-                                    <div class="pico">
+                                    <div class="${metric.name}" heatmapvalue="true">
                                             ${metric.name.displayName} : ${metric.value} ${metric.units.displayName}
                                         <div style="display:none">${metric.value}</div>
                                     </div>

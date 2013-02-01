@@ -6,7 +6,8 @@
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.HeatMapActionBean"/>
 
 <script type="text/javascript">
-    function applyHeatMap(component, colorstyle, reverseOrder) {
+    function applyHeatMap() {
+        var component = '.' + $j('#heatField').val();
         $j(component).heatcolor(
                 function () {
                     return $j("div", this).text();
@@ -23,6 +24,13 @@
     <div>
         <table>
             <tr>
+                <td>
+                    <select id="heatField">
+                        <c:forEach items="${actionBean.heatMapFields}" var="field">
+                            <option value="${field}">${field}</option>
+                        </c:forEach>
+                    </select>
+                </td>
                 <td>
                     <stripes:radio id="roygbiv" value="roygbiv" name="colorStyle"/>
                 </td>
@@ -44,6 +52,6 @@
     </div>
 
     <div>
-        <a href="javascript:applyHeatMap('${actionBean.jqueryClass}', '${actionBean.colorStyle}')">Apply Heat Map</a>
+        <a href="javascript:applyHeatMap()">Apply Heat Map</a>
     </div>
 </stripes:form>

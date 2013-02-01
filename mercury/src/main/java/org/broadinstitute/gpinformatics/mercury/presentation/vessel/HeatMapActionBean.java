@@ -3,14 +3,33 @@ package org.broadinstitute.gpinformatics.mercury.presentation.vessel;
 import net.sourceforge.stripes.action.*;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
+import java.util.Arrays;
+import java.util.List;
+
 @UrlBinding(value = "/view/heatMap.action")
 public class HeatMapActionBean extends CoreActionBean {
 
     private static final String VIEW_PAGE = "/resources/container/heatMap.jsp";
 
     private String jqueryClass;
-    private String colorStyle;
-    private Boolean reverseOrder;
+    private String colorStyle = "redtogreen";
+    private Boolean reverseOrder = false;
+    private List<String> heatMapFields = null;
+
+    public List<String> getHeatMapFields() {
+        if (heatMapFields == null) {
+            String[] fields = jqueryClass.split(",");
+            heatMapFields = Arrays.asList(fields);
+            if (heatMapFields.size() > 0) {
+                jqueryClass = "." + heatMapFields.get(0);
+            }
+        }
+        return heatMapFields;
+    }
+
+    public void setHeatMapFields(List<String> heatMapFields) {
+        this.heatMapFields = heatMapFields;
+    }
 
     public String getJqueryClass() {
         return jqueryClass;
