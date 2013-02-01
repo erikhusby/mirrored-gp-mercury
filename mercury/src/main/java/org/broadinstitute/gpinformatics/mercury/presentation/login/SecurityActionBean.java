@@ -21,11 +21,11 @@ import javax.servlet.http.HttpServletRequest;
  */
 @UrlBinding("/security/security.action")
 public class SecurityActionBean extends CoreActionBean {
-    private Log logger = LogFactory.getLog(SecurityActionBean.class);
+    private static final Log logger = LogFactory.getLog(SecurityActionBean.class);
 
-    public final static String LOGIN_ACTION = "/security/security.action";
+    public static final String LOGIN_ACTION = "/security/security.action";
 
-    public final static String LOGIN_PAGE = "/security/login.jsp";
+    public static final String LOGIN_PAGE = "/security/login.jsp";
 
     @Validate(required = true, on = {"signIn"})
     private String username;
@@ -55,11 +55,11 @@ public class SecurityActionBean extends CoreActionBean {
     /**
      * Sign the user in and figure out where they should go.
      *
-     * @return
+     * @return login page on error, or user's start page
      */
     @DefaultHandler
     public Resolution welcome() {
-        HttpServletRequest request = (HttpServletRequest) getContext().getRequest();
+        HttpServletRequest request = getContext().getRequest();
         if (request.getUserPrincipal() == null || request.getUserPrincipal().getName() == null) {
             // User not logged in
             return new RedirectResolution(LOGIN_PAGE);
@@ -75,7 +75,7 @@ public class SecurityActionBean extends CoreActionBean {
      */
     public Resolution signIn() {
         String targetPage;
-        HttpServletRequest request = (HttpServletRequest) getContext().getRequest();
+        HttpServletRequest request = getContext().getRequest();
 
         if (request.getUserPrincipal() != null && username.equalsIgnoreCase(request.getUserPrincipal().getName())) {
             // User is already logged in, don't try to login again.
