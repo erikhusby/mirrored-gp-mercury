@@ -11,18 +11,24 @@ public class HeatMapActionBean extends CoreActionBean {
 
     private static final String VIEW_PAGE = "/resources/container/heatMap.jsp";
 
+    private String heatMapFieldString;
     private String jqueryClass;
     private String colorStyle = "redtogreen";
     private Boolean reverseOrder = false;
     private List<String> heatMapFields = null;
 
+    public String getHeatMapFieldString() {
+        return heatMapFieldString;
+    }
+
+    public void setHeatMapFieldString(String heatMapFieldString) {
+        this.heatMapFieldString = heatMapFieldString;
+    }
+
     public List<String> getHeatMapFields() {
         if (heatMapFields == null) {
-            String[] fields = jqueryClass.split(",");
+            String[] fields = heatMapFieldString.split(",");
             heatMapFields = Arrays.asList(fields);
-            if (heatMapFields.size() > 0) {
-                jqueryClass = "." + heatMapFields.get(0);
-            }
         }
         return heatMapFields;
     }

@@ -72,7 +72,7 @@
         for (var key in classes) {
             classesString += key + ',';
         }
-        $j('#heatMapDiv').load('${ctxpath}/view/heatMap.action?jqueryClass=' + classesString);
+        $j('#heatMapDiv').load('${ctxpath}/view/heatMap.action?heatMapFieldString=' + classesString);
         $j('#heatMapDiv').show();
     }
 </script>
