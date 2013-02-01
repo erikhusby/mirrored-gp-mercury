@@ -109,7 +109,8 @@ public class ZimsIlluminaRunFactoryTest {
         testResearchProject.setJiraTicketKey("TestRP-1");
 
         // Create a test product order
-        ProductOrder testProductOrder = new ProductOrder(101L, "TestPDO-1", Collections.singletonList(new ProductOrderSample("TestSM-1")), "Quote-1", testProduct, testResearchProject);
+        ProductOrder testProductOrder = new ProductOrder(101L, "Test Order", Collections.singletonList(new ProductOrderSample("TestSM-1")), "Quote-1", testProduct, testResearchProject);
+        testProductOrder.setJiraTicketKey("TestPDO-1");
         when(mockProductOrderDao.findByBusinessKey("TestPDO-1")).thenReturn(testProductOrder);
 
         // Record some events for the sample
@@ -177,6 +178,23 @@ public class ZimsIlluminaRunFactoryTest {
         assertThat(libraryBean.getSpecies(), equalTo("Hamster"));
         assertThat(libraryBean.getLsid(), equalTo("ZimsIlluminaRunFactoryTest.testMakeLibraryBean.sampleDTO"));
         assertThat(libraryBean.getParticipantId(), equalTo("Spencer"));
-//        assertThat(libraryBean.getLcSet(), equalTo("LCSET-1"));
+//        assertThat(libraryBean.getLcSet(), equalTo("LCSET-1")); // TODO
+        assertThat(libraryBean.getProductOrderTitle(), equalTo("Test Order"));
+        assertThat(libraryBean.getProductOrderKey(), equalTo("TestPDO-1"));
+        assertThat(libraryBean.getResearchProjectName(), equalTo("Test Project"));
+        assertThat(libraryBean.getResearchProjectId(), equalTo("TestRP-1"));
+        assertThat(libraryBean.getProduct(), equalTo("Test Product"));
+        assertThat(libraryBean.getProductFamily(), equalTo("Test Product Family"));
+        assertThat(libraryBean.getRootSample(), equalTo("RootSample"));
+        assertThat(libraryBean.getSampleId(), equalTo("sample1"));
+        assertThat(libraryBean.getGender(), equalTo("M"));
+        assertThat(libraryBean.getCollection(), equalTo("collection1"));
+        assertThat(libraryBean.getPrimaryDisease(), equalTo("Test failure"));
+        assertThat(libraryBean.getCollaboratorSampleId(), equalTo("first_sample"));
+        assertThat(libraryBean.getCollaboratorParticipantId(), equalTo("participant1"));
+        assertThat(libraryBean.getMaterialType(), equalTo("Test Material"));
+        assertThat(libraryBean.getIsGssrSample(), equalTo(false));
+        assertThat(libraryBean.getPopulation(), equalTo("unknown"));
+        assertThat(libraryBean.getRace(), equalTo("N/A"));
     }
 }

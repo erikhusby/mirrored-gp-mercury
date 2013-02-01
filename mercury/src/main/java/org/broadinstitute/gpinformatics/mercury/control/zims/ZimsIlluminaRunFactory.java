@@ -71,7 +71,7 @@ public class ZimsIlluminaRunFactory {
         SampleInstance sampleInstance = sampleInstances.iterator().next();
         BSPSampleDTO bspSampleDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(sampleInstance.getStartingSample().getSampleKey());
         String lcSet = null;
-        LibraryBean libraryBean = new LibraryBean(labVessel.getLabel(), productOrder.getResearchProject().getBusinessKey(), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0, null, null, null, null, null, null, null, null, lcSet, bspSampleDTO);
+        LibraryBean libraryBean = new LibraryBean(labVessel.getLabel(), productOrder.getResearchProject().getBusinessKey(), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0, null, null, null, null, null, null, null, productOrder, lcSet, bspSampleDTO);
         return libraryBean;
     }
 
