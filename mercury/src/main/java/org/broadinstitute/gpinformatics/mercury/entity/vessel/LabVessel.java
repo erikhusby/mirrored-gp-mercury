@@ -575,6 +575,13 @@ public abstract class LabVessel implements Serializable {
     TraversalResults traverseAncestors() {
         TraversalResults traversalResults = new TraversalResults();
 
+        if (isSampleAuthority()) {
+            for (MercurySample mercurySample : mercurySamples) {
+                traversalResults.add(new SampleInstance(mercurySample, null, null));
+            }
+            // stop at first MercurySample, to avoid picking up multiple BSP batches
+            return traversalResults;
+        }
         List<VesselEvent> vesselEvents = getAncestors();
         for (VesselEvent vesselEvent : vesselEvents) {
             LabVessel labVessel = vesselEvent.getLabVessel();
@@ -583,11 +590,6 @@ public abstract class LabVessel implements Serializable {
                 traversalResults.add(vesselEvent.getVesselContainer().traverseAncestors(vesselEvent.getPosition()));
             } else {
                 traversalResults.add(labVessel.traverseAncestors());
-            }
-        }
-        if (isSampleAuthority()) {
-            for (MercurySample mercurySample : mercurySamples) {
-                traversalResults.add(new SampleInstance(mercurySample, null, null));
             }
         }
         for (Reagent reagent : getReagentContents()) {
