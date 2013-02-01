@@ -30,10 +30,10 @@ public class LibraryBean {
     private String project;
 
     @JsonProperty("initiative")
-    private String initiative;
+    private String initiative; // Squid only
 
     @JsonProperty("workRequestId")
-    private Long workRequest;
+    private Long workRequest; // Squid only
 
     @JsonProperty("molecularIndexingScheme")
     private MolecularIndexingSchemeBean indexingScheme;
@@ -41,19 +41,19 @@ public class LibraryBean {
     private Boolean hasIndexingRead;
 
     @JsonProperty("expectedInsertSize")
-    private String expectedInsertSize;
+    private String expectedInsertSize; // Squid only
 
     @JsonProperty("analysisType")
-    private String analysisType;
+    private String analysisType; // Squid only
 
     @JsonProperty("referenceSequence")
-    private String referenceSequence;
+    private String referenceSequence; // Squid only
 
     @JsonProperty("referenceSequenceVersion")
-    private String referenceSequenceVersion;
+    private String referenceSequenceVersion; // Squid only
 
     @JsonProperty("aggregate")
-    private Boolean doAggregation;
+    private Boolean doAggregation; // Squid only
 
     @JsonProperty("species")
     private String species;
@@ -62,38 +62,38 @@ public class LibraryBean {
     private String sampleLSID;
 
     @JsonProperty("aligner")
-    private String aligner;
+    private String aligner; // Squid only
 
     @JsonProperty("rrbsSizeRange")
-    private String rrbsSizeRange;
+    private String rrbsSizeRange; // Squid only
 
     @JsonProperty("restrictionEnzyme")
-    private String restrictionEnzyme;
+    private String restrictionEnzyme; // Squid only
 
     @JsonProperty("baitSetName")
-    private String bait;
+    private String bait; // Squid only
 
     /** obfuscated name of the participantId (person) from whence this sample was taken */
     @JsonProperty("participantId")
     private String participantId;
 
     @JsonProperty("labMeasuredInsertSize")
-    private Double labMeasuredInsertSize;
+    private Double labMeasuredInsertSize; // Squid only (for now)
 
     @JsonProperty("positiveControl")
-    private Boolean isPositiveControl;
+    private Boolean isPositiveControl; // Squid only
 
     @JsonProperty("negativeControl")
-    private Boolean isNegativeControl;
+    private Boolean isNegativeControl; // Squid only
 
     @JsonProperty("devExperimentData")
-    private DevExperimentDataBean devExperimentData;
+    private DevExperimentDataBean devExperimentData; // Squid only
 
     @JsonProperty("gssrBarcodes")
-    private Collection<String> gssrBarcodes = new ArrayList<String>();
+    private Collection<String> gssrBarcodes = new ArrayList<String>(); // Squid only
 
     @JsonProperty("customAmpliconSetNames")
-    private Collection<String> customAmpliconSetNames = new ArrayList<String>();
+    private Collection<String> customAmpliconSetNames = new ArrayList<String>(); // Squid only
 
     @JsonProperty
     private String lcSet;
@@ -120,7 +120,7 @@ public class LibraryBean {
     private String rootSample;
 
     @JsonProperty
-    private String sampleId;
+    private String sampleId; // BSP sample ID
 
     @JsonProperty
     private String gender;
@@ -132,7 +132,7 @@ public class LibraryBean {
     private String primaryDisease;
 
     @JsonProperty
-    private String sampleType;
+    private String sampleType; // GSSR?
 
     @JsonProperty
     private String collaboratorSampleId;

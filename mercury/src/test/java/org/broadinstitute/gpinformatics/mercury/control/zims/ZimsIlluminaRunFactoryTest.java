@@ -1,8 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -10,12 +16,13 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapT
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.SectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaRunConfiguration;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.testng.annotations.BeforeMethod;
@@ -28,13 +35,14 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.*;
 import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FLOWCELL_TYPE.EIGHT_LANE;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes.RackType.Matrix96;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection.ALL96;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition.B04;
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * @author breilly
@@ -43,9 +51,18 @@ public class ZimsIlluminaRunFactoryTest {
 
     private ZimsIlluminaRunFactory zimsIlluminaRunFactory;
     private LabEventFactory labEventFactory;
+    private IlluminaFlowcell flowcell;
+    private TwoDBarcodedTube testTube;
+
+    private ProductOrderDao mockProductOrderDao;
+    private BSPSampleDataFetcher mockBSPSampleDataFetcher;
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void setUp() throws Exception {
+        mockProductOrderDao = mock(ProductOrderDao.class);
+        mockBSPSampleDataFetcher = mock(BSPSampleDataFetcher.class);
+
+        // Create a simple test workflow
         ProductWorkflowDef testWorkflow = new ProductWorkflowDef("Test Workflow");
         ProductWorkflowDefVersion productWorkflowDefVersion = new ProductWorkflowDefVersion("1", new Date());
         testWorkflow.addProductWorkflowDefVersion(productWorkflowDefVersion);
@@ -63,11 +80,12 @@ public class ZimsIlluminaRunFactoryTest {
         testProcess1.addStep(step3);
         productWorkflowDefVersion.addWorkflowProcessDef(testProcess);
 
+        // Create a test product
         Product testProduct = new Product("Test Product", new ProductFamily("Test Product Family"), "Test product",
                 "P-TEST-1", new Date(), new Date(), 0, 0, 0, 0, "Test samples only", "None", true,
                 "Test Workflow", false);
 
-        zimsIlluminaRunFactory = new ZimsIlluminaRunFactory();
+        zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(mockProductOrderDao, mockBSPSampleDataFetcher);
         labEventFactory = new LabEventFactory();
         labEventFactory.setLabEventRefDataFetcher(new LabEventFactory.LabEventRefDataFetcher() {
             @Override
@@ -85,10 +103,16 @@ public class ZimsIlluminaRunFactoryTest {
                 return null;
             }
         });
-    }
 
-    @Test(groups = DATABASE_FREE)
-    public void testMakeZimsIlluminaRun() throws Exception {
+        // Create a test research project
+        ResearchProject testResearchProject = new ResearchProject(101L, "Test Project", "ZimsIlluminaRunFactoryTest project", true);
+        testResearchProject.setJiraTicketKey("TestRP-1");
+
+        // Create a test product order
+        ProductOrder testProductOrder = new ProductOrder(101L, "TestPDO-1", Collections.singletonList(new ProductOrderSample("TestSM-1")), "Quote-1", testProduct, testResearchProject);
+        when(mockProductOrderDao.findByBusinessKey("TestPDO-1")).thenReturn(testProductOrder);
+
+        // Record some events for the sample
         PlateCherryPickEvent stripTubeBTransferEvent = new PlateCherryPickEvent();
         stripTubeBTransferEvent.setEventType("StripTubeBTransfer");
         stripTubeBTransferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar("2013-01-23T14:30:00-05:00"));
@@ -97,7 +121,8 @@ public class ZimsIlluminaRunFactoryTest {
         stripTube.setReceptacleType("StripTube");
         positionMap.getReceptacle().add(stripTube);
         stripTubeBTransferEvent.setPositionMap(positionMap);
-        TwoDBarcodedTube testTube = new TwoDBarcodedTube("testTube");
+        testTube = new TwoDBarcodedTube("testTube");
+        testTube.addSample(new MercurySample("TestPDO-1", "TestSM-1"));
         Map<String, TubeFormation> barcodeToSourceTubeFormation = Collections.singletonMap("testRack", new TubeFormation(Collections.singletonMap(B04, testTube), Matrix96));
         Map<String, TwoDBarcodedTube> barcodeToSourceTube = Collections.singletonMap("B04", testTube);
         Map<String, TubeFormation> barcodeToTargetTubeFormation = null; // not even used by buildCherryPickRackToStripTubeDbFree!!!
@@ -105,13 +130,15 @@ public class ZimsIlluminaRunFactoryTest {
         Map<String, RackOfTubes> barcodeToSourceRackOfTubes = Collections.singletonMap("testRack", new RackOfTubes("testRack", Matrix96));
         LabEvent stripTubeBTransfer = labEventFactory.buildCherryPickRackToStripTubeDbFree(stripTubeBTransferEvent, barcodeToSourceTubeFormation, barcodeToSourceTube, barcodeToTargetTubeFormation, barcodeToTargetStripTube, barcodeToSourceRackOfTubes);
 
-        IlluminaFlowcell flowcell = new IlluminaFlowcell(EIGHT_LANE, "testFlowcell", new IlluminaRunConfiguration(76, true));
+        flowcell = new IlluminaFlowcell(EIGHT_LANE, "testFlowcell", new IlluminaRunConfiguration(76, true));
         PlateTransferEventType flowcellTransferEvent = new PlateTransferEventType();
         flowcellTransferEvent.setEventType("FlowcellTransfer");
         flowcellTransferEvent.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar("2013-01-23T15:17:00-05:00"));
         labEventFactory.buildFromBettaLimsPlateToPlateDbFree(flowcellTransferEvent, new StripTube("testStripTube"), flowcell);
+    }
 
-
+    @Test(groups = DATABASE_FREE)
+    public void testMakeZimsIlluminaRun() throws Exception {
         Date runDate = new Date(1358889107084L);
         IlluminaSequencingRun sequencingRun = new IlluminaSequencingRun(flowcell, "TestRun", "Run-123", "IlluminaRunServiceImplTest", 101L, true, runDate);
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(sequencingRun);
@@ -135,5 +162,21 @@ public class ZimsIlluminaRunFactoryTest {
                 assertThat(lane.getLibraries().size(), is(0));
             }
         }
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void testMakeLibraryBean() {
+        BSPSampleDTO sampleDTO = new BSPSampleDTO("BspContainer", "Stock1", "RootSample", "Aliquot1", "Spencer", "Hamster", "first_sample", "collection1", "7", "9", "ZimsIlluminaRunFactoryTest.testMakeLibraryBean.sampleDTO", "participant1", "Test Material", "42", "Test Sample", "Test failure", "M", "Stock Type", "fingerprint", "sample1", "ZimsIlluminaRunFactoryTest", "N/A", "unknown");
+        when(mockBSPSampleDataFetcher.fetchSingleSampleFromBSP("TestSM-1")).thenReturn(sampleDTO);
+
+        LibraryBean libraryBean = zimsIlluminaRunFactory.makeLibraryBean(testTube);
+        verify(mockProductOrderDao).findByBusinessKey("TestPDO-1");
+        assertThat(libraryBean.getLibrary(), equalTo("testTube")); // TODO: expand with full definition of generated library name
+        assertThat(libraryBean.getProject(), equalTo("TestRP-1"));
+//        assertThat(libraryBean.getMolecularIndexingScheme(), equalTo("???")); // TODO
+        assertThat(libraryBean.getSpecies(), equalTo("Hamster"));
+        assertThat(libraryBean.getLsid(), equalTo("ZimsIlluminaRunFactoryTest.testMakeLibraryBean.sampleDTO"));
+        assertThat(libraryBean.getParticipantId(), equalTo("Spencer"));
+//        assertThat(libraryBean.getLcSet(), equalTo("LCSET-1"));
     }
 }

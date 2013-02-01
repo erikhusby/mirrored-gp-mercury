@@ -2,16 +2,22 @@ package org.broadinstitute.gpinformatics.mercury.control.zims;
 
 import org.apache.commons.collections15.Factory;
 import org.apache.commons.collections15.map.LazyMap;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 
+import javax.inject.Inject;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -22,6 +28,15 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTra
  * @author breilly
  */
 public class ZimsIlluminaRunFactory {
+
+    private ProductOrderDao productOrderDao;
+    private BSPSampleDataFetcher bspSampleDataFetcher;
+
+    @Inject
+    public ZimsIlluminaRunFactory(ProductOrderDao productOrderDao, BSPSampleDataFetcher bspSampleDataFetcher) {
+        this.productOrderDao = productOrderDao;
+        this.bspSampleDataFetcher = bspSampleDataFetcher;
+    }
 
     public ZimsIlluminaRun makeZimsIlluminaRun(SequencingRun sequencingRun) {
         if (!OrmUtil.proxySafeIsInstance(sequencingRun, IlluminaSequencingRun.class)) {
@@ -44,6 +59,20 @@ public class ZimsIlluminaRunFactory {
         }
 
         return run;
+    }
+
+    public LibraryBean makeLibraryBean(LabVessel labVessel) {
+        String productOrderKey = labVessel.getNearestProductOrders().iterator().next(); // TODO: use singular version
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(productOrderKey);
+        Set<SampleInstance> sampleInstances = labVessel.getSampleInstances();
+        if (sampleInstances.size() > 1) {
+            throw new RuntimeException("Cannot currently handle vessels with more than one sample");
+        }
+        SampleInstance sampleInstance = sampleInstances.iterator().next();
+        BSPSampleDTO bspSampleDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(sampleInstance.getStartingSample().getSampleKey());
+        String lcSet = null;
+        LibraryBean libraryBean = new LibraryBean(labVessel.getLabel(), productOrder.getResearchProject().getBusinessKey(), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0, null, null, null, null, null, null, null, null, lcSet, bspSampleDTO);
+        return libraryBean;
     }
 
     private static class LibrariesForIlluminaRunCriteria implements TransferTraverserCriteria {
