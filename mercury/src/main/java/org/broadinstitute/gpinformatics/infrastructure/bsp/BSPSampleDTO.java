@@ -21,49 +21,49 @@ public class BSPSampleDTO {
 
     private final String patientId;
 
-    private final String stockSample;
+    private String stockSample;
 
-    private final String rootSample;
+    private String rootSample;
 
-    private final String aliquotSample;
+    private String aliquotSample;
 
     private final String collaboratorsSampleName;
 
-    private final String collection;
+    private String collection;
 
-    private final double volume;
+    private double volume;
 
-    private final double concentration;
+    private double concentration;
 
     private final String organism;
 
-    private final String stockAtExport;
+    private String stockAtExport;
 
-    private final Boolean positiveControl;
+    private Boolean positiveControl;
 
-    private final Boolean negativeControl;
+    private Boolean negativeControl;
 
-    private final String sampleLsid;
+    private String sampleLsid;
 
-    private final String collaboratorParticipantId;
+    private String collaboratorParticipantId;
 
     private final String materialType;
 
-    private final double total;
+    private double total;
 
-    private final String sampleType;
+    private String sampleType;
 
     private final String primaryDisease;
 
-    private final String gender;
+    private String gender;
 
-    private final String stockType;
+    private String stockType;
 
-    private final String fingerprint;
+    private String fingerprint;
 
-    private final String containerId;
+    private String containerId;
 
-    private final String sampleId;
+    private String sampleId;
 
     private Boolean ffpeDerived;
 
@@ -121,7 +121,6 @@ public class BSPSampleDTO {
         negativeControl = false;
         this.sampleId = sampleId;
         this.collaboratorName = collaboratorName;
-        this.collaboratorParticipantId = collaboratorParticipantId;
         this.race = race;
         this.population = population;
     }
