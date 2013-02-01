@@ -43,14 +43,25 @@ public class RiskItem {
     RiskItem() {
     }
 
-    public RiskItem(RiskCriteria riskCriteria, Date occurredDate, String comparedValue) {
+    public RiskItem(RiskCriteria riskCriteria, String comparedValue) {
         this.riskCriteria = riskCriteria;
-        this.occurredDate = occurredDate;
+        this.occurredDate = new Date();
         this.comparedValue = comparedValue;
     }
 
-    public RiskItem(RiskCriteria riskCriteria, Date occurredDate, String comparedValue, String comment) {
-        this(riskCriteria, occurredDate, comparedValue);
+    public RiskItem(RiskCriteria riskCriteria, String comparedValue, String comment) {
+        this(riskCriteria, comparedValue);
+        this.remark = comment;
+    }
+
+    /**
+     * This means that the risk item is passed, so don't make the user pass nulls
+     *
+     * @param comment The user comment on how it passed
+     */
+    public
+    RiskItem(String comment) {
+        this(null, null);
         this.remark = comment;
     }
 

@@ -641,21 +641,20 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent(SET_RISK)
     public Resolution setRisk() throws Exception {
-        // status true creates a manual item. false adds the success item, which is a null criterion
-        RiskCriteria criterion;
-        String value;
 
+        // If we are creating a manual on risk, then need to set it up and persist it for reuse
+        RiskCriteria criterion = null;
         if (riskStatus) {
             criterion = RiskCriteria.createManual();
-            value = "true";
             productOrderDao.persist(criterion);
-        } else {
-            criterion = null;
-            value = null;
         }
 
         for (ProductOrderSample sample : selectedProductOrderSamples) {
-            sample.setManualOnRisk(criterion, value, riskComment);
+            if (riskStatus) {
+                sample.setManualOnRisk(criterion, riskComment);
+            } else {
+                sample.setManualNotOnRisk(riskComment);
+            }
         }
 
         productOrderDao.persist(editOrder);

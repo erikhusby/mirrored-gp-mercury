@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
@@ -93,20 +91,24 @@ public class ProductOrderSample implements Serializable {
         for (RiskCriteria criterion : productOrder.getProduct().getRiskCriteriaList()) {
             // If this is on risk, then create a risk item for it and add it in
             if (criterion.onRisk(this)) {
-                riskItems.add(new RiskItem(criterion, new Date(), criterion.getValueProvider().getValue(this)));
+                riskItems.add(new RiskItem(criterion, criterion.getValueProvider().getValue(this)));
             }
         }
 
-        // If there are no risk checks that failed, then create a risk item with no criteria to represent NO RISK
-        // and this will distinguish NO RISK from never checked
+        // If there are no risk checks that failed, then create a risk item to represent no risk
         if (riskItems.isEmpty()) {
-            riskItems.add(new RiskItem(null, new Date(), null));
+            riskItems.add(new RiskItem("Determined no risk"));
         }
     }
 
-    public void setManualOnRisk(RiskCriteria criterion, String value, String comment) {
+    public void setManualOnRisk(RiskCriteria criterion, String comment) {
         riskItems.clear();
-        riskItems.add(new RiskItem(criterion, new Date(), value, comment));
+        riskItems.add(new RiskItem(criterion, Boolean.toString(true), comment));
+    }
+
+    public void setManualNotOnRisk(String comment) {
+        riskItems.clear();
+        riskItems.add(new RiskItem(comment));
     }
 
     public static enum DeliveryStatus implements StatusType {
