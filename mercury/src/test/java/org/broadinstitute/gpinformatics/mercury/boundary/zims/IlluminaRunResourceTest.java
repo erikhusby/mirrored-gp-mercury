@@ -27,7 +27,6 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EX
 import static org.testng.Assert.*;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.*;
 
-@Test(groups = EXTERNAL_INTEGRATION)
 public class IlluminaRunResourceTest extends Arquillian {
 
     @Inject
@@ -74,7 +73,7 @@ public class IlluminaRunResourceTest extends Arquillian {
      * Does a test of {@link #RUN_NAME} {@link #CHAMBER}
      * directly in container.
      */
-    @Test
+    @Test(groups = EXTERNAL_INTEGRATION)
     public void test_zims_in_container() throws Exception {
         // todo arz update the run in QA squid to link all WRS to the PDO
         wrIdToPDO.put(29225L,pdoDao.findByBusinessKey(PDO_KEY));
@@ -84,19 +83,12 @@ public class IlluminaRunResourceTest extends Arquillian {
         doAssertions(zamboniRun,runBean,wrIdToPDO);
     }
 
-    @Test
-    public void test_error_handling() throws Exception {
-        ZimsIlluminaRun runBean = runLaneResource.getRun(null);
-
-        assertNotNull(runBean.getError());
-        assertEquals(runBean.getError(),"runName cannot be null");
-    }
-
     /**
      * Ensures that error handling makes it all the way through
      * out to HTTP
      */
-    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,
+          groups = EXTERNAL_INTEGRATION)
     @RunAsClient
     public void test_error_handling(@ArquillianResource URL baseUrl) throws Exception {
         String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
@@ -106,7 +98,6 @@ public class IlluminaRunResourceTest extends Arquillian {
 
 
         ZimsIlluminaRun run = Client.create(clientConfig).resource(url)
-                .queryParam("runName", null)
                 .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
         assertNotNull(run);
         assertNotNull(run.getError());
@@ -120,7 +111,8 @@ public class IlluminaRunResourceTest extends Arquillian {
     * are applied properly in {@link LibraryBean}.
     * @param baseUrl
     */
-    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER,
+        groups = EXTERNAL_INTEGRATION)
     @RunAsClient
     public void test_zims_over_http(@ArquillianResource URL baseUrl) throws Exception {
         String url = baseUrl.toExternalForm() + WEBSERVICE_URL;
@@ -285,13 +277,16 @@ public class IlluminaRunResourceTest extends Arquillian {
                 foundIt = true;
                 assertEquals(libBean.getProject(),zLib.getProject());
                 assertEquals(libBean.getWorkRequestId().longValue(),zLib.getWorkRequestId());
-                assertEquals(libBean.getCollaboratorSampleId(),zLib.getSampleAlias());
-                assertEquals(libBean.getCollaboratorParticipantId(),zLib.getIndividual());
+                if (libBean.getIsGssrSample()) {
+                    assertEquals(libBean.getCollaboratorSampleId(),zLib.getSampleAlias());
+                    assertEquals(libBean.getCollaboratorParticipantId(),zLib.getIndividual());
+                    assertEquals(libBean.getMaterialType(),zLib.getGssrSampleType());
+                }
+                // else gssr copy and bsp copy may be different, and this is not reliable in our testing environment
                 assertEquals(libBean.getAligner(),zLib.getAligner());
                 assertEquals(libBean.getAnalysisType(),zLib.getAnalysisType());
                 assertEquals(libBean.getBaitSetName(),zLib.getBaitSetName());
                 assertEquals(libBean.getExpectedInsertSize(),zLib.getExpectedInsertSize());
-                assertEquals(libBean.getMaterialType(),zLib.getGssrSampleType());
                 assertEquals(libBean.getInitiative(),zLib.getInitiative());
                 assertEquals(libBean.getLabMeasuredInsertSize(),zLib.getLabMeasuredInsertSize() == 0 ? null : zLib.getLabMeasuredInsertSize());
                 assertEquals(libBean.getLibrary(),zLib.getLibrary());
@@ -300,7 +295,6 @@ public class IlluminaRunResourceTest extends Arquillian {
                 assertEquals(libBean.getRestrictionEnzyme(),zLib.getRestrictionEnzyme());
                 assertEquals(libBean.getRrbsSizeRange(),zLib.getRrbsSizeRange());
                 assertEquals(libBean.doAggregation().booleanValue(),zLib.aggregate);
-
 
                 if (libBean.getIsGssrSample()) {
                     assertEquals(libBean.getSpecies(),zLib.getOrganism() + ":" + zLib.getSpecies() + ":" + zLib.getStrain());

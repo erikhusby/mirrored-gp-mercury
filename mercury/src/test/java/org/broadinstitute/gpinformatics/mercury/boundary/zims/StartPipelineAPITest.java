@@ -17,7 +17,7 @@ public class StartPipelineAPITest extends Arquillian {
     }
 
     @RunAsClient
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void test_start_server_for_kt() {
         try {
             System.out.println("Starting up");
