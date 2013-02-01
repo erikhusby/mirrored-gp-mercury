@@ -5,6 +5,7 @@ import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.hibernate.envers.RevisionType;
+import org.omg.CORBA.PRIVATE_MEMBER;
 
 import javax.inject.Inject;
 import java.io.BufferedWriter;
@@ -12,8 +13,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
-abstract public class GenericEntityEtl {
-    Logger logger = Logger.getLogger(this.getClass());
+public abstract class GenericEntityEtl {
+    protected final Logger logger = Logger.getLogger(getClass());
     public static final String UNDEFINED_VALUE = "undefined";
 
     private AuditReaderDao auditReaderDao;
@@ -84,14 +85,13 @@ abstract public class GenericEntityEtl {
      * Iterates on the modified Mercury entities, converts them to sqlLoader records, and
      * writes the records to the data file.
      *
-     * @param lastRev      beginning of the interval to look for entity changes.
-     * @param etlRev       end of the interval to look for entity changes.
+     * @param revIds       list of audit revision ids
      * @param etlDateStr   etlDate formatted as YYYYMMDDHHMMSS
      * @return the number of records created in the data file (deletes and modifies).
      */
-    public int doEtl(long lastRev, long etlRev, String etlDateStr) {
+    public int doEtl(Collection<Long> revIds, String etlDateStr) {
         // Retrieves the Envers-formatted list of entity changes in the given revision range.
-        List<Object[]> dataChanges = auditReaderDao.fetchDataChanges(lastRev, etlRev, getEntityClass());
+        List<Object[]> dataChanges = auditReaderDao.fetchDataChanges(revIds, getEntityClass());
 
         // Creates the wrapped Writer to the sqlLoader data file.
         String filename = dataFilename(etlDateStr, getBaseFilename());
@@ -120,7 +120,7 @@ abstract public class GenericEntityEtl {
 
             for (Object[] dataChange : dataChanges) {
                 RevisionType revType = (RevisionType) dataChange[2];
-                boolean isDelete = revType.equals(RevisionType.DEL);
+                boolean isDelete = revType == RevisionType.DEL;
                 Object entity = dataChange[0];
                 Long entityId = entityId(entity);
                 if (isDelete) {
@@ -272,10 +272,10 @@ abstract public class GenericEntityEtl {
     }
 
     /** Class to wrap/manage writing to the data file. */
-    protected class DataFile {
+    protected static class DataFile {
         private final String filename;
-        private BufferedWriter writer = null;
-        private int lineCount = 0;
+        private BufferedWriter writer;
+        private int lineCount;
 
         DataFile(String filename) {
             this.filename = filename;
@@ -306,14 +306,28 @@ abstract public class GenericEntityEtl {
         }
     }
 
-    /** Calculates a 64-bit Java hashCode on String. */
+    public static long HASH_PRIME = 1125899906842597L;
+    public static long HASH_MULTIPLIER = 31L;
+
+    /** Calculates a hash on String. */
     public static long hash(String string) {
-        long h = 1125899906842597L; // prime
+        long h = HASH_PRIME;
         int len = string.length();
         for (int i = 0; i < len; i++) {
-            h = 31*h + string.charAt(i);
+            h = HASH_MULTIPLIER * h + string.charAt(i);
         }
         return h;
     }
+
+    /** Calculates a hash on all workflow config elements. */
+    public static long hash(Collection<WorkflowConfigDenorm> denorms) {
+        long h = HASH_PRIME;
+        for (WorkflowConfigDenorm denorm : denorms) {
+            // Reuses the existing hash of this record, which is its id.
+            h = HASH_MULTIPLIER * h + denorm.getWorkflowConfigDenormId();
+        }
+        return h;
+    }
+
 
 }

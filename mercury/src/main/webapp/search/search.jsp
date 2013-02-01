@@ -51,38 +51,36 @@
         <c:if test="${not empty actionBean.foundVessels}">
 
             <!-- This should be using a batch action bean class to do the create gesture-->
-            <stripes:form beanclass="${actionBean.class.name}" id="vesselForm" class="form-horizontal">
-                <div class="tableBar">
-                    Found ${fn:length(actionBean.foundVessels)} Vessels
+            <div class="tableBar">
+                Found ${fn:length(actionBean.foundVessels)} Vessels
 
-                    <c:if test="${actionBean.multipleResultTypes}">
-                        <a id="vesselAnchor" href="javascript:showResult('vessel')" style="margin-left: 10px;">show</a>
-                        <a id="vesselAnchorHide" href="javascript:hideResult('vessel')"
-                           style="display:none; margin-left: 10px;">hide</a>
-                    </c:if>
+                <c:if test="${actionBean.multipleResultTypes}">
+                    <a id="vesselAnchor" href="javascript:showResult('vessel')" style="margin-left: 10px;">show</a>
+                    <a id="vesselAnchorHide" href="javascript:hideResult('vessel')"
+                       style="display:none; margin-left: 10px;">hide</a>
+                </c:if>
 
-                    <div class="pull-right">
-                        <img alt="show plate view" width="20" height="20" name="" title="show plate view"
-                             src="${ctxpath}/images/plate.png" style="margin-top: -5px;"/> - plate layout
-                        <img alt="show sample view" width="20" height="20" name="" title="show sample view"
-                             src="${ctxpath}/images/list.png" style="margin-top: -5px; margin-left: 10px;"/> - sample
-                        list
-                    </div>
+                <div class="pull-right">
+                    <img alt="show plate view" width="20" height="20" name="" title="show plate view"
+                         src="${ctxpath}/images/plate.png" style="margin-top: -5px;"/> - plate layout
+                    <img alt="show sample view" width="20" height="20" name="" title="show sample view"
+                         src="${ctxpath}/images/list.png" style="margin-top: -5px; margin-left: 10px;"/> - sample
+                    list
                 </div>
+            </div>
 
-                <!-- If we get here, then it is showing at least this one, SO, if there are mutliple, hide it, otherwise just show this only one -->
-                <c:choose>
-                    <c:when test="${actionBean.multipleResultTypes}">
-                        <div id="vesselDiv" style="${actionBean.resultTypeStyle}">
-                    </c:when>
-                    <c:otherwise>
-                        <div id="vesselDiv">
-                    </c:otherwise>
-                </c:choose>
-                <stripes:layout-render name="/search/vessel_list.jsp" vessels="${actionBean.foundVessels}"
-                                       bean="${actionBean}" showCheckboxes="false"/>
-                </div>
-            </stripes:form>
+            <!-- If we get here, then it is showing at least this one, SO, if there are mutliple, hide it, otherwise just show this only one -->
+            <c:choose>
+                <c:when test="${actionBean.multipleResultTypes}">
+                    <div id="vesselDiv" style="${actionBean.resultTypeStyle}">
+                </c:when>
+                <c:otherwise>
+                    <div id="vesselDiv">
+                </c:otherwise>
+            </c:choose>
+            <stripes:layout-render name="/search/vessel_list.jsp" vessels="${actionBean.foundVessels}"
+                                   bean="${actionBean}" showCheckboxes="false"/>
+            </div>
         </c:if>
 
         <c:if test="${not empty actionBean.foundSamples}">

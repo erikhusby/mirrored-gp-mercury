@@ -2,14 +2,14 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
+import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.meanbean.lang.EquivalentFactory;
-import org.meanbean.test.*;
 import org.testng.Assert;
 import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
@@ -34,24 +34,6 @@ public class ProductOrderSampleTest {
 
     }
 
-    @Test
-    public void testBeaniness() {
-        Configuration configuration = new ConfigurationBuilder().ignoreProperty("productOrder").ignoreProperty("sampleComment")
-                .ignoreProperty("bspDTO").ignoreProperty("billingStatus").build();
-        new BeanTester().testBean(ProductOrderSample.class, configuration);
-
-        class ProductOrderSampleFactory implements EquivalentFactory<ProductOrderSample> {
-            @Override public ProductOrderSample create() {
-                ProductOrderSample sample = new ProductOrderSample("SM-12345", BSPSampleDTO.DUMMY);
-                sample.setSamplePosition(0);
-                return sample;
-            }
-        }
-
-        new EqualsMethodTester().testEqualsMethod(new ProductOrderSampleFactory(), configuration);
-        new HashCodeMethodTester().testHashCodeMethod(new ProductOrderSampleFactory());
-    }
-
     public static List<ProductOrderSample> createSampleList(String[] sampleArray,
                                                             Collection<BillingLedger> billableItems,
                                                             boolean dbFree) {
@@ -64,7 +46,7 @@ public class ProductOrderSampleTest {
                 productOrderSample = new ProductOrderSample(sampleName);
             }
             productOrderSample.setSampleComment("athenaComment");
-            productOrderSample.getLedgerItems().addAll( billableItems );
+            productOrderSample.getLedgerItems().addAll(billableItems);
             productOrderSamples.add(productOrderSample);
         }
         return productOrderSamples;
@@ -87,11 +69,11 @@ public class ProductOrderSampleTest {
             addOn.addAllowableMaterialType(materialType);
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);
-            sample1 = new ProductOrderSample("",
+            sample1 = new ProductOrderSample("Sample1",
                     new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", BSP_MATERIAL_TYPE.getFullName(), "", "", "", "", "", "",
-                            "","","",""));
-            sample2 = new ProductOrderSample("",
-                    new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "XXX:XXX", "", "", "", "", "", "", "","","",""));
+                            ""));
+            sample2 = new ProductOrderSample("Sample2",
+                    new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "XXX:XXX", "", "", "", "", "", "", ""));
             order.setSamples(Collections.singletonList(sample1));
             List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
             samples.add(sample1);
@@ -144,9 +126,36 @@ public class ProductOrderSampleTest {
         };
     }
 
+    @DataProvider(name = "riskSample")
+    public static Object[][] makeRiskSample() {
+        TestPDOData data = new TestPDOData();
+
+        // sample 1 has risk items and sample 2 does not
+        RiskCriteria riskCriteria = new RiskCriteria(RiskCriteria.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
+        RiskItem riskItem = new RiskItem(riskCriteria, new Date(), "240.0");
+        riskItem.setRemark("Bad Concentration found");
+
+        data.sample1.setRiskItems(Collections.singletonList(riskItem));
+        return new Object[][] {
+            new Object[] { data.sample1 },
+            new Object[] { data.sample2 }
+        };
+    }
+
     @Test(dataProvider = "autoBillSample")
     public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<BillingLedger> billingLedgers, BillingStatus billingStatus) {
         sample.autoBillSample(completedDate, 1);
         Assert.assertEquals(sample.getBillableLedgerItems(), billingLedgers);
+    }
+
+    @Test(dataProvider = "riskSample")
+    public void testRisk(ProductOrderSample sample) {
+        if (sample.isOnRisk()) {
+            Assert.assertTrue(!sample.getRiskString().isEmpty(), "Sample: " + sample.getSampleName() +
+                    " is on risk but has no risk string");
+        } else {
+            Assert.assertTrue(sample.getRiskString().isEmpty(), "Sample: " + sample.getSampleName() +
+                    " is not on risk but has a risk string: " + sample.getRiskString());
+        }
     }
 }

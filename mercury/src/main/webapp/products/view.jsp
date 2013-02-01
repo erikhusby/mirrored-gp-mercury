@@ -122,27 +122,46 @@
                 </div>
             </div>
 
-            <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Billing</label>
+                <label class="control-label label-form">Risk Criteria</label>
                 <div class="controls">
                     <div class="form-value">
-                        ${actionBean.editProduct.useAutomatedBilling ? "Automatic When:" : "Manual with tracker"}
+                        <c:choose>
+                            <c:when test="${empty actionBean.editProduct.riskCriteriaList}">
+                                No risk criteria
+                            </c:when>
+                            <c:otherwise>
+                                A sample is on risk if:<br/>
+                                <c:forEach items="${actionBean.editProduct.riskCriteriaList}" var="criterion">
+                                    ${criterion.calculationString}<br/>
+                                </c:forEach>
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
             </div>
 
-            <c:if test="${actionBean.editProduct.useAutomatedBilling}">
-                <div class="control-group">
-                    <label class="control-label label-form">&nbsp;</label>
+            <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Billing</label>
                     <div class="controls">
-                        <div class="form-value">${actionBean.editProduct.requirement.attribute}&#160;
-                                ${actionBean.editProduct.requirement.operator.label}&#160;
-                                ${actionBean.editProduct.requirement.value}
+                        <div class="form-value">
+                            ${actionBean.editProduct.useAutomatedBilling ? "Automatic When:" : "Manual with tracker"}
                         </div>
                     </div>
                 </div>
-            </c:if>
+
+                <c:if test="${actionBean.editProduct.useAutomatedBilling}">
+                    <div class="control-group">
+                        <label class="control-label label-form">&nbsp;</label>
+                        <div class="controls">
+                            <div class="form-value">${actionBean.editProduct.requirement.attribute}&#160;
+                                    ${actionBean.editProduct.requirement.operator.label}&#160;
+                                    ${actionBean.editProduct.requirement.value}
+                            </div>
+                        </div>
+                    </div>
+                </c:if>
             </security:authorizeBlock>
 
         </div>

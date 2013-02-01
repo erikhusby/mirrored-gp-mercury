@@ -161,7 +161,8 @@ public class PriceListCache extends AbstractCache implements Serializable {
 
         for (PriceItem priceItem : getPriceItems()) {
             String currentKey =
-                priceItem.getPlatformName() + '|' + priceItem.getCategoryName() + '|' + priceItem.getName();
+                org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.makeConcatenatedKey(
+                        priceItem.getPlatformName(), priceItem.getCategoryName(),priceItem.getName());
 
             if (concatenatedKey.equals(currentKey)) {
                 return priceItem;
@@ -189,5 +190,17 @@ public class PriceListCache extends AbstractCache implements Serializable {
         }
 
         return "invalid price item id " + priceItemId;
+    }
+
+    public PriceItem findByKeyFields(String platform, String category, String name) {
+        for (PriceItem priceItem : getPriceList().getPriceItems()) {
+            if (priceItem.getPlatformName().equals(platform) &&
+                priceItem.getCategoryName().equals(category) &&
+                priceItem.getName().equals(name)) {
+                return priceItem;
+            }
+        }
+
+        return null;
     }
 }

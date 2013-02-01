@@ -25,7 +25,7 @@ public class BillingRequirementTest {
     public static Object[][] makeCanBillData() {
         BillingRequirement requirement = new BillingRequirement();
         requirement.setAttribute(CALL_RATE);
-        requirement.setOperator(BillingRequirement.Operator.GREATER_THAN);
+        requirement.setOperator(Operator.GREATER_THAN);
         requirement.setValue(95.0);
 
         return new Object[][] {
@@ -45,17 +45,17 @@ public class BillingRequirementTest {
     @DataProvider(name = "ops")
     public static Object[][] makeOpsData() {
         return new Object[][] {
-                new Object[] { BillingRequirement.Operator.LESS_THAN, 1, 2, true },
-                new Object[] { BillingRequirement.Operator.LESS_THAN_OR_EQUAL_TO, 2, 2, true },
-                new Object[] { BillingRequirement.Operator.GREATER_THAN, 1, 2, false },
-                new Object[] { BillingRequirement.Operator.GREATER_THAN_OR_EQUAL_TO, 2, 2, true }
+                new Object[] { Operator.LESS_THAN, 1, 2, true },
+                new Object[] { Operator.LESS_THAN_OR_EQUAL_TO, 2, 2, true },
+                new Object[] { Operator.GREATER_THAN, 1, 2, false },
+                new Object[] { Operator.GREATER_THAN_OR_EQUAL_TO, 2, 2, true }
         };
     }
 
     @Test(dataProvider = "ops")
-    public void testOperatorApply(BillingRequirement.Operator operator,
+    public void testOperatorApply(Operator operator,
                                   double d1, double d2, boolean result) throws Exception {
-        Assert.assertEquals(operator.apply(d1, d2), result, d1 + " " + operator.label + " " + d2 + " is " + result);
+        Assert.assertEquals(operator.apply(d1, d2), result, d1 + " " + operator.getLabel() + " " + d2 + " is " + result);
 
     }
 }

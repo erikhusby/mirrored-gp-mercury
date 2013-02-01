@@ -4,6 +4,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.labevent;
  * Names of events as they come
  * in on messages
  */
+// todo jmt delete
 public enum LabEventName {
 
     ADAPTOR_LIGATION,

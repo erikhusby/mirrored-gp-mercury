@@ -2,6 +2,9 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialType;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+
+import java.util.Collections;
 
 /**
  * A simple DTO for fetching commonly used data from BSP.
@@ -16,52 +19,53 @@ public class BSPSampleDTO {
 
     public static final String ACTIVE_IND = "Active Stock";
 
+    private final String patientId;
 
-    private String patientId;
+    private final String stockSample;
 
-    private String stockSample;
+    private final String rootSample;
 
-    private String rootSample;
+    private final String aliquotSample;
 
-    private String aliquotSample;
+    private final String collaboratorsSampleName;
 
-    private String collaboratorsSampleName;
+    private final String collection;
 
-    private String collection;
+    private final double volume;
 
-    private double volume;
+    private final double concentration;
 
-    private double concentration;
+    private final String organism;
 
-    private String organism;
+    private final String stockAtExport;
 
-    private String stockAtExport;
+    private final Boolean positiveControl;
 
-    private Boolean positiveControl;
+    private final Boolean negativeControl;
 
-    private Boolean negativeControl;
+    private final String sampleLsid;
 
-    private String sampleLsid;
+    private final String collaboratorParticipantId;
 
-    private String collaboratorParticipantId;
+    private final String materialType;
 
-    private String materialType;
+    private final double total;
 
-    private double total;
+    private final String sampleType;
 
-    private String sampleType;
+    private final String primaryDisease;
 
-    private String primaryDisease;
+    private final String gender;
 
-    private String gender;
+    private final String stockType;
 
-    private String stockType;
+    private final String fingerprint;
 
-    private String fingerprint;
+    private final String containerId;
 
-    private String containerId;
+    private final String sampleId;
 
-    private String sampleId;
+    private Boolean ffpeDerived;
 
     private String collaboratorName;
 
@@ -103,8 +107,9 @@ public class BSPSampleDTO {
         this.rootSample = rootSample;
         this.aliquotSample = aliquotSample;
         this.collection = collection;
+
         this.volume = safeParseDouble(volume);
-        this.concentration = safeParseDouble(concentration);
+        this.concentration = safeParseDouble(concentration);    
         this.collaboratorParticipantId = collaboratorParticipantId;
         this.total = safeParseDouble(total);
         this.sampleType = sampleType;
@@ -286,5 +291,17 @@ public class BSPSampleDTO {
 
     public String getRace() {
         return race;
+    }
+
+    public Boolean getFfpeDerived() {
+        if (ffpeDerived == null) {
+            BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
+            bspSampleDataFetcher.fetchFFPEDerived(Collections.singletonList(this));
+        }
+        return ffpeDerived;
+    }
+
+    public void setFfpeDerived(Boolean ffpeDerived) {
+        this.ffpeDerived = ffpeDerived;
     }
 }

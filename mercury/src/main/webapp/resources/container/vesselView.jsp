@@ -64,7 +64,7 @@
 
     function showHeatMapOptions() {
         $j('#heatMapDiv').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
-        $j('#heatMapDiv').load('${ctxpath}/view/heatMap.action?jqueryClass=.vvInfo');
+        $j('#heatMapDiv').load('${ctxpath}/view/heatMap.action?jqueryClass=.pico');
         $j('#heatMapDiv').show();
     }
 </script>
@@ -104,15 +104,18 @@
                                 ${row}${column}
                         </div>
                         <div class="vvInfo">
-                            <div style="display:none">
-                                <!-- this is just here to do the demo heatmap we need to figure out how to
-                                add values for heatmapping dynamically-->
-                                    ${rowStatus.index * 12 + colStatus.index}
-                            </div>
                             <c:forEach var="sample" items="${actionBean.samplesAtPosition(row, column)}">
                                 <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.startingSample.sampleKey}">
                                         ${sample.startingSample.sampleKey}
+
                                 </a>
+                                <c:forEach var="metric"
+                                           items="${actionBean.sampleToMetricsMap.get(sample.startingSample.sampleKey)}">
+                                    <div class="pico">
+                                            ${metric.name.displayName} : ${metric.value} ${metric.units.displayName}
+                                        <div style="display:none">${metric.value}</div>
+                                    </div>
+                                </c:forEach>
                             </c:forEach>
                         </div>
                     </div>

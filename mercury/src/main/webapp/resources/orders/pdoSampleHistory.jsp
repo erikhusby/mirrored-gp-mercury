@@ -4,8 +4,26 @@
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.orders.ProductOrderSampleHistoryActionBean"/>
-
 <script type="text/javascript">
+    $j(document).ready(function () {
+        $j('#pdoSampleListView').dataTable({
+            "oTableTools":ttExportDefines,
+            "aaSorting":[
+                [4, 'asc']
+            ],
+            "aoColumns":[
+                {"bSortable":true, "sType":"date"},
+                {"bSortable":false},
+                {"bSortable":true, "sType":"date"},
+                {"bSortable":true},
+                {"bSortable":true},
+                {"bSortable":true},
+                {"bSortable":true},
+                {"bSortable":true}
+            ]
+        })
+    });
+
     $j('.sparkline').each(function (index) {
         $j(this).sparkline('html', { type:'bar', stackedBarColor:'blue', width:'300', height:'20', barWidth:'7',
                     tooltipFormat:'{{offset:offset}} {{value:value}}',
@@ -13,28 +31,41 @@
                         'offset':{
                             ${actionBean.getToolTipLookups()}
                         }
-                    },
+                    }
                 }
         )
     });
 </script>
 
-<table id="sampleListView" class="table simple">
+<table id="pdoSampleListView" class="table simple">
     <thead>
     <tr>
+        <th width="120">First Event Date</th>
         <th width="300">History</th>
+        <th width="120">Last Event Date</th>
+        <th>Process Duration</th>
         <th>Sample Name</th>
         <th>Latest Step</th>
         <th>Latest Process</th>
         <th>Event User</th>
-        <th>Event Date</th>
     </tr>
     </thead>
     <tbody>
     <c:forEach items="${actionBean.mercurySamples}" var="sample">
         <tr>
             <td>
+                <fmt:formatDate value="${actionBean.getFirstLabEvent(sample).eventDate}"
+                                pattern="MM/dd/yyyy HH:MM:ss"/>
+            </td>
+            <td>
                 <span class="sparkline">${actionBean.getSparklineData(sample)}</span>
+            </td>
+            <td>
+                <fmt:formatDate value="${actionBean.getLatestLabEvent(sample).eventDate}"
+                                pattern="MM/dd/yyyy HH:MM:ss"/>
+            </td>
+            <td>
+                    ${actionBean.getDuration(sample)}
             </td>
             <td>
                 <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.sampleKey}">
@@ -49,10 +80,6 @@
             </td>
             <td>
                     ${actionBean.getUserFullName(actionBean.getLatestLabEvent(sample).eventOperator)}
-            </td>
-            <td>
-                <fmt:formatDate value="${actionBean.getLatestLabEvent(sample).eventDate}"
-                                pattern="MM/dd/yyyy HH:MM:SS"/>
             </td>
         </tr>
     </c:forEach>
