@@ -243,18 +243,19 @@ public class LabEventTest {
         MercurySample startingSample =
                 twoDBarcodedTubeForRework.getValue().getAllSamples().iterator().next().getStartingSample();
 
-        ReworkEntry reworkEntry = startingSample.getRapSheet().addRework(ReworkReason.MACHINE_ERROR, ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH,
-                                catchEvent.getLabEventType(),VesselPosition.TUBE1,startingSample);
+        ReworkEntry reworkEntry = startingSample.reworkSample(ReworkReason.MACHINE_ERROR,
+                ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH, catchEvent, catchEvent.getLabEventType(),
+                twoDBarcodedTubeForRework.getValue(), VesselPosition.TUBE1, "test comment");
 
-        LabVesselComment reworkComment =
-                new LabVesselComment<ReworkEntry>(catchEvent, twoDBarcodedTubeForRework.getValue(), "rework comment",
-                        Arrays.asList(reworkEntry));
-        Assert.assertNotNull(reworkComment.getLabEvent(),"Lab event is required.");
-        Assert.assertNotNull(reworkComment.getLabVessel(),"Lab Vessel is required.");
-        Assert.assertNotNull(reworkComment.getRapSheetEntries(),"Rap Sheet Entries should not be null.");
-        Assert.assertFalse(reworkComment.getRapSheetEntries().isEmpty(), "Should have some Rap Sheet Entries.");
-        Assert.assertTrue(reworkComment.getRapSheetEntries().get(0) instanceof ReworkEntry, "Entry should be ReworkEntry.");
-        final ReworkEntry rework = (ReworkEntry)reworkComment.getRapSheetEntries().get(0);
+        Assert.assertNotNull(reworkEntry.getLabVesselComment().getLabEvent(), "Lab event is required.");
+        Assert.assertNotNull(reworkEntry.getLabVesselComment().getLabVessel(), "Lab Vessel is required.");
+        Assert.assertNotNull(reworkEntry.getLabVesselComment().getRapSheetEntries(),
+                "Rap Sheet Entries should not be null.");
+        Assert.assertFalse(reworkEntry.getLabVesselComment().getRapSheetEntries().isEmpty(),
+                "Should have some Rap Sheet Entries.");
+        Assert.assertTrue(reworkEntry.getLabVesselComment().getRapSheetEntries().get(0) instanceof ReworkEntry,
+                "Entry should be ReworkEntry.");
+        final ReworkEntry rework = (ReworkEntry) reworkEntry.getLabVesselComment().getRapSheetEntries().get(0);
         Assert.assertNotNull(rework.getReworkLevel(), "ReworkLevel cannot be null.");
         Assert.assertNotNull(rework.getReworkReason(), "ReworkReason cannot be null.");
         Assert.assertNotNull(rework.getReworkStep(), "getReworkStep cannot be null.");

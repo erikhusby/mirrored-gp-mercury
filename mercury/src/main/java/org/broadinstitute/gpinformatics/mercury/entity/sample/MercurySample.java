@@ -3,11 +3,16 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
-import org.broadinstitute.gpinformatics.mercury.entity.rework.RapSheet;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.rework.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import java.util.Arrays;
 
 /**
  * Represents Mercury's view of a sample.  Sample information is held in another system (initially Athena),
@@ -45,6 +50,17 @@ public class MercurySample {
         this.productOrderKey = productOrderKey;
         this.sampleKey = sampleKey;
         this.bspSampleDTO = bspSampleDTO;
+    }
+
+    public ReworkEntry reworkSample(ReworkReason reworkReason, ReworkLevel reworkLevel, LabEvent labEvent,
+                                    LabEventType reworkStep, LabVessel labVessel, VesselPosition vesselPosition,
+                                    String comment) {
+        final ReworkEntry reworkEntry =
+                getRapSheet().addRework(reworkReason, reworkLevel, reworkStep, vesselPosition, this);
+        LabVesselComment reworkComment =
+                new LabVesselComment<ReworkEntry>(labEvent, labVessel, comment, Arrays.asList(reworkEntry));
+        reworkEntry.setLabVesselComment(reworkComment);
+        return reworkEntry;
     }
 
     public RapSheet getRapSheet() {
