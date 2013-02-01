@@ -152,12 +152,12 @@ public class SearchActionBean extends CoreActionBean {
         }
 
         // If there is only one result, jump to the item's page, if it has a view page
-        if (totalResults == 1) {
+        /*  if (totalResults == 1) {
             RedirectResolution resolution = getRedirectResolution();
             if (resolution != null) {
                 return resolution;
             }
-        }
+        }*/
 
         multipleResultTypes = count > 1;
         resultsAvailable = totalResults > 0;
@@ -195,7 +195,14 @@ public class SearchActionBean extends CoreActionBean {
     private void doBatchSearch() {
         List<String> searchList = SearchActionBean.cleanInputString(searchKey);
 
+        foundVessels = new ArrayList<LabVessel>();
+
         foundVessels = labVesselDao.findByListIdentifiers(searchList);
+
+        foundVessels.addAll(labVesselDao.findByPDOKeyList(searchList));
+
+        foundVessels.addAll(labVesselDao.findBySampleKeyList(searchList));
+
 
         foundSamples = null;
         foundPDOs = null;

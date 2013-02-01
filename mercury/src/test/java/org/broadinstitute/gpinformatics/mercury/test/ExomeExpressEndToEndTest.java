@@ -15,13 +15,19 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServiceProducer;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.designation.LibraryRegistrationSOAPService;
 import org.broadinstitute.gpinformatics.mercury.boundary.designation.LibraryRegistrationSOAPServiceProducer;
 import org.broadinstitute.gpinformatics.mercury.boundary.designation.RegistrationJaxbConverter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequelLibrary;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.bsp.EverythingYouAskForYouGetAndItsHuman;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
@@ -30,6 +36,7 @@ import org.broadinstitute.gpinformatics.mercury.control.zims.LibraryBeanFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventName;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.queue.AliquotParameters;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
@@ -40,10 +47,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.mercury.test.entity.bsp.BSPSampleExportTest;
+import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -163,26 +172,24 @@ public class ExomeExpressEndToEndTest {
             JiraTicket jiraTicket = null;
 
             // grab the jira custom field definitions
-            final Map<String, CustomFieldDefinition> requiredFieldsMap =
+            Map<String, CustomFieldDefinition> requiredFieldsMap =
                     JiraCustomFieldsUtil.getRequiredLcSetFieldDefinitions(jiraService);
             Assert.assertFalse(requiredFieldsMap.isEmpty());
             Assert.assertEquals(requiredFieldsMap.size(), 9);
 
-            final CustomField workRequestCustomField = new CustomField(requiredFieldsMap.get(
-                    JiraCustomFieldsUtil.WORK_REQUEST_IDS), "Work Request One Billion!",
-                                                                       CustomField.SingleFieldType.TEXT);
+            CustomField workRequestCustomField = new CustomField(requiredFieldsMap.get(
+                    JiraCustomFieldsUtil.WORK_REQUEST_IDS), "Work Request One Billion!");
             // kludge: expect stock samples to have a different field name (like "BSP STOCKS") when this goes live.  until then, we'll call it GSSR.
-            final StringBuilder stockSamplesBuilder = new StringBuilder();
+            StringBuilder stockSamplesBuilder = new StringBuilder();
             for (LabVessel starter : testLabBatch.getStartingLabVessels()) {
                 stockSamplesBuilder.append(" ").append(starter.getLabel());
             }
-            final CustomField stockSamplesCustomField = new CustomField(requiredFieldsMap.get(
-                    JiraCustomFieldsUtil.GSSR_IDS), stockSamplesBuilder.toString(), CustomField.SingleFieldType.TEXT);
-            final CustomField protocolCustomField = new CustomField(requiredFieldsMap.get(
-                    JiraCustomFieldsUtil.PROTOCOL), "Protocol to take over the world",
-                                                                    CustomField.SingleFieldType.TEXT);
+            CustomField stockSamplesCustomField = new CustomField(requiredFieldsMap.get(
+                    JiraCustomFieldsUtil.GSSR_IDS), stockSamplesBuilder.toString());
+            CustomField protocolCustomField = new CustomField(requiredFieldsMap.get(
+                    JiraCustomFieldsUtil.PROTOCOL), "Protocol to take over the world");
 
-            final Collection<CustomField> allCustomFields = new HashSet<CustomField>();
+            Collection<CustomField> allCustomFields = new HashSet<CustomField>();
             allCustomFields.add(workRequestCustomField);
             allCustomFields.add(stockSamplesCustomField);
             allCustomFields.add(protocolCustomField);
@@ -274,8 +281,35 @@ public class ExomeExpressEndToEndTest {
                     return null;
                 }
             });
-            LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(),
-                                                                  AthenaClientProducer.stubInstance());
+
+            BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
+
+            LabBatchEjb labBatchEJB = new LabBatchEjb();
+            labBatchEJB.setAthenaClientService(AthenaClientProducer.stubInstance());
+            labBatchEJB.setJiraService(JiraServiceProducer.stubInstance());
+
+            LabVesselDao tubeDao = EasyMock.createNiceMock(LabVesselDao.class);
+            labBatchEJB.setTubeDAO(tubeDao);
+
+            JiraTicketDao mockJira = EasyMock.createNiceMock(JiraTicketDao.class);
+            labBatchEJB.setJiraTicketDao(mockJira);
+
+            LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
+            labBatchEJB.setLabBatchDao(labBatchDAO);
+
+            EasyMock.expect(mockBucketDao.findByName(EasyMock.eq(LabEventType.SHEARING_BUCKET.getName())))
+                    .andReturn(new LabEventTest.MockBucket(new WorkflowStepDef(LabEventType.SHEARING_BUCKET
+                            .getName()), jiraTicket.getTicketName()));
+            BucketBean bucketBeanEJB = new BucketBean(labEventFactory, JiraServiceProducer.stubInstance(), labBatchEJB);
+
+            EasyMock.replay(mockBucketDao, mockJira, labBatchDAO, tubeDao);
+
+
+            LabEventHandler labEventHandler =
+                    new LabEventHandler(new WorkflowLoader(),
+                            AthenaClientProducer
+                                    .stubInstance(), bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer
+                            .stubInstance()));
             BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
             Map<String, TwoDBarcodedTube> mapBarcodeToTube = new HashMap<String, TwoDBarcodedTube>();
 
@@ -488,6 +522,8 @@ public class ExomeExpressEndToEndTest {
                 }
             }
             Assert.assertTrue(foundLane);
+
+            EasyMock.verify(mockBucketDao);
         }
     }
 }

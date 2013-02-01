@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
@@ -13,6 +14,7 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
 import java.io.*;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 import java.util.concurrent.Semaphore;
 
@@ -40,7 +42,7 @@ public class ExtractTransform {
     /** This filename matches what cron job expects. */
     public static final String READY_FILE_SUFFIX = "_is_ready";
     /** This date format matches what cron job expects in filenames, and in SqlLoader data files. */
-    public static final SimpleDateFormat fullDateFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+    public static final SimpleDateFormat secTimestampFormat = new SimpleDateFormat("yyyyMMddHHmmss");
     /** Name of file that contains the mSec time of the last etl run. */
     public static final String LAST_ETL_FILE = "last_etl_run";
     /** Name of subdirectory under configured ETL root dir where new sqlLoader files are put. */
@@ -48,7 +50,8 @@ public class ExtractTransform {
     /** Name of directory where sqlLoader files are put. */
     private static String datafileDir;
 
-    private static final long MSEC_IN_MINUTE = 60 * 1000;
+    private static final long MSEC_IN_SEC = 1000L;
+    private static final long SEC_IN_MIN = 60L;
     private static final Logger logger = Logger.getLogger(ExtractTransform.class);
     private static final Semaphore mutex = new Semaphore(1);
     private static long incrementalRunStartTime = System.currentTimeMillis();  // only useful for logging
@@ -85,6 +88,14 @@ public class ExtractTransform {
     private ResearchProjectCohortEtl researchProjectCohortEtl;
     @Inject
     private ProductOrderAddOnEtl productOrderAddOnEtl;
+    @Inject
+    private EventEtl eventEtl;
+    @Inject
+    private WorkflowConfigEtl workflowConfigEtl;
+    @Inject
+    private LabBatchEtl labBatchEtl;
+    @Inject
+    private LabVesselEtl labVesselEtl;
 
 
     /**
@@ -115,6 +126,16 @@ public class ExtractTransform {
         return Response.status(status).build();
     }
 
+    /**
+     * Runs a normal, incremental ETL to avoid waiting up to 15 minutes when testing.
+     */
+    @Path("incremental")
+    @PUT
+    public Response onDemandIncrementalEtl() {
+        initConfig();
+        incrementalEtl();
+        return Response.status(ClientResponse.Status.ACCEPTED).build();
+    }
 
     /**
      * Extracts data from operational database, transforms the data to data warehouse records,
@@ -127,7 +148,7 @@ public class ExtractTransform {
         // may run at a time.  Does not queue a new job if busy, to avoid snowball effect if system is
         // busy for a long time, for whatever reason.
         if (!mutex.tryAcquire()) {
-            int minutes = lastRunDuration(incrementalRunStartTime);
+            int minutes = (int)Math.ceil((System.currentTimeMillis() - incrementalRunStartTime) / MSEC_IN_SEC / SEC_IN_MIN);
             if (minutes > 0) {
                 logger.info("Skipping new ETL run since previous run is still busy after " + minutes + " minutes.");
             }
@@ -152,47 +173,63 @@ public class ExtractTransform {
 
             // The same etl_date is used for all DW data processed by one ETL run.
             final Date etlDate = new Date();
-            final String etlDateStr = fullDateFormat.format(etlDate);
-            incrementalRunStartTime = etlDate.getTime();
+            final String etlDateStr = secTimestampFormat.format(etlDate);
+            final long currentEtlTimestamp = etlDate.getTime();
+            incrementalRunStartTime = currentEtlTimestamp;
 
-            final long lastRev = readLastEtlRun(dataDir);
-            final long etlRev = auditReaderDao.currentRevNumber(etlDate);
-            if (lastRev >= etlRev) {
-                logger.debug("Incremental ETL found no changes since rev " + lastRev);
+            final long lastEtlTimestamp = readLastEtlRun();
+            // Allows last timestamp to be in the future thereby shutting off incremental etl.
+            if (lastEtlTimestamp >= currentEtlTimestamp) {
                 return 0;
             }
-            logger.debug("Doing incremental ETL for rev numbers " + lastRev + " to " + etlRev);
-            if (0L == lastRev) {
-                logger.warn("Cannot determine time of last incremental ETL.  Doing a full ETL.");
-            }
-
-            int recordCount = 0;
-            // The order of ETL is not significant since import tables have no referential integrity.
-            recordCount += productEtl.doEtl(lastRev, etlRev, etlDateStr);
-            recordCount += priceItemEtl.doEtl(lastRev, etlRev, etlDateStr);
-            recordCount += researchProjectEtl.doEtl(lastRev, etlRev, etlDateStr);
-            recordCount += researchProjectStatusEtl.doEtl(lastRev, etlRev, etlDateStr);
-            recordCount += projectPersonEtl.doEtl(lastRev, etlRev, etlDateStr);
-            recordCount += researchProjectIrbEtl.doEtl(lastRev, etlRev, etlDateStr);
-            recordCount += researchProjectFundingEtl.doEtl(lastRev, etlRev, etlDateStr);
-            recordCount += researchProjectCohortEtl.doEtl(lastRev, etlRev, etlDateStr);
-            recordCount += productOrderSampleEtl.doEtl(lastRev, etlRev, etlDateStr);
-            recordCount += productOrderSampleStatusEtl.doEtl(lastRev, etlRev, etlDateStr);
-            recordCount += productOrderEtl.doEtl(lastRev, etlRev, etlDateStr);
-            recordCount += productOrderStatusEtl.doEtl(lastRev, etlRev, etlDateStr);
-            recordCount += productOrderAddOnEtl.doEtl(lastRev, etlRev, etlDateStr);
-
-            boolean lastEtlFileWritten = writeLastEtlRun(dataDir, etlRev);
-            if (recordCount > 0 && lastEtlFileWritten) {
-                writeIsReadyFile(dataDir, etlDateStr);
-                logger.debug("Incremental ETL created " + recordCount + " data records in " + lastRunDuration(incrementalRunStartTime) + " seconds.");
-            }
-
-            return recordCount;
-
+            return incrementalEtl(lastEtlTimestamp, currentEtlTimestamp, etlDateStr);
         } finally {
             mutex.release();
         }
+    }
+
+    /** Testable helper method that does the incremental etl work, has no mutex. */
+    public int incrementalEtl(long startTimestamp, long endTimestamp, String etlDateStr) {
+        if (0L == startTimestamp) {
+            logger.warn("Cannot determine time of last incremental ETL.  ETL will not be run.");
+            return 0;
+        }
+        // Gets the audit revision ids for the given interval.
+        Collection<Long> revIds = auditReaderDao.fetchAuditIds(startTimestamp, endTimestamp);
+        logger.debug ("Incremental ETL found " + revIds.size() + " changes.");
+        if (revIds.size() == 0) {
+            writeLastEtlRun(endTimestamp);
+            return 0;
+        }
+
+        int recordCount = 0;
+        // The order of ETL is not significant since import tables have no referential integrity.
+        recordCount += productEtl.doEtl(revIds, etlDateStr);
+        recordCount += priceItemEtl.doEtl(revIds, etlDateStr);
+        recordCount += researchProjectEtl.doEtl(revIds, etlDateStr);
+        recordCount += researchProjectStatusEtl.doEtl(revIds, etlDateStr);
+        recordCount += projectPersonEtl.doEtl(revIds, etlDateStr);
+        recordCount += researchProjectIrbEtl.doEtl(revIds, etlDateStr);
+        recordCount += researchProjectFundingEtl.doEtl(revIds, etlDateStr);
+        recordCount += researchProjectCohortEtl.doEtl(revIds, etlDateStr);
+        recordCount += productOrderSampleEtl.doEtl(revIds, etlDateStr);
+        recordCount += productOrderSampleStatusEtl.doEtl(revIds, etlDateStr);
+        recordCount += productOrderEtl.doEtl(revIds, etlDateStr);
+        recordCount += productOrderStatusEtl.doEtl(revIds, etlDateStr);
+        recordCount += productOrderAddOnEtl.doEtl(revIds, etlDateStr);
+        // event datamart
+        recordCount += labBatchEtl.doEtl(revIds, etlDateStr);
+        recordCount += labVesselEtl.doEtl(revIds, etlDateStr);
+        recordCount += workflowConfigEtl.doEtl(revIds, etlDateStr);
+        recordCount += eventEtl.doEtl(revIds, etlDateStr);
+
+        writeLastEtlRun(endTimestamp);
+        if (recordCount > 0) {
+            writeIsReadyFile(etlDateStr);
+            logger.debug("Incremental ETL created " + recordCount + " data records in " +
+                    (int)((System.currentTimeMillis() - incrementalRunStartTime) / MSEC_IN_SEC) + " seconds.");
+        }
+        return recordCount;
     }
 
     /**
@@ -217,7 +254,7 @@ public class ExtractTransform {
         }
 
         final Date etlDate = new Date();
-        final String etlDateStr = fullDateFormat.format(etlDate);
+        final String etlDateStr = secTimestampFormat.format(etlDate);
 
         Class entityClass;
         try {
@@ -253,12 +290,17 @@ public class ExtractTransform {
         recordCount += productOrderEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
         recordCount += productOrderStatusEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
         recordCount += productOrderAddOnEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        // event datamart
+        recordCount += labBatchEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += labVesselEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += workflowConfigEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += eventEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
 
         if (recordCount > 0) {
-            writeIsReadyFile(dataDir, etlDateStr);
+            writeIsReadyFile(etlDateStr);
         }
         logger.info("Backfill ETL created " + recordCount + " " + entityClass.getSimpleName()
-                + " data records in " + lastRunDuration(backfillStartTime) + " seconds.");
+                + " data records in " + (int) ((System.currentTimeMillis() - backfillStartTime) / MSEC_IN_SEC) + " seconds.");
 
         return Response.Status.NO_CONTENT;
     }
@@ -268,52 +310,72 @@ public class ExtractTransform {
      * Reads the last incremental ETL run file and returns start of this etl interval.
      * @return the end rev of last incremental ETL, or 0 if missing.
      */
-    public long readLastEtlRun(String dataDir) {
+    public long readLastEtlRun() {
         try {
-            Reader rdr = new FileReader(new File (dataDir, LAST_ETL_FILE));
-            String s = IOUtils.toString(rdr);
-            IOUtils.closeQuietly(rdr);
-            return Long.parseLong(s);
-        } catch (FileNotFoundException e) {
-            logger.warn("Missing file: " + LAST_ETL_FILE);
-            return 0L;
-        } catch (IOException e) {
-            logger.error("Error processing file " + LAST_ETL_FILE, e);
-            return 0L;
+            return Long.parseLong(readEtlFile(LAST_ETL_FILE));
         } catch (NumberFormatException e) {
-            logger.error("Cannot parse " + LAST_ETL_FILE + " : " + e);
+            logger.warn("Cannot parse " + LAST_ETL_FILE + " : " + e);
             return 0L;
         }
     }
 
     /**
      * Writes the file used by this class in the next incremental ETL run, to know where the last run finished.
-     * @param etlRev last rev of the etl run to record
+     * @param end indicator of end of this etl
      * @return true if file was written ok
      */
-    public boolean writeLastEtlRun(String dataDir, long etlRev) {
-        try {
-            Writer fw = new FileWriter(new File (dataDir, LAST_ETL_FILE), false);
-            IOUtils.write(String.valueOf(etlRev), fw);
-            IOUtils.closeQuietly(fw);
-            return true;
-        } catch (IOException e) {
-            logger.error("Error writing file " + LAST_ETL_FILE);
-            return false;
-        }
+    public boolean writeLastEtlRun(long end) {
+        return writeEtlFile(LAST_ETL_FILE, String.valueOf(end));
     }
 
     /**
      * Writes the file used by cron job to know when this etl run has completed and data file processing can start.
      * @param etlDateStr used to name the file
      */
-    public void writeIsReadyFile(String dataDir, String etlDateStr) {
+    public void writeIsReadyFile(String etlDateStr) {
+        writeEtlFile(etlDateStr + READY_FILE_SUFFIX, " ");
+    }
+
+    /**
+     * Utility method that reads the file's contents.
+     * @param filename is the leaf name of the file, expected to be in the etl data directory
+     * @return content as one string
+     */
+    public static String readEtlFile(String filename) {
+        String dirname = getDatafileDir();
+        Reader rdr = null;
         try {
-            FileWriter fw = new FileWriter(new File (dataDir, etlDateStr + READY_FILE_SUFFIX), false);
-            IOUtils.write(" ", fw);
-            IOUtils.closeQuietly(fw);
+            rdr = new FileReader(new File (dirname, filename));
+            return IOUtils.toString(rdr);
+        } catch (FileNotFoundException e) {
+            logger.warn("Missing file: " + filename);
+            return "";
         } catch (IOException e) {
-            logger.error("Error creating file " + etlDateStr + READY_FILE_SUFFIX, e);
+            logger.error("Error processing file " + filename, e);
+            return "";
+        } finally {
+            IOUtils.closeQuietly(rdr);
+        }
+    }
+
+    /**
+     * Utility method that writes the file's contents.
+     * @param filename is the leaf name of the file, expected to be in the etl data directory
+     * @param content overwrites what is in the file
+     * @return true if file was written ok
+     */
+    public static boolean writeEtlFile(String filename, String content) {
+        String dirname = getDatafileDir();
+        Writer fw = null;
+        try {
+            fw = new FileWriter(new File (dirname, filename), false);
+            IOUtils.write(content, fw);
+            return true;
+        } catch (IOException e) {
+            logger.error("Error writing file " + LAST_ETL_FILE);
+            return false;
+        } finally {
+            IOUtils.closeQuietly(fw);
         }
     }
 
@@ -331,10 +393,6 @@ public class ExtractTransform {
 
     public static long getIncrementalRunStartTime() {
         return incrementalRunStartTime;
-    }
-
-    private int lastRunDuration(long startTime) {
-        return (int)Math.ceil((System.currentTimeMillis() - startTime) / MSEC_IN_MINUTE);
     }
 
     /** Gets relevant configuration from the .yaml file */

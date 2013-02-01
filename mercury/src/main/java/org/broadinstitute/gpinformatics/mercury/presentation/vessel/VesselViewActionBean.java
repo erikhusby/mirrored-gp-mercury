@@ -6,13 +6,17 @@ import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @UrlBinding(value = "/view/vesselView.action")
 public class VesselViewActionBean extends CoreActionBean {
@@ -25,6 +29,8 @@ public class VesselViewActionBean extends CoreActionBean {
     private String vesselLabel;
 
     private LabVessel vessel;
+
+    private Map<String, Set<LabMetric>> sampleToMetricsMap = new HashMap<String, Set<LabMetric>>();
 
     public String getVesselLabel() {
         return vesselLabel;
@@ -40,6 +46,14 @@ public class VesselViewActionBean extends CoreActionBean {
 
     public void setVessel(LabVessel vessel) {
         this.vessel = vessel;
+    }
+
+    public Map<String, Set<LabMetric>> getSampleToMetricsMap() {
+        return sampleToMetricsMap;
+    }
+
+    public void setSampleToMetricsMap(Map<String, Set<LabMetric>> sampleToMetricsMap) {
+        this.sampleToMetricsMap = sampleToMetricsMap;
     }
 
     @DefaultHandler
@@ -58,6 +72,15 @@ public class VesselViewActionBean extends CoreActionBean {
             sampleInstances = vesselContainer.getSampleInstancesAtPositionList(position);
         } else {
             sampleInstances = vessel.getSampleInstancesList();
+        }
+        for (SampleInstance sample : sampleInstances) {
+            List<LabVessel> vessels = labVesselDao.findBySampleKey(sample.getStartingSample().getSampleKey());
+            for (LabVessel sampleVessel : vessels) {
+                Set<LabMetric> metrics = sampleVessel.getMetrics();
+                if (metrics.size() > 0) {
+                    sampleToMetricsMap.put(sample.getStartingSample().getSampleKey(), metrics);
+                }
+            }
         }
         return sampleInstances;
     }

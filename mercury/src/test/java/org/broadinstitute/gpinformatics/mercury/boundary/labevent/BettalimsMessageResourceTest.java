@@ -46,15 +46,20 @@ import javax.transaction.RollbackException;
 import javax.transaction.SystemException;
 import javax.transaction.UserTransaction;
 import javax.ws.rs.core.MediaType;
+import java.io.BufferedReader;
 import java.io.File;
-//import java.io.FileInputStream;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
-//import java.nio.MappedByteBuffer;
-//import java.nio.channels.FileChannel;
-//import java.nio.charset.Charset;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
@@ -292,33 +297,12 @@ public class BettalimsMessageResourceTest extends Arquillian {
                 List<String> messageFileNames=Arrays.asList(dayDirectory.list());
                 Collections.sort(messageFileNames);
                 for (String messageFileName : messageFileNames) {
-                    String response=null;
-                    try {
-                        //                    String message = FileUtils.readFileToString(new File(dayDirectory, messageFileName));
-                        //                    if(message.contains("PreSelectionPool")) {
 /*
-                        String message;
-                        FileInputStream stream = new FileInputStream(new File(dayDirectory, messageFileName));
-                        try {
-                            FileChannel fc = stream.getChannel();
-                            MappedByteBuffer mappedByteBuffer = fc.map(FileChannel.MapMode.READ_ONLY, 0, fc.size());
-                            message = Charset.defaultCharset().decode(mappedByteBuffer).toString();
-                        }
-                        finally {
-                            stream.close();
-                        }
+                    String message = FileUtils.readFileToString(new File(dayDirectory, messageFileName));
+                    if(message.contains("PreSelectionPool"))
                         BettalimsMessageBeanTest.sendJmsMessage(message);
 */
-                        response=Client.create().resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
-                                .type(MediaType.APPLICATION_XML_TYPE)
-                                .accept(MediaType.APPLICATION_XML)
-                                .entity(new File(dayDirectory, messageFileName))
-                                .post(String.class);
-                        //                    }
-                    } catch (Exception e) {
-                        System.out.println(e.getMessage());
-                    }
-                    System.out.println(response);
+                    sendFile(baseUrl, new File(dayDirectory, messageFileName));
                 }
             }
         }
@@ -327,17 +311,37 @@ public class BettalimsMessageResourceTest extends Arquillian {
     @Test(enabled=false, groups=EXTERNAL_INTEGRATION, dataProvider=Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testSingleFile(@ArquillianResource URL baseUrl) {
-        String response=null;
+        File file = new File("c:/Temp/seq/lims/bettalims/production/inbox/20120103/20120103_101119570_localhost_9998_ws.xml");
+        sendFile(baseUrl, file);
+    }
+
+    @Test(enabled=false, groups=EXTERNAL_INTEGRATION, dataProvider=Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @RunAsClient
+    public void testFileList(@ArquillianResource URL baseUrl) {
         try {
-            response=Client.create().resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
+            BufferedReader bufferedReader = new BufferedReader(new FileReader("c:/temp/PdoLcSetMessageList.txt"));
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                if(!line.startsWith("#")) {
+                    sendFile(baseUrl, new File(line));
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private void sendFile(URL baseUrl, File file) {
+        try {
+            String response= Client.create().resource(baseUrl.toExternalForm() + "rest/bettalimsmessage")
                     .type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)
-                    .entity(new File("c:/Temp/seq/lims/bettalims/production/inbox/20120103/20120103_101119570_localhost_9998_ws.xml"))
+                    .entity(file)
                     .post(String.class);
+            System.out.println(response);
         } catch (Exception e) {
             System.out.println(e.getMessage());
         }
-        System.out.println(response);
     }
 
 }

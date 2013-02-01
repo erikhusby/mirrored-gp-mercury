@@ -22,6 +22,7 @@ import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClient
 import org.codehaus.jackson.map.ObjectMapper;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.text.ParseException;
@@ -123,8 +124,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         WebResource webResource = getJerseyClient().resource(urlString);
 
-        JiraIssueData data = post(webResource, issueRequest, new GenericType<JiraIssueData>() {
-        });
+        JiraIssueData data = post(webResource, issueRequest, new GenericType<JiraIssueData>() { });
         return new JiraIssue(data.key, this);
     }
 
@@ -160,7 +160,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
         if (null != fields) {
             for (String currField : fields) {
-                issueResult.addFieldValue(currField, issueResult.getFieldValue(currField));
+                issueResult.addFieldValue(currField, data.extraFields.get(currField));
             }
         }
 
@@ -355,7 +355,7 @@ public class JiraServiceImpl extends AbstractJsonJerseyClientService implements 
 
     @Override
     public void postNewTransition(String jiraIssueKey, Transition transition, Collection<CustomField> customFields,
-                                  String comment) throws IOException {
+                                  @Nullable String comment) throws IOException {
         IssueTransitionRequest jiraIssueTransition = new IssueTransitionRequest(transition, customFields, comment);
 
         String urlString = getBaseUrl() + "/issue/" + jiraIssueKey + "/transitions";

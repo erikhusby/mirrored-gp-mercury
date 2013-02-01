@@ -2,7 +2,22 @@
 
 <stripes:layout-definition>
     <script type="text/javascript">
+        $j(document).ready(function () {
+            $j('#sampleListView').dataTable({
+                "oTableTools":ttExportDefines,
+                "aaSorting":[
+                    [1, 'asc']
+                ],
+                "aoColumns":[
+                    {"bSortable":false},
+                    {"bSortable":true},
+                    {"bSortable":true}
+                ]
+            })
+        });
+
         function showPlasticHistoryVisualizer(sampleKey) {
+            $j('#plasticViewDiv').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
             $j('#plasticViewDiv').load('${ctxpath}/view/plasticHistoryView.action?sampleKey=' + sampleKey);
             $j('#plasticViewDiv').show();
         }
@@ -28,10 +43,14 @@
                     </a>
                 </td>
                 <td>
-                        ${sample.sampleKey}
+                    <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.sampleKey}">
+                            ${sample.sampleKey}
+                    </a>
                 </td>
                 <td>
-                        ${sample.productOrderKey}
+                    <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.productOrderKey}">
+                            ${sample.productOrderKey}
+                    </a>
                 </td>
             </tr>
         </c:forEach>

@@ -16,7 +16,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
@@ -163,6 +162,24 @@ public class ProductOrder implements Serializable {
         setSamples(samples);
     }
 
+    public void calculateAllRisk() {
+        calculateRisk(false);
+    }
+
+    public void calculateNewRisk() {
+        calculateRisk(true);
+    }
+
+    private void calculateRisk(boolean newSamplesOnly) {
+        for (ProductOrderSample sample : samples) {
+            // If not skipping samples with risk, then always do it, otherwise only do samples with no risk items.
+            // have risk items, means that risk was calculated
+            if (!newSamplesOnly || sample.getRiskItems().isEmpty()) {
+                sample.calculateRisk();
+            }
+        }
+    }
+
     /**
      * Class that encapsulates counting samples and storing the results.
      */
@@ -170,6 +187,7 @@ public class ProductOrder implements Serializable {
         private static final long serialVersionUID = -6031146789417566007L;
         private boolean countsValid;
         private int totalSampleCount;
+        private int onRiskCount;
         private int bspSampleCount;
         private int receivedSampleCount;
         private int activeSampleCount;
@@ -205,6 +223,7 @@ public class ProductOrder implements Serializable {
             activeSampleCount = 0;
             hasFPCount = 0;
             missingBspMetaDataCount = 0;
+            onRiskCount = 0;
             stockTypeCounts.clear();
             primaryDiseaseCounts.clear();
             genderCounts.clear();
@@ -242,6 +261,10 @@ public class ProductOrder implements Serializable {
                         }
 
                         incrementCount(sampleTypeCounts, bspDTO.getSampleType());
+
+                        if (sample.isOnRisk()) {
+                            onRiskCount++;
+                        }
                     }
                 }
             }
@@ -268,6 +291,8 @@ public class ProductOrder implements Serializable {
                     output.add(MessageFormat.format("Unique: {0}", uniqueSampleCount));
                     output.add(MessageFormat.format("Duplicate: {0}", (totalSampleCount - uniqueSampleCount)));
                 }
+
+                output.add(MessageFormat.format("On Risk: {0}", onRiskCount));
 
                 if (bspSampleCount == uniqueSampleCount) {
                     output.add("From BSP: All");
@@ -342,7 +367,8 @@ public class ProductOrder implements Serializable {
     /**
      * Used for test purposes only.
      */
-    public ProductOrder(@Nonnull Long creatorId, @Nonnull String title, List<ProductOrderSample> samples, String quoteId,
+    public ProductOrder(@Nonnull Long creatorId, @Nonnull String title,
+                        @Nonnull List<ProductOrderSample> samples, String quoteId,
                         Product product, ResearchProject researchProject) {
         createdBy = creatorId;
         this.title = title;
@@ -356,12 +382,17 @@ public class ProductOrder implements Serializable {
      * Call this method before saving changes to the database.  It updates the modified date and modified user,
      * and sets the create date and create user if these haven't been set yet.
      * @param user the user doing the save operation.
+     * @param isCreating true if creating a new PDO
      */
-    public void prepareToSave(BspUser user) {
+    public void prepareToSave(BspUser user, boolean isCreating) {
         Date now = new Date();
         long userId = user.getUserId();
-        if (createdBy == null) {
-            createdBy = userId;
+        if (isCreating) {
+            // createdBy is now set in the UI.
+            if (createdBy == null) {
+                // Used by tests only.
+                createdBy = userId;
+            }
             createdDate = now;
         }
         modifiedBy = userId;
@@ -452,19 +483,62 @@ public class ProductOrder implements Serializable {
         return samples;
     }
 
-    public void setSamples(List<ProductOrderSample> samples) {
-        this.samples.clear();
+    private void addSamplesInternal(List<ProductOrderSample> newSamples, int samplePos) {
+        for (ProductOrderSample sample : newSamples) {
+            sample.setProductOrder(this);
+            sample.setSamplePosition(samplePos++);
+            samples.add(sample);
+        }
+        counts.invalidate();
+    }
 
-        int samplePos = 0;
-        if (samples != null) {
-            for (ProductOrderSample sample : samples) {
-                sample.setProductOrder(this);
-                sample.setSamplePosition(samplePos++);
-                this.samples.add(sample);
+    public void setSamples(@Nonnull List<ProductOrderSample> samples) {
+        if (samples.isEmpty()) {
+            return;
+        }
+        // only update samples if there are no ledger items on any samples or the sample list has changed
+        if (!hasLedgerItems() || sampleListHasChanged(samples)) {
+            this.samples.clear();
+
+            addSamplesInternal(samples, 0);
+        }
+    }
+
+    public void addSamples(@Nonnull List<ProductOrderSample> newSamples) {
+        if (samples.isEmpty()) {
+            setSamples(newSamples);
+        } else {
+            int samplePos = samples.get(samples.size() - 1).getSamplePosition();
+            addSamplesInternal(newSamples, samplePos);
+        }
+    }
+
+    /**
+     * Determine if the list of samples names is exactly the same as the original list of sample names
+     *
+     * @param newSamples new sample list
+     *
+     * @return true, if the name lists are different
+     */
+    private boolean sampleListHasChanged(List<ProductOrderSample> newSamples) {
+        List<String> originalSampleNames = ProductOrderSample.getSampleNames(samples);
+        List<String> newSampleNames = ProductOrderSample.getSampleNames(newSamples);
+
+        // If not equals, then this has changed
+        return !newSampleNames.equals(originalSampleNames);
+    }
+
+    /**
+     * @return If any sample has ledger items, then return true. Otherwise return false
+     */
+    private boolean hasLedgerItems() {
+        for (ProductOrderSample sample : samples) {
+            if (!sample.getLedgerItems().isEmpty()) {
+                return true;
             }
         }
 
-        counts.invalidate();
+        return false;
     }
 
     /**
@@ -488,8 +562,17 @@ public class ProductOrder implements Serializable {
         return createdDate;
     }
 
-    public long getCreatedBy() {
+    public Long getCreatedBy() {
         return createdBy;
+    }
+
+    /**
+     * Call this method to change the 'owner' attribute of a Product Order.  We are currently storing this
+     * attribute in the created by column in the database.
+     * @param userId the owner ID
+     */
+    public void setCreatedBy(Long userId) {
+        createdBy = userId;
     }
 
     public Date getModifiedDate() {
@@ -513,19 +596,28 @@ public class ProductOrder implements Serializable {
         }
 
         if (uniqueNames.isEmpty()) {
-            // No BSP samples, nothing to do.
+            // This early return is needed to avoid making a unnecessary injection, which could cause
+            // DB Free automated tests to fail.
             return;
         }
 
         BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
         Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(uniqueNames);
+
+        // the non-null DTOs which we use to look up FFPE status
+        List<BSPSampleDTO> nonNullDTOs = new ArrayList<BSPSampleDTO>();
         for (ProductOrderSample sample : getSamples()) {
             BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getSampleName());
-            if (bspSampleDTO == null) {
-                bspSampleDTO = BSPSampleDTO.DUMMY;
+
+            // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample
+            if (bspSampleDTO != null) {
+                sample.setBspDTO(bspSampleDTO);
+                nonNullDTOs.add(bspSampleDTO);
             }
-            sample.setBspDTO(bspSampleDTO);
         }
+
+        // fill out all the non-null DTOs with FFPE status in one shot
+        bspSampleDataFetcher.fetchFFPEDerived(nonNullDTOs);
     }
 
     /**
@@ -552,12 +644,8 @@ public class ProductOrder implements Serializable {
      * @return the list of sample names for this order, including duplicates. in the same sequence that
      * they were entered.
      */
-    private List<String> getSampleNames() {
-        List<String> names = new ArrayList<String>(samples.size());
-        for (ProductOrderSample productOrderSample : samples) {
-            names.add(productOrderSample.getSampleName());
-        }
-        return names;
+    public String getSampleString() {
+        return StringUtils.join(ProductOrderSample.getSampleNames(samples), '\n');
     }
 
     /**
@@ -690,14 +778,14 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * @return The order is a draft while it is not 'placed,' which is the state of having a jira ticket
+     * @return true if order is in Draft
      */
     public boolean isDraft() {
         return OrderStatus.Draft == orderStatus;
     }
 
     /**
-     * @return The order is a draft while it is not 'placed,' which is the state of having a jira ticket
+     * @return true if order is abandoned
      */
     public boolean isAbandoned() {
         return OrderStatus.Abandoned == orderStatus;
@@ -721,27 +809,28 @@ public class ProductOrder implements Serializable {
 
         List<CustomField> listOfFields = new ArrayList<CustomField>();
 
-        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.PRODUCT_FAMILY,
+        listOfFields.add(new CustomField(submissionFields, JiraField.PRODUCT_FAMILY,
                 product.getProductFamily() == null ? "" : product.getProductFamily().getName()));
 
-        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.PRODUCT,
+        listOfFields.add(new CustomField(submissionFields, JiraField.PRODUCT,
                 product.getProductName() == null ? "" : product.getProductName()));
 
         if (quoteId != null && !quoteId.isEmpty()) {
-            listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.QUOTE_ID, quoteId));
+            listOfFields.add(new CustomField(submissionFields, JiraField.QUOTE_ID, quoteId));
         }
-        listOfFields.add(new CustomField(submissionFields, RequiredSubmissionFields.SAMPLE_IDS,
-                StringUtils.join(getSampleNames(), '\n')));
+        listOfFields.add(new CustomField(submissionFields, JiraField.SAMPLE_IDS, getSampleString()));
 
         BSPUserList bspUserList = ServiceAccessUtility.getBean(BSPUserList.class);
 
         JiraIssue issue = jiraService.createIssue(
-                fetchJiraProject().getKeyPrefix(), bspUserList.getById(modifiedBy).getUsername(),
+                fetchJiraProject().getKeyPrefix(), bspUserList.getById(createdBy).getUsername(),
                 fetchJiraIssueType(), title, comments == null ? "" : comments, listOfFields);
 
         jiraTicketKey = issue.getKey();
         issue.addLink(researchProject.getJiraTicketKey());
 
+        // Due to the way we set createdBy, it's possible that these two values will be different.
+        issue.addWatcher(bspUserList.getById(createdBy).getUsername());
         issue.addWatcher(bspUserList.getById(modifiedBy).getUsername());
 
         issue.addComment(StringUtils.join(getSampleSummaryComments(), "\n"));
@@ -809,19 +898,19 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
-     * for Product orders
+     * This is used to help create or update a PDO's Jira ticket.
      */
-    public enum RequiredSubmissionFields implements CustomField.SubmissionField {
+    public enum JiraField implements CustomField.SubmissionField {
         PRODUCT_FAMILY("Product Family"),
         PRODUCT("Product"),
         QUOTE_ID("Quote ID"),
         MERCURY_URL("Mercury URL"),
-        SAMPLE_IDS("Sample IDs");
+        SAMPLE_IDS("Sample IDs"),
+        REPORTER("Reporter");
 
         private final String fieldName;
 
-        private RequiredSubmissionFields(String fieldNameIn) {
+        private JiraField(String fieldNameIn) {
             fieldName = fieldNameIn;
         }
 

@@ -269,6 +269,10 @@ public class LabBatch {
         return batchName;
     }
 
+    public Long getLabBatchId() {
+        return labBatchId;
+    }
+
     /**
      * RequiredSubmissionFields is an enum intended to assist in the creation of a Jira ticket
      * for Product orders
@@ -296,7 +300,9 @@ public class LabBatch {
         PROGRESS_STATUS("Progress Status", true),
 
         //List of Sample names
-        GSSR_IDS("GSSR ID(s)", true),;
+        GSSR_IDS("GSSR ID(s)", true),
+
+        LIMS_ACTIVITY_STREAM("LIMS Activity Stream", true);
 
         private final String fieldName;
         private final boolean customField;
@@ -347,6 +353,15 @@ public class LabBatch {
         return hashCodeBuilder.hashCode();
     }
 
+    /**
+     * Helper method to determine if a batch applies to a group of lab vessels
+     *
+     * Typically called by looping through the nearest batches of one of the vessels in the vessel group
+     *
+     * @param targetBatch
+     * @param batchSet
+     * @return
+     */
     public static boolean isCommonBatch(LabBatch targetBatch, Collection<LabVessel> batchSet) {
 
         boolean result = false;

@@ -1,7 +1,5 @@
 /*
  Does insert/update/delete to all reporting tables, using data from import tables.
- Tables are put into one of 3 groups depending on their FK dependencies.
- All tables within a grouping can be (but are not yet) processed in parallel.
 */
 CREATE OR REPLACE PROCEDURE merge_import
 IS
@@ -19,6 +17,10 @@ CURSOR im_rp_funding_cur IS SELECT * FROM im_research_project_funding WHERE is_d
 CURSOR im_rp_irb_cur IS SELECT * FROM im_research_project_irb WHERE is_delete = 'F';
 CURSOR im_rp_person_cur IS SELECT * FROM im_research_project_person WHERE is_delete = 'F';
 CURSOR im_rp_status_cur IS SELECT * FROM im_research_project_status WHERE is_delete = 'F';
+CURSOR im_lab_batch_cur IS SELECT * FROM im_lab_batch WHERE is_delete = 'F';
+CURSOR im_lab_vessel_cur IS SELECT * FROM im_lab_vessel WHERE is_delete = 'F';
+CURSOR im_workflow_config_cur IS SELECT * FROM im_workflow_config WHERE is_delete = 'F';
+CURSOR im_event_fact_cur IS SELECT * FROM im_event_fact WHERE is_delete = 'F';
 
 errmsg VARCHAR2(255);
 
@@ -29,24 +31,16 @@ BEGIN
 -- Does the most dependent (FK dependency) tables first.
 ---------------------------------------------------------------------------
 
---Level 3 (depends on level 2 tables)
-
-DELETE FROM product_order_status
-WHERE product_order_id IN (
-  SELECT product_order_id FROM im_product_order_status WHERE is_delete = 'T'
+-- event_fact deletes not on the PK but on lab_event_id
+DELETE FROM event_fact
+WHERE lab_event_id IN (
+  SELECT DISTINCT lab_event_id FROM im_event_fact WHERE is_delete = 'T'
 );
 
-DELETE FROM product_order_sample_status
+UPDATE product_order_sample SET is_deleted = 'T'
 WHERE product_order_sample_id IN (
-  SELECT product_order_sample_id FROM im_product_order_sample_stat WHERE is_delete = 'T'
+  SELECT product_order_sample_id FROM im_product_order_sample WHERE is_delete = 'T'
 );
-
-DELETE FROM product_order_add_on
-WHERE product_order_add_on_id IN (
-  SELECT product_order_add_on_id FROM im_product_order_add_on WHERE is_delete = 'T'
-);
-
---Level 2 (depends only on level 1 tables)
 
 DELETE FROM research_project_status
 WHERE research_project_id IN (
@@ -73,21 +67,9 @@ WHERE research_project_irb_id IN (
   SELECT research_project_irb_id FROM im_research_project_irb WHERE is_delete = 'T'
 );
 
-DELETE FROM product_order
-WHERE product_order_id IN (
-  SELECT product_order_id FROM im_product_order WHERE is_delete = 'T'
-);
-
-DELETE FROM product_order_sample
-WHERE product_order_sample_id IN (
-  SELECT product_order_sample_id FROM im_product_order_sample WHERE is_delete = 'T'
-);
-
--- Level 1 (independent tables)
-
-DELETE FROM research_project
-WHERE research_project_id IN (
-  SELECT research_project_id FROM im_research_project WHERE is_delete = 'T'
+UPDATE product_order_add_on SET is_deleted = 'T'
+WHERE product_order_add_on_id IN (
+  SELECT product_order_add_on_id FROM im_product_order_add_on WHERE is_delete = 'T'
 );
 
 DELETE FROM price_item
@@ -95,9 +77,29 @@ WHERE price_item_id IN (
   SELECT price_item_id FROM im_price_item WHERE is_delete = 'T'
 );
 
+UPDATE product_order SET is_deleted = 'T'
+WHERE product_order_id IN (
+  SELECT product_order_id FROM im_product_order WHERE is_delete = 'T'
+);
+
+DELETE FROM lab_batch
+WHERE lab_batch_id IN (
+  SELECT lab_batch_id FROM im_lab_batch WHERE is_delete = 'T'
+);
+
+DELETE FROM lab_vessel
+WHERE lab_vessel_id IN (
+  SELECT lab_vessel_id FROM im_lab_vessel WHERE is_delete = 'T'
+);
+
 DELETE FROM product
 WHERE product_id IN (
   SELECT product_id FROM im_product WHERE is_delete = 'T'
+);
+
+DELETE FROM research_project
+WHERE research_project_id IN (
+  SELECT research_project_id FROM im_research_project WHERE is_delete = 'T'
 );
 
 COMMIT;
@@ -105,8 +107,6 @@ COMMIT;
 -----------------------------------------------------------------------------------------
 -- Updates rows when they exist in the target table, inserts rows when they do not exist.
 -----------------------------------------------------------------------------------------
-
--- Level 1 (independent tables)
 
 FOR new IN im_rp_cur LOOP
   BEGIN
@@ -205,7 +205,124 @@ FOR new IN im_product_cur LOOP
 END LOOP;
 
 
---Level 2 (depends only on level 1 tables)
+FOR new IN im_lab_vessel_cur LOOP
+  BEGIN
+    UPDATE lab_vessel SET
+      lab_vessel_id = new.lab_vessel_id,
+      label = new.label,
+      lab_vessel_type = new.lab_vessel_type,
+      etl_date = new.etl_date
+    WHERE lab_vessel_id = new.lab_vessel_id;
+
+    INSERT INTO lab_vessel (
+      lab_vessel_id,
+      label,
+      lab_vessel_type,
+      etl_date
+    ) 
+    SELECT
+      new.lab_vessel_id,
+      new.label,
+      new.lab_vessel_type,
+      new.etl_date
+    FROM DUAL WHERE NOT EXISTS (
+      SELECT 1 FROM lab_vessel
+      WHERE lab_vessel_id = new.lab_vessel_id
+    );
+  EXCEPTION WHEN OTHERS THEN 
+    errmsg := SQLERRM;
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_lab_vessel.dat line '||new.line_number||'  '||errmsg);
+    CONTINUE;
+  END;
+
+END LOOP;
+
+FOR new IN im_lab_batch_cur LOOP
+  BEGIN
+    UPDATE lab_batch SET
+      lab_batch_id = new.lab_batch_id,
+      batch_name = new.batch_name,
+      is_active = new.is_active,
+      created_on = new.created_on,
+      due_date = new.due_date,
+      etl_date = new.etl_date
+    WHERE lab_batch_id = new.lab_batch_id;
+
+    INSERT INTO lab_batch (
+      lab_batch_id,
+      batch_name,
+      is_active,
+      created_on,
+      due_date,
+      etl_date
+    ) 
+    SELECT
+      new.lab_batch_id,
+      new.batch_name,
+      new.is_active,
+      new.created_on,
+      new.due_date,
+      new.etl_date
+    FROM DUAL WHERE NOT EXISTS (
+      SELECT 1 FROM lab_batch
+      WHERE lab_batch_id = new.lab_batch_id
+    );
+  EXCEPTION WHEN OTHERS THEN 
+    errmsg := SQLERRM;
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_lab_batch.dat line '||new.line_number||'  '||errmsg);
+    CONTINUE;
+  END;
+
+END LOOP;
+
+FOR new IN im_workflow_config_cur LOOP
+  BEGIN
+    UPDATE workflow_config SET
+      workflow_config_id = new.workflow_config_id,
+      effective_date = new.effective_date,
+      workflow_name = new.workflow_name,
+      workflow_version = new.workflow_version,
+      process_name = new.process_name,
+      process_version = new.process_version,
+      step_name = new.step_name,
+      event_name = new.event_name,
+      etl_date = new.etl_date
+    WHERE workflow_config_id = new.workflow_config_id;
+
+    INSERT INTO workflow_config (
+      workflow_config_id,
+      effective_date,
+      workflow_name,
+      workflow_version,
+      process_name,
+      process_version,
+      step_name,
+      event_name,
+      etl_date
+    ) 
+    SELECT
+      new.workflow_config_id,
+      new.effective_date,
+      new.workflow_name,
+      new.workflow_version,
+      new.process_name,
+      new.process_version,
+      new.step_name,
+      new.event_name,
+      new.etl_date
+    FROM DUAL WHERE NOT EXISTS (
+      SELECT 1 FROM workflow_config
+      WHERE workflow_config_id = new.workflow_config_id
+    );
+  EXCEPTION WHEN OTHERS THEN 
+    errmsg := SQLERRM;
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_workflow_config.dat line '||new.line_number||'  '||errmsg);
+    CONTINUE;
+  END;
+
+END LOOP;
+
+
 
 FOR new IN im_po_cur LOOP
   BEGIN
@@ -541,6 +658,49 @@ FOR new IN im_po_sample_cur LOOP
 
 END LOOP;
 
+-- Needed for idempotent repeatable merge
+UPDATE im_event_fact SET event_fact_id = event_fact_id_seq.nextval WHERE event_fact_id IS NULL;
+
+FOR new IN im_event_fact_cur LOOP
+  BEGIN
+    -- No update is possible due to lack of common unique key
+
+    INSERT INTO event_fact (
+      event_fact_id,
+      lab_event_id,
+      event_name,
+      workflow_config_id,
+      product_order_id,
+      sample_key,
+      lab_batch_id,
+      station_name,
+      lab_vessel_id,
+      event_date,
+      etl_date
+    ) 
+    SELECT
+      new.event_fact_id,
+      new.lab_event_id,
+      new.event_name,
+      new.workflow_config_id,
+      new.product_order_id,
+      new.sample_key,
+      new.lab_batch_id,
+      new.station_name,
+      new.lab_vessel_id,
+      new.event_date,
+      new.etl_date
+    FROM DUAL WHERE NOT EXISTS (
+      SELECT 1 FROM event_fact
+      WHERE event_fact_id = new.event_fact_id
+    );
+  EXCEPTION WHEN OTHERS THEN 
+    errmsg := SQLERRM;
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_event_fact.dat line '||new.line_number||'  '||errmsg);
+    CONTINUE;
+  END;
+
+END LOOP;
 
 
 --Level 3 (depends on level 2 tables)

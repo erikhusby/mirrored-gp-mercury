@@ -7,7 +7,7 @@
             <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Preflight Bucket</name>
-                <optional>false</optional>
+                <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <entryMaterialType>GENOMIC_DNA</entryMaterialType>
@@ -43,6 +43,59 @@
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
                 <numberOfRepeats>1</numberOfRepeats>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>Pico/Plating</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
+                <name>Pico/Plating Bucket</name>
+                <labEventTypes>PICO_PLATING_BUCKET</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <entryMaterialType>GENOMIC_DNA</entryMaterialType>
+                <batchJiraProjectType>LCSET</batchJiraProjectType>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pico/Plating QC</name>
+                <labEventTypes>PICO_PLATING_QC</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <quantType>PICO</quantType>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pico/Plating Setup</name>
+                <labEventTypes>PICO_DILUTION_TRANSFER</labEventTypes>
+                <labEventTypes>PICO_BUFFER_ADDITION</labEventTypes>
+                <labEventTypes>PICO_MICROFLUOR_TRANSFER</labEventTypes>
+                <labEventTypes>PICO_STANDARDS_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <quantType>PICO</quantType>
+                <numberOfRepeats>1</numberOfRepeats>
+                <deadEndBranch>true</deadEndBranch>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pico/Plating Normalization</name>
+                <labEventTypes>SAMPLES_NORMALIZATION_TRANSFER</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Pico/Plating Post Norm Pico Setup</name>
+                <labEventTypes>PICO_PLATING_POST_NORM_PICO</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <numberOfRepeats>1</numberOfRepeats>
+                <deadEndBranch>true</deadEndBranch>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -89,19 +142,24 @@
             <workflowStepDefs xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="workflowBucketDef">
                 <name>Shearing Bucket</name>
                 <labEventTypes>SHEARING_BUCKET</labEventTypes>
-                <optional>false</optional>
-                <entryPoint>true</entryPoint>
-                <reEntryPoint>true</reEntryPoint>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                </jiraTransition>
             </workflowStepDefs>
-<!--
             <workflowStepDefs>
                 <name>Plating to Shearing Tubes</name>
                 <labEventTypes>PLATING_TO_SHEARING_TUBES</labEventTypes>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Shearing</statusTransition>
+                </jiraTransition>
             </workflowStepDefs>
--->
             <workflowStepDefs>
                 <name>Covaris Loaded</name>
                 <labEventTypes>COVARIS_LOADED</labEventTypes>
@@ -122,6 +180,10 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In LC</statusTransition>
+                </jiraTransition>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -192,6 +254,10 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In Hyb Sel</statusTransition>
+                </jiraTransition>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -264,6 +330,10 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In QTP</statusTransition>
+                </jiraTransition>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -345,6 +415,10 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In MiSeq Sequencing</statusTransition>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Strip Tube B Transfer</name>
@@ -352,6 +426,10 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>FCT</project>
+                    <statusTransition>Strip Tube Created (or Registered)</statusTransition>
+                </jiraTransition>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -366,6 +444,14 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Closed</statusTransition>
+                </jiraTransition>
+                <jiraTransition>
+                    <project>FCT</project>
+                    <statusTransition>Flowcell Registered</statusTransition>
+                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Flowcell Loaded</name>
@@ -373,6 +459,10 @@
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>FCT</project>
+                    <statusTransition>On Sequencer</statusTransition>
+                </jiraTransition>
             </workflowStepDefs>
         </workflowProcessDefVersions>
     </workflowProcessDefs>
@@ -387,6 +477,7 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
+                <batchJiraProjectType></batchJiraProjectType>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Whole Blood</name>
@@ -410,7 +501,7 @@
             <version>1.0</version>
             <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>
             <!--<workflowProcessDefs>Extraction</workflowProcessDefs>-->
-            <!--<workflowProcessDefs>Preflight</workflowProcessDefs>-->
+            <workflowProcessDefs>Pico/Plating</workflowProcessDefs>
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>
             <workflowProcessDefs>Hybrid Selection</workflowProcessDefs>

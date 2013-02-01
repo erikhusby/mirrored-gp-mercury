@@ -1,0 +1,37 @@
+package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
+
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.testng.Assert;
+import org.testng.annotations.Test;
+
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * Database free test of the Vessel Metric web service
+ */
+public class VesselMetricResourceTest {
+
+    @Test
+    public void testBuildLabMetricRun() {
+        VesselMetricResource vesselMetricResource = new VesselMetricResource();
+
+        ArrayList<VesselMetricBean> vesselMetricBeans = new ArrayList<VesselMetricBean>();
+        String barcode = "1234";
+        vesselMetricBeans.add(new VesselMetricBean(barcode, "1.2", "ng/uL"));
+        VesselMetricRunBean vesselMetricRunBean = new VesselMetricRunBean("TestRun", new Date(),  "BSP Pico", vesselMetricBeans);
+
+        Map<String, LabVessel> mapBarcodeToVessel = new HashMap<String, LabVessel>();
+        mapBarcodeToVessel.put(barcode, new TwoDBarcodedTube(barcode));
+        LabMetricRun labMetricRun = vesselMetricResource.buildLabMetricRun(vesselMetricRunBean, mapBarcodeToVessel);
+
+        Assert.assertEquals(labMetricRun.getLabMetrics().size(), 1, "Wrong number of metrics");
+        LabMetric labMetric = labMetricRun.getLabMetrics().iterator().next();
+        Assert.assertEquals(labMetric.getLabVessel().getLabel(), barcode, "Wrong barcode");
+    }
+}

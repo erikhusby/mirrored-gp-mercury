@@ -105,14 +105,6 @@
         </repository>
 -->
 
-        <!-- PrimeFaces Repository for PrimeFaces and themes -->
-        <repository>
-            <id>prime-repo</id>
-            <name>PrimeFaces Maven Repository</name>
-            <url>http://repository.primefaces.org</url>
-            <layout>default</layout>
-        </repository>
-
         <repository>
             <id>Sonatype-public</id>
             <name>SnakeYAML repository</name>
@@ -681,7 +673,7 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.32:1521:gpinfprd</database.url>
+                <database.url>jdbc:oracle:thin:@192.168.195.30:1521:gpinfprd</database.url>
                 <mercury.password>guest</mercury.password>
                 <athena.password>guest</athena.password>
             </properties>
@@ -742,7 +734,7 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.13:1521:gpinfprd</database.url>
+                <database.url>jdbc:oracle:thin:@192.168.195.43:1521:gpinfprd</database.url>
                 <mercury.password>guest</mercury.password>
                 <athena.password>guest</athena.password>
             </properties>
@@ -1028,19 +1020,6 @@
                 <scope>import</scope>
             </dependency>
 -->
-            <dependency>
-                <groupId>org.primefaces.extensions</groupId>
-                <artifactId>primefaces-extensions</artifactId>
-                <version>0.6.1</version>
-            </dependency>
-
-            <!-- primefaces-extensions has a dependency on primefaces, so use this to control the version of primefaces we depend on -->
-            <!-- see: http://code.google.com/p/primefaces-extensions/wiki/GettingStarted -->
-            <dependency>
-                <groupId>org.primefaces</groupId>
-                <artifactId>primefaces</artifactId>
-                <version>3.4.1</version>
-            </dependency>
         </dependencies>
     </dependencyManagement>
 
@@ -1196,71 +1175,11 @@
             <scope>provided</scope>
         </dependency>
 
-<!--
-	<dependency>
-	    <groupId>com.twitter.bootstrap</groupId>
-	    <artifactId>twitter-bootstrap</artifactId>
-	    <version>2.1.1</version>
-	    <type>zip</type>
-	    <scope>runtime</scope>
-	</dependency>
--->
-
         <dependency>
         	<groupId>org.apache.commons</groupId>
         	<artifactId>commons-lang3</artifactId>
         	<version>3.1</version>
         </dependency>
-
-        <!-- BEGIN primefaces -->
-        <dependency>
-            <groupId>org.primefaces</groupId>
-            <artifactId>primefaces</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.primefaces.extensions</groupId>
-            <artifactId>primefaces-extensions</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.primefaces.themes</groupId>
-            <artifactId>bootstrap</artifactId>
-            <version>1.0.8</version>
-        </dependency>
-        <!-- END primefaces -->
-
-        <!-- BEGIN seam-faces -->
-<!--
-        <dependency>
-            <groupId>org.jboss.seam.faces</groupId>
-            <artifactId>seam-faces-api</artifactId>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.seam.faces</groupId>
-            <artifactId>seam-faces</artifactId>
-            <version>3.1.0.Final</version>
-            <scope>runtime</scope>
-        </dependency>
--->
-
-<!--
-        <dependency>
-            <groupId>org.jboss.solder</groupId>
-            <artifactId>solder-api</artifactId>
-            <version>3.1.1.Final</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.solder</groupId>
-            <artifactId>solder-impl</artifactId>
-            <version>3.1.1.Final</version>
-            <scope>runtime</scope>
-        </dependency>
--->
-
-        <!-- END seam-faces -->
 
         <dependency>
             <groupId>log4j</groupId>
@@ -1327,6 +1246,13 @@
             <groupId>org.easymock</groupId>
             <artifactId>easymock</artifactId>
             <version>3.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>1.9.5</version>
             <scope>test</scope>
         </dependency>
 
@@ -1474,7 +1400,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-site-plugin</artifactId>
-                    <version>3.0</version>
+                    <version>3.2</version>
                 </plugin>
 
                 <plugin>
@@ -2014,6 +1940,11 @@
                 <groupId>org.codehaus.sonar-plugins</groupId>
                 <artifactId>maven-report</artifactId>
                 <version>0.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-project-info-reports-plugin</artifactId>
+                <version>2.6</version>
             </plugin>
         </plugins>
     </reporting>

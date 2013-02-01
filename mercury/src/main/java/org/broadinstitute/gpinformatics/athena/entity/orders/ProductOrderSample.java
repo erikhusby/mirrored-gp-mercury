@@ -8,11 +8,13 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.hibernate.annotations.Index;
+import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -66,12 +68,53 @@ public class ProductOrderSample implements Serializable {
     @Column(name="SAMPLE_POSITION", updatable = false, insertable = false, nullable=false)
     private Integer samplePosition;
 
+    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
+    @JoinColumn(name = "product_order_sample", nullable = false)
+    @AuditJoinTable(name = "po_sample_risk_join_aud")
+    private Set<RiskItem> riskItems = new HashSet<RiskItem>();
+
+    /**
+     * Convert a list of ProductOrderSamples into a list of sample names.
+     * @param samples the samples to convert
+     * @return the names of the samples, in the same order as the input
+     */
+    public static List<String> getSampleNames(Collection<ProductOrderSample> samples) {
+        List<String> names = new ArrayList<String>(samples.size());
+        for (ProductOrderSample productOrderSample : samples) {
+            names.add(productOrderSample.getSampleName());
+        }
+        return names;
+    }
+
+    public void calculateRisk() {
+        riskItems.clear();
+
+        // Go through each risk check on the product
+        for (RiskCriteria criterion : productOrder.getProduct().getRiskCriteriaList()) {
+            // If this is on risk, then create a risk item for it and add it in
+            if (criterion.onRisk(this)) {
+                riskItems.add(new RiskItem(criterion, new Date(), criterion.getValueProvider().getValue(this)));
+            }
+        }
+
+        // If there are no risk checks that failed, then create a risk item with no criteria to represent NO RISK
+        // and this will distinguish NO RISK from never checked
+        if (riskItems.isEmpty()) {
+            riskItems.add(new RiskItem(null, new Date(), null));
+        }
+    }
+
+    public void setManualOnRisk(RiskCriteria criterion, String value, String comment) {
+        riskItems.clear();
+        riskItems.add(new RiskItem(criterion, new Date(), value, comment));
+    }
+
     public static enum DeliveryStatus implements StatusType {
-        NOT_STARTED("Not Started"),
+        NOT_STARTED(""),
         DELIVERED("Delivered"),
         ABANDONED("Abandoned");
 
-        private String displayName;
+        private final String displayName;
 
         DeliveryStatus(String displayName) {
             this.displayName = displayName;
@@ -157,12 +200,15 @@ public class ProductOrderSample implements Serializable {
             if (isInBspFormat()) {
                 BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
                 bspDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(getSampleName());
-            } else {
-                // not BSP format, but we still need a semblance of a BSP DTO
-                bspDTO = BSPSampleDTO.DUMMY;
+                if (bspDTO == null) {
+                    // not BSP sample exists with this name, but we still need a semblance of a BSP DTO
+                    bspDTO = BSPSampleDTO.DUMMY;
+                }
             }
+
             hasBspDTOBeenInitialized = true;
         }
+
         return bspDTO;
     }
 
@@ -186,6 +232,7 @@ public class ProductOrderSample implements Serializable {
         if (bspDTO == null) {
             throw new NullPointerException("BSP Sample DTO cannot be null");
         }
+
         this.bspDTO = bspDTO;
         hasBspDTOBeenInitialized = true;
     }
@@ -195,30 +242,7 @@ public class ProductOrderSample implements Serializable {
     }
 
     public static boolean isInBspFormat(@Nonnull String sampleName) {
-        if (sampleName == null) {
-            throw new NullPointerException("Sample name cannot be null");
-        }
-
         return BSP_SAMPLE_NAME_PATTERN.matcher(sampleName).matches();
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof ProductOrderSample)) {
-            return false;
-        }
-
-        ProductOrderSample that = (ProductOrderSample) o;
-        return new EqualsBuilder().append(sampleName, that.getSampleName()).append(samplePosition, that.getSamplePosition())
-                .append(productOrder, that.getProductOrder()).build();
-    }
-
-    @Override
-    public int hashCode() {
-        return new HashCodeBuilder().append(sampleName).append(samplePosition).append(productOrder).build();
     }
 
     public Set<BillingLedger> getBillableLedgerItems() {
@@ -383,5 +407,40 @@ public class ProductOrderSample implements Serializable {
         log.debug(MessageFormat.format(
                 "Added BillingLedger item for sample {0} to PDO {1} for PriceItemName: {2} - Quantity:{3}",
                 sampleName, productOrder.getBusinessKey(), priceItem.getName(), delta));
+    }
+
+    /**
+     * @return If there are any risk items with non-null criteria, then it is on risk
+     */
+    public boolean isOnRisk() {
+        for (RiskItem item : riskItems) {
+            if (item.getRiskCriteria() != null) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public String getRiskString() {
+        StringBuilder riskStringBuilder = new StringBuilder();
+
+        if (isOnRisk()) {
+            for (RiskItem riskItem : riskItems) {
+                riskStringBuilder.append(riskItem.getInformation());
+            }
+        }
+
+        return riskStringBuilder.toString();
+    }
+
+    public Collection<RiskItem> getRiskItems() {
+        return riskItems;
+    }
+
+    // Only called from test code.
+    public void setRiskItems(Collection<RiskItem> riskItems) {
+        this.riskItems.clear();
+        this.riskItems.addAll(riskItems);
     }
 }

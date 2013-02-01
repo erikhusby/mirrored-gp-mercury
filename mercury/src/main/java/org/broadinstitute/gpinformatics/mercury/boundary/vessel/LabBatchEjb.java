@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
@@ -23,10 +24,7 @@ import javax.annotation.Nonnull;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Encapsulates the business logic related to {@link LabBatch}s.  This includes the creation
@@ -49,7 +47,7 @@ public class LabBatchEjb {
 
     private JiraTicketDao jiraTicketDao;
 
-    private TwoDBarcodedTubeDAO tubeDAO;
+    private LabVesselDao tubeDAO;
 
     /**
      * Alternate create lab batch method to allow a user to define the vessels for use by their barcode
@@ -65,7 +63,7 @@ public class LabBatchEjb {
         Set<LabVessel> vesselsForBatch = new HashSet<LabVessel>(labVesselNames.size());
 
         for (String currVesselLabel : labVesselNames) {
-            vesselsForBatch.add(tubeDAO.findByBarcode(currVesselLabel));
+            vesselsForBatch.add(tubeDAO.findByIdentifier(currVesselLabel));
         }
 
         return createLabBatch(vesselsForBatch, reporter, jiraTicket);
@@ -80,8 +78,6 @@ public class LabBatchEjb {
      */
     public LabBatch createLabBatch(@Nonnull Set<LabVessel> labVessels, @Nonnull String reporter,
                                    @Nonnull String jiraTicket) {
-
-//        Collection<String> pdoList = LabVessel.extractPdoList(labVessels);
 
         LabBatch batchObject = new LabBatch(jiraTicket, labVessels);
 
@@ -137,7 +133,6 @@ public class LabBatchEjb {
                 ticket = new JiraTicket(jiraService, jiraIssue.getKey());
             }
 
-//            batchObject.setBatchName(jiraIssue.getSummary());
             batchObject.setBatchDescription(jiraIssue.getDescription());
 
             batchObject.setJiraTicket(ticket);
@@ -170,7 +165,6 @@ public class LabBatchEjb {
 
                 Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
-                // TODO  SGM Set Due Date
 
                 // TODO SGM Determine Project and Issue type better.  Use Workflow Configuration
                 JiraIssue jiraIssue = jiraService
@@ -188,19 +182,50 @@ public class LabBatchEjb {
         }
     }
 
+    /**
+     * Isolates the logic for updating the Jira ticket associated with a batch with information on what has changed
+     * for this new batch
+     *
+     * @param newBatch
+     */
     public void jiraBatchNotification(LabBatch newBatch) {
         for (String pdo : LabVessel.extractPdoKeyList(newBatch.getStartingLabVessels())) {
             try {
-                jiraService.addLink(AddIssueLinkRequest.LinkType.Related, pdo, newBatch.getJiraTicket().getTicketName(),
-                        "New Batch Created: " +
-                        newBatch.getJiraTicket().getTicketName() +
-                        " " + newBatch.getBatchName(), Visibility.Type.role,
-                        Visibility.Value.QA_Jira_Users);
+                if (newBatch.getJiraTicket() != null) {
+                    jiraService.addLink(AddIssueLinkRequest.LinkType.Parentage, pdo, newBatch.getJiraTicket()
+                            .getTicketName());
+                }
             } catch (Exception ioe) {
-                logger.error("Error attempting to link Batch " + newBatch.getJiraTicket().getTicketName() + " to Product order " + pdo,
+                logger.error("Error attempting to link Batch " + newBatch.getJiraTicket().getTicketName()
+                             + " to Product order " + pdo,
                         ioe);
             }
         }
+    }
+
+    /**
+     * Primarily utilized by the deck messaging, this method will validate that all given Vessels have previously been
+     * defined in a batch known to the Mercury System.
+     *
+     * @param batchVessels
+     * @return
+     */
+    public boolean validatePriorBatch(Collection<LabVessel> batchVessels) {
+
+        boolean result = false;
+
+        Iterator<LabVessel> vesselIterator = batchVessels.iterator();
+
+        LabVessel firstVessel = vesselIterator.next();
+
+        for (LabBatch testBatch : firstVessel.getNearestLabBatchesList()) {
+            if (testBatch.getStartingLabVessels().containsAll(batchVessels)) {
+                result = true;
+                break;
+            }
+        }
+
+        return result;
     }
 
     /*
@@ -227,7 +252,7 @@ public class LabBatchEjb {
     }
 
     @Inject
-    public void setTubeDAO(TwoDBarcodedTubeDAO tubeDAO) {
+    public void setTubeDAO(LabVesselDao tubeDAO) {
         this.tubeDAO = tubeDAO;
     }
 }

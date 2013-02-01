@@ -1,17 +1,16 @@
 package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 import com.sun.jersey.api.client.Client;
+import org.apache.commons.io.FileUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
@@ -26,7 +25,16 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.Query;
 import javax.ws.rs.core.MediaType;
+import java.io.File;
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,7 +43,7 @@ import java.util.Map;
  * A Test to import molecular indexes and LCSETs from Squid.  This prepares an empty database to accept messages.  This must
  * be in the same package as MolecularIndexingScheme, because it uses package visible methods on that class.
  * Use the following VM options: -Xmx1G -XX:MaxPermSize=128M -Dorg.jboss.remoting-jmx.timeout=3000
- * As of August 2012, the test takes about 35 minutes to run.
+ * As of January 2013, the test takes about 35 minutes to run.
  * This test requires an XA-datasource, or the following in the <system-properties> element in standalone.xml
  *         <property name="com.arjuna.ats.arjuna.allowMultipleLastResources" value="true"/>
  * For XA in Postgres, in data/postgresql.conf, set max_prepared_transactions = 10
@@ -65,6 +73,9 @@ public class ImportFromSquidTest extends ContainerTest {
 
     @Inject
     private ProductOrderDao productOrderDao;
+
+    public static final String XML_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss";
+    private SimpleDateFormat xmlDateFormat = new SimpleDateFormat(XML_DATE_FORMAT);
 
 /*
     @SuppressWarnings("CdiInjectionPointsInspection")
@@ -148,9 +159,9 @@ public class ImportFromSquidTest extends ContainerTest {
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION, dependsOnMethods = {"testImportIndexingSchemes"})
     public void testImportIndexPlates() {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
-                "     p.barcode as plate_barcode, " +
-                "     wd.NAME as well_name, " +
-                "     mis.NAME as scheme_name " +
+                "     p.barcode AS plate_barcode, " +
+                "     wd.NAME AS well_name, " +
+                "     mis.NAME AS scheme_name " +
                 "FROM " +
                 "     plate_seq_sample_identifier pssi " +
                 "     INNER JOIN plate p " +
@@ -213,79 +224,96 @@ public class ImportFromSquidTest extends ContainerTest {
      */
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testCreateLcSets() {
-        Map<String, String> mapWorkflowToPartNum = new HashMap<String, String>();
-        mapWorkflowToPartNum.put("Custom Amplicon", "P-VAL-0002");
-//        ("IGN WGS", "?")
-//        ("Fluidigm Multi", "?")
-        mapWorkflowToPartNum.put("Whole Genome", "P-WG-0002");
-        mapWorkflowToPartNum.put("Exome Express", "P-EX-0002");
-        mapWorkflowToPartNum.put("Hybrid Selection", "P-EX-0001");
-//        ("180SM", "?")
+//        Map<String, String> mapWorkflowToPartNum = new HashMap<String, String>();
+//        mapWorkflowToPartNum.put("Custom Amplicon", "P-VAL-0002");
+////        ("IGN WGS", "?")
+////        ("Fluidigm Multi", "?")
+//        mapWorkflowToPartNum.put("Whole Genome", "P-WG-0002");
+//        mapWorkflowToPartNum.put("Exome Express", "P-EX-0002");
+//        mapWorkflowToPartNum.put("Hybrid Selection", "P-EX-0001");
+////        ("180SM", "?")
 
+        // Positive and negative controls are not included in the Product Order, but are included in the LCSet
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
-                "     l.KEY, " +
-                "     lwd.NAME, " +
-                "     r.barcode AS tube_barcode, " +
-                "     ls.barcode AS sample_barcode " +
+                "    DISTINCT  " +
+                "    l.KEY AS lcsetKey, " +
+                "    lwd.NAME AS workflowName, " +
+                "    r.barcode AS tube_barcode, " +
+                "    ls.barcode AS sample_barcode, " +
+                "    ls.lsid AS sampleLsid, " +
+                "    wd.name AS wellName, " +
+                "    wrmd.product_order_name " +
                 "FROM " +
-                "     lcset l " +
-                "     INNER JOIN lab_workflow lw " +
-                "          ON   lw.lcset_id = l.lcset_id " +
-                "     INNER JOIN lab_workflow_def lwd " +
-                "          ON   lwd.lab_workflow_def_id = lw.lab_workflow_def_id " +
-                "     INNER JOIN lab_workflow_receptacle lwr " +
-                "          ON   lwr.lab_workflow_id = lw.lab_workflow_id " +
-                "     INNER JOIN receptacle r " +
-                "          ON   r.receptacle_id = lwr.receptacle_id " +
-                "     INNER JOIN seq_content sc " +
-                "          ON   sc.receptacle_id = r.receptacle_id " +
-                "     INNER JOIN seq_content_descr_set scds " +
-                "          ON   scds.seq_content_id = sc.seq_content_id " +
-                "     INNER JOIN seq_content_descr scd " +
-                "          ON   scd.seq_content_descr_id = scds.seq_content_descr_id " +
-                "     INNER JOIN gssr_pool_descr gpd " +
-                "          ON   gpd.seq_content_descr_id = scd.seq_content_descr_id " +
-                "     INNER JOIN lc_sample ls " +
-                "          ON   ls.lc_sample_id = gpd.lc_sample_id " +
-                "     INNER JOIN well_map_entry wme " +
-                "          ON   wme.receptacle_id = r.receptacle_id " +
-                "     INNER JOIN well_description wd " +
-                "          ON   wd.well_description_id = wme.well_description_id " +
-                "     INNER JOIN well_map wm " +
-                "          ON   wm.well_map_id = wme.well_map_id " +
-                "     INNER JOIN plate p " +
-                "          ON   p.plate_id = wm.rack_plate_id " +
-                "     INNER JOIN plate_transfer_event pte " +
-                "          ON   pte.source_well_map_id = wm.well_map_id " +
-                "     INNER JOIN plate_event pe " +
-                "          ON   pe.station_event_id = pte.station_event_id " +
-                "     INNER JOIN station_event se " +
-                "          ON   se.station_event_id = pe.station_event_id " +
-                "     INNER JOIN station_event_type set1 " +
-                "          ON   set1.station_event_type_id = se.station_event_type_id " +
+                "    lcset l " +
+                "    INNER JOIN lab_workflow lw " +
+                "        ON   lw.lcset_id = l.lcset_id " +
+                "    INNER JOIN lab_workflow_def lwd " +
+                "        ON   lwd.lab_workflow_def_id = lw.lab_workflow_def_id " +
+                "    INNER JOIN lab_workflow_receptacle lwr " +
+                "        ON   lwr.lab_workflow_id = lw.lab_workflow_id " +
+                "    INNER JOIN receptacle r " +
+                "        ON   r.receptacle_id = lwr.receptacle_id " +
+                "    INNER JOIN wr_material_recep_membership wmrm " +
+                "        ON   wmrm.receptacle_id = r.receptacle_id " +
+                "    INNER JOIN work_request_material wrm " +
+                "        ON   wrm.work_request_material_id = wmrm.work_request_material_id " +
+                "    INNER JOIN work_request_material_descr wrmd " +
+                "        ON   wrmd.work_request_material_id = wrm.work_request_material_id " +
+                "    INNER JOIN seq_content sc " +
+                "        ON   sc.receptacle_id = r.receptacle_id " +
+                "    INNER JOIN seq_content_descr_set scds " +
+                "        ON   scds.seq_content_id = sc.seq_content_id " +
+                "    INNER JOIN seq_content_descr scd " +
+                "        ON   scd.seq_content_descr_id = scds.seq_content_descr_id " +
+                "    INNER JOIN gssr_pool_descr gpd " +
+                "        ON   gpd.seq_content_descr_id = scd.seq_content_descr_id " +
+                "    INNER JOIN lc_sample ls " +
+                "        ON   ls.lc_sample_id = gpd.lc_sample_id " +
+                "    INNER JOIN well_map_entry wme " +
+                "        ON   wme.receptacle_id = r.receptacle_id " +
+                "    INNER JOIN well_description wd " +
+                "        ON   wd.well_description_id = wme.well_description_id " +
+                "    INNER JOIN well_map wm " +
+                "        ON   wm.well_map_id = wme.well_map_id " +
+                "    INNER JOIN plate p " +
+                "        ON   p.plate_id = wm.rack_plate_id " +
+                "    INNER JOIN plate_transfer_event pte " +
+                "        ON   pte.source_well_map_id = wm.well_map_id " +
+                "    INNER JOIN plate_event pe " +
+                "        ON   pe.station_event_id = pte.station_event_id " +
+                "    INNER JOIN station_event se " +
+                "        ON   se.station_event_id = pe.station_event_id " +
+                "    INNER JOIN station_event_type set1 " +
+                "        ON   set1.station_event_type_id = se.station_event_type_id " +
+//                "WHERE " +
+//                "    wrmd.product_order_name IS NOT NULL " +
+//                "    AND lwd.name = 'Exome Express' " +
                 "ORDER BY " +
-                "     l.KEY, " +
-                "     wd.NAME ");
+                "    l.KEY, " +
+                "    wd.NAME ");
         List<?> resultList = nativeQuery.getResultList();
         String previousLcSet = "";
         LabBatchBean labBatch = null;
         List<TubeBean> tubeBeans = null;
 
-        ResearchProject researchProject = new ResearchProject(1701L, "Import from Squid", "Import from Squid", false);
-        String jiraTicketKey = "RP-ImportFromSquid";
-        researchProject.setJiraTicketKey(jiraTicketKey);
-        researchProjectDao.persist(researchProject);
-        ArrayList<ProductOrderSample> productOrderSamples = null;
+//        ResearchProject researchProject = new ResearchProject(1701L, "Import from Squid", "Import from Squid", false);
+//        String jiraTicketKey = "RP-ImportFromSquid";
+//        researchProject.setJiraTicketKey(jiraTicketKey);
+//        researchProjectDao.persist(researchProject);
+//        ArrayList<ProductOrderSample> productOrderSamples = null;
 
         for (Object o : resultList) {
             Object[] columns = (Object[]) o;
             String lcSet = (String) columns[0];
             String workflowName = (String) columns[1];
             String tubeBarcode = (String) columns[2];
-            String sampleBarcode = (String) columns[3];
+//            String sampleBarcode = (String) columns[3];
+            String sampleLsid = (String) columns[4];
+//            String wellName = (String) columns[5];
+            String productOrder = (String) columns[6];
             if(!lcSet.equals(previousLcSet)) {
                 previousLcSet = lcSet;
-                String partNumber = mapWorkflowToPartNum.get(workflowName);
+//                String partNumber = mapWorkflowToPartNum.get(workflowName);
                 if(labBatch != null) {
                     System.out.println("About to persist batch " + labBatch.getBatchId());
                     String response = null;
@@ -302,23 +330,23 @@ public class ImportFromSquidTest extends ContainerTest {
                         System.out.println(e.getMessage());
                     }
                     System.out.println(response);
-                    if (partNumber != null) {
-                        Product product = productDao.findByBusinessKey(partNumber);
-                        researchProject = researchProjectDao.findByBusinessKey(jiraTicketKey);
-                        ProductOrder productOrder = new ProductOrder(1701L, lcSet, productOrderSamples, "BSP-123", product, researchProject);
-                        productOrder.setJiraTicketKey(lcSet);
-                        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
-                        productOrderDao.persist(productOrder);
-                        productOrderDao.clear();
-                    }
+//                    if (partNumber != null) {
+//                        Product product = productDao.findByBusinessKey(partNumber);
+//                        researchProject = researchProjectDao.findByBusinessKey(jiraTicketKey);
+//                        ProductOrder productOrder = new ProductOrder(1701L, lcSet, productOrderSamples, "BSP-123", product, researchProject);
+//                        productOrder.setJiraTicketKey(lcSet);
+//                        productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
+//                        productOrderDao.persist(productOrder);
+//                        productOrderDao.clear();
+//                    }
                 }
                 tubeBeans = new ArrayList<TubeBean>();
                 labBatch = new LabBatchBean(lcSet, workflowName, tubeBeans);
-                productOrderSamples = new ArrayList<ProductOrderSample>();
+//                productOrderSamples = new ArrayList<ProductOrderSample>();
             }
             assert tubeBeans != null;
-            tubeBeans.add(new TubeBean(tubeBarcode, sampleBarcode, lcSet));
-            productOrderSamples.add(new ProductOrderSample(sampleBarcode));
+            tubeBeans.add(new TubeBean(tubeBarcode, "SM-" + sampleLsid.substring(sampleLsid.lastIndexOf(':') + 1), productOrder));
+//            productOrderSamples.add(new ProductOrderSample(sampleBarcode));
         }
     }
 
@@ -327,7 +355,7 @@ public class ImportFromSquidTest extends ContainerTest {
      */
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testCreateBaits() {
-        Query nativeQuery = entityManager.createNativeQuery("SELECT distinct " +
+        Query nativeQuery = entityManager.createNativeQuery("SELECT DISTINCT " +
                 "    r.barcode, " +
                 "    hbd.design_name " +
                 "FROM " +
@@ -423,6 +451,220 @@ public class ImportFromSquidTest extends ContainerTest {
         }
         twoDBarcodedTubeDAO.clear();
     }
+
+    /**
+     * Runs a native query against Squid to get the station events associated with a hard-coded list of LCSETs (derived
+     * from a query that returns LCSETs that have Product Order associations).  For each station event, attempts to
+     * find on the file system the corresponding message file.  This list of message files can be used in
+     * BettalimsMessageResourceTest.testFileList to send the messages to Mercury.
+     * Note: later discovered that this misses many events after PoolingTransfer, because of workflow validation errors.
+     */
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void testFindMessageFilesForLcSet() {
+        try {
+            Query nativeQuery = entityManager.createNativeQuery("SELECT " +
+                    "    DISTINCT  " +
+                    "    l.key, " +
+                    "    min(se.start_time), " +
+                    "    set1.name " +
+                    "FROM " +
+                    "    lcset l " +
+                    "    INNER JOIN lab_workflow lw " +
+                    "        ON   lw.lcset_id = l.lcset_id " +
+                    "    INNER JOIN lab_workflow_workflow_reg lwwr " +
+                    "        ON   lwwr.lab_workflow_id = lw.lab_workflow_id " +
+                    "    INNER JOIN lab_workflow_registration lwr " +
+                    "        ON   lwr.lab_workflow_registration_id = lwwr.lab_workflow_registration_id " +
+                    "    INNER JOIN station_event se " +
+                    "        ON   se.station_event_id = lwr.station_event_id " +
+                    "    INNER JOIN station_event_type set1 " +
+                    "        ON   set1.station_event_type_id = se.station_event_type_id " +
+                    "WHERE " +
+                    "    l.\"KEY\" IN ( " +
+                    "'LCSET-2339', " +
+                    "'LCSET-2403', " +
+                    "'LCSET-2420', " +
+                    "'LCSET-2422', " +
+                    "'LCSET-2423', " +
+                    "'LCSET-2424', " +
+                    "'LCSET-2425', " +
+                    "'LCSET-2427', " +
+                    "'LCSET-2428', " +
+                    "'LCSET-2432', " +
+                    "'LCSET-2433', " +
+                    "'LCSET-2436', " +
+                    "'LCSET-2438', " +
+                    "'LCSET-2439', " +
+                    "'LCSET-2442', " +
+                    "'LCSET-2445', " +
+                    "'LCSET-2456', " +
+                    "'LCSET-2470', " +
+                    "'LCSET-2471', " +
+                    "'LCSET-2472', " +
+                    "'LCSET-2473', " +
+                    "'LCSET-2477', " +
+                    "'LCSET-2479', " +
+                    "'LCSET-2486', " +
+                    "'LCSET-2489', " +
+                    "'LCSET-2490', " +
+                    "'LCSET-2491', " +
+                    "'LCSET-2492', " +
+                    "'LCSET-2495', " +
+                    "'LCSET-2497', " +
+                    "'LCSET-2498', " +
+                    "'LCSET-2501', " +
+                    "'LCSET-2502', " +
+                    "'LCSET-2504', " +
+                    "'LCSET-2507', " +
+                    "'LCSET-2508', " +
+                    "'LCSET-2509', " +
+                    "'LCSET-2511', " +
+                    "'LCSET-2512', " +
+                    "'LCSET-2515', " +
+                    "'LCSET-2516', " +
+                    "'LCSET-2519', " +
+                    "'LCSET-2521', " +
+                    "'LCSET-2522', " +
+                    "'LCSET-2523', " +
+                    "'LCSET-2527', " +
+                    "'LCSET-2528', " +
+                    "'LCSET-2531', " +
+                    "'LCSET-2542', " +
+                    "'LCSET-2547', " +
+                    "'LCSET-2563', " +
+                    "'LCSET-2573', " +
+                    "'LCSET-2578', " +
+                    "'LCSET-2582', " +
+                    "'LCSET-2599', " +
+                    "'LCSET-2603', " +
+                    "'LCSET-2606', " +
+                    "'LCSET-2607', " +
+                    "'LCSET-2613', " +
+                    "'LCSET-2615', " +
+                    "'LCSET-2616', " +
+                    "'LCSET-2622', " +
+                    "'LCSET-2623', " +
+                    "'LCSET-2700'" +
+                    ") " +
+                    "GROUP BY " +
+                    "    l.key, " +
+                    "    set1.name " +
+                    "ORDER BY " +
+                    "    1, " +
+                    "    2 ");
+            List<?> resultList = nativeQuery.getResultList();
+            File inboxDirectory = new File("C:/Temp/seq/lims/bettalims/production/inbox");
+            String previousLcSset = "";
+
+            for (Object o : resultList) {
+                Object[] columns = (Object[]) o;
+                String lcSet = (String) columns[0];
+                Date startTime = (Date) columns[1];
+                String eventName = (String) columns[2];
+
+                if(!lcSet.equals(previousLcSset)) {
+                    System.out.println("# "+ lcSet);
+                    previousLcSset = lcSet;
+                }
+                GregorianCalendar gregorianCalendar = new GregorianCalendar();
+                gregorianCalendar.setTime(startTime);
+                int year = gregorianCalendar.get(Calendar.YEAR);
+                int month = gregorianCalendar.get(Calendar.MONTH) + 1;
+                int day = gregorianCalendar.get(Calendar.DAY_OF_MONTH);
+                int hour = gregorianCalendar.get(Calendar.HOUR_OF_DAY);
+                int minute = gregorianCalendar.get(Calendar.MINUTE);
+                int second = gregorianCalendar.get(Calendar.SECOND);
+                String yearMonthDay = String.format("%d%02d%02d", year, month, day);
+                String dateString = xmlDateFormat.format(startTime);
+
+                File dayDirectory = new File(inboxDirectory, yearMonthDay);
+                String[] messageFileList = dayDirectory.list();
+                if(messageFileList == null) {
+                    throw new RuntimeException("Failed to find directory " + dayDirectory.getName());
+                }
+                Collections.sort(Arrays.asList(messageFileList));
+                boolean found = false;
+                for (String fileName : messageFileList) {
+                    File messageFile = new File(dayDirectory, fileName);
+                    String message = FileUtils.readFileToString(messageFile);
+                    // Strip tube and flowcell transfer dates are assigned on the server, so they may not match
+                    // what's in the file, hence we have to do a lenient check against the file name
+                    if(eventName.equals("StripTubeBTransfer") || eventName.equals("FlowcellTransfer")) {
+                        if(message.contains(eventName) &&
+                                (fileName.startsWith(yearMonthDay + "_" + String.format("%02d%02d", hour, minute)) ||
+                                fileName.startsWith(yearMonthDay + "_" + String.format("%02d%02d", hour, minute + 1)) ||
+                                fileName.startsWith(yearMonthDay + "_" + String.format("%02d", hour)) ||
+                                fileName.startsWith(yearMonthDay + "_" + String.format("%02d", hour + 1)))) {
+                            System.out.println("#" + eventName);
+                            System.out.println(messageFile.getCanonicalPath());
+                            found = true;
+                            break;
+                        }
+                    } else if(message.contains(eventName) && message.contains(dateString)) {
+                        System.out.println("#" + eventName);
+                        System.out.println(messageFile.getCanonicalPath());
+                        found = true;
+                        break;
+                    }
+                }
+                if(!found) {
+                    System.out.println("#Failed to find file for " + lcSet + " " + eventName + " " + startTime);
+                }
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    private void testImportQuants() {
+        Query nativeQuery = entityManager.createNativeQuery("SELECT " +
+                "     lqr.run_name, " +
+                "     lqr.run_date, " +
+                "     lqt.quant_type_name, " +
+                "     lq.quant_value, " +
+                "     r.barcode " +
+                "FROM " +
+                "     library_quant_run lqr " +
+                "     INNER JOIN library_quant_type lqt " +
+                "          ON   lqt.quant_type_id = lqr.quant_type_id " +
+                "     INNER JOIN library_quant lq " +
+                "          ON   lq.quant_run_id = lqr.run_id " +
+                "     INNER JOIN receptacle r " +
+                "          ON   r.receptacle_id = lq.receptacle_id " +
+                "WHERE " +
+                "     lq.is_archived = 'N' AND lqr.run_name = :lcSetNumber " +
+                "ORDER BY " +
+                "     1, 3");
+        nativeQuery.setParameter("lcSetNumber", "2588");
+        List<?> resultList = nativeQuery.getResultList();
+
+        ArrayList<VesselMetricBean> vesselMetricBeans = new ArrayList<VesselMetricBean>();
+        String previousQuantType = "";
+        VesselMetricRunBean vesselMetricRunBean = null;
+        for (Object o : resultList) {
+            Object[] columns = (Object[]) o;
+            String runName = (String) columns[0];
+            Date runDate = (Date) columns[1];
+            String quantTypeName = (String) columns[2];
+            BigDecimal quantValue = (BigDecimal) columns[3];
+            String barcode = (String) columns[4];
+
+            if(!quantTypeName.equals(previousQuantType)) {
+                if(!previousQuantType.isEmpty()) {
+                    ImportFromBspTest.recordMetrics(vesselMetricRunBean);
+                }
+                vesselMetricBeans.clear();
+                vesselMetricRunBean = new VesselMetricRunBean(runName, runDate, quantTypeName,
+                        vesselMetricBeans);
+                previousQuantType = quantTypeName;
+            }
+            vesselMetricBeans.add(new VesselMetricBean(barcode, quantValue.toString(), "ng/uL"));
+        }
+
+        ImportFromBspTest.recordMetrics(vesselMetricRunBean);
+    }
+
     /*
 SELECT
 	lqr.run_name,
@@ -464,4 +706,40 @@ FROM
 
 		493,677 rows
      */
+/*
+SELECT
+	DISTINCT product_order_name,
+--	set1."NAME",
+	l."KEY"--,
+--	l2."KEY"
+FROM
+	work_request_material_descr
+	INNER JOIN work_request_material wrm
+		ON   wrm.work_request_material_id = work_request_material_descr.work_request_material_id
+	INNER JOIN work_request wr
+		ON   wr.work_request_id = wrm.work_request_id
+	INNER JOIN lcset l
+		ON   l.lcset_id = wr.lcset_id
+	INNER JOIN wr_material_recep_membership wmrm
+		ON   wmrm.work_request_material_id = wrm.work_request_material_id
+	INNER JOIN receptacle r
+		ON   r.receptacle_id = wmrm.receptacle_id
+--	INNER JOIN lab_workflow_receptacle lwr
+--		ON   lwr.receptacle_id = r.receptacle_id
+--	INNER JOIN lab_workflow lw
+--		ON   lw.lab_workflow_id = lwr.lab_workflow_id
+--	INNER JOIN lcset l2
+--		ON   l2.lcset_id = lw.lcset_id
+	INNER JOIN receptacle_transfer_event rte
+		ON   rte.src_receptacle_id = r.receptacle_id
+	INNER JOIN receptacle_event re
+		ON   re.station_event_id = rte.station_event_id
+	INNER JOIN station_event se
+		ON   se.station_event_id = re.station_event_id
+	INNER JOIN station_event_type set1
+		ON   set1.station_event_type_id = se.station_event_type_id
+WHERE
+	product_order_name IS NOT NULL
+	AND set1.name = 'StripTubeBTransfer';
+*/
 }

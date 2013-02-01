@@ -41,46 +41,6 @@ public class BillingRequirement {
         return false;
     }
 
-    public enum Operator {
-        GREATER_THAN(">"),
-        GREATER_THAN_OR_EQUAL_TO(">="),
-        LESS_THAN("<"),
-        LESS_THAN_OR_EQUAL_TO("<=");
-
-        public final String label;
-
-        public boolean apply(double d1, double d2) {
-            switch (this) {
-            case GREATER_THAN:
-                return d1 > d2;
-            case GREATER_THAN_OR_EQUAL_TO:
-                return d1 >= d2;
-            case LESS_THAN:
-                return d1 < d2;
-            case LESS_THAN_OR_EQUAL_TO:
-                return d1 <= d2;
-            }
-            throw new RuntimeException();
-        }
-
-        static Operator fromLabel(String label) {
-            for (Operator op : values()) {
-                if (op.label.equals(label)) {
-                    return op;
-                }
-            }
-            return null;
-        }
-
-        public String getLabel() {
-            return label;
-        }
-
-        Operator(String label) {
-            this.label = label;
-        }
-    }
-
     @Column(name = "attribute", length = 255)
     private String attribute;
 

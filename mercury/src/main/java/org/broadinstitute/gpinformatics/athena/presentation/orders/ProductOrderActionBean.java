@@ -8,6 +8,7 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
@@ -24,6 +25,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.BspLink;
@@ -31,7 +33,10 @@ import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
+import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
+import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -63,6 +68,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String ORDER_CREATE_PAGE = "/orders/create.jsp";
     private static final String ORDER_LIST_PAGE = "/orders/list.jsp";
     private static final String ORDER_VIEW_PAGE = "/orders/view.jsp";
+    private static final String ADD_SAMPLES_ACTION = "addSamples";
+    private static final String ABANDON_SAMPLES_ACTION = "abandonSamples";
+    private static final String DELETE_SAMPLES_ACTION = "deleteSamples";
+    private static final String SET_RISK = "setRisk";
 
     @Inject
     private QuoteService quoteService;
@@ -104,6 +113,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     private BillingLedgerDao billingLedgerDao;
 
     @Inject
+    private ProductOrderSampleDao productOrderSampleDao;
+
+    @Inject
     private ProductOrderEjb productOrderEjb;
 
     @Inject
@@ -115,6 +127,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private ProjectTokenInput projectTokenInput;
 
+    @Inject
+    private JiraService jiraService;
+
     private List<ProductOrderListEntry> allProductOrders;
 
     private String sampleList;
@@ -122,7 +137,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
     private String productOrder;
 
-    private long sampleId;
+    private long sampleIdForGetBspData;
 
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
@@ -137,21 +152,41 @@ public class ProductOrderActionBean extends CoreActionBean {
     private List<String> selectedProductOrderBusinessKeys;
     private List<ProductOrder> selectedProductOrders;
 
+    @Validate(required = true, on = {ABANDON_SAMPLES_ACTION, DELETE_SAMPLES_ACTION})
+    private List<Long> selectedProductOrderSampleIds;
+    private List<ProductOrderSample> selectedProductOrderSamples;
+
     private String quoteIdentifier;
 
     private String product;
 
-    private List<String> addOnKeys = new ArrayList<String> ();
+    private List<String> addOnKeys = new ArrayList<String>();
+
+    @Validate(required = true, on = ADD_SAMPLES_ACTION)
+    private String addSamplesText;
+
+    @Validate(required = true, on = SET_RISK)
+    private boolean onlyNew = true;
+
+    @Validate(required = true, on = SET_RISK)
+    private boolean riskStatus = true;
+
+    @Validate(required = true, on = SET_RISK)
+    private String riskComment;
 
     /*
      * The search query.
      */
     private String q;
 
+    /** The owner of the Product Order, stored as createdBy in ProductOrder and Reporter in JIRA */
+    @Inject
+    private UserTokenInput owner;
+
     /**
      * Initialize the product with the passed in key for display in the form or create it, if not specified
      */
-    @Before(stages = LifecycleStage.BindingAndValidation)
+    @Before(stages = LifecycleStage.BindingAndValidation, on = {"!" + LIST_ACTION, "!getQuoteFunding"})
     public void init() {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
@@ -182,41 +217,63 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // If this is not a draft, some fields are required
         if (!editOrder.isDraft()) {
-            validatePlacedOrder();
+            doValidation("save");
+        } else {
+            // Even in draft, created by must be set. This can't be checked using @Validate (yet),
+            // since its value isn't set until updateTokenInputFields() has been called.
+            requireField(editOrder.getCreatedBy(), "an owner", "save");
         }
     }
 
-    @ValidationMethod(on = "placeOrder")
-    public void validatePlacedOrder() {
-        if (editOrder.getSamples().isEmpty()) {
-            addGlobalValidationError("Order does not have any samples");
-        }
+    /**
+     * Validate a required field
+     * @param value if null, field is missing
+     * @param name name of field
+     */
+    private void requireField(Object value, String name, String action) {
+        requireField(value != null, name, action);
+    }
 
-        String placeOrderString = "Cannot place order ''" + editOrder.getBusinessKey();
-
-        if (editOrder.getResearchProject() == null) {
-            addGlobalValidationError(placeOrderString + "'' because it does not have a research project");
+    /**
+     * Validate a required field
+     * @param hasValue if false, field is missing
+     * @param name name of field
+     */
+    private void requireField(boolean hasValue, String name, String action) {
+        if (!hasValue) {
+            addGlobalValidationError("Cannot {2} ''{3}'' because it does not have {4}.",
+                    action, editOrder.getBusinessKey(), name);
         }
+    }
 
-        if (editOrder.getQuoteId() == null) {
-            addGlobalValidationError(placeOrderString + "'' because it does not have a quote specified");
-        }
-
-        if (editOrder.getProduct() == null) {
-            addGlobalValidationError(placeOrderString + "'' because it does not have a product");
-        }
-
-        if (editOrder.getCount() < 1) {
-            addGlobalValidationError(placeOrderString  + "'' because it does not have a specified number of lanes");
-        }
+    private void doValidation(String action) {
+        String ownerUsername = bspUserList.getById(editOrder.getCreatedBy()).getUsername();
+        requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
+        requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
+        requireField(editOrder.getResearchProject(), "a research project", action);
+        requireField(editOrder.getQuoteId(), "a quote specified", action);
+        requireField(editOrder.getProduct(), "a product", action);
+        requireField(editOrder.getCount() > 0, "a specified number of lanes", action);
+        requireField(editOrder.getCreatedBy(), "an owner", action);
 
         try {
             quoteService.getQuoteByAlphaId(editOrder.getQuoteId());
         } catch (QuoteServerException ex) {
             addGlobalValidationError("The quote id " + editOrder.getQuoteId() + " is not valid: " + ex.getMessage());
         } catch (QuoteNotFoundException ex) {
-            addGlobalValidationError("The quote id " + editOrder.getQuoteId() + " is not found");
+            addGlobalValidationError("The quote id " + editOrder.getQuoteId() + " was not found.");
         }
+
+        // Since we are only validating from view, we can persist without worry of saving something bad.
+        if (getContext().getValidationErrors().isEmpty()) {
+            editOrder.calculateAllRisk();
+            productOrderDao.persist(editOrder);
+        }
+    }
+
+    @ValidationMethod(on = "placeOrder")
+    public void validatePlacedOrder() {
+        doValidation("place order");
     }
 
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
@@ -225,11 +282,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                 "tracker download";
 
         if (!getUserBean().isValidBspUser()) {
-            addGlobalValidationError("A valid bsp user is needed to start a " + validatingFor);
+            addGlobalValidationError("A valid bsp user is needed to start a {2}", validatingFor);
         }
 
         if ((selectedProductOrderBusinessKeys == null) || selectedProductOrderBusinessKeys.isEmpty()) {
-            addGlobalValidationError("You must select at least one product order to start a " + validatingFor);
+            addGlobalValidationError("You must select at least one product order to start a {2}", validatingFor);
         } else {
             Set<Product> products = new HashSet<Product> ();
             selectedProductOrders =
@@ -248,14 +305,14 @@ public class ProductOrderActionBean extends CoreActionBean {
                 String[] duplicatePriceItems = product.getDuplicatePriceItemNames();
                 if (duplicatePriceItems != null) {
                     addGlobalValidationError(
-                            "The Product " + product.getPartNumber() + " has duplicate price items: " +
+                            "The Product {2} has duplicate price items: {3}", product.getPartNumber(),
                             StringUtils.join(duplicatePriceItems, ", "));
                 }
             }
 
-            // If there are locked out orders, then do not allow the session to start.
-            // TODO: It looks like this could be done by traversing the entity tree, e.g. ProductOrder -> ProductOrderSample -> BusinessLedger.
-            Set<BillingLedger> lockedOutOrders = billingLedgerDao.findLockedOutByOrderList(getSelectedProductOrderBusinessKeys());
+            // If there are locked out orders, then do not allow the session to start. Using a DAO to do this is a quick
+            // way to do this without having to go through all the objects.
+            Set<BillingLedger> lockedOutOrders = billingLedgerDao.findLockedOutByOrderList(selectedProductOrderBusinessKeys);
             if (!lockedOutOrders.isEmpty()) {
                 Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());
                 for (BillingLedger ledger : lockedOutOrders) {
@@ -288,8 +345,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getQuoteFunding")
     public Resolution getQuoteFunding() {
-
-        StringReader returnStringStream;
 
         JSONObject item = new JSONObject();
 
@@ -329,14 +384,16 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution create() {
         setSubmitString(CREATE_ORDER);
         populateTokenListsFromObjectData();
+        owner.setup(userBean.getBspUser().getUserId());
         return new ForwardResolution(ORDER_CREATE_PAGE);
     }
 
     @HandlesEvent(EDIT_ACTION)
     public Resolution edit() {
-        validateUser("edit");
+        validateUser(EDIT_ACTION);
         setSubmitString(EDIT_ORDER);
         populateTokenListsFromObjectData();
+        owner.setup(editOrder.getCreatedBy());
         return new ForwardResolution(ORDER_CREATE_PAGE);
     }
 
@@ -362,7 +419,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("placeOrder")
     public Resolution placeOrder() {
         try {
-            editOrder.prepareToSave(userBean.getBspUser());
+            editOrder.prepareToSave(userBean.getBspUser(), isCreating());
             editOrder.submitProductOrder();
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
@@ -374,8 +431,23 @@ public class ProductOrderActionBean extends CoreActionBean {
             return getSourcePageResolution();
         }
 
-        addMessage("Product Order \"" + editOrder.getTitle() + "\" has been placed");
-        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER, editOrder.getBusinessKey());
+        addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
+        return createViewResolution();
+    }
+
+    @HandlesEvent("deleteOrder")
+    public Resolution deleteOrder() {
+        String title = editOrder.getTitle();
+        String businessKey = editOrder.getBusinessKey();
+
+        productOrderDao.remove(editOrder);
+        addMessage("Deleted order {0} ({1})", title, businessKey);
+        return new ForwardResolution(ProductOrderActionBean.class, LIST_ACTION);
+    }
+
+    private Resolution createViewResolution() {
+        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER,
+                editOrder.getBusinessKey());
     }
 
     @HandlesEvent("validate")
@@ -393,7 +465,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution save() throws Exception {
 
         // Update the modified by and created by, if necessary.
-        editOrder.prepareToSave(userBean.getBspUser());
+        editOrder.prepareToSave(userBean.getBspUser(), isCreating());
 
         if (editOrder.isDraft()) {
             // mlc isDraft checks if the status is Draft and if so, we set it to Draft again?
@@ -406,7 +478,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         productOrderDao.persist(editOrder);
 
         addMessage("Product Order \"" + editOrder.getTitle() + "\" has been saved.");
-        return new RedirectResolution(ProductOrderActionBean.class, VIEW_ACTION).addParameter(PRODUCT_ORDER_PARAMETER, editOrder.getBusinessKey());
+        return createViewResolution();
     }
 
     private void updateTokenInputFields() {
@@ -414,7 +486,13 @@ public class ProductOrderActionBean extends CoreActionBean {
         ResearchProject project = projectDao.findByBusinessKey(projectTokenInput.getTokenObject());
         Product product = productDao.findByPartNumber(productTokenInput.getTokenObject());
         List<Product> addOnProducts = productDao.findByPartNumbers(addOnKeys);
-        editOrder.updateData(project, product, addOnProducts, getSamplesAsList());
+        editOrder.updateData(project, product, addOnProducts, stringToSampleList(sampleList));
+        List<BspUser> ownerList = owner.getTokenObjects();
+        if (ownerList.isEmpty()) {
+            editOrder.setCreatedBy(null);
+        } else {
+            editOrder.setCreatedBy(ownerList.get(0).getUserId());
+        }
     }
 
     @HandlesEvent("downloadBillingTracker")
@@ -430,7 +508,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("startBilling")
     public Resolution startBilling() {
         Set<BillingLedger> ledgerItems =
-                billingLedgerDao.findWithoutBillingSessionByOrderList(getSelectedProductOrderBusinessKeys());
+                billingLedgerDao.findWithoutBillingSessionByOrderList(selectedProductOrderBusinessKeys);
         if ((ledgerItems == null) || (ledgerItems.isEmpty())) {
             addGlobalValidationError("There is nothing to bill");
             return new RedirectResolution(ProductOrderActionBean.class, LIST_ACTION);
@@ -478,9 +556,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getBspData")
     public Resolution getBspData() throws Exception {
-        JSONArray itemList = new JSONArray();
-
-        ProductOrderSample sample = sampleDao.findById(ProductOrderSample.class, sampleId);
+        ProductOrderSample sample = sampleDao.findById(ProductOrderSample.class, sampleIdForGetBspData);
 
         JSONObject item = new JSONObject();
 
@@ -499,13 +575,128 @@ public class ProductOrderActionBean extends CoreActionBean {
         boolean lanesSupported = true;
         JSONObject item = new JSONObject();
 
-        if ( this.product != null ) {
+        if (this.product != null) {
             Product product = productDao.findByBusinessKey(this.product);
-            lanesSupported =  product.getSupportsNumberOfLanes();
+            lanesSupported = product.getSupportsNumberOfLanes();
         }
         item.put("supports", lanesSupported);
 
         return createTextResolution(item.toString());
+    }
+
+    @ValidationMethod(on = "deleteOrder")
+    public void validateDeleteOrder() {
+        if (!editOrder.isDraft()) {
+            addGlobalValidationError("Orders can only be deleted in draft mode");
+        }
+    }
+
+    @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION, SET_RISK}, priority = 0)
+    public void validateSampleListOperation() {
+        if (selectedProductOrderSampleIds != null) {
+            selectedProductOrderSamples = new ArrayList<ProductOrderSample>(selectedProductOrderSampleIds.size());
+            for (ProductOrderSample sample : editOrder.getSamples()) {
+                if (selectedProductOrderSampleIds.contains(sample.getProductOrderSampleId())) {
+                    selectedProductOrderSamples.add(sample);
+                }
+            }
+        } else {
+            selectedProductOrderSamples = Collections.emptyList();
+        }
+    }
+
+    @ValidationMethod(on = {DELETE_SAMPLES_ACTION, ABANDON_SAMPLES_ACTION}, priority = 1)
+    public void validateDeleteOrAbandonOperation() {
+        if (selectedProductOrderSamples.isEmpty()) {
+            addGlobalValidationError("You must select at least one sample.");
+        }
+    }
+
+    @ValidationMethod(on = DELETE_SAMPLES_ACTION, priority = 2)
+    public void validateDeleteSamplesOperation() {
+        // Report an error if any sample has billing data associated with it.
+        for (ProductOrderSample sample : selectedProductOrderSamples) {
+            if (!sample.getLedgerItems().isEmpty()) {
+                addGlobalValidationError("Cannot delete sample {2} because billing has started.",
+                        sample.getSampleName());
+            }
+        }
+    }
+
+    @HandlesEvent(DELETE_SAMPLES_ACTION)
+    public Resolution deleteSamples() throws Exception {
+        // If removeAll returns false, no samples were removed -- should never happen.
+        if (editOrder.getSamples().removeAll(selectedProductOrderSamples)) {
+            String nameList = StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ",");
+            productOrderDao.persist(editOrder);
+            addMessage("Deleted samples: {0}.", nameList);
+            JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
+            issue.addComment(MessageFormat.format("{0} deleted samples: {1}.", userBean.getLoginUserName(), nameList));
+            issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
+                    editOrder.getSampleString(),
+                    ProductOrder.TransitionStates.DeveloperEdit.getStateName());
+        }
+        return createViewResolution();
+    }
+
+    @HandlesEvent(SET_RISK)
+    public Resolution setRisk() throws Exception {
+        // status true creates a manual item. false adds the success item, which is a null criterion
+        RiskCriteria criterion;
+        String value;
+
+        if (riskStatus) {
+            criterion = RiskCriteria.createManual();
+            value = "true";
+            productOrderDao.persist(criterion);
+        } else {
+            criterion = null;
+            value = null;
+        }
+
+        for (ProductOrderSample sample : selectedProductOrderSamples) {
+            sample.setManualOnRisk(criterion, value, riskComment);
+        }
+
+        productOrderDao.persist(editOrder);
+
+        addMessage("Set manual on risk for {0} samples.", selectedProductOrderSampleIds.size());
+        JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
+        issue.addComment(MessageFormat.format("{0} set manual on risk for {1} samples.",
+                userBean.getLoginUserName(), selectedProductOrderSampleIds.size()));
+        return createViewResolution();
+    }
+
+    @HandlesEvent(ABANDON_SAMPLES_ACTION)
+    public Resolution abandonSamples() throws Exception {
+        // Handle case where user is trying to abandon samples that are already abandoned.
+        Iterator<ProductOrderSample> samples = selectedProductOrderSamples.iterator();
+        while (samples.hasNext()) {
+            ProductOrderSample sample = samples.next();
+            if (sample.getDeliveryStatus() == ProductOrderSample.DeliveryStatus.ABANDONED) {
+                samples.remove();
+            }
+        }
+        if (!selectedProductOrderSamples.isEmpty()) {
+            String nameList = StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ",");
+            productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples);
+        }
+        return createViewResolution();
+    }
+
+    @HandlesEvent(ADD_SAMPLES_ACTION)
+    public Resolution addSamples() throws Exception {
+        List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
+        editOrder.addSamples(samplesToAdd);
+        productOrderDao.persist(editOrder);
+        String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samplesToAdd), ",");
+        addMessage("Added samples: {0}.", nameList);
+        JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
+        issue.addComment(MessageFormat.format("{0} added samples: {1}.", userBean.getLoginUserName(), nameList));
+        issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
+                editOrder.getSampleString(),
+                ProductOrder.TransitionStates.DeveloperEdit.getStateName());
+        return createViewResolution();
     }
 
     public List<String> getSelectedProductOrderBusinessKeys() {
@@ -514,6 +705,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setSelectedProductOrderBusinessKeys(List<String> selectedProductOrderBusinessKeys) {
         this.selectedProductOrderBusinessKeys = selectedProductOrderBusinessKeys;
+    }
+
+    public List<Long> getSelectedProductOrderSampleIds() {
+        return selectedProductOrderSampleIds;
+    }
+
+    public void setSelectedProductOrderSampleIds(List<Long> selectedProductOrderSampleIds) {
+        this.selectedProductOrderSampleIds = selectedProductOrderSampleIds;
     }
 
     public List<ProductOrderListEntry> getAllProductOrders() {
@@ -639,18 +838,15 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public String getSampleList() {
         if (sampleList == null) {
-            sampleList = "";
-            for (ProductOrderSample sample : getEditOrder().getSamples()) {
-                sampleList += sample.getSampleName() + "\n";
-            }
+            sampleList = editOrder.getSampleString();
         }
 
         return sampleList;
     }
 
-    public List<ProductOrderSample> getSamplesAsList() {
+    private static List<ProductOrderSample> stringToSampleList(String sampleListText) {
         List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
-        for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleList)) {
+        for (String sampleName : SearchActionBean.cleanInputStringForSamples(sampleListText)) {
             samples.add(new ProductOrderSample(sampleName));
         }
 
@@ -667,6 +863,30 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setQuoteIdentifier(String quoteIdentifier) {
         this.quoteIdentifier = quoteIdentifier;
+    }
+
+    public UserTokenInput getOwner() {
+        return owner;
+    }
+
+    /**
+     * Sample list edit is only enabled if this is a DRAFT order.  Once an order has been placed, users must use the
+     * UI in the view PDO page to edit the samples in an order.
+     *
+     * @return true if user can edit the sample list
+     */
+    public boolean getAllowSampleListEdit() {
+        return editOrder.isDraft();
+    }
+
+    /**
+     * Quote edit is allowed if the PDO is DRAFT, or if no billing has occurred for any samples yet. This may change
+     * if we snapshot quotes into ledger entries.
+     *
+     * @return true if user can edit the quote
+     */
+    public boolean getAllowQuoteEdit() {
+        return editOrder.isDraft() || billingLedgerDao.findByOrderList(editOrder).isEmpty();
     }
 
     public String getQ() {
@@ -693,11 +913,43 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.researchProjectKey = researchProjectKey;
     }
 
-    public long getSampleId() {
-        return sampleId;
+    public long getSampleIdForGetBspData() {
+        return sampleIdForGetBspData;
     }
 
-    public void setSampleId(long sampleId) {
-        this.sampleId = sampleId;
+    public void setSampleIdForGetBspData(long sampleIdForGetBspData) {
+        this.sampleIdForGetBspData = sampleIdForGetBspData;
+    }
+
+    public String getAddSamplesText() {
+        return addSamplesText;
+    }
+
+    public void setAddSamplesText(String addSamplesText) {
+        this.addSamplesText = addSamplesText;
+    }
+
+    public boolean isRiskStatus() {
+        return riskStatus;
+    }
+
+    public void setRiskStatus(boolean riskStatus) {
+        this.riskStatus = riskStatus;
+    }
+
+    public boolean isOnlyNew() {
+        return onlyNew;
+    }
+
+    public void setOnlyNew(boolean onlyNew) {
+        this.onlyNew = onlyNew;
+    }
+
+    public String getRiskComment() {
+        return riskComment;
+    }
+
+    public void setRiskComment(String riskComment) {
+        this.riskComment = riskComment;
     }
 }

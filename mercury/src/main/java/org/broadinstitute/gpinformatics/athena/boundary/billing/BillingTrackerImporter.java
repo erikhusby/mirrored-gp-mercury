@@ -6,7 +6,6 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.ss.usermodel.*;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -103,9 +102,9 @@ public class BillingTrackerImporter {
                 if (!BillingTrackerUtils.isNonNullNumericCell( sortCell)) {
                     String error =
                             "Row " + (row.getRowNum() + 1) + " of spreadsheet tab " + productPartNumberStr +
-                            " has a non-numeric value is the " + SampleLedgerExporter.SORT_COLUMN_HEADING +
+                            " has a non-numeric value is the " + BillingTrackerUtils.SORT_COLUMN_HEADING +
                             " cell. Please correct and ensure the spreadsheet is ordered by the " +
-                            SampleLedgerExporter.SORT_COLUMN_HEADING + " column heading.";
+                            BillingTrackerUtils.SORT_COLUMN_HEADING + " column heading.";
                     addError(error);
                     return;
                 }
@@ -117,7 +116,7 @@ public class BillingTrackerImporter {
                     String error = "Sample " + currentSampleName + " on row " + (row.getRowNum() + 1) +
                                    " of spreadsheet tab " + productPartNumberStr +
                                    " is not in the expected position. Please re-order the spreadsheet by the " +
-                                   SampleLedgerExporter.SORT_COLUMN_HEADING + " column heading.";
+                                   BillingTrackerUtils.SORT_COLUMN_HEADING + " column heading.";
                     addError(error);
                     return;
                 }
@@ -246,7 +245,7 @@ public class BillingTrackerImporter {
             BillableRef billableRef = trackerColumnInfos.get(priceItemIndex).getBillableRef();
 
             // There are two cells per product header cell, so we need to account for this.
-            int currentBilledPosition = BillingTrackerUtils.fixedHeaders.length + (priceItemIndex * 2);
+            int currentBilledPosition = BillingTrackerUtils.FIXED_HEADERS.length + (priceItemIndex * 2);
 
             // Get the AlreadyBilled cell
             Cell billedCell = row.getCell(currentBilledPosition);
@@ -281,7 +280,7 @@ public class BillingTrackerImporter {
                     Cell cell = row.getCell(BillingTrackerUtils.WORK_COMPLETE_DATE_COL_POS);
                     if (cell == null || cell.getDateCellValue() == null) {
                         return String.format("Found empty %s value for updated sample %s in %s, price item '%s', in Product sheet %s",
-                                SampleLedgerExporter.WORK_COMPLETE_DATE_HEADING, row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
+                                BillingTrackerUtils.WORK_COMPLETE_DATE_HEADING, row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
                                 billableRef.getPriceItemName(), product.getPartNumber());
                     }
 

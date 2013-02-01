@@ -1,14 +1,20 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
+import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo_;
 import org.hibernate.envers.AuditReader;
 import org.hibernate.envers.AuditReaderFactory;
 import org.hibernate.envers.query.AuditEntity;
 import org.hibernate.envers.query.AuditQuery;
 
 import javax.enterprise.context.ApplicationScoped;
-import java.util.Date;
-import java.util.List;
+import javax.persistence.NoResultException;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import java.util.*;
 
 /**
  * Access to Mercury AuditReader for data warehouse.
@@ -16,54 +22,75 @@ import java.util.List;
 @ApplicationScoped
 public class AuditReaderDao extends GenericDao {
 
-    private static AuditReader auditReader = null;
-
     /**
      * Returns an auditReader, doing one-time init if needed.
      * @return the auditReader
      */
     private AuditReader getAuditReader() {
-        if (auditReader == null) {
-            auditReader = AuditReaderFactory.get(getEntityManager());
+        return AuditReaderFactory.get(getEntityManager());
+    }
+
+    /**
+     * Finds the audit info ids for data changes that happened in the given interval.
+     * Must use REV_INFO timestamp in interval, and not id because in Mercury
+     * the ids were observed to be not always monotonic, which caused ETL to miss
+     * some changes.
+     *
+     * @param lastEtlTimestamp     start of interval
+     * @param currentEtlTimestamp  end of interval
+     */
+    public Collection<Long> fetchAuditIds(long lastEtlTimestamp, long currentEtlTimestamp) {
+        Date startDate = new Date(lastEtlTimestamp);
+        Date endDate = new Date(currentEtlTimestamp);
+
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
+        Root<RevInfo> root = criteriaQuery.from(RevInfo.class);
+        criteriaQuery.select(root.get(RevInfo_.revInfoId));
+        Predicate predicate = criteriaBuilder.and(
+                criteriaBuilder.greaterThan(root.get(RevInfo_.revDate), startDate),
+                criteriaBuilder.lessThanOrEqualTo(root.get(RevInfo_.revDate), endDate));
+        criteriaQuery.where(predicate);
+        try {
+            Collection<Long> revList = getEntityManager().createQuery(criteriaQuery).getResultList();
+            return revList;
+
+        } catch (NoResultException ignored) {
+            return Collections.EMPTY_LIST;
         }
-        return auditReader;
     }
 
     /**
-     * Returns the current (i.e. highest) audited entity revision number used before
-     * the reference date.
+     * Finds and records all data changes for the given audit revision ids.
      *
-     * @param etlDate the reference date
-     * @return revision number
-     */
-    public long currentRevNumber(Date etlDate) {
-        Number revNumber = getAuditReader().getRevisionNumberForDate(etlDate);
-        return revNumber.longValue();
-    }
-
-    /**
-     * Returns the date for a given revNumber.
-     * @param revNumber
-     * @return
-     */
-    public Date dateForRevNumber(long revNumber) {
-        return getAuditReader().getRevisionDate(revNumber);
-    }
-
-    /**
-     * Finds and records all data changes that happened in the given interval.
-     *
-     * @param lastRev     start of interval
-     * @param etlRev      end of interval
+     * @param revIds      audit revision ids
      * @param entityClass the class of entity to process
      */
-    public List<Object[]> fetchDataChanges(long lastRev, long etlRev, Class entityClass) {
+    public List<Object[]> fetchDataChanges(Collection<Long> revIds, Class entityClass) {
+        List<Object[]> dataChanges = new ArrayList<Object[]>();
 
-        AuditQuery query = getAuditReader().createQuery().forRevisionsOfEntity(entityClass, false, true)
-                .add(AuditEntity.revisionNumber().gt(lastRev))
-                .add(AuditEntity.revisionNumber().le(etlRev));
+        if (revIds == null || revIds.size() == 0) {
+            return dataChanges;
+        }
+        // Chunks revIds as necessary to limit sql "in" clause to 1000 elements.
+        final int IN_CLAUSE_LIMIT = 1000;
+        Collection<Long> sublist = new ArrayList<Long>();
+        for (Long id : revIds) {
+            sublist.add(id);
+            if (sublist.size() == IN_CLAUSE_LIMIT || sublist.size() == revIds.size()) {
 
-        List<Object[]> dataChanges = query.getResultList();
+                // Processes and flushes sublist.
+                AuditQuery query = getAuditReader().createQuery()
+                        .forRevisionsOfEntity(entityClass, false, true)
+                        .add(AuditEntity.revisionNumber().in(sublist));
+                try {
+                    dataChanges.addAll(query.getResultList());
+                } catch (NoResultException e) {
+                    // Ignore, continue querying.
+                }
+                sublist.clear();
+            }
+        }
         return dataChanges;
     }
 

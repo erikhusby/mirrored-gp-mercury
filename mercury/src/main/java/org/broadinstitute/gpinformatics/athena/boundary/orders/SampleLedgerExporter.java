@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerUtils;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
@@ -31,24 +32,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
     // Each worksheet is a different product, so distribute the list of orders by product
     private final Map<Product, List<ProductOrder>> orderMap = new HashMap<Product, List<ProductOrder>>();
 
-    public static final String SAMPLE_ID_HEADING = "Sample ID";
-    public static final String ORDER_ID_HEADING = "Product Order ID";
-    public static final String WORK_COMPLETE_DATE_HEADING = "Date Completed";
-    public static final String SORT_COLUMN_HEADING = "Sort Column";
-
-    public static final String[] FIXED_HEADERS = {
-            SAMPLE_ID_HEADING,
-            "Collaborator Sample ID",
-            "Material Type",
-            "Product Name",
-            ORDER_ID_HEADING,
-            "Product Order Name",
-            "Project Manager",
-            WORK_COMPLETE_DATE_HEADING,
-            "Quote ID",
-            SORT_COLUMN_HEADING
-    };
-
+    private static final int FIXED_HEADER_WIDTH = 259 * 15;
     private static final int VALUE_WIDTH = 259 * 25;
     private static final int ERRORS_WIDTH = 259 * 100;
     private static final int COMMENTS_WIDTH = 259 * 60;
@@ -165,8 +149,9 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
             // Write headers after placing an extra line
             getWriter().nextRow();
-            for (String header : FIXED_HEADERS) {
+            for (String header : BillingTrackerUtils.FIXED_HEADERS) {
                 getWriter().writeCell(header, getFixedHeaderStyle());
+                getWriter().setColumnWidth(FIXED_HEADER_WIDTH);
             }
 
             // Get the ordered price items for the current product, add the spanning price item + product headers
@@ -181,6 +166,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             // Write content.
             int sortOrder = 1;
             for (ProductOrder productOrder : productOrders) {
+                productOrder.loadBspData();
                 for (ProductOrderSample sample : productOrder.getSamples()) {
                     writeRow(sortedPriceItems, sortedAddOns, sample, sortOrder++);
                 }
@@ -201,6 +187,18 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         // Material type from BSP (GPLIM-422)
         getWriter().writeCell(sample.getBspDTO().getMaterialType());
+
+        // Risk Information (GPLIM-660)
+        String riskString = sample.getRiskString();
+        if (StringUtils.isBlank(riskString)) {
+            getWriter().writeCell(riskString);
+        } else {
+            getWriter().writeCell(riskString, getRiskStyle());
+        }
+
+        // Sample Status
+        ProductOrderSample.DeliveryStatus status = sample.getDeliveryStatus();
+        getWriter().writeCell(status.getDisplayName());
 
         // product name
         getWriter().writeCell(sample.getProductOrder().getProduct().getProductName());
@@ -267,6 +265,10 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             getWriter().writeCell(billingError, getErrorMessageStyle());
         }
 
+        if (status == ProductOrderSample.DeliveryStatus.ABANDONED) {
+            // Set the row style last, so all columns are affected.
+            getWriter().setRowStyle(getAbandonedStyle());
+        }
     }
 
     private static String getBillingError(Set<BillingLedger> billableItems) {
@@ -331,7 +333,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
     private void writeEmptyFixedHeaders() {
         // Write blank secondary header line for fixed columns, with default styling.
-        for (String header : FIXED_HEADERS) {
+        for (String header : BillingTrackerUtils.FIXED_HEADERS) {
             getWriter().writeCell(" ");
         }
     }

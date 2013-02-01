@@ -3,6 +3,26 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <script type="text/javascript">
+
+    $j(document).ready(function () {
+        $j('#vesselSampleListView').dataTable({
+            "oTableTools":ttExportDefines,
+            "aaSorting":[
+                [1, 'asc']
+            ],
+            "aoColumns":[
+                {"bSortable":false},
+                {"bSortable":true},
+                {"bSortable":true},
+                {"bSortable":true},
+                {"bSortable":true},
+                {"bSortable":true},
+                {"bSortable":true},
+                {"bSortable":true}
+            ]
+        })
+    });
+
     function showPlasticHistoryVisualizer(sampleKey) {
         $j('#plasticViewDiv').load('${ctxpath}/view/plasticHistoryView.action?sampleKey=' + sampleKey);
         $j('#plasticViewDiv').show();
@@ -11,7 +31,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.VesselSampleListViewActionBean"/>
 
-<table id="sampleListView" class="table simple">
+<table id="vesselSampleListView" class="table simple">
     <thead>
     <tr>
         <th width="30">Vessel History</th>
@@ -21,7 +41,7 @@
         <th>Sample Name</th>
         <th width="150">PDO</th>
         <th width="200">Index Info</th>
-        <th width="200">Reagent Info</th>
+        <th>Reagent Info</th>
     </tr>
     </thead>
     <tbody>
@@ -38,16 +58,23 @@
                         ${position}
                 </td>
                 <td>
-                        ${actionBean.getVesselAtPosition(position).label}
+                    <a href="${ctxpath}/search/all.action?search=&searchKey=${actionBean.getVesselAtPosition(position).label}">
+                            ${actionBean.getVesselAtPosition(position).label}
+                    </a>
                 </td>
                 <td>
                         ${actionBean.getVesselAtPosition(position).type.name}
                 </td>
                 <td>
-                        ${sample.startingSample.sampleKey}
+                    <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.startingSample.sampleKey}">
+                            ${sample.startingSample.sampleKey}
+                    </a>
+
                 </td>
                 <td>
-                        ${sample.startingSample.productOrderKey}
+                    <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.startingSample.productOrderKey}">
+                            ${sample.startingSample.productOrderKey}
+                    </a>
                 </td>
                 <td>
                         ${actionBean.getIndexValueForSample(sample)}

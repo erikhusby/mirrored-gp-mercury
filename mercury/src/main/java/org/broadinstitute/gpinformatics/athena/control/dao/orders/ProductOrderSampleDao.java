@@ -33,6 +33,28 @@ public class ProductOrderSampleDao extends GenericDao {
         return findList(ProductOrderSample.class, ProductOrderSample_.productOrder, productOrder);
     }
 
+    public List<ProductOrderSample> findByOrderAndIndex(@Nonnull ProductOrder productOrder, @Nonnull List<Integer> indices) {
+        EntityManager entityManager = getEntityManager();
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+
+        CriteriaQuery<ProductOrderSample> criteriaQuery =
+                criteriaBuilder.createQuery(ProductOrderSample.class);
+
+        Root<ProductOrderSample> productOrderSampleRoot = criteriaQuery.from(ProductOrderSample.class);
+        Predicate[] predicates = new Predicate[] {
+                criteriaBuilder.equal(productOrderSampleRoot.get(ProductOrderSample_.productOrder), productOrder),
+                productOrderSampleRoot.get(ProductOrderSample_.samplePosition).in(indices)
+        };
+
+        criteriaQuery.where(predicates);
+
+        try {
+            return entityManager.createQuery(criteriaQuery).getResultList();
+        } catch (NoResultException ignored) {
+            return null;
+        }
+    }
+
     public List<ProductOrderSample> findByOrderAndName(@Nonnull ProductOrder productOrder, @Nonnull String sampleName) {
         if (productOrder == null) {
             throw new NullPointerException("Null Product Order.");
@@ -47,11 +69,11 @@ public class ProductOrderSampleDao extends GenericDao {
         CriteriaQuery<ProductOrderSample> criteriaQuery =
                 criteriaBuilder.createQuery(ProductOrderSample.class);
 
-        Predicate[] predicates = new Predicate[2];
-
         Root<ProductOrderSample> productOrderSampleRoot = criteriaQuery.from(ProductOrderSample.class);
-        predicates[0] = criteriaBuilder.equal(productOrderSampleRoot.get(ProductOrderSample_.productOrder), productOrder);
-        predicates[1] = criteriaBuilder.equal(productOrderSampleRoot.get(ProductOrderSample_.sampleName), sampleName);
+        Predicate[] predicates = new Predicate[] {
+                criteriaBuilder.equal(productOrderSampleRoot.get(ProductOrderSample_.productOrder), productOrder),
+                criteriaBuilder.equal(productOrderSampleRoot.get(ProductOrderSample_.sampleName), sampleName)
+        };
 
         criteriaQuery.where(predicates);
 

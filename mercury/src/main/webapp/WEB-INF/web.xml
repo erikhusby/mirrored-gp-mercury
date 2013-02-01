@@ -55,11 +55,12 @@
             org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryResource,
             org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryTypesResource,
             org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource,
+            org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricResource,
             org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource,
             org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource,
             org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource,
             org.broadinstitute.gpinformatics.athena.boundary.util.PingResource,
-	    org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform
+            org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform
         </param-value>
     </context-param>
     <context-param>

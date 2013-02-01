@@ -21,17 +21,19 @@ import java.util.Date;
 @Test(groups = TestGroups.DATABASE_FREE)
 public class WorkflowTest {
 
-    private WorkflowConfig            workflowConfig;
-    private ProductWorkflowDef        exomeExpressProduct;
+    private WorkflowConfig workflowConfig;
+    private ProductWorkflowDef exomeExpressProduct;
     private ProductWorkflowDefVersion exomeExpressProductVersion;
-    private WorkflowProcessDef        libraryConstructionProcess;
+    private WorkflowProcessDef libraryConstructionProcess;
     private WorkflowProcessDefVersion libraryConstructionProcessVersion;
-    private String                    exomeExpressProductName;
-    private WorkflowProcessDef        preLcProcess;
+    private String exomeExpressProductName;
+    private WorkflowProcessDef preLcProcess;
     private WorkflowProcessDefVersion preLcProcessVersion;
+    private WorkflowProcessDef picoProcess;
+    private WorkflowProcessDefVersion picoProcessVersion;
 
     @Test
-    public void testMessageValidation () {
+    public void testMessageValidation() {
         // Quote
         // Send kits
         // BSP portal -> Athena Product Order
@@ -43,108 +45,144 @@ public class WorkflowTest {
         // Validate first message
         // Perform first message
         // Validate second message
-        buildProcesses ();
+        buildProcesses();
 
 
-        Assert.assertEquals ( exomeExpressProductName, exomeExpressProduct.getName () );
+        Assert.assertEquals(exomeExpressProductName, exomeExpressProduct.getName());
 
-        Assert.assertNotNull ( exomeExpressProduct );
-        Assert.assertNotNull ( exomeExpressProduct.getByVersion ( exomeExpressProductVersion.getVersion () ) );
+        Assert.assertNotNull(exomeExpressProduct);
+        Assert.assertNotNull(exomeExpressProduct.getByVersion(exomeExpressProductVersion.getVersion()));
 
-        Assert.assertEquals ( exomeExpressProductVersion , exomeExpressProduct.getByVersion ( exomeExpressProductVersion.getVersion () )
-                              );
+        Assert.assertEquals(exomeExpressProductVersion, exomeExpressProduct
+                .getByVersion(exomeExpressProductVersion.getVersion())
+        );
 
-        Assert.assertNotNull ( exomeExpressProductVersion.getProcessDefsByName (
-                libraryConstructionProcess.getName () ) );
-        Assert.assertEquals ( libraryConstructionProcess, exomeExpressProductVersion.getProcessDefsByName ( libraryConstructionProcess.getName () )
-                               );
+        Assert.assertNotNull(exomeExpressProductVersion.getProcessDefsByName(
+                libraryConstructionProcess.getName()));
+        Assert.assertEquals(libraryConstructionProcess, exomeExpressProductVersion
+                .getProcessDefsByName(libraryConstructionProcess.getName())
+        );
 
-        Assert.assertNotNull ( exomeExpressProductVersion.findStepByEventType (
-                LabEventType.END_REPAIR_CLEANUP.getName () ) );
+        Assert.assertNotNull(exomeExpressProductVersion.findStepByEventType(
+                LabEventType.END_REPAIR_CLEANUP.getName()));
 
-        Assert.assertNotNull ( exomeExpressProductVersion.getPreviousStep (
-                LabEventType.END_REPAIR_CLEANUP.getName () ) );
-        Assert.assertEquals ( LabEventType.END_REPAIR.getName (),exomeExpressProductVersion.getPreviousStep ( LabEventType.END_REPAIR_CLEANUP.getName () )
-                                                        .getName () );
+        Assert.assertNotNull(exomeExpressProductVersion.getPreviousStep(
+                LabEventType.END_REPAIR_CLEANUP.getName()));
+        Assert.assertEquals(LabEventType.END_REPAIR.getName(), exomeExpressProductVersion
+                .getPreviousStep(LabEventType.END_REPAIR_CLEANUP.getName())
+                .getName());
 
-        Assert.assertEquals(1,preLcProcessVersion.getBuckets().size());
+        Assert.assertEquals(1, preLcProcessVersion.getBuckets().size());
 
-        Assert.assertTrue(exomeExpressProductVersion.isPreviousStepBucket(LabEventType.PLATING_TO_SHEARING_TUBES.getName()));
+        Assert.assertTrue(exomeExpressProductVersion.isPreviousStepBucket(LabEventType.PLATING_TO_SHEARING_TUBES
+                .getName()));
+        Assert.assertFalse(exomeExpressProductVersion
+                .isNextStepBucket(LabEventType.PLATING_TO_SHEARING_TUBES.getName()));
+
+        Assert.assertFalse(exomeExpressProductVersion
+                .isPreviousStepBucket(LabEventType.PICO_PLATING_POST_NORM_PICO.getName()));
+        Assert.assertTrue(exomeExpressProductVersion
+                .isNextStepBucket(LabEventType.PICO_PLATING_POST_NORM_PICO.getName()));
+
     }
 
-    public void buildProcesses () {
-        ArrayList<WorkflowStepDef> workflowStepDefs = new ArrayList<WorkflowStepDef> ();
-        WorkflowProcessDef sampleReceipt = new WorkflowProcessDef ( "Sample Receipt" );
-        new WorkflowProcessDef ( "Extraction" );
-        new WorkflowProcessDef ( "Finger Printing" );
-        new WorkflowProcessDef ( "Samples Pico / Plating" );
-        preLcProcess = new WorkflowProcessDef ( "Pre-Library Construction" );
-        preLcProcessVersion = new WorkflowProcessDefVersion ( "1.0", new Date () );
-        preLcProcess.addWorkflowProcessDefVersion ( preLcProcessVersion );
+    public void buildProcesses() {
+        ArrayList<WorkflowStepDef> workflowStepDefs = new ArrayList<WorkflowStepDef>();
+        WorkflowProcessDef sampleReceipt = new WorkflowProcessDef("Sample Receipt");
+        new WorkflowProcessDef("Extraction");
+        new WorkflowProcessDef("Finger Printing");
+        picoProcess = new WorkflowProcessDef("Samples Pico / Plating");
+        picoProcessVersion = new WorkflowProcessDefVersion("1.0", new Date());
+        picoProcess.addWorkflowProcessDefVersion(picoProcessVersion);
+
+        WorkflowBucketDef picoBucket = new WorkflowBucketDef(LabEventType.PICO_PLATING_BUCKET.getName());
+        picoBucket.setEntryMaterialType(WorkflowBucketDef.MaterialType.GENOMIC_DNA);
+        picoBucket.addLabEvent(LabEventType.PICO_PLATING_BUCKET);
+
+        picoProcessVersion.addStep(picoBucket);
+        picoProcessVersion.addStep(new WorkflowStepDef(LabEventType.PICO_PLATING_QC.getName())
+                .addLabEvent(LabEventType.PICO_PLATING_QC));
+
+        picoProcessVersion.addStep(new WorkflowStepDef("Pico / Plating Setup")
+                .addLabEvent(LabEventType.PICO_DILUTION_TRANSFER).addLabEvent(LabEventType.PICO_BUFFER_ADDITION)
+                .addLabEvent(LabEventType.PICO_MICROFLUOR_TRANSFER).addLabEvent(LabEventType.PICO_STANDARDS_TRANSFER));
+
+        picoProcessVersion.addStep(new WorkflowStepDef(LabEventType.SAMPLES_NORMALIZATION_TRANSFER.getName())
+                .addLabEvent(LabEventType.SAMPLES_NORMALIZATION_TRANSFER));
+        picoProcessVersion.addStep(new WorkflowStepDef(LabEventType.PICO_PLATING_POST_NORM_PICO.getName())
+                .addLabEvent(LabEventType.PICO_PLATING_POST_NORM_PICO));
+
+        preLcProcess = new WorkflowProcessDef("Pre-Library Construction");
+        preLcProcessVersion = new WorkflowProcessDefVersion("1.0", new Date());
+        preLcProcess.addWorkflowProcessDefVersion(preLcProcessVersion);
 //        preLcProcessVersion.addStep ( new WorkflowBucketDef ( "Pre-LC Bucket" ) );
 
-        WorkflowBucketDef workflowBucketDef = new WorkflowBucketDef ( LabEventType.SHEARING_BUCKET.getName() );
-        workflowBucketDef.setEntryMaterialType ( WorkflowBucketDef.MaterialType.GENOMIC_DNA );
-        workflowBucketDef.addLabEvent(LabEventType.SHEARING_BUCKET);
+        WorkflowBucketDef shearingBucketDef = new WorkflowBucketDef(LabEventType.SHEARING_BUCKET.getName());
+        shearingBucketDef.setEntryMaterialType(WorkflowBucketDef.MaterialType.GENOMIC_DNA);
+        shearingBucketDef.addLabEvent(LabEventType.SHEARING_BUCKET);
 
-        preLcProcessVersion.addStep ( workflowBucketDef );
-        preLcProcessVersion.addStep ( new WorkflowStepDef(LabEventType.PLATING_TO_SHEARING_TUBES.getName()).addLabEvent(
+        preLcProcessVersion.addStep(shearingBucketDef);
+        preLcProcessVersion.addStep(new WorkflowStepDef(LabEventType.PLATING_TO_SHEARING_TUBES.getName()).addLabEvent(
                 LabEventType.PLATING_TO_SHEARING_TUBES));
-        preLcProcessVersion.addStep ( new WorkflowStepDef(LabEventType.COVARIS_LOADED.getName()).addLabEvent(
+        preLcProcessVersion.addStep(new WorkflowStepDef(LabEventType.COVARIS_LOADED.getName()).addLabEvent(
                 LabEventType.COVARIS_LOADED));
-        preLcProcessVersion.addStep ( new WorkflowStepDef(LabEventType.POST_SHEARING_TRANSFER_CLEANUP.getName()).addLabEvent(
-                LabEventType.POST_SHEARING_TRANSFER_CLEANUP));
-        preLcProcessVersion.addStep ( new WorkflowStepDef(LabEventType.SHEARING_QC.getName()).addLabEvent(
+        preLcProcessVersion
+                .addStep(new WorkflowStepDef(LabEventType.POST_SHEARING_TRANSFER_CLEANUP.getName()).addLabEvent(
+                        LabEventType.POST_SHEARING_TRANSFER_CLEANUP));
+        preLcProcessVersion.addStep(new WorkflowStepDef(LabEventType.SHEARING_QC.getName()).addLabEvent(
                 LabEventType.SHEARING_QC));
 
-        libraryConstructionProcess = new WorkflowProcessDef ( "Library Construction" );
-        libraryConstructionProcessVersion = new WorkflowProcessDefVersion ( "1.0", new Date () );
-        libraryConstructionProcess.addWorkflowProcessDefVersion ( libraryConstructionProcessVersion );
-        libraryConstructionProcessVersion.addStep ( new WorkflowStepDef ( "EndRepair" ).addLabEvent (
-                LabEventType.END_REPAIR ) );
-        libraryConstructionProcessVersion.addStep ( new WorkflowStepDef ( "EndRepairCleanup" ).addLabEvent (
-                LabEventType.END_REPAIR_CLEANUP ) );
-        libraryConstructionProcessVersion.addStep ( new WorkflowStepDef ( "ABase" ).addLabEvent (
-                LabEventType.A_BASE ) );
-        libraryConstructionProcessVersion.addStep ( new WorkflowStepDef ( "ABaseCleanup" ).addLabEvent (
-                LabEventType.A_BASE_CLEANUP ) );
+        libraryConstructionProcess = new WorkflowProcessDef("Library Construction");
+        libraryConstructionProcessVersion = new WorkflowProcessDefVersion("1.0", new Date());
+        libraryConstructionProcess.addWorkflowProcessDefVersion(libraryConstructionProcessVersion);
+        libraryConstructionProcessVersion.addStep(new WorkflowStepDef("EndRepair").addLabEvent(
+                LabEventType.END_REPAIR));
+        libraryConstructionProcessVersion.addStep(new WorkflowStepDef("EndRepairCleanup").addLabEvent(
+                LabEventType.END_REPAIR_CLEANUP));
+        libraryConstructionProcessVersion.addStep(new WorkflowStepDef("ABase").addLabEvent(
+                LabEventType.A_BASE));
+        libraryConstructionProcessVersion.addStep(new WorkflowStepDef("ABaseCleanup").addLabEvent(
+                LabEventType.A_BASE_CLEANUP));
 
-        WorkflowProcessDef hybridSelectionProcess = new WorkflowProcessDef ( "Hybrid Selection" );
-        WorkflowProcessDefVersion hybridSelectionProcessVersion = new WorkflowProcessDefVersion ( "1.0", new Date () );
-        hybridSelectionProcess.addWorkflowProcessDefVersion ( hybridSelectionProcessVersion );
-        WorkflowStepDef capture = new WorkflowStepDef ( "Capture" );
-        capture.addLabEvent ( LabEventType.AP_WASH );
-        capture.addLabEvent ( LabEventType.GS_WASH_1 );
-        hybridSelectionProcessVersion.addStep ( capture );
+        WorkflowProcessDef hybridSelectionProcess = new WorkflowProcessDef("Hybrid Selection");
+        WorkflowProcessDefVersion hybridSelectionProcessVersion = new WorkflowProcessDefVersion("1.0", new Date());
+        hybridSelectionProcess.addWorkflowProcessDefVersion(hybridSelectionProcessVersion);
+        WorkflowStepDef capture = new WorkflowStepDef("Capture");
+        capture.addLabEvent(LabEventType.AP_WASH);
+        capture.addLabEvent(LabEventType.GS_WASH_1);
+        hybridSelectionProcessVersion.addStep(capture);
 
-        new WorkflowProcessDef ( "QTP" );
-        new WorkflowProcessDef ( "HiSeq" );
+        new WorkflowProcessDef("QTP");
+        new WorkflowProcessDef("HiSeq");
 
-        workflowConfig = new WorkflowConfig ();
+        workflowConfig = new WorkflowConfig();
         exomeExpressProductName = "Exome Express";
-        exomeExpressProduct = new ProductWorkflowDef ( exomeExpressProductName );
-        exomeExpressProductVersion = new ProductWorkflowDefVersion ( "1.0", new Date () );
-        exomeExpressProduct.addProductWorkflowDefVersion ( exomeExpressProductVersion );
-        exomeExpressProductVersion.addWorkflowProcessDef ( preLcProcess );
-        exomeExpressProductVersion.addWorkflowProcessDef ( libraryConstructionProcess );
-        exomeExpressProductVersion.addWorkflowProcessDef ( hybridSelectionProcess );
+        exomeExpressProduct = new ProductWorkflowDef(exomeExpressProductName);
+        exomeExpressProductVersion = new ProductWorkflowDefVersion("1.0", new Date());
+        exomeExpressProduct.addProductWorkflowDefVersion(exomeExpressProductVersion);
+        exomeExpressProductVersion.addWorkflowProcessDef(picoProcess);
+        exomeExpressProductVersion.addWorkflowProcessDef(preLcProcess);
+        exomeExpressProductVersion.addWorkflowProcessDef(libraryConstructionProcess);
+        exomeExpressProductVersion.addWorkflowProcessDef(hybridSelectionProcess);
 
-        workflowConfig.addProductWorkflowDef ( exomeExpressProduct );
-        workflowConfig.addWorkflowProcessDef ( libraryConstructionProcess );
-        workflowConfig.addWorkflowProcessDef ( hybridSelectionProcess );
+        workflowConfig.addProductWorkflowDef(exomeExpressProduct);
+        workflowConfig.addWorkflowProcessDef(picoProcess);
+        workflowConfig.addWorkflowProcessDef(preLcProcess);
+        workflowConfig.addWorkflowProcessDef(libraryConstructionProcess);
+        workflowConfig.addWorkflowProcessDef(hybridSelectionProcess);
 
         try {
             // Have to explicitly include WorkflowStepDef subclasses, otherwise JAXB doesn't find them
-            JAXBContext jc = JAXBContext.newInstance ( WorkflowConfig.class, WorkflowBucketDef.class );
+            JAXBContext jc = JAXBContext.newInstance(WorkflowConfig.class, WorkflowBucketDef.class);
 
-            Marshaller marshaller = jc.createMarshaller ();
-            marshaller.setProperty ( Marshaller.JAXB_FORMATTED_OUTPUT, true );
-            JAXBElement<WorkflowConfig> jaxbElement = new JAXBElement<WorkflowConfig> ( new QName ( "workflowConfig" ),
-                                                                                        WorkflowConfig.class,
-                                                                                        workflowConfig );
-            marshaller.marshal ( jaxbElement, System.out );
-        } catch ( JAXBException e ) {
-            throw new RuntimeException ( e );
+            Marshaller marshaller = jc.createMarshaller();
+            marshaller.setProperty(Marshaller.JAXB_FORMATTED_OUTPUT, true);
+            JAXBElement<WorkflowConfig> jaxbElement = new JAXBElement<WorkflowConfig>(new QName("workflowConfig"),
+                    WorkflowConfig.class,
+                    workflowConfig);
+            marshaller.marshal(jaxbElement, System.out);
+        } catch (JAXBException e) {
+            throw new RuntimeException(e);
         }
     }
 }
