@@ -259,15 +259,24 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             quoteService.getQuoteByAlphaId(editOrder.getQuoteId());
         } catch (QuoteServerException ex) {
-            addGlobalValidationError("The quote id " + editOrder.getQuoteId() + " is not valid: " + ex.getMessage());
+            addGlobalValidationError("The quote id {0} is not valid: {1}", editOrder.getQuoteId(), ex.getMessage());
         } catch (QuoteNotFoundException ex) {
-            addGlobalValidationError("The quote id " + editOrder.getQuoteId() + " was not found.");
+            addGlobalValidationError("The quote id {0] was not found ", editOrder.getQuoteId());
         }
 
         // Since we are only validating from view, we can persist without worry of saving something bad.
+        // We are doing on risk calculation only when everything passes, but informing the user no matter what
         if (getContext().getValidationErrors().isEmpty()) {
-            editOrder.calculateAllRisk();
+            int numSamplesOnRisk = editOrder.calculateAllRisk();
             productOrderDao.persist(editOrder);
+
+            if (numSamplesOnRisk == 0) {
+                addMessage("None of the samples for this order are on risk");
+            } else {
+                addMessage("{0} sample{1} for this order are on risk", numSamplesOnRisk, numSamplesOnRisk == 1 ? "" : "s");
+            }
+        } else {
+            addGlobalValidationError("On risk was not calculated. Fix other errors first");
         }
     }
 
