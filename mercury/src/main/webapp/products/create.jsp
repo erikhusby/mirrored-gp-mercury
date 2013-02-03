@@ -70,7 +70,8 @@
                         "${ctxpath}/products/product.action?materialTypesAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type a Material Type name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.materialTypeTokenInput.completeData)},
-                            preventDuplicates: true
+                            preventDuplicates: true,
+                            tokenDelimiter: "|"
                         }
                     );
 

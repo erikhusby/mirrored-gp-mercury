@@ -12,21 +12,16 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.*;
-import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.MaterialTypeTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPMaterialTypeList;
-import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
-import org.json.JSONArray;
 
 import javax.inject.Inject;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 /**
  * This class supports all the actions done on products
@@ -267,39 +262,6 @@ public class ProductActionBean extends CoreActionBean {
 
     public List<ProductFamily> getProductFamilies() {
         return productFamilies;
-    }
-
-    private static List<MaterialType> convertDtosToEntities(
-            List<org.broadinstitute.bsp.client.sample.MaterialType> materialTypeDtos) {
-
-        if (materialTypeDtos != null) {
-            List<MaterialType> materialTypeEntities = new ArrayList<MaterialType>(materialTypeDtos.size());
-            for (org.broadinstitute.bsp.client.sample.MaterialType materialTypeDto : materialTypeDtos) {
-                MaterialType materialTypeEntity =
-                        new MaterialType(materialTypeDto.getCategory(), materialTypeDto.getName());
-                materialTypeEntity.setFullName(materialTypeDto.getFullName());
-                materialTypeEntities.add(materialTypeEntity);
-            }
-            return materialTypeEntities;
-        }
-
-        return Collections.emptyList();
-    }
-    /* This method retrieves any material types already set on the product and
-     * returns a JsonArray as a string
-     */
-    public String getMaterialTypeCompleteData() throws Exception {
-        if ((editProduct == null) || (editProduct.getAllowableMaterialTypes() == null)) {
-            return "";
-        }
-
-        JSONArray itemList = new JSONArray();
-        Set<MaterialType> materialTypes =  editProduct.getAllowableMaterialTypes();
-        for ( MaterialType materialType : materialTypes ) {
-            String idName = materialType.getCategory() + ":" + materialType.getName();
-            itemList.put(TokenInput.getJSONObject(idName, idName, false));
-        }
-        return itemList.toString();
     }
 
     public MaterialTypeTokenInput getMaterialTypeTokenInput() {

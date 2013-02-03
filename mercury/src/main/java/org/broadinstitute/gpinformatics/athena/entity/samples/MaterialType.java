@@ -72,12 +72,9 @@ public class MaterialType implements Serializable, Comparable<MaterialType> {
         return category;
     }
 
+    // Mirror BSP's full name method of adding colon in between the names
     public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
+        return category + ":" + name;
     }
 
     @Override
