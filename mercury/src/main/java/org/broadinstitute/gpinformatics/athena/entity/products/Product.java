@@ -116,8 +116,8 @@ public class Product implements Serializable, Comparable<Product> {
     /**
      * The onRisk criteria that are associated with the Product.
      */
-    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    @JoinColumn(name = "product", nullable = false)
+    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @JoinColumn(name = "product", nullable = true)
     @AuditJoinTable(name = "product_risk_criteria_join_aud")
     private List<RiskCriteria> riskCriteriaList;
 
