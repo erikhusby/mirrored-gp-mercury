@@ -519,8 +519,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         Set<BillingLedger> ledgerItems =
                 billingLedgerDao.findWithoutBillingSessionByOrderList(selectedProductOrderBusinessKeys);
         if ((ledgerItems == null) || (ledgerItems.isEmpty())) {
-            addGlobalValidationError("There is nothing to bill");
-            return new RedirectResolution(ProductOrderActionBean.class, LIST_ACTION);
+            addGlobalValidationError("There are no items to bill on any of the selected orders");
+            return new ForwardResolution(ProductOrderActionBean.class, LIST_ACTION);
         }
 
         BillingSession session = new BillingSession(getUserBean().getBspUser().getUserId(), ledgerItems);
