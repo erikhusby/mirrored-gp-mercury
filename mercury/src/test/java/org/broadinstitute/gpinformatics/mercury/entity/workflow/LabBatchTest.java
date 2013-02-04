@@ -17,14 +17,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Scott Matthews
@@ -38,7 +31,7 @@ public class LabBatchTest {
     private String pdoBusinessName;
     private List<String> pdoNames;
     private String workflowName;
-    private Map<String,TwoDBarcodedTube> mapBarcodeToTube;
+    private Map<String, TwoDBarcodedTube> mapBarcodeToTube;
 
     @BeforeMethod
     public void setUp() {
@@ -57,7 +50,7 @@ public class LabBatchTest {
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
                 40, null, null, true, workflowName, false), new ResearchProject(101L, "Test RP", "Test synopsis",
-                                                                                false));
+                false));
         productOrder.setJiraTicketKey(pdoBusinessName);
         productOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
         mapKeyToProductOrder.put(pdoBusinessName, productOrder);
@@ -69,7 +62,7 @@ public class LabBatchTest {
         // starting rack
         for (int sampleIndex = 1; sampleIndex <= vesselSampleList.size(); sampleIndex++) {
             String barcode = "R" + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex + sampleIndex;
-            String bspStock = vesselSampleList.get(sampleIndex-1);
+            String bspStock = vesselSampleList.get(sampleIndex - 1);
             productOrderSamples.add(new ProductOrderSample(bspStock));
             TwoDBarcodedTube bspAliquot = new TwoDBarcodedTube(barcode);
             bspAliquot.addSample(new MercurySample(pdoBusinessName, bspStock));
@@ -108,7 +101,7 @@ public class LabBatchTest {
 
 
         LabBatch testBatch = new LabBatch(LabBatch.generateBatchName(workflowName, pdoNames),
-                                          new HashSet<LabVessel>(mapBarcodeToTube.values()));
+                new HashSet<LabVessel>(mapBarcodeToTube.values()));
 
 
         Assert.assertNotNull(testBatch.getBatchName());

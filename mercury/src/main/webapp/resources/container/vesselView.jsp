@@ -67,11 +67,18 @@
         $j('#heatMapDiv').load('${ctxpath}/view/heatMap.action?jqueryClass=.pico');
         $j('#heatMapDiv').show();
     }
+    function showReworkOptions() {
+        $j('#reworkDiv').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
+        $j('#reworkDiv').load('${ctxpath}/view/rework.action?jqueryClass=.vvInfo');
+        $j('#reworkDiv').show();
+    }
 </script>
-<a href="javascript:showHeatMapOptions()">Add Heat Map</a>
+<a href="javascript:showHeatMapOptions()">Add Heat Map</a><br/>
+<a href="javascript:showReworkOptions()">Mark for rework</a>
 
 <div id="heatMapDiv"></div>
-<table cellspacing="5" class="vvTable">
+<stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.VesselViewActionBean">
+    <table cellspacing="5" class="vvTable">
     <!-- Need a row of checkboxes for select all and then each select all column box -->
     <tr>
         <th width="40">
@@ -82,10 +89,13 @@
         <c:forEach var="column" items="${actionBean.vessel.vesselGeometry.columnNames}" varStatus="colStatus">
             <th>
                     ${column}
+                <%--<stripes:checkbox name="selectedSamples" id="col-${colStatus.index}-head" style="float:none;"--%>
+                                       <%--onchange="sectionCheck('col-' + ${colStatus.index})"/>--%>
                 <input id="col-${colStatus.index}-head" type="checkbox" style="float:none;"
                        onchange="sectionCheck('col-' + ${colStatus.index})"/>
             </th>
         </c:forEach>
+
     </tr>
     <c:forEach var="row" items="${actionBean.vessel.vesselGeometry.rowNames}" varStatus="rowStatus">
         <tr>
@@ -98,7 +108,7 @@
                 <td class="vvCell">
                     <div class="vvWell">
                         <div class="vvName">
-                            <input type="checkbox" class="vvCheckbox row-${rowStatus.index} col-${colStatus.index}"
+                            <stripes:checkbox class="vvCheckbox row-${rowStatus.index} col-${colStatus.index}"
                                    style="float:none;"
                                    name="vesselLabel" value="${actionBean.vessel.label}"/>
                                 ${row}${column}
@@ -124,3 +134,14 @@
         </tr>
     </c:forEach>
 </table>
+
+    <%--<table class="vvTable">--%>
+        <%--<tr><th>sample name</th></tr>--%>
+            <%--<c:forEach items="${actionBean.selectedCells}" var="sampleInstance">--%>
+                <%--<tr><td>${sampleInstance.startingSample.sampleKey}</td></tr>--%>
+            <%--</c:forEach>--%>
+        <%----%>
+    <%--</table>--%>
+
+
+</stripes:form>
