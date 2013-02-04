@@ -45,6 +45,8 @@ import java.util.*;
 @Audited
 @Table(name = "PRODUCT_ORDER", schema = "athena")
 public class ProductOrder implements Serializable {
+    private static final long serialVersionUID = 2712946561792445251L;
+
     private static final String JIRA_SUBJECT_PREFIX = "Product order for ";
 
     public static final String DRAFT_PREFIX = "Draft-";
@@ -162,22 +164,35 @@ public class ProductOrder implements Serializable {
         setSamples(samples);
     }
 
-    public void calculateAllRisk() {
-        calculateRisk(false);
+    public int calculateAllRisk() {
+        return calculateRisk(false);
     }
 
-    public void calculateNewRisk() {
-        calculateRisk(true);
+    public int calculateNewRisk() {
+        return calculateRisk(true);
     }
 
-    private void calculateRisk(boolean newSamplesOnly) {
+    /**
+     * This calculates risk for all samples on the order (or just new ones if specified).
+     *
+     * @param newSamplesOnly If the caller only wants to calculate for newly added samples
+     * @return The number of samples calculated to be on risk.
+     */
+    private int calculateRisk(boolean newSamplesOnly) {
+        int samplesOnRisk = 0;
+
         for (ProductOrderSample sample : samples) {
             // If not skipping samples with risk, then always do it, otherwise only do samples with no risk items.
             // have risk items, means that risk was calculated
             if (!newSamplesOnly || sample.getRiskItems().isEmpty()) {
-                sample.calculateRisk();
+                boolean isOnRisk = sample.calculateRisk();
+                if (isOnRisk) {
+                    samplesOnRisk++;
+                }
             }
         }
+
+        return samplesOnRisk;
     }
 
     /**

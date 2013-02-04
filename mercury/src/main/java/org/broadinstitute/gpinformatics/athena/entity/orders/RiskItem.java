@@ -7,6 +7,7 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.Date;
 
@@ -21,7 +22,9 @@ import java.util.Date;
 @Entity
 @Audited
 @Table(schema = "ATHENA", name = "RISK_ITEM" )
-public class RiskItem {
+public class RiskItem implements Serializable {
+    private static final long serialVersionUID = -7818942360426002526L;
+
     @Id
     @SequenceGenerator(name = "SEQ_RISK_ITEM", schema = "ATHENA", sequenceName = "SEQ_RISK_ITEM")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_RISK_ITEM")
