@@ -13,6 +13,8 @@
 
                 updateFundsRemaining();
 
+                setupDialogs();
+
                 $j.ajax({
                     url: "${ctxpath}/orders/order.action?getSummary=&productOrder=${actionBean.editOrder.businessKey}",
                     dataType: 'json',
@@ -20,8 +22,28 @@
                 });
 
                 bspDataCount = $j(".sampleName").length;
-                $j(".sampleName").each(updateBspInformation);
 
+                var sampleNameFields = $j(".sampleName");
+
+                // If there are no samples, set up the filter, otherwise kick off some javascript
+                if (sampleNameFields.length == 0) {
+                    $j('#sampleData').dataTable( {
+                        "oTableTools": ttExportDefines,
+                        "bSort": false
+                    });
+                } else {
+                    var i,j,tempArray,chunk = 50;
+                    for (i=0,j=sampleNameFields.length; i<j; i+=chunk) {
+                        tempArray = sampleNameFields.slice(i,i+chunk);
+
+                        updateBspInformation(tempArray);
+                    }
+                }
+            });
+
+            var bspDataCount = 0;
+
+            function setupDialogs() {
                 $j("#confirmDialog").dialog({
                     modal: true,
                     autoOpen: false,
@@ -79,33 +101,38 @@
                         }
                     }
                 });
-            });
+            }
 
-            var bspDataCount = 0;
+            function updateBspInformation(chunkOfSamples) {
 
-            function updateBspInformation(index, sampleIdCell) {
-                var sampleId = $j(sampleIdCell).attr('id').split("-")[1];
+                var sampleIdString = "";
+                $j(chunkOfSamples).each(function(index, sampleIdCell) {
+                    sampleIdString += "&sampleIdsForGetBspData=" + $j(sampleIdCell).attr('id').split("-")[1];
+                });
 
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getBspData=&productOrder=${actionBean.editOrder.businessKey}&sampleIdForGetBspData=" + sampleId,
+                    url: "${ctxpath}/orders/order.action?getBspData=&productOrder=${actionBean.editOrder.businessKey}&" + sampleIdString,
                     dataType: 'json',
-                    success: showSample
+                    success: showSamples
                 });
             }
 
-            function showSample(sampleData) {
-                var sampleId = sampleData.sampleId;
+            function showSamples(sampleData) {
+                for(var x=0; x<sampleData.length; x++) {
 
-                $j('#patient-' + sampleId).text(sampleData.patientId);
-                $j('#volume-' + sampleId).text(sampleData.volume);
-                $j('#concentration-' + sampleId).text(sampleData.concentration);
-                $j('#total-' + sampleId).text(sampleData.total);
+                    var sampleId = sampleData[x].sampleId;
 
-                if (sampleData.hasFingerprint) {
-                    $j('#fingerprint-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
+                    $j('#patient-' + sampleId).text(sampleData[x].patientId);
+                    $j('#volume-' + sampleId).text(sampleData[x].volume);
+                    $j('#concentration-' + sampleId).text(sampleData[x].concentration);
+                    $j('#total-' + sampleId).text(sampleData[x].total);
+
+                    if (sampleData[x].hasFingerprint) {
+                        $j('#fingerprint-' + sampleId).html('<img src="${ctxpath}/images/check.png" title="Yes"/>');
+                    }
+
+                    bspDataCount--;
                 }
-
-                bspDataCount--;
 
                 if (bspDataCount < 1) {
                     $j('#sampleData').dataTable( {

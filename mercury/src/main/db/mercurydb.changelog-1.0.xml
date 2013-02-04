@@ -504,7 +504,7 @@
 
         <createTable tableName="lv_comment" schemaName="mercury">
             <column name="lab_vessel_comment_id" type="number(19,0)">
-                <constraints nullable="false"/>
+                <constraints primaryKey="true"/>
             </column>
 
             <column name="lab_vessel_comment" type="varchar2(255)"/>
@@ -520,7 +520,6 @@
             </column>
         </createTable>
         <createSequence sequenceName="SEQ_LV_COMMENT" schemaName="mercury" startValue="1" incrementBy="50"/>
-        <addPrimaryKey tableName="lv_comment" columnNames="lab_vessel_comment_id"/>
         <addForeignKeyConstraint baseTableName="lv_comment" baseColumnNames="lab_event" baseTableSchemaName="mercury"
                                  constraintName="fk_lv_comment_lab_event"
                                  referencedTableName="lab_event"
@@ -530,6 +529,7 @@
                                  referencedTableName="lab_vessel"
                                  referencedColumnNames="lab_vessel_id"/>
     </changeSet>
+
 
     <changeSet id="GPLIM-765-02.0" author="dryan">
            <preConditions onFail="MARK_RAN">
@@ -659,12 +659,12 @@
                                  referencedTableName="rap_sheet"
                                  referencedColumnNames="rap_sheet_id"/>
         <addForeignKeyConstraint baseTableName="rap_sheet_entry" baseTableSchemaName="mercury"
-                                 baseColumnNames="lab_vessel_comment_id"
+                                 baseColumnNames="lab_vessel_comment"
                                  constraintName="fk_rs_ent_lv_comment"
                                  referencedTableName="lv_comment" referencedTableSchemaName="mercury"
                                  referencedColumnNames="lab_vessel_comment_id"/>
-
        </changeSet>
+
     <changeSet id="GPLIM-765-08" author="dryan">
            <preConditions onFail="MARK_RAN">
                <not>
