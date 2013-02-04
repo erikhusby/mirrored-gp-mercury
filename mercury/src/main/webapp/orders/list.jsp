@@ -13,17 +13,17 @@
                     "oTableTools": ttExportDefines,
                     "aaSorting": [[8,'desc']],
                     "aoColumns": [
-                        {"bSortable": false},                   // checkbox
-                        {"bSortable": true, "sType": "html"},   // Name
+                        {"bSortable": false},                    // checkbox
+                        {"bSortable": true, "sType": "html"},    // Name
                         {"bSortable": true, "sType": "title-jira"},   // ID
-                        {"bSortable": true},                    // Product
-                        {"bSortable": true},                    // Product Family
-                        {"bSortable": true},                    // Status
-                        {"bSortable": true},                    // Research Project
-                        {"bSortable": true},                    // Owner
-                        {"bSortable": true, "sType": "date"},   // Updated
-                        {"bSortable": true, "sType": "numeric"},   // Count
-                        {"bSortable": false},                   // Billing Session ID
+                        {"bSortable": true},                     // Product
+                        {"bSortable": true},                     // Product Family
+                        {"bSortable": true},                     // Status
+                        {"bSortable": true},                     // Research Project
+                        {"bSortable": true},                     // Owner
+                        {"bSortable": true, "sType": "date"},    // Updated
+                        {"bSortable": true, "sType": "numeric"}, // Count
+                        {"bSortable": true },                    // Billing Session ID
                         {"bSortable": true, "sType" : "title-string"}]  // eligible for billing
                 })
             });
