@@ -11,9 +11,7 @@ import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.PROD;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.*;
 
 public class BSPSampleDataFetcherContainerTest extends Arquillian {
 
