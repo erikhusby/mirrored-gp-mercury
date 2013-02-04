@@ -152,10 +152,12 @@ public class LabEventHandler implements Serializable {
                 message += bspUser.getUsername() + " ran ";
             }
         }
-        MercuryConfig mercuryConfig = ServiceAccessUtility.getBean(MercuryConfig.class);
-        message += labEvent.getLabEventType().getName() + " for <a href=\"" + mercuryConfig.getUrl() +
-                "/search/all.action?search=&searchKey=" + labEvent.getAllLabVessels().iterator().next().getLabel() +
-                "\">" + labEvent.getAllLabVessels().iterator().next().getLabel() + "</a>" +
+        // todo jmt why is MercuryConfig null?
+//        MercuryConfig mercuryConfig = ServiceAccessUtility.getBean(MercuryConfig.class);
+//        message += labEvent.getLabEventType().getName() + " for <a href=\"" + mercuryConfig.getUrl() +
+//                "/search/all.action?search=&searchKey=" + labEvent.getAllLabVessels().iterator().next().getLabel() +
+//                "\">" + labEvent.getAllLabVessels().iterator().next().getLabel() + "</a>" +
+        message += labEvent.getLabEventType().getName() + " for " + labEvent.getAllLabVessels().iterator().next().getLabel() +
                 " on " + labEvent.getEventLocation() + " at " + labEvent.getEventDate();
         if (jiraCommentUtil != null) {
             try {
