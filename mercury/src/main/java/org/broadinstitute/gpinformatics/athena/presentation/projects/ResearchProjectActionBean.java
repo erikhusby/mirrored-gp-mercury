@@ -416,7 +416,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     }
 
     public String getTableauLink() {
-        return tableauLink.passReportUrl(editResearchProject.getTitle());
+        return tableauLink.tableauReportUrl("PASS", editResearchProject.getTitle());
     }
 
     /**
