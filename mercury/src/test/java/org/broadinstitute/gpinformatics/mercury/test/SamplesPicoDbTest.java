@@ -29,8 +29,7 @@ public class SamplesPicoDbTest extends ContainerTest {
 
     private final SimpleDateFormat timestampFormat = new SimpleDateFormat("MMddHHmmss");
 
-    // todo jmt re-enable when figure out what to do with "Failed to find source plate PicoStandardsPlate"
-    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testEndToEnd(@ArquillianResource URL baseUrl) {
         String timestamp = timestampFormat.format(new Date());

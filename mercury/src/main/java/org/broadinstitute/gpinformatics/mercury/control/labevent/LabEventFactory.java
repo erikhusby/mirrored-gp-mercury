@@ -577,7 +577,7 @@ public class LabEventFactory implements Serializable {
             }
             sourcePlate = staticPlateDAO.findByBarcode(plateTransferEvent.getSourcePlate().getBarcode());
             if ( sourcePlate == null ) {
-                if (CREATE_SOURCES) {
+                if (LabEventType.getByName(plateTransferEvent.getEventType()).isCreateSources() || CREATE_SOURCES) {
                     sourcePlate = new StaticPlate ( plateTransferEvent.getSourcePlate().getBarcode(),
                                                     StaticPlate.PlateType.getByDisplayName (
                                                             plateTransferEvent.getSourcePlate ().getPhysType () ) );
