@@ -23,7 +23,7 @@
                         {"bSortable": true},                    // Owner
                         {"bSortable": true, "sType": "date"},   // Updated
                         {"bSortable": true, "sType": "numeric"},   // Count
-                        {"bSortable": false},                   // Billing Session ID
+                        {"bSortable": true},                   // Billing Session ID
                         {"bSortable": true, "sType" : "title-string"}]  // eligible for billing
                 })
             });
