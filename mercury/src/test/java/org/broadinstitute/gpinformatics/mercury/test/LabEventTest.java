@@ -46,6 +46,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
+import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -231,6 +232,14 @@ public class LabEventTest {
 
         Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().iterator().next(),
                 qtpEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
+
+//        TransferVisualizerFrame transferVisualizerFrame = new TransferVisualizerFrame();
+//        transferVisualizerFrame.renderVessel(stringTwoDBarcodedTubeEntry.getValue());
+//        try {
+//            Thread.sleep(500000L);
+//        } catch (InterruptedException e) {
+//            throw new RuntimeException(e);
+//        }
 
 //        Controller.stopCPURecording();
     }
@@ -2339,6 +2348,8 @@ public class LabEventTest {
             denatureRack = (TubeFormation) denatureEntity.getTargetLabVessels().iterator().next();
             Set<SampleInstance> denaturedSampleInstances = denatureRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(denaturedSampleInstances.size(), normCatchRack.getSampleInstances().size(), "Wrong number of denatured samples");
+            Assert.assertEquals(denatureRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances().size(),
+                    normCatchRack.getSampleInstances().size(), "Wrong number of denatured samples");
 
             // StripTubeBTransfer
             validateWorkflow("StripTubeBTransfer", denatureRack);

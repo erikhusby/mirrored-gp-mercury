@@ -308,7 +308,7 @@ public class ProductOrderFixupTest extends Arquillian {
         int count = 0;
         for (ProductOrderSample sample : productOrder.getSamples()) {
             if ((count++ % 2) == 0) {
-                RiskItem riskItem = new RiskItem(riskCriteria, new Date(), "240.0");
+                RiskItem riskItem = new RiskItem(riskCriteria, "240.0");
                 riskItem.setRemark("Bad Concentration found");
                 sample.setRiskItems(Collections.singletonList(riskItem));
                 productOrderSampleDao.persist(sample);
