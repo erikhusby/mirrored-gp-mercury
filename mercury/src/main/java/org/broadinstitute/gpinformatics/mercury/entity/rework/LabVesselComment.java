@@ -35,7 +35,6 @@ public class LabVesselComment<T extends RapSheetEntry> {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     protected LabEvent labEvent;
 
-    @Null
     @Column(name = "LAB_VESSEL_COMMENT")
     private String comment;
 
