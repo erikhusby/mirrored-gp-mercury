@@ -13,6 +13,8 @@
 
                 updateFundsRemaining();
 
+                setupDialogs();
+
                 $j.ajax({
                     url: "${ctxpath}/orders/order.action?getSummary=&productOrder=${actionBean.editOrder.businessKey}",
                     dataType: 'json',
@@ -21,7 +23,11 @@
 
                 bspDataCount = $j(".sampleName").length;
                 $j(".sampleName").each(updateBspInformation);
+            });
 
+            var bspDataCount = 0;
+
+            function setupDialogs() {
                 $j("#confirmDialog").dialog({
                     modal: true,
                     autoOpen: false,
@@ -79,9 +85,7 @@
                         }
                     }
                 });
-            });
-
-            var bspDataCount = 0;
+            }
 
             function updateBspInformation(index, sampleIdCell) {
                 var sampleId = $j(sampleIdCell).attr('id').split("-")[1];
