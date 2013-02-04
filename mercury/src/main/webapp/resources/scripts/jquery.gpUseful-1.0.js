@@ -133,113 +133,93 @@
 })(jQuery);
 
 
-// extend sorting for datatables to allow for title sorting
+// Compares strings of the form PDO-25 or RP-100, considering first the project name first lexically and second the
+// issue number numerically.
+function fn_title_jira_asc(a, b) {
+    // JIRA ticket regexp.
+    var re = /^([A-Z]+)-(\d+)$/;
+
+    var aMatchingArray = a.match(re);
+    var bMatchingArray = b.match(re);
+
+    // If the array is null or the number of match groups is < 3, the match failed.
+    var aMatchFail = (aMatchingArray == null || aMatchingArray.length < 3);
+    var bMatchFail = (bMatchingArray == null || bMatchingArray.length < 3);
+
+    // Do a simple lexical compare if both fail.
+    if (aMatchFail && bMatchFail) {
+        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+    }
+    // Things that don't match the JIRA regexp always sort before things that do.
+    else if (aMatchFail) {
+        return -1;
+    }
+    else if (bMatchFail) {
+        return 1;
+    }
+
+    // Compare projects first, lexically.
+    var aProject = aMatchingArray[1];
+    var bProject = bMatchingArray[1];
+    if (aProject != bProject) {
+        return ((aProject < bProject) ? -1 : ((aProject > bProject) ? 1 : 0));
+    }
+
+    // Drop back to numerical comparision of issue ids if the projects are the same.
+    var aIssue = parseFloat(aMatchingArray[2]);
+    var bIssue = parseFloat(bMatchingArray[2]);
+
+    return ((aIssue < bIssue) ? -1 : ((aIssue > bIssue) ? 1 : 0));
+}
+
+// Simple ascending compare.
+function fn_title_string_asc(a, b) {
+    return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+}
+
+
+// Pulls out a title attribute if any, otherwise returns the empty string.
+function fn_title_pre(a) {
+    var matchingArray = a.match(/title="(.*?)"/);
+
+    // If there is no title attribute simply return the empty string.
+    if (matchingArray == null) {
+        return '';
+    }
+
+    if (matchingArray.length < 2) {
+        return '';
+    }
+
+    return matchingArray[1];
+}
+
+
+// Extend sorting for datatables to allow for title sorting.
 jQuery.extend( jQuery.fn.dataTableExt.oSort, {
+
     "title-string-pre": function ( a ) {
-        var matchingArray = a.match(/title="(.*?)"/);
-        if (matchingArray == null) {
-            return '';
-        }
-
-        if (matchingArray.length < 2) {
-            return '';
-        }
-
-        return matchingArray[1].toLowerCase();
+        return fn_title_pre(a).toLowerCase();
     },
 
     "title-string-asc": function ( a, b ) {
-        return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+        return fn_title_string_asc(a, b);
     },
 
     "title-string-desc": function ( a, b ) {
-        return ((a < b) ? 1 : ((a > b) ? -1 : 0));
+        return fn_title_string_asc(b, a);
     },
 
     "title-jira-pre": function ( a ) {
-        // if there is no title attribute simply return the empty string.  if there is a title attribute, uppercase its
-        // value and return that
-        var matchingArray = a.match(/title="(.*?)"/);
-        if (matchingArray == null) {
-            return '';
-        }
-
-        if (matchingArray.length < 2) {
-            return '';
-        }
-
-        return matchingArray[1].toUpperCase();
+        return fn_title_pre(a).toUpperCase();
     },
 
     "title-jira-asc": function ( a, b ) {
-
-        // JIRA ticket regexp
-        var re = /^([A-Z]+)-(\d+)$/;
-
-        var aMatchingArray = a.match(re);
-        var bMatchingArray = b.match(re);
-
-        var aMatchFail = (aMatchingArray == null || aMatchingArray.length < 3);
-        var bMatchFail = (bMatchingArray == null || bMatchingArray.length < 3);
-
-        // do a simple lexical compare if both fail
-        if (aMatchFail && bMatchFail) {
-            return ((a < b) ? 1 : ((a > b) ? -1 : 0));
-        }
-        else if (aMatchFail) {
-            return -1;
-        }
-        else if (bMatchFail) {
-            return 1;
-        }
-
-        var aProject = aMatchingArray[1];
-        var bProject = bMatchingArray[1];
-        if (aProject != bProject) {
-            return ((aProject < bProject) ? -1 : ((aProject > bProject) ? 1 : 0));
-        }
-
-        var aIssue = parseFloat(aMatchingArray[2]);
-        var bIssue = parseFloat(bMatchingArray[2]);
-
-        return ((aIssue < bIssue) ? -1 : ((aIssue > bIssue) ? 1 : 0));
+        return fn_title_jira_asc(a, b);
     },
 
-
     "title-jira-desc": function ( a, b ) {
-        // this function is purely the negation of title-jira-asc, if we can figure out how to call that and
-        // negate its result we should do that
-
-        // JIRA ticket regexp
-        var re = /^([A-Z]+)-(\d+)$/;
-
-        var aMatchingArray = a.match(re);
-        var bMatchingArray = b.match(re);
-
-        var aMatchFail = (aMatchingArray == null || aMatchingArray.length < 3);
-        var bMatchFail = (bMatchingArray == null || bMatchingArray.length < 3);
-
-        // do a simple lexical compare if both fail
-        if (aMatchFail && bMatchFail) {
-            return ((a < b) ? -1 : ((a > b) ? 1 : 0));
-        }
-        else if (aMatchFail) {
-            return 1;
-        }
-        else if (bMatchFail) {
-            return -1;
-        }
-
-        var aProject = aMatchingArray[1];
-        var bProject = bMatchingArray[1];
-        if (aProject != bProject) {
-            return ((aProject < bProject) ? 1 : ((aProject > bProject) ? -1 : 0));
-        }
-
-        var aIssue = parseFloat(aMatchingArray[2]);
-        var bIssue = parseFloat(bMatchingArray[2]);
-
-        return ((aIssue < bIssue) ? 1 : ((aIssue > bIssue) ? -1 : 0));
+        return fn_title_jira_asc(b, a);
     }
 });
 

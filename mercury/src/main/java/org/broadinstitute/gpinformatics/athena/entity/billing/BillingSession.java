@@ -10,6 +10,7 @@ import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -20,7 +21,9 @@ import java.util.*;
 @Entity
 @Audited
 @Table(name= "BILLING_SESSION", schema = "athena")
-public class BillingSession {
+public class BillingSession implements Serializable {
+    private static final long serialVersionUID = -5063307042006128046L;
+
     public static final String ID_PREFIX = "BILL-";
     public static final String SUCCESS = "Billed Successfully";
 

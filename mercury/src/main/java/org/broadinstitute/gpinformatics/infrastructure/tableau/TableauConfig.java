@@ -45,17 +45,8 @@ public class TableauConfig extends AbstractConfig implements Serializable {
         // Populates the multi-key reportUrlMap from yaml's list of map<name, url>.
         reportUrlMap = new HashMap<String, String>();
         for (Map<String, String> map : reportUrls) {
-            // collects the name and url
-            String name = null;
-            String url = null;
-            for (Map.Entry<String, String> ent: map.entrySet()) {
-                if ("name".equals(ent.getKey())) {
-                    name = ent.getValue();
-                }
-                if ("url".equals(ent.getKey())) {
-                    url = ent.getValue();
-                }
-            }
+            String name = map.get("name");
+            String url = map.get("url");
             if (name != null && url != null) {
                 reportUrlMap.put(name, url);
             } else {
