@@ -13,14 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -46,7 +39,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
-import org.broadinstitute.gpinformatics.mercury.presentation.transfervis.TransferVisualizerFrame;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -58,7 +50,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
-import static org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign.*;
+import static org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign.ReagentType;
 
 /**
  * Test messaging
