@@ -532,6 +532,26 @@ public class ProductOrderActionBean extends CoreActionBean {
                 .addParameter("sessionKey", session.getBusinessKey());
     }
 
+    @HandlesEvent("abandonOrders")
+    public Resolution abandonOrders() {
+
+        for (String businessKey : selectedProductOrderBusinessKeys) {
+            try {
+                productOrderEjb.abandon(businessKey, businessKey + " abandoned by " + userBean.getLoginUserName());
+            } catch (ProductOrderEjb.NoTransitionException e) {
+                throw new RuntimeException(e);
+            } catch (ProductOrderEjb.NoSuchPDOException e) {
+                throw new RuntimeException(e);
+            } catch (ProductOrderEjb.SampleDeliveryStatusChangeException e) {
+                throw new RuntimeException(e);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return new RedirectResolution(ProductOrderActionBean.class, LIST_ACTION);
+    }
+
     @HandlesEvent("getAddOns")
     public Resolution getAddOns() throws Exception {
         JSONArray itemList = new JSONArray();

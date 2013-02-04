@@ -43,6 +43,10 @@
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
             <div class="actionButtons">
 
+                <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+                    <stripes:submit name="abandonOrders" value="Abandon Orders" class="btn" style="margin-right:30px;"/>
+                </security:authorizeBlock>
+
                 <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.BillingManager.name}%>">
                     <stripes:submit name="startBilling" value="Start Billing Session" class="btn" style="margin-right:30px;"/>
                 </security:authorizeBlock>
