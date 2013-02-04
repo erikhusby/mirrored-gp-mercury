@@ -67,14 +67,8 @@
         $j('#heatMapDiv').load('${ctxpath}/view/heatMap.action?jqueryClass=.pico');
         $j('#heatMapDiv').show();
     }
-    function showReworkOptions() {
-        $j('#reworkDiv').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
-        $j('#reworkDiv').load('${ctxpath}/view/rework.action?jqueryClass=.vvInfo');
-        $j('#reworkDiv').show();
-    }
 </script>
 <a href="javascript:showHeatMapOptions()">Add Heat Map</a><br/>
-<a href="javascript:showReworkOptions()">Mark for rework</a>
 
 <div id="heatMapDiv"></div>
 <stripes:form beanclass="org.broadinstitute.gpinformatics.mercury.presentation.vessel.VesselViewActionBean">
