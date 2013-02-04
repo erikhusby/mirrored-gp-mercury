@@ -9,6 +9,7 @@ import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
+import java.io.Serializable;
 import java.util.Date;
 
 /**
@@ -19,7 +20,9 @@ import java.util.Date;
 @Entity
 @Audited
 @Table(name= "BILLING_LEDGER", schema = "athena")
-public class BillingLedger {
+public class BillingLedger implements Serializable {
+    private static final long serialVersionUID = -4740767648087018522L;
+
     @Id
     @SequenceGenerator(name = "SEQ_LEDGER", schema = "athena", sequenceName = "SEQ_LEDGER", allocationSize = 10)
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LEDGER")

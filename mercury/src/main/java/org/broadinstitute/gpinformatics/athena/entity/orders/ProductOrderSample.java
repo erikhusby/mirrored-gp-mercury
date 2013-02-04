@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
 @Audited
 @Table(name= "PRODUCT_ORDER_SAMPLE", schema = "athena")
 public class ProductOrderSample implements Serializable {
+    private static final long serialVersionUID = 8645451167948826402L;
 
     /** Count shown when no billing has occurred. */
     public static final double NO_BILL_COUNT = 0;
@@ -43,7 +44,7 @@ public class ProductOrderSample implements Serializable {
     public static final String FEMALE_IND = BSPSampleDTO.FEMALE_IND;
     public static final String MALE_IND = BSPSampleDTO.MALE_IND;
     public static final String ACTIVE_IND = BSPSampleDTO.ACTIVE_IND;
-
+ 
     @Id
     @SequenceGenerator(name = "SEQ_ORDER_SAMPLE", schema = "athena", sequenceName = "SEQ_ORDER_SAMPLE")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_ORDER_SAMPLE")
@@ -86,27 +87,37 @@ public class ProductOrderSample implements Serializable {
         return names;
     }
 
-    public void calculateRisk() {
+    public boolean calculateRisk() {
         riskItems.clear();
+
+        boolean isOnRisk = false;
 
         // Go through each risk check on the product
         for (RiskCriteria criterion : productOrder.getProduct().getRiskCriteriaList()) {
             // If this is on risk, then create a risk item for it and add it in
             if (criterion.onRisk(this)) {
-                riskItems.add(new RiskItem(criterion, new Date(), criterion.getValueProvider().getValue(this)));
+                riskItems.add(new RiskItem(criterion, criterion.getValueProvider().getValue(this)));
+                isOnRisk = true;
             }
         }
 
         // If there are no risk checks that failed, then create a risk item with no criteria to represent NO RISK
         // and this will distinguish NO RISK from never checked
         if (riskItems.isEmpty()) {
-            riskItems.add(new RiskItem(null, new Date(), null));
+            riskItems.add(new RiskItem("Determined no risk"));
         }
+
+        return isOnRisk;
     }
 
-    public void setManualOnRisk(RiskCriteria criterion, String value, String comment) {
+    public void setManualOnRisk(RiskCriteria criterion, String comment) {
         riskItems.clear();
-        riskItems.add(new RiskItem(criterion, new Date(), value, comment));
+        riskItems.add(new RiskItem(criterion, Boolean.toString(true), comment));
+    }
+
+    public void setManualNotOnRisk(String comment) {
+        riskItems.clear();
+        riskItems.add(new RiskItem(comment));
     }
 
     public static enum DeliveryStatus implements StatusType {

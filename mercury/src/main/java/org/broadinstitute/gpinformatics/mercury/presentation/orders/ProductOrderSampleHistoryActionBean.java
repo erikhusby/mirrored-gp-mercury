@@ -204,7 +204,11 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
 
     public String getDuration(MercurySample sample) {
         Long mSecDiff = getLatestLabEvent(sample).getEventDate().getTime() - getFirstLabEvent(sample).getEventDate().getTime();
-        return String.format("%d day %d hr %d min", TimeUnit.MILLISECONDS.toDays(mSecDiff), TimeUnit.MILLISECONDS.toHours(mSecDiff), TimeUnit.MILLISECONDS.toMinutes(mSecDiff));
+        long days = TimeUnit.MILLISECONDS.toDays(mSecDiff);
+        long hours = TimeUnit.MILLISECONDS.toHours(mSecDiff);
+        return String.format("%d day %d hr %d min", days,
+                hours - TimeUnit.DAYS.toHours(days),
+                TimeUnit.MILLISECONDS.toMinutes(mSecDiff) - TimeUnit.HOURS.toMinutes(hours));
     }
 
     public WorkflowStepDef getLatestProcess(LabEvent event) {

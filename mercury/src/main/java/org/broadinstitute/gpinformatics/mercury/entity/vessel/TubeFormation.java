@@ -50,6 +50,11 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
         }
     }
 
+    /**
+     * Make a digest from position / tube pairs
+     * @param mapPositionToTube each entry is a position / tube pair
+     * @return digest
+     */
     private static String makeDigest(Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube) {
         List<Map.Entry<VesselPosition, String>> positionBarcodeList = new ArrayList<Map.Entry<VesselPosition, String>>();
         for (Map.Entry<VesselPosition, TwoDBarcodedTube> vesselPositionTwoDBarcodedTubeEntry : mapPositionToTube.entrySet()) {
@@ -69,6 +74,11 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
         return rackType;
     }
 
+    /**
+     * Make a digest from a list of position / tube barcode pairs
+     * @param positionBarcodeList pairs of position / tube barcode
+     * @return digest
+     */
     public static String makeDigest(List<Map.Entry<VesselPosition, String>> positionBarcodeList) {
         Collections.sort(positionBarcodeList, new Comparator<Map.Entry<VesselPosition, String>>() {
             @Override
@@ -84,6 +94,12 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
         return makeDigest(stringBuilder.toString());
     }
 
+    /**
+     * Makes a digest of a String holding the positions and barcodes of a set of tubes.  The digest is used to
+     * refer to the formation, e.g. to retrieve existing formation from the database
+     * @param positionBarcodeTupleString a sequence of position / barcode pairs, in alphabetical order of position
+     * @return digest
+     */
     public static String makeDigest(String positionBarcodeTupleString) {
         try {
             MessageDigest md = MessageDigest.getInstance("MD5");

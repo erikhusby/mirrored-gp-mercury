@@ -191,7 +191,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
         // Risk Information (GPLIM-660)
         String riskString = sample.getRiskString();
         if (StringUtils.isBlank(riskString)) {
-            getWriter().writeCell(riskString);
+            getWriter().writeCell("");
         } else {
             getWriter().writeCell(riskString, getRiskStyle());
         }
@@ -260,7 +260,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
 
         // Only use error style when there is an error in the string
         if (StringUtils.isBlank(billingError)) {
-            getWriter().writeCell(billingError);
+            getWriter().writeCell("");
         } else {
             getWriter().writeCell(billingError, getErrorMessageStyle());
         }

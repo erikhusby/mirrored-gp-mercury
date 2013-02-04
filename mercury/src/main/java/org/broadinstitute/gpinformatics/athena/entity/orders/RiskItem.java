@@ -7,6 +7,7 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.*;
+import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.Date;
 
@@ -21,7 +22,9 @@ import java.util.Date;
 @Entity
 @Audited
 @Table(schema = "ATHENA", name = "RISK_ITEM" )
-public class RiskItem {
+public class RiskItem implements Serializable {
+    private static final long serialVersionUID = -7818942360426002526L;
+
     @Id
     @SequenceGenerator(name = "SEQ_RISK_ITEM", schema = "ATHENA", sequenceName = "SEQ_RISK_ITEM")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_RISK_ITEM")
@@ -43,14 +46,25 @@ public class RiskItem {
     RiskItem() {
     }
 
-    public RiskItem(RiskCriteria riskCriteria, Date occurredDate, String comparedValue) {
+    public RiskItem(RiskCriteria riskCriteria, String comparedValue) {
         this.riskCriteria = riskCriteria;
-        this.occurredDate = occurredDate;
+        this.occurredDate = new Date();
         this.comparedValue = comparedValue;
     }
 
-    public RiskItem(RiskCriteria riskCriteria, Date occurredDate, String comparedValue, String comment) {
-        this(riskCriteria, occurredDate, comparedValue);
+    public RiskItem(RiskCriteria riskCriteria, String comparedValue, String comment) {
+        this(riskCriteria, comparedValue);
+        this.remark = comment;
+    }
+
+    /**
+     * This means that the risk item is passed, so don't make the user pass nulls
+     *
+     * @param comment The user comment on how it passed
+     */
+    public
+    RiskItem(String comment) {
+        this(null, null);
         this.remark = comment;
     }
 
