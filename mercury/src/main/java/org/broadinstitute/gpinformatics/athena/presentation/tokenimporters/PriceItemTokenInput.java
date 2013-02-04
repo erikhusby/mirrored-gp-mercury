@@ -78,7 +78,11 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
     public org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getMercuryTokenObject() {
         List<PriceItem> priceItems = getTokenObjects();
 
-        if ((priceItems == null) || (priceItems.size() != 1)) {
+        if ((priceItems == null) || (priceItems.isEmpty())) {
+            return null;
+        }
+
+        if (priceItems.size() > 1) {
             throw new IllegalArgumentException("If you want to get more than one price item, use getMercuryTokenObjecs");
         }
 
