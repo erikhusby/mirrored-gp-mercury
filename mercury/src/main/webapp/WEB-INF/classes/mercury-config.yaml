@@ -223,10 +223,9 @@ tableau:
 
     PROD:
 
-        trustedTicketServer: https://tableau-dev.broadinstitute.org
-        username: lab\tableau-test
+        tableauServer: https://tableau.broadinstitute.org
         reportUrls:
-            - {name: PASS, url: "/views/PMBPASSSampleDashboard/PMBridgeSamplesDashboard?:embed=yes&Research%20Project="}
+            - {name: PASS, url: "/views/PMBPASSSampleDashboard/PMBridgeSamplesDashboard?Research%20Project="}
 
 
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
