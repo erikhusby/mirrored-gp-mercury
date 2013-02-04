@@ -254,7 +254,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         requireField(editOrder.getResearchProject(), "a research project", action);
         requireField(editOrder.getQuoteId(), "a quote specified", action);
         requireField(editOrder.getProduct(), "a product", action);
-        requireField(editOrder.getCount() > 0, "a specified number of lanes", action);
+        if (editOrder.getProduct().getSupportsNumberOfLanes()) {
+            requireField(editOrder.getCount() > 0, "a specified number of lanes", action);
+        }
         requireField(editOrder.getCreatedBy(), "an owner", action);
 
         try {
@@ -531,6 +533,26 @@ public class ProductOrderActionBean extends CoreActionBean {
                 .addParameter("sessionKey", session.getBusinessKey());
     }
 
+    @HandlesEvent("abandonOrders")
+    public Resolution abandonOrders() {
+
+        for (String businessKey : selectedProductOrderBusinessKeys) {
+            try {
+                productOrderEjb.abandon(businessKey, businessKey + " abandoned by " + userBean.getLoginUserName());
+            } catch (ProductOrderEjb.NoTransitionException e) {
+                throw new RuntimeException(e);
+            } catch (ProductOrderEjb.NoSuchPDOException e) {
+                throw new RuntimeException(e);
+            } catch (ProductOrderEjb.SampleDeliveryStatusChangeException e) {
+                throw new RuntimeException(e);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return new RedirectResolution(ProductOrderActionBean.class, LIST_ACTION);
+    }
+
     @HandlesEvent("getAddOns")
     public Resolution getAddOns() throws Exception {
         JSONArray itemList = new JSONArray();
@@ -593,14 +615,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getSupportsNumberOfLanes")
     public Resolution getSupportsNumberOfLanes() throws Exception {
-        boolean lanesSupported = true;
+        boolean supportsNumberOfLanes = true;
         JSONObject item = new JSONObject();
 
         if (this.product != null) {
             Product product = productDao.findByBusinessKey(this.product);
-            lanesSupported = product.getSupportsNumberOfLanes();
+            supportsNumberOfLanes = product.getSupportsNumberOfLanes();
         }
-        item.put("supports", lanesSupported);
+        item.put("supportsNumberOfLanes", supportsNumberOfLanes);
 
         return createTextResolution(item.toString());
     }
