@@ -2,6 +2,9 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialType;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
+
+import java.util.Collections;
 
 /**
  * A simple DTO for fetching commonly used data from BSP.
@@ -16,8 +19,7 @@ public class BSPSampleDTO {
 
     public static final String ACTIVE_IND = "Active Stock";
 
-
-    private String patientId;
+    private final String patientId;
 
     private String stockSample;
 
@@ -25,7 +27,7 @@ public class BSPSampleDTO {
 
     private String aliquotSample;
 
-    private String collaboratorsSampleName;
+    private final String collaboratorsSampleName;
 
     private String collection;
 
@@ -33,7 +35,7 @@ public class BSPSampleDTO {
 
     private double concentration;
 
-    private String organism;
+    private final String organism;
 
     private String stockAtExport;
 
@@ -45,13 +47,13 @@ public class BSPSampleDTO {
 
     private String collaboratorParticipantId;
 
-    private String materialType;
+    private final String materialType;
 
     private double total;
 
     private String sampleType;
 
-    private String primaryDisease;
+    private final String primaryDisease;
 
     private String gender;
 
@@ -62,6 +64,8 @@ public class BSPSampleDTO {
     private String containerId;
 
     private String sampleId;
+
+    private Boolean ffpeDerived;
 
     private String collaboratorName;
 
@@ -103,8 +107,9 @@ public class BSPSampleDTO {
         this.rootSample = rootSample;
         this.aliquotSample = aliquotSample;
         this.collection = collection;
+
         this.volume = safeParseDouble(volume);
-        this.concentration = safeParseDouble(concentration);
+        this.concentration = safeParseDouble(concentration);    
         this.collaboratorParticipantId = collaboratorParticipantId;
         this.total = safeParseDouble(total);
         this.sampleType = sampleType;
@@ -116,7 +121,6 @@ public class BSPSampleDTO {
         negativeControl = false;
         this.sampleId = sampleId;
         this.collaboratorName = collaboratorName;
-        this.collaboratorParticipantId = collaboratorParticipantId;
         this.race = race;
         this.population = population;
     }
@@ -286,5 +290,17 @@ public class BSPSampleDTO {
 
     public String getRace() {
         return race;
+    }
+
+    public Boolean getFfpeDerived() {
+        if (ffpeDerived == null) {
+            BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
+            bspSampleDataFetcher.fetchFFPEDerived(Collections.singletonList(this));
+        }
+        return ffpeDerived;
+    }
+
+    public void setFfpeDerived(Boolean ffpeDerived) {
+        this.ffpeDerived = ffpeDerived;
     }
 }

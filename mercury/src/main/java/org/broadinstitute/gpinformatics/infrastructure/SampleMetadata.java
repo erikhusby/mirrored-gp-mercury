@@ -7,6 +7,7 @@ package org.broadinstitute.gpinformatics.infrastructure;
  * also implement this, backed by a spreadsheet
  * upload of some sort.
  */
+// todo jmt delete
 public interface SampleMetadata {
 
     /**

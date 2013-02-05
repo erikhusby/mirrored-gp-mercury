@@ -8,6 +8,7 @@ import org.hibernate.envers.Audited;
 import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.io.Serializable;
+import java.util.Collection;
 
 
 /**
@@ -57,7 +58,7 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
     /**
      * Package visible constructor for JPA
      */
-    PriceItem() {}
+    public PriceItem() {}
 
     public PriceItem(@Nonnull String quoteServerId, @Nonnull String platform, String category, @Nonnull String name) {
         this.quoteServerId = quoteServerId;
@@ -148,5 +149,19 @@ public class PriceItem implements Serializable, Comparable<PriceItem> {
             return category + " : " + name;
         }
         return name;
+    }
+
+    public static String[] getPriceItemKeys(Collection<PriceItem> priceItems) {
+        String[] keys = new String[priceItems.size()];
+        int i = 0;
+        for (PriceItem priceItem : priceItems) {
+            keys[i++] = makeConcatenatedKey(priceItem.getPlatform(), priceItem.getCategory(), priceItem.getName());
+        }
+
+        return keys;
+    }
+
+    public static String makeConcatenatedKey(String platform, String category, String name) {
+        return platform + '|' + category + '|' + name;
     }
 }

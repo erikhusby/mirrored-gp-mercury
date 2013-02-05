@@ -1,11 +1,17 @@
-
+DROP INDEX research_project_status_idx1;
+DROP INDEX research_project_person_idx1;
 DROP INDEX research_project_fund_idx1;
 DROP INDEX research_project_cohort_idx1;
 DROP INDEX research_project_irb_idx1;
+DROP INDEX product_order_status_idx1;
 DROP INDEX product_order_idx1;
 DROP INDEX product_order_idx2;
 DROP INDEX product_order_sample_idx1;
+DROP INDEX pdo_sample_status_idx1;
+DROP INDEX pdo_add_on_idx1;
+DROP INDEX pdo_add_on_idx2;
 DROP INDEX event_fact_idx1;
+DROP INDEX event_fact_idx2;
 
 ALTER TABLE research_project_status DROP CONSTRAINT fk_rp_status_rpid;
 ALTER TABLE research_project_person DROP CONSTRAINT fk_rp_person_rpid;
@@ -24,6 +30,8 @@ ALTER TABLE event_fact DROP CONSTRAINT fk_event_lab_vessel;
 ALTER TABLE event_fact DROP CONSTRAINT fk_event_workflow_config;
 ALTER TABLE event_fact DROP CONSTRAINT fk_event_pdo;
 
+DROP SEQUENCE event_fact_id_seq;
+
 DROP TABLE product_order_add_on;
 DROP TABLE product_order_sample_status;
 DROP TABLE product_order_sample;
@@ -41,8 +49,6 @@ DROP TABLE lab_batch;
 DROP TABLE lab_vessel;
 DROP TABLE workflow_config;
 DROP TABLE event_fact;
-
-DROP SEQUENCE event_fact_id_seq;
 
 DROP TABLE im_product_order_add_on;
 DROP TABLE im_product_order_sample_stat;
@@ -106,8 +112,6 @@ CREATE TABLE research_project_status (
   status_date DATE NOT NULL,
   status VARCHAR2(40) NOT NULL,
   etl_date DATE NOT NULL,
-  CONSTRAINT fk_rp_status_rpid FOREIGN KEY (research_project_id)
-    REFERENCES research_project(research_project_id),
   PRIMARY KEY (research_project_id, status_date)
 );
 
@@ -119,37 +123,29 @@ CREATE TABLE research_project_person (
   first_name VARCHAR2(255),
   last_name VARCHAR2(255),
   username VARCHAR2(255),
-  etl_date DATE NOT NULL,
-  CONSTRAINT fk_rp_person_rpid FOREIGN KEY (research_project_id)
-    REFERENCES research_project(research_project_id)
+  etl_date DATE NOT NULL
 );
 
 CREATE TABLE research_project_funding (
   research_project_funding_id NUMERIC(19) NOT NULL PRIMARY KEY,
   research_project_id NUMERIC(19) NOT NULL,
   funding_id VARCHAR2(255) NOT NULL,
-  etl_date DATE NOT NULL,
-  CONSTRAINT fk_rp_funding_rpid FOREIGN KEY (research_project_id) REFERENCES research_project(research_project_id)
+  etl_date DATE NOT NULL
 );
-CREATE INDEX research_project_fund_idx1 ON research_project_funding(research_project_id);
 
 CREATE TABLE research_project_cohort (
   research_project_cohort_id NUMERIC(19) NOT NULL PRIMARY KEY,
   research_project_id NUMERIC(19) NOT NULL,
-  etl_date DATE NOT NULL,
-  CONSTRAINT fk_rp_cohort_rpid FOREIGN KEY (research_project_id) REFERENCES research_project(research_project_id)
+  etl_date DATE NOT NULL
 );
-CREATE INDEX research_project_cohort_idx1 ON research_project_cohort(research_project_id);
 
 CREATE TABLE research_project_irb (
   research_project_irb_id NUMERIC(19) NOT NULL PRIMARY KEY,
   research_project_id NUMERIC(19) NOT NULL,
   research_project_irb VARCHAR2(255) NOT NULL,
   research_project_irb_type VARCHAR2(255) NOT NULL,
-  etl_date DATE NOT NULL,
-  CONSTRAINT fk_rp_irb_rpid FOREIGN KEY (research_project_id) REFERENCES research_project(research_project_id)
+  etl_date DATE NOT NULL
 );
-CREATE INDEX research_project_irb_idx1 ON research_project_irb(research_project_id);
 
 CREATE TABLE product_order (
   product_order_id NUMERIC(19) PRIMARY KEY NOT NULL,
@@ -161,20 +157,15 @@ CREATE TABLE product_order (
   title VARCHAR2(255),
   quote_id VARCHAR2(255),
   jira_ticket_key VARCHAR2(255),
-  etl_date DATE NOT NULL,
-  CONSTRAINT fk_po_rpid FOREIGN KEY (research_project_id) REFERENCES research_project(research_project_id),
-  CONSTRAINT fk_po_productid FOREIGN KEY (product_id) REFERENCES product(product_id)
+  is_deleted CHAR(1) DEFAULT 'F' NOT NULL ,
+  etl_date DATE NOT NULL
 );
-
-CREATE INDEX product_order_idx1 ON product_order(research_project_id);
-CREATE INDEX product_order_idx2 ON product_order(product_id);
 
 CREATE TABLE product_order_status (
   product_order_id NUMERIC(19) NOT NULL,
   status_date DATE NOT NULL,
   status VARCHAR2(40) NOT NULL,
   etl_date DATE NOT NULL,
-  CONSTRAINT fk_po_status_poid FOREIGN KEY (product_order_id) REFERENCES product_order(product_order_id),
   PRIMARY KEY (product_order_id, status_date)
 );
 
@@ -184,19 +175,15 @@ CREATE TABLE product_order_sample (
   sample_name VARCHAR2(255),
   delivery_status VARCHAR2(40) NOT NULL,
   sample_position NUMERIC(19) NOT NULL,
-  etl_date DATE NOT NULL,
-  CONSTRAINT fk_pos_poid FOREIGN KEY (product_order_id) REFERENCES product_order(product_order_id)
+  is_deleted CHAR(1) DEFAULT 'F' NOT NULL,
+  etl_date DATE NOT NULL
 );
-
-CREATE INDEX product_order_sample_idx1 ON product_order_sample(product_order_id);
 
 CREATE TABLE product_order_sample_status (
   product_order_sample_id NUMERIC(19) NOT NULL,
   status_date DATE NOT NULL,
   delivery_status VARCHAR2(40) NOT NULL,
   etl_date DATE NOT NULL,
-  CONSTRAINT fk_po_sample_b_s_po_sid FOREIGN KEY (product_order_sample_id)
-    REFERENCES product_order_sample(product_order_sample_id),
   PRIMARY KEY (product_order_sample_id, status_date)
 );
 
@@ -204,11 +191,9 @@ CREATE TABLE product_order_add_on (
   product_order_add_on_id NUMERIC(19) NOT NULL PRIMARY KEY,
   product_order_id NUMERIC(19) NOT NULL,
   product_id NUMERIC(19) NOT NULL,
-  etl_date DATE NOT NULL,
-  CONSTRAINT fk_po_add_on_prodid FOREIGN KEY (product_id) REFERENCES product(product_id),
-  CONSTRAINT fk_po_add_on_poid FOREIGN KEY (product_order_id) REFERENCES product_order(product_order_id)
+  is_deleted CHAR(1) DEFAULT 'F' NOT NULL,
+  etl_date DATE NOT NULL
 );
-
 
 CREATE TABLE lab_vessel (
   lab_vessel_id NUMERIC(19) NOT NULL PRIMARY KEY,
@@ -249,15 +234,8 @@ CREATE TABLE event_fact (
   station_name VARCHAR2(255),
   lab_vessel_id NUMERIC(19),
   event_date DATE NOT NULL,
-  etl_date DATE NOT NULL,
-  CONSTRAINT fk_event_lab_vessel FOREIGN KEY (lab_vessel_id) REFERENCES lab_vessel(lab_vessel_id),
-  CONSTRAINT fk_event_lab_batch FOREIGN KEY (lab_batch_id) REFERENCES lab_batch(lab_batch_id),
-  CONSTRAINT fk_event_pdo FOREIGN KEY (product_order_id) REFERENCES product_order(product_order_id),
-  CONSTRAINT fk_event_workflow_config FOREIGN KEY (workflow_config_id) REFERENCES workflow_config(workflow_config_id)
+  etl_date DATE NOT NULL
 );
-
-CREATE INDEX event_fact_idx1 ON event_fact(event_date);
-CREATE SEQUENCE event_fact_id_seq start with 1;
 
 
 -- The import tables
@@ -457,6 +435,72 @@ CREATE TABLE im_event_fact (
   event_date DATE,
   event_fact_id NUMERIC(19) --this gets populated by merge_import.sql
 );
+
+CREATE SEQUENCE event_fact_id_seq start with 1;
+
+ALTER TABLE research_project_status ADD CONSTRAINT fk_rp_status_rpid FOREIGN KEY (research_project_id)
+  REFERENCES research_project(research_project_id) ON DELETE CASCADE;
+
+ALTER TABLE research_project_person ADD CONSTRAINT fk_rp_person_rpid FOREIGN KEY (research_project_id)
+  REFERENCES research_project(research_project_id) ON DELETE CASCADE;
+
+ALTER TABLE research_project_funding ADD CONSTRAINT fk_rp_funding_rpid FOREIGN KEY (research_project_id)
+  REFERENCES research_project(research_project_id) ON DELETE CASCADE;
+
+ALTER TABLE research_project_cohort ADD CONSTRAINT fk_rp_cohort_rpid FOREIGN KEY (research_project_id)
+  REFERENCES research_project(research_project_id) ON DELETE CASCADE;
+
+ALTER TABLE research_project_irb ADD CONSTRAINT fk_rp_irb_rpid FOREIGN KEY (research_project_id)
+  REFERENCES research_project(research_project_id) ON DELETE CASCADE;
+
+ALTER TABLE product_order ADD CONSTRAINT fk_po_rpid FOREIGN KEY (research_project_id)
+  REFERENCES research_project(research_project_id)  ON DELETE CASCADE;
+
+ALTER TABLE product_order ADD CONSTRAINT fk_po_productid FOREIGN KEY (product_id)
+  REFERENCES product(product_id) ON DELETE CASCADE;
+
+ALTER TABLE product_order_status ADD CONSTRAINT fk_po_status_poid FOREIGN KEY (product_order_id)
+  REFERENCES product_order(product_order_id) ON DELETE CASCADE;
+
+ALTER TABLE product_order_sample ADD CONSTRAINT fk_pos_poid FOREIGN KEY (product_order_id)
+  REFERENCES product_order(product_order_id) ON DELETE CASCADE;
+
+ALTER TABLE product_order_sample_status ADD CONSTRAINT fk_po_sample_b_s_po_sid FOREIGN KEY (product_order_sample_id)
+  REFERENCES product_order_sample(product_order_sample_id) ON DELETE CASCADE;
+
+ALTER TABLE product_order_add_on ADD CONSTRAINT fk_po_add_on_prodid FOREIGN KEY (product_id)
+  REFERENCES product(product_id) ON DELETE CASCADE;
+
+ALTER TABLE product_order_add_on ADD CONSTRAINT fk_po_add_on_poid FOREIGN KEY (product_order_id)
+  REFERENCES product_order(product_order_id) ON DELETE CASCADE;
+
+ALTER TABLE event_fact ADD CONSTRAINT fk_event_lab_vessel FOREIGN KEY (lab_vessel_id)
+  REFERENCES lab_vessel(lab_vessel_id) ON DELETE CASCADE;
+
+ALTER TABLE event_fact ADD CONSTRAINT fk_event_lab_batch FOREIGN KEY (lab_batch_id)
+  REFERENCES lab_batch(lab_batch_id) ON DELETE CASCADE;
+
+ALTER TABLE event_fact ADD CONSTRAINT fk_event_pdo FOREIGN KEY (product_order_id)
+  REFERENCES product_order(product_order_id) ON DELETE CASCADE;
+
+ALTER TABLE event_fact ADD CONSTRAINT fk_event_workflow_config FOREIGN KEY (workflow_config_id)
+  REFERENCES workflow_config(workflow_config_id) ON DELETE CASCADE;
+
+
+CREATE INDEX research_project_status_idx1 ON research_project_status(research_project_id);
+CREATE INDEX research_project_person_idx1 ON research_project_person(research_project_id);
+CREATE INDEX research_project_fund_idx1 ON research_project_funding(research_project_id);
+CREATE INDEX research_project_cohort_idx1 ON research_project_cohort(research_project_id);
+CREATE INDEX research_project_irb_idx1 ON research_project_irb(research_project_id);
+CREATE INDEX product_order_idx1 ON product_order(research_project_id);
+CREATE INDEX product_order_idx2 ON product_order(product_id);
+CREATE INDEX product_order_status_idx1 ON product_order_status(product_order_id);
+CREATE INDEX product_order_sample_idx1 ON product_order_sample(product_order_id);
+CREATE INDEX pdo_sample_status_idx1 ON product_order_sample_status(product_order_sample_id);
+CREATE INDEX pdo_add_on_idx1 ON product_order_add_on(product_order_id);
+CREATE INDEX pdo_add_on_idx2 ON product_order_add_on(product_id);
+CREATE INDEX event_fact_idx1 ON event_fact(event_date);
+CREATE INDEX event_fact_idx2 ON event_fact(product_order_id);
 
 
 COMMIT;

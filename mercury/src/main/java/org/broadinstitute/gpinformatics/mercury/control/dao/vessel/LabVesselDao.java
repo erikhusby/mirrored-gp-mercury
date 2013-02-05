@@ -9,9 +9,15 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel_;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
-import javax.persistence.criteria.*;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 @Stateful
 @RequestScoped
@@ -75,5 +81,17 @@ public class LabVesselDao extends GenericDao {
             return resultList;
         }
         return resultList;
+    }
+
+    public Map<String, LabVessel> findByBarcodes(List<String> barcodes) {
+        Map<String, LabVessel> mapBarcodeToTube = new TreeMap<String, LabVessel>();
+        for (String barcode : barcodes) {
+            mapBarcodeToTube.put(barcode, null);
+        }
+        List<LabVessel> results = findListByList(LabVessel.class, LabVessel_.label, barcodes);
+        for (LabVessel result : results) {
+            mapBarcodeToTube.put(result.getLabel(), result);
+        }
+        return mapBarcodeToTube;
     }
 }

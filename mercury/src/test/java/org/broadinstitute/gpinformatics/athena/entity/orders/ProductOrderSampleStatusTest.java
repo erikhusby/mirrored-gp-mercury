@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDaoTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
@@ -97,18 +96,15 @@ public class ProductOrderSampleStatusTest extends ContainerTest {
 
     @Test
     public void testAbandonSamples() throws Exception {
-        List<Integer> indices = Arrays.asList(1, 3, 5);
-        List<String> comments =
-                Arrays.asList("Abandoning sample uno", "And sample tres", "And sample 5 too");
-        productOrderEjb.abandonSamples(testKey, indices, comments);
         ProductOrder order = productOrderDao.findByBusinessKey(testKey);
-        Assert.assertEquals(order.getOrderStatus(), ProductOrder.OrderStatus.Draft);
         List<ProductOrderSample> samples = order.getSamples();
+        List<ProductOrderSample> samplesToAbandon = Arrays.asList(samples.get(1), samples.get(3), samples.get(5));
+        productOrderEjb.abandonSamples(testKey, samplesToAbandon);
+        Assert.assertEquals(order.getOrderStatus(), ProductOrder.OrderStatus.Draft);
         Assert.assertEquals(samples.size(), NUM_TEST_SAMPLES);
-        for (int i = 0; i < samples.size(); i++) {
-            ProductOrderSample sample = samples.get(i);
+        for (ProductOrderSample sample : samples) {
             ProductOrderSample.DeliveryStatus status = ProductOrderSample.DeliveryStatus.NOT_STARTED;
-            if (indices.contains(i)) {
+            if (samplesToAbandon.contains(sample)) {
                 status = ProductOrderSample.DeliveryStatus.ABANDONED;
             }
             Assert.assertEquals(sample.getDeliveryStatus(), status);
@@ -117,17 +113,15 @@ public class ProductOrderSampleStatusTest extends ContainerTest {
 
     @Test
     public void testCompleteSamples() throws Exception{
-        List<Integer> indices = Arrays.asList(12, 14, 16);
-        List<String> comments = Arrays.asList("Completing sample 12", "And sample 14", "And sample 16 too");
-        productOrderEjb.completeSamples(testKey, indices, comments);
         ProductOrder order = productOrderDao.findByBusinessKey(testKey);
-        Assert.assertEquals(order.getOrderStatus(), ProductOrder.OrderStatus.Draft);
         List<ProductOrderSample> samples = order.getSamples();
+        List<ProductOrderSample> samplesToComplete = Arrays.asList(samples.get(12), samples.get(14), samples.get(16));
+        productOrderEjb.completeSamples(testKey, samplesToComplete);
+        Assert.assertEquals(order.getOrderStatus(), ProductOrder.OrderStatus.Draft);
         Assert.assertEquals(samples.size(), NUM_TEST_SAMPLES);
-        for (int i = 0; i < samples.size(); i++) {
-            ProductOrderSample sample = samples.get(i);
+        for (ProductOrderSample sample : samples) {
             ProductOrderSample.DeliveryStatus status = ProductOrderSample.DeliveryStatus.NOT_STARTED;
-            if (indices.contains(i)) {
+            if (samplesToComplete.contains(sample)) {
                 status = ProductOrderSample.DeliveryStatus.DELIVERED;
             }
             Assert.assertEquals(sample.getDeliveryStatus(), status);

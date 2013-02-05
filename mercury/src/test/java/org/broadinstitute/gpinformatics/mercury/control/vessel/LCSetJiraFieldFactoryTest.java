@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
@@ -103,12 +104,11 @@ public class LCSetJiraFieldFactoryTest {
         AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory
                 .getInstance(CreateFields.ProjectType.LCSET_PROJECT, testBatch, AthenaClientProducer.stubInstance());
 
-        Assert.assertEquals(rpSynopsis, testBuilder.generateDescription());
+        Assert.assertEquals("6 samples from Test RP PDO-999\n", testBuilder.generateDescription());
 
         Collection<CustomField> generatedFields = testBuilder.getCustomFields(jiraFieldDefs);
 
-//        Assert.assertEquals(7, generatedFields.size());
-        Assert.assertEquals(5, generatedFields.size());
+        Assert.assertEquals(6, generatedFields.size());
 
         for (CustomField currField : generatedFields) {
             if (currField.getFieldDefinition().getName()
@@ -118,21 +118,23 @@ public class LCSetJiraFieldFactoryTest {
             if (currField.getFieldDefinition().getName()
                          .equals(LabBatch.RequiredSubmissionFields.GSSR_IDS.getFieldName())) {
                 for (LabVessel currVessel : testBatch.getStartingLabVessels()) {
-                    Assert.assertTrue(((String) currField.getValue()).contains(currVessel.getLabel()));
+                    for(SampleInstance currSample:currVessel.getSampleInstances()) {
+                        Assert.assertTrue(((String) currField.getValue()).contains(currSample.getStartingSample().getSampleKey()));
+                    }
                 }
             }
             if (currField.getFieldDefinition().getName()
                          .equals(LabBatch.RequiredSubmissionFields.LIBRARY_QC_SEQUENCING_REQUIRED.getFieldName())) {
-                Assert.assertEquals(((String) currField.getValue()), LCSetJiraFieldFactory.LIB_QC_SEQ_REQUIRED);
+                Assert.assertEquals(((CustomField.SelectOption) currField.getValue()).getId(), "-1");
             }
             if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.NUMBER_OF_SAMPLES.getFieldName())) {
                 Assert.assertEquals(testBatch.getStartingLabVessels().size(), currField.getValue());
             }
-            if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName())) {
-                Assert.assertEquals(LCSetJiraFieldFactory.POOLING_STATUS, currField.getValue());
-            }
+//            if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.POOLING_STATUS.getFieldName())) {
+//                Assert.assertEquals(LCSetJiraFieldFactory.POOLING_STATUS, currField.getValue());
+//            }
             if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.PROGRESS_STATUS.getFieldName())) {
-                Assert.assertEquals(LCSetJiraFieldFactory.PROGRESS_STATUS, currField.getValue());
+                Assert.assertEquals(LCSetJiraFieldFactory.PROGRESS_STATUS, ((CustomField.ValueContainer)currField.getValue()).getValue());
             }
             if (currField.getFieldDefinition().getName().equals(LabBatch.RequiredSubmissionFields.PROTOCOL.getFieldName())) {
                 WorkflowLoader wfLoader = new WorkflowLoader();

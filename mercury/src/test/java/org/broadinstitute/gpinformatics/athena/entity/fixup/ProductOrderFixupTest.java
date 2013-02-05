@@ -3,9 +3,15 @@ package org.broadinstitute.gpinformatics.athena.entity.fixup;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.products.RiskItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
+import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -30,6 +36,15 @@ public class ProductOrderFixupTest extends Arquillian {
 
     @Inject
     private ProductOrderDao productOrderDao;
+
+    @Inject
+    private ProductDao productDao;
+
+    @Inject
+    private RiskItemDao riskItemDao;
+
+    @Inject
+    private ProductOrderSampleDao productOrderSampleDao;
 
     @Inject
     JiraService jiraService;
@@ -251,5 +266,53 @@ public class ProductOrderFixupTest extends Arquillian {
         }
 
         productOrderDao.persist(productOrder);
+    }
+
+    @Test(enabled = true)
+    public void removeSamplesForGPLIM877() {
+        List<String> samplesToRemove = Arrays.asList(
+                "SM-1WJOV",
+                "SM-1WJOX",
+                "SM-1WJPC",
+                "SM-1WJPD");
+
+        String pdo="PDO-388";
+
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
+
+        List<ProductOrderSample> sampleList = productOrder.getSamples();
+
+        Iterator<ProductOrderSample> sampleIterator = sampleList.iterator();
+        while (sampleIterator.hasNext()) {
+            ProductOrderSample sample = sampleIterator.next();
+
+            if (samplesToRemove.contains(sample.getSampleName())) {
+                sampleIterator.remove();
+            }
+        }
+
+        productOrderDao.persist(productOrder);
+    }
+
+    @Test(enabled = false)
+    public void setupOnRiskTestData() {
+
+        String pdo="PDO-49";
+        ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
+
+        RiskCriteria riskCriteria = new RiskCriteria(RiskCriteria.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
+        productOrder.getProduct().addRiskCriteria(riskCriteria);
+        productDao.persist(productOrder.getProduct());
+
+        // Populate on risk for every other sample
+        int count = 0;
+        for (ProductOrderSample sample : productOrder.getSamples()) {
+            if ((count++ % 2) == 0) {
+                RiskItem riskItem = new RiskItem(riskCriteria, new Date(), "240.0");
+                riskItem.setRemark("Bad Concentration found");
+                sample.setRiskItems(Collections.singletonList(riskItem));
+                productOrderSampleDao.persist(sample);
+            }
+        }
     }
 }

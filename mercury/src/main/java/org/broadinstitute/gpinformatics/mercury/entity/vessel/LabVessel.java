@@ -120,14 +120,17 @@ public abstract class LabVessel implements Serializable {
     private Set<MercurySample> mercurySamples = new HashSet<MercurySample>();
 
     // todo jmt set these fields db-free
-    @OneToMany(mappedBy = "sourceVessel")
+    @OneToMany(mappedBy = "sourceVessel", cascade = CascadeType.PERSIST)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsSource = new HashSet<VesselToVesselTransfer>();
 
-    @OneToMany(mappedBy = "targetLabVessel")
+    @OneToMany(mappedBy = "targetLabVessel", cascade = CascadeType.PERSIST)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsTarget = new HashSet<VesselToVesselTransfer>();
 
     @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "reworkedLabVessels")
     private Set<Rework> reworks = new HashSet<Rework>();
+
+    @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
+    private Set<LabMetric> labMetrics = new HashSet<LabMetric>();
 
     protected LabVessel(String label) {
         createdOn = new Date();
@@ -162,12 +165,13 @@ public abstract class LabVessel implements Serializable {
         return label;
     }
 
-    public void addMetric(LabMetric m) {
-        throw new RuntimeException("I haven't been written yet.");
+    public void addMetric(LabMetric labMetric) {
+        labMetrics.add(labMetric);
+        labMetric.setLabVessel(this);
     }
 
-    public Collection<LabMetric> getMetrics() {
-        throw new RuntimeException("I haven't been written yet.");
+    public Set<LabMetric> getMetrics() {
+        return labMetrics;
     }
 
     /**
@@ -209,12 +213,12 @@ public abstract class LabVessel implements Serializable {
      * only have metrics for a single container--and
      * no transfer graph.
      *
-     * @param metricName
+     * @param metricType
      * @param searchMode
      * @param sampleInstance
      * @return
      */
-    public LabMetric getMetric(LabMetric.MetricName metricName, MetricSearchMode searchMode,
+    public LabMetric getMetric(LabMetric.MetricType metricType, MetricSearchMode searchMode,
                                SampleInstance sampleInstance) {
         throw new RuntimeException("I haven't been written yet.");
     }
@@ -376,19 +380,26 @@ public abstract class LabVessel implements Serializable {
 
     public static Collection<String> extractPdoKeyList(Collection<LabVessel> labVessels) {
 
-        Set<String> pdoNames = new HashSet<String>();
+        return extractPdoLabVesselMap(labVessels).keySet();
+    }
 
-        for (LabVessel currVessel : labVessels) {
+    public static Map<String, Set<LabVessel>> extractPdoLabVesselMap(Collection<LabVessel> labVessels) {
+
+        Map<String, Set<LabVessel>> vesselByPdoMap = new HashMap<String, Set<LabVessel>>();
+
+        for(LabVessel currVessel : labVessels) {
             Collection<String> nearestPdos = currVessel.getNearestProductOrders();
 
-            if (nearestPdos != null && !nearestPdos.isEmpty()) {
-                pdoNames.addAll(nearestPdos);
-            } else {
-                logger.error("Unable to find at least one nearest PDO for " + currVessel.getLabel());
+            for(String pdoKey: nearestPdos) {
+
+                if(!vesselByPdoMap.containsKey(pdoKey)) {
+                    vesselByPdoMap.put(pdoKey, new HashSet<LabVessel>());
+                }
+                vesselByPdoMap.get(pdoKey).add(currVessel);
             }
         }
 
-        return pdoNames;
+        return vesselByPdoMap;
     }
 
     public String getNearestLabBatchesString() {
@@ -492,10 +503,12 @@ public abstract class LabVessel implements Serializable {
     static class TraversalResults {
         private Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
         private Set<Reagent> reagents = new HashSet<Reagent>();
-        private LabBatch lastEncounteredLabBatch;
+        private LabBatch lastEncounteredLabBatch = null;
 
         void add(TraversalResults traversalResults) {
             sampleInstances.addAll(traversalResults.getSampleInstances());
+            // Update here since last encountered lab batch may have been defined already, and won't be encountered again.
+            updateSampleInstanceLabBatch();
             reagents.addAll(traversalResults.getReagents());
         }
 
@@ -507,12 +520,9 @@ public abstract class LabVessel implements Serializable {
             return reagents;
         }
 
-        public LabBatch getLastEncounteredLabBatch() {
-            return lastEncounteredLabBatch;
-        }
-
         public void add(SampleInstance sampleInstance) {
             sampleInstances.add(sampleInstance);
+            updateSampleInstanceLabBatch();
         }
 
         public void add(Reagent reagent) {
@@ -520,11 +530,23 @@ public abstract class LabVessel implements Serializable {
         }
 
         public void add(Collection<LabBatch> labBatches) {
-            // Keeps only the last encountered lab batch.
-            // Expects that all samples in the vessel have the same batch when the vessel is not a container.
-            // It's an oversimplification that needs to be fixed when implementation of workflow/event/batch matures.
+            // Keeps only the last encountered lab batch.  Sample instances may or may not have been defined
+            // by this point of traversal, and if so, sets their lab batch.
+            //
+            // todo fix this oversimplification when implementation of workflow/event/batch matures.
+            // Expects that all samples in the vessel have the same batch when the vessel is not a container, i.e.
+            // there is only one lab batch for the vessel.
             if (labBatches != null && labBatches.size() == 1) {
                 lastEncounteredLabBatch = labBatches.iterator().next();
+                updateSampleInstanceLabBatch();
+            }
+        }
+
+        public void updateSampleInstanceLabBatch() {
+            if (lastEncounteredLabBatch != null) {
+                for (SampleInstance si : sampleInstances) {
+                    si.setLabBatch(lastEncounteredLabBatch);
+                }
             }
         }
 
@@ -553,6 +575,13 @@ public abstract class LabVessel implements Serializable {
     TraversalResults traverseAncestors() {
         TraversalResults traversalResults = new TraversalResults();
 
+        if (isSampleAuthority()) {
+            for (MercurySample mercurySample : mercurySamples) {
+                traversalResults.add(new SampleInstance(mercurySample, null, null));
+            }
+            // stop at first MercurySample, to avoid picking up multiple BSP batches
+            return traversalResults;
+        }
         List<VesselEvent> vesselEvents = getAncestors();
         for (VesselEvent vesselEvent : vesselEvents) {
             LabVessel labVessel = vesselEvent.getLabVessel();
@@ -561,11 +590,6 @@ public abstract class LabVessel implements Serializable {
                 traversalResults.add(vesselEvent.getVesselContainer().traverseAncestors(vesselEvent.getPosition()));
             } else {
                 traversalResults.add(labVessel.traverseAncestors());
-            }
-        }
-        if (isSampleAuthority()) {
-            for (MercurySample mercurySample : mercurySamples) {
-                traversalResults.add(new SampleInstance(mercurySample, null, null));
             }
         }
         for (Reagent reagent : getReagentContents()) {

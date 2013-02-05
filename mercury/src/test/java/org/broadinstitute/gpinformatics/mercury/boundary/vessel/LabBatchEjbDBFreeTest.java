@@ -121,7 +121,7 @@ public class LabBatchEjbDBFreeTest {
         Assert.assertEquals(testBatch.getJiraTicket().getTicketName(),testBatch.getBatchName());
 
         Assert.assertEquals(6, testBatch.getStartingLabVessels().size());
-        Assert.assertEquals(AthenaClientServiceStub.rpSynopsis, testBatch.getBatchDescription());
+        Assert.assertEquals("6 samples from Test RP PDO-999\n", testBatch.getBatchDescription());
         Assert.assertNull(testBatch.getDueDate());
         Assert.assertEquals(testBatch.getBatchName(), testBatch.getJiraTicket().getTicketName());
     }
@@ -182,7 +182,7 @@ public class LabBatchEjbDBFreeTest {
 
         Assert.assertNotNull(testBatch.getStartingLabVessels());
         Assert.assertEquals(6, testBatch.getStartingLabVessels().size());
-        Assert.assertEquals(AthenaClientServiceStub.rpSynopsis, testBatch.getBatchDescription());
+        Assert.assertEquals("6 samples from Test RP PDO-999\n", testBatch.getBatchDescription());
         Assert.assertNull(testBatch.getDueDate());
 
         Assert.assertEquals(testBatch.getBatchName(), testBatch.getJiraTicket().getTicketName());
