@@ -593,21 +593,23 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         JSONArray itemList = new JSONArray();
 
-        // assuming all samples come from same product order here
-        List<String> sampleNames = ProductOrderSample.getSampleNames(samples);
-        samples.get(0).getProductOrder().loadBspData(sampleNames, samples);
+        if (samples != null) {
+            // assuming all samples come from same product order here
+            List<String> sampleNames = ProductOrderSample.getSampleNames(samples);
+            ProductOrder.loadBspData(sampleNames, samples);
 
-        for (ProductOrderSample sample : samples) {
-            JSONObject item = new JSONObject();
+            for (ProductOrderSample sample : samples) {
+                JSONObject item = new JSONObject();
 
-            item.put("sampleId", sample.getProductOrderSampleId());
-            item.put("patientId", sample.getBspDTO().getPatientId());
-            item.put("volume", sample.getBspDTO().getVolume());
-            item.put("concentration", sample.getBspDTO().getConcentration());
-            item.put("total", sample.getBspDTO().getTotal());
-            item.put("hasFingerprint", sample.getBspDTO().getHasFingerprint());
+                item.put("sampleId", sample.getProductOrderSampleId());
+                item.put("patientId", sample.getBspDTO().getPatientId());
+                item.put("volume", sample.getBspDTO().getVolume());
+                item.put("concentration", sample.getBspDTO().getConcentration());
+                item.put("total", sample.getBspDTO().getTotal());
+                item.put("hasFingerprint", sample.getBspDTO().getHasFingerprint());
 
-            itemList.put(item);
+                itemList.put(item);
+            }
         }
 
         return createTextResolution(itemList.toString());

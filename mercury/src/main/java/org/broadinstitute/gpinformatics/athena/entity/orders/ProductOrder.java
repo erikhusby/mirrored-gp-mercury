@@ -618,7 +618,7 @@ public class ProductOrder implements Serializable {
         loadBspData(uniqueNames, getSamples());
     }
 
-    public void loadBspData(Collection<String> names, List<ProductOrderSample> samples) {
+    public static void loadBspData(Collection<String> names, List<ProductOrderSample> samples) {
 
         BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
         Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(names);
