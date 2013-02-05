@@ -130,7 +130,9 @@ public class ZimsIlluminaRunFactoryTest {
             cherryPicks.add(new BettaLimsMessageFactory.CherryPick("testRack", "A01", "testStripTubeHolder", stripTubeWells[i]));
         }
         PlateCherryPickEvent stripTubeBTransferEvent = bettaLimsMessageFactory.buildCherryPickToStripTube("StripTubeBTransfer", Collections.singletonList("testRack"), Collections.singletonList(Collections.singletonList("testTube")), "testStripTubeHolder", Collections.singletonList("testStripTube"), cherryPicks);
-        LabEvent stripTubeBTransfer = labEventFactory.buildCherryPickRackToStripTubeDbFree(stripTubeBTransferEvent, new HashMap<String, TubeFormation>(), new HashMap<String, TwoDBarcodedTube>(), null, new HashMap<String, StripTube>(), new HashMap<String, RackOfTubes>());
+        HashMap<String, TwoDBarcodedTube> mapBarcodeToSourceTube = new HashMap<String, TwoDBarcodedTube>();
+        mapBarcodeToSourceTube.put("testTube", testTube);
+        LabEvent stripTubeBTransfer = labEventFactory.buildCherryPickRackToStripTubeDbFree(stripTubeBTransferEvent, new HashMap<String, TubeFormation>(), mapBarcodeToSourceTube, null, new HashMap<String, StripTube>(), new HashMap<String, RackOfTubes>());
 
         flowcell = new IlluminaFlowcell(EIGHT_LANE, "testFlowcell", new IlluminaRunConfiguration(76, true));
         PlateTransferEventType flowcellTransferEvent = bettaLimsMessageFactory.buildStripTubeToFlowcell("FlowcellTransfer", "testStripTube", "testFlowcell");
