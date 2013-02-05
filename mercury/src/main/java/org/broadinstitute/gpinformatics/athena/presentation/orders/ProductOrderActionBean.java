@@ -262,9 +262,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             quoteService.getQuoteByAlphaId(editOrder.getQuoteId());
         } catch (QuoteServerException ex) {
-            addGlobalValidationError("The quote id {0} is not valid: {1}", editOrder.getQuoteId(), ex.getMessage());
+            addGlobalValidationError("The quote id {2} is not valid: {3}", editOrder.getQuoteId(), ex.getMessage());
         } catch (QuoteNotFoundException ex) {
-            addGlobalValidationError("The quote id {0] was not found ", editOrder.getQuoteId());
+            addGlobalValidationError("The quote id {2} was not found ", editOrder.getQuoteId());
         }
 
         // Since we are only validating from view, we can persist without worry of saving something bad.
@@ -276,7 +276,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             if (numSamplesOnRisk == 0) {
                 addMessage("None of the samples for this order are on risk");
             } else {
-                addMessage("{0} sample{1} for this order are on risk", numSamplesOnRisk, numSamplesOnRisk == 1 ? "" : "s");
+                addMessage("{0} sample{0,choice,0#s|1#|1<s} for this order are on risk", numSamplesOnRisk);
             }
         } else {
             addGlobalValidationError("On risk was not calculated. Fix other errors first");
