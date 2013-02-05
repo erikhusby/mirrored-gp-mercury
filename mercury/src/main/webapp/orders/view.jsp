@@ -382,7 +382,7 @@
             </c:if>
 
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Comments</label>
+                <label class="control-label label-form">Description</label>
                 <div class="controls">
                     <div class="form-value">${actionBean.editOrder.comments}</div>
                 </div>
