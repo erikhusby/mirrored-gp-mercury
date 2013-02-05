@@ -34,6 +34,7 @@ public class ExternalDataCacheControl extends AbstractCacheControl {
      */
     public void registerCache(AbstractCache cache) {
         caches.add(cache);
+        cache.refreshCache();
     }
 
     /**
