@@ -373,7 +373,7 @@
 
             <c:if test="${actionBean.editOrder.product.productFamily.supportsNumberOfLanes}">
                 <div class="view-control-group control-group">
-                    <label class="control-label label-form">Number of Lanes</label>
+                    <label class="control-label label-form">Number of Lanes Per Sample</label>
 
                     <div class="controls">
                         <div class="form-value">${actionBean.editOrder.count}</div>

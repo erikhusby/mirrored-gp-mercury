@@ -288,7 +288,7 @@
 
                 <div id="numberOfLanesDiv" class="control-group">
                     <stripes:label for="numberOfLanes" class="control-label">
-                        Number of Lanes
+                        Number of Lanes Per Sample
                     </stripes:label>
                     <div class="controls">
                         <stripes:text readonly="${!actionBean.editOrder.draft}" id="numberOfLanes" name="editOrder.count" class="defaultText"
