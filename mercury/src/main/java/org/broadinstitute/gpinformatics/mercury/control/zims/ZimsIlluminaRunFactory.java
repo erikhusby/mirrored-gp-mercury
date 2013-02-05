@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 
@@ -70,7 +71,13 @@ public class ZimsIlluminaRunFactory {
         }
         SampleInstance sampleInstance = sampleInstances.iterator().next();
         BSPSampleDTO bspSampleDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(sampleInstance.getStartingSample().getSampleKey());
-        String lcSet = null;
+        LabBatch labBatch = labVessel.getNearestLabBatches().iterator().next(); // TODO: change to use singular version
+        String lcSet;
+        if (labBatch.getJiraTicket() != null) {
+            lcSet = labBatch.getJiraTicket().getTicketId();
+        } else {
+            throw new RuntimeException("Could not find LCSET for vessel: " + labVessel.getLabel());
+        }
         LibraryBean libraryBean = new LibraryBean(labVessel.getLabel(), productOrder.getResearchProject().getBusinessKey(), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0, null, null, null, null, null, null, null, productOrder, lcSet, bspSampleDTO);
         return libraryBean;
     }
