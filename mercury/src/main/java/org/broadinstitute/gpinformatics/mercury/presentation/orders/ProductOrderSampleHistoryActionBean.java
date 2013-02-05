@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.orders;
 
+import clover.org.apache.commons.lang.time.DurationFormatUtils;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.Resolution;
@@ -22,7 +23,6 @@ import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import javax.inject.Inject;
 import java.sql.Timestamp;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 @UrlBinding(value = "/view/pdoSampleHistory.action")
 public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
@@ -204,11 +204,7 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
 
     public String getDuration(MercurySample sample) {
         Long mSecDiff = getLatestLabEvent(sample).getEventDate().getTime() - getFirstLabEvent(sample).getEventDate().getTime();
-        long days = TimeUnit.MILLISECONDS.toDays(mSecDiff);
-        long hours = TimeUnit.MILLISECONDS.toHours(mSecDiff);
-        return String.format("%d day %d hr %d min", days,
-                hours - TimeUnit.DAYS.toHours(days),
-                TimeUnit.MILLISECONDS.toMinutes(mSecDiff) - TimeUnit.HOURS.toMinutes(hours));
+        return DurationFormatUtils.formatDurationWords(mSecDiff, true, false);
     }
 
     public WorkflowStepDef getLatestProcess(LabEvent event) {
