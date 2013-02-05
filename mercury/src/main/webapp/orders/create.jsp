@@ -298,11 +298,11 @@
 
                 <div class="control-group">
                     <stripes:label for="comments" class="control-label">
-                        Comments
+                        Description
                     </stripes:label>
                     <div class="controls">
                         <stripes:textarea readonly="${!actionBean.editOrder.draft}" id="comments" name="editOrder.comments" class="defaultText input-xlarge textarea"
-                            title="Enter comments" cols="50" rows="3"/>
+                            title="Enter description" cols="50" rows="3"/>
                     </div>
                 </div>
 
