@@ -95,7 +95,9 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
 
         for (PriceItem priceItem : getTokenObjects()) {
             org.broadinstitute.gpinformatics.athena.entity.products.PriceItem mercuryPriceItem = getMercuryPriceItem(priceItem);
-            mercuryTokenObjects.add(mercuryPriceItem);
+            if (mercuryPriceItem != null) {
+                mercuryTokenObjects.add(mercuryPriceItem);
+            }
         }
 
         return mercuryTokenObjects;
@@ -103,6 +105,10 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
 
     private org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getMercuryPriceItem(PriceItem priceItem) {
         // Find the existing mercury price item
+        if (priceItem == null) {
+            return null;
+        }
+
         org.broadinstitute.gpinformatics.athena.entity.products.PriceItem mercuryPriceItem =
                 priceItemDao.find(priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
 
