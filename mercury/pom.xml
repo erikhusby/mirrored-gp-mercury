@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <version>1.16-SNAPSHOT</version>
+    <version>1.16-RC</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -180,7 +180,7 @@
         <athena.password>athena_local</athena.password>
         <database.delimiterType>normal</database.delimiterType>
 
-        <mercury.rc.ip>must be specified.</mercury.rc.ip>
+        <mercury.rc.ip>192.168.195.2</mercury.rc.ip>
 
         <umlgraph.path>must be specified</umlgraph.path>
 

@@ -27,6 +27,18 @@ public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
     public MaterialTypeTokenInput() {
     }
 
+    // There are commas in material types so use the | character for the separator
+    @Override
+    public String getTokenSeparator() {
+        return "\\|";
+    }
+
+    // There are commas in material types so use the | character for the separator
+    @Override
+    public String getJoinSeparator() {
+        return "|";
+    }
+
     @Override
     protected MaterialType getById(String name) {
         return materialTypeListCache.getByFullName(name);
@@ -59,8 +71,10 @@ public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
     }
 
     private static void createAutocomplete(JSONArray itemList, MaterialType materialType) throws JSONException {
-        JSONObject item = getJSONObject(materialType.getFullName(), materialType.getFullName(), false);
-        itemList.put(item);
+        if (materialType != null) {
+            JSONObject item = getJSONObject(materialType.getFullName(), materialType.getFullName(), false);
+            itemList.put(item);
+        }
     }
 
     public Collection<? extends org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType> getMercuryTokenObjects() {
@@ -68,11 +82,12 @@ public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
                 new ArrayList<org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType>();
 
         for (MaterialType materialType : getTokenObjects()) {
-            org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType mercuryMaterialType =
-                    new org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType(materialType.getCategory(), materialType.getName());
-            mercuryMaterialType.setFullName(materialType.getFullName());
+            if (materialType != null) {
+                org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType mercuryMaterialType =
+                        new org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType(materialType.getCategory(), materialType.getName());
 
-            mercuryTokenObjects.add(mercuryMaterialType);
+                mercuryTokenObjects.add(mercuryMaterialType);
+            }
         }
 
         return mercuryTokenObjects;

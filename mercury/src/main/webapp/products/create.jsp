@@ -70,7 +70,8 @@
                         "${ctxpath}/products/product.action?materialTypesAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type a Material Type name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.materialTypeTokenInput.completeData)},
-                            preventDuplicates: true
+                            preventDuplicates: true,
+                            tokenDelimiter: "|"
                         }
                     );
 
@@ -141,8 +142,10 @@
                 newCriteria += operatorOptions(criteriaCount, operatorsLabel, operator);
                 newCriteria += '    </select>\n';
 
-                if (!booleanTypes[criteriaLabel]) {
+                if (!booleanTypes[criteria]) {
                     newCriteria += '    <input id="valueText-' + criteriaCount + '" type="text" name="values" value="' + value + '"/>\n';
+                } else {
+                    newCriteria += '    <input id="valueText-' + criteriaCount + '" type="hidden" name="values" value="' + value + '"/>\n';
                 }
 
                 newCriteria += '</div>\n';

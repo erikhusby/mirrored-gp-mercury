@@ -56,7 +56,8 @@
                         }
                     );
 
-                    updateUIForProductChoice();
+
+                    initializeUIForProductChoice();
                     updateFundsRemaining();
                 }
             );
@@ -70,7 +71,19 @@
                 addOn['${addOnProduct.addOn.businessKey}'] = true;
             </c:forEach>
 
+
+            function initializeUIForProductChoice() {
+                configureUIForProductChoice({"isUpdate" : false});
+            }
+
+
             function updateUIForProductChoice() {
+                configureUIForProductChoice({"isUpdate" : true});
+            }
+
+
+            function configureUIForProductChoice(options) {
+
                 var productKey = $j("#product").val();
                 if ((productKey == null) || (productKey == "")) {
                     $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
@@ -85,19 +98,31 @@
                 $j.ajax({
                     url: "${ctxpath}/orders/order.action?getSupportsNumberOfLanes=&product=" + productKey,
                     dataType: 'json',
-                    success: adjustNumberOfLanesVisibility
+                    success: options.isUpdate ? updateNumberOfLanesVisibility : initializeNumberOfLanesVisibility
                 });
             }
 
-            function adjustNumberOfLanesVisibility(data) {
-                var numberOfLanesDiv = $j("#numberOfLanesDiv")
-                if (data["supports"]) {
-                    numberOfLanesDiv.fadeIn()
+
+            function updateNumberOfLanesVisibility(data) {
+                configureNumberOfLanesVisibility(data, {'isUpdate' : true});
+            }
+
+
+            function initializeNumberOfLanesVisibility(data) {
+                configureNumberOfLanesVisibility(data, {'isUpdate' : false});
+            }
+
+
+            function configureNumberOfLanesVisibility(data, options) {
+                var numberOfLanesDiv = $j("#numberOfLanesDiv");
+                if (data.supportsNumberOfLanes) {
+                    options.isUpdate ? numberOfLanesDiv.fadeIn({'duration' : 1000}) : numberOfLanesDiv.show();
                 }
                 else {
-                    numberOfLanesDiv.fadeOut();
+                    options.isUpdate ? numberOfLanesDiv.fadeOut({'duration' : 1000}) : numberOfLanesDiv.hide();
                 }
             }
+
 
             function setupCheckboxes(data) {
                 var productTitle = $j("#product").val();
@@ -263,7 +288,7 @@
 
                 <div id="numberOfLanesDiv" class="control-group">
                     <stripes:label for="numberOfLanes" class="control-label">
-                        Number of Lanes
+                        Number of Lanes Per Sample
                     </stripes:label>
                     <div class="controls">
                         <stripes:text readonly="${!actionBean.editOrder.draft}" id="numberOfLanes" name="editOrder.count" class="defaultText"

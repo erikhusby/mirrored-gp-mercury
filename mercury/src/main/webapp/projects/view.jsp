@@ -29,8 +29,8 @@
                 <label class="control-label label-form">Project</label>
 
                 <div class="controls">
-                    <div class="form-value">${actionBean.editResearchProject.title}
-                        (<stripes:link target="tableau" href="${actionBean.tableauLink}" class="external">Pass Report</stripes:link>)
+                    <div class="form-value">
+                        ${actionBean.editResearchProject.title}
                     </div>
                 </div>
             </div>
