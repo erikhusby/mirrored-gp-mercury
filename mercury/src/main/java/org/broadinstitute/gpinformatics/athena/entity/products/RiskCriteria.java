@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.text.MessageFormat;
@@ -27,11 +28,11 @@ public class RiskCriteria {
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_RISK_CRITERIA")
     private Long risk_criteria_id;
 
-    @Column(name = "type", length = 30)
+    @Column(name = "type", length = 30, nullable = false)
     @Enumerated(EnumType.STRING)
     private RiskCriteriaType type;
 
-    @Column(name = "operator", length = 30)
+    @Column(name = "operator", length = 30, nullable = false)
     @Enumerated(EnumType.STRING)
     private Operator operator;
 
@@ -41,7 +42,7 @@ public class RiskCriteria {
     protected RiskCriteria() {
     }
 
-    public RiskCriteria(@Nonnull RiskCriteriaType type, @Nonnull Operator operator, @Nonnull String value) {
+    public RiskCriteria(@Nonnull RiskCriteriaType type, @Nonnull Operator operator, @Nullable String value) {
         if (!type.getOperators().contains(operator)) {
             throw new RuntimeException("operator: " + operator.getLabel() + " is not allowed on type: " + type.getLabel());
         }

@@ -301,7 +301,7 @@ public class ProductOrderFixupTest extends Arquillian {
         ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
 
         RiskCriteria riskCriteria = new RiskCriteria(RiskCriteria.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
-        productOrder.getProduct().addRiskCriteria(riskCriteria);
+        productOrder.getProduct().getRiskCriteriaList().add(riskCriteria);
         productDao.persist(productOrder.getProduct());
 
         // Populate on risk for every other sample
