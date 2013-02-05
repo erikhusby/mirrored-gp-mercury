@@ -51,6 +51,16 @@
                             }
                         ]
                     });
+
+                    $j("#noneSelectedDialog").dialog({
+                        modal: true,
+                        autoOpen: false,
+                        buttons: {
+                            OK: function () {
+                                $j(this).dialog("close");
+                            }
+                        }
+                    });
                 }
             });
 
@@ -75,6 +85,10 @@
 
         <div id="confirmDialog">
             <p>Are you sure you want to <span id="confirmDialogMessage"></span> the <span id="dialogNumProductOrders"></span> Product Order(s)?</p>
+        </div>
+
+        <div id="noneSelectedDialog">
+            <p>You must select at least one Product Order to <span id="noneSelectedDialogMessage"></span>.</p>
         </div>
 
         <p>
