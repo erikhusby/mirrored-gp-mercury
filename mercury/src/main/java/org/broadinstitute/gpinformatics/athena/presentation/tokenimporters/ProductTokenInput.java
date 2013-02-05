@@ -61,8 +61,7 @@ public class ProductTokenInput extends TokenInput<Product> {
 
         JSONArray itemList = new JSONArray();
         for (Product addOn : addOns) {
-            JSONObject item = getJSONObject(addOn.getBusinessKey(), addOn.getDisplayName(), false);
-            itemList.put(item);
+            createAutocomplete(itemList, addOn);
         }
 
         return itemList.toString();
