@@ -39,9 +39,14 @@ public enum Operator {
         case STRING:
             return applyTyped(s1, s2);
         case NUMERIC:
-            double d1 = Double.parseDouble(s1);
-            double d2 = Double.parseDouble(s2);
-            return applyTyped(d1, d2);
+            try {
+                double d1 = Double.parseDouble(s1);
+                double d2 = Double.parseDouble(s2);
+                return applyTyped(d1, d2);
+            } catch (NumberFormatException e) {
+                // If we can't parse the arguments, consider the result to be 'failed'.
+                return false;
+            }
         case BOOLEAN:
             boolean b1 = Boolean.parseBoolean(s1);
             boolean b2 = Boolean.parseBoolean(s2);
