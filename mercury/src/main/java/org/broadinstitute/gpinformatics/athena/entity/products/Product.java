@@ -114,12 +114,12 @@ public class Product implements Serializable, Comparable<Product> {
     private Set<MaterialType> allowableMaterialTypes = new HashSet<MaterialType>();
 
     /**
-     * The onRisk criteria that are associated with the Product.
+     * The onRisk criteria that are associated with the Product. When creating new, default to empty list
      */
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinColumn(name = "product", nullable = true)
     @AuditJoinTable(name = "product_risk_criteria_join_aud")
-    private List<RiskCriteria> riskCriteriaList;
+    private List<RiskCriteria> riskCriteriaList = new ArrayList<RiskCriteria>();
 
     /**
      * JPA package visible no arg constructor

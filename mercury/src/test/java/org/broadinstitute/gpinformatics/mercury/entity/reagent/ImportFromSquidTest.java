@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.TubeBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricBean;
@@ -617,7 +618,7 @@ public class ImportFromSquidTest extends ContainerTest {
     }
 
     @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
-    private void testImportQuants() {
+    public void testImportQuants() {
         Query nativeQuery = entityManager.createNativeQuery("SELECT " +
                 "     lqr.run_name, " +
                 "     lqr.run_date, " +
@@ -663,6 +664,69 @@ public class ImportFromSquidTest extends ContainerTest {
         }
 
         ImportFromBspTest.recordMetrics(vesselMetricRunBean);
+    }
+
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void testImportRuns() {
+        Query nativeQuery = entityManager.createNativeQuery("SELECT " +
+                "    r.barcode AS flowcell_barcode, " +
+                "    ngr.barcode AS run_barcode, " +
+                "    ngr.run_date, " +
+                "    lm.machine_name, " +
+                "    odd.directory_path " +
+                "FROM " +
+                "    solexa_run sr " +
+                "    INNER JOIN next_generation_run ngr " +
+                "        ON   ngr.run_id = sr.run_id " +
+                "    INNER JOIN object_data_directory odd " +
+                "        ON   odd.directory_id = ngr.directory_id " +
+                "    INNER JOIN lab_machine lm " +
+                "        ON   lm.lab_machine_id = ngr.lab_machine_id " +
+                "    INNER JOIN flowcell f " +
+                "        ON   f.flowcell_id = sr.new_flowcell_id " +
+                "    INNER JOIN receptacle r " +
+                "        ON   r.receptacle_id = f.flowcell_id " +
+                "WHERE " +
+                "    r.barcode IN ( " +
+                "'C19F5ACXX', " +
+                "'C1E2VACXX', " +
+                "'C1E35ACXX', " +
+                "'C1E3NACXX', " +
+                "'C1EAAACXX', " +
+                "'C1EAHACXX', " +
+                "'C1EE5ACXX', " +
+                "'C1EK8ACXX', " +
+                "'C1ETHACXX', " +
+                "'C1EU9ACXX', " +
+                "'D1DUTACXX', " +
+                "'D1J6MACXX', " +
+                "'D1JN1ACXX', " +
+                "'D1JNDACXX', " +
+                "'D1JP2ACXX', " +
+                "'D1JPLACXX', " +
+                "'D1JRRACXX', " +
+                "'D1JYWACXX', " +
+                "'D1K4LACXX', " +
+                "'D1K54ACXX', " +
+                "'D1K5DACXX', " +
+                "'D1K7DACXD') ");
+        List<?> resultList = nativeQuery.getResultList();
+        for (Object o : resultList) {
+            Object[] columns = (Object[]) o;
+            String flowcellBarcode = (String) columns[0];
+            String runBarcode = (String) columns[1];
+            Date runDate = (Date) columns[2];
+            String machineName = (String) columns[3];
+            String directory = (String) columns[4];
+
+            SolexaRunBean solexaRunBean = new SolexaRunBean(flowcellBarcode, runBarcode, runDate, machineName, directory, null);
+            String response = Client.create().resource(TEST_MERCURY_URL + "/rest/solexarun")
+                    .type(MediaType.APPLICATION_XML_TYPE)
+                    .accept(MediaType.APPLICATION_XML)
+                    .entity(solexaRunBean)
+                    .post(String.class);
+            System.out.println(response);
+        }
     }
 
     /*

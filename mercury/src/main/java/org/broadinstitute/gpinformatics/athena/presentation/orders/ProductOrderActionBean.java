@@ -24,6 +24,7 @@ import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -137,7 +138,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = {VIEW_ACTION, EDIT_ACTION})
     private String productOrder;
 
-    private long sampleIdForGetBspData;
+    private List<Long> sampleIdsForGetBspData;
 
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
@@ -253,7 +254,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         requireField(editOrder.getResearchProject(), "a research project", action);
         requireField(editOrder.getQuoteId(), "a quote specified", action);
         requireField(editOrder.getProduct(), "a product", action);
-        requireField(editOrder.getCount() > 0, "a specified number of lanes", action);
+        if (editOrder.getProduct().getSupportsNumberOfLanes()) {
+            requireField(editOrder.getCount() > 0, "a specified number of lanes", action);
+        }
         requireField(editOrder.getCreatedBy(), "an owner", action);
 
         try {
@@ -530,6 +533,26 @@ public class ProductOrderActionBean extends CoreActionBean {
                 .addParameter("sessionKey", session.getBusinessKey());
     }
 
+    @HandlesEvent("abandonOrders")
+    public Resolution abandonOrders() {
+
+        for (String businessKey : selectedProductOrderBusinessKeys) {
+            try {
+                productOrderEjb.abandon(businessKey, businessKey + " abandoned by " + userBean.getLoginUserName());
+            } catch (ProductOrderEjb.NoTransitionException e) {
+                throw new RuntimeException(e);
+            } catch (ProductOrderEjb.NoSuchPDOException e) {
+                throw new RuntimeException(e);
+            } catch (ProductOrderEjb.SampleDeliveryStatusChangeException e) {
+                throw new RuntimeException(e);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        return new RedirectResolution(ProductOrderActionBean.class, LIST_ACTION);
+    }
+
     @HandlesEvent("getAddOns")
     public Resolution getAddOns() throws Exception {
         JSONArray itemList = new JSONArray();
@@ -565,30 +588,43 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getBspData")
     public Resolution getBspData() throws Exception {
-        ProductOrderSample sample = sampleDao.findById(ProductOrderSample.class, sampleIdForGetBspData);
+        List<ProductOrderSample> samples = sampleDao.findListByList(
+                ProductOrderSample.class, ProductOrderSample_.productOrderSampleId, sampleIdsForGetBspData);
 
-        JSONObject item = new JSONObject();
+        JSONArray itemList = new JSONArray();
 
-        item.put("sampleId", sample.getProductOrderSampleId());
-        item.put("patientId", sample.getBspDTO().getPatientId());
-        item.put("volume", sample.getBspDTO().getVolume());
-        item.put("concentration", sample.getBspDTO().getConcentration());
-        item.put("total", sample.getBspDTO().getTotal());
-        item.put("hasFingerprint", sample.getBspDTO().getHasFingerprint());
+        if (samples != null) {
+            // assuming all samples come from same product order here
+            List<String> sampleNames = ProductOrderSample.getSampleNames(samples);
+            ProductOrder.loadBspData(sampleNames, samples);
 
-        return createTextResolution(item.toString());
+            for (ProductOrderSample sample : samples) {
+                JSONObject item = new JSONObject();
+
+                item.put("sampleId", sample.getProductOrderSampleId());
+                item.put("patientId", sample.getBspDTO().getPatientId());
+                item.put("volume", sample.getBspDTO().getVolume());
+                item.put("concentration", sample.getBspDTO().getConcentration());
+                item.put("total", sample.getBspDTO().getTotal());
+                item.put("hasFingerprint", sample.getBspDTO().getHasFingerprint());
+
+                itemList.put(item);
+            }
+        }
+
+        return createTextResolution(itemList.toString());
     }
 
     @HandlesEvent("getSupportsNumberOfLanes")
     public Resolution getSupportsNumberOfLanes() throws Exception {
-        boolean lanesSupported = true;
+        boolean supportsNumberOfLanes = true;
         JSONObject item = new JSONObject();
 
         if (this.product != null) {
             Product product = productDao.findByBusinessKey(this.product);
-            lanesSupported = product.getSupportsNumberOfLanes();
+            supportsNumberOfLanes = product.getSupportsNumberOfLanes();
         }
-        item.put("supports", lanesSupported);
+        item.put("supportsNumberOfLanes", supportsNumberOfLanes);
 
         return createTextResolution(item.toString());
     }
@@ -921,12 +957,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.researchProjectKey = researchProjectKey;
     }
 
-    public long getSampleIdForGetBspData() {
-        return sampleIdForGetBspData;
+    public List<Long> getSampleIdsForGetBspData() {
+        return sampleIdsForGetBspData;
     }
 
-    public void setSampleIdForGetBspData(long sampleIdForGetBspData) {
-        this.sampleIdForGetBspData = sampleIdForGetBspData;
+    public void setSampleIdsForGetBspData(List<Long> sampleIdsForGetBspData) {
+        this.sampleIdsForGetBspData = sampleIdsForGetBspData;
     }
 
     public String getAddSamplesText() {

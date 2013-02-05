@@ -552,7 +552,8 @@ public class TransferVisualizerClient {
             // EJB deployment, without the .jar suffix, but can be overridden via the ejb-jar.xml
             // In this example, we have deployed the EJBs in a jboss-as-ejb-remote-app.jar, so the module name is
             // jboss-as-ejb-remote-app
-            final String moduleName = "Mercury-1.15-SNAPSHOT";
+            // todo jmt change web.xml to make this fixed, or fetch it from BuildInfoBean
+            final String moduleName = "Mercury-1.16-SNAPSHOT";
 //            final String moduleName = "Mercury-Arquillian";
             // AS7 allows each deployment to have an (optional) distinct name. We haven't specified a distinct name for
             // our EJB deployment, so this is an empty string

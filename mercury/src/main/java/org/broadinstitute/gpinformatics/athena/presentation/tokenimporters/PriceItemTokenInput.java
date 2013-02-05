@@ -78,7 +78,11 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
     public org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getMercuryTokenObject() {
         List<PriceItem> priceItems = getTokenObjects();
 
-        if ((priceItems == null) || (priceItems.size() != 1)) {
+        if ((priceItems == null) || (priceItems.isEmpty())) {
+            return null;
+        }
+
+        if (priceItems.size() > 1) {
             throw new IllegalArgumentException("If you want to get more than one price item, use getMercuryTokenObjecs");
         }
 
@@ -91,7 +95,9 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
 
         for (PriceItem priceItem : getTokenObjects()) {
             org.broadinstitute.gpinformatics.athena.entity.products.PriceItem mercuryPriceItem = getMercuryPriceItem(priceItem);
-            mercuryTokenObjects.add(mercuryPriceItem);
+            if (mercuryPriceItem != null) {
+                mercuryTokenObjects.add(mercuryPriceItem);
+            }
         }
 
         return mercuryTokenObjects;
@@ -99,6 +105,10 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
 
     private org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getMercuryPriceItem(PriceItem priceItem) {
         // Find the existing mercury price item
+        if (priceItem == null) {
+            return null;
+        }
+
         org.broadinstitute.gpinformatics.athena.entity.products.PriceItem mercuryPriceItem =
                 priceItemDao.find(priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
 

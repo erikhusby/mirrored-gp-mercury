@@ -597,7 +597,6 @@ public class ProductOrder implements Serializable {
     public long getModifiedBy() {
         return modifiedBy;
     }
-
     /**
      * Use the BSP Manager to load the bsp data for every sample in this product order.
      */
@@ -616,12 +615,17 @@ public class ProductOrder implements Serializable {
             return;
         }
 
+        loadBspData(uniqueNames, getSamples());
+    }
+
+    public static void loadBspData(Collection<String> names, List<ProductOrderSample> samples) {
+
         BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-        Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(uniqueNames);
+        Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(names);
 
         // the non-null DTOs which we use to look up FFPE status
         List<BSPSampleDTO> nonNullDTOs = new ArrayList<BSPSampleDTO>();
-        for (ProductOrderSample sample : getSamples()) {
+        for (ProductOrderSample sample : samples) {
             BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getSampleName());
 
             // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample
