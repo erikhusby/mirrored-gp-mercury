@@ -597,7 +597,6 @@ public class ProductOrder implements Serializable {
     public long getModifiedBy() {
         return modifiedBy;
     }
-
     /**
      * Use the BSP Manager to load the bsp data for every sample in this product order.
      */
@@ -610,10 +609,16 @@ public class ProductOrder implements Serializable {
             }
         }
 
+        if (uniqueNames.isEmpty()) {
+            // This early return is needed to avoid making a unnecessary injection, which could cause
+            // DB Free automated tests to fail.
+            return;
+        }
+
         loadBspData(uniqueNames, getSamples());
     }
 
-    public static void loadBspData(Collection<String> names, List<ProductOrderSample> samples) {
+    public void loadBspData(Collection<String> names, List<ProductOrderSample> samples) {
 
         BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
         Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(names);
