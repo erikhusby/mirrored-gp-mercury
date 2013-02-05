@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.samples;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -44,8 +45,6 @@ public class MaterialType implements Serializable, Comparable<MaterialType> {
             return builder.build();
         }
     };
-
-    private transient String fullName;
 
     /**
      * Package visible constructor for JPA
