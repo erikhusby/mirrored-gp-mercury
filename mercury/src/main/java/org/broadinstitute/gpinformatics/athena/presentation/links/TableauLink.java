@@ -1,16 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.presentation.links;
 
-import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
 
 import javax.inject.Inject;
 import javax.inject.Named;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.net.URL;
-import java.net.URLConnection;
+import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 /**
@@ -18,85 +12,29 @@ import java.net.URLEncoder;
  */
 @Named
 public class TableauLink {
-    private final Logger logger = Logger.getLogger(this.getClass());
-    private static final String TRUST_PATH = "/trusted/";
-    private static final String PASS_REPORT_NAME = "PASS"; //the lookup key for urls in yaml config file
 
-    private static final long TRUSTED_ID_LIFETIME = 10 * 1000L;  //trusted ticket is good for at least ten seconds
-    public static final String BAD_TABLEAU_TICKET = "-1";
-
-    private String trustId = null;
-    private long trustedIdTimestamp = 0L;
-
-    @Inject
     private TableauConfig tableauConfig;
 
-    public String serverUrl() {
-        return tableauConfig.getTrustedTicketServer();
+    @Inject
+    public void setTableauConfig(TableauConfig config) {
+        tableauConfig = config;
     }
 
     /**
      * Returns a url to the tableau report.
-     * @param projectTitle The title of the project
-     * @return uses trusted ticketing, or normal auth path if unavailable.
+     * @param reportName the lookup key for tableau urls in yaml config file
+     * @param param1 the parameter to pass to tableau
+     * @return url to the report
      */
-    public String passReportUrl(String projectTitle) {
-        // If trustId is too old, gets another one from the server.
-        if (System.currentTimeMillis() - trustedIdTimestamp > TRUSTED_ID_LIFETIME) {
-            trustId = getTrustedTicket(tableauConfig.getTrustedTicketServer(), tableauConfig.getUsername());
-        }
-        return makeReportUrl(trustId, PASS_REPORT_NAME, projectTitle);
-    }
-
-    private String makeReportUrl(String trustId, String reportName, String param) {
-        return new StringBuilder()
-                .append(serverUrl())
-                .append(TRUST_PATH)
-                .append(trustId)
-                .append(tableauConfig.getReportUrl(reportName))
-                .append(param)
-                .toString();
-    }
-
-    /**
-     * Gets a unique trusted ticket from Tableau server.
-     *
-     * @param wgserver tableau server root url
-     * @param user     tableau username
-     * @return ticket ("-1" if server could not validate), or null if some other error happened.
-     */
-    private String getTrustedTicket(String wgserver, String user) {
-        OutputStreamWriter out = null;
-        BufferedReader in = null;
+    public String tableauReportUrl(String reportName, String param1) {
+        String url = null;
         try {
-            // Encodes parameters
-            StringBuilder data = new StringBuilder()
-                    .append(URLEncoder.encode("username", "UTF-8"))
-                    .append("=")
-                    .append(URLEncoder.encode(user, "UTF-8"));
-
-            // Sends request
-            URL url = new URL(wgserver + TRUST_PATH);
-            URLConnection conn = url.openConnection();
-            conn.setDoOutput(true);
-            out = new OutputStreamWriter(conn.getOutputStream());
-            out.write(data.toString());
-            out.flush();
-
-            // Reads response which will be the ticket id
-            in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
-            String ticket = new String(IOUtils.toCharArray(in));
-            if (ticket.equals(BAD_TABLEAU_TICKET)) {
-                logger.warn("Tableau server " + serverUrl() + " returns ticketId " + ticket + " for user " + user);
-            }
-            return ticket;
-
-        } catch (Exception e) {
-            logger.error("Exception while getting trusted ticket from tableau server", e);
-        } finally {
-            IOUtils.closeQuietly(in);
-            IOUtils.closeQuietly(out);
+            url = tableauConfig.getTableauServer() +
+                    tableauConfig.getReportUrl(reportName) +
+                    URLEncoder.encode(param1, "UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            //can't happen, UTF-8 is always supported
         }
-        return null;
+        return url;
     }
 }

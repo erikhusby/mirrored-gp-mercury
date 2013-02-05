@@ -62,6 +62,10 @@ public class BillingTrackerUtils {
         String[] fixedHeaders = FIXED_HEADERS;
         int numFixedHeaders = fixedHeaders.length;
 
+        if (row0 == null) {
+            throw getRuntimeException("No rows in tracker sheet: " + primaryProductPartNumber);
+        }
+
         // Check row0 header names. Should match what we write.
         Iterator<Cell> cells = row0.cellIterator();
         for (String fixedHeader : fixedHeaders) {

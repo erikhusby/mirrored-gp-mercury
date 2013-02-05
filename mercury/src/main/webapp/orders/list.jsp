@@ -13,8 +13,8 @@
                     "oTableTools": ttExportDefines,
                     "aaSorting": [[8,'desc']],
                     "aoColumns": [
-                        {"bSortable": false},                   // checkbox
-                        {"bSortable": true, "sType": "html"},   // Name
+                        {"bSortable": false},                    // checkbox
+                        {"bSortable": true, "sType": "html"},    // Name
                         {"bSortable": true, "sType": "title-jira"},   // ID
                         {"bSortable": true},                    // Product
                         {"bSortable": true},                    // Product Family
@@ -23,7 +23,7 @@
                         {"bSortable": true},                    // Owner
                         {"bSortable": true, "sType": "date"},   // Updated
                         {"bSortable": true, "sType": "numeric"},   // Count
-                        {"bSortable": false},                   // Billing Session ID
+                        {"bSortable": true},                   // Billing Session ID
                         {"bSortable": true, "sType" : "title-string"}]  // eligible for billing
                 })
             });
@@ -42,6 +42,10 @@
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
             <div class="actionButtons">
+
+                <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+                    <stripes:submit name="abandonOrders" value="Abandon Orders" class="btn" style="margin-right:30px;"/>
+                </security:authorizeBlock>
 
                 <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.BillingManager.name}%>">
                     <stripes:submit name="startBilling" value="Start Billing Session" class="btn" style="margin-right:30px;"/>

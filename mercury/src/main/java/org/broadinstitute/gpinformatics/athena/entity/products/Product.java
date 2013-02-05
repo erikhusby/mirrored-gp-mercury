@@ -114,12 +114,12 @@ public class Product implements Serializable, Comparable<Product> {
     private Set<MaterialType> allowableMaterialTypes = new HashSet<MaterialType>();
 
     /**
-     * The onRisk criteria that are associated with the Product.
+     * The onRisk criteria that are associated with the Product. When creating new, default to empty list
      */
-    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    @JoinColumn(name = "product", nullable = false)
+    @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
+    @JoinColumn(name = "product", nullable = true)
     @AuditJoinTable(name = "product_risk_criteria_join_aud")
-    private List<RiskCriteria> riskCriteriaList;
+    private List<RiskCriteria> riskCriteriaList = new ArrayList<RiskCriteria>();
 
     /**
      * JPA package visible no arg constructor
@@ -509,10 +509,6 @@ public class Product implements Serializable, Comparable<Product> {
         return riskCriteriaList;
     }
 
-    public void addRiskCriteria(RiskCriteria riskCriterion) {
-        this.riskCriteriaList.add(riskCriterion);
-    }
-
     public String[] getAllowableMaterialTypeNames() {
         String[] names = new String[allowableMaterialTypes.size()];
         int i = 0;
@@ -547,39 +543,36 @@ public class Product implements Serializable, Comparable<Product> {
 
         // The new list
         List<RiskCriteria> newList = new ArrayList<RiskCriteria>();
-        // assume that the new list is no different than the original
+        // Assume that the new list is no different than the original.
         boolean isDifferent = false;
 
         if (criteria != null) {
 
-            // If the lengths are not the same, then these ARE different
+            // If the lengths are not the same, then these ARE different.
             if (criteria.length !=  riskCriteriaList.size()) {
                 isDifferent = true;
             }
 
-            // Go through specified criteria and find matching existing risk criteria
-            for (int i=0; i<criteria.length; i++) {
+            // Go through specified criteria and find matching existing risk criteria.
+            for (int i = 0; i < criteria.length; i++) {
+                String value = values == null ? null : values[i];
 
                 boolean sameAsCurrent;
                 RiskCriteria currentCriteria = null;
 
                 if (riskCriteriaList.size() > i) {
                     currentCriteria = riskCriteriaList.get(i);
-                    sameAsCurrent = currentCriteria.isSame(criteria[i], operators[i], values[i]);
+                    sameAsCurrent = currentCriteria.isSame(criteria[i], operators[i], value);
                 } else {
                     sameAsCurrent = false;
                 }
 
-                // If things are potentially the same, check if this is still the same.
-                if (!isDifferent && !sameAsCurrent) {
-                    // Not the same, so set isDifferent so we know to update the list later
-                    isDifferent = true;
-                }
-
                 if (!sameAsCurrent) {
-                    currentCriteria = findMatching(criteria[i], operators[i], values == null ? null : values[i]);
+                    // Not the same, so set isDifferent so we know to update the list later.
+                    isDifferent = true;
+                    currentCriteria = findMatching(criteria[i], operators[i], value);
                     if (currentCriteria == null) {
-                        currentCriteria = new RiskCriteria(RiskCriteria.RiskCriteriaType.findByLabel(criteria[i]), Operator.findByLabel(operators[i]), values == null ? null : values[i]);
+                        currentCriteria = new RiskCriteria(RiskCriteria.RiskCriteriaType.findByLabel(criteria[i]), Operator.findByLabel(operators[i]), value);
                     }
                 }
 
@@ -590,10 +583,8 @@ public class Product implements Serializable, Comparable<Product> {
                 riskCriteriaList.clear();
                 riskCriteriaList.addAll(newList);
             }
-        } else {
-            if (!riskCriteriaList.isEmpty()) {
-                riskCriteriaList.clear();
-            }
+        } else if (!riskCriteriaList.isEmpty()) {
+            riskCriteriaList.clear();
         }
     }
 

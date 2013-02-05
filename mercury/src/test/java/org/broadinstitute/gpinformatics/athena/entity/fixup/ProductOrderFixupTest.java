@@ -301,14 +301,14 @@ public class ProductOrderFixupTest extends Arquillian {
         ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
 
         RiskCriteria riskCriteria = new RiskCriteria(RiskCriteria.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
-        productOrder.getProduct().addRiskCriteria(riskCriteria);
+        productOrder.getProduct().getRiskCriteriaList().add(riskCriteria);
         productDao.persist(productOrder.getProduct());
 
         // Populate on risk for every other sample
         int count = 0;
         for (ProductOrderSample sample : productOrder.getSamples()) {
             if ((count++ % 2) == 0) {
-                RiskItem riskItem = new RiskItem(riskCriteria, new Date(), "240.0");
+                RiskItem riskItem = new RiskItem(riskCriteria, "240.0");
                 riskItem.setRemark("Bad Concentration found");
                 sample.setRiskItems(Collections.singletonList(riskItem));
                 productOrderSampleDao.persist(sample);

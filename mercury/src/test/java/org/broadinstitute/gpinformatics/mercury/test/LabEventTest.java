@@ -13,14 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -37,6 +30,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.*;
+import org.broadinstitute.gpinformatics.mercury.entity.rework.LabVesselComment;
+import org.broadinstitute.gpinformatics.mercury.entity.rework.ReworkEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.rework.ReworkLevel;
+import org.broadinstitute.gpinformatics.mercury.entity.rework.ReworkReason;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -57,7 +54,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
-import static org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign.*;
+import static org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign.ReagentType;
 
 /**
  * Test messaging
@@ -232,6 +229,32 @@ public class LabEventTest {
         Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().iterator().next(),
                 qtpEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
 
+        // pick a sample and mark it for rework
+        Map.Entry<String, TwoDBarcodedTube> twoDBarcodedTubeForRework = mapBarcodeToTube.entrySet().iterator().next();
+        final int lastEventIndex = transferTraverserCriteria.visitedLabEvents.size();
+        LabEvent catchEvent =
+                transferTraverserCriteria.visitedLabEvents.toArray(new LabEvent[lastEventIndex])[lastEventIndex - 1];
+        MercurySample startingSample =
+                twoDBarcodedTubeForRework.getValue().getAllSamples().iterator().next().getStartingSample();
+
+        ReworkEntry reworkEntry = startingSample.getRapSheet().addRework(ReworkReason.MACHINE_ERROR, ReworkLevel.ONE_SAMPLE_HOLD_REST_BATCH,
+                                catchEvent.getLabEventType(),VesselPosition.TUBE1,startingSample);
+
+        LabVesselComment reworkComment =
+                new LabVesselComment<ReworkEntry>(catchEvent, twoDBarcodedTubeForRework.getValue(), "rework comment",
+                        Arrays.asList(reworkEntry));
+        Assert.assertNotNull(reworkComment.getLabEvent(),"Lab event is required.");
+        Assert.assertNotNull(reworkComment.getLabVessel(),"Lab Vessel is required.");
+        Assert.assertNotNull(reworkComment.getRapSheetEntries(),"Rap Sheet Entries should not be null.");
+        Assert.assertFalse(reworkComment.getRapSheetEntries().isEmpty(), "Should have some Rap Sheet Entries.");
+        Assert.assertTrue(reworkComment.getRapSheetEntries().get(0) instanceof ReworkEntry, "Entry should be ReworkEntry.");
+        final ReworkEntry rework = (ReworkEntry)reworkComment.getRapSheetEntries().get(0);
+        Assert.assertNotNull(rework.getReworkLevel(), "ReworkLevel cannot be null.");
+        Assert.assertNotNull(rework.getReworkReason(), "ReworkReason cannot be null.");
+        Assert.assertNotNull(rework.getReworkStep(), "getReworkStep cannot be null.");
+        Assert.assertNotNull(rework.getRapSheet(), "rework.getRapSheet cannot be null.");
+        Assert.assertNotNull(rework.getRapSheet().getSample(), "RapSheet.sample cannot be null.");
+
 //        Controller.stopCPURecording();
     }
 
@@ -281,7 +304,6 @@ public class LabEventTest {
 
         LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
         labBatchEJB.setLabBatchDao(labBatchDAO);
-
 
 
         BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
@@ -2339,6 +2361,8 @@ public class LabEventTest {
             denatureRack = (TubeFormation) denatureEntity.getTargetLabVessels().iterator().next();
             Set<SampleInstance> denaturedSampleInstances = denatureRack.getContainerRole().getSampleInstancesAtPosition(VesselPosition.A01);
             Assert.assertEquals(denaturedSampleInstances.size(), normCatchRack.getSampleInstances().size(), "Wrong number of denatured samples");
+            Assert.assertEquals(denatureRack.getContainerRole().getVesselAtPosition(VesselPosition.A01).getSampleInstances().size(),
+                    normCatchRack.getSampleInstances().size(), "Wrong number of denatured samples");
 
             // StripTubeBTransfer
             validateWorkflow("StripTubeBTransfer", denatureRack);

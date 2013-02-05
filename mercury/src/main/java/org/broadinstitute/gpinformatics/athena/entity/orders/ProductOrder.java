@@ -45,6 +45,8 @@ import java.util.*;
 @Audited
 @Table(name = "PRODUCT_ORDER", schema = "athena")
 public class ProductOrder implements Serializable {
+    private static final long serialVersionUID = 2712946561792445251L;
+
     private static final String JIRA_SUBJECT_PREFIX = "Product order for ";
 
     public static final String DRAFT_PREFIX = "Draft-";
@@ -162,22 +164,35 @@ public class ProductOrder implements Serializable {
         setSamples(samples);
     }
 
-    public void calculateAllRisk() {
-        calculateRisk(false);
+    public int calculateAllRisk() {
+        return calculateRisk(false);
     }
 
-    public void calculateNewRisk() {
-        calculateRisk(true);
+    public int calculateNewRisk() {
+        return calculateRisk(true);
     }
 
-    private void calculateRisk(boolean newSamplesOnly) {
+    /**
+     * This calculates risk for all samples on the order (or just new ones if specified).
+     *
+     * @param newSamplesOnly If the caller only wants to calculate for newly added samples
+     * @return The number of samples calculated to be on risk.
+     */
+    private int calculateRisk(boolean newSamplesOnly) {
+        int samplesOnRisk = 0;
+
         for (ProductOrderSample sample : samples) {
             // If not skipping samples with risk, then always do it, otherwise only do samples with no risk items.
             // have risk items, means that risk was calculated
             if (!newSamplesOnly || sample.getRiskItems().isEmpty()) {
-                sample.calculateRisk();
+                boolean isOnRisk = sample.calculateRisk();
+                if (isOnRisk) {
+                    samplesOnRisk++;
+                }
             }
         }
+
+        return samplesOnRisk;
     }
 
     /**
@@ -582,7 +597,6 @@ public class ProductOrder implements Serializable {
     public long getModifiedBy() {
         return modifiedBy;
     }
-
     /**
      * Use the BSP Manager to load the bsp data for every sample in this product order.
      */
@@ -601,12 +615,17 @@ public class ProductOrder implements Serializable {
             return;
         }
 
+        loadBspData(uniqueNames, getSamples());
+    }
+
+    public static void loadBspData(Collection<String> names, List<ProductOrderSample> samples) {
+
         BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
-        Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(uniqueNames);
+        Map<String, BSPSampleDTO> bspSampleMetaData = bspSampleDataFetcher.fetchSamplesFromBSP(names);
 
         // the non-null DTOs which we use to look up FFPE status
         List<BSPSampleDTO> nonNullDTOs = new ArrayList<BSPSampleDTO>();
-        for (ProductOrderSample sample : getSamples()) {
+        for (ProductOrderSample sample : samples) {
             BSPSampleDTO bspSampleDTO = bspSampleMetaData.get(sample.getSampleName());
 
             // If the DTO is null, we do not need to set it because it defaults to DUMMY inside sample

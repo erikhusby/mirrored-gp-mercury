@@ -19,7 +19,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.Rework;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Formula;
 import org.hibernate.envers.Audited;
@@ -126,9 +125,6 @@ public abstract class LabVessel implements Serializable {
     @OneToMany(mappedBy = "targetLabVessel", cascade = CascadeType.PERSIST)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsTarget = new HashSet<VesselToVesselTransfer>();
 
-    @ManyToMany(cascade = CascadeType.PERSIST, mappedBy = "reworkedLabVessels")
-    private Set<Rework> reworks = new HashSet<Rework>();
-
     @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
     private Set<LabMetric> labMetrics = new HashSet<LabMetric>();
 
@@ -233,7 +229,14 @@ public abstract class LabVessel implements Serializable {
 
     //Utility method for getting containers as a list so they can be displayed in a display table column
     public List<VesselContainer<?>> getContainerList() {
-        return new ArrayList<VesselContainer<?>>(getContainers());
+        List<VesselContainer<?>> vesselContainers = new ArrayList<VesselContainer<?>>(getContainers());
+        Collections.sort(vesselContainers, new Comparator<VesselContainer<?>>() {
+            @Override
+            public int compare(VesselContainer<?> o1, VesselContainer<?> o2) {
+                return o1.getEmbedder().getCreatedOn().compareTo(o2.getEmbedder().getCreatedOn());
+            }
+        });
+        return vesselContainers;
     }
 
     public Set<VesselContainer<?>> getContainers() {
@@ -761,9 +764,6 @@ public abstract class LabVessel implements Serializable {
         return Collections.unmodifiableSet(bucketEntries);
     }
 
-    public void addRework(Rework rework) {
-        reworks.add(rework);
-    }
 
     /* *
      * In the context of the given WorkflowDescription, are there any

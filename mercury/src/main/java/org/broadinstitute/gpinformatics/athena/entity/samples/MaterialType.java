@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.athena.entity.samples;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
@@ -45,8 +46,6 @@ public class MaterialType implements Serializable, Comparable<MaterialType> {
         }
     };
 
-    private transient String fullName;
-
     /**
      * Package visible constructor for JPA
      */
@@ -72,12 +71,9 @@ public class MaterialType implements Serializable, Comparable<MaterialType> {
         return category;
     }
 
+    // Mirror BSP's full name method of adding colon in between the names
     public String getFullName() {
-        return fullName;
-    }
-
-    public void setFullName(String fullName) {
-        this.fullName = fullName;
+        return category + ":" + name;
     }
 
     @Override
