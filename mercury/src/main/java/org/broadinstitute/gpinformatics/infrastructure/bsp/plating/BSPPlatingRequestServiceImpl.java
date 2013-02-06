@@ -263,7 +263,7 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
         if (platingRequestName != null && !platingRequestName.isEmpty()) {
             workRequestName = platingRequestName;
         } else {
-            workRequestName = "" + System.currentTimeMillis();
+            workRequestName = String.valueOf(System.currentTimeMillis());
         }
         workRequest.setWorkRequestName(workRequestName);
 
@@ -272,14 +272,12 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
 
         // Trying to leave PI null for now. Per 2011-08-17 meeting PIs can be
         // "various" for the samples.
-        Long userId;
 
         // userId = getPrincipalInvestigatorBspUserId(bspUserManager, logins.getPrincipalInvestigator());
         // workRequest.setPrimaryInvestigatorId(userId);
 
         // hardcoded to an individual, in the long run this should become "various"
-        userId = getProgramProjectManagerBspUserId(bspUserManager, login);
-        workRequest.setProjectManagerId(userId);
+        workRequest.setProjectManager(getProgramProjectManagerBspUser(bspUserManager, login));
 
         String userName = getPlatformProjectManagerBspLogin(bspUserManager, login);
         workRequest.setRequestUser(userName);
@@ -370,11 +368,14 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
     }
 
 
-    private Long getProgramProjectManagerBspUserId(UserManager bspUserManager, String login) {
+    private BspUser getProgramProjectManagerBspUser(UserManager bspUserManager, String login) {
         // Value for GSAP PM Id I got from Jason, intended for testing purposes.  I'm using this as a fallback
         // in case the specified GSAP PM isn't found
 
         Long id = 6947L; //some default that works
+
+        BspUser unknownUser = new BspUser();
+        unknownUser.setUserId(id);
 
         // Just return this id for now, I can't seem to get any real Program PM to work
         //return id;
@@ -385,7 +386,7 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
         if (bspUser == null || bspUser.getUsername() == null) {
             // this is not as big of a deal as a missing GSP PM since the GSP PM is the Plating WR owner
             log.warn("Could not find BSP User for GSP PM login '" + login + "'");
-            return id;
+            return unknownUser;
         }
 
 
@@ -394,14 +395,12 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
 
         for (BspUser pm : projectManagers) {
             if (pm.getUserId().equals(bspUser.getUserId())) {
-                return pm.getUserId();
+                return pm;
             }
         }
 
-        return id;
-
+        return unknownUser;
     }
-
 
     @SuppressWarnings("unused")
     private Long getPrincipalInvestigatorBspUserId(UserManager bspUserManager, String login) {

@@ -164,35 +164,21 @@ public class ProductOrder implements Serializable {
         setSamples(samples);
     }
 
-    public int calculateAllRisk() {
-        return calculateRisk(false);
-    }
-
-    public int calculateNewRisk() {
-        return calculateRisk(true);
-    }
-
     /**
-     * This calculates risk for all samples on the order (or just new ones if specified).
+     * This calculates risk for all samples on the order
      *
-     * @param newSamplesOnly If the caller only wants to calculate for newly added samples
      * @return The number of samples calculated to be on risk.
      */
-    private int calculateRisk(boolean newSamplesOnly) {
-        int samplesOnRisk = 0;
+    public int calculateRisk() {
+        Set<String> uniqueSampleNamesOnRisk = new HashSet<String>();
 
         for (ProductOrderSample sample : samples) {
-            // If not skipping samples with risk, then always do it, otherwise only do samples with no risk items.
-            // have risk items, means that risk was calculated
-            if (!newSamplesOnly || sample.getRiskItems().isEmpty()) {
-                boolean isOnRisk = sample.calculateRisk();
-                if (isOnRisk) {
-                    samplesOnRisk++;
-                }
+            if (sample.calculateRisk()) {
+                uniqueSampleNamesOnRisk.add(sample.getSampleName());
             }
         }
 
-        return samplesOnRisk;
+        return uniqueSampleNamesOnRisk.size();
     }
 
     /**
