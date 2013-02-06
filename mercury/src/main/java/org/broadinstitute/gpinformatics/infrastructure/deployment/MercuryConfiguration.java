@@ -72,19 +72,22 @@ public class MercuryConfiguration {
 
 
         public void set(String systemKey, Deployment deployment, AbstractConfig config) {
-            if (!map.containsKey(systemKey))
+            if (!map.containsKey(systemKey)) {
                 map.put(systemKey, new HashMap<Deployment, AbstractConfig>());
+            }
 
             map.get(systemKey).put(deployment, config);
         }
 
 
         public AbstractConfig getConfig(String systemKey, Deployment deployment) {
-            if (!map.containsKey(systemKey))
+            if (!map.containsKey(systemKey)) {
                 return null;
+            }
 
-            if (!map.get(systemKey).containsKey(deployment))
+            if (!map.get(systemKey).containsKey(deployment)) {
                 return null;
+            }
 
             return map.get(systemKey).get(deployment);
         }
@@ -101,18 +104,21 @@ public class MercuryConfiguration {
         }
 
         public void set(String systemKey, Deployment mercuryDeployment, Deployment externalDeployment) {
-            if (!map.containsKey(systemKey))
+            if (!map.containsKey(systemKey)) {
                 map.put(systemKey, new HashMap<Deployment, Deployment>());
+            }
 
             map.get(systemKey).put(mercuryDeployment, externalDeployment);
         }
 
         public Deployment getExternalDeployment(String systemKey, Deployment mercuryDeployment) {
-            if (!map.containsKey(systemKey))
+            if (!map.containsKey(systemKey)) {
                 return null;
+            }
 
-            if (!map.get(systemKey).containsKey(mercuryDeployment))
+            if (!map.get(systemKey).containsKey(mercuryDeployment)) {
                 return null;
+            }
 
             return map.get(systemKey).get(mercuryDeployment);
         }
@@ -135,9 +141,11 @@ public class MercuryConfiguration {
     }
 
     private Class<? extends AbstractConfig> getConfigClass(String configKey) {
-        for (Class<? extends AbstractConfig> clazz : CONFIG_CLASSES)
-            if (getConfigKey(clazz).equals(configKey))
+        for (Class<? extends AbstractConfig> clazz : CONFIG_CLASSES) {
+            if (getConfigKey(clazz).equals(configKey)) {
                 return clazz;
+            }
+        }
 
         return null;
     }
@@ -149,8 +157,9 @@ public class MercuryConfiguration {
     }
 
     public static MercuryConfiguration getInstance() {
-        if (instance == null)
+        if (instance == null) {
             instance = new MercuryConfiguration();
+        }
 
         return instance;
     }
@@ -165,32 +174,32 @@ public class MercuryConfiguration {
             String systemKey = section.getKey();
 
             // this method doesn't deal with mercury connections
-            if ("mercury".equals(systemKey))
+            if ("mercury".equals(systemKey)) {
                 continue;
+            }
 
             final Class<? extends AbstractConfig> configClass = getConfigClass(systemKey);
 
-
-            if (configClass == null)
+            if (configClass == null) {
                 throw new RuntimeException("Unrecognized top-level key: '" + systemKey + "'");
-
+            }
 
             // iterate the deployments for this external system
             for (Map.Entry<String, Map> deploymentEntry : ((Map<String, Map>) section.getValue()).entrySet()) {
                 String deploymentString = deploymentEntry.getKey();
 
-                if (Deployment.valueOf(deploymentString) == null)
+                if (Deployment.valueOf(deploymentString) == null) {
                     throw new RuntimeException("Unrecognized deployment key '" + deploymentString + "'");
-
+                }
 
                 Deployment deployment = Deployment.valueOf(deploymentString);
 
                 AbstractConfig config = externalSystems.getConfig(systemKey, deployment);
 
-                if (config == null)
+                if (config == null) {
                     config = newConfig(configClass);
+                }
                 // else roll with the preexisting config
-
 
                 config.setExternalDeployment(deployment);
 
@@ -233,7 +242,7 @@ public class MercuryConfiguration {
                 }
             } catch (IOException ioe) {
                 MERCURY_BUILD_INFO = "Unknown build - problematic " + versionFilename;
-                throw new RuntimeException("Problem reading version file " + versionFilename);
+                throw new RuntimeException("Problem reading version file " + versionFilename, ioe);
             } catch (ParseException e) {
                 // problem parsing the maven build date, use it's default one
                 if ((buildDate != null) && !buildDate.isEmpty()) {
@@ -257,8 +266,9 @@ public class MercuryConfiguration {
         final String APP_KEY = "mercury";
 
         if (!doc.containsKey(APP_KEY)) {
-            if (globalConfig)
+            if (globalConfig) {
                 throw new RuntimeException("'" + APP_KEY + "' key not found in global configuration file!");
+            }
             // for local config, there is nothing to do if there's no 'mercury' key
             return;
         }
@@ -267,8 +277,9 @@ public class MercuryConfiguration {
 
         for (Map.Entry<String, Map> deployments : deploymentsMap.entrySet()) {
             String mercuryDeploymentString = deployments.getKey();
-            if (Deployment.valueOf(mercuryDeploymentString) == null)
+            if (Deployment.valueOf(mercuryDeploymentString) == null) {
                 throw new RuntimeException("Unrecognized deployment '" + mercuryDeploymentString + "'");
+            }
 
             Deployment mercuryDeployment = Deployment.valueOf(mercuryDeploymentString);
             Map<String, String> systemsMappings = (Map<String, String>) deployments.getValue();
@@ -277,8 +288,9 @@ public class MercuryConfiguration {
                 String externalDeploymentString = systemsMapping.getValue();
 
                 // This must point to a known external deployment for this system
-                if (Deployment.valueOf(externalDeploymentString) == null)
+                if (Deployment.valueOf(externalDeploymentString) == null) {
                     throw new RuntimeException("Unrecognized deployment '" + externalDeploymentString + "'");
+                }
 
                 Deployment externalDeployment = Deployment.valueOf(externalDeploymentString);
 
@@ -325,8 +337,9 @@ public class MercuryConfiguration {
         // load up external systems and overrides
         loadExternalSystems(globalConfigDoc);
 
-        if (localConfigDoc != null)
+        if (localConfigDoc != null) {
             loadExternalSystems(localConfigDoc);
+        }
 
         // now process the mercury connections to those systems
         // second parameter indicates whether global or not.  global config must have "mercury" section.
@@ -345,8 +358,9 @@ public class MercuryConfiguration {
 
                     is = getClass().getResourceAsStream(MERCURY_CONFIG);
 
-                    if (is == null)
+                    if (is == null) {
                         throw new RuntimeException("Cannot find global config file '" + MERCURY_CONFIG + "'");
+                    }
 
                     Yaml yaml = new Yaml();
                     final Map<String, Map> globalConfigDoc = (Map<String, Map>) yaml.load(is);
@@ -355,8 +369,9 @@ public class MercuryConfiguration {
                     Map<String, Map> localConfigDoc = null;
                     is = getClass().getResourceAsStream(MERCURY_CONFIG_LOCAL);
 
-                    if (is != null)
+                    if (is != null) {
                         localConfigDoc = (Map<String, Map>) yaml.load(is);
+                    }
 
                     load(globalConfigDoc, localConfigDoc);
                 }
@@ -389,9 +404,10 @@ public class MercuryConfiguration {
 
             for (Map.Entry<String, String> property : propertyMap.entrySet()) {
 
-                if (!properties.contains(property.getKey()))
+                if (!properties.contains(property.getKey())) {
                     throw new RuntimeException(
                             "Cannot set property '" + property.getKey() + "' into Config class '" + config.getClass() + "': no such property");
+                }
 
                 BeanUtils.setProperty(config, property.getKey(), property.getValue());
             }

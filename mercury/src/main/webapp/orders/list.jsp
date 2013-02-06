@@ -25,13 +25,72 @@
                         {"bSortable": true, "sType": "numeric"},   // Count
                         {"bSortable": true},                   // Billing Session ID
                         {"bSortable": true, "sType" : "title-string"}]  // eligible for billing
-                })
+                });
+
+                setupDialogs();
+
+                function setupDialogs() {
+                    $j("#confirmDialog").dialog({
+                        modal: true,
+                        autoOpen: false,
+                        buttons: [
+                            {
+                                id: "confirmOkButton",
+                                text: "OK",
+                                click: function () {
+                                    $j(this).dialog("close");
+                                    $j("#confirmOkButton").attr("disabled", "disabled");
+                                    $j("#createForm").submit();
+                                }
+                            },
+                            {
+                                text: "Cancel",
+                                click : function () {
+                                    $j(this).dialog("close");
+                                }
+                            }
+                        ]
+                    });
+
+                    $j("#noneSelectedDialog").dialog({
+                        modal: true,
+                        autoOpen: false,
+                        buttons: {
+                            OK: function () {
+                                $j(this).dialog("close");
+                            }
+                        }
+                    });
+                }
             });
+
+
+            function showConfirm(action, actionPrompt) {
+                var numChecked = $("input.shiftCheckbox:checked").size();
+                if (numChecked) {
+                    $j("#dialogAction").attr("name", action);
+                    $j("#confirmDialogMessage").text(actionPrompt);
+                    $j("#dialogNumProductOrders").text(numChecked);
+                    $j("#confirmDialog").dialog("open");
+                } else {
+                    $j("#noneSelectedDialogMessage").text(actionPrompt);
+                    $j("#noneSelectedDialog").dialog("open");
+                }
+            }
 
         </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
+
+        <div id="confirmDialog">
+            <p>Are you sure you want to <span id="confirmDialogMessage"></span> the <span id="dialogNumProductOrders"></span> Product Order(s)?</p>
+        </div>
+
+        <div id="noneSelectedDialog">
+            <p>You must select at least one Product Order to <span id="noneSelectedDialogMessage"></span>.</p>
+        </div>
+
         <p>
             <stripes:link title="<%=ProductOrderActionBean.CREATE_ORDER%>" beanclass="${actionBean.class.name}" event="create" class="pull-right">
                 <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.CREATE_ORDER%>
@@ -41,10 +100,11 @@
         <div class="clearfix"></div>
 
         <stripes:form beanclass="${actionBean.class.name}" id="createForm" class="form-horizontal">
+            <stripes:hidden id="dialogAction" name=""/>
             <div class="actionButtons">
 
                 <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
-                    <stripes:submit name="abandonOrders" value="Abandon Orders" class="btn" style="margin-right:30px;"/>
+                    <stripes:button name="abandonOrders" value="Abandon Orders" class="btn" onclick="showConfirm('abandonOrders', 'abandon')" style="margin-right:30px;"/>
                 </security:authorizeBlock>
 
                 <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.BillingManager.name}%>">
