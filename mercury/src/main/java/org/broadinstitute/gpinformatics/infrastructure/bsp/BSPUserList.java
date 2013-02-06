@@ -74,6 +74,16 @@ public class BSPUserList extends AbstractCache implements Serializable {
     }
 
     /**
+     * Returns the BSP user for the given badge ID, or null if no user exists with that badge ID.
+     *
+     * @param badgeId    the user's badge ID
+     * @return the BSP user or null
+     */
+    public BspUser getByBadgeId(String badgeId) {
+        return null; // TODO
+    }
+
+    /**
      * Returns a list of users whose first name, last name, or username match the given query.  If the query is
      * null then it will return an empty list.
      *

@@ -220,12 +220,19 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchSourceTubesForPlate")
     public List<WellAndSourceTubeType> fetchSourceTubesForPlate(@QueryParam("plateBarcode") String plateBarcode) {
-        List<WellAndSourceTubeType> wellAndSourceTubeTypes = new ArrayList<WellAndSourceTubeType>();
-        List<WellAndSourceTube> wellAndSourceTubes = thriftService.fetchSourceTubesForPlate(plateBarcode);
-        for (WellAndSourceTube wellAndSourceTube : wellAndSourceTubes) {
-            wellAndSourceTubeTypes.add(responseFactory.makeWellAndSourceTube(wellAndSourceTube));
+        switch (mercuryOrSquidRouter.routeForPlate(plateBarcode)) {
+        case MERCURY:
+            return limsQueries.fetchSourceTubesForPlate(plateBarcode);
+        case SQUID:
+            List<WellAndSourceTubeType> wellAndSourceTubeTypes = new ArrayList<WellAndSourceTubeType>();
+            List<WellAndSourceTube> wellAndSourceTubes = thriftService.fetchSourceTubesForPlate(plateBarcode);
+            for (WellAndSourceTube wellAndSourceTube : wellAndSourceTubes) {
+                wellAndSourceTubeTypes.add(responseFactory.makeWellAndSourceTube(wellAndSourceTube));
+            }
+            return wellAndSourceTubeTypes;
+        default:
+            throw new RuntimeException("Unable to route fetchSourceTubesForPlate for plate: " + plateBarcode);
         }
-        return wellAndSourceTubeTypes;
     }
 
     // TODO round 3?: PlateInfo fetchPlateInfo(1:string plateBarcode)
@@ -234,12 +241,19 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchTransfersForPlate")
     public List<PlateTransferType> fetchTransfersForPlate(@QueryParam("plateBarcode") String plateBarcode, @QueryParam("depth") short depth) {
-        List<PlateTransferType> plateTransferTypes = new ArrayList<PlateTransferType>();
-        List<PlateTransfer> plateTransfers = thriftService.fetchTransfersForPlate(plateBarcode, depth);
-        for (PlateTransfer plateTransfer : plateTransfers) {
-            plateTransferTypes.add(responseFactory.makePlateTransfer(plateTransfer));
+        switch (mercuryOrSquidRouter.routeForPlate(plateBarcode)) {
+        case MERCURY:
+            return limsQueries.fetchTransfersForPlate(plateBarcode, depth);
+        case SQUID:
+            List<PlateTransferType> plateTransferTypes = new ArrayList<PlateTransferType>();
+            List<PlateTransfer> plateTransfers = thriftService.fetchTransfersForPlate(plateBarcode, depth);
+            for (PlateTransfer plateTransfer : plateTransfers) {
+                plateTransferTypes.add(responseFactory.makePlateTransfer(plateTransfer));
+            }
+            return plateTransferTypes;
+        default:
+            throw new RuntimeException("Unable to route fetchTransfersForPlate for plate: " + plateBarcode);
         }
-        return plateTransferTypes;
     }
 
     // TODO round ?: list<PlateTransfer> fetchTransfersForRack(1:string rackBarcode, 2:list<WellAndSourceTube> positionMap, 3:i16 depth)
