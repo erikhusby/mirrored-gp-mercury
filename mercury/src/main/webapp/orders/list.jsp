@@ -83,11 +83,11 @@
 
     <stripes:layout-component name="content">
 
-        <div id="confirmDialog">
+        <div style="display:none;" id="confirmDialog">
             <p>Are you sure you want to <span id="confirmDialogMessage"></span> the <span id="dialogNumProductOrders"></span> Product Order(s)?</p>
         </div>
 
-        <div id="noneSelectedDialog">
+        <div style="display:none;" id="noneSelectedDialog">
             <p>You must select at least one Product Order to <span id="noneSelectedDialogMessage"></span>.</p>
         </div>
 
