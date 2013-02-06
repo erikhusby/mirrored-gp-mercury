@@ -3,6 +3,9 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import org.apache.thrift.TException;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
@@ -46,7 +49,9 @@ public class LimsQueryResourceUnitTest {
         mockResponseFactory = createMock(LimsQueryResourceResponseFactory.class);
         mockTwoDBarcodedTubeDAO = createMock(TwoDBarcodedTubeDAO.class);
         mockStaticPlateDAO = createMock(StaticPlateDAO.class);
-        resource = new LimsQueryResource(mockThriftService, mockLimsQueries, mockResponseFactory, mockMercuryOrSquidRouter);
+        BSPUserList bspUserList = new BSPUserList(BSPManagerFactoryProducer.stubInstance());
+        resource = new LimsQueryResource(mockThriftService, mockLimsQueries, mockResponseFactory, mockMercuryOrSquidRouter, bspUserList);
+
     }
 
     /*
@@ -306,6 +311,15 @@ public class LimsQueryResourceUnitTest {
         assertThat(result, equalTo(1.23));
 
         verifyAll();
+    }
+
+    public void testFetchUserByBadge() throws Exception {
+
+        String testUserBadge = "Test" + String.valueOf(BSPManagerFactoryStub.QA_DUDE_USER_ID);
+
+        String userId = resource.fetchUserIdForBadgeId(testUserBadge);
+
+        assertThat(userId, equalTo("QADudeTest"));
     }
 
     private void replayAll() {

@@ -47,11 +47,14 @@ public class LimsQueryResource {
 
     public LimsQueryResource() {}
 
-    public LimsQueryResource(ThriftService thriftService, LimsQueries limsQueries, LimsQueryResourceResponseFactory responseFactory, MercuryOrSquidRouter mercuryOrSquidRouter) {
+    public LimsQueryResource(ThriftService thriftService, LimsQueries limsQueries,
+                             LimsQueryResourceResponseFactory responseFactory,
+                             MercuryOrSquidRouter mercuryOrSquidRouter, BSPUserList bspUserList) {
         this.thriftService = thriftService;
         this.limsQueries = limsQueries;
         this.responseFactory = responseFactory;
         this.mercuryOrSquidRouter = mercuryOrSquidRouter;
+        this.bspUserList = bspUserList;
     }
 
     @GET
