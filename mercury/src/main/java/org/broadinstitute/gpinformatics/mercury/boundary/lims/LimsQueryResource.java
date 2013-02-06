@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.apache.commons.logging.Log;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
@@ -40,6 +41,9 @@ public class LimsQueryResource {
 
     @Inject
     private MercuryOrSquidRouter mercuryOrSquidRouter;
+
+    @Inject
+    private BSPUserList bspUserList;
 
     public LimsQueryResource() {}
 
