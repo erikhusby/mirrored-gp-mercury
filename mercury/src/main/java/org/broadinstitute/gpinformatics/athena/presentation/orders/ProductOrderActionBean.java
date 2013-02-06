@@ -270,7 +270,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // Since we are only validating from view, we can persist without worry of saving something bad.
         // We are doing on risk calculation only when everything passes, but informing the user no matter what
         if (getContext().getValidationErrors().isEmpty()) {
-            int numSamplesOnRisk = editOrder.calculateAllRisk();
+            int numSamplesOnRisk = editOrder.calculateRisk();
             productOrderDao.persist(editOrder);
 
             if (numSamplesOnRisk == 0) {
