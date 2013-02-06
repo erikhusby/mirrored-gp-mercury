@@ -180,18 +180,30 @@ function fn_title_string_asc(a, b) {
 
 // Pulls out a title attribute if any, otherwise returns the empty string.
 function fn_title_pre(a) {
-    var matchingArray = a.match(/title="(.*?)"/);
+
+    // This regular expression looks for a word boundary, followed by the literal 'title'.  'title' may be followed
+    // by zero or more whitespace characters, an equals sign, and zero or more whitespace characters again.  Next we
+    // want to see either a single or double quote, followed by one or more characters that do not match that first
+    // single or double quote, followed by a terminal quote that does match that first single or double quote.
+    // Getting this regex to work in JavaScript required the use of a negative lookahead:
+    //
+    // http://stackoverflow.com/questions/8055727/negating-a-backreference-in-regular-expressions
+
+    var regex = /\btitle\s*=\s*(["'])((?:(?!\1).)*)\1/;
+
+    var matchingArray = a.match(regex);
 
     // If there is no title attribute simply return the empty string.
     if (matchingArray == null) {
         return '';
     }
 
-    if (matchingArray.length < 2) {
+    // There are two captures in the regex in addition to the global \0 capture.
+    if (matchingArray.length < 3) {
         return '';
     }
 
-    return matchingArray[1];
+    return matchingArray[2];
 }
 
 

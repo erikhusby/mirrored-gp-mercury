@@ -179,14 +179,20 @@ public class ProductDao extends GenericDao implements Serializable {
         Collections.sort(products);
 
         for (Product product : products) {
+            boolean matchAll = true;
             for (String searchWord : searchWords) {
-                if (StringUtils.containsIgnoreCase(product.getProductName(), searchWord) ||
-                        StringUtils.containsIgnoreCase(product.getPartNumber(), searchWord)) {
-                    list.add(product);
+                if (!StringUtils.containsIgnoreCase(product.getProductName(), searchWord) &&
+                    !StringUtils.containsIgnoreCase(product.getPartNumber(), searchWord)) {
+                    matchAll = false;
                     break;
                 }
             }
+
+            if (matchAll) {
+                list.add(product);
+            }
         }
+
         return list;
     }
 
