@@ -62,6 +62,7 @@
                         "${ctxpath}/products/product.action?addOnsAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type a Product name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.addOnTokenInput.completeData)},
+                            resultsFormatter: formatProduct,
                             preventDuplicates: true
                         }
                     );
@@ -85,6 +86,11 @@
                     </c:forEach>
                 }
             );
+
+            function formatProduct(item) {
+                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
+                        "<div class=\"ac-dropdown-subtext\">" + item.id + "</div></li>";
+            }
 
             function formatPriceItem(item) {
                 return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +

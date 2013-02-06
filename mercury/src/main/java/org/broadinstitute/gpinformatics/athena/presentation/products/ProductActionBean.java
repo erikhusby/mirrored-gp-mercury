@@ -155,6 +155,18 @@ public class ProductActionBean extends CoreActionBean {
         if (priceItemTokenInput.getMercuryTokenObject() == null) {
             addValidationError("token-input-primaryPriceItem", "Primary price item is required");
         }
+
+        // Ensure that numeric criteria have valid data.
+        for (int i = 0; i < operators.length; i++) {
+            Operator operator = Operator.findByLabel(operators[i]);
+            if (operator.getType() == Operator.OperatorType.NUMERIC) {
+                try {
+                    Double.parseDouble(values[i]);
+                } catch (NumberFormatException e) {
+                    addGlobalValidationError("Not a valid number for risk calculation: {2}", values[i]);
+                }
+            }
+        }
     }
 
     @DefaultHandler
