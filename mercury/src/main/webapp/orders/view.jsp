@@ -200,11 +200,11 @@
 
     <stripes:layout-component name="content">
 
-    <div id="confirmDialog">
+    <div style="display:none" id="confirmDialog">
         <p>Are you sure you want to <span id="confirmDialogMessage"></span> the <span id="dialogNumSamples"></span> selected samples?</p>
     </div>
 
-    <div id="riskDialog" style="width:600px;">
+    <div style="display:none" id="riskDialog" style="width:600px;">
         <p>Manually Update Risk (<span id="selectedCountId"> </span> selected)</p>
         <p><span style="float:left; width:185px;">Update status to:</span>
             <input type="radio" id="onRiskDialogId" name="riskRadio" value="true" checked="checked" style="float:left;margin-right:5px;">
@@ -220,7 +220,7 @@
     </div>
 
 
-    <div id="noneSelectedDialog">
+    <div style="display:none" id="noneSelectedDialog">
         <p>You must select at least one sample to <span id="noneSelectedDialogMessage"></span>.</p>
     </div>
 
