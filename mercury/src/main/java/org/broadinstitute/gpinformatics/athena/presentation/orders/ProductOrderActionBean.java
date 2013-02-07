@@ -1008,6 +1008,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             return "";
         }
 
-        return MessageFormat.format("{0,number,##0.00}", counter.getPercentComplete());
+        return MessageFormat.format("{0,number,##0}%", counter.getPercentComplete());
     }
 }

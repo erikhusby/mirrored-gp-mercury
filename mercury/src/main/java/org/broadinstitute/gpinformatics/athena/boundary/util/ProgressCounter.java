@@ -26,8 +26,8 @@ public class ProgressCounter {
         this.total = total;
     }
 
-    public float getPercentComplete() {
-        return ((float)completed/(float)total) * 100f;
+    public int getPercentComplete() {
+        return (completed * 100)/total;
     }
 
     public void incrementCompletedAndTotal() {

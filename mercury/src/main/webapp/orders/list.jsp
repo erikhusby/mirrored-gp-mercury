@@ -9,6 +9,13 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
+
+                $j('.barFull').each(function(index, barDiv) {
+                    $j(barDiv).progressbar({
+                        value: parseFloat($j(this).attr('title'))
+                    })
+                });
+
                 $j('#productOrderList').dataTable( {
                     "oTableTools": ttExportDefines,
                     "aaSorting": [[8,'desc']],
@@ -26,12 +33,6 @@
                         {"bSortable": true, "sType": "numeric"},   // Count
                         {"bSortable": true},                   // Billing Session ID
                         {"bSortable": true, "sType" : "title-string"}]  // eligible for billing
-                });
-
-                $j('.barFull').each(function(index, barDiv) {
-                    $j(barDiv).progressbar({
-                        value: parseFloat($j(this).attr('title'))
-                    })
                 });
 
                 setupDialogs();
