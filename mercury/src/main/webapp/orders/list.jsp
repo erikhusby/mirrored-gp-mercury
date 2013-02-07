@@ -22,7 +22,7 @@
                         {"bSortable": true},                    // Research Project
                         {"bSortable": true},                    // Owner
                         {"bSortable": true, "sType": "date"},   // Updated
-                        {"bSortable": true, "sType": "title-numeric"},   // % Comlete
+                        {"bSortable": true, "sType": "title-numeric"},   // % Complete
                         {"bSortable": true, "sType": "numeric"},   // Count
                         {"bSortable": true},                   // Billing Session ID
                         {"bSortable": true, "sType" : "title-string"}]  // eligible for billing
