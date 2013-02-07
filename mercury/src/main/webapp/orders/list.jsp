@@ -193,7 +193,7 @@
                             </td>
                             <td>
                                 <div class="barFull" title="${actionBean.getPercentComplete(order.businessKey)}">
-                                    <span class="barComplete" style="width: ${actionBean.getPercentComplete(order.businessKey)}"></span>
+                                    <span class="barComplete" style="width:80px;"></span>
                                 </div>
                             </td>
                             <td>${order.pdoSampleCount}</td>
