@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.sample;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
+import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.rework.*;
@@ -11,8 +13,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.util.Arrays;
+import java.util.regex.Pattern;
 
 /**
  * Represents Mercury's view of a sample.  Sample information is held in another system (initially Athena),
@@ -38,6 +42,9 @@ public class MercurySample {
 
     @Transient
     private BSPSampleDTO bspSampleDTO;
+    @Transient
+    private boolean hasBspDTOBeenInitialized;
+    public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile("SM-[A-Z1-9]{4,6}");
 
 
     public MercurySample(String productOrderKey, String sampleKey) {
@@ -88,7 +95,37 @@ public class MercurySample {
         return sampleKey;
     }
 
+    public boolean isInBspFormat() {
+        return isInBspFormat(sampleKey);
+    }
+
+    public static boolean isInBspFormat(@Nonnull String sampleName) {
+        return BSP_SAMPLE_NAME_PATTERN.matcher(sampleName).matches();
+    }
+
+    /**
+     * @return true if sample is a loaded BSP sample but BSP didn't have any data for it.
+     */
+    public boolean bspMetaDataMissing() {
+        // Use == here, we want to match the exact object.
+        //noinspection ObjectEquality
+        return isInBspFormat() && hasBspDTOBeenInitialized && bspSampleDTO == BSPSampleDTO.DUMMY;
+    }
+
     public BSPSampleDTO getBspSampleDTO() {
+        if (!hasBspDTOBeenInitialized) {
+            if (isInBspFormat()) {
+                BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
+                bspSampleDTO = bspSampleDataFetcher.fetchSingleSampleFromBSP(getSampleKey());
+                if (bspSampleDTO == null) {
+                    // not BSP sample exists with this name, but we still need a semblance of a BSP DTO
+                    bspSampleDTO = BSPSampleDTO.DUMMY;
+                }
+            }
+
+            hasBspDTOBeenInitialized = true;
+        }
+
         return bspSampleDTO;
     }
 
