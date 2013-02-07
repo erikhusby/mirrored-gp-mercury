@@ -57,6 +57,7 @@ public class MercurySample {
         this.productOrderKey = productOrderKey;
         this.sampleKey = sampleKey;
         this.bspSampleDTO = bspSampleDTO;
+        hasBspDTOBeenInitialized = true;
     }
 
     public ReworkEntry reworkSample(ReworkReason reworkReason, ReworkLevel reworkLevel, LabEvent labEvent,
