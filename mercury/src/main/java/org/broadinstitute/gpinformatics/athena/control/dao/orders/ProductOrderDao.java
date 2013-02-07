@@ -1,17 +1,22 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
+import org.broadinstitute.gpinformatics.athena.boundary.util.ProgressCounter;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.entity.orders.*;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.hibernate.SQLQuery;
+import org.hibernate.type.StandardBasicTypes;
 
 import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
+import javax.persistence.Query;
 import javax.persistence.criteria.*;
 import java.util.*;
 
@@ -224,5 +229,48 @@ public class ProductOrderDao extends GenericDao {
         return findSingle(ProductOrder.class, ProductOrder_.productOrderId, orderId);
     }
 
+    @SuppressWarnings("unchecked")
+    public Map<String, ProgressCounter> getProgressByBusinessKey() {
+        String sqlString =
+                "SELECT JIRA_TICKET_KEY AS name, " +
+                "    ( SELECT count( DISTINCT pos.PRODUCT_ORDER_SAMPLE_ID) " +
+                "      FROM athena.product_order_sample pos " +
+                "           LEFT JOIN athena.BILLING_LEDGER ledger ON ledger.PRODUCT_ORDER_SAMPLE_ID = pos.PRODUCT_ORDER_SAMPLE_ID" +
+                "      WHERE pos.product_order = ord.product_order_id " +
+                "      AND (pos.DELIVERY_STATUS = 'ABANDONED' " +
+                "         OR (ledger.LEDGER_ID is not null " +
+                "            AND (ledger.PRICE_ITEM_ID = prod.PRIMARY_PRICE_ITEM " +
+                "                OR ledger.price_item_id in ( " +
+                "                    select OPTIONAL_PRICE_ITEMS from athena.PRODUCT_OPT_PRICE_ITEMS opt where opt.PRODUCT = prod.PRODUCT_ID " +
+                "                ) " +
+                "            ) " +
+                "         ) " +
+                "     ) " +
+                "   ) as completed, " +
+                "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos" +
+                "        WHERE pos.product_order = ord.product_order_id" +
+                "    ) AS total" +
+                " from athena.PRODUCT_ORDER ord LEFT JOIN athena.PRODUCT prod on ord.PRODUCT = prod.PRODUCT_ID " +
+                " WHERE ord.JIRA_TICKET_KEY is not null ";
+
+
+        Query query = getThreadEntityManager().getEntityManager().createNativeQuery(sqlString);
+        query.unwrap(SQLQuery.class)
+                .addScalar("name", StandardBasicTypes.STRING)
+                .addScalar("completed", StandardBasicTypes.INTEGER)
+                .addScalar("total", StandardBasicTypes.INTEGER);
+
+        List<Object> results = (List<Object>) query.getResultList();
+
+        Map<String, ProgressCounter> progressCounterMap = new HashMap<String, ProgressCounter> (results.size());
+        for (Object resultObject : results) {
+            Object[] result = (Object[]) resultObject;
+            if (result[0] != null) {
+                progressCounterMap.put((String) result[0], new ProgressCounter((Integer) result[1], (Integer) result[2]));
+            }
+        }
+
+        return progressCounterMap;
+    }
 
 }

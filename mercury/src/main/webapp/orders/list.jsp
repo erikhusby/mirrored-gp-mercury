@@ -22,48 +22,54 @@
                         {"bSortable": true},                    // Research Project
                         {"bSortable": true},                    // Owner
                         {"bSortable": true, "sType": "date"},   // Updated
+                        {"bSortable": true, "sType": "title-numeric"},   // % Comlete
                         {"bSortable": true, "sType": "numeric"},   // Count
                         {"bSortable": true},                   // Billing Session ID
                         {"bSortable": true, "sType" : "title-string"}]  // eligible for billing
                 });
 
+                $j('.barFull').each(function(index, barDiv) {
+                    $j(barDiv).progressbar({
+                        value: parseFloat($j(this).attr('title'))
+                    })
+                });
+
                 setupDialogs();
+            });
 
-                function setupDialogs() {
-                    $j("#confirmDialog").dialog({
-                        modal: true,
-                        autoOpen: false,
-                        buttons: [
-                            {
-                                id: "confirmOkButton",
-                                text: "OK",
-                                click: function () {
-                                    $j(this).dialog("close");
-                                    $j("#confirmOkButton").attr("disabled", "disabled");
-                                    $j("#createForm").submit();
-                                }
-                            },
-                            {
-                                text: "Cancel",
-                                click : function () {
-                                    $j(this).dialog("close");
-                                }
+            function setupDialogs() {
+                $j("#confirmDialog").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    buttons: [
+                        {
+                            id: "confirmOkButton",
+                            text: "OK",
+                            click: function () {
+                                $j(this).dialog("close");
+                                $j("#confirmOkButton").attr("disabled", "disabled");
+                                $j("#createForm").submit();
                             }
-                        ]
-                    });
-
-                    $j("#noneSelectedDialog").dialog({
-                        modal: true,
-                        autoOpen: false,
-                        buttons: {
-                            OK: function () {
+                        },
+                        {
+                            text: "Cancel",
+                            click : function () {
                                 $j(this).dialog("close");
                             }
                         }
-                    });
-                }
-            });
+                    ]
+                });
 
+                $j("#noneSelectedDialog").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    buttons: {
+                        OK: function () {
+                            $j(this).dialog("close");
+                        }
+                    }
+                });
+            }
 
             function showConfirm(action, actionPrompt) {
                 var numChecked = $("input.shiftCheckbox:checked").size();
@@ -79,6 +85,10 @@
             }
 
         </script>
+        <style type="text/css">
+            .barFull { height: 10px; }
+            .ui-progressbar-value { background-color: #90ee90; }
+        </style>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
@@ -128,12 +138,13 @@
                         </th>
                         <th>Name</th>
                         <th width="100">ID</th>
-                        <th width="200">Product</th>
-                        <th width="220">Product Family</th>
-                        <th>Status</th>
+                        <th>Product</th>
+                        <th>Product Family</th>
+                        <th width="80">Status</th>
                         <th width="150">Research Project</th>
-                        <th>Owner</th>
+                        <th width="120">Owner</th>
                         <th width="70">Updated</th>
+                        <th width="80">% Complete</th>
                         <th width="25">Sample Count</th>
                         <th width="35">Billing Session</th>
                         <th width="25">Can Bill</th>
@@ -179,6 +190,11 @@
                             <td>${actionBean.getUserFullName(order.ownerId)}</td>
                             <td>
                                 <fmt:formatDate value="${order.updatedDate}"/>
+                            </td>
+                            <td>
+                                <div class="barFull" title="${actionBean.getPercentComplete(order.businessKey)}">
+                                    <span class="barComplete" style="width: ${actionBean.getPercentComplete(order.businessKey)}"></span>
+                                </div>
                             </td>
                             <td>${order.pdoSampleCount}</td>
                             <td>

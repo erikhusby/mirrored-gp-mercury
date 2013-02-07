@@ -12,6 +12,7 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
+import org.broadinstitute.gpinformatics.athena.boundary.util.ProgressCounter;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
@@ -139,6 +140,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String productOrder;
 
     private List<Long> sampleIdsForGetBspData;
+
+    private Map<String, ProgressCounter> progressByBusinesKey;
 
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
@@ -347,6 +350,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION})
     public void listInit() {
         allProductOrders = orderListEntryDao.findProductOrderListEntries();
+
+        progressByBusinesKey = productOrderDao.getProgressByBusinessKey();
     }
 
     private void validateUser(String validatingFor) {
@@ -995,5 +1000,14 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setRiskComment(String riskComment) {
         this.riskComment = riskComment;
+    }
+
+    public String getPercentComplete(String businessKey) {
+        ProgressCounter counter = progressByBusinesKey.get(businessKey);
+        if (counter == null) {
+            return "";
+        }
+
+        return MessageFormat.format("{0,number,##0.00}", counter.getPercentComplete());
     }
 }
