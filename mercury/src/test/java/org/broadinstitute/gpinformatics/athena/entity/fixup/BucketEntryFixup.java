@@ -57,7 +57,7 @@ public class BucketEntryFixup extends Arquillian {
         utx.begin();
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void addExomeExpressPicoBucketEntries() {
         ProductOrder order = null;
         List<ProductOrder> pdos = pdoDao.findAll(ProductOrderDao.FetchSpec.Product);
