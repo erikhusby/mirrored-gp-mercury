@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.apache.commons.logging.Log;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
@@ -176,7 +177,14 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchUserIdForBadgeId")
     public String fetchUserIdForBadgeId(@QueryParam("badgeId") String badgeId) {
-        return bspUserList.getByBadgeId(badgeId).getUsername();
+
+        BspUser foundUser = bspUserList.getByBadgeId(badgeId);
+        String userId = null;
+
+        if(foundUser != null) {
+            userId = foundUser.getUsername();
+        }
+        return userId;
     }
 
     /**

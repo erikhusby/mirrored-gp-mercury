@@ -313,13 +313,20 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
+    @BeforeMethod(groups = DATABASE_FREE)
     public void testFetchUserByBadge() throws Exception {
 
-        String testUserBadge = "Test" + String.valueOf(BSPManagerFactoryStub.QA_DUDE_USER_ID);
+        String testUserBadge = "BOGUSFAKENONEXISTANTBADGE";
 
         String userId = resource.fetchUserIdForBadgeId(testUserBadge);
 
-        assertThat(userId, equalTo("QADudeTest"));
+        assertThat(userId, not(equalTo("QADudeTest")));
+        assertThat(userId, equalTo(null));
+    }
+
+    @BeforeMethod(groups = DATABASE_FREE)
+    public void testFetchNoUserByBogusBadge() throws Exception {
+
     }
 
     private void replayAll() {
