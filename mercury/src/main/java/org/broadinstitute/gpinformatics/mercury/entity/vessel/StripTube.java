@@ -1,15 +1,9 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
-//import org.broadinstitute.gpinformatics.mercury.entity.project.Project;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Embedded;
 import javax.persistence.Entity;
-import javax.persistence.Table;
-import java.util.Collection;
-import java.util.Set;
 
 /**
  * Represents a strip tube, several tubes molded into a single piece of plasticware, e.g. 8 tubes in the same formation
@@ -17,7 +11,6 @@ import java.util.Set;
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
 public class StripTube extends LabVessel implements VesselContainerEmbedder<StripTubeWell> {
 
     protected StripTube() {

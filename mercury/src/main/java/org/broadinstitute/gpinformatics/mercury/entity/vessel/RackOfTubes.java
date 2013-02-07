@@ -5,7 +5,6 @@ import org.hibernate.envers.Audited;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
-import javax.persistence.Table;
 
 /**
  * A piece of plastic that holds tubes.  Can be reused to hold different sets of tubes.
@@ -13,11 +12,10 @@ import javax.persistence.Table;
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
 public class RackOfTubes extends LabVessel{
 
     /** For JPA */
-    RackOfTubes() {
+    protected RackOfTubes() {
     }
 
     // todo jmt create interface implemented by this and PlateType, to get display name and geometry.
