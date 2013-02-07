@@ -3,9 +3,9 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.hibernate.envers.AuditJoinTable;
-import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
 
+import javax.annotation.Nonnull;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.util.*;
@@ -539,7 +539,9 @@ public class Product implements Serializable, Comparable<Product> {
         return new Long[] { primaryPriceItem.getPriceItemId() };
     }
 
-    public void updateRiskCriteria(String[] criteria, String[] operators, String[] values) {
+    public void updateRiskCriteria(@Nonnull String[] criteria, @Nonnull String[] operators, @Nonnull String[] values) {
+
+        assert (criteria.length == operators.length) && (criteria.length == values.length);
 
         // The new list
         List<RiskCriteria> newList = new ArrayList<RiskCriteria>();
@@ -553,7 +555,7 @@ public class Product implements Serializable, Comparable<Product> {
 
         // Go through specified criteria and find matching existing risk criteria.
         for (int i = 0; i < criteria.length; i++) {
-            String value = values == null ? null : values[i];
+            String value = values[i];
 
             boolean sameAsCurrent;
             RiskCriteria currentCriteria = null;
