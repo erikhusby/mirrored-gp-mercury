@@ -92,7 +92,7 @@ public class AutomatedBiller {
                 if (product.getRequirement().canBill(message.getData())) {
                     List<ProductOrderSample> samples =
                             productOrderSampleDao.findByOrderAndName(order, message.getSampleName());
-                    ProductOrderSample sample = samples.get(message.getSampleIndex().intValue());
+                    ProductOrderSample sample = samples.get(message.getSampleIndex());
                     sample.autoBillSample(message.getCompletedDate(), 1);
                 }
             } else {
