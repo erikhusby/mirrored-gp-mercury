@@ -102,9 +102,10 @@ public class WorkflowViewActionBean extends CoreActionBean {
             for (LabEventType type : step.getLabEventTypes()) {
                 LabEvent labEvent = getVesselEventByType(type);
                 if (labEvent != null) {
-                    if (type.equals(latestEventType)) {
+                    if (type == latestEventType) {
                         return "latest";
                     } else {
+                        //change the class if we ever want to do different styling for current vs past steps.
                         return "latest";
                     }
                 }
