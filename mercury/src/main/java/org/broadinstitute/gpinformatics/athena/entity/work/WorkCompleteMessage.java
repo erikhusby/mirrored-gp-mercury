@@ -23,7 +23,7 @@ public class WorkCompleteMessage {
     }
 
     public WorkCompleteMessage(
-        @Nonnull String pdoName, @Nonnull String sampleName, long sampleIndex, @Nonnull Date completedDate,
+        @Nonnull String pdoName, @Nonnull String sampleName, int sampleIndex, @Nonnull Date completedDate,
         @Nonnull Map<String, Object> dataMap) {
 
         this.pdoName = pdoName;
@@ -52,7 +52,7 @@ public class WorkCompleteMessage {
 
     // If the same sample exists multiple times in the PDO, this will let us know which was meant
     @Column(name = "SAMPLE_INDEX", nullable = false)
-    private long sampleIndex;
+    private int sampleIndex;
 
     @Column(name = "COMPLETED_DATE", nullable = false)
     @Nonnull
@@ -78,7 +78,7 @@ public class WorkCompleteMessage {
         return sampleName;
     }
 
-    public Long getSampleIndex() {
+    public Integer getSampleIndex() {
         return sampleIndex;
     }
 
