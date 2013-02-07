@@ -192,9 +192,7 @@
                                 <fmt:formatDate value="${order.updatedDate}"/>
                             </td>
                             <td>
-                                <div class="barFull" title="${actionBean.getPercentComplete(order.businessKey)}">
-                                    <span class="barComplete" style="width:80px;"></span>
-                                </div>
+                                <div class="barFull" title="${actionBean.getPercentComplete(order.businessKey)}"> </div>
                             </td>
                             <td>${order.pdoSampleCount}</td>
                             <td>
