@@ -205,7 +205,7 @@
                         <td>
                             <fmt:formatDate value="${order.modifiedDate}" pattern="MM/dd/yyyy"/>
                         </td>
-                        <td>${order.pdoSampleCount}</td>
+                        <td>${actionBean.getNumberOfSamples(order.businessKey)}</td>
                     </tr>
                 </c:forEach>
             </tbody>

@@ -21,10 +21,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.*;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -140,6 +137,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<Long> sampleIdsForGetBspData;
 
+    private Map<String, ProductOrderCompletionStatus> progressByBusinessKey =
+            new HashMap<String, ProductOrderCompletionStatus> ();
+
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
         @Validate(field="title", required = true, maxlength=255, on={SAVE_ACTION}, label = "Name"),
@@ -192,6 +192,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
+            progressByBusinessKey =
+                productOrderDao.getProgressByBusinessKey(Collections.singletonList(editOrder.getBusinessKey()));
         } else {
             // If this was a create with research project specified, find that.
             // This is only used for save, when creating a new product order.
@@ -347,6 +349,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION})
     public void listInit() {
         allProductOrders = orderListEntryDao.findProductOrderListEntries();
+        progressByBusinessKey = productOrderDao.getProgressByBusinessKey();
     }
 
     private void validateUser(String validatingFor) {
@@ -995,5 +998,36 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setRiskComment(String riskComment) {
         this.riskComment = riskComment;
+    }
+
+    public int getPercentAbandoned(String orderKey) {
+        ProductOrderCompletionStatus counter = progressByBusinessKey.get(orderKey);
+        if (counter == null) {
+            return 0;
+        }
+
+        return counter.getPercentAbandoned();
+    }
+
+    public int getPercentComplete(String orderKey) {
+        ProductOrderCompletionStatus counter = progressByBusinessKey.get(orderKey);
+        if (counter == null) {
+            return 0;
+        }
+
+        return counter.getPercentComplete();
+    }
+
+    public int getPercentCompleteAndAbandoned(String orderKey) {
+        return getPercentAbandoned(orderKey) + getPercentComplete(orderKey);
+    }
+
+    public int getNumberOfSamples(String orderKey) {
+        ProductOrderCompletionStatus counter = progressByBusinessKey.get(orderKey);
+        if (counter == null) {
+            return 0;
+        }
+
+        return counter.getTotal();
     }
 }
