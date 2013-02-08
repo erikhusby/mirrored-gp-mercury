@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
-import org.broadinstitute.gpinformatics.athena.boundary.util.ProgressCounter;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
@@ -229,44 +229,76 @@ public class ProductOrderDao extends GenericDao {
         return findSingle(ProductOrder.class, ProductOrder_.productOrderId, orderId);
     }
 
+    /**
+     * @return Get the completion status information for all product orders
+     */
+    public Map<String, ProductOrderCompletionStatus> getProgressByBusinessKey() {
+        return getProgressByBusinessKey(null);
+    }
+
+    /**
+     * This gets the completion status for the product orders. There are four pieces of information returned for each order:
+     *
+     *      'name' - Simply the jira ticket key
+     *      'completed' - The number of NOT abandoned samples that have ledger items for any primary or optional price item
+     *      'abandoned' - The number of samples that ARE abandoned
+     *      'total' - The total number of samples
+     *
+     * @param productOrderKeys null if returning info for all orders, the list of keys for specific ones
+     *
+     * @return The mapping of business keys to the completion status object for each order
+     */
     @SuppressWarnings("unchecked")
-    public Map<String, ProgressCounter> getProgressByBusinessKey() {
+    public Map<String, ProductOrderCompletionStatus> getProgressByBusinessKey(Collection<String> productOrderKeys) {
         String sqlString =
                 "SELECT JIRA_TICKET_KEY AS name, " +
                 "    ( SELECT count( DISTINCT pos.PRODUCT_ORDER_SAMPLE_ID) " +
                 "      FROM athena.product_order_sample pos " +
                 "           LEFT JOIN athena.BILLING_LEDGER ledger ON ledger.PRODUCT_ORDER_SAMPLE_ID = pos.PRODUCT_ORDER_SAMPLE_ID" +
                 "      WHERE pos.product_order = ord.product_order_id " +
-                "      AND (pos.DELIVERY_STATUS = 'ABANDONED' " +
-                "         OR (ledger.LEDGER_ID is not null " +
-                "            AND (ledger.PRICE_ITEM_ID = prod.PRIMARY_PRICE_ITEM " +
-                "                OR ledger.price_item_id in ( " +
-                "                    select OPTIONAL_PRICE_ITEMS from athena.PRODUCT_OPT_PRICE_ITEMS opt where opt.PRODUCT = prod.PRODUCT_ID " +
-                "                ) " +
-                "            ) " +
-                "         ) " +
-                "     ) " +
-                "   ) as completed, " +
+                "      AND (pos.DELIVERY_STATUS != 'ABANDONED' " +
+                "      AND (ledger.LEDGER_ID IS NOT null " +
+                "           AND ( ledger.PRICE_ITEM_ID = prod.PRIMARY_PRICE_ITEM " +
+                "                 OR ledger.price_item_id IN ( " +
+                "                    SELECT OPTIONAL_PRICE_ITEMS FROM athena.PRODUCT_OPT_PRICE_ITEMS opt WHERE opt.PRODUCT = prod.PRODUCT_ID " +
+                "                 ) " +
+                "               ) " +
+                "          ) " +
+                "      ) " +
+                "   ) AS completed, " +
+                "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos" +
+                "        WHERE pos.product_order = ord.product_order_id AND pos.DELIVERY_STATUS = 'ABANDONED' " +
+                "    ) AS abandoned, " +
                 "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos" +
                 "        WHERE pos.product_order = ord.product_order_id" +
                 "    ) AS total" +
-                " from athena.PRODUCT_ORDER ord LEFT JOIN athena.PRODUCT prod on ord.PRODUCT = prod.PRODUCT_ID " +
-                " WHERE ord.JIRA_TICKET_KEY is not null ";
+                " FROM athena.PRODUCT_ORDER ord LEFT JOIN athena.PRODUCT prod ON ord.PRODUCT = prod.PRODUCT_ID ";
 
+        // Add the business key, if we are only doing one
+        if ((productOrderKeys != null) && (!productOrderKeys.isEmpty())) {
+            sqlString += " WHERE ord.JIRA_TICKET_KEY in (:businessKeys)";
+        }
 
         Query query = getThreadEntityManager().getEntityManager().createNativeQuery(sqlString);
         query.unwrap(SQLQuery.class)
                 .addScalar("name", StandardBasicTypes.STRING)
                 .addScalar("completed", StandardBasicTypes.INTEGER)
+                .addScalar("abandoned", StandardBasicTypes.INTEGER)
                 .addScalar("total", StandardBasicTypes.INTEGER);
+
+        if ((productOrderKeys != null) && (!productOrderKeys.isEmpty())) {
+            query.setParameter("businessKeys", productOrderKeys);
+        }
 
         List<Object> results = (List<Object>) query.getResultList();
 
-        Map<String, ProgressCounter> progressCounterMap = new HashMap<String, ProgressCounter> (results.size());
+        Map<String, ProductOrderCompletionStatus> progressCounterMap =
+            new HashMap<String, ProductOrderCompletionStatus> (results.size());
         for (Object resultObject : results) {
             Object[] result = (Object[]) resultObject;
             if (result[0] != null) {
-                progressCounterMap.put((String) result[0], new ProgressCounter((Integer) result[1], (Integer) result[2]));
+                progressCounterMap.put((String) result[0],
+                    new ProductOrderCompletionStatus((Integer) result[2], (Integer) result[1], (Integer) result[3]));
             }
         }
 

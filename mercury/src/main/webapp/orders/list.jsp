@@ -10,12 +10,6 @@
         <script type="text/javascript">
             $j(document).ready(function() {
 
-                $j('.barFull').each(function(index, barDiv) {
-                    $j(barDiv).progressbar({
-                        value: parseFloat($j(this).attr('title'))
-                    })
-                });
-
                 $j('#productOrderList').dataTable( {
                     "oTableTools": ttExportDefines,
                     "aaSorting": [[8,'desc']],
@@ -87,8 +81,9 @@
 
         </script>
         <style type="text/css">
-            .barFull { height: 10px; }
-            .ui-progressbar-value { background-color: #90ee90; }
+            .barFull { height: 10px; width:80px; background-color: white; border-color: #a9a9a9; border-style: solid; border-width: thin; }
+            .barComplete { height: 10px; float:left; background-color: #c4eec0; }
+            .barAbandon { height: 10px; float:left; background-color: #eed6e1; }
         </style>
     </stripes:layout-component>
 
@@ -145,7 +140,7 @@
                         <th width="150">Research Project</th>
                         <th width="120">Owner</th>
                         <th width="70">Updated</th>
-                        <th width="80">% Complete</th>
+                        <th width="80">%&nbsp;Complete</th>
                         <th width="25">Sample Count</th>
                         <th width="35">Billing Session</th>
                         <th width="25">Can Bill</th>
@@ -192,10 +187,17 @@
                             <td>
                                 <fmt:formatDate value="${order.updatedDate}"/>
                             </td>
-                            <td>
-                                <div class="barFull" title="${actionBean.getPercentComplete(order.businessKey)}"> </div>
+                            <td align="center">
+                                <div class="barFull" title="${actionBean.getPercentCompleteAndAbandoned(order.businessKey)}%">
+                                    <span class="barAbandon"
+                                          title="${actionBean.getPercentAbandoned(order.businessKey)}%"
+                                          style="width: ${actionBean.getPercentAbandoned(order.businessKey)}%"> </span>
+                                    <span class="barComplete"
+                                          title="${actionBean.getPercentComplete(order.businessKey)}%"
+                                          style="width: ${actionBean.getPercentComplete(order.businessKey)}%"> </span>
+                                </div>
                             </td>
-                            <td>${order.pdoSampleCount}</td>
+                            <td>${actionBean.getNumberOfSamples(order.businessKey)}</td>
                             <td>
                                 <c:if test="${order.billingSessionBusinessKey != null}">
                                     <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"
