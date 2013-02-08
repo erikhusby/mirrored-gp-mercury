@@ -12,6 +12,7 @@ import org.hibernate.SQLQuery;
 import org.hibernate.type.StandardBasicTypes;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.EntityManager;
@@ -249,34 +250,32 @@ public class ProductOrderDao extends GenericDao {
      * @return The mapping of business keys to the completion status object for each order
      */
     @SuppressWarnings("unchecked")
-    public Map<String, ProductOrderCompletionStatus> getProgressByBusinessKey(Collection<String> productOrderKeys) {
+    public Map<String, ProductOrderCompletionStatus> getProgressByBusinessKey(@Nullable Collection<String> productOrderKeys) {
         String sqlString =
                 "SELECT JIRA_TICKET_KEY AS name, " +
                 "    ( SELECT count( DISTINCT pos.PRODUCT_ORDER_SAMPLE_ID) " +
                 "      FROM athena.product_order_sample pos " +
-                "           LEFT JOIN athena.BILLING_LEDGER ledger ON ledger.PRODUCT_ORDER_SAMPLE_ID = pos.PRODUCT_ORDER_SAMPLE_ID" +
+                "           INNER JOIN athena.BILLING_LEDGER ledger ON ledger.PRODUCT_ORDER_SAMPLE_ID = pos.PRODUCT_ORDER_SAMPLE_ID" +
                 "      WHERE pos.product_order = ord.product_order_id " +
-                "      AND (pos.DELIVERY_STATUS != 'ABANDONED' " +
-                "      AND (ledger.LEDGER_ID IS NOT null " +
-                "           AND ( ledger.PRICE_ITEM_ID = prod.PRIMARY_PRICE_ITEM " +
-                "                 OR ledger.price_item_id IN ( " +
-                "                    SELECT OPTIONAL_PRICE_ITEMS FROM athena.PRODUCT_OPT_PRICE_ITEMS opt WHERE opt.PRODUCT = prod.PRODUCT_ID " +
-                "                 ) " +
-                "               ) " +
-                "          ) " +
+                "      AND pos.DELIVERY_STATUS != 'ABANDONED' " +
+                "      AND (ledger.PRICE_ITEM_ID = prod.PRIMARY_PRICE_ITEM " +
+                "           OR ledger.price_item_id IN ( " +
+                "               SELECT OPTIONAL_PRICE_ITEMS FROM athena.PRODUCT_OPT_PRICE_ITEMS opt WHERE opt.PRODUCT = prod.PRODUCT_ID " +
+                "           ) " +
                 "      ) " +
-                "   ) AS completed, " +
+                "    ) AS completed, " +
                 "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos" +
                 "        WHERE pos.product_order = ord.product_order_id AND pos.DELIVERY_STATUS = 'ABANDONED' " +
                 "    ) AS abandoned, " +
                 "    (SELECT count(pos.PRODUCT_ORDER_SAMPLE_ID) FROM athena.product_order_sample pos" +
                 "        WHERE pos.product_order = ord.product_order_id" +
                 "    ) AS total" +
-                " FROM athena.PRODUCT_ORDER ord LEFT JOIN athena.PRODUCT prod ON ord.PRODUCT = prod.PRODUCT_ID ";
+                " FROM athena.PRODUCT_ORDER ord LEFT JOIN athena.PRODUCT prod ON ord.PRODUCT = prod.PRODUCT_ID " +
+                " WHERE ord.JIRA_TICKET_KEY is not null ";
 
         // Add the business key, if we are only doing one
         if ((productOrderKeys != null) && (!productOrderKeys.isEmpty())) {
-            sqlString += " WHERE ord.JIRA_TICKET_KEY in (:businessKeys)";
+            sqlString += " AND ord.JIRA_TICKET_KEY in (:businessKeys)";
         }
 
         Query query = getThreadEntityManager().getEntityManager().createNativeQuery(sqlString);
