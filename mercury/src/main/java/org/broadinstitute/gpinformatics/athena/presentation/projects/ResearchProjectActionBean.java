@@ -7,12 +7,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.TableauLink;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.CohortTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.FundingTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
@@ -119,8 +119,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
 
     private String irbList = "";
 
-    private Map<String, ProductOrderCompletionStatus> progressByBusinessKey =
-            new HashMap<String, ProductOrderCompletionStatus> ();
+    private CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
 
     /**
      * Fetch the complete list of research projects.
@@ -155,7 +154,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         }
 
         if (!businessKeys.isEmpty()) {
-            progressByBusinessKey = productOrderDao.getProgressByBusinessKey(businessKeys);
+            progressFetcher.setupProgress(productOrderDao, businessKeys);
         }
     }
 
@@ -443,12 +442,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return userBean.isValidUser();
     }
 
-    public int getNumberOfSamples(String businessKey) {
-        ProductOrderCompletionStatus counter = progressByBusinessKey.get(businessKey);
-        if (counter == null) {
-            return 0;
-        }
-
-        return counter.getTotal();
+    public CompletionStatusFetcher getProgressFetcher() {
+        return progressFetcher;
     }
 }
