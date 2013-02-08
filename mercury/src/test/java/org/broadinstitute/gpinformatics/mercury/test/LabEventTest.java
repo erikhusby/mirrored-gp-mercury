@@ -135,7 +135,7 @@ public class LabEventTest {
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, "Hybrid Selection", false), new ResearchProject(101L, "Test RP", "Test synopsis",
+                40, null, null, true, WorkflowConfig.WorkflowName.HYBRID_SELECTION.getWorkflowName(), false), new ResearchProject(101L, "Test RP", "Test synopsis",
                 false));
         String jiraTicketKey = "PD0-1";
         productOrder.setJiraTicketKey(jiraTicketKey);
@@ -269,7 +269,7 @@ public class LabEventTest {
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, "Exome Express", false), new ResearchProject(101L, "Test RP", "Test synopsis",
+                40, null, null, true, WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName(), false), new ResearchProject(101L, "Test RP", "Test synopsis",
                 false));
         String jiraTicketKey = "PD0-1";
         productOrder.setJiraTicketKey(jiraTicketKey);
@@ -383,7 +383,7 @@ public class LabEventTest {
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, "Whole Genome Shotgun", false), new ResearchProject(101L, "Test RP",
+                40, null, null, true, WorkflowConfig.WorkflowName.WHOLE_GENOME_SHOTGUN.getWorkflowName(), false), new ResearchProject(101L, "Test RP",
                 "Test synopsis", false));
         String jiraTicketKey = "PD0-2";
         productOrder.setJiraTicketKey(jiraTicketKey);

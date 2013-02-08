@@ -394,11 +394,8 @@ public class BucketBean {
          */
         if (bucketBatch == null) {
 
-            //TODO SGM  Should use logic in LabBatchEJB
+//            throw new InformaticsServiceException("There should be an existing Batch");
 
-            bucketBatch = new LabBatch(LabBatch.generateBatchName(CreateFields.IssueType.EXOME_EXPRESS.getJiraName(),
-                    LabVessel.extractPdoKeyList(batchVessels)),
-                    batchVessels);
         }
 
         removeEntries(bucketEntries);

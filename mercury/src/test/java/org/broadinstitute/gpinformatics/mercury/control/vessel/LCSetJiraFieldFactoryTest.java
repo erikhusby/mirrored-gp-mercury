@@ -58,7 +58,7 @@ public class LCSetJiraFieldFactoryTest {
         pdoNames = new ArrayList<String>();
         Collections.addAll(pdoNames, pdoBusinessName);
 
-        workflowName = "Exome Express";
+        workflowName = WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName();
         mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
 
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();

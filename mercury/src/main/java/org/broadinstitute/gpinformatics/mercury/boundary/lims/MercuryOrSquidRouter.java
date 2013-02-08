@@ -7,6 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedT
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.inject.Inject;
 import java.util.Arrays;
@@ -27,7 +28,7 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTra
 public class MercuryOrSquidRouter {
 
     /** Names of products that Mercury should handle queries and messaging for. */
-    public static final Collection<String> MERCURY_PRODUCTS = Arrays.asList("Exome Express");
+    public static final Collection<String> MERCURY_PRODUCTS = Arrays.asList(WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName());
 
     public enum MercuryOrSquid { MERCURY, SQUID }
 

@@ -97,6 +97,8 @@ public class MercuryOrSquidRouterTest {
         ProductFamily family = new ProductFamily("Test Product Family");
         testProduct = new Product("Test Product", family, "Test product", "P-TEST-1", new Date(), new Date(),
                 0, 0, 0, 0, "Test samples only", "None", true, "Test Workflow", false);
+
+        //todo SGM:  Revisit. This probably meant to set the Workflow to ExEx
         exomeExpress = new Product("Exome Express", family, "Exome express", "P-EX-1", new Date(), new Date(),
                 0, 0, 0, 0, "Test exome express samples only", "None", true, "Test Exome Express Workflow", false);
     }

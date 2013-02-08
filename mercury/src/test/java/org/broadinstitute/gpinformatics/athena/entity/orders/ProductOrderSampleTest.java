@@ -65,7 +65,7 @@ public class ProductOrderSampleTest {
             ProductOrder order = AthenaClientServiceStub.createDummyProductOrder();
             product = order.getProduct();
             MaterialType materialType = new MaterialType(BSP_MATERIAL_TYPE.getCategory(), BSP_MATERIAL_TYPE.getName());
-            addOn = AthenaClientServiceStub.createDummyProduct();
+            addOn = AthenaClientServiceStub.createDummyProduct("Exome Express", "partNumber");
             addOn.addAllowableMaterialType(materialType);
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);

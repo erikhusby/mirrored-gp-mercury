@@ -104,7 +104,7 @@ public abstract class LabVessel implements Serializable {
     @JoinTable(schema = "mercury")
     private Collection<StatusNote> notes = new HashSet<StatusNote>();
 
-    @OneToMany(mappedBy = "labVessel")
+    @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
     private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
 
     @Embedded
