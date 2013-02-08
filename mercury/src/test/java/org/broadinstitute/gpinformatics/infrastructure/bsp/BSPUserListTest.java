@@ -16,6 +16,9 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class BSPUserListTest extends Arquillian {
+    private final String TEST_BADGE_ID = "bsptestuser_badge_id_1234";
+    private final String BSP_TEST_USER = "tester";
+
     @Deployment
     public static WebArchive deployment() {
         return DeploymentBuilder.buildMercuryWar(DEV);
@@ -43,9 +46,14 @@ public class BSPUserListTest extends Arquillian {
     }
 
     @Test(enabled = true)
+    public void testFindUserByBadgeId() throws Exception {
+        BspUser user = bspUserList.getByBadgeId(TEST_BADGE_ID);
+        Assert.assertNotNull(user, "Could not find test user!!");
+        Assert.assertTrue(user.getUsername().equals(BSP_TEST_USER), "user is not test user!");
+    }
+
+    @Test(enabled = true)
     public void testHasBadgeId() throws Exception {
-        final String TEST_BADGE_ID = "bsptestuser_badge_id_1234";
-        final String BSP_TEST_USER = "tester";
         BspUser user = bspUserList.getByUsername(BSP_TEST_USER);
         Assert.assertNotNull(user, "Could not find test user!!");
         Assert.assertTrue(user.getUsername().equals(BSP_TEST_USER), "user is not test user!");
