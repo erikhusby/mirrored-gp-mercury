@@ -5,11 +5,14 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.*;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.TableauLink;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.CohortTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.FundingTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
@@ -23,10 +26,7 @@ import org.json.JSONException;
 
 import javax.inject.Inject;
 import java.text.MessageFormat;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * This class is for research projects action bean / web page.
@@ -114,7 +114,12 @@ public class ResearchProjectActionBean extends CoreActionBean {
     @Inject
     private UserBean userBean;
 
+    @Inject
+    private ProductOrderDao productOrderDao;
+
     private String irbList = "";
+
+    private CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
 
     /**
      * Fetch the complete list of research projects.
@@ -140,6 +145,16 @@ public class ResearchProjectActionBean extends CoreActionBean {
             } else {
                 editResearchProject = new ResearchProject();
             }
+        }
+
+        // Get the totals for the order
+        Collection<String> businessKeys = new ArrayList<String> ();
+        for (ProductOrder order : editResearchProject.getProductOrders()) {
+            businessKeys.add(order.getBusinessKey());
+        }
+
+        if (!businessKeys.isEmpty()) {
+            progressFetcher.setupProgress(productOrderDao, businessKeys);
         }
     }
 
@@ -427,4 +442,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
         return userBean.isValidUser();
     }
 
+    public CompletionStatusFetcher getProgressFetcher() {
+        return progressFetcher;
+    }
 }

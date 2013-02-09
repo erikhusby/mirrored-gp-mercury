@@ -56,8 +56,6 @@
                         }
                     );
 
-
-                    initializeUIForProductChoice();
                     updateFundsRemaining();
                 }
             );
@@ -72,17 +70,7 @@
             </c:forEach>
 
 
-            function initializeUIForProductChoice() {
-                configureUIForProductChoice({"isUpdate" : false});
-            }
-
-
             function updateUIForProductChoice() {
-                configureUIForProductChoice({"isUpdate" : true});
-            }
-
-
-            function configureUIForProductChoice(options) {
 
                 var productKey = $j("#product").val();
                 if ((productKey == null) || (productKey == "")) {
@@ -98,29 +86,17 @@
                 $j.ajax({
                     url: "${ctxpath}/orders/order.action?getSupportsNumberOfLanes=&product=" + productKey,
                     dataType: 'json',
-                    success: options.isUpdate ? updateNumberOfLanesVisibility : initializeNumberOfLanesVisibility
+                    success: updateNumberOfLanesVisibility
                 });
             }
 
 
             function updateNumberOfLanesVisibility(data) {
-                configureNumberOfLanesVisibility(data, {'isUpdate' : true});
-            }
-
-
-            function initializeNumberOfLanesVisibility(data) {
-                configureNumberOfLanesVisibility(data, {'isUpdate' : false});
-            }
-
-
-            function configureNumberOfLanesVisibility(data, options) {
                 var numberOfLanesDiv = $j("#numberOfLanesDiv");
-                if (data.supportsNumberOfLanes) {
-                    options.isUpdate ? numberOfLanesDiv.fadeIn({'duration' : 1000}) : numberOfLanesDiv.show();
-                }
-                else {
-                    options.isUpdate ? numberOfLanesDiv.fadeOut({'duration' : 1000}) : numberOfLanesDiv.hide();
-                }
+
+                var duration = {'duration' : 800};
+
+                data.supportsNumberOfLanes ? numberOfLanesDiv.fadeIn(duration) : numberOfLanesDiv.fadeOut(duration);
             }
 
 
@@ -145,7 +121,12 @@
                     checkboxText += '  <label style="font-size: x-small;" for="' + addOnId + '">' + val.value +' [' + val.key + ']</label>';
                 });
 
-                $j("#addOnCheckboxes").html(checkboxText);
+                var duration = {'duration' : 800};
+
+                var checkboxes = $j("#addOnCheckboxes");
+                checkboxes.hide();
+                checkboxes.html(checkboxText);
+                checkboxes.fadeIn(duration);
             }
 
             function updateFundsRemaining() {
@@ -286,7 +267,7 @@
                     </div>
                 </div>
 
-                <div id="numberOfLanesDiv" class="control-group">
+                <div id="numberOfLanesDiv" class="control-group" style="display: ${actionBean.editOrder.product.supportsNumberOfLanes ? 'block' : 'none'};">
                     <stripes:label for="numberOfLanes" class="control-label">
                         Number of Lanes Per Sample
                     </stripes:label>

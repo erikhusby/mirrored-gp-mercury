@@ -9,6 +9,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
@@ -140,6 +141,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<Long> sampleIdsForGetBspData;
 
+    private CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
+
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
         @Validate(field="title", required = true, maxlength=255, on={SAVE_ACTION}, label = "Name"),
@@ -192,6 +195,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
+
+            progressFetcher.setupProgress(productOrderDao, Collections.singletonList(editOrder.getBusinessKey()));
         } else {
             // If this was a create with research project specified, find that.
             // This is only used for save, when creating a new product order.
@@ -347,6 +352,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION})
     public void listInit() {
         allProductOrders = orderListEntryDao.findProductOrderListEntries();
+        progressFetcher.setupProgress(productOrderDao);
     }
 
     private void validateUser(String validatingFor) {
@@ -617,7 +623,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getSupportsNumberOfLanes")
     public Resolution getSupportsNumberOfLanes() throws Exception {
-        boolean supportsNumberOfLanes = true;
+        boolean supportsNumberOfLanes = false;
         JSONObject item = new JSONObject();
 
         if (this.product != null) {
@@ -995,5 +1001,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setRiskComment(String riskComment) {
         this.riskComment = riskComment;
+    }
+
+    public CompletionStatusFetcher getProgressFetcher() {
+        return progressFetcher;
     }
 }

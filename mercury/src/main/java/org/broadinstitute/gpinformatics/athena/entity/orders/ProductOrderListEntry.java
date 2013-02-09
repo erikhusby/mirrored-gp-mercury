@@ -30,8 +30,6 @@ public class ProductOrderListEntry implements Serializable {
 
     private Date updatedDate;
 
-    private Integer pdoSampleCount;
-
     private Long billingSessionId;
 
     private Long unbilledLedgerEntryCount = 0L;
@@ -52,7 +50,7 @@ public class ProductOrderListEntry implements Serializable {
      */
     public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
                                  String productName, String productFamilyName, String researchProjectTitle, Long ownerId,
-                                 Date updatedDate, Integer pdoSampleCount) {
+                                 Date updatedDate) {
         this.orderId = orderId;
         this.title = title;
         this.jiraTicketKey = jiraTicketKey;
@@ -62,7 +60,6 @@ public class ProductOrderListEntry implements Serializable {
         this.researchProjectTitle = researchProjectTitle;
         this.ownerId = ownerId;
         this.updatedDate = updatedDate;
-        this.pdoSampleCount = pdoSampleCount;
     }
 
 
@@ -128,10 +125,6 @@ public class ProductOrderListEntry implements Serializable {
             return null;
         }
         return BillingSession.ID_PREFIX + billingSessionId;
-    }
-
-    public Integer getPdoSampleCount() {
-        return pdoSampleCount;
     }
 
     public Long getBillingSessionId() {
