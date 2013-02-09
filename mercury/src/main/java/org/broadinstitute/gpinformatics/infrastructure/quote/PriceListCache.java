@@ -15,15 +15,14 @@ import java.util.*;
 
 /**
  *
- * Application-wide cache of all price items, potentially filtering by platform. {@link @Named} and
- * {@link javax.enterprise.context.ApplicationScoped} annotated to be directly usable from JSF templates or backing
- * beans
+ * Application-wide cache of all price items, potentially filtering by platform. {@link @Named}
  *
  */
 @Named
 @ApplicationScoped
 public class PriceListCache extends AbstractCache implements Serializable {
-    
+    private static final long serialVersionUID = 1843525203075284455L;
+
     private Collection<PriceItem> priceItems = new ArrayList<PriceItem>();
 
     private PMBQuoteService quoteService;
