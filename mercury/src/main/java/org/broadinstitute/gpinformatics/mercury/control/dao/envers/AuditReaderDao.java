@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
+import org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo_;
@@ -10,6 +11,7 @@ import org.hibernate.envers.query.AuditQuery;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.persistence.NoResultException;
+import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
@@ -21,13 +23,10 @@ import java.util.*;
  */
 @ApplicationScoped
 public class AuditReaderDao extends GenericDao {
+    private AuditReader auditReader = AuditReaderFactory.get(getEntityManager());
 
-    /**
-     * Returns an auditReader, doing one-time init if needed.
-     * @return the auditReader
-     */
-    private AuditReader getAuditReader() {
-        return AuditReaderFactory.get(getEntityManager());
+    void setAuditReader(AuditReader ar) {
+        auditReader = ar;
     }
 
     /**
@@ -80,7 +79,7 @@ public class AuditReaderDao extends GenericDao {
             if (sublist.size() == IN_CLAUSE_LIMIT || sublist.size() == revIds.size()) {
 
                 // Processes and flushes sublist.
-                AuditQuery query = getAuditReader().createQuery()
+                AuditQuery query = auditReader.createQuery()
                         .forRevisionsOfEntity(entityClass, false, true)
                         .add(AuditEntity.revisionNumber().in(sublist));
                 try {
@@ -92,6 +91,23 @@ public class AuditReaderDao extends GenericDao {
             }
         }
         return dataChanges;
+    }
+
+        /**
+     * Finds the date a recent audit rev, typically the most recent.
+     * @return timestamp represented as mSec since start of the epoch
+     */
+    public long fetchLatestAuditDate(String audTableName) {
+        String queryString = "SELECT TO_CHAR(rev_date,'YYYYMMDDHH24MISSRR')||'0' FROM REV_INFO " +
+                " WHERE rev_info_id = (SELECT MAX(rev) FROM " + audTableName + ")";
+        Query query = getEntityManager().createNativeQuery(queryString);
+        try {
+            String result = (String)query.getSingleResult();
+            long timestamp = ExtractTransform.msecTimestampFormat.parse(result).getTime();
+            return timestamp;
+        } catch (Exception e) {
+            return 0L;
+        }
     }
 
 }
