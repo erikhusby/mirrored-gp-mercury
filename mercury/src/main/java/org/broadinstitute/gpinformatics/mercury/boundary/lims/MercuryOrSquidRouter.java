@@ -1,12 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
 import javax.inject.Inject;
@@ -16,7 +17,6 @@ import java.util.List;
 
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.MERCURY;
 import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter.MercuryOrSquid.SQUID;
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
 
 /**
  * Utility for routing messages and queries to Mercury or Squid as determined by the supplied sample containers.
@@ -27,20 +27,22 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTra
  */
 public class MercuryOrSquidRouter {
 
-    /** Names of products that Mercury should handle queries and messaging for. */
-    public static final Collection<String> MERCURY_PRODUCTS = Arrays.asList(WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName());
+    /**
+     * Names of products that Mercury should handle queries and messaging for.
+     */
+    public static final Collection<String> MERCURY_PRODUCTS =
+            Arrays.asList(WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName());
 
-    public enum MercuryOrSquid { MERCURY, SQUID }
+    public enum MercuryOrSquid {MERCURY, SQUID}
 
-    private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
-    private StaticPlateDAO staticPlateDAO;
-    private ProductOrderDao productOrderDao;
+    private LabVesselDao labVesselDao;
+
+    private AthenaClientService athenaClientService;
 
     @Inject
-    public MercuryOrSquidRouter(TwoDBarcodedTubeDAO twoDBarcodedTubeDAO, StaticPlateDAO staticPlateDAO, ProductOrderDao productOrderDao) {
-        this.twoDBarcodedTubeDAO = twoDBarcodedTubeDAO;
-        this.staticPlateDAO = staticPlateDAO;
-        this.productOrderDao = productOrderDao;
+    public MercuryOrSquidRouter(LabVesselDao labVesselDao, AthenaClientService athenaClientService) {
+        this.labVesselDao = labVesselDao;
+        this.athenaClientService = athenaClientService;
     }
 
     public MercuryOrSquid routeForTubes(List<String> tubeBarcodes) {
@@ -53,8 +55,13 @@ public class MercuryOrSquidRouter {
     }
 
     public MercuryOrSquid routeForPlate(String plateBarcode) {
-        StaticPlate plate = staticPlateDAO.findByBarcode(plateBarcode);
+        StaticPlate plate = (StaticPlate) labVesselDao.findByIdentifier(plateBarcode);
         return routeForVessel(plate);
+    }
+
+    public MercuryOrSquid routeForVessel(String barcode) {
+        LabVessel vessel = labVesselDao.findByIdentifier(barcode);
+        return routeForVessel(vessel);
     }
 
     // TODO: figure out how to handle libraryNames for fetchLibraryDetailsByLibraryName
@@ -62,30 +69,31 @@ public class MercuryOrSquidRouter {
     /**
      * Determines if a tube belongs to Mercury or Squid. See {@link MercuryOrSquid} for a description of "belongs".
      *
-     * @param tubeBarcode    the barcode of the tube to check
+     * @param tubeBarcode the barcode of the tube to check
+     *
      * @return system that should process messages/queries for the tube
      */
     public MercuryOrSquid routeForTube(String tubeBarcode) {
-        TwoDBarcodedTube tube = twoDBarcodedTubeDAO.findByBarcode(tubeBarcode);
+        TwoDBarcodedTube tube = (TwoDBarcodedTube) labVesselDao.findByIdentifier(tubeBarcode);
         return routeForVessel(tube);
     }
 
     private MercuryOrSquid routeForVessel(LabVessel vessel) {
         if (vessel != null) {
-/*
-            HasProductOrderCriteria criteria = new HasProductOrderCriteria();
-            tube.evaluateCriteria(criteria, Ancestors);
-            if (criteria.getFoundAnyProductOrder()) {
-                return MERCURY;
-            } else {
-                return SQUID;
-            }
-*/
+            /*
+                        HasProductOrderCriteria criteria = new HasProductOrderCriteria();
+                        tube.evaluateCriteria(criteria, Ancestors);
+                        if (criteria.getFoundAnyProductOrder()) {
+                            return MERCURY;
+                        } else {
+                            return SQUID;
+                        }
+            */
             for (SampleInstance sampleInstance : vessel.getSampleInstances()) {
                 String productOrderKey = sampleInstance.getStartingSample().getProductOrderKey();
                 if (productOrderKey != null) {
-                    ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
-                    if (order != null && MERCURY_PRODUCTS.contains(order.getProduct().getProductName())) {
+                    ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
+                    if (order != null && MERCURY_PRODUCTS.contains(order.getProduct().getWorkflowName())) {
                         return MERCURY;
                     }
                 }
@@ -104,8 +112,8 @@ public class MercuryOrSquidRouter {
                 for (SampleInstance sampleInstance : context.getLabVessel().getSampleInstances()) {
                     String productOrderKey = sampleInstance.getStartingSample().getProductOrderKey();
                     if (productOrderKey != null) {
-                        ProductOrder order = productOrderDao.findByBusinessKey(productOrderKey);
-                        if (order != null && MERCURY_PRODUCTS.contains(order.getProduct().getProductName())) {
+                        ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
+                        if (order != null && MERCURY_PRODUCTS.contains(order.getProduct().getWorkflowName())) {
                             foundAnyProductOrder = true;
                             return TraversalControl.StopTraversing;
                         }

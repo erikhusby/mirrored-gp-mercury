@@ -185,11 +185,11 @@ public class BucketBean {
 
         LabBatch bucketBatch = startBucketDrain(bucketEntrySet, operator, batchInitiationLocation, false);
 
-        if (bucketBatch.getJiraTicket() == null) {
-            batchEjb.batchToJira(operator, batchTicket, bucketBatch);
-        }
+//        if (bucketBatch.getJiraTicket() == null) {
+//            batchEjb.batchToJira(operator, batchTicket, bucketBatch);
+//        }
 
-        batchEjb.jiraBatchNotification(bucketBatch);
+//        batchEjb.jiraBatchNotification(bucketBatch);
 
 
     }

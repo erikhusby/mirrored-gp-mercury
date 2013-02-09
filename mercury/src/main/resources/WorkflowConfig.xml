@@ -523,7 +523,7 @@
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
-        <name>Whole Genome Shotgun</name>
+        <name>Whole Genome</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
             <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>

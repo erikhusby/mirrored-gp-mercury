@@ -18,7 +18,7 @@ public class WorkflowConfig {
     public enum WorkflowName {
         EXOME_EXPRESS("Exome Express"),
         HYBRID_SELECTION("Hybrid Selection"),
-        WHOLE_GENOME_SHOTGUN("Whole Genome Shotgun"),
+//        WHOLE_GENOME_SHOTGUN("Whole Genome Shotgun"),
         WHOLE_GENOME("Whole Genome");
 
         private final String workflowName;

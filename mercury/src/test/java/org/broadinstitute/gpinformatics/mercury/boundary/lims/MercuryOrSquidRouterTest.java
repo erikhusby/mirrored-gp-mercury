@@ -6,13 +6,12 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
-import org.easymock.EasyMockSupport;
-import org.testng.annotations.AfterMethod;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -29,7 +28,6 @@ import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.AdditionalMatchers.or;
-import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.*;
 
 /**
@@ -58,9 +56,8 @@ public class MercuryOrSquidRouterTest {
 
     private MercuryOrSquidRouter mercuryOrSquidRouter;
 
-    private TwoDBarcodedTubeDAO mockTwoDBarcodedTubeDAO;
-    private StaticPlateDAO mockStaticPlateDAO;
-    private ProductOrderDao mockProductOrderDao;
+    private LabVesselDao mockLabVesselDao;
+    private AthenaClientService mockAthenaClientService;
     private int productOrderSequence = 1;
 
     private TwoDBarcodedTube tube1;
@@ -73,24 +70,23 @@ public class MercuryOrSquidRouterTest {
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void setUp() throws Exception {
-        mockTwoDBarcodedTubeDAO = mock(TwoDBarcodedTubeDAO.class);
-        mockStaticPlateDAO = mock(StaticPlateDAO.class);
-        mockProductOrderDao = mock(ProductOrderDao.class);
-        mercuryOrSquidRouter = new MercuryOrSquidRouter(mockTwoDBarcodedTubeDAO, mockStaticPlateDAO, mockProductOrderDao);
+        mockLabVesselDao = mock(LabVesselDao.class);
+        mockAthenaClientService = mock(AthenaClientService.class);
+        mercuryOrSquidRouter = new MercuryOrSquidRouter(mockLabVesselDao, mockAthenaClientService);
 
 //        when(mockTwoDBarcodedTubeDAO.findByBarcode(anyString())).thenReturn(null); // TODO: Make this explicit and required? Currently this is the default behavior even without this call
 
         tube1 = new TwoDBarcodedTube(MERCURY_TUBE_1);
-        when(mockTwoDBarcodedTubeDAO.findByBarcode(MERCURY_TUBE_1)).thenReturn(tube1);
+        when(mockLabVesselDao.findByIdentifier(MERCURY_TUBE_1)).thenReturn(tube1);
 
         tube2 = new TwoDBarcodedTube(MERCURY_TUBE_2);
-        when(mockTwoDBarcodedTubeDAO.findByBarcode(MERCURY_TUBE_2)).thenReturn(tube2);
+        when(mockLabVesselDao.findByIdentifier(MERCURY_TUBE_2)).thenReturn(tube2);
 
         tube3 = new TwoDBarcodedTube(MERCURY_TUBE_3);
-        when(mockTwoDBarcodedTubeDAO.findByBarcode(MERCURY_TUBE_3)).thenReturn(tube3);
+        when(mockLabVesselDao.findByIdentifier(MERCURY_TUBE_3)).thenReturn(tube3);
 
         plate = new StaticPlate("mercuryPlate", Eppendorf96);
-        when(mockStaticPlateDAO.findByBarcode("mercuryPlate")).thenReturn(plate);
+        when(mockLabVesselDao.findByIdentifier("mercuryPlate")).thenReturn(plate);
 
         testProject = new ResearchProject(101L, "Test Project", "Test project", true);
 
@@ -100,7 +96,7 @@ public class MercuryOrSquidRouterTest {
 
         //todo SGM:  Revisit. This probably meant to set the Workflow to ExEx
         exomeExpress = new Product("Exome Express", family, "Exome express", "P-EX-1", new Date(), new Date(),
-                0, 0, 0, 0, "Test exome express samples only", "None", true, "Test Exome Express Workflow", false);
+                0, 0, 0, 0, "Test exome express samples only", "None", true, WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName(), false);
     }
 
     /*
@@ -110,42 +106,42 @@ public class MercuryOrSquidRouterTest {
     @Test(groups = DATABASE_FREE)
     public void testRouteForTubesNoneInMercury() {
         assertThat(mercuryOrSquidRouter.routeForTubes(Arrays.asList("squidTube1", "squidTube2")), is(SQUID));
-        verify(mockTwoDBarcodedTubeDAO).findByBarcode("squidTube1");
-        verify(mockTwoDBarcodedTubeDAO).findByBarcode("squidTube2");
+        verify(mockLabVesselDao).findByIdentifier("squidTube1");
+        verify(mockLabVesselDao).findByIdentifier("squidTube2");
     }
 
     @Test(groups = DATABASE_FREE)
     public void testRouteForTubesSomeInMercuryWithoutOrders() {
         assertThat(mercuryOrSquidRouter.routeForTubes(Arrays.asList("squidTube", MERCURY_TUBE_1)), is(SQUID));
-        verify(mockTwoDBarcodedTubeDAO).findByBarcode("squidTube");
-        verify(mockTwoDBarcodedTubeDAO).findByBarcode(MERCURY_TUBE_1);
+        verify(mockLabVesselDao).findByIdentifier("squidTube");
+        verify(mockLabVesselDao).findByIdentifier(MERCURY_TUBE_1);
     }
 
     @Test(groups = DATABASE_FREE)
     public void testRouteForTubesSomeInMercuryWithNonExomeExpressOrders() {
         ProductOrder order = placeOrderForTube(tube1, testProduct);
         assertThat(mercuryOrSquidRouter.routeForTubes(Arrays.asList("squidTube", MERCURY_TUBE_1)), is(SQUID));
-        verify(mockTwoDBarcodedTubeDAO).findByBarcode("squidTube");
-        verify(mockTwoDBarcodedTubeDAO).findByBarcode(MERCURY_TUBE_1);
-        verify(mockProductOrderDao).findByBusinessKey(order.getBusinessKey());
+        verify(mockLabVesselDao).findByIdentifier("squidTube");
+        verify(mockLabVesselDao).findByIdentifier(MERCURY_TUBE_1);
+        verify(mockAthenaClientService).retrieveProductOrderDetails(order.getBusinessKey());
     }
 
     @Test(groups = DATABASE_FREE)
     public void testRouteForTubesAllInMercuryWithoutExomeExpressOrders() {
         ProductOrder order = placeOrderForTube(tube2, testProduct);
         assertThat(mercuryOrSquidRouter.routeForTubes(Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2)), is(SQUID));
-        verify(mockTwoDBarcodedTubeDAO).findByBarcode(MERCURY_TUBE_1);
-        verify(mockTwoDBarcodedTubeDAO).findByBarcode(MERCURY_TUBE_2);
-        verify(mockProductOrderDao).findByBusinessKey(order.getBusinessKey());
+        verify(mockLabVesselDao).findByIdentifier(MERCURY_TUBE_1);
+        verify(mockLabVesselDao).findByIdentifier(MERCURY_TUBE_2);
+        verify(mockAthenaClientService).retrieveProductOrderDetails(order.getBusinessKey());
     }
 
     @Test(groups = DATABASE_FREE)
     public void testRouteForTubesSomeInMercuryWithExomeExpressOrders() {
         ProductOrder order = placeOrderForTube(tube1, exomeExpress);
         assertThat(mercuryOrSquidRouter.routeForTubes(Arrays.asList("squidTube", MERCURY_TUBE_1)), is(MERCURY));
-        verify(mockTwoDBarcodedTubeDAO).findByBarcode("squidTube");
-        verify(mockTwoDBarcodedTubeDAO).findByBarcode(MERCURY_TUBE_1);
-        verify(mockProductOrderDao).findByBusinessKey(order.getBusinessKey());
+        verify(mockLabVesselDao).findByIdentifier("squidTube");
+        verify(mockLabVesselDao).findByIdentifier(MERCURY_TUBE_1);
+        verify(mockAthenaClientService).retrieveProductOrderDetails(order.getBusinessKey());
     }
 
     @Test(groups = DATABASE_FREE)
@@ -153,10 +149,10 @@ public class MercuryOrSquidRouterTest {
         ProductOrder order1 = placeOrderForTube(tube1, testProduct);
         ProductOrder order2 = placeOrderForTube(tube2, exomeExpress);
         assertThat(mercuryOrSquidRouter.routeForTubes(Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2)), is(MERCURY));
-        verify(mockTwoDBarcodedTubeDAO).findByBarcode(MERCURY_TUBE_1);
-        verify(mockTwoDBarcodedTubeDAO).findByBarcode(MERCURY_TUBE_2);
-        verify(mockProductOrderDao).findByBusinessKey(order1.getBusinessKey());
-        verify(mockProductOrderDao).findByBusinessKey(order2.getBusinessKey());
+        verify(mockLabVesselDao).findByIdentifier(MERCURY_TUBE_1);
+        verify(mockLabVesselDao).findByIdentifier(MERCURY_TUBE_2);
+        verify(mockAthenaClientService).retrieveProductOrderDetails(order1.getBusinessKey());
+        verify(mockAthenaClientService).retrieveProductOrderDetails(order2.getBusinessKey());
     }
 
     @Test(groups = DATABASE_FREE)
@@ -165,8 +161,8 @@ public class MercuryOrSquidRouterTest {
         placeOrderForTube(tube2, exomeExpress);
         assertThat(mercuryOrSquidRouter.routeForTubes(Arrays.asList(MERCURY_TUBE_1, MERCURY_TUBE_2)), is(MERCURY));
         // only verify for one tube because current implementation short-circuits once one qualifying order is found
-        verify(mockTwoDBarcodedTubeDAO).findByBarcode(MERCURY_TUBE_1);
-        verify(mockProductOrderDao).findByBusinessKey(order1.getBusinessKey());
+        verify(mockLabVesselDao).findByIdentifier(MERCURY_TUBE_1);
+        verify(mockAthenaClientService).retrieveProductOrderDetails(order1.getBusinessKey());
     }
 
     /*
@@ -176,13 +172,13 @@ public class MercuryOrSquidRouterTest {
     @Test(groups = DATABASE_FREE)
     public void testRouteForPlateNotInMercury() {
         assertThat(mercuryOrSquidRouter.routeForPlate("squidPlate"), equalTo(SQUID));
-        verify(mockStaticPlateDAO).findByBarcode("squidPlate");
+        verify(mockLabVesselDao).findByIdentifier("squidPlate");
     }
 
     @Test(groups = DATABASE_FREE)
     public void testRouteForPlateInMercuryWithoutOrder() {
         assertThat(mercuryOrSquidRouter.routeForPlate("mercuryPlate"), equalTo(SQUID));
-        verify(mockStaticPlateDAO).findByBarcode("mercuryPlate");
+        verify(mockLabVesselDao).findByIdentifier("mercuryPlate");
     }
 
     @Test(groups = DATABASE_FREE)
@@ -190,8 +186,8 @@ public class MercuryOrSquidRouterTest {
         ProductOrder order = placeOrderForTube(tube1, testProduct);
         doSectionTransfer(makeTubeFormation(tube1), plate);
         assertThat(mercuryOrSquidRouter.routeForPlate("mercuryPlate"), equalTo(SQUID));
-        verify(mockStaticPlateDAO).findByBarcode("mercuryPlate");
-        verify(mockProductOrderDao).findByBusinessKey(order.getBusinessKey());
+        verify(mockLabVesselDao).findByIdentifier("mercuryPlate");
+        verify(mockAthenaClientService).retrieveProductOrderDetails(order.getBusinessKey());
     }
 
     @Test(groups = DATABASE_FREE)
@@ -200,11 +196,11 @@ public class MercuryOrSquidRouterTest {
         ProductOrder order2 = placeOrderForTube(tube2, exomeExpress);
         doSectionTransfer(makeTubeFormation(tube1, tube2), plate);
         assertThat(mercuryOrSquidRouter.routeForPlate("mercuryPlate"), equalTo(MERCURY));
-        verify(mockStaticPlateDAO).findByBarcode("mercuryPlate");
+        verify(mockLabVesselDao).findByIdentifier("mercuryPlate");
         // only verify for the Exome Express order because the other may be skipped if this one is inspected first
-        verify(mockProductOrderDao).findByBusinessKey(order2.getBusinessKey());
+        verify(mockAthenaClientService).retrieveProductOrderDetails(order2.getBusinessKey());
         // looking up the non-Exome Express order is allowed
-        verify(mockProductOrderDao, atMost(1)).findByBusinessKey(order1.getBusinessKey());
+        verify(mockAthenaClientService, atMost(1)).retrieveProductOrderDetails(order1.getBusinessKey());
     }
 
     @Test(groups = DATABASE_FREE)
@@ -213,9 +209,10 @@ public class MercuryOrSquidRouterTest {
         ProductOrder order2 = placeOrderForTube(tube2, exomeExpress);
         doSectionTransfer(makeTubeFormation(tube1, tube2), plate);
         assertThat(mercuryOrSquidRouter.routeForPlate("mercuryPlate"), equalTo(MERCURY));
-        verify(mockStaticPlateDAO).findByBarcode("mercuryPlate");
+        verify(mockLabVesselDao).findByIdentifier("mercuryPlate");
         // must look up one order or the other, but not both since they're both Exome Express
-        verify(mockProductOrderDao).findByBusinessKey(or(eq(order1.getBusinessKey()), eq(order2.getBusinessKey())));
+        verify(mockAthenaClientService).retrieveProductOrderDetails(or(eq(order1.getBusinessKey()),
+                                                                              eq(order2.getBusinessKey())));
     }
 
     /*
@@ -225,29 +222,29 @@ public class MercuryOrSquidRouterTest {
     @Test(groups = DATABASE_FREE)
     public void testRouteForTubeNotInMercury() {
         assertThat(mercuryOrSquidRouter.routeForTube("squidTube"), is(SQUID));
-        verify(mockTwoDBarcodedTubeDAO).findByBarcode("squidTube");
+        verify(mockLabVesselDao).findByIdentifier("squidTube");
     }
 
     @Test(groups = DATABASE_FREE)
     public void testRouteForTubeInMercuryWithoutOrder() {
         assertThat(mercuryOrSquidRouter.routeForTube(MERCURY_TUBE_1), is(SQUID));
-        verify(mockTwoDBarcodedTubeDAO).findByBarcode(MERCURY_TUBE_1);
+        verify(mockLabVesselDao).findByIdentifier(MERCURY_TUBE_1);
     }
 
     @Test(groups = DATABASE_FREE)
     public void testRouteForTubeInMercuryWithNonExomeExpressOrder() {
         ProductOrder order = placeOrderForTube(tube1, testProduct);
         assertThat(mercuryOrSquidRouter.routeForTube(MERCURY_TUBE_1), is(SQUID));
-        verify(mockTwoDBarcodedTubeDAO).findByBarcode(MERCURY_TUBE_1);
-        verify(mockProductOrderDao).findByBusinessKey(order.getBusinessKey());
+        verify(mockLabVesselDao).findByIdentifier(MERCURY_TUBE_1);
+        verify(mockAthenaClientService).retrieveProductOrderDetails(order.getBusinessKey());
     }
 
     @Test(groups = DATABASE_FREE)
     public void testRouteForTubeInMercuryWithExomeExpressOrder() {
         ProductOrder order = placeOrderForTube(tube1, exomeExpress);
         assertThat(mercuryOrSquidRouter.routeForTube(MERCURY_TUBE_1), is(MERCURY));
-        verify(mockTwoDBarcodedTubeDAO).findByBarcode(MERCURY_TUBE_1);
-        verify(mockProductOrderDao).findByBusinessKey(order.getBusinessKey());
+        verify(mockLabVesselDao).findByIdentifier(MERCURY_TUBE_1);
+        verify(mockAthenaClientService).retrieveProductOrderDetails(order.getBusinessKey());
     }
 
     /*
@@ -259,7 +256,7 @@ public class MercuryOrSquidRouterTest {
                 Collections.singletonList(new ProductOrderSample("SM-1")), "Quote-1", product, testProject);
         String jiraTicketKey = "PDO-" + productOrderSequence++;
         order.setJiraTicketKey(jiraTicketKey);
-        when(mockProductOrderDao.findByBusinessKey(jiraTicketKey)).thenReturn(order);
+        when(mockAthenaClientService.retrieveProductOrderDetails(jiraTicketKey)).thenReturn(order);
         tube.addSample(new MercurySample(jiraTicketKey, "SM-1"));
         return order;
     }

@@ -17,6 +17,9 @@ import java.util.*;
 public class TubeFormation extends LabVessel implements VesselContainerEmbedder<TwoDBarcodedTube> {
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "mercury", name = "LAB_VESSEL_RACKS_OF_TUBES",
+                      joinColumns = @JoinColumn(name = "LAB_VESSEL"),
+                      inverseJoinColumns = @JoinColumn(name = "RACKS_OF_TUBES"))
     private Set<RackOfTubes> racksOfTubes = new HashSet<RackOfTubes>();
 
     @Enumerated(EnumType.STRING)

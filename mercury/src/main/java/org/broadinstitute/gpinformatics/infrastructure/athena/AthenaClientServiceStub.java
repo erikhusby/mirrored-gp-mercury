@@ -93,7 +93,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
         String jiraKey = "PD0-2WGS";
 
 
-        return createDummyProductOrder(maxSamples, jiraKey, WorkflowConfig.WorkflowName.WHOLE_GENOME_SHOTGUN.getWorkflowName(), 301L, "Test RP", rpSynopsis,
+        return createDummyProductOrder(maxSamples, jiraKey, WorkflowConfig.WorkflowName.WHOLE_GENOME.getWorkflowName(), 301L, "Test RP", rpSynopsis,
                                        ResearchProject.IRB_ENGAGED, "P-WGS-9294");
 
     }

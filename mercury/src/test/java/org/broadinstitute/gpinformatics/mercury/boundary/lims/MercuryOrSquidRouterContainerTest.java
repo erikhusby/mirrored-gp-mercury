@@ -16,6 +16,8 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
@@ -122,11 +124,13 @@ public class MercuryOrSquidRouterContainerTest extends ContainerTest {
             vesselDao.clear();
         }
 
-        LabVessel finalItem = vesselDao.findByIdentifier(jaxbBuilder.getPicoPlatingNormalizaionBarcode());
+//        LabVessel finalItem = vesselDao.findByIdentifier(rackBarcode);
+        RackOfTubes finalItem = (RackOfTubes)vesselDao.findByIdentifier(jaxbBuilder.getPicoPlatingNormalizaionBarcode());
+        TubeFormation finalFormation = finalItem.getTubeFormations().iterator().next();
 
-        Assert.assertTrue(finalItem.getEvents().size() > 0);
-
+        Assert.assertTrue(finalFormation.getEvents().size() > 0);
     }
+
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testNonExomeExpressTubeEvent() throws Exception {
@@ -147,10 +151,10 @@ public class MercuryOrSquidRouterContainerTest extends ContainerTest {
             vesselDao.clear();
         }
 
-        LabVessel finalItem = vesselDao.findByIdentifier(jaxbBuilder.getRackBarcode());
+        RackOfTubes finalItem = (RackOfTubes)vesselDao.findByIdentifier(jaxbBuilder.getRackBarcode());
+        TubeFormation finalTubes = finalItem.getTubeFormations().iterator().next();
 
-        Assert.assertTrue(finalItem.getEvents().size() == 0);
-
+        Assert.assertTrue(finalTubes.getEvents().size() == 0);
     }
 
     private Map<String, TwoDBarcodedTube> buildVesselsForPdo(ProductOrder productOrder, String bucketName) {
