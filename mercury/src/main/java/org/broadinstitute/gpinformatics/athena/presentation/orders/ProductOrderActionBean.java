@@ -9,6 +9,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
@@ -21,7 +22,10 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSa
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.entity.orders.*;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -137,8 +141,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     private List<Long> sampleIdsForGetBspData;
 
-    private Map<String, ProductOrderCompletionStatus> progressByBusinessKey =
-            new HashMap<String, ProductOrderCompletionStatus> ();
+    private CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
 
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
@@ -192,8 +195,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
-            progressByBusinessKey =
-                productOrderDao.getProgressByBusinessKey(Collections.singletonList(editOrder.getBusinessKey()));
+
+            progressFetcher.setupProgress(productOrderDao, Collections.singletonList(editOrder.getBusinessKey()));
         } else {
             // If this was a create with research project specified, find that.
             // This is only used for save, when creating a new product order.
@@ -349,7 +352,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION})
     public void listInit() {
         allProductOrders = orderListEntryDao.findProductOrderListEntries();
-        progressByBusinessKey = productOrderDao.getProgressByBusinessKey();
+        progressFetcher.setupProgress(productOrderDao);
     }
 
     private void validateUser(String validatingFor) {
@@ -1000,34 +1003,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.riskComment = riskComment;
     }
 
-    public int getPercentAbandoned(String orderKey) {
-        ProductOrderCompletionStatus counter = progressByBusinessKey.get(orderKey);
-        if (counter == null) {
-            return 0;
-        }
-
-        return counter.getPercentAbandoned();
-    }
-
-    public int getPercentComplete(String orderKey) {
-        ProductOrderCompletionStatus counter = progressByBusinessKey.get(orderKey);
-        if (counter == null) {
-            return 0;
-        }
-
-        return counter.getPercentComplete();
-    }
-
-    public int getPercentCompleteAndAbandoned(String orderKey) {
-        return getPercentAbandoned(orderKey) + getPercentComplete(orderKey);
-    }
-
-    public int getNumberOfSamples(String orderKey) {
-        ProductOrderCompletionStatus counter = progressByBusinessKey.get(orderKey);
-        if (counter == null) {
-            return 0;
-        }
-
-        return counter.getTotal();
+    public CompletionStatusFetcher getProgressFetcher() {
+        return progressFetcher;
     }
 }
