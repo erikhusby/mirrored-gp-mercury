@@ -149,6 +149,7 @@ public class BettalimsMessageResource {
                         processInSquid = true;
                         break;
                     case PRODUCT_DEPENDENT:
+
                         // todo jmt for Mar 1, traverse plastic
                         break;
                     case BOTH:
@@ -372,7 +373,6 @@ public class BettalimsMessageResource {
         List<LabEvent> labEvents = labEventFactory.buildFromBettaLims(message);
         for (LabEvent labEvent : labEvents) {
             labEventHandler.processEvent(labEvent);
-
         }
     }
 

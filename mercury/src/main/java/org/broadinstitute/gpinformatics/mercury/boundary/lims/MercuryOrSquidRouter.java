@@ -45,6 +45,7 @@ public class MercuryOrSquidRouter {
         this.athenaClientService = athenaClientService;
     }
 
+    @Deprecated
     public MercuryOrSquid routeForTubes(List<String> tubeBarcodes) {
         for (String tubeBarcode : tubeBarcodes) {
             if (routeForTube(tubeBarcode) == MERCURY) {
@@ -54,9 +55,19 @@ public class MercuryOrSquidRouter {
         return SQUID;
     }
 
+    @Deprecated
     public MercuryOrSquid routeForPlate(String plateBarcode) {
         StaticPlate plate = (StaticPlate) labVesselDao.findByIdentifier(plateBarcode);
         return routeForVessel(plate);
+    }
+
+    public MercuryOrSquid routeForVessels(List<String> barcodes) {
+        for(String vesselBarcode: barcodes) {
+            if(routeForVessel(vesselBarcode) == MERCURY) {
+                return MERCURY;
+            }
+        }
+        return SQUID;
     }
 
     public MercuryOrSquid routeForVessel(String barcode) {
@@ -73,6 +84,7 @@ public class MercuryOrSquidRouter {
      *
      * @return system that should process messages/queries for the tube
      */
+    @Deprecated
     public MercuryOrSquid routeForTube(String tubeBarcode) {
         TwoDBarcodedTube tube = (TwoDBarcodedTube) labVesselDao.findByIdentifier(tubeBarcode);
         return routeForVessel(tube);

@@ -187,7 +187,7 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFindImmediatePlateParentsFromMercury() {
-        expect(mockMercuryOrSquidRouter.routeForPlate("mercuryPlate")).andReturn(MERCURY);
+        expect(mockMercuryOrSquidRouter.routeForVessel("mercuryPlate")).andReturn(MERCURY);
         expect(mockLimsQueries.findImmediatePlateParents("mercuryPlate")).andReturn(Arrays.asList("mp1", "mp2"));
         replayAll();
 
@@ -199,7 +199,7 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFindImmediatePlateParentsFromSquid() {
-        expect(mockMercuryOrSquidRouter.routeForPlate("squidPlate")).andReturn(SQUID);
+        expect(mockMercuryOrSquidRouter.routeForVessel("squidPlate")).andReturn(SQUID);
         expect(mockThriftService.findImmediatePlateParents("squidPlate")).andReturn(Arrays.asList("sp1", "sp2"));
         replayAll();
 
@@ -250,7 +250,7 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchParentRackContentsForPlateFromMercury() {
-        expect(mockMercuryOrSquidRouter.routeForPlate("mercuryPlate")).andReturn(MERCURY);
+        expect(mockMercuryOrSquidRouter.routeForVessel("mercuryPlate")).andReturn(MERCURY);
         Map<String, Boolean> map = new HashMap<String, Boolean>();
         map.put("A01", true);
         map.put("A02", false);
@@ -265,7 +265,7 @@ public class LimsQueryResourceUnitTest {
 
     @Test(groups = DATABASE_FREE)
     public void testFetchParentRackContentsForPlateFromSquid() {
-        expect(mockMercuryOrSquidRouter.routeForPlate("squidPlate")).andReturn(SQUID);
+        expect(mockMercuryOrSquidRouter.routeForVessel("squidPlate")).andReturn(SQUID);
         Map<String, Boolean> map = new HashMap<String, Boolean>();
         map.put("A01", true);
         map.put("A02", false);
