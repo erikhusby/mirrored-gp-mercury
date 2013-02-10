@@ -1,13 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.transfervis;
 
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
 
 /**
  * Start a server that deploys the EJB
  */
 public class TransferEntityGrapherTest extends ContainerTest {
-    @Test(enabled = false)
+    @Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testRun() {
         try {
             // Put the test to sleep, to keep the EJB deployed
