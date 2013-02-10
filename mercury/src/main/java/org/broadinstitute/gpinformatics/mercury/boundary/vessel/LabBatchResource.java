@@ -51,7 +51,7 @@ public class LabBatchResource {
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDAO.findByBarcodes(tubeBarcodes);
         Map<MercurySample, MercurySample> mapSampleToSample = mercurySampleDao.findByMercurySample(mercurySampleKeys);
-        LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample/*, null*/);
+        LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample);
 
         if(!labBatchBean.getBatchId().startsWith("BP")) {
             JiraTicket jiraTicket = new JiraTicket(jiraService, labBatchBean.getBatchId());
@@ -73,7 +73,7 @@ public class LabBatchResource {
      */
     @DaoFree
     public LabBatch buildLabBatch(LabBatchBean labBatchBean, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-            Map<MercurySample, MercurySample> mapBarcodeToSample/*, BasicProjectPlan projectPlan*/) {
+            Map<MercurySample, MercurySample> mapBarcodeToSample) {
         Set<LabVessel> starters = new HashSet<LabVessel>();
         for (TubeBean tubeBean : labBatchBean.getTubeBeans()) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTube.get(tubeBean.getBarcode());
