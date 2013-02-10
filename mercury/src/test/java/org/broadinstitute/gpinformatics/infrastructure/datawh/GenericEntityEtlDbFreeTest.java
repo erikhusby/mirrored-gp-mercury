@@ -22,7 +22,7 @@ import java.util.Date;
 import java.util.List;
 
 import static org.easymock.EasyMock.*;
-import static org.testng.Assert.*;
+import static org.testng.Assert.assertEquals;
 
 /**
  * dbfree unit test of GenericEntityEtl as implementd by ProductOrder etl.

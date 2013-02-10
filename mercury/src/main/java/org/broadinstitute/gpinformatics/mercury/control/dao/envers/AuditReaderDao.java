@@ -23,10 +23,9 @@ import java.util.*;
  */
 @ApplicationScoped
 public class AuditReaderDao extends GenericDao {
-    private AuditReader auditReader = AuditReaderFactory.get(getEntityManager());
 
-    void setAuditReader(AuditReader ar) {
-        auditReader = ar;
+    private AuditReader getAuditReader() {
+        return AuditReaderFactory.get(getEntityManager());
     }
 
     /**
@@ -79,7 +78,7 @@ public class AuditReaderDao extends GenericDao {
             if (sublist.size() == IN_CLAUSE_LIMIT || sublist.size() == revIds.size()) {
 
                 // Processes and flushes sublist.
-                AuditQuery query = auditReader.createQuery()
+                AuditQuery query = getAuditReader().createQuery()
                         .forRevisionsOfEntity(entityClass, false, true)
                         .add(AuditEntity.revisionNumber().in(sublist));
                 try {

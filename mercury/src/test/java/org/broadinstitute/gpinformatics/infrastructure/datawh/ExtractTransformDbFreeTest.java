@@ -1,15 +1,9 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.io.FileUtils;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
-import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
-import org.hibernate.envers.RevisionType;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
@@ -19,7 +13,7 @@ import org.testng.annotations.Test;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.util.Date;
 
 import static org.easymock.EasyMock.*;
 
@@ -38,7 +32,6 @@ public class ExtractTransformDbFreeTest {
     private String badDataDir = datafileDir + nowMsec;
 
     private ExtractTransform extractTransform;
-    private Deployment deployment;
     private AuditReaderDao auditReaderDao;
     private ProductEtl productEtl;
     private ProductOrderEtl productOrderEtl;
@@ -71,6 +64,7 @@ public class ExtractTransformDbFreeTest {
     public void beforeMethod() throws Exception {
         ExtractTransform.setDatafileDir(datafileDir);
         EtlTestUtilities.deleteEtlFiles(datafileDir);
+        resetAll();
     }
 
     @AfterMethod
@@ -80,9 +74,6 @@ public class ExtractTransformDbFreeTest {
 
 
     private void createMocks() {
-        deployment = createMock(Deployment.class);
-        extractTransform.setDeployment(deployment);
-
         auditReaderDao = createMock(AuditReaderDao.class);
         extractTransform.setAuditReaderDao(auditReaderDao);
 
@@ -139,7 +130,6 @@ public class ExtractTransformDbFreeTest {
     }
 
     private void replayAll() {
-        replay(deployment);
         replay(auditReaderDao);
         replay(productEtl);
         replay(productOrderEtl);
@@ -161,7 +151,6 @@ public class ExtractTransformDbFreeTest {
     }
 
     private void verifyAll() {
-        verify(deployment);
         verify(auditReaderDao);
         verify(productEtl);
         verify(productOrderEtl);
@@ -183,7 +172,6 @@ public class ExtractTransformDbFreeTest {
     }
 
     private void resetAll() {
-        reset(deployment);
         reset(auditReaderDao);
         reset(productEtl);
         reset(productOrderEtl);
@@ -216,6 +204,7 @@ public class ExtractTransformDbFreeTest {
         verifyAll();
 
         resetAll();
+        replayAll();
         ExtractTransform.setDatafileDir("");
         Assert.assertEquals(-1, extractTransform.incrementalEtl());
         Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR,
@@ -223,6 +212,7 @@ public class ExtractTransformDbFreeTest {
         verifyAll();
 
         resetAll();
+        replayAll();
         ExtractTransform.setDatafileDir(badDataDir);
         Assert.assertEquals(-1, extractTransform.incrementalEtl());
         Assert.assertEquals(Response.Status.INTERNAL_SERVER_ERROR,
@@ -234,7 +224,7 @@ public class ExtractTransformDbFreeTest {
      * Mathematically excludes changes by setting last ETL version impossibly high.
      */
     public void testNoChanges() {
-        resetAll();
+        replayAll();
         extractTransform.writeLastEtlRun(Long.MAX_VALUE - 1);
         Assert.assertEquals(0, extractTransform.incrementalEtl());
         Assert.assertTrue(ExtractTransform.getIncrementalRunStartTime() >= 0);
@@ -242,12 +232,13 @@ public class ExtractTransformDbFreeTest {
     }
 
     public void testBadRange() {
-        resetAll();
+        replayAll();
         Assert.assertEquals(Response.Status.BAD_REQUEST,
                 extractTransform.backfillEtl(ProductOrderSample.class.getName(), -1, Long.MAX_VALUE));
         verifyAll();
 
         resetAll();
+        replayAll();
         Assert.assertEquals(Response.Status.BAD_REQUEST,
                 extractTransform.backfillEtl(ProductOrderSample.class.getName(), 1000, 999));
         verifyAll();
@@ -257,9 +248,9 @@ public class ExtractTransformDbFreeTest {
      * Must supply fully qualified class name
      */
     public void testInvalidClassName() {
-        resetAll();
+        replayAll();
         Assert.assertEquals(Response.Status.NOT_FOUND,
-                extractTransform.backfillEtl("ProductOrderSample", 0, Long.MAX_VALUE));
+                extractTransform.backfillEtl("NoSuchClass_Ihope", 0, Long.MAX_VALUE));
         verifyAll();
     }
 
@@ -267,7 +258,7 @@ public class ExtractTransformDbFreeTest {
      * Passes a non-existent directory for the last run file.
      */
     public void testInvalidLastEtlBadDir() {
-        resetAll();
+        replayAll();
         extractTransform.setDatafileDir(badDataDir);
         Assert.assertEquals(0L, extractTransform.readLastEtlRun());
         verifyAll();
@@ -277,7 +268,7 @@ public class ExtractTransformDbFreeTest {
      * Writes an unparsable timestamp.
      */
     public void testReadLastEtlUnparsable() throws IOException {
-        resetAll();
+        replayAll();
         File file = new File(datafileDir, ExtractTransform.LAST_ETL_FILE);
         FileUtils.write(file, "abcedfg");
 
@@ -289,7 +280,7 @@ public class ExtractTransformDbFreeTest {
      * Takes the mutex, ETL cannot run.
      */
     public void testMutex() {
-        resetAll();
+        replayAll();
         Assert.assertTrue(ExtractTransform.getMutex().tryAcquire());
         try {
             int recordCount = extractTransform.incrementalEtl();

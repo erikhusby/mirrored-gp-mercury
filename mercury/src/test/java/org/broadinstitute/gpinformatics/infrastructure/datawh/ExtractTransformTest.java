@@ -1,16 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.log4j.Logger;
-import org.apache.poi.ss.formula.functions.T;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
-import org.hamcrest.text.X;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -22,8 +16,9 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.ws.rs.core.Response;
-import java.io.*;
-import java.text.SimpleDateFormat;
+import java.io.File;
+import java.io.FileReader;
+import java.io.Reader;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -98,9 +93,9 @@ public class ExtractTransformTest extends Arquillian {
             logger.warn("No audit entities exist -- cannot test etl");
             return;
         }
-
-        // Sets up the last etl file to be just before the most recent audit rev.
-        long startEtl = mostRecentTimestamp - 1;
+        logger.debug("most recent entity: " + mostRecentTimestamp + ", " + mostRecentClass.getEntityClass() + ", " + mostRecentClass.getBaseFilename());
+        // Sets up the last etl file to be just before the most recent audit rev.  Sql timestamp resolution is 10 mSec.
+        long startEtl = mostRecentTimestamp - 10;
         extractTransform.writeLastEtlRun(startEtl);
 
         // Does incremental Etl.
@@ -116,7 +111,7 @@ public class ExtractTransformTest extends Arquillian {
         String fileTimestamp = ExtractTransform.secTimestampFormat.format(new Date(endEtl));
         String isReadyFilename = fileTimestamp + ExtractTransform.READY_FILE_SUFFIX;
         Assert.assertTrue((new File(datafileDir, isReadyFilename)).exists());
-        String dataFilename = fileTimestamp + "_" + mostRecentClass.getBaseFilename();
+        String dataFilename = fileTimestamp + "_" + mostRecentClass.getBaseFilename() + ".dat";
         File datafile = new File(datafileDir, dataFilename);
         Assert.assertTrue(datafile.exists());
 
@@ -161,6 +156,9 @@ public class ExtractTransformTest extends Arquillian {
         }
         IOUtils.closeQuietly(reader);
         Assert.assertTrue(found);
+
+
+        auditReaderDao.fetchLatestAuditDate("PRODUCT_ORDER_SAMPLE");
     }
 
 }
