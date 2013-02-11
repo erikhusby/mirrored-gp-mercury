@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -10,7 +11,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserC
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -25,7 +28,7 @@ import static org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSq
  * The current definition of "belonging" to Mercury is that any sample in the tube is associated with an
  * Exome Express product order.
  */
-public class MercuryOrSquidRouter {
+public class MercuryOrSquidRouter implements Serializable {
 
     /**
      * Names of products that Mercury should handle queries and messaging for.
@@ -36,29 +39,15 @@ public class MercuryOrSquidRouter {
     public enum MercuryOrSquid {MERCURY, SQUID}
 
     private LabVesselDao labVesselDao;
-
     private AthenaClientService athenaClientService;
+
+    MercuryOrSquidRouter() {
+    }
 
     @Inject
     public MercuryOrSquidRouter(LabVesselDao labVesselDao, AthenaClientService athenaClientService) {
         this.labVesselDao = labVesselDao;
         this.athenaClientService = athenaClientService;
-    }
-
-    @Deprecated
-    public MercuryOrSquid routeForTubes(List<String> tubeBarcodes) {
-        for (String tubeBarcode : tubeBarcodes) {
-            if (routeForTube(tubeBarcode) == MERCURY) {
-                return MERCURY;
-            }
-        }
-        return SQUID;
-    }
-
-    @Deprecated
-    public MercuryOrSquid routeForPlate(String plateBarcode) {
-        StaticPlate plate = (StaticPlate) labVesselDao.findByIdentifier(plateBarcode);
-        return routeForVessel(plate);
     }
 
     public MercuryOrSquid routeForVessels(List<String> barcodes) {
@@ -70,6 +59,13 @@ public class MercuryOrSquidRouter {
         return SQUID;
     }
 
+    /**
+     * Determines if a tube belongs to Mercury or Squid. See {@link MercuryOrSquid} for a description of "belongs".
+     *
+     * @param barcode the barcode of the tube to check
+     *
+     * @return system that should process messages/queries for the tube
+     */
     public MercuryOrSquid routeForVessel(String barcode) {
         LabVessel vessel = labVesselDao.findByIdentifier(barcode);
         return routeForVessel(vessel);
@@ -77,20 +73,7 @@ public class MercuryOrSquidRouter {
 
     // TODO: figure out how to handle libraryNames for fetchLibraryDetailsByLibraryName
 
-    /**
-     * Determines if a tube belongs to Mercury or Squid. See {@link MercuryOrSquid} for a description of "belongs".
-     *
-     * @param tubeBarcode the barcode of the tube to check
-     *
-     * @return system that should process messages/queries for the tube
-     */
-    @Deprecated
-    public MercuryOrSquid routeForTube(String tubeBarcode) {
-        TwoDBarcodedTube tube = (TwoDBarcodedTube) labVesselDao.findByIdentifier(tubeBarcode);
-        return routeForVessel(tube);
-    }
-
-    private MercuryOrSquid routeForVessel(LabVessel vessel) {
+    public MercuryOrSquid routeForVessel(LabVessel vessel) {
         if (vessel != null) {
             /*
                         HasProductOrderCriteria criteria = new HasProductOrderCriteria();

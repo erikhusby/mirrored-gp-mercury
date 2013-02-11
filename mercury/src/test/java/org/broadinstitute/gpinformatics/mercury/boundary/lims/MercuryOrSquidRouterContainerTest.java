@@ -1,9 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import junit.framework.Assert;
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -56,12 +54,6 @@ public class MercuryOrSquidRouterContainerTest extends ContainerTest {
     private LabVesselDao vesselDao;
 
     @Inject
-    private ProductDao productDao;
-
-    @Inject
-    private ResearchProjectDao researchProjectDao;
-
-    @Inject
     private BettaLimsMessageFactory bettaLimsMessageFactory;
 
     @Inject
@@ -69,6 +61,10 @@ public class MercuryOrSquidRouterContainerTest extends ContainerTest {
 
     @Inject
     private BucketDao bucketDao;
+
+    @Inject
+    private MercuryOrSquidRouter mosRouter;
+
 
     private ProductOrder testExExOrder;
     private ProductOrder squidProductOrder;
@@ -110,7 +106,8 @@ public class MercuryOrSquidRouterContainerTest extends ContainerTest {
 
         testExExOrder = poDao.findByBusinessKey(exExJiraKey);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildVesselsForPdo(testExExOrder, "Pico/Plating Bucket");
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildVesselsForPdo(testExExOrder, "Pico/Plating Bucket",
+                                                                                   bucketDao, vesselDao);
 
         String rackBarcode = "REXEX" + (new Date()).toString();
         LabEventTest.PicoPlatingJaxbBuilder jaxbBuilder =
@@ -124,7 +121,6 @@ public class MercuryOrSquidRouterContainerTest extends ContainerTest {
             vesselDao.clear();
         }
 
-//        LabVessel finalItem = vesselDao.findByIdentifier(rackBarcode);
         RackOfTubes finalItem = (RackOfTubes)vesselDao.findByIdentifier(jaxbBuilder.getPicoPlatingNormalizaionBarcode());
         TubeFormation finalFormation = finalItem.getTubeFormations().iterator().next();
 
@@ -137,7 +133,8 @@ public class MercuryOrSquidRouterContainerTest extends ContainerTest {
 
         squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
 
-        Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildVesselsForPdo(squidProductOrder, null);
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube = buildVesselsForPdo(squidProductOrder, null, bucketDao,
+                                                                                   vesselDao);
 
         String rackBarcode = "RSQUID" + (new Date()).toString();
         LabEventTest.PreFlightJaxbBuilder jaxbBuilder =
@@ -157,7 +154,8 @@ public class MercuryOrSquidRouterContainerTest extends ContainerTest {
         Assert.assertTrue(finalTubes.getEvents().size() == 0);
     }
 
-    private Map<String, TwoDBarcodedTube> buildVesselsForPdo(ProductOrder productOrder, String bucketName) {
+    public static Map<String, TwoDBarcodedTube> buildVesselsForPdo(ProductOrder productOrder, String bucketName,
+                                                                   BucketDao bucketDao1, LabVesselDao vesselDao1) {
 
         Set<LabVessel> tubes = new HashSet<LabVessel>(productOrder.getTotalSampleCount());
 
@@ -167,7 +165,7 @@ public class MercuryOrSquidRouterContainerTest extends ContainerTest {
 
         Bucket bucket = null;
         if (bucketName != null) {
-            bucket = bucketDao.findByName(bucketName);
+            bucket = bucketDao1.findByName(bucketName);
             if (bucket == null) {
                 bucket = new Bucket(new WorkflowBucketDef(bucketName));
             }
@@ -189,17 +187,17 @@ public class MercuryOrSquidRouterContainerTest extends ContainerTest {
                 new LinkedHashMap<String, TwoDBarcodedTube>(productOrder.getTotalSampleCount());
 
         if (bucketName != null) {
-            bucketDao.persist(bucket);
-            bucketDao.flush();
-            bucketDao.clear();
+            bucketDao1.persist(bucket);
+            bucketDao1.flush();
+            bucketDao1.clear();
         } else {
-            vesselDao.persistAll(new ArrayList<Object>(tubes));
-            vesselDao.flush();
-            vesselDao.clear();
+            vesselDao1.persistAll(new ArrayList<Object>(tubes));
+            vesselDao1.flush();
+            vesselDao1.clear();
         }
 
         for (String barcode : barcodes) {
-            LabVessel foundTube = vesselDao.findByIdentifier(barcode);
+            LabVessel foundTube = vesselDao1.findByIdentifier(barcode);
             mapBarcodeToTube.put(barcode, (TwoDBarcodedTube) foundTube);
         }
         return mapBarcodeToTube;

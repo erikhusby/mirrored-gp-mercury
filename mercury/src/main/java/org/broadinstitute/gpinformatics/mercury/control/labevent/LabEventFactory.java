@@ -295,6 +295,45 @@ public class LabEventFactory implements Serializable {
     }
 
     /**
+     * Builds one or more lab event entities from a JAXB message bean that contains one or more event beans
+     *
+     * @param bettaLIMSMessage JAXB bean
+     *
+     * @return list of entities
+     */
+    public List<LabEvent> preBuildFromBettaLims ( BettaLIMSMessage bettaLIMSMessage ) {
+        List<LabEvent> labEvents = new ArrayList<LabEvent> ();
+        bettaLIMSMessage.getMode ();
+        Set<UniqueEvent> uniqueEvents = new HashSet<UniqueEvent> ();
+
+        // Have to persist and flush inside each loop, because the first event may create
+        // vessels that are referenced by the second event, e.g. PreSelectionPool
+        for ( PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent () ) {
+            LabEvent labEvent = buildFromBettaLims ( plateCherryPickEvent );
+            labEvents.add ( labEvent );
+        }
+        for ( PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent () ) {
+            LabEvent labEvent = buildFromBettaLims ( plateEventType );
+            labEvents.add ( labEvent );
+        }
+        for ( PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent () ) {
+            LabEvent labEvent = buildFromBettaLims ( plateTransferEventType );
+            labEvents.add ( labEvent );
+        }
+        for ( ReceptaclePlateTransferEvent receptaclePlateTransferEvent :
+                bettaLIMSMessage.getReceptaclePlateTransferEvent() ) {
+            LabEvent labEvent = buildFromBettaLims ( receptaclePlateTransferEvent );
+            labEvents.add ( labEvent );
+        }
+        for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
+            LabEvent labEvent = buildFromBettaLims(receptacleEventType);
+            labEvents.add(labEvent);
+        }
+
+        return labEvents;
+    }
+
+    /**
      * Modify disambiguators of other events in the same message, if necessary, and persist an event
      *
      * @param uniqueEvents    events in a message

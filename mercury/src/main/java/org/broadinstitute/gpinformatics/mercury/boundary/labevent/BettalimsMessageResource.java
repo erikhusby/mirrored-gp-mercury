@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePl
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
@@ -70,7 +71,7 @@ import java.util.*;
 @RequestScoped
 public class BettalimsMessageResource {
     /** workflow error message from Squid */
-    public static final String WORKFLOW_MESSAGE = " error(s) processing workflows for ";
+    private static final String WORKFLOW_MESSAGE = " error(s) processing workflows for ";
 
     private static final Log LOG = LogFactory.getLog(BettalimsMessageResource.class);
 
@@ -91,6 +92,9 @@ public class BettalimsMessageResource {
 
     @Inject
     private ThriftService thriftService;
+
+    @Inject
+    private MercuryOrSquidRouter mercuryOrSquidRouter;
 
     /**
      * Accepts a message from (typically) a liquid handling deck.  We unmarshal ourselves, rather than letting JAX-RS
@@ -132,8 +136,8 @@ public class BettalimsMessageResource {
             boolean processInSquid = false;
             if(bettaLIMSMessage.getMode() != null && bettaLIMSMessage.getMode().equals(LabEventFactory.MODE_MERCURY)) {
                 // Don't route Mercury test messages to BettalIMS/Squid
-                processInMercury = true;
-                processInSquid = false;
+                processInMercury = false;
+                processInSquid = true;
             } else {
                 LabEventType labEventType = getLabEventType(bettaLIMSMessage);
                 if(labEventType == null) {
@@ -149,6 +153,20 @@ public class BettalimsMessageResource {
                         processInSquid = true;
                         break;
                     case PRODUCT_DEPENDENT:
+
+                        List<LabEvent> preFoundEvents = labEventFactory.preBuildFromBettaLims(bettaLIMSMessage);
+
+                        for (LabEvent testEvent : preFoundEvents) {
+                            for (LabVessel currSourceVessel : testEvent.getAllLabVessels()) {
+                                if (MercuryOrSquidRouter.MercuryOrSquid
+                                                        .MERCURY
+                                                        .equals(mercuryOrSquidRouter.routeForVessel(currSourceVessel.getLabel()))) {
+                                    processInMercury = true;
+                                    processInSquid = false;
+                                    break;
+                                }
+                            }
+                        }
 
                         // todo jmt for Mar 1, traverse plastic
                         break;
