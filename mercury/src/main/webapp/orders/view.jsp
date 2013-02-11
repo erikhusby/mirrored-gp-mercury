@@ -237,17 +237,12 @@
                         <stripes:submit name="validate" value="Validate" style="margin-left: 5px;" class="btn"/>
                     </security:authorizeBlock>
 
-                    <%-- MLC GPLIM-802 says PDO edit should only be available to PDMs, i.e. not PMs. --%>
-                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
-
-                        &#160;
-                        <stripes:link title="Click to edit ${actionBean.editOrder.title}"
-                                      beanclass="${actionBean.class.name}" event="edit" class="btn"
-                                      style="text-decoration: none !important;">
-                            <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
-                            <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
-                        </stripes:link>
-                    </security:authorizeBlock>
+                    <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+                                  beanclass="${actionBean.class.name}" event="edit" class="btn"
+                                  style="text-decoration: none !important;margin-left: 5px;">
+                        <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
+                        <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                    </stripes:link>
 
                     <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
                         <stripes:submit name="deleteOrder" value="Delete" style="margin-left: 5px;" class="btn"/>
@@ -256,6 +251,7 @@
             </div>
         </stripes:form>
 
+        <%-- MLC GPLIM-802 says PDO edit should only be available to PDMs, i.e. not PMs. --%>
         <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
             <c:if test="${!actionBean.editOrder.draft}">
                 <stripes:link title="Click to edit ${actionBean.editOrder.title}"
