@@ -43,6 +43,7 @@ public class ExtractTransform {
     public static final String READY_FILE_SUFFIX = "_is_ready";
     /** This date format matches what cron job expects in filenames, and in SqlLoader data files. */
     public static final SimpleDateFormat secTimestampFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+    public static final SimpleDateFormat msecTimestampFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
     /** Name of file that contains the mSec time of the last etl run. */
     public static final String LAST_ETL_FILE = "last_etl_run";
     /** Name of subdirectory under configured ETL root dir where new sqlLoader files are put. */
@@ -58,44 +59,122 @@ public class ExtractTransform {
     private static boolean loggedConfigError = false;
     private EtlConfig etlConfig = null;
 
-    @Inject
-    private Deployment deployment;
-    @Inject
     private AuditReaderDao auditReaderDao;
-    @Inject
-    private ProductEtl productEtl;
-    @Inject
-    private ProductOrderEtl productOrderEtl;
-    @Inject
-    private ProductOrderSampleEtl productOrderSampleEtl;
-    @Inject
-    private ProductOrderSampleStatusEtl productOrderSampleStatusEtl;
-    @Inject
-    private ProductOrderStatusEtl productOrderStatusEtl;
-    @Inject
-    private PriceItemEtl priceItemEtl;
-    @Inject
-    private ResearchProjectEtl researchProjectEtl;
-    @Inject
-    private ResearchProjectStatusEtl researchProjectStatusEtl;
-    @Inject
-    private ProjectPersonEtl projectPersonEtl;
-    @Inject
-    private ResearchProjectIrbEtl researchProjectIrbEtl;
-    @Inject
-    private ResearchProjectFundingEtl researchProjectFundingEtl;
-    @Inject
-    private ResearchProjectCohortEtl researchProjectCohortEtl;
-    @Inject
-    private ProductOrderAddOnEtl productOrderAddOnEtl;
-    @Inject
+    private Deployment deployment;
     private EventEtl eventEtl;
-    @Inject
-    private WorkflowConfigEtl workflowConfigEtl;
-    @Inject
     private LabBatchEtl labBatchEtl;
-    @Inject
     private LabVesselEtl labVesselEtl;
+    private PriceItemEtl priceItemEtl;
+    private ProductEtl productEtl;
+    private ProductOrderAddOnEtl productOrderAddOnEtl;
+    private ProductOrderEtl productOrderEtl;
+    private ProductOrderSampleEtl productOrderSampleEtl;
+    private ProductOrderSampleStatusEtl productOrderSampleStatusEtl;
+    private ProductOrderStatusEtl productOrderStatusEtl;
+    private ProjectPersonEtl projectPersonEtl;
+    private ResearchProjectCohortEtl researchProjectCohortEtl;
+    private ResearchProjectEtl researchProjectEtl;
+    private ResearchProjectFundingEtl researchProjectFundingEtl;
+    private ResearchProjectIrbEtl researchProjectIrbEtl;
+    private ResearchProjectStatusEtl researchProjectStatusEtl;
+    private WorkflowConfigEtl workflowConfigEtl;
+
+
+    @Inject
+    public void setDeployment(Deployment d) {
+        deployment = d;
+    }
+
+    @Inject
+    public void setAuditReaderDao(AuditReaderDao d) {
+	auditReaderDao = d;
+    }
+
+    @Inject
+    public void setProductEtl(ProductEtl d) {
+        productEtl = d;
+    }
+
+    @Inject
+    public void setProductOrderEtl(ProductOrderEtl d) {
+        productOrderEtl = d;
+    }
+
+    @Inject
+    public void setProductOrderSampleEtl(ProductOrderSampleEtl d) {
+        productOrderSampleEtl = d;
+    }
+
+    @Inject
+    public void setProductOrderSampleStatusEtl(ProductOrderSampleStatusEtl d) {
+        productOrderSampleStatusEtl = d;
+    }
+
+    @Inject
+    public void setProductOrderStatusEtl(ProductOrderStatusEtl d) {
+        productOrderStatusEtl = d;
+    }
+
+    @Inject
+    public void setPriceItemEtl(PriceItemEtl d) {
+        priceItemEtl = d;
+    }
+
+    @Inject
+    public void setResearchProjectEtl(ResearchProjectEtl d) {
+        researchProjectEtl = d;
+    }
+
+    @Inject
+    public void setResearchProjectStatusEtl(ResearchProjectStatusEtl d) {
+        researchProjectStatusEtl = d;
+    }
+
+    @Inject
+    public void setProjectPersonEtl(ProjectPersonEtl d) {
+        projectPersonEtl = d;
+    }
+
+    @Inject
+    public void setResearchProjectIrbEtl(ResearchProjectIrbEtl d) {
+        researchProjectIrbEtl = d;
+    }
+
+    @Inject
+    public void setResearchProjectFundingEtl(ResearchProjectFundingEtl d) {
+        researchProjectFundingEtl = d;
+    }
+
+    @Inject
+    public void setResearchProjectCohortEtl(ResearchProjectCohortEtl d) {
+        researchProjectCohortEtl = d;
+    }
+
+    @Inject
+    public void setProductOrderAddOnEtl(ProductOrderAddOnEtl d) {
+        productOrderAddOnEtl = d;
+    }
+
+    @Inject
+    public void setEventEtl(EventEtl d) {
+        eventEtl = d;
+    }
+
+    @Inject
+    public void setWorkflowConfigEtl(WorkflowConfigEtl d) {
+        workflowConfigEtl = d;
+    }
+
+    @Inject
+    public void setLabBatchEtl(LabBatchEtl d) {
+        labBatchEtl = d;
+    }
+
+    @Inject
+    public void setLabVesselEtl(LabVesselEtl d) {
+        labVesselEtl = d;
+    }
+
 
 
     /**

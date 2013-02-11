@@ -20,7 +20,7 @@ import static org.testng.Assert.*;
 
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class EventEtlTest {
+public class WorkflowConfigEtlTest {
 
     // 3 successive days starting 1-jan-2013 00:00:00 EST
     static final long[] MSEC_DATES = new long[]{1357016400000L, 1357016400000L + 86400000L, 1357016400000L + 2 * 86400000L};
