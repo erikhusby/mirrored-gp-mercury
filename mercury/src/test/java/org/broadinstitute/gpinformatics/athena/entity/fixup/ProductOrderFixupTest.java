@@ -268,7 +268,7 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderDao.persist(productOrder);
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void removeSamplesForGPLIM877() {
         List<String> samplesToRemove = Arrays.asList(
                 "SM-1WJOV",
