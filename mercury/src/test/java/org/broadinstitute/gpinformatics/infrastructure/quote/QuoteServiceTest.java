@@ -149,32 +149,30 @@ public class QuoteServiceTest {
 
         QuoteService service = new QuoteServiceStub();
         Quotes quotes = service.getAllSequencingPlatformQuotes();
+        Set<String> fundingTypes = getFundingTypes(quotes);
+
+        Assert.assertEquals(2,fundingTypes.size());
+        Assert.assertTrue(fundingTypes.contains(Funding.FUNDS_RESERVATION));
+        Assert.assertTrue(fundingTypes.contains(Funding.PURCHASE_ORDER));
+    }
+
+    public static Set<String> getFundingTypes(Quotes quotes) {
         Assert.assertNotNull(quotes);
         Assert.assertFalse(quotes.getQuotes().isEmpty());
-        Set<String> grants = new HashSet<String>();
         Set<String> fundingTypes = new HashSet<String>();
-        Set<String> pos = new HashSet<String>();
         for (Quote quote : quotes.getQuotes()) {
             if (quote.getQuoteFunding() != null) {
                 if (quote.getQuoteFunding().getFundingLevel() != null) {
                     if (quote.getQuoteFunding().getFundingLevel().getFunding() != null) {
                         Funding funding = quote.getQuoteFunding().getFundingLevel().getFunding();
                         fundingTypes.add(funding.getFundingType());
-
-                        if (Funding.FUNDS_RESERVATION.equals(funding.getFundingType())) {
-                            grants.add(funding.getGrantDescription());
-                        }
-                        else if (Funding.PURCHASE_ORDER.equals(funding.getFundingType())) {
-                            pos.add(funding.getPurchaseOrderNumber());
-                        }
                     }
                 }
 
             }
         }
-        Assert.assertEquals(2,fundingTypes.size());
-        Assert.assertTrue(fundingTypes.contains(Funding.FUNDS_RESERVATION));
-        Assert.assertTrue(fundingTypes.contains(Funding.PURCHASE_ORDER));
+
+        return fundingTypes;
     }
 
 }

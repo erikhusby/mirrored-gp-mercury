@@ -9,6 +9,7 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
+
                 $j('#productOrderList').dataTable( {
                     "oTableTools": ttExportDefines,
                     "aaSorting": [[8,'desc']],
@@ -22,48 +23,48 @@
                         {"bSortable": true},                    // Research Project
                         {"bSortable": true},                    // Owner
                         {"bSortable": true, "sType": "date"},   // Updated
+                        {"bSortable": true, "sType": "title-numeric"},   // % Complete
                         {"bSortable": true, "sType": "numeric"},   // Count
                         {"bSortable": true},                   // Billing Session ID
                         {"bSortable": true, "sType" : "title-string"}]  // eligible for billing
                 });
 
                 setupDialogs();
+            });
 
-                function setupDialogs() {
-                    $j("#confirmDialog").dialog({
-                        modal: true,
-                        autoOpen: false,
-                        buttons: [
-                            {
-                                id: "confirmOkButton",
-                                text: "OK",
-                                click: function () {
-                                    $j(this).dialog("close");
-                                    $j("#confirmOkButton").attr("disabled", "disabled");
-                                    $j("#createForm").submit();
-                                }
-                            },
-                            {
-                                text: "Cancel",
-                                click : function () {
-                                    $j(this).dialog("close");
-                                }
+            function setupDialogs() {
+                $j("#confirmDialog").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    buttons: [
+                        {
+                            id: "confirmOkButton",
+                            text: "OK",
+                            click: function () {
+                                $j(this).dialog("close");
+                                $j("#confirmOkButton").attr("disabled", "disabled");
+                                $j("#createForm").submit();
                             }
-                        ]
-                    });
-
-                    $j("#noneSelectedDialog").dialog({
-                        modal: true,
-                        autoOpen: false,
-                        buttons: {
-                            OK: function () {
+                        },
+                        {
+                            text: "Cancel",
+                            click : function () {
                                 $j(this).dialog("close");
                             }
                         }
-                    });
-                }
-            });
+                    ]
+                });
 
+                $j("#noneSelectedDialog").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    buttons: {
+                        OK: function () {
+                            $j(this).dialog("close");
+                        }
+                    }
+                });
+            }
 
             function showConfirm(action, actionPrompt) {
                 var numChecked = $("input.shiftCheckbox:checked").size();
@@ -79,6 +80,11 @@
             }
 
         </script>
+        <style type="text/css">
+            .barFull { height: 10px; width:80px; background-color: white; border-color: #a9a9a9; border-style: solid; border-width: thin; }
+            .barComplete { height: 10px; float:left; background-color: #c4eec0; }
+            .barAbandon { height: 10px; float:left; background-color: #eed6e1; }
+        </style>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
@@ -128,12 +134,13 @@
                         </th>
                         <th>Name</th>
                         <th width="100">ID</th>
-                        <th width="200">Product</th>
-                        <th width="220">Product Family</th>
-                        <th>Status</th>
+                        <th>Product</th>
+                        <th>Product Family</th>
+                        <th width="80">Status</th>
                         <th width="150">Research Project</th>
-                        <th>Owner</th>
+                        <th width="120">Owner</th>
                         <th width="70">Updated</th>
+                        <th width="80">%&nbsp;Complete</th>
                         <th width="25">Sample Count</th>
                         <th width="35">Billing Session</th>
                         <th width="25">Can Bill</th>
@@ -180,7 +187,17 @@
                             <td>
                                 <fmt:formatDate value="${order.updatedDate}"/>
                             </td>
-                            <td>${order.pdoSampleCount}</td>
+                            <td align="center">
+                                <div class="barFull" title="${actionBean.progressFetcher.getPercentCompleteAndAbandoned(order.businessKey)}% Completed or Aandoned">
+                                    <span class="barAbandon"
+                                          title="${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}% Abandoned"
+                                          style="width: ${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}%"> </span>
+                                    <span class="barComplete"
+                                          title="${actionBean.progressFetcher.getPercentComplete(order.businessKey)}% Completed"
+                                          style="width: ${actionBean.progressFetcher.getPercentComplete(order.businessKey)}%"> </span>
+                                </div>
+                            </td>
+                            <td>${actionBean.progressFetcher.getNumberOfSamples(order.businessKey)}</td>
                             <td>
                                 <c:if test="${order.billingSessionBusinessKey != null}">
                                     <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"
