@@ -57,8 +57,8 @@ public class ProductOrderEtl extends GenericEntityEtl {
         Collection<String> recordList = new ArrayList<String>();
         ProductOrder entity = dao.findById(ProductOrder.class, entityId);
         if (entity != null) {
-	    recordList.add(entityRecord(etlDateStr, isDelete, entity));
-	} else {
+            recordList.add(entityRecord(etlDateStr, isDelete, entity));
+        } else {
             logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
         }
         return recordList;
