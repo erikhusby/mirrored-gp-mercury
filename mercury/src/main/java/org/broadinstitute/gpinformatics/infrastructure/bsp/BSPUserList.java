@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.faces.model.SelectItem;
 import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.Serializable;
@@ -67,6 +66,21 @@ public class BSPUserList extends AbstractCache implements Serializable {
     public BspUser getByUsername(String username) {
         for (BspUser user : getUsers().values()) {
             if (user.getUsername().equalsIgnoreCase(username)) {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the BSP user for the given badge ID, or null if no user exists with that badge ID.
+     *
+     * @param badgeId    the user's badge ID
+     * @return the BSP user or null
+     */
+    public BspUser getByBadgeId(String badgeId) {
+        for (BspUser user : getUsers().values()) {
+            if (user.getBadgeNumber()!=null && user.getBadgeNumber().equalsIgnoreCase(badgeId)) {
                 return user;
             }
         }
@@ -209,30 +223,5 @@ public class BSPUserList extends AbstractCache implements Serializable {
 
     public static boolean isTestUser(BspUser user) {
         return user instanceof QADudeUser;
-    }
-
-    /**
-     * Create a list of SelectItems for use in the JSF UI.  The first element in the list is a dummy value, 'Any'.
-     * @param users the list of bsp users
-     * @return the list of select items for the users.
-     */
-    public static List<SelectItem> createSelectItems(Set<BspUser> users) {
-        // order the users by last name so the SelectItem generator below will create items in a predictable order
-        // per GPLIM-401
-        List<BspUser> bspUserList = new ArrayList<BspUser>(users);
-        Collections.sort(bspUserList, new Comparator<BspUser>() {
-            @Override
-            public int compare(BspUser bspUser, BspUser bspUser1) {
-                return bspUser.getLastName().compareTo(bspUser1.getLastName());
-            }
-        });
-
-        List<SelectItem> items = new ArrayList<SelectItem>(bspUserList.size() + 1);
-        items.add(new SelectItem("", "Any"));
-        for (BspUser user : bspUserList) {
-            items.add(new SelectItem(user.getUserId(), user.getFirstName() + " " + user.getLastName()));
-        }
-
-        return items;
     }
 }

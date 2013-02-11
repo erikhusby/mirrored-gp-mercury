@@ -17,7 +17,6 @@ import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.ManyToOne;
-import javax.persistence.Table;
 
 /**
  * Reagent for BaitDesigns.
@@ -26,7 +25,6 @@ import javax.persistence.Table;
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
 public class DesignedReagent extends Reagent {
 
     // In production code, the reagentDesign will always exist first, so there's no need for cascade, but in tests
@@ -42,7 +40,7 @@ public class DesignedReagent extends Reagent {
     }
 
     /** For JPA */
-    DesignedReagent() {
+    protected DesignedReagent() {
     }
 
     public ReagentDesign getReagentDesign() {

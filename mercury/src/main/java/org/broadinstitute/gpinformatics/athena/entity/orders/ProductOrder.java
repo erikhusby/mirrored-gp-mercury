@@ -16,10 +16,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
-import org.hibernate.envers.NotAudited;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
@@ -92,12 +90,6 @@ public class ProductOrder implements Serializable {
     /** counts the number of lanes; the default value is one lane */
     private int count = 1;
 
-    /** Counts the number of rows in the one-to-many table.  Reference this count before fetching the collection, to
-     * avoid an unnecessary database round trip  */
-    @NotAudited
-    @Formula("(select count(*) from athena.product_order_sample pos where pos.product_order = product_order_id)")
-    private Integer pdoSampleCount = 0;
-
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order", nullable = false)
     @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
@@ -164,35 +156,21 @@ public class ProductOrder implements Serializable {
         setSamples(samples);
     }
 
-    public int calculateAllRisk() {
-        return calculateRisk(false);
-    }
-
-    public int calculateNewRisk() {
-        return calculateRisk(true);
-    }
-
     /**
-     * This calculates risk for all samples on the order (or just new ones if specified).
+     * This calculates risk for all samples on the order
      *
-     * @param newSamplesOnly If the caller only wants to calculate for newly added samples
      * @return The number of samples calculated to be on risk.
      */
-    private int calculateRisk(boolean newSamplesOnly) {
-        int samplesOnRisk = 0;
+    public int calculateRisk() {
+        Set<String> uniqueSampleNamesOnRisk = new HashSet<String>();
 
         for (ProductOrderSample sample : samples) {
-            // If not skipping samples with risk, then always do it, otherwise only do samples with no risk items.
-            // have risk items, means that risk was calculated
-            if (!newSamplesOnly || sample.getRiskItems().isEmpty()) {
-                boolean isOnRisk = sample.calculateRisk();
-                if (isOnRisk) {
-                    samplesOnRisk++;
-                }
+            if (sample.calculateRisk()) {
+                uniqueSampleNamesOnRisk.add(sample.getSampleName());
             }
         }
 
-        return samplesOnRisk;
+        return uniqueSampleNamesOnRisk.size();
     }
 
     /**
@@ -991,10 +969,6 @@ public class ProductOrder implements Serializable {
 
     public boolean hasJiraTicketKey() {
         return !StringUtils.isBlank(jiraTicketKey);
-    }
-
-    public Integer getPdoSampleCount() {
-        return pdoSampleCount;
     }
 
     public String getOriginalTitle() {

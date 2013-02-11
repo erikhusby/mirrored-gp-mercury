@@ -12,19 +12,16 @@
 
 package org.broadinstitute.gpinformatics.mercury.entity.rework;
 
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.*;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.validation.constraints.NotNull;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
 
 @Entity
 @Audited
-@Table(schema = "mercury")
 public class ReworkEntry extends RapSheetEntry {
     @Enumerated(EnumType.STRING)
     @NotNull

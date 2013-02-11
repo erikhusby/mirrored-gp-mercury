@@ -46,9 +46,9 @@ public class WorkCompleteMessageBean implements MessageListener {
 
             String pdoName = message.getStringProperty(WorkCompleteMessage.REQUIRED_NAMES.PDO_NAME.name());
             String sampleName = message.getStringProperty(WorkCompleteMessage.REQUIRED_NAMES.SAMPLE_NAME.name());
-            long sampleIndex = 1;
+            int sampleIndex = 1;
             if (message.propertyExists(WorkCompleteMessage.REQUIRED_NAMES.SAMPLE_INDEX.name())) {
-                sampleIndex = message.getLongProperty(WorkCompleteMessage.REQUIRED_NAMES.SAMPLE_INDEX.name());
+                sampleIndex = message.getIntProperty(WorkCompleteMessage.REQUIRED_NAMES.SAMPLE_INDEX.name());
             }
             long completedTime = message.getLongProperty(WorkCompleteMessage.REQUIRED_NAMES.COMPLETED_TIME.name());
             Date completedDate = new Date(completedTime);
