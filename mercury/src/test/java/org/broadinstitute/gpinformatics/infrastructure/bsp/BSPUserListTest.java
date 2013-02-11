@@ -77,8 +77,8 @@ public class BSPUserListTest extends Arquillian {
         long end = System.nanoTime();
         long durationNano = end - start;
         double durationMilli = durationNano / 1000000.0;
-        Assert.assertTrue("User should not have been found", user == null);
-        Assert.assertTrue("Query for unknown badge ID should take less than 200ms. Actually took " +
-                durationMilli + "ms", durationMilli < 50);
+        Assert.assertTrue(user == null, "User should not have been found");
+        Assert.assertTrue(durationMilli < 50, "Query for unknown badge ID should take less than 200ms. Actually took " +
+                durationMilli + "ms");
     }
 }
