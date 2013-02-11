@@ -213,13 +213,13 @@
                             <fmt:formatDate value="${order.modifiedDate}" pattern="MM/dd/yyyy"/>
                         </td>
                         <td align="center">
-                            <div class="barFull" title="${actionBean.progressFetcher.getPercentCompleteAndAbandoned(order.businessKey)}%">
-                                    <span class="barAbandon"
-                                          title="${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}%"
-                                          style="width: ${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}%"> </span>
-                                    <span class="barComplete"
-                                          title="${actionBean.progressFetcher.getPercentComplete(order.businessKey)}%"
-                                          style="width: ${actionBean.progressFetcher.getPercentComplete(order.businessKey)}%"> </span>
+                            <div class="barFull" title="${actionBean.progressFetcher.getPercentCompleteAndAbandoned(order.businessKey)}% Completed or Aandoned">
+                                <span class="barAbandon"
+                                      title="${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}% Abandoned"
+                                      style="width: ${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}%"> </span>
+                                <span class="barComplete"
+                                      title="${actionBean.progressFetcher.getPercentComplete(order.businessKey)}% Completed"
+                                      style="width: ${actionBean.progressFetcher.getPercentComplete(order.businessKey)}%"> </span>
                             </div>
                         </td>
                         <td>${actionBean.progressFetcher.getNumberOfSamples(order.businessKey)}</td>

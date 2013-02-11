@@ -188,12 +188,12 @@
                                 <fmt:formatDate value="${order.updatedDate}"/>
                             </td>
                             <td align="center">
-                                <div class="barFull" title="${actionBean.progressFetcher.getPercentCompleteAndAbandoned(order.businessKey)}%">
+                                <div class="barFull" title="${actionBean.progressFetcher.getPercentCompleteAndAbandoned(order.businessKey)}% Completed or Aandoned">
                                     <span class="barAbandon"
-                                          title="${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}%"
+                                          title="${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}% Abandoned"
                                           style="width: ${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}%"> </span>
                                     <span class="barComplete"
-                                          title="${actionBean.progressFetcher.getPercentComplete(order.businessKey)}%"
+                                          title="${actionBean.progressFetcher.getPercentComplete(order.businessKey)}% Completed"
                                           style="width: ${actionBean.progressFetcher.getPercentComplete(order.businessKey)}%"> </span>
                                 </div>
                             </td>

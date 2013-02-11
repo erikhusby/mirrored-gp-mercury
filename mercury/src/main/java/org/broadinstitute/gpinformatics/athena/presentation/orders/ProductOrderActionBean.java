@@ -623,7 +623,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getSupportsNumberOfLanes")
     public Resolution getSupportsNumberOfLanes() throws Exception {
-        boolean supportsNumberOfLanes = true;
+        boolean supportsNumberOfLanes = false;
         JSONObject item = new JSONObject();
 
         if (this.product != null) {

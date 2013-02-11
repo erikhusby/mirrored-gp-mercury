@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 
+import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +21,7 @@ public class CompletionStatusFetcher {
             new HashMap<String, ProductOrderCompletionStatus>();
 
 
-    public void setupProgress(ProductOrderDao productOrderDao, Collection<String> productKeys) {
+    public void setupProgress(ProductOrderDao productOrderDao, @Nullable Collection<String> productKeys) {
         progressByBusinessKey = productOrderDao.getProgressByBusinessKey(productKeys);
     }
 
