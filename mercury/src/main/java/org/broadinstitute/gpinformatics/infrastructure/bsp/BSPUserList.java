@@ -80,7 +80,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
      */
     public BspUser getByBadgeId(String badgeId) {
         for (BspUser user : getUsers().values()) {
-            if (user.getBadgeNumber()!=null && user.getBadgeNumber().equalsIgnoreCase(badgeId)) {
+            if (user.getBadgeNumber() != null && user.getBadgeNumber().equalsIgnoreCase(badgeId)) {
                 return user;
             }
         }
