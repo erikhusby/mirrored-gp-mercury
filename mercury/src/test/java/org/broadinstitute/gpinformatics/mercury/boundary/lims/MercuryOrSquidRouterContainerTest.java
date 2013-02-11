@@ -4,6 +4,7 @@ import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConnector;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
@@ -22,6 +23,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDe
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
+import org.easymock.EasyMock;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -79,6 +81,14 @@ public class MercuryOrSquidRouterContainerTest extends ContainerTest {
             return;
         }
 
+        if(bettalimsMessageResource != null) {
+
+            BettalimsConnector mockConnector = EasyMock.createNiceMock(BettalimsConnector.class);
+
+            EasyMock.expect(mockConnector.sendMessage(EasyMock.anyObject(String.class))).andReturn(new BettalimsConnector.BettalimsResponse(200, "Success"));
+            bettalimsMessageResource.setBettalimsConnector(mockConnector);
+        }
+
         utx.begin();
 
         testExExOrder =
@@ -116,7 +126,11 @@ public class MercuryOrSquidRouterContainerTest extends ContainerTest {
         jaxbBuilder.invoke();
 
         for (BettaLIMSMessage msg : jaxbBuilder.getMessageList()) {
-            bettalimsMessageResource.processMessage(msg);
+            msg.setMode(null);
+
+            String xmlMessage =BettaLimsMessageFactory.marshal(msg);
+
+            bettalimsMessageResource.processMessage(xmlMessage);
             vesselDao.flush();
             vesselDao.clear();
         }
@@ -143,7 +157,11 @@ public class MercuryOrSquidRouterContainerTest extends ContainerTest {
         jaxbBuilder.invoke();
 
         for (BettaLIMSMessage msg : jaxbBuilder.getMessageList()) {
-            bettalimsMessageResource.processMessage(msg);
+            msg.setMode(null);
+
+            String xmlMessage =BettaLimsMessageFactory.marshal(msg);
+
+            bettalimsMessageResource.processMessage(xmlMessage);
             vesselDao.flush();
             vesselDao.clear();
         }

@@ -52,6 +52,7 @@ import javax.ws.rs.core.Response;
 //import javax.xml.XMLConstants;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 import javax.xml.bind.Unmarshaller;
 //import javax.xml.bind.ValidationEvent;
 //import javax.xml.bind.ValidationEventHandler;
@@ -60,6 +61,7 @@ import javax.xml.transform.sax.SAXSource;
 //import javax.xml.validation.SchemaFactory;
 //import java.io.File;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.util.*;
 
 /**
@@ -136,8 +138,8 @@ public class BettalimsMessageResource {
             boolean processInSquid = false;
             if(bettaLIMSMessage.getMode() != null && bettaLIMSMessage.getMode().equals(LabEventFactory.MODE_MERCURY)) {
                 // Don't route Mercury test messages to BettalIMS/Squid
-                processInMercury = false;
-                processInSquid = true;
+                processInMercury = true;
+                processInSquid = false;
             } else {
                 LabEventType labEventType = getLabEventType(bettaLIMSMessage);
                 if(labEventType == null) {
@@ -447,6 +449,10 @@ public class BettalimsMessageResource {
                 addedNamespace = true;
             }
         }
+    }
+
+    public void setBettalimsConnector(BettalimsConnector connector) {
+        this.bettalimsConnector = connector;
     }
 
 }
