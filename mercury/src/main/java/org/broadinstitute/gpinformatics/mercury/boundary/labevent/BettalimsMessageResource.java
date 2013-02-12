@@ -166,19 +166,16 @@ public class BettalimsMessageResource {
                         Collection<String> preFoundEvents = preBuildFromBettaLims(bettaLIMSMessage);
 
                         for (String testEvent : preFoundEvents) {
-                            if (MercuryOrSquidRouter.MercuryOrSquid
-                                                    .MERCURY
-                                                    .equals(mercuryOrSquidRouter.routeForVessel(testEvent))) {
+                            if (MercuryOrSquidRouter.MercuryOrSquid.MERCURY.equals(mercuryOrSquidRouter
+                                                                                           .routeForVessel(testEvent))) {
                                 processInMercury = true;
                             } else {
                                 processInSquid = true;
                             }
                         }
-
-                        if(processInMercury && processInSquid) {
+                        if (processInMercury && processInSquid) {
                             throw new InformaticsServiceException("For Product Dependent processing, we cannot process in both Mercury and Squid");
                         }
-
                         break;
                     case BOTH:
                         processInMercury = true;
@@ -346,11 +343,11 @@ public class BettalimsMessageResource {
     }
 
     /**
-     * Builds a collection of {@link LabVessel} barcodes from a JAXB message bean that contains one or more event beans.
+     * Builds a collection of {@link LabVessel} barcodes from a JAXB message bean that contains one or more event
+     * beans.
      * Since this method is used to validate the system of record for existing vessels, the vessels returned will be
      * Source vessles, In place vessels, and some target vessels If the setting for the associated
      * {@link LabEventType#expectExistingTarget} determines it is possible.
-     *
      *
      * @param bettaLIMSMessage JAXB bean
      *
@@ -367,10 +364,10 @@ public class BettalimsMessageResource {
             for (PlateType sourcePlateType : plateCherryPickEvent.getSourcePlate()) {
                 testBarcodes.add(sourcePlateType.getBarcode());
             }
-//          SGM:  Assuming that Cherry Picks will not yield an existing Target.
-//            if (labEventType.isExpectExistingTarget()) {
-//
-//            }
+            //          SGM:  Assuming that Cherry Picks will not yield an existing Target.
+            //            if (labEventType.isExpectExistingTarget()) {
+            //
+            //            }
 
         }
         for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
@@ -383,8 +380,8 @@ public class BettalimsMessageResource {
             testBarcodes.add(plateTransferEventType.getSourcePlate().getBarcode());
 
         }
-        for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent :
-                bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
+        for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage
+                                                                                 .getReceptaclePlateTransferEvent()) {
 
             testBarcodes.add(receptaclePlateTransferEvent.getSourceReceptacle().getBarcode());
 
