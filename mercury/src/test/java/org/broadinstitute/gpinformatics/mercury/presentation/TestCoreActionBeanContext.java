@@ -13,7 +13,7 @@ import net.sourceforge.stripes.mock.MockServletContext;
 import net.sourceforge.stripes.validation.ValidationErrors;
 
 /**
- * The test Stripes action bean context that gets passed around.
+ * The test Stripes action bean context that gets passed around in the ActionBeans.
  *
  * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
  */
