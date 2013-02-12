@@ -21,57 +21,63 @@ public class BSPSampleDTO {
 
     private final String patientId;
 
-    private final String stockSample;
+    private String stockSample;
 
-    private final String rootSample;
+    private String rootSample;
 
-    private final String aliquotSample;
+    private String aliquotSample;
 
     private final String collaboratorsSampleName;
 
-    private final String collection;
+    private String collection;
 
-    private final double volume;
+    private double volume;
 
-    private final double concentration;
+    private double concentration;
 
     private final String organism;
 
-    private final String stockAtExport;
+    private String stockAtExport;
 
-    private final Boolean positiveControl;
+    private Boolean positiveControl;
 
-    private final Boolean negativeControl;
+    private Boolean negativeControl;
 
-    private final String sampleLsid;
+    private String sampleLsid;
 
-    private final String collaboratorParticipantId;
+    private String collaboratorParticipantId;
 
     private final String materialType;
 
-    private final double total;
+    private double total;
 
-    private final String sampleType;
+    private String sampleType;
 
     private final String primaryDisease;
 
-    private final String gender;
+    private String gender;
 
-    private final String stockType;
+    private String stockType;
 
-    private final String fingerprint;
+    private String fingerprint;
 
-    private final String containerId;
+    private String containerId;
 
-    private final String sampleId;
+    private String sampleId;
 
     private Boolean ffpeDerived;
+
+    private String collaboratorName;
+
+    private String race;
+
+    private String population;
 
     /**
      * Use this when no valid DTO is present, to avoid null checks
      */
     public static final BSPSampleDTO DUMMY =
-            new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "");
+            new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "","","","");
 
     // collaborator?
     // species vs organism?
@@ -93,24 +99,20 @@ public class BSPSampleDTO {
                         String patientId, String organism, String collaboratorsSampleName, String collection,
                         String volume, String concentration, String sampleLsid, String collaboratorParticipantId,
                         String materialType, String total, String sampleType, String primaryDisease,
-                        String gender, String stockType, String fingerprint, String sampleId) {
+                        String gender, String stockType, String fingerprint, String sampleId,String collaboratorName,
+                        String race,String population) {
+        this(primaryDisease,sampleLsid,materialType,collaboratorsSampleName,organism,patientId);
         this.containerId = containerId;
         this.stockSample = stockSample;
         this.rootSample = rootSample;
         this.aliquotSample = aliquotSample;
-        this.patientId = patientId;
-        this.collaboratorsSampleName = collaboratorsSampleName;
         this.collection = collection;
 
         this.volume = safeParseDouble(volume);
-        this.concentration = safeParseDouble(concentration);
-        this.organism = organism;
-        this.sampleLsid = sampleLsid;
+        this.concentration = safeParseDouble(concentration);    
         this.collaboratorParticipantId = collaboratorParticipantId;
-        this.materialType = materialType;
         this.total = safeParseDouble(total);
         this.sampleType = sampleType;
-        this.primaryDisease = primaryDisease;
         this.gender = gender;
         this.stockType = stockType;
         this.fingerprint = fingerprint;
@@ -118,6 +120,28 @@ public class BSPSampleDTO {
         positiveControl = false;
         negativeControl = false;
         this.sampleId = sampleId;
+        this.collaboratorName = collaboratorName;
+        this.race = race;
+        this.population = population;
+    }
+
+    /**
+     * Useful for tests
+     * @param primaryDisease
+     * @param lsid
+     */
+    public BSPSampleDTO(String primaryDisease,
+                        String lsid,
+                        String materialType,
+                        String collaboratorsSampleName,
+                        String organism,
+                        String patientId) {
+        this.primaryDisease = primaryDisease;
+        this.sampleLsid = lsid;
+        this.materialType = materialType;
+        this.collaboratorsSampleName = collaboratorsSampleName;
+        this.organism = organism;
+        this.patientId = patientId;
     }
 
     public double getVolume() {
@@ -256,6 +280,17 @@ public class BSPSampleDTO {
         return new MaterialType(materialType);
     }
 
+    public String getCollaboratorName() {
+        return collaboratorName;
+    }
+
+    public String getPopulation() {
+        return population;
+    }
+
+    public String getRace() {
+        return race;
+    }
 
     public Boolean getFfpeDerived() {
         if (ffpeDerived == null) {

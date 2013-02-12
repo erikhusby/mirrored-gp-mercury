@@ -15,7 +15,7 @@ public class PriceListCacheTest {
 
     private static final Log log = LogFactory.getLog(PriceListCacheTest.class);
     
-    @Test(groups = DATABASE_FREE)
+    @Test(groups = EXTERNAL_INTEGRATION)
     public void test_gsp_platform() {
         PriceList priceList = new PriceList();
         PriceItem item1 = new PriceItem("Illumina Sequencing","123","101bp MiSeq","5","Sample",QuotePlatformType.SEQ.getPlatformName());
