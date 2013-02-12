@@ -73,6 +73,7 @@ public class MercuryOrSquidRouterContainerTest extends ContainerTest {
     private String       squidPdoJiraKey;
 
     private String exExJiraKey;
+    private BettalimsConnector mockConnector;
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
@@ -81,13 +82,16 @@ public class MercuryOrSquidRouterContainerTest extends ContainerTest {
             return;
         }
 
-        if(bettalimsMessageResource != null) {
-
-            BettalimsConnector mockConnector = EasyMock.createNiceMock(BettalimsConnector.class);
-
-            EasyMock.expect(mockConnector.sendMessage(EasyMock.anyObject(String.class))).andReturn(new BettalimsConnector.BettalimsResponse(200, "Success"));
-            bettalimsMessageResource.setBettalimsConnector(mockConnector);
+        if(bettalimsMessageResource == null) {
+            return;
         }
+
+        mockConnector = EasyMock.createNiceMock(BettalimsConnector.class);
+
+        EasyMock.expect(mockConnector.sendMessage(EasyMock.anyObject(String.class))).andReturn(new BettalimsConnector.BettalimsResponse(200,
+                                                                                                                                               "Success"));
+        EasyMock.replay(mockConnector);
+        bettalimsMessageResource.setBettalimsConnector(mockConnector);
 
         utx.begin();
 
@@ -166,10 +170,13 @@ public class MercuryOrSquidRouterContainerTest extends ContainerTest {
             vesselDao.clear();
         }
 
-        RackOfTubes finalItem = (RackOfTubes)vesselDao.findByIdentifier(jaxbBuilder.getRackBarcode());
-        TubeFormation finalTubes = finalItem.getTubeFormations().iterator().next();
+        EasyMock.verify(mockConnector);
 
-        Assert.assertTrue(finalTubes.getEvents().size() == 0);
+        RackOfTubes finalItem = (RackOfTubes)vesselDao.findByIdentifier(jaxbBuilder.getRackBarcode());
+        Assert.assertNull(finalItem);
+//        TubeFormation finalTubes = finalItem.getTubeFormations().iterator().next();
+//
+//        Assert.assertTrue(finalTubes.getEvents().size() == 0);
     }
 
     public static Map<String, TwoDBarcodedTube> buildVesselsForPdo(ProductOrder productOrder, String bucketName,
