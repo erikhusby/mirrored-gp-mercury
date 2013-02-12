@@ -80,7 +80,7 @@ public interface TransferTraverserCriteria {
          * @param hopCount              the traversal depth
          * @param traversalDirection    the direction of traversal
          */
-        public Context(@Nonnull LabVessel labVessel, LabEvent event, @Nonnull int hopCount, @Nonnull TraversalDirection traversalDirection) {
+        public Context(@Nonnull LabVessel labVessel, LabEvent event, int hopCount, @Nonnull TraversalDirection traversalDirection) {
             this.labVessel = labVessel;
             this.event = event;
             this.hopCount = hopCount;
@@ -246,18 +246,18 @@ public interface TransferTraverserCriteria {
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
             if (context.getLabVessel() != null) {
-                for (SampleInstance sampleInstance : context.getLabVessel().getSampleInstances()) {
-                    MercurySample startingSample = sampleInstance.getStartingSample();
+                if(context.getLabVessel().getMercurySamples() != null){
+                    for (MercurySample sampleInstance : context.getLabVessel().getMercurySamples()) {
 
-                    if (!productOrdersAtHopCount.containsKey(context.getHopCount())) {
-                        productOrdersAtHopCount.put(context.getHopCount(), new HashSet<String>());
+                        if (!productOrdersAtHopCount.containsKey(context.getHopCount())) {
+                            productOrdersAtHopCount.put(context.getHopCount(), new HashSet<String>());
+                        }
+
+                        productOrdersAtHopCount.get(context.getHopCount()).add(sampleInstance.getProductOrderKey());
                     }
-
-                    productOrdersAtHopCount.get(context.getHopCount()).add(startingSample.getProductOrderKey());
                 }
             }
             return TraversalControl.ContinueTraversing;
-
         }
 
         @Override

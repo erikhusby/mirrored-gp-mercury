@@ -50,6 +50,11 @@ public class MercuryOrSquidRouter implements Serializable {
         this.athenaClientService = athenaClientService;
     }
 
+    /**
+     * similar to
+     * @param barcodes
+     * @return
+     */
     public MercuryOrSquid routeForVessels(List<String> barcodes) {
         for(String vesselBarcode: barcodes) {
             if(routeForVessel(vesselBarcode) == MERCURY) {
@@ -75,17 +80,7 @@ public class MercuryOrSquidRouter implements Serializable {
 
     public MercuryOrSquid routeForVessel(LabVessel vessel) {
         if (vessel != null) {
-            /*
-                        HasProductOrderCriteria criteria = new HasProductOrderCriteria();
-                        tube.evaluateCriteria(criteria, Ancestors);
-                        if (criteria.getFoundAnyProductOrder()) {
-                            return MERCURY;
-                        } else {
-                            return SQUID;
-                        }
-            */
-            for (SampleInstance sampleInstance : vessel.getSampleInstances()) {
-                String productOrderKey = sampleInstance.getStartingSample().getProductOrderKey();
+            for (String productOrderKey: vessel.getNearestProductOrders()) {
                 if (productOrderKey != null) {
                     ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
                     if (order != null && MERCURY_PRODUCTS.contains(order.getProduct().getWorkflowName())) {
@@ -95,37 +90,5 @@ public class MercuryOrSquidRouter implements Serializable {
             }
         }
         return SQUID;
-    }
-
-    public class HasProductOrderCriteria implements TransferTraverserCriteria {
-
-        private boolean foundAnyProductOrder = false;
-
-        @Override
-        public TraversalControl evaluateVesselPreOrder(Context context) {
-            if (context.getLabVessel() != null) {
-                for (SampleInstance sampleInstance : context.getLabVessel().getSampleInstances()) {
-                    String productOrderKey = sampleInstance.getStartingSample().getProductOrderKey();
-                    if (productOrderKey != null) {
-                        ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
-                        if (order != null && MERCURY_PRODUCTS.contains(order.getProduct().getWorkflowName())) {
-                            foundAnyProductOrder = true;
-                            return TraversalControl.StopTraversing;
-                        }
-                    }
-                }
-            }
-            return TraversalControl.ContinueTraversing;
-        }
-
-        @Override
-        public void evaluateVesselInOrder(Context context) {}
-
-        @Override
-        public void evaluateVesselPostOrder(Context context) {}
-
-        public boolean getFoundAnyProductOrder() {
-            return foundAnyProductOrder;
-        }
     }
 }
