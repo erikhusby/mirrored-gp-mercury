@@ -30,7 +30,7 @@ public class BSPPlatingTest extends ContainerTest {
      *
      * @throws Exception any errors
      */
-    @Test(groups = {EXTERNAL_INTEGRATION}, enabled = false)
+    @Test(groups = {EXTERNAL_INTEGRATION}, enabled = true)
     public void testIssueBSPPlating() throws Exception {
 
         platingService = new BSPPlatingRequestServiceImpl();
@@ -46,7 +46,7 @@ public class BSPPlatingTest extends ContainerTest {
         sample = new MercurySample("PDO-123", "SM-26BPU");
         starterMap.put(sample, new AliquotParameters(0.0f, 1.0f));
 
-        sample = new MercurySample("PDO-123", "SM-26BPN");
+        sample = new MercurySample("PDO-123", "SM-HOWIE");
         starterMap.put(sample, new AliquotParameters(0.0f, 1.0f));
 
         sample = new MercurySample("PDO-123", "SM-26BPK");
