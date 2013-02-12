@@ -1,9 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
-import net.sourceforge.stripes.action.DefaultHandler;
-import net.sourceforge.stripes.action.ForwardResolution;
-import net.sourceforge.stripes.action.Resolution;
-import net.sourceforge.stripes.action.UrlBinding;
+import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
@@ -34,17 +32,16 @@ public class BucketViewActionBean extends CoreActionBean {
     @Validate(required = true, on = "viewBucket")
     private String selectedBucket;
 
-    private List<String> selectedVesselLabels;
-
     private Collection<BucketEntry> bucketEntries;
 
-
-    public List<String> getSelectedVesselLabels() {
-        return selectedVesselLabels;
-    }
-
-    public void setSelectedVesselLabels(List<String> selectedVesselLabels) {
-        this.selectedVesselLabels = selectedVesselLabels;
+    @Before(stages = LifecycleStage.BindingAndValidation)
+    public void init() {
+        WorkflowConfig workflowConfig = workflowLoader.load();
+        List<ProductWorkflowDef> workflowDefs = workflowConfig.getProductWorkflowDefs();
+        for (ProductWorkflowDef workflowDef : workflowDefs) {
+            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
+            buckets.addAll(workflowVersion.getBuckets());
+        }
     }
 
     public Set<WorkflowBucketDef> getBuckets() {
@@ -73,12 +70,6 @@ public class BucketViewActionBean extends CoreActionBean {
 
     @DefaultHandler
     public Resolution view() {
-        WorkflowConfig workflowConfig = workflowLoader.load();
-        List<ProductWorkflowDef> workflowDefs = workflowConfig.getProductWorkflowDefs();
-        for (ProductWorkflowDef workflowDef : workflowDefs) {
-            ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-            buckets.addAll(workflowVersion.getBuckets());
-        }
         return new ForwardResolution(VIEW_PAGE);
     }
 
