@@ -1,0 +1,6 @@
+username: mercurydw
+password: mercurydw_qa
+servername: gpinfqa
+port: 1521
+sid: gpinfqa 
+rootDir: /seq/lims/datawh/qa
