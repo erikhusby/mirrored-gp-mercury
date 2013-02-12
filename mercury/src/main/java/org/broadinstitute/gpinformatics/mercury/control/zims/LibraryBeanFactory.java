@@ -67,39 +67,40 @@ public class LibraryBeanFactory {
                     null/*project.getSequenceAnalysisInstructions(sampleInstance).getReferenceSequence().toString()*//*String referenceSequence*/,
                     null/*String referenceSequenceVersion*/,
                     null/*String collaboratorSampleId*/,
-                    null/*String collaborator*/,
+                    /*String collaborator*/
                     null/*String organism*/,
                     null/*String species*/,
                     null/*String strain*/,
                     null/*bspStartingSample.getBspDTO().getSampleLsid()*//*String sampleLSID*/,
-                    null/*String tissueType*/,
-                    null/*String expectedPlasmid*/,
+                    /*String tissueType*/
+                    /*String expectedPlasmid*/
                     null/*String aligner*/,
                     null/*String rrbsSizeRange*/,
                     null/*String restrictionEnzyme*/,
-                    null/*String cellLine*/,
+                    /*String cellLine*/
                     null/*String bait*/,
                     null/*String individual*/,
                     0/*Double labMeasuredInsertSize*/,
                     null/*Boolean positiveControl*/,
                     null/*Boolean negativeControl*/,
-                    null/*String weirdness*/,
-                    0/*Double preCircularizationDnaSize*/,
-                    null/*Boolean partOfDevExperiment*/,
+                    /*String weirdness*/
+                    /*Double preCircularizationDnaSize*/
+                    /*Boolean partOfDevExperiment*/
                     null/*TZDevExperimentData devExperimentData*/,
-                    null/*String gssrBarcode*/,
+                    /*String gssrBarcode*/
                     null/*Collection<String> gssrBarcodes*/,
                     null/*String gssrSampleType*/,
-                    null/*Short targetLaneCoverage*/,
+                    /*Short targetLaneCoverage*/
                     null/*Boolean doAggregation*/,
                     null/*Collection<String> customAmpliconSetNames*/,
-                    false/*Boolean fastTrack*/));
+                    /*Boolean fastTrack*/
+                    null, null, null));
         }
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(ZimsIlluminaRun.DATE_FORMAT);
         ZimsIlluminaRun zimsIlluminaRun = new ZimsIlluminaRun(illuminaSequencingRun.getRunName(),
                 illuminaSequencingRun.getRunBarcode(), runCartridge.getCartridgeBarcode(),
                 illuminaSequencingRun.getMachineName(), null, simpleDateFormat.format(illuminaSequencingRun.getRunDate()),
-                (short) 0, (short) 0, (short) 0, (short) 0, (short) 0, false);
+                false);
         zimsIlluminaRun.addLane(new ZimsIlluminaChamber((short) 1, libraries, "",""));
         return zimsIlluminaRun;
     }

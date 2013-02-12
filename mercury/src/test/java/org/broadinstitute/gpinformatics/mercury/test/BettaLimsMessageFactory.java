@@ -162,7 +162,7 @@ public class BettaLimsMessageFactory {
         private final String destinationRackBarcode;
         private final String destinationWell;
 
-        CherryPick(String sourceRackBarcode, String sourceWell, String destinationRackBarcode, String destinationWell) {
+        public CherryPick(String sourceRackBarcode, String sourceWell, String destinationRackBarcode, String destinationWell) {
             this.sourceRackBarcode = sourceRackBarcode;
             this.sourceWell = sourceWell;
             this.destinationRackBarcode = destinationRackBarcode;
