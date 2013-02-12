@@ -41,15 +41,16 @@ public class ProductOrderEtlDbFreeTest {
     ProductOrder pdo = createMock(ProductOrder.class);
     ResearchProject researchProject = createMock(ResearchProject.class);
     Product product = createMock(Product.class);
+    Object[] mocks = new Object[]{auditReader, dao, pdo, researchProject, product};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
-        reset(auditReader, dao, pdo, researchProject, product);
+        reset(mocks);
     }
 
     public void testEtlFlags() throws Exception {
         expect(pdo.getProductOrderId()).andReturn(entityId);
-        replay(dao, auditReader, product, researchProject, pdo);
+        replay(mocks);
 
         ProductOrderEtl tst = new ProductOrderEtl();
         tst.setProductOrderDao(dao);
@@ -65,13 +66,13 @@ public class ProductOrderEtlDbFreeTest {
 
         assertTrue(tst.isEntityEtl());
 
-        verify(dao, auditReader, product, researchProject, pdo);
+        verify(mocks);
     }
 
     public void testCantMakeEtlRecord() throws Exception {
         expect(dao.findById(ProductOrder.class, -1L)).andReturn(null);
 
-        replay(dao, auditReader, product, researchProject, pdo);
+        replay(mocks);
 
         ProductOrderEtl tst = new ProductOrderEtl();
         tst.setProductOrderDao(dao);
@@ -79,14 +80,12 @@ public class ProductOrderEtlDbFreeTest {
 
         assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
 
-        verify(dao, auditReader, product, researchProject, pdo);
+        verify(mocks);
     }
 
-    public void testMakeEtlRecord() throws Exception {
+    public void testIncrementalEtl() throws Exception {
         expect(dao.findById(ProductOrder.class, entityId)).andReturn(pdo);
 
-        List<ProductOrder> list = new ArrayList<ProductOrder>();
-        list.add(pdo);
         expect(pdo.getProductOrderId()).andReturn(entityId);
         expect(pdo.getResearchProject()).andReturn(researchProject).times(2);
         expect(pdo.getProduct()).andReturn(product).times(2);
@@ -100,7 +99,7 @@ public class ProductOrderEtlDbFreeTest {
         expect(researchProject.getResearchProjectId()).andReturn(researchProjectId);
         expect(product.getProductId()).andReturn(productId);
 
-        replay(dao, auditReader, product, researchProject, pdo);
+        replay(mocks);
 
         ProductOrderEtl tst = new ProductOrderEtl();
         tst.setProductOrderDao(dao);
@@ -108,24 +107,12 @@ public class ProductOrderEtlDbFreeTest {
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
+        verifyRecord(records.iterator().next());
 
-        String[] parts = records.iterator().next().split(",");
-        assertEquals(parts[0], etlDateStr);
-        assertEquals(parts[1], "F");
-        assertEquals(parts[2], String.valueOf(entityId));
-        assertEquals(parts[3], String.valueOf(researchProjectId));
-        assertEquals(parts[4], String.valueOf(productId));
-        assertEquals(parts[5], orderStatus.name());
-        assertEquals(parts[6], ExtractTransform.secTimestampFormat.format(createdDate));
-        assertEquals(parts[7], ExtractTransform.secTimestampFormat.format(modifiedDate));
-        assertEquals(parts[8], title);
-        assertEquals(parts[9], quoteId);
-        assertEquals(parts[10], jiraTicketKey);
-
-        verify(dao, auditReader, product, researchProject, pdo);
+        verify(mocks);
     }
 
-    public void testMakeEtlRecord2() throws Exception {
+    public void testBackfillEtl() throws Exception {
         List<ProductOrder> list = new ArrayList<ProductOrder>();
         list.add(pdo);
         expect(dao.findAll(eq(ProductOrder.class), (GenericDao.GenericDaoCallback<ProductOrder>)anyObject())).andReturn(list);
@@ -143,7 +130,7 @@ public class ProductOrderEtlDbFreeTest {
         expect(researchProject.getResearchProjectId()).andReturn(researchProjectId);
         expect(product.getProductId()).andReturn(productId);
 
-        replay(dao, auditReader, product, researchProject, pdo);
+        replay(mocks);
 
         ProductOrderEtl tst = new ProductOrderEtl();
         tst.setProductOrderDao(dao);
@@ -151,13 +138,25 @@ public class ProductOrderEtlDbFreeTest {
 
         Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
         assertEquals(records.size(), 1);
-        String[] parts = records.iterator().next().split(",");
-        assertEquals(parts[0], etlDateStr);
-        assertEquals(parts[1], "F");
-        assertEquals(parts[2], String.valueOf(entityId));
+        verifyRecord(records.iterator().next());
 
-        verify(dao, auditReader, product, researchProject, pdo);
+        verify(mocks);
     }
 
+    private void verifyRecord(String record) {
+	int i = 0;
+        String[] parts = record.split(",");
+        assertEquals(parts[i++], etlDateStr);
+        assertEquals(parts[i++], "F");
+        assertEquals(parts[i++], String.valueOf(entityId));
+        assertEquals(parts[i++], String.valueOf(researchProjectId));
+        assertEquals(parts[i++], String.valueOf(productId));
+        assertEquals(parts[i++], orderStatus.name());
+        assertEquals(parts[i++], ExtractTransform.secTimestampFormat.format(createdDate));
+        assertEquals(parts[i++], ExtractTransform.secTimestampFormat.format(modifiedDate));
+        assertEquals(parts[i++], title);
+        assertEquals(parts[i++], quoteId);
+        assertEquals(parts[i++], jiraTicketKey);
+    }
 }
 

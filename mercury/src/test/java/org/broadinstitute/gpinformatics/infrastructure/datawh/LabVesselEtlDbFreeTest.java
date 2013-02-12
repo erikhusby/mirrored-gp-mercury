@@ -32,15 +32,16 @@ public class LabVesselEtlDbFreeTest {
     AuditReaderDao auditReader = createMock(AuditReaderDao.class);
     LabVessel obj = createMock(LabVessel.class);
     LabVesselDao dao = createMock(LabVesselDao.class);
+    Object[] mocks = new Object[]{auditReader, dao, obj};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
-        reset(auditReader, dao, obj);
+        reset(mocks);
     }
 
     public void testEtlFlags() throws Exception {
         expect(obj.getLabVesselId()).andReturn(entityId);
-        replay(auditReader, dao, obj);
+        replay(mocks);
 
         LabVesselEtl tst = new LabVesselEtl();
         tst.setLabVesselDao(dao);
@@ -56,13 +57,13 @@ public class LabVesselEtlDbFreeTest {
 
         assertTrue(tst.isEntityEtl());
 
-        verify(dao, auditReader, obj);
+        verify(mocks);
     }
 
     public void testCantMakeEtlRecord() throws Exception {
         expect(dao.findById(LabVessel.class, -1L)).andReturn(null);
 
-        replay(dao, auditReader, obj);
+        replay(mocks);
 
         LabVesselEtl tst = new LabVesselEtl();
         tst.setLabVesselDao(dao);
@@ -70,19 +71,17 @@ public class LabVesselEtlDbFreeTest {
 
         assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
 
-        verify(dao, auditReader, obj);
+        verify(mocks);
     }
 
-    public void testMakeEtlRecord() throws Exception {
+    public void testIncrementalEtl() throws Exception {
         expect(dao.findById(LabVessel.class, entityId)).andReturn(obj);
 
-        List<LabVessel> list = new ArrayList<LabVessel>();
-        list.add(obj);
         expect(obj.getLabVesselId()).andReturn(entityId);
         expect(obj.getLabel()).andReturn(vesselLabel);
         expect(obj.getType()).andReturn(vesselType);
 
-        replay(dao, auditReader, obj);
+        replay(mocks);
 
         LabVesselEtl tst = new LabVesselEtl();
         tst.setLabVesselDao(dao);
@@ -90,18 +89,12 @@ public class LabVesselEtlDbFreeTest {
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
+        verifyRecord(records.iterator().next());
 
-        String[] parts = records.iterator().next().split(",");
-        assertEquals(parts[0], etlDateStr);
-        assertEquals(parts[1], "F");
-        assertEquals(parts[2], String.valueOf(entityId));
-        assertEquals(parts[3], vesselLabel);
-        assertEquals(parts[4], vesselType.getName());
-
-        verify(dao, auditReader, obj);
+        verify(mocks);
     }
 
-    public void testMakeEtlRecord2() throws Exception {
+    public void testBackfillEtl() throws Exception {
         List<LabVessel> list = new ArrayList<LabVessel>();
         list.add(obj);
         expect(dao.findAll(eq(LabVessel.class), (GenericDao.GenericDaoCallback<LabVessel>)anyObject())).andReturn(list);
@@ -110,7 +103,7 @@ public class LabVesselEtlDbFreeTest {
         expect(obj.getLabel()).andReturn(vesselLabel);
         expect(obj.getType()).andReturn(vesselType);
 
-        replay(dao, auditReader, obj);
+        replay(mocks);
 
         LabVesselEtl tst = new LabVesselEtl();
         tst.setLabVesselDao(dao);
@@ -118,15 +111,19 @@ public class LabVesselEtlDbFreeTest {
 
         Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
         assertEquals(records.size(), 1);
-        String[] parts = records.iterator().next().split(",");
-        assertEquals(parts[0], etlDateStr);
-        assertEquals(parts[1], "F");
-        assertEquals(parts[2], String.valueOf(entityId));
-        assertEquals(parts[3], vesselLabel);
-        assertEquals(parts[4], vesselType.getName());
+        verifyRecord(records.iterator().next());
 
-        verify(dao, auditReader, obj);
+        verify(mocks);
     }
 
+    private void verifyRecord(String record) {
+	int i = 0;
+        String[] parts = record.split(",");
+        assertEquals(parts[i++], etlDateStr);
+        assertEquals(parts[i++], "F");
+        assertEquals(parts[i++], String.valueOf(entityId));
+        assertEquals(parts[i++], vesselLabel);
+        assertEquals(parts[i++], vesselType.getName());
+    }
 }
 

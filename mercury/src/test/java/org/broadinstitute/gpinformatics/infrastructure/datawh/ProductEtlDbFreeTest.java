@@ -47,12 +47,12 @@ public class ProductEtlDbFreeTest {
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
-        reset(auditReader, dao, obj, family);
+        reset(mocks);
     }
 
     public void testEtlFlags() throws Exception {
         expect(obj.getProductId()).andReturn(entityId);
-        replay(auditReader, dao, obj, family);
+        replay(mocks);
 
         ProductEtl tst = new ProductEtl();
         tst.setProductDao(dao);
@@ -68,13 +68,13 @@ public class ProductEtlDbFreeTest {
 
         assertTrue(tst.isEntityEtl());
 
-        verify(dao, auditReader, obj, family);
+        verify(mocks);
     }
 
     public void testCantMakeEtlRecord() throws Exception {
         expect(dao.findById(Product.class, -1L)).andReturn(null);
 
-        replay(dao, auditReader, obj, family);
+        replay(mocks);
 
         ProductEtl tst = new ProductEtl();
         tst.setProductDao(dao);
@@ -82,14 +82,11 @@ public class ProductEtlDbFreeTest {
 
         assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
 
-        verify(dao, auditReader, obj, family);
+        verify(mocks);
     }
 
-    public void testMakeEtlRecord() throws Exception {
+    public void testIncrementalEtl() throws Exception {
         expect(dao.findById(Product.class, entityId)).andReturn(obj);
-
-        List<Product> list = new ArrayList<Product>();
-        list.add(obj);
 
         expect(obj.getProductId()).andReturn(entityId);
         expect(obj.getProductName()).andReturn(productName);
@@ -105,7 +102,7 @@ public class ProductEtlDbFreeTest {
 
         expect(family.getName()).andReturn(productFamilyName);
 
-        replay(dao, auditReader, obj, family);
+        replay(mocks);
 
         ProductEtl tst = new ProductEtl();
         tst.setProductDao(dao);
@@ -116,10 +113,10 @@ public class ProductEtlDbFreeTest {
 
         verifyRecord(records.iterator().next());
 
-        verify(dao, auditReader, obj, family);
+        verify(mocks);
     }
 
-    public void testMakeEtlRecord2() throws Exception {
+    public void testBackfillEtl() throws Exception {
         List<Product> list = new ArrayList<Product>();
         list.add(obj);
         expect(dao.findAll(eq(Product.class), (GenericDao.GenericDaoCallback<Product>) anyObject())).andReturn(list);
@@ -138,8 +135,6 @@ public class ProductEtlDbFreeTest {
 
         expect(family.getName()).andReturn(productFamilyName);
 
-
-        //replay(dao, auditReader, obj, family);
         replay(mocks);
 
         ProductEtl tst = new ProductEtl();
@@ -150,7 +145,6 @@ public class ProductEtlDbFreeTest {
         assertEquals(records.size(), 1);
         verifyRecord(records.iterator().next());
 
-        //verify(dao, auditReader, obj, family);
         verify(mocks);
     }
 

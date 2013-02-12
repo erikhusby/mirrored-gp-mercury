@@ -41,7 +41,8 @@ public class GenericEntityEtlDbFreeTest {
     AuditReaderDao auditReader = createMock(AuditReaderDao.class);
     LabBatch obj = createMock(LabBatch.class);
     LabBatchDAO dao = createMock(LabBatchDAO.class);
-
+    Object[] mocks = new Object[]{auditReader, dao, obj};
+    
     LabBatchEtl tst = new LabBatchEtl();
     RevInfo[] revInfo = new RevInfo[] {new RevInfo(), new RevInfo(), new RevInfo()};
 
@@ -58,7 +59,7 @@ public class GenericEntityEtlDbFreeTest {
         ExtractTransform.setDatafileDir(datafileDir);
         EtlTestUtilities.deleteEtlFiles(datafileDir);
 
-        reset(auditReader, dao, obj);
+        reset(mocks);
     }
 
     @AfterMethod
@@ -83,7 +84,7 @@ public class GenericEntityEtlDbFreeTest {
         expect(obj.getCreatedOn()).andReturn(createdOn);
         expect(obj.getDueDate()).andReturn(dueDate);
 
-        replay(dao, auditReader, obj);
+        replay(mocks);
 
         tst.setLabBatchDAO(dao);
         tst.setAuditReaderDao(auditReader);
@@ -95,7 +96,7 @@ public class GenericEntityEtlDbFreeTest {
         File datafile = new File(datafileDir, dataFilename);
         Assert.assertTrue(datafile.exists());
 
-        verify(dao, auditReader, obj);
+        verify(mocks);
     }
 
     public void testDeletionEtl() throws Exception {
@@ -112,7 +113,7 @@ public class GenericEntityEtlDbFreeTest {
 
         expect(obj.getLabBatchId()).andReturn(entityId).times(3);
 
-        replay(dao, auditReader, obj);
+        replay(mocks);
 
         tst.setLabBatchDAO(dao);
         tst.setAuditReaderDao(auditReader);
@@ -124,7 +125,7 @@ public class GenericEntityEtlDbFreeTest {
         File datafile = new File(datafileDir, dataFilename);
         Assert.assertTrue(datafile.exists());
 
-        verify(dao, auditReader, obj);
+        verify(mocks);
     }
 
     public void testBackfillEtl() throws Exception {
@@ -138,7 +139,7 @@ public class GenericEntityEtlDbFreeTest {
         expect(obj.getCreatedOn()).andReturn(createdOn);
         expect(obj.getDueDate()).andReturn(dueDate);
 
-        replay(dao, auditReader, obj);
+        replay(mocks);
 
         LabBatchEtl tst = new LabBatchEtl();
         tst.setLabBatchDAO(dao);
@@ -151,7 +152,7 @@ public class GenericEntityEtlDbFreeTest {
         File datafile = new File(datafileDir, dataFilename);
         Assert.assertTrue(datafile.exists());
 
-        verify(dao, auditReader, obj);
+        verify(mocks);
     }
 
 }

@@ -36,15 +36,16 @@ public class PriceItemEtlDbFreeTest {
     AuditReaderDao auditReader = createMock(AuditReaderDao.class);
     PriceItem obj = createMock(PriceItem.class);
     PriceItemDao dao = createMock(PriceItemDao.class);
+    Object[] mocks = new Object[]{auditReader, obj, dao};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
-        reset(auditReader, dao, obj);
+        reset(mocks);
     }
 
     public void testEtlFlags() throws Exception {
         expect(obj.getPriceItemId()).andReturn(entityId);
-        replay(auditReader, dao, obj);
+        replay(mocks);
 
         PriceItemEtl tst = new PriceItemEtl();
         tst.setPriceItemDao(dao);
@@ -60,13 +61,13 @@ public class PriceItemEtlDbFreeTest {
 
         assertTrue(tst.isEntityEtl());
 
-        verify(dao, auditReader, obj);
+        verify(mocks);
     }
 
     public void testCantMakeEtlRecord() throws Exception {
         expect(dao.findById(PriceItem.class, -1L)).andReturn(null);
 
-        replay(dao, auditReader, obj);
+        replay(mocks);
 
         PriceItemEtl tst = new PriceItemEtl();
         tst.setPriceItemDao(dao);
@@ -74,14 +75,12 @@ public class PriceItemEtlDbFreeTest {
 
         assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
 
-        verify(dao, auditReader, obj);
+        verify(mocks);
     }
 
-    public void testMakeEtlRecord() throws Exception {
+    public void testIncrementalEtl() throws Exception {
         expect(dao.findById(PriceItem.class, entityId)).andReturn(obj);
 
-        List<PriceItem> list = new ArrayList<PriceItem>();
-        list.add(obj);
         expect(obj.getPriceItemId()).andReturn(entityId);
         expect(obj.getPlatform()).andReturn(platform);
         expect(obj.getCategory()).andReturn(category).times(2);
@@ -90,7 +89,7 @@ public class PriceItemEtlDbFreeTest {
         expect(obj.getPrice()).andReturn(price);
         expect(obj.getUnits()).andReturn(units);
 
-        replay(dao, auditReader, obj);
+        replay(mocks);
 
         PriceItemEtl tst = new PriceItemEtl();
         tst.setPriceItemDao(dao);
@@ -101,10 +100,10 @@ public class PriceItemEtlDbFreeTest {
 
         verifyRecord(records.iterator().next());
 
-        verify(dao, auditReader, obj);
+        verify(mocks);
     }
 
-    public void testMakeEtlRecord2() throws Exception {
+    public void testBackfillEtl() throws Exception {
         List<PriceItem> list = new ArrayList<PriceItem>();
         list.add(obj);
         expect(dao.findAll(eq(PriceItem.class), (GenericDao.GenericDaoCallback<PriceItem>) anyObject())).andReturn(list);
@@ -117,7 +116,7 @@ public class PriceItemEtlDbFreeTest {
         expect(obj.getPrice()).andReturn(price);
         expect(obj.getUnits()).andReturn(units);
 
-        replay(dao, auditReader, obj);
+        replay(mocks);
 
         PriceItemEtl tst = new PriceItemEtl();
         tst.setPriceItemDao(dao);
@@ -127,20 +126,21 @@ public class PriceItemEtlDbFreeTest {
         assertEquals(records.size(), 1);
         verifyRecord(records.iterator().next());
 
-        verify(dao, auditReader, obj);
+        verify(mocks);
     }
 
     private void verifyRecord(String record) {
+	int i = 0;
         String[] parts = record.split(",");
-        assertEquals(parts[0], etlDateStr);
-        assertEquals(parts[1], "F");
-        assertEquals(parts[2], String.valueOf(entityId));
-        assertEquals(parts[3], platform);
-        assertEquals(parts[4], category);
-        assertEquals(parts[5], name);
-        assertEquals(parts[6], quoteServerId);
-        assertEquals(parts[7], price);
-        assertEquals(parts[8], units);
+        assertEquals(parts[i++], etlDateStr);
+        assertEquals(parts[i++], "F");
+        assertEquals(parts[i++], String.valueOf(entityId));
+        assertEquals(parts[i++], platform);
+        assertEquals(parts[i++], category);
+        assertEquals(parts[i++], name);
+        assertEquals(parts[i++], quoteServerId);
+        assertEquals(parts[i++], price);
+        assertEquals(parts[i++], units);
     }
 
 }
