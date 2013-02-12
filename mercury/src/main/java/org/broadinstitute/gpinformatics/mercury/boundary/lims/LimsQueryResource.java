@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.apache.commons.logging.Log;
+import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceResponseFactory;
@@ -41,13 +43,19 @@ public class LimsQueryResource {
     @Inject
     private MercuryOrSquidRouter mercuryOrSquidRouter;
 
+    @Inject
+    private BSPUserList bspUserList;
+
     public LimsQueryResource() {}
 
-    public LimsQueryResource(ThriftService thriftService, LimsQueries limsQueries, LimsQueryResourceResponseFactory responseFactory, MercuryOrSquidRouter mercuryOrSquidRouter) {
+    public LimsQueryResource(ThriftService thriftService, LimsQueries limsQueries,
+                             LimsQueryResourceResponseFactory responseFactory,
+                             MercuryOrSquidRouter mercuryOrSquidRouter, BSPUserList bspUserList) {
         this.thriftService = thriftService;
         this.limsQueries = limsQueries;
         this.responseFactory = responseFactory;
         this.mercuryOrSquidRouter = mercuryOrSquidRouter;
+        this.bspUserList = bspUserList;
     }
 
     @GET
@@ -169,7 +177,12 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchUserIdForBadgeId")
     public String fetchUserIdForBadgeId(@QueryParam("badgeId") String badgeId) {
-        return thriftService.fetchUserIdForBadgeId(badgeId);
+        BspUser foundUser = bspUserList.getByBadgeId(badgeId);
+        if (foundUser != null) {
+            return foundUser.getUsername();
+        } else {
+            throw new RuntimeException("User not found for badge ID: " + badgeId);
+        }
     }
 
     /**

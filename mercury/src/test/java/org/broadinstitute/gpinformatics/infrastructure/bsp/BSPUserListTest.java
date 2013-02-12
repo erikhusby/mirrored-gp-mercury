@@ -36,7 +36,7 @@ public class BSPUserListTest extends Arquillian {
         Assert.assertTrue(users.size() > 1000);
     }
 
-    @Test(enabled = true)
+    @Test
     public void testFindUserById() throws Exception {
         Collection<BspUser> users = bspUserList.getUsers().values();
         Assert.assertTrue(!users.isEmpty());
@@ -45,14 +45,14 @@ public class BSPUserListTest extends Arquillian {
         Assert.assertTrue(user1.equals(user2));
     }
 
-    @Test(enabled = true)
+    @Test
     public void testFindUserByBadgeId() throws Exception {
         BspUser user = bspUserList.getByBadgeId(TEST_BADGE_ID);
         Assert.assertNotNull(user, "Could not find test user!!");
         Assert.assertTrue(user.getUsername().equals(BSP_TEST_USER), "user is not test user!");
     }
 
-    @Test(enabled = true)
+    @Test
     public void testHasBadgeId() throws Exception {
         BspUser user = bspUserList.getByUsername(BSP_TEST_USER);
         Assert.assertNotNull(user, "Could not find test user!!");
@@ -61,4 +61,24 @@ public class BSPUserListTest extends Arquillian {
         Assert.assertTrue(user.getBadgeNumber().equals(TEST_BADGE_ID), "test user should have badgeId");
     }
 
+
+    /**
+     * Test the performance of BSPUserList.getByBadgeId(). Like the existing implementation of getById(), the current
+     * implementation of getByBadgeId() is rather inefficient. However, it's good enough, as long as it consistently
+     * returns a result in 50ms or less. This test assumes that querying on a badge ID that does not exist is the worst
+     * case for performance.
+     *
+     * TODO: consider moving this to LimsQueryResourceTest instead, since the overall performance of the service is probably a more meaningful measure
+     */
+    @Test
+    public void testGetByBadgeIdPerformance() {
+        long start = System.nanoTime();
+        BspUser user = bspUserList.getByBadgeId("BSPUserListTest.testGetByBadgeIdPerformance");
+        long end = System.nanoTime();
+        long durationNano = end - start;
+        double durationMilli = durationNano / 1000000.0;
+        Assert.assertTrue(user == null, "User should not have been found");
+        Assert.assertTrue(durationMilli < 50, "Query for unknown badge ID should take less than 200ms. Actually took " +
+                durationMilli + "ms");
+    }
 }

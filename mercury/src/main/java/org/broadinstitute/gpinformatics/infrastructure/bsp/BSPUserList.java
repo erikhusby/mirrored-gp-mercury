@@ -200,15 +200,17 @@ public class BSPUserList extends AbstractCache implements Serializable {
 
     public static class QADudeUser extends BspUser {
         public QADudeUser(String type, long userId) {
-            setFields(userId, "QADude" + type, "QADude", type, "qadude" + type.toLowerCase() + "@broadinstitute.org");
+            setFields(userId, "QADude" + type, "QADude", type, "qadude" + type.toLowerCase() + "@broadinstitute.org", type+String.valueOf(userId));
         }
 
-        private void setFields(long userId, String username, String firstName, String lastName, String email) {
+        private void setFields(long userId, String username, String firstName, String lastName, String email,
+                               String badgeId) {
             setUserId(userId);
             setUsername(username);
             setFirstName(firstName);
             setLastName(lastName);
             setEmail(email);
+            setBadgeNumber(badgeId);
         }
     }
 
