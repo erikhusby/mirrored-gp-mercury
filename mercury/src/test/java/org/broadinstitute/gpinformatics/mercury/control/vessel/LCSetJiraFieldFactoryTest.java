@@ -58,7 +58,7 @@ public class LCSetJiraFieldFactoryTest {
         pdoNames = new ArrayList<String>();
         Collections.addAll(pdoNames, pdoBusinessName);
 
-        workflowName = "Exome Express";
+        workflowName = WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName();
         mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
 
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
@@ -104,7 +104,7 @@ public class LCSetJiraFieldFactoryTest {
         AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory
                 .getInstance(CreateFields.ProjectType.LCSET_PROJECT, testBatch, AthenaClientProducer.stubInstance());
 
-        Assert.assertEquals("6 samples from Test RP PDO-999\n", testBuilder.generateDescription());
+        Assert.assertEquals("6 samples from MyResearchProject PDO-999\n", testBuilder.generateDescription());
 
         Collection<CustomField> generatedFields = testBuilder.getCustomFields(jiraFieldDefs);
 

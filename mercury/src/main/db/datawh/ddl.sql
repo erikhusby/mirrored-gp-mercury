@@ -206,7 +206,7 @@ CREATE TABLE lab_batch (
   lab_batch_id NUMERIC(19) NOT NULL PRIMARY KEY,
   batch_name VARCHAR2(40) NOT NULL,
   is_active CHAR(1) DEFAULT 'T' NOT NULL CHECK (is_active IN ('T','F')),
-  created_on DATE NOT NULL,
+  created_on DATE,
   due_date DATE,
   etl_date DATE NOT NULL
 );

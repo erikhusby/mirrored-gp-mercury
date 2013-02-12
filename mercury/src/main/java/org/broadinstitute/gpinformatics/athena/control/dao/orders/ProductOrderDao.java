@@ -168,6 +168,34 @@ public class ProductOrderDao extends GenericDao {
         }
     }
 
+    public List<ProductOrder> findByWorkflowName(@Nonnull String workflowName) {
+        if(workflowName == null) {
+            throw new NullPointerException("Null workflowName");
+        }
+
+        EntityManager entityManager = getEntityManager();
+        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+
+        CriteriaQuery<ProductOrder> criteriaQuery =
+                criteriaBuilder.createQuery(ProductOrder.class);
+
+        List<Predicate> predicates = new ArrayList<Predicate>();
+
+
+        Root<ProductOrder> productOrderRoot = criteriaQuery.from(ProductOrder.class);
+        Join<ProductOrder, Product> productJoin = productOrderRoot.join(ProductOrder_.product);
+
+        predicates.add(criteriaBuilder.equal(productJoin.get(Product_.workflowName), workflowName));
+
+        criteriaQuery.where(predicates.toArray(new Predicate[predicates.size()]));
+
+        try {
+            return entityManager.createQuery(criteriaQuery).getResultList();
+        } catch (NoResultException ignored) {
+            return null;
+        }
+    }
+
     /**
      * Find all ProductOrders, not initializing any associations
      *

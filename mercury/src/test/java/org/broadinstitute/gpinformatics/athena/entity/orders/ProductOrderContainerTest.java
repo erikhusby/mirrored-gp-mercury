@@ -41,7 +41,7 @@ public class ProductOrderContainerTest extends Arquillian {
     public ProductOrder createSimpleProductOrder() throws Exception {
         return new ProductOrder(TEST_CREATOR, "containerTest Product Order Test1",
                 ProductOrderTest.createSampleList("SM-1P3X9", "SM-1P3WY", "SM-1P3XN"),
-                "newQuote", AthenaClientServiceStub.createDummyProduct(),
+                "newQuote", AthenaClientServiceStub.createDummyProduct("Exome Express", "partNumber"),
                 createDummyResearchProject(userList, "Test Research Project"));
     }
 
@@ -96,7 +96,7 @@ public class ProductOrderContainerTest extends Arquillian {
                 new ProductOrder(TEST_CREATOR, "containerTest Product Order Test2",
                         ProductOrderTest.createSampleList("SM_12CO4", "SM_1P3WY", "SM_1P3XN"),
                         "newQuote",
-                        AthenaClientServiceStub.createDummyProduct(),
+                        AthenaClientServiceStub.createDummyProduct("Exome Express", "partNumber"),
                         createDummyResearchProject(userList, "Test Research Project"));
 
         Assert.assertEquals(testOrder.getUniqueSampleCount(), 3);

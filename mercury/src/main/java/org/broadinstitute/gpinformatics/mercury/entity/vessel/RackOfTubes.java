@@ -2,9 +2,15 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.hibernate.envers.Audited;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
 import javax.persistence.Enumerated;
+import javax.persistence.JoinColumn;
+import javax.persistence.JoinTable;
+import javax.persistence.ManyToMany;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * A piece of plastic that holds tubes.  Can be reused to hold different sets of tubes.
@@ -12,9 +18,17 @@ import javax.persistence.Enumerated;
  */
 @Entity
 @Audited
-public class RackOfTubes extends LabVessel{
+public class RackOfTubes extends LabVessel {
 
-    /** For JPA */
+    @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "mercury", name = "LAB_VESSEL_RACKS_OF_TUBES",
+                      joinColumns = @JoinColumn(name = "RACKS_OF_TUBES"),
+                      inverseJoinColumns = @JoinColumn(name = "LAB_VESSEL"))
+    private Set<TubeFormation> tubeFormations = new HashSet<TubeFormation>();
+
+    /**
+     * For JPA
+     */
     protected RackOfTubes() {
     }
 
@@ -22,7 +36,7 @@ public class RackOfTubes extends LabVessel{
     public enum RackType {
         Matrix96("Matrix96", VesselGeometry.G12x8);
 
-        private final String displayName;
+        private final String         displayName;
         private final VesselGeometry vesselGeometry;
 
         RackType(String displayName, VesselGeometry vesselGeometry) {
@@ -61,4 +75,7 @@ public class RackOfTubes extends LabVessel{
         return CONTAINER_TYPE.RACK_OF_TUBES;
     }
 
+    public Set<TubeFormation> getTubeFormations() {
+        return tubeFormations;
+    }
 }
