@@ -166,8 +166,9 @@ public class BettalimsMessageResource {
                         Collection<String> preFoundEvents = preBuildFromBettaLims(bettaLIMSMessage);
 
                         for (String testEvent : preFoundEvents) {
-                            if (MercuryOrSquidRouter.MercuryOrSquid.MERCURY.equals(mercuryOrSquidRouter
-                                                                                           .routeForVessel(testEvent))) {
+                            if (MercuryOrSquidRouter.MercuryOrSquid
+                                                    .MERCURY
+                                                    .equals(mercuryOrSquidRouter.routeForVessel(testEvent))) {
                                 processInMercury = true;
                             } else {
                                 processInSquid = true;
