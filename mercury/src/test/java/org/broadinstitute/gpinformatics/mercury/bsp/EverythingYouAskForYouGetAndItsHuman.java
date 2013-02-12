@@ -19,10 +19,8 @@ public class EverythingYouAskForYouGetAndItsHuman implements BSPSampleSearchServ
     public List<String[]> runSampleSearch(Collection<String> sampleIDs, BSPSampleSearchColumn... resultColumns) {
         final List<String[]> samples = new ArrayList<String[]>();
         for (String sampleID : sampleIDs) {
-            samples.add(new String[] {
-                    "1","2",sampleID,"4","5","6","7","sapiens", "broadinstitute.org:bsp.prod.sample:1"
-
-            });
+            samples.add(new String[] {"Bill the Cat","2",sampleID,"4","5","6","7",
+                    "8","9","10","11","12","13","14","15","16","17","18","19","20"});
         }
         return samples;
     }
