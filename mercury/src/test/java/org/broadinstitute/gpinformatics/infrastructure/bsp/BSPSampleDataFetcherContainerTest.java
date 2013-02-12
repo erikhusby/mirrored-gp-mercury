@@ -11,7 +11,7 @@ import javax.inject.Inject;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.*;
 
 public class BSPSampleDataFetcherContainerTest extends Arquillian {
 
@@ -32,6 +32,9 @@ public class BSPSampleDataFetcherContainerTest extends Arquillian {
         BSPSampleDTO paraffin = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-2UVBU");
         BSPSampleDTO notFFPE = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-3HM8");
 
+        Assert.assertNotNull(ffpe);
+        Assert.assertNotNull(paraffin);
+        Assert.assertNotNull(notFFPE);
         List<BSPSampleDTO> dtoList = Arrays.asList(ffpe, paraffin, notFFPE);
 
         bspSampleDataFetcher.fetchFFPEDerived(dtoList);

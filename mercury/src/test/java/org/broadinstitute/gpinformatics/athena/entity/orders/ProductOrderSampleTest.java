@@ -71,9 +71,9 @@ public class ProductOrderSampleTest {
             product.addAddOn(addOn);
             sample1 = new ProductOrderSample("Sample1",
                     new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", BSP_MATERIAL_TYPE.getFullName(), "", "", "", "", "", "",
-                            ""));
+                            "","","",""));
             sample2 = new ProductOrderSample("Sample2",
-                    new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "XXX:XXX", "", "", "", "", "", "", ""));
+                    new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "XXX:XXX", "", "", "", "", "", "", "","","",""));
             order.setSamples(Collections.singletonList(sample1));
             List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
             samples.add(sample1);

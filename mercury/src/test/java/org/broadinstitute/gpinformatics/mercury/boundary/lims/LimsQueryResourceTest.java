@@ -138,9 +138,12 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient
     public void testFetchUserIdForBadgeId(@ArquillianResource URL baseUrl) {
-        WebResource resource = makeWebResource(baseUrl, "fetchUserIdForBadgeId").queryParam("badgeId", "8f03f000f7ff12e0");
+        // TODO: after ~2/19/13 BSP release, use tester/bsptestuser_badge_id_1234 data below for a better integration test
+//        WebResource resource = makeWebResource(baseUrl, "fetchUserIdForBadgeId").queryParam("badgeId", "bsptestuser_badge_id_1234");
+        WebResource resource = makeWebResource(baseUrl, "fetchUserIdForBadgeId").queryParam("badgeId", "Test101010101");
         String result = get(resource);
-        assertThat(result, equalTo("breilly"));
+//        assertThat(result, equalTo("tester"));
+        assertThat(result, equalTo("QADudeTest"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)

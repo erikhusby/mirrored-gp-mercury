@@ -125,20 +125,20 @@ mercury:
 
     DEV:
 
-      bsp:      QA
+      bsp:      DEV
       jira:     TEST
       pmbridge: DEV
-      quote:    QA
+      quote:    DEV
       squid:    DEV
       thrift:   QA
 
 
     TEST:
 
-      bsp:      QA
+      bsp:      DEV
       jira:     TEST
       pmbridge: DEV
-      quote:    QA
+      quote:    DEV
       squid:    TEST
       thrift:   QA
 
