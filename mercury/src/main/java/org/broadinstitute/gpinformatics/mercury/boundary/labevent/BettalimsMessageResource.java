@@ -179,7 +179,6 @@ public class BettalimsMessageResource {
                             throw new InformaticsServiceException("For Product Dependent processing, we cannot process in both Mercury and Squid");
                         }
 
-                        // todo jmt for Mar 1, traverse plastic
                         break;
                     case BOTH:
                         processInMercury = true;
