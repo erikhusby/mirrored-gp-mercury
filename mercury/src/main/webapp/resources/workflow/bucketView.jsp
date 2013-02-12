@@ -140,6 +140,7 @@
                                                                               class="bucket-checkedCount"></span>
                     </th>
                     <th>Vessel Name</th>
+                    <th>Sample Name</th>
                     <th>PDO</th>
                     <th>Batch Name</th>
                     <th>Sample Type</th>
@@ -159,14 +160,23 @@
                             </a>
                         </td>
                         <td>
+                            <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample">
+                                <a href="${ctxpath}/search/all.action?search=&searchKey=${mercurySample.sampleKey}">
+                                        ${mercurySample.sampleKey}
+                                </a>
+                            </c:forEach>
+                        </td>
+                        <td>
                             <a href="${ctxpath}/search/all.action?search=&searchKey=${entry.poBusinessKey}">
                                     ${entry.poBusinessKey}
                             </a>
                         </td>
                         <td>
-                            <a href="${ctxpath}/search/all.action?search=&searchKey=${entry.labVessel.nearestLabBatchesString}">
-                                    ${entry.labVessel.nearestLabBatchesString}
-                            </a>
+                            <c:forEach items="${entry.labVessel.nearestLabBatches}" var="batch">
+                                <a href="${ctxpath}/search/all.action?search=&searchKey=${batch.businessKey}">
+                                        ${batch.businessKey}
+                                </a>
+                            </c:forEach>
                         </td>
                         <td>
                             <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample">

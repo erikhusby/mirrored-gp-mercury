@@ -16,20 +16,26 @@ import java.util.*;
  * does a bit more object-ifying and type-safety.
  */
 public class BSPSampleDataFetcher extends AbstractJerseyClientService {
-    
-    @Inject BSPSampleSearchService service;
 
-    @Inject BSPConfig bspConfig;
+    @Inject
+    BSPSampleSearchService service;
+
+    @Inject
+    BSPConfig bspConfig;
 
     private final static Log logger = LogFactory.getLog(BSPSampleDataFetcher.class);
 
     private static final String WS_FFPE_DERIVED = "sample/ffpeDerived";
 
-    public BSPSampleDataFetcher() {}
+    private static final String WS_SAMPLE_DETAILS = "sample/getdetails";
+
+    public BSPSampleDataFetcher() {
+    }
 
 
     /**
      * New one up using the given service.
+     *
      * @param service
      */
     public BSPSampleDataFetcher(@Nonnull BSPSampleSearchService service) {
@@ -41,6 +47,7 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
 
     /**
      * Fetch the data from BSP for the given sample.
+     *
      * @param sampleName
      * @return
      */
@@ -62,6 +69,7 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
 
     /**
      * Fetch the data from bsp for multiple samples.
+     *
      * @param sampleNames
      * @return
      */
@@ -174,10 +182,10 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
         }
         /** beware of DBFreeBSPSampleTest: if you add columns here, you'll need to add them to the mock **/
 
-        return new BSPSampleDTO(containerId,stockSample,rootSample,null,patientId,organism,collaboratorSampleId,collection,
-                                volume,concentration, sampleLsid, collaboratorParticipantId, materialType, total,
-                                sampleType, primaryDisease,gender, stockType, fingerprint, sampleId,collaboratorName,
-                                ethnicity,population);
+        return new BSPSampleDTO(containerId, stockSample, rootSample, null, patientId, organism, collaboratorSampleId, collection,
+                volume, concentration, sampleLsid, collaboratorParticipantId, materialType, total,
+                sampleType, primaryDisease, gender, stockType, fingerprint, sampleId, collaboratorName,
+                ethnicity, population);
 
     }
 
@@ -191,7 +199,7 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
     }
 
     private List<String[]> getBSPResponse(Collection<String> sampleNames) {
-        return  service.runSampleSearch(sampleNames,
+        return service.runSampleSearch(sampleNames,
                 BSPSampleSearchColumn.PARTICIPANT_ID,
                 BSPSampleSearchColumn.ROOT_SAMPLE,
                 BSPSampleSearchColumn.STOCK_SAMPLE,
@@ -215,7 +223,6 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
                 BSPSampleSearchColumn.ETHNICITY,
                 BSPSampleSearchColumn.RACE);
     }
-
 
 
     @Override
@@ -263,6 +270,33 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
                 bspSampleDTO.setFfpeDerived(Boolean.valueOf(bspOutput[FFPE]));
             }
         });
-   }
+    }
+
+    public void fetchSamplePlastic(@Nonnull Collection<BSPSampleDTO> bspSampleDTOs) {
+        if (bspSampleDTOs.isEmpty()) {
+            return;
+        }
+
+        final Map<String, BSPSampleDTO> lsidToDTOMap = new HashMap<String, BSPSampleDTO>();
+        for (BSPSampleDTO bspSampleDTO : bspSampleDTOs) {
+            lsidToDTOMap.put(bspSampleDTO.getSampleLsid(), bspSampleDTO);
+        }
+
+        String urlString = bspConfig.getWSUrl(WS_SAMPLE_DETAILS);
+        String queryString = "sample_lsid=" + StringUtils.join(lsidToDTOMap.keySet(), "&sample_lsid=");
+        final int LSID = 1;
+        final int PLASTIC_BARCODE = 16;
+        post(urlString, queryString, ExtraTab.FALSE, new PostCallback() {
+            @Override
+            public void callback(String[] bspOutput) {
+                BSPSampleDTO bspSampleDTO = lsidToDTOMap.get(bspOutput[LSID]);
+                if (bspSampleDTO == null) {
+                    throw new RuntimeException("Unrecognized return lsid: " + bspOutput[LSID]);
+                }
+                bspSampleDTO.addPlastic(bspOutput[PLASTIC_BARCODE]);
+            }
+        });
+
+    }
 
 }
