@@ -246,8 +246,6 @@ public enum LabEventType {
 
     private final boolean expectExistingTarget;
 
-    //TODO SGM:  add type for source, or target, or inplace or both to help product dependant
-
 
     /**
      * One attempt at trying to make a very generic
@@ -258,7 +256,8 @@ public enum LabEventType {
      * @param expectTargetsEmpty whether it's an error for the target vessels to have content
      * @param systemOfRecord which system is responsible for handling the message
      * @param createSources whether sources should be create, if they don't exist
-     * @param expectExistingTarget
+     * @param expectExistingTarget whether the Target for the associated event can be expected to already be registered
+     *                             in the LIMS system
      */
     LabEventType(String name, boolean expectSourcesEmpty, boolean expectTargetsEmpty, SystemOfRecord systemOfRecord,
                  boolean createSources, boolean expectExistingTarget) {

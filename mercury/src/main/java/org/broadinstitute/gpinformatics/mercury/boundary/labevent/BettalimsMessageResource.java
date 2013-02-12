@@ -51,6 +51,7 @@ import javax.xml.bind.Unmarshaller;
 import javax.xml.transform.sax.SAXSource;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -162,8 +163,7 @@ public class BettalimsMessageResource {
                         break;
                     case PRODUCT_DEPENDENT:
 
-                        //TODO SGM Wrong.   Just return
-                        Set<String> preFoundEvents = preBuildFromBettaLims(bettaLIMSMessage);
+                        Collection<String> preFoundEvents = preBuildFromBettaLims(bettaLIMSMessage);
 
                         for (String testEvent : preFoundEvents) {
                             if (MercuryOrSquidRouter.MercuryOrSquid.MERCURY.equals(mercuryOrSquidRouter
@@ -177,8 +177,6 @@ public class BettalimsMessageResource {
                         if(processInMercury && processInSquid) {
                             throw new InformaticsServiceException("For Product Dependent processing, we cannot process in both Mercury and Squid");
                         }
-
-                        //TODO SGM:  THis should only be either or.  if we find both mercury AND squid, throw an exception
 
                         // todo jmt for Mar 1, traverse plastic
                         break;
@@ -348,13 +346,17 @@ public class BettalimsMessageResource {
     }
 
     /**
-     * Builds one or more lab event entities from a JAXB message bean that contains one or more event beans
+     * Builds a collection of {@link LabVessel} barcodes from a JAXB message bean that contains one or more event beans.
+     * Since this method is used to validate the system of record for existing vessels, the vessels returned will be
+     * Source vessles, In place vessels, and some target vessels If the setting for the associated
+     * {@link LabEventType#expectExistingTarget} determines it is possible.
+     *
      *
      * @param bettaLIMSMessage JAXB bean
      *
-     * @return list of entities
+     * @return list of barcodes
      */
-    private Set<String> preBuildFromBettaLims(BettaLIMSMessage bettaLIMSMessage) {
+    private Collection<String> preBuildFromBettaLims(BettaLIMSMessage bettaLIMSMessage) {
 
         Set<String> testBarcodes = new HashSet<String>();
 
@@ -365,10 +367,10 @@ public class BettalimsMessageResource {
             for (PlateType sourcePlateType : plateCherryPickEvent.getSourcePlate()) {
                 testBarcodes.add(sourcePlateType.getBarcode());
             }
-
-            if (labEventType.isExpectExistingTarget()) {
-
-            }
+//          SGM:  Assuming that Cherry Picks will not yield an existing Target.
+//            if (labEventType.isExpectExistingTarget()) {
+//
+//            }
 
         }
         for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
@@ -381,8 +383,8 @@ public class BettalimsMessageResource {
             testBarcodes.add(plateTransferEventType.getSourcePlate().getBarcode());
 
         }
-        for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage
-                                                                                 .getReceptaclePlateTransferEvent()) {
+        for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent :
+                bettaLIMSMessage.getReceptaclePlateTransferEvent()) {
 
             testBarcodes.add(receptaclePlateTransferEvent.getSourceReceptacle().getBarcode());
 
