@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
+import junit.framework.Assert;
 import org.apache.thrift.TException;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
@@ -316,17 +317,26 @@ public class LimsQueryResourceUnitTest {
     @BeforeMethod(groups = DATABASE_FREE)
     public void testFetchUserByBadge() throws Exception {
 
-        String testUserBadge = "BOGUSFAKENONEXISTANTBADGE";
+
+        String testUserBadge = "Test" + String.valueOf(BSPManagerFactoryStub.QA_DUDE_USER_ID);
 
         String userId = resource.fetchUserIdForBadgeId(testUserBadge);
 
-        assertThat(userId, not(equalTo("QADudeTest")));
-        assertThat(userId, equalTo(null));
+        assertThat(userId, equalTo("QADudeTest"));
     }
 
     @BeforeMethod(groups = DATABASE_FREE)
     public void testFetchNoUserByBogusBadge() throws Exception {
 
+        String testUserBadge = "BOGUSFAKENONEXISTANTBADGE";
+
+        try {
+            String userId = resource.fetchUserIdForBadgeId(testUserBadge);
+
+            Assert.fail();
+        } catch (Exception e) {
+
+        }
     }
 
     private void replayAll() {
