@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.*;
 
@@ -78,9 +79,9 @@ public class BSPUserList extends AbstractCache implements Serializable {
      * @param badgeId    the user's badge ID
      * @return the BSP user or null
      */
-    public BspUser getByBadgeId(String badgeId) {
+    public BspUser getByBadgeId(@NotNull String badgeId) {
         for (BspUser user : getUsers().values()) {
-            if (user.getBadgeNumber() != null && user.getBadgeNumber().equalsIgnoreCase(badgeId)) {
+            if (badgeId.equalsIgnoreCase(user.getBadgeNumber())) {
                 return user;
             }
         }
