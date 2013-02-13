@@ -202,7 +202,7 @@
                                 <c:if test="${order.billingSessionBusinessKey != null}">
                                     <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"
                                                   event="view">
-                                        <stripes:param name="billingSession" value="${order.billingSessionBusinessKey}"/>
+                                        <stripes:param name="sessionKey" value="${order.billingSessionBusinessKey}"/>
                                         ${order.billingSessionBusinessKey}
                                     </stripes:link>
                                 </c:if>
