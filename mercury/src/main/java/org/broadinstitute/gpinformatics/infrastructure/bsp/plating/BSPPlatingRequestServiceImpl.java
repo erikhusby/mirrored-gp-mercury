@@ -181,8 +181,6 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
                                                      String login, String platingRequestName,
                                                      List<SeqWorkRequestAliquot> seqAliquots, List<ControlWell> controlWells,
                                                      String comments, String seqTechnology, String humanReadableBarcode) {
-
-
         final int SAMPLES_PER_PLATE = PLATE_WELL_COUNT - (controlWells == null ? 0 : controlWells.size());
 
         GroupingIterable<SeqWorkRequestAliquot> platesWorthGroupingsOfAliquots =
@@ -195,7 +193,6 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
         // this will start being used once Jason clues me in as to how to differentiate plates from tubes
         @SuppressWarnings("unused")
         ContainerManager bspContainerManager = bspManagerFactory.createContainerManager();
-
 
         /*
         * Instantiate a new Work Request
