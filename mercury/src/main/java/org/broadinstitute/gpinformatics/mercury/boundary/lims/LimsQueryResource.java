@@ -131,7 +131,7 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/findImmediatePlateParents")
     public List<String> findImmediatePlateParents(@QueryParam("plateBarcode") String plateBarcode) {
-        switch (mercuryOrSquidRouter.routeForPlate(plateBarcode)) {
+        switch (mercuryOrSquidRouter.routeForVessel(plateBarcode)) {
         case MERCURY:
             return limsQueries.findImmediatePlateParents(plateBarcode);
         case SQUID:
@@ -197,7 +197,7 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchParentRackContentsForPlate")
     public Map<String, Boolean> fetchParentRackContentsForPlate(@QueryParam("plateBarcode") String plateBarcode) {
-        switch (mercuryOrSquidRouter.routeForPlate(plateBarcode)) {
+        switch (mercuryOrSquidRouter.routeForVessel(plateBarcode)) {
         case MERCURY:
             return limsQueries.fetchParentRackContentsForPlate(plateBarcode);
         case SQUID:
@@ -229,7 +229,7 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchSourceTubesForPlate")
     public List<WellAndSourceTubeType> fetchSourceTubesForPlate(@QueryParam("plateBarcode") String plateBarcode) {
-        switch (mercuryOrSquidRouter.routeForPlate(plateBarcode)) {
+        switch (mercuryOrSquidRouter.routeForVessel(plateBarcode)) {
         case MERCURY:
             return limsQueries.fetchSourceTubesForPlate(plateBarcode);
         case SQUID:
@@ -250,7 +250,7 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchTransfersForPlate")
     public List<PlateTransferType> fetchTransfersForPlate(@QueryParam("plateBarcode") String plateBarcode, @QueryParam("depth") short depth) {
-        switch (mercuryOrSquidRouter.routeForPlate(plateBarcode)) {
+        switch (mercuryOrSquidRouter.routeForVessel(plateBarcode)) {
         case MERCURY:
             return limsQueries.fetchTransfersForPlate(plateBarcode, depth);
         case SQUID:

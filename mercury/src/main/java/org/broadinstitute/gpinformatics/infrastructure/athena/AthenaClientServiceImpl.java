@@ -5,6 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 
 @Impl

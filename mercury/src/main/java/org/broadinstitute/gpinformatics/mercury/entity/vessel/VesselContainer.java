@@ -391,4 +391,30 @@ public class VesselContainer<T extends LabVessel> {
         }
         return anonymousVessels;
     }
+
+    public void applyCriteriaToAllPositions(TransferTraverserCriteria criteria) {
+        Iterator<String> positionNames = getEmbedder().getVesselGeometry().getPositionNames();
+        while (positionNames.hasNext()) {
+            String positionName = positionNames.next();
+            VesselPosition vesselPosition = VesselPosition.getByName(positionName);
+            evaluateCriteria(vesselPosition, criteria, TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
+        }
+
+    }
+
+    public Collection<LabBatch> getNearestLabBatches() {
+        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
+                new TransferTraverserCriteria.NearestLabBatchFinder();
+        applyCriteriaToAllPositions(batchCriteria);
+        return batchCriteria.getNearestLabBatches();
+    }
+
+    public Collection<String> getNearestProductOrders() {
+        TransferTraverserCriteria.NearestProductOrderCriteria productOrderCriteria =
+                new TransferTraverserCriteria.NearestProductOrderCriteria();
+        applyCriteriaToAllPositions(productOrderCriteria);
+        return productOrderCriteria.getNearestProductOrders();
+    }
+
+
 }

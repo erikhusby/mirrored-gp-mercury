@@ -144,7 +144,7 @@ public class WorkflowTest {
         libraryConstructionProcessVersion.addStep(new WorkflowStepDef("ABaseCleanup").addLabEvent(
                 LabEventType.A_BASE_CLEANUP));
 
-        WorkflowProcessDef hybridSelectionProcess = new WorkflowProcessDef("Hybrid Selection");
+        WorkflowProcessDef hybridSelectionProcess = new WorkflowProcessDef(WorkflowConfig.WorkflowName.HYBRID_SELECTION.getWorkflowName());
         WorkflowProcessDefVersion hybridSelectionProcessVersion = new WorkflowProcessDefVersion("1.0", new Date());
         hybridSelectionProcess.addWorkflowProcessDefVersion(hybridSelectionProcessVersion);
         WorkflowStepDef capture = new WorkflowStepDef("Capture");
@@ -156,7 +156,7 @@ public class WorkflowTest {
         new WorkflowProcessDef("HiSeq");
 
         workflowConfig = new WorkflowConfig();
-        exomeExpressProductName = "Exome Express";
+        exomeExpressProductName = WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName();
         exomeExpressProduct = new ProductWorkflowDef(exomeExpressProductName);
         exomeExpressProductVersion = new ProductWorkflowDefVersion("1.0", new Date());
         exomeExpressProduct.addProductWorkflowDefVersion(exomeExpressProductVersion);

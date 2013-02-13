@@ -70,7 +70,7 @@ public class BucketEntry  {
     @Column(name = "po_business_key")
     private String poBusinessKey;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn (name = "bucket_existence_id")
     private Bucket bucketExistence;
 
