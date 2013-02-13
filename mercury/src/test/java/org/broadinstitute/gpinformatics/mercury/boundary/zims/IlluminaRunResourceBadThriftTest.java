@@ -2,10 +2,13 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
+import junit.framework.Assert;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.easymock.EasyMock;
+import org.jboss.shrinkwrap.api.asset.Asset;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -30,20 +33,23 @@ public class IlluminaRunResourceBadThriftTest {
         ThriftService badService = getMockThriftService();
         
         badService.fetchRun((String)EasyMock.anyObject());
-        EasyMock.expectLastCall().andThrow(new TTransportException("Can't open!"));
+        EasyMock.expectLastCall().andThrow(new RuntimeException("Can't open!"));
 
         EasyMock.replay(badService);
         runLaneResource.getRun(badService,"foo");
     }
 
 
-    @Test(expectedExceptions = RuntimeException.class,groups = {DATABASE_FREE})
+    @Test(groups = {DATABASE_FREE})
     public void test_client_returns_null() throws Exception {
         ThriftService badService = getMockThriftService();
         EasyMock.expect(badService.fetchRun((String)EasyMock.anyObject())).andReturn(null);
 
         EasyMock.replay(badService);
-        runLaneResource.getRun(badService,"foo");
+        ZimsIlluminaRun run = runLaneResource.getRun(badService,"foo");
+        Assert.assertNotNull(run);
+        Assert.assertNotNull(run.getError());
+        Assert.assertNull(run.getName());
     }
 
     @Test(expectedExceptions = RuntimeException.class,groups = {DATABASE_FREE})
