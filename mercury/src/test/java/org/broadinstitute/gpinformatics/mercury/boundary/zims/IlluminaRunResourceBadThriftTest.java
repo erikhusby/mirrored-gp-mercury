@@ -28,18 +28,6 @@ public class IlluminaRunResourceBadThriftTest {
         runLaneResource = new IlluminaRunResource();
     }
 
-    @Test(expectedExceptions = RuntimeException.class,groups = {DATABASE_FREE})
-    public void test_bad_transport() throws Exception {
-        ThriftService badService = getMockThriftService();
-        
-        badService.fetchRun((String)EasyMock.anyObject());
-        EasyMock.expectLastCall().andThrow(new RuntimeException("Can't open!"));
-
-        EasyMock.replay(badService);
-        runLaneResource.getRun(badService,"foo");
-    }
-
-
     @Test(groups = {DATABASE_FREE})
     public void test_client_returns_null() throws Exception {
         ThriftService badService = getMockThriftService();
