@@ -1,10 +1,11 @@
-package org.broadinstitute.gpinformatics.athena.entity.fixup;
+package org.broadinstitute.gpinformatics.mercury.test;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
@@ -30,11 +31,15 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 /**
  * This test fakes adding tubes to a pico bucket
  */
-public class BucketEntryFixup extends Arquillian {
+public class AddEntriesToPicoBucketTest extends Arquillian {
+
     @Inject
-    private ProductOrderDao pdoDao;
+    private AthenaClientService athenaClientService;
+
     @Inject
     private BucketDao bucketDao;
+    @Inject
+    private LabVesselDao labVesselDao;
     @Inject
     private UserTransaction utx;
     @Inject
@@ -59,15 +64,8 @@ public class BucketEntryFixup extends Arquillian {
 
     @Test(enabled = false)
     public void addExomeExpressPicoBucketEntries() {
-        ProductOrder order = null;
-        List<ProductOrder> pdos = pdoDao.findAll(ProductOrderDao.FetchSpec.Product);
-        //find an exome express pdo
-        for (ProductOrder pdo : pdos) {
-            if (pdo.getProduct().getPartNumber().equals("P-EX-0002")) {
-                order = pdo;
-                break;
-            }
-        }
+        ProductOrder order = athenaClientService.retrieveProductOrderDetails("PDO-107");   //183
+
         if (order != null) {
             WorkflowConfig workflowConfig = workflowLoader.load();
             ProductWorkflowDef workflowDef = workflowConfig.getWorkflowByName(order.getProduct().getWorkflowName());
@@ -84,12 +82,19 @@ public class BucketEntryFixup extends Arquillian {
                     workingBucket = new Bucket(workingBucketIdentifier);
                 }
                 for (ProductOrderSample sample : order.getSamples()) {
-                    LabVessel vessel = new TwoDBarcodedTube(sample.getSampleName());
+
                     MercurySample mercurySample = new MercurySample(sample.getProductOrder().getBusinessKey(), sample.getSampleName());
-                    vessel.addSample(mercurySample);
-                    String materialType = sample.getBspDTO().getMaterialType();
-                    if (workingBucketIdentifier.getEntryMaterialType().getName().equals(materialType)) {
+                    List<String> plasticBarcodes = sample.getBspDTO().getPlasticBarcodes();
+                    if (plasticBarcodes != null && plasticBarcodes.size() > 0) {
+                        //lookup the vessel... if it doesn't exist create one
+                        LabVessel vessel = labVesselDao.findByIdentifier(plasticBarcodes.get(0));
+                        if (vessel == null) {
+                            vessel = new TwoDBarcodedTube(plasticBarcodes.get(0));
+                        }
+                        vessel.addSample(mercurySample);
+                        // if (workingBucketIdentifier.getEntryMaterialType().getName().equals(materialType)) {
                         workingBucket.addEntry(sample.getProductOrder().getBusinessKey(), vessel);
+                        // }
                     }
                 }
                 bucketDao.persist(workingBucket);
