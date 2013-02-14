@@ -39,7 +39,7 @@ public class Bucket {
     @Id
     private Long bucketId;
 
-    @OneToMany (mappedBy = "bucketExistence", cascade = { CascadeType.PERSIST, CascadeType.REMOVE})
+    @OneToMany (mappedBy = "bucket", cascade = { CascadeType.PERSIST, CascadeType.REMOVE})
     private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
 
     @Column ()
@@ -82,7 +82,7 @@ public class Bucket {
      * @param newEntry
      */
     public void addEntry( BucketEntry newEntry ) {
-        newEntry.setBucketExistence(this);
+        newEntry.setBucket(this);
         newEntry.setProductOrderRanking(getBucketEntries().size()+1);
         bucketEntries.add(newEntry);
 

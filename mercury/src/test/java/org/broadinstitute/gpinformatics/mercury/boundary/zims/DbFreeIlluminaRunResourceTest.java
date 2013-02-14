@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
+import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLane;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
@@ -7,6 +8,7 @@ import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.control.zims.SquidThriftLibraryConverter;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
@@ -42,12 +44,28 @@ public class DbFreeIlluminaRunResourceTest {
         return pdoDao;
     }
 
+
     @Test(groups = DATABASE_FREE)
     public void test_error_handling() throws Exception {
-        ZimsIlluminaRun runBean = new IlluminaRunResource().getRun(null);
+        ThriftService brokenThrift = EasyMock.createMock(ThriftService.class);
+        EasyMock.expect(brokenThrift.fetchRun((String)EasyMock.anyObject())).andThrow(
+                new RuntimeException("something blew up remotely")
+        );
+        EasyMock.replay(brokenThrift);
+        ZimsIlluminaRun runBean = new IlluminaRunResource(
+                brokenThrift,
+                new BSPSampleDataFetcher(new BSPSampleSearchServiceStub())
+        ).getRun("whatever");
 
         Assert.assertNotNull(runBean.getError());
         Assert.assertTrue(runBean.getError().contains("Failed while running pipeline query for run"));
+    }
+
+    @Test(groups = DATABASE_FREE)
+    public void test_null_run_name() throws Exception {
+        ZimsIlluminaRun runBean = new IlluminaRunResource().getRun(null);
+
+        Assert.assertNotNull(runBean.getError());
     }
 
     @Test(groups = DATABASE_FREE)
@@ -81,6 +99,7 @@ public class DbFreeIlluminaRunResourceTest {
         for (ZimsIlluminaChamber lane : runBean.getLanes()) {
             for (LibraryBean libraryBean : lane.getLibraries()) {
                 Assert.assertEquals(sampleDTO.getOrganism(),libraryBean.getSpecies());
+
                 Assert.assertEquals(sampleDTO.getPrimaryDisease(),libraryBean.getPrimaryDisease());
                 Assert.assertEquals(sampleDTO.getSampleType(),libraryBean.getSampleType());
             }
