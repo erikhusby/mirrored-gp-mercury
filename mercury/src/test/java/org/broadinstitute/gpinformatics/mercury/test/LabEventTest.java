@@ -334,7 +334,7 @@ public class LabEventTest {
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
                 bettaLimsMessageFactory, labEventFactory, labEventHandler,
                 shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
-                shearingEntityBuilder.getShearingPlate(), NUM_POSITIONS_IN_RACK).invoke();
+                shearingEntityBuilder.getCovarisPlate(), NUM_POSITIONS_IN_RACK).invoke();
 
         HybridSelectionEntityBuilder hybridSelectionEntityBuilder = new HybridSelectionEntityBuilder(
                 bettaLimsMessageFactory, labEventFactory, labEventHandler,
@@ -367,7 +367,7 @@ public class LabEventTest {
         stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
                 TransferTraverserCriteria.TraversalDirection.Descendants);
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
-        Assert.assertEquals(labEventNames.size(), 14, "Wrong number of transfers");
+        Assert.assertEquals(labEventNames.size(), 13, "Wrong number of transfers");
 
         Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().iterator().next(),
                 qtpEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
@@ -1383,7 +1383,7 @@ public class LabEventTest {
         private String covarisPlateBarcode;
         private StaticPlate covarisPlate;
         private String shearPlateBarcode;
-        private StaticPlate shearingPlate;
+//        private StaticPlate shearingPlate;
         private String shearCleanPlateBarcode;
         private StaticPlate shearingCleanupPlate;
 
@@ -1404,8 +1404,12 @@ public class LabEventTest {
             mapKeyToProductOrder.put(pdo.getJiraTicketKey(), pdo);
         }
 
-        public StaticPlate getShearingPlate() {
-            return shearingPlate;
+//        public StaticPlate getShearingPlate() {
+//            return shearingPlate;
+//        }
+
+        public StaticPlate getCovarisPlate() {
+            return covarisPlate;
         }
 
         public String getShearCleanPlateBarcode() {
@@ -1433,21 +1437,23 @@ public class LabEventTest {
 //            labEventHandler.processEvent(shearingBucketEntity);
 
             // ShearingTransfer
-            //TODO SGM   SHould this validate be on the tube formation?
-            validateWorkflow("PlatingToShearingTubes", mapBarcodeToTube.values());
-            LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
-                    exomeExpressShearingJaxbBuilder.getPlateToShearTubeTransferEventJaxb(), preflightRack, null/* shearingPlate ? */);
-            labEventHandler.processEvent(shearingTransferEventEntity);
-
-//            // asserts
-            shearingPlate = (StaticPlate) shearingTransferEventEntity.getTargetLabVessels().iterator().next();
-            Assert.assertEquals(shearingPlate.getSampleInstances().size(), mapBarcodeToTube.size(),
-                                "Wrong number of sample instances");
+//            validateWorkflow("PlatingToShearingTubes", mapBarcodeToTube.values());
+//            LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
+//                    exomeExpressShearingJaxbBuilder.getPlateToShearTubeTransferEventJaxb(), preflightRack, null/* shearingPlate ? */);
+//            labEventHandler.processEvent(shearingTransferEventEntity);
+//
+////            // asserts
+//            shearingPlate = (StaticPlate) shearingTransferEventEntity.getTargetLabVessels().iterator().next();
+//            Assert.assertEquals(shearingPlate.getSampleInstances().size(), mapBarcodeToTube.size(),
+//                                "Wrong number of sample instances");
 
             // Covaris Load
-            validateWorkflow("CovarisLoaded", shearingPlate);
-            LabEvent covarisLoadedEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                    exomeExpressShearingJaxbBuilder.getCovarisLoadEventJaxb(), shearingPlate, null/*covarisPlate ? */);
+//            validateWorkflow("CovarisLoaded", shearingPlate);
+            validateWorkflow("CovarisLoaded", mapBarcodeToTube.values());
+            LabEvent covarisLoadedEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
+                                exomeExpressShearingJaxbBuilder.getCovarisLoadEventJaxb(), preflightRack, null/* shearingPlate ? */);
+//            LabEvent covarisLoadedEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
+//                    exomeExpressShearingJaxbBuilder.getCovarisLoadEventJaxb(), shearingPlate, null/*covarisPlate ? */);
             labEventHandler.processEvent(covarisLoadedEntity);
             // asserts
             covarisPlate =
@@ -1560,15 +1566,17 @@ public class LabEventTest {
                             .buildRackEvent(LabEventType.SHEARING_BUCKET.getName(), rackBarcode, tubeBarcodeList);
             addMessage(messageList, bettaLimsMessageFactory, exExShearingBucket);
 
-            shearPlateBarcode = "PlateToShearTubes" + testPrefix;
-            plateToShearTubeTransferEventJaxb =
-                    bettaLimsMessageFactory.buildRackToPlate("PlatingToShearingTubes", rackBarcode,
-                            tubeBarcodeList, shearPlateBarcode);
-            addMessage(messageList, bettaLimsMessageFactory, plateToShearTubeTransferEventJaxb);
+//            shearPlateBarcode = "PlateToShearTubes" + testPrefix;
+//            plateToShearTubeTransferEventJaxb =
+//                    bettaLimsMessageFactory.buildRackToPlate("PlatingToShearingTubes", rackBarcode,
+//                            tubeBarcodeList, shearPlateBarcode);
+//            addMessage(messageList, bettaLimsMessageFactory, plateToShearTubeTransferEventJaxb);
 
             covarisRackBarCode = "CovarisLoaded" + testPrefix;
-            CovarisLoadEventJaxb = bettaLimsMessageFactory
-                    .buildPlateToPlate("CovarisLoaded", shearPlateBarcode, covarisRackBarCode);
+            CovarisLoadEventJaxb =
+                    bettaLimsMessageFactory.buildRackToPlate("CovarisLoaded", rackBarcode,
+                            tubeBarcodeList, covarisRackBarCode);
+//                    bettaLimsMessageFactory.buildPlateToPlate("CovarisLoaded", shearPlateBarcode, covarisRackBarCode);
             addMessage(messageList, bettaLimsMessageFactory, CovarisLoadEventJaxb);
 
             shearCleanPlateBarcode = "ShearCleanPlate" + testPrefix;

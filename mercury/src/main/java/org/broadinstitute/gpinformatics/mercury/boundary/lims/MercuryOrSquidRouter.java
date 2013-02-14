@@ -51,7 +51,8 @@ public class MercuryOrSquidRouter implements Serializable {
     }
 
     /**
-     * similar to
+     * Building on {@link #routeForVessel(String)}, this method takes a list of barcodes for which a user wishes to
+     * determine the system of record.  The work is delegated to {@link #routeForVessel(String)}
      * @param barcodes
      * @return
      */

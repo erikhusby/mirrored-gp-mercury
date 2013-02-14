@@ -4,7 +4,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -413,7 +412,7 @@ public class BucketBean {
                     .getLabCentricName() +
                         " and PDO " + currEntry.getPoBusinessKey() + " to be popped from bucket.");
 
-            currEntry.getBucketExistence().removeEntry(currEntry);
+            currEntry.getBucket().removeEntry(currEntry);
 
             jiraRemovalUpdate(currEntry, "Extracted for Batch");
 
@@ -452,7 +451,7 @@ public class BucketBean {
             jiraService.addComment(bucketEntry.getPoBusinessKey(), bucketEntry.getPoBusinessKey() + ":" +
                                                                    bucketEntry.getLabVessel().getLabCentricName() +
                                                                    " Removed from bucket " + bucketEntry
-                    .getBucketExistence()
+                    .getBucket()
                     .getBucketDefinitionName() + ":: " + reason);
         } catch (IOException ioe) {
             logger.error("Error attempting to create jira removal comment for " +

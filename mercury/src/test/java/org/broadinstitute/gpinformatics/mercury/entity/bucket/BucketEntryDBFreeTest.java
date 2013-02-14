@@ -38,8 +38,8 @@ public class BucketEntryDBFreeTest {
         Assert.assertNotNull(entry.getLabVessel());
         Assert.assertEquals ( twoDBarcode, entry.getLabVessel ().getLabel () );
 
-        Assert.assertNotNull(entry.getBucketExistence());
-        Assert.assertEquals(bucketName, entry.getBucketExistence().getBucketDefinitionName());
+        Assert.assertNotNull(entry.getBucket());
+        Assert.assertEquals(bucketName, entry.getBucket().getBucketDefinitionName());
 
         SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yy");
 
