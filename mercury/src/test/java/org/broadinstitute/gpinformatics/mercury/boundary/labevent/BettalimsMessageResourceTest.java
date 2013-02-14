@@ -167,7 +167,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
             twoDBarcodedTubeDAO.persist(bspAliquot);
             starters.add(bspAliquot);
         }
-        LabBatch labBatch = new LabBatch("LCSET-MsgTest-" + testPrefix, starters);
+        LabBatch labBatch = new LabBatch("LCSET-MsgTest-" + testPrefix, starters, LabBatch.LabBatchType.WORKFLOW);
 
         Product exomeExpressProduct=productDao.findByPartNumber("P-EX-0001");
         if(exomeExpressProduct == null) {

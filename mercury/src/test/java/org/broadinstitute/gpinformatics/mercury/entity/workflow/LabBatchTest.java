@@ -101,7 +101,7 @@ public class LabBatchTest {
 
 
         LabBatch testBatch = new LabBatch(LabBatch.generateBatchName(workflowName, pdoNames),
-                new HashSet<LabVessel>(mapBarcodeToTube.values()));
+                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
 
 
         Assert.assertNotNull(testBatch.getBatchName());

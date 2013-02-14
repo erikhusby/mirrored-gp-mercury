@@ -398,7 +398,7 @@ public class BucketBean {
 
             bucketBatch = new LabBatch(LabBatch.generateBatchName(CreateFields.IssueType.EXOME_EXPRESS.getJiraName(),
                     LabVessel.extractPdoKeyList(batchVessels)),
-                    batchVessels);
+                    batchVessels, LabBatch.LabBatchType.WORKFLOW);
         }
 
         removeEntries(bucketEntries);

@@ -26,6 +26,8 @@ import java.util.*;
 @RequestScoped
 public class LabBatchResource {
 
+    public static final String BSP_BATCH_PREFIX = "BP";
+
     @Inject
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
 
@@ -53,7 +55,7 @@ public class LabBatchResource {
         Map<MercurySample, MercurySample> mapSampleToSample = mercurySampleDao.findByMercurySample(mercurySampleKeys);
         LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample);
 
-        if(!labBatchBean.getBatchId().startsWith("BP")) {
+        if(!labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX)) {
             JiraTicket jiraTicket = new JiraTicket(jiraService, labBatchBean.getBatchId());
             labBatch.setJiraTicket(jiraTicket);
             jiraTicket.setLabBatch(labBatch);
@@ -93,7 +95,8 @@ public class LabBatchResource {
             }
             starters.add(twoDBarcodedTube);
         }
-        return new LabBatch(labBatchBean.getBatchId(), starters);
+        return new LabBatch(labBatchBean.getBatchId(), starters, labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX) ?
+                LabBatch.LabBatchType.BSP : LabBatch.LabBatchType.WORKFLOW);
     }
 
 }

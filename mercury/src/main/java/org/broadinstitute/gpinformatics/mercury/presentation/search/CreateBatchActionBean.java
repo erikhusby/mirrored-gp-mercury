@@ -150,7 +150,8 @@ public class CreateBatchActionBean extends CoreActionBean {
                If a new ticket is to be created, pass the description, summary, due date and important info in a batch
                object acting as a DTO
             */
-            batchObject = new LabBatch(summary.trim(), vesselSet, description, dueDate, important);
+            batchObject = new LabBatch(summary.trim(), vesselSet, LabBatch.LabBatchType.WORKFLOW, description, dueDate,
+                    important);
 
             labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername());
         }
