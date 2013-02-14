@@ -16,6 +16,7 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import java.sql.Timestamp;
 import java.util.*;
 
 /**
@@ -34,10 +35,28 @@ public class AuditReaderDao extends GenericDao {
      * the ids were observed to be not always monotonic, which caused ETL to miss
      * some changes.
      *
-     * @param lastEtlTimestamp     start of interval
-     * @param currentEtlTimestamp  end of interval
+     * Subtlety here with the timestamps:  revDate has 10 mSec resolution but JPA on our
+     * RevInfo table empirically only permits comparing revDate with a param that has whole
+     * second resolution.  Using native query is no help since Oracle to_timestamp cannot
+     * convert sub-second values.
+     * Etl must not etl the same event twice nor miss audited events regardless of their
+     * revDate, which may have hundredth of second values from 0 through 99.
+     * The solution used is to have date-based etl (i.e. incremental etl) set the endDate
+     * to be the floor of the current mSec time, which can possibly leave the very most
+     * recent events to be picked up later.  In addition the interval passed in is truncated
+     * and the query must include start point (revDate hundredths >= 0) and exclude end point
+     * (revDate hundredths = 0).  The start date is managed by the caller.
+     *
+     * @param lastEtlTimestamp     start of interval in mSec units, truncated to second resolution
+     * @param currentEtlTimestamp  end of interval in mSec units, truncated to second resolution
+     * @throws IllegalArgumentException if params are not whole second values.
      */
-    public Collection<Long> fetchAuditIds(long lastEtlTimestamp, long currentEtlTimestamp) {
+    public Collection<Long> fetchAuditIds(long lastEtlTimestamp, long currentEtlTimestamp)
+            throws IllegalArgumentException {
+
+        if (lastEtlTimestamp % 1000 != 0 || currentEtlTimestamp % 1000 != 0) {
+            throw new IllegalArgumentException ("Etl interval must be whole second aligned.");
+        }
         Date startDate = new Date(lastEtlTimestamp);
         Date endDate = new Date(currentEtlTimestamp);
 
@@ -46,9 +65,10 @@ public class AuditReaderDao extends GenericDao {
         Root<RevInfo> root = criteriaQuery.from(RevInfo.class);
         criteriaQuery.select(root.get(RevInfo_.revInfoId));
         Predicate predicate = criteriaBuilder.and(
-                criteriaBuilder.greaterThan(root.get(RevInfo_.revDate), startDate),
-                criteriaBuilder.lessThanOrEqualTo(root.get(RevInfo_.revDate), endDate));
+                criteriaBuilder.greaterThanOrEqualTo(root.get(RevInfo_.revDate), startDate),
+                criteriaBuilder.lessThan(root.get(RevInfo_.revDate), endDate));
         criteriaQuery.where(predicate);
+
         try {
             Collection<Long> revList = getEntityManager().createQuery(criteriaQuery).getResultList();
             return revList;
@@ -90,23 +110,6 @@ public class AuditReaderDao extends GenericDao {
             }
         }
         return dataChanges;
-    }
-
-        /**
-     * Finds the date a recent audit rev, typically the most recent.
-     * @return timestamp represented as mSec since start of the epoch
-     */
-    public long fetchLatestAuditDate(String audTableName) {
-        String queryString = "SELECT TO_CHAR(rev_date,'YYYYMMDDHH24MISSRR')||'0' FROM REV_INFO " +
-                " WHERE rev_info_id = (SELECT MAX(rev) FROM " + audTableName + ")";
-        Query query = getEntityManager().createNativeQuery(queryString);
-        try {
-            String result = (String)query.getSingleResult();
-            long timestamp = ExtractTransform.msecTimestampFormat.parse(result).getTime();
-            return timestamp;
-        } catch (Exception e) {
-            return 0L;
-        }
     }
 
 }
