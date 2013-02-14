@@ -23,7 +23,7 @@ public class IlluminaRunResourceBadThriftTest {
     }
 
 
-    @BeforeMethod
+    @BeforeMethod(groups = {DATABASE_FREE})
     protected void setUp() throws Exception {
         runLaneResource = new IlluminaRunResource();
     }
