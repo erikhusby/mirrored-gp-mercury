@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.integration.quotes;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.quote.*;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -10,17 +12,19 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DA
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 public class PriceListCacheTest {
+
+    private static final Log log = LogFactory.getLog(PriceListCacheTest.class);
     
-    @Test(groups = DATABASE_FREE)
+    @Test(groups = EXTERNAL_INTEGRATION)
     public void test_gsp_platform() {
         PriceList priceList = new PriceList();
         PriceItem item1 = new PriceItem("Illumina Sequencing","123","101bp MiSeq","5","Sample",QuotePlatformType.SEQ.getPlatformName());
-        PriceItem item2 = new PriceItem("Illumina Sequencing","1234","151bp MiSeq","5","Sample",QuotePlatformType.SEQ.getPlatformName());       
+        PriceItem item2 = new PriceItem("Illumina Sequencing","1234","151bp MiSeq","5","Sample",QuotePlatformType.SEQ.getPlatformName());
         priceList.add(item1);
         priceList.add(item2);
         priceList.add(new PriceItem("Illumina Sequencing","1234","151bp MiSeq","3","Sample","Cookie Baking Platform"));
 
-        PriceListCache cache = new PriceListCache(priceList);
+        PriceListCache cache = new PriceListCache(priceList.getPriceItems());
         
         Collection<PriceItem> priceItems = cache.getGSPPriceItems();
         
@@ -32,12 +36,12 @@ public class PriceListCacheTest {
     
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_gsp_prices() throws Exception {
-        PriceListCache cache = new PriceListCache(new QuoteServiceStub().getAllPriceItems());
+        PriceListCache cache = new PriceListCache(new QuoteServiceStub().getAllPriceItems().getPriceItems());
         Assert.assertFalse(cache.getGSPPriceItems().isEmpty());
 
         for (PriceItem priceItem : cache.getGSPPriceItems()) {
             Assert.assertTrue(QuotePlatformType.SEQ.getPlatformName().equalsIgnoreCase(priceItem.getPlatformName()));
-            System.out.println(priceItem.getName());
+            log.debug(priceItem.getName());
         }
     }
 }

@@ -30,7 +30,7 @@ public class ResearchProjectContainerTest extends Arquillian {
 
     public void testJiraSubmission() throws IOException {
 
-        ResearchProject dummy = AthenaClientServiceStub.createDummyResearchProject ();
+        ResearchProject dummy = AthenaClientServiceStub.createDummyResearchProject (10950L, "MyResearchProject", "To Study Stuff", ResearchProject.IRB_ENGAGED);
 
         dummy.submit();
 

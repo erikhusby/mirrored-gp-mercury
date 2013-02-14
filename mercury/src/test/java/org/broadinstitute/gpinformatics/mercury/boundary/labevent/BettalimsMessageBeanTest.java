@@ -38,7 +38,7 @@ public class BettalimsMessageBeanTest {
                 LabEventType.POST_SHEARING_TRANSFER_CLEANUP.getName(), "x", "y");
         BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
         bettaLIMSMessage.getPlateTransferEvent().add(plateTransferEventType);
-        String message = marshalMessage(bettaLIMSMessage);
+        String message = BettaLimsMessageFactory.marshal(bettaLIMSMessage);
         sendJmsMessage(message);
     }
 

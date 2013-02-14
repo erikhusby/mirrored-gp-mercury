@@ -23,7 +23,7 @@ public class ConcentrationRiskCriteriaTest {
                                                     "", "", "", "",
                                                     "", "25.0", "", "",
                                                     "", "", "", "",
-                                                    "", "", "", "TST-1234");
+                                                    "", "", "", "TST-1234","","","");
         ProductOrderSample productOrderSample = new ProductOrderSample(dummySample1.getSampleId(), dummySample1);
 
         // Create a risk criteria where the sample would be on risk if less than 50.0

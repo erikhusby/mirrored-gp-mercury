@@ -21,7 +21,7 @@ public class ZimsIlluminaRun {
 
     @JsonProperty("name")
     private String runName;
-
+    
     @JsonProperty("barcode")
     private String runBarcode;
 
@@ -37,26 +37,11 @@ public class ZimsIlluminaRun {
     @JsonIgnore
     private Date runDate;
 
-    @JsonProperty("firstCycle")
-    private Integer firstCycle;
-
-    @JsonProperty("firstCycleReadLength")
-    private Integer firstCycleReadLength;
-
-    @JsonProperty("lastCycle")
-    private Integer lastCycle;
-
     @JsonIgnore
-    private final SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
+    private final SimpleDateFormat dateFormat =  new SimpleDateFormat(DATE_FORMAT);
 
     @JsonProperty("lanes")
     private List<ZimsIlluminaChamber> chambers = new ArrayList<ZimsIlluminaChamber>();
-
-    @JsonProperty("molecularBarcodeCycle")
-    private Integer molecularBarcodeCycle;
-
-    @JsonProperty("molecularBarcodeLength")
-    private Integer molecularBarcodeLength;
 
     @JsonProperty("pairedRun")
     private Boolean isPaired;
@@ -64,9 +49,14 @@ public class ZimsIlluminaRun {
     @JsonProperty("reads")
     private List<ZamboniRead> reads = new ArrayList<ZamboniRead>();
 
+    // if something blows up, we put the error message here
+    // to keep clients happy
+    @JsonProperty
+    private String error;
+
     @JsonProperty("actualReadStructure")
     private String actualReadStructure;
-
+    
     @JsonProperty("imagedAreaPerLaneMM2")
     private Double imagedAreaPerLaneMM2;
 
@@ -80,14 +70,7 @@ public class ZimsIlluminaRun {
                            String sequencer,
                            String sequencerModel,
                            String runDate,
-                           short firstCycle,
-                           short firstCycleReadLength,
-                           short lastCycle,
-                           short molecularBarcodeCycle,
-                           short molecularBarcodeLength,
-                           boolean isPaired,
-                           String actualReadStructure,
-                           double imagedAreaPerLaneMM2) {
+                           Boolean isPaired) {
         this.runName = runName;
         this.runBarcode = runBarcode;
         this.flowcellBarcode = flowcellBarcode;
@@ -95,14 +78,10 @@ public class ZimsIlluminaRun {
         this.sequencerModel = sequencerModel;
         try {
             this.runDate = dateFormat.parse(runDate);
-        } catch (ParseException e) {
+        }
+        catch(ParseException e) {
             throw new RuntimeException("Cannot parse run date " + runDate + " for " + runName);
         }
-        this.firstCycle = ThriftConversionUtil.zeroAsNull(firstCycle);
-        this.firstCycleReadLength = ThriftConversionUtil.zeroAsNull(firstCycleReadLength);
-        this.lastCycle = ThriftConversionUtil.zeroAsNull(lastCycle);
-        this.molecularBarcodeCycle = ThriftConversionUtil.zeroAsNull(molecularBarcodeCycle);
-        this.molecularBarcodeLength = ThriftConversionUtil.zeroAsNull(molecularBarcodeLength);
         this.isPaired = isPaired;
         this.actualReadStructure = actualReadStructure;
         this.imagedAreaPerLaneMM2 = ThriftConversionUtil.zeroAsNull(imagedAreaPerLaneMM2);
@@ -118,29 +97,13 @@ public class ZimsIlluminaRun {
         return reads;
     }
 
-    public boolean getPairedRun() {
+    public Boolean getPairedRun() {
         return isPaired;
     }
 
-    public Integer getMolecularBarcodeLength() {
-        return molecularBarcodeLength;
-    }
-
-    public Integer getMolecularBarcodeCycle() {
-        return molecularBarcodeCycle;
-    }
-
-    public Integer getFirstCycleReadLength() {
-        return firstCycleReadLength;
-    }
-
-    public Integer getFirstCycle() {
-        return firstCycle;
-    }
 
     /**
      * Format is 01/03/2010 24:19
-     *
      * @return
      */
     @JsonProperty("runDateString")
@@ -155,7 +118,8 @@ public class ZimsIlluminaRun {
     public void setRunDateString(String runDate) throws ParseException {
         if (runDate != null) {
             this.runDate = dateFormat.parse(runDate);
-        } else {
+        }
+        else {
             this.runDate = null;
         }
     }
@@ -172,32 +136,33 @@ public class ZimsIlluminaRun {
         return flowcellBarcode;
     }
 
-    public Integer getLastCycle() {
-        return lastCycle;
-    }
-
     public String getName() {
         return runName;
     }
-
+    
     public String getBarcode() {
         return runBarcode;
-    }
-
-    public String getActualReadStructure() {
-        return actualReadStructure;
-    }
-
-    public Double getImagedAreaPerLaneMM2() {
-        return imagedAreaPerLaneMM2;
     }
 
     public void addLane(ZimsIlluminaChamber chamber) {
         chambers.add(chamber);
     }
-
+    
     public Collection<ZimsIlluminaChamber> getLanes() {
         return chambers;
     }
+
+    /**
+     * Should only be used in the REST resource itself.
+     * @param error
+     */
+    public void setError(String error) {
+        this.error = error;
+    }
+
+    public String getError() {
+        return error;
+    }
+
 
 }

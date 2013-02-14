@@ -104,7 +104,7 @@ public abstract class LabVessel implements Serializable {
     @JoinTable(schema = "mercury")
     private Collection<StatusNote> notes = new HashSet<StatusNote>();
 
-    @OneToMany(mappedBy = "labVessel")
+    @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
     private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
 
     @Embedded
@@ -578,21 +578,21 @@ public abstract class LabVessel implements Serializable {
     TraversalResults traverseAncestors() {
         TraversalResults traversalResults = new TraversalResults();
 
+        // stop traversing at first MercurySample, to avoid picking up multiple BSP batches
         if (isSampleAuthority()) {
             for (MercurySample mercurySample : mercurySamples) {
                 traversalResults.add(new SampleInstance(mercurySample, null, null));
             }
-            // stop at first MercurySample, to avoid picking up multiple BSP batches
-            return traversalResults;
-        }
-        List<VesselEvent> vesselEvents = getAncestors();
-        for (VesselEvent vesselEvent : vesselEvents) {
-            LabVessel labVessel = vesselEvent.getLabVessel();
-            // todo jmt put this logic in VesselEvent?
-            if (labVessel == null) {
-                traversalResults.add(vesselEvent.getVesselContainer().traverseAncestors(vesselEvent.getPosition()));
-            } else {
-                traversalResults.add(labVessel.traverseAncestors());
+        } else {
+            List<VesselEvent> vesselEvents = getAncestors();
+            for (VesselEvent vesselEvent : vesselEvents) {
+                LabVessel labVessel = vesselEvent.getLabVessel();
+                // todo jmt put this logic in VesselEvent?
+                if (labVessel == null) {
+                    traversalResults.add(vesselEvent.getVesselContainer().traverseAncestors(vesselEvent.getPosition()));
+                } else {
+                    traversalResults.add(labVessel.traverseAncestors());
+                }
             }
         }
         for (Reagent reagent : getReagentContents()) {
@@ -853,12 +853,13 @@ public abstract class LabVessel implements Serializable {
         // todo the real method should walk transfers...this is just for experimental testing for GPLIM-64
         // in reality, the implementation would walk back to all roots,
         // detecting vessels along the way where hasSampleMetadata is true.
+        //
+        Set<MercurySample> foundSamples = new HashSet<MercurySample>();
         if (!mercurySamples.isEmpty()) {
-            return mercurySamples;
+            foundSamples.addAll(mercurySamples);
         }
-        // else walk transfers
-        throw new RuntimeException("history traversal for empty samples list not implemented");
 
+        return foundSamples;
     }
 
     public List<MercurySample> getMercurySamplesList() {
@@ -985,19 +986,27 @@ public abstract class LabVessel implements Serializable {
 
     public Collection<String> getNearestProductOrders() {
 
+        if(getContainerRole() != null) {
+            return getContainerRole().getNearestProductOrders();
+        } else {
 
-        TransferTraverserCriteria.NearestProductOrderCriteria nearestProductOrderCriteria =
-                new TransferTraverserCriteria.NearestProductOrderCriteria();
+            TransferTraverserCriteria.NearestProductOrderCriteria nearestProductOrderCriteria =
+                    new TransferTraverserCriteria.NearestProductOrderCriteria();
 
-        evaluateCriteria(nearestProductOrderCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
-        return nearestProductOrderCriteria.getNearestProductOrders();
+            evaluateCriteria(nearestProductOrderCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            return nearestProductOrderCriteria.getNearestProductOrders();
+        }
     }
 
     public Collection<LabBatch> getNearestLabBatches() {
-        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
-                new TransferTraverserCriteria.NearestLabBatchFinder();
-        evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
-        return batchCriteria.getNearestLabBatches();
+        if(getContainerRole() != null) {
+            return getContainerRole().getNearestLabBatches();
+        } else {
+            TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
+                    new TransferTraverserCriteria.NearestLabBatchFinder();
+            evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            return batchCriteria.getNearestLabBatches();
+        }
     }
 
     public List<LabBatch> getNearestLabBatchesList() {

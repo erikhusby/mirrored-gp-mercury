@@ -73,9 +73,9 @@ public class ProductActionBean extends CoreActionBean {
     private String product;
 
     // Risk criteria
-    private String[] criteria;
-    private String[] operators;
-    private String[] values;
+    private String[] criteria = new String[0];
+    private String[] operators = new String[0];
+    private String[] values = new String[0];
 
     @ValidateNestedProperties({
         @Validate(field="productFamily.productFamilyId", label="Product Family", required = true, maxlength=255, on={SAVE_ACTION}),

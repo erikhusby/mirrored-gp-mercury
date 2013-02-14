@@ -65,15 +65,15 @@ public class ProductOrderSampleTest {
             ProductOrder order = AthenaClientServiceStub.createDummyProductOrder();
             product = order.getProduct();
             MaterialType materialType = new MaterialType(BSP_MATERIAL_TYPE.getCategory(), BSP_MATERIAL_TYPE.getName());
-            addOn = AthenaClientServiceStub.createDummyProduct();
+            addOn = AthenaClientServiceStub.createDummyProduct("Exome Express", "partNumber");
             addOn.addAllowableMaterialType(materialType);
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);
             sample1 = new ProductOrderSample("Sample1",
                     new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", BSP_MATERIAL_TYPE.getFullName(), "", "", "", "", "", "",
-                            ""));
+                            "","","",""));
             sample2 = new ProductOrderSample("Sample2",
-                    new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "XXX:XXX", "", "", "", "", "", "", ""));
+                    new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "XXX:XXX", "", "", "", "", "", "", "","","",""));
             order.setSamples(Collections.singletonList(sample1));
             List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
             samples.add(sample1);

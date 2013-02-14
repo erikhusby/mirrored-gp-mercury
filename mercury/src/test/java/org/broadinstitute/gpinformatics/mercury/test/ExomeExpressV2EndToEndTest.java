@@ -62,7 +62,7 @@ public class ExomeExpressV2EndToEndTest {
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
         ProductOrder productOrder1 = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, "Exome Express", false), new ResearchProject(101L, "Test RP", "Test synopsis",
+                40, null, null, true, WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName(), false), new ResearchProject(101L, "Test RP", "Test synopsis",
                 false));
         String jiraTicketKey = "PD0-1";
         productOrder1.setJiraTicketKey(jiraTicketKey);
@@ -192,29 +192,29 @@ public class ExomeExpressV2EndToEndTest {
 
 
         //TODO SGM   SHould this validate be on the tube formation?
-        LabEventTest.validateWorkflow(LabEventType.PLATING_TO_SHEARING_TUBES.getName(),
+        LabEventTest.validateWorkflow(LabEventType.COVARIS_LOADED.getName(),
                 pplatingEntityBuilder.getNormBarcodeToTubeMap().values());
-        PlateTransferEventType plateToShearXfer = exexJaxbBuilder.getPlateToShearTubeTransferEventJaxb();
-        LabEvent pToShearEvent = labEventFactory.buildFromBettaLimsRackToPlateDbFree(plateToShearXfer,
+        PlateTransferEventType plateToShearXfer = exexJaxbBuilder.getCovarisLoadEventJaxb();
+        LabEvent covarisEvent = labEventFactory.buildFromBettaLimsRackToPlateDbFree(plateToShearXfer,
                 pplatingEntityBuilder.getNormTubeFormation(),
-                new StaticPlate("CovarisPlate", StaticPlate.PlateType.Eppendorf96));
-        StaticPlate shearingPlate = (StaticPlate) pToShearEvent.getTargetLabVessels().iterator().next();
-        leHandler.processEvent(pToShearEvent);
+                new StaticPlate("NormPlate", StaticPlate.PlateType.Eppendorf96));
+        StaticPlate covarisPlate = (StaticPlate) covarisEvent.getTargetLabVessels().iterator().next();
+        leHandler.processEvent(covarisEvent);
 
 
         // Bucket should have been drained after Plating to Shearing Tubes
         Assert.assertEquals(0,workingShearingBucket.getBucketEntries().size());
 
 
-        LabEventTest.validateWorkflow(LabEventType.COVARIS_LOADED.getName(),
-                pToShearEvent.getTargetLabVessels());
-        // When the above event is executed, the items should be removed from the bucket.
-        PlateTransferEventType covarisxfer = exexJaxbBuilder.getCovarisLoadEventJaxb();
-        LabEvent covarisEvent = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(covarisxfer,
-                (StaticPlate) pToShearEvent.getTargetLabVessels().iterator().next(),
-                new StaticPlate("NormPlate", StaticPlate.PlateType.Eppendorf96));
-        leHandler.processEvent(covarisEvent);
-        StaticPlate covarisPlate = (StaticPlate) covarisEvent.getTargetLabVessels().iterator().next();
+//        LabEventTest.validateWorkflow(LabEventType.COVARIS_LOADED.getName(),
+//                pToShearEvent.getTargetLabVessels());
+//        // When the above event is executed, the items should be removed from the bucket.
+//        PlateTransferEventType covarisxfer = exexJaxbBuilder.getCovarisLoadEventJaxb();
+//        LabEvent covarisEvent = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(covarisxfer,
+//                (StaticPlate) pToShearEvent.getTargetLabVessels().iterator().next(),
+//                new StaticPlate("NormPlate", StaticPlate.PlateType.Eppendorf96));
+//        leHandler.processEvent(covarisEvent);
+//        StaticPlate covarisPlate = (StaticPlate) covarisEvent.getTargetLabVessels().iterator().next();
 
 
         LabEventTest.validateWorkflow(LabEventType.POST_SHEARING_TRANSFER_CLEANUP.getName(),covarisPlate);
@@ -234,7 +234,7 @@ public class ExomeExpressV2EndToEndTest {
         LabEventTest.LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LabEventTest.LibraryConstructionEntityBuilder(
                 bettaLimsMessageFactory, labEventFactory, leHandler,
                 shearingCleanupPlate,  postShearingTransferCleanupEntity.getTargetLabVessels().iterator().next().getLabel(),
-                shearingPlate, LabEventTest.NUM_POSITIONS_IN_RACK).invoke();
+                covarisPlate, LabEventTest.NUM_POSITIONS_IN_RACK).invoke();
 
 
 

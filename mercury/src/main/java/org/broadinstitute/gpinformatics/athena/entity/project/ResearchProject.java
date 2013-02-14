@@ -135,7 +135,7 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
     }
 
     /**
-     * no arg constructor for JSF.
+     * no arg constructor.
      */
     public ResearchProject() {
         this(null, null, null, false);

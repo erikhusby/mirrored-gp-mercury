@@ -149,17 +149,17 @@
                     <project>LCSET</project>
                 </jiraTransition>
             </workflowStepDefs>
-            <workflowStepDefs>
-                <name>Plating to Shearing Tubes</name>
-                <labEventTypes>PLATING_TO_SHEARING_TUBES</labEventTypes>
-                <optional>false</optional>
-                <entryPoint>false</entryPoint>
-                <reEntryPoint>false</reEntryPoint>
-                <jiraTransition>
-                    <project>LCSET</project>
-                    <statusTransition>In Shearing</statusTransition>
-                </jiraTransition>
-            </workflowStepDefs>
+            <!--<workflowStepDefs>-->
+                <!--<name>Plating to Shearing Tubes</name>-->
+                <!--<labEventTypes>PLATING_TO_SHEARING_TUBES</labEventTypes>-->
+                <!--<optional>false</optional>-->
+                <!--<entryPoint>false</entryPoint>-->
+                <!--<reEntryPoint>false</reEntryPoint>-->
+                <!--<jiraTransition>-->
+                    <!--<project>LCSET</project>-->
+                    <!--<statusTransition>In Shearing</statusTransition>-->
+                <!--</jiraTransition>-->
+            <!--</workflowStepDefs>-->
             <workflowStepDefs>
                 <name>Covaris Loaded</name>
                 <labEventTypes>COVARIS_LOADED</labEventTypes>
@@ -523,7 +523,7 @@
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>
-        <name>Whole Genome Shotgun</name>
+        <name>Whole Genome</name>
         <productWorkflowDefVersions>
             <version>1.0</version>
             <effectiveDate>2012-09-30T22:04:23.932-04:00</effectiveDate>

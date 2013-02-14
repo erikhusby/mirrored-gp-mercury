@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.CherryPickSourceType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
@@ -10,10 +11,16 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
+import org.xml.sax.SAXException;
 
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.JAXBException;
+import javax.xml.bind.Marshaller;
 import javax.xml.datatype.DatatypeConfigurationException;
 import javax.xml.datatype.DatatypeFactory;
+import java.io.StringWriter;
 import java.util.GregorianCalendar;
 import java.util.List;
 
@@ -25,6 +32,22 @@ public class BettaLimsMessageFactory {
     public static final int NUMBER_OF_RACK_COLUMNS = 12;
 
     private long time = System.currentTimeMillis();
+
+    public static String marshal(BettaLIMSMessage blmJaxbObject) {
+        try {
+            JAXBContext jc = JAXBContext.newInstance(BettaLIMSMessage.class);
+
+            Marshaller marsh = jc.createMarshaller();
+
+            StringWriter writer = new StringWriter();
+
+            marsh.marshal(blmJaxbObject, writer);
+
+            return writer.toString();
+        } catch (JAXBException e) {
+            throw new InformaticsServiceException(e);
+        }
+    }
 
     /**
      * LabEvent has a unique constraint that includes a timestamp, so database test code must advance the timestamp
@@ -144,7 +167,7 @@ public class BettaLimsMessageFactory {
         private final String destinationRackBarcode;
         private final String destinationWell;
 
-        CherryPick(String sourceRackBarcode, String sourceWell, String destinationRackBarcode, String destinationWell) {
+        public CherryPick(String sourceRackBarcode, String sourceWell, String destinationRackBarcode, String destinationWell) {
             this.sourceRackBarcode = sourceRackBarcode;
             this.sourceWell = sourceWell;
             this.destinationRackBarcode = destinationRackBarcode;

@@ -177,6 +177,13 @@ function fn_title_string_asc(a, b) {
     return ((a < b) ? -1 : ((a > b) ? 1 : 0));
 }
 
+// Simple ascending compare.
+function fn_title_numeric_asc(aString, bString) {
+    var a = parseFloat(aString);
+    var b = parseFloat(bString);
+    return ((a < b) ? -1 : ((a > b) ? 1 : 0));
+}
+
 
 // Pulls out a title attribute if any, otherwise returns the empty string.
 function fn_title_pre(a) {
@@ -220,6 +227,18 @@ jQuery.extend( jQuery.fn.dataTableExt.oSort, {
 
     "title-string-desc": function ( a, b ) {
         return fn_title_string_asc(b, a);
+    },
+
+    "title-numeric-pre": function ( a ) {
+        return fn_title_pre(a).toLowerCase();
+    },
+
+    "title-numeric-asc": function ( a, b ) {
+        return fn_title_numeric_asc(a, b);
+    },
+
+    "title-numeric-desc": function ( a, b ) {
+        return fn_title_numeric_asc(b, a);
     },
 
     "title-jira-pre": function ( a ) {

@@ -135,7 +135,7 @@ public class LabEventTest {
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, "Hybrid Selection", false), new ResearchProject(101L, "Test RP", "Test synopsis",
+                40, null, null, true, WorkflowConfig.WorkflowName.HYBRID_SELECTION.getWorkflowName(), false), new ResearchProject(101L, "Test RP", "Test synopsis",
                 false));
         String jiraTicketKey = "PD0-1";
         productOrder.setJiraTicketKey(jiraTicketKey);
@@ -269,7 +269,7 @@ public class LabEventTest {
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, "Exome Express", false), new ResearchProject(101L, "Test RP", "Test synopsis",
+                40, null, null, true, WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName(), false), new ResearchProject(101L, "Test RP", "Test synopsis",
                 false));
         String jiraTicketKey = "PD0-1";
         productOrder.setJiraTicketKey(jiraTicketKey);
@@ -286,6 +286,8 @@ public class LabEventTest {
             mapBarcodeToTube.put(barcode, bspAliquot);
         }
         String rackBarcode = "REXEX" + (new Date()).toString();
+
+
 
         // Messaging
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
@@ -305,6 +307,7 @@ public class LabEventTest {
         LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
         labBatchEJB.setLabBatchDao(labBatchDAO);
 
+//        LabBatch testBatch = labBatchEJB.createLabBatch(mapBarcodeToTube.values())
 
         BucketDao mockBucketDao = EasyMock.createMock(BucketDao.class);
         EasyMock.expect(mockBucketDao.findByName(EasyMock.eq("Shearing Bucket")))
@@ -331,7 +334,7 @@ public class LabEventTest {
         LibraryConstructionEntityBuilder libraryConstructionEntityBuilder = new LibraryConstructionEntityBuilder(
                 bettaLimsMessageFactory, labEventFactory, labEventHandler,
                 shearingEntityBuilder.getShearingCleanupPlate(), shearingEntityBuilder.getShearCleanPlateBarcode(),
-                shearingEntityBuilder.getShearingPlate(), NUM_POSITIONS_IN_RACK).invoke();
+                shearingEntityBuilder.getCovarisPlate(), NUM_POSITIONS_IN_RACK).invoke();
 
         HybridSelectionEntityBuilder hybridSelectionEntityBuilder = new HybridSelectionEntityBuilder(
                 bettaLimsMessageFactory, labEventFactory, labEventHandler,
@@ -364,7 +367,7 @@ public class LabEventTest {
         stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
                 TransferTraverserCriteria.TraversalDirection.Descendants);
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
-        Assert.assertEquals(labEventNames.size(), 14, "Wrong number of transfers");
+        Assert.assertEquals(labEventNames.size(), 13, "Wrong number of transfers");
 
         Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().iterator().next(),
                 qtpEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
@@ -383,7 +386,7 @@ public class LabEventTest {
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>();
         ProductOrder productOrder = new ProductOrder(101L, "Test PO", productOrderSamples, "GSP-123", new Product(
                 "Test product", new ProductFamily("Test product family"), "test", "1234", null, null, 10000, 20000, 100,
-                40, null, null, true, "Whole Genome Shotgun", false), new ResearchProject(101L, "Test RP",
+                40, null, null, true, WorkflowConfig.WorkflowName.WHOLE_GENOME.getWorkflowName(), false), new ResearchProject(101L, "Test RP",
                 "Test synopsis", false));
         String jiraTicketKey = "PD0-2";
         productOrder.setJiraTicketKey(jiraTicketKey);
@@ -1380,7 +1383,7 @@ public class LabEventTest {
         private String covarisPlateBarcode;
         private StaticPlate covarisPlate;
         private String shearPlateBarcode;
-        private StaticPlate shearingPlate;
+//        private StaticPlate shearingPlate;
         private String shearCleanPlateBarcode;
         private StaticPlate shearingCleanupPlate;
 
@@ -1401,8 +1404,12 @@ public class LabEventTest {
             mapKeyToProductOrder.put(pdo.getJiraTicketKey(), pdo);
         }
 
-        public StaticPlate getShearingPlate() {
-            return shearingPlate;
+//        public StaticPlate getShearingPlate() {
+//            return shearingPlate;
+//        }
+
+        public StaticPlate getCovarisPlate() {
+            return covarisPlate;
         }
 
         public String getShearCleanPlateBarcode() {
@@ -1430,21 +1437,23 @@ public class LabEventTest {
 //            labEventHandler.processEvent(shearingBucketEntity);
 
             // ShearingTransfer
-            //TODO SGM   SHould this validate be on the tube formation?
-            validateWorkflow("PlatingToShearingTubes", mapBarcodeToTube.values());
-            LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
-                    exomeExpressShearingJaxbBuilder.getPlateToShearTubeTransferEventJaxb(), preflightRack, null/* shearingPlate ? */);
-            labEventHandler.processEvent(shearingTransferEventEntity);
-
-//            // asserts
-            shearingPlate = (StaticPlate) shearingTransferEventEntity.getTargetLabVessels().iterator().next();
-            Assert.assertEquals(shearingPlate.getSampleInstances().size(), mapBarcodeToTube.size(),
-                                "Wrong number of sample instances");
+//            validateWorkflow("PlatingToShearingTubes", mapBarcodeToTube.values());
+//            LabEvent shearingTransferEventEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
+//                    exomeExpressShearingJaxbBuilder.getPlateToShearTubeTransferEventJaxb(), preflightRack, null/* shearingPlate ? */);
+//            labEventHandler.processEvent(shearingTransferEventEntity);
+//
+////            // asserts
+//            shearingPlate = (StaticPlate) shearingTransferEventEntity.getTargetLabVessels().iterator().next();
+//            Assert.assertEquals(shearingPlate.getSampleInstances().size(), mapBarcodeToTube.size(),
+//                                "Wrong number of sample instances");
 
             // Covaris Load
-            validateWorkflow("CovarisLoaded", shearingPlate);
-            LabEvent covarisLoadedEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
-                    exomeExpressShearingJaxbBuilder.getCovarisLoadEventJaxb(), shearingPlate, null/*covarisPlate ? */);
+//            validateWorkflow("CovarisLoaded", shearingPlate);
+            validateWorkflow("CovarisLoaded", mapBarcodeToTube.values());
+            LabEvent covarisLoadedEntity = labEventFactory.buildFromBettaLimsRackToPlateDbFree(
+                                exomeExpressShearingJaxbBuilder.getCovarisLoadEventJaxb(), preflightRack, null/* shearingPlate ? */);
+//            LabEvent covarisLoadedEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
+//                    exomeExpressShearingJaxbBuilder.getCovarisLoadEventJaxb(), shearingPlate, null/*covarisPlate ? */);
             labEventHandler.processEvent(covarisLoadedEntity);
             // asserts
             covarisPlate =
@@ -1557,15 +1566,17 @@ public class LabEventTest {
                             .buildRackEvent(LabEventType.SHEARING_BUCKET.getName(), rackBarcode, tubeBarcodeList);
             addMessage(messageList, bettaLimsMessageFactory, exExShearingBucket);
 
-            shearPlateBarcode = "PlateToShearTubes" + testPrefix;
-            plateToShearTubeTransferEventJaxb =
-                    bettaLimsMessageFactory.buildRackToPlate("PlatingToShearingTubes", rackBarcode,
-                            tubeBarcodeList, shearPlateBarcode);
-            addMessage(messageList, bettaLimsMessageFactory, plateToShearTubeTransferEventJaxb);
+//            shearPlateBarcode = "PlateToShearTubes" + testPrefix;
+//            plateToShearTubeTransferEventJaxb =
+//                    bettaLimsMessageFactory.buildRackToPlate("PlatingToShearingTubes", rackBarcode,
+//                            tubeBarcodeList, shearPlateBarcode);
+//            addMessage(messageList, bettaLimsMessageFactory, plateToShearTubeTransferEventJaxb);
 
             covarisRackBarCode = "CovarisLoaded" + testPrefix;
-            CovarisLoadEventJaxb = bettaLimsMessageFactory
-                    .buildPlateToPlate("CovarisLoaded", shearPlateBarcode, covarisRackBarCode);
+            CovarisLoadEventJaxb =
+                    bettaLimsMessageFactory.buildRackToPlate("CovarisLoaded", rackBarcode,
+                            tubeBarcodeList, covarisRackBarCode);
+//                    bettaLimsMessageFactory.buildPlateToPlate("CovarisLoaded", shearPlateBarcode, covarisRackBarCode);
             addMessage(messageList, bettaLimsMessageFactory, CovarisLoadEventJaxb);
 
             shearCleanPlateBarcode = "ShearCleanPlate" + testPrefix;
