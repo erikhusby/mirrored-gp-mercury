@@ -5,9 +5,6 @@ package org.broadinstitute.gpinformatics.mercury.test;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -20,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -559,7 +557,7 @@ public class LabEventTest {
 
         LabEventHandler labEventHandler = new LabEventHandler(new WorkflowLoader(), AthenaClientProducer.stubInstance(), bucketBeanEJB, mockBucketDao, new BSPUserList(BSPManagerFactoryProducer
                 .stubInstance()));
-        BuildIndexPlate buildIndexPlate = new BuildIndexPlate("IndexPlate").invoke();
+        BuildIndexPlate buildIndexPlate = new BuildIndexPlate("IndexPlate").invoke(null);
         FluidigmMessagesBuilder fluidigmMessagesBuilder = new FluidigmMessagesBuilder("", bettaLimsMessageFactory,
                 labEventFactory, labEventHandler,
                 mapBarcodeToTube,
@@ -1644,7 +1642,7 @@ public class LabEventTest {
             // IndexedAdapterLigation
             validateWorkflow("IndexedAdapterLigation", shearingCleanupPlate);
             BuildIndexPlate buildIndexPlate = new BuildIndexPlate(libraryConstructionJaxbBuilder.getIndexPlateBarcode())
-                    .invoke();
+                    .invoke(null);
             StaticPlate indexPlate = buildIndexPlate.getIndexPlate();
             LabEvent indexedAdapterLigationEntity = labEventFactory.buildFromBettaLimsPlateToPlateDbFree(
                     libraryConstructionJaxbBuilder.getIndexedAdapterLigationJaxb(), indexPlate, shearingCleanupPlate);
@@ -1714,7 +1712,7 @@ public class LabEventTest {
             return indexPlate;
         }
 
-        public BuildIndexPlate invoke() {
+        public BuildIndexPlate invoke(MolecularIndexingSchemeDao molecularIndexingSchemeDao) {
             char[] bases = {'A', 'C', 'T', 'G'};
 
             indexPlate = new StaticPlate(indexPlateBarcode, StaticPlate.PlateType.IndexedAdapterPlate96);
@@ -1730,10 +1728,26 @@ public class LabEventTest {
                 }
 
                 final String sequence = stringBuilder.toString();
-                MolecularIndexReagent molecularIndexReagent = new MolecularIndexReagent(new MolecularIndexingScheme(
-                        new HashMap<MolecularIndexingScheme.IndexPosition, MolecularIndex>() {{
-                            put(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7, new MolecularIndex(sequence));
-                        }}));
+                MolecularIndexingScheme testScheme = null;
+                if(molecularIndexingSchemeDao != null) {
+                    testScheme = molecularIndexingSchemeDao.findSingleIndexScheme(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7.name(), sequence);
+                }
+                if(testScheme == null) {
+                    testScheme = new MolecularIndexingScheme(
+                                            new HashMap<MolecularIndexingScheme.IndexPosition, MolecularIndex>() {{
+                                                put(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7, new MolecularIndex(sequence));
+                                            }});
+                    if(molecularIndexingSchemeDao != null) {
+                        molecularIndexingSchemeDao.persist(testScheme);
+                        System.out.println(testScheme.getName() + ", " + testScheme
+                                                                                 .getIndex(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7)
+                                                                                 .getSequence());
+                        molecularIndexingSchemeDao.flush();
+                        molecularIndexingSchemeDao.clear();
+                    }
+
+                }
+                MolecularIndexReagent molecularIndexReagent = new MolecularIndexReagent(testScheme);
                 plateWell.addReagent(molecularIndexReagent);
                 indexPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
             }
