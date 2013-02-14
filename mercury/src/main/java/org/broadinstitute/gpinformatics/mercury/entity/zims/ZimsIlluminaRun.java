@@ -21,7 +21,7 @@ public class ZimsIlluminaRun {
 
     @JsonProperty("name")
     private String runName;
-    
+
     @JsonProperty("barcode")
     private String runBarcode;
 
@@ -47,7 +47,7 @@ public class ZimsIlluminaRun {
     private Integer lastCycle;
 
     @JsonIgnore
-    private final SimpleDateFormat dateFormat =  new SimpleDateFormat(DATE_FORMAT);
+    private final SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_FORMAT);
 
     @JsonProperty("lanes")
     private List<ZimsIlluminaChamber> chambers = new ArrayList<ZimsIlluminaChamber>();
@@ -64,7 +64,15 @@ public class ZimsIlluminaRun {
     @JsonProperty("reads")
     private List<ZamboniRead> reads = new ArrayList<ZamboniRead>();
 
-    public ZimsIlluminaRun() {}
+    @JsonProperty("actualReadStructure")
+    private String actualReadStructure;
+
+    @JsonProperty("imagedAreaPerLaneMM2")
+    private Double imagedAreaPerLaneMM2;
+
+
+    public ZimsIlluminaRun() {
+    }
 
     public ZimsIlluminaRun(String runName,
                            String runBarcode,
@@ -77,7 +85,9 @@ public class ZimsIlluminaRun {
                            short lastCycle,
                            short molecularBarcodeCycle,
                            short molecularBarcodeLength,
-                           boolean isPaired) {
+                           boolean isPaired,
+                           String actualReadStructure,
+                           double imagedAreaPerLaneMM2) {
         this.runName = runName;
         this.runBarcode = runBarcode;
         this.flowcellBarcode = flowcellBarcode;
@@ -85,8 +95,7 @@ public class ZimsIlluminaRun {
         this.sequencerModel = sequencerModel;
         try {
             this.runDate = dateFormat.parse(runDate);
-        }
-        catch(ParseException e) {
+        } catch (ParseException e) {
             throw new RuntimeException("Cannot parse run date " + runDate + " for " + runName);
         }
         this.firstCycle = ThriftConversionUtil.zeroAsNull(firstCycle);
@@ -95,6 +104,8 @@ public class ZimsIlluminaRun {
         this.molecularBarcodeCycle = ThriftConversionUtil.zeroAsNull(molecularBarcodeCycle);
         this.molecularBarcodeLength = ThriftConversionUtil.zeroAsNull(molecularBarcodeLength);
         this.isPaired = isPaired;
+        this.actualReadStructure = actualReadStructure;
+        this.imagedAreaPerLaneMM2 = ThriftConversionUtil.zeroAsNull(imagedAreaPerLaneMM2);
     }
 
     public void addRead(TZamboniRead thriftRead) {
@@ -129,6 +140,7 @@ public class ZimsIlluminaRun {
 
     /**
      * Format is 01/03/2010 24:19
+     *
      * @return
      */
     @JsonProperty("runDateString")
@@ -143,8 +155,7 @@ public class ZimsIlluminaRun {
     public void setRunDateString(String runDate) throws ParseException {
         if (runDate != null) {
             this.runDate = dateFormat.parse(runDate);
-        }
-        else {
+        } else {
             this.runDate = null;
         }
     }
@@ -168,18 +179,25 @@ public class ZimsIlluminaRun {
     public String getName() {
         return runName;
     }
-    
+
     public String getBarcode() {
         return runBarcode;
+    }
+
+    public String getActualReadStructure() {
+        return actualReadStructure;
+    }
+
+    public Double getImagedAreaPerLaneMM2() {
+        return imagedAreaPerLaneMM2;
     }
 
     public void addLane(ZimsIlluminaChamber chamber) {
         chambers.add(chamber);
     }
-    
+
     public Collection<ZimsIlluminaChamber> getLanes() {
         return chambers;
     }
-
 
 }

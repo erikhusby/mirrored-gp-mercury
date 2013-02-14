@@ -4,12 +4,11 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.DefaultClientConfig;
 import com.sun.jersey.api.json.JSONConfiguration;
 import edu.mit.broad.prodinfo.thrift.lims.*;
-import org.broadinstitute.gpinformatics.mercury.bsp.EverythingYouAskForYouGetAndItsHuman;
-import org.broadinstitute.gpinformatics.mercury.entity.zims.*;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
-import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
+import org.broadinstitute.gpinformatics.mercury.bsp.EverythingYouAskForYouGetAndItsHuman;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.*;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.container.test.api.RunAsClient;
 import org.jboss.arquillian.test.api.ArquillianResource;
@@ -106,6 +105,8 @@ public class IlluminaRunResourceTest extends Arquillian {
         assertEquals(runBean.getMolecularBarcodeLength(),new Integer(thriftRun.getMolBarcodeLength()));
         assertEquals(runBean.getPairedRun(),thriftRun.isPairedRun());
         assertEquals(runBean.getLastCycle(),new Integer(thriftRun.getLastCycle()));
+        assertEquals(runBean.getActualReadStructure(), thriftRun.getActualReadStructure());
+        assertEquals(runBean.getImagedAreaPerLaneMM2(), new Double(thriftRun.getImagedAreaPerLaneMM2())); //actual,exp
 
         doReadAssertions(thriftRun,runBean);
 

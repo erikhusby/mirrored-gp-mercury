@@ -1,14 +1,17 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 
-import edu.mit.broad.prodinfo.thrift.lims.*;
-import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
-import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
-import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniLane;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -83,7 +86,9 @@ public class IlluminaRunResource implements Serializable {
                 tRun.getLastCycle(),
                 tRun.getMolBarcodeCycle(),
                 tRun.getMolBarcodeLength(),
-                tRun.isPairedRun());
+                tRun.isPairedRun(),
+                tRun.getActualReadStructure(),
+                tRun.getImagedAreaPerLaneMM2());
 
         for (TZamboniRead tZamboniRead : tRun.getReads()) {
             runBean.addRead(tZamboniRead);

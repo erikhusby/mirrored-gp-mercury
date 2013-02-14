@@ -122,7 +122,9 @@ public class OfflineThriftService implements ThriftService {
         List<TZamboniRead> reads = new ArrayList<TZamboniRead>();
         reads.add(new TZamboniRead((short) 1, (short) 10, TZReadType.INDEX));
         reads.add(new TZamboniRead((short) 11, (short) 20, TZReadType.TEMPLATE));
-        TZamboniRun run = new TZamboniRun(runName, "Flowcell-123", lanes, "Sequencer 123", "Test Sequencer", "05/11/2012 17:08", "Run-123", (short) 1, (short) 2, (short) 3, (short) 4, (short) 5, false, 123, reads);
+        TZamboniRun run = new TZamboniRun(runName, "Flowcell-123", lanes, "Sequencer 123", "Test Sequencer", "05/11/2012 17:08", "Run-123", (short) 1, (short) 2,
+                (short) 3, (short) 4, (short) 5, false, 123, reads, "36T8B", 999.987654);
+        //TZamboniRun tzRun = new TZamboniRun();
         return run;
     }
 
