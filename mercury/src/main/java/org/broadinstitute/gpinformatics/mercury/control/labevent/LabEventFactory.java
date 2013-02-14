@@ -46,6 +46,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.AbstractMap;
@@ -406,7 +407,7 @@ public class LabEventFactory implements Serializable {
             Map<String, TwoDBarcodedTube> mapBarcodeToSourceTube,
             Map<String, TubeFormation> mapBarcodeToTargetTubeFormation,
             Map<String, TwoDBarcodedTube> mapBarcodeToTargetTube,
-            RackOfTubes targetRackOfTubes) {
+            @Nullable RackOfTubes targetRackOfTubes) {
         LabEvent labEvent = constructReferenceData ( plateCherryPickEvent, labEventRefDataFetcher );
         addSourceTubeFormationsToMap(plateCherryPickEvent, mapBarcodeToSourceTubeFormation, mapBarcodeToSourceTube, mapBarcodeToSourceRackOfTubes);
 
@@ -656,8 +657,8 @@ public class LabEventFactory implements Serializable {
     @DaoFree
     public LabEvent buildFromBettaLimsRackToPlateDbFree ( PlateTransferEventType plateTransferEvent,
             Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes,
-            RackOfTubes sourceRackOfTubes,
-            StaticPlate targetPlate ) {
+            @Nullable RackOfTubes sourceRackOfTubes,
+            @Nullable StaticPlate targetPlate ) {
         LabEvent labEvent = constructReferenceData ( plateTransferEvent, labEventRefDataFetcher );
         TubeFormation tubeFormation = buildRackDaoFree(mapBarcodeToSourceTubes, sourceRackOfTubes, plateTransferEvent.getSourcePlate(),
                 plateTransferEvent.getSourcePositionMap(), true);
@@ -685,7 +686,7 @@ public class LabEventFactory implements Serializable {
      */
     @DaoFree
     public LabEvent buildFromBettaLimsRackToPlateDbFree ( PlateTransferEventType plateTransferEvent,
-                                                          TubeFormation tubeFormation, StaticPlate targetPlate ) {
+                                                          TubeFormation tubeFormation, @Nullable StaticPlate targetPlate ) {
         LabEvent labEvent = constructReferenceData ( plateTransferEvent, labEventRefDataFetcher );
         if ( targetPlate == null ) {
             targetPlate = new StaticPlate ( plateTransferEvent.getPlate ().getBarcode (),
@@ -771,9 +772,9 @@ public class LabEventFactory implements Serializable {
     @DaoFree
     public LabEvent buildFromBettaLimsRackToRackDbFree ( PlateTransferEventType plateTransferEvent,
             Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes,
-            RackOfTubes sourceRackOfTubes,
+            @Nullable RackOfTubes sourceRackOfTubes,
             Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes,
-            RackOfTubes targetRackOfTubes) {
+            @Nullable RackOfTubes targetRackOfTubes) {
         LabEvent labEvent = constructReferenceData ( plateTransferEvent, labEventRefDataFetcher );
         TubeFormation sourceTubeFormation = buildRackDaoFree ( mapBarcodeToSourceTubes, sourceRackOfTubes,
                 plateTransferEvent.getSourcePlate (), plateTransferEvent.getSourcePositionMap (), true);
@@ -801,7 +802,7 @@ public class LabEventFactory implements Serializable {
     @DaoFree
     public LabEvent buildFromBettaLimsRackToRackDbFree ( PlateTransferEventType plateTransferEvent,
             Map<String, TwoDBarcodedTube> mapBarcodeToSourceTubes,
-            RackOfTubes rackOfTubes,
+            @Nullable RackOfTubes rackOfTubes,
             TubeFormation targetTubeFormation) {
         LabEvent labEvent = constructReferenceData ( plateTransferEvent, labEventRefDataFetcher );
         TubeFormation sourceTubeFormation = buildRackDaoFree ( mapBarcodeToSourceTubes, rackOfTubes,
@@ -838,7 +839,7 @@ public class LabEventFactory implements Serializable {
     @DaoFree
     public LabEvent buildFromBettaLimsPlateToRackDbFree(PlateTransferEventType plateTransferEvent,
             StaticPlate sourcePlate,
-            Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes, RackOfTubes targetRackOfTubes) {
+            Map<String, TwoDBarcodedTube> mapBarcodeToTargetTubes, @Nullable RackOfTubes targetRackOfTubes) {
         LabEvent labEvent = constructReferenceData ( plateTransferEvent, labEventRefDataFetcher );
         TubeFormation tubeFormation = buildRackDaoFree(mapBarcodeToTargetTubes, targetRackOfTubes, plateTransferEvent.getPlate(),
                 plateTransferEvent.getPositionMap(), false);
@@ -846,6 +847,18 @@ public class LabEventFactory implements Serializable {
         labEvent.getSectionTransfers().add(new SectionTransfer(
                 sourcePlate.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getSourcePlate().getSection()),
                 tubeFormation.getContainerRole(), SBSSection.getBySectionName(plateTransferEvent.getPlate().getSection()), labEvent));
+        return labEvent;
+    }
+
+    @DaoFree
+    public LabEvent buildFromBettaLimsPlateEventDbFree(PlateEventType plateEvent, IlluminaFlowcell flowcell) {
+        LabEvent labEvent = constructReferenceData(plateEvent, labEventRefDataFetcher);
+        if (flowcell == null) {
+            flowcell = new IlluminaFlowcell(IlluminaFlowcell.FLOWCELL_TYPE.EIGHT_LANE,
+                    plateEvent.getPlate().getBarcode(), null);
+        }
+
+        flowcell.addInPlaceEvent(labEvent);
         return labEvent;
     }
 
@@ -878,8 +891,8 @@ public class LabEventFactory implements Serializable {
     }
 
     @DaoFree
-    public LabEvent buildFromBettaLimsRackEventDbFree(PlateEventType plateEvent, TubeFormation tubeFormation,
-            Map<String, TwoDBarcodedTube> mapBarcodeToTubes, RackOfTubes rackOfTubes) {
+    public LabEvent buildFromBettaLimsRackEventDbFree(PlateEventType plateEvent, @Nullable TubeFormation tubeFormation,
+            Map<String, TwoDBarcodedTube> mapBarcodeToTubes, @Nullable RackOfTubes rackOfTubes) {
         LabEvent labEvent = constructReferenceData ( plateEvent, labEventRefDataFetcher );
         if ( tubeFormation == null ) {
             tubeFormation = buildRackDaoFree(mapBarcodeToTubes, rackOfTubes, plateEvent.getPlate(), plateEvent.getPositionMap(),
@@ -892,7 +905,7 @@ public class LabEventFactory implements Serializable {
 
     @DaoFree
     public LabEvent buildFromBettaLimsPlateToPlateDbFree ( PlateTransferEventType plateTransferEvent,
-                                                           StaticPlate sourcePlate, StaticPlate targetPlate ) {
+                                                           StaticPlate sourcePlate, @Nullable StaticPlate targetPlate ) {
         LabEvent labEvent = constructReferenceData ( plateTransferEvent, labEventRefDataFetcher );
         if ( targetPlate == null ) {
             targetPlate = new StaticPlate ( plateTransferEvent.getPlate ().getBarcode (),
@@ -929,7 +942,7 @@ public class LabEventFactory implements Serializable {
 
     @DaoFree
     public LabEvent buildVesselToSectionDbFree ( ReceptaclePlateTransferEvent receptaclePlateTransferEvent,
-                                                 TwoDBarcodedTube sourceTube, StaticPlate targetPlate,
+                                                 TwoDBarcodedTube sourceTube, @Nullable StaticPlate targetPlate,
                                                  String targetSection ) {
         LabEvent labEvent = constructReferenceData ( receptaclePlateTransferEvent, labEventRefDataFetcher );
         if(sourceTube == null) {
