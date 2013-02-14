@@ -361,62 +361,79 @@ public class BettalimsMessageResource {
 
         for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
 
-            for (PositionMapType positionMapType : plateCherryPickEvent.getSourcePositionMap()) {
-                for (ReceptacleType receptacle : positionMapType.getReceptacle()) {
-                    barcodes.add(receptacle.getBarcode());
-                }
+            switch (labEventType.isExpectExistingTarget()) {
+                case SOURCE:
+                    for (PositionMapType positionMapType : plateCherryPickEvent.getSourcePositionMap()) {
+                        for (ReceptacleType receptacle : positionMapType.getReceptacle()) {
+                            barcodes.add(receptacle.getBarcode());
+                        }
+                    }
+                    break;
             }
-            //          SGM:  Assuming that Cherry Picks will not yield an existing Target.
-            //            if (labEventType.isExpectExistingTarget()) {
-            //
-            //            }
 
         }
         for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
 
-            if (plateEventType.getPositionMap() == null) {
-                barcodes.add(plateEventType.getPlate().getBarcode());
-            } else {
-                for (ReceptacleType position : plateEventType.getPositionMap().getReceptacle()) {
-                    barcodes.add(position.getBarcode());
-                }
+            switch (labEventType.isExpectExistingTarget()) {
+                case SOURCE:
+                    if (plateEventType.getPositionMap() == null) {
+                        barcodes.add(plateEventType.getPlate().getBarcode());
+                    } else {
+                        for (ReceptacleType position : plateEventType.getPositionMap().getReceptacle()) {
+                            barcodes.add(position.getBarcode());
+                        }
+                    }
+                    break;
             }
 
         }
         for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
 
-            if (plateTransferEventType.getSourcePositionMap() == null) {
-                barcodes.add(plateTransferEventType.getSourcePlate().getBarcode());
-            } else {
-                for (ReceptacleType receptacleType : plateTransferEventType.getSourcePositionMap().getReceptacle()) {
-                    barcodes.add(receptacleType.getBarcode());
-                }
-            }
-
-            if (labEventType.isExpectExistingTarget()) {
-                if (plateTransferEventType.getPositionMap() == null) {
-                    barcodes.add(plateTransferEventType.getPlate().getBarcode());
-                } else {
-                    for (ReceptacleType targetReceptacle : plateTransferEventType.getPositionMap().getReceptacle()) {
-                        barcodes.add(targetReceptacle.getBarcode());
+            switch (labEventType.isExpectExistingTarget()) {
+                case SOURCE:
+                    if (plateTransferEventType.getSourcePositionMap() == null) {
+                        barcodes.add(plateTransferEventType.getSourcePlate().getBarcode());
+                    } else {
+                        for (ReceptacleType receptacleType : plateTransferEventType.getSourcePositionMap()
+                                                                                   .getReceptacle()) {
+                            barcodes.add(receptacleType.getBarcode());
+                        }
                     }
-                }
+                    break;
+                case TARGET:
+
+                    if (plateTransferEventType.getPositionMap() == null) {
+                        barcodes.add(plateTransferEventType.getPlate().getBarcode());
+                    } else {
+                        for (ReceptacleType targetReceptacle : plateTransferEventType.getPositionMap()
+                                                                                     .getReceptacle()) {
+                            barcodes.add(targetReceptacle.getBarcode());
+                        }
+                    }
+                    break;
             }
 
         }
         for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage
                                                                                  .getReceptaclePlateTransferEvent()) {
+            switch (labEventType.isExpectExistingTarget()) {
+                case SOURCE:
+                    barcodes.add(receptaclePlateTransferEvent.getSourceReceptacle().getBarcode());
+                    break;
 
-            barcodes.add(receptaclePlateTransferEvent.getSourceReceptacle().getBarcode());
-
-            if (labEventType.isExpectExistingTarget()) {
-                barcodes.add(receptaclePlateTransferEvent.getDestinationPlate().getBarcode());
+                case TARGET:
+                    barcodes.add(receptaclePlateTransferEvent.getDestinationPlate().getBarcode());
+                    break;
             }
 
         }
         for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
 
-            barcodes.add(receptacleEventType.getReceptacle().getBarcode());
+            switch (labEventType.isExpectExistingTarget()) {
+                case SOURCE:
+                    barcodes.add(receptacleEventType.getReceptacle().getBarcode());
+                    break;
+            }
 
         }
 
