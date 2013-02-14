@@ -22,6 +22,10 @@ public class ParentVesselBean {
     private String vesselType;
     private List<ChildVesselBean> childVesselBeans;
 
+    /** For JAXB */
+    public ParentVesselBean() {
+    }
+
     public ParentVesselBean(String manufacturerBarcode, String sampleId, String productOrderKey, String vesselType, List<ChildVesselBean> childVesselBeans) {
         this.manufacturerBarcode = manufacturerBarcode;
         this.sampleId = sampleId;

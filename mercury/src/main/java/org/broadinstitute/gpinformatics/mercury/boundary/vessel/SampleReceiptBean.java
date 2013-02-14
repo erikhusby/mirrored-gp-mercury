@@ -20,6 +20,10 @@ public class SampleReceiptBean {
     private String kitId;
     private List<ParentVesselBean> parentVesselBeans;
 
+    /** For JAXB */
+    public SampleReceiptBean() {
+    }
+
     public SampleReceiptBean(Date receiptDate, String kitId, List<ParentVesselBean> parentVesselBeans) {
         this.receiptDate = receiptDate;
         this.kitId = kitId;

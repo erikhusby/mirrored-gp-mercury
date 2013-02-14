@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Set;
 
 /**
- * Dao Free test of
+ * Dao Free test of receiving samples from BSP
  */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class SampleReceiptResourceTest {
@@ -24,13 +24,17 @@ public class SampleReceiptResourceTest {
     @Test
     public void testReceiveTubes() {
         SampleReceiptResource sampleReceiptResource = new SampleReceiptResource();
-        ArrayList<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
-        parentVesselBeans.add(new ParentVesselBean("1234", "SM-1234", "PDO-123", "Matrix Tube [0.75mL]", null));
-        parentVesselBeans.add(new ParentVesselBean("2345", "SM-2345", "PDO-123", "Matrix Tube [0.75mL]", null));
-        SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), "SK-123", parentVesselBeans);
+        SampleReceiptBean sampleReceiptBean = buildTubes("");
 
         List<LabVessel> labVessels = sampleReceiptResource.notifyOfReceiptDaoFree(sampleReceiptBean, new HashMap<String, LabVessel>());
         Assert.assertEquals(labVessels.size(), 2, "Wrong number of vessels");
+    }
+
+    public static SampleReceiptBean buildTubes(String date) {
+        ArrayList<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
+        parentVesselBeans.add(new ParentVesselBean("1234" + "_" + date, "SM-1234" + "-" + date, "PDO-123", "Matrix Tube [0.75mL]", null));
+        parentVesselBeans.add(new ParentVesselBean("2345" + "_" + date, "SM-2345" + "-" + date, "PDO-123", "Matrix Tube [0.75mL]", null));
+        return new SampleReceiptBean(new Date(), "SK-123", parentVesselBeans);
     }
 
     @Test

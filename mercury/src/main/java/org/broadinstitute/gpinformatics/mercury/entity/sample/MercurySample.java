@@ -77,7 +77,7 @@ public class MercurySample {
     /**
      * For JPA
      */
-    MercurySample() {
+    public MercurySample() {
     }
 
     public String getProductOrderKey() {

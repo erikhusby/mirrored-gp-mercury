@@ -2,16 +2,22 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.POST;
+import javax.ws.rs.Path;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -19,10 +25,16 @@ import java.util.Map;
  * JAX-RS web service used by BSP to notify Mercury that samples have been received.
  */
 @SuppressWarnings("FeatureEnvy")
+@Path("/samplereceipt")
+@Stateful
+@RequestScoped
 public class SampleReceiptResource {
 
     @Inject
     private LabVesselDao labVesselDao;
+
+    @Inject
+    private LabBatchDAO labBatchDAO;
 
     @POST
     public String notifyOfReceipt(SampleReceiptBean sampleReceiptBean) {
@@ -39,7 +51,9 @@ public class SampleReceiptResource {
             }
         }
         Map<String,LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
-        notifyOfReceiptDaoFree(sampleReceiptBean, mapBarcodeToVessel);
+        labBatchDAO.persist(new LabBatch(sampleReceiptBean.getKitId(),
+                new HashSet<LabVessel>(notifyOfReceiptDaoFree(sampleReceiptBean, mapBarcodeToVessel)),
+                LabBatch.LabBatchType.SAMPLES_RECEIPT));
         return "Samples received";
     }
 
@@ -63,7 +77,7 @@ public class SampleReceiptResource {
             } else {
                 String vesselType = parentVesselBean.getVesselType().toLowerCase();
                 if (vesselType.contains("plate")) {
-                    // todo jmt map other geometries
+                    // todo jmt map other geometries?
                     StaticPlate staticPlate = new StaticPlate(parentVesselBean.getManufacturerBarcode(), StaticPlate.PlateType.Eppendorf96);
                     labVessels.add(staticPlate);
                     for (ChildVesselBean childVesselBean : parentVesselBean.getChildVesselBeans()) {
@@ -71,10 +85,13 @@ public class SampleReceiptResource {
                         if(vesselPosition == null) {
                             throw new RuntimeException("Unknown vessel position " + childVesselBean.getPosition());
                         }
-                        staticPlate.getContainerRole().addContainedVessel(new PlateWell(staticPlate, vesselPosition), vesselPosition);
+                        PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
+                        plateWell.addSample(new MercurySample(childVesselBean.getProductOrderKey(),
+                                childVesselBean.getSampleId()));
+                        staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
                     }
 
-                } /*else if(vesselType.contains("rack")) {
+                } /* todo jmt else if(vesselType.contains("rack")) {
 
                 } */else {
                     throw new RuntimeException("Unexpected vessel type with child vessels " + parentVesselBean.getVesselType());

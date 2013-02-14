@@ -55,6 +55,8 @@
             org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryResource,
             org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryTypesResource,
             org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchResource,
+            org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleImportResource,
+            org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptResource,
             org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricResource,
             org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource,
             org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource,
