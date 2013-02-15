@@ -47,6 +47,7 @@ import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -1712,7 +1713,7 @@ public class LabEventTest {
             return indexPlate;
         }
 
-        public BuildIndexPlate invoke(MolecularIndexingSchemeDao molecularIndexingSchemeDao) {
+        public BuildIndexPlate invoke(@Nullable MolecularIndexingSchemeDao molecularIndexingSchemeDao) {
             char[] bases = {'A', 'C', 'T', 'G'};
 
             indexPlate = new StaticPlate(indexPlateBarcode, StaticPlate.PlateType.IndexedAdapterPlate96);
@@ -1730,7 +1731,7 @@ public class LabEventTest {
                 final String sequence = stringBuilder.toString();
                 MolecularIndexingScheme testScheme = null;
                 if(molecularIndexingSchemeDao != null) {
-                    testScheme = molecularIndexingSchemeDao.findSingleIndexScheme(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7.name(), sequence);
+                    testScheme = molecularIndexingSchemeDao.findSingleIndexScheme(MolecularIndexingScheme.IndexPosition.ILLUMINA_P7, sequence);
                 }
                 if(testScheme == null) {
                     testScheme = new MolecularIndexingScheme(
