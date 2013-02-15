@@ -9,7 +9,6 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -74,11 +73,6 @@ public class ExtractTransformTest extends Arquillian {
         EtlTestUtilities.deleteEtlFiles(datafileDir);
     }
 
-    @AfterMethod
-    public void afterMethod() throws Exception {
-        EtlTestUtilities.deleteEtlFiles(datafileDir);
-    }
-
     public void testEtl() throws Exception {
         // Gets the most recent audit rev timestamp for an etl entity.
         long mostRecentTimestamp = 0L;
@@ -113,9 +107,11 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertFalse(startEtl == endEtl);
 
         String fileTimestamp = ExtractTransform.secTimestampFormat.format(new Date(endEtl));
+        final String datFileEnding = "_" + mostRecentClass.getBaseFilename() + ".dat";
         String isReadyFilename = fileTimestamp + ExtractTransform.READY_FILE_SUFFIX;
+
         Assert.assertTrue((new File(datafileDir, isReadyFilename)).exists());
-        String dataFilename = fileTimestamp + "_" + mostRecentClass.getBaseFilename() + ".dat";
+        String dataFilename = fileTimestamp + datFileEnding;
         File datafile = new File(datafileDir, dataFilename);
         logger.info("expecting file " + datafile.getName());
         Assert.assertTrue(datafile.exists());
@@ -143,34 +139,63 @@ public class ExtractTransformTest extends Arquillian {
         EtlTestUtilities.deleteEtlFiles(datafileDir);
 
         // Runs backfill ETL on a range of entity ids that includes the known entity id.
+        long backfillEtlStart = System.currentTimeMillis();
         Assert.assertEquals(Response.Status.NO_CONTENT,
                 extractTransform.backfillEtl(mostRecentClass.getEntityClass().getName() , entityId - 1, entityId + 1));
-
+        long backfillEtlEnd = System.currentTimeMillis();
         // Checks that the new data file contains the known entity id.
         boolean found = false;
-        datafile = new File(datafileDir, dataFilename);
-        Assert.assertTrue(datafile.exists());
-        reader = new FileReader(datafile);
-        lines = IOUtils.readLines(reader);
-        for (String line : lines) {
-            String[] parts = line.split(",");
-            if (entityId == Long.parseLong(parts[3])) {
-                found = true;
-                break;
+        File[] files = EtlTestUtilities.getDirFiles(datafileDir, backfillEtlStart, backfillEtlEnd);
+        for (File dataFile : files) {
+            logger.debug("Found backfill etl file " + dataFile.getName());
+            if (dataFile.getName().endsWith(datFileEnding)) {
+                reader = new FileReader(dataFile);
+                lines = IOUtils.readLines(reader);
+                IOUtils.closeQuietly(reader);
+                for (String line : lines) {
+                    String[] parts = line.split(",");
+                    if (entityId == Long.parseLong(parts[3])) {
+                        found = true;
+                        break;
+                    }
+                }
             }
         }
-        IOUtils.closeQuietly(reader);
         Assert.assertTrue(found);
 
-    }
 
+        //public void testNotWholeSeconds1() {
+        long start = 1001L;
+        long end = 1360000000000L;
+        boolean caught = false;
+        try {
+            extractTransform.incrementalEtl(start, end, null);
+        } catch (Exception e) {
+            if (e.getCause() instanceof IllegalArgumentException) {
+                caught = true;
+            }
+        }
+        Assert.assertTrue(caught);
+
+        start = 1000L;
+        end = 1360000000001L;
+        caught = false;
+        try {
+            extractTransform.incrementalEtl(start, end, null);
+        } catch (Exception e) {
+            if (e.getCause() instanceof IllegalArgumentException) {
+                caught = true;
+            }
+        }
+        Assert.assertTrue(caught);
+    }
 
 
     /**
      * Finds the date a recent audit rev, typically the most recent.
      * @return timestamp represented as mSec since start of the epoch
      */
-    public long fetchLatestAuditDate(String audTableName) throws Exception {
+    private long fetchLatestAuditDate(String audTableName) throws Exception {
         String queryString = "SELECT TO_CHAR(rev_date,'YYYYMMDDHH24MISSRR')||'0' FROM REV_INFO " +
                 " WHERE rev_info_id = (SELECT MAX(rev) FROM " + audTableName + ")";
         Query query = auditReaderDao.getEntityManager().createNativeQuery(queryString);

@@ -51,11 +51,9 @@ public class AuditReaderDao extends GenericDao {
      * @param currentEtlTimestamp  end of interval in mSec units, truncated to second resolution
      * @throws IllegalArgumentException if params are not whole second values.
      */
-    public Collection<Long> fetchAuditIds(long lastEtlTimestamp, long currentEtlTimestamp)
-            throws IllegalArgumentException {
-
+    public Collection<Long> fetchAuditIds(long lastEtlTimestamp, long currentEtlTimestamp) {
         if (lastEtlTimestamp % 1000 != 0 || currentEtlTimestamp % 1000 != 0) {
-            throw new IllegalArgumentException ("Etl interval must be whole second aligned.");
+            throw new java.lang.IllegalArgumentException ("Etl interval must be whole second aligned.");
         }
         Date startDate = new Date(lastEtlTimestamp);
         Date endDate = new Date(currentEtlTimestamp);

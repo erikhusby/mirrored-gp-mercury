@@ -268,7 +268,7 @@ public class ExtractTransform {
     }
 
     /** Testable helper method that does the incremental etl work, has no mutex. */
-    public int incrementalEtl(long startTimestamp, long endTimestamp, String etlDateStr) throws IllegalArgumentException {
+    public int incrementalEtl(long startTimestamp, long endTimestamp, String etlDateStr) {
         if (0L == startTimestamp) {
             logger.warn("Cannot determine time of last incremental ETL.  ETL will not be run.");
             return 0;
