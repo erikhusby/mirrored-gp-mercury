@@ -122,10 +122,17 @@ public class OfflineThriftService implements ThriftService {
         List<TZamboniRead> reads = new ArrayList<TZamboniRead>();
         reads.add(new TZamboniRead((short) 1, (short) 10, TZReadType.INDEX));
         reads.add(new TZamboniRead((short) 11, (short) 20, TZReadType.TEMPLATE));
-        TZamboniRun run = new TZamboniRun(runName, "Flowcell-123", lanes, "Sequencer 123", "Test Sequencer", "05/11/2012 17:08", "Run-123", (short) 1, (short) 2,
-                (short) 3, (short) 4, (short) 5, false, 123, reads, "36T8B", 999.987654);
-        //TZamboniRun tzRun = new TZamboniRun();
-        return run;
+        //TZamboniRun run = new TZamboniRun(runName, "Flowcell-123", lanes, "Sequencer 123", "Test Sequencer", "05/11/2012 17:08", "Run-123", (short) 1, (short) 2,
+        //        (short) 3, (short) 4, (short) 5, false, 123, reads, "36T8B", 999.987654);
+        TZamboniRun tZRun = new TZamboniRun();
+        tZRun.setRunName(runName); tZRun.setFlowcellBarcode("Flowcell-123"); tZRun.setLanes(lanes);
+        tZRun.setSequencer("Sequencer 123"); tZRun.setSequencerModel("Test Sequencer"); tZRun.setRunDate("05/11/2012 17:08");
+        tZRun.setRunBarcode("Run-123"); tZRun.setFirstCycle((short) 1); tZRun.setFirstCycleReadLength((short) 2);
+        tZRun.setLastCycle((short) 3); tZRun.setMolBarcodeCycle((short) 4); tZRun.setMolBarcodeLength((short) 5);
+        tZRun.setRunId(123); tZRun.setReads(reads);
+        //tZRun.setActualReadStructure("36T8B"); tZRun.setImagedAreaPerLaneMM2(999.986);
+
+        return tZRun;
     }
 
     private static TZamboniLane makeLane(int laneNumber, int numLibraries) {
