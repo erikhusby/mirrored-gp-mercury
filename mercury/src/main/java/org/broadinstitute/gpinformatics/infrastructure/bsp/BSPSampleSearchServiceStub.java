@@ -2,9 +2,11 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
+import javax.enterprise.inject.Alternative;
 import java.util.*;
 
 @Stub
+@Alternative
 public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
 
     public static final String SM_1P3XN = "SM-1P3XN";

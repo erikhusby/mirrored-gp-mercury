@@ -4,7 +4,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * A simple DTO for fetching commonly used data from BSP.
@@ -73,11 +75,13 @@ public class BSPSampleDTO {
 
     private String population;
 
+    private List<String> plasticBarcodes;
+
     /**
      * Use this when no valid DTO is present, to avoid null checks
      */
     public static final BSPSampleDTO DUMMY =
-            new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "","","","");
+            new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "");
 
     // collaborator?
     // species vs organism?
@@ -99,9 +103,9 @@ public class BSPSampleDTO {
                         String patientId, String organism, String collaboratorsSampleName, String collection,
                         String volume, String concentration, String sampleLsid, String collaboratorParticipantId,
                         String materialType, String total, String sampleType, String primaryDisease,
-                        String gender, String stockType, String fingerprint, String sampleId,String collaboratorName,
-                        String race,String population) {
-        this(primaryDisease,sampleLsid,materialType,collaboratorsSampleName,organism,patientId);
+                        String gender, String stockType, String fingerprint, String sampleId, String collaboratorName,
+                        String race, String population) {
+        this(primaryDisease, sampleLsid, materialType, collaboratorsSampleName, organism, patientId);
         this.containerId = containerId;
         this.stockSample = stockSample;
         this.rootSample = rootSample;
@@ -109,7 +113,7 @@ public class BSPSampleDTO {
         this.collection = collection;
 
         this.volume = safeParseDouble(volume);
-        this.concentration = safeParseDouble(concentration);    
+        this.concentration = safeParseDouble(concentration);
         this.collaboratorParticipantId = collaboratorParticipantId;
         this.total = safeParseDouble(total);
         this.sampleType = sampleType;
@@ -127,6 +131,7 @@ public class BSPSampleDTO {
 
     /**
      * Useful for tests
+     *
      * @param primaryDisease
      * @param lsid
      */
@@ -302,5 +307,20 @@ public class BSPSampleDTO {
 
     public void setFfpeDerived(Boolean ffpeDerived) {
         this.ffpeDerived = ffpeDerived;
+    }
+
+    public List<String> getPlasticBarcodes() {
+        if (plasticBarcodes == null) {
+            BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
+            bspSampleDataFetcher.fetchSamplePlastic(Collections.singletonList(this));
+        }
+        return plasticBarcodes;
+    }
+
+    public void addPlastic(String barcode) {
+        if (plasticBarcodes == null) {
+            plasticBarcodes = new ArrayList<String>();
+        }
+        plasticBarcodes.add(barcode);
     }
 }

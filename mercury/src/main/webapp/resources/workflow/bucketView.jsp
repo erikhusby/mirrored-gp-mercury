@@ -21,6 +21,7 @@
                         {"bSortable":true},
                         {"bSortable":true},
                         {"bSortable":true},
+                        {"bSortable":true},
                         {"bSortable":true, "sType":"date"}
                     ]
                 });
@@ -39,99 +40,103 @@
                 $j('#' + type + 'Div').hide();
             }
 
+            function showJiraInfo() {
+                $j('#jiraTable').show();
+            }
         </script>
     </stripes:layout-component>
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="bucketForm">
             <div class="control-group">
                 <div class="control">
-                    <stripes:select name="selectedBucket">
+                    <stripes:select id="bucketSelect" name="selectedBucket">
                         <stripes:options-collection collection="${actionBean.buckets}" label="name"
                                                     value="name"/>
                     </stripes:select>
-                    <stripes:submit name="viewBucket" value="View Bucket"/>
+                    <stripes:submit name="viewBucket" value="View Bucket" onclick="javascript:showJiraInfo();"/>
                 </div>
             </div>
         </stripes:form>
         <stripes:form beanclass="${batchActionBean.class.name}"
                       id="bucketEntryForm">
-            <table>
-                <tr>
-                    <td valign="top">
-                        <div class="control-group">
-                            <div class="controls">
-                                <stripes:radio value="${batchActionBean.existingJiraTicketValue}"
-                                               name="jiraInputType"
-                                               onclick="javascript:showResult('jiraId');hideResult('newTicket');"/>
-                                Use Existing Jira Ticket
-                            </div>
-                            <div class="controls">
-                                <stripes:radio value="${batchActionBean.newJiraTicketValue}"
-                                               name="jiraInputType"
-                                               onclick="javascript:showResult('newTicket');hideResult('jiraId');"/>
-                                Create a New Jira Ticket
-                            </div>
-                        </div>
-
-                        <div id="jiraIdDiv">
+            <c:if test="${actionBean.jiraEnabled}">
+                <table>
+                    <tr>
+                        <td valign="top">
                             <div class="control-group">
-                                <stripes:label for="jiraTicketId" name="Jira Ticket Key" class="control-label"/>
                                 <div class="controls">
-                                    <stripes:text name="jiraTicketId" class="defaultText"
-                                                  title="Enter an existing batch ticket" id="jiraTicketId"/>
+                                    <stripes:radio value="${batchActionBean.existingJiraTicketValue}"
+                                                   name="jiraInputType"
+                                                   onclick="javascript:showResult('jiraId');hideResult('newTicket');"/>
+                                    Use Existing Jira Ticket
                                 </div>
-                            </div>
-                        </div>
-                        <div id="newTicketDiv" style="display: none;">
-                            <div class="control-group">
-                                <stripes:label for="summary" name="Summary" class="control-label"/>
                                 <div class="controls">
-                                    <stripes:text name="summary" class="defaultText"
-                                                  title="Enter a summary for a new batch ticket" id="summary"
-                                                  value="${batchActionBean.summary}"/>
+                                    <stripes:radio value="${batchActionBean.newJiraTicketValue}"
+                                                   name="jiraInputType"
+                                                   onclick="javascript:showResult('newTicket');hideResult('jiraId');"/>
+                                    Create a New Jira Ticket
                                 </div>
                             </div>
 
-                            <div class="control-group">
-                                <stripes:label for="description" name="Description" class="control-label"/>
-                                <div class="controls">
-                                    <stripes:textarea name="description" class="defaultText"
-                                                      title="Enter a description for a new batch ticket"
-                                                      id="description" value="${batchActionBean.description}"/>
+                            <div id="jiraIdDiv">
+                                <div class="control-group">
+                                    <stripes:label for="jiraTicketId" name="Jira Ticket Key" class="control-label"/>
+                                    <div class="controls">
+                                        <stripes:text name="jiraTicketId" class="defaultText"
+                                                      title="Enter an existing batch ticket" id="jiraTicketId"/>
+                                    </div>
                                 </div>
                             </div>
+                            <div id="newTicketDiv" style="display: none;">
+                                <div class="control-group">
+                                    <stripes:label for="summary" name="Summary" class="control-label"/>
+                                    <div class="controls">
+                                        <stripes:text name="summary" class="defaultText"
+                                                      title="Enter a summary for a new batch ticket" id="summary"
+                                                      value="${batchActionBean.summary}"/>
+                                    </div>
+                                </div>
 
-                            <div class="control-group">
-                                <stripes:label for="important" name="Important Information"
-                                               class="control-label"/>
-                                <div class="controls">
-                                    <stripes:textarea name="important" class="defaultText"
-                                                      title="Enter important info for a new batch ticket"
-                                                      id="important"
-                                                      value="${batchActionBean.important}"/>
+                                <div class="control-group">
+                                    <stripes:label for="description" name="Description" class="control-label"/>
+                                    <div class="controls">
+                                        <stripes:textarea name="description" class="defaultText"
+                                                          title="Enter a description for a new batch ticket"
+                                                          id="description" value="${batchActionBean.description}"/>
+                                    </div>
+                                </div>
+
+                                <div class="control-group">
+                                    <stripes:label for="important" name="Important Information"
+                                                   class="control-label"/>
+                                    <div class="controls">
+                                        <stripes:textarea name="important" class="defaultText"
+                                                          title="Enter important info for a new batch ticket"
+                                                          id="important"
+                                                          value="${batchActionBean.important}"/>
+                                    </div>
+                                </div>
+
+                                <div class="control-group">
+                                    <stripes:label for="dueDate" name="Availability Date" class="control-label"/>
+                                    <div class="controls">
+                                        <stripes:text id="dueDate" name="dueDate" class="defaultText"
+                                                      title="enter date (MM/dd/yyyy)"
+                                                      value="${batchActionBean.dueDate}"><fmt:formatDate
+                                                value="${batchActionBean.dueDate}"
+                                                dateStyle="short"/></stripes:text>
+                                    </div>
                                 </div>
                             </div>
-
                             <div class="control-group">
-                                <stripes:label for="dueDate" name="Availability Date" class="control-label"/>
-                                <div class="controls">
-                                    <stripes:text id="dueDate" name="dueDate" class="defaultText"
-                                                  title="enter date (MM/dd/yyyy)"
-                                                  value="${batchActionBean.dueDate}"><fmt:formatDate
-                                            value="${batchActionBean.dueDate}"
-                                            dateStyle="short"/></stripes:text>
+                                <div class="controls" style="margin-left: 80px;">
+                                    <stripes:submit name="createBatch" value="Create Batch"/>
                                 </div>
                             </div>
-                        </div>
-                        <div class="control-group">
-                            <div class="controls" style="margin-left: 80px;">
-                                <stripes:submit name="createBatch" value="Create Batch"/>
-                            </div>
-                        </div>
-                    </td>
-                </tr>
-            </table>
-
+                        </td>
+                    </tr>
+                </table>
+            </c:if>
             <table id="bucketEntryView" class="table simple">
                 <thead>
                 <tr>
@@ -140,6 +145,7 @@
                                                                               class="bucket-checkedCount"></span>
                     </th>
                     <th>Vessel Name</th>
+                    <th>Sample Name</th>
                     <th>PDO</th>
                     <th>Batch Name</th>
                     <th>Sample Type</th>
@@ -159,14 +165,23 @@
                             </a>
                         </td>
                         <td>
+                            <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample">
+                                <a href="${ctxpath}/search/all.action?search=&searchKey=${mercurySample.sampleKey}">
+                                        ${mercurySample.sampleKey}
+                                </a>
+                            </c:forEach>
+                        </td>
+                        <td>
                             <a href="${ctxpath}/search/all.action?search=&searchKey=${entry.poBusinessKey}">
                                     ${entry.poBusinessKey}
                             </a>
                         </td>
                         <td>
-                            <a href="${ctxpath}/search/all.action?search=&searchKey=${entry.labVessel.nearestLabBatchesString}">
-                                    ${entry.labVessel.nearestLabBatchesString}
-                            </a>
+                            <c:forEach items="${entry.labVessel.nearestLabBatches}" var="batch">
+                                <a href="${ctxpath}/search/all.action?search=&searchKey=${batch.businessKey}">
+                                        ${batch.businessKey}
+                                </a>
+                            </c:forEach>
                         </td>
                         <td>
                             <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample">

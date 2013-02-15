@@ -25,11 +25,11 @@ public class MolecularIndexingSchemeDao extends GenericDao {
      * @see MolecularIndexingSchemeDao
      */
     public MolecularIndexingScheme findSingleIndexScheme(
-            String indexPosition,
+                                                                MolecularIndexingScheme.IndexPosition indexPosition,
             String indexSequence) {
         Query query = this.getThreadEntityManager().getEntityManager().createNamedQuery(
                 "MolecularIndexingScheme.findSingleIndexScheme");
-        query.setParameter("indexPosition", indexPosition);
+        query.setParameter("indexPosition", indexPosition.name());
         query.setParameter("indexSequence", indexSequence);
         MolecularIndexingScheme molecularIndexingScheme = null;
         try {
@@ -43,15 +43,15 @@ public class MolecularIndexingSchemeDao extends GenericDao {
      * @see MolecularIndexingSchemeDao
      */
     public MolecularIndexingScheme findDualIndexScheme(
-            String indexPosition1,
+                                                              MolecularIndexingScheme.IndexPosition indexPosition1,
             String indexSequence1,
-            String indexPosition2,
+            MolecularIndexingScheme.IndexPosition indexPosition2,
             String indexSequence2) {
         Query query = this.getThreadEntityManager().getEntityManager().createNamedQuery(
                 "MolecularIndexingScheme.findDualIndexScheme");
-        query.setParameter("indexPosition1", indexPosition1);
+        query.setParameter("indexPosition1", indexPosition1.name());
         query.setParameter("indexSequence1", indexSequence1);
-        query.setParameter("indexPosition2", indexPosition2);
+        query.setParameter("indexPosition2", indexPosition2.name());
         query.setParameter("indexSequence2", indexSequence2);
         MolecularIndexingScheme molecularIndexingScheme = null;
         try {
@@ -65,19 +65,19 @@ public class MolecularIndexingSchemeDao extends GenericDao {
      * @see MolecularIndexingSchemeDao
      */
     public MolecularIndexingScheme findTripleIndexScheme(
-            String indexPosition1,
+                                                                MolecularIndexingScheme.IndexPosition indexPosition1,
             String indexSequence1,
-            String indexPosition2,
+            MolecularIndexingScheme.IndexPosition indexPosition2,
             String indexSequence2,
-            String indexPosition3,
+            MolecularIndexingScheme.IndexPosition indexPosition3,
             String indexSequence3) {
         Query query = this.getThreadEntityManager().getEntityManager().createNamedQuery(
                 "MolecularIndexingScheme.findTripleIndexScheme");
-        query.setParameter("indexPosition1", indexPosition1);
+        query.setParameter("indexPosition1", indexPosition1.name());
         query.setParameter("indexSequence1", indexSequence1);
-        query.setParameter("indexPosition2", indexPosition2);
+        query.setParameter("indexPosition2", indexPosition2.name());
         query.setParameter("indexSequence2", indexSequence2);
-        query.setParameter("indexPosition3", indexPosition3);
+        query.setParameter("indexPosition3", indexPosition3.name());
         query.setParameter("indexSequence3", indexSequence3);
         MolecularIndexingScheme molecularIndexingScheme = null;
         try {

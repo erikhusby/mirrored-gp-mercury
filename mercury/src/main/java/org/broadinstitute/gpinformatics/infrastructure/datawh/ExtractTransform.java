@@ -251,12 +251,12 @@ public class ExtractTransform {
             }
 
             // The same etl_date is used for all DW data processed by one ETL run.
-            final Date etlDate = new Date();
-            final String etlDateStr = secTimestampFormat.format(etlDate);
-            final long currentEtlTimestamp = etlDate.getTime();
+            // Etl interval must be whole second aligned.
+            final long currentEtlTimestamp = 1000L * (long)Math.floor((double)System.currentTimeMillis() / 1000L);
+            final String etlDateStr = secTimestampFormat.format(new Date(currentEtlTimestamp));
             incrementalRunStartTime = currentEtlTimestamp;
 
-            final long lastEtlTimestamp = readLastEtlRun();
+            final long lastEtlTimestamp = 1000L * (long)Math.floor((double)readLastEtlRun() / 1000L);
             // Allows last timestamp to be in the future thereby shutting off incremental etl.
             if (lastEtlTimestamp >= currentEtlTimestamp) {
                 return 0;
@@ -332,8 +332,9 @@ public class ExtractTransform {
             return Response.Status.INTERNAL_SERVER_ERROR;
         }
 
-        final Date etlDate = new Date();
-        final String etlDateStr = secTimestampFormat.format(etlDate);
+        // BackfillEtl file timestamps are not whole second aligned, just to avoid collisions with incremental.
+        final long currentEtlTimestamp = 999L + 1000L * (long)Math.floor((double)System.currentTimeMillis() / 1000L);
+        final String etlDateStr = secTimestampFormat.format(new Date(currentEtlTimestamp));
 
         Class entityClass;
         try {
@@ -352,7 +353,7 @@ public class ExtractTransform {
         }
 
         logger.debug("ETL backfill of " + entityClass.getName() + " having ids " + startId + " to " + endId);
-        long backfillStartTime = etlDate.getTime();
+        long backfillStartTime = System.currentTimeMillis();
 
         int recordCount = 0;
         // The one of these that matches the entityClass will make ETL records, others are no-ops.

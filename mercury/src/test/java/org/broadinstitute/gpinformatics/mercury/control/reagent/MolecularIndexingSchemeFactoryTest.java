@@ -74,7 +74,7 @@ public class MolecularIndexingSchemeFactoryTest extends ContainerTest {
         molecularIndexingSchemeDao.flush();
         molecularIndexingSchemeDao.clear();
         MolecularIndexingScheme fetchedMolecularIndexingScheme = molecularIndexingSchemeDao.findSingleIndexScheme(
-                MolecularIndexingScheme.IndexPosition.ILLUMINA_P7.name(), sequence);
+                MolecularIndexingScheme.IndexPosition.ILLUMINA_P7, sequence);
         SortedMap<MolecularIndexingScheme.IndexPosition, MolecularIndex> mapPositionToIndex =
                 fetchedMolecularIndexingScheme.getIndexes();
         Assert.assertEquals(mapPositionToIndex.size(), 1, "Wrong number of indexes");

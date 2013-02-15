@@ -9,12 +9,12 @@ import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
-import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.Query;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.FileReader;
@@ -52,18 +52,18 @@ public class ExtractTransformTest extends Arquillian {
     public void beforeClass() throws Exception {
         datafileDir = System.getProperty("java.io.tmpdir");
 
-        auditTables.put("LAB_EVENT_AUD", new EventEtl());
-        auditTables.put("LAB_BATCH_AUD", new LabBatchEtl());
-        auditTables.put("LAB_VESSEL_AUD", new LabVesselEtl());
-        auditTables.put("PRICE_ITEM_AUD", new PriceItemEtl());
-        auditTables.put("PRODUCT_AUD", new ProductEtl());
-        auditTables.put("PRODUCT_ORDER_AUD", new ProductOrderEtl());
-        auditTables.put("PRODUCT_ORDER_ADD_ON_AUD", new ProductOrderAddOnEtl());
-        auditTables.put("PRODUCT_ORDER_SAMPLE_AUD", new ProductOrderSampleEtl());
-        auditTables.put("RESEARCH_PROJECT_AUD", new ResearchProjectEtl());
-        auditTables.put("RESEARCH_PROJECT_COHORT_AUD", new ResearchProjectCohortEtl());
-        auditTables.put("RESEARCH_PROJECT_FUNDING_AUD", new ResearchProjectFundingEtl());
-        auditTables.put("RESEARCH_PROJECTIRB_AUD", new ResearchProjectIrbEtl());
+        auditTables.put("MERCURY.LAB_EVENT_AUD", new EventEtl());
+        auditTables.put("MERCURY.LAB_BATCH_AUD", new LabBatchEtl());
+        auditTables.put("MERCURY.LAB_VESSEL_AUD", new LabVesselEtl());
+        auditTables.put("ATHENA.PRICE_ITEM_AUD", new PriceItemEtl());
+        auditTables.put("ATHENA.PRODUCT_AUD", new ProductEtl());
+        auditTables.put("ATHENA.PRODUCT_ORDER_AUD", new ProductOrderEtl());
+        auditTables.put("ATHENA.PRODUCT_ORDER_ADD_ON_AUD", new ProductOrderAddOnEtl());
+        auditTables.put("ATHENA.PRODUCT_ORDER_SAMPLE_AUD", new ProductOrderSampleEtl());
+        auditTables.put("ATHENA.RESEARCH_PROJECT_AUD", new ResearchProjectEtl());
+        auditTables.put("ATHENA.RESEARCH_PROJECT_COHORT_AUD", new ResearchProjectCohortEtl());
+        auditTables.put("ATHENA.RESEARCH_PROJECT_FUNDING_AUD", new ResearchProjectFundingEtl());
+        auditTables.put("ATHENA.RESEARCH_PROJECTIRB_AUD", new ResearchProjectIrbEtl());
 
     }
 
@@ -73,17 +73,12 @@ public class ExtractTransformTest extends Arquillian {
         EtlTestUtilities.deleteEtlFiles(datafileDir);
     }
 
-    @AfterMethod
-    public void afterMethod() throws Exception {
-        EtlTestUtilities.deleteEtlFiles(datafileDir);
-    }
-
     public void testEtl() throws Exception {
         // Gets the most recent audit rev timestamp for an etl entity.
         long mostRecentTimestamp = 0L;
         GenericEntityEtl mostRecentClass = null;
         for (String auditTable : auditTables.keySet()) {
-            long auditTimestamp = auditReaderDao.fetchLatestAuditDate(auditTable);
+            long auditTimestamp = fetchLatestAuditDate(auditTable);
             if (auditTimestamp > mostRecentTimestamp) {
                 mostRecentTimestamp = auditTimestamp;
                 mostRecentClass = auditTables.get(auditTable);
@@ -93,12 +88,15 @@ public class ExtractTransformTest extends Arquillian {
             logger.warn("No audit entities exist -- cannot test etl");
             return;
         }
+        final long ONE_SECOND_MSEC = 1000L;
         logger.debug("most recent entity: " + mostRecentTimestamp + ", " + mostRecentClass.getEntityClass() + ", " + mostRecentClass.getBaseFilename());
-        // Sets up the last etl file to be just before the most recent audit rev.  Sql timestamp resolution is 10 mSec.
-        long startEtl = mostRecentTimestamp - 10;
+        long startEtl = ONE_SECOND_MSEC * (long)Math.floor((double)mostRecentTimestamp / ONE_SECOND_MSEC);
         extractTransform.writeLastEtlRun(startEtl);
 
         // Does incremental Etl.
+        if (System.currentTimeMillis() - startEtl < ONE_SECOND_MSEC) {
+            Thread.sleep(ONE_SECOND_MSEC);
+        }
         int recordCount = extractTransform.incrementalEtl();
 
         // Must have at least one etl record.
@@ -109,10 +107,13 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertFalse(startEtl == endEtl);
 
         String fileTimestamp = ExtractTransform.secTimestampFormat.format(new Date(endEtl));
+        final String datFileEnding = "_" + mostRecentClass.getBaseFilename() + ".dat";
         String isReadyFilename = fileTimestamp + ExtractTransform.READY_FILE_SUFFIX;
+
         Assert.assertTrue((new File(datafileDir, isReadyFilename)).exists());
-        String dataFilename = fileTimestamp + "_" + mostRecentClass.getBaseFilename() + ".dat";
+        String dataFilename = fileTimestamp + datFileEnding;
         File datafile = new File(datafileDir, dataFilename);
+        logger.info("expecting file " + datafile.getName());
         Assert.assertTrue(datafile.exists());
 
         // Extracts an entity id from the data file.
@@ -123,7 +124,7 @@ public class ExtractTransformTest extends Arquillian {
             // All data records start with: linenumber, etlDate, deletionFlag, entityId.
             String[] parts = line.split(",");
             // Looks for the first non-deletion record.
-            if ("T".equals(parts[2])) {
+            if ("F".equals(parts[2])) {
                 entityId = Long.parseLong(parts[3]);
                 break;
             }
@@ -138,27 +139,69 @@ public class ExtractTransformTest extends Arquillian {
         EtlTestUtilities.deleteEtlFiles(datafileDir);
 
         // Runs backfill ETL on a range of entity ids that includes the known entity id.
+        long backfillEtlStart = System.currentTimeMillis();
         Assert.assertEquals(Response.Status.NO_CONTENT,
                 extractTransform.backfillEtl(mostRecentClass.getEntityClass().getName() , entityId - 1, entityId + 1));
-
+        long backfillEtlEnd = System.currentTimeMillis();
         // Checks that the new data file contains the known entity id.
         boolean found = false;
-        datafile = new File(datafileDir, dataFilename);
-        Assert.assertTrue(datafile.exists());
-        reader = new FileReader(datafile);
-        lines = IOUtils.readLines(reader);
-        for (String line : lines) {
-            String[] parts = line.split(",");
-            if (entityId == Long.parseLong(parts[3])) {
-                found = true;
-                break;
+        File[] files = EtlTestUtilities.getDirFiles(datafileDir, backfillEtlStart, backfillEtlEnd);
+        for (File dataFile : files) {
+            logger.debug("Found backfill etl file " + dataFile.getName());
+            if (dataFile.getName().endsWith(datFileEnding)) {
+                reader = new FileReader(dataFile);
+                lines = IOUtils.readLines(reader);
+                IOUtils.closeQuietly(reader);
+                for (String line : lines) {
+                    String[] parts = line.split(",");
+                    if (entityId == Long.parseLong(parts[3])) {
+                        found = true;
+                        break;
+                    }
+                }
             }
         }
-        IOUtils.closeQuietly(reader);
         Assert.assertTrue(found);
 
 
-        auditReaderDao.fetchLatestAuditDate("PRODUCT_ORDER_SAMPLE");
+        //public void testNotWholeSeconds1() {
+        long start = 1001L;
+        long end = 1360000000000L;
+        boolean caught = false;
+        try {
+            extractTransform.incrementalEtl(start, end, null);
+        } catch (Exception e) {
+            if (e.getCause() instanceof IllegalArgumentException) {
+                caught = true;
+            }
+        }
+        Assert.assertTrue(caught);
+
+        start = 1000L;
+        end = 1360000000001L;
+        caught = false;
+        try {
+            extractTransform.incrementalEtl(start, end, null);
+        } catch (Exception e) {
+            if (e.getCause() instanceof IllegalArgumentException) {
+                caught = true;
+            }
+        }
+        Assert.assertTrue(caught);
+    }
+
+
+    /**
+     * Finds the date a recent audit rev, typically the most recent.
+     * @return timestamp represented as mSec since start of the epoch
+     */
+    private long fetchLatestAuditDate(String audTableName) throws Exception {
+        String queryString = "SELECT TO_CHAR(rev_date,'YYYYMMDDHH24MISSRR')||'0' FROM REV_INFO " +
+                " WHERE rev_info_id = (SELECT MAX(rev) FROM " + audTableName + ")";
+        Query query = auditReaderDao.getEntityManager().createNativeQuery(queryString);
+        String result = (String)query.getSingleResult();
+        long timestamp = ExtractTransform.msecTimestampFormat.parse(result).getTime();
+        return timestamp;
     }
 
 }

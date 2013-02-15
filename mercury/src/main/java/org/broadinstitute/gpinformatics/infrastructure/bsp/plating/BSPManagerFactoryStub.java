@@ -13,6 +13,7 @@ import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
+import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,6 +24,7 @@ import java.util.List;
  *         Time: 3:03 PM
  */
 @Stub
+@Alternative
 public class BSPManagerFactoryStub implements BSPManagerFactory {
     public static final long QA_DUDE_USER_ID = 9382L;
 

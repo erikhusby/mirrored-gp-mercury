@@ -15,7 +15,9 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 @UrlBinding(value = "/view/bucketView.action")
 public class BucketViewActionBean extends CoreActionBean {
@@ -28,27 +30,32 @@ public class BucketViewActionBean extends CoreActionBean {
     @Inject
     private BucketDao bucketDao;
 
-    private Set<WorkflowBucketDef> buckets = new HashSet<WorkflowBucketDef>();
+    private List<WorkflowBucketDef> buckets = new ArrayList<WorkflowBucketDef>();
     @Validate(required = true, on = "viewBucket")
     private String selectedBucket;
 
     private Collection<BucketEntry> bucketEntries;
 
+    private boolean jiraEnabled = false;
+
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
         WorkflowConfig workflowConfig = workflowLoader.load();
         List<ProductWorkflowDef> workflowDefs = workflowConfig.getProductWorkflowDefs();
+        //currently only do ExEx
         for (ProductWorkflowDef workflowDef : workflowDefs) {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-            buckets.addAll(workflowVersion.getBuckets());
+            if (workflowDef.getName().equals(WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
+                buckets.addAll(workflowVersion.getBuckets());
+            }
         }
     }
 
-    public Set<WorkflowBucketDef> getBuckets() {
+    public List<WorkflowBucketDef> getBuckets() {
         return buckets;
     }
 
-    public void setBuckets(Set<WorkflowBucketDef> buckets) {
+    public void setBuckets(List<WorkflowBucketDef> buckets) {
         this.buckets = buckets;
     }
 
@@ -68,6 +75,14 @@ public class BucketViewActionBean extends CoreActionBean {
         this.bucketEntries = bucketEntries;
     }
 
+    public boolean isJiraEnabled() {
+        return jiraEnabled;
+    }
+
+    public void setJiraEnabled(boolean jiraEnabled) {
+        this.jiraEnabled = jiraEnabled;
+    }
+
     @DefaultHandler
     public Resolution view() {
         return new ForwardResolution(VIEW_PAGE);
@@ -80,7 +95,9 @@ public class BucketViewActionBean extends CoreActionBean {
                 bucketEntries = bucket.getBucketEntries();
             } else {
                 bucketEntries = new ArrayList<BucketEntry>();
-
+            }
+            if (bucketEntries.size() > 0) {
+                jiraEnabled = true;
             }
         }
         return view();
