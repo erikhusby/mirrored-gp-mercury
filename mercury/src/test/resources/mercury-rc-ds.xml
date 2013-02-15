@@ -5,8 +5,6 @@
         http://www.jboss.org/ironjacamar/schema
         http://docs.jboss.org/ironjacamar/schema/datasources_1_0.xsd">
     <datasource jndi-name="java:jboss/jdbc/mercury_pool" pool-name="mercury_pool" enabled="true">
-<!-- mercury.rc.ip=${mercury.rc.ip} -->
-<!-- mercury.rc.ip=@mercury.rc.ip@ -->
 
         <connection-url>jdbc:oracle:thin:${mercury.rc.ip}:1521:gpinfprd</connection-url>
 
