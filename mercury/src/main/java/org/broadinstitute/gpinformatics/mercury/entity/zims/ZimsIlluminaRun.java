@@ -70,7 +70,9 @@ public class ZimsIlluminaRun {
                            String sequencer,
                            String sequencerModel,
                            String runDate,
-                           Boolean isPaired) {
+                           Boolean isPaired,
+                           String actualReadStructure,
+                           double  imagedAreaPerLaneMM2) {
         this.runName = runName;
         this.runBarcode = runBarcode;
         this.flowcellBarcode = flowcellBarcode;
@@ -165,4 +167,11 @@ public class ZimsIlluminaRun {
     }
 
 
+    public String getActualReadStructure() {
+        return actualReadStructure;
+    }
+
+    public Double getImagedAreaPerLaneMM2() {
+        return imagedAreaPerLaneMM2;
+    }
 }
