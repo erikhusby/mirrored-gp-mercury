@@ -63,16 +63,18 @@ public class IlluminaRunResource implements Serializable {
             @QueryParam("runName") String runName)
     {
         ZimsIlluminaRun runBean = new ZimsIlluminaRun();
-        try {
-            if (runName == null) {
-                throw new NullPointerException("runName cannot be null");
-            }
-            runBean = getRun(thriftService,runName);
+        if (runName == null) {
+            runBean.setError("runName cannot be null");
         }
-        catch(Throwable t) {
-            String message = "Failed while running pipeline query for run " + runName;
-            LOG.error(message,t);
-            runBean.setError(message + ": " + t.getMessage());
+        else {
+            try {
+                runBean = getRun(thriftService,runName);
+            }
+            catch(Throwable t) {
+                String message = "Failed while running pipeline query for run " + runName;
+                LOG.error(message,t);
+                runBean.setError(message + ": " + t.getMessage());
+            }
         }
 
         return runBean;
@@ -120,18 +122,23 @@ public class IlluminaRunResource implements Serializable {
         return runBean;
     }
 
+    /**
+     * Always returns a non-null {@link ZimsIlluminaRun).
+     * @param thriftService
+     * @param runName
+     * @return
+     */
     ZimsIlluminaRun getRun(ThriftService thriftService,
                            String runName) {
-        ZimsIlluminaRun runBean = null;
+        ZimsIlluminaRun runBean = new ZimsIlluminaRun();
         final TZamboniRun tRun = thriftService.fetchRun(runName);
-        if (tRun == null) {
-            throw new RuntimeException("Could not load run " + runName);
-        }
-        else {
+        if (tRun != null) {
             Map<String,BSPSampleDTO> lsidToBSPSample = fetchAllBSPDataAtOnce(tRun);
             runBean = getRun(tRun,lsidToBSPSample,new SquidThriftLibraryConverter(),pdoDao);
         }
-
+        else {
+            runBean.setError("Run " + runName + " doesn't appear to have been registered yet.  Please try again later or contact the mercury team if the problem persists.");
+        }
         return runBean;
     }
 

@@ -32,7 +32,6 @@ public class BSPPlatingTest extends ContainerTest {
      */
     @Test(groups = {EXTERNAL_INTEGRATION}, enabled = false)
     public void testIssueBSPPlating() throws Exception {
-
         platingService = new BSPPlatingRequestServiceImpl();
 
         Map<MercurySample, AliquotParameters> starterMap = new HashMap<MercurySample, AliquotParameters>();
@@ -59,10 +58,13 @@ public class BSPPlatingTest extends ContainerTest {
         List<ControlWell> controls = new ArrayList<ControlWell>();
         BSPPlatingRequestService bspPlatingService = new BSPPlatingRequestServiceStub();
         BSPPlatingRequestOptions options = bspPlatingService.getBSPPlatingRequestDefaultOptions();
+
         BSPPlatingRequestResult platingResult = bspPlatingService.issueBSPPlatingRequest(options, bspRequests,
                 controls, "hrafal", "EE-BSP-PLATING-1", "BSP Plating Exome Express Test", "Solexa", "EE-TEST-1");
 
         Assert.assertNotNull(platingResult);
+        Assert.assertNotNull(platingResult.getPlatingRequestReceipt(), "Should have returned a plating request receipt");
+        Assert.assertTrue(((platingResult.getErrors() == null) || platingResult.getErrors().isEmpty()), "Should not have received any errors");
     }
 }
 

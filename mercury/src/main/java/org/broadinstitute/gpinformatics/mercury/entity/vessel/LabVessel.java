@@ -854,8 +854,6 @@ public abstract class LabVessel implements Serializable {
         // in reality, the implementation would walk back to all roots,
         // detecting vessels along the way where hasSampleMetadata is true.
         //
-        //The a
-        //
         Set<MercurySample> foundSamples = new HashSet<MercurySample>();
         if (!mercurySamples.isEmpty()) {
             foundSamples.addAll(mercurySamples);

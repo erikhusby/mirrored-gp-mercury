@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
@@ -115,9 +114,9 @@ public class BettalimsMessageResource {
             storeAndProcess(message);
         } catch (Exception e) {
             if (e.getMessage() != null && e.getMessage().contains(WORKFLOW_MESSAGE)) {
-                throw new ResourceException(e.getMessage(), Response.Status.CREATED);
+                throw new ResourceException(e.getMessage(), Response.Status.CREATED, e);
             } else {
-                throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+                throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
             }
         }
         // The VWorks client seems to prefer 200 to 204
@@ -163,9 +162,9 @@ public class BettalimsMessageResource {
                         break;
                     case PRODUCT_DEPENDENT:
 
-                        Collection<String> preFoundEvents = preBuildFromBettaLims(bettaLIMSMessage);
+                        Collection<String> barcodesToBeVerified = getRegisteredBarcodesFromMessage(bettaLIMSMessage);
 
-                        for (String testEvent : preFoundEvents) {
+                        for (String testEvent : barcodesToBeVerified) {
                             if (MercuryOrSquidRouter.MercuryOrSquid.MERCURY.equals(mercuryOrSquidRouter
                                                                                            .routeForVessel(testEvent))) {
                                 processInMercury = true;
@@ -353,50 +352,91 @@ public class BettalimsMessageResource {
      *
      * @return list of barcodes
      */
-    private Collection<String> preBuildFromBettaLims(BettaLIMSMessage bettaLIMSMessage) {
+    private Collection<String> getRegisteredBarcodesFromMessage(BettaLIMSMessage bettaLIMSMessage) {
 
-        Set<String> testBarcodes = new HashSet<String>();
+        Set<String> barcodes = new HashSet<String>();
 
         LabEventType labEventType = getLabEventType(bettaLIMSMessage);
 
         for (PlateCherryPickEvent plateCherryPickEvent : bettaLIMSMessage.getPlateCherryPickEvent()) {
 
-            for (PlateType sourcePlateType : plateCherryPickEvent.getSourcePlate()) {
-                testBarcodes.add(sourcePlateType.getBarcode());
+            switch (labEventType.isExpectExistingTarget()) {
+                case SOURCE:
+                    for (PositionMapType positionMapType : plateCherryPickEvent.getSourcePositionMap()) {
+                        for (ReceptacleType receptacle : positionMapType.getReceptacle()) {
+                            barcodes.add(receptacle.getBarcode());
+                        }
+                    }
+                    break;
             }
-            //          SGM:  Assuming that Cherry Picks will not yield an existing Target.
-            //            if (labEventType.isExpectExistingTarget()) {
-            //
-            //            }
 
         }
         for (PlateEventType plateEventType : bettaLIMSMessage.getPlateEvent()) {
 
-            testBarcodes.add(plateEventType.getPlate().getBarcode());
+            switch (labEventType.isExpectExistingTarget()) {
+                case SOURCE:
+                    if (plateEventType.getPositionMap() == null) {
+                        barcodes.add(plateEventType.getPlate().getBarcode());
+                    } else {
+                        for (ReceptacleType position : plateEventType.getPositionMap().getReceptacle()) {
+                            barcodes.add(position.getBarcode());
+                        }
+                    }
+                    break;
+            }
 
         }
         for (PlateTransferEventType plateTransferEventType : bettaLIMSMessage.getPlateTransferEvent()) {
 
-            testBarcodes.add(plateTransferEventType.getSourcePlate().getBarcode());
+            switch (labEventType.isExpectExistingTarget()) {
+                case SOURCE:
+                    if (plateTransferEventType.getSourcePositionMap() == null) {
+                        barcodes.add(plateTransferEventType.getSourcePlate().getBarcode());
+                    } else {
+                        for (ReceptacleType receptacleType : plateTransferEventType.getSourcePositionMap()
+                                                                                   .getReceptacle()) {
+                            barcodes.add(receptacleType.getBarcode());
+                        }
+                    }
+                    break;
+                case TARGET:
+
+                    if (plateTransferEventType.getPositionMap() == null) {
+                        barcodes.add(plateTransferEventType.getPlate().getBarcode());
+                    } else {
+                        for (ReceptacleType targetReceptacle : plateTransferEventType.getPositionMap()
+                                                                                     .getReceptacle()) {
+                            barcodes.add(targetReceptacle.getBarcode());
+                        }
+                    }
+                    break;
+            }
 
         }
         for (ReceptaclePlateTransferEvent receptaclePlateTransferEvent : bettaLIMSMessage
                                                                                  .getReceptaclePlateTransferEvent()) {
+            switch (labEventType.isExpectExistingTarget()) {
+                case SOURCE:
+                    barcodes.add(receptaclePlateTransferEvent.getSourceReceptacle().getBarcode());
+                    break;
 
-            testBarcodes.add(receptaclePlateTransferEvent.getSourceReceptacle().getBarcode());
-
-            if (labEventType.isExpectExistingTarget()) {
-                testBarcodes.add(receptaclePlateTransferEvent.getDestinationPlate().getBarcode());
+                case TARGET:
+                    barcodes.add(receptaclePlateTransferEvent.getDestinationPlate().getBarcode());
+                    break;
             }
 
         }
         for (ReceptacleEventType receptacleEventType : bettaLIMSMessage.getReceptacleEvent()) {
 
-            testBarcodes.add(receptacleEventType.getReceptacle().getBarcode());
+            switch (labEventType.isExpectExistingTarget()) {
+                case SOURCE:
+                    barcodes.add(receptacleEventType.getReceptacle().getBarcode());
+                    break;
+            }
 
         }
 
-        return testBarcodes;
+        return barcodes;
     }
 
     /**

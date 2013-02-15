@@ -22,7 +22,13 @@ public class MockThriftService implements ThriftService {
         } catch (IOException e) {
             throw new RuntimeException("Failed to deserialize run from local file", e);
         }
-        return run;
+
+        if (runName.equals(run.getRunName())) {
+            return run;
+        }
+        else {
+            return null;
+        }
     }
 
     @Override

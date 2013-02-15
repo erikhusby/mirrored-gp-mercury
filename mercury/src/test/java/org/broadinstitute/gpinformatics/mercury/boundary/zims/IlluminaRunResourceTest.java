@@ -167,8 +167,16 @@ public class IlluminaRunResourceTest extends Arquillian {
         assertTrue(foundLcSet);
         assertTrue(foundPdo);
         assertTrue(foundTumor);
+
+        run = Client.create(clientConfig).resource(url)
+                .queryParam("runName", "Cheese ball")
+                .accept(MediaType.APPLICATION_JSON).get(ZimsIlluminaRun.class);
+        assertNotNull(run.getError());
+        // this is important: the pipeline hardcodes the "run isn't registered yet" response
+        // and retries later
+        assertTrue(run.getError().contains("Run Cheese ball doesn't appear to have been registered yet"));
     }
-    
+
     public static void doAssertions(TZamboniRun thriftRun,ZimsIlluminaRun runBean,Map<Long,ProductOrder> wrIdToPDO) {
         assertNull(runBean.getError());
         assertEquals(runBean.getLanes().size(),thriftRun.getLanes().size());

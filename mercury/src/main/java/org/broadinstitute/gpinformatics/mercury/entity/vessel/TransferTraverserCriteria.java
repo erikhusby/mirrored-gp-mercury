@@ -247,13 +247,13 @@ public interface TransferTraverserCriteria {
         public TraversalControl evaluateVesselPreOrder(Context context) {
             if (context.getLabVessel() != null) {
                 if(context.getLabVessel().getMercurySamples() != null){
-                    for (MercurySample sampleInstance : context.getLabVessel().getMercurySamples()) {
+                    for (MercurySample mercurySample : context.getLabVessel().getMercurySamples()) {
 
                         if (!productOrdersAtHopCount.containsKey(context.getHopCount())) {
                             productOrdersAtHopCount.put(context.getHopCount(), new HashSet<String>());
                         }
 
-                        productOrdersAtHopCount.get(context.getHopCount()).add(sampleInstance.getProductOrderKey());
+                        productOrdersAtHopCount.get(context.getHopCount()).add(mercurySample.getProductOrderKey());
                     }
                 }
             }

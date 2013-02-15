@@ -11,6 +11,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEv
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
+import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.xml.sax.SAXException;
 
@@ -32,16 +33,20 @@ public class BettaLimsMessageFactory {
 
     private long time = System.currentTimeMillis();
 
-    public static String marshal(BettaLIMSMessage blmJaxbObject) throws JAXBException, SAXException {
-        JAXBContext jc = JAXBContext.newInstance(BettaLIMSMessage.class);
+    public static String marshal(BettaLIMSMessage blmJaxbObject) {
+        try {
+            JAXBContext jc = JAXBContext.newInstance(BettaLIMSMessage.class);
 
-        Marshaller marsh = jc.createMarshaller();
+            Marshaller marsh = jc.createMarshaller();
 
-        StringWriter writer = new StringWriter();
+            StringWriter writer = new StringWriter();
 
-        marsh.marshal(blmJaxbObject, writer);
+            marsh.marshal(blmJaxbObject, writer);
 
-        return writer.toString();
+            return writer.toString();
+        } catch (JAXBException e) {
+            throw new InformaticsServiceException(e);
+        }
     }
 
     /**
@@ -287,6 +292,20 @@ public class BettaLimsMessageFactory {
         plateTransferEvent.setPlate(flowcell);
 
         return plateTransferEvent;
+    }
+
+    public PlateEventType buildFlowcellEvent(String eventType, String flowcellBarcode) {
+
+        PlateEventType flowcellEvent = new PlateEventType();
+        setStationEventData(eventType, flowcellEvent);
+
+        PlateType flowcell = new PlateType();
+        flowcell.setBarcode(flowcellBarcode);
+        flowcell.setPhysType(LabEventFactory.PHYS_TYPE_FLOWCELL);
+        flowcell.setSection(LabEventFactory.SECTION_ALL_96);
+        flowcellEvent.setPlate(flowcell);
+
+        return flowcellEvent;
     }
 
     private void setStationEventData(String eventType, StationEventType plateTransferEvent) {

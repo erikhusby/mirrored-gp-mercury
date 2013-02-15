@@ -30,6 +30,7 @@ public class ExtractTransformDbFreeTest {
     private final Date now = new Date();
     private final String nowMsec = String.valueOf(now.getTime());
     private String badDataDir = datafileDir + nowMsec;
+    private String etlDateStr = "20130215091500";
 
     private ExtractTransform extractTransform;
     private AuditReaderDao auditReaderDao;
@@ -100,8 +101,9 @@ public class ExtractTransformDbFreeTest {
     }
 
     public void testNoChanges() {
+        long futureMsec = 9999999999000L;
         replay(auditReaderDao);
-        extractTransform.writeLastEtlRun(Long.MAX_VALUE - 1);
+        extractTransform.writeLastEtlRun(futureMsec);
         Assert.assertEquals(0, extractTransform.incrementalEtl());
         Assert.assertTrue(ExtractTransform.getIncrementalRunStartTime() >= 0);
         verify(auditReaderDao);

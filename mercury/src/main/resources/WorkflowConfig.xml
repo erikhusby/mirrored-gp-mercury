@@ -150,15 +150,11 @@
                 </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
-                <name>Plating to Shearing Tubes</name>
-                <labEventTypes>PLATING_TO_SHEARING_TUBES</labEventTypes>
+                <name>Shearing Transfer</name>
+                <labEventTypes>SHEARING_TRANSFER</labEventTypes>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <jiraTransition>
-                    <project>LCSET</project>
-                    <statusTransition>In Shearing</statusTransition>
-                </jiraTransition>
             </workflowStepDefs>
             <workflowStepDefs>
                 <name>Covaris Loaded</name>
