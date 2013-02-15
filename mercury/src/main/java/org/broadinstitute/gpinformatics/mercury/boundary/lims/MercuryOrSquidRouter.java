@@ -2,16 +2,10 @@ package org.broadinstitute.gpinformatics.mercury.boundary.lims;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 
-import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.Arrays;
@@ -34,11 +28,11 @@ public class MercuryOrSquidRouter implements Serializable {
      * Names of products that Mercury should handle queries and messaging for.
      */
     public static final Collection<String> MERCURY_PRODUCTS =
-            Arrays.asList(WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName());
+            Arrays.asList(WorkflowName.EXOME_EXPRESS.getWorkflowName());
 
     public enum MercuryOrSquid {MERCURY, SQUID}
 
-    private LabVesselDao labVesselDao;
+    private LabVesselDao        labVesselDao;
     private AthenaClientService athenaClientService;
 
     MercuryOrSquidRouter() {
@@ -53,12 +47,14 @@ public class MercuryOrSquidRouter implements Serializable {
     /**
      * Building on {@link #routeForVessel(String)}, this method takes a list of barcodes for which a user wishes to
      * determine the system of record.  The work is delegated to {@link #routeForVessel(String)}
+     *
      * @param barcodes
+     *
      * @return
      */
     public MercuryOrSquid routeForVessels(List<String> barcodes) {
-        for(String vesselBarcode: barcodes) {
-            if(routeForVessel(vesselBarcode) == MERCURY) {
+        for (String vesselBarcode : barcodes) {
+            if (routeForVessel(vesselBarcode) == MERCURY) {
                 return MERCURY;
             }
         }
@@ -81,7 +77,7 @@ public class MercuryOrSquidRouter implements Serializable {
 
     public MercuryOrSquid routeForVessel(LabVessel vessel) {
         if (vessel != null) {
-            for (String productOrderKey: vessel.getNearestProductOrders()) {
+            for (String productOrderKey : vessel.getNearestProductOrders()) {
                 if (productOrderKey != null) {
                     ProductOrder order = athenaClientService.retrieveProductOrderDetails(productOrderKey);
                     if (order != null && MERCURY_PRODUCTS.contains(order.getProduct().getWorkflowName())) {

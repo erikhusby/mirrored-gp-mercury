@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -120,7 +120,7 @@ public class ProductOrderDaoTest extends ContainerTest {
         ResearchProject project = projects.get(new Random().nextInt(projects.size()));
 
         List<Product> products = productDao.findList(Product.class, Product_.workflowName,
-                                                            WorkflowConfig.WorkflowName.EXOME_EXPRESS
+                                                            WorkflowName.EXOME_EXPRESS
                                                                                        .getWorkflowName());
         Assert.assertTrue(products != null && !products.isEmpty());
         Product product = products.get(new Random().nextInt(products.size()));
@@ -194,7 +194,7 @@ public class ProductOrderDaoTest extends ContainerTest {
 
         Collection<ProductOrder> orders =
 //                productOrderDao.findByWorkflowName("ScottFlow");
-                productOrderDao.findByWorkflowName(WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName());
+                productOrderDao.findByWorkflowName(WorkflowName.EXOME_EXPRESS.getWorkflowName());
 
         Assert.assertTrue(orders.size()>0);
 

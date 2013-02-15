@@ -41,7 +41,7 @@ public class LabBatchTest {
         pdoNames = new ArrayList<String>();
         Collections.addAll(pdoNames, pdoBusinessName);
 
-        workflowName = WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName();
+        workflowName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
         mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
 
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
