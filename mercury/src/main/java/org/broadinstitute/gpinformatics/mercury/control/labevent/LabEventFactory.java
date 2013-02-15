@@ -994,7 +994,7 @@ public class LabEventFactory implements Serializable {
      * @return lab event entity
      */
     @DaoFree
-    private LabEvent buildReceptacleEventDbFree(ReceptacleEventType receptacleEventType, LabVessel labVessel) {
+    public LabEvent buildReceptacleEventDbFree(ReceptacleEventType receptacleEventType, LabVessel labVessel) {
         LabEvent labEvent = constructReferenceData ( receptacleEventType, labEventRefDataFetcher );
         if(labVessel == null) {
             throw new RuntimeException("Source tube not found for " + receptacleEventType.getReceptacle().getBarcode());

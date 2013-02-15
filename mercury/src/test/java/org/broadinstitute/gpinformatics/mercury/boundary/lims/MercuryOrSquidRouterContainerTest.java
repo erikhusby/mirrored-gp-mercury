@@ -11,12 +11,15 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStoreStub;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -300,23 +303,23 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
                 (IlluminaFlowcell) vesselDao.findByIdentifier(flowcellTransferJaxb.getPlate().getBarcode());
         Assert.assertNotNull(flowcell);
 
-        //        //Load Flowcell   (Just FLowcell)
-        //        PlateEventType flowcellLoadJaxb =
-        //                bettaLimsMessageFactory.buildFlowcellEvent(LabEventType.FLOWCELL_LOADED.getName(),
-        //                                                                  flowcellTransferJaxb.getPlate().getBarcode());
-        //
-        //        BettaLIMSMessage fcellLoadMsg = new BettaLIMSMessage();
-        //        fcellLoadMsg.getPlateEvent().add(flowcellLoadJaxb);
-        //        bettaLimsMessageFactory.advanceTime();
-        //        String fcellLoadMessage = BettaLimsMessageFactory.marshal(fcellLoadMsg);
-        //
-        //        bettalimsMessageResource.processMessage(fcellLoadMessage);
-        //        vesselDao.flush();
-        //        vesselDao.clear();
-        //
-        //        IlluminaFlowcell flowcellLoadEntity =
-        //                (IlluminaFlowcell) vesselDao.findByIdentifier(flowcellLoadJaxb.getPlate().getBarcode());
-        //        Assert.assertNotNull(flowcellLoadEntity);
+                //Load Flowcell   (Just FLowcell)
+                ReceptacleEventType flowcellLoadJaxb =
+                        bettaLimsMessageFactory.buildReceptacleEvent(LabEventType.FLOWCELL_LOADED.getName(),
+                                                                          flowcellTransferJaxb.getPlate().getBarcode(), LabEventFactory.PHYS_TYPE_FLOWCELL);
+
+                BettaLIMSMessage fcellLoadMsg = new BettaLIMSMessage();
+                fcellLoadMsg.getReceptacleEvent().add(flowcellLoadJaxb);
+                bettaLimsMessageFactory.advanceTime();
+                String fcellLoadMessage = BettaLimsMessageFactory.marshal(fcellLoadMsg);
+
+                bettalimsMessageResource.processMessage(fcellLoadMessage);
+                vesselDao.flush();
+                vesselDao.clear();
+
+                IlluminaFlowcell flowcellLoadEntity =
+                        (IlluminaFlowcell) vesselDao.findByIdentifier(flowcellLoadJaxb.getReceptacle().getBarcode());
+                Assert.assertNotNull(flowcellLoadEntity);
 
     }
 
@@ -809,6 +812,160 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
                 (IlluminaFlowcell) vesselDao.findByIdentifier(flowcellTransferJaxb.getPlate().getBarcode());
         Assert.assertNull(flowcell);
 
+
+        EasyMock.verify(mockConnector);
+    }
+
+
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void testNonExomeExpressFlowcellLoadEvent() throws Exception {
+
+        mockConnector = EasyMock.createNiceMock(BettalimsConnector.class);
+
+        EasyMock.expect(mockConnector.sendMessage(EasyMock.anyObject(String.class)))
+                .andReturn(new BettalimsConnector.BettalimsResponse(200, "Success"));
+        EasyMock.replay(mockConnector);
+        bettalimsMessageResource.setBettalimsConnector(mockConnector);
+
+        squidProductOrder = poDao.findByBusinessKey(squidPdoJiraKey);
+
+        Map<String, TwoDBarcodedTube> mapBarcodeToTube =
+                buildVesselsForPdo(squidProductOrder, vesselDao, null, bucketDao);
+
+        String rackBarcode = "RSQUID" + (new Date()).toString();
+        List<VesselPosition> vesselPositions = new ArrayList<VesselPosition>(mapBarcodeToTube.size());
+
+        for (int sampleIdx = 0; sampleIdx < mapBarcodeToTube.size(); sampleIdx++) {
+            vesselPositions.add(VesselPosition.values()[sampleIdx]);
+        }
+
+        TubeFormation shearingSourceRack =
+                makeTubeFormation(vesselPositions.toArray(new VesselPosition[vesselPositions.size()]),
+                                         new ArrayList<TwoDBarcodedTube>(mapBarcodeToTube.values())
+                                                 .toArray(new TwoDBarcodedTube[mapBarcodeToTube.size()]));
+
+        shearingSourceRack.addRackOfTubes(new RackOfTubes(rackBarcode, RackOfTubes.RackType.Matrix96));
+
+        vesselDao.persist(shearingSourceRack);
+        vesselDao.flush();
+        vesselDao.clear();
+
+        /*
+            Calling shearing with bypassing the routing call just to get a plate *
+         */
+        String postShearingPlateBarCode = "Shearing" + testPrefix;
+        PlateTransferEventType shearingEventJaxb =
+                bettaLimsMessageFactory.buildRackToPlate(LabEventType.SHEARING_TRANSFER.getName(), rackBarcode,
+                                                                new ArrayList<String>(mapBarcodeToTube.keySet()),
+                                                                postShearingPlateBarCode);
+
+        BettaLIMSMessage msg = new BettaLIMSMessage();
+        msg.getPlateTransferEvent().
+
+                                           add(shearingEventJaxb);
+
+        bettaLimsMessageFactory.advanceTime();
+
+        bettalimsMessageResource.processMessage(msg);
+        vesselDao.flush();
+        vesselDao.clear();
+
+        StaticPlate shearPlate =
+                (StaticPlate) vesselDao.findByIdentifier(shearingEventJaxb.getPlate().getBarcode());
+
+        /*
+            We now have a Plate that we can do a Plate to Rack utilizing the Routing calls
+         */
+
+        List<String> pondRegBarcodes = new ArrayList<String>();
+        for (int rackPosition = 1; rackPosition <= 24 / 2; rackPosition++) {
+            pondRegBarcodes.add("NormCatch" + testPrefix + rackPosition);
+        }
+
+        String pondRegRackBarcode = "PondRegRack" + testPrefix;
+        PlateTransferEventType pondRegJaxb =
+                bettaLimsMessageFactory.buildPlateToRack(LabEventType.POND_REGISTRATION.getName(),
+                                                                shearPlate.getLabel(), pondRegRackBarcode,
+                                                                pondRegBarcodes);
+
+        BettaLIMSMessage pondRegMsg = new BettaLIMSMessage();
+        pondRegMsg.getPlateTransferEvent().add(pondRegJaxb);
+        bettaLimsMessageFactory.advanceTime();
+
+        bettalimsMessageResource.processMessage(pondRegMsg);
+        vesselDao.flush();
+        vesselDao.clear();
+
+        RackOfTubes pondRack = (RackOfTubes) vesselDao.findByIdentifier(pondRegJaxb.getPlate().getBarcode());
+
+         // Strip Tube B Transfer  (Rack to Strip tube)
+        String stripTubeHolderBarcode = "StripTubeHolder" + testPrefix;
+        List<BettaLimsMessageFactory.CherryPick> stripTubeCherryPicks =
+                new ArrayList<BettaLimsMessageFactory.CherryPick>();
+        for (int rackPosition = 0; rackPosition < 8; rackPosition++) {
+            stripTubeCherryPicks.add(new BettaLimsMessageFactory.CherryPick(pondRegJaxb.getPlate().getBarcode(), "A01",
+                                                                                   stripTubeHolderBarcode,
+                                                                                   Character.toString(
+                                                                                                             (char) ('A' + rackPosition)) + "01"));
+        }
+
+        String stripTubeBarcode = "StripTube" + testPrefix + "1";
+        PlateCherryPickEvent stripTubeTransferJaxb =
+                bettaLimsMessageFactory.buildCherryPickToStripTube(LabEventType.STRIP_TUBE_B_TRANSFER.getName(),
+                                                                          Arrays.asList(pondRegJaxb.getPlate()
+                                                                                                   .getBarcode()),
+                                                                          Arrays.asList(Arrays.asList(pondRegJaxb
+                                                                                                              .getPositionMap()
+                                                                                                              .getReceptacle()
+                                                                                                              .iterator()
+                                                                                                              .next()
+                                                                                                              .getBarcode())),
+                                                                          stripTubeHolderBarcode,
+                                                                          Arrays.asList(stripTubeBarcode),
+                                                                          stripTubeCherryPicks);
+
+        BettaLIMSMessage stBMsg = new BettaLIMSMessage();
+        stBMsg.getPlateCherryPickEvent().add(stripTubeTransferJaxb);
+        bettaLimsMessageFactory.advanceTime();
+
+        bettalimsMessageResource.processMessage(stBMsg);
+        vesselDao.flush();
+        vesselDao.clear();
+
+        StripTube stripTube = (StripTube) vesselDao.findByIdentifier(stripTubeBarcode);
+
+
+
+        // FlowcellTransfer      (Strip tube to Flowcell)
+        String flowcellBarcode = "Flowcell" + testPrefix;
+        PlateTransferEventType flowcellTransferJaxb =
+                bettaLimsMessageFactory.buildStripTubeToFlowcell(LabEventType.FLOWCELL_TRANSFER.getName(),
+                                                                        stripTubeBarcode, flowcellBarcode);
+
+        BettaLIMSMessage fcellMsg = new BettaLIMSMessage();
+        fcellMsg.getPlateTransferEvent().add(flowcellTransferJaxb);
+        bettaLimsMessageFactory.advanceTime();
+
+        bettalimsMessageResource.processMessage(fcellMsg);
+        vesselDao.flush();
+        vesselDao.clear();
+
+        IlluminaFlowcell flowcell =
+                (IlluminaFlowcell) vesselDao.findByIdentifier(flowcellTransferJaxb.getPlate().getBarcode());
+
+        //Load Flowcell   (Just FLowcell)
+        ReceptacleEventType flowcellLoadJaxb =
+                bettaLimsMessageFactory.buildReceptacleEvent(LabEventType.FLOWCELL_LOADED.getName(),
+                                                                  flowcellTransferJaxb.getPlate().getBarcode(), LabEventFactory.PHYS_TYPE_FLOWCELL);
+
+        BettaLIMSMessage fcellLoadMsg = new BettaLIMSMessage();
+        fcellLoadMsg.getReceptacleEvent().add(flowcellLoadJaxb);
+        bettaLimsMessageFactory.advanceTime();
+        String fcellLoadMessage = BettaLimsMessageFactory.marshal(fcellLoadMsg);
+
+        bettalimsMessageResource.processMessage(fcellLoadMessage);
+        vesselDao.flush();
+        vesselDao.clear();
 
         EasyMock.verify(mockConnector);
     }

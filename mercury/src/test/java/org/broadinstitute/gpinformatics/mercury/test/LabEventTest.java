@@ -696,6 +696,8 @@ public class LabEventTest {
                 bettaLIMSMessage.getPlateEvent().add((PlateEventType) stationEventType);
             } else if (stationEventType instanceof ReceptaclePlateTransferEvent) {
                 bettaLIMSMessage.getReceptaclePlateTransferEvent().add((ReceptaclePlateTransferEvent) stationEventType);
+            } else if (stationEventType instanceof ReceptacleEventType) {
+                bettaLIMSMessage.getReceptacleEvent().add((ReceptacleEventType) stationEventType);
             } else {
                 throw new RuntimeException("Unknown station event type " + stationEventType);
             }
@@ -2329,7 +2331,7 @@ public class LabEventTest {
             final String stripTubeHolderBarcode = qtpJaxbBuilder.getStripTubeHolderBarcode();
             PlateTransferEventType flowcellTransferJaxb = qtpJaxbBuilder.getFlowcellTransferJaxb();
 
-            PlateEventType flowcellLoadJaxb = qtpJaxbBuilder.getFlowcellLoad();
+            ReceptacleEventType flowcellLoadJaxb = qtpJaxbBuilder.getFlowcellLoad();
 
             // PoolingTransfer
             validateWorkflow("PoolingTransfer", normCatchRack);
@@ -2408,7 +2410,7 @@ public class LabEventTest {
             //FlowcellLoaded
             validateWorkflow(LabEventType.FLOWCELL_LOADED.getName(), illuminaFlowcell);
             LabEvent flowcellLoadEntity = labEventFactory
-                    .buildFromBettaLimsPlateEventDbFree(flowcellLoadJaxb, illuminaFlowcell);
+                    .buildReceptacleEventDbFree(flowcellLoadJaxb, illuminaFlowcell);
             labEventHandler.processEvent(flowcellLoadEntity);
         }
 
@@ -2442,7 +2444,7 @@ public class LabEventTest {
         private String stripTubeHolderBarcode;
         private PlateCherryPickEvent stripTubeTransferJaxb;
         private PlateTransferEventType flowcellTransferJaxb;
-        private PlateEventType flowcellLoad;
+        private ReceptacleEventType flowcellLoad;
         private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
         private String flowcellBarcode;
 
@@ -2486,7 +2488,7 @@ public class LabEventTest {
             return flowcellTransferJaxb;
         }
 
-        public PlateEventType getFlowcellLoad() {
+        public ReceptacleEventType getFlowcellLoad() {
             return flowcellLoad;
         }
 
@@ -2557,8 +2559,9 @@ public class LabEventTest {
             addMessage(messageList, bettaLimsMessageFactory, flowcellTransferJaxb);
 
 
-            flowcellLoad = bettaLimsMessageFactory.buildFlowcellEvent(LabEventType.FLOWCELL_LOADED
-                    .getName(), flowcellBarcode);
+            flowcellLoad = bettaLimsMessageFactory.buildReceptacleEvent(LabEventType.FLOWCELL_LOADED
+                                                                                    .getName(), flowcellBarcode,
+                                                                               LabEventFactory.PHYS_TYPE_FLOWCELL);
             addMessage(messageList, bettaLimsMessageFactory, flowcellLoad);
 
 
