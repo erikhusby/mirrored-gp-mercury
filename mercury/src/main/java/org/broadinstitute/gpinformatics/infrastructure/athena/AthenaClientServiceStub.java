@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
+import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -32,6 +33,7 @@ import java.util.Set;
  *         Time: 4:47 PM
  */
 @Stub
+@Alternative
 public class AthenaClientServiceStub implements AthenaClientService {
 
     private static final Long   TEST_CREATOR = 1111L;

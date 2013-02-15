@@ -9,7 +9,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
@@ -115,9 +114,9 @@ public class BettalimsMessageResource {
             storeAndProcess(message);
         } catch (Exception e) {
             if (e.getMessage() != null && e.getMessage().contains(WORKFLOW_MESSAGE)) {
-                throw new ResourceException(e.getMessage(), Response.Status.CREATED);
+                throw new ResourceException(e.getMessage(), Response.Status.CREATED, e);
             } else {
-                throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+                throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
             }
         }
         // The VWorks client seems to prefer 200 to 204

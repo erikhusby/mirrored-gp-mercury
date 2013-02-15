@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
+import javax.enterprise.inject.Alternative;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -13,6 +14,7 @@ import java.util.Set;
  * Time: 5:31 PM
  */
 @Stub
+@Alternative
 public class BSPCohortSearchServiceStub implements BSPCohortSearchService {
 
     @Override
