@@ -203,7 +203,12 @@ public class ProductOrderSampleHistoryActionBean extends CoreActionBean {
     }
 
     public String getDuration(MercurySample sample) {
-        Long mSecDiff = getLatestLabEvent(sample).getEventDate().getTime() - getFirstLabEvent(sample).getEventDate().getTime();
+        LabEvent firstLabEvent = getFirstLabEvent(sample);
+        LabEvent latestLabEvent = getLatestLabEvent(sample);
+        Long mSecDiff = 0l;
+        if (firstLabEvent != null && latestLabEvent != null) {
+            mSecDiff = latestLabEvent.getEventDate().getTime() - firstLabEvent.getEventDate().getTime();
+        }
         return DurationFormatUtils.formatDurationWords(mSecDiff, true, false);
     }
 
