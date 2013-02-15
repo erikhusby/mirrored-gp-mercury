@@ -294,6 +294,20 @@ public class BettaLimsMessageFactory {
         return plateTransferEvent;
     }
 
+    public PlateEventType buildFlowcellEvent(String eventType, String flowcellBarcode) {
+
+        PlateEventType flowcellEvent = new PlateEventType();
+        setStationEventData(eventType, flowcellEvent);
+
+        PlateType flowcell = new PlateType();
+        flowcell.setBarcode(flowcellBarcode);
+        flowcell.setPhysType(LabEventFactory.PHYS_TYPE_FLOWCELL);
+        flowcell.setSection(LabEventFactory.SECTION_ALL_96);
+        flowcellEvent.setPlate(flowcell);
+
+        return flowcellEvent;
+    }
+
     private void setStationEventData(String eventType, StationEventType plateTransferEvent) {
         plateTransferEvent.setEventType(eventType);
         GregorianCalendar gregorianCalendar = new GregorianCalendar();
