@@ -5,9 +5,7 @@ import org.apache.commons.io.FileUtils;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.List;
 
 public class EtlTestUtilities {
 
@@ -40,12 +38,10 @@ public class EtlTestUtilities {
         File[] list = dir.listFiles(new FilenameFilter() {
             @Override
             public boolean accept(File dirname, String filename) {
-                org.apache.log4j.Logger.getLogger(getClass()).debug("XXX found file " + filename);
                 try {
                     // Only cares about files named <dateTime>_<*>
                     String s = filename.split("_")[0];
                     long timestamp = Long.parseLong(s);
-                    org.apache.log4j.Logger.getLogger(getClass()).debug("XXX s=" + s + "  ts=" + timestamp + " interval=" + yyyymmddHHMMSSstart + "-" + yyyymmddHHMMSSend);
                     return (timestamp >= yyyymmddHHMMSSstart && timestamp <= yyyymmddHHMMSSend);
                 } catch (NumberFormatException e) {
                     return false;
