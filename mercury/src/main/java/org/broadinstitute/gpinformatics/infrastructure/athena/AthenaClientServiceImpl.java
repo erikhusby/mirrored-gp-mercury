@@ -9,6 +9,7 @@ import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 
 @Impl
+@Default
 public class AthenaClientServiceImpl implements AthenaClientService {
 
     @Inject

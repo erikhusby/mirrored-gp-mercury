@@ -190,16 +190,16 @@ public class MolecularIndexingSchemeFactory {
         switch (indexPositionPairs.size()) {
             case 1:
                 return this.schemeDao.findSingleIndexScheme(
-                        indexPositionPairs.get(0).getPositionHint().getIndexPosition().name(), indexPositionPairs.get(0).getSequence());
+                        indexPositionPairs.get(0).getPositionHint().getIndexPosition(), indexPositionPairs.get(0).getSequence());
             case 2:
                 return this.schemeDao.findDualIndexScheme(
-                        indexPositionPairs.get(0).getPositionHint().getIndexPosition().name(), indexPositionPairs.get(0).getSequence(),
-                        indexPositionPairs.get(1).getPositionHint().getIndexPosition().name(), indexPositionPairs.get(1).getSequence());
+                        indexPositionPairs.get(0).getPositionHint().getIndexPosition(), indexPositionPairs.get(0).getSequence(),
+                        indexPositionPairs.get(1).getPositionHint().getIndexPosition(), indexPositionPairs.get(1).getSequence());
             case 3:
                 return this.schemeDao.findTripleIndexScheme(
-                        indexPositionPairs.get(0).getPositionHint().getIndexPosition().name(), indexPositionPairs.get(0).getSequence(),
-                        indexPositionPairs.get(1).getPositionHint().getIndexPosition().name(), indexPositionPairs.get(1).getSequence(),
-                        indexPositionPairs.get(2).getPositionHint().getIndexPosition().name(), indexPositionPairs.get(2).getSequence());
+                        indexPositionPairs.get(0).getPositionHint().getIndexPosition(), indexPositionPairs.get(0).getSequence(),
+                        indexPositionPairs.get(1).getPositionHint().getIndexPosition(), indexPositionPairs.get(1).getSequence(),
+                        indexPositionPairs.get(2).getPositionHint().getIndexPosition(), indexPositionPairs.get(2).getSequence());
             default:
                 throw new IllegalArgumentException("For now, up to three component indexes may be used in a single MolecularIndexingScheme.");
         }

@@ -2,9 +2,11 @@ package org.broadinstitute.gpinformatics.infrastructure.quote;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
+import javax.enterprise.inject.Alternative;
 import java.util.Date;
 
 @Stub
+@Alternative
 public class QuoteServiceStub implements QuoteService {
 
     private static int workItemId = 1;

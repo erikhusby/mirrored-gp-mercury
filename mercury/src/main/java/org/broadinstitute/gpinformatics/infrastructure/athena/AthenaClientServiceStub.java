@@ -14,9 +14,18 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 
-import java.util.*;
+import javax.enterprise.inject.Alternative;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
 
 /**
  * @author Scott Matthews
@@ -24,6 +33,7 @@ import java.util.*;
  *         Time: 4:47 PM
  */
 @Stub
+@Alternative
 public class AthenaClientServiceStub implements AthenaClientService {
 
     private static final Long   TEST_CREATOR = 1111L;
@@ -72,11 +82,11 @@ public class AthenaClientServiceStub implements AthenaClientService {
 
     public static ProductOrder buildExExProductOrder(int maxSamples) {
 
-        String workflowName = WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName();
+        String workflowName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
         String pdoBusinessName = "PD0-1EE";
 
         return createDummyProductOrder(maxSamples, pdoBusinessName, workflowName, 101L, "Test RP", rpSynopsis,
-                                       ResearchProject.IRB_ENGAGED, "P-EXEXTest-1232");
+                                              ResearchProject.IRB_ENGAGED, "P-EXEXTest-1232");
 
     }
 
@@ -84,17 +94,19 @@ public class AthenaClientServiceStub implements AthenaClientService {
 
         String jiraKey = "PD0-1HS";
 
-        return createDummyProductOrder(maxSamples, jiraKey, WorkflowConfig.WorkflowName.HYBRID_SELECTION.getWorkflowName(), 101L, "Test RP", rpSynopsis,
-                                       ResearchProject.IRB_ENGAGED, "P-HSEL-9293");
+        return createDummyProductOrder(maxSamples, jiraKey,
+                                              WorkflowName.HYBRID_SELECTION.getWorkflowName(), 101L,
+                                              "Test RP", rpSynopsis,
+                                              ResearchProject.IRB_ENGAGED, "P-HSEL-9293");
     }
 
     public static ProductOrder buildWholeGenomeProductOrder(int maxSamples) {
 
         String jiraKey = "PD0-2WGS";
 
-
-        return createDummyProductOrder(maxSamples, jiraKey, WorkflowConfig.WorkflowName.WHOLE_GENOME.getWorkflowName(), 301L, "Test RP", rpSynopsis,
-                                       ResearchProject.IRB_ENGAGED, "P-WGS-9294");
+        return createDummyProductOrder(maxSamples, jiraKey, WorkflowName.WHOLE_GENOME.getWorkflowName(),
+                                              301L, "Test RP", rpSynopsis,
+                                              ResearchProject.IRB_ENGAGED, "P-WGS-9294");
 
     }
 
@@ -134,15 +146,16 @@ public class AthenaClientServiceStub implements AthenaClientService {
     public static ProductOrder createDummyProductOrder(int sampleCount, String jiraKey, String workflowName,
                                                        long creatorId) {
 
-        return createDummyProductOrder(sampleCount, jiraKey, workflowName, creatorId, "MyResearchProject", "To Study Stuff",
-                                       ResearchProject.IRB_ENGAGED, "partNumber");
+        return createDummyProductOrder(sampleCount, jiraKey, workflowName, creatorId, "MyResearchProject",
+                                              "To Study Stuff",
+                                              ResearchProject.IRB_ENGAGED, "partNumber");
     }
 
     /*
        helper Methods to create test data.  Moved from Test cases to aid stub implementation
     */
     public static ProductOrder createDummyProductOrder() {
-        return createDummyProductOrder(1, null,WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName(),10950L);
+        return createDummyProductOrder(1, null, WorkflowName.EXOME_EXPRESS.getWorkflowName(), 10950L);
     }
 
     public static Product createDummyProduct(String workflowName, String partNumber) {

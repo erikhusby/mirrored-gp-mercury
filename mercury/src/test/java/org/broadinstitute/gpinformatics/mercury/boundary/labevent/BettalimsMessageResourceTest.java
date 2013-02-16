@@ -26,7 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -173,7 +173,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
         Product exomeExpressProduct=productDao.findByPartNumber("P-EX-0001");
         if(exomeExpressProduct == null) {
             exomeExpressProduct=new Product("Standard Exome Sequencing", productFamilyDao.find("Exome"), "Standard Exome Sequencing",
-                    "P-EX-0001", new Date(), null, 1814400, 1814400, 184, null, null, null, true, WorkflowConfig.WorkflowName.HYBRID_SELECTION.getWorkflowName(), false);
+                    "P-EX-0001", new Date(), null, 1814400, 1814400, 184, null, null, null, true, WorkflowName.HYBRID_SELECTION.getWorkflowName(), false);
             exomeExpressProduct.setPrimaryPriceItem(new PriceItem("1234", PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Standard Pony"));
             productDao.persist(exomeExpressProduct);
             productDao.flush();
