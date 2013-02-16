@@ -75,10 +75,8 @@ public class ResearchProjectCohortEtl  extends GenericEntityEtl {
                 new GenericDao.GenericDaoCallback<ResearchProjectCohort>() {
                     @Override
                     public void callback(CriteriaQuery<ResearchProjectCohort> cq, Root<ResearchProjectCohort> root) {
-                        if (startId > 0 || endId < Long.MAX_VALUE) {
-                            CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-                            cq.where(cb.between(root.get(ResearchProjectCohort_.researchProjectCohortId), startId, endId));
-                        }
+                        CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
+                        cq.where(cb.between(root.get(ResearchProjectCohort_.researchProjectCohortId), startId, endId));
                     }
                 });
         for (ResearchProjectCohort entity : entityList) {

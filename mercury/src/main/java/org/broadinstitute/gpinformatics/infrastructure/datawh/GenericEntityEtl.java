@@ -237,7 +237,7 @@ public abstract class GenericEntityEtl {
      * @param date the date to format
      */
     public static String format(Date date) {
-        return (date != null ? ExtractTransform.secTimestampFormat.format(date) : "");
+        return (date != null ? ExtractTransform.secTimestampFormat.format(date) : "\"\"");
     }
 
     /**
@@ -254,7 +254,7 @@ public abstract class GenericEntityEtl {
      */
     public static String format(String string) {
         if (string == null) {
-            return "";
+            return "\"\"";
         }
         if (string.contains(ExtractTransform.DELIM)) {
             // Escapes all embedded double quotes by doubling them: " becomes ""
@@ -268,7 +268,7 @@ public abstract class GenericEntityEtl {
      * @param num to format
      */
     public static <T extends Number > String format(T num) {
-        return (num != null ? num.toString() : "");
+        return (num != null ? num.toString() : "\"\"");
     }
 
     /** Class to wrap/manage writing to the data file. */

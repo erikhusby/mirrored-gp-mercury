@@ -18,14 +18,16 @@ import java.util.List;
 import static org.easymock.EasyMock.*;
 import static org.testng.Assert.*;
 
-
+/**
+ * unit test of Event Etl doing a lookup of WorkflowConfigDenorm.
+ */
 @Test(groups = TestGroups.DATABASE_FREE)
-public class WorkflowConfigEtlTest {
+public class WorkflowConfigLookupDbFreeTest {
 
     // 3 successive days starting 1-jan-2013 00:00:00 EST
     static final long[] MSEC_DATES = new long[]{1357016400000L, 1357016400000L + 86400000L, 1357016400000L + 2 * 86400000L};
 
-    private EventEtl eventEtl;
+    private WorkflowConfigLookup wfConfigLookup;
     private WorkflowLoader workflowLoader;
     private WorkflowConfig workflowConfig = buildWorkflowConfig();
 
@@ -37,10 +39,8 @@ public class WorkflowConfigEtlTest {
         expect(workflowLoader.load()).andReturn(workflowConfig);
         replay(workflowLoader);
 
-        eventEtl = new EventEtl();
-        eventEtl.setWorkflowLoader(workflowLoader);
-        // Should have at least 4 event names in WorkflowConfig.
-        assertTrue(eventEtl.mapEventToWorkflows.size() > 4);
+        wfConfigLookup = new WorkflowConfigLookup();
+        wfConfigLookup.setWorkflowLoader(workflowLoader);
 
         verify(workflowLoader);
         reset(workflowLoader);
@@ -68,14 +68,14 @@ public class WorkflowConfigEtlTest {
 
         // Does a variety of workflow config lookups.  The ugly long expected value is the WorkflowConfigDenorm id,
         // a calculated hash value based on the contents of the WorkflowConfig elements.
-        assertNull(eventEtl.lookupWorkflowConfigId("No such event", pdo1, new Date(MSEC_DATES[0] + 1000)));
-        assertNull(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[0] - 1000)));
-        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[0] + 1000)), Long.valueOf(-3820907449895214598L));
-        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[1] + 1000)), Long.valueOf(-7175333637954737190L));
-        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[2] + 1000)), Long.valueOf(4622114345093982745L));
+        assertNull(wfConfigLookup.lookupWorkflowConfigId("No such event", pdo1, new Date(MSEC_DATES[0] + 1000)));
+        assertNull(wfConfigLookup.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[0] - 1000)));
+        assertEquals(wfConfigLookup.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[0] + 1000)), Long.valueOf(-3820907449895214598L));
+        assertEquals(wfConfigLookup.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[1] + 1000)), Long.valueOf(-7175333637954737190L));
+        assertEquals(wfConfigLookup.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[2] + 1000)), Long.valueOf(4622114345093982745L));
         // (check log for cache hit on next one)
-        assertEquals(eventEtl.lookupWorkflowConfigId("GSWash1", pdo2, new Date(MSEC_DATES[2] + 1000)), Long.valueOf(4622114345093982745L));
-        assertEquals(eventEtl.lookupWorkflowConfigId("SageCleanup", pdo3, new Date(MSEC_DATES[2] + 1000)), Long.valueOf(-6067216737971651861L));
+        assertEquals(wfConfigLookup.lookupWorkflowConfigId("GSWash1", pdo2, new Date(MSEC_DATES[2] + 1000)), Long.valueOf(4622114345093982745L));
+        assertEquals(wfConfigLookup.lookupWorkflowConfigId("SageCleanup", pdo3, new Date(MSEC_DATES[2] + 1000)), Long.valueOf(-6067216737971651861L));
 
     }
 

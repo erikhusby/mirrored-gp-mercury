@@ -38,9 +38,6 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
 	this.workflowLoader = workflowLoader;
     }
 
-    /** Name of the file that contains the hash of the last exported workflow config data. */
-    public static final String LAST_WF_CONFIG_HASH_FILE = "last_wf_config_hash";
-
     /**
      * @{inheritDoc}
      */
@@ -187,16 +184,16 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
     /** Reads the persisted magic number representing the last known workflow config, for versioning purposes. */
     long readWorkflowConfigHash() {
         try {
-            return Long.parseLong(ExtractTransform.readEtlFile(LAST_WF_CONFIG_HASH_FILE));
+            return Long.parseLong(ExtractTransform.readEtlFile(ExtractTransform.LAST_WF_CONFIG_HASH_FILE));
         } catch (NumberFormatException e) {
-            logger.warn("Cannot parse " + LAST_WF_CONFIG_HASH_FILE + " : " + e);
+            logger.warn("Cannot parse " + ExtractTransform.LAST_WF_CONFIG_HASH_FILE + " : " + e);
             return 0L;
         }
     }
 
     /** Writes the magic number representing the last known workflow config, for versioning purposes. */
     void writeWorkflowConfigHash(long number) {
-        ExtractTransform.writeEtlFile(LAST_WF_CONFIG_HASH_FILE, String.valueOf(number));
+        ExtractTransform.writeEtlFile(ExtractTransform.LAST_WF_CONFIG_HASH_FILE, String.valueOf(number));
     }
 
 }

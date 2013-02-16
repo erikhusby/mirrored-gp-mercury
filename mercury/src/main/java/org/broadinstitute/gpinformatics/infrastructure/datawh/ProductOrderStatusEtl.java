@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 
 import javax.ejb.Stateless;
@@ -11,13 +10,6 @@ import java.util.Date;
 
 @Stateless
 public class ProductOrderStatusEtl extends GenericEntityEtl {
-
-    private ProductOrderDao dao;
-
-    @Inject
-    public void setProductOrderDao(ProductOrderDao dao) {
-	this.dao = dao;
-    }
 
     /**
      * @{inheritDoc}

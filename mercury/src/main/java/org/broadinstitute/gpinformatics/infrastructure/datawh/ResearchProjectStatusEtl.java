@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
 import javax.ejb.Stateless;
@@ -11,13 +10,6 @@ import java.util.Date;
 
 @Stateless
 public class ResearchProjectStatusEtl extends GenericEntityEtl {
-
-    private ResearchProjectDao dao;
-
-    @Inject
-    public void setResearchProjectDao(ResearchProjectDao dao) {
-	this.dao = dao;
-    }
 
     /**
      * @{inheritDoc}

@@ -20,7 +20,8 @@ public class EtlTestUtilities {
             public boolean accept(File dirname, String filename) {
                 return (filename.startsWith(yyyymmdd) && filename.endsWith(".dat")
                         || filename.startsWith(yyyymmdd) && filename.endsWith(ExtractTransform.READY_FILE_SUFFIX))
-                        || filename.equals(ExtractTransform.LAST_ETL_FILE);
+                        || filename.equals(ExtractTransform.LAST_ETL_FILE)
+                        || filename.equals(ExtractTransform.LAST_WF_CONFIG_HASH_FILE);
             }
         };
         for (File file : new File(dir).listFiles(filter)) {
