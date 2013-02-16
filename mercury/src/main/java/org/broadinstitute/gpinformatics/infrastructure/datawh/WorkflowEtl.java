@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
@@ -12,30 +13,18 @@ import java.util.Date;
 import java.util.List;
 
 /**
- * This entity etl class is a bit different than others, because WorkflowConfig is not being persisted
- * by Mercury app.  Some of the implications are:
- *
- *   - WorkflowConfig does not have a primary key, so ETL needs to add one.  The id must be generated
- *   deterministically from the relevant content of the workflow config record, so that old DW db
- *   references are preserved after a re-export of workflow config.
- *
- *   - ETL only creates new records for WorkflowConfig deltas that have a new version in the xml file.
- *   A change to the config without a new version value is treated as a correction that overwrites the
- *   corresponding DW record, which is probably correct behavior.
- *
- *   - Because not every change is versioned, and also because WorkflowConfig records may be deleted by
- *   a developer, if ETL ever has to re-export all events and workflow configs there may be different
- *   workflow configs associated with historical event records.  Worst case, an event cannot be mapped
- *   to any workflow anymore.
+ * This entity etl class draws Workflow info from WorkflowConfig.
+ * WorkflowConfig does not have a primary key, so ETL adds one from the hash of fields,
+ * and because of this, ETL cannot update existing records, only add new records.
  */
 @Stateless
-public class WorkflowConfigEtl extends GenericEntityEtl {
-
+public class WorkflowEtl extends GenericEntityEtl {
+    private static Logger logger = Logger.getLogger(WorkflowEtl.class);
     private WorkflowLoader workflowLoader;
 
     @Inject
     public void setWorkflowLoader(WorkflowLoader workflowLoader) {
-	this.workflowLoader = workflowLoader;
+        this.workflowLoader = workflowLoader;
     }
 
     /**
@@ -51,7 +40,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
      */
     @Override
     String getBaseFilename() {
-        return "workflow_config";
+        return "workflow";
     }
 
     /**
@@ -59,7 +48,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
      */
     @Override
     Long entityId(Object entity) {
-        return ((WorkflowConfigDenorm)entity).getWorkflowConfigDenormId();
+        return ((WorkflowConfigDenorm)entity).getWorkflowId();
     }
 
     /**
@@ -74,10 +63,8 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
 
         // Gets the flattened version of workflow config, calculates its hash, compares to the
         // previously exported one's hash, and if different, exports the new version.
-        Collection<WorkflowConfigDenorm> flatConfig = WorkflowConfigDenorm.parse(workflowLoader.load());
-        long currentHashValue = hash(flatConfig);
-        long previousHashValue = readWorkflowConfigHash();
-        if (currentHashValue == previousHashValue) {
+        HashMatchResult res = hashesMatch(workflowLoader);
+        if (res.isMatch) {
             return 0;
         }
 
@@ -86,8 +73,8 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
         DataFile dataFile = new DataFile(filename);
 
         // Exports all flattened records and updates the hash.
-        exportWorkflowConfigSteps(flatConfig, dataFile, etlDateStr);
-        writeWorkflowConfigHash(currentHashValue);
+        exportWorkflowConfigSteps(res.denormConfig, dataFile, etlDateStr);
+        writeWorkflowConfigHash(res.hashValue);
 
         return dataFile.getRecordCount();
     }
@@ -156,14 +143,9 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
      */
     String entityRecord(String etlDateStr, boolean isDelete, WorkflowConfigDenorm entity) {
         return genericRecord(etlDateStr, isDelete,
-                entity.getWorkflowConfigDenormId(),
-                entity.getEffectiveDateStr(),
+                entity.getWorkflowId(),
                 entity.getProductWorkflowName(),
-                entity.getProductWorkflowVersion(),
-                entity.getWorkflowProcessName(),
-                entity.getWorkflowProcessVersion(),
-                entity.getWorkflowStepName(),
-                entity.getWorkflowStepEventName()
+                entity.getProductWorkflowVersion()
         );
     }
 
@@ -182,7 +164,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
 
 
     /** Reads the persisted magic number representing the last known workflow config, for versioning purposes. */
-    long readWorkflowConfigHash() {
+    static long readWorkflowConfigHash() {
         try {
             return Long.parseLong(ExtractTransform.readEtlFile(ExtractTransform.LAST_WF_CONFIG_HASH_FILE));
         } catch (NumberFormatException e) {
@@ -192,8 +174,31 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
     }
 
     /** Writes the magic number representing the last known workflow config, for versioning purposes. */
-    void writeWorkflowConfigHash(long number) {
+    static void writeWorkflowConfigHash(long number) {
         ExtractTransform.writeEtlFile(ExtractTransform.LAST_WF_CONFIG_HASH_FILE, String.valueOf(number));
     }
 
+    /**
+     * Gets the flattened version of workflow config, calculates its hash, compares to the
+     * previously exported one's hash.
+     * @return HashMatchResult
+     */
+    static HashMatchResult hashesMatch(WorkflowLoader workflowLoader) {
+        Collection<WorkflowConfigDenorm> flatConfig = WorkflowConfigDenorm.parse(workflowLoader.load());
+        long currentHashValue = hash(flatConfig);
+        long previousHashValue = readWorkflowConfigHash();
+        return new HashMatchResult((currentHashValue == previousHashValue), currentHashValue, flatConfig);
+    }
+
+    static class HashMatchResult {
+        boolean isMatch;
+        long hashValue;
+        Collection<WorkflowConfigDenorm> denormConfig;
+
+        HashMatchResult(boolean match, long hashValue, Collection<WorkflowConfigDenorm> denormConfig) {
+            isMatch = match;
+            this.hashValue = hashValue;
+            this.denormConfig = denormConfig;
+        }
+    }
 }

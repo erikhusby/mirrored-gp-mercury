@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
@@ -13,7 +14,9 @@ import org.testng.annotations.Test;
 
 import javax.ws.rs.core.Response;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
@@ -221,6 +224,14 @@ public class ExtractTransformDbFreeTest {
         Assert.assertTrue(f.exists());
     }
 
+    public void testIncr() {
+        replay(mocks);
+        extractTransform.writeLastEtlRun(0L);
+        extractTransform.scheduledEtl();
+        Assert.assertEquals(0L, extractTransform.readLastEtlRun());
+        verify(mocks);
+    }
+
     public void testOnDemandIncr() {
         replay(mocks);
         extractTransform.writeLastEtlRun(0L);
@@ -253,6 +264,43 @@ public class ExtractTransformDbFreeTest {
         extractTransform.writeLastEtlRun(0L);
         extractTransform.onDemandEtl(testClass.getName(), 0, 0);
         Assert.assertEquals(0L, extractTransform.readLastEtlRun());
+        verify(mocks);
+    }
+
+    public void testBackfillDefaultEnd() {
+        long startEtl = System.currentTimeMillis();
+        Class testClass = LabBatch.class;
+        expect(productEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(1);
+        expect(priceItemEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectStatusEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(projectPersonEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectIrbEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectFundingEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(researchProjectCohortEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productOrderSampleEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productOrderSampleStatusEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productOrderEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productOrderStatusEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(productOrderAddOnEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(labBatchEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(labVesselEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(workflowConfigEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(eventEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+
+        replay(mocks);
+        extractTransform.writeLastEtlRun(0L);
+        extractTransform.onDemandEtl(testClass.getName(), 0, -1);
+        long endEtl = System.currentTimeMillis();
+        File[] files = EtlTestUtilities.getDirFiles(datafileDir, startEtl, endEtl);
+        boolean readyFileFound = false;
+        for (File dataFile : files) {
+            if (dataFile.getName().endsWith(ExtractTransform.READY_FILE_SUFFIX)) {
+                readyFileFound = true;
+            }
+        }
+        Assert.assertTrue(readyFileFound);
+
         verify(mocks);
     }
 

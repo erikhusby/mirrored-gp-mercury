@@ -319,6 +319,15 @@ public abstract class GenericEntityEtl {
         return h;
     }
 
+    /** Concatenates each string with a delimiter, then calculates a hash on the whole thing. */
+    public static long hash(String... strings) {
+	StringBuilder sb = new StringBuilder();
+	for (String s : strings) {
+	    sb.append(ExtractTransform.DELIM).append(s);
+	}
+        return GenericEntityEtl.hash(sb.toString());
+    }
+
     /** Calculates a hash on all workflow config elements. */
     public static long hash(Collection<WorkflowConfigDenorm> denorms) {
         long h = HASH_PRIME;
@@ -328,6 +337,5 @@ public abstract class GenericEntityEtl {
         }
         return h;
     }
-
 
 }
