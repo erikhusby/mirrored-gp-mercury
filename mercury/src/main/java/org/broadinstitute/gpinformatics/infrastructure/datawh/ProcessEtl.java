@@ -6,9 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
+import java.util.*;
 
 /**
  * This entity etl class draws Process info from WorkflowConfig.
@@ -41,11 +39,11 @@ public class ProcessEtl extends GenericEntityEtl {
     }
 
     /**
-     * @{inheritDoc}
+     * This is unused, and it is meaningless for derived class WorkflowConfigDenorm.
      */
     @Override
     Long entityId(Object entity) {
-        return ((WorkflowConfigDenorm)entity).getProcessId();
+        return null;
     }
 
     /**
@@ -71,7 +69,7 @@ public class ProcessEtl extends GenericEntityEtl {
 
         // Exports all flattened records and updates the hash.
         exportWorkflowConfigSteps(res.denormConfig, dataFile, etlDateStr);
-        writeWorkflowConfigHash(res.hashValue);
+        WorkflowEtl.writeWorkflowConfigHash(res.hashValue);
 
         return dataFile.getRecordCount();
     }
@@ -97,7 +95,7 @@ public class ProcessEtl extends GenericEntityEtl {
         // Exports all flattened records and updates the hash.
         Collection<WorkflowConfigDenorm> flatConfig = WorkflowConfigDenorm.parse(workflowLoader.load());
         exportWorkflowConfigSteps(flatConfig, dataFile, etlDateStr);
-        writeWorkflowConfigHash(hash(flatConfig));
+        WorkflowEtl.writeWorkflowConfigHash(hash(flatConfig));
 
         return dataFile.getRecordCount();
     }
@@ -120,10 +118,15 @@ public class ProcessEtl extends GenericEntityEtl {
 
     /** Writes the denormalized config records to a sqlLoader file */
     void exportWorkflowConfigSteps(Collection<WorkflowConfigDenorm>flatConfig, DataFile dataFile, String etlDateStr) {
+        Set<Long> processIds = new HashSet<Long>();
         try {
             for (WorkflowConfigDenorm wcstep : flatConfig) {
-                String record = entityRecord(etlDateStr, false, wcstep);
-                dataFile.write(record);
+                // Only exports one record per workflowId.
+                if (!processIds.contains(wcstep.getProcessId())) {
+                    processIds.add(wcstep.getProcessId());
+                    String record = entityRecord(etlDateStr, false, wcstep);
+                    dataFile.write(record);
+                }
             }
         } catch (IOException e) {
             logger.error("Error while writing file " + dataFile.getFilename(), e);
@@ -158,23 +161,6 @@ public class ProcessEtl extends GenericEntityEtl {
     @Override
     boolean isEntityEtl() {
         return true;
-    }
-
-
-
-    /** Reads the persisted magic number representing the last known workflow config, for versioning purposes. */
-    long readWorkflowConfigHash() {
-        try {
-            return Long.parseLong(ExtractTransform.readEtlFile(ExtractTransform.LAST_WF_CONFIG_HASH_FILE));
-        } catch (NumberFormatException e) {
-            logger.warn("Cannot parse " + ExtractTransform.LAST_WF_CONFIG_HASH_FILE + " : " + e);
-            return 0L;
-        }
-    }
-
-    /** Writes the magic number representing the last known workflow config, for versioning purposes. */
-    void writeWorkflowConfigHash(long number) {
-        ExtractTransform.writeEtlFile(ExtractTransform.LAST_WF_CONFIG_HASH_FILE, String.valueOf(number));
     }
 
 }

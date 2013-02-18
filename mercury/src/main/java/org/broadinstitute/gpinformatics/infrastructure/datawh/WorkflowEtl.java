@@ -7,10 +7,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import javax.ejb.Stateless;
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 /**
  * This entity etl class draws Workflow info from WorkflowConfig.
@@ -44,11 +41,11 @@ public class WorkflowEtl extends GenericEntityEtl {
     }
 
     /**
-     * @{inheritDoc}
+     * This is unused, and it is meaningless for derived class WorkflowConfigDenorm.
      */
     @Override
     Long entityId(Object entity) {
-        return ((WorkflowConfigDenorm)entity).getWorkflowId();
+        return null;
     }
 
     /**
@@ -123,10 +120,15 @@ public class WorkflowEtl extends GenericEntityEtl {
 
     /** Writes the denormalized config records to a sqlLoader file */
     void exportWorkflowConfigSteps(Collection<WorkflowConfigDenorm>flatConfig, DataFile dataFile, String etlDateStr) {
+        Set<Long> workflowIds = new HashSet<Long>();
         try {
             for (WorkflowConfigDenorm wcstep : flatConfig) {
-                String record = entityRecord(etlDateStr, false, wcstep);
-                dataFile.write(record);
+                // Only exports one record per workflowId.
+                if (!workflowIds.contains(wcstep.getWorkflowId())) {
+                    workflowIds.add(wcstep.getWorkflowId());
+                    String record = entityRecord(etlDateStr, false, wcstep);
+                    dataFile.write(record);
+                }
             }
         } catch (IOException e) {
             logger.error("Error while writing file " + dataFile.getFilename(), e);

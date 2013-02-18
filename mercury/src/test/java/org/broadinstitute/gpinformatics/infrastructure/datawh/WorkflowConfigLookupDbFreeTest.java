@@ -66,8 +66,7 @@ public class WorkflowConfigLookupDbFreeTest {
         ProductOrder pdo2 = new ProductOrder(0L, "", emptyList, null, product2, null);
         ProductOrder pdo3 = new ProductOrder(0L, "", emptyList, null, product3, null);
 
-        // Does a variety of workflow config lookups.  The ugly long expected value is the WorkflowConfigDenorm id,
-        // a calculated hash value based on the contents of the WorkflowConfig elements.
+        // Does lookups based on product and date.  Checks the denorm cache for hits.
         assertNull(wfConfigLookup.lookupWorkflowConfig("No such event", pdo1, new Date(MSEC_DATES[0] + 1000)));
         assertNull(wfConfigLookup.lookupWorkflowConfig("GSWash1", pdo1, new Date(MSEC_DATES[0] - 1000)));
         assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", pdo1, new Date(MSEC_DATES[0] + 1000)).getWorkflowConfigDenormId(),
