@@ -6,6 +6,8 @@ import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
+import static org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO.*;
+
 /**
  * Created by IntelliJ IDEA.
  * User: mccrory
@@ -19,11 +21,10 @@ public class ConcentrationRiskCriteriaTest {
     public void testOnRisk() throws Exception {
 
         // Create a sample and set the name and conc to 25 ( ng/uL )
-        BSPSampleDTO dummySample1 = new BSPSampleDTO("", "", "", "",
-                                                    "", "", "", "",
-                                                    "", "25.0", "", "",
-                                                    "", "", "", "",
-                                                    "", "", "", "TST-1234","","","");
+        BSPSampleDTO dummySample1 = new BSPSampleDTO();
+        dummySample1.setConcentration(25.0);
+        dummySample1.setSampleId("TST-1234");
+
         ProductOrderSample productOrderSample = new ProductOrderSample(dummySample1.getSampleId(), dummySample1);
 
         // Create a risk criteria where the sample would be on risk if less than 50.0

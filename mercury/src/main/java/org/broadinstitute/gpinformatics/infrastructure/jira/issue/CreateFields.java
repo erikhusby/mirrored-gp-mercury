@@ -107,10 +107,6 @@ public class CreateFields extends UpdateFields {
         public String getJiraName() {
             return jiraName;
         }
-
-        // the convention for enum instances is all-caps, but the JIRA 5 REST examples I've seen have specified
-        // this value as mixed case.  In my limited experience with the JIRA 5 REST API it has proven to be
-        // very sensitive to case.
     }
 
 
