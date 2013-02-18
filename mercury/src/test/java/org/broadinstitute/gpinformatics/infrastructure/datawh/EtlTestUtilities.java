@@ -13,13 +13,11 @@ public class EtlTestUtilities {
      * Deletes all the files written by these tests including .dat, isReady, and lastEtlRun files.
      */
     public static void deleteEtlFiles(String dir) {
-        // Uses current year month day to determine whether to delete a file.
-        final String yyyymmdd = (new SimpleDateFormat("yyyyMMdd")).format(new Date());
         FilenameFilter filter = new FilenameFilter() {
             @Override
             public boolean accept(File dirname, String filename) {
-                return (filename.startsWith(yyyymmdd) && filename.endsWith(".dat")
-                        || filename.startsWith(yyyymmdd) && filename.endsWith(ExtractTransform.READY_FILE_SUFFIX))
+                return (filename.endsWith(".dat")
+                        || filename.endsWith(ExtractTransform.READY_FILE_SUFFIX))
                         || filename.equals(ExtractTransform.LAST_ETL_FILE)
                         || filename.equals(ExtractTransform.LAST_WF_CONFIG_HASH_FILE);
             }
