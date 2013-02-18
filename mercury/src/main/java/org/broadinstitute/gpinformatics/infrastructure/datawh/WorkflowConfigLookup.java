@@ -12,9 +12,10 @@ import java.util.*;
 public class WorkflowConfigLookup {
     private Logger logger = Logger.getLogger(getClass());
     public WorkflowLoader workflowLoader;
-    public Map<String, List<WorkflowConfigDenorm>> mapEventToWorkflows = null;
-    public final int CONFIG_ID_CACHE_SIZE = 4;
-    public LRUMap configIdCache = new LRUMap(CONFIG_ID_CACHE_SIZE);
+    private Map<String, List<WorkflowConfigDenorm>> mapEventToWorkflows = null;
+    private final int CONFIG_ID_CACHE_SIZE = 4;
+    private final LRUMap configIdCache = new LRUMap(CONFIG_ID_CACHE_SIZE);
+    int cacheHit = 0; //instrumentation variable for testing
 
     @Inject
     public void setWorkflowLoader(WorkflowLoader workflowLoader) {
@@ -54,13 +55,14 @@ public class WorkflowConfigLookup {
      *
      * @return null if no id found
      */
-    public Long lookupWorkflowConfigId(String eventName, ProductOrder productOrder, Date eventDate) {
+    public WorkflowConfigDenorm lookupWorkflowConfig(String eventName, ProductOrder productOrder, Date eventDate) {
 
         // Checks for a cache hit, which may be a null.
         String cacheKey = eventName + productOrder.getBusinessKey() + eventDate.toString();
         synchronized (configIdCache) {
             if (configIdCache.containsKey(cacheKey)) {
-                return (Long) configIdCache.get(cacheKey);
+                ++cacheHit;
+                return (WorkflowConfigDenorm) configIdCache.get(cacheKey);
             }
         }
 
@@ -73,7 +75,6 @@ public class WorkflowConfigLookup {
             return null;
         }
 
-        // Iterates on the sorted list of workflow configs to find a match having latest effective date.
         List<WorkflowConfigDenorm> denormConfigs = mapEventToWorkflows.get(eventName);
         if (denormConfigs == null) {
             logger.warn("No WorkflowConfig records have event " + eventName);
@@ -83,13 +84,13 @@ public class WorkflowConfigLookup {
             return null;
         }
 
+        // Iterates on the sorted list of workflow configs to find a match having latest effective date.
         for (WorkflowConfigDenorm denorm : denormConfigs) {
             if (workflowName.equals(denorm.getProductWorkflowName()) && eventDate.after(denorm.getEffectiveDate())) {
-                Long id = denorm.getWorkflowConfigDenormId();
                 synchronized (configIdCache) {
-                    configIdCache.put(cacheKey, id);
+                    configIdCache.put(cacheKey, denorm);
                 }
-                return id;
+                return denorm;
             }
         }
         logger.warn("No denormalized workflow config for product " + workflowName + " having eventName " + eventName
