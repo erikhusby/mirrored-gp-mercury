@@ -49,7 +49,7 @@ public class BSPSampleDTO {
 
     private String collaboratorParticipantId;
 
-    private final String materialType;
+    private String materialType;
 
     private double total;
 
@@ -67,6 +67,11 @@ public class BSPSampleDTO {
 
     private String sampleId;
 
+    public enum FFPEStatus {
+        DERIVED,
+        NOT_DERIVED;
+    }
+
     private Boolean ffpeDerived;
 
     private String collaboratorName;
@@ -78,10 +83,9 @@ public class BSPSampleDTO {
     private List<String> plasticBarcodes;
 
     /**
-     * Use this when no valid DTO is present, to avoid null checks
+     * Use this when no valid DTO is present, to avoid null checks.
      */
-    public static final BSPSampleDTO DUMMY =
-            new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "");
+    public static final BSPSampleDTO DUMMY = new BSPSampleDTO();
 
     // collaborator?
     // species vs organism?
@@ -99,12 +103,20 @@ public class BSPSampleDTO {
         return 0;
     }
 
+
+    public BSPSampleDTO() {
+        this("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", FFPEStatus.NOT_DERIVED);
+    }
+
+    /**
+     * Use this constructor for DatabaseFree tests with a non-null ffpeStatus value.
+     */
     public BSPSampleDTO(String containerId, String stockSample, String rootSample, String aliquotSample,
                         String patientId, String organism, String collaboratorsSampleName, String collection,
                         String volume, String concentration, String sampleLsid, String collaboratorParticipantId,
                         String materialType, String total, String sampleType, String primaryDisease,
                         String gender, String stockType, String fingerprint, String sampleId, String collaboratorName,
-                        String race, String population) {
+                        String race, String population, FFPEStatus ffpeStatus) {
         this(primaryDisease, sampleLsid, materialType, collaboratorsSampleName, organism, patientId);
         this.containerId = containerId;
         this.stockSample = stockSample;
@@ -127,6 +139,9 @@ public class BSPSampleDTO {
         this.collaboratorName = collaboratorName;
         this.race = race;
         this.population = population;
+        // If we are given a null FFPEStatus, assign a null; that is the sentinel for an unloaded FFPE status.
+        // If we are given a non-null FFPEStatus, map that to a boolean.
+        this.ffpeDerived = (ffpeStatus == null ? null : (ffpeStatus == FFPEStatus.DERIVED));
     }
 
     /**
@@ -147,7 +162,25 @@ public class BSPSampleDTO {
         this.collaboratorsSampleName = collaboratorsSampleName;
         this.organism = organism;
         this.patientId = patientId;
+        // Need to set this explicitly to be sure we don't trigger a lazy load in a DBFree test context
+        this.ffpeDerived = false;
     }
+
+    /**
+     * Use this constructor for real code, FFPE status will be fetched only on demand.
+     */
+    public BSPSampleDTO(String containerId, String stockSample, String rootSample, String aliquotSample,
+                        String patientId, String organism, String collaboratorsSampleName, String collection,
+                        String volume, String concentration, String sampleLsid, String collaboratorParticipantId,
+                        String materialType, String total, String sampleType, String primaryDisease,
+                        String gender, String stockType, String fingerprint, String sampleId, String collaboratorName,
+                        String race, String population) {
+
+        this(containerId, stockSample, rootSample, aliquotSample, patientId, organism, collaboratorsSampleName, collection,
+                volume, concentration, sampleLsid, collaboratorParticipantId, materialType, total, sampleType, primaryDisease,
+                gender, stockType, fingerprint, sampleId, collaboratorName, race, population, null);
+    }
+
 
     public double getVolume() {
         return volume;
@@ -155,6 +188,10 @@ public class BSPSampleDTO {
 
     public double getConcentration() {
         return concentration;
+    }
+
+    public void setConcentration(double concentration) {
+        this.concentration = concentration;
     }
 
     public String getRootSample() {
@@ -230,6 +267,10 @@ public class BSPSampleDTO {
         return materialType;
     }
 
+    public void setMaterialType(String materialType) {
+        this.materialType = materialType;
+    }
+
     public double getTotal() {
         return total;
     }
@@ -276,6 +317,10 @@ public class BSPSampleDTO {
 
     public String getSampleId() {
         return sampleId;
+    }
+
+    public void setSampleId(String sampleId) {
+        this.sampleId = sampleId;
     }
 
     public MaterialType getMaterialTypeObject() {
