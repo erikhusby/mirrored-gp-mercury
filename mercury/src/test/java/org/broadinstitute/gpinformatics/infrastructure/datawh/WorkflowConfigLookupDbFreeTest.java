@@ -66,17 +66,27 @@ public class WorkflowConfigLookupDbFreeTest {
         ProductOrder pdo2 = new ProductOrder(0L, "", emptyList, null, product2, null);
         ProductOrder pdo3 = new ProductOrder(0L, "", emptyList, null, product3, null);
 
-        // Does a variety of workflow config lookups.  The ugly long expected value is the WorkflowConfigDenorm id,
-        // a calculated hash value based on the contents of the WorkflowConfig elements.
-        assertNull(wfConfigLookup.lookupWorkflowConfigId("No such event", pdo1, new Date(MSEC_DATES[0] + 1000)));
-        assertNull(wfConfigLookup.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[0] - 1000)));
-        assertEquals(wfConfigLookup.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[0] + 1000)), Long.valueOf(-3820907449895214598L));
-        assertEquals(wfConfigLookup.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[1] + 1000)), Long.valueOf(-7175333637954737190L));
-        assertEquals(wfConfigLookup.lookupWorkflowConfigId("GSWash1", pdo1, new Date(MSEC_DATES[2] + 1000)), Long.valueOf(4622114345093982745L));
-        // (check log for cache hit on next one)
-        assertEquals(wfConfigLookup.lookupWorkflowConfigId("GSWash1", pdo2, new Date(MSEC_DATES[2] + 1000)), Long.valueOf(4622114345093982745L));
-        assertEquals(wfConfigLookup.lookupWorkflowConfigId("SageCleanup", pdo3, new Date(MSEC_DATES[2] + 1000)), Long.valueOf(-6067216737971651861L));
-
+        // Does lookups based on product and date.  Checks the denorm cache for hits.
+        assertNull(wfConfigLookup.lookupWorkflowConfig("No such event", pdo1, new Date(MSEC_DATES[0] + 1000)));
+        assertNull(wfConfigLookup.lookupWorkflowConfig("GSWash1", pdo1, new Date(MSEC_DATES[0] - 1000)));
+        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", pdo1, new Date(MSEC_DATES[0] + 1000)).getWorkflowConfigDenormId(),
+                Long.valueOf(7366990729258982731L));
+        assertEquals(wfConfigLookup.cacheHit, 0);
+        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", pdo1, new Date(MSEC_DATES[1] + 1000)).getWorkflowConfigDenormId(),
+                Long.valueOf(1625593456990639556L));
+        assertEquals(wfConfigLookup.cacheHit, 0);
+        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", pdo1, new Date(MSEC_DATES[2] + 1000)).getWorkflowConfigDenormId(),
+                Long.valueOf(-2472811271328835449L));
+        assertEquals(wfConfigLookup.cacheHit, 0);
+        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", pdo2, new Date(MSEC_DATES[2] + 1000)).getWorkflowConfigDenormId(),
+                Long.valueOf(-2472811271328835449L));
+        assertEquals(wfConfigLookup.cacheHit, 1);
+        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("SageCleanup", pdo3, new Date(MSEC_DATES[2] + 1000)).getWorkflowConfigDenormId(),
+                Long.valueOf(-961977840485104866L));
+        assertEquals(wfConfigLookup.cacheHit, 1);
+        assertEquals((Long)wfConfigLookup.lookupWorkflowConfig("GSWash1", pdo2, new Date(MSEC_DATES[2] + 1000)).getWorkflowConfigDenormId(),
+                Long.valueOf(-2472811271328835449L));
+        assertEquals(wfConfigLookup.cacheHit, 2);
     }
 
 

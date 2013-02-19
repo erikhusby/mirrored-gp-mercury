@@ -145,7 +145,7 @@ public class ExtractTransform {
      * JEE auto-schedules incremental ETL.
      */
     @Schedule(hour="*", minute="*/15", persistent=false)
-    private void scheduledEtl() {
+    void scheduledEtl() {
         initConfig();
         incrementalEtl();
     }

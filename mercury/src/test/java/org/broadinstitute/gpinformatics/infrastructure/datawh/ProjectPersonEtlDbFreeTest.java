@@ -172,7 +172,7 @@ public class ProjectPersonEtlDbFreeTest {
     }
 
     private void verifyRecord(String record) {
-	int i = 0;
+        int i = 0;
         String[] parts = record.split(",");
         assertEquals(parts[i++], etlDateStr);
         assertEquals(parts[i++], "F");
@@ -183,6 +183,7 @@ public class ProjectPersonEtlDbFreeTest {
         assertEquals(parts[i++], firstName);
         assertEquals(parts[i++], lastName);
         assertEquals(parts[i++], userName);
+        assertEquals(parts.length, i);
     }
 
 }

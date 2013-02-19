@@ -92,10 +92,7 @@ public class LabBatchEtl extends GenericEntityEtl {
     String entityRecord(String etlDateStr, boolean isDelete, LabBatch entity) {
         return genericRecord(etlDateStr, isDelete,
                 entity.getLabBatchId(),
-                format(entity.getBatchName()),
-                format(entity.getActive()),
-                format(entity.getCreatedOn()),
-                format(entity.getDueDate())
+                format(entity.getBatchName())
         );
     }
 

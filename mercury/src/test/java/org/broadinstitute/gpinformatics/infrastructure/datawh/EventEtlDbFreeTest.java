@@ -30,7 +30,8 @@ import static org.testng.Assert.*;
 public class EventEtlDbFreeTest {
     private final String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
     private final long entityId = 1122334455L;
-    private final long wfConfigId = -1234123412341234123L;
+    private final long workflowId = -1234123412341234123L;
+    private final long processId = 3412341234123412312L;
     private final String pdoKey = "PDO-0000";
     private final long pdoId = 3344551122L;
     private final String sampleKey = "SMID-000000";
@@ -44,6 +45,7 @@ public class EventEtlDbFreeTest {
     private final LabEventDao dao = createMock(LabEventDao.class);
     private final ProductOrderDao pdoDao = createMock(ProductOrderDao.class);
     private final WorkflowConfigLookup wfLookup = createMock(WorkflowConfigLookup.class);
+    private final WorkflowConfigDenorm wfConfig = createMock(WorkflowConfigDenorm.class);
     private final LabEvent obj = createMock(LabEvent.class);
     private final ProductOrder pdo = createMock(ProductOrder.class);
     private final LabVessel vessel = createMock(LabVessel.class);
@@ -51,7 +53,7 @@ public class EventEtlDbFreeTest {
     private final MercurySample sample = createMock(MercurySample.class);
     private final LabBatch labBatch = createMock(LabBatch.class);
 
-    private final Object[] mocks = new Object[]{auditReader, dao, pdoDao, wfLookup, obj, pdo, vessel, sampleInst, sample, labBatch};
+    private final Object[] mocks = new Object[]{auditReader, dao, pdoDao, wfLookup, wfConfig, obj, pdo, vessel, sampleInst, sample, labBatch};
 
     private final Set<LabVessel> vesselList = new HashSet<LabVessel>();
     private final Set<SampleInstance> sampleInstList = new HashSet<SampleInstance>();
@@ -152,9 +154,6 @@ public class EventEtlDbFreeTest {
         expect(obj.getLabBatch()).andReturn(null);
         expect(obj.getTargetLabVessels()).andReturn(vesselList);
         expect(vessel.getSampleInstances()).andReturn(new HashSet<SampleInstance>());
-        expect(obj.getLabEventId()).andReturn(entityId);
-        expect(obj.getEventLocation()).andReturn(location);
-        expect(obj.getEventDate()).andReturn(eventDate);
 
         replay(mocks);
 
@@ -165,8 +164,7 @@ public class EventEtlDbFreeTest {
         tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
-        assertEquals(records.size(), 1);
-        verifyNoSampleRecord(records.iterator().next());
+        assertEquals(records.size(), 0);
 
         verify(mocks);
     }
@@ -180,10 +178,6 @@ public class EventEtlDbFreeTest {
         expect(sampleInst.getLabBatch()).andReturn(null);
         expect(sampleInst.getStartingSample()).andReturn(null);
 
-        expect(obj.getLabEventId()).andReturn(entityId);
-        expect(obj.getEventLocation()).andReturn(location);
-        expect(obj.getEventDate()).andReturn(eventDate);
-
         replay(mocks);
 
         EventEtl tst = new EventEtl();
@@ -192,7 +186,7 @@ public class EventEtlDbFreeTest {
         tst.setWorkflowConfigLookup(wfLookup);
         tst.setAuditReaderDao(auditReader);
 
-        assertEquals(tst.entityRecord(etlDateStr, false, entityId).size(), 1);
+        assertEquals(tst.entityRecord(etlDateStr, false, entityId).size(), 0);
 
         verify(mocks);
     }
@@ -200,17 +194,13 @@ public class EventEtlDbFreeTest {
     public void testMissingPdoKey() throws Exception {
         expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
         expect(obj.getLabEventType()).andReturn(eventType).times(2);
-        expect(obj.getLabBatch()).andReturn(labBatch).times(3);
+        expect(obj.getLabBatch()).andReturn(labBatch).times(2);
         expect(obj.getTargetLabVessels()).andReturn(vesselList);
         expect(vessel.getSampleInstances()).andReturn(sampleInstList);
         expect(sampleInst.getStartingSample()).andReturn(sample);
-        expect(labBatch.getLabBatchId()).andReturn(labBatchId).times(2);
+        expect(labBatch.getLabBatchId()).andReturn(labBatchId);
         expect(sample.getSampleKey()).andReturn(sampleKey).times(2);
         expect(sample.getProductOrderKey()).andReturn(null);
-
-        expect(obj.getLabEventId()).andReturn(entityId);
-        expect(obj.getEventLocation()).andReturn(location);
-        expect(obj.getEventDate()).andReturn(eventDate);
 
         replay(mocks);
 
@@ -221,8 +211,7 @@ public class EventEtlDbFreeTest {
         tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
-        assertEquals(records.size(), 1);
-        verifyNoPdoRecord(records.iterator().next());
+        assertEquals(records.size(), 0);
 
         verify(mocks);
     }
@@ -230,18 +219,14 @@ public class EventEtlDbFreeTest {
     public void testMissingPdo() throws Exception {
         expect(dao.findById(LabEvent.class, entityId)).andReturn(obj);
         expect(obj.getLabEventType()).andReturn(eventType).times(2);
-        expect(obj.getLabBatch()).andReturn(labBatch).times(3);
+        expect(obj.getLabBatch()).andReturn(labBatch).times(2);
         expect(obj.getTargetLabVessels()).andReturn(vesselList);
         expect(vessel.getSampleInstances()).andReturn(sampleInstList);
         expect(sampleInst.getStartingSample()).andReturn(sample);
-        expect(labBatch.getLabBatchId()).andReturn(labBatchId).times(2);
+        expect(labBatch.getLabBatchId()).andReturn(labBatchId);
         expect(sample.getSampleKey()).andReturn(sampleKey);
         expect(sample.getProductOrderKey()).andReturn(pdoKey);
         expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(null);
-
-        expect(obj.getLabEventId()).andReturn(entityId);
-        expect(obj.getEventLocation()).andReturn(location);
-        expect(obj.getEventDate()).andReturn(eventDate);
 
         replay(mocks);
 
@@ -252,8 +237,7 @@ public class EventEtlDbFreeTest {
         tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
-        assertEquals(records.size(), 1);
-        verifyNoPdoRecord(records.iterator().next());
+        assertEquals(records.size(), 0);
 
         verify(mocks);
     }
@@ -271,7 +255,9 @@ public class EventEtlDbFreeTest {
         expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
         expect(pdo.getProductOrderId()).andReturn(pdoId);
         expect(obj.getEventDate()).andReturn(eventDate);
-        expect(wfLookup.lookupWorkflowConfigId(eventType.getName(), pdo, eventDate)).andReturn(wfConfigId);
+        expect(wfLookup.lookupWorkflowConfig(eventType.getName(), pdo, eventDate)).andReturn(wfConfig);
+        expect(wfConfig.getWorkflowId()).andReturn(workflowId);
+        expect(wfConfig.getProcessId()).andReturn(processId);
         expect(obj.getLabEventId()).andReturn(entityId);
         expect(obj.getEventLocation()).andReturn(location);
         expect(vessel.getLabVesselId()).andReturn(vesselId);
@@ -307,7 +293,9 @@ public class EventEtlDbFreeTest {
         expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
         expect(pdo.getProductOrderId()).andReturn(pdoId);
         expect(obj.getEventDate()).andReturn(eventDate);
-        expect(wfLookup.lookupWorkflowConfigId(eventType.getName(), pdo, eventDate)).andReturn(wfConfigId);
+        expect(wfLookup.lookupWorkflowConfig(eventType.getName(), pdo, eventDate)).andReturn(wfConfig);
+        expect(wfConfig.getWorkflowId()).andReturn(workflowId);
+        expect(wfConfig.getProcessId()).andReturn(processId);
         expect(obj.getLabEventId()).andReturn(entityId);
         expect(obj.getEventLocation()).andReturn(location);
         expect(vessel.getLabVesselId()).andReturn(vesselId);
@@ -345,7 +333,9 @@ public class EventEtlDbFreeTest {
         expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(pdo);
         expect(pdo.getProductOrderId()).andReturn(pdoId);
         expect(obj.getEventDate()).andReturn(eventDate);
-        expect(wfLookup.lookupWorkflowConfigId(eventType.getName(), pdo, eventDate)).andReturn(wfConfigId);
+        expect(wfLookup.lookupWorkflowConfig(eventType.getName(), pdo, eventDate)).andReturn(wfConfig);
+        expect(wfConfig.getWorkflowId()).andReturn(workflowId);
+        expect(wfConfig.getProcessId()).andReturn(processId);
         expect(obj.getLabEventId()).andReturn(entityId);
         expect(obj.getEventLocation()).andReturn(location);
         expect(vessel.getLabVesselId()).andReturn(vesselId);
@@ -366,52 +356,21 @@ public class EventEtlDbFreeTest {
         verify(mocks);
     }
 
-    private void verifyNoSampleRecord(String record) {
-        int i = 0;
-        String[] parts = record.split(",");
-        assertEquals(parts[i++], etlDateStr);
-        assertEquals(parts[i++], "F");
-        assertEquals(parts[i++], String.valueOf(entityId));
-        assertEquals(parts[i++], eventType.getName());
-        assertEquals(parts[i++], "\"\"");
-        assertEquals(parts[i++], "\"\"");
-        assertEquals(parts[i++], "\"\"");
-        assertEquals(parts[i++], "\"\"");
-        assertEquals(parts[i++], location);
-        assertEquals(parts[i++], "\"\"");
-        assertEquals(parts[i++], ExtractTransform.secTimestampFormat.format(eventDate));
-    }
-
-    private void verifyNoPdoRecord(String record) {
-        int i = 0;
-        String[] parts = record.split(",");
-        assertEquals(parts[i++], etlDateStr);
-        assertEquals(parts[i++], "F");
-        assertEquals(parts[i++], String.valueOf(entityId));
-        assertEquals(parts[i++], eventType.getName());
-        assertEquals(parts[i++], "\"\"");
-        assertEquals(parts[i++], "\"\"");
-        assertEquals(parts[i++], "\"\"");
-        assertEquals(parts[i++], String.valueOf(labBatchId));
-        assertEquals(parts[i++], location);
-        assertEquals(parts[i++], "\"\"");
-        assertEquals(parts[i++], ExtractTransform.secTimestampFormat.format(eventDate));
-    }
-
     private void verifyRecord(String record) {
         int i = 0;
         String[] parts = record.split(",");
         assertEquals(parts[i++], etlDateStr);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));
-        assertEquals(parts[i++], eventType.getName());
-        assertEquals(parts[i++], String.valueOf(wfConfigId));
+        assertEquals(parts[i++], String.valueOf(workflowId));
+        assertEquals(parts[i++], String.valueOf(processId));
         assertEquals(parts[i++], String.valueOf(pdoId));
         assertEquals(parts[i++], sampleKey);
         assertEquals(parts[i++], String.valueOf(labBatchId));
         assertEquals(parts[i++], location);
         assertEquals(parts[i++], String.valueOf(vesselId));
         assertEquals(parts[i++], ExtractTransform.secTimestampFormat.format(eventDate));
+        assertEquals(parts.length, i);
     }
 }
 

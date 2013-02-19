@@ -19,7 +19,8 @@ CURSOR im_rp_person_cur IS SELECT * FROM im_research_project_person WHERE is_del
 CURSOR im_rp_status_cur IS SELECT * FROM im_research_project_status WHERE is_delete = 'F';
 CURSOR im_lab_batch_cur IS SELECT * FROM im_lab_batch WHERE is_delete = 'F';
 CURSOR im_lab_vessel_cur IS SELECT * FROM im_lab_vessel WHERE is_delete = 'F';
-CURSOR im_workflow_config_cur IS SELECT * FROM im_workflow_config WHERE is_delete = 'F';
+CURSOR im_workflow_cur IS SELECT * FROM im_workflow WHERE is_delete = 'F';
+CURSOR im_process_cur IS SELECT * FROM im_process WHERE is_delete = 'F';
 CURSOR im_event_fact_cur IS SELECT * FROM im_event_fact WHERE is_delete = 'F';
 
 errmsg VARCHAR2(255);
@@ -31,11 +32,9 @@ BEGIN
 -- Does the most dependent (FK dependency) tables first.
 ---------------------------------------------------------------------------
 
--- event_fact deletes not on the PK but on lab_event_id
+-- Since this is a fact table, a reexport of identical data will delete the first set.
 DELETE FROM event_fact
-WHERE lab_event_id IN (
-  SELECT DISTINCT lab_event_id FROM im_event_fact WHERE is_delete = 'T'
-);
+WHERE lab_event_id IN (SELECT DISTINCT lab_event_id FROM im_event_fact);
 
 UPDATE product_order_sample SET is_deleted = 'T'
 WHERE product_order_sample_id IN (
@@ -242,26 +241,17 @@ FOR new IN im_lab_batch_cur LOOP
     UPDATE lab_batch SET
       lab_batch_id = new.lab_batch_id,
       batch_name = new.batch_name,
-      is_active = new.is_active,
-      created_on = new.created_on,
-      due_date = new.due_date,
       etl_date = new.etl_date
     WHERE lab_batch_id = new.lab_batch_id;
 
     INSERT INTO lab_batch (
       lab_batch_id,
       batch_name,
-      is_active,
-      created_on,
-      due_date,
       etl_date
     ) 
     SELECT
       new.lab_batch_id,
       new.batch_name,
-      new.is_active,
-      new.created_on,
-      new.due_date,
       new.etl_date
     FROM DUAL WHERE NOT EXISTS (
       SELECT 1 FROM lab_batch
@@ -275,25 +265,51 @@ FOR new IN im_lab_batch_cur LOOP
 
 END LOOP;
 
-FOR new IN im_workflow_config_cur LOOP
+FOR new IN im_workflow_cur LOOP
   BEGIN
-    UPDATE workflow_config SET
-      workflow_config_id = new.workflow_config_id,
-      effective_date = new.effective_date,
+    UPDATE workflow SET
+      workflow_id = new.workflow_id,
       workflow_name = new.workflow_name,
       workflow_version = new.workflow_version,
+      etl_date = new.etl_date
+    WHERE workflow_id = new.workflow_id;
+
+    INSERT INTO workflow (
+      workflow_id,
+      workflow_name,
+      workflow_version,
+      etl_date
+    ) 
+    SELECT
+      new.workflow_id,
+      new.workflow_name,
+      new.workflow_version,
+      new.etl_date
+    FROM DUAL WHERE NOT EXISTS (
+      SELECT 1 FROM workflow
+      WHERE workflow_id = new.workflow_id
+    );
+  EXCEPTION WHEN OTHERS THEN 
+    errmsg := SQLERRM;
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_workflow.dat line '||new.line_number||'  '||errmsg);
+    CONTINUE;
+  END;
+
+END LOOP;
+
+FOR new IN im_process_cur LOOP
+  BEGIN
+    UPDATE process SET
+      process_id = new.process_id,
       process_name = new.process_name,
       process_version = new.process_version,
       step_name = new.step_name,
       event_name = new.event_name,
       etl_date = new.etl_date
-    WHERE workflow_config_id = new.workflow_config_id;
+    WHERE process_id = new.process_id;
 
-    INSERT INTO workflow_config (
-      workflow_config_id,
-      effective_date,
-      workflow_name,
-      workflow_version,
+    INSERT INTO process (
+      process_id,
       process_name,
       process_version,
       step_name,
@@ -301,22 +317,19 @@ FOR new IN im_workflow_config_cur LOOP
       etl_date
     ) 
     SELECT
-      new.workflow_config_id,
-      new.effective_date,
-      new.workflow_name,
-      new.workflow_version,
+      new.process_id,
       new.process_name,
       new.process_version,
       new.step_name,
       new.event_name,
       new.etl_date
     FROM DUAL WHERE NOT EXISTS (
-      SELECT 1 FROM workflow_config
-      WHERE workflow_config_id = new.workflow_config_id
+      SELECT 1 FROM process
+      WHERE process_id = new.process_id
     );
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_workflow_config.dat line '||new.line_number||'  '||errmsg);
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_process.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 
@@ -658,7 +671,7 @@ FOR new IN im_po_sample_cur LOOP
 
 END LOOP;
 
--- Needed for idempotent repeatable merge
+-- Only sets PK when it is null, so we can do an idempotent repeatable merge.
 UPDATE im_event_fact SET event_fact_id = event_fact_id_seq.nextval WHERE event_fact_id IS NULL;
 
 FOR new IN im_event_fact_cur LOOP
@@ -668,10 +681,10 @@ FOR new IN im_event_fact_cur LOOP
     INSERT INTO event_fact (
       event_fact_id,
       lab_event_id,
-      event_name,
-      workflow_config_id,
+      workflow_id,
+      process_id,
       product_order_id,
-      sample_key,
+      sample_name,
       lab_batch_id,
       station_name,
       lab_vessel_id,
@@ -681,10 +694,10 @@ FOR new IN im_event_fact_cur LOOP
     SELECT
       new.event_fact_id,
       new.lab_event_id,
-      new.event_name,
-      new.workflow_config_id,
+      new.workflow_id,
+      new.process_id,
       new.product_order_id,
-      new.sample_key,
+      new.sample_name,
       new.lab_batch_id,
       new.station_name,
       new.lab_vessel_id,

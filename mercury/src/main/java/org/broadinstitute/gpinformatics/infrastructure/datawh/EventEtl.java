@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import oracle.sql.DATE;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
@@ -129,6 +130,11 @@ public class EventEtl extends GenericEntityEtl {
         for (LabVessel vessel : vessels) {
 
             Set<SampleInstance> sampleInstances = vessel.getSampleInstances();
+            if (vessels.size() == 0) {
+                logger.warn("Cannot ETL event " + entity.getLabEventId() + " vessel " + vessel.getLabel() + " that has no SampleInstances.");
+                continue;
+            }
+
             for (SampleInstance si : sampleInstances) {
 
                 LabBatch labBatch = noLabBatch ? si.getLabBatch() : entity.getLabBatch();
@@ -151,32 +157,17 @@ public class EventEtl extends GenericEntityEtl {
                     continue;
                 }
 
-                Long workflowConfigId = workflowConfigLookup.lookupWorkflowConfigId(eventName, productOrder, entity.getEventDate());
+                WorkflowConfigDenorm denorm = workflowConfigLookup.lookupWorkflowConfig(eventName, productOrder, entity.getEventDate());
 
                 records.add(genericRecord(etlDateStr, isDelete,
                         entity.getLabEventId(),
-                        format(eventName),
-                        format(workflowConfigId),
+                        format(denorm.getWorkflowId()),
+                        format(denorm.getProcessId()),
                         format(productOrder.getProductOrderId()),
                         format(sampleKey),
                         format(labBatchId),
                         format(entity.getEventLocation()),
                         format(vessel.getLabVesselId()),
-                        format(ExtractTransform.secTimestampFormat.format(entity.getEventDate()))
-                ));
-            }
-
-            // Makes a record for the event when there are no samples.
-            if (records.size() == 0) {
-                records.add(genericRecord(etlDateStr, isDelete,
-                        entity.getLabEventId(),
-                        format(eventName),
-                        format((Long) null),
-                        format((String) null),
-                        format((String) null),
-                        format(noLabBatch ? (Long)null : entity.getLabBatch().getLabBatchId()),
-                        format(entity.getEventLocation()),
-                        format((String) null),
                         format(ExtractTransform.secTimestampFormat.format(entity.getEventDate()))
                 ));
             }

@@ -19,6 +19,7 @@ import static org.testng.Assert.*;
 
 /**
  * dbfree unit test of entity etl.
+ *
  * @author epolk
  */
 
@@ -97,7 +98,7 @@ public class LabVesselEtlDbFreeTest {
     public void testBackfillEtl() throws Exception {
         List<LabVessel> list = new ArrayList<LabVessel>();
         list.add(obj);
-        expect(dao.findAll(eq(LabVessel.class), (GenericDao.GenericDaoCallback<LabVessel>)anyObject())).andReturn(list);
+        expect(dao.findAll(eq(LabVessel.class), (GenericDao.GenericDaoCallback<LabVessel>) anyObject())).andReturn(list);
 
         expect(obj.getLabVesselId()).andReturn(entityId);
         expect(obj.getLabel()).andReturn(vesselLabel);
@@ -117,13 +118,14 @@ public class LabVesselEtlDbFreeTest {
     }
 
     private void verifyRecord(String record) {
-	int i = 0;
+        int i = 0;
         String[] parts = record.split(",");
         assertEquals(parts[i++], etlDateStr);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));
         assertEquals(parts[i++], vesselLabel);
         assertEquals(parts[i++], vesselType.getName());
+        assertEquals(parts.length, i);
     }
 }
 
