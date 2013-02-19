@@ -244,8 +244,8 @@
                         <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
                     </stripes:link>
 
-                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
-                        <stripes:submit name="deleteOrder" value="Delete" style="margin-left: 5px;" class="btn"/>
+                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PM.name}%>">
+                        <stripes:submit name="deleteOrder" value="Delete Draft" style="margin-left: 5px;" class="btn"/>
                     </security:authorizeBlock>
                 </c:if>
             </div>
