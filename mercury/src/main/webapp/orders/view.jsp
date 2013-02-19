@@ -92,6 +92,29 @@
                     ]
                 });
 
+                $j("#deleteConfirmation").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    buttons: [
+                        {
+                            id: "deleteOKButton",
+                            text: "OK",
+                            click: function () {
+                                $j(this).dialog("close");
+
+                                $j("#confirmOkButton").attr("disabled", "disabled");
+                                $j("#orderForm").submit();
+                            }
+                        },
+                        {
+                            text: "Cancel",
+                            click : function () {
+                                $j(this).dialog("close");
+                            }
+                        }
+                    ]
+                });
+
                 $j("#noneSelectedDialog").dialog({
                     modal: true,
                     autoOpen: false,
@@ -183,6 +206,11 @@
                 }
             }
 
+            function showDeleteConfirm(action) {
+                $j("#orderDialogAction").attr("name", action);
+                $j("#deleteConfirmation").dialog("open");
+            }
+
             function showConfirm(action, actionPrompt) {
                 var numChecked = $("input.shiftCheckbox:checked").size();
                 if (numChecked) {
@@ -219,6 +247,9 @@
         <textarea id="riskCommentId" name="comment" class="controlledText" cols="80" rows="4"> </textarea>
     </div>
 
+    <div style="display:none" id="deleteConfirmation">
+        <p>This will permanently remove this draft. Are you sure?</p>
+    </div>
 
     <div style="display:none" id="noneSelectedDialog">
         <p>You must select at least one sample to <span id="noneSelectedDialogMessage"></span>.</p>
@@ -226,6 +257,7 @@
 
         <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
             <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+            <stripes:hidden id="orderDialogAction" name=""/>
 
             <div class="actionButtons">
                 <c:if test="${actionBean.editOrder.draft}">
@@ -245,7 +277,8 @@
                     </stripes:link>
 
                     <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PM.name}%>">
-                        <stripes:submit name="deleteOrder" value="Delete Draft" style="margin-left: 5px;" class="btn"/>
+                        <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
+                                        value="Delete Draft" style="margin-left: 5px;" class="btn"/>
                     </security:authorizeBlock>
                 </c:if>
             </div>
