@@ -85,21 +85,6 @@ jira:
 #      port:     8020
       urlBase:      https://labopsjira.broadinstitute.org
 
-
-pmbridge:
-
-    DEV:
-
-      url: http://pmbridgedev.broadinstitute.org/PMBridge
-
-
-    PROD:
-
-      url: http://pmbridge.broadinstitute.org/PMBridge
-
-
-
-
 quote:
 
     QA:
@@ -240,7 +225,6 @@ mercury:
       bsp:      DEV
       gap:      DEV
       jira:     TEST
-      pmbridge: DEV
       quote:    QA
       squid:    DEV
       thrift:   QA
@@ -256,7 +240,6 @@ mercury:
       bsp:      QA
       gap:      QA
       jira:     TEST
-      pmbridge: DEV
       quote:    QA
       squid:    TEST
       thrift:   TEST
@@ -272,7 +255,6 @@ mercury:
       bsp:      QA
       gap:      QA
       jira:     TEST
-      pmbridge: DEV
       quote:    QA
       squid:    QA
       thrift:   QA
@@ -288,7 +270,6 @@ mercury:
       bsp:      QA
       gap:      QA
       jira:     TEST
-      pmbridge: DEV
       quote:    QA
       squid:    QA
       thrift:   QA
@@ -304,7 +285,6 @@ mercury:
       bsp:      PROD
       gap:      PROD
       jira:     PROD
-      pmbridge: PROD
       quote:    PROD
       squid:    PROD
       thrift:   PROD
