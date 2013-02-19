@@ -21,7 +21,7 @@ public class ConcentrationRiskCriteriaTest {
     public void testOnRisk() throws Exception {
 
         // Create a sample and set the name and conc to 25 ( ng/uL )
-        BSPSampleDTO dummySample1 = new BSPSampleDTO();
+        BSPSampleDTO dummySample1 = BSPSampleDTO.createDummy();
         dummySample1.setConcentration(25.0);
         dummySample1.setSampleId("TST-1234");
 

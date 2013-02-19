@@ -119,7 +119,7 @@ public class RiskCriteria {
         FFPE("FFPE", Operator.OperatorType.BOOLEAN, DISPLAYED, new ValueProvider() {
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspDTO().getFfpeDerived());
+                return String.valueOf(sample.getBspDTO().getFfpeStatus());
             }
         }),
         MANUAL("Manual", Operator.OperatorType.BOOLEAN, NOT_DISPLAYED, new ValueProvider() {
