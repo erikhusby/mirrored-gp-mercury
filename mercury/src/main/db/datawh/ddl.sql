@@ -216,7 +216,7 @@ CREATE TABLE workflow (
   etl_date DATE NOT NULL
 );
 
-CREATE TABLE process (
+CREATE TABLE workflow_process (
   process_id NUMERIC(19) NOT NULL PRIMARY KEY,
   process_name VARCHAR2(255) NOT NULL,
   process_version VARCHAR2(40) NOT NULL,
@@ -414,7 +414,7 @@ CREATE TABLE im_workflow (
   workflow_version VARCHAR2(40)
 );
 
-CREATE TABLE im_process (
+CREATE TABLE im_workflow_process (
   line_number NUMERIC(9) NOT NULL,
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL,
@@ -492,7 +492,7 @@ ALTER TABLE event_fact ADD CONSTRAINT fk_event_workflow FOREIGN KEY (workflow_id
   REFERENCES workflow(workflow_id) ON DELETE CASCADE;
 
 ALTER TABLE event_fact ADD CONSTRAINT fk_event_process FOREIGN KEY (process_id)
-  REFERENCES process(process_id) ON DELETE CASCADE;
+  REFERENCES workflow_process(process_id) ON DELETE CASCADE;
 
 
 CREATE INDEX research_project_status_idx1 ON research_project_status(research_project_id);
