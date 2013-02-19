@@ -34,8 +34,6 @@ public class AthenaClientServiceStub implements AthenaClientService {
 
         Map<String, ProductOrder> productOrderByBusinessKeyMap = buildTestProductOrderMap();
 
-
-
         ProductOrder testOrder1 = productOrderByBusinessKeyMap.get(poBusinessKey);
         if(testOrder1 == null) {
             testOrder1 = createDummyProductOrder();
@@ -48,6 +46,18 @@ public class AthenaClientServiceStub implements AthenaClientService {
 //        }
 
         return testOrder1;
+    }
+
+    @Override
+    public Map<String, List<ProductOrderSample>> findMapBySamples(List<String> sampleNames) {
+        Map<String, List<ProductOrderSample>> mapSampleIdToPdoSample = new HashMap<String, List<ProductOrderSample>>();
+        ProductOrder productOrder = buildExExProductOrder();
+        List<ProductOrderSample> samples = productOrder.getSamples();
+        for (ProductOrderSample productOrderSample : samples) {
+            mapSampleIdToPdoSample.put(productOrderSample.getSampleName(),
+                    new ArrayList<ProductOrderSample>(Collections.singletonList(productOrderSample)));
+        }
+        return mapSampleIdToPdoSample;
     }
 
     private Map<String, ProductOrder> buildTestProductOrderMap() {
