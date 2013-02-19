@@ -148,15 +148,13 @@
                 newCriteria += operatorOptions(criteriaCount, operatorsLabel, operator);
                 newCriteria += '    </select>\n';
 
-                if (!booleanTypes[criteria]) {
-                    newCriteria += '    <input id="valueText-' + criteriaCount + '" type="text" name="values" value="' + value + '"/>\n';
-                } else {
-                    newCriteria += '    <input id="valueText-' + criteriaCount + '" type="hidden" name="values" value="' + value + '"/>\n';
-                }
+                newCriteria += '    <input style="display:none" id="valueText-' + criteriaCount + '" type="text" name="values" value="' + value + '"/>\n';
 
                 newCriteria += '</div>\n';
 
                 $j('#riskCriteria').append(newCriteria);
+                updateValueView(criteriaLabel, criteriaCount);
+
                 criteriaCount++;
             }
 
@@ -168,6 +166,10 @@
                 // Set the value text
                 $j('#valueText-' + criteriaCount).attr("value", defaultValues[criteriaLabel]);
 
+                updateValueView(criteriaLabel, criteriaCount);
+            }
+
+            function updateValueView(criteriaLabel, criteriaCount) {
                 if (booleanTypes[criteriaLabel]) {
                     $j('#valueText-' + criteriaCount).hide();
                 } else {
