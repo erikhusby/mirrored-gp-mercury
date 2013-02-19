@@ -12,6 +12,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowD
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -45,7 +46,7 @@ public class BucketViewActionBean extends CoreActionBean {
         //currently only do ExEx
         for (ProductWorkflowDef workflowDef : workflowDefs) {
             ProductWorkflowDefVersion workflowVersion = workflowDef.getEffectiveVersion();
-            if (workflowDef.getName().equals(WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
+            if (workflowDef.getName().equals(WorkflowName.EXOME_EXPRESS.getWorkflowName())) {
                 buckets.addAll(workflowVersion.getBuckets());
             }
         }

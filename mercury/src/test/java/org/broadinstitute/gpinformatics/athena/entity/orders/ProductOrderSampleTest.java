@@ -16,6 +16,8 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 
+import static org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO.*;
+
 /**
  * A test.
  *
@@ -69,11 +71,15 @@ public class ProductOrderSampleTest {
             addOn.addAllowableMaterialType(materialType);
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);
-            sample1 = new ProductOrderSample("Sample1",
-                    new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", BSP_MATERIAL_TYPE.getFullName(), "", "", "", "", "", "",
-                            "","","",""));
-            sample2 = new ProductOrderSample("Sample2",
-                    new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "XXX:XXX", "", "", "", "", "", "", "","","",""));
+
+            BSPSampleDTO bspSampleDTO1 = new BSPSampleDTO();
+            bspSampleDTO1.setMaterialType(BSP_MATERIAL_TYPE.getFullName());
+            sample1 = new ProductOrderSample("Sample1", bspSampleDTO1);
+
+            BSPSampleDTO bspSampleDTO2 = new BSPSampleDTO();
+            bspSampleDTO2.setMaterialType("XXX:XXX");
+            sample2 = new ProductOrderSample("Sample2", bspSampleDTO2);
+
             order.setSamples(Collections.singletonList(sample1));
             List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
             samples.add(sample1);

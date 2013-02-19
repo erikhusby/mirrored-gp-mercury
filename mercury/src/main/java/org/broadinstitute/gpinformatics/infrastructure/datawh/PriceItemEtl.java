@@ -74,10 +74,8 @@ public class PriceItemEtl  extends GenericEntityEtl {
                 new GenericDao.GenericDaoCallback<PriceItem>() {
                     @Override
                     public void callback(CriteriaQuery<PriceItem> cq, Root<PriceItem> root) {
-                        if (startId > 0 || endId < Long.MAX_VALUE) {
-                            CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-                            cq.where(cb.between(root.get(PriceItem_.priceItemId), startId, endId));
-                        }
+                        CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
+                        cq.where(cb.between(root.get(PriceItem_.priceItemId), startId, endId));
                     }
                 });
         for (PriceItem entity : entityList) {

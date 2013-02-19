@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.jira.issue;
 
 import org.broadinstitute.gpinformatics.infrastructure.jira.JsonLabopsJiraIssueTypeSerializer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CreateJiraIssueFieldsSerializer;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.codehaus.jackson.map.annotate.JsonSerialize;
 
 import javax.annotation.Nullable;
@@ -94,7 +94,7 @@ public class CreateFields extends UpdateFields {
     public enum IssueType {
 
         WHOLE_EXOME_HYBSEL("Whole Exome (HybSel)"),
-        EXOME_EXPRESS(WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName()),
+        EXOME_EXPRESS(WorkflowName.EXOME_EXPRESS.getWorkflowName()),
         PRODUCT_ORDER("Product Order"),
         RESEARCH_PROJECT("Research Project");
 
@@ -107,10 +107,6 @@ public class CreateFields extends UpdateFields {
         public String getJiraName() {
             return jiraName;
         }
-
-        // the convention for enum instances is all-caps, but the JIRA 5 REST examples I've seen have specified
-        // this value as mixed case.  In my limited experience with the JIRA 5 REST API it has proven to be
-        // very sensitive to case.
     }
 
 

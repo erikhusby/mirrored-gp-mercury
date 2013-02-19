@@ -1,11 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectCohort;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
@@ -27,24 +24,17 @@ import static org.testng.Assert.*;
  */
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class ProjectPersonEtlDbFreeTest {
+public class ResearchProjectCohortEtlDbFreeTest {
     String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
     long entityId = 1122334455L;
     long researchProjectId = 2233445511L;
-    long personId = 3344551122L;
-    RoleType role = RoleType.PM;
-    String firstName = "Zinthia";
-    String lastName = "Zither";
-    String userName = "zz";
 
     AuditReaderDao auditReader = createMock(AuditReaderDao.class);
     ResearchProjectDao dao = createMock(ResearchProjectDao.class);
-    ProjectPerson obj = createMock(ProjectPerson.class);
+    ResearchProjectCohort obj = createMock(ResearchProjectCohort.class);
     ResearchProject project = createMock(ResearchProject.class);
-    BSPUserList userList = createMock(BSPUserList.class);
-    BspUser user = createMock(BspUser.class);
 
-    Object[] mocks = new Object[]{auditReader, dao, obj, project, userList, user};
+    Object[] mocks = new Object[]{auditReader, dao, obj, project};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
@@ -52,17 +42,16 @@ public class ProjectPersonEtlDbFreeTest {
     }
 
     public void testEtlFlags() throws Exception {
-        expect(obj.getProjectPersonId()).andReturn(entityId);
+        expect(obj.getResearchProjectCohortId()).andReturn(entityId);
         replay(mocks);
 
-        ProjectPersonEtl tst = new ProjectPersonEtl();
+        ResearchProjectCohortEtl tst = new ResearchProjectCohortEtl();
         tst.setResearchProjectDao(dao);
         tst.setAuditReaderDao(auditReader);
-        tst.setBSPUserList(userList);
 
-        assertEquals(tst.getEntityClass(), ProjectPerson.class);
+        assertEquals(tst.getEntityClass(), ResearchProjectCohort.class);
 
-        assertEquals(tst.getBaseFilename(), "research_project_person");
+        assertEquals(tst.getBaseFilename(), "research_project_cohort");
 
         assertEquals(tst.entityId(obj), (Long) entityId);
 
@@ -74,14 +63,13 @@ public class ProjectPersonEtlDbFreeTest {
     }
 
     public void testCantMakeEtlRecord() throws Exception {
-        expect(dao.findById(ProjectPerson.class, -1L)).andReturn(null);
+        expect(dao.findById(ResearchProjectCohort.class, -1L)).andReturn(null);
 
         replay(mocks);
 
-        ProjectPersonEtl tst = new ProjectPersonEtl();
+        ResearchProjectCohortEtl tst = new ResearchProjectCohortEtl();
         tst.setResearchProjectDao(dao);
         tst.setAuditReaderDao(auditReader);
-        tst.setBSPUserList(userList);
 
         assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
 
@@ -89,23 +77,16 @@ public class ProjectPersonEtlDbFreeTest {
     }
 
     public void testIncrementalEtl() throws Exception {
-        expect(dao.findById(ProjectPerson.class, entityId)).andReturn(obj);
-        expect(obj.getPersonId()).andReturn(personId).times(2);
-        expect(userList.getById(personId)).andReturn(user);
-        expect(obj.getProjectPersonId()).andReturn(entityId);
+        expect(dao.findById(ResearchProjectCohort.class, entityId)).andReturn(obj);
+        expect(obj.getResearchProjectCohortId()).andReturn(entityId);
         expect(obj.getResearchProject()).andReturn(project).times(2);
         expect(project.getResearchProjectId()).andReturn(researchProjectId);
-        expect(obj.getRole()).andReturn(role).times(2);
-        expect(user.getFirstName()).andReturn(firstName);
-        expect(user.getLastName()).andReturn(lastName);
-        expect(user.getUsername()).andReturn(userName);
 
         replay(mocks);
 
-        ProjectPersonEtl tst = new ProjectPersonEtl();
+        ResearchProjectCohortEtl tst = new ResearchProjectCohortEtl();
         tst.setResearchProjectDao(dao);
         tst.setAuditReaderDao(auditReader);
-        tst.setBSPUserList(userList);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
@@ -116,53 +97,38 @@ public class ProjectPersonEtlDbFreeTest {
     }
 
     public void testIncrementalEtlWithNulls() throws Exception {
-        expect(dao.findById(ProjectPerson.class, entityId)).andReturn(obj);
-        expect(obj.getPersonId()).andReturn(personId).times(2);
-        expect(userList.getById(personId)).andReturn(user);
-        expect(obj.getProjectPersonId()).andReturn(entityId);
+        expect(dao.findById(ResearchProjectCohort.class, entityId)).andReturn(obj);
+        expect(obj.getResearchProjectCohortId()).andReturn(entityId);
         expect(obj.getResearchProject()).andReturn(null);
-        expect(obj.getRole()).andReturn(null);
-        expect(user.getFirstName()).andReturn(firstName);
-        expect(user.getLastName()).andReturn(lastName);
-        expect(user.getUsername()).andReturn(userName);
 
         replay(mocks);
 
-        ProjectPersonEtl tst = new ProjectPersonEtl();
+        ResearchProjectCohortEtl tst = new ResearchProjectCohortEtl();
         tst.setResearchProjectDao(dao);
         tst.setAuditReaderDao(auditReader);
-        tst.setBSPUserList(userList);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
 
         String[] parts = records.iterator().next().split(",");
         assertEquals(parts[3], "\"\"");
-        assertEquals(parts[4], "\"\"");
 
         verify(mocks);
     }
 
     public void testBackfillEtl() throws Exception {
-        List<ProjectPerson> list = new ArrayList<ProjectPerson>();
+        List<ResearchProjectCohort> list = new ArrayList<ResearchProjectCohort>();
         list.add(obj);
-        expect(dao.findAll(eq(ProjectPerson.class), (GenericDao.GenericDaoCallback<ProjectPerson>) anyObject())).andReturn(list);
-        expect(obj.getPersonId()).andReturn(personId).times(2);
-        expect(userList.getById(personId)).andReturn(user);
-        expect(obj.getProjectPersonId()).andReturn(entityId);
+        expect(dao.findAll(eq(ResearchProjectCohort.class), (GenericDao.GenericDaoCallback<ResearchProjectCohort>) anyObject())).andReturn(list);
+        expect(obj.getResearchProjectCohortId()).andReturn(entityId);
         expect(obj.getResearchProject()).andReturn(project).times(2);
         expect(project.getResearchProjectId()).andReturn(researchProjectId);
-        expect(obj.getRole()).andReturn(role).times(2);
-        expect(user.getFirstName()).andReturn(firstName);
-        expect(user.getLastName()).andReturn(lastName);
-        expect(user.getUsername()).andReturn(userName);
 
         replay(mocks);
 
-        ProjectPersonEtl tst = new ProjectPersonEtl();
+        ResearchProjectCohortEtl tst = new ResearchProjectCohortEtl();
         tst.setResearchProjectDao(dao);
         tst.setAuditReaderDao(auditReader);
-        tst.setBSPUserList(userList);
 
         Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
         assertEquals(records.size(), 1);
@@ -178,11 +144,6 @@ public class ProjectPersonEtlDbFreeTest {
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));
         assertEquals(parts[i++], String.valueOf(researchProjectId));
-        assertEquals(parts[i++], role.toString());
-        assertEquals(parts[i++], String.valueOf(personId));
-        assertEquals(parts[i++], firstName);
-        assertEquals(parts[i++], lastName);
-        assertEquals(parts[i++], userName);
     }
 
 }

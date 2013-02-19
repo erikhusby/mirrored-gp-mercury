@@ -1255,7 +1255,9 @@
         <dependency>
             <groupId>lims</groupId>
             <artifactId>limsThrift</artifactId>
-            <version>1.0-SNAPSHOT</version>
+<!--            <version>1.0-SNAPSHOT</version> -->
+<!-- Temporary while SquidThrift undergoes a release cycle. -->
+<version>1.0-20121210.154738-35</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>

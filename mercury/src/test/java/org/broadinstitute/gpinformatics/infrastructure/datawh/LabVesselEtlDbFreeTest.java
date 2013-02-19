@@ -18,7 +18,7 @@ import static org.easymock.EasyMock.*;
 import static org.testng.Assert.*;
 
 /**
- * dbfree unit test of ProductOrder etl.
+ * dbfree unit test of entity etl.
  * @author epolk
  */
 

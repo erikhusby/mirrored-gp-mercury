@@ -74,10 +74,8 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl {
                 new GenericDao.GenericDaoCallback<ProductOrderAddOn>() {
                     @Override
                     public void callback(CriteriaQuery<ProductOrderAddOn> cq, Root<ProductOrderAddOn> root) {
-                        if (startId > 0 || endId < Long.MAX_VALUE) {
-                            CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-                            cq.where(cb.between(root.get(ProductOrderAddOn_.productOrderAddOnId), startId, endId));
-                        }
+                        CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
+                        cq.where(cb.between(root.get(ProductOrderAddOn_.productOrderAddOnId), startId, endId));
                     }
                 });
         for (ProductOrderAddOn entity : entityList) {

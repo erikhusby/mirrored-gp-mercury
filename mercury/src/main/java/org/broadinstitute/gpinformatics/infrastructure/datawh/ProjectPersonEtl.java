@@ -82,10 +82,8 @@ public class ProjectPersonEtl  extends GenericEntityEtl {
                 new GenericDao.GenericDaoCallback<ProjectPerson>() {
                     @Override
                     public void callback(CriteriaQuery<ProjectPerson> cq, Root<ProjectPerson> root) {
-                        if (startId > 0 || endId < Long.MAX_VALUE) {
-                            CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-                            cq.where(cb.between(root.get(ProjectPerson_.projectPersonId), startId, endId));
-                        }
+                        CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
+                        cq.where(cb.between(root.get(ProjectPerson_.projectPersonId), startId, endId));
                     }
                 });
         for (ProjectPerson entity : entityList) {

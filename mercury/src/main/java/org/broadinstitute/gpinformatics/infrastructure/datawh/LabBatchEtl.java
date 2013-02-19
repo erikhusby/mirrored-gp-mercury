@@ -74,10 +74,8 @@ public class LabBatchEtl extends GenericEntityEtl {
                 new GenericDao.GenericDaoCallback<LabBatch>() {
                     @Override
                     public void callback(CriteriaQuery<LabBatch> cq, Root<LabBatch> root) {
-                        if (startId > 0 || endId < Long.MAX_VALUE) {
-                            CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-                            cq.where(cb.between(root.get(LabBatch_.labBatchId), startId, endId));
-                        }
+                        CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
+                        cq.where(cb.between(root.get(LabBatch_.labBatchId), startId, endId));
                     }
                 });
         for (LabBatch entity : entityList) {
