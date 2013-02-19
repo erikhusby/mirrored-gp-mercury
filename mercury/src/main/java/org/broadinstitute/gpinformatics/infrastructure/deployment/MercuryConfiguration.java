@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.infrastructure.datawh.EtlConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deckmsgs.DeckMessagesConfig;
 import org.broadinstitute.gpinformatics.infrastructure.gap.GAPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
-import org.broadinstitute.gpinformatics.infrastructure.pmbridge.PMBridgeConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
@@ -44,7 +43,6 @@ public class MercuryConfiguration {
             MercuryConfig.class,
             SquidConfig.class,
             BSPConfig.class,
-            PMBridgeConfig.class,
             JiraConfig.class,
             QuoteConfig.class,
             ThriftConfig.class,
