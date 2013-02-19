@@ -58,10 +58,6 @@
             <allow pkg="org.broadinstitute.gpinformatics.athena.boundary"/>
             <allow pkg="org.broadinstitute.gpinformatics.athena.entity"/>
             <allow pkg="org.broadinstitute.gpinformatics.athena.presentation"/>
-
-            <allow pkg="javax.faces"/>
-            <allow pkg="javax.inject"/>
-            <allow pkg="org.primefaces"/>
         </subpackage>
 
         <!-- unit tests are allowed to import external Mercury interfaces, test frameworks, mock frameworks, etc. -->
@@ -164,10 +160,6 @@
             <allow pkg="org.broadinstitute.gpinformatics.mercury.boundary"/>
             <allow pkg="org.broadinstitute.gpinformatics.mercury.entity"/>
             <allow pkg="org.broadinstitute.gpinformatics.mercury.presentation"/>
-
-            <allow pkg="javax.faces"/>
-            <allow pkg="javax.inject"/>
-            <allow pkg="org.primefaces"/>
         </subpackage>
 
         <!-- unit tests are allowed to import external Mercury interfaces, test frameworks, mock frameworks, etc. -->
