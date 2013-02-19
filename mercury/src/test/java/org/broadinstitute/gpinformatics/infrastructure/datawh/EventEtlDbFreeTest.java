@@ -370,6 +370,7 @@ public class EventEtlDbFreeTest {
         assertEquals(parts[i++], location);
         assertEquals(parts[i++], String.valueOf(vesselId));
         assertEquals(parts[i++], ExtractTransform.secTimestampFormat.format(eventDate));
+        assertEquals(parts.length, i);
     }
 }
 

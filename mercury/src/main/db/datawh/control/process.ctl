@@ -1,12 +1,15 @@
 UNRECOVERABLE LOAD DATA
 INFILE 'from command line'
-REPLACE INTO TABLE im_lab_batch
+REPLACE INTO TABLE im_process
 FIELDS TERMINATED BY "," OPTIONALLY ENCLOSED BY '"'
 TRAILING NULLCOLS
 (
  line_number,
  etl_date DATE "YYYYMMDDHH24MISS",
  is_delete,
- lab_batch_id,
- batch_name
+ process_id,
+ process_name,
+ process_version,
+ step_name,
+ event_name
 )

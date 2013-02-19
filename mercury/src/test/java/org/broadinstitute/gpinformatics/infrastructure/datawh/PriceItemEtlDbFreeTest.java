@@ -130,7 +130,7 @@ public class PriceItemEtlDbFreeTest {
     }
 
     private void verifyRecord(String record) {
-	int i = 0;
+        int i = 0;
         String[] parts = record.split(",");
         assertEquals(parts[i++], etlDateStr);
         assertEquals(parts[i++], "F");
@@ -141,6 +141,7 @@ public class PriceItemEtlDbFreeTest {
         assertEquals(parts[i++], quoteServerId);
         assertEquals(parts[i++], price);
         assertEquals(parts[i++], units);
+        assertEquals(parts.length, i);
     }
 
 }

@@ -206,9 +206,6 @@ CREATE TABLE lab_vessel (
 CREATE TABLE lab_batch (
   lab_batch_id NUMERIC(19) NOT NULL PRIMARY KEY,
   batch_name VARCHAR2(40) NOT NULL,
-  is_active CHAR(1) DEFAULT 'T' NOT NULL CHECK (is_active IN ('T','F')),
-  created_on DATE,
-  due_date DATE,
   etl_date DATE NOT NULL
 );
 
@@ -405,10 +402,7 @@ CREATE TABLE im_lab_batch (
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL,
   lab_batch_id NUMERIC(19) NOT NULL,
-  batch_name VARCHAR2(40),
-  is_active CHAR(1),
-  created_on DATE,
-  due_date DATE
+  batch_name VARCHAR2(40)
 );
 
 CREATE TABLE im_workflow (

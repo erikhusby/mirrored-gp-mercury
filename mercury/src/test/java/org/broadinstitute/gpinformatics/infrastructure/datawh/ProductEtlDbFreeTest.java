@@ -164,6 +164,7 @@ public class ProductEtlDbFreeTest {
         assertEquals(parts[i++], EtlTestUtilities.format(isTopLevelProduct));
         assertEquals(parts[i++], workflowName);
         assertEquals(parts[i++], productFamilyName);
+        assertEquals(parts.length, i);
     }
 
 }

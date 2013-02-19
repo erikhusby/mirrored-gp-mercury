@@ -18,6 +18,7 @@ import static org.testng.Assert.*;
 
 /**
  * dbfree unit test of entity etl.
+ *
  * @author epolk
  */
 
@@ -136,6 +137,7 @@ public class ResearchProjectEtlDbFreeTest {
         assertEquals(parts[i++], title);
         assertEquals(parts[i++], EtlTestUtilities.format(irbNotEngaged));
         assertEquals(parts[i++], jiraTicketKey);
+        assertEquals(parts.length, i);
     }
 
 }

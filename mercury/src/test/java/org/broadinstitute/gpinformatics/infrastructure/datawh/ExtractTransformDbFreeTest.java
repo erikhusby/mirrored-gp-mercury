@@ -53,8 +53,7 @@ public class ExtractTransformDbFreeTest {
     private final ResearchProjectFundingEtl researchProjectFundingEtl = createMock(ResearchProjectFundingEtl.class);
     private final ResearchProjectIrbEtl researchProjectIrbEtl = createMock(ResearchProjectIrbEtl.class);
     private final ResearchProjectStatusEtl researchProjectStatusEtl = createMock(ResearchProjectStatusEtl.class);
-    private final WorkflowEtl workflowEtl = createMock(WorkflowEtl.class);
-    private final ProcessEtl processEtl = createMock(ProcessEtl.class);
+    private final WorkflowConfigEtl workflowConfigEtl = createMock(WorkflowConfigEtl.class);
 
     private Object[] mocks = new Object[]{
             auditReaderDao,
@@ -74,8 +73,7 @@ public class ExtractTransformDbFreeTest {
             researchProjectFundingEtl,
             researchProjectIrbEtl,
             researchProjectStatusEtl,
-            workflowEtl,
-            processEtl};
+            workflowConfigEtl};
 
     @BeforeClass
     public void beforeClass() throws Exception {
@@ -100,8 +98,7 @@ public class ExtractTransformDbFreeTest {
                 researchProjectFundingEtl,
                 researchProjectIrbEtl,
                 researchProjectStatusEtl,
-                workflowEtl,
-                processEtl);
+                workflowConfigEtl);
     }
 
     @BeforeMethod
@@ -257,8 +254,7 @@ public class ExtractTransformDbFreeTest {
         expect(productOrderAddOnEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(labBatchEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(labVesselEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(workflowEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(processEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(workflowConfigEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(eventEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
 
         replay(mocks);
@@ -286,8 +282,7 @@ public class ExtractTransformDbFreeTest {
         expect(productOrderAddOnEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(labBatchEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(labVesselEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(workflowEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
-        expect(processEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(workflowConfigEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(eventEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
 
         replay(mocks);
@@ -338,8 +333,7 @@ public class ExtractTransformDbFreeTest {
         expect(productOrderAddOnEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(labBatchEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(labVesselEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
-        expect(workflowEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
-        expect(processEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
+        expect(workflowConfigEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(eventEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
 
         replay(mocks);

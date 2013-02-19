@@ -32,11 +32,9 @@ BEGIN
 -- Does the most dependent (FK dependency) tables first.
 ---------------------------------------------------------------------------
 
--- event_fact deletes not on the PK but on lab_event_id
+-- Since this is a fact table, a reexport of identical data will delete the first set.
 DELETE FROM event_fact
-WHERE lab_event_id IN (
-  SELECT DISTINCT lab_event_id FROM im_event_fact WHERE is_delete = 'T'
-);
+WHERE lab_event_id IN (SELECT DISTINCT lab_event_id FROM im_event_fact);
 
 UPDATE product_order_sample SET is_deleted = 'T'
 WHERE product_order_sample_id IN (
@@ -243,20 +241,17 @@ FOR new IN im_lab_batch_cur LOOP
     UPDATE lab_batch SET
       lab_batch_id = new.lab_batch_id,
       batch_name = new.batch_name,
-      created_on = new.created_on,
       etl_date = new.etl_date
     WHERE lab_batch_id = new.lab_batch_id;
 
     INSERT INTO lab_batch (
       lab_batch_id,
       batch_name,
-      created_on,
       etl_date
     ) 
     SELECT
       new.lab_batch_id,
       new.batch_name,
-      new.created_on,
       new.etl_date
     FROM DUAL WHERE NOT EXISTS (
       SELECT 1 FROM lab_batch
@@ -676,7 +671,7 @@ FOR new IN im_po_sample_cur LOOP
 
 END LOOP;
 
--- Needed for idempotent repeatable merge
+-- Only sets PK when it is null, so we can do an idempotent repeatable merge.
 UPDATE im_event_fact SET event_fact_id = event_fact_id_seq.nextval WHERE event_fact_id IS NULL;
 
 FOR new IN im_event_fact_cur LOOP

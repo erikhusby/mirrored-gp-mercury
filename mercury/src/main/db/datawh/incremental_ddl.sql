@@ -1,3 +1,4 @@
+
 -------------------------------------------------------
 -- For release 1.17
 -------------------------------------------------------
@@ -11,7 +12,6 @@ ALTER TABLE event_fact ADD (workflow_id numeric(19) not null);
 ALTER TABLE event_fact DROP COLUMN event_name;
 ALTER TABLE event_fact DROP COLUMN sample_key;
 ALTER TABLE event_fact DROP COLUMN workflow_config_id;
-ALTER TABLE lab_batch ADD (batch_type varchar2(40));
 ALTER TABLE lab_batch DROP COLUMN due_date;
 ALTER TABLE lab_batch DROP COLUMN is_active;
 
@@ -21,7 +21,6 @@ ALTER TABLE im_event_fact ADD (workflow_id numeric(19) not null);
 ALTER TABLE im_event_fact DROP COLUMN event_name;
 ALTER TABLE im_event_fact DROP COLUMN sample_key;
 ALTER TABLE im_event_fact DROP COLUMN workflow_config_id;
-ALTER TABLE im_lab_batch ADD (batch_type varchar2(40));
 ALTER TABLE im_lab_batch DROP COLUMN due_date;
 ALTER TABLE im_lab_batch DROP COLUMN is_active;
 

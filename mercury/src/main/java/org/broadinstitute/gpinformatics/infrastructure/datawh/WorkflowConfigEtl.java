@@ -15,9 +15,11 @@ import java.util.*;
  * and because of this, ETL cannot update existing records, only add new records.
  */
 @Stateless
-public class WorkflowEtl extends GenericEntityEtl {
-    private static Logger logger = Logger.getLogger(WorkflowEtl.class);
+public class WorkflowConfigEtl extends GenericEntityEtl {
+    private static Logger logger = Logger.getLogger(WorkflowConfigEtl.class);
     private WorkflowLoader workflowLoader;
+    static final String WORKFLOW_BASE_FILENAME = "workflow";
+    static final String PROCESS_BASE_FILENAME = "process";
 
     @Inject
     public void setWorkflowLoader(WorkflowLoader workflowLoader) {
@@ -37,7 +39,7 @@ public class WorkflowEtl extends GenericEntityEtl {
      */
     @Override
     String getBaseFilename() {
-        return "workflow";
+        return null;
     }
 
     /**
@@ -57,23 +59,16 @@ public class WorkflowEtl extends GenericEntityEtl {
      */
     @Override
     public int doEtl(Collection<Long> revIds, String etlDateStr) {
-
-        // Gets the flattened version of workflow config, calculates its hash, compares to the
-        // previously exported one's hash, and if different, exports the new version.
+        // Does nothing if no change in WorkflowConfig, indicated by the hash.
         HashMatchResult res = hashesMatch(workflowLoader);
         if (res.isMatch) {
             return 0;
         }
 
-        // Creates the wrapped Writer to the sqlLoader data file.
-        String filename = dataFilename(etlDateStr, getBaseFilename());
-        DataFile dataFile = new DataFile(filename);
-
-        // Exports all flattened records and updates the hash.
-        exportWorkflowConfigSteps(res.denormConfig, dataFile, etlDateStr);
+        int count = doEtlFiles(res.denormConfig, etlDateStr);
         writeWorkflowConfigHash(res.hashValue);
 
-        return dataFile.getRecordCount();
+        return count;
     }
 
     /**
@@ -90,16 +85,25 @@ public class WorkflowEtl extends GenericEntityEtl {
         if (!getEntityClass().equals(entityClass) || !isEntityEtl()) {
             return 0;
         }
-        // Creates the wrapped Writer to the sqlLoader data file.
-        String filename = dataFilename(etlDateStr, getBaseFilename());
+        Collection<WorkflowConfigDenorm> denormConfig = WorkflowConfigDenorm.parse(workflowLoader.load());
+        return doEtlFiles(denormConfig, etlDateStr);
+    }
+
+    /** Creates the wrapped Writer to the sqlLoader data files and exports flattened records. */
+    private int doEtlFiles(Collection<WorkflowConfigDenorm> denorms, String etlDateStr) {
+        int count = 0;
+
+        String filename = dataFilename(etlDateStr, WORKFLOW_BASE_FILENAME);
         DataFile dataFile = new DataFile(filename);
+        exportWorkflow(denorms, dataFile, etlDateStr);
+        count += dataFile.getRecordCount();
 
-        // Exports all flattened records and updates the hash.
-        Collection<WorkflowConfigDenorm> flatConfig = WorkflowConfigDenorm.parse(workflowLoader.load());
-        exportWorkflowConfigSteps(flatConfig, dataFile, etlDateStr);
-        writeWorkflowConfigHash(hash(flatConfig));
+        filename = dataFilename(etlDateStr, PROCESS_BASE_FILENAME);
+        dataFile = new DataFile(filename);
+        exportProcess(denorms, dataFile, etlDateStr);
+        count += dataFile.getRecordCount();
 
-        return dataFile.getRecordCount();
+        return count;
     }
 
     /**
@@ -118,15 +122,15 @@ public class WorkflowEtl extends GenericEntityEtl {
         return Collections.EMPTY_LIST;
     }
 
-    /** Writes the denormalized config records to a sqlLoader file */
-    void exportWorkflowConfigSteps(Collection<WorkflowConfigDenorm>flatConfig, DataFile dataFile, String etlDateStr) {
-        Set<Long> workflowIds = new HashSet<Long>();
+    /** Writes the Workflow records to a sqlLoader file */
+    private void exportWorkflow(Collection<WorkflowConfigDenorm>flatConfig, DataFile dataFile, String etlDateStr) {
+        Set<Long> ids = new HashSet<Long>();
         try {
-            for (WorkflowConfigDenorm wcstep : flatConfig) {
-                // Only exports one record per workflowId.
-                if (!workflowIds.contains(wcstep.getWorkflowId())) {
-                    workflowIds.add(wcstep.getWorkflowId());
-                    String record = entityRecord(etlDateStr, false, wcstep);
+            for (WorkflowConfigDenorm denorm : flatConfig) {
+                // Deduplicates the workflow records.
+                if (!ids.contains(denorm.getWorkflowId())) {
+                    ids.add(denorm.getWorkflowId());
+                    String record = workflowRecord(etlDateStr, false, denorm);
                     dataFile.write(record);
                 }
             }
@@ -135,20 +139,56 @@ public class WorkflowEtl extends GenericEntityEtl {
         } finally {
             dataFile.close();
         }
-
+    }
+    /** Writes the Process records to a sqlLoader file */
+    private void exportProcess(Collection<WorkflowConfigDenorm>flatConfig, DataFile dataFile, String etlDateStr) {
+        Set<Long> ids = new HashSet<Long>();
+        try {
+            for (WorkflowConfigDenorm denorm : flatConfig) {
+                // Deduplicates the process records.
+                if (!ids.contains(denorm.getProcessId())) {
+                    ids.add(denorm.getProcessId());
+                    String record = processRecord(etlDateStr, false, denorm);
+                    dataFile.write(record);
+                }
+            }
+        } catch (IOException e) {
+            logger.error("Error while writing file " + dataFile.getFilename(), e);
+        } finally {
+            dataFile.close();
+        }
     }
 
     /**
-     * Makes a data record from an entity, in a format that matches the corresponding SqlLoader control file.
-     * @param entity Mercury Entity
+     * Makes a Process ETL data record from a WorkflowConfigDenorm, in a format that matches the corresponding SqlLoader control file.
+     * @param etlDateStr etl date string
+     * @param isDelete deletion indicator
+     * @param entity denormalized WorkflowConfig
      * @return delimited SqlLoader record
      */
-    String entityRecord(String etlDateStr, boolean isDelete, WorkflowConfigDenorm entity) {
+    private String workflowRecord(String etlDateStr, boolean isDelete, WorkflowConfigDenorm entity) {
         return genericRecord(etlDateStr, isDelete,
                 entity.getWorkflowId(),
                 entity.getProductWorkflowName(),
                 entity.getProductWorkflowVersion()
         );
+    }
+
+    /**
+     * Makes a Process ETL data record from a WorkflowConfigDenorm, in a format that matches the corresponding SqlLoader control file.
+     * @param etlDateStr etl date string
+     * @param isDelete deletion indicator
+     * @param entity denormalized WorkflowConfig
+     * @return  delimited SqlLoader record
+     */
+    private String processRecord(String etlDateStr, boolean isDelete, WorkflowConfigDenorm entity) {
+            return genericRecord(etlDateStr, isDelete,
+                    entity.getProcessId(),
+                    entity.getWorkflowProcessName(),
+                    entity.getWorkflowProcessVersion(),
+                    entity.getWorkflowStepName(),
+                    entity.getWorkflowStepEventName()
+            );
     }
 
     /** This entity does not make status records. */
@@ -166,7 +206,7 @@ public class WorkflowEtl extends GenericEntityEtl {
 
 
     /** Reads the persisted magic number representing the last known workflow config, for versioning purposes. */
-    static long readWorkflowConfigHash() {
+    private long readWorkflowConfigHash() {
         try {
             return Long.parseLong(ExtractTransform.readEtlFile(ExtractTransform.LAST_WF_CONFIG_HASH_FILE));
         } catch (NumberFormatException e) {
@@ -176,7 +216,7 @@ public class WorkflowEtl extends GenericEntityEtl {
     }
 
     /** Writes the magic number representing the last known workflow config, for versioning purposes. */
-    static void writeWorkflowConfigHash(long number) {
+    private void writeWorkflowConfigHash(long number) {
         ExtractTransform.writeEtlFile(ExtractTransform.LAST_WF_CONFIG_HASH_FILE, String.valueOf(number));
     }
 
@@ -185,14 +225,14 @@ public class WorkflowEtl extends GenericEntityEtl {
      * previously exported one's hash.
      * @return HashMatchResult
      */
-    static HashMatchResult hashesMatch(WorkflowLoader workflowLoader) {
+    private HashMatchResult hashesMatch(WorkflowLoader workflowLoader) {
         Collection<WorkflowConfigDenorm> flatConfig = WorkflowConfigDenorm.parse(workflowLoader.load());
         long currentHashValue = hash(flatConfig);
         long previousHashValue = readWorkflowConfigHash();
         return new HashMatchResult((currentHashValue == previousHashValue), currentHashValue, flatConfig);
     }
 
-    static class HashMatchResult {
+    private class HashMatchResult {
         boolean isMatch;
         long hashValue;
         Collection<WorkflowConfigDenorm> denormConfig;

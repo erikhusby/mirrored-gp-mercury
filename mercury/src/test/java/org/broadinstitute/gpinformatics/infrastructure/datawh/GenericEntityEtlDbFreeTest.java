@@ -80,9 +80,6 @@ public class GenericEntityEtlDbFreeTest {
 
         expect(obj.getLabBatchId()).andReturn(entityId).times(2);
         expect(obj.getBatchName()).andReturn(batchName);
-        expect(obj.getActive()).andReturn(isActive);
-        expect(obj.getCreatedOn()).andReturn(createdOn);
-        expect(obj.getDueDate()).andReturn(dueDate);
 
         replay(mocks);
 
@@ -135,9 +132,6 @@ public class GenericEntityEtlDbFreeTest {
 
         expect(obj.getLabBatchId()).andReturn(entityId);
         expect(obj.getBatchName()).andReturn(batchName);
-        expect(obj.getActive()).andReturn(isActive);
-        expect(obj.getCreatedOn()).andReturn(createdOn);
-        expect(obj.getDueDate()).andReturn(dueDate);
 
         replay(mocks);
 

@@ -138,12 +138,13 @@ public class ResearchProjectCohortEtlDbFreeTest {
     }
 
     private void verifyRecord(String record) {
-	int i = 0;
+        int i = 0;
         String[] parts = record.split(",");
         assertEquals(parts[i++], etlDateStr);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));
         assertEquals(parts[i++], String.valueOf(researchProjectId));
+        assertEquals(parts.length, i);
     }
 
 }

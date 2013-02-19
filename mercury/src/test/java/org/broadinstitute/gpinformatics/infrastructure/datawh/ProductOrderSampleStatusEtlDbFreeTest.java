@@ -13,6 +13,7 @@ import static org.testng.Assert.*;
 
 /**
  * dbfree unit test of entity etl.
+ *
  * @author epolk
  */
 
@@ -64,6 +65,7 @@ public class ProductOrderSampleStatusEtlDbFreeTest {
 
         verify(mocks);
     }
+
     public void testCantMakeEtlRecord2() throws Exception {
         expect(obj.getDeliveryStatus()).andReturn(null);
 
@@ -95,13 +97,14 @@ public class ProductOrderSampleStatusEtlDbFreeTest {
     }
 
     private void verifyRecord(String record) {
-	int i = 0;
+        int i = 0;
         String[] parts = record.split(",");
         assertEquals(parts[i++], etlDateStr);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));
         assertEquals(parts[i++], ExtractTransform.secTimestampFormat.format(revDate));
         assertEquals(parts[i++], deliveryStatus.name());
+        assertEquals(parts.length, i);
     }
 }
 

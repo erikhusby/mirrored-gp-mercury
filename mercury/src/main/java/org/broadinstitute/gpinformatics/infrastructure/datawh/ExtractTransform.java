@@ -98,9 +98,7 @@ public class ExtractTransform {
     @Inject
     private ResearchProjectStatusEtl researchProjectStatusEtl;
     @Inject
-    private WorkflowEtl workflowEtl;
-    @Inject
-    private ProcessEtl processEtl;
+    private WorkflowConfigEtl workflowConfigEtl;
 
     public ExtractTransform() {
     }
@@ -122,8 +120,7 @@ public class ExtractTransform {
                             ResearchProjectFundingEtl researchProjectFundingEtl,
                             ResearchProjectIrbEtl researchProjectIrbEtl,
                             ResearchProjectStatusEtl researchProjectStatusEtl,
-                            WorkflowEtl workflowEtl,
-                            ProcessEtl processEtl) {
+                            WorkflowConfigEtl workflowConfigEtl) {
         this.auditReaderDao = auditReaderDao;
         this.eventEtl = eventEtl;
         this.labBatchEtl = labBatchEtl;
@@ -141,8 +138,7 @@ public class ExtractTransform {
         this.researchProjectFundingEtl = researchProjectFundingEtl;
         this.researchProjectIrbEtl = researchProjectIrbEtl;
         this.researchProjectStatusEtl = researchProjectStatusEtl;
-        this.workflowEtl = workflowEtl;
-        this.processEtl = processEtl;
+        this.workflowConfigEtl = workflowConfigEtl;
     }
 
     /**
@@ -267,8 +263,7 @@ public class ExtractTransform {
         // event datamart
         recordCount += labBatchEtl.doEtl(revIds, etlDateStr);
         recordCount += labVesselEtl.doEtl(revIds, etlDateStr);
-        recordCount += workflowEtl.doEtl(revIds, etlDateStr);
-        recordCount += processEtl.doEtl(revIds, etlDateStr);
+        recordCount += workflowConfigEtl.doEtl(revIds, etlDateStr);
         recordCount += eventEtl.doEtl(revIds, etlDateStr);
 
         writeLastEtlRun(endTimestamp);
@@ -342,8 +337,7 @@ public class ExtractTransform {
         // event datamart
         recordCount += labBatchEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
         recordCount += labVesselEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += workflowEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += processEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += workflowConfigEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
         recordCount += eventEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
 
         if (recordCount > 0) {
