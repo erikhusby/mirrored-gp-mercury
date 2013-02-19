@@ -20,7 +20,7 @@ CURSOR im_rp_status_cur IS SELECT * FROM im_research_project_status WHERE is_del
 CURSOR im_lab_batch_cur IS SELECT * FROM im_lab_batch WHERE is_delete = 'F';
 CURSOR im_lab_vessel_cur IS SELECT * FROM im_lab_vessel WHERE is_delete = 'F';
 CURSOR im_workflow_cur IS SELECT * FROM im_workflow WHERE is_delete = 'F';
-CURSOR im_process_cur IS SELECT * FROM im_process WHERE is_delete = 'F';
+CURSOR im_workflow_process_cur IS SELECT * FROM im_workflow_process WHERE is_delete = 'F';
 CURSOR im_event_fact_cur IS SELECT * FROM im_event_fact WHERE is_delete = 'F';
 
 errmsg VARCHAR2(255);
@@ -297,9 +297,9 @@ FOR new IN im_workflow_cur LOOP
 
 END LOOP;
 
-FOR new IN im_process_cur LOOP
+FOR new IN im_workflow_process_cur LOOP
   BEGIN
-    UPDATE process SET
+    UPDATE workflow_process SET
       process_id = new.process_id,
       process_name = new.process_name,
       process_version = new.process_version,
@@ -308,7 +308,7 @@ FOR new IN im_process_cur LOOP
       etl_date = new.etl_date
     WHERE process_id = new.process_id;
 
-    INSERT INTO process (
+    INSERT INTO workflow_process (
       process_id,
       process_name,
       process_version,
@@ -324,12 +324,12 @@ FOR new IN im_process_cur LOOP
       new.event_name,
       new.etl_date
     FROM DUAL WHERE NOT EXISTS (
-      SELECT 1 FROM process
+      SELECT 1 FROM workflow_process
       WHERE process_id = new.process_id
     );
   EXCEPTION WHEN OTHERS THEN 
     errmsg := SQLERRM;
-    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_process.dat line '||new.line_number||'  '||errmsg);
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_workflow_process.dat line '||new.line_number||'  '||errmsg);
     CONTINUE;
   END;
 

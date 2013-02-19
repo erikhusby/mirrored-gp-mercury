@@ -19,7 +19,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
     private static Logger logger = Logger.getLogger(WorkflowConfigEtl.class);
     private WorkflowLoader workflowLoader;
     static final String WORKFLOW_BASE_FILENAME = "workflow";
-    static final String PROCESS_BASE_FILENAME = "process";
+    static final String PROCESS_BASE_FILENAME = "workflow_process";
 
     @Inject
     public void setWorkflowLoader(WorkflowLoader workflowLoader) {
