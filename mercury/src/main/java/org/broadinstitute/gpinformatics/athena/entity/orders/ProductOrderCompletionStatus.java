@@ -7,23 +7,23 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
  */
 public class ProductOrderCompletionStatus {
     private final int total;
-    private final int abandoned;
-    private final int completed;
+    private final int percentComplete;
+    private final int percentAbandoned;
 
     // Completed and Total known up front
     public ProductOrderCompletionStatus(int abandoned, int completed, int total) {
-        this.abandoned = abandoned;
-        this.completed = completed;
         this.total = total;
+        if (total != 0) {
+            percentComplete = (completed * 100) / total;
+            percentAbandoned = (abandoned * 100) / total;
+        } else {
+            percentComplete = 0;
+            percentAbandoned = 0;
+        }
     }
 
     public int getPercentComplete() {
-        // protect against divide by 0 error
-        if (total == 0) {
-            return 0;
-        }
-
-        return (completed * 100)/total;
+        return percentComplete;
     }
 
     public int getTotal() {
@@ -31,11 +31,6 @@ public class ProductOrderCompletionStatus {
     }
 
     public int getPercentAbandoned() {
-        // protect against divide by 0 error
-        if (total == 0) {
-            return 0;
-        }
-
-        return (abandoned * 100)/getTotal();
+        return percentAbandoned;
     }
 }
