@@ -18,6 +18,11 @@ public class ProductOrderCompletionStatus {
     }
 
     public int getPercentComplete() {
+        // protect against divide by 0 error
+        if (total == 0) {
+            return 0;
+        }
+
         return (completed * 100)/total;
     }
 
@@ -26,6 +31,11 @@ public class ProductOrderCompletionStatus {
     }
 
     public int getPercentAbandoned() {
+        // protect against divide by 0 error
+        if (total == 0) {
+            return 0;
+        }
+
         return (abandoned * 100)/getTotal();
     }
 }
