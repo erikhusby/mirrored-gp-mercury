@@ -138,7 +138,6 @@
                         <span id="jiraProblem" class="badge" style="cursor: pointer;"
                               title="Click here to send a bug report or feedback">Feedback</span>
 
-                <!-- security-isLoggedIn" -->
                 <c:if test="${bean.context.username ne null}">
                     |
                          <span id="userBadge" class="badge ${bean.userBean.badgeClass}" style="cursor: help;"
