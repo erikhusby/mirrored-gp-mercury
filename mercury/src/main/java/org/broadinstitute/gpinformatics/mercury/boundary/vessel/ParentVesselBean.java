@@ -18,7 +18,6 @@ import java.util.List;
 public class ParentVesselBean {
     private String manufacturerBarcode;
     private String sampleId;
-    private String productOrderKey;
     private String vesselType;
     private List<ChildVesselBean> childVesselBeans;
 
@@ -26,10 +25,9 @@ public class ParentVesselBean {
     public ParentVesselBean() {
     }
 
-    public ParentVesselBean(String manufacturerBarcode, String sampleId, String productOrderKey, String vesselType, List<ChildVesselBean> childVesselBeans) {
+    public ParentVesselBean(String manufacturerBarcode, String sampleId, String vesselType, List<ChildVesselBean> childVesselBeans) {
         this.manufacturerBarcode = manufacturerBarcode;
         this.sampleId = sampleId;
-        this.productOrderKey = productOrderKey;
         this.vesselType = vesselType;
         this.childVesselBeans = childVesselBeans;
     }
@@ -40,10 +38,6 @@ public class ParentVesselBean {
 
     public String getSampleId() {
         return sampleId;
-    }
-
-    public String getProductOrderKey() {
-        return productOrderKey;
     }
 
     public String getVesselType() {

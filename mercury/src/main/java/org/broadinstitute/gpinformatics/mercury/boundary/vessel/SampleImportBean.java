@@ -21,6 +21,10 @@ public class SampleImportBean {
     private Date exportDate;
     private List<ParentVesselBean> parentVesselBeans;
 
+    /** For JAXB */
+    public SampleImportBean() {
+    }
+
     public SampleImportBean(String sourceSystem, String sourceSystemExportId, Date exportDate, List<ParentVesselBean> parentVesselBeans) {
         this.sourceSystem = sourceSystem;
         this.sourceSystemExportId = sourceSystemExportId;

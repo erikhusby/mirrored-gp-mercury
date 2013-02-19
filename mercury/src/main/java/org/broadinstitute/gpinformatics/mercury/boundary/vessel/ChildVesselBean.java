@@ -16,18 +16,16 @@ import javax.xml.bind.annotation.XmlType;
 public class ChildVesselBean {
     private String manufacturerBarcode;
     private String sampleId;
-    private String productOrderKey;
     private String vesselType;
     private String position;
 
     /** For JAXB */
-    ChildVesselBean() {
+    public ChildVesselBean() {
     }
 
-    public ChildVesselBean(String manufacturerBarcode, String sampleId, String productOrderKey, String vesselType, String position) {
+    public ChildVesselBean(String manufacturerBarcode, String sampleId, String vesselType, String position) {
         this.manufacturerBarcode = manufacturerBarcode;
         this.sampleId = sampleId;
-        this.productOrderKey = productOrderKey;
         this.vesselType = vesselType;
         this.position = position;
     }
@@ -38,10 +36,6 @@ public class ChildVesselBean {
 
     public String getSampleId() {
         return sampleId;
-    }
-
-    public String getProductOrderKey() {
-        return productOrderKey;
     }
 
     public String getVesselType() {
