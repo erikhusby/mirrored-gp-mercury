@@ -102,7 +102,7 @@
                             click: function () {
                                 $j(this).dialog("close");
 
-                                $j("#confirmOkButton").attr("disabled", "disabled");
+                                $j("#deleteOKButton").attr("disabled", "disabled");
                                 $j("#orderForm").submit();
                             }
                         },

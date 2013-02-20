@@ -454,7 +454,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * There is a validation for this only being allowed for drafts
+     * There is a validation for this only being allowed for drafts.
+     *
      * @return The resolution
      */
     @HandlesEvent("deleteOrder")
