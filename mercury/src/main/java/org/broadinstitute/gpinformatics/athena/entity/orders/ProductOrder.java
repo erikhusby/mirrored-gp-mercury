@@ -58,6 +58,9 @@ public class ProductOrder implements Serializable {
 
     private Long createdBy;
 
+    @Transient
+    private Date placedDate;
+
     private Date modifiedDate;
 
     private Long modifiedBy;
@@ -575,6 +578,20 @@ public class ProductOrder implements Serializable {
     public long getModifiedBy() {
         return modifiedBy;
     }
+
+    public Date getPlacedDate() {
+        return placedDate;
+    }
+
+    /**
+     * This should only be called from tests or for database backpopulation.  The placed date is normally set interally
+     * when an order is placed.
+     * @param placedDate the date to set
+     */
+    public void setPlacedDate(Date placedDate) {
+        this.placedDate = placedDate;
+    }
+
     /**
      * Use the BSP Manager to load the bsp data for every sample in this product order.
      */
@@ -789,7 +806,7 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * submitProductOrder encapsulates the set of steps necessary to finalize the submission of a product order.
+     * This method encapsulates the set of steps necessary to finalize the submission of a product order.
      * This mainly deals with jira ticket creation.  This method will:
      * <ul>
      * <li>Create a new jira ticket and persist the reference to the ticket key</li>
@@ -800,7 +817,8 @@ public class ProductOrder implements Serializable {
      *
      * @throws IOException
      */
-    public void submitProductOrder() throws IOException {
+    public void placeOrder() throws IOException {
+        placedDate = new Date();
         JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 

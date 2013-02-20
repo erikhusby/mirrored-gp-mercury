@@ -89,15 +89,6 @@ public class ProductOrderEjb {
     }
 
 
-    private static void createJiraIssue(ProductOrder productOrder) {
-        try {
-            productOrder.submitProductOrder();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-
     private void setAddOnProducts(ProductOrder productOrder, List<String> addOnPartNumbers) {
         List<Product> addOns =
                 addOnPartNumbers.isEmpty() ? new ArrayList<Product>() : productDao.findByPartNumbers(addOnPartNumbers);
@@ -129,17 +120,6 @@ public class ProductOrderEjb {
         setSamples(productOrder, productOrderSampleIds);
         setAddOnProducts(productOrder, addOnPartNumbers);
         setStatus(productOrder);
-    }
-
-    /**
-     * This handles the creation of the JIRA ticket when placing an order.
-     *
-     * @param productOrder The order to place
-     */
-    public void placeOrder(ProductOrder productOrder) {
-        // Create JIRA before we attempt to persist since that is more likely to fail.
-        createJiraIssue(productOrder);
-        productOrderDao.persist(productOrder);
     }
 
     /**

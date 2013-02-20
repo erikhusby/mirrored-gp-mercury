@@ -438,7 +438,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution placeOrder() {
         try {
             editOrder.prepareToSave(userBean.getBspUser(), isCreating());
-            editOrder.submitProductOrder();
+            editOrder.placeOrder();
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             // save it!
