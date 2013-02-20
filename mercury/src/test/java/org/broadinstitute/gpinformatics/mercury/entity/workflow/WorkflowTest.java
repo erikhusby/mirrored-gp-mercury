@@ -2,7 +2,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
-import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.testng.annotations.Test;
 
@@ -10,7 +9,6 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBElement;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Marshaller;
-import javax.xml.bind.Unmarshaller;
 import javax.xml.namespace.QName;
 import java.util.ArrayList;
 import java.util.Date;
@@ -144,7 +142,7 @@ public class WorkflowTest {
         libraryConstructionProcessVersion.addStep(new WorkflowStepDef("ABaseCleanup").addLabEvent(
                 LabEventType.A_BASE_CLEANUP));
 
-        WorkflowProcessDef hybridSelectionProcess = new WorkflowProcessDef(WorkflowConfig.WorkflowName.HYBRID_SELECTION.getWorkflowName());
+        WorkflowProcessDef hybridSelectionProcess = new WorkflowProcessDef(WorkflowName.HYBRID_SELECTION.getWorkflowName());
         WorkflowProcessDefVersion hybridSelectionProcessVersion = new WorkflowProcessDefVersion("1.0", new Date());
         hybridSelectionProcess.addWorkflowProcessDefVersion(hybridSelectionProcessVersion);
         WorkflowStepDef capture = new WorkflowStepDef("Capture");
@@ -156,7 +154,7 @@ public class WorkflowTest {
         new WorkflowProcessDef("HiSeq");
 
         workflowConfig = new WorkflowConfig();
-        exomeExpressProductName = WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName();
+        exomeExpressProductName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
         exomeExpressProduct = new ProductWorkflowDef(exomeExpressProductName);
         exomeExpressProductVersion = new ProductWorkflowDefVersion("1.0", new Date());
         exomeExpressProduct.addProductWorkflowDefVersion(exomeExpressProductVersion);

@@ -8,8 +8,5 @@ TRAILING NULLCOLS
  etl_date DATE "YYYYMMDDHH24MISS",
  is_delete,
  lab_batch_id,
- batch_name,
- is_active,
- created_on DATE "YYYYMMDDHH24MISS",
- due_date DATE "YYYYMMDDHH24MISS"
+ batch_name
 )

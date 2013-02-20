@@ -144,19 +144,18 @@
                 newCriteria += '    </select>\n';
 
                 // the operator for the selected item
-                newCriteria += '    <select id="operatorSelect-' + criteriaCount + '" style="padding-left:4px;padding-right:4px;width:auto;" name="operators">\n';
+                newCriteria += '    <select style="display:none" id="operatorSelect-' + criteriaCount + '" style="padding-left:4px;padding-right:4px;width:auto;" name="operators">\n';
                 newCriteria += operatorOptions(criteriaCount, operatorsLabel, operator);
                 newCriteria += '    </select>\n';
 
-                if (!booleanTypes[criteria]) {
-                    newCriteria += '    <input id="valueText-' + criteriaCount + '" type="text" name="values" value="' + value + '"/>\n';
-                } else {
-                    newCriteria += '    <input id="valueText-' + criteriaCount + '" type="hidden" name="values" value="' + value + '"/>\n';
-                }
+                newCriteria += '    <input style="display:none" id="valueText-' + criteriaCount + '" type="text" name="values" value="' + value + '"/>\n';
 
                 newCriteria += '</div>\n';
 
                 $j('#riskCriteria').append(newCriteria);
+
+                updateValueView(criteria, criteriaCount);
+
                 criteriaCount++;
             }
 
@@ -168,9 +167,15 @@
                 // Set the value text
                 $j('#valueText-' + criteriaCount).attr("value", defaultValues[criteriaLabel]);
 
+                updateValueView(criteriaLabel, criteriaCount);
+            }
+
+            function updateValueView(criteriaLabel, criteriaCount) {
                 if (booleanTypes[criteriaLabel]) {
+                    $j('#operatorSelect-' + criteriaCount).hide();
                     $j('#valueText-' + criteriaCount).hide();
                 } else {
+                    $j('#operatorSelect-' + criteriaCount).show();
                     $j('#valueText-' + criteriaCount).show();
                 }
             }

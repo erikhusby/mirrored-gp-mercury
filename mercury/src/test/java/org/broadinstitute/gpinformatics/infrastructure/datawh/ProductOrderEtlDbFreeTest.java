@@ -19,7 +19,8 @@ import static org.easymock.EasyMock.*;
 import static org.testng.Assert.*;
 
 /**
- * dbfree unit test of ProductOrder etl.
+ * dbfree unit test of entity etl.
+ *
  * @author epolk
  */
 
@@ -115,7 +116,7 @@ public class ProductOrderEtlDbFreeTest {
     public void testBackfillEtl() throws Exception {
         List<ProductOrder> list = new ArrayList<ProductOrder>();
         list.add(pdo);
-        expect(dao.findAll(eq(ProductOrder.class), (GenericDao.GenericDaoCallback<ProductOrder>)anyObject())).andReturn(list);
+        expect(dao.findAll(eq(ProductOrder.class), (GenericDao.GenericDaoCallback<ProductOrder>) anyObject())).andReturn(list);
 
         expect(pdo.getProductOrderId()).andReturn(entityId);
         expect(pdo.getResearchProject()).andReturn(researchProject).times(2);
@@ -144,7 +145,7 @@ public class ProductOrderEtlDbFreeTest {
     }
 
     private void verifyRecord(String record) {
-	int i = 0;
+        int i = 0;
         String[] parts = record.split(",");
         assertEquals(parts[i++], etlDateStr);
         assertEquals(parts[i++], "F");
@@ -157,6 +158,7 @@ public class ProductOrderEtlDbFreeTest {
         assertEquals(parts[i++], title);
         assertEquals(parts[i++], quoteId);
         assertEquals(parts[i++], jiraTicketKey);
+        assertEquals(parts.length, i);
     }
 }
 

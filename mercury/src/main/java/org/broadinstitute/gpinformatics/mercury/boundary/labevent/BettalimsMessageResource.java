@@ -165,8 +165,8 @@ public class BettalimsMessageResource {
                         Collection<String> barcodesToBeVerified = getRegisteredBarcodesFromMessage(bettaLIMSMessage);
 
                         for (String testEvent : barcodesToBeVerified) {
-                            if (MercuryOrSquidRouter.MercuryOrSquid.MERCURY.equals(mercuryOrSquidRouter
-                                                                                           .routeForVessel(testEvent))) {
+                            if (MercuryOrSquidRouter.MercuryOrSquid.MERCURY == mercuryOrSquidRouter
+                                                                                           .routeForVessel(testEvent)) {
                                 processInMercury = true;
                             } else {
                                 processInSquid = true;

@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.common.ServiceAccessUtility;
 
+import javax.annotation.Nonnull;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -49,7 +50,7 @@ public class BSPSampleDTO {
 
     private String collaboratorParticipantId;
 
-    private final String materialType;
+    private String materialType;
 
     private double total;
 
@@ -67,7 +68,28 @@ public class BSPSampleDTO {
 
     private String sampleId;
 
-    private Boolean ffpeDerived;
+    public enum FFPEStatus {
+        DERIVED(true),
+        NOT_DERIVED(false),
+        UNKNOWN(null);
+
+        Boolean derived;
+
+        FFPEStatus(Boolean derived) {
+            this.derived = derived;
+        }
+
+        static FFPEStatus fromBoolean(Boolean bool) {
+            for (FFPEStatus ffpeStatus : values()) {
+                if (ffpeStatus.derived == bool) {
+                    return ffpeStatus;
+                }
+            }
+            throw new RuntimeException("Cannot map FFPEStatus to Boolean");
+        }
+    }
+
+    private FFPEStatus ffpeStatus = FFPEStatus.UNKNOWN;
 
     private String collaboratorName;
 
@@ -78,10 +100,9 @@ public class BSPSampleDTO {
     private List<String> plasticBarcodes;
 
     /**
-     * Use this when no valid DTO is present, to avoid null checks
+     * Use this when no valid DTO is present, to avoid null checks.
      */
-    public static final BSPSampleDTO DUMMY =
-            new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "");
+    public static final BSPSampleDTO DUMMY = createDummy();
 
     // collaborator?
     // species vs organism?
@@ -99,12 +120,19 @@ public class BSPSampleDTO {
         return 0;
     }
 
+    public static BSPSampleDTO createDummy() {
+        return new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", FFPEStatus.NOT_DERIVED);
+    }
+
+    /**
+     * Use this constructor for DatabaseFree tests with a non-UNKNOWN ffpeStatus value.
+     */
     public BSPSampleDTO(String containerId, String stockSample, String rootSample, String aliquotSample,
                         String patientId, String organism, String collaboratorsSampleName, String collection,
                         String volume, String concentration, String sampleLsid, String collaboratorParticipantId,
                         String materialType, String total, String sampleType, String primaryDisease,
                         String gender, String stockType, String fingerprint, String sampleId, String collaboratorName,
-                        String race, String population) {
+                        String race, String population, @Nonnull FFPEStatus ffpeStatus) {
         this(primaryDisease, sampleLsid, materialType, collaboratorsSampleName, organism, patientId);
         this.containerId = containerId;
         this.stockSample = stockSample;
@@ -127,6 +155,7 @@ public class BSPSampleDTO {
         this.collaboratorName = collaboratorName;
         this.race = race;
         this.population = population;
+        this.ffpeStatus = ffpeStatus;
     }
 
     /**
@@ -147,7 +176,25 @@ public class BSPSampleDTO {
         this.collaboratorsSampleName = collaboratorsSampleName;
         this.organism = organism;
         this.patientId = patientId;
+        // Need to set this explicitly to be sure we don't trigger a lazy load in a DBFree test context
+        this.ffpeStatus = FFPEStatus.NOT_DERIVED;
     }
+
+    /**
+     * Use this constructor for real code, FFPE status will be fetched only on demand.
+     */
+    public BSPSampleDTO(String containerId, String stockSample, String rootSample, String aliquotSample,
+                        String patientId, String organism, String collaboratorsSampleName, String collection,
+                        String volume, String concentration, String sampleLsid, String collaboratorParticipantId,
+                        String materialType, String total, String sampleType, String primaryDisease,
+                        String gender, String stockType, String fingerprint, String sampleId, String collaboratorName,
+                        String race, String population) {
+
+        this(containerId, stockSample, rootSample, aliquotSample, patientId, organism, collaboratorsSampleName, collection,
+                volume, concentration, sampleLsid, collaboratorParticipantId, materialType, total, sampleType, primaryDisease,
+                gender, stockType, fingerprint, sampleId, collaboratorName, race, population, null);
+    }
+
 
     public double getVolume() {
         return volume;
@@ -155,6 +202,10 @@ public class BSPSampleDTO {
 
     public double getConcentration() {
         return concentration;
+    }
+
+    public void setConcentration(double concentration) {
+        this.concentration = concentration;
     }
 
     public String getRootSample() {
@@ -230,6 +281,10 @@ public class BSPSampleDTO {
         return materialType;
     }
 
+    public void setMaterialType(String materialType) {
+        this.materialType = materialType;
+    }
+
     public double getTotal() {
         return total;
     }
@@ -278,6 +333,10 @@ public class BSPSampleDTO {
         return sampleId;
     }
 
+    public void setSampleId(String sampleId) {
+        this.sampleId = sampleId;
+    }
+
     public MaterialType getMaterialTypeObject() {
         if (StringUtils.isBlank(materialType)) {
             return null;
@@ -297,16 +356,16 @@ public class BSPSampleDTO {
         return race;
     }
 
-    public Boolean getFfpeDerived() {
-        if (ffpeDerived == null) {
+    public Boolean getFfpeStatus() {
+        if (ffpeStatus == FFPEStatus.UNKNOWN) {
             BSPSampleDataFetcher bspSampleDataFetcher = ServiceAccessUtility.getBean(BSPSampleDataFetcher.class);
             bspSampleDataFetcher.fetchFFPEDerived(Collections.singletonList(this));
         }
-        return ffpeDerived;
+        return ffpeStatus.derived;
     }
 
-    public void setFfpeDerived(Boolean ffpeDerived) {
-        this.ffpeDerived = ffpeDerived;
+    public void setFfpeStatus(Boolean ffpeStatus) {
+        this.ffpeStatus = FFPEStatus.fromBoolean(ffpeStatus);
     }
 
     public List<String> getPlasticBarcodes() {

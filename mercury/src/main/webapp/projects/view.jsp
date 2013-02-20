@@ -213,7 +213,7 @@
                             <fmt:formatDate value="${order.modifiedDate}" pattern="MM/dd/yyyy"/>
                         </td>
                         <td align="center">
-                            <div class="barFull" title="${actionBean.progressFetcher.getPercentCompleteAndAbandoned(order.businessKey)}% Completed or Aandoned">
+                            <div class="barFull" title="${actionBean.progressFetcher.getInProgress(order.businessKey)}% In Progress">
                                 <span class="barAbandon"
                                       title="${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}% Abandoned"
                                       style="width: ${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}%"> </span>

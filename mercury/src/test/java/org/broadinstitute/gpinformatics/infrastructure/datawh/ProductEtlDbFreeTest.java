@@ -18,7 +18,7 @@ import static org.easymock.EasyMock.*;
 import static org.testng.Assert.*;
 
 /**
- * dbfree unit test of Product etl.
+ * dbfree unit test of entity etl.
  *
  * @author epolk
  */
@@ -164,6 +164,7 @@ public class ProductEtlDbFreeTest {
         assertEquals(parts[i++], EtlTestUtilities.format(isTopLevelProduct));
         assertEquals(parts[i++], workflowName);
         assertEquals(parts[i++], productFamilyName);
+        assertEquals(parts.length, i);
     }
 
 }

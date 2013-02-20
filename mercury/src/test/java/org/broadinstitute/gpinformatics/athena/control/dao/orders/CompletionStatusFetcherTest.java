@@ -118,15 +118,15 @@ public class CompletionStatusFetcherTest extends ContainerTest {
                 "Fetcher calculated different complete percentage", fetcherPercentComplete, (complete * 100)/realTotal);
     }
 
-    public void testGetPercentCompleteAndAbandoned() throws Exception {
+    public void testGetPercentInProgress() throws Exception {
         // Find the first PDO with abandoned samples
         String firstCompleteAndAbandonedKey = null;
-        int fetcherPercentCompleteAndAbandoned = 0;
+        int fetcherInProgess = 0;
 
         for (String pdoKey : allPDOFetcher.getKeys()) {
             if (allPDOFetcher.getPercentComplete(pdoKey) > 0) {
                 firstCompleteAndAbandonedKey = pdoKey;
-                fetcherPercentCompleteAndAbandoned = allPDOFetcher.getPercentCompleteAndAbandoned(pdoKey);
+                fetcherInProgess = allPDOFetcher.getInProgress(pdoKey);
                 break;
             }
         }
@@ -150,8 +150,8 @@ public class CompletionStatusFetcherTest extends ContainerTest {
         }
 
         Assert.assertEquals(
-                "Fetcher calculated different complete percentage",
-                fetcherPercentCompleteAndAbandoned, (completeAndAbandoned * 100)/realTotal);
+                "Fetcher calculated different in progress percentage",
+                fetcherInProgess, 100 - (completeAndAbandoned * 100)/realTotal);
     }
 
     public void testGetNumberOfSamples() throws Exception {

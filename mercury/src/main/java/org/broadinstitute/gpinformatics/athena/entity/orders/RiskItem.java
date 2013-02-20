@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
@@ -11,10 +10,11 @@ import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.Date;
 
+import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.OperatorType.BOOLEAN;
+
 /**
- * The purpose of this class is to capture any risks that
- * have been calculated on a productOrder sample.
- * Created by IntelliJ IDEA.
+ * The purpose of this class is to capture any risks that have been calculated on a productOrder sample.
+ *
  * User: mccrory
  * Date: 1/18/13
  * Time: 4:17 PM
@@ -110,7 +110,7 @@ public class RiskItem implements Serializable {
         String comment =
             StringUtils.isBlank(remark) ? "" : MessageFormat.format("with comment: {0}", remark);
 
-        if (riskCriteria.getOperator().getType() == Operator.OperatorType.BOOLEAN) {
+        if (riskCriteria.getOperatorType() == BOOLEAN) {
             return MessageFormat.format(
                     "At {0,time} on {0,date}, calculated {1} {2}",
                     occurredDate, riskCriteria.getCalculationString(), comment);

@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <version>1.17-SNAPSHOT</version>
+    <version>1.18-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -1255,7 +1255,9 @@
         <dependency>
             <groupId>lims</groupId>
             <artifactId>limsThrift</artifactId>
-            <version>1.0-SNAPSHOT</version>
+<!--            <version>1.0-SNAPSHOT</version> -->
+<!-- Temporary while SquidThrift undergoes a release cycle. -->
+<version>1.0-20121210.154738-35</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -1298,7 +1300,7 @@
         <dependency>
             <groupId>org.broadinstitute.bsp</groupId>
             <artifactId>bspclient</artifactId>
-            <version>1.3.6</version>
+            <version>1.3.7</version>
         </dependency>
 
         <dependency>

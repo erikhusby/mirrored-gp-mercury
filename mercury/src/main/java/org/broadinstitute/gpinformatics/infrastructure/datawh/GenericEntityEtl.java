@@ -237,7 +237,7 @@ public abstract class GenericEntityEtl {
      * @param date the date to format
      */
     public static String format(Date date) {
-        return (date != null ? ExtractTransform.secTimestampFormat.format(date) : "");
+        return (date != null ? ExtractTransform.secTimestampFormat.format(date) : "\"\"");
     }
 
     /**
@@ -254,7 +254,7 @@ public abstract class GenericEntityEtl {
      */
     public static String format(String string) {
         if (string == null) {
-            return "";
+            return "\"\"";
         }
         if (string.contains(ExtractTransform.DELIM)) {
             // Escapes all embedded double quotes by doubling them: " becomes ""
@@ -268,7 +268,7 @@ public abstract class GenericEntityEtl {
      * @param num to format
      */
     public static <T extends Number > String format(T num) {
-        return (num != null ? num.toString() : "");
+        return (num != null ? num.toString() : "\"\"");
     }
 
     /** Class to wrap/manage writing to the data file. */
@@ -319,6 +319,15 @@ public abstract class GenericEntityEtl {
         return h;
     }
 
+    /** Concatenates each string with a delimiter, then calculates a hash on the whole thing. */
+    public static long hash(String... strings) {
+	StringBuilder sb = new StringBuilder();
+	for (String s : strings) {
+	    sb.append(ExtractTransform.DELIM).append(s);
+	}
+        return GenericEntityEtl.hash(sb.toString());
+    }
+
     /** Calculates a hash on all workflow config elements. */
     public static long hash(Collection<WorkflowConfigDenorm> denorms) {
         long h = HASH_PRIME;
@@ -328,6 +337,5 @@ public abstract class GenericEntityEtl {
         }
         return h;
     }
-
 
 }

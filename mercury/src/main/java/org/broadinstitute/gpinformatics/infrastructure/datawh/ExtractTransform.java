@@ -46,6 +46,8 @@ public class ExtractTransform {
     public static final SimpleDateFormat msecTimestampFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
     /** Name of file that contains the mSec time of the last etl run. */
     public static final String LAST_ETL_FILE = "last_etl_run";
+    /** Name of the file that contains the hash of the last exported workflow config data. */
+    public static final String LAST_WF_CONFIG_HASH_FILE = "last_wf_config_hash";
     /** Name of subdirectory under configured ETL root dir where new sqlLoader files are put. */
     public static final String DATAFILE_SUBDIR = "/new";
     /** Name of directory where sqlLoader files are put. */
@@ -59,129 +61,91 @@ public class ExtractTransform {
     private static boolean loggedConfigError = false;
     private EtlConfig etlConfig = null;
 
+    @Inject
     private AuditReaderDao auditReaderDao;
+    @Inject
     private Deployment deployment;
+    @Inject
     private EventEtl eventEtl;
+    @Inject
     private LabBatchEtl labBatchEtl;
+    @Inject
     private LabVesselEtl labVesselEtl;
+    @Inject
     private PriceItemEtl priceItemEtl;
+    @Inject
     private ProductEtl productEtl;
+    @Inject
     private ProductOrderAddOnEtl productOrderAddOnEtl;
+    @Inject
     private ProductOrderEtl productOrderEtl;
+    @Inject
     private ProductOrderSampleEtl productOrderSampleEtl;
+    @Inject
     private ProductOrderSampleStatusEtl productOrderSampleStatusEtl;
+    @Inject
     private ProductOrderStatusEtl productOrderStatusEtl;
+    @Inject
     private ProjectPersonEtl projectPersonEtl;
+    @Inject
     private ResearchProjectCohortEtl researchProjectCohortEtl;
+    @Inject
     private ResearchProjectEtl researchProjectEtl;
+    @Inject
     private ResearchProjectFundingEtl researchProjectFundingEtl;
+    @Inject
     private ResearchProjectIrbEtl researchProjectIrbEtl;
+    @Inject
     private ResearchProjectStatusEtl researchProjectStatusEtl;
+    @Inject
     private WorkflowConfigEtl workflowConfigEtl;
 
-
-    @Inject
-    public void setDeployment(Deployment d) {
-        deployment = d;
+    public ExtractTransform() {
     }
 
-    @Inject
-    public void setAuditReaderDao(AuditReaderDao d) {
-	auditReaderDao = d;
+    public ExtractTransform(AuditReaderDao auditReaderDao,
+                            EventEtl eventEtl,
+                            LabBatchEtl labBatchEtl,
+                            LabVesselEtl labVesselEtl,
+                            PriceItemEtl priceItemEtl,
+                            ProductEtl productEtl,
+                            ProductOrderAddOnEtl productOrderAddOnEtl,
+                            ProductOrderEtl productOrderEtl,
+                            ProductOrderSampleEtl productOrderSampleEtl,
+                            ProductOrderSampleStatusEtl productOrderSampleStatusEtl,
+                            ProductOrderStatusEtl productOrderStatusEtl,
+                            ProjectPersonEtl projectPersonEtl,
+                            ResearchProjectCohortEtl researchProjectCohortEtl,
+                            ResearchProjectEtl researchProjectEtl,
+                            ResearchProjectFundingEtl researchProjectFundingEtl,
+                            ResearchProjectIrbEtl researchProjectIrbEtl,
+                            ResearchProjectStatusEtl researchProjectStatusEtl,
+                            WorkflowConfigEtl workflowConfigEtl) {
+        this.auditReaderDao = auditReaderDao;
+        this.eventEtl = eventEtl;
+        this.labBatchEtl = labBatchEtl;
+        this.labVesselEtl = labVesselEtl;
+        this.priceItemEtl = priceItemEtl;
+        this.productEtl = productEtl;
+        this.productOrderAddOnEtl = productOrderAddOnEtl;
+        this.productOrderEtl = productOrderEtl;
+        this.productOrderSampleEtl = productOrderSampleEtl;
+        this.productOrderSampleStatusEtl = productOrderSampleStatusEtl;
+        this.productOrderStatusEtl = productOrderStatusEtl;
+        this.projectPersonEtl = projectPersonEtl;
+        this.researchProjectCohortEtl = researchProjectCohortEtl;
+        this.researchProjectEtl = researchProjectEtl;
+        this.researchProjectFundingEtl = researchProjectFundingEtl;
+        this.researchProjectIrbEtl = researchProjectIrbEtl;
+        this.researchProjectStatusEtl = researchProjectStatusEtl;
+        this.workflowConfigEtl = workflowConfigEtl;
     }
-
-    @Inject
-    public void setProductEtl(ProductEtl d) {
-        productEtl = d;
-    }
-
-    @Inject
-    public void setProductOrderEtl(ProductOrderEtl d) {
-        productOrderEtl = d;
-    }
-
-    @Inject
-    public void setProductOrderSampleEtl(ProductOrderSampleEtl d) {
-        productOrderSampleEtl = d;
-    }
-
-    @Inject
-    public void setProductOrderSampleStatusEtl(ProductOrderSampleStatusEtl d) {
-        productOrderSampleStatusEtl = d;
-    }
-
-    @Inject
-    public void setProductOrderStatusEtl(ProductOrderStatusEtl d) {
-        productOrderStatusEtl = d;
-    }
-
-    @Inject
-    public void setPriceItemEtl(PriceItemEtl d) {
-        priceItemEtl = d;
-    }
-
-    @Inject
-    public void setResearchProjectEtl(ResearchProjectEtl d) {
-        researchProjectEtl = d;
-    }
-
-    @Inject
-    public void setResearchProjectStatusEtl(ResearchProjectStatusEtl d) {
-        researchProjectStatusEtl = d;
-    }
-
-    @Inject
-    public void setProjectPersonEtl(ProjectPersonEtl d) {
-        projectPersonEtl = d;
-    }
-
-    @Inject
-    public void setResearchProjectIrbEtl(ResearchProjectIrbEtl d) {
-        researchProjectIrbEtl = d;
-    }
-
-    @Inject
-    public void setResearchProjectFundingEtl(ResearchProjectFundingEtl d) {
-        researchProjectFundingEtl = d;
-    }
-
-    @Inject
-    public void setResearchProjectCohortEtl(ResearchProjectCohortEtl d) {
-        researchProjectCohortEtl = d;
-    }
-
-    @Inject
-    public void setProductOrderAddOnEtl(ProductOrderAddOnEtl d) {
-        productOrderAddOnEtl = d;
-    }
-
-    @Inject
-    public void setEventEtl(EventEtl d) {
-        eventEtl = d;
-    }
-
-    @Inject
-    public void setWorkflowConfigEtl(WorkflowConfigEtl d) {
-        workflowConfigEtl = d;
-    }
-
-    @Inject
-    public void setLabBatchEtl(LabBatchEtl d) {
-        labBatchEtl = d;
-    }
-
-    @Inject
-    public void setLabVesselEtl(LabVesselEtl d) {
-        labVesselEtl = d;
-    }
-
-
 
     /**
      * JEE auto-schedules incremental ETL.
      */
     @Schedule(hour="*", minute="*/15", persistent=false)
-    private void scheduledEtl() {
+    void scheduledEtl() {
         initConfig();
         incrementalEtl();
     }
@@ -479,6 +443,8 @@ public class ExtractTransform {
     private void initConfig() {
         if (null == etlConfig) {
             etlConfig = (EtlConfig) MercuryConfiguration.getInstance().getConfig(EtlConfig.class, deployment);
+        }
+        if (null == datafileDir) {
             setDatafileDir(etlConfig.getDatawhEtlDirRoot() + DATAFILE_SUBDIR);
         }
     }

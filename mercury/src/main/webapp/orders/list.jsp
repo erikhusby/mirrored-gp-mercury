@@ -188,7 +188,7 @@
                                 <fmt:formatDate value="${order.updatedDate}"/>
                             </td>
                             <td align="center">
-                                <div class="barFull" title="${actionBean.progressFetcher.getPercentCompleteAndAbandoned(order.businessKey)}% Completed or Aandoned">
+                                <div class="barFull" title="${actionBean.progressFetcher.getInProgress(order.businessKey)}% In Progress">
                                     <span class="barAbandon"
                                           title="${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}% Abandoned"
                                           style="width: ${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}%"> </span>
@@ -202,7 +202,7 @@
                                 <c:if test="${order.billingSessionBusinessKey != null}">
                                     <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"
                                                   event="view">
-                                        <stripes:param name="billingSession" value="${order.billingSessionBusinessKey}"/>
+                                        <stripes:param name="sessionKey" value="${order.billingSessionBusinessKey}"/>
                                         ${order.billingSessionBusinessKey}
                                     </stripes:link>
                                 </c:if>

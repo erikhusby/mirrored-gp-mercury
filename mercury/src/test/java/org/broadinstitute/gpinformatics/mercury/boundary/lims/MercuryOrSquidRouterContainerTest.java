@@ -5,13 +5,11 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConnector;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStoreStub;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
@@ -33,7 +31,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.easymock.EasyMock;
@@ -121,11 +119,11 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         utx.begin();
 
         testExExOrder =
-                poDao.findByWorkflowName(WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName()).iterator().next();
+                poDao.findByWorkflowName(WorkflowName.EXOME_EXPRESS.getWorkflowName()).iterator().next();
         exExJiraKey = testExExOrder.getBusinessKey();
 
         squidProductOrder =
-                poDao.findByWorkflowName(WorkflowConfig.WorkflowName.WHOLE_GENOME.getWorkflowName()).iterator().next();
+                poDao.findByWorkflowName(WorkflowName.WHOLE_GENOME.getWorkflowName()).iterator().next();
         squidPdoJiraKey = squidProductOrder.getBusinessKey();
 
         testPrefix = "bcode";

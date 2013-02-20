@@ -10,6 +10,10 @@ import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.List;
 
+import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.OperatorType;
+import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.OperatorType.BOOLEAN;
+import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.OperatorType.NUMERIC;
+
 /**
  * This base class represents the OnRisk criteria thresholds for a product
  *
@@ -106,46 +110,70 @@ public class RiskCriteria {
     }
 
     public String getCalculationString() {
-        return MessageFormat.format("{0} {1} {2}", type.getLabel(), operator.getLabel(), operator.getType() == Operator.OperatorType.BOOLEAN ? "" : value);
+        if (operator.getType() == BOOLEAN) {
+            return MessageFormat.format("{0}", type.getLabel());
+        }
+
+        return MessageFormat.format("{0} {1} {2}", type.getLabel(), operator.getLabel(), value);
+    }
+
+    public OperatorType getOperatorType() {
+        return operator.getType();
     }
 
     public enum RiskCriteriaType {
-        CONCENTRATION("Concentration", Operator.OperatorType.NUMERIC, DISPLAYED, new ValueProvider() {
+        VOLUME("Volume", NUMERIC, DISPLAYED, new ValueProvider() {
+            @Override
+            public String getValue(ProductOrderSample sample) {
+                return String.valueOf(sample.getBspDTO().getVolume());
+            }
+        }),
+        CONCENTRATION("Concentration", NUMERIC, DISPLAYED, new ValueProvider() {
             @Override
             public String getValue(ProductOrderSample sample) {
                 return String.valueOf(sample.getBspDTO().getConcentration());
             }
         }),
-        FFPE("FFPE", Operator.OperatorType.BOOLEAN, DISPLAYED, new ValueProvider() {
+        WGA("Is WGA", BOOLEAN, DISPLAYED, new ValueProvider() {
             @Override
             public String getValue(ProductOrderSample sample) {
-                return String.valueOf(sample.getBspDTO().getFfpeDerived());
+                return String.valueOf(sample.getBspDTO().getMaterialType().contains("WGA"));
             }
         }),
-        MANUAL("Manual", Operator.OperatorType.BOOLEAN, NOT_DISPLAYED, new ValueProvider() {
+        FFPE("FFPE is On Risk", BOOLEAN, DISPLAYED, new ValueProvider() {
+            @Override
+            public String getValue(ProductOrderSample sample) {
+                return String.valueOf(sample.getBspDTO().getFfpeStatus());
+            }
+        }),
+        MANUAL("Manual", BOOLEAN, NOT_DISPLAYED, new ValueProvider() {
             @Override
             public String getValue(ProductOrderSample sample) {
                 // Manual is used for manually failing a sample.
                 return String.valueOf(true);
             }
         }),
-        TOTAL_DNA("Total DNA", Operator.OperatorType.NUMERIC, DISPLAYED, new ValueProvider() {
+        TOTAL_DNA("Total DNA", NUMERIC, DISPLAYED, new ValueProvider() {
             @Override
             public String getValue(ProductOrderSample sample) {
                 return String.valueOf(sample.getBspDTO().getTotal());
             }
         });
 
-        private final Operator.OperatorType operatorType;
+        private final OperatorType operatorType;
         private final String label;
         private final ValueProvider valueProvider;
         private final boolean isDisplayed;
 
-        RiskCriteriaType(String label, Operator.OperatorType operatorType, boolean isDisplayed, ValueProvider valueProvider) {
+        RiskCriteriaType(String label, OperatorType operatorType, boolean isDisplayed, ValueProvider valueProvider) {
             this.label = label;
             this.operatorType = operatorType;
             this.valueProvider = valueProvider;
             this.isDisplayed = isDisplayed;
+        }
+
+        public OperatorType getOperatorType() {
+            return operatorType;
         }
 
         public String getLabel() {

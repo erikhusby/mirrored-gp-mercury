@@ -8,7 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -60,7 +60,7 @@ public class LabBatchEJBTest extends ContainerTest {
         pdoNames = new ArrayList<String>();
         Collections.addAll(pdoNames, STUB_TEST_PDO_KEY);
 
-        workflowName = WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName();
+        workflowName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
 
         List<String> vesselSampleList = new ArrayList<String>(6);
 

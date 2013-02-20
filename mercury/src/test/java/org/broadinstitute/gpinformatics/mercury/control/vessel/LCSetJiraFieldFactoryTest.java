@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import junit.framework.Assert;
-import org.apache.commons.lang.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -22,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -58,7 +58,7 @@ public class LCSetJiraFieldFactoryTest {
         pdoNames = new ArrayList<String>();
         Collections.addAll(pdoNames, pdoBusinessName);
 
-        workflowName = WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName();
+        workflowName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
         mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
 
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();

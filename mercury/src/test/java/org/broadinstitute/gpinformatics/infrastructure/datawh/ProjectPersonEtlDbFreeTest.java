@@ -2,9 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
-import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -139,8 +137,8 @@ public class ProjectPersonEtlDbFreeTest {
         assertEquals(records.size(), 1);
 
         String[] parts = records.iterator().next().split(",");
-        assertEquals(parts[3], "");
-        assertEquals(parts[4], "");
+        assertEquals(parts[3], "\"\"");
+        assertEquals(parts[4], "\"\"");
 
         verify(mocks);
     }
@@ -174,7 +172,7 @@ public class ProjectPersonEtlDbFreeTest {
     }
 
     private void verifyRecord(String record) {
-	int i = 0;
+        int i = 0;
         String[] parts = record.split(",");
         assertEquals(parts[i++], etlDateStr);
         assertEquals(parts[i++], "F");
@@ -185,6 +183,7 @@ public class ProjectPersonEtlDbFreeTest {
         assertEquals(parts[i++], firstName);
         assertEquals(parts[i++], lastName);
         assertEquals(parts[i++], userName);
+        assertEquals(parts.length, i);
     }
 
 }

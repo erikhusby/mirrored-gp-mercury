@@ -39,9 +39,9 @@ public class BSPSampleDataFetcherContainerTest extends Arquillian {
 
         bspSampleDataFetcher.fetchFFPEDerived(dtoList);
 
-        Assert.assertTrue(ffpe.getFfpeDerived());
-        Assert.assertTrue(paraffin.getFfpeDerived());
-        Assert.assertFalse(notFFPE.getFfpeDerived());
+        Assert.assertTrue(ffpe.getFfpeStatus());
+        Assert.assertTrue(paraffin.getFfpeStatus());
+        Assert.assertFalse(notFFPE.getFfpeStatus());
     }
 
     @Test(enabled = true)

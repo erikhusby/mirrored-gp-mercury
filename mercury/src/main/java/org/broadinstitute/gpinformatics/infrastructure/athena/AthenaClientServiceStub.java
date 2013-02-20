@@ -14,7 +14,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 
 import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
@@ -82,7 +82,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
 
     public static ProductOrder buildExExProductOrder(int maxSamples) {
 
-        String workflowName = WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName();
+        String workflowName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
         String pdoBusinessName = "PD0-1EE";
 
         return createDummyProductOrder(maxSamples, pdoBusinessName, workflowName, 101L, "Test RP", rpSynopsis,
@@ -95,7 +95,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
         String jiraKey = "PD0-1HS";
 
         return createDummyProductOrder(maxSamples, jiraKey,
-                                              WorkflowConfig.WorkflowName.HYBRID_SELECTION.getWorkflowName(), 101L,
+                                              WorkflowName.HYBRID_SELECTION.getWorkflowName(), 101L,
                                               "Test RP", rpSynopsis,
                                               ResearchProject.IRB_ENGAGED, "P-HSEL-9293");
     }
@@ -104,7 +104,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
 
         String jiraKey = "PD0-2WGS";
 
-        return createDummyProductOrder(maxSamples, jiraKey, WorkflowConfig.WorkflowName.WHOLE_GENOME.getWorkflowName(),
+        return createDummyProductOrder(maxSamples, jiraKey, WorkflowName.WHOLE_GENOME.getWorkflowName(),
                                               301L, "Test RP", rpSynopsis,
                                               ResearchProject.IRB_ENGAGED, "P-WGS-9294");
 
@@ -155,7 +155,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
        helper Methods to create test data.  Moved from Test cases to aid stub implementation
     */
     public static ProductOrder createDummyProductOrder() {
-        return createDummyProductOrder(1, null, WorkflowConfig.WorkflowName.EXOME_EXPRESS.getWorkflowName(), 10950L);
+        return createDummyProductOrder(1, null, WorkflowName.EXOME_EXPRESS.getWorkflowName(), 10950L);
     }
 
     public static Product createDummyProduct(String workflowName, String partNumber) {

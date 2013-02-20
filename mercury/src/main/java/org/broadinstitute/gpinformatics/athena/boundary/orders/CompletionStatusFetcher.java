@@ -50,8 +50,8 @@ public class CompletionStatusFetcher {
     }
 
     @DaoFree
-    public int getPercentCompleteAndAbandoned(String orderKey) {
-        return getPercentAbandoned(orderKey) + getPercentComplete(orderKey);
+    public int getInProgress(String orderKey) {
+        return 100 - (getPercentAbandoned(orderKey) + getPercentComplete(orderKey));
     }
 
     @DaoFree

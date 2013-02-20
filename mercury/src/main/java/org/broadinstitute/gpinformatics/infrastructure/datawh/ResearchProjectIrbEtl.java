@@ -74,11 +74,9 @@ public class ResearchProjectIrbEtl  extends GenericEntityEtl {
                 new GenericDao.GenericDaoCallback<ResearchProjectIRB>() {
                     @Override
                     public void callback(CriteriaQuery<ResearchProjectIRB> cq, Root<ResearchProjectIRB> root) {
-                        if (startId > 0 || endId < Long.MAX_VALUE) {
-                            CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-                            cq.where(cb.between(root.get(ResearchProjectIRB_.researchProjectIRBId), startId, endId));
+                        CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
+                        cq.where(cb.between(root.get(ResearchProjectIRB_.researchProjectIRBId), startId, endId));
                         }
-                    }
                 });
         for (ResearchProjectIRB entity : entityList) {
             recordList.add(entityRecord(etlDateStr, isDelete, entity));

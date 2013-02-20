@@ -267,7 +267,7 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
                     throw new RuntimeException("Unrecognized return barcode: " + bspOutput[SAMPLE_BARCODE]);
                 }
 
-                bspSampleDTO.setFfpeDerived(Boolean.valueOf(bspOutput[FFPE]));
+                bspSampleDTO.setFfpeStatus(Boolean.valueOf(bspOutput[FFPE]));
             }
         });
     }

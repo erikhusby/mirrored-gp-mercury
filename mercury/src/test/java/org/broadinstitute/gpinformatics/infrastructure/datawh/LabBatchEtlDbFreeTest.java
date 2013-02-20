@@ -1,9 +1,5 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
@@ -21,7 +17,8 @@ import static org.easymock.EasyMock.*;
 import static org.testng.Assert.*;
 
 /**
- * dbfree unit test of ProductOrder etl.
+ * dbfree unit test of entity etl.
+ *
  * @author epolk
  */
 
@@ -30,9 +27,6 @@ public class LabBatchEtlDbFreeTest {
     String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
     long entityId = 1122334455L;
     String batchName = "LCSET-1235";
-    boolean isActive = true;
-    Date createdOn = new Date(1350000000000L);
-    Date dueDate = new Date(1354000000000L);
 
     AuditReaderDao auditReader = createMock(AuditReaderDao.class);
     LabBatch obj = createMock(LabBatch.class);
@@ -84,9 +78,6 @@ public class LabBatchEtlDbFreeTest {
 
         expect(obj.getLabBatchId()).andReturn(entityId);
         expect(obj.getBatchName()).andReturn(batchName);
-        expect(obj.getActive()).andReturn(isActive);
-        expect(obj.getCreatedOn()).andReturn(createdOn);
-        expect(obj.getDueDate()).andReturn(dueDate);
 
         replay(mocks);
 
@@ -104,13 +95,10 @@ public class LabBatchEtlDbFreeTest {
     public void testBackfillEtl() throws Exception {
         List<LabBatch> list = new ArrayList<LabBatch>();
         list.add(obj);
-        expect(dao.findAll(eq(LabBatch.class), (GenericDao.GenericDaoCallback<LabBatch>)anyObject())).andReturn(list);
+        expect(dao.findAll(eq(LabBatch.class), (GenericDao.GenericDaoCallback<LabBatch>) anyObject())).andReturn(list);
 
         expect(obj.getLabBatchId()).andReturn(entityId);
         expect(obj.getBatchName()).andReturn(batchName);
-        expect(obj.getActive()).andReturn(isActive);
-        expect(obj.getCreatedOn()).andReturn(createdOn);
-        expect(obj.getDueDate()).andReturn(dueDate);
 
         replay(mocks);
 
@@ -126,15 +114,13 @@ public class LabBatchEtlDbFreeTest {
     }
 
     private void verifyRecord(String record) {
-	int i = 0;
+        int i = 0;
         String[] parts = record.split(",");
         assertEquals(parts[i++], etlDateStr);
         assertEquals(parts[i++], "F");
         assertEquals(parts[i++], String.valueOf(entityId));
         assertEquals(parts[i++], batchName);
-        assertEquals(parts[i++], isActive ? "T":"F");
-        assertEquals(parts[i++], ExtractTransform.secTimestampFormat.format(createdOn));
-        assertEquals(parts[i++], ExtractTransform.secTimestampFormat.format(dueDate));
+        assertEquals(parts.length, i);
     }
 
 }
