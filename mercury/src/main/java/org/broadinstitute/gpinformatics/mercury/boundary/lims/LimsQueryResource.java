@@ -177,12 +177,14 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchUserIdForBadgeId")
     public String fetchUserIdForBadgeId(@QueryParam("badgeId") String badgeId) {
-        BspUser foundUser = bspUserList.getByBadgeId(badgeId);
-        if (foundUser != null) {
-            return foundUser.getUsername();
-        } else {
-            throw new RuntimeException("User not found for badge ID: " + badgeId);
-        }
+        return thriftService.fetchUserIdForBadgeId(badgeId);
+
+//        BspUser foundUser = bspUserList.getByBadgeId(badgeId);
+//        if (foundUser != null) {
+//            return foundUser.getUsername();
+//        } else {
+//            throw new RuntimeException("User not found for badge ID: " + badgeId);
+//        }
     }
 
     /**

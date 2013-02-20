@@ -13,6 +13,7 @@ import org.broadinstitute.gpinformatics.mercury.control.lims.LimsQueryResourceRe
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
 import org.broadinstitute.gpinformatics.mercury.limsquery.generated.FlowcellDesignationType;
+import org.easymock.EasyMock;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
@@ -314,21 +315,29 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
-    @BeforeMethod(groups = DATABASE_FREE)
+    @BeforeMethod(groups = DATABASE_FREE,enabled = false)
     public void testFetchUserByBadge() throws Exception {
 
-
         String testUserBadge = "Test" + String.valueOf(BSPManagerFactoryStub.QA_DUDE_USER_ID);
+        EasyMock.expect(mockThriftService.fetchUserIdForBadgeId(testUserBadge)).andReturn("QADudeTest");
+        EasyMock.replay(mockThriftService);
 
         String userId = resource.fetchUserIdForBadgeId(testUserBadge);
 
         assertThat(userId, equalTo("QADudeTest"));
+
+        EasyMock.verify(mockThriftService);
     }
 
-    @BeforeMethod(groups = DATABASE_FREE)
+    //
+    @BeforeMethod(groups = DATABASE_FREE,enabled = false)
     public void testFetchNoUserByBogusBadge() throws Exception {
 
         String testUserBadge = "BOGUSFAKENONEXISTANTBADGE";
+        EasyMock.expect(mockThriftService.fetchUserIdForBadgeId(testUserBadge))
+                .andThrow(new RuntimeException());
+        EasyMock.replay(mockThriftService);
+
 
         try {
             String userId = resource.fetchUserIdForBadgeId(testUserBadge);
@@ -337,6 +346,7 @@ public class LimsQueryResourceUnitTest {
         } catch (Exception e) {
 
         }
+        EasyMock.verify(mockThriftService);
     }
 
     private void replayAll() {
