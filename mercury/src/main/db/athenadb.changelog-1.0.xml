@@ -2435,4 +2435,15 @@
         </sql>
     </changeSet>
 
+    <changeSet id="GPLIM-960.1" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_order_aud" columnName="placed_date" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_aud" schemaName="athena">
+            <column name="placed_date" type="DATE"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
