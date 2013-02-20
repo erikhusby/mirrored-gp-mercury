@@ -2405,4 +2405,15 @@
         </createIndex>
     </changeSet>
 
+    <changeSet id="GPLIM-960" author="pshapiro">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_order" columnName="placed_date" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order" schemaName="athena">
+            <column name="placed_date" type="DATE"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

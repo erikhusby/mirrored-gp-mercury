@@ -58,7 +58,7 @@ public class ProductOrder implements Serializable {
 
     private Long createdBy;
 
-    @Transient
+    @Column(name = "placed_date")
     private Date placedDate;
 
     private Date modifiedDate;
