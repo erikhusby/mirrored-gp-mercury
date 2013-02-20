@@ -53,6 +53,7 @@ public class ProductOrderTest {
                 .ignoreProperty("createdBy")
                 .ignoreProperty("createdDate")
                 .ignoreProperty("modifiedDate")
+                .ignoreProperty("placedDate")
                 .ignoreProperty("quoteId")
                 .ignoreProperty("product")
                 .ignoreProperty("researchProject")
