@@ -114,9 +114,9 @@ public class UploadTrackerActionBean extends CoreActionBean {
             IOUtils.closeQuietly(inputStream);
 
             // Even if there is no preview data, we may want to clear out previously billed items, so do all this work either way.
-                inputStream = trackerFile.getInputStream();
-                File tempFile = copyFromStreamToTempFile(inputStream);
-                previewFilePath = tempFile.getAbsolutePath();
+            inputStream = trackerFile.getInputStream();
+            File tempFile = copyFromStreamToTempFile(inputStream);
+            previewFilePath = tempFile.getAbsolutePath();
         } catch (Exception e) {
             logger.error(e);
             addGlobalValidationError("Error uploading tracker: " + e.getMessage());
