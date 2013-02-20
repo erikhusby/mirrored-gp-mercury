@@ -144,7 +144,7 @@
                 newCriteria += '    </select>\n';
 
                 // the operator for the selected item
-                newCriteria += '    <select id="operatorSelect-' + criteriaCount + '" style="padding-left:4px;padding-right:4px;width:auto;" name="operators">\n';
+                newCriteria += '    <select style="display:none" id="operatorSelect-' + criteriaCount + '" style="padding-left:4px;padding-right:4px;width:auto;" name="operators">\n';
                 newCriteria += operatorOptions(criteriaCount, operatorsLabel, operator);
                 newCriteria += '    </select>\n';
 
@@ -153,7 +153,8 @@
                 newCriteria += '</div>\n';
 
                 $j('#riskCriteria').append(newCriteria);
-                updateValueView(criteriaLabel, criteriaCount);
+
+                updateValueView(criteria, criteriaCount);
 
                 criteriaCount++;
             }

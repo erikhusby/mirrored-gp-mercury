@@ -158,18 +158,18 @@ public class ProductActionBean extends CoreActionBean {
 
         // Ensure that numeric criteria have valid data.
         int matchingValueIndex = 0;
-        for (int i = 0; i < operators.length; i++) {
-            Operator operator = Operator.findByLabel(operators[i]);
-            if (operator.getType() == Operator.OperatorType.NUMERIC) {
+        for (String criterion : criteria) {
+            RiskCriteria.RiskCriteriaType type = RiskCriteria.RiskCriteriaType.findByLabel(criterion);
+            if (type.getOperatorType() == Operator.OperatorType.NUMERIC) {
                 try {
-                    Double.parseDouble(values[i]);
+                    Double.parseDouble(values[matchingValueIndex]);
                 } catch (NumberFormatException e) {
-                    addGlobalValidationError("Not a valid number for risk calculation: {2}", values[i]);
+                    addGlobalValidationError("Not a valid number for risk calculation: {2}", values[matchingValueIndex]);
                 }
             }
 
             // Only increment the matching value if it is not boolean or if this is old style boolean where all indexes match
-            if ((operator.getType() != Operator.OperatorType.BOOLEAN) || allLengthsMatch()) {
+            if ((type.getOperatorType() != Operator.OperatorType.BOOLEAN) || allLengthsMatch()) {
                 matchingValueIndex++;
             }
         }
