@@ -171,8 +171,10 @@
 
             function updateValueView(criteriaLabel, criteriaCount) {
                 if (booleanTypes[criteriaLabel]) {
+                    $j('#operatorSelect-' + criteriaCount).hide();
                     $j('#valueText-' + criteriaCount).hide();
                 } else {
+                    $j('#operatorSelect-' + criteriaCount).show();
                     $j('#valueText-' + criteriaCount).show();
                 }
             }

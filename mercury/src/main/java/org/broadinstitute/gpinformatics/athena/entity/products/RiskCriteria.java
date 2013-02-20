@@ -106,17 +106,33 @@ public class RiskCriteria {
     }
 
     public String getCalculationString() {
-        return MessageFormat.format("{0} {1} {2}", type.getLabel(), operator.getLabel(), operator.getType() == Operator.OperatorType.BOOLEAN ? "" : value);
+        if (operator.getType() == Operator.OperatorType.BOOLEAN) {
+            return MessageFormat.format("{0}", type.getLabel());
+        }
+
+        return MessageFormat.format("{0} {1} {2}", type.getLabel(), operator.getLabel(), value);
     }
 
     public enum RiskCriteriaType {
+        VOLUME("Volume", Operator.OperatorType.NUMERIC, DISPLAYED, new ValueProvider() {
+            @Override
+            public String getValue(ProductOrderSample sample) {
+                return String.valueOf(sample.getBspDTO().getVolume());
+            }
+        }),
         CONCENTRATION("Concentration", Operator.OperatorType.NUMERIC, DISPLAYED, new ValueProvider() {
             @Override
             public String getValue(ProductOrderSample sample) {
                 return String.valueOf(sample.getBspDTO().getConcentration());
             }
         }),
-        FFPE("FFPE", Operator.OperatorType.BOOLEAN, DISPLAYED, new ValueProvider() {
+        WGA("Is WGA", Operator.OperatorType.BOOLEAN, DISPLAYED, new ValueProvider() {
+            @Override
+            public String getValue(ProductOrderSample sample) {
+                return String.valueOf(sample.getBspDTO().getMaterialType().contains("WGA"));
+            }
+        }),
+        FFPE("Is FFPE", Operator.OperatorType.BOOLEAN, DISPLAYED, new ValueProvider() {
             @Override
             public String getValue(ProductOrderSample sample) {
                 return String.valueOf(sample.getBspDTO().getFfpeStatus());
@@ -146,6 +162,10 @@ public class RiskCriteria {
             this.operatorType = operatorType;
             this.valueProvider = valueProvider;
             this.isDisplayed = isDisplayed;
+        }
+
+        public Operator.OperatorType getOperatorType() {
+            return operatorType;
         }
 
         public String getLabel() {
