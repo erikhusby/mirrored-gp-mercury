@@ -22,7 +22,7 @@
                         {"bSortable": true},                    // Status
                         {"bSortable": true},                    // Research Project
                         {"bSortable": true},                    // Owner
-                        {"bSortable": true, "sType": "date"},   // Updated
+                        {"bSortable": true, "sType": "date"},   // Placed
                         {"bSortable": true, "sType": "title-numeric"},   // % Complete
                         {"bSortable": true, "sType": "numeric"},   // Count
                         {"bSortable": true},                   // Billing Session ID
@@ -139,7 +139,7 @@
                         <th width="80">Status</th>
                         <th width="150">Research Project</th>
                         <th width="120">Owner</th>
-                        <th width="70">Updated</th>
+                        <th width="70">Placed</th>
                         <th width="80">%&nbsp;Complete</th>
                         <th width="25">Sample Count</th>
                         <th width="35">Billing Session</th>
@@ -185,7 +185,7 @@
                             <td>${order.researchProjectTitle}</td>
                             <td>${actionBean.getUserFullName(order.ownerId)}</td>
                             <td>
-                                <fmt:formatDate value="${order.updatedDate}"/>
+                                <fmt:formatDate value="${order.placedDate}"/>
                             </td>
                             <td align="center">
                                 <div class="barFull" title="${actionBean.progressFetcher.getInProgress(order.businessKey)}% In Progress">

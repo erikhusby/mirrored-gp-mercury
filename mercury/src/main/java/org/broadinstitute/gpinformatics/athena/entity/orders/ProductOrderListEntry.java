@@ -28,7 +28,7 @@ public class ProductOrderListEntry implements Serializable {
 
     private Long ownerId;
 
-    private Date updatedDate;
+    private Date placedDate;
 
     private Long billingSessionId;
 
@@ -46,11 +46,11 @@ public class ProductOrderListEntry implements Serializable {
      * @param productFamilyName
      * @param researchProjectTitle
      * @param ownerId
-     * @param updatedDate
+     * @param placedDate
      */
     public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
                                  String productName, String productFamilyName, String researchProjectTitle, Long ownerId,
-                                 Date updatedDate) {
+                                 Date placedDate) {
         this.orderId = orderId;
         this.title = title;
         this.jiraTicketKey = jiraTicketKey;
@@ -59,7 +59,7 @@ public class ProductOrderListEntry implements Serializable {
         this.productFamilyName = productFamilyName;
         this.researchProjectTitle = researchProjectTitle;
         this.ownerId = ownerId;
-        this.updatedDate = updatedDate;
+        this.placedDate = placedDate;
     }
 
 
@@ -116,8 +116,8 @@ public class ProductOrderListEntry implements Serializable {
         return ownerId;
     }
 
-    public Date getUpdatedDate() {
-        return updatedDate;
+    public Date getPlacedDate() {
+        return placedDate;
     }
 
     public String getBillingSessionBusinessKey() {
