@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftConfig;
-import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
@@ -39,7 +38,7 @@ public class MercuryConfiguration {
     // Hopefully we can do something with portable extensions and @Observes ProcessAnnotatedType<T> to find these
     // automatically, and maybe something really sneaky to create qualified bean instances of these types to
     // support @TestInstance-style qualifier injection with producer classes.  But not in this version.
-    private static final Class[] CONFIG_CLASSES = new Class[]{
+    private static final Class<? extends AbstractConfig>[] CONFIG_CLASSES = array(
             MercuryConfig.class,
             SquidConfig.class,
             BSPConfig.class,
@@ -50,9 +49,8 @@ public class MercuryConfiguration {
             DeckMessagesConfig.class,
             EtlConfig.class,
             BettalimsConfig.class,
-            TableauConfig.class,
-            WsMessageStore.class
-    };
+            TableauConfig.class);
+
 
     private static final String MERCURY_CONFIG = "/mercury-config.yaml";
 
@@ -61,6 +59,19 @@ public class MercuryConfiguration {
     private static MercuryConfiguration instance;
 
     private static String MERCURY_BUILD_INFO;
+
+    /**
+     * Workaround for Java language limitations regarding creation of generic arrays, prevents classes not extending
+     * {@link AbstractConfig} from being entered into the array of configuration classes.
+     *
+     * @param classes Varargs list of {@link AbstractConfig} classes.
+     *
+     * @return Arguments are simply passed through this method unmodified.
+     */
+    private static Class<? extends AbstractConfig> [] array(Class<? extends AbstractConfig>... classes) {
+        return classes;
+    }
+
 
     private class ExternalSystems {
         // Map of system key ("bsp", "squid", "thrift") to a Map of external system Deployments (TEST, QA, PROD) to
@@ -132,7 +143,7 @@ public class MercuryConfiguration {
 
     private String getConfigKey(Class<? extends AbstractConfig> configClass) {
         ConfigKey annotation = configClass.getAnnotation(ConfigKey.class);
-        if(annotation == null) {
+        if (annotation == null) {
             throw new RuntimeException("Failed to get config key for " + configClass.getName());
         }
         return annotation.value();
