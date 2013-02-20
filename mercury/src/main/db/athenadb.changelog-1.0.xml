@@ -2405,6 +2405,7 @@
         </createIndex>
     </changeSet>
 
+
     <changeSet id="GPLIM-960" author="pshapiro">
         <preConditions>
             <not>
@@ -2416,24 +2417,6 @@
         </addColumn>
     </changeSet>
 
-    <changeSet id="GPLIM-958" author="mcovarr">
-        <sql>
-            UPDATE athena.product_order pdo
-              SET pdo.placed_date = (
-                SELECT rev_info.rev_date
-                FROM athena.product_order_aud pdo_aud, mercury.rev_info rev_info
-                WHERE
-                  pdo.product_order_id = pdo_aud.product_order_id AND
-                  rev_info.rev_info_id = pdo_aud.rev AND
-                  pdo_aud.rev = (
-                    SELECT min(pdo_aud2.rev)
-                    FROM athena.product_order_aud pdo_aud2
-                    WHERE
-                      pdo_aud2.product_order_id = pdo.product_order_id AND pdo_aud2.jira_ticket_key IS NOT NULL
-                  )
-              ) WHERE pdo.placed_date IS NULL
-        </sql>
-    </changeSet>
 
     <changeSet id="GPLIM-960.1" author="mcovarr">
         <preConditions>
