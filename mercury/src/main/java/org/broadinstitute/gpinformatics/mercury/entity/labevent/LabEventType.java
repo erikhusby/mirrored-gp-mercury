@@ -187,6 +187,7 @@ public enum LabEventType {
     ONE_STEP_RT_PCR_PRODUCT_POOL_TRANSFER("OneStepRtPcrProductPoolTransfer", false, true, SystemOfRecord.SQUID, false),
 
     // From BSP UI
+    SAMPLE_RECEIPT("SampleReceipt", true, true, SystemOfRecord.MERCURY, false),
     SAMPLES_EXTRACTION_START("SamplesExtractionStart", false, true, SystemOfRecord.MERCURY, false),
     SAMPLES_EXTRACTION_END_TRANSFER("SamplesExtractionEndTransfer", false, true, SystemOfRecord.MERCURY, false),
     SAMPLES_NORMALIZATION_TRANSFER("SamplesNormalizationTransfer", false, true, SystemOfRecord.MERCURY, false),
@@ -223,7 +224,7 @@ public enum LabEventType {
         /** Mercury, being phased in */
         MERCURY,
         /** For processes that are shared by multiple products, a message could belong to either system.  The
-         * message router must examine the plastic barcodes to determine system or record
+         * message router must examine the plastic barcodes to determine system of record
          */
         PRODUCT_DEPENDENT,
         /** Some messages, e.g. BaitSetup, don't include enough information to determine system of record, so

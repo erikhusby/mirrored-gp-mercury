@@ -6,6 +6,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
@@ -33,6 +35,9 @@ import java.util.Map;
 @Stateful
 @RequestScoped
 public class SampleReceiptResource {
+
+    // todo jmt currently set to thompson, which user should this be?
+    private static final long OPERATOR = 1701L;
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -94,6 +99,7 @@ public class SampleReceiptResource {
             Map<String, List<MercurySample>> mapIdToListMercurySample,
             Map<String, List<ProductOrderSample>> mapIdToListPdoSamples) {
 
+        long disambiguator = 1L;
         List<LabVessel> labVessels = new ArrayList<LabVessel>();
         for (ParentVesselBean parentVesselBean : sampleReceiptBean.getParentVesselBeans()) {
             String sampleId = parentVesselBean.getSampleId();
@@ -105,16 +111,19 @@ public class SampleReceiptResource {
             }
 
             if(parentVesselBean.getChildVesselBeans() == null || parentVesselBean.getChildVesselBeans().isEmpty()) {
-                // todo jmt differentiate Cryo vial, Conical, Slide, Flip-top etc.?
+                // todo jmt differentiate Cryo vial, Conical, Slide, Flip-top etc.
                 TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(barcode);
 
                 MercurySample mercurySample = getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples, sampleId);
                 twoDBarcodedTube.addSample(mercurySample);
+                twoDBarcodedTube.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT,
+                        sampleReceiptBean.getReceiptDate(), "BSP", disambiguator, OPERATOR));
+                disambiguator++;
                 labVessels.add(twoDBarcodedTube);
             } else {
                 String vesselType = parentVesselBean.getVesselType().toLowerCase();
                 if (vesselType.contains("plate")) {
-                    // todo jmt map other geometries?
+                    // todo jmt map other geometries
                     StaticPlate staticPlate = new StaticPlate(parentVesselBean.getManufacturerBarcode(),
                             StaticPlate.PlateType.Eppendorf96);
                     labVessels.add(staticPlate);
@@ -128,7 +137,8 @@ public class SampleReceiptResource {
                                 childVesselBean.getSampleId()));
                         staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
                     }
-
+                    staticPlate.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT,
+                            sampleReceiptBean.getReceiptDate(), "BSP", disambiguator, OPERATOR));
                 } /* todo jmt else if(vesselType.contains("rack")) {
 
                 } */else {
