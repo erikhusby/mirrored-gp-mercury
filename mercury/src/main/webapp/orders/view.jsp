@@ -339,6 +339,17 @@
                 </div>
             </div>
 
+            <c:if test="${actionBean.editOrder.placedDate != null}">
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Order Placed on</label>
+                    <div class="controls">
+                        <div class="form-value">
+                            <fmt:formatDate value="${actionBean.editOrder.placedDate}"/>
+                        </div>
+                    </div>
+                </div>
+            </c:if>
+
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Owner</label>
                 <div class="controls">
