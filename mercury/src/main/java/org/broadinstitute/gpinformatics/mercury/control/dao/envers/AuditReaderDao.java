@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.envers;
 
-import org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo_;
@@ -11,12 +10,10 @@ import org.hibernate.envers.query.AuditQuery;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.persistence.NoResultException;
-import javax.persistence.Query;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
-import java.sql.Timestamp;
 import java.util.*;
 
 /**
@@ -24,6 +21,7 @@ import java.util.*;
  */
 @ApplicationScoped
 public class AuditReaderDao extends GenericDao {
+    private final long MSEC_IN_SEC = 1000L;
 
     private AuditReader getAuditReader() {
         return AuditReaderFactory.get(getEntityManager());
@@ -31,32 +29,23 @@ public class AuditReaderDao extends GenericDao {
 
     /**
      * Finds the audit info ids for data changes that happened in the given interval.
-     * Must use REV_INFO timestamp in interval, and not id because in Mercury
-     * the ids were observed to be not always monotonic, which caused ETL to miss
-     * some changes.
      *
-     * Subtlety here with the timestamps:  revDate has 10 mSec resolution but JPA on our
-     * RevInfo table empirically only permits comparing revDate with a param that has whole
-     * second resolution.  Using native query is no help since Oracle to_timestamp cannot
-     * convert sub-second values.
-     * Etl must not etl the same event twice nor miss audited events regardless of their
-     * revDate, which may have hundredth of second values from 0 through 99.
-     * The solution used is to have date-based etl (i.e. incremental etl) set the endDate
-     * to be the floor of the current mSec time, which can possibly leave the very most
-     * recent events to be picked up later.  In addition the interval passed in is truncated
-     * and the query must include start point (revDate hundredths >= 0) and exclude end point
-     * (revDate hundredths = 0).  The start date is managed by the caller.
-     *
-     * @param lastEtlTimestamp     start of interval in mSec units, truncated to second resolution
-     * @param currentEtlTimestamp  end of interval in mSec units, truncated to second resolution
+     * @param startTimeSec     start of interval, in seconds
+     * @param endTimeSec  end of interval, in seconds
      * @throws IllegalArgumentException if params are not whole second values.
      */
-    public Collection<Long> fetchAuditIds(long lastEtlTimestamp, long currentEtlTimestamp) {
-        if (lastEtlTimestamp % 1000 != 0 || currentEtlTimestamp % 1000 != 0) {
-            throw new java.lang.IllegalArgumentException ("Etl interval must be whole second aligned.");
-        }
-        Date startDate = new Date(lastEtlTimestamp);
-        Date endDate = new Date(currentEtlTimestamp);
+    public Collection<Long> fetchAuditIds(long startTimeSec, long endTimeSec) {
+        Date startDate = new Date(startTimeSec * MSEC_IN_SEC);
+        Date endDate = new Date(endTimeSec * MSEC_IN_SEC);
+
+        // Typical AuditReader usage would use audit rev id to determine where to start
+        // the new etl.  But in Mercury the ids were observed to be not always monotonic,
+        // so the audit timestamp must be used instead.
+
+        // Audit revDate has 10 mSec resolution but JPA on our RevInfo table empirically only
+        // permits comparing revDate with a param that has whole second resolution.  That
+        // means etl must have a time interval defined on whole second boundaries.  This
+        // can possibly leave the very most recent events to be picked up in the next etl.
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
