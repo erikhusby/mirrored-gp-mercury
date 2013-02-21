@@ -81,7 +81,7 @@ public class SampleReceiptResourceTest {
         ArrayList<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
         parentVesselBeans.add(new ParentVesselBean(BARCODE1 + date, SAMPLE1 + date, "Matrix Tube [0.75mL]", null));
         parentVesselBeans.add(new ParentVesselBean(BARCODE2 + date, SAMPLE2 + date, "Matrix Tube [0.75mL]", null));
-        return new SampleReceiptBean(new Date(), "SK-123", parentVesselBeans);
+        return new SampleReceiptBean(new Date(), "SK-123-" + date, parentVesselBeans);
     }
 
     @Test
