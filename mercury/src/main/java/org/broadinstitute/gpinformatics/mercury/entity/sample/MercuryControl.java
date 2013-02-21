@@ -17,9 +17,9 @@ import javax.persistence.Table;
  * with the control and an indicator of what kind of control (positive or negative) this is.
  *
  */
-//@Entity
-//@Audited
-//@Table(schema = "mercury")
+@Entity
+@Audited
+@Table(schema = "mercury")
 public class MercuryControl {
 
     public enum CONTROL_TYPE {
@@ -30,16 +30,17 @@ public class MercuryControl {
         ACTIVE, INACTIVE;
     }
 
-//    @Id
-//    @SequenceGenerator(name = "SEQ_CONTROL", schema = "mercury", sequenceName = "SEQ_CONTROL")
-//    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_CONTROL")
+    @Id
+    @SequenceGenerator(name = "SEQ_MERCURY_CONTROL", schema = "mercury", sequenceName = "SEQ_MERCURY_CONTROL")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MERCURY_CONTROL")
     private Long mercuryControlId;
 
-//    @Index(name = "ix_mc_sample_key")
+    @Index(name = "ix_mc_sample_key")
     private String collaboratorSampleId;
 
     private CONTROL_TYPE type;
 
+    @Index(name = "ix_mc_sample_key")
     private CONTROL_STATE state;
 
     public MercuryControl() {
