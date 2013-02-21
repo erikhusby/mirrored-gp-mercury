@@ -163,7 +163,8 @@ public class LabEventTest {
             rackPosition++;
         }
 
-        final LabBatch workflowBatch = new LabBatch("Hybrid Selection Batch", new HashSet<LabVessel>(mapBarcodeToTube.values()));
+        final LabBatch workflowBatch = new LabBatch("Hybrid Selection Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         labBatchEJB.createLabBatch(workflowBatch, "scottmat");
 
         mapKeyToProductOrder.put(productOrder.getBusinessKey(), productOrder);
@@ -299,7 +300,8 @@ public class LabEventTest {
             rackPosition++;
         }
 
-        final LabBatch workflowBatch = new LabBatch("Exome Express Batch", new HashSet<LabVessel>(mapBarcodeToTube.values()));
+        final LabBatch workflowBatch = new LabBatch("Exome Express Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         labBatchEJB.createLabBatch(workflowBatch, "scottmat");
 
         String rackBarcode = "REXEX" + (new Date()).toString();
@@ -413,7 +415,8 @@ public class LabEventTest {
             mapBarcodeToTube.put(barcode, bspAliquot);
             rackPosition++;
         }
-        final LabBatch workflowBatch = new LabBatch("whole Genome Batch", new HashSet<LabVessel>(mapBarcodeToTube.values()));
+        final LabBatch workflowBatch = new LabBatch("whole Genome Batch",
+                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         labBatchEJB.createLabBatch(workflowBatch, "scottmat");
 
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();

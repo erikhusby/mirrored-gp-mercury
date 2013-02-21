@@ -243,6 +243,8 @@ public enum LabEventType {
                                                  PlasticToValidate.SOURCE),
 
     // From BSP UI
+    SAMPLE_RECEIPT("SampleReceipt", false, true, SystemOfRecord.MERCURY, false,
+                                    PlasticToValidate.SOURCE),
     SAMPLES_EXTRACTION_START("SamplesExtractionStart", false, true, SystemOfRecord.MERCURY, false,
                                     PlasticToValidate.SOURCE),
     SAMPLES_EXTRACTION_END_TRANSFER("SamplesExtractionEndTransfer", false, true, SystemOfRecord.MERCURY, false,
