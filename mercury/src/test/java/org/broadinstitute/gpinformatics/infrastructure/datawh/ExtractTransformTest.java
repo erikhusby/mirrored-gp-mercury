@@ -37,6 +37,7 @@ public class ExtractTransformTest extends Arquillian {
     private Logger logger = Logger.getLogger(getClass());
     private String datafileDir;
     private Map<String, GenericEntityEtl> auditTables = new HashMap<String, GenericEntityEtl>();
+    public final long MSEC_IN_SEC = 1000L;
 
     @Inject
     private ExtractTransform extractTransform;
@@ -77,27 +78,26 @@ public class ExtractTransformTest extends Arquillian {
 
     public void testEtl() throws Exception {
         // Gets the most recent audit rev timestamp for an etl entity.
-        long mostRecentTimestamp = 0L;
+        long mostRecentTimeSec = 0L;
         GenericEntityEtl mostRecentClass = null;
         for (String auditTable : auditTables.keySet()) {
-            long auditTimestamp = fetchLatestAuditDate(auditTable);
-            if (auditTimestamp > mostRecentTimestamp) {
-                mostRecentTimestamp = auditTimestamp;
+            long auditTimeSec = fetchLatestAuditDate(auditTable);
+            if (auditTimeSec > mostRecentTimeSec) {
+                mostRecentTimeSec = auditTimeSec;
                 mostRecentClass = auditTables.get(auditTable);
             }
         }
-        if (mostRecentTimestamp == 0L) {
+        if (mostRecentTimeSec == 0L) {
             logger.warn("No audit entities exist -- cannot test etl");
             return;
         }
-        final long ONE_SECOND_MSEC = 1000L;
-        logger.debug("most recent entity: " + mostRecentTimestamp + ", " + mostRecentClass.getEntityClass() + ", " + mostRecentClass.getBaseFilename());
-        long startEtl = ONE_SECOND_MSEC * (long)Math.floor((double)mostRecentTimestamp / ONE_SECOND_MSEC);
-        extractTransform.writeLastEtlRun(startEtl);
+        logger.debug("most recent entity: " + mostRecentTimeSec + ", " + mostRecentClass.getEntityClass() + ", " + mostRecentClass.getBaseFilename());
+
+        extractTransform.writeLastEtlRun(mostRecentTimeSec);
 
         // Does incremental Etl.
-        if (System.currentTimeMillis() - startEtl < ONE_SECOND_MSEC) {
-            Thread.sleep(ONE_SECOND_MSEC);
+        if (System.currentTimeMillis() / MSEC_IN_SEC == mostRecentTimeSec) {
+            Thread.sleep(MSEC_IN_SEC);
         }
         int recordCount = extractTransform.incrementalEtl();
 
@@ -105,10 +105,10 @@ public class ExtractTransformTest extends Arquillian {
         Assert.assertTrue(recordCount > 0);
 
         // Must have is_ready and at least one data file for the most recent class.
-        long endEtl = extractTransform.readLastEtlRun();
-        Assert.assertFalse(startEtl == endEtl);
+        long endEtlSec = extractTransform.readLastEtlRun();
+        Assert.assertFalse(mostRecentTimeSec == endEtlSec);
 
-        String fileTimestamp = ExtractTransform.secTimestampFormat.format(new Date(endEtl));
+        String fileTimestamp = ExtractTransform.secTimestampFormat.format(new Date(endEtlSec * MSEC_IN_SEC));
         final String datFileEnding = "_" + mostRecentClass.getBaseFilename() + ".dat";
         String isReadyFilename = fileTimestamp + ExtractTransform.READY_FILE_SUFFIX;
 
@@ -164,46 +164,20 @@ public class ExtractTransformTest extends Arquillian {
             }
         }
         Assert.assertTrue(found);
-
-
-        //public void testNotWholeSeconds1() {
-        long start = 1001L;
-        long end = 1360000000000L;
-        boolean caught = false;
-        try {
-            extractTransform.incrementalEtl(start, end, null);
-        } catch (Exception e) {
-            if (e.getCause() instanceof IllegalArgumentException) {
-                caught = true;
-            }
-        }
-        Assert.assertTrue(caught);
-
-        start = 1000L;
-        end = 1360000000001L;
-        caught = false;
-        try {
-            extractTransform.incrementalEtl(start, end, null);
-        } catch (Exception e) {
-            if (e.getCause() instanceof IllegalArgumentException) {
-                caught = true;
-            }
-        }
-        Assert.assertTrue(caught);
     }
 
 
     /**
      * Finds the date a recent audit rev, typically the most recent.
-     * @return timestamp represented as mSec since start of the epoch
+     * @return timestamp in seconds since start of the epoch
      */
     private long fetchLatestAuditDate(String audTableName) throws Exception {
-        String queryString = "SELECT TO_CHAR(rev_date,'YYYYMMDDHH24MISSRR')||'0' FROM REV_INFO " +
+        String queryString = "SELECT TO_CHAR(rev_date,'YYYYMMDDHH24MISS') FROM REV_INFO " +
                 " WHERE rev_info_id = (SELECT MAX(rev) FROM " + audTableName + ")";
         Query query = auditReaderDao.getEntityManager().createNativeQuery(queryString);
         String result = (String)query.getSingleResult();
-        long timestamp = ExtractTransform.msecTimestampFormat.parse(result).getTime();
-        return timestamp;
+        long timeSec = ExtractTransform.secTimestampFormat.parse(result).getTime() / MSEC_IN_SEC;
+        return timeSec;
     }
 
 }

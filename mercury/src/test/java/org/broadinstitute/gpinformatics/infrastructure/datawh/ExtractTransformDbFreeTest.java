@@ -34,6 +34,7 @@ public class ExtractTransformDbFreeTest {
     private final String nowMsec = String.valueOf(now.getTime());
     private String badDataDir = datafileDir + nowMsec;
     private String etlDateStr = "20130215091500";
+    private final long MSEC_IN_SEC = 1000L;
 
     private ExtractTransform extractTransform;
     private final AuditReaderDao auditReaderDao = createMock(AuditReaderDao.class);
@@ -148,9 +149,9 @@ public class ExtractTransformDbFreeTest {
     }
 
     public void testNoChanges() {
-        long futureMsec = 9999999999000L;
+        long futureSec = 9999999999L;
         replay(mocks);
-        extractTransform.writeLastEtlRun(futureMsec);
+        extractTransform.writeLastEtlRun(futureSec);
         Assert.assertEquals(0, extractTransform.incrementalEtl());
         Assert.assertTrue(ExtractTransform.getIncrementalRunStartTime() >= 0);
         verify(mocks);
@@ -181,22 +182,22 @@ public class ExtractTransformDbFreeTest {
      * Passes a non-existent directory for the last run file.
      */
     public void testInvalidLastEtlBadDir() {
-        replay(mocks);
         extractTransform.setDatafileDir(badDataDir);
         Assert.assertEquals(0L, extractTransform.readLastEtlRun());
-        verify(mocks);
     }
 
     /**
-     * Writes an unparsable timestamp.
+     * Writes seconds or milliseconds, verify read is always seconds.
      */
-    public void testReadLastEtlUnparsable() throws IOException {
-        replay(mocks);
+    public void testReadLastEtlmSec() throws IOException {
         File file = new File(datafileDir, ExtractTransform.LAST_ETL_FILE);
-        FileUtils.write(file, "abcedfg");
+        final long sec  = 1351112223L;
+        final long mSec = 1351112223789L;
+        FileUtils.write(file, String.valueOf(sec));
+        Assert.assertEquals(sec, extractTransform.readLastEtlRun());
 
-        Assert.assertEquals(0L, extractTransform.readLastEtlRun());
-        verify(mocks);
+        FileUtils.write(file, String.valueOf(mSec));
+        Assert.assertEquals(sec, extractTransform.readLastEtlRun());
     }
 
     /**
@@ -302,22 +303,22 @@ public class ExtractTransformDbFreeTest {
     }
 
     public void testOnDemandIncrementalNoChanges() {
-        long startEtl = 1360000000000L;
+        final long startEtlSec = 1360000000L;
         Collection<Long> revIds = new ArrayList<Long>();
-        expect(auditReaderDao.fetchAuditIds(eq(startEtl), anyLong())).andReturn(revIds);
+        expect(auditReaderDao.fetchAuditIds(eq(startEtlSec), anyLong())).andReturn(revIds);
 
         replay(mocks);
-        extractTransform.writeLastEtlRun(startEtl);
+        extractTransform.writeLastEtlRun(startEtlSec);
         extractTransform.onDemandIncrementalEtl();
-        Assert.assertTrue(extractTransform.readLastEtlRun() > startEtl);
+        Assert.assertTrue(extractTransform.readLastEtlRun() > startEtlSec);
         verify(mocks);
     }
 
     public void testOnDemandIncremental() {
-        long startEtl = 1360000000000L;
+        final long startEtlSec = 1360000000L;
         Collection<Long> revIds = new ArrayList<Long>();
         revIds.add(1L);
-        expect(auditReaderDao.fetchAuditIds(eq(startEtl), anyLong())).andReturn(revIds);
+        expect(auditReaderDao.fetchAuditIds(eq(startEtlSec), anyLong())).andReturn(revIds);
         expect(productEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(1);
         expect(priceItemEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(researchProjectEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
@@ -337,16 +338,16 @@ public class ExtractTransformDbFreeTest {
         expect(eventEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
 
         replay(mocks);
-        extractTransform.writeLastEtlRun(startEtl);
+        extractTransform.writeLastEtlRun(startEtlSec);
         extractTransform.onDemandIncrementalEtl();
         long etlEnd = extractTransform.readLastEtlRun();
-        Assert.assertTrue(etlEnd > startEtl);
-        String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date(etlEnd));
+        Assert.assertTrue(etlEnd >= startEtlSec);
+        String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date(etlEnd * MSEC_IN_SEC));
         Assert.assertTrue((new File(datafileDir, etlDateStr + ExtractTransform.READY_FILE_SUFFIX)).exists());
 
         verify(mocks);
     }
-
 }
+
 
 

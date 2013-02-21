@@ -26,26 +26,12 @@ import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.*;
 
-/**
- * Class to model the concept of a Product ProductOrder that can be created
- * by the Program PM and subsequently submitted to a lims system.
- * Currently supports the concept associating a product with a set of samples withe a quote.
- * For more detail on the purpose of the ProductOrder, see the user stories listed on
- *
- * @see <a href="https://confluence.broadinstitute.org/x/kwPGAg</a>
- *      <p/>
- *      Created by IntelliJ IDEA.
- *      User: mccrory
- *      Date: 8/28/12
- *      Time: 10:25 AM
- */
+
 @Entity
 @Audited
 @Table(name = "PRODUCT_ORDER", schema = "athena")
 public class ProductOrder implements Serializable {
     private static final long serialVersionUID = 2712946561792445251L;
-
-    private static final String JIRA_SUBJECT_PREFIX = "Product order for ";
 
     public static final String DRAFT_PREFIX = "Draft-";
 
@@ -57,6 +43,9 @@ public class ProductOrder implements Serializable {
     private Date createdDate;
 
     private Long createdBy;
+
+    @Column(name = "placed_date")
+    private Date placedDate;
 
     private Date modifiedDate;
 
@@ -575,6 +564,20 @@ public class ProductOrder implements Serializable {
     public long getModifiedBy() {
         return modifiedBy;
     }
+
+    public Date getPlacedDate() {
+        return placedDate;
+    }
+
+    /**
+     * This should only be called from tests or for database backpopulation.  The placed date is normally set interally
+     * when an order is placed.
+     * @param placedDate the date to set
+     */
+    public void setPlacedDate(Date placedDate) {
+        this.placedDate = placedDate;
+    }
+
     /**
      * Use the BSP Manager to load the bsp data for every sample in this product order.
      */
@@ -789,7 +792,7 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * submitProductOrder encapsulates the set of steps necessary to finalize the submission of a product order.
+     * This method encapsulates the set of steps necessary to finalize the submission of a product order.
      * This mainly deals with jira ticket creation.  This method will:
      * <ul>
      * <li>Create a new jira ticket and persist the reference to the ticket key</li>
@@ -800,7 +803,8 @@ public class ProductOrder implements Serializable {
      *
      * @throws IOException
      */
-    public void submitProductOrder() throws IOException {
+    public void placeOrder() throws IOException {
+        placedDate = new Date();
         JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 

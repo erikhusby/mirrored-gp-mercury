@@ -119,7 +119,8 @@ public class ZimsIlluminaRunFactoryTest {
         testTube = new TwoDBarcodedTube("testTube");
         testTube.addSample(new MercurySample("TestPDO-1", "TestSM-1"));
         JiraTicket lcSetTicket = new JiraTicket(mockJiraService, "LCSET-1");
-        LabBatch lcSetBatch = new LabBatch("LCSET-1 batch", Collections.<LabVessel>singleton(testTube));
+        LabBatch lcSetBatch = new LabBatch("LCSET-1 batch", Collections.<LabVessel>singleton(testTube),
+                LabBatch.LabBatchType.WORKFLOW);
         lcSetBatch.setJiraTicket(lcSetTicket);
 
         // Record some events for the sample

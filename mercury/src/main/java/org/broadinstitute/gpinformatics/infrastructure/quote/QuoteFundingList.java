@@ -6,17 +6,15 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
 /**
- * Application wide access to the quote funding list (POs and COs). The list is currently cached once at application
- * startup. In the future, we may want to rebuild the list regularly to account for changes to the user database.
+ * Application wide access to the quote funding list (POs and COs). The list is regularly refreshed by
+ * ExternalDataCacheControl.
  */
-@Named
 // MLC @ApplicationScoped breaks the test, as does @javax.ejb.Singleton.  @javax.inject.Singleton is the CDI version
 // and does appear to work.  Much to learn about CDI still...
 @Singleton

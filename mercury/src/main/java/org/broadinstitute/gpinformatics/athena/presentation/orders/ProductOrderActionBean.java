@@ -30,7 +30,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
-import org.broadinstitute.gpinformatics.athena.presentation.links.BspLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SampleSearchLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
@@ -88,16 +88,13 @@ public class ProductOrderActionBean extends CoreActionBean {
     private ProductOrderListEntryDao orderListEntryDao;
 
     @Inject
-    private JiraLink jiraLink;
-
-    @Inject
     private BSPUserList bspUserList;
 
     @Inject
     private QuoteLink quoteLink;
 
     @Inject
-    private BspLink bspLink;
+    private SampleSearchLink sampleSearchLink;
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -438,7 +435,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution placeOrder() {
         try {
             editOrder.prepareToSave(userBean.getBspUser(), isCreating());
-            editOrder.submitProductOrder();
+            editOrder.placeOrder();
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             // save it!
@@ -774,10 +771,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         return allProductOrders;
     }
 
-    public String getJiraUrl() {
-        return jiraLink.browseUrl();
-    }
-
     public ProductOrder getEditOrder() {
         return editOrder;
     }
@@ -790,8 +783,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         return quoteLink.quoteUrl(editOrder.getQuoteId());
     }
 
-    public String getEditOrderSampleSearchUrl() {
-        return bspLink.sampleSearchUrl();
+    public String sampleSearchUrlForBspSample(ProductOrderSample sample) {
+        return sampleSearchLink.getUrl(sample);
     }
 
     public static Resolution getTrackerForOrders(

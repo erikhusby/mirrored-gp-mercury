@@ -57,9 +57,6 @@ public class CreateBatchActionBean extends CoreActionBean {
     @Inject
     private UserBean userBean;
 
-    @Inject
-    private JiraLink jiraLink;
-
     @Validate(required = true, on = {SEARCH_ACTION})
     private String searchKey;
 
@@ -150,7 +147,8 @@ public class CreateBatchActionBean extends CoreActionBean {
                If a new ticket is to be created, pass the description, summary, due date and important info in a batch
                object acting as a DTO
             */
-            batchObject = new LabBatch(summary.trim(), vesselSet, description, dueDate, important);
+            batchObject = new LabBatch(summary.trim(), vesselSet, LabBatch.LabBatchType.WORKFLOW, description, dueDate,
+                    important);
 
             labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername());
         }
@@ -291,18 +289,4 @@ public class CreateBatchActionBean extends CoreActionBean {
     public void setJiraTicketId(String jiraTicketId) {
         this.jiraTicketId = jiraTicketId;
     }
-
-    /**
-     * Get the fully qualified Jira URL.
-     *
-     * @return URL string
-     */
-    public String getJiraUrl() {
-        if (jiraLink == null) {
-            return "";
-        }
-        return jiraLink.browseUrl();
-    }
-
-
 }

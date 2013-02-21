@@ -83,7 +83,7 @@ public class ProductOrderContainerTest extends Arquillian {
         BspUser bspUser = new BspUser();
         bspUser.setUserId(TEST_CREATOR);
         testOrder.prepareToSave(bspUser, true);
-        testOrder.submitProductOrder();
+        testOrder.placeOrder();
 
 //        testOrder.closeProductOrder();
 

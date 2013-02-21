@@ -53,6 +53,7 @@ public class ProductOrderTest {
                 .ignoreProperty("createdBy")
                 .ignoreProperty("createdDate")
                 .ignoreProperty("modifiedDate")
+                .ignoreProperty("placedDate")
                 .ignoreProperty("quoteId")
                 .ignoreProperty("product")
                 .ignoreProperty("researchProject")
@@ -74,7 +75,7 @@ public class ProductOrderTest {
             }
         }
 
-        // Current;y ProductOrder is equivalent based only on RP and title.
+        // Currently ProductOrder is equivalent based only on RP and title.
         new EqualsMethodTester().testEqualsMethod(new ProductOrderFactory(), configuration);
 
         new HashCodeMethodTester().testHashCodeMethod(new ProductOrderFactory());
