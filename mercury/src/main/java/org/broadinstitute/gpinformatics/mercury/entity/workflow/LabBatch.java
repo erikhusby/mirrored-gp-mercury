@@ -45,14 +45,25 @@ public class LabBatch {
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     private JiraTicket jiraTicket;
 
-    //    @ManyToOne(fetch = FetchType.LAZY)
-    //    private ProjectPlan projectPlan;
-
     // todo jmt get Hibernate to sort this
     @OneToMany(mappedBy = "labBatch")
     private Set<LabEvent> labEvents = new LinkedHashSet<LabEvent>();
 
     private Date createdOn;
+
+    public enum LabBatchType {
+        /** A batch created as part of workflow, e.g. an LCSET */
+        WORKFLOW,
+        /** A batch created in BSP, typically named BP-1234 */
+        BSP,
+        /** Receipt of samples into BSP, from external collaborators, typically named SK-1234 for sample kit */
+        SAMPLES_RECEIPT,
+        /** Import of BSP samples into Mercury */
+        SAMPLES_IMPORT
+    }
+
+    @Enumerated(EnumType.STRING)
+    private LabBatchType labBatchType;
 
     @Transient
     private String batchDescription;
@@ -69,42 +80,28 @@ public class LabBatch {
      *
      * @param starters
      */
-    //    public LabBatch(ProjectPlan projectPlan,
-    //                    String batchName,
-    //                    Set<Starter> starters) {
-    //        if (projectPlan == null) {
-    //            throw new NullPointerException("ProjectPlan cannot be null.");
-    //        }
-    //        if (batchName == null) {
-    //            throw new NullPointerException("BatchName cannot be null");
-    //        }
-    //        if (starters == null) {
-    //            throw new NullPointerException("starters cannot be null");
-    //        }
-    //        this.projectPlan = projectPlan;
-    //        this.batchName = batchName;
-    //        for (Starter starter : starters) {
-    //            addStarter(starter);
-    //        }
-    //    }
-    public LabBatch(String batchName, Set<LabVessel> starters) {
+    public LabBatch(String batchName, Set<LabVessel> starters, LabBatchType labBatchType) {
         if (batchName == null) {
             throw new NullPointerException("BatchName cannot be null");
         }
         if (starters == null) {
             throw new NullPointerException("starters cannot be null");
         }
+        if(labBatchType == null) {
+            throw new NullPointerException("labBatchType cannot be null");
+        }
         this.batchName = batchName;
+        this.labBatchType = labBatchType;
         for (LabVessel starter : starters) {
             addLabVessel(starter);
         }
         createdOn = new Date();
     }
 
-    public LabBatch(String batchName, Set<LabVessel> startingLabVessels, String batchDescription, Date dueDate,
-                    String important) {
+    public LabBatch(String batchName, Set<LabVessel> startingLabVessels, LabBatchType labBatchType,
+            String batchDescription, Date dueDate, String important) {
 
-        this(batchName, startingLabVessels);
+        this(batchName, startingLabVessels, labBatchType);
         this.batchDescription = batchDescription;
         this.dueDate = dueDate;
         this.important = important;
@@ -112,12 +109,6 @@ public class LabBatch {
 
     protected LabBatch() {
     }
-
-    //    public ProjectPlan getProjectPlan() {
-    //        // todo could have different project plans per
-    //        // starter, make this a map accessible by Starter.
-    //        return projectPlan;
-    //    }
 
     public Set<LabVessel> getStartingLabVessels() {
         return startingLabVessels;
@@ -164,14 +155,6 @@ public class LabBatch {
     public JiraTicket getJiraTicket() {
         return jiraTicket;
     }
-
-    //    public void setProjectPlanOverride(LabVessel vessel,ProjectPlan planOverride) {
-    //        throw new RuntimeException("I haven't been written yet.");
-    //    }
-
-    //    public ProjectPlan getProjectPlanOverride(LabVessel labVessel) {
-    //        throw new RuntimeException("I haven't been written yet.");
-    //    }
 
     public Set<LabEvent> getLabEvents() {
         return labEvents;
@@ -271,6 +254,10 @@ public class LabBatch {
 
     public Long getLabBatchId() {
         return labBatchId;
+    }
+
+    public LabBatchType getLabBatchType() {
+        return labBatchType;
     }
 
     /**

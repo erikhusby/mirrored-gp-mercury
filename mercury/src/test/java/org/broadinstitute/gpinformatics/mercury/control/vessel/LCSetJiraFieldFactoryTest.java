@@ -99,7 +99,7 @@ public class LCSetJiraFieldFactoryTest {
 
     public void testLCSetFieldGeneration() throws IOException {
         LabBatch testBatch = new LabBatch(LabBatch.generateBatchName(workflowName, pdoNames),
-                                          new HashSet<LabVessel>(mapBarcodeToTube.values()));
+                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
 
         AbstractBatchJiraFieldFactory testBuilder = AbstractBatchJiraFieldFactory
                 .getInstance(CreateFields.ProjectType.LCSET_PROJECT, testBatch, AthenaClientProducer.stubInstance());
