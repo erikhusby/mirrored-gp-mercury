@@ -215,33 +215,38 @@ public class ExtractTransform {
             }
 
             // The same etl_date is used for all DW data processed by one ETL run.
-            // Etl interval must be whole second aligned.
-            final long currentEtlTimestamp = 1000L * (long)Math.floor((double)System.currentTimeMillis() / 1000L);
-            final String etlDateStr = secTimestampFormat.format(new Date(currentEtlTimestamp));
-            incrementalRunStartTime = currentEtlTimestamp;
+            final long currentEtlSec = (long)Math.floor((double)System.currentTimeMillis() / MSEC_IN_SEC);
+            final String etlDateStr = secTimestampFormat.format(new Date(currentEtlSec * MSEC_IN_SEC));
+            incrementalRunStartTime = System.currentTimeMillis();
 
-            final long lastEtlTimestamp = 1000L * (long)Math.floor((double)readLastEtlRun() / 1000L);
+            final long lastEtlSec = readLastEtlRun();
             // Allows last timestamp to be in the future thereby shutting off incremental etl.
-            if (lastEtlTimestamp >= currentEtlTimestamp) {
+            if (lastEtlSec >= currentEtlSec) {
                 return 0;
             }
-            return incrementalEtl(lastEtlTimestamp, currentEtlTimestamp, etlDateStr);
+            return incrementalEtl(lastEtlSec, currentEtlSec, etlDateStr);
         } finally {
             mutex.release();
         }
     }
 
-    /** Testable helper method that does the incremental etl work, has no mutex. */
-    public int incrementalEtl(long startTimestamp, long endTimestamp, String etlDateStr) {
-        if (0L == startTimestamp) {
+    /**
+     * Testable helper method that does the incremental etl work, has no mutex.
+     * @param startTimeSec start of ETL interval, in seconds
+     * @param endTimeSec end of ETL interval, in seconds
+     * @param etlDateStr y-m-d formatted etl time, for filenames
+     * @return number of etl records
+     */
+    public int incrementalEtl(long startTimeSec, long endTimeSec, String etlDateStr) {
+        if (0L == startTimeSec) {
             logger.warn("Cannot determine time of last incremental ETL.  ETL will not be run.");
             return 0;
         }
         // Gets the audit revision ids for the given interval.
-        Collection<Long> revIds = auditReaderDao.fetchAuditIds(startTimestamp, endTimestamp);
+        Collection<Long> revIds = auditReaderDao.fetchAuditIds(startTimeSec, endTimeSec);
         logger.debug ("Incremental ETL found " + revIds.size() + " changes.");
         if (revIds.size() == 0) {
-            writeLastEtlRun(endTimestamp);
+            writeLastEtlRun(endTimeSec);
             return 0;
         }
 
@@ -266,7 +271,7 @@ public class ExtractTransform {
         recordCount += workflowConfigEtl.doEtl(revIds, etlDateStr);
         recordCount += eventEtl.doEtl(revIds, etlDateStr);
 
-        writeLastEtlRun(endTimestamp);
+        writeLastEtlRun(endTimeSec);
         if (recordCount > 0) {
             writeIsReadyFile(etlDateStr);
             logger.debug("Incremental ETL created " + recordCount + " data records in " +
@@ -349,18 +354,26 @@ public class ExtractTransform {
         return Response.Status.NO_CONTENT;
     }
 
+    public final int TIMESTAMP_SECONDS_SIZE = 10;
 
     /**
      * Reads the last incremental ETL run file and returns start of this etl interval.
-     * @return the end rev of last incremental ETL, or 0 if missing.
+     * Returns seconds if file contains seconds or milliseconds.
+     * @return the end time in seconds of last incremental ETL, or 0 if missing or unparsable.
      */
     public long readLastEtlRun() {
         try {
-            return Long.parseLong(readEtlFile(LAST_ETL_FILE));
+            // Extracts the first 10 digits.
+            String content = readEtlFile(LAST_ETL_FILE);
+            if (content.length() >= TIMESTAMP_SECONDS_SIZE) {
+                return Long.parseLong(content.substring(0, TIMESTAMP_SECONDS_SIZE));
+            }
         } catch (NumberFormatException e) {
-            logger.warn("Cannot parse " + LAST_ETL_FILE + " : " + e);
-            return 0L;
+            // fall through
         }
+        logger.warn("Invalid timestamp in " + LAST_ETL_FILE);
+        return 0L;
+
     }
 
     /**

@@ -94,14 +94,27 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
         int count = 0;
 
         String filename = dataFilename(etlDateStr, WORKFLOW_BASE_FILENAME);
-        DataFile dataFile = new DataFile(filename);
-        exportWorkflow(denorms, dataFile, etlDateStr);
-        count += dataFile.getRecordCount();
+        DataFile dataFile = null;
+        try {
+            dataFile = new DataFile(filename);
+            exportWorkflow(denorms, dataFile, etlDateStr);
+            count += dataFile.getRecordCount();
+        } catch (IOException e) {
+            logger.error("Error while writing file " + dataFile.getFilename(), e);
+        } finally {
+            dataFile.close();
+        }
 
-        filename = dataFilename(etlDateStr, PROCESS_BASE_FILENAME);
-        dataFile = new DataFile(filename);
-        exportProcess(denorms, dataFile, etlDateStr);
-        count += dataFile.getRecordCount();
+        try {
+            filename = dataFilename(etlDateStr, PROCESS_BASE_FILENAME);
+            dataFile = new DataFile(filename);
+            exportProcess(denorms, dataFile, etlDateStr);
+            count += dataFile.getRecordCount();
+        } catch (IOException e) {
+            logger.error("Error while writing file " + dataFile.getFilename(), e);
+        } finally {
+            dataFile.close();
+        }
 
         return count;
     }
@@ -123,39 +136,29 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
     }
 
     /** Writes the Workflow records to a sqlLoader file */
-    private void exportWorkflow(Collection<WorkflowConfigDenorm>flatConfig, DataFile dataFile, String etlDateStr) {
+    private void exportWorkflow(Collection<WorkflowConfigDenorm>flatConfig, DataFile dataFile, String etlDateStr)
+            throws IOException {
         Set<Long> ids = new HashSet<Long>();
-        try {
-            for (WorkflowConfigDenorm denorm : flatConfig) {
-                // Deduplicates the workflow records.
-                if (!ids.contains(denorm.getWorkflowId())) {
-                    ids.add(denorm.getWorkflowId());
-                    String record = workflowRecord(etlDateStr, false, denorm);
-                    dataFile.write(record);
-                }
+        for (WorkflowConfigDenorm denorm : flatConfig) {
+            // Deduplicates the workflow records.
+            if (!ids.contains(denorm.getWorkflowId())) {
+                ids.add(denorm.getWorkflowId());
+                String record = workflowRecord(etlDateStr, false, denorm);
+                dataFile.write(record);
             }
-        } catch (IOException e) {
-            logger.error("Error while writing file " + dataFile.getFilename(), e);
-        } finally {
-            dataFile.close();
         }
     }
     /** Writes the Process records to a sqlLoader file */
-    private void exportProcess(Collection<WorkflowConfigDenorm>flatConfig, DataFile dataFile, String etlDateStr) {
+    private void exportProcess(Collection<WorkflowConfigDenorm>flatConfig, DataFile dataFile, String etlDateStr)
+            throws IOException {
         Set<Long> ids = new HashSet<Long>();
-        try {
-            for (WorkflowConfigDenorm denorm : flatConfig) {
-                // Deduplicates the process records.
-                if (!ids.contains(denorm.getProcessId())) {
-                    ids.add(denorm.getProcessId());
-                    String record = processRecord(etlDateStr, false, denorm);
-                    dataFile.write(record);
-                }
+        for (WorkflowConfigDenorm denorm : flatConfig) {
+            // Deduplicates the process records.
+            if (!ids.contains(denorm.getProcessId())) {
+                ids.add(denorm.getProcessId());
+                String record = processRecord(etlDateStr, false, denorm);
+                dataFile.write(record);
             }
-        } catch (IOException e) {
-            logger.error("Error while writing file " + dataFile.getFilename(), e);
-        } finally {
-            dataFile.close();
         }
     }
 

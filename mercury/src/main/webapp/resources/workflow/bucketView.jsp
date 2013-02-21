@@ -118,7 +118,7 @@
                                 </div>
 
                                 <div class="control-group">
-                                    <stripes:label for="dueDate" name="Availability Date" class="control-label"/>
+                                    <stripes:label for="dueDate" name="Due Date" class="control-label"/>
                                     <div class="controls">
                                         <stripes:text id="dueDate" name="dueDate" class="defaultText"
                                                       title="enter date (MM/dd/yyyy)"
