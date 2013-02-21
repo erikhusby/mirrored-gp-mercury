@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRu
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 
 import javax.ejb.Stateful;
-import javax.ejb.Stateless;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
@@ -47,7 +46,7 @@ public class SolexaRunResource {
             illuminaSequencingRun = registerRun(solexaRunBean);
         } catch (Exception e) {
             LOG.error("Failed to process run", e);
-            throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
         }
         URI createdUri = uriInfo.getAbsolutePathBuilder().path(illuminaSequencingRun.getRunName()).build();
         return Response.created(createdUri).entity(new SolexaRunBean(illuminaSequencingRun)).build();

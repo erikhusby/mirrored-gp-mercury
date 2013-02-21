@@ -73,9 +73,9 @@ public class ProductActionBean extends CoreActionBean {
     private String product;
 
     // Risk criteria
-    private String[] criteria;
-    private String[] operators;
-    private String[] values;
+    private String[] criteria = new String[0];
+    private String[] operators = new String[0];
+    private String[] values = new String[0];
 
     @ValidateNestedProperties({
         @Validate(field="productFamily.productFamilyId", label="Product Family", required = true, maxlength=255, on={SAVE_ACTION}),
@@ -157,16 +157,30 @@ public class ProductActionBean extends CoreActionBean {
         }
 
         // Ensure that numeric criteria have valid data.
-        for (int i = 0; i < operators.length; i++) {
-            Operator operator = Operator.findByLabel(operators[i]);
-            if (operator.getType() == Operator.OperatorType.NUMERIC) {
+        int matchingValueIndex = 0;
+        for (String criterion : criteria) {
+            RiskCriteria.RiskCriteriaType type = RiskCriteria.RiskCriteriaType.findByLabel(criterion);
+            if (type.getOperatorType() == Operator.OperatorType.NUMERIC) {
                 try {
-                    Double.parseDouble(values[i]);
+                    Double.parseDouble(values[matchingValueIndex]);
                 } catch (NumberFormatException e) {
-                    addGlobalValidationError("Not a valid number for risk calculation: {2}", values[i]);
+                    addGlobalValidationError("Not a valid number for risk calculation: {2}", values[matchingValueIndex]);
                 }
             }
+
+            // Only increment the matching value if it is not boolean or if this is old style boolean where all indexes match
+            if ((type.getOperatorType() != Operator.OperatorType.BOOLEAN) || allLengthsMatch()) {
+                matchingValueIndex++;
+            }
         }
+    }
+
+    /**
+     * @return There was a period where all lengths always matched because of using hidden fields for booleans, but this
+     * was too error prone. Support both by checking all lengths here.
+     */
+    private boolean allLengthsMatch() {
+        return (operators.length == criteria.length) && (criteria.length == values.length);
     }
 
     @DefaultHandler
@@ -231,7 +245,36 @@ public class ProductActionBean extends CoreActionBean {
 
         editProduct.setProductFamily(productFamilyDao.find(editProduct.getProductFamily().getProductFamilyId()));
 
-        editProduct.updateRiskCriteria(criteria, operators, values);
+        // If all lengths match, just send it
+        if (allLengthsMatch()) {
+            editProduct.updateRiskCriteria(criteria, operators, values);
+        } else {
+            // Otherwise, there must be a boolean and we need to make them synchronized
+            String[] fullOperators = new String[criteria.length];
+            String[] fullValues = new String[criteria.length];
+
+            // insert the operators and values for booleans, otherwise, use the next item
+            int fullPosition = 0;
+            int originalPosition = 0;
+            for (String criterion : criteria) {
+                RiskCriteria.RiskCriteriaType type = RiskCriteria.RiskCriteriaType.findByLabel(criterion);
+                if (type.getOperatorType() == Operator.OperatorType.BOOLEAN) {
+                    fullOperators[fullPosition] = type.getOperators().get(0).getLabel();
+                    fullValues[fullPosition] = "true";
+                } else {
+                    fullOperators[fullPosition] = operators[originalPosition];
+                    fullValues[fullPosition] = values[originalPosition];
+
+                    // Only increment original position for values that are not boolean
+                    originalPosition++;
+                }
+
+                // Always increment full position
+                fullPosition++;
+            }
+
+            editProduct.updateRiskCriteria(criteria, fullOperators, fullValues);
+        }
 
         productDao.persist(editProduct);
         addMessage("Product \"" + editProduct.getProductName() + "\" has been saved");

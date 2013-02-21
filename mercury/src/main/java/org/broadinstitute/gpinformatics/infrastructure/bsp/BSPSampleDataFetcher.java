@@ -16,20 +16,26 @@ import java.util.*;
  * does a bit more object-ifying and type-safety.
  */
 public class BSPSampleDataFetcher extends AbstractJerseyClientService {
-    
-    @Inject BSPSampleSearchService service;
 
-    @Inject BSPConfig bspConfig;
+    @Inject
+    BSPSampleSearchService service;
+
+    @Inject
+    BSPConfig bspConfig;
 
     private final static Log logger = LogFactory.getLog(BSPSampleDataFetcher.class);
 
     private static final String WS_FFPE_DERIVED = "sample/ffpeDerived";
 
-    public BSPSampleDataFetcher() {}
+    private static final String WS_SAMPLE_DETAILS = "sample/getdetails";
+
+    public BSPSampleDataFetcher() {
+    }
 
 
     /**
      * New one up using the given service.
+     *
      * @param service
      */
     public BSPSampleDataFetcher(@Nonnull BSPSampleSearchService service) {
@@ -41,6 +47,7 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
 
     /**
      * Fetch the data from BSP for the given sample.
+     *
      * @param sampleName
      * @return
      */
@@ -62,6 +69,7 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
 
     /**
      * Fetch the data from bsp for multiple samples.
+     *
      * @param sampleNames
      * @return
      */
@@ -102,76 +110,96 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
         String fingerprint = null;
         String containerId = null;
         String sampleId = null;
+        String collaboratorName = null;
+        String population = null;
+        String ethnicity = null;
 
         if (bspColumns.length > 0) {
-            patientId = bspColumns[0];
+            patientId = getIfNotNullAndNotEmpty(bspColumns[0]);
         }
         if (bspColumns.length > 1) {
-            rootSample = bspColumns[1];
+            rootSample = getIfNotNullAndNotEmpty(bspColumns[1]);
         }
         if (bspColumns.length > 2) {
-            stockSample = bspColumns[2];
+            stockSample = getIfNotNullAndNotEmpty(bspColumns[2]);
         }
         if (bspColumns.length > 3) {
-            collaboratorSampleId = bspColumns[3];
+            collaboratorSampleId = getIfNotNullAndNotEmpty(bspColumns[3]);
         }
         if (bspColumns.length > 4) {
-            collection = bspColumns[4];
+            collection = getIfNotNullAndNotEmpty(bspColumns[4]);
         }
         if (bspColumns.length > 5) {
-            volume = bspColumns[5];
+            volume = getIfNotNullAndNotEmpty(bspColumns[5]);
         }
         if (bspColumns.length > 6) {
-            concentration = bspColumns[6];
+            concentration = getIfNotNullAndNotEmpty(bspColumns[6]);
         }
         if (bspColumns.length > 7) {
-            organism = bspColumns[7];
+            organism = getIfNotNullAndNotEmpty(bspColumns[7]);
         }
         if (bspColumns.length > 8) {
-            sampleLsid = bspColumns[8];
+            sampleLsid = getIfNotNullAndNotEmpty(bspColumns[8]);
         }
         if (bspColumns.length > 9) {
-            collaboratorParticipantId = bspColumns[9];
+            collaboratorParticipantId = getIfNotNullAndNotEmpty(bspColumns[9]);
         }
         if (bspColumns.length > 10) {
-            materialType = bspColumns[10];
+            materialType = getIfNotNullAndNotEmpty(bspColumns[10]);
         }
         if (bspColumns.length > 11) {
-            total = bspColumns[11];
+            total = getIfNotNullAndNotEmpty(bspColumns[11]);
         }
         if (bspColumns.length > 12) {
-            sampleType = bspColumns[12];
+            sampleType = getIfNotNullAndNotEmpty(bspColumns[12]);
         }
         if (bspColumns.length > 13) {
-            primaryDisease = bspColumns[13];
+            primaryDisease = getIfNotNullAndNotEmpty(bspColumns[13]);
         }
         if (bspColumns.length > 14) {
-            gender = bspColumns[14];
+            gender = getIfNotNullAndNotEmpty(bspColumns[14]);
         }
         if (bspColumns.length > 15) {
-            stockType = bspColumns[15];
+            stockType = getIfNotNullAndNotEmpty(bspColumns[15]);
         }
         if (bspColumns.length > 16) {
-            fingerprint = bspColumns[16];
+            fingerprint = getIfNotNullAndNotEmpty(bspColumns[16]);
         }
-
         if (bspColumns.length > 17) {
-            containerId = bspColumns[17];
+            containerId = getIfNotNullAndNotEmpty(bspColumns[17]);
         }
-
         if (bspColumns.length > 18) {
-            sampleId = bspColumns[18];
+            sampleId = getIfNotNullAndNotEmpty(bspColumns[18]);
+        }
+        if (bspColumns.length > 19) {
+            collaboratorName = getIfNotNullAndNotEmpty(bspColumns[19]);
+        }
+        if (bspColumns.length > 20) {
+            ethnicity = getIfNotNullAndNotEmpty(bspColumns[20]);
+        }
+        if (bspColumns.length > 21) {
+            population = getIfNotNullAndNotEmpty(bspColumns[21]);
         }
         /** beware of DBFreeBSPSampleTest: if you add columns here, you'll need to add them to the mock **/
 
-        return new BSPSampleDTO(containerId,stockSample,rootSample,null,patientId,organism,collaboratorSampleId,collection,
-                                volume,concentration, sampleLsid, collaboratorParticipantId, materialType, total,
-                                sampleType, primaryDisease,gender, stockType, fingerprint, sampleId);
+        return new BSPSampleDTO(containerId, stockSample, rootSample, null, patientId, organism, collaboratorSampleId, collection,
+                volume, concentration, sampleLsid, collaboratorParticipantId, materialType, total,
+                sampleType, primaryDisease, gender, stockType, fingerprint, sampleId, collaboratorName,
+                ethnicity, population);
 
     }
 
+    private static String getIfNotNullAndNotEmpty(String value) {
+        if (value != null) {
+            if (value.trim().length() > 0) {
+                return value.trim();
+            }
+        }
+        return null;
+    }
+
     private List<String[]> getBSPResponse(Collection<String> sampleNames) {
-        return  service.runSampleSearch(sampleNames,
+        return service.runSampleSearch(sampleNames,
                 BSPSampleSearchColumn.PARTICIPANT_ID,
                 BSPSampleSearchColumn.ROOT_SAMPLE,
                 BSPSampleSearchColumn.STOCK_SAMPLE,
@@ -190,9 +218,11 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
                 BSPSampleSearchColumn.STOCK_TYPE,
                 BSPSampleSearchColumn.FINGERPRINT,
                 BSPSampleSearchColumn.CONTAINER_ID,
-                BSPSampleSearchColumn.SAMPLE_ID);
+                BSPSampleSearchColumn.SAMPLE_ID,
+                BSPSampleSearchColumn.COLLABORATOR_NAME,
+                BSPSampleSearchColumn.ETHNICITY,
+                BSPSampleSearchColumn.RACE);
     }
-
 
 
     @Override
@@ -237,9 +267,36 @@ public class BSPSampleDataFetcher extends AbstractJerseyClientService {
                     throw new RuntimeException("Unrecognized return barcode: " + bspOutput[SAMPLE_BARCODE]);
                 }
 
-                bspSampleDTO.setFfpeDerived(Boolean.valueOf(bspOutput[FFPE]));
+                bspSampleDTO.setFfpeStatus(Boolean.valueOf(bspOutput[FFPE]));
             }
         });
-   }
+    }
+
+    public void fetchSamplePlastic(@Nonnull Collection<BSPSampleDTO> bspSampleDTOs) {
+        if (bspSampleDTOs.isEmpty()) {
+            return;
+        }
+
+        final Map<String, BSPSampleDTO> lsidToDTOMap = new HashMap<String, BSPSampleDTO>();
+        for (BSPSampleDTO bspSampleDTO : bspSampleDTOs) {
+            lsidToDTOMap.put(bspSampleDTO.getSampleLsid(), bspSampleDTO);
+        }
+
+        String urlString = bspConfig.getWSUrl(WS_SAMPLE_DETAILS);
+        String queryString = "sample_lsid=" + StringUtils.join(lsidToDTOMap.keySet(), "&sample_lsid=");
+        final int LSID = 1;
+        final int PLASTIC_BARCODE = 16;
+        post(urlString, queryString, ExtraTab.FALSE, new PostCallback() {
+            @Override
+            public void callback(String[] bspOutput) {
+                BSPSampleDTO bspSampleDTO = lsidToDTOMap.get(bspOutput[LSID]);
+                if (bspSampleDTO == null) {
+                    throw new RuntimeException("Unrecognized return lsid: " + bspOutput[LSID]);
+                }
+                bspSampleDTO.addPlastic(bspOutput[PLASTIC_BARCODE]);
+            }
+        });
+
+    }
 
 }

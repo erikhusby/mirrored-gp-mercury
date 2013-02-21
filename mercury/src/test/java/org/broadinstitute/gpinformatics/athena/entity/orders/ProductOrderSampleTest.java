@@ -16,6 +16,8 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 
+import static org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO.*;
+
 /**
  * A test.
  *
@@ -65,15 +67,19 @@ public class ProductOrderSampleTest {
             ProductOrder order = AthenaClientServiceStub.createDummyProductOrder();
             product = order.getProduct();
             MaterialType materialType = new MaterialType(BSP_MATERIAL_TYPE.getCategory(), BSP_MATERIAL_TYPE.getName());
-            addOn = AthenaClientServiceStub.createDummyProduct();
+            addOn = AthenaClientServiceStub.createDummyProduct("Exome Express", "partNumber");
             addOn.addAllowableMaterialType(materialType);
             addOn.setPrimaryPriceItem(new PriceItem("A", "B", "C", "D"));
             product.addAddOn(addOn);
-            sample1 = new ProductOrderSample("Sample1",
-                    new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", BSP_MATERIAL_TYPE.getFullName(), "", "", "", "", "", "",
-                            ""));
-            sample2 = new ProductOrderSample("Sample2",
-                    new BSPSampleDTO("", "", "", "", "", "", "", "", "", "", "", "", "XXX:XXX", "", "", "", "", "", "", ""));
+
+            BSPSampleDTO bspSampleDTO1 = BSPSampleDTO.createDummy();
+            bspSampleDTO1.setMaterialType(BSP_MATERIAL_TYPE.getFullName());
+            sample1 = new ProductOrderSample("Sample1", bspSampleDTO1);
+
+            BSPSampleDTO bspSampleDTO2 = BSPSampleDTO.createDummy();
+            bspSampleDTO2.setMaterialType("XXX:XXX");
+            sample2 = new ProductOrderSample("Sample2", bspSampleDTO2);
+
             order.setSamples(Collections.singletonList(sample1));
             List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
             samples.add(sample1);

@@ -2,9 +2,11 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
+import javax.enterprise.inject.Alternative;
 import java.util.*;
 
 @Stub
+@Alternative
 public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
 
     public static final String SM_1P3XN = "SM-1P3XN";
@@ -58,6 +60,7 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
     public static final String SM_12CO4_FP =
             "AACTCCCCGGAAAGCTACAAAACG--AATTAGAGTTAATTCTCCAATTGTCTAG--GGACAGGGGGTTCTAAACCCAA--GTCTCCCGCTAGTTTTGGAGAGAGCCGGAGCCCTTTCCAGAGTTCTCTAGTTGGCTGGAGTTCCAAAACTTTCCAATTCTTTGTCGCCGGTTTTACCCCCGGAGAGCTCCCT";
     public static final String SM_12CO4_DISEASE = "Carcinoid Tumor";
+    public static final String SM_12CO4_COLLABORATOR = "Home Simpson";
 
 
     public static final String SM_12FO4 = "SM-12FO4";
@@ -139,7 +142,8 @@ public class BSPSampleSearchServiceStub implements BSPSampleSearchService {
                 "",//  STOCK_TYPE
                 SM_12CO4_FP,//  FINGERPRINT
                 SM_12CO4_CONTAINER_ID, //Container ID,
-                SM_12CO4 // Sample ID
+                SM_12CO4, // Sample ID
+                SM_12CO4_COLLABORATOR
 
         });
         addToMap( SM_1P3WY,new String[] {

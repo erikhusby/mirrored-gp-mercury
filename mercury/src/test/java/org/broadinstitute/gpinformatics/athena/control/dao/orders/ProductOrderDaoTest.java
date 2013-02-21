@@ -6,9 +6,11 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderTest;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -16,24 +18,24 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.util.Collection;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
 
 /**
- *
  * Created by IntelliJ IDEA.
  * User: mccrory
  * Date: 10/9/12
  * Time: 3:47 PM
  */
-@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=true)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = true)
 public class ProductOrderDaoTest extends ContainerTest {
 
     public static final String TEST_ORDER_TITLE_PREFIX = "TestProductOrder_";
-    public static final long TEST_CREATOR_ID = new Random().nextInt(Integer.MAX_VALUE);
-    public static final String MS_1111 = "MS-1111";
-    public static final String MS_1112 = "MS-1112";
+    public static final long   TEST_CREATOR_ID         = new Random().nextInt(Integer.MAX_VALUE);
+    public static final String MS_1111                 = "MS-1111";
+    public static final String MS_1112                 = "MS-1112";
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -47,7 +49,7 @@ public class ProductOrderDaoTest extends ContainerTest {
     @Inject
     private UserTransaction utx;
 
-    private final String testResearchProjectKey = "TestResearchProject_" + UUID.randomUUID();
+    private final        String testResearchProjectKey    = "TestResearchProject_" + UUID.randomUUID();
     private static final String testProductOrderKeyPrefix = "DRAFT-";
 
     ProductOrder order;
@@ -98,9 +100,36 @@ public class ProductOrderDaoTest extends ContainerTest {
 
         // Try to create a Product Order and persist it.
         String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
-        ProductOrder order = new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle,
-                ProductOrderTest.createSampleList(sampleNames), "quoteId",
-                product, project);
+        ProductOrder order =
+                new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, ProductOrderTest.createSampleList(sampleNames),
+                                        "quoteId", product, project);
+
+        order.setJiraTicketKey(getTestProductOrderKey());
+        BspUser testUser = new BspUser();
+        testUser.setUserId(TEST_CREATOR_ID);
+        order.prepareToSave(testUser, true);
+
+        return order;
+    }
+
+    public static ProductOrder createTestExExProductOrder(ResearchProjectDao researchProjectDao, ProductDao productDao,
+                                                          String... sampleNames) {
+        // Find a research project in the DB.
+        List<ResearchProject> projects = researchProjectDao.findAllResearchProjects();
+        Assert.assertTrue(projects != null && !projects.isEmpty());
+        ResearchProject project = projects.get(new Random().nextInt(projects.size()));
+
+        List<Product> products = productDao.findList(Product.class, Product_.workflowName,
+                                                            WorkflowName.EXOME_EXPRESS
+                                                                                       .getWorkflowName());
+        Assert.assertTrue(products != null && !products.isEmpty());
+        Product product = products.get(new Random().nextInt(products.size()));
+
+        // Try to create a Product Order and persist it.
+        String testProductOrderTitle = TEST_ORDER_TITLE_PREFIX + UUID.randomUUID();
+        ProductOrder order =
+                new ProductOrder(TEST_CREATOR_ID, testProductOrderTitle, ProductOrderTest.createSampleList(sampleNames),
+                                        "quoteId", product, project);
 
         order.setJiraTicketKey(getTestProductOrderKey());
         BspUser testUser = new BspUser();
@@ -122,9 +151,9 @@ public class ProductOrderDaoTest extends ContainerTest {
 
         // Try to find a non-existing ProductOrder
         productOrderFromDb = productOrderDao.findByResearchProjectAndTitle(order.getResearchProject(),
-                "NonExistingProductOrder_" + UUID.randomUUID());
+                                                                                  "NonExistingProductOrder_" + UUID.randomUUID());
         Assert.assertNull(productOrderFromDb,
-                "Should have thrown exception when trying to retrieve an non-existing product Order.");
+                                 "Should have thrown exception when trying to retrieve an non-existing product Order.");
 
         // Try to find an existing ProductOrder by ResearchProject
         List<ProductOrder> orders = productOrderDao.findByResearchProject(order.getResearchProject());
@@ -152,4 +181,23 @@ public class ProductOrderDaoTest extends ContainerTest {
         Assert.assertNotNull(orders);
         Assert.assertFalse(orders.isEmpty());
     }
+
+    public void testFindByWorkflow() {
+
+        ProductOrder testOrder = createTestExExProductOrder(researchProjectDao, productDao);
+
+        String businessKey = testOrder.getBusinessKey();
+
+        productOrderDao.persist(testOrder);
+        productOrderDao.flush();
+        productOrderDao.clear();
+
+        Collection<ProductOrder> orders =
+//                productOrderDao.findByWorkflowName("ScottFlow");
+                productOrderDao.findByWorkflowName(WorkflowName.EXOME_EXPRESS.getWorkflowName());
+
+        Assert.assertTrue(orders.size()>0);
+
+    }
+
 }

@@ -32,12 +32,30 @@ public class BSPSampleDataFetcherContainerTest extends Arquillian {
         BSPSampleDTO paraffin = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-2UVBU");
         BSPSampleDTO notFFPE = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-3HM8");
 
+        Assert.assertNotNull(ffpe);
+        Assert.assertNotNull(paraffin);
+        Assert.assertNotNull(notFFPE);
         List<BSPSampleDTO> dtoList = Arrays.asList(ffpe, paraffin, notFFPE);
 
         bspSampleDataFetcher.fetchFFPEDerived(dtoList);
 
-        Assert.assertTrue(ffpe.getFfpeDerived());
-        Assert.assertTrue(paraffin.getFfpeDerived());
-        Assert.assertFalse(notFFPE.getFfpeDerived());
+        Assert.assertTrue(ffpe.getFfpeStatus());
+        Assert.assertTrue(paraffin.getFfpeStatus());
+        Assert.assertFalse(notFFPE.getFfpeStatus());
+    }
+
+    @Test(enabled = true)
+    public void testSamplePlastic() {
+        BSPSampleDTO rootSample = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-12LY");
+        BSPSampleDTO aliquotSample = bspSampleDataFetcher.fetchSingleSampleFromBSP("SM-3HM8");
+
+        Assert.assertNotNull(rootSample);
+        Assert.assertNotNull(aliquotSample);
+        List<BSPSampleDTO> dtoList = Arrays.asList(rootSample, aliquotSample);
+
+        bspSampleDataFetcher.fetchSamplePlastic(dtoList);
+
+        Assert.assertNotNull(rootSample.getPlasticBarcodes());
+        Assert.assertNotNull(aliquotSample.getPlasticBarcodes());
     }
 }

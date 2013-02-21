@@ -35,6 +35,14 @@ public class LiveThriftService implements ThriftService {
                 try {
                     return client.fetchRun(runName);
                 } catch (TZIMSException e) {
+                    if (e.getDetails() != null) {
+                        if (e.getDetails().contains("ZIMs failed to find run")) {
+                            // this is a typical situation: the pipeline is asking for a run
+                            // a tad too early, and it hasn't been registered yet, so don't panic.
+                            log.info("Run " + runName + " doesn't appear to have been registered yet.  Please try again later or contact the mercury team if the problem persists.");
+                        }
+                        return null;
+                    }
                     String message = "Failed to fetch run: " + runName;
                     log.error(message, e);
                     throw new RuntimeException(message, e);

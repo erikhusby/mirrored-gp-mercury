@@ -14,7 +14,6 @@ import java.util.Set;
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
 public class GenericReagent extends Reagent {
 
     @ManyToMany

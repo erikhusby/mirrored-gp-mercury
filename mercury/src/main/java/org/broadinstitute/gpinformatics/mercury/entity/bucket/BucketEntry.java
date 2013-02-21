@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -70,9 +69,9 @@ public class BucketEntry  {
     @Column(name = "po_business_key")
     private String poBusinessKey;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
     @JoinColumn (name = "bucket_existence_id")
-    private Bucket bucketExistence;
+    private Bucket bucket;
 
     /*
         TODO SGM:  Implement this as a separate join table to have the ranking associated directly with the Product
@@ -90,7 +89,7 @@ public class BucketEntry  {
     public BucketEntry ( @Nonnull LabVessel labVesselIn, @Nonnull String poBusinessKey, @Nonnull Bucket bucket ) {
 
         this(labVesselIn, poBusinessKey);
-        bucketExistence = bucket;
+        this.bucket = bucket;
 
     }
 
@@ -122,8 +121,8 @@ public class BucketEntry  {
      * accessor for the bucket to which this entry is associated with
      * @return a specific instance of a Bucket
      */
-    public Bucket getBucketExistence () {
-        return bucketExistence;
+    public Bucket getBucket() {
+        return bucket;
     }
 
     /**
@@ -131,8 +130,8 @@ public class BucketEntry  {
      *
      * @param bucketExistenceIn a specific instance of a Bucket to associate with this entry
      */
-    public void setBucketExistence ( Bucket bucketExistenceIn ) {
-        bucketExistence = bucketExistenceIn;
+    public void setBucket(Bucket bucketExistenceIn) {
+        bucket = bucketExistenceIn;
     }
 
     /**

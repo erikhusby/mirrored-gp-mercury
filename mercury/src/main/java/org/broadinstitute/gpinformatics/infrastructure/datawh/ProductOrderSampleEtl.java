@@ -74,10 +74,8 @@ public class ProductOrderSampleEtl extends GenericEntityEtl {
                 new GenericDao.GenericDaoCallback<ProductOrderSample>() {
                     @Override
                     public void callback(CriteriaQuery<ProductOrderSample> cq, Root<ProductOrderSample> root) {
-                        if (startId > 0 || endId < Long.MAX_VALUE) {
-                            CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-                            cq.where(cb.between(root.get(ProductOrderSample_.productOrderSampleId), startId, endId));
-                        }
+                        CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
+                        cq.where(cb.between(root.get(ProductOrderSample_.productOrderSampleId), startId, endId));
                     }
                 });
         for (ProductOrderSample entity : entityList) {

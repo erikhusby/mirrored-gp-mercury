@@ -23,6 +23,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.Query;
 import java.io.IOException;
 import java.util.*;
 
@@ -268,7 +269,7 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderDao.persist(productOrder);
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void removeSamplesForGPLIM877() {
         List<String> samplesToRemove = Arrays.asList(
                 "SM-1WJOV",
@@ -312,6 +313,43 @@ public class ProductOrderFixupTest extends Arquillian {
                 riskItem.setRemark("Bad Concentration found");
                 sample.setRiskItems(Collections.singletonList(riskItem));
                 productOrderSampleDao.persist(sample);
+            }
+        }
+    }
+
+
+
+    @Test(enabled = false)
+    public void setPlacedDate() {
+
+        Query query = productOrderDao.getEntityManager().createNativeQuery(
+                "SELECT pdo_aud.jira_ticket_key, rev_info.REV_DATE FROM\n" +
+                "  athena.product_order_aud pdo_aud, athena.product_order pdo, mercury.rev_info rev_info WHERE \n" +
+                "  pdo.product_order_id = pdo_aud.product_order_id AND\n" +
+                "  pdo_aud.rev = (\n" +
+                "    SELECT MIN(pdo_aud2.rev) FROM athena.product_order_aud pdo_aud2 WHERE\n" +
+                "      pdo_aud2.product_order_id = pdo.product_order_id AND pdo_aud2.jira_ticket_key IS NOT NULL\n" +
+                "  ) AND\n" +
+                "rev_info.REV_INFO_ID = pdo_aud.rev\n" +
+                "  \n" +
+                "ORDER BY pdo.created_date "
+        );
+
+        List<Object[]> resultList = query.getResultList();
+
+        Map<String, Date> keyToDateMap = new HashMap<String, Date>();
+
+        for (Object[] row : resultList) {
+            String key = (String) row[0];
+            Date date = (Date) row[1];
+            keyToDateMap.put(key, date);
+        }
+
+        List<ProductOrder> productOrders = productOrderDao.findAll();
+        for (ProductOrder productOrder : productOrders) {
+            if (keyToDateMap.containsKey(productOrder.getBusinessKey())) {
+                productOrder.setPlacedDate(keyToDateMap.get(productOrder.getBusinessKey()));
+                productOrderDao.persist(productOrder);
             }
         }
     }

@@ -2383,4 +2383,50 @@
         <modifyDataType tableName="risk_criteria_aud" schemaName="athena" columnName="value" newDataType="varchar(255)"/>
     </changeSet>
 
+    <changeSet id="GPLIM-945-1" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="risk_item" indexName="ix_item_sample" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="risk_item" indexName="ix_item_sample" schemaName="athena">
+            <column name="product_order_sample"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-945-2" author="hrafal">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="risk_item" indexName="ix_item_criteria" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="risk_item" indexName="ix_item_criteria" schemaName="athena">
+            <column name="risk_criteria"/>
+        </createIndex>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-960" author="pshapiro">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_order" columnName="placed_date" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order" schemaName="athena">
+            <column name="placed_date" type="DATE"/>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-960.1" author="mcovarr">
+        <preConditions>
+            <not>
+                <columnExists tableName="product_order_aud" columnName="placed_date" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <addColumn tableName="product_order_aud" schemaName="athena">
+            <column name="placed_date" type="DATE"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>

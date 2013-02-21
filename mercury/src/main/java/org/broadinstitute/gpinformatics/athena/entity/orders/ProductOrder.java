@@ -16,10 +16,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
-import org.hibernate.envers.NotAudited;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
@@ -60,6 +58,9 @@ public class ProductOrder implements Serializable {
 
     private Long createdBy;
 
+    @Column(name = "placed_date")
+    private Date placedDate;
+
     private Date modifiedDate;
 
     private Long modifiedBy;
@@ -91,12 +92,6 @@ public class ProductOrder implements Serializable {
     @Column(name = "count")
     /** counts the number of lanes; the default value is one lane */
     private int count = 1;
-
-    /** Counts the number of rows in the one-to-many table.  Reference this count before fetching the collection, to
-     * avoid an unnecessary database round trip  */
-    @NotAudited
-    @Formula("(select count(*) from athena.product_order_sample pos where pos.product_order = product_order_id)")
-    private Integer pdoSampleCount = 0;
 
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order", nullable = false)
@@ -583,6 +578,20 @@ public class ProductOrder implements Serializable {
     public long getModifiedBy() {
         return modifiedBy;
     }
+
+    public Date getPlacedDate() {
+        return placedDate;
+    }
+
+    /**
+     * This should only be called from tests or for database backpopulation.  The placed date is normally set interally
+     * when an order is placed.
+     * @param placedDate the date to set
+     */
+    public void setPlacedDate(Date placedDate) {
+        this.placedDate = placedDate;
+    }
+
     /**
      * Use the BSP Manager to load the bsp data for every sample in this product order.
      */
@@ -797,7 +806,7 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * submitProductOrder encapsulates the set of steps necessary to finalize the submission of a product order.
+     * This method encapsulates the set of steps necessary to finalize the submission of a product order.
      * This mainly deals with jira ticket creation.  This method will:
      * <ul>
      * <li>Create a new jira ticket and persist the reference to the ticket key</li>
@@ -808,7 +817,8 @@ public class ProductOrder implements Serializable {
      *
      * @throws IOException
      */
-    public void submitProductOrder() throws IOException {
+    public void placeOrder() throws IOException {
+        placedDate = new Date();
         JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
@@ -977,10 +987,6 @@ public class ProductOrder implements Serializable {
 
     public boolean hasJiraTicketKey() {
         return !StringUtils.isBlank(jiraTicketKey);
-    }
-
-    public Integer getPdoSampleCount() {
-        return pdoSampleCount;
     }
 
     public String getOriginalTitle() {

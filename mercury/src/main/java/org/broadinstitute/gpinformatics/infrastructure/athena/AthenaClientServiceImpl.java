@@ -8,11 +8,13 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 
 import javax.annotation.Nonnull;
+import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 
 @Impl
+@Default
 public class AthenaClientServiceImpl implements AthenaClientService {
 
     @Inject

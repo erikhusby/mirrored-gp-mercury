@@ -15,8 +15,9 @@ public class WorkflowConfigDenorm {
     private static final Logger logger = Logger.getLogger(WorkflowConfigDenorm.class);
 
     private final long workflowConfigDenormId;
+    private final long workflowId;
+    private final long processId;
     private final Date effectiveDate;
-    private final String effectiveDateStr;
     private final String productWorkflowName;
     private final String productWorkflowVersion;
     private final String workflowProcessName;
@@ -34,19 +35,38 @@ public class WorkflowConfigDenorm {
                                 String workflowStepEventName) {
 
         this.effectiveDate = effectiveDate;
-        this.effectiveDateStr = ExtractTransform.secTimestampFormat.format(effectiveDate);
         this.productWorkflowName = productWorkflowName;
         this.productWorkflowVersion = productWorkflowVersion;
         this.workflowProcessName = workflowProcessName;
         this.workflowProcessVersion = workflowProcessVersion;
         this.workflowStepName = workflowStepName;
         this.workflowStepEventName = workflowStepEventName;
-        this.workflowConfigDenormId = calculateId(effectiveDateStr, productWorkflowName, productWorkflowVersion,
+
+        workflowConfigDenormId = calculateId(effectiveDate, productWorkflowName, productWorkflowVersion,
                 workflowProcessName, workflowProcessVersion, workflowStepName, workflowStepEventName);
+
+        workflowId = calculateWorkflowId(productWorkflowName, productWorkflowVersion);
+        processId = calculateProcessId(workflowProcessName, workflowProcessVersion, workflowStepName, workflowStepEventName);
+    }
+
+    public long calculateProcessId(String processName, String version, String stepName, String eventName) {
+        return GenericEntityEtl.hash(processName, version, stepName, eventName);
+    }
+
+    public long calculateWorkflowId(String productWorkflowName, String productWorkflowVersion) {
+        return GenericEntityEtl.hash(productWorkflowName, productWorkflowVersion);
     }
 
     public long getWorkflowConfigDenormId() {
         return workflowConfigDenormId;
+    }
+
+    public long getWorkflowId() {
+        return workflowId;
+    }
+
+    public long getProcessId() {
+        return processId;
     }
 
     public Date getEffectiveDate() {
@@ -54,7 +74,7 @@ public class WorkflowConfigDenorm {
     }
 
     public String getEffectiveDateStr() {
-        return effectiveDateStr;
+        return ExtractTransform.secTimestampFormat.format(effectiveDate);
     }
 
     public String getProductWorkflowName() {
@@ -81,22 +101,13 @@ public class WorkflowConfigDenorm {
         return workflowStepEventName;
     }
 
-    /** Calculates a workflowConfigDenormId using a deterministic algorithm. */
-    private static long calculateId(String effectiveDateStr, String productWorkflowName, String productWorkflowVersion,
-                                   String workflowProcessName, String workflowProcessVersion, String workflowStepName,
-                                   String workflowStepEventName) {
-
-        long id = GenericEntityEtl.hash(effectiveDateStr +
-                productWorkflowName +
-                productWorkflowVersion +
-                workflowProcessName +
-                workflowProcessVersion +
-                workflowStepName +
-                workflowStepEventName);
-        // Uncomment this to get the denorm ids used in unit test.
-        //logger.info("id=" + id + ", " + effectiveDateStr + ", " + productWorkflowName + ", " + productWorkflowVersion +
-        //", " + workflowProcessName + ", " + workflowProcessVersion + ", " + workflowStepName + ", " + workflowStepEventName);
-        return id;
+    /**
+     * Calculates a workflowConfigDenormId using a deterministic algorithm.
+     */
+    public long calculateId(Date effectiveDate, String productWorkflowName, String productWorkflowVersion, String workflowProcessName,
+                            String workflowProcessVersion, String workflowStepName, String workflowStepEventName) {
+        return GenericEntityEtl.hash(String.valueOf(effectiveDate.getTime()), productWorkflowName, productWorkflowVersion,
+                workflowProcessName, workflowProcessVersion, workflowStepName, workflowStepEventName);
     }
 
     /**

@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
@@ -16,16 +15,6 @@ public class ProductOrderUtil {
 
     @Inject
     private QuoteService quoteService;
-
-    public String getFundsRemaining(ProductOrder productOrder) throws Exception {
-
-        if (productOrder == null) {
-            return "";
-        }
-
-        String quoteId = productOrder.getQuoteId();
-        return getFundsRemaining(quoteId);
-    }
 
     public String getFundsRemaining(String quoteId) throws Exception {
         String fundsRemainingString;

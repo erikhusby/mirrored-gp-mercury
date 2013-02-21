@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.infrastructure.bsp.plating;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.config.ClientConfig;
-import junit.framework.Assert;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.container.ContainerManager;
@@ -181,8 +180,6 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
                                                      String login, String platingRequestName,
                                                      List<SeqWorkRequestAliquot> seqAliquots, List<ControlWell> controlWells,
                                                      String comments, String seqTechnology, String humanReadableBarcode) {
-
-
         final int SAMPLES_PER_PLATE = PLATE_WELL_COUNT - (controlWells == null ? 0 : controlWells.size());
 
         GroupingIterable<SeqWorkRequestAliquot> platesWorthGroupingsOfAliquots =
@@ -195,7 +192,6 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
         // this will start being used once Jason clues me in as to how to differentiate plates from tubes
         @SuppressWarnings("unused")
         ContainerManager bspContainerManager = bspManagerFactory.createContainerManager();
-
 
         /*
         * Instantiate a new Work Request
@@ -510,7 +506,7 @@ public class BSPPlatingRequestServiceImpl extends AbstractJerseyClientService im
                                                           String comments, String seqTechnology, String label)
             throws Exception {
         //Assert.fail("failed from impl on purpose");
-        Assert.assertNotNull(options);
+
         List<SeqWorkRequestAliquot> bspStocks = new ArrayList<SeqWorkRequestAliquot>();
         BSPPlatingRequestResult result = null;
         for (BSPPlatingRequest request : requests) {

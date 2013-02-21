@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 /**
  * This handles all the needed interface processing elements
  */
-@UrlBinding("/search/all.action")
+@UrlBinding(SearchActionBean.ACTIONBEAN_URL_BINDING)
 public class SearchActionBean extends CoreActionBean {
 
     private static final String SEPARATOR = ",";
@@ -78,7 +78,7 @@ public class SearchActionBean extends CoreActionBean {
     private String batchLabel;
     private LabBatch batch;
 
-    private List<LabVessel> foundVessels = null;
+    private Set<LabVessel> foundVessels = null;
     private List<MercurySample> foundSamples;
     private List<ProductOrder> foundPDOs;
     private List<LabBatch> foundBatches;
@@ -127,7 +127,7 @@ public class SearchActionBean extends CoreActionBean {
         int count = 0;
         long totalResults = 0l;
 
-        foundVessels = labVesselDao.findByListIdentifiers(searchList);
+        foundVessels = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(searchList));
         if (foundVessels.size() > 0) {
             count++;
             totalResults += foundVessels.size();
@@ -195,9 +195,7 @@ public class SearchActionBean extends CoreActionBean {
     private void doBatchSearch() {
         List<String> searchList = SearchActionBean.cleanInputString(searchKey);
 
-        foundVessels = new ArrayList<LabVessel>();
-
-        foundVessels = labVesselDao.findByListIdentifiers(searchList);
+        foundVessels = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(searchList));
 
         foundVessels.addAll(labVesselDao.findByPDOKeyList(searchList));
 
@@ -277,11 +275,11 @@ public class SearchActionBean extends CoreActionBean {
         return multipleResultTypes;
     }
 
-    public List<LabVessel> getFoundVessels() {
+    public Set<LabVessel> getFoundVessels() {
         return foundVessels;
     }
 
-    public void setFoundVessels(List<LabVessel> foundVessels) {
+    public void setFoundVessels(Set<LabVessel> foundVessels) {
         this.foundVessels = foundVessels;
     }
 

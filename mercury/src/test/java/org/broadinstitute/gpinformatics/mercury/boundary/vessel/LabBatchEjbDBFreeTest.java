@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.easymock.EasyMock;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -93,7 +94,7 @@ public class LabBatchEjbDBFreeTest {
         pdoNames = new ArrayList<String>();
         Collections.addAll(pdoNames, STUB_TEST_PDO_KEY);
 
-        workflowName = "Exome Express";
+        workflowName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
 
         EasyMock.replay(mockJira, labBatchDAO, tubeDao);
 
@@ -122,7 +123,7 @@ public class LabBatchEjbDBFreeTest {
         Assert.assertEquals(testBatch.getJiraTicket().getTicketName(),testBatch.getBatchName());
 
         Assert.assertEquals(6, testBatch.getStartingLabVessels().size());
-        Assert.assertEquals("6 samples from Test RP PDO-999\n", testBatch.getBatchDescription());
+        Assert.assertEquals("6 samples from MyResearchProject PDO-999\n", testBatch.getBatchDescription());
         Assert.assertNull(testBatch.getDueDate());
         Assert.assertEquals(testBatch.getBatchName(), testBatch.getJiraTicket().getTicketName());
     }
@@ -183,7 +184,7 @@ public class LabBatchEjbDBFreeTest {
 
         Assert.assertNotNull(testBatch.getStartingLabVessels());
         Assert.assertEquals(6, testBatch.getStartingLabVessels().size());
-        Assert.assertEquals("6 samples from Test RP PDO-999\n", testBatch.getBatchDescription());
+        Assert.assertEquals("6 samples from MyResearchProject PDO-999\n", testBatch.getBatchDescription());
         Assert.assertNull(testBatch.getDueDate());
 
         Assert.assertEquals(testBatch.getBatchName(), testBatch.getJiraTicket().getTicketName());

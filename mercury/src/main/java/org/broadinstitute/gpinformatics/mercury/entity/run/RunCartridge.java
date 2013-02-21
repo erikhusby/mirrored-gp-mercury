@@ -4,7 +4,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
-import javax.persistence.Table;
 
 /**
  * Something that contains samples and is
@@ -15,7 +14,6 @@ import javax.persistence.Table;
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
 public abstract class RunCartridge extends LabVessel {
 
     public RunCartridge(String label) {

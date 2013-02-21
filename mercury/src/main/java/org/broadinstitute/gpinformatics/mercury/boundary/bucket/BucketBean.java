@@ -4,7 +4,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -183,13 +182,14 @@ public class BucketBean {
 
         Set<BucketEntry> bucketEntrySet = buildBatchListByVessels(vesselsToBatch, workingBucket);
 
-        LabBatch bucketBatch = startBucketDrain(bucketEntrySet, operator, batchInitiationLocation, false);
+//        LabBatch bucketBatch =
+                startBucketDrain(bucketEntrySet, operator, batchInitiationLocation, false);
 
-        if (bucketBatch.getJiraTicket() == null) {
-            batchEjb.batchToJira(operator, batchTicket, bucketBatch);
-        }
+//        if (bucketBatch.getJiraTicket() == null) {
+//            batchEjb.batchToJira(operator, batchTicket, bucketBatch);
+//        }
 
-        batchEjb.jiraBatchNotification(bucketBatch);
+//        batchEjb.jiraBatchNotification(bucketBatch);
 
 
     }
@@ -273,12 +273,11 @@ public class BucketBean {
     public void start(@Nonnull String operator, final int numberOfBatchSamples, @Nonnull Bucket workingBucket,
                       final String batchTicket) {
 
-        LabBatch bucketBatch = null;
+//        LabBatch bucketBatch = null;
+//
+//        bucketBatch =
+                startDBFree(operator, numberOfBatchSamples, workingBucket);
 
-        bucketBatch = startDBFree(operator, numberOfBatchSamples, workingBucket);
-
-        batchEjb.batchToJira(operator, batchTicket, bucketBatch);
-        batchEjb.jiraBatchNotification(bucketBatch);
     }
 
     /**
@@ -344,12 +343,9 @@ public class BucketBean {
          *
          * Create (if necessary) a new batch
          */
-        LabBatch bucketBatch = startBucketDrain(bucketEntries, operator, batchInitiationLocation, false);
+//        LabBatch bucketBatch =
+                startBucketDrain(bucketEntries, operator, batchInitiationLocation, false);
 
-        if (bucketBatch.getJiraTicket() == null) {
-            batchEjb.batchToJira(operator, batchTicket, bucketBatch);
-        }
-        batchEjb.jiraBatchNotification(bucketBatch);
     }
 
     /**
@@ -394,11 +390,8 @@ public class BucketBean {
          */
         if (bucketBatch == null) {
 
-            //TODO SGM  Should use logic in LabBatchEJB
+//            throw new InformaticsServiceException("There should be an existing Batch");
 
-            bucketBatch = new LabBatch(LabBatch.generateBatchName(CreateFields.IssueType.EXOME_EXPRESS.getJiraName(),
-                    LabVessel.extractPdoKeyList(batchVessels)),
-                    batchVessels, LabBatch.LabBatchType.WORKFLOW);
         }
 
         removeEntries(bucketEntries);
@@ -419,7 +412,7 @@ public class BucketBean {
                     .getLabCentricName() +
                         " and PDO " + currEntry.getPoBusinessKey() + " to be popped from bucket.");
 
-            currEntry.getBucketExistence().removeEntry(currEntry);
+            currEntry.getBucket().removeEntry(currEntry);
 
             jiraRemovalUpdate(currEntry, "Extracted for Batch");
 
@@ -458,7 +451,7 @@ public class BucketBean {
             jiraService.addComment(bucketEntry.getPoBusinessKey(), bucketEntry.getPoBusinessKey() + ":" +
                                                                    bucketEntry.getLabVessel().getLabCentricName() +
                                                                    " Removed from bucket " + bucketEntry
-                    .getBucketExistence()
+                    .getBucket()
                     .getBucketDefinitionName() + ":: " + reason);
         } catch (IOException ioe) {
             logger.error("Error attempting to create jira removal comment for " +
