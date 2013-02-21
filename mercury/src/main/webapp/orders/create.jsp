@@ -182,7 +182,7 @@
                                     DRAFT
                                 </c:when>
                                 <c:otherwise>
-                                    <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">
+                                    <a target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.jiraTicketKey)}" class="external" target="JIRA">
                                             ${actionBean.editOrder.jiraTicketKey}
                                     </a>
                                 </c:otherwise>
@@ -228,7 +228,7 @@
                                                    value="${actionBean.editOrder.researchProject.businessKey}"/>
                                     ${actionBean.editOrder.researchProject.title}
                                 </stripes:link>
-                                (<a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.researchProject.jiraTicketKey}" class="external" target="JIRA">
+                                (<a target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.researchProject.jiraTicketKey)}" class="external" target="JIRA">
                                 ${actionBean.editOrder.researchProject.jiraTicketKey}
                                 </a>)
                             </div>

@@ -48,7 +48,7 @@
                     <div class="form-value">
                         <c:if test="${actionBean.editResearchProject.jiraTicketKey != null}">
                             <stripes:link target="JIRA"
-                                          href="${actionBean.jiraUrl}${actionBean.editResearchProject.jiraTicketKey}"
+                                          href="${actionBean.jiraUrl(actionBean.editResearchProject.jiraTicketKey)}"
                                           class="external">
                                 ${actionBean.editResearchProject.jiraTicketKey}
                             </stripes:link>
@@ -202,7 +202,7 @@
                             </stripes:link>
                         </td>
                         <td>
-                            <a class="external" target="JIRA" href="${actionBean.jiraUrl}${order.jiraTicketKey}" class="external" target="JIRA">
+                            <a class="external" target="JIRA" href="${actionBean.jiraUrl(order.jiraTicketKey)}" class="external" target="JIRA">
                                     ${order.jiraTicketKey}
                             </a>
                         </td>

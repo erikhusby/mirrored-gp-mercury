@@ -12,16 +12,13 @@ import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.*;
 
 /**
- * Application wide access to BSP's user list. The list is currently cached once at application startup. In the
- * future, we may want to rebuild the list regularly to account for changes to the user database.
+ * Application wide access to BSP's user list. The list is regularly refreshed by ExternalDataCacheControl.
  */
-@Named
 @ApplicationScoped
 public class BSPUserList extends AbstractCache implements Serializable {
     private static final Log logger = LogFactory.getLog(BSPUserList.class);

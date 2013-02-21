@@ -6,10 +6,8 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.text.NumberFormat;
 
-@Named
 @RequestScoped
 public class ProductOrderUtil {
 

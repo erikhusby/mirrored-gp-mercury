@@ -7,12 +7,10 @@ import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONArray;
 import org.json.JSONException;
 
-import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@Named
 public class IrbConverter {
 
     private static final int IRB_NAME_MAX_LENGTH = 250;

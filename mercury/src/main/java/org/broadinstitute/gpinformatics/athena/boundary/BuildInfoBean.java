@@ -5,14 +5,12 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfigu
 
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.inject.Named;
 
 /**
  * Get the build and version information.  Also get the deployment type (DEV,QA,PROD,STUBBY).
  *
  * @author Michael Dinsmore
  */
-@Named
 @RequestScoped
 public class BuildInfoBean {
     @Inject

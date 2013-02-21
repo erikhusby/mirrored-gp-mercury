@@ -172,7 +172,7 @@
                                     </c:when>
                                     <c:otherwise>
                                         <a target="JIRA" title="${order.jiraTicketKey}"
-                                           href="${actionBean.jiraUrl}${order.jiraTicketKey}" class="external"
+                                           href="${actionBean.jiraUrl(order.jiraTicketKey)}" class="external"
                                            target="JIRA">
                                                 ${order.jiraTicketKey}
                                         </a>

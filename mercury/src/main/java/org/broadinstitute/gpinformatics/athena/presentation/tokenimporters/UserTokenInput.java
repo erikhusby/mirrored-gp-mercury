@@ -8,15 +8,13 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.util.List;
 
 /**
- * This class is the user implementation of the token object
+ * Token Input support for users.
  *
  * @author hrafal
  */
-@Named
 public class UserTokenInput extends TokenInput<BspUser> {
 
     @Inject

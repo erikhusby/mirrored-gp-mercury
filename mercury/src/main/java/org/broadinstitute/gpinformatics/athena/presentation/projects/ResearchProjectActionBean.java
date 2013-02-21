@@ -4,15 +4,14 @@ import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.*;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.converter.IrbConverter;
-import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.TableauLink;
-import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.CohortTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.FundingTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
@@ -70,9 +69,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
             @Validate(field = "comments", label = "Comments", maxlength = 2000, on = {SAVE_ACTION})
     })
     private ResearchProject editResearchProject;
-
-    @Inject
-    private JiraLink jiraLink;
 
     /*
      * The search query.
@@ -316,18 +312,6 @@ public class ResearchProjectActionBean extends CoreActionBean {
         }
 
         return StringUtils.join(fundingIds, ", ");
-    }
-
-    /**
-     * Get the fully qualified Jira URL.
-     *
-     * @return URL string
-     */
-    public String getJiraUrl() {
-        if (jiraLink == null) {
-            return "";
-        }
-        return jiraLink.browseUrl();
     }
 
     public static String getAutoCompleteJsonString(Collection<ResearchProject> projects) throws JSONException {
