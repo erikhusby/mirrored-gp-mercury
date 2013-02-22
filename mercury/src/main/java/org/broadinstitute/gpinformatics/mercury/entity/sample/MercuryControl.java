@@ -13,11 +13,12 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
- * @author Scott Matthews
  *
- * Represents a user defined control for Mercury.  Will encapsulate both the collaborator sample ID that is associated
+ * Represents a user defined control for Mercury.  Will encapsulate both the collaborator sample ID that is
+ * associated
  * with the control and an indicator of what kind of control (positive or negative) this is.
  *
+ * @author Scott Matthews
  */
 @Entity
 @Audited
@@ -88,7 +89,7 @@ public class MercuryControl {
      * easily flips the current state of a control from Active->Inactive or Vice Versa
      */
     public void toggleState() {
-        if(this.state == CONTROL_STATE.ACTIVE) {
+        if (this.state == CONTROL_STATE.ACTIVE) {
             this.state = CONTROL_STATE.INACTIVE;
         } else {
             this.state = CONTROL_STATE.ACTIVE;
