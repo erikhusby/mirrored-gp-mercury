@@ -177,7 +177,7 @@ public class SampleReceiptResource {
         MercurySample mercurySample;
         if(mercurySamples.isEmpty()) {
             if(productOrderSamples.isEmpty()) {
-                mercurySample = new MercurySample(null, sampleId);
+                mercurySample = new MercurySample(sampleId);
             } else {
                 ProductOrderSample productOrderSample = productOrderSamples.get(0);
                 mercurySample = new MercurySample(productOrderSample.getProductOrder().getBusinessKey(),
