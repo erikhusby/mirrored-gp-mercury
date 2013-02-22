@@ -8,17 +8,16 @@ import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 import javax.annotation.Nonnull;
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.Serializable;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
+import java.util.List;
 
 
 /**
- *
- * Application-wide cache of all price items, potentially filtering by platform. {@link @Named}
- *
+ * Application-wide cache of all price items, potentially filtering by platform.
  */
-@Named
 @ApplicationScoped
 public class PriceListCache extends AbstractCache implements Serializable {
     private static final long serialVersionUID = 1843525203075284455L;

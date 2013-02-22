@@ -41,7 +41,7 @@ public class JiraCommentUtilTest extends Arquillian {
 
         HashSet<LabVessel> starters = new HashSet<LabVessel>();
         starters.add(twoDBarcodedTube);
-        LabBatch labBatch = new LabBatch("LCSET-2690", starters);
+        LabBatch labBatch = new LabBatch("LCSET-2690", starters, LabBatch.LabBatchType.WORKFLOW);
         labBatch.setJiraTicket(new JiraTicket(jiraService, "LCSET-2690"));
         twoDBarcodedTube.addLabBatch(labBatch);
 

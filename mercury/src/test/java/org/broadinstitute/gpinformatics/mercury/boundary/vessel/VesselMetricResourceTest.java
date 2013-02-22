@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetric;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabMetricRun;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -17,7 +18,7 @@ import java.util.Map;
  */
 public class VesselMetricResourceTest {
 
-    @Test
+    @Test(groups = TestGroups.DATABASE_FREE)
     public void testBuildLabMetricRun() {
         VesselMetricResource vesselMetricResource = new VesselMetricResource();
 

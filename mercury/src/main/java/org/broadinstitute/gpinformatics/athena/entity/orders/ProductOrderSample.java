@@ -284,11 +284,11 @@ public class ProductOrderSample implements Serializable {
         return builder.toString();
     }
 
-    public String getStripBspName() {
+    public String getBspSampleName() {
+        // skip the SM- part of the name.
         if ((sampleName.length() > 3) && isInBspFormat(sampleName)) {
             return sampleName.substring(3);
         }
-
         return sampleName;
     }
 

@@ -11,7 +11,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.DB;
 
 import javax.enterprise.context.SessionScoped;
 import javax.inject.Inject;
-import javax.inject.Named;
 import javax.servlet.http.HttpServletRequest;
 import java.io.Serializable;
 import java.text.MessageFormat;
@@ -22,7 +21,6 @@ import java.util.EnumSet;
  * @author breilly
  */
 // FIXME: properly support serialization; need to add readResolve() method that calls ensureUserValid().
-@Named
 @SessionScoped
 public class UserBean implements Serializable {
     private static final String SUPPORT_EMAIL = "mercury-support@broadinstitute.org";

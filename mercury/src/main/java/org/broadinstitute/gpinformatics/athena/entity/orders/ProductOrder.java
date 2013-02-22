@@ -26,26 +26,12 @@ import java.io.Serializable;
 import java.text.MessageFormat;
 import java.util.*;
 
-/**
- * Class to model the concept of a Product ProductOrder that can be created
- * by the Program PM and subsequently submitted to a lims system.
- * Currently supports the concept associating a product with a set of samples withe a quote.
- * For more detail on the purpose of the ProductOrder, see the user stories listed on
- *
- * @see <a href="https://confluence.broadinstitute.org/x/kwPGAg</a>
- *      <p/>
- *      Created by IntelliJ IDEA.
- *      User: mccrory
- *      Date: 8/28/12
- *      Time: 10:25 AM
- */
+
 @Entity
 @Audited
 @Table(name = "PRODUCT_ORDER", schema = "athena")
 public class ProductOrder implements Serializable {
     private static final long serialVersionUID = 2712946561792445251L;
-
-    private static final String JIRA_SUBJECT_PREFIX = "Product order for ";
 
     public static final String DRAFT_PREFIX = "Draft-";
 

@@ -8,17 +8,15 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 /**
- * This class is the user implementation of the token object
+ * Token Input support for Material Type.
  *
  * @author hrafal
  */
-@Named
 public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
 
     @Inject

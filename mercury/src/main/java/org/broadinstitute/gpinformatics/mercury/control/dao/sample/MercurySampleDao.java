@@ -61,4 +61,16 @@ public class MercurySampleDao extends GenericDao {
         return findSingle(MercurySample.class, MercurySample_.sampleKey, sampleKey);
     }
 
+    public Map<String, List<MercurySample>> findMapIdToListMercurySample(List<String> sampleKeys) {
+        Map<String, List<MercurySample>> mapSampleIdToListMercurySamples = new HashMap<String, List<MercurySample>>();
+        for (String sampleKey : sampleKeys) {
+            mapSampleIdToListMercurySamples.put(sampleKey, new ArrayList<MercurySample>());
+        }
+        List<MercurySample> mercurySamples = findListByList(MercurySample.class, MercurySample_.sampleKey, sampleKeys);
+        for (MercurySample mercurySample : mercurySamples) {
+            mapSampleIdToListMercurySamples.get(mercurySample.getSampleKey()).add(mercurySample);
+        }
+        return mapSampleIdToListMercurySamples;
+    }
+
 }

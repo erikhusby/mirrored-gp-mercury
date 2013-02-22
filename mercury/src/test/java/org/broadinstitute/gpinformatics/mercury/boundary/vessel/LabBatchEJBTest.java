@@ -128,7 +128,8 @@ public class LabBatchEJBTest extends ContainerTest {
 
         String futureDate = dFormatter.format(future);
 
-        LabBatch batchInput =new LabBatch(batchName,new HashSet<LabVessel>(mapBarcodeToTube.values()));
+        LabBatch batchInput =new LabBatch(batchName,new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
         batchInput.setBatchDescription(description);
         batchInput.setDueDate(future);
 

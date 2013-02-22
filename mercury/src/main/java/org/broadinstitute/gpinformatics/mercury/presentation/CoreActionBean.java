@@ -22,6 +22,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.BuildInfoBean;
+import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 
@@ -70,6 +71,9 @@ public class CoreActionBean implements ActionBean {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private JiraLink jiraLink;
 
     // The date range widget can be used by simply adding a div with a class of dateRangeDiv. If only one date is
     // needed, this will work for any action bean. If more are needed, then ids should be used and configured directly.
@@ -380,5 +384,14 @@ public class CoreActionBean implements ActionBean {
             return "''";
         }
         return s;
+    }
+
+    /**
+     * Given a JIRA ticket key, create a URL to open the ticket in JIRA.
+     * @param jiraTicketKey the key
+     * @return the JIRA URL
+     */
+    public String jiraUrl(String jiraTicketKey) {
+        return jiraLink.browseUrl(jiraTicketKey);
     }
 }

@@ -111,7 +111,8 @@ public class LabBatchEjbDBFreeTest {
 
         final String batchName = "Test create batch basic";
         LabBatch testBatch = labBatchEJB
-                .createLabBatch(new LabBatch(batchName, new HashSet<LabVessel>(mapBarcodeToTube.values())), "scottmat");
+                .createLabBatch(new LabBatch(batchName, new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                        LabBatch.LabBatchType.WORKFLOW), "scottmat");
 
         Assert.assertNotNull(testBatch);
         Assert.assertNotNull(testBatch.getJiraTicket());
@@ -171,8 +172,8 @@ public class LabBatchEjbDBFreeTest {
 
         final String batchName = "second Test batch name";
         LabBatch testBatch = labBatchEJB
-                .createLabBatch(new LabBatch(batchName, new HashSet<LabVessel>(mapBarcodeToTube.values())), scottmat
-                );
+                .createLabBatch(new LabBatch(batchName, new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                        LabBatch.LabBatchType.WORKFLOW), scottmat);
 
         Assert.assertNotNull(testBatch);
         Assert.assertNotNull(testBatch.getJiraTicket());
@@ -195,7 +196,8 @@ public class LabBatchEjbDBFreeTest {
         final String description =
                 "New User defined description set here at the Create LabBatch call level.  SHould be useful when giving users the ability to set their own description for the LCSET or whatever ticket";
         final String batchName = "Third test of batch name.";
-        LabBatch batchInput = new LabBatch(batchName, new HashSet<LabVessel>(mapBarcodeToTube.values()));
+        LabBatch batchInput = new LabBatch(batchName, new HashSet<LabVessel>(mapBarcodeToTube.values()),
+                LabBatch.LabBatchType.WORKFLOW);
         batchInput.setBatchDescription(description);
 
         LabBatch testBatch = labBatchEJB
@@ -224,7 +226,8 @@ public class LabBatchEjbDBFreeTest {
         Set<LabVessel> workingVessels = new HashSet<LabVessel>(mapBarcodeToTube.values());
 
 
-        LabBatch testBatch = new LabBatch( "Test Batch for vessel Validation", workingVessels);
+        LabBatch testBatch = new LabBatch( "Test Batch for vessel Validation", workingVessels,
+                LabBatch.LabBatchType.WORKFLOW);
 
         Assert.assertTrue(labBatchEJB.validatePriorBatch(mapBarcodeToTube.values()));
 

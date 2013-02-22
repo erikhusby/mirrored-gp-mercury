@@ -3,14 +3,12 @@ package org.broadinstitute.gpinformatics.athena.presentation.links;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 
 /**
- * This is a bean to help the UI deal with Tableau links.
+ * This class is used to generate Tableau links for the UI.
  */
-@Named
 public class TableauLink {
 
     private TableauConfig tableauConfig;
