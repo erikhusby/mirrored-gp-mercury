@@ -10,7 +10,6 @@ import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -19,7 +18,6 @@ import java.util.Set;
  * Application wide access to BSP's cohort list (collections). The list is currently cached once at application startup. In the
  * future, we may want to rebuild the list regularly to account for changes to the user database.
  */
-@Named
 // MLC @ApplicationScoped breaks the test, as does @javax.ejb.Singleton.  @javax.inject.Singleton is the CDI version
 // and does appear to work.  Much to learn about CDI still...
 @ApplicationScoped

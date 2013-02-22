@@ -321,7 +321,7 @@
                                 &nbsp;
                             </c:when>
                             <c:otherwise>
-                                <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">${actionBean.editOrder.jiraTicketKey}</a>
+                                <a target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.jiraTicketKey)}" class="external" target="JIRA">${actionBean.editOrder.jiraTicketKey}</a>
                             </c:otherwise>
                         </c:choose>
                     </div>
@@ -338,6 +338,17 @@
                     </div>
                 </div>
             </div>
+
+            <c:if test="${actionBean.editOrder.placedDate != null}">
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Order Placed on</label>
+                    <div class="controls">
+                        <div class="form-value">
+                            <fmt:formatDate value="${actionBean.editOrder.placedDate}"/>
+                        </div>
+                    </div>
+                </div>
+            </c:if>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Owner</label>
@@ -359,7 +370,7 @@
                                 <stripes:param name="<%=ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER%>" value="${actionBean.editOrder.researchProject.businessKey}"/>
                                 ${actionBean.editOrder.researchProject.title}
                             </stripes:link>
-                            (<a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.researchProject.jiraTicketKey}" class="external" target="JIRA">
+                            (<a target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.researchProject.jiraTicketKey)}" class="external" target="JIRA">
                             ${actionBean.editOrder.researchProject.jiraTicketKey}
                             </a>)
                         </c:if>
@@ -477,7 +488,7 @@
                             <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
                                 <c:choose>
                                     <c:when test="${sample.inBspFormat}">
-                                        <stripes:link class="external" target="BSP_SAMPLE" title="BSP Sample" href="${actionBean.editOrderSampleSearchUrl}${sample.stripBspName}">
+                                        <stripes:link class="external" target="BSP_SAMPLE" title="BSP Sample" href="${actionBean.sampleSearchUrlForBspSample(sample)}">
                                             ${sample.sampleName}
                                         </stripes:link>
                                     </c:when>

@@ -38,6 +38,7 @@ public class EventEtlDbFreeTest {
     private final long labBatchId = 4455112233L;
     private final String location = "Machine-XYZ";
     private final long vesselId = 5511223344L;
+    private final String vesselLabel = "03138970";
     private final Date eventDate = new Date(1350000000000L);
     private final LabEventType eventType = LabEventType.PICO_PLATING_BUCKET;
 
@@ -74,10 +75,7 @@ public class EventEtlDbFreeTest {
         expect(obj.getLabEventId()).andReturn(entityId);
         replay(mocks);
 
-        EventEtl tst = new EventEtl();
-        tst.setLabEventDao(dao);
-        tst.setProductOrderDao(pdoDao);
-        tst.setWorkflowConfigLookup(wfLookup);
+        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
         tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.getEntityClass(), LabEvent.class);
@@ -98,10 +96,7 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        EventEtl tst = new EventEtl();
-        tst.setLabEventDao(dao);
-        tst.setProductOrderDao(pdoDao);
-        tst.setWorkflowConfigLookup(wfLookup);
+        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
         tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
@@ -116,10 +111,7 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        EventEtl tst = new EventEtl();
-        tst.setLabEventDao(dao);
-        tst.setProductOrderDao(pdoDao);
-        tst.setWorkflowConfigLookup(wfLookup);
+        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
         tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.entityRecord(etlDateStr, false, entityId).size(), 0);
@@ -137,10 +129,7 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        EventEtl tst = new EventEtl();
-        tst.setLabEventDao(dao);
-        tst.setProductOrderDao(pdoDao);
-        tst.setWorkflowConfigLookup(wfLookup);
+        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
         tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.entityRecord(etlDateStr, false, entityId).size(), 0);
@@ -154,13 +143,12 @@ public class EventEtlDbFreeTest {
         expect(obj.getLabBatch()).andReturn(null);
         expect(obj.getTargetLabVessels()).andReturn(vesselList);
         expect(vessel.getSampleInstances()).andReturn(new HashSet<SampleInstance>());
+        expect(obj.getLabEventId()).andReturn(entityId);
+        expect(vessel.getLabel()).andReturn(vesselLabel);
 
         replay(mocks);
 
-        EventEtl tst = new EventEtl();
-        tst.setLabEventDao(dao);
-        tst.setProductOrderDao(pdoDao);
-        tst.setWorkflowConfigLookup(wfLookup);
+        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
         tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
@@ -180,10 +168,7 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        EventEtl tst = new EventEtl();
-        tst.setLabEventDao(dao);
-        tst.setProductOrderDao(pdoDao);
-        tst.setWorkflowConfigLookup(wfLookup);
+        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
         tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.entityRecord(etlDateStr, false, entityId).size(), 0);
@@ -204,10 +189,7 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        EventEtl tst = new EventEtl();
-        tst.setLabEventDao(dao);
-        tst.setProductOrderDao(pdoDao);
-        tst.setWorkflowConfigLookup(wfLookup);
+        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
         tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
@@ -230,10 +212,7 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        EventEtl tst = new EventEtl();
-        tst.setLabEventDao(dao);
-        tst.setProductOrderDao(pdoDao);
-        tst.setWorkflowConfigLookup(wfLookup);
+        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
         tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
@@ -265,10 +244,7 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        EventEtl tst = new EventEtl();
-        tst.setLabEventDao(dao);
-        tst.setProductOrderDao(pdoDao);
-        tst.setWorkflowConfigLookup(wfLookup);
+        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
         tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
@@ -303,10 +279,7 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        EventEtl tst = new EventEtl();
-        tst.setLabEventDao(dao);
-        tst.setProductOrderDao(pdoDao);
-        tst.setWorkflowConfigLookup(wfLookup);
+        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
         tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
@@ -343,10 +316,7 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        EventEtl tst = new EventEtl();
-        tst.setLabEventDao(dao);
-        tst.setProductOrderDao(pdoDao);
-        tst.setWorkflowConfigLookup(wfLookup);
+        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
         tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);

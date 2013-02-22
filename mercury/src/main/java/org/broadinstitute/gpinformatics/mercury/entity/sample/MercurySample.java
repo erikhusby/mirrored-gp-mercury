@@ -85,11 +85,15 @@ public class MercurySample {
     /**
      * For JPA
      */
-    MercurySample() {
+    public MercurySample() {
     }
 
     public String getProductOrderKey() {
         return productOrderKey;
+    }
+
+    public void setProductOrderKey(String productOrderKey) {
+        this.productOrderKey = productOrderKey;
     }
 
     public String getSampleKey() {

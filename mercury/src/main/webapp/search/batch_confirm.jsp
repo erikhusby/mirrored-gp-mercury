@@ -21,7 +21,7 @@
                 <div class="controls">
                     <div class="form-value">
                         <stripes:link target="JIRA"
-                                      href="${actionBean.jiraUrl}${actionBean.batch.jiraTicket.ticketName}"
+                                      href="${actionBean.batch.jiraTicket.browserUrl}"
                                       class="external">
                             ${actionBean.batch.jiraTicket.ticketName}
                         </stripes:link></div>

@@ -26,6 +26,8 @@ import java.util.*;
 @RequestScoped
 public class LabBatchResource {
 
+    public static final String BSP_BATCH_PREFIX = "BP";
+
     @Inject
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
 
@@ -51,9 +53,9 @@ public class LabBatchResource {
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDAO.findByBarcodes(tubeBarcodes);
         Map<MercurySample, MercurySample> mapSampleToSample = mercurySampleDao.findByMercurySample(mercurySampleKeys);
-        LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample/*, null*/);
+        LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample);
 
-        if(!labBatchBean.getBatchId().startsWith("BP")) {
+        if(!labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX)) {
             JiraTicket jiraTicket = new JiraTicket(jiraService, labBatchBean.getBatchId());
             labBatch.setJiraTicket(jiraTicket);
             jiraTicket.setLabBatch(labBatch);
@@ -73,7 +75,7 @@ public class LabBatchResource {
      */
     @DaoFree
     public LabBatch buildLabBatch(LabBatchBean labBatchBean, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-            Map<MercurySample, MercurySample> mapBarcodeToSample/*, BasicProjectPlan projectPlan*/) {
+            Map<MercurySample, MercurySample> mapBarcodeToSample) {
         Set<LabVessel> starters = new HashSet<LabVessel>();
         for (TubeBean tubeBean : labBatchBean.getTubeBeans()) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTube.get(tubeBean.getBarcode());
@@ -93,7 +95,8 @@ public class LabBatchResource {
             }
             starters.add(twoDBarcodedTube);
         }
-        return new LabBatch(labBatchBean.getBatchId(), starters);
+        return new LabBatch(labBatchBean.getBatchId(), starters, labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX) ?
+                LabBatch.LabBatchType.BSP : LabBatch.LabBatchType.WORKFLOW);
     }
 
 }

@@ -469,7 +469,7 @@
             <column name="run_name" type="varchar2(255)"/>
         </createTable>
     </changeSet>
-    
+
     <changeSet id="GPLIM-849-5" author="thompson">
         <addForeignKeyConstraint baseTableName="lab_metric" baseTableSchemaName="mercury" baseColumnNames="lab_metric_run"
                                  constraintName="fk_lm_lab_metric_run"
@@ -488,7 +488,7 @@
                                  referencedTableName="rev_info" referencedTableSchemaName="mercury"
                                  referencedColumnNames="rev_info_id"/>
     </changeSet>
-    
+
     <changeSet id="GPLIM-849-6" author="thompson">
         <createSequence sequenceName="SEQ_LAB_METRIC" schemaName="mercury" startValue="1" incrementBy="50"/>
         <createSequence sequenceName="SEQ_LAB_METRIC_RUN" schemaName="mercury" startValue="1" incrementBy="50"/>
@@ -532,122 +532,122 @@
 
 
     <changeSet id="GPLIM-765-02.0" author="dryan">
-           <preConditions onFail="MARK_RAN">
-               <not>
-                   <tableExists tableName="lv_comment_aud" schemaName="mercury"/>
-               </not>
-           </preConditions>
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="lv_comment_aud" schemaName="mercury"/>
+            </not>
+        </preConditions>
 
-           <createTable tableName="lv_comment_aud" schemaName="mercury">
-               <column name="lab_vessel_comment_id" type="number(19,0)">
-               </column>
+        <createTable tableName="lv_comment_aud" schemaName="mercury">
+            <column name="lab_vessel_comment_id" type="number(19,0)">
+            </column>
 
-               <column name="lab_vessel_comment" type="varchar2(255)"/>
-               <column name="log_date" type="oracle.sql.TIMESTAMP">
-                   <constraints nullable="false"/>
-               </column>
+            <column name="lab_vessel_comment" type="varchar2(255)"/>
+            <column name="log_date" type="oracle.sql.TIMESTAMP">
+                <constraints nullable="false"/>
+            </column>
 
-               <column name="lab_event" type="number(19,0)">
-                   <constraints nullable="false"/>
-               </column>
-               <column name="lab_vessel" type="number(19,0)">
-                   <constraints nullable="false"/>
-               </column>
-               <column name="rev" type="number(19,0)">
-               </column>
-               <column name="revtype" type="number(3,0)"/>
+            <column name="lab_event" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="lab_vessel" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="number(19,0)">
+            </column>
+            <column name="revtype" type="number(3,0)"/>
 
-           </createTable>
-           <addPrimaryKey tableName="lv_comment_aud" schemaName="mercury" columnNames="lab_vessel_comment_id, rev"/>
-       </changeSet>
+        </createTable>
+        <addPrimaryKey tableName="lv_comment_aud" schemaName="mercury" columnNames="lab_vessel_comment_id, rev"/>
+    </changeSet>
 
     <changeSet id="GPLIM-765-03" author="dryan">
-           <preConditions onFail="MARK_RAN">
-               <not>
-                   <tableExists tableName="lv_pos" schemaName="mercury"/>
-               </not>
-           </preConditions>
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="lv_pos" schemaName="mercury"/>
+            </not>
+        </preConditions>
 
-           <createTable tableName="lv_pos" schemaName="mercury">
-               <column name="lab_vessel_position_id" type="number(19,0)">
-                   <constraints nullable="false"/>
-               </column>
-               <column name="vessel_position" type="varchar2(255)"/>
-           </createTable>
-           <addPrimaryKey schemaName="mercury" tableName="lv_pos" columnNames="lab_vessel_position_id"/>
+        <createTable tableName="lv_pos" schemaName="mercury">
+            <column name="lab_vessel_position_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vessel_position" type="varchar2(255)"/>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="lv_pos" columnNames="lab_vessel_position_id"/>
         <createSequence sequenceName="SEQ_LV_POS" schemaName="mercury" startValue="1" incrementBy="50"/>
-       </changeSet>
+    </changeSet>
 
     <changeSet id="GPLIM-765-04" author="dryan">
-           <preConditions onFail="MARK_RAN">
-               <not>
-                   <tableExists tableName="lv_pos_aud" schemaName="mercury"/>
-               </not>
-           </preConditions>
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="lv_pos_aud" schemaName="mercury"/>
+            </not>
+        </preConditions>
 
-           <createTable tableName="lv_pos_aud" schemaName="mercury">
-               <column name="lab_vessel_position_id" type="number(19,0)">
-                   <constraints nullable="false"/>
-               </column>
-               <column name="vessel_position" type="varchar2(255)"/>
-               <column name="rev" type="number(19,0)"/>
-               <column name="revtype" type="number(3,0)"/>
-           </createTable>
-           <addPrimaryKey schemaName="mercury" tableName="lv_pos_aud" columnNames="lab_vessel_position_id, rev"/>
-       </changeSet>
+        <createTable tableName="lv_pos_aud" schemaName="mercury">
+            <column name="lab_vessel_position_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="vessel_position" type="varchar2(255)"/>
+            <column name="rev" type="number(19,0)"/>
+            <column name="revtype" type="number(3,0)"/>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="lv_pos_aud" columnNames="lab_vessel_position_id, rev"/>
+    </changeSet>
 
     <changeSet id="GPLIM-765-05" author="dryan">
-           <preConditions onFail="MARK_RAN">
-               <not>
-                   <tableExists tableName="rap_sheet" schemaName="mercury"/>
-               </not>
-           </preConditions>
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="rap_sheet" schemaName="mercury"/>
+            </not>
+        </preConditions>
 
-           <createTable tableName="rap_sheet" schemaName="mercury">
-               <column name="rap_sheet_id" type="number(19,0)">
-                   <constraints nullable="false"/>
-               </column>
-           </createTable>
-           <addPrimaryKey schemaName="mercury" tableName="rap_sheet" columnNames="rap_sheet_id"/>
+        <createTable tableName="rap_sheet" schemaName="mercury">
+            <column name="rap_sheet_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addPrimaryKey schemaName="mercury" tableName="rap_sheet" columnNames="rap_sheet_id"/>
         <createSequence sequenceName="SEQ_RAP_SHEET" schemaName="mercury" startValue="1" incrementBy="50"/>
-       </changeSet>
+    </changeSet>
     <changeSet id="GPLIM-765-06" author="dryan">
-           <preConditions onFail="MARK_RAN">
-               <not>
-                   <tableExists tableName="rap_sheet_aud" schemaName="mercury"/>
-               </not>
-           </preConditions>
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="rap_sheet_aud" schemaName="mercury"/>
+            </not>
+        </preConditions>
 
-           <createTable tableName="rap_sheet_aud" schemaName="mercury">
-               <column name="rap_sheet_id" type="number(19,0)">
-                   <constraints nullable="false"/>
-               </column>
-               <column name="rev" type="number(19,0)"/>
-               <column name="revtype" type="number(3,0)"/>
-           </createTable>
+        <createTable tableName="rap_sheet_aud" schemaName="mercury">
+            <column name="rap_sheet_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="number(19,0)"/>
+            <column name="revtype" type="number(3,0)"/>
+        </createTable>
 
-           <addPrimaryKey schemaName="mercury" tableName="rap_sheet_aud" columnNames="rap_sheet_id,rev"/>
-       </changeSet>
+        <addPrimaryKey schemaName="mercury" tableName="rap_sheet_aud" columnNames="rap_sheet_id,rev"/>
+    </changeSet>
     <changeSet id="GPLIM-765-07" author="dryan">
-           <preConditions onFail="MARK_RAN">
-               <not>
-                   <tableExists tableName="rap_sheet_entry" schemaName="mercury"/>
-               </not>
-           </preConditions>
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="rap_sheet_entry" schemaName="mercury"/>
+            </not>
+        </preConditions>
 
-           <createTable tableName="rap_sheet_entry" schemaName="mercury">
-               <column name="rap_sheet_entry_id" type="number(19,0)"> <constraints nullable="false"/> </column>
-               <column name="dtype" type="varchar2(31)"><constraints nullable="false"/></column>
-               <column name="rework_level" type="varchar2(255)"><constraints nullable="false"/></column>
-               <column name="rework_reason" type="varchar2(255)"><constraints nullable="false"/></column>
-               <column name="rework_step" type="varchar2(255)"><constraints nullable="false"/></column>
-               <column name="lab_vessel_comment" type="number(19,0)"><constraints nullable="false"/></column>
-               <column name="lab_vessel_position" type="number(19,0)"><constraints nullable="false"/></column>
-               <column name="rap_sheet" type="number(19,0)"><constraints nullable="false"/></column>
-           </createTable>
+        <createTable tableName="rap_sheet_entry" schemaName="mercury">
+            <column name="rap_sheet_entry_id" type="number(19,0)"> <constraints nullable="false"/> </column>
+            <column name="dtype" type="varchar2(31)"><constraints nullable="false"/></column>
+            <column name="rework_level" type="varchar2(255)"><constraints nullable="false"/></column>
+            <column name="rework_reason" type="varchar2(255)"><constraints nullable="false"/></column>
+            <column name="rework_step" type="varchar2(255)"><constraints nullable="false"/></column>
+            <column name="lab_vessel_comment" type="number(19,0)"><constraints nullable="false"/></column>
+            <column name="lab_vessel_position" type="number(19,0)"><constraints nullable="false"/></column>
+            <column name="rap_sheet" type="number(19,0)"><constraints nullable="false"/></column>
+        </createTable>
         <createSequence sequenceName="SEQ_RAP_SHEET_ENTRY" schemaName="mercury" startValue="1" incrementBy="50"/>
 
-           <addPrimaryKey tableName="rap_sheet_entry" columnNames="rap_sheet_entry_id"/>
+        <addPrimaryKey tableName="rap_sheet_entry" columnNames="rap_sheet_entry_id"/>
         <addForeignKeyConstraint baseTableName="rap_sheet_entry" baseTableSchemaName="mercury"
                                  baseColumnNames="lab_vessel_position"
                                  constraintName="fk_rs_ent_lv_pos"
@@ -663,43 +663,43 @@
                                  constraintName="fk_rs_ent_lv_comment"
                                  referencedTableName="lv_comment" referencedTableSchemaName="mercury"
                                  referencedColumnNames="lab_vessel_comment_id"/>
-       </changeSet>
+    </changeSet>
 
     <changeSet id="GPLIM-765-08" author="dryan">
-           <preConditions onFail="MARK_RAN">
-               <not>
-                   <tableExists tableName="rap_sheet_entry_aud" schemaName="mercury"/>
-               </not>
-           </preConditions>
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="rap_sheet_entry_aud" schemaName="mercury"/>
+            </not>
+        </preConditions>
 
-           <createTable tableName="rap_sheet_entry_aud" schemaName="mercury">
-               <column name="rap_sheet_entry_id" type="number(19,0)"> <constraints nullable="false"/> </column>
-               <column name="dtype" type="varchar2(31)"><constraints nullable="false"/></column>
-               <column name="rework_level" type="varchar2(255)"><constraints nullable="true"/></column>
-               <column name="rework_reason" type="varchar2(255)"><constraints nullable="true"/></column>
-               <column name="rework_step" type="varchar2(255)"><constraints nullable="true"/></column>
-               <column name="lab_vessel_comment" type="number(19,0)"><constraints nullable="false"/></column>
-               <column name="lab_vessel_position" type="number(19,0)"><constraints nullable="false"/></column>
-               <column name="rap_sheet" type="number(19,0)"><constraints nullable="false"/></column>
-               <column name="rev" type="number(19,0)"/>
-               <column name="revtype" type="number(3,0)"/>
-           </createTable>
-           <addPrimaryKey tableName="rap_sheet_entry_aud" columnNames="rap_sheet_entry_id,rev"/>
-       </changeSet>
+        <createTable tableName="rap_sheet_entry_aud" schemaName="mercury">
+            <column name="rap_sheet_entry_id" type="number(19,0)"> <constraints nullable="false"/> </column>
+            <column name="dtype" type="varchar2(31)"><constraints nullable="false"/></column>
+            <column name="rework_level" type="varchar2(255)"><constraints nullable="true"/></column>
+            <column name="rework_reason" type="varchar2(255)"><constraints nullable="true"/></column>
+            <column name="rework_step" type="varchar2(255)"><constraints nullable="true"/></column>
+            <column name="lab_vessel_comment" type="number(19,0)"><constraints nullable="false"/></column>
+            <column name="lab_vessel_position" type="number(19,0)"><constraints nullable="false"/></column>
+            <column name="rap_sheet" type="number(19,0)"><constraints nullable="false"/></column>
+            <column name="rev" type="number(19,0)"/>
+            <column name="revtype" type="number(3,0)"/>
+        </createTable>
+        <addPrimaryKey tableName="rap_sheet_entry_aud" columnNames="rap_sheet_entry_id,rev"/>
+    </changeSet>
 
 
     <changeSet id="GPLIM-765-09" author="dryan">
-           <preConditions onFail="MARK_RAN">
-               <not>
-                   <tableExists tableName="lv_pos_mercury_samples" schemaName="mercury"/>
-               </not>
-           </preConditions>
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="lv_pos_mercury_samples" schemaName="mercury"/>
+            </not>
+        </preConditions>
 
-           <createTable tableName="lv_pos_mercury_samples" schemaName="mercury">
-               <column name="lv_pos" type="number(19,0)"> <constraints nullable="false"/> </column>
-               <column name="mercury_samples" type="number(19,0)"> <constraints nullable="false"/> </column>
-           </createTable>
-           <addUniqueConstraint tableName="lv_pos_mercury_samples" columnNames="mercury_samples"/>
+        <createTable tableName="lv_pos_mercury_samples" schemaName="mercury">
+            <column name="lv_pos" type="number(19,0)"> <constraints nullable="false"/> </column>
+            <column name="mercury_samples" type="number(19,0)"> <constraints nullable="false"/> </column>
+        </createTable>
+        <addUniqueConstraint tableName="lv_pos_mercury_samples" columnNames="mercury_samples"/>
         <addForeignKeyConstraint baseTableName="lv_pos_mercury_samples" baseColumnNames="lv_pos"
                                  constraintName="fk_lv_pos_mercury_samples_pos"
                                  referencedTableName="lv_pos"
@@ -708,30 +708,30 @@
                                  constraintName="fk_lv_pos_mercury_samples_ms"
                                  referencedTableName="mercury_sample"
                                  referencedColumnNames="mercury_sample_id"/>
-       </changeSet>
+    </changeSet>
 
     <changeSet id="GPLIM-765-10" author="dryan">
-           <preConditions onFail="MARK_RAN">
-               <not>
-                   <tableExists tableName="lv_pos_mercury_samples_aud" schemaName="mercury"/>
-               </not>
-           </preConditions>
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="lv_pos_mercury_samples_aud" schemaName="mercury"/>
+            </not>
+        </preConditions>
 
-           <createTable tableName="lv_pos_mercury_samples_aud" schemaName="mercury">
-               <column name="lv_pos" type="number(19,0)"> <constraints nullable="false"/> </column>
-               <column name="mercury_samples" type="number(19,0)"> <constraints nullable="false"/> </column>
-               <column name="rev" type="number(19,0)"/>
-               <column name="revtype" type="number(3,0)"/>
-           </createTable>
-           <addPrimaryKey tableName="lv_pos_mercury_samples_aud" columnNames="rev, lv_pos, mercury_samples"/>
-       </changeSet>
+        <createTable tableName="lv_pos_mercury_samples_aud" schemaName="mercury">
+            <column name="lv_pos" type="number(19,0)"> <constraints nullable="false"/> </column>
+            <column name="mercury_samples" type="number(19,0)"> <constraints nullable="false"/> </column>
+            <column name="rev" type="number(19,0)"/>
+            <column name="revtype" type="number(3,0)"/>
+        </createTable>
+        <addPrimaryKey tableName="lv_pos_mercury_samples_aud" columnNames="rev, lv_pos, mercury_samples"/>
+    </changeSet>
 
     <changeSet id="GPLIM-765-11" author="dryan">
-           <preConditions onFail="MARK_RAN">
-               <not>
-                   <columnExists tableName="mercury_sample" columnName="rap_sheet" schemaName="mercury"/>
-               </not>
-           </preConditions>
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="mercury_sample" columnName="rap_sheet" schemaName="mercury"/>
+            </not>
+        </preConditions>
         <addColumn tableName="mercury_sample" schemaName="mercury">
             <column name="rap_sheet" type="number(19,0)"/>
         </addColumn>
@@ -739,17 +739,36 @@
                                  constraintName="fk_mercury_sample_rap_sheet"
                                  referencedTableName="rap_sheet"
                                  referencedColumnNames="rap_sheet_id"/>
-
-       </changeSet>
+    </changeSet>
     <changeSet id="GPLIM-765-12" author="dryan">
-           <preConditions onFail="MARK_RAN">
-               <not>
-                   <columnExists tableName="mercury_sample_aud" columnName="rap_sheet" schemaName="mercury"/>
-               </not>
-           </preConditions>
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="mercury_sample_aud" columnName="rap_sheet" schemaName="mercury"/>
+            </not>
+        </preConditions>
         <addColumn tableName="mercury_sample_aud" schemaName="mercury">
             <column name="rap_sheet" type="number(19,0)"/>
         </addColumn>
+    </changeSet>
+    
+    <changeSet id="GPLIM-914-1" author="thompson">
+        <addColumn tableName="lab_batch">
+            <column name="lab_batch_type" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+    <changeSet id="GPLIM-914-2" author="thompson">
+        <addColumn tableName="lab_batch_aud">
+            <column name="lab_batch_type" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+
+    <changeSet id="GPLIM-973-1" author="breilly">
+        <dropNotNullConstraint tableName="bucket_entry_aud" columnName="lab_vessel_id"/>
+        <dropNotNullConstraint tableName="bucket_entry_aud" columnName="po_business_key"/>
+        <dropNotNullConstraint tableName="bucket_entry_aud" columnName="bucket_existence_id"/>
+        <dropNotNullConstraint tableName="bucket_entry_aud" columnName="product_order_ranking"/>
+        <dropNotNullConstraint tableName="bucket_entry_aud" columnName="created_date"/>
+    </changeSet>
        </changeSet>
 
     <changeSet id="GPLIM-970-1" author="scottmat">

@@ -79,7 +79,7 @@ public class LabBatchEjb {
     public LabBatch createLabBatch(@Nonnull Set<LabVessel> labVessels, @Nonnull String reporter,
                                    @Nonnull String jiraTicket) {
 
-        LabBatch batchObject = new LabBatch(jiraTicket, labVessels);
+        LabBatch batchObject = new LabBatch(jiraTicket, labVessels, LabBatch.LabBatchType.WORKFLOW);
 
         labBatchDao.persist(batchObject);
 

@@ -12,15 +12,12 @@ import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
-import javax.inject.Named;
 import java.io.Serializable;
 import java.util.*;
 
 /**
- * Application wide access to BSP's material type list. The list is currently cached once at application startup. In the
- * future, we may want to rebuild the list regularly to account for changes to the bsp database.
+ * Application wide access to BSP's material type list. The list is regularly refreshed by ExternalDataCacheControl.
  */
-@Named
 @ApplicationScoped
 public class BSPMaterialTypeList extends AbstractCache implements Serializable {
 

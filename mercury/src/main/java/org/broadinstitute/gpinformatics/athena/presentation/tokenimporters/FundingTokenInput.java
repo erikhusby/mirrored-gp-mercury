@@ -20,9 +20,6 @@ public class FundingTokenInput extends TokenInput<Funding> {
     @Inject
     private QuoteFundingList quoteFundingList;
 
-    public FundingTokenInput() {
-    }
-
     @Override
     protected Funding getById(String fundingId) {
         return quoteFundingList.getById(fundingId);
@@ -50,7 +47,7 @@ public class FundingTokenInput extends TokenInput<Funding> {
         return itemList.toString();
     }
 
-    private void createAutocomplete(JSONArray itemList, Funding funding) throws JSONException {
+    private static void createAutocomplete(JSONArray itemList, Funding funding) throws JSONException {
         JSONObject item = getJSONObject(funding.getDisplayName(), funding.getDisplayName(), false);
         item.put("matchDescription", funding.getMatchDescription());
         itemList.put(item);
