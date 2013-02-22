@@ -233,7 +233,7 @@ public abstract class GenericEntityEtl {
     }
 
     /**
-     * Returns formatted date string, or empty string if date is null.
+     * Returns formatted date string, or "" string if date is null.
      * @param date the date to format
      */
     public static String format(Date date) {
@@ -249,7 +249,7 @@ public abstract class GenericEntityEtl {
     }
 
     /**
-     * Returns String, or empty string if null, and quotes string if DELIM occurs.
+     * Returns String, or "" string if null, and quotes string if DELIM occurs.
      * @param string to format
      */
     public static String format(String string) {
@@ -264,7 +264,7 @@ public abstract class GenericEntityEtl {
     }
 
     /**
-     * Returns String, or empty string if null.
+     * Returns String, or "" string if null.
      * @param num to format
      */
     public static <T extends Number > String format(T num) {

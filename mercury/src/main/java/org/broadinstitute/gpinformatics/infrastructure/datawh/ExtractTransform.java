@@ -55,6 +55,8 @@ public class ExtractTransform {
 
     private static final long MSEC_IN_SEC = 1000L;
     private static final long SEC_IN_MIN = 60L;
+    // Number of digits in the number representing seconds since start of epoch.
+    private final int TIMESTAMP_SECONDS_SIZE = 10;
     private static final Logger logger = Logger.getLogger(ExtractTransform.class);
     private static final Semaphore mutex = new Semaphore(1);
     private static long incrementalRunStartTime = System.currentTimeMillis();  // only useful for logging
@@ -191,7 +193,7 @@ public class ExtractTransform {
         // may run at a time.  Does not queue a new job if busy, to avoid snowball effect if system is
         // busy for a long time, for whatever reason.
         if (!mutex.tryAcquire()) {
-            int minutes = (int)Math.ceil((System.currentTimeMillis() - incrementalRunStartTime) / MSEC_IN_SEC / SEC_IN_MIN);
+            int minutes = minutesSince(incrementalRunStartTime);
             if (minutes > 0) {
                 logger.info("Skipping new ETL run since previous run is still busy after " + minutes + " minutes.");
             }
@@ -215,7 +217,7 @@ public class ExtractTransform {
             }
 
             // The same etl_date is used for all DW data processed by one ETL run.
-            final long currentEtlSec = (long)Math.floor((double)System.currentTimeMillis() / MSEC_IN_SEC);
+            final long currentEtlSec = System.currentTimeMillis() / MSEC_IN_SEC;
             final String etlDateStr = secTimestampFormat.format(new Date(currentEtlSec * MSEC_IN_SEC));
             incrementalRunStartTime = System.currentTimeMillis();
 
@@ -275,7 +277,7 @@ public class ExtractTransform {
         if (recordCount > 0) {
             writeIsReadyFile(etlDateStr);
             logger.debug("Incremental ETL created " + recordCount + " data records in " +
-                    (int)((System.currentTimeMillis() - incrementalRunStartTime) / MSEC_IN_SEC) + " seconds.");
+                    minutesSince(incrementalRunStartTime) + " seconds.");
         }
         return recordCount;
     }
@@ -301,9 +303,7 @@ public class ExtractTransform {
             return Response.Status.INTERNAL_SERVER_ERROR;
         }
 
-        // BackfillEtl file timestamps are not whole second aligned, just to avoid collisions with incremental.
-        final long currentEtlTimestamp = 999L + 1000L * (long)Math.floor((double)System.currentTimeMillis() / 1000L);
-        final String etlDateStr = secTimestampFormat.format(new Date(currentEtlTimestamp));
+        final String etlDateStr = secTimestampFormat.format(new Date());
 
         Class entityClass;
         try {
@@ -353,8 +353,6 @@ public class ExtractTransform {
 
         return Response.Status.NO_CONTENT;
     }
-
-    public final int TIMESTAMP_SECONDS_SIZE = 10;
 
     /**
      * Reads the last incremental ETL run file and returns start of this etl interval.
@@ -462,5 +460,9 @@ public class ExtractTransform {
         }
     }
 
+    /** Returns the whole number of minutes since the given mSec timestamp, rounded up. */
+    private int minutesSince(long msecTimestamp) {
+        return (int)Math.ceil((System.currentTimeMillis() - msecTimestamp) / MSEC_IN_SEC / SEC_IN_MIN);
+    }
 }
 

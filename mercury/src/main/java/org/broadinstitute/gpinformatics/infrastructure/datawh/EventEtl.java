@@ -22,22 +22,18 @@ import java.util.*;
 @Stateless
 public class EventEtl extends GenericEntityEtl {
 
+    @Inject
     private LabEventDao dao;
+    @Inject
     private ProductOrderDao pdoDao;
+    @Inject
     private WorkflowConfigLookup workflowConfigLookup;
 
-    @Inject
-    public void setWorkflowConfigLookup(WorkflowConfigLookup workflowConfigLookup) {
+    public EventEtl() {}
+
+    public EventEtl(WorkflowConfigLookup workflowConfigLookup, LabEventDao dao, ProductOrderDao pdoDao) {
         this.workflowConfigLookup = workflowConfigLookup;
-    }
-
-    @Inject
-    public void setLabEventDao(LabEventDao dao) {
         this.dao = dao;
-    }
-
-    @Inject
-    public void setProductOrderDao(ProductOrderDao pdoDao) {
         this.pdoDao = pdoDao;
     }
 
@@ -130,7 +126,7 @@ public class EventEtl extends GenericEntityEtl {
         for (LabVessel vessel : vessels) {
 
             Set<SampleInstance> sampleInstances = vessel.getSampleInstances();
-            if (vessels.size() == 0) {
+            if (sampleInstances.size() == 0) {
                 logger.warn("Cannot ETL event " + entity.getLabEventId() + " vessel " + vessel.getLabel() + " that has no SampleInstances.");
                 continue;
             }
