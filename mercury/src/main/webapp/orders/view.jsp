@@ -1,6 +1,7 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
+<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.*" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -264,7 +265,7 @@
                     <%-- MLC PDOs can be placed by PM or PDMs, so I'm making the security tag accept either of those roles for 'Place Order'.
                          I am also putting 'Validate' under that same security tag since I think that may have the power to alter 'On-Riskedness'
                          for PDO samples --%>
-                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name, DB.Role.PM.name}%>">
+                    <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name, Role.PM.name}%>">
                         <stripes:submit name="placeOrder" value="Validate and Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
                         <stripes:submit name="validate" value="Validate" style="margin-left: 5px;" class="btn"/>
                     </security:authorizeBlock>
@@ -276,7 +277,7 @@
                         <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
                     </stripes:link>
 
-                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PM.name}%>">
+                    <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PM.name}%>">
                         <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
                                         value="Delete Draft" style="margin-left: 5px;" class="btn"/>
                     </security:authorizeBlock>
@@ -284,8 +285,8 @@
             </div>
         </stripes:form>
 
-        <%-- MLC GPLIM-802 says PDO edit should only be available to PDMs, i.e. not PMs. --%>
-        <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
+        <%-- PDO edit should only be available to PDMs, i.e. not PMs. --%>
+        <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name}%>">
             <c:if test="${!actionBean.editOrder.draft}">
                 <stripes:link title="Click to edit ${actionBean.editOrder.title}"
                     beanclass="${actionBean.class.name}" event="edit" class="pull-right">
@@ -313,7 +314,7 @@
             </div>
 
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Order Barcode</label>
+                <label class="control-label label-form">Order ID</label>
                 <div class="controls">
                     <div class="form-value">
                         <c:choose>
@@ -329,7 +330,34 @@
             </div>
 
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Status</label>
+                <label class="control-label label-form">Product</label>
+                <div class="controls">
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrder.product != null}">
+                            <stripes:link title="Product" href="${ctxpath}/products/product.action?view">
+                                <stripes:param name="product" value="${actionBean.editOrder.product.partNumber}"/>
+                                ${actionBean.editOrder.product.productName}
+                            </stripes:link>
+                        </c:if>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Product Family</label>
+                <div class="controls">
+                    <div class="form-value">
+                        <c:if test="${actionBean.editOrder.product != null}">
+                            ${actionBean.editOrder.product.productFamily.name}
+                        </c:if>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Order Status</label>
                 <div class="controls">
                     <div class="form-value">
                         <c:if test="${actionBean.editOrder.draft}"><span class="label label-info"></c:if>
@@ -339,25 +367,6 @@
                 </div>
             </div>
 
-            <c:if test="${actionBean.editOrder.placedDate != null}">
-                <div class="view-control-group control-group">
-                    <label class="control-label label-form">Order Placed on</label>
-                    <div class="controls">
-                        <div class="form-value">
-                            <fmt:formatDate value="${actionBean.editOrder.placedDate}"/>
-                        </div>
-                    </div>
-                </div>
-            </c:if>
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Owner</label>
-                <div class="controls">
-                    <div class="form-value">
-                            ${actionBean.getUserFullName(actionBean.editOrder.createdBy)}
-                    </div>
-                </div>
-            </div>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Research Project</label>
@@ -378,19 +387,38 @@
                 </div>
             </div>
 
+
             <div class="view-control-group control-group">
-                <label class="control-label label-form">Product</label>
+                <label class="control-label label-form">Owner</label>
                 <div class="controls">
                     <div class="form-value">
-                        <c:if test="${actionBean.editOrder.product != null}">
-                            <stripes:link title="Product" href="${ctxpath}/products/product.action?view">
-                                <stripes:param name="product" value="${actionBean.editOrder.product.partNumber}"/>
-                                ${actionBean.editOrder.product.productName}
-                            </stripes:link>
-                        </c:if>
+                            ${actionBean.getUserFullName(actionBean.editOrder.createdBy)}
                     </div>
                 </div>
             </div>
+
+
+            <c:if test="${actionBean.editOrder.placedDate != null}">
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Placed Date</label>
+                    <div class="controls">
+                        <div class="form-value">
+                            <fmt:formatDate value="${actionBean.editOrder.placedDate}"/>
+                        </div>
+                    </div>
+                </div>
+            </c:if>
+
+            <c:if test="${actionBean.editOrder.product.productFamily.supportsNumberOfLanes}">
+                <div class="view-control-group control-group">
+                    <label class="control-label label-form">Number of Lanes Per Sample</label>
+
+                    <div class="controls">
+                        <div class="form-value">${actionBean.editOrder.count}</div>
+                    </div>
+                </div>
+            </c:if>
+
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Add-ons</label>
@@ -411,15 +439,45 @@
                 </div>
             </div>
 
-            <c:if test="${actionBean.editOrder.product.productFamily.supportsNumberOfLanes}">
-                <div class="view-control-group control-group">
-                    <label class="control-label label-form">Number of Lanes Per Sample</label>
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Can Bill</label>
+                <div class="controls">
+                    <div class="form-value">
+                        <c:choose>
+                            <c:when test="${actionBean.eligibleForBilling}">
+                                <c:choose>
+                                    <c:when test="${actionBean.billingSessionBusinessKey == null}">
+                                        Yes, No Billing Session
+                                    </c:when>
+                                    <c:otherwise>
+                                        <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"
+                                                      event="view">Yes,
+                                            <stripes:param name="sessionKey" value="${actionBean.billingSessionBusinessKey}"/>
+                                            ${actionBean.billingSessionBusinessKey}
+                                        </stripes:link>
+                                    </c:otherwise>
+                                </c:choose>
 
-                    <div class="controls">
-                        <div class="form-value">${actionBean.editOrder.count}</div>
+                            </c:when>
+                            <c:otherwise>
+                                No
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
-            </c:if>
+            </div>
+
+            <div class="view-control-group control-group">
+                <label class="control-label label-form">Sample Status</label>
+                <div class="controls">
+                    <div class="form-value">
+                        In Progress:&nbsp;${actionBean.progressFetcher.getPercentInProgress(actionBean.editOrder.businessKey)}%,
+                        Abandoned:&nbsp;${actionBean.progressFetcher.getPercentAbandoned(actionBean.editOrder.businessKey)}%,
+                        Completed:&nbsp;${actionBean.progressFetcher.getPercentCompleted(actionBean.editOrder.businessKey)}%
+                    </div>
+                </div>
+            </div>
+
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Description</label>
@@ -432,7 +490,7 @@
                 Samples
 
                 <c:if test="${!actionBean.editOrder.draft}">
-                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
+                    <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name}%>">
                         <span class="actionButtons">
                             <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
                                         style="margin-left:30px;" onclick="showConfirm('deleteSamples', 'delete')"/>

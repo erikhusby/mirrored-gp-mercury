@@ -48,6 +48,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchAction
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -346,7 +347,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION})
+    // TODO MLC temporarily rebuilding the entire ProductOrderListEntry list for view prototyping, but we really
+    // only need the one reporting object for the currently loaded PDO.
+    @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION, VIEW_ACTION})
     public void listInit() {
         allProductOrders = orderListEntryDao.findProductOrderListEntries();
         progressFetcher.setupProgress(productOrderDao);
@@ -1003,5 +1006,34 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public CompletionStatusFetcher getProgressFetcher() {
         return progressFetcher;
+    }
+
+    public ProductOrderListEntry getProductOrderListEntry() {
+
+        if (editOrder.getBusinessKey() == null) {
+            throw new RuntimeException("Order has no business key!");
+        }
+
+        for (ProductOrderListEntry listEntry : allProductOrders) {
+            if (listEntry.getBusinessKey().equals(editOrder.getBusinessKey())) {
+                return listEntry;
+            }
+        }
+
+        throw new RuntimeException(MessageFormat.format("ProductOrderListEntry not found for ''{0}''", editOrder.getBusinessKey()));
+    }
+
+
+    public boolean isEligibleForBilling() {
+        return editOrder.getBusinessKey() != null && getProductOrderListEntry().isEligibleForBilling();
+    }
+
+
+    public String getBillingSessionBusinessKey() {
+        if (!isEligibleForBilling()) {
+            throw new RuntimeException("Product Order is not eligible for billing");
+        }
+
+        return getProductOrderListEntry().getBillingSessionBusinessKey();
     }
 }

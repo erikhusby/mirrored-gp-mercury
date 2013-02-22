@@ -1,5 +1,6 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
+<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.*" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -109,17 +110,17 @@
             <stripes:hidden id="dialogAction" name=""/>
             <div class="actionButtons">
 
-                <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+                <security:authorizeBlock roles="<%=new String[] {Role.Developer.name}%>">
                     <stripes:button name="abandonOrders" value="Abandon Orders" class="btn" onclick="showConfirm('abandonOrders', 'abandon')" style="margin-right:30px;"/>
                 </security:authorizeBlock>
 
-                <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.BillingManager.name}%>">
+                <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.BillingManager.name}%>">
                     <stripes:submit name="startBilling" value="Start Billing Session" class="btn" style="margin-right:30px;"/>
                 </security:authorizeBlock>
 
                 <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn" style="margin-right:5px;"/>
 
-                <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
+                <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name}%>">
                     <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean" event="view">
                         Upload Billing Tracker
                     </stripes:link>
@@ -163,7 +164,7 @@
                             <td>
                                 <%--
                                    Real JIRA tickets IDs for PDOs have a "PDO-" prefix followed by digits.  Draft PDOs don't have a ticket ID,
-                                   Graphene tests have "PDO-" followed by arbitrary text.
+                                   Messaging tests have "PDO-" followed by arbitrary text.
                                  --%>
                                 <c:choose>
                                     <%-- draft PDO --%>
@@ -188,13 +189,13 @@
                                 <fmt:formatDate value="${order.placedDate}"/>
                             </td>
                             <td align="center">
-                                <div class="barFull" title="${actionBean.progressFetcher.getInProgress(order.businessKey)}% In Progress">
+                                <div class="barFull" title="${actionBean.progressFetcher.getPercentInProgress(order.businessKey)}% In Progress">
                                     <span class="barAbandon"
                                           title="${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}% Abandoned"
                                           style="width: ${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}%"> </span>
                                     <span class="barComplete"
-                                          title="${actionBean.progressFetcher.getPercentComplete(order.businessKey)}% Completed"
-                                          style="width: ${actionBean.progressFetcher.getPercentComplete(order.businessKey)}%"> </span>
+                                          title="${actionBean.progressFetcher.getPercentCompleted(order.businessKey)}% Completed"
+                                          style="width: ${actionBean.progressFetcher.getPercentCompleted(order.businessKey)}%"> </span>
                                 </div>
                             </td>
                             <td>${actionBean.progressFetcher.getNumberOfSamples(order.businessKey)}</td>

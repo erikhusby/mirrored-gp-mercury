@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * This is a utility class for setting up PDO completion status and retrieving all informaiton
+ * This is a utility class for setting up PDO completion status and retrieving all information.
  *
  * @author hrafal
  */
@@ -40,18 +40,18 @@ public class CompletionStatusFetcher {
     }
 
     @DaoFree
-    public int getPercentComplete(String orderKey) {
+    public int getPercentCompleted(String orderKey) {
         ProductOrderCompletionStatus counter = progressByBusinessKey.get(orderKey);
         if (counter == null) {
             return 0;
         }
 
-        return counter.getPercentComplete();
+        return counter.getPercentCompleted();
     }
 
     @DaoFree
-    public int getInProgress(String orderKey) {
-        return 100 - (getPercentAbandoned(orderKey) + getPercentComplete(orderKey));
+    public int getPercentInProgress(String orderKey) {
+        return 100 - (getPercentAbandoned(orderKey) + getPercentCompleted(orderKey));
     }
 
     @DaoFree
