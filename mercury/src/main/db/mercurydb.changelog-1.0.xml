@@ -769,7 +769,6 @@
         <dropNotNullConstraint tableName="bucket_entry_aud" columnName="product_order_ranking"/>
         <dropNotNullConstraint tableName="bucket_entry_aud" columnName="created_date"/>
     </changeSet>
-       </changeSet>
 
     <changeSet id="GPLIM-970-1" author="scottmat">
         <createTable tableName="mercury_control" schemaName="mercury">
