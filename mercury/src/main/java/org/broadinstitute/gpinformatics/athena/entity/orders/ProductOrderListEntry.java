@@ -169,35 +169,4 @@ public class ProductOrderListEntry implements Serializable {
         return ProductOrder.OrderStatus.Draft == orderStatus;
     }
 
-
-    public boolean isValidJiraTicket() {
-        if (jiraTicketKey == null) {
-            return false;
-        }
-
-        return JiraTicket.PATTERN.matcher(jiraTicketKey).matches();
-    }
-
-
-    /**
-     *
-     * @return the numeric portion of the JIRA ticket key if this looks like a real JIRA ticket, otherwise return null.
-     */
-    public Integer getJiraTicketNumber() {
-
-        if (jiraTicketKey == null) {
-            return null;
-        }
-
-        Matcher matcher = JiraTicket.PATTERN.matcher(jiraTicketKey);
-
-        if ( ! matcher.matches() || ! "PDO".equals(matcher.group(JiraTicket.PATTERN_GROUP_PREFIX))) {
-            return null;
-        }
-
-        // pluck out the numeric portion of the JIRA ticket key and convert to Integer
-        return Integer.valueOf(matcher.group(JiraTicket.PATTERN_GROUP_NUMBER));
-    }
-
-
 }
