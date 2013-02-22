@@ -39,7 +39,7 @@ public class Bucket {
     @Id
     private Long bucketId;
 
-    @OneToMany (mappedBy = "bucket", cascade = { CascadeType.PERSIST, CascadeType.REMOVE})
+    @OneToMany (mappedBy = "bucket", cascade = CascadeType.PERSIST, orphanRemoval = true)
     private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
 
     @Column ()
