@@ -45,7 +45,6 @@ public class MercuryControlDaoTest extends ContainerTest {
             return;
         }
 
-
         utx.rollback();
     }
 
@@ -148,4 +147,56 @@ public class MercuryControlDaoTest extends ContainerTest {
         listOfOne = mercuryControlDao.findAllInactiveNegativeControls();
         Assert.assertEquals(0, listOfOne.size());
     }
+
+    public void testSimpleInactiveDuplicateSave() throws Exception {
+
+        final String testId = "Test_collaborator_id";
+        MercuryControl testCtrl = new MercuryControl(testId, MercuryControl.CONTROL_TYPE.POSITIVE);
+        testCtrl.toggleState();
+
+        mercuryControlDao.persist(testCtrl);
+        mercuryControlDao.flush();
+        mercuryControlDao.clear();
+
+        MercuryControl newTestCtrl = mercuryControlDao.findBySampleId(testId);
+
+        Assert.assertNull(newTestCtrl);
+
+        MercuryControl testCtrlDupe = new MercuryControl(testId, MercuryControl.CONTROL_TYPE.POSITIVE);
+
+        mercuryControlDao.persist(testCtrlDupe);
+        mercuryControlDao.flush();
+        mercuryControlDao.clear();
+
+        MercuryControl newTestCtrlDupe = mercuryControlDao.findBySampleId(testId);
+        Assert.assertNotNull(newTestCtrlDupe);
+
+        List<MercuryControl> listOfOne = mercuryControlDao.findAllActive();
+        Assert.assertEquals(1, listOfOne.size());
+        listOfOne = mercuryControlDao.findAllInactive();
+        Assert.assertEquals(1, listOfOne.size());
+        listOfOne = mercuryControlDao.findAllActivePositiveControls();
+        Assert.assertEquals(1, listOfOne.size());
+        listOfOne = mercuryControlDao.findAllActiveNegativeControls();
+        Assert.assertEquals(0, listOfOne.size());
+        listOfOne = mercuryControlDao.findAllInactivePositiveControls();
+        Assert.assertEquals(1, listOfOne.size());
+        listOfOne = mercuryControlDao.findAllInactiveNegativeControls();
+        Assert.assertEquals(0, listOfOne.size());
+
+        try {
+            MercuryControl testCtrlDupe2 = new MercuryControl(testId, MercuryControl.CONTROL_TYPE.POSITIVE);
+
+            mercuryControlDao.persist(testCtrlDupe2);
+            mercuryControlDao.flush();
+            mercuryControlDao.clear();
+
+            Assert.fail();
+
+        } catch (Exception e) {
+
+        }
+
+    }
+
 }

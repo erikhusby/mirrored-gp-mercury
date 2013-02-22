@@ -768,7 +768,7 @@
             </column>
         </createTable>
         <addPrimaryKey tableName="mercury_control" schemaName="mercury" columnNames="mercury_control_id"/>
-        <createIndex tableName="mercury_control" indexName="ix_mc_sample_key">
+        <createIndex tableName="mercury_control" indexName="ix_mc_sample_key" unique="true">
             <column name="collaborator_sample_id"/>
             <column name="state"/>
         </createIndex>
