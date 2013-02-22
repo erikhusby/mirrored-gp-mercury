@@ -761,4 +761,61 @@
             <column name="lab_batch_type" type="varchar2(255)"/>
         </addColumn>
     </changeSet>
+
+    <changeSet id="GPLIM-973-1" author="breilly">
+        <dropNotNullConstraint tableName="bucket_entry_aud" columnName="lab_vessel_id"/>
+        <dropNotNullConstraint tableName="bucket_entry_aud" columnName="po_business_key"/>
+        <dropNotNullConstraint tableName="bucket_entry_aud" columnName="bucket_existence_id"/>
+        <dropNotNullConstraint tableName="bucket_entry_aud" columnName="product_order_ranking"/>
+        <dropNotNullConstraint tableName="bucket_entry_aud" columnName="created_date"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-970-1" author="scottmat">
+        <createTable tableName="mercury_control" schemaName="mercury">
+            <column name="mercury_control_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="collaborator_sample_id" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="type" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="state" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="mercury_control" schemaName="mercury" columnNames="mercury_control_id"/>
+        <createIndex tableName="mercury_control" indexName="ix_mc_sample_key" unique="true">
+            <column name="collaborator_sample_id"/>
+            <column name="state"/>
+        </createIndex>
+        <createSequence sequenceName="SEQ_MERCURY_CONTROL" schemaName="mercury" startValue="1" incrementBy="50"/>
+    </changeSet>
+    <changeSet id="GPLIM-970-2" author="scottmat">
+        <createTable tableName="mercury_control_aud" schemaName="mercury">
+            <column name="mercury_control_id" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="number(3,0)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="collaborator_sample_id" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="type" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+            <column name="state" type="varchar(255)">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addPrimaryKey tableName="mercury_control_aud" schemaName="mercury" columnNames="mercury_control_id, rev"/>
+    </changeSet>
+
+
+
 </databaseChangeLog>

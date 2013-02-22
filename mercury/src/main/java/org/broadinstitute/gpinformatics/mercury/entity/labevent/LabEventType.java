@@ -45,7 +45,7 @@ public enum LabEventType {
                                          PlasticToValidate.SOURCE),
     POND_ENRICHMENT ("PondEnrichment", true, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE),
     INDEX_P5_POND_ENRICHMENT ("IndexP5PondEnrichment", true, true, SystemOfRecord.SQUID, false,
-                                     PlasticToValidate.SOURCE),
+                                     PlasticToValidate.TARGET),
     POST_POND_ENRICHMENT_THERMO_CYCLER_LOADED("PostPondEnrichmentThermoCyclerLoaded", true, true, SystemOfRecord.SQUID, false,
                                                      PlasticToValidate.SOURCE),
     POND_ENRICHMENT_CLEANUP ("HybSelPondEnrichmentCleanup", false, true, SystemOfRecord.SQUID, false,
