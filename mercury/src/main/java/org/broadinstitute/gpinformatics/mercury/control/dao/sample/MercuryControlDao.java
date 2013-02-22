@@ -6,11 +6,6 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercuryControl_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,8 +20,8 @@ import java.util.List;
 public class MercuryControlDao extends GenericDao {
 
     public MercuryControl findBySampleId(String sampleId) {
-        return findSingle(MercuryControl.class, MercuryControl_.collaboratorSampleId, sampleId,
-                                 new MercuryControlStateCallback(MercuryControl.CONTROL_STATE.ACTIVE));
+        return findSingle(MercuryControl.class, new MercuryControlIdCallback(this, MercuryControl.CONTROL_STATE.ACTIVE,
+                                                                                    sampleId));
     }
 
     public List<MercuryControl> findAllActivePositiveControls() {
@@ -46,54 +41,34 @@ public class MercuryControlDao extends GenericDao {
     }
 
     public List<MercuryControl> findAllActive() {
-        return findAll(MercuryControl.class, new MercuryControlStateCallback(MercuryControl.CONTROL_STATE.ACTIVE));
+        return findAll(MercuryControl.class,
+                              new MercuryControlTypeCallback(this, MercuryControl.CONTROL_STATE.ACTIVE,null));
     }
 
     public List<MercuryControl> findAllInactive() {
-        return findAll(MercuryControl.class, new MercuryControlStateCallback(MercuryControl.CONTROL_STATE.INACTIVE));
+        return findAll(MercuryControl.class,
+                              new MercuryControlTypeCallback(this, MercuryControl.CONTROL_STATE.INACTIVE, null));
     }
 
     private List<MercuryControl> findAllActiveControlsByType(MercuryControl.CONTROL_TYPE type) {
-        return findListByList(MercuryControl.class, MercuryControl_.type,
-                                     Collections.singletonList(type),
-                                     new MercuryControlStateCallback(MercuryControl.CONTROL_STATE.ACTIVE));
+        return findAll(MercuryControl.class,
+                              new MercuryControlTypeCallback(this, MercuryControl.CONTROL_STATE.ACTIVE,type));
+
     }
 
     private List<MercuryControl> findAllInactiveControlsByType(MercuryControl.CONTROL_TYPE type) {
-        return findListByList(MercuryControl.class, MercuryControl_.type,
-                                     Collections.singletonList(type),
-                                     new MercuryControlStateCallback(MercuryControl.CONTROL_STATE.INACTIVE));
+        return findAll(MercuryControl.class,
+                              new MercuryControlTypeCallback(this, MercuryControl.CONTROL_STATE.INACTIVE, type));
     }
 
     private List<MercuryControl> findAllControlsByType(MercuryControl.CONTROL_TYPE type) {
         List<MercuryControl> results = new LinkedList<MercuryControl>();
 
-        results.addAll(findListByList(MercuryControl.class, MercuryControl_.type,
-                                             Collections.singletonList(type),
-                                             new MercuryControlStateCallback(MercuryControl.CONTROL_STATE.ACTIVE)));
-        results.addAll(findListByList(MercuryControl.class, MercuryControl_.type,
-                                             Collections.singletonList(type),
-                                             new MercuryControlStateCallback(MercuryControl.CONTROL_STATE.INACTIVE)));
+        results.addAll(findAll(MercuryControl.class,
+                                      new MercuryControlTypeCallback(this, MercuryControl.CONTROL_STATE.ACTIVE, type)));
+        results.addAll(findAll(MercuryControl.class,
+                                      new MercuryControlTypeCallback(this, MercuryControl.CONTROL_STATE.INACTIVE, type)));
         return results;
     }
 
-    private class MercuryControlStateCallback implements GenericDaoCallback<MercuryControl> {
-
-        private final MercuryControl.CONTROL_STATE callbackState;
-
-        private MercuryControlStateCallback(MercuryControl.CONTROL_STATE callbackState) {
-            this.callbackState = callbackState;
-        }
-
-        @Override
-        public void callback(CriteriaQuery<MercuryControl> mercuryControlCriteriaQuery,
-                             Root<MercuryControl> mercuryControlRoot) {
-            CriteriaBuilder cbuilder = getEntityManager().getCriteriaBuilder();
-
-            List<Predicate> predicates = new ArrayList<Predicate>();
-
-            mercuryControlCriteriaQuery.where(cbuilder.equal(mercuryControlRoot.get(MercuryControl_.state),
-                                                                    callbackState));
-        }
-    }
 }

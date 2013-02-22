@@ -133,7 +133,7 @@ public class MercuryControlDaoTest extends ContainerTest {
 
         MercuryControl newTestCtrl = mercuryControlDao.findBySampleId(testId1);
 
-        Assert.assertNull(newTestCtrl);
+        Assert.assertNotNull(newTestCtrl);
 
         List<MercuryControl> listOfOne = mercuryControlDao.findAllActive();
         Assert.assertEquals(5, listOfOne.size());

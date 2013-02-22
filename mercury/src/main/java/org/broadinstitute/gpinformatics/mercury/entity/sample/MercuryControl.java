@@ -4,6 +4,8 @@ import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -38,8 +40,10 @@ public class MercuryControl {
     @Index(name = "ix_mc_sample_key")
     private String collaboratorSampleId;
 
+    @Enumerated(EnumType.STRING)
     private CONTROL_TYPE type;
 
+    @Enumerated(EnumType.STRING)
     @Index(name = "ix_mc_sample_key")
     private CONTROL_STATE state;
 
