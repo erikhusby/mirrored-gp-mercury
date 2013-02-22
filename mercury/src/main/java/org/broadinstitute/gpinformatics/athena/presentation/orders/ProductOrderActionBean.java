@@ -1036,4 +1036,18 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         return getProductOrderListEntry().getBillingSessionBusinessKey();
     }
+
+
+    public int getPercentAbandoned() {
+        return progressFetcher.getPercentAbandoned(editOrder.getBusinessKey());
+    }
+
+    public int getPercentCompleted() {
+        return progressFetcher.getPercentCompleted(editOrder.getBusinessKey());
+    }
+
+    public int getPercentInProgress() {
+        return progressFetcher.getPercentInProgress(editOrder.getBusinessKey());
+    }
+
 }

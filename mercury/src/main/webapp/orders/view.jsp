@@ -1,11 +1,13 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
-<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 <%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.*" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"/>
+
+<c:set var="editOrder" scope="page" value="${actionBean.editOrder}" />
+
 
 <stripes:layout-render name="/layout.jsp" pageTitle="View Product Order" sectionTitle="View Product Order">
     <stripes:layout-component name="extraHead">
@@ -17,7 +19,7 @@
                 setupDialogs();
 
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getSummary=&productOrder=${actionBean.editOrder.businessKey}",
+                    url: "${ctxpath}/orders/order.action?getSummary=&productOrder=${editOrder.businessKey}",
                     dataType: 'json',
                     success: showSummary
                 });
@@ -135,7 +137,7 @@
                 });
 
                 $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getBspData=&productOrder=${actionBean.editOrder.businessKey}&" + sampleIdString,
+                    url: "${ctxpath}/orders/order.action?getBspData=&productOrder=${editOrder.businessKey}&" + sampleIdString,
                     dataType: 'json',
                     success: showSamples
                 });
@@ -170,7 +172,7 @@
                 var quoteIdentifier = $j("#quote").val();
                 if ($j.trim(quoteIdentifier)) {
                     $j.ajax({
-                        url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${actionBean.editOrder.quoteId}",
+                        url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${editOrder.quoteId}",
                         dataType: 'json',
                         success: updateFunds
                     });
@@ -257,11 +259,11 @@
     </div>
 
         <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
-            <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+            <stripes:hidden name="productOrder" value="${editOrder.businessKey}"/>
             <stripes:hidden id="orderDialogAction" name=""/>
 
             <div class="actionButtons">
-                <c:if test="${actionBean.editOrder.draft}">
+                <c:if test="${editOrder.draft}">
                     <%-- MLC PDOs can be placed by PM or PDMs, so I'm making the security tag accept either of those roles for 'Place Order'.
                          I am also putting 'Validate' under that same security tag since I think that may have the power to alter 'On-Riskedness'
                          for PDO samples --%>
@@ -270,11 +272,11 @@
                         <stripes:submit name="validate" value="Validate" style="margin-left: 5px;" class="btn"/>
                     </security:authorizeBlock>
 
-                    <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+                    <stripes:link title="Click to edit ${editOrder.title}"
                                   beanclass="${actionBean.class.name}" event="edit" class="btn"
                                   style="text-decoration: none !important;">
                         <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
-                        <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                        <stripes:param name="productOrder" value="${editOrder.businessKey}"/>
                     </stripes:link>
 
                     <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PM.name}%>">
@@ -287,11 +289,11 @@
 
         <%-- PDO edit should only be available to PDMs, i.e. not PMs. --%>
         <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name}%>">
-            <c:if test="${!actionBean.editOrder.draft}">
-                <stripes:link title="Click to edit ${actionBean.editOrder.title}"
+            <c:if test="${!editOrder.draft}">
+                <stripes:link title="Click to edit ${editOrder.title}"
                     beanclass="${actionBean.class.name}" event="edit" class="pull-right">
                     <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
-                    <stripes:param name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+                    <stripes:param name="productOrder" value="${editOrder.businessKey}"/>
                 </stripes:link>
             </c:if>
         </security:authorizeBlock>
@@ -299,7 +301,7 @@
         <div style="both:clear"> </div>
 
         <stripes:form action="/orders/order.action" id="orderSamplesForm" class="form-horizontal">
-            <stripes:hidden name="productOrder" value="${actionBean.editOrder.businessKey}"/>
+            <stripes:hidden name="productOrder" value="${editOrder.businessKey}"/>
             <stripes:hidden id="dialogAction" name=""/>
 
             <stripes:hidden id="riskStatus" name="riskStatus" value=""/>
@@ -309,7 +311,7 @@
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Name</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editOrder.title}</div>
+                    <div class="form-value">${editOrder.title}</div>
                 </div>
             </div>
 
@@ -318,11 +320,11 @@
                 <div class="controls">
                     <div class="form-value">
                         <c:choose>
-                            <c:when test="${actionBean.editOrder.draft}">
+                            <c:when test="${editOrder.draft}">
                                 &nbsp;
                             </c:when>
                             <c:otherwise>
-                                <a target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.jiraTicketKey)}" class="external" target="JIRA">${actionBean.editOrder.jiraTicketKey}</a>
+                                <a target="JIRA" href="${actionBean.jiraUrl(editOrder.jiraTicketKey)}" class="external" target="JIRA">${editOrder.jiraTicketKey}</a>
                             </c:otherwise>
                         </c:choose>
                     </div>
@@ -333,10 +335,10 @@
                 <label class="control-label label-form">Product</label>
                 <div class="controls">
                     <div class="form-value">
-                        <c:if test="${actionBean.editOrder.product != null}">
+                        <c:if test="${editOrder.product != null}">
                             <stripes:link title="Product" href="${ctxpath}/products/product.action?view">
-                                <stripes:param name="product" value="${actionBean.editOrder.product.partNumber}"/>
-                                ${actionBean.editOrder.product.productName}
+                                <stripes:param name="product" value="${editOrder.product.partNumber}"/>
+                                ${editOrder.product.productName}
                             </stripes:link>
                         </c:if>
                     </div>
@@ -348,8 +350,8 @@
                 <label class="control-label label-form">Product Family</label>
                 <div class="controls">
                     <div class="form-value">
-                        <c:if test="${actionBean.editOrder.product != null}">
-                            ${actionBean.editOrder.product.productFamily.name}
+                        <c:if test="${editOrder.product != null}">
+                            ${editOrder.product.productFamily.name}
                         </c:if>
                     </div>
                 </div>
@@ -360,9 +362,9 @@
                 <label class="control-label label-form">Order Status</label>
                 <div class="controls">
                     <div class="form-value">
-                        <c:if test="${actionBean.editOrder.draft}"><span class="label label-info"></c:if>
-                            ${actionBean.editOrder.orderStatus}
-                        <c:if test="${actionBean.editOrder.draft}"></span></c:if>
+                        <c:if test="${editOrder.draft}"><span class="label label-info"></c:if>
+                            ${editOrder.orderStatus}
+                        <c:if test="${editOrder.draft}"></span></c:if>
                     </div>
                 </div>
             </div>
@@ -372,15 +374,15 @@
                 <label class="control-label label-form">Research Project</label>
                 <div class="controls">
                     <div class="form-value">
-                        <c:if test="${actionBean.editOrder.researchProject != null}">
+                        <c:if test="${editOrder.researchProject != null}">
                             <stripes:link title="Research Project"
                                           beanclass="<%=ResearchProjectActionBean.class.getName()%>"
                                           event="view">
-                                <stripes:param name="<%=ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER%>" value="${actionBean.editOrder.researchProject.businessKey}"/>
-                                ${actionBean.editOrder.researchProject.title}
+                                <stripes:param name="<%=ResearchProjectActionBean.RESEARCH_PROJECT_PARAMETER%>" value="${editOrder.researchProject.businessKey}"/>
+                                ${editOrder.researchProject.title}
                             </stripes:link>
-                            (<a target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.researchProject.jiraTicketKey)}" class="external" target="JIRA">
-                            ${actionBean.editOrder.researchProject.jiraTicketKey}
+                            (<a target="JIRA" href="${actionBean.jiraUrl(editOrder.researchProject.jiraTicketKey)}" class="external" target="JIRA">
+                            ${editOrder.researchProject.jiraTicketKey}
                             </a>)
                         </c:if>
                     </div>
@@ -392,29 +394,29 @@
                 <label class="control-label label-form">Owner</label>
                 <div class="controls">
                     <div class="form-value">
-                            ${actionBean.getUserFullName(actionBean.editOrder.createdBy)}
+                            ${actionBean.getUserFullName(editOrder.createdBy)}
                     </div>
                 </div>
             </div>
 
 
-            <c:if test="${actionBean.editOrder.placedDate != null}">
+            <c:if test="${editOrder.placedDate != null}">
                 <div class="view-control-group control-group">
                     <label class="control-label label-form">Placed Date</label>
                     <div class="controls">
                         <div class="form-value">
-                            <fmt:formatDate value="${actionBean.editOrder.placedDate}"/>
+                            <fmt:formatDate value="${editOrder.placedDate}"/>
                         </div>
                     </div>
                 </div>
             </c:if>
 
-            <c:if test="${actionBean.editOrder.product.productFamily.supportsNumberOfLanes}">
+            <c:if test="${editOrder.product.productFamily.supportsNumberOfLanes}">
                 <div class="view-control-group control-group">
                     <label class="control-label label-form">Number of Lanes Per Sample</label>
 
                     <div class="controls">
-                        <div class="form-value">${actionBean.editOrder.count}</div>
+                        <div class="form-value">${editOrder.count}</div>
                     </div>
                 </div>
             </c:if>
@@ -423,7 +425,7 @@
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Add-ons</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editOrder.addOnList}</div>
+                    <div class="form-value">${editOrder.addOnList}</div>
                 </div>
             </div>
 
@@ -432,7 +434,7 @@
                 <div class="controls">
                     <div class="form-value">
                         <a href="${actionBean.quoteUrl}" class="external" target="QUOTE">
-                                ${actionBean.editOrder.quoteId}
+                                ${editOrder.quoteId}
                         </a>
                         <span id="fundsRemaining" style="margin-left: 20px;"> </span>
                     </div>
@@ -471,9 +473,18 @@
                 <label class="control-label label-form">Sample Status</label>
                 <div class="controls">
                     <div class="form-value">
-                        In Progress:&nbsp;${actionBean.progressFetcher.getPercentInProgress(actionBean.editOrder.businessKey)}%,
-                        Abandoned:&nbsp;${actionBean.progressFetcher.getPercentAbandoned(actionBean.editOrder.businessKey)}%,
-                        Completed:&nbsp;${actionBean.progressFetcher.getPercentCompleted(actionBean.editOrder.businessKey)}%
+                        ${actionBean.percentAbandoned}%&nbsp;Abandoned,
+                        ${actionBean.percentCompleted}%&nbsp;Completed,
+                        <c:choose>
+                            <c:when test="${editOrder.draft}">
+                                <%-- Hardcoding 0% in progress for draft orders since the lab can't see these and isn't
+                                     working on them --%>
+                                0%&nbsp;In Progress
+                            </c:when>
+                            <c:otherwise>
+                                ${actionBean.percentInProgress}%&nbsp;In Progress
+                            </c:otherwise>
+                        </c:choose>
                     </div>
                 </div>
             </div>
@@ -482,14 +493,14 @@
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Description</label>
                 <div class="controls">
-                    <div class="form-value">${actionBean.editOrder.comments}</div>
+                    <div class="form-value">${editOrder.comments}</div>
                 </div>
             </div>
 
             <div class="borderHeader">
                 Samples
 
-                <c:if test="${!actionBean.editOrder.draft}">
+                <c:if test="${!editOrder.draft}">
                     <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name}%>">
                         <span class="actionButtons">
                             <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
@@ -517,7 +528,7 @@
             <table id="sampleData" class="table simple">
                 <thead>
                     <tr>
-                        <c:if test="${!actionBean.editOrder.draft}">
+                        <c:if test="${!editOrder.draft}">
                             <th width="40">
                                 <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
                             </th>
@@ -536,9 +547,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <c:forEach items="${actionBean.editOrder.samples}" var="sample">
+                    <c:forEach items="${editOrder.samples}" var="sample">
                         <tr>
-                            <c:if test="${!actionBean.editOrder.draft}">
+                            <c:if test="${!editOrder.draft}">
                                 <td>
                                     <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${sample.productOrderSampleId}"/>
                                 </td>
