@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.billing;
 
 import junit.framework.Assert;
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDaoTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;

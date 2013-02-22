@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.athena.control.dao;
+package org.broadinstitute.gpinformatics.athena.control.dao.projects;
 
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;

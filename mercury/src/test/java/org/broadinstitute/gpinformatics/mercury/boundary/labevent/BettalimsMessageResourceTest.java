@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 //import com.jprofiler.api.agent.Controller;
 
 import com.sun.jersey.api.client.Client;
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;

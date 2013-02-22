@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.util;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -8,10 +8,11 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
 import javax.ejb.Stateful;
-import javax.ejb.Stateless;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import java.util.ArrayList;
 import java.util.List;
@@ -20,7 +21,7 @@ import java.util.List;
  * Restful webservice to
  * list the athena research project info.
  */
-@Path("/util")
+@Path("util")
 @Stateful
 @RequestScoped
 public class PingResource {
@@ -34,14 +35,14 @@ public class PingResource {
 
     /**
      * Ping service for use in app monitor
-     * an attempy will be made to load a Product, PDO & RP
+     * an attempt will be made to load a Product, PDO & RP
      * a 200 and the word "OK"
      *
      * @return String - "OK"
      */
     @GET
-    @Produces({MediaType.TEXT_PLAIN})
-    @Path("/ping")
+    @Produces(MediaType.TEXT_PLAIN)
+    @Path("ping")
     public List<String> ping() {
         List<String> results = new ArrayList<String>();
 
