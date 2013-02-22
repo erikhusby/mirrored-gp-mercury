@@ -3,16 +3,14 @@ package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -30,6 +28,8 @@ public class BucketViewActionBean extends CoreActionBean {
     private WorkflowLoader workflowLoader;
     @Inject
     private BucketDao bucketDao;
+    @Inject
+    private AthenaClientService athenaClientService;
 
     private List<WorkflowBucketDef> buckets = new ArrayList<WorkflowBucketDef>();
     @Validate(required = true, on = "viewBucket")
@@ -102,5 +102,9 @@ public class BucketViewActionBean extends CoreActionBean {
             }
         }
         return view();
+    }
+
+    public ProductOrder getPDODetails(String pdoKey) {
+        return athenaClientService.retrieveProductOrderDetails(pdoKey);
     }
 }
