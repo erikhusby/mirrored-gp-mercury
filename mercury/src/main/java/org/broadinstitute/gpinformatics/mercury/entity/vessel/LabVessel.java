@@ -43,7 +43,7 @@ public abstract class LabVessel implements Serializable {
 
     //todo SGM:  create comparator for sorting Containers THEN Create getter that gets sorted containers
 
-    private final static Log logger = LogFactory.getLog(LabVessel.class);
+    private static final Log logger = LogFactory.getLog(LabVessel.class);
 
     @SequenceGenerator(name = "SEQ_LAB_VESSEL", schema = "mercury", sequenceName = "SEQ_LAB_VESSEL")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_VESSEL")
@@ -220,12 +220,12 @@ public abstract class LabVessel implements Serializable {
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    public void addToContainer(VesselContainer vesselContainer) {
-        this.containers.add(vesselContainer.getEmbedder());
-        if (this.containersCount == null) {
-            this.containersCount = 0;
+    public void addToContainer(VesselContainer<?> vesselContainer) {
+        containers.add(vesselContainer.getEmbedder());
+        if (containersCount == null) {
+            containersCount = 0;
         }
-        this.containersCount++;
+        containersCount++;
     }
 
     //Utility method for getting containers as a list so they can be displayed in a display table column
@@ -453,12 +453,12 @@ public abstract class LabVessel implements Serializable {
      */
     public static class VesselEvent {
 
-        private LabVessel       labVessel;
-        private VesselContainer vesselContainer;
-        private VesselPosition  position;
-        private LabEvent        labEvent;
+        private final LabVessel       labVessel;
+        private final VesselContainer<?> vesselContainer;
+        private final VesselPosition  position;
+        private final LabEvent        labEvent;
 
-        public VesselEvent(LabVessel labVessel, VesselContainer vesselContainer, VesselPosition position,
+        public VesselEvent(LabVessel labVessel, VesselContainer<?> vesselContainer, VesselPosition position,
                            LabEvent labEvent) {
             this.labVessel = labVessel;
             this.vesselContainer = vesselContainer;
@@ -478,7 +478,7 @@ public abstract class LabVessel implements Serializable {
             return position;
         }
 
-        public VesselContainer getVesselContainer() {
+        public VesselContainer<?> getVesselContainer() {
             return vesselContainer;
         }
     }
@@ -507,8 +507,8 @@ public abstract class LabVessel implements Serializable {
      */
     static class TraversalResults {
 
-        private Set<SampleInstance> sampleInstances         = new HashSet<SampleInstance>();
-        private Set<Reagent>        reagents                = new HashSet<Reagent>();
+        private final Set<SampleInstance> sampleInstances         = new HashSet<SampleInstance>();
+        private final Set<Reagent>        reagents                = new HashSet<Reagent>();
         private LabBatch            lastEncounteredLabBatch = null;
 
         void add(TraversalResults traversalResults) {
@@ -927,7 +927,7 @@ public abstract class LabVessel implements Serializable {
      *
      * @return object representing this vessel's role as a container of other vessels
      */
-    public VesselContainer getContainerRole() {
+    public VesselContainer<?> getContainerRole() {
         return null;
     }
 
@@ -962,9 +962,9 @@ public abstract class LabVessel implements Serializable {
         transferTraverserCriteria.evaluateVesselPostOrder(context);
     }
 
-    private void evaluateVesselEvent(TransferTraverserCriteria transferTraverserCriteria,
-                                     TransferTraverserCriteria.TraversalDirection traversalDirection, int hopCount,
-                                     VesselEvent vesselEvent) {
+    private static void evaluateVesselEvent(TransferTraverserCriteria transferTraverserCriteria,
+                                            TransferTraverserCriteria.TraversalDirection traversalDirection, int hopCount,
+                                            VesselEvent vesselEvent) {
         LabVessel labVessel = vesselEvent.getLabVessel();
         if (labVessel == null) {
             vesselEvent.getVesselContainer().evaluateCriteria(vesselEvent.getPosition(),

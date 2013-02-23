@@ -13,7 +13,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusF
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -31,7 +31,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.SampleSearchLink;
-import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;

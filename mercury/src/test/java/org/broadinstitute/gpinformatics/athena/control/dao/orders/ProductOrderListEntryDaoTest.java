@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 import org.apache.commons.collections15.CollectionUtils;
 import org.apache.commons.collections15.Predicate;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;

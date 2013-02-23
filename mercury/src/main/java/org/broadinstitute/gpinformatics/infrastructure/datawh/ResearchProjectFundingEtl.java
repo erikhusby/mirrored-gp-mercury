@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectFunding_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
