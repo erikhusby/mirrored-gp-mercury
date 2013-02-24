@@ -24,9 +24,9 @@ public class JacksonConfigurator implements ContextResolver<ObjectMapper> {
 
     public JacksonConfigurator() {
         SerializationConfig serConfig = mapper.getSerializationConfig();
-        serConfig.setDateFormat(new SimpleDateFormat(DATE_FORMAT));
+        serConfig.withDateFormat(new SimpleDateFormat(DATE_FORMAT));
         DeserializationConfig deserializationConfig = mapper.getDeserializationConfig();
-        deserializationConfig.setDateFormat(new SimpleDateFormat(DATE_FORMAT));
+        deserializationConfig.withDateFormat(new SimpleDateFormat(DATE_FORMAT));
         mapper.configure(SerializationConfig.Feature.WRITE_DATES_AS_TIMESTAMPS, false);
     }
 
