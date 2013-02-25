@@ -473,6 +473,14 @@
                 <label class="control-label label-form">Sample Status</label>
                 <div class="controls">
                     <div class="form-value">
+                        <div class="barFull view" title="${actionBean.percentInProgress}% In Progress">
+                            <span class="barAbandon view"
+                                title="${actionBean.percentAbandoned}% Abandoned"
+                                style="width: ${actionBean.percentAbandoned}%"> </span>
+                            <span class="barComplete view"
+                                title="${actionBean.percentCompleted}% Completed"
+                                style="width: ${actionBean.percentCompleted}%"> </span>
+                        </div>
                         ${actionBean.percentAbandoned}%&nbsp;Abandoned,
                         ${actionBean.percentCompleted}%&nbsp;Completed,
                         <c:choose>

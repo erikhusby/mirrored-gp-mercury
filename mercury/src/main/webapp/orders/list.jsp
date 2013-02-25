@@ -1,5 +1,4 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
-<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 <%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.*" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
@@ -81,11 +80,6 @@
             }
 
         </script>
-        <style type="text/css">
-            .barFull { height: 10px; width:80px; background-color: white; border-color: #a9a9a9; border-style: solid; border-width: thin; }
-            .barComplete { height: 10px; float:left; background-color: #c4eec0; }
-            .barAbandon { height: 10px; float:left; background-color: #eed6e1; }
-        </style>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
