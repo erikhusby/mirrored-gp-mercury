@@ -1007,6 +1007,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         return progressFetcher;
     }
 
+    /**
+     * Convenience method to get the {@link ProductOrderListEntry} for the PDO view page, this should be
+     * optimized so the view page only fetches this object for the current PDO.
+     *
+     * @return {@link ProductOrderListEntry} for the view page's PDO.
+     */
     public ProductOrderListEntry getProductOrderListEntry() {
 
         if (editOrder.getBusinessKey() == null) {
@@ -1023,11 +1029,22 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
 
+    /**
+     * Convenience method to determine if the current PDO for the view page is eligible for billing.
+     *
+     * @return Boolean eligible for billing.
+     */
     public boolean isEligibleForBilling() {
         return editOrder.getBusinessKey() != null && getProductOrderListEntry().isEligibleForBilling();
     }
 
 
+    /**
+     * Convenience method to return the billing session ID for the current PDO in the view page, if any.  Throws
+     * an exception if the current PDO is not eligible for billing.
+     *
+     * @return Billing session for this PDO if any, null if none.
+     */
     public String getBillingSessionBusinessKey() {
         if (!isEligibleForBilling()) {
             throw new RuntimeException("Product Order is not eligible for billing");
@@ -1037,16 +1054,60 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
 
+    /**
+     * Convenience method for PDO view page to show percentage of samples abandoned for the current PDO.
+     *
+     * @return Percentage of sample abandoned.
+     */
     public int getPercentAbandoned() {
         return progressFetcher.getPercentAbandoned(editOrder.getBusinessKey());
     }
 
+
+    /**
+     * Convenience method for PDO view page to show percentage of samples completed for the current PDO.
+     *
+     * @return Percentage of sample completed.
+     */
     public int getPercentCompleted() {
         return progressFetcher.getPercentCompleted(editOrder.getBusinessKey());
     }
 
+
+    /**
+     * Convenience method for PDO view page to show percentage of samples in progress for the current PDO.
+     *
+     * @return Percentage of sample in progress.
+     */
     public int getPercentInProgress() {
         return progressFetcher.getPercentInProgress(editOrder.getBusinessKey());
+    }
+
+    /**
+     * Computes the String to show for sample progress, taking into account Draft status and excluding mention of
+     * zero-valued progress categories.
+     *
+     * @return Progress String suitable for display under progress bar.
+     */
+    public String getProgressString() {
+
+        if (editOrder.isDraft()) {
+            return "Draft order, work has not begun";
+        }
+        else {
+            List<String> progressPieces = new ArrayList<String>();
+            if (getPercentAbandoned() != 0) {
+                progressPieces.add(getPercentAbandoned() + "% Abandoned");
+            }
+            if (getPercentCompleted() != 0) {
+                progressPieces.add(getPercentCompleted() + "% Completed");
+            }
+            if (getPercentInProgress() != 0) {
+                progressPieces.add(getPercentInProgress() + "% In Progress");
+            }
+
+            return StringUtils.join(progressPieces, ", ");
+        }
     }
 
 }

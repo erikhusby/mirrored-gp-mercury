@@ -474,18 +474,7 @@
                                 title="${actionBean.percentCompleted}% Completed"
                                 style="width: ${actionBean.percentCompleted}%"> </span>
                         </div>
-                        ${actionBean.percentAbandoned}%&nbsp;Abandoned,
-                        ${actionBean.percentCompleted}%&nbsp;Completed,
-                        <c:choose>
-                            <c:when test="${editOrder.draft}">
-                                <%-- Hardcoding 0% in progress for draft orders since the lab can't see these and isn't
-                                     working on them --%>
-                                0%&nbsp;In Progress
-                            </c:when>
-                            <c:otherwise>
-                                ${actionBean.percentInProgress}%&nbsp;In Progress
-                            </c:otherwise>
-                        </c:choose>
+                        ${actionBean.progressString}
                     </div>
                 </div>
             </div>
