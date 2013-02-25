@@ -109,9 +109,9 @@ textarea.controlledText { width: 550px; }
 .ac-dropdown-text { margin-left: 5px; font-size: 10pt; }
 .ac-dropdown-subtext { margin-left: 5px; font-size: 8pt; font-style: italic; border-bottom: 1px solid #cfd3cf; }
 
-.barFull.view { height: 25px; width: 300px; }
-.barComplete.view { height: 25px; }
-.barAbandon.view { height: 25px; }
+.barFull.view { height: 15px; width: 270px; }
+.barComplete.view { height: 15px; }
+.barAbandon.view { height: 15px; }
 
 .barFull { height: 10px; width:80px; background-color: white; border-color: #a9a9a9; border-style: solid; border-width: thin; }
 .barComplete { height: 10px; float:left; background-color: #c4eec0; }

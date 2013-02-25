@@ -9,7 +9,7 @@
 <c:set var="editOrder" scope="page" value="${actionBean.editOrder}" />
 
 
-<stripes:layout-render name="/layout.jsp" pageTitle="View Product Order" sectionTitle="View Product Order">
+<stripes:layout-render name="/layout.jsp" pageTitle="Product Order ${editOrder.title}" sectionTitle="Product Order ${editOrder.title}">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
@@ -307,13 +307,6 @@
             <stripes:hidden id="riskStatus" name="riskStatus" value=""/>
             <stripes:hidden id="riskComment" name="riskComment" value=""/>
             <stripes:hidden id="onlyNew" name="onlyNew" value=""/>
-
-            <div class="view-control-group control-group">
-                <label class="control-label label-form">Name</label>
-                <div class="controls">
-                    <div class="form-value">${editOrder.title}</div>
-                </div>
-            </div>
 
             <div class="view-control-group control-group">
                 <label class="control-label label-form">Order ID</label>
