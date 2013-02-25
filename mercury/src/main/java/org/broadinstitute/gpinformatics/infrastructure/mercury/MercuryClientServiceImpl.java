@@ -26,7 +26,10 @@ import java.util.logging.Logger;
 @Impl
 @Default
 public class MercuryClientServiceImpl implements MercuryClientService {
-    Logger logger = Logger.getLogger(getClass().getName());
+    private final Logger logger = Logger.getLogger(getClass().getName());
+    private final String eventLocation = "BSP";
+    private final LabEventType eventType = LabEventType.PICO_PLATING_BUCKET;
+
 
     @Inject
     private MercurySampleDao mercurySampleDao;
@@ -37,12 +40,14 @@ public class MercuryClientServiceImpl implements MercuryClientService {
     @Inject
     private LabBatchDAO labBatchDao;
     @Inject
-    private BSPUserList userList;
-    @Inject
     private WorkflowLoader workflowLoader;
 
-    private final String eventLocation = "BSP";
-    private final LabEventType eventType = LabEventType.PICO_PLATING_BUCKET;
+    private BSPUserList userList;
+
+    @Inject
+    public void setUserList(BSPUserList userList) {
+        this.userList = userList;
+    }
 
     /**
      * @{inheritDoc}
@@ -66,8 +71,8 @@ public class MercuryClientServiceImpl implements MercuryClientService {
         }
 
         // Finds the pico bucket from workflow config for this product.
-        BucketInfo bucketInfo = findPicoBucket(pdo.getProduct());
-        if (bucketInfo == null) {
+        Bucket picoBucket = findPicoBucket(pdo.getProduct());
+        if (picoBucket == null) {
             return Collections.EMPTY_LIST;
         }
 
@@ -75,7 +80,9 @@ public class MercuryClientServiceImpl implements MercuryClientService {
         Long bspUserId = pdo.getCreatedBy();
         if (bspUserId != null) {
             BspUser bspUser = userList.getById(bspUserId);
-            username = bspUser.getUsername();
+            if (bspUser != null) {
+                username = bspUser.getUsername();
+            }
         }
 
         // For each pdo sample, if it is in receiving, adds it to pico bucket.
@@ -92,16 +99,17 @@ public class MercuryClientServiceImpl implements MercuryClientService {
             vesselsAdded.add(vessel);
             samplesAdded.add(pdoSample);
         }
-        bucketBean.add(vesselsAdded, bucketInfo.bucket, username, eventLocation, eventType);
+        bucketBean.add(vesselsAdded, picoBucket, username, eventLocation, eventType, pdo.getBusinessKey());
         return samplesAdded;
     }
 
-    private BucketInfo findPicoBucket(Product product) {
+    private Bucket findPicoBucket(Product product) {
         if (StringUtils.isBlank(product.getWorkflowName())) {
             return null;
         }
 
         WorkflowConfig workflowConfig = workflowLoader.load();
+        assert(workflowConfig != null && workflowConfig.getProductWorkflowDefs() != null && workflowConfig.getProductWorkflowDefs().size() > 0);
         ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(product.getWorkflowName());
         ProductWorkflowDefVersion versionResult = productWorkflowDef.getEffectiveVersion();
 
@@ -109,20 +117,11 @@ public class MercuryClientServiceImpl implements MercuryClientService {
         String bucketName = bucketStep.getName();
         Bucket picoBucket = bucketDao.findByName(bucketName);
         if (picoBucket == null) {
-            logger.severe("Cannot find bucket " + bucketName);
-            return null;
+            picoBucket = new Bucket(bucketStep);
+            bucketDao.persist(picoBucket);
+            logger.fine("Creating new bucket " + bucketName);
         }
-        return new BucketInfo(picoBucket, bucketStep);
+        return picoBucket;
     }
-
-    private class BucketInfo {
-        public final Bucket bucket;
-        public final WorkflowStepDef bucketStep;
-
-        BucketInfo(Bucket bucket, WorkflowStepDef bucketStep) {
-            this.bucket = bucket;
-            this.bucketStep = bucketStep;
-        }
-    }
-
 }
+
