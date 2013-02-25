@@ -45,7 +45,6 @@ public class SearchActionBean extends CoreActionBean {
     private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
 
     private static final String SESSION_LIST_PAGE = "/search/search.jsp";
-    private static final String SEARCH_PLASTIC_PAGE= "/search/search_plasticware.jsp";
     private static final String BATCH_CREATE_PAGE = "/search/create_batch.jsp";
     private static final String BATCH_CONFIRM_PAGE = "/search/batch_confirm.jsp";
 
@@ -87,6 +86,7 @@ public class SearchActionBean extends CoreActionBean {
 
     private boolean resultsAvailable = false;
     private boolean multipleResultTypes = false;
+    private boolean plasticOnly=false;
     private Map<String, String> getPDOKeyMap = null;
     private Map<String, String> getIndexesMap = null;
 
@@ -125,12 +125,13 @@ public class SearchActionBean extends CoreActionBean {
     @HandlesEvent(SEARCH_PLASTIC_ACTION)
     public Resolution searchPlastic() {
         doSearch(SEARCH_TYPE.BARCODE);
-        return new ForwardResolution(SEARCH_PLASTIC_PAGE);
+        return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
     @HandlesEvent(VIEW_PLASTIC_ACTION)
     public Resolution viewPlastic() {
-        return new ForwardResolution(SEARCH_PLASTIC_PAGE);
+        plasticOnly=true;
+        return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
     private void doSearch(SEARCH_TYPE... searchForItems) {
@@ -495,5 +496,13 @@ public class SearchActionBean extends CoreActionBean {
 
     public void setJiraTicketId(String jiraTicketId) {
         this.jiraTicketId = jiraTicketId;
+    }
+
+    public boolean isPlasticOnly() {
+        return plasticOnly;
+    }
+
+    public void setPlasticOnly(boolean plasticOnly) {
+        this.plasticOnly = plasticOnly;
     }
 }
