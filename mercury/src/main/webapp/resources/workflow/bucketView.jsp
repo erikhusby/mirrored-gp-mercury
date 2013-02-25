@@ -61,6 +61,7 @@
     </stripes:form>
     <stripes:form beanclass="${batchActionBean.class.name}"
                   id="bucketEntryForm">
+        <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
         <c:if test="${actionBean.jiraEnabled}">
             <table>
                 <tr>

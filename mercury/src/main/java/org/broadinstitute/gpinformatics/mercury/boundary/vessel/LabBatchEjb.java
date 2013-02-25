@@ -8,20 +8,22 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.broadinstitute.gpinformatics.infrastructure.jira.issue.Visibility;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.link.AddIssueLinkRequest;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.AbstractBatchJiraFieldFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
-import javax.ejb.Stateless;
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.*;
@@ -34,7 +36,8 @@ import java.util.*;
  *         Date: 12/6/12
  *         Time: 2:01 PM
  */
-@Stateless
+@Stateful
+@RequestScoped
 public class LabBatchEjb {
 
     private final static Log logger = LogFactory.getLog(LabBatchEjb.class);
@@ -48,6 +51,10 @@ public class LabBatchEjb {
     private JiraTicketDao jiraTicketDao;
 
     private LabVesselDao tubeDAO;
+
+    private BucketDao bucketDao;
+
+    private BucketBean bucketBean;
 
     /**
      * Alternate create lab batch method to allow a user to define the vessels for use by their barcode
@@ -116,6 +123,25 @@ public class LabBatchEjb {
         jiraBatchNotification(batchObject);
 
         return batchObject;
+    }
+
+    public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull List<String> vesselLabels,
+                                                      @Nonnull String operator, @Nonnull String jiraTicket,
+                                                      @Nonnull String bucketName, @Nonnull String location) {
+        Set<LabVessel> vessels =
+                new HashSet<LabVessel>(tubeDAO.findByListIdentifiers(vesselLabels));
+        Bucket bucket = bucketDao.findByName(bucketName);
+        LabBatch batch = createLabBatch(vessels, operator, jiraTicket);
+        bucketBean.start(operator, vessels, bucket, location);
+        return batch;
+    }
+
+    public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull LabBatch batch, @Nonnull String operator,
+                                                      @Nonnull String bucketName, @Nonnull String location) {
+        Bucket bucket = bucketDao.findByName(bucketName);
+        batch = createLabBatch(batch, operator);
+        bucketBean.start(operator, batch.getStartingLabVessels(), bucket, location);
+        return batch;
     }
 
     /**
@@ -254,5 +280,15 @@ public class LabBatchEjb {
     @Inject
     public void setTubeDAO(LabVesselDao tubeDAO) {
         this.tubeDAO = tubeDAO;
+    }
+
+    @Inject
+    public void setBucketDao(BucketDao bucketDao) {
+        this.bucketDao = bucketDao;
+    }
+
+    @Inject
+    public void setBucketBean(BucketBean bucketBean) {
+        this.bucketBean = bucketBean;
     }
 }
