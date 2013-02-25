@@ -30,6 +30,7 @@ import java.util.regex.Pattern;
  */
 @UrlBinding(SearchActionBean.ACTIONBEAN_URL_BINDING)
 public class SearchActionBean extends CoreActionBean {
+    public static final String ACTIONBEAN_URL_BINDING = "/search/all.action";
 
     private static final String SEPARATOR = ",";
     private static final Pattern SPLIT_PATTERN = Pattern.compile("[" + SEPARATOR + "\\s]+");
@@ -40,16 +41,16 @@ public class SearchActionBean extends CoreActionBean {
     private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
 
     private static final String SESSION_LIST_PAGE = "/search/search.jsp";
-    public static final String ACTIONBEAN_URL_BINDING = "/search/all.action";
-
+    private static final String SEARCH_PLASTIC_PAGE= "/search/search_plasticware.jsp";
     private static final String BATCH_CREATE_PAGE = "/search/create_batch.jsp";
-
     private static final String BATCH_CONFIRM_PAGE = "/search/batch_confirm.jsp";
 
     public static final String CREATE_BATCH_ACTION = "createBatch";
     public static final String VIEW_ACTION = "startBatch";
     public static final String CONFIRM_ACTION = "confirm";
     public static final String SEARCH_ACTION = "search";
+    public static final String VIEW_PLASTIC_ACTION = "viewPlastic";
+
     public static final String SEARCH_BATCH_CANDIDATES_ACTION = "searchBatchCandidates";
 
     public static final String EXISTING_TICKET = "existingTicket";
@@ -115,6 +116,11 @@ public class SearchActionBean extends CoreActionBean {
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         return new ForwardResolution(SESSION_LIST_PAGE);
+    }
+
+    @HandlesEvent(VIEW_PLASTIC_ACTION)
+    public Resolution viewPlastic() {
+        return new ForwardResolution(SEARCH_PLASTIC_PAGE);
     }
 
     @HandlesEvent(SEARCH_ACTION)

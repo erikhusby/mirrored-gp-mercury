@@ -53,17 +53,24 @@
                     </li>
                 </ul>
             </li>
-            
-            <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
-                <li class="dropdown">
-                    <a id="labBatcheNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span class="icon-tasks"></span> Lab Batches <b class="caret"></b></a>
-                    <ul class="dropdown-menu" role="menu">
-                        <li>
-                            <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean" event="view">Buckets</stripes:link>
-                        </li>
-                    </ul>
-                </li>
-            </security:authorizeBlock>
+
+            <li class="dropdown">
+                <a id="labNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
+                        class="icon-tasks"></span> Lab <b class="caret"></b></a>
+                <ul class="dropdown-menu" role="menu">
+                    <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+                        <li><stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
+                                event="view">Buckets</stripes:link></li>
+                    </security:authorizeBlock>
+
+                    <security:authorizeBlock roles="<%=new String[] {DB.Role.LabUser.name,DB.Role.PDM.name}%>">
+                        <li><stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"
+                                event="viewPlastic">Search Plasticware</stripes:link></li>
+                    </security:authorizeBlock>
+                </ul>
+            </li>
 
             <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
                 <li class="dropdown">
