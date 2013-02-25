@@ -63,7 +63,8 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
      * {@link org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest} and otherwise wouldn't have a
      * {@link Deployment} method
      *
-     * @return
+     * @return {@link WebArchive} configured with the {@link org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment}
+     * specified within.
      */
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -124,7 +125,7 @@ public class LimsQueryTypesResourceTest extends RestServiceContainerTest {
      * sent to a service as query parameters. The alternative is falling back on
      * POST instead of GET even though it may be a query service call.
      *
-     * @param baseUrl
+     * @param baseUrl Base URL to use for calculating the URL.
      */
     @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER)
     @RunAsClient

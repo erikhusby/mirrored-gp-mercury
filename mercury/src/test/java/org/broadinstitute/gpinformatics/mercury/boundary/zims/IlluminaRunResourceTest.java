@@ -184,6 +184,8 @@ public class IlluminaRunResourceTest extends Arquillian {
         assertEquals(runBean.getSequencer(),thriftRun.getSequencer());
         assertEquals(runBean.getSequencerModel(),thriftRun.getSequencerModel());
         assertEquals(runBean.getPairedRun().booleanValue(),thriftRun.isPairedRun());
+        assertEquals(runBean.getActualReadStructure(), thriftRun.getActualReadStructure());
+        assertEquals(runBean.getImagedAreaPerLaneMM2(), ThriftConversionUtil.zeroAsNull(thriftRun.getImagedAreaPerLaneMM2())); //actual,exp
 
         doReadAssertions(thriftRun,runBean);
 
@@ -346,6 +348,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         assertTrue((foundLcSet && zLib.getLcset() != null)  || (zLib.getLcset() == null));
         assertTrue(foundIt);
         assertTrue(foundPDO || pdo == null);
+
     }
 
     private static void checkEquality(DevExperimentDataBean devExperimentBean,TZDevExperimentData thriftExperimentData) {
