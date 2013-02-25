@@ -30,17 +30,13 @@ public class MercuryClientServiceImpl implements MercuryClientService {
     private final String eventLocation = "BSP";
     private final LabEventType eventType = LabEventType.PICO_PLATING_BUCKET;
 
-    @Inject
     private BucketBean bucketBean;
-    @Inject
     private BucketDao bucketDao;
-    @Inject
     private LabBatchDAO labBatchDao;
-    @Inject
     private WorkflowLoader workflowLoader;
-    @Inject
     private BSPUserList userList;
 
+    @Inject
     public MercuryClientServiceImpl(BucketBean bucketBean, BucketDao bucketDao,
                                     LabBatchDAO labBatchDao, WorkflowLoader workflowLoader, BSPUserList userList) {
         this.bucketBean = bucketBean;
