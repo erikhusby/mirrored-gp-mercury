@@ -1,13 +1,26 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.workflow;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent_;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign_;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch_;
 
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
+import javax.persistence.NoResultException;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 @Stateful
@@ -45,5 +58,22 @@ public class LabBatchDAO extends GenericDao {
 
     public LabBatch findByBusinessKey(String businessKey) {
         return findByName(businessKey);
+    }
+
+    public Collection<LabBatch> findBatchesInReceiving() {
+        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<LabBatch> criteriaQuery = criteriaBuilder.createQuery(LabBatch.class);
+        Root<LabBatch> root = criteriaQuery.from(LabBatch.class);
+
+        Predicate[] predicates = new Predicate[2];
+        predicates[0] = criteriaBuilder.equal(root.get(LabBatch_.labBatchType), LabBatch.LabBatchType.SAMPLES_RECEIPT);
+        predicates[1] = criteriaBuilder.equal(root.get(LabBatch_.isActive), true);
+        criteriaQuery.where(predicates);
+
+        try {
+            return getEntityManager().createQuery(criteriaQuery).getResultList();
+        } catch (NoResultException ignored) {
+            return Collections.EMPTY_LIST;
+        }
     }
 }
