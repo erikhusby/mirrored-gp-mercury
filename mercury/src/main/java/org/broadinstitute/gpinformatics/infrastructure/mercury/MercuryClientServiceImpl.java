@@ -30,9 +30,6 @@ public class MercuryClientServiceImpl implements MercuryClientService {
     private final String eventLocation = "BSP";
     private final LabEventType eventType = LabEventType.PICO_PLATING_BUCKET;
 
-
-    @Inject
-    private MercurySampleDao mercurySampleDao;
     @Inject
     private BucketBean bucketBean;
     @Inject
@@ -41,11 +38,15 @@ public class MercuryClientServiceImpl implements MercuryClientService {
     private LabBatchDAO labBatchDao;
     @Inject
     private WorkflowLoader workflowLoader;
-
+    @Inject
     private BSPUserList userList;
 
-    @Inject
-    public void setUserList(BSPUserList userList) {
+    public MercuryClientServiceImpl(BucketBean bucketBean, BucketDao bucketDao,
+                                    LabBatchDAO labBatchDao, WorkflowLoader workflowLoader, BSPUserList userList) {
+        this.bucketBean = bucketBean;
+        this.bucketDao = bucketDao;
+        this.labBatchDao = labBatchDao;
+        this.workflowLoader = workflowLoader;
         this.userList = userList;
     }
 
@@ -118,8 +119,7 @@ public class MercuryClientServiceImpl implements MercuryClientService {
         Bucket picoBucket = bucketDao.findByName(bucketName);
         if (picoBucket == null) {
             picoBucket = new Bucket(bucketStep);
-            bucketDao.persist(picoBucket);
-            logger.fine("Creating new bucket " + bucketName);
+            logger.fine("Created new bucket " + bucketName);
         }
         return picoBucket;
     }
