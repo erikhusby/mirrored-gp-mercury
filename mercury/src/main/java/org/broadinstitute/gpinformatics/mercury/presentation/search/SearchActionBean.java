@@ -32,6 +32,10 @@ import java.util.regex.Pattern;
 public class SearchActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/search/all.action";
 
+    private enum SEARCH_TYPE {
+        BARCODE, PDO, SAMPLE_KEY, BATCH
+    }
+
     private static final String SEPARATOR = ",";
     private static final Pattern SPLIT_PATTERN = Pattern.compile("[" + SEPARATOR + "\\s]+");
 
@@ -50,7 +54,7 @@ public class SearchActionBean extends CoreActionBean {
     public static final String CONFIRM_ACTION = "confirm";
     public static final String SEARCH_ACTION = "search";
     public static final String VIEW_PLASTIC_ACTION = "viewPlastic";
-
+    public static final String SEARCH_PLASTIC_ACTION = "searchPlastic";
     public static final String SEARCH_BATCH_CANDIDATES_ACTION = "searchBatchCandidates";
 
     public static final String EXISTING_TICKET = "existingTicket";
@@ -70,7 +74,7 @@ public class SearchActionBean extends CoreActionBean {
     @Inject
     private LabBatchDAO labBatchDAO;
 
-    @Validate(required = true, on = {SEARCH_ACTION, SEARCH_BATCH_CANDIDATES_ACTION})
+    @Validate(required = true, on = {SEARCH_ACTION, SEARCH_BATCH_CANDIDATES_ACTION,SEARCH_PLASTIC_ACTION})
     private String searchKey;
 
     private String batchLabel;
@@ -118,53 +122,65 @@ public class SearchActionBean extends CoreActionBean {
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
+    @HandlesEvent(SEARCH_PLASTIC_ACTION)
+    public Resolution searchPlastic() {
+        doSearch(SEARCH_TYPE.BARCODE);
+        return new ForwardResolution(SEARCH_PLASTIC_PAGE);
+    }
+
     @HandlesEvent(VIEW_PLASTIC_ACTION)
     public Resolution viewPlastic() {
         return new ForwardResolution(SEARCH_PLASTIC_PAGE);
     }
 
-    @HandlesEvent(SEARCH_ACTION)
-    public Resolution search() throws Exception {
+    private void doSearch(SEARCH_TYPE... searchForItems) {
+        if (searchForItems.length==0) {
+            searchForItems = SEARCH_TYPE.values();
+        }
         List<String> searchList = cleanInputString(searchKey);
 
         int count = 0;
         long totalResults = 0l;
+        for (SEARCH_TYPE searchForItem : searchForItems) {
+            switch (searchForItem) {
+            case BARCODE:
+                foundVessels = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(searchList));
+                if (foundVessels.size() > 0) {
+                    count++;
+                    totalResults += foundVessels.size();
+                }
 
-        foundVessels = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(searchList));
-        if (foundVessels.size() > 0) {
-            count++;
-            totalResults += foundVessels.size();
-        }
-
-        foundSamples = mercurySampleDao.findBySampleKeys(searchList);
-        if (foundSamples.size() > 0) {
-            count++;
-            totalResults += foundSamples.size();
-        }
-
-        foundPDOs = productOrderDao.findListByBusinessKeyList(searchList);
-        if (foundPDOs.size() > 0) {
-            count++;
-            totalResults += foundPDOs.size();
-        }
-
-        foundBatches = labBatchDAO.findByListIdentifier(searchList);
-        if (foundBatches.size() > 0) {
-            count++;
-            totalResults += foundBatches.size();
-        }
-
-        // If there is only one result, jump to the item's page, if it has a view page
-        /*  if (totalResults == 1) {
-            RedirectResolution resolution = getRedirectResolution();
-            if (resolution != null) {
-                return resolution;
+                break;
+            case SAMPLE_KEY:
+                foundSamples = mercurySampleDao.findBySampleKeys(searchList);
+                if (foundSamples.size() > 0) {
+                    count++;
+                    totalResults += foundSamples.size();
+                }
+                break;
+            case PDO:
+                foundPDOs = productOrderDao.findListByBusinessKeyList(searchList);
+                if (foundPDOs.size() > 0) {
+                    count++;
+                    totalResults += foundPDOs.size();
+                }
+                break;
+            case BATCH:
+                foundBatches = labBatchDAO.findByListIdentifier(searchList);
+                if (foundBatches.size() > 0) {
+                    count++;
+                    totalResults += foundBatches.size();
+                }
+                break;
             }
-        }*/
-
+        }
         multipleResultTypes = count > 1;
         resultsAvailable = totalResults > 0;
+    }
 
+    @HandlesEvent(SEARCH_ACTION)
+    public Resolution search() throws Exception {
+        doSearch();
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
