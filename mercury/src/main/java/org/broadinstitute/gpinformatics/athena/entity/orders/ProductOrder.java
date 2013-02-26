@@ -16,8 +16,10 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
+import org.hibernate.envers.NotAudited;
 
 import javax.annotation.Nonnull;
 import javax.persistence.*;
@@ -84,6 +86,12 @@ public class ProductOrder implements Serializable {
     @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
     @AuditJoinTable(name = "product_order_sample_join_aud")
     private List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
+
+    /** Counts the number of rows in the one-to-many table.  Reference this count before fetching the collection, to
+     * avoid an unnecessary database round trip  */
+    @NotAudited
+    @Formula("(select count(*) from athena.product_order_sample pos where pos.product_order = product_order_id)")
+    private Integer sampleCount = 0;
 
     @Transient
     private final SampleCounts counts = new SampleCounts();
@@ -973,5 +981,9 @@ public class ProductOrder implements Serializable {
 
     public String getOriginalTitle() {
         return originalTitle;
+    }
+
+    public Integer getSampleCount() {
+        return sampleCount;
     }
 }

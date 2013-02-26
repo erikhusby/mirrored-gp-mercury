@@ -192,7 +192,7 @@
                                           style="width: ${actionBean.progressFetcher.getPercentCompleted(order.businessKey)}%"> </span>
                                 </div>
                             </td>
-                            <td>${actionBean.progressFetcher.getNumberOfSamples(order.businessKey)}</td>
+                            <td>${order.sampleCount}</td>
                             <td>
                                 <c:if test="${order.billingSessionBusinessKey != null}">
                                     <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"
