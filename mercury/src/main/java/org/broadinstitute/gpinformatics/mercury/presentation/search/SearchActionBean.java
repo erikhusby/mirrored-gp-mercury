@@ -73,7 +73,7 @@ public class SearchActionBean extends CoreActionBean {
     @Inject
     private LabBatchDAO labBatchDAO;
 
-    @Validate(required = true, on = {SEARCH_ACTION, SEARCH_BATCH_CANDIDATES_ACTION,SEARCH_PLASTIC_ACTION})
+    @Validate(required = true, on = {SEARCH_ACTION, SEARCH_BATCH_CANDIDATES_ACTION, SEARCH_PLASTIC_ACTION})
     private String searchKey;
 
     private String batchLabel;
@@ -86,7 +86,7 @@ public class SearchActionBean extends CoreActionBean {
 
     private boolean resultsAvailable = false;
     private boolean multipleResultTypes = false;
-    private boolean plasticOnly=false;
+    private boolean plasticOnly = false;
     private Map<String, String> getPDOKeyMap = null;
     private Map<String, String> getIndexesMap = null;
 
@@ -130,12 +130,12 @@ public class SearchActionBean extends CoreActionBean {
 
     @HandlesEvent(VIEW_PLASTIC_ACTION)
     public Resolution viewPlastic() {
-        plasticOnly=true;
+        plasticOnly = true;
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
     private void doSearch(SEARCH_TYPE... searchForItems) {
-        if (searchForItems.length==0) {
+        if (searchForItems.length == 0) {
             searchForItems = SEARCH_TYPE.values();
         }
         List<String> searchList = cleanInputString(searchKey);
@@ -190,7 +190,8 @@ public class SearchActionBean extends CoreActionBean {
 
         if (selectedVesselLabels == null || selectedVesselLabels.isEmpty()) {
             doBatchSearch();
-            errors.add("selectedVesselLabels", new SimpleError("At least one vessel must be selected to create a batch"));
+            errors.add("selectedVesselLabels",
+                    new SimpleError("At least one vessel must be selected to create a batch"));
         }
 
         if (jiraInputType.equals(EXISTING_TICKET)) {
@@ -201,7 +202,8 @@ public class SearchActionBean extends CoreActionBean {
         } else {
             if (StringUtils.isBlank(summary)) {
                 doBatchSearch();
-                errors.add("summary", new SimpleError("You must provide at least a summary to create a Jira Ticket"));
+                errors.add("summary",
+                        new SimpleError("You must provide at least a summary to create a Jira Ticket"));
             }
         }
     }
@@ -264,7 +266,8 @@ public class SearchActionBean extends CoreActionBean {
                If a new ticket is to be created, pass the description, summary, due date and important info in a batch
                object acting as a DTO
             */
-            batchObject = new LabBatch(summary.trim(), vesselSet, LabBatch.LabBatchType.WORKFLOW, description, dueDate, important);
+            batchObject = new LabBatch(summary.trim(), vesselSet, LabBatch.LabBatchType.WORKFLOW, description, dueDate,
+                    important);
 
             labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername());
         }
