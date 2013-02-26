@@ -37,8 +37,14 @@
                 </div>
 
                 <div class="control-group">
+
                     <div class="controls" style="margin-left: 80px;">
-                        <stripes:submit name="search" value="Search"/>
+
+                        <c:choose>
+                            <c:when test="${actionBean.searchPlastic}">
+                                <stripes:submit name="searchPlastic" value="Search"/>
+                        </c:when>
+                        <c:otherwise> <stripes:submit name="search" value="Search"/></c:otherwise></c:choose>
                     </div>
                 </div>
             </div>
