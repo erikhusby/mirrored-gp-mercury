@@ -348,6 +348,7 @@ FOR new IN im_po_cur LOOP
       title = new.title,
       quote_id = new.quote_id,
       jira_ticket_key = new.jira_ticket_key,
+      is_deleted = 'F',
       etl_date = new.etl_date
     WHERE product_order_id = new.product_order_id;
 
@@ -435,6 +436,7 @@ FOR new IN im_po_add_on_cur  LOOP
     UPDATE product_order_add_on SET
       product_order_id = new.product_order_id,
       product_id = new.product_id,
+      is_deleted = 'F',
       etl_date = new.etl_date 
     WHERE product_order_add_on_id = new.product_order_add_on_id;
 
@@ -641,7 +643,8 @@ FOR new IN im_po_sample_cur LOOP
       sample_name = new.sample_name,
       delivery_status = new.delivery_status,
       sample_position = new.sample_position,
-      etl_date = new.etl_date 
+      is_deleted = 'F',
+      etl_date = new.etl_date
     WHERE product_order_sample_id = new.product_order_sample_id;
 
     INSERT INTO product_order_sample (
