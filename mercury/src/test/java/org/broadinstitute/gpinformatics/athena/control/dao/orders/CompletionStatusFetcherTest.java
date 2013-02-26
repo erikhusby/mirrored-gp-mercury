@@ -91,9 +91,9 @@ public class CompletionStatusFetcherTest extends ContainerTest {
         int fetcherPercentComplete = 0;
 
         for (String pdoKey : allPDOFetcher.getKeys()) {
-            if (allPDOFetcher.getPercentComplete(pdoKey) > 0) {
+            if (allPDOFetcher.getPercentCompleted(pdoKey) > 0) {
                 firstCompletePDOKey = pdoKey;
-                fetcherPercentComplete = allPDOFetcher.getPercentComplete(pdoKey);
+                fetcherPercentComplete = allPDOFetcher.getPercentCompleted(pdoKey);
                 break;
             }
         }
@@ -124,9 +124,9 @@ public class CompletionStatusFetcherTest extends ContainerTest {
         int fetcherInProgess = 0;
 
         for (String pdoKey : allPDOFetcher.getKeys()) {
-            if (allPDOFetcher.getPercentComplete(pdoKey) > 0) {
+            if (allPDOFetcher.getPercentCompleted(pdoKey) > 0) {
                 firstCompleteAndAbandonedKey = pdoKey;
-                fetcherInProgess = allPDOFetcher.getInProgress(pdoKey);
+                fetcherInProgess = allPDOFetcher.getPercentInProgress(pdoKey);
                 break;
             }
         }

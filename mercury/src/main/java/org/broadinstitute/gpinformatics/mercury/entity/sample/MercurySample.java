@@ -30,6 +30,7 @@ public class MercurySample {
     @Id
     @SequenceGenerator(name = "SEQ_MERCURY_SAMPLE", schema = "mercury", sequenceName = "SEQ_MERCURY_SAMPLE")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_MERCURY_SAMPLE")
+    @SuppressWarnings("UnusedDeclaration")
     private Long mercurySampleId;
 
     private String productOrderKey;
@@ -46,6 +47,16 @@ public class MercurySample {
     private boolean hasBspDTOBeenInitialized;
     public static final Pattern BSP_SAMPLE_NAME_PATTERN = Pattern.compile("SM-[A-Z1-9]{4,6}");
 
+
+    /**
+     * For JPA
+     */
+    protected MercurySample() {
+    }
+
+    public MercurySample(String sampleKey) {
+        this.sampleKey = sampleKey;
+    }
 
     public MercurySample(String productOrderKey, String sampleKey) {
         this.productOrderKey = productOrderKey;
@@ -80,12 +91,6 @@ public class MercurySample {
 
     public void setRapSheet(RapSheet rapSheet) {
         this.rapSheet = rapSheet;
-    }
-
-    /**
-     * For JPA
-     */
-    public MercurySample() {
     }
 
     public String getProductOrderKey() {

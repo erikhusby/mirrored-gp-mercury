@@ -20,6 +20,16 @@
             </activation-config>
         </message-driven>
         <message-driven>
+            <ejb-name>SampleReceiptMessageBean</ejb-name>
+            <ejb-class>org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptMessageBean</ejb-class>
+            <activation-config>
+                <activation-config-property>
+                    <activation-config-property-name>destination</activation-config-property-name>
+                    <activation-config-property-value>queue/broad.queue.mercury.samplereceipt.dev</activation-config-property-value>
+                </activation-config-property>
+            </activation-config>
+        </message-driven>
+        <message-driven>
             <ejb-name>WorkCompleteMessageBean</ejb-name>
             <ejb-class>org.broadinstitute.gpinformatics.athena.boundary.billing.WorkCompleteMessageBean</ejb-class>
             <activation-config>

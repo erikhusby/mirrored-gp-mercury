@@ -1,11 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.regex.Matcher;
 
 /**
  * Non-entity used for optimizing the performance of the PDO list page.
@@ -34,6 +32,7 @@ public class ProductOrderListEntry implements Serializable {
 
     private Long unbilledLedgerEntryCount = 0L;
 
+    private Integer sampleCount;
 
     /**
      * Version of the constructor called by the non-ledger aware first pass query
@@ -50,7 +49,7 @@ public class ProductOrderListEntry implements Serializable {
      */
     public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
                                  String productName, String productFamilyName, String researchProjectTitle, Long ownerId,
-                                 Date placedDate) {
+                                 Date placedDate, Integer sampleCount) {
         this.orderId = orderId;
         this.title = title;
         this.jiraTicketKey = jiraTicketKey;
@@ -60,8 +59,8 @@ public class ProductOrderListEntry implements Serializable {
         this.researchProjectTitle = researchProjectTitle;
         this.ownerId = ownerId;
         this.placedDate = placedDate;
+        this.sampleCount = sampleCount;
     }
-
 
     /**
      * Version of the constructor called by the ledger-aware second pass query.  These objects are essentially merged
@@ -78,7 +77,6 @@ public class ProductOrderListEntry implements Serializable {
         this.billingSessionId = billingSessionId;
         this.unbilledLedgerEntryCount = unbilledLedgerEntryCount;
     }
-
 
     public String getTitle() {
         return title;
@@ -145,6 +143,10 @@ public class ProductOrderListEntry implements Serializable {
 
     public boolean isEligibleForBilling() {
         return getUnbilledLedgerEntryCount() > 0;
+    }
+
+    public Integer getSampleCount() {
+        return sampleCount;
     }
 
     @Override

@@ -410,6 +410,9 @@
                                         <include>org/broadinstitute/gpinformatics/mercury/boundary/Namespaces.java</include>
                                         <include>org/broadinstitute/gpinformatics/mercury/boundary/vessel/*Bean.java</include>
                                     </includes>
+                                    <excludes>
+                                        <exclude>org/broadinstitute/gpinformatics/mercury/boundary/vessel/SampleReceiptMessageBean.java</exclude>
+                                    </excludes>
                                     <transformSchemas>
                                         <transformSchema>
                                             <uri>http://broadinstitute.org/gpinformatics/mercury/vessel</uri>
@@ -1225,7 +1228,7 @@
             <artifactId>limsThrift</artifactId>
 <!--            <version>1.0-SNAPSHOT</version> -->
 <!-- Temporary while SquidThrift undergoes a release cycle. -->
-<version>1.0-20121210.154738-35</version>
+                <version>1.0-20130222.020813-36</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>

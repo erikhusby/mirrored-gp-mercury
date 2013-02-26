@@ -14,12 +14,10 @@ import javax.xml.bind.annotation.XmlType;
 public class TubeBean {
     private String barcode;
     private String sampleBarcode;
-    private String productOrderKey;
 
-    public TubeBean(String barcode, String sampleBarcode, String productOrderKey) {
+    public TubeBean(String barcode, String sampleBarcode) {
         this.barcode = barcode;
         this.sampleBarcode = sampleBarcode;
-        this.productOrderKey = productOrderKey;
     }
 
     public TubeBean() {
@@ -39,13 +37,5 @@ public class TubeBean {
 
     public void setSampleBarcode(String sampleBarcode) {
         this.sampleBarcode = sampleBarcode;
-    }
-
-    public String getProductOrderKey() {
-        return productOrderKey;
-    }
-
-    public void setProductOrderKey(String productOrderKey) {
-        this.productOrderKey = productOrderKey;
     }
 }

@@ -71,7 +71,7 @@ public class SamplesPicoDbTest extends ContainerTest {
             List<String> tubeBarcodes) {
         ArrayList<TubeBean> tubeBeans = new ArrayList<TubeBean>();
         for (String tubeBarcode : tubeBarcodes) {
-            tubeBeans.add(new TubeBean(tubeBarcode, null, null));
+            tubeBeans.add(new TubeBean(tubeBarcode, null));
         }
         LabBatchBean labBatchBean = new LabBatchBean(batchId, null, tubeBeans);
 

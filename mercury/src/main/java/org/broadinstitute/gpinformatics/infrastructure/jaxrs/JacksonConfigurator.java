@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.jaxrs;
 
-import org.codehaus.jackson.map.DeserializationConfig;
 import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.map.SerializationConfig;
 
 import javax.ws.rs.Produces;
 import javax.ws.rs.ext.ContextResolver;
@@ -20,14 +18,11 @@ public class JacksonConfigurator implements ContextResolver<ObjectMapper> {
 
     public static final String DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss.SSSZ";
 
-    private ObjectMapper mapper = new ObjectMapper();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     public JacksonConfigurator() {
-        SerializationConfig serConfig = mapper.getSerializationConfig();
-        serConfig.setDateFormat(new SimpleDateFormat(DATE_FORMAT));
-        DeserializationConfig deserializationConfig = mapper.getDeserializationConfig();
-        deserializationConfig.setDateFormat(new SimpleDateFormat(DATE_FORMAT));
-        mapper.configure(SerializationConfig.Feature.WRITE_DATES_AS_TIMESTAMPS, false);
+        mapper.setSerializationConfig(mapper.getSerializationConfig().withDateFormat(new SimpleDateFormat(DATE_FORMAT)));
+        mapper.setDeserializationConfig(mapper.getDeserializationConfig().withDateFormat(new SimpleDateFormat(DATE_FORMAT)));
     }
 
     @Override
