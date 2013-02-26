@@ -209,15 +209,15 @@ public class BucketBean {
         for (LabVessel workingVessel : vesselsToBatch) {
 
             BucketEntry foundEntry = workingBucket.findEntry(workingVessel);
-            if (null == foundEntry) {
-                throw new InformaticsServiceException(
-                        "Attempting to pull a vessel from a bucket when it does not exist in that bucket");
-            }
-            logger.info("Adding entry " + foundEntry.getBucketEntryId() + " for vessel " + foundEntry.getLabVessel()
-                    .getLabCentricName() +
+            if (foundEntry != null) {
+                logger.info("Adding entry " + foundEntry.getBucketEntryId() + " for vessel " + foundEntry.getLabVessel()
+                        .getLabCentricName() +
                         " and PDO " + foundEntry.getPoBusinessKey() + " to be popped from bucket.");
-            bucketEntrySet.add(foundEntry);
-
+                bucketEntrySet.add(foundEntry);
+            } else {
+                logger.info("Attempting to pull a vessel, " + workingVessel.getLabel() + ", from a bucket, " +
+                        workingBucket.getBucketDefinitionName() + ", when it does not exist in that bucket");
+            }
         }
         return bucketEntrySet;
     }
