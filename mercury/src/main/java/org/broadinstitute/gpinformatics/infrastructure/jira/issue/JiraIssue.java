@@ -38,7 +38,7 @@ public class JiraIssue implements Serializable {
     public String getSummary() throws IOException{
 
         if(summary == null) {
-            JiraIssue tempIssue = jiraService.getIssueInfo(key,null);
+            JiraIssue tempIssue = jiraService.getIssueInfo(key, (String []) null);
             summary = tempIssue.getSummary();
             description = tempIssue.getDescription();
             dueDate = tempIssue.getDueDate();
@@ -53,7 +53,7 @@ public class JiraIssue implements Serializable {
     public String getDescription() throws IOException {
 
         if(description == null && summary == null) {
-            JiraIssue tempIssue = jiraService.getIssueInfo(key, null);
+            JiraIssue tempIssue = jiraService.getIssueInfo(key, (String []) null);
             summary = tempIssue.getSummary();
             description = tempIssue.getDescription();
             dueDate = tempIssue.getDueDate();
@@ -69,7 +69,7 @@ public class JiraIssue implements Serializable {
     public Date getDueDate() throws IOException {
 
         if(dueDate == null && summary == null) {
-            JiraIssue tempIssue = jiraService.getIssueInfo(key, null);
+            JiraIssue tempIssue = jiraService.getIssueInfo(key, (String []) null);
             summary = tempIssue.getSummary();
             description = tempIssue.getDescription();
             dueDate = tempIssue.getDueDate();

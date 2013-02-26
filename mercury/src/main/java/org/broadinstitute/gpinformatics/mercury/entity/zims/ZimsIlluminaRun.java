@@ -54,7 +54,15 @@ public class ZimsIlluminaRun {
     @JsonProperty
     private String error;
 
-    public ZimsIlluminaRun() {}
+    @JsonProperty("actualReadStructure")
+    private String actualReadStructure;
+    
+    @JsonProperty("imagedAreaPerLaneMM2")
+    private Double imagedAreaPerLaneMM2;
+
+
+    public ZimsIlluminaRun() {
+    }
 
     public ZimsIlluminaRun(String runName,
                            String runBarcode,
@@ -62,7 +70,9 @@ public class ZimsIlluminaRun {
                            String sequencer,
                            String sequencerModel,
                            String runDate,
-                           Boolean isPaired) {
+                           Boolean isPaired,
+                           String actualReadStructure,
+                           double  imagedAreaPerLaneMM2) {
         this.runName = runName;
         this.runBarcode = runBarcode;
         this.flowcellBarcode = flowcellBarcode;
@@ -75,6 +85,8 @@ public class ZimsIlluminaRun {
             throw new RuntimeException("Cannot parse run date " + runDate + " for " + runName);
         }
         this.isPaired = isPaired;
+        this.actualReadStructure = actualReadStructure;
+        this.imagedAreaPerLaneMM2 = ThriftConversionUtil.zeroAsNull(imagedAreaPerLaneMM2);
     }
 
     public void addRead(TZamboniRead thriftRead) {
@@ -155,4 +167,11 @@ public class ZimsIlluminaRun {
     }
 
 
+    public String getActualReadStructure() {
+        return actualReadStructure;
+    }
+
+    public Double getImagedAreaPerLaneMM2() {
+        return imagedAreaPerLaneMM2;
+    }
 }

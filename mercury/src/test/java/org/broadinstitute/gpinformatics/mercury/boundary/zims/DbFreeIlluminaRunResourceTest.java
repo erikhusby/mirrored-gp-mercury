@@ -1,23 +1,21 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
-import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLane;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
 import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
 import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
-import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
-import org.broadinstitute.gpinformatics.mercury.control.zims.SquidThriftLibraryConverter;
-import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
-import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
-import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.MockThriftService;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftFileAccessor;
+import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
+import org.broadinstitute.gpinformatics.mercury.control.zims.SquidThriftLibraryConverter;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.easymock.EasyMock;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -71,6 +69,7 @@ public class DbFreeIlluminaRunResourceTest {
     @Test(groups = DATABASE_FREE)
     public void test_known_good_run() throws Exception {
         TZamboniRun thriftRun = ThriftFileAccessor.deserializeRun();
+        System.out.println("----DBFree IRR test : " + thriftRun.getImagedAreaPerLaneMM2());
         ZimsIlluminaRun runBean = new IlluminaRunResource(
                 new MockThriftService(),
                 new BSPSampleDataFetcher(new BSPSampleSearchServiceStub())

@@ -30,6 +30,11 @@ import java.util.regex.Pattern;
  */
 @UrlBinding(SearchActionBean.ACTIONBEAN_URL_BINDING)
 public class SearchActionBean extends CoreActionBean {
+    public static final String ACTIONBEAN_URL_BINDING = "/search/all.action";
+
+    private enum SearchType {
+        VESSELS_BY_BARCODE, VESSELS_BY_PDO, VESSELS_BY_SAMPLE_KEY, PDO_BY_KEY, SAMPLES_BY_NAME, BATCH_BY_KEY
+    }
 
     private static final String SEPARATOR = ",";
     private static final Pattern SPLIT_PATTERN = Pattern.compile("[" + SEPARATOR + "\\s]+");
@@ -40,16 +45,15 @@ public class SearchActionBean extends CoreActionBean {
     private static final Pattern UPPERCASE_PATTERN = Pattern.compile("[sS][mMpP]-.*");
 
     private static final String SESSION_LIST_PAGE = "/search/search.jsp";
-    public static final String ACTIONBEAN_URL_BINDING = "/search/all.action";
-
     private static final String BATCH_CREATE_PAGE = "/search/create_batch.jsp";
-
     private static final String BATCH_CONFIRM_PAGE = "/search/batch_confirm.jsp";
 
     public static final String CREATE_BATCH_ACTION = "createBatch";
     public static final String VIEW_ACTION = "startBatch";
     public static final String CONFIRM_ACTION = "confirm";
     public static final String SEARCH_ACTION = "search";
+    public static final String VIEW_PLASTIC_ACTION = "viewPlastic";
+    public static final String SEARCH_PLASTIC_ACTION = "searchPlastic";
     public static final String SEARCH_BATCH_CANDIDATES_ACTION = "searchBatchCandidates";
 
     public static final String EXISTING_TICKET = "existingTicket";
@@ -69,19 +73,20 @@ public class SearchActionBean extends CoreActionBean {
     @Inject
     private LabBatchDAO labBatchDAO;
 
-    @Validate(required = true, on = {SEARCH_ACTION, SEARCH_BATCH_CANDIDATES_ACTION})
+    @Validate(required = true, on = {SEARCH_ACTION, SEARCH_BATCH_CANDIDATES_ACTION, SEARCH_PLASTIC_ACTION})
     private String searchKey;
 
     private String batchLabel;
     private LabBatch batch;
 
-    private Set<LabVessel> foundVessels = null;
+    private Set<LabVessel> foundVessels = new HashSet<LabVessel>();
     private List<MercurySample> foundSamples;
     private List<ProductOrder> foundPDOs;
     private List<LabBatch> foundBatches;
 
     private boolean resultsAvailable = false;
     private boolean multipleResultTypes = false;
+    private boolean plasticOnly = false;
     private Map<String, String> getPDOKeyMap = null;
     private Map<String, String> getIndexesMap = null;
 
@@ -117,48 +122,75 @@ public class SearchActionBean extends CoreActionBean {
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
-    @HandlesEvent(SEARCH_ACTION)
-    public Resolution search() throws Exception {
+    @HandlesEvent(SEARCH_PLASTIC_ACTION)
+    public Resolution searchPlastic() {
+        doSearch(SearchType.VESSELS_BY_SAMPLE_KEY, SearchType.VESSELS_BY_PDO, SearchType.VESSELS_BY_BARCODE);
+        return viewPlastic();
+    }
+
+    @HandlesEvent(VIEW_PLASTIC_ACTION)
+    public Resolution viewPlastic() {
+        plasticOnly = true;
+        return new ForwardResolution(SESSION_LIST_PAGE).addParameter(SEARCH_PLASTIC_ACTION, plasticOnly);
+    }
+
+    private void doSearch(SearchType... searchForItems) {
+        if (searchForItems.length == 0) {
+            searchForItems = SearchType.values();
+        }
         List<String> searchList = cleanInputString(searchKey);
 
         int count = 0;
         long totalResults = 0l;
+        for (SearchType searchForItem : searchForItems) {
+            switch (searchForItem) {
+            case VESSELS_BY_BARCODE:
+                foundVessels.addAll(labVesselDao.findByListIdentifiers(searchList));
+                if (foundVessels.size() > 0) {
+                    count++;
+                    totalResults += foundVessels.size();
+                }
 
-        foundVessels = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(searchList));
-        if (foundVessels.size() > 0) {
-            count++;
-            totalResults += foundVessels.size();
-        }
-
-        foundSamples = mercurySampleDao.findBySampleKeys(searchList);
-        if (foundSamples.size() > 0) {
-            count++;
-            totalResults += foundSamples.size();
-        }
-
-        foundPDOs = productOrderDao.findListByBusinessKeyList(searchList);
-        if (foundPDOs.size() > 0) {
-            count++;
-            totalResults += foundPDOs.size();
-        }
-
-        foundBatches = labBatchDAO.findByListIdentifier(searchList);
-        if (foundBatches.size() > 0) {
-            count++;
-            totalResults += foundBatches.size();
-        }
-
-        // If there is only one result, jump to the item's page, if it has a view page
-        /*  if (totalResults == 1) {
-            RedirectResolution resolution = getRedirectResolution();
-            if (resolution != null) {
-                return resolution;
+                break;
+            case VESSELS_BY_PDO:
+                foundVessels.addAll(labVesselDao.findByPDOKeyList(searchList));
+                break;
+            case VESSELS_BY_SAMPLE_KEY:
+                foundVessels.addAll(labVesselDao.findBySampleKeyList(searchList));
+                break;
+            case SAMPLES_BY_NAME:
+                foundSamples = mercurySampleDao.findBySampleKeys(searchList);
+                if (foundSamples.size() > 0) {
+                    count++;
+                    totalResults += foundSamples.size();
+                }
+                break;
+            case PDO_BY_KEY:
+                foundPDOs = productOrderDao.findListByBusinessKeyList(searchList);
+                if (foundPDOs.size() > 0) {
+                    count++;
+                    totalResults += foundPDOs.size();
+                }
+                break;
+            case BATCH_BY_KEY:
+                foundBatches = labBatchDAO.findByListIdentifier(searchList);
+                if (foundBatches.size() > 0) {
+                    count++;
+                    totalResults += foundBatches.size();
+                }
+                break;
             }
-        }*/
-
+        }
         multipleResultTypes = count > 1;
         resultsAvailable = totalResults > 0;
+    }
 
+    @HandlesEvent(SEARCH_ACTION)
+    public Resolution search() throws Exception {
+        if (plasticOnly){
+            return searchPlastic();
+        }
+        doSearch();
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
 
@@ -166,18 +198,19 @@ public class SearchActionBean extends CoreActionBean {
     public void createBatchValidation(ValidationErrors errors) {
 
         if (selectedVesselLabels == null || selectedVesselLabels.isEmpty()) {
-            doBatchSearch();
-            errors.add("selectedVesselLabels", new SimpleError("At least one vessel must be selected to create a batch"));
+            doSearch(SearchType.VESSELS_BY_SAMPLE_KEY, SearchType.VESSELS_BY_PDO, SearchType.VESSELS_BY_BARCODE);
+            errors.add("selectedVesselLabels",
+                    new SimpleError("At least one vessel must be selected to create a batch"));
         }
 
         if (jiraInputType.equals(EXISTING_TICKET)) {
             if (StringUtils.isBlank(jiraTicketId)) {
-                doBatchSearch();
+                doSearch(SearchType.VESSELS_BY_SAMPLE_KEY, SearchType.VESSELS_BY_PDO, SearchType.VESSELS_BY_BARCODE);
                 errors.add("jiraTicketId", new SimpleError("An existing Jira ticket key is required"));
             }
         } else {
             if (StringUtils.isBlank(summary)) {
-                doBatchSearch();
+                doSearch(SearchType.VESSELS_BY_SAMPLE_KEY, SearchType.VESSELS_BY_PDO, SearchType.VESSELS_BY_BARCODE);
                 errors.add("summary", new SimpleError("You must provide at least a summary to create a Jira Ticket"));
             }
         }
@@ -185,29 +218,9 @@ public class SearchActionBean extends CoreActionBean {
 
     @HandlesEvent(SEARCH_BATCH_CANDIDATES_ACTION)
     public Resolution searchForBatchCandidates() throws Exception {
-        doBatchSearch();
+        doSearch(SearchType.VESSELS_BY_SAMPLE_KEY, SearchType.VESSELS_BY_PDO, SearchType.VESSELS_BY_BARCODE);
         return new ForwardResolution(BATCH_CREATE_PAGE);
     }
-
-    private void doBatchSearch() {
-        List<String> searchList = SearchActionBean.cleanInputString(searchKey);
-
-        foundVessels = new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(searchList));
-
-        foundVessels.addAll(labVesselDao.findByPDOKeyList(searchList));
-
-        foundVessels.addAll(labVesselDao.findBySampleKeyList(searchList));
-
-
-        foundSamples = null;
-        foundPDOs = null;
-        foundBatches = null;
-
-        long totalResults = foundVessels.size();
-
-        resultsAvailable = totalResults > 0;
-    }
-
 
     @HandlesEvent(CONFIRM_ACTION)
     public Resolution confirm() {
@@ -241,7 +254,8 @@ public class SearchActionBean extends CoreActionBean {
                If a new ticket is to be created, pass the description, summary, due date and important info in a batch
                object acting as a DTO
             */
-            batchObject = new LabBatch(summary.trim(), vesselSet, LabBatch.LabBatchType.WORKFLOW, description, dueDate, important);
+            batchObject = new LabBatch(summary.trim(), vesselSet, LabBatch.LabBatchType.WORKFLOW, description, dueDate,
+                    important);
 
             labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername());
         }
@@ -473,5 +487,13 @@ public class SearchActionBean extends CoreActionBean {
 
     public void setJiraTicketId(String jiraTicketId) {
         this.jiraTicketId = jiraTicketId;
+    }
+
+    public boolean isPlasticOnly() {
+        return plasticOnly;
+    }
+
+    public void setPlasticOnly(boolean plasticOnly) {
+        this.plasticOnly = plasticOnly;
     }
 }

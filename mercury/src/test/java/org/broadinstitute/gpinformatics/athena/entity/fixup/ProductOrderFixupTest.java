@@ -42,9 +42,6 @@ public class ProductOrderFixupTest extends Arquillian {
     private ProductDao productDao;
 
     @Inject
-    private RiskItemDao riskItemDao;
-
-    @Inject
     private ProductOrderSampleDao productOrderSampleDao;
 
     @Inject
@@ -323,15 +320,18 @@ public class ProductOrderFixupTest extends Arquillian {
     public void setPlacedDate() {
 
         Query query = productOrderDao.getEntityManager().createNativeQuery(
-                "SELECT pdo_aud.jira_ticket_key, rev_info.REV_DATE FROM\n" +
-                "  athena.product_order_aud pdo_aud, athena.product_order pdo, mercury.rev_info rev_info WHERE \n" +
-                "  pdo.product_order_id = pdo_aud.product_order_id AND\n" +
-                "  pdo_aud.rev = (\n" +
-                "    SELECT MIN(pdo_aud2.rev) FROM athena.product_order_aud pdo_aud2 WHERE\n" +
-                "      pdo_aud2.product_order_id = pdo.product_order_id AND pdo_aud2.jira_ticket_key IS NOT NULL\n" +
-                "  ) AND\n" +
-                "rev_info.REV_INFO_ID = pdo_aud.rev\n" +
-                "  \n" +
+                "SELECT pdo_aud.jira_ticket_key, rev_info.rev_date " +
+                "FROM athena.product_order_aud pdo_aud, athena.product_order pdo, mercury.rev_info rev_info " +
+                "WHERE " +
+                "  pdo.product_order_id = pdo_aud.product_order_id AND " +
+                "  pdo_aud.rev = (" +
+                "    SELECT MIN(pdo_aud2.rev) " +
+                "    FROM athena.product_order_aud pdo_aud2 " +
+                "    WHERE " +
+                "      pdo_aud2.product_order_id = pdo.product_order_id AND " +
+                "      pdo_aud2.jira_ticket_key IS NOT NULL " +
+                "  ) AND " +
+                "rev_info.rev_info_id = pdo_aud.rev " +
                 "ORDER BY pdo.created_date "
         );
 
