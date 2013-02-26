@@ -290,10 +290,6 @@ public class ProductOrder implements Serializable {
                 output.add(MessageFormat.format("Unique Participants: {0}", uniqueParticipantCount));
             }
 
-            if (receivedSampleCount != 0) {
-                output.add(MessageFormat.format("RECEIVED: {0}", receivedSampleCount));
-            }
-
             outputCounts(output, stockTypeCounts, "Stock Type");
             outputCounts(output, primaryDiseaseCounts, "Disease");
             outputCounts(output, genderCounts, "Gender");
