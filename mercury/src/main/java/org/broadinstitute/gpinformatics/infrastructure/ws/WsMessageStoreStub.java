@@ -13,12 +13,12 @@ import java.util.Date;
 public class WsMessageStoreStub implements WsMessageStore{
 
     @Override
-    public void store(String message, Date receivedDate) {
+    public void store(String resourceType, String message, Date receivedDate) {
         // do nothing
     }
 
     @Override
-    public void recordError(String message, Date receivedDate, Exception exception) {
+    public void recordError(String resourceType, String message, Date receivedDate, Exception exception) {
         // do nothing
     }
 }

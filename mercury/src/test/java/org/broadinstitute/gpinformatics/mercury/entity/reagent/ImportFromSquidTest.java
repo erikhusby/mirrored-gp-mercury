@@ -346,7 +346,7 @@ public class ImportFromSquidTest extends ContainerTest {
 //                productOrderSamples = new ArrayList<ProductOrderSample>();
             }
             assert tubeBeans != null;
-            tubeBeans.add(new TubeBean(tubeBarcode, "SM-" + sampleLsid.substring(sampleLsid.lastIndexOf(':') + 1), productOrder));
+            tubeBeans.add(new TubeBean(tubeBarcode, "SM-" + sampleLsid.substring(sampleLsid.lastIndexOf(':') + 1)));
 //            productOrderSamples.add(new ProductOrderSample(sampleBarcode));
         }
     }
