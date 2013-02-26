@@ -1,8 +1,13 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
+import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
@@ -19,10 +24,15 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
+import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -39,6 +49,8 @@ public class SampleReceiptResource {
     // todo jmt currently set to thompson, which user should this be?
     private static final long OPERATOR = 1701L;
 
+    private static final Log LOG = LogFactory.getLog(SampleReceiptResource.class);
+
     @Inject
     private LabVesselDao labVesselDao;
 
@@ -52,7 +64,37 @@ public class SampleReceiptResource {
     @Inject
     private AthenaClientService athenaClientService;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    @Inject
+    private WsMessageStore wsMessageStore;
+
+    /**
+     * Accepts a message from BSP.  We unmarshal ourselves, rather than letting JAX-RS
+     * do it, because we need to write the text to the file system.
+     *
+     * @param message the text of the message
+     */
     @POST
+    @Consumes({MediaType.APPLICATION_XML})
+    public String notifyOfReceipt(String sampleReceiptBeanXml) throws ResourceException {
+        Date now = new Date();
+        wsMessageStore.store(WsMessageStore.SAMPLE_RECEIPT_RESOURCE_TYPE, sampleReceiptBeanXml, now);
+        try {
+            SampleReceiptBean sampleReceiptBean = ObjectMarshaller.unmarshall(SampleReceiptBean.class,
+                    new StringReader(sampleReceiptBeanXml));
+            return notifyOfReceipt(sampleReceiptBean);
+        } catch (Exception e) {
+            wsMessageStore.store(WsMessageStore.SAMPLE_RECEIPT_RESOURCE_TYPE, sampleReceiptBeanXml, now);
+            LOG.error("Failed to process sample receipt", e);
+            throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
+        }
+    }
+
+    /**
+     * For samples received by BSP: find or create plastic; find or create MercurySamples; create receipt LabBatch.
+     * @param sampleReceiptBean from BSP
+     * @return string indicating success
+     */
     public String notifyOfReceipt(SampleReceiptBean sampleReceiptBean) {
         List<String> barcodes = new ArrayList<String>();
         List<String> sampleIds = new ArrayList<String>();
@@ -80,6 +122,7 @@ public class SampleReceiptResource {
         List<LabVessel> labVessels = notifyOfReceiptDaoFree(sampleReceiptBean, mapBarcodeToVessel, mapIdToListMercurySample,
                 mapIdToListPdoSamples);
 
+        // todo jmt may need to append a timestamp to make the batch unique
         labBatchDAO.persist(new LabBatch(sampleReceiptBean.getKitId(), new HashSet<LabVessel>(labVessels),
                 LabBatch.LabBatchType.SAMPLES_RECEIPT));
         return "Samples received";
