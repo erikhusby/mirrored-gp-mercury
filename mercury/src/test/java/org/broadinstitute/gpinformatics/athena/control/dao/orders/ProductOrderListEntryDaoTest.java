@@ -77,7 +77,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
-        // Skip if no injections, meaning we're not running in container
+        // Skip if no injections, meaning we're not running in container.
         if (utx == null) {
             return;
         }
@@ -87,7 +87,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
 
     /**
-     * Sanity check: should not see any PDOs represented more than once
+     * Sanity check: should not see any PDOs represented more than once.
      *
      * @param productOrderListEntries
      */
@@ -189,10 +189,17 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
     }
 
-    // it would be nice to have tests for multiple ledger entries but that would require us to know that a given order
+    // It would be nice to have tests for multiple ledger entries but that would require us to know that a given order
     // has either more than one sample or more than one price item associated with its product (either through add-ons
-    // or optional price items on the main product).  we're currently picking product orders completely at random from
-    // the db so this isn't currently possible.  we should ideally generate our own rich product / product order test
+    // or optional price items on the main product).  We're currently picking product orders completely at random from
+    // the db so this isn't currently possible.  We should ideally generate our own rich product / product order test
     // fixture data instead.
+
+
+    public void testSingle() {
+        ProductOrderListEntry entry = productOrderListEntryDao.findSingle("PDO-41");
+        Assert.assertNotNull(entry);
+        Assert.assertTrue(entry.isEligibleForBilling());
+    }
 
 }

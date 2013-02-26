@@ -142,7 +142,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <c:forEach items="${actionBean.allProductOrders}" var="order">
+                    <c:forEach items="${actionBean.allProductOrderListEntries}" var="order">
                         <tr>
                             <td>
                                 <c:if test="${!order.draft}">
