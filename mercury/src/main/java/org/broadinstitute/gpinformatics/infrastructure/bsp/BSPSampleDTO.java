@@ -192,7 +192,7 @@ public class BSPSampleDTO {
 
         this(containerId, stockSample, rootSample, aliquotSample, patientId, organism, collaboratorsSampleName, collection,
                 volume, concentration, sampleLsid, collaboratorParticipantId, materialType, total, sampleType, primaryDisease,
-                gender, stockType, fingerprint, sampleId, collaboratorName, race, population, null);
+                gender, stockType, fingerprint, sampleId, collaboratorName, race, population, FFPEStatus.UNKNOWN);
     }
 
 
