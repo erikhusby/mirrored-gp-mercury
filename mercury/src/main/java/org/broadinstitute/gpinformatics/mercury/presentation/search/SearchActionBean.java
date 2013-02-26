@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
 public class SearchActionBean extends CoreActionBean {
     public static final String ACTIONBEAN_URL_BINDING = "/search/all.action";
 
-    private enum SEARCH_TYPE {
+    private enum SearchType {
         VESSELS_BY_BARCODE, VESSELS_BY_PDO, VESSELS_BY_SAMPLE_KEY, PDO_BY_KEY, SAMPLES_BY_NAME, BATCH_BY_KEY
     }
 
@@ -124,7 +124,7 @@ public class SearchActionBean extends CoreActionBean {
 
     @HandlesEvent(SEARCH_PLASTIC_ACTION)
     public Resolution searchPlastic() {
-        doSearch(SEARCH_TYPE.VESSELS_BY_SAMPLE_KEY, SEARCH_TYPE.VESSELS_BY_PDO, SEARCH_TYPE.VESSELS_BY_BARCODE);
+        doSearch(SearchType.VESSELS_BY_SAMPLE_KEY, SearchType.VESSELS_BY_PDO, SearchType.VESSELS_BY_BARCODE);
         return viewPlastic();
     }
 
@@ -134,15 +134,15 @@ public class SearchActionBean extends CoreActionBean {
         return new ForwardResolution(SESSION_LIST_PAGE).addParameter(SEARCH_PLASTIC_ACTION, plasticOnly);
     }
 
-    private void doSearch(SEARCH_TYPE... searchForItems) {
+    private void doSearch(SearchType... searchForItems) {
         if (searchForItems.length == 0) {
-            searchForItems = SEARCH_TYPE.values();
+            searchForItems = SearchType.values();
         }
         List<String> searchList = cleanInputString(searchKey);
 
         int count = 0;
         long totalResults = 0l;
-        for (SEARCH_TYPE searchForItem : searchForItems) {
+        for (SearchType searchForItem : searchForItems) {
             switch (searchForItem) {
             case VESSELS_BY_BARCODE:
                 foundVessels.addAll(labVesselDao.findByListIdentifiers(searchList));
@@ -198,19 +198,19 @@ public class SearchActionBean extends CoreActionBean {
     public void createBatchValidation(ValidationErrors errors) {
 
         if (selectedVesselLabels == null || selectedVesselLabels.isEmpty()) {
-            doSearch(SEARCH_TYPE.VESSELS_BY_SAMPLE_KEY, SEARCH_TYPE.VESSELS_BY_PDO, SEARCH_TYPE.VESSELS_BY_BARCODE);
+            doSearch(SearchType.VESSELS_BY_SAMPLE_KEY, SearchType.VESSELS_BY_PDO, SearchType.VESSELS_BY_BARCODE);
             errors.add("selectedVesselLabels",
                     new SimpleError("At least one vessel must be selected to create a batch"));
         }
 
         if (jiraInputType.equals(EXISTING_TICKET)) {
             if (StringUtils.isBlank(jiraTicketId)) {
-                doSearch(SEARCH_TYPE.VESSELS_BY_SAMPLE_KEY, SEARCH_TYPE.VESSELS_BY_PDO, SEARCH_TYPE.VESSELS_BY_BARCODE);
+                doSearch(SearchType.VESSELS_BY_SAMPLE_KEY, SearchType.VESSELS_BY_PDO, SearchType.VESSELS_BY_BARCODE);
                 errors.add("jiraTicketId", new SimpleError("An existing Jira ticket key is required"));
             }
         } else {
             if (StringUtils.isBlank(summary)) {
-                doSearch(SEARCH_TYPE.VESSELS_BY_SAMPLE_KEY, SEARCH_TYPE.VESSELS_BY_PDO, SEARCH_TYPE.VESSELS_BY_BARCODE);
+                doSearch(SearchType.VESSELS_BY_SAMPLE_KEY, SearchType.VESSELS_BY_PDO, SearchType.VESSELS_BY_BARCODE);
                 errors.add("summary", new SimpleError("You must provide at least a summary to create a Jira Ticket"));
             }
         }
@@ -218,7 +218,7 @@ public class SearchActionBean extends CoreActionBean {
 
     @HandlesEvent(SEARCH_BATCH_CANDIDATES_ACTION)
     public Resolution searchForBatchCandidates() throws Exception {
-        doSearch(SEARCH_TYPE.VESSELS_BY_SAMPLE_KEY, SEARCH_TYPE.VESSELS_BY_PDO, SEARCH_TYPE.VESSELS_BY_BARCODE);
+        doSearch(SearchType.VESSELS_BY_SAMPLE_KEY, SearchType.VESSELS_BY_PDO, SearchType.VESSELS_BY_BARCODE);
         return new ForwardResolution(BATCH_CREATE_PAGE);
     }
 
