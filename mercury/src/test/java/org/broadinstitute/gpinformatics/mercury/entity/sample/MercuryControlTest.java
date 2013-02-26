@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
-import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.Control;
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -18,15 +17,15 @@ public class MercuryControlTest {
     @Test(groups = DATABASE_FREE)
     public void testControlCreation() {
 
-        MercuryControl testCtrl = new MercuryControl(na12878, MercuryControl.CONTROL_TYPE.POSITIVE);
+        MercuryControl testCtrl = new MercuryControl(na12878, MercuryControl.ControlType.POSITIVE);
 
         Assert.assertNotNull(testCtrl);
 
         Assert.assertEquals(na12878, testCtrl.getCollaboratorSampleId());
 
-        Assert.assertEquals(MercuryControl.CONTROL_TYPE.POSITIVE, testCtrl.getType());
+        Assert.assertEquals(MercuryControl.ControlType.POSITIVE, testCtrl.getType());
 
-        Assert.assertEquals(MercuryControl.CONTROL_STATE.ACTIVE, testCtrl.getState());
+        Assert.assertEquals(MercuryControl.ControlState.ACTIVE, testCtrl.getState());
 
     }
 
@@ -35,17 +34,17 @@ public class MercuryControlTest {
 
         final String sampleId = "Dummy_Collaborator_1";
 
-        MercuryControl testCtrl = new MercuryControl(sampleId, MercuryControl.CONTROL_TYPE.POSITIVE);
+        MercuryControl testCtrl = new MercuryControl(sampleId, MercuryControl.ControlType.POSITIVE);
 
         Assert.assertNotNull(testCtrl);
 
         Assert.assertEquals(sampleId, testCtrl.getCollaboratorSampleId());
 
-        Assert.assertEquals(MercuryControl.CONTROL_STATE.ACTIVE, testCtrl.getState());
+        Assert.assertEquals(MercuryControl.ControlState.ACTIVE, testCtrl.getState());
 
         testCtrl.toggleState();
 
-        Assert.assertEquals(MercuryControl.CONTROL_STATE.INACTIVE, testCtrl.getState());
+        Assert.assertEquals(MercuryControl.ControlState.INACTIVE, testCtrl.getState());
 
     }
 
