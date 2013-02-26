@@ -50,6 +50,14 @@ public class MercuryControlDaoTest extends ContainerTest {
 
     public void testSimpleSave() throws Exception {
 
+        int initialActiveSize = mercuryControlDao.findAllActive().size();
+        int initialInactiveSize = mercuryControlDao.findAllInactive().size();
+        int initialActivePositiveSize = mercuryControlDao.findAllActivePositiveControls().size();
+        int initialActiveNegativeSize = mercuryControlDao.findAllActiveNegativeControls().size();
+        int initalInactivePositiveSize = mercuryControlDao.findAllInactivePositiveControls().size();
+        int initalInactiveNegativeSize = mercuryControlDao.findAllInactiveNegativeControls().size();
+
+
         final String testId = "Test_collaborator_id";
         MercuryControl testCtrl = new MercuryControl(testId, MercuryControl.ControlType.POSITIVE);
 
@@ -68,21 +76,29 @@ public class MercuryControlDaoTest extends ContainerTest {
         Assert.assertEquals(MercuryControl.ControlState.ACTIVE, newTestCtrl.getState());
 
         List<MercuryControl> listOfOne = mercuryControlDao.findAllActive();
-        Assert.assertEquals(1, listOfOne.size());
+        Assert.assertEquals(1 + initialActiveSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllInactive();
-        Assert.assertEquals(0, listOfOne.size());
+        Assert.assertEquals(0 + initialInactiveSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllActivePositiveControls();
-        Assert.assertEquals(1, listOfOne.size());
+        Assert.assertEquals(1+initialActivePositiveSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllActiveNegativeControls();
-        Assert.assertEquals(0, listOfOne.size());
+        Assert.assertEquals(0+initialActiveNegativeSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllInactivePositiveControls();
-        Assert.assertEquals(0, listOfOne.size());
+        Assert.assertEquals(0+initalInactivePositiveSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllInactiveNegativeControls();
-        Assert.assertEquals(0, listOfOne.size());
+        Assert.assertEquals(0+initalInactiveNegativeSize, listOfOne.size());
 
     }
 
     public void testSimpleInactiveSave() throws Exception {
+
+        int initialActiveSize = mercuryControlDao.findAllActive().size();
+        int initialInactiveSize = mercuryControlDao.findAllInactive().size();
+        int initialActivePositiveSize = mercuryControlDao.findAllActivePositiveControls().size();
+        int initialActiveNegativeSize = mercuryControlDao.findAllActiveNegativeControls().size();
+        int initalInactivePositiveSize = mercuryControlDao.findAllInactivePositiveControls().size();
+        int initalInactiveNegativeSize = mercuryControlDao.findAllInactiveNegativeControls().size();
+
 
         final String testId = "Test_collaborator_id";
         MercuryControl testCtrl = new MercuryControl(testId, MercuryControl.ControlType.POSITIVE);
@@ -96,21 +112,32 @@ public class MercuryControlDaoTest extends ContainerTest {
 
         Assert.assertNull(newTestCtrl);
 
+        newTestCtrl = mercuryControlDao.findInactiveBySampleId(testId);
+        Assert.assertNotNull(newTestCtrl);
+
         List<MercuryControl> listOfOne = mercuryControlDao.findAllActive();
-        Assert.assertEquals(0, listOfOne.size());
+        Assert.assertEquals(0+initialActiveSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllInactive();
-        Assert.assertEquals(1, listOfOne.size());
+        Assert.assertEquals(1+initialInactiveSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllActivePositiveControls();
-        Assert.assertEquals(0, listOfOne.size());
+        Assert.assertEquals(0+initialActivePositiveSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllActiveNegativeControls();
-        Assert.assertEquals(0, listOfOne.size());
+        Assert.assertEquals(0+initialActiveNegativeSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllInactivePositiveControls();
-        Assert.assertEquals(1, listOfOne.size());
+        Assert.assertEquals(1+initalInactivePositiveSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllInactiveNegativeControls();
-        Assert.assertEquals(0, listOfOne.size());
+        Assert.assertEquals(0+initalInactiveNegativeSize, listOfOne.size());
     }
 
     public void testMultipleSave() throws Exception {
+
+        int initialActiveSize = mercuryControlDao.findAllActive().size();
+        int initialInactiveSize = mercuryControlDao.findAllInactive().size();
+        int initialActivePositiveSize = mercuryControlDao.findAllActivePositiveControls().size();
+        int initialActiveNegativeSize = mercuryControlDao.findAllActiveNegativeControls().size();
+        int initalInactivePositiveSize = mercuryControlDao.findAllInactivePositiveControls().size();
+        int initalInactiveNegativeSize = mercuryControlDao.findAllInactiveNegativeControls().size();
+
         final String testId1 = "Test_collaborator_id_1";
         final String testId2 = "Test_collaborator_id_2";
         final String testId3 = "Test_collaborator_id_3";
@@ -135,20 +162,28 @@ public class MercuryControlDaoTest extends ContainerTest {
         Assert.assertNotNull(newTestCtrl);
 
         List<MercuryControl> listOfOne = mercuryControlDao.findAllActive();
-        Assert.assertEquals(5, listOfOne.size());
+        Assert.assertEquals(5 + initialActiveSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllInactive();
-        Assert.assertEquals(0, listOfOne.size());
+        Assert.assertEquals(0 + initialInactiveSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllActivePositiveControls();
-        Assert.assertEquals(3, listOfOne.size());
+        Assert.assertEquals(3 + initialActivePositiveSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllActiveNegativeControls();
-        Assert.assertEquals(2, listOfOne.size());
+        Assert.assertEquals(2 + initialActiveNegativeSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllInactivePositiveControls();
-        Assert.assertEquals(0, listOfOne.size());
+        Assert.assertEquals(0 + initalInactivePositiveSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllInactiveNegativeControls();
-        Assert.assertEquals(0, listOfOne.size());
+        Assert.assertEquals(0 + initalInactiveNegativeSize, listOfOne.size());
     }
 
     public void testSimpleInactiveDuplicateSave() throws Exception {
+
+        int initialActiveSize = mercuryControlDao.findAllActive().size();
+        int initialInactiveSize = mercuryControlDao.findAllInactive().size();
+        int initialActivePositiveSize = mercuryControlDao.findAllActivePositiveControls().size();
+        int initialActiveNegativeSize = mercuryControlDao.findAllActiveNegativeControls().size();
+        int initalInactivePositiveSize = mercuryControlDao.findAllInactivePositiveControls().size();
+        int initalInactiveNegativeSize = mercuryControlDao.findAllInactiveNegativeControls().size();
+
 
         final String testId = "Test_collaborator_id";
         MercuryControl testCtrl = new MercuryControl(testId, MercuryControl.ControlType.POSITIVE);
@@ -172,17 +207,17 @@ public class MercuryControlDaoTest extends ContainerTest {
         Assert.assertNotNull(newTestCtrlDupe);
 
         List<MercuryControl> listOfOne = mercuryControlDao.findAllActive();
-        Assert.assertEquals(1, listOfOne.size());
+        Assert.assertEquals(1+initialActiveSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllInactive();
-        Assert.assertEquals(1, listOfOne.size());
+        Assert.assertEquals(1+initialInactiveSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllActivePositiveControls();
-        Assert.assertEquals(1, listOfOne.size());
+        Assert.assertEquals(1+initialActivePositiveSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllActiveNegativeControls();
-        Assert.assertEquals(0, listOfOne.size());
+        Assert.assertEquals(0+initialActiveNegativeSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllInactivePositiveControls();
-        Assert.assertEquals(1, listOfOne.size());
+        Assert.assertEquals(1+initalInactivePositiveSize, listOfOne.size());
         listOfOne = mercuryControlDao.findAllInactiveNegativeControls();
-        Assert.assertEquals(0, listOfOne.size());
+        Assert.assertEquals(0+initalInactiveNegativeSize, listOfOne.size());
 
         try {
             MercuryControl testCtrlDupe2 = new MercuryControl(testId, MercuryControl.ControlType.POSITIVE);

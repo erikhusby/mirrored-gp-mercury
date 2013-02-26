@@ -30,6 +30,18 @@ public class MercuryControlDao extends GenericDao {
     }
 
     /**
+     * Finds an <u>inactive</u> control entity based on the sample ID
+     *
+     * @param sampleId collaborator sample ID associated with the control that we wish to find.
+     *
+     * @return a single {@link MercuryControl} instance that relates to the query
+     */
+    public MercuryControl findInactiveBySampleId(String sampleId) {
+        return findSingle(MercuryControl.class, new MercuryControlIdCallback(this, MercuryControl.ControlState.INACTIVE,
+                                                                                    sampleId));
+    }
+
+    /**
      * Finds all <u>active</u> controls within the system that are stored as positive
      *
      * @return a list of all {@link MercuryControl}s in the system that not only have  a
