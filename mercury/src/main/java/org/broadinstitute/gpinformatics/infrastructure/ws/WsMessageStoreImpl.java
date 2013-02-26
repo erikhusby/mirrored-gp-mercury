@@ -19,6 +19,7 @@ import java.util.Date;
 @Impl
 public class WsMessageStoreImpl implements WsMessageStore {
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private DeckMessagesConfig deckMessagesConfig;
 
@@ -47,17 +48,19 @@ public class WsMessageStoreImpl implements WsMessageStore {
 
     /**
      * Stores the message; even if database persistence fails, we have the text of the message
+     * @param resourceType e.g bettalims, allows message for different web services to have their own directory structure
      * @param message text of the message
      * @param receivedDate when the message was received
      */
     @Override
-    public void store(String message, Date receivedDate) {
+    public void store(String resourceType, String message, Date receivedDate) {
         String directoryTime;
         // SimpleDateFormat is not thread-safe
         synchronized (directoryFormat) {
             directoryTime = directoryFormat.format(receivedDate);
         }
-        String directoryName = deckMessagesConfig.getMessageStoreDirRoot() + File.separator + INBOX_DIR + File.separator + directoryTime;
+        String directoryName = deckMessagesConfig.getMessageStoreDirRoot() + File.separator + resourceType +
+                File.separator + INBOX_DIR + File.separator + directoryTime;
         File directory = new File(directoryName);
         if(!directory.exists()) {
             if(!directory.mkdirs()) {
@@ -89,12 +92,13 @@ public class WsMessageStoreImpl implements WsMessageStore {
 
     /**
      * Called when an exception occurs during processing or persistence of the message
+     * @param resourceType e.g bettalims, allows message for different web services to have their own directory structure
      * @param message text of the message
      * @param receivedDate when the message was received
      * @param exception the exception to log
      */
     @Override
-    public void recordError(String message, Date receivedDate, Exception exception) {
+    public void recordError(String resourceType, String message, Date receivedDate, Exception exception) {
         String directoryName;
         if(exception instanceof UnmarshalException || message.contains("DetectorPlateLoaded")) {
             // Mercury doesn't currently handle Coral messages or detector plates
@@ -102,7 +106,8 @@ public class WsMessageStoreImpl implements WsMessageStore {
         } else {
             directoryName = ERROR_DIR;
         }
-        File errorDirectory = new File(deckMessagesConfig.getMessageStoreDirRoot(), directoryName);
+        File errorDirectory = new File(deckMessagesConfig.getMessageStoreDirRoot() + File.separator + resourceType,
+                directoryName);
         if(!errorDirectory.exists()) {
             if(!errorDirectory.mkdirs()) {
                 // mkdirs can fail if two threads attempt it simultaneously, so try again
