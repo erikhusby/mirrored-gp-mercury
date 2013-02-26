@@ -48,7 +48,7 @@ public class DriedBloodSpotDbFreeTest {
         List<TubeBean> tubeBeans = new ArrayList<TubeBean>();
         for(int rackPosition = 1; rackPosition <= 96; rackPosition++) {
             String barcode = "SM-FTA" + rackPosition + timestamp;
-            tubeBeans.add(new TubeBean(barcode, null, null));
+            tubeBeans.add(new TubeBean(barcode, null));
         }
 
         String batchId = "BP-2";

@@ -56,7 +56,7 @@ public class SamplesPicoEndToEndTest {
         List<TubeBean> tubeBeans = new ArrayList<TubeBean>();
         for (int rackPosition = 1; rackPosition <= 96; rackPosition++) {
             String barcode = "R" + rackPosition;
-            tubeBeans.add(new TubeBean(barcode, null, null));
+            tubeBeans.add(new TubeBean(barcode, null));
         }
         String batchId = "BP-1";
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
