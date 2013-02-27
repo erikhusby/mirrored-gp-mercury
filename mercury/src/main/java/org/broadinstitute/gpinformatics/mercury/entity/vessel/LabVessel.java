@@ -1079,7 +1079,10 @@ public abstract class LabVessel implements Serializable {
     public Set<String> getPdoKeys() {
         Set<String> pdoKeys = new HashSet<String>();
         for (SampleInstance sample : getAllSamples()) {
-            pdoKeys.add(sample.getStartingSample().getProductOrderKey());
+            String productOrderKey = sample.getStartingSample().getProductOrderKey();
+            if (productOrderKey != null) {
+                pdoKeys.add(productOrderKey);
+            }
         }
 
         pdoKeys.remove(null);
