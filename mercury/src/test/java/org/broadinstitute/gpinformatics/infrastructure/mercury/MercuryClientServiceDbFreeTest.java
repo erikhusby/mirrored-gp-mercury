@@ -21,7 +21,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.util.*;
-import java.util.logging.Logger;
 
 import static org.easymock.EasyMock.*;
 
@@ -32,7 +31,6 @@ import static org.easymock.EasyMock.*;
 
 @Test(enabled = true, groups = TestGroups.DATABASE_FREE)
 public class MercuryClientServiceDbFreeTest {
-    private Logger logger = Logger.getLogger(getClass().getName());
     private String workflowName = "Exome Express";
     private Long userId = 10400L;
     private String userName = "testUser";
