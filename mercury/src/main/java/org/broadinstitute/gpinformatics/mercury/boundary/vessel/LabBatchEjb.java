@@ -125,6 +125,16 @@ public class LabBatchEjb {
         return batchObject;
     }
 
+    /**
+     * Creates a new lab batch, using an existing JIRA ticket for tracking, and adds the vessels to the named bucket.
+     *
+     * @param vesselLabels    the vessel labels to add to the batch and the bucket
+     * @param operator        the person creating the batch
+     * @param jiraTicket      the existing JIRA ticket to use
+     * @param bucketName      the name of the bucket to add the vessels to
+     * @param location        the machine location of the operation for the bucket event
+     * @return the new lab batch
+     */
     public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull List<String> vesselLabels,
                                                       @Nonnull String operator, @Nonnull String jiraTicket,
                                                       @Nonnull String bucketName, @Nonnull String location) {
@@ -136,6 +146,16 @@ public class LabBatchEjb {
         return batch;
     }
 
+    /**
+     * Creates a new lab batch and adds the vessels to the named bucket.
+     *
+     * @param batch         a constructed, but not persisted, batch object containing all initial information necessary
+     *                      to persist a new batch
+     * @param operator      the person creating the batch
+     * @param bucketName    the name of the bucket to add the vessels to
+     * @param location      the machine location of the operation for the bucket event
+     * @return the persisted lab batch
+     */
     public LabBatch createLabBatchAndRemoveFromBucket(@Nonnull LabBatch batch, @Nonnull String operator,
                                                       @Nonnull String bucketName, @Nonnull String location) {
         Bucket bucket = bucketDao.findByName(bucketName);
