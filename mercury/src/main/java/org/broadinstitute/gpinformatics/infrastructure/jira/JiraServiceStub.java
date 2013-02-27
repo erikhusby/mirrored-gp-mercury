@@ -30,13 +30,15 @@ import java.util.*;
 @Alternative
 public class JiraServiceStub implements JiraService {
 
+    public static final String CREATED_ISSUE_SUFFIX = "-123";
+
     private Log logger = LogFactory.getLog(JiraServiceStub.class);
 
     @Override
     public JiraIssue createIssue(String projectPrefix, String reporter, CreateFields.IssueType issueType,
                                  String summary, String description, Collection<CustomField> customFields) throws
             IOException {
-        return new JiraIssue(projectPrefix + "-123", this);
+        return new JiraIssue(projectPrefix + CREATED_ISSUE_SUFFIX, this);
     }
 
     @Override

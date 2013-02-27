@@ -500,7 +500,7 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * Determine if the list of samples names is exactly the same as the original list of sample names
+     * Determine if the list of samples names is exactly the same as the original list of sample names.
      *
      * @param newSamples new sample list
      *
@@ -528,10 +528,10 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * getJiraTicketKey allows a user of this class to gain access to the Unique key representing the Jira Ticket for
-     * which this Product ProductOrder is associated
+     * Allows a user of this class to gain access to the Unique key representing the Jira Ticket for
+     * which this Product ProductOrder is associated.
      *
-     * @return a {@link String} that represents the unique Jira Ticket key
+     * @return a {@link String} that represents the unique Jira Ticket key.
      */
     public String getJiraTicketKey() {
         return jiraTicketKey;
@@ -574,7 +574,7 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * This should only be called from tests or for database backpopulation.  The placed date is normally set interally
+     * This should only be called from tests or for database backpopulation.  The placed date is normally set internally
      * when an order is placed.
      * @param placedDate the date to set
      */

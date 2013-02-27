@@ -16,13 +16,14 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.annotation.Nonnull;
-import javax.ejb.Stateless;
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.*;
 
-@Stateless
-//@RequestScoped
+@Stateful
+@RequestScoped
 public class BucketBean {
 
     private LabEventFactory labEventFactory;
@@ -226,21 +227,21 @@ public class BucketBean {
      * @param workingBucket  The bucket from which to find the the bucket entries
      * @return
      */
-    public static Set<BucketEntry> buildBatchListByVessels(Collection<LabVessel> vesselsToBatch, Bucket workingBucket) {
+    public Set<BucketEntry> buildBatchListByVessels(Collection<LabVessel> vesselsToBatch, Bucket workingBucket) {
         Set<BucketEntry> bucketEntrySet = new HashSet<BucketEntry>();
 
         for (LabVessel workingVessel : vesselsToBatch) {
 
             BucketEntry foundEntry = workingBucket.findEntry(workingVessel);
-            if (null == foundEntry) {
-                throw new InformaticsServiceException(
-                        "Attempting to pull a vessel from a bucket when it does not exist in that bucket");
-            }
-            logger.info("Adding entry " + foundEntry.getBucketEntryId() + " for vessel " + foundEntry.getLabVessel()
-                    .getLabCentricName() +
+            if (foundEntry != null) {
+                logger.info("Adding entry " + foundEntry.getBucketEntryId() + " for vessel " + foundEntry.getLabVessel()
+                        .getLabCentricName() +
                         " and PDO " + foundEntry.getPoBusinessKey() + " to be popped from bucket.");
-            bucketEntrySet.add(foundEntry);
-
+                bucketEntrySet.add(foundEntry);
+            } else {
+                logger.info("Attempting to pull a vessel, " + workingVessel.getLabel() + ", from a bucket, " +
+                        workingBucket.getBucketDefinitionName() + ", when it does not exist in that bucket");
+            }
         }
         return bucketEntrySet;
     }
@@ -313,7 +314,7 @@ public class BucketBean {
      * @return a set of bucket entries found in the given bucket.  The size of the set is defined by
      *         numberOfBatchSamples
      */
-    public static Set<BucketEntry> buildBatchListBySize(int numberOfBatchSamples, Bucket workingBucket) {
+    public Set<BucketEntry> buildBatchListBySize(int numberOfBatchSamples, Bucket workingBucket) {
         Set<BucketEntry> bucketEntrySet = new HashSet<BucketEntry>();
 
         List<BucketEntry> sortedBucketEntries = new ArrayList<BucketEntry>(workingBucket.getBucketEntries());
@@ -492,7 +493,7 @@ public class BucketBean {
      * @return Set of all PDO business keys that are references in the collection of bucket entries being
      *         processed
      */
-    private static Set<String> extractProductOrderSet(Collection<BucketEntry> entries) {
+    private Set<String> extractProductOrderSet(Collection<BucketEntry> entries) {
         Set<String> pdoSet = new HashSet<String>();
 
         for (BucketEntry currEntry : entries) {
@@ -510,7 +511,7 @@ public class BucketBean {
      * @param entries
      * @return
      */
-    private static Collection<LabVessel> extractPdoLabVessels(String pdo, Collection<BucketEntry> entries) {
+    private Collection<LabVessel> extractPdoLabVessels(String pdo, Collection<BucketEntry> entries) {
         List<LabVessel> labVessels = new LinkedList<LabVessel>();
 
         for (BucketEntry currEntry : entries) {
