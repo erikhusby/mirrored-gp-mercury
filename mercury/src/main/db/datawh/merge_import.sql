@@ -652,13 +652,13 @@ FOR new IN im_po_sample_cur LOOP
       AND is_deleted = 'T';
 
       BEGIN
-	DELETE FROM product_order_sample_status WHERE product_order_sample_id = dup_sample_id;
-      EXCEPTION WHEN NO_DATA_FOUND THEN CONTINUE;
+        DELETE FROM product_order_sample_status WHERE product_order_sample_id = dup_sample_id;
+      EXCEPTION WHEN NO_DATA_FOUND THEN null;
       END;
 
       DELETE FROM product_order_sample WHERE product_order_sample_id = dup_sample_id;
 
-    EXCEPTION WHEN NO_DATA_FOUND THEN CONTINUE;
+    EXCEPTION WHEN NO_DATA_FOUND THEN null;
     END;
 
     UPDATE product_order_sample SET
