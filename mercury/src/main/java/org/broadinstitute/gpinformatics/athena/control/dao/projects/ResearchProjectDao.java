@@ -29,10 +29,6 @@ public class ResearchProjectDao extends GenericDao {
     public static final boolean WITH_ORDERS = true;
     public static final boolean NO_ORDERS = false;
 
-    public List<ResearchProject> findResearchProjectsByOwner(long username) {
-        return findList(ResearchProject.class, ResearchProject_.createdBy, username);
-    }
-
     public ResearchProject findByBusinessKey(String key) {
         return findByJiraTicketKey(key);
     }

@@ -57,7 +57,8 @@
             org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource,
             org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource,
             org.broadinstitute.gpinformatics.athena.boundary.util.PingResource,
-            org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform
+            org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform,
+            org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectResource
         </param-value>
     </context-param>
     <context-param>
