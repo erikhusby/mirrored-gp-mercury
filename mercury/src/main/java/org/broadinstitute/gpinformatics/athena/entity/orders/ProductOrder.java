@@ -799,7 +799,6 @@ public class ProductOrder implements Serializable {
      * @return true if order is submitted
      */
     public boolean isSubmitted() {
-
         return OrderStatus.Submitted == orderStatus;
     }
 
