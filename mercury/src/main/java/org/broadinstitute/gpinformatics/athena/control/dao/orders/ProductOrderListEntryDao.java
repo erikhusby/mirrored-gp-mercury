@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
+import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger_;
@@ -17,10 +18,12 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
+import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.criteria.*;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +33,15 @@ import java.util.Map;
 public class ProductOrderListEntryDao extends GenericDao implements Serializable {
 
     /**
+     *
+     * @param productOrderListEntries The entries to fill with unbilled ledger entry counts.
+     */
+    private void fetchUnbilledLedgerEntryCounts(List<ProductOrderListEntry> productOrderListEntries) {
+        fetchUnbilledLedgerEntryCounts(productOrderListEntries, null);
+    }
+
+
+    /**
      * Second-pass, ledger aware query that merges its results into the first-pass objects passed as an argument.
      *
      * Fetch the count of unbilled ledger entries for the
@@ -37,11 +49,11 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
      * {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry} DTOs and set those counts
      * into the DTOs.
      *
-     * @param productOrderListEntries - The entries to look up
+     * @param productOrderListEntries The entries to fill with unbilled ledger entry counts.
      */
-    private void fetchUnbilledLedgerEntryCounts(List<ProductOrderListEntry> productOrderListEntries) {
+    private void fetchUnbilledLedgerEntryCounts(List<ProductOrderListEntry> productOrderListEntries, @Nullable String jiraTicketKey) {
 
-        // build map of input productOrderListEntries jira key to DTO
+        // Build map of input productOrderListEntries jira key to DTO.
         Map<String, ProductOrderListEntry> jiraKeyToProductOrderListEntryMap =
                 new HashMap<String, ProductOrderListEntry>();
 
@@ -49,8 +61,8 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
             jiraKeyToProductOrderListEntryMap.put(productOrderListEntry.getJiraTicketKey(), productOrderListEntry);
         }
 
-        // build query to pick out eligible DTOs.  this only returns values for PDOs with ledger entries in open
-        // billing sessions or with no associated billing session
+        // Build query to pick out eligible DTOs.  This only returns values for PDOs with ledger entries in open
+        // billing sessions or with no associated billing session.
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<ProductOrderListEntry> cq = cb.createQuery(ProductOrderListEntry.class);
 
@@ -58,14 +70,14 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
 
         Root<ProductOrder> productOrderRoot = cq.from(ProductOrder.class);
 
-        // left join the samples, inner join the samples to the ledger items
+        // Left join the samples, inner join the samples to the ledger items.
         ListJoin<ProductOrder, ProductOrderSample> productOrderProductOrderSampleListJoin =
                 productOrderRoot.join(ProductOrder_.samples, JoinType.LEFT);
 
         SetJoin<ProductOrderSample, BillingLedger> productOrderSampleBillingLedgerSetJoin =
                 productOrderProductOrderSampleListJoin.join(ProductOrderSample_.ledgerItems);
 
-        // even if there are ledger entries there may not be a billing session so left join
+        // Even if there are ledger entries there may not be a billing session so left join.
         Join<BillingLedger, BillingSession> billingLedgerBillingSessionJoin =
                 productOrderSampleBillingLedgerSetJoin.join(BillingLedger_.billingSession, JoinType.LEFT);
 
@@ -76,8 +88,15 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                         billingLedgerBillingSessionJoin.get(BillingSession_.billingSessionId),
                         cb.count(productOrderRoot)));
 
-        cq.where(
-                cb.isNull(billingLedgerBillingSessionJoin.get(BillingSession_.billedDate)));
+        List<Predicate> predicates = new ArrayList<Predicate>();
+        predicates.add(cb.isNull(billingLedgerBillingSessionJoin.get(BillingSession_.billedDate)));
+
+        if (jiraTicketKey != null) {
+            predicates.add(cb.equal(productOrderRoot.get(ProductOrder_.jiraTicketKey), jiraTicketKey));
+        }
+
+        //noinspection ToArrayCallWithZeroLengthArrayArgument
+        cq.where(predicates.toArray(new Predicate[]{}));
 
         cq.groupBy(
                 productOrderRoot.get(ProductOrder_.productOrderId),
@@ -86,7 +105,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
 
         List<ProductOrderListEntry> resultList = getEntityManager().createQuery(cq).getResultList();
 
-        // merge these counts into the objects from the first-pass query
+        // Merge these counts into the objects from the first-pass query.
         for (ProductOrderListEntry result : resultList) {
             ProductOrderListEntry productOrderListEntry = jiraKeyToProductOrderListEntryMap.get(result.getJiraTicketKey());
             productOrderListEntry.setBillingSessionId(result.getBillingSessionId());
@@ -95,19 +114,30 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
 
     }
 
+
     /**
-     * First pass, ledger-unware querying
+     * Call the worker method with a null parameter indicating all {@link ProductOrderListEntry}s should be fetched.
+     *
+     * @return {@link List} of all {@link ProductOrderListEntry}s.
+     */
+    private List<ProductOrderListEntry> findBaseProductOrderListEntries() {
+        return findBaseProductOrderListEntries(null);
+    }
+
+
+    /**
+     * First pass, ledger-unaware querying.
      *
      * @return The order list
      */
-    private List<ProductOrderListEntry> findBaseProductOrderListEntries() {
+    private List<ProductOrderListEntry> findBaseProductOrderListEntries(@Nullable String jiraTicketKey) {
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<ProductOrderListEntry> cq = cb.createQuery(ProductOrderListEntry.class);
 
         Root<ProductOrder> productOrderRoot = cq.from(ProductOrder.class);
 
-        // these joins pick out attributes that are selected into the report object. DRAFTS can have any of these by null
-        // so left joins are needed
+        // These joins pick out attributes that are selected into the report object. DRAFTS can have any of these by null
+        // so left joins are needed.
         Join<ProductOrder, Product> productOrderProductJoin = productOrderRoot.join(ProductOrder_.product, JoinType.LEFT);
         Join<Product, ProductFamily> productProductFamilyJoin = productOrderProductJoin.join(Product_.productFamily, JoinType.LEFT);
         Join<ProductOrder, ResearchProject> productOrderResearchProjectJoin = productOrderRoot.join(ProductOrder_.researchProject, JoinType.LEFT);
@@ -125,6 +155,12 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                         productOrderRoot.get(ProductOrder_.placedDate),
                         productOrderRoot.get(ProductOrder_.sampleCount)));
 
+        // Only taking a single JIRA ticket key as I don't want to worry about Splitter-like issues for
+        // a varargs array of keys as there is currently no need for that functionality.
+        if (jiraTicketKey != null) {
+            cq.where(cb.equal(productOrderRoot.get(ProductOrder_.jiraTicketKey), jiraTicketKey));
+        }
+
         return getEntityManager().createQuery(cq).getResultList();
     }
 
@@ -132,7 +168,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
      * Generates reporting object {@link ProductOrderListEntry}s for efficient Product Order list view.  Merges the
      * results of the first-pass ledger-unaware query with the second-pass ledger aware query.
      *
-     * @return The list of order entries
+     * @return The list of order entries.
      */
     public List<ProductOrderListEntry> findProductOrderListEntries() {
 
@@ -141,5 +177,23 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
 
         return productOrderListEntries;
 
+    }
+
+
+    public ProductOrderListEntry findSingle(String jiraTicketKey) {
+
+        List<ProductOrderListEntry> productOrderListEntries = findBaseProductOrderListEntries(jiraTicketKey);
+
+        if (CollectionUtils.isEmpty(productOrderListEntries)) {
+            return null;
+        }
+
+        if (productOrderListEntries.size() > 1) {
+            throw new RuntimeException("Too many results");
+        }
+
+        fetchUnbilledLedgerEntryCounts(productOrderListEntries, jiraTicketKey);
+
+        return productOrderListEntries.get(0);
     }
 }

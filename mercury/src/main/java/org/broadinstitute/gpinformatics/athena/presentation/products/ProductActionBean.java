@@ -81,7 +81,7 @@ public class ProductActionBean extends CoreActionBean {
         @Validate(field="productFamily.productFamilyId", required = true, maxlength=255, on={SAVE_ACTION}, label="Product Family"),
         @Validate(field="productName", required = true, maxlength=255, on={SAVE_ACTION}, label = "Product Name"),
         @Validate(field="partNumber", required = true, maxlength=255, on={SAVE_ACTION}, label="Part Number"),
-        @Validate(field="description", required = true, maxlength = 255, on={SAVE_ACTION}, label = "Description"),
+        @Validate(field="description", required = true, maxlength = 2000, on={SAVE_ACTION}, label = "Description"),
         @Validate(field="availabilityDate", required = true, maxlength = 255, on={SAVE_ACTION}, label = "Availability Date")
     })
     private Product editProduct;
