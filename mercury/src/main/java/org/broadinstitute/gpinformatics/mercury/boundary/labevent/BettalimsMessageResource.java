@@ -136,7 +136,7 @@ public class BettalimsMessageResource {
         Date now = new Date();
         //noinspection OverlyBroadCatchBlock
         try {
-            wsMessageStore.store(message, now);
+            wsMessageStore.store(WsMessageStore.BETTALIMS_RESOURCE_TYPE, message, now);
 
             BettaLIMSMessage bettaLIMSMessage = unmarshal(message);
 
@@ -196,7 +196,7 @@ public class BettalimsMessageResource {
                 throw new RuntimeException(bettalimsResponse.getMessage());
             }
         } catch (Exception e) {
-            wsMessageStore.recordError(message, now, e);
+            wsMessageStore.recordError(WsMessageStore.BETTALIMS_RESOURCE_TYPE, message, now, e);
             LOG.error("Failed to process run", e);
             //            notifySupport(e);
             throw e;

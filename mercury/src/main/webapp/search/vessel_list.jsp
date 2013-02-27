@@ -6,58 +6,61 @@
     <%--@elvariable id="vessels" type="java.util.Collection"--%>
     <%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"--%>
     <%--@elvariable id="showCheckboxes" type="java.lang.Boolean"--%>
+    <%--@elvariable id="showSampleList" type="java.lang.Boolean"--%>
+    <%--@elvariable id="showVesselView" type="java.lang.Boolean"--%>
+    <%--@elvariable id="showWorkflow" type="java.lang.Boolean"--%>
 
     <script type="text/javascript">
+
         $(document).ready(function () {
+            <%--if (${showSampleList}){--%>
+                <%--showSampleList=true;--%>
+            <%--}--%>
+            <%--if (${showVesselView}){--%>
+                <%--showVesselView=true;--%>
+            <%--}--%>
+            <%--if (${showWorkflow}){--%>
+                <%--showWorkflow=true;--%>
+            <%--}--%>
+            var tableOptions=[];
+            var firstSortColumn=1;
+            if (${showSampleList}){
+                firstSortColumn++;
+                tableOptions.push({"bSortable":false});
+            }
+            if (${showWorkflow}) {
+                firstSortColumn++;
+                tableOptions.push({"bSortable":false});
+            }
+            if (${showVesselView}) {
+                firstSortColumn++;
+                tableOptions.push({"bSortable":false});
+            }
             if (${showCheckboxes}) {
+                firstSortColumn++;
+                tableOptions.push({"bSortable":false});
+            }
+            tableOptions.push [{"bSortable":false},{"bSortable":false},
+                                        {"bSortable":false},
+                                        {"bSortable":true},
+                                        {"bSortable":true, "sType":"numeric"},
+                                        {"bSortable":true},
+                                        {"bSortable":true, "sType":"numeric"},
+                                        {"bSortable":true, "sType":"numeric"},
+                                        {"bSortable":true, "sType":"numeric"},
+                                        {"bSortable":true},
+                                        {"bSortable":true},
+                                        {"bSortable":true},
+                                        {"bSortable":true, "sType":"date"},
+                                        {"bSortable":true, "sType":"date"}];
+
                 $j('#vesselList').dataTable({
                     "oTableTools":ttExportDefines,
                     "aaSorting":[
-                        [4, 'asc']
+                        [tableOptions.length, 'asc']
                     ],
-                    "aoColumns":[
-                        {"bSortable":false},
-                        {"bSortable":false},
-                        {"bSortable":false},
-                        {"bSortable":false},
-                        {"bSortable":true},
-                        {"bSortable":true, "sType":"numeric"},
-                        {"bSortable":true},
-                        {"bSortable":true, "sType":"numeric"},
-                        {"bSortable":true, "sType":"numeric"},
-                        {"bSortable":true, "sType":"numeric"},
-                        {"bSortable":true},
-                        {"bSortable":true},
-                        {"bSortable":true},
-                        {"bSortable":true, "sType":"date"},
-                        {"bSortable":true, "sType":"date"}
-                    ]
+                    "aoColumns":tableOptions
                 });
-            }
-            else {
-                $j('#vesselList').dataTable({
-                    "oTableTools":ttExportDefines,
-                    "aaSorting":[
-                        [3, 'asc']
-                    ],
-                    "aoColumns":[
-                        {"bSortable":false},
-                        {"bSortable":false},
-                        {"bSortable":false},
-                        {"bSortable":true},
-                        {"bSortable":true, "sType":"numeric"},
-                        {"bSortable":true},
-                        {"bSortable":true, "sType":"numeric"},
-                        {"bSortable":true, "sType":"numeric"},
-                        {"bSortable":true, "sType":"numeric"},
-                        {"bSortable":true},
-                        {"bSortable":true},
-                        {"bSortable":true},
-                        {"bSortable":true, "sType":"date"},
-                        {"bSortable":true, "sType":"date"}
-                    ]
-                });
-            }
 
             $j('.vessel-checkbox').enableCheckboxRangeSelection({
                 checkAllClass:'vessel-checkAll',
@@ -93,9 +96,9 @@
                     <input type="checkbox" class="vessel-checkAll"/><span id="count" class="vessel-checkedCount"></span>
                 </th>
             </c:if>
-            <th width="30">Vessel Viewer</th>
-            <th width="30">Sample List Viewer</th>
-            <th width="30">Workflow View</th>
+            <c:if test="${showVesselView}"> <th width="30">Vessel Viewer</th> </c:if>
+            <c:if test="${showSampleList}"><th width="30">Sample List Viewer</th></c:if>
+            <c:if test="${showWorkflow}"><th width="30">Workflow View</th></c:if>
             <th>Label</th>
             <th width="80">Sample Count</th>
             <th>Type</th>
@@ -120,31 +123,31 @@
 
                     </td>
                 </c:if>
-                <td>
+                <c:if test="${showVesselView}"><td>
                     <c:if test="${vessel.sampleInstanceCount > 0 }">
                         <a href="javascript:showVesselVisualizer('${vessel.label}')">
                             <img width="30" height="30" name="" title="show plate view"
                                  src="${ctxpath}/images/plate.png"/>
                         </a>
                     </c:if>
-                </td>
-                <td>
+                </td></c:if>
+                <c:if test="${showSampleList}"><td>
                     <c:if test="${vessel.sampleInstanceCount > 0 }">
                         <a href="javascript:showSampleVisualizer('${vessel.label}')">
                             <img width="30" height="30" name="" title="show sample list"
                                  src="${ctxpath}/images/list.png"/>
                         </a>
                     </c:if>
-                </td>
+                </td></c:if>
 
-                <td>
+                <c:if test="${showWorkflow}"><td>
                     <c:if test="${vessel.sampleInstanceCount > 0 }">
                         <a href="javascript:showWorkflowVisualizer('${vessel.label}')">
                             <img width="30" height="30" name="" title="show workflow view"
                                  src="${ctxpath}/images/list.png"/>
                         </a>
                     </c:if>
-                </td>
+                </td></c:if>
 
                 <td>
                     <a href="${ctxpath}/search/all.action?search=&searchKey=${vessel.label}">

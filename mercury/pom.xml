@@ -410,6 +410,9 @@
                                         <include>org/broadinstitute/gpinformatics/mercury/boundary/Namespaces.java</include>
                                         <include>org/broadinstitute/gpinformatics/mercury/boundary/vessel/*Bean.java</include>
                                     </includes>
+                                    <excludes>
+                                        <exclude>org/broadinstitute/gpinformatics/mercury/boundary/vessel/SampleReceiptMessageBean.java</exclude>
+                                    </excludes>
                                     <transformSchemas>
                                         <transformSchema>
                                             <uri>http://broadinstitute.org/gpinformatics/mercury/vessel</uri>

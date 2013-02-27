@@ -4,7 +4,22 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Search Vessels" sectionTitle="Search">
+
+<c:choose>
+    <c:when test="${actionBean.plasticOnly}">
+        <c:set var="actionTitle" value="Search Vessels"/>
+        <c:set var="showWorkflow" value="true"/>
+        <c:set var="showVesselView" value="false"/>
+        <c:set var="showSampleList" value="false"/>
+    </c:when>
+    <c:otherwise>
+        <c:set var="actionTitle" value="Search"/>
+        <c:set var="showVesselView" value="true"/>
+        <c:set var="showWorkflow" value="true"/>
+        <c:set var="showSampleList" value="true"/>
+    </c:otherwise>
+</c:choose>
+<stripes:layout-render name="/layout.jsp" pageTitle="${actionTitle}" sectionTitle="${actionTitle}">
 
     <stripes:layout-component name="extraHead">
 
@@ -37,8 +52,10 @@
                 </div>
 
                 <div class="control-group">
+
                     <div class="controls" style="margin-left: 80px;">
-                        <stripes:submit name="search" value="Search"/>
+                        <stripes:hidden name="plasticOnly" value="${actionBean.plasticOnly}"/>
+                        <stripes:submit name="search" value="${actionTitle}"/>
                     </div>
                 </div>
             </div>
@@ -61,11 +78,18 @@
                 </c:if>
 
                 <div class="pull-right">
-                    <img alt="show plate view" width="20" height="20" name="" title="show plate view"
-                         src="${ctxpath}/images/plate.png" style="margin-top: -5px;"/> - plate layout
-                    <img alt="show sample view" width="20" height="20" name="" title="show sample view"
-                         src="${ctxpath}/images/list.png" style="margin-top: -5px; margin-left: 10px;"/> - sample
+                        <c:if test="${!actionBean.plasticOnly}">
+                        <img alt="show plate view" width="20" height="20" name="" title="show plate view"
+                             src="${ctxpath}/images/plate.png" style="margin-top: -5px;"/> - plate layout
+                        <img alt="show sample view" width="20" height="20" name="" title="show sample view"
+                             src="${ctxpath}/images/list.png"
+                             style="margin-top: -5px; margin-left: 10px;"/> - sample list
+
                     list
+                    </c:if>
+                    <img alt="show sample view" width="20" height="20" name="" title="show workflow view"
+                         src="${ctxpath}/images/list.png"
+                         style="margin-top: -5px; margin-left: 10px;"/> - workflow
                 </div>
             </div>
 
@@ -79,7 +103,8 @@
                 </c:otherwise>
             </c:choose>
             <stripes:layout-render name="/search/vessel_list.jsp" vessels="${actionBean.foundVessels}"
-                                   bean="${actionBean}" showCheckboxes="false"/>
+                                   bean="${actionBean}" showCheckboxes="false" showVesselView="${showVesselView}"
+                                   showSampleList="${showSampleList}" showWorkflow="${showWorkflow}"/>
             </div>
         </c:if>
 
