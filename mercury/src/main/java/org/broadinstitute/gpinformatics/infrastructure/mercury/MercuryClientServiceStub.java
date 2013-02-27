@@ -19,11 +19,17 @@ public class MercuryClientServiceStub implements MercuryClientService {
 
     @Override
     public Collection<ProductOrderSample> addSampleToPicoBucket(ProductOrder pdo) {
+        return addSampleToPicoBucket(pdo, pdo.getSamples());
+    }
+
+    @Override
+    public Collection<ProductOrderSample> addSampleToPicoBucket(ProductOrder pdo,
+                                                                Collection<ProductOrderSample> samples) {
         Collection<ProductOrderSample> addedSamples = new ArrayList<ProductOrderSample>();
-        for (ProductOrderSample sample : pdo.getSamples()) {
+        for (ProductOrderSample sample : samples) {
             addedSamples.add(sample);
             // Pretends to put half the samples in the pico bucket.
-            if (addedSamples.size() >= pdo.getSamples().size() / 2) {
+            if (addedSamples.size() >= samples.size() / 2) {
                 break;
             }
         }

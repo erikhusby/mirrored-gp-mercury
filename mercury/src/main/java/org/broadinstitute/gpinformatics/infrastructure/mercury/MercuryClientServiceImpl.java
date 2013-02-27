@@ -46,6 +46,9 @@ public class MercuryClientServiceImpl implements MercuryClientService {
         this.userList = userList;
     }
 
+    /**
+     * @{inheritDoc}
+     */
     @Override
     public Collection<ProductOrderSample> addSampleToPicoBucket(ProductOrder pdo) {
         return addSampleToPicoBucket(pdo, pdo.getSamples());

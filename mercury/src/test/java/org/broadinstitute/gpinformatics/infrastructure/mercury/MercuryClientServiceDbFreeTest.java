@@ -30,7 +30,7 @@ import static org.easymock.EasyMock.*;
  * @author epolk
  */
 
-@Test(enabled = true, groups = TestGroups.DATABASE_FREE)
+@Test(enabled = true, groups = TestGroups.DATABASE_FREE, singleThreaded = true)
 public class MercuryClientServiceDbFreeTest {
     private Logger logger = Logger.getLogger(getClass().getName());
     private String workflowName = "Exome Express";
@@ -46,7 +46,7 @@ public class MercuryClientServiceDbFreeTest {
 
     private MercuryClientService service;
     private ProductOrder pdo = createMock(ProductOrder.class);
-    private List<ProductOrderSample> pdoSamples = new ArrayList<ProductOrderSample>();
+    private List<ProductOrderSample> pdoSamples;
     private ProductOrderSample pdoSample1 = createMock(ProductOrderSample.class);
     private ProductOrderSample pdoSample2 = createMock(ProductOrderSample.class);
     private Product product = createMock(Product.class);
@@ -67,7 +67,6 @@ public class MercuryClientServiceDbFreeTest {
     @BeforeClass
     public void beforeClass() throws Exception {
         service = new MercuryClientServiceImpl(bucketBean, bucketDao, labBatchDao, workflowLoader, bspUserList);
-        pdoSamples.add(pdoSample1);
         labBatches.add(labBatch);
         labVessels.add(labVessel);
         samples.add(sample);
@@ -75,10 +74,13 @@ public class MercuryClientServiceDbFreeTest {
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
+        pdoSamples = new ArrayList<ProductOrderSample>();
+        pdoSamples.add(pdoSample1);
         reset(mocks);
     }
 
     public void testSampleToPicoBucket() throws Exception {
+        // subtle differences from testAddSampleToPicoBucketSubset: pdoSamples contains only pdoSample1, and pdo.getSamples() is expected and returns pdoSamples
         expect(labBatchDao.findBatchesInReceiving()).andReturn(labBatches);
         expect(labBatch.getStartingLabVessels()).andReturn(labVessels);
         expect(labVessel.getMercurySamples()).andReturn(samples);
@@ -98,6 +100,32 @@ public class MercuryClientServiceDbFreeTest {
         replay(mocks);
 
         Collection<ProductOrderSample> addedSamples = service.addSampleToPicoBucket(pdo);
+        Assert.assertEquals(addedSamples.size(), 1);
+
+        verify(mocks);
+    }
+
+    public void testAddSampleToPicoBucketSubset() {
+        // subtle differences from testSampleToPicoBucket: pdoSamples contains pdoSample1 and pdoSample2, and pdo.getSamples() is not expected
+        pdoSamples.add(pdoSample2);
+        expect(labBatchDao.findBatchesInReceiving()).andReturn(labBatches);
+        expect(labBatch.getStartingLabVessels()).andReturn(labVessels);
+        expect(labVessel.getMercurySamples()).andReturn(samples);
+        expect(sample.getSampleKey()).andReturn(sampleKey);
+        expect(pdo.getProduct()).andReturn(product);
+        expect(product.getWorkflowName()).andReturn(workflowName).anyTimes();
+        expect(bucketDao.findByName("Pico/Plating Bucket")).andReturn(bucket);
+        expect(pdo.getCreatedBy()).andReturn(userId);
+        expect(bspUserList.getById(userId)).andReturn(bspUser);
+        expect(bspUser.getUsername()).andReturn(userName);
+        expect(pdoSample1.getSampleName()).andReturn(sampleKey);
+        expect(pdo.getBusinessKey()).andReturn(pdoKey);
+        Collection<LabVessel> bucketVessels = new ArrayList<LabVessel>();
+        bucketVessels.add(labVessel);
+        bucketBean.add(bucketVessels, bucket, userName, eventLocation, eventType, pdoKey);
+        replay(mocks);
+
+        Collection<ProductOrderSample> addedSamples = service.addSampleToPicoBucket(pdo, Collections.singleton(pdoSample1));
         Assert.assertEquals(addedSamples.size(), 1);
 
         verify(mocks);
