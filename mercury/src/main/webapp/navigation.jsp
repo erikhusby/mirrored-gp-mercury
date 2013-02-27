@@ -90,15 +90,26 @@
                             </li>
                         </security:authorizeBlock>
                         <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
-                            <li><stripes:link
-                                    beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"
-                                        tabindex="1" event="startBatch">Batches</stripes:link></li>
-                            <li class="divider"></li>
                             <li><a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a></li>
                         </security:authorizeBlock>
                     </ul>
                 </li>
             </security:authorizeBlock>
+
+            <security:authorizeBlock
+                    roles="<%=new String[] {DB.Role.Developer.name}%>">
+                <li class="dropdown">
+
+                    <a id="adminNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
+                            class="icon-tasks"></span> Admin <b class="caret"></b></a>
+                    <ul class="dropdown-menu" role="menu">
+                        <li><stripes:link
+                                beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"
+                                tabindex="1" event="startBatch">Create Batch</stripes:link></li>
+                    </ul>
+                </li>
+            </security:authorizeBlock>
+
         </ul>
 
         <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
