@@ -20,4 +20,5 @@ public interface MercuryClientService extends Serializable {
      */
     public Collection<ProductOrderSample> addSampleToPicoBucket(ProductOrder pdo);
 
+    public Collection<ProductOrderSample> addSampleToPicoBucket(ProductOrder pdo, Collection<ProductOrderSample> samples);
 }

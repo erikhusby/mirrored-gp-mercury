@@ -46,11 +46,16 @@ public class MercuryClientServiceImpl implements MercuryClientService {
         this.userList = userList;
     }
 
+    @Override
+    public Collection<ProductOrderSample> addSampleToPicoBucket(ProductOrder pdo) {
+        return addSampleToPicoBucket(pdo, pdo.getSamples());
+    }
+
     /**
      * @{inheritDoc}
      */
     @Override
-    public Collection<ProductOrderSample> addSampleToPicoBucket(ProductOrder pdo) {
+    public Collection<ProductOrderSample> addSampleToPicoBucket(ProductOrder pdo, Collection<ProductOrderSample> samples) {
 
         // Finds all samples in receiving.  Start with batches that are active with type sample receipt,
         // get their vessels, then the sample names.
@@ -86,7 +91,7 @@ public class MercuryClientServiceImpl implements MercuryClientService {
         List<ProductOrderSample> samplesAdded = new ArrayList<ProductOrderSample>();
         Collection<LabVessel> vesselsAdded = new ArrayList<LabVessel>();
 
-        for (ProductOrderSample pdoSample : pdo.getSamples()) {
+        for (ProductOrderSample pdoSample : samples) {
             String stockSampleName = pdoSample.getSampleName();
             LabVessel vessel = samplesInReceiving.get(stockSampleName);
             if (vessel == null) {
