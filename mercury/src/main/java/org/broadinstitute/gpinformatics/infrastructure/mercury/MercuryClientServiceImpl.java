@@ -63,43 +63,31 @@ public class MercuryClientServiceImpl implements MercuryClientService {
         Collection<LabVessel> vesselsAdded = new ArrayList<LabVessel>();
 
         // Finds the vessels for MercurySamples representing the pdo samples.
-        List<String> sampleNames = new ArrayList<String>();
+        Map<String, ProductOrderSample> nameToSampleMap = new HashMap<String, ProductOrderSample>();
         for (ProductOrderSample pdoSample : pdo.getSamples()) {
-            sampleNames.add(pdoSample.getSampleName());
+            nameToSampleMap.put(pdoSample.getSampleName(), pdoSample);
         }
-        List<LabVessel> vessels = labVesselDao.findBySampleKeyList(sampleNames);
+        List<LabVessel> vessels = labVesselDao.findBySampleKeyList((List<String>)Arrays.asList(nameToSampleMap.keySet().toArray()));
 
         // Determines if the vessel is in receiving, by finding its active batch
-        // and checking if that batch has sample receipt type.
+        // and checking if that batch is a sample receipt batch.
 
-        for (MercurySample mercurySample : mercurySamples) {
-
-            LabVessel vessel = samplesInReceiving.get(stockSampleName);
-            if (vessel == null) {
-                continue;
+        for (LabVessel vessel : vessels) {
+            Collection<LabBatch> batches = vessel.getLabBatches();
+            if (batches.size() == 0) {
+                batches = vessel.getNearestLabBatches();
             }
-            // todo Validates entry into bucket (must be genomic DNA)
-            vesselsAdded.add(vessel);
-            samplesAdded.add(pdoSample);
-        }
-        bucketBean.add(vesselsAdded, picoBucket, username, eventLocation, eventType, pdo.getBusinessKey());
+            if (batches.size() == 1 && batches.iterator().next().getLabBatchType() == LabBatch.LabBatchType.SAMPLES_RECEIPT) {
+                vesselsAdded.add(vessel);
 
-        // Finds all samples in receiving.  Start with batches that are active with type sample receipt,
-        // get their vessels, then the sample names.
-        Map<String, LabVessel> samplesInReceiving = new HashMap<String, LabVessel>();
-        for (LabBatch labBatch : labBatchDao.findBatchesInReceiving()) {
-            for (LabVessel labVessel : labBatch.getStartingLabVessels()) {
-                for (MercurySample vesselSample : labVessel.getMercurySamples()) {
-                    String sampleName = vesselSample.getSampleKey();
-                    if (samplesInReceiving.containsKey(sampleName)) {
-                        logger.debug("Found multiple samples in receiving having name " + sampleName);
-                    }
-                    samplesInReceiving.put(sampleName, labVessel);
+                for (MercurySample mercurySample : vessel.getMercurySamples()) {
+                    assert(nameToSampleMap.containsKey(mercurySample.getSampleKey()));
+                    samplesAdded.add(nameToSampleMap.get(mercurySample.getSampleKey()));
                 }
             }
         }
-
         // Finds the pico bucket from workflow config for this product.
+
         Bucket picoBucket = findPicoBucket(pdo.getProduct());
         if (picoBucket == null) {
             return Collections.EMPTY_LIST;
@@ -113,6 +101,10 @@ public class MercuryClientServiceImpl implements MercuryClientService {
                 username = bspUser.getUsername();
             }
         }
+
+        // todo Validates entry into bucket (must be genomic DNA)
+
+        bucketBean.add(vesselsAdded, picoBucket, username, eventLocation, eventType, pdo.getBusinessKey());
 
         return samplesAdded;
     }
