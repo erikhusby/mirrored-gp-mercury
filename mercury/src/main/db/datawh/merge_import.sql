@@ -24,6 +24,7 @@ CURSOR im_workflow_process_cur IS SELECT * FROM im_workflow_process WHERE is_del
 CURSOR im_event_fact_cur IS SELECT * FROM im_event_fact WHERE is_delete = 'F';
 
 errmsg VARCHAR2(255);
+dup_sample_id NUMERIC(19);
 
 BEGIN
 
@@ -348,6 +349,7 @@ FOR new IN im_po_cur LOOP
       title = new.title,
       quote_id = new.quote_id,
       jira_ticket_key = new.jira_ticket_key,
+      is_deleted = 'F',
       etl_date = new.etl_date
     WHERE product_order_id = new.product_order_id;
 
@@ -435,6 +437,7 @@ FOR new IN im_po_add_on_cur  LOOP
     UPDATE product_order_add_on SET
       product_order_id = new.product_order_id,
       product_id = new.product_id,
+      is_deleted = 'F',
       etl_date = new.etl_date 
     WHERE product_order_add_on_id = new.product_order_add_on_id;
 
@@ -636,12 +639,35 @@ END LOOP;
 
 FOR new IN im_po_sample_cur LOOP
   BEGIN
+
+    -- Allow reinstating a pdo sample that had been deleted when new one has
+    -- a different pdo sample id by deleting the old is_deleted record.
+    BEGIN
+
+      SELECT product_order_sample_id INTO dup_sample_id
+      FROM product_order_sample
+      WHERE product_order_id = new.product_order_id
+      AND sample_name = new.sample_name
+      AND sample_position = new.sample_position
+      AND is_deleted = 'T';
+
+      BEGIN
+	DELETE FROM product_order_sample_status WHERE product_order_sample_id = dup_sample_id;
+      EXCEPTION WHEN NO_DATA_FOUND THEN CONTINUE;
+      END;
+
+      DELETE FROM product_order_sample WHERE product_order_sample_id = dup_sample_id;
+
+    EXCEPTION WHEN NO_DATA_FOUND THEN CONTINUE;
+    END;
+
     UPDATE product_order_sample SET
       product_order_id = new.product_order_id,
       sample_name = new.sample_name,
       delivery_status = new.delivery_status,
       sample_position = new.sample_position,
-      etl_date = new.etl_date 
+      is_deleted = 'F',
+      etl_date = new.etl_date
     WHERE product_order_sample_id = new.product_order_sample_id;
 
     INSERT INTO product_order_sample (
