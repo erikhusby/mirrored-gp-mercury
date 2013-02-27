@@ -78,6 +78,12 @@ public class ProductOrderListEntry implements Serializable {
         this.unbilledLedgerEntryCount = unbilledLedgerEntryCount;
     }
 
+    private ProductOrderListEntry() {}
+
+    public static ProductOrderListEntry createDummy() {
+        return new ProductOrderListEntry();
+    }
+
     public String getTitle() {
         return title;
     }

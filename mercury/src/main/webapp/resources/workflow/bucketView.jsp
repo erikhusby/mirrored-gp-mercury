@@ -1,3 +1,4 @@
+<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib prefix="stripes" uri="http://stripes.sourceforge.net/stripes.tld" %>
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
@@ -47,7 +48,12 @@
         }
     </script>
 </stripes:layout-component>
+
 <stripes:layout-component name="content">
+    <c:set var="readOnly" value="false"/>
+    <security:authorizeBlock roles="<%=new String[] {DB.Role.LabUser.name,DB.Role.PDM.name}%>">
+        <c:set var="readOnly" value="true"/>
+    </security:authorizeBlock>
     <stripes:form beanclass="${actionBean.class.name}" id="bucketForm">
         <div class="control-group">
             <div class="control">
@@ -61,6 +67,7 @@
     </stripes:form>
     <stripes:form beanclass="${batchActionBean.class.name}"
                   id="bucketEntryForm">
+        <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
         <c:if test="${actionBean.jiraEnabled}">
             <table>
                 <tr>
@@ -142,10 +149,10 @@
         <table id="bucketEntryView" class="table simple">
             <thead>
             <tr>
-                <th width="10">
-                    <input type="checkbox" class="bucket-checkAll"/><span id="count"
-                                                                          class="bucket-checkedCount"></span>
-                </th>
+                    <th width="10">
+                        <input type="checkbox" class="bucket-checkAll"/><span id="count"
+                                                                              class="bucket-checkedCount"></span>
+                    </th>
                 <th width="60">Vessel Name</th>
                 <th width="50">Sample Name</th>
                 <th width="50">PDO</th>
@@ -164,22 +171,32 @@
                                           value="${entry.labVessel.label}"/>
                     </td>
                     <td>
-                        <a href="${ctxpath}/search/all.action?search=&searchKey=${entry.labVessel.label}">
-                                ${entry.labVessel.label}
-                        </a>
-                    </td>
-                    <td>
-                        <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample">
-                            <a href="${ctxpath}/search/all.action?search=&searchKey=${mercurySample.sampleKey}">
-                                    ${mercurySample.sampleKey}
+                        <c:choose> <c:when test="${!readOnly}">
+                            <a href="${ctxpath}/search/all.action?search=&searchKey=${entry.labVessel.label}">
+                                    ${entry.labVessel.label}
                             </a>
+                        </c:when><c:otherwise>${entry.labVessel.label}</c:otherwise>
+                        </c:choose></td>
+                    <td>
+                        <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
+                            <c:choose><c:when test="${!readOnly}">
+                                <a href="${ctxpath}/search/all.action?search=&searchKey=${mercurySample.sampleKey}">
+                                        ${mercurySample.sampleKey}
+                                </a>
+                            </c:when><c:otherwise>${mercurySample.sampleKey}</c:otherwise></c:choose><c:if
+                                test="${!stat.last}">&nbsp;</c:if>
                         </c:forEach>
                     </td>
                     <td>
-                        <a href="${ctxpath}/search/all.action?search=&searchKey=${entry.poBusinessKey}">
-                                ${entry.poBusinessKey}
-                        </a>
-                    </td>
+                        <c:choose>
+                            <c:when test="${!readOnly}"><a
+                                    href="${ctxpath}/search/all.action?search=&searchKey=${entry.poBusinessKey}">
+                                    ${entry.poBusinessKey}
+                            </a>
+                            </c:when>
+                            <c:otherwise>${entry.poBusinessKey}</c:otherwise>
+                        </c:choose>
+                            </td>
                     <td>
                             ${actionBean.getPDODetails(entry.poBusinessKey).title}
                     </td>
@@ -187,11 +204,15 @@
                             ${actionBean.getUserFullName(actionBean.getPDODetails(entry.poBusinessKey).createdBy)}
                     </td>
                     <td>
-                        <c:forEach items="${entry.labVessel.nearestLabBatches}" var="batch">
-                            <a href="${ctxpath}/search/all.action?search=&searchKey=${batch.businessKey}">
+                        <c:forEach items="${entry.labVessel.nearestLabBatches}" var="batch" varStatus="stat">
+                            <c:choose><c:when test="${!readOnly}"> <a
+                                    href="${ctxpath}/search/all.action?search=&searchKey=${batch.businessKey}">
                                     ${batch.businessKey}
                             </a>
-                        </c:forEach>
+                            </c:when>
+                                <c:otherwise>${batch.businessKey}</c:otherwise></c:choose><c:if
+                                test="${!stat.last}">&nbsp;</c:if></c:forEach>
+
                     </td>
                     <td>
                         <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample">

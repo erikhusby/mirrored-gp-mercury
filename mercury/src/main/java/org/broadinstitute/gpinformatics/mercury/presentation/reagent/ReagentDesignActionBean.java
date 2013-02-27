@@ -132,7 +132,7 @@ public class ReagentDesignActionBean extends CoreActionBean {
         return new ForwardResolution(REAGENT_CREATE_PAGE);
     }
 
-    @ValidationMethod(on = SAVE_ACTION, when = ValidationState.ALWAYS)
+    @ValidationMethod(on = {SAVE_ACTION,CREATE_ACTION}, when = ValidationState.ALWAYS)
     public void validateReagent() {
         if (isCreating()) {
             if (editReagentDesign.getReagentType() == null) {
