@@ -118,6 +118,28 @@
                     ]
                 });
 
+                $j("#abandonConfirmation").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    buttons: [
+                        {
+                            id: "abandonOkButton",
+                            text: "OK",
+                            click: function () {
+                                $j(this).dialog("close");
+                                $j("#abandonOkButton").attr("disabled", "disabled");
+                                $j("#orderForm").submit();
+                            }
+                        },
+                        {
+                            text: "Cancel",
+                            click : function () {
+                                $j(this).dialog("close");
+                            }
+                        }
+                    ]
+                });
+
                 $j("#noneSelectedDialog").dialog({
                     modal: true,
                     autoOpen: false,
@@ -226,13 +248,19 @@
                     $j("#noneSelectedDialog").dialog("open");
                 }
             }
+
+            function showAbandonConfirm(action, actionPrompt) {
+                $j("#orderDialogAction").attr("name", action);
+                $j("#confirmDialogMessage").text(actionPrompt);
+                $j("#abandonConfirmation").dialog("open");
+            }
         </script>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
 
     <div style="display:none" id="confirmDialog">
-        <p>Are you sure you want to <span id="confirmDialogMessage"></span> the <span id="dialogNumSamples"></span> selected samples?</p>
+        <p>Are you sure you want to <span id="confirmDialogMessage"></span> the <span id="dialogNumSamples"></span> selected samples</span>?</p>
     </div>
 
     <div style="display:none" id="riskDialog" style="width:600px;">
@@ -254,6 +282,10 @@
         <p>This will permanently remove this draft. Are you sure?</p>
     </div>
 
+    <div style="display:none" id="abandonConfirmation">
+        <p>This will abandon this product order. Are you sure?</p>
+    </div>
+
     <div style="display:none" id="noneSelectedDialog">
         <p>You must select at least one sample to <span id="noneSelectedDialogMessage"></span>.</p>
     </div>
@@ -263,11 +295,23 @@
             <stripes:hidden id="orderDialogAction" name=""/>
 
             <div class="actionButtons">
+                <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name}%>">
+                    <c:choose>
+                        <c:when test="${actionBean.abandonable}">
+                            <stripes:button name="abandonOrders" id="abandonOrders" value="Abandon Order" class="btn" onclick="showAbandonConfirm('abandonOrders', 'abandon')" style="margin-right:30px;" title="Click to abandon ${editOrder.title}"/>
+                            <stripes:hidden name="selectedProductOrderBusinessKeys" value="${editOrder.businessKey}"/>
+                        </c:when>
+                        <c:otherwise>
+                            <stripes:button name="abandonOrders" id="abandonOrders" value="Abandon Order" class="btn" onclick="showAbandonConfirm('abandonOrders', 'abandon')" style="margin-right:30px;" disabled="true" title="This order is not abandonable"/>
+                        </c:otherwise>
+                    </c:choose>
+                </security:authorizeBlock>
                 <c:if test="${editOrder.draft}">
                     <%-- MLC PDOs can be placed by PM or PDMs, so I'm making the security tag accept either of those roles for 'Place Order'.
                          I am also putting 'Validate' under that same security tag since I think that may have the power to alter 'On-Riskedness'
                          for PDO samples --%>
                     <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name, Role.PM.name}%>">
+
                         <stripes:submit name="placeOrder" value="Validate and Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
                         <stripes:submit name="validate" value="Validate" style="margin-left: 5px;" class="btn"/>
                     </security:authorizeBlock>
