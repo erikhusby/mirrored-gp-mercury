@@ -78,37 +78,26 @@
                     <a id="labNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                             class="icon-tasks"></span> Lab <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
-                        <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name,DB.Role.LabUser.name,DB.Role.PDM.name}%>">
+                        <security:authorizeBlock
+                                roles="<%=new String[] {DB.Role.Developer.name,DB.Role.LabUser.name,DB.Role.PDM.name}%>">
                             <li><stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
                                     event="view">Buckets</stripes:link></li>
-                        </security:authorizeBlock>
-
-                        <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name,DB.Role.LabUser.name,DB.Role.PDM.name}%>">
                             <li>
                                 <stripes:link
                                         beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean"
                                         event="list">Controls</stripes:link>
                             </li>
                         </security:authorizeBlock>
-                    </ul>
-                </li>
-            </security:authorizeBlock>
-
-            <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
-                <li class="dropdown">
-                    <a id="adminNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
-                            class="icon-cog"></span> Admin <b class="caret"></b></a>
-                    <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
-                        <li><a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Design</a></li>
-                        <li>
-                            <stripes:link
+                        <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+                            <li><stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"
-                                    tabindex="1" event="startBatch">Create Batch</stripes:link>
-                        </li>
+                                        tabindex="1" event="startBatch">Batches</stripes:link></li>
+                            <li class="divider"></li>
+                            <li><a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a></li>
+                        </security:authorizeBlock>
                     </ul>
                 </li>
-
             </security:authorizeBlock>
         </ul>
 
