@@ -359,7 +359,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @After(stages = LifecycleStage.BindingAndValidation, on = VIEW_ACTION)
     public void entryInit() {
-        productOrderListEntry = orderListEntryDao.findSingle(editOrder.getJiraTicketKey());
+        productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
+                orderListEntryDao.findSingle(editOrder.getJiraTicketKey());
     }
 
     private void validateUser(String validatingFor) {
