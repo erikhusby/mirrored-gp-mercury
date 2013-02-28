@@ -1,10 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.orders;
 
-import clover.org.apache.commons.lang.time.DurationFormatUtils;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
+import org.apache.commons.lang3.time.DurationFormatUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
