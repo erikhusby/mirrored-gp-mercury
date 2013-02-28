@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
 import edu.mit.broad.prodinfo.thrift.lims.*;
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.apache.commons.logging.Log;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;

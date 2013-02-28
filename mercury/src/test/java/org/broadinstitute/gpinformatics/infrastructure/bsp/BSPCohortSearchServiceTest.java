@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.annotations.Test;

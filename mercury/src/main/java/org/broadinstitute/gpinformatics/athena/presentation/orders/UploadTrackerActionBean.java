@@ -64,7 +64,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
                     importer.parseFileForSummaryMap(inputStream);
 
             // If there were parsing errors, just return
-            if (!getContext().getValidationErrors().isEmpty()) {
+            if (hasAnyValidationErrors()) {
                 return;
             }
 
@@ -150,7 +150,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
             Map<String, List<ProductOrder>> billedProductOrdersMapByPartNumber =
                     billingTrackerManager.parseFileForBilling(inputStream);
 
-            if (!getContext().getValidationErrors().isEmpty()) {
+            if (hasAnyValidationErrors()) {
                 return;
             }
 
@@ -218,7 +218,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
         previewUploadedFile();
 
         // If there are no errors, show the preview!
-        if (getContext().getValidationErrors().isEmpty()) {
+        if (hasNoValidationErrors()) {
             isPreview = true;
         }
 

@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import junit.framework.TestCase;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.ss.usermodel.Row;

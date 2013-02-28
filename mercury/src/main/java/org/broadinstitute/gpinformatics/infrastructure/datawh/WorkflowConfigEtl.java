@@ -5,7 +5,7 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
-import javax.ejb.Stateless;
+import javax.ejb.Stateful;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.util.*;
@@ -15,7 +15,7 @@ import java.util.*;
  * WorkflowConfig does not have a primary key, so ETL adds one from the hash of fields,
  * and because of this, ETL cannot update existing records, only add new records.
  */
-@Stateless
+@Stateful
 public class WorkflowConfigEtl extends GenericEntityEtl {
     private Log logger = LogFactory.getLog(getClass());
     private WorkflowLoader workflowLoader;

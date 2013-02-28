@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -94,16 +94,15 @@ public class SamplesPicoEndToEndTest {
                         return null;
                     }
                 });
-        Assert.assertEquals("Wrong number of messages", 10, labEventBeans.size());
+        Assert.assertEquals(10, labEventBeans.size(), "Wrong number of messages");
         LabEventBean standardsTransferEvent = labEventBeans.get(labEventBeans.size() - 1);
         LabVesselBean microfluorPlate = standardsTransferEvent.getTargets().iterator().next();
-        Assert.assertEquals("Wrong barcode",
-                            samplesPicoJaxbBuilder.getPicoMicrofluorTransferJaxb().getPlate().getBarcode(),
-                            microfluorPlate.getBarcode());
+        Assert.assertEquals(samplesPicoJaxbBuilder.getPicoMicrofluorTransferJaxb().getPlate().getBarcode(),
+                            microfluorPlate.getBarcode(), "Wrong barcode");
         LabVesselPositionBean labVesselPositionBean = microfluorPlate.getLabVesselPositionBeans().get(0);
-        Assert.assertEquals("Wrong position", "A01", labVesselPositionBean.getPosition());
-        Assert.assertEquals("Wrong starter", mapBarcodeToTube.values().iterator().next().getLabel(),
-                            labVesselPositionBean.getLabVesselBean().getStarter());
+        Assert.assertEquals("A01", labVesselPositionBean.getPosition(), "Wrong position");
+        Assert.assertEquals(mapBarcodeToTube.values().iterator().next().getLabel(),
+                            labVesselPositionBean.getLabVesselBean().getStarter(), "Wrong starter");
 
         printLabEvents(labEventBeans);
 
