@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
@@ -17,7 +16,6 @@ import java.util.List;
 
 import static org.easymock.EasyMock.*;
 import static org.testng.Assert.*;
-import static org.testng.Assert.assertEquals;
 
 /**
  * dbfree unit test of entity etl.

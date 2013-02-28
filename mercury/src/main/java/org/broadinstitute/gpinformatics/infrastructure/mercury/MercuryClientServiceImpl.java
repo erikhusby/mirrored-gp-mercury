@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.mercury;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -10,40 +12,44 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
 
+import javax.ejb.Stateful;
 import javax.enterprise.inject.Default;
 import javax.inject.Inject;
 import java.util.*;
-import java.util.logging.Logger;
+
 
 @Impl
 @Default
 public class MercuryClientServiceImpl implements MercuryClientService {
-    private final Logger logger = Logger.getLogger(getClass().getName());
-    private final String eventLocation = "BSP";
+    private final Log logger = LogFactory.getLog(getClass());
+    private final String eventLocation = LabEvent.UI_EVENT_LOCATION;
     private final LabEventType eventType = LabEventType.PICO_PLATING_BUCKET;
 
     private BucketBean bucketBean;
     private BucketDao bucketDao;
-    private LabBatchDAO labBatchDao;
     private WorkflowLoader workflowLoader;
     private BSPUserList userList;
+    private LabVesselDao labVesselDao;
 
     @Inject
-    public MercuryClientServiceImpl(BucketBean bucketBean, BucketDao bucketDao,
-                                    LabBatchDAO labBatchDao, WorkflowLoader workflowLoader, BSPUserList userList) {
+    public MercuryClientServiceImpl(BucketBean bucketBean, BucketDao bucketDao, WorkflowLoader workflowLoader,
+                                    BSPUserList userList, LabVesselDao lvd) {
         this.bucketBean = bucketBean;
         this.bucketDao = bucketDao;
-        this.labBatchDao = labBatchDao;
         this.workflowLoader = workflowLoader;
         this.userList = userList;
+        labVesselDao = lvd;
     }
 
     /**
@@ -51,18 +57,31 @@ public class MercuryClientServiceImpl implements MercuryClientService {
      */
     @Override
     public Collection<ProductOrderSample> addSampleToPicoBucket(ProductOrder pdo) {
+        List<ProductOrderSample> samplesAdded = new ArrayList<ProductOrderSample>();
+        Collection<LabVessel> vesselsAdded = new ArrayList<LabVessel>();
 
-        // Finds all samples in receiving.  Start with batches that are active with type sample receipt,
-        // get their vessels, then the sample names.
-        Map<String, LabVessel> samplesInReceiving = new HashMap<String, LabVessel>();
-        for (LabBatch labBatch : labBatchDao.findBatchesInReceiving()) {
-            for (LabVessel labVessel : labBatch.getStartingLabVessels()) {
-                for (MercurySample vesselSample : labVessel.getMercurySamples()) {
-                    String sampleName = vesselSample.getSampleKey();
-                    if (samplesInReceiving.containsKey(sampleName)) {
-                        logger.fine("Found multiple samples in receiving having name " + sampleName);
-                    }
-                    samplesInReceiving.put(sampleName, labVessel);
+        // Finds the vessels for MercurySamples representing the pdo samples.
+        Map<String, ProductOrderSample> nameToSampleMap = new HashMap<String, ProductOrderSample>();
+        for (ProductOrderSample pdoSample : pdo.getSamples()) {
+            nameToSampleMap.put(pdoSample.getSampleName(), pdoSample);
+        }
+        List<String> listOfSampleNames = new ArrayList(nameToSampleMap.keySet());
+        List<LabVessel> vessels = labVesselDao.findBySampleKeyList(listOfSampleNames);
+
+        // Determines if the vessel is in receiving, by finding its active batch
+        // and checking if that batch is a sample receipt batch.
+
+        for (LabVessel vessel : vessels) {
+            Collection<LabBatch> batches = vessel.getLabBatches();
+            if (batches.size() == 0) {
+                batches = vessel.getNearestLabBatches();
+            }
+            if (batches.size() == 1 && batches.iterator().next().getLabBatchType() == LabBatch.LabBatchType.SAMPLES_RECEIPT) {
+                vesselsAdded.add(vessel);
+
+                for (MercurySample mercurySample : vessel.getMercurySamples()) {
+                    assert(nameToSampleMap.containsKey(mercurySample.getSampleKey()));
+                    samplesAdded.add(nameToSampleMap.get(mercurySample.getSampleKey()));
                 }
             }
         }
@@ -82,21 +101,10 @@ public class MercuryClientServiceImpl implements MercuryClientService {
             }
         }
 
-        // For each pdo sample, if it is in receiving, adds it to pico bucket.
-        List<ProductOrderSample> samplesAdded = new ArrayList<ProductOrderSample>();
-        Collection<LabVessel> vesselsAdded = new ArrayList<LabVessel>();
+        // todo Validates entry into bucket (must be genomic DNA)
 
-        for (ProductOrderSample pdoSample : pdo.getSamples()) {
-            String stockSampleName = pdoSample.getSampleName();
-            LabVessel vessel = samplesInReceiving.get(stockSampleName);
-            if (vessel == null) {
-                continue;
-            }
-            // todo Validates entry into bucket (must be genomic DNA)
-            vesselsAdded.add(vessel);
-            samplesAdded.add(pdoSample);
-        }
         bucketBean.add(vesselsAdded, picoBucket, username, eventLocation, eventType, pdo.getBusinessKey());
+
         return samplesAdded;
     }
 
@@ -115,7 +123,7 @@ public class MercuryClientServiceImpl implements MercuryClientService {
         Bucket picoBucket = bucketDao.findByName(bucketName);
         if (picoBucket == null) {
             picoBucket = new Bucket(bucketStep);
-            logger.fine("Created new bucket " + bucketName);
+            logger.debug("Created new bucket " + bucketName);
         }
         return picoBucket;
     }
