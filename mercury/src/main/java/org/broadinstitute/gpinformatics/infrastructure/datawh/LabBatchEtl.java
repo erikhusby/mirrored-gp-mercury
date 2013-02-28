@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch_;
 
-import javax.ejb.Stateless;
+import javax.ejb.Stateful;
 import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -15,7 +15,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-@Stateless
+@Stateful
 public class LabBatchEtl extends GenericEntityEtl {
 
     private LabBatchDAO dao;

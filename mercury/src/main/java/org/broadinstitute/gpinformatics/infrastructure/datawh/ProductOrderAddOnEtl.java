@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
-import javax.ejb.Stateless;
+import javax.ejb.Stateful;
 import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -15,7 +15,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-@Stateless
+@Stateful
 public class ProductOrderAddOnEtl extends GenericEntityEtl {
 
     private ProductOrderDao dao;
