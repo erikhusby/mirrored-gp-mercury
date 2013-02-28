@@ -62,6 +62,10 @@ public class ResearchProjectDao extends GenericDao {
         return findSingle(ResearchProject.class, ResearchProject_.jiraTicketKey, jiraTicketKey);
     }
 
+    public List<ResearchProject> findByJiraTicketKeys(List<String> jiraTicketKeys) {
+        return findListByList(ResearchProject.class, ResearchProject_.jiraTicketKey, jiraTicketKeys);
+    }
+
     public Map<String, Long> getProjectOrderCounts() {
 
         CriteriaBuilder cb = getCriteriaBuilder();

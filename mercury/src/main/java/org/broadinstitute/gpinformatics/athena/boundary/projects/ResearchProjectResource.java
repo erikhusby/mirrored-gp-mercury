@@ -17,15 +17,12 @@ import javax.ws.rs.core.MediaType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
- * Restful webservice to
- * list the athena research project info.
+ * Restful webservice to list research projects.
  */
-@Path("/researchProjects")
+@Path("researchProjects")
 @Stateful
 @RequestScoped
 public class ResearchProjectResource {
@@ -37,15 +34,11 @@ public class ResearchProjectResource {
     private BSPUserList bspUserList;
 
     @XmlRootElement
-    public static class ProductOrderData {
-
-    }
-
-    @XmlRootElement
     public static class ResearchProjectData {
         public final String title;
-        public final String jiraId;
+        public final String id;
         public final String synopsis;
+        public final Date modifiedDate;
         @XmlElementWrapper
         @XmlElement(name = "projectManager")
         public final List<String> projectManagers;
@@ -53,24 +46,34 @@ public class ResearchProjectResource {
         @XmlElement(name = "broadPI")
         public final List<String> broadPIs;
         @XmlElementWrapper
-        @XmlElement(name = "productOrder")
+        @XmlElement(name = "order")
         public final List<String> orders;
 
+        // Required by JAXB.
         ResearchProjectData() {
             title = null;
-            jiraId = null;
+            id = null;
             synopsis = null;
             projectManagers = null;
             broadPIs = null;
             orders = null;
+            modifiedDate = null;
         }
 
-        public List<String> createUsernamesFromIds(BSPUserList bspUserList, Long[] ids) {
+        private static List<String> createUsernamesFromIds(BSPUserList bspUserList, Long[] ids) {
             List<String> names = new ArrayList<String>(ids.length);
             for (Long id : ids) {
                 BspUser user = bspUserList.getById(id);
                 if (user != null) {
-                    names.add(bspUserList.getById(id).getUsername());
+                    String username = user.getUsername();
+                    // Special case inactive users. This should only happen for PI users.
+                    if (username.startsWith("inactive_user_")) {
+                        username = user.getEmail();
+                    }
+                    names.add(username);
+                } else {
+                    // This can happen if a user has left the Broad.
+                    names.add("(Unknown user: " + id + ")");
                 }
             }
             return names;
@@ -78,7 +81,7 @@ public class ResearchProjectResource {
 
         public ResearchProjectData(BSPUserList bspUserList, ResearchProject researchProject) {
             title = researchProject.getTitle();
-            jiraId = researchProject.getJiraTicketKey();
+            id = researchProject.getJiraTicketKey();
             synopsis = researchProject.getSynopsis();
             projectManagers = createUsernamesFromIds(bspUserList, researchProject.getProjectManagers());
             broadPIs = createUsernamesFromIds(bspUserList, researchProject.getBroadPIs());
@@ -86,6 +89,7 @@ public class ResearchProjectResource {
             for (ProductOrder order : researchProject.getProductOrders()) {
                 orders.add(order.getJiraTicketKey());
             }
+            modifiedDate = researchProject.getModifiedDate();
         }
     }
 
@@ -100,10 +104,6 @@ public class ResearchProjectResource {
             projects = Collections.emptyList();
         }
 
-        public ResearchProjects(BSPUserList bspUserList, ResearchProject project) {
-            this(bspUserList, Collections.singletonList(project));
-        }
-
         public ResearchProjects(BSPUserList bspUserList, List<ResearchProject> projects) {
             this.projects = new ArrayList<ResearchProjectData>(projects.size());
             for (ResearchProject project : projects) {
@@ -114,20 +114,22 @@ public class ResearchProjectResource {
 
 
     @GET
-    @Path("rp/{researchProjectId}")
+    @Path("rp/{researchProjectIds}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public ResearchProjects findResearchProjectById(@PathParam("researchProjectId") String researchProjectId) {
-        return new ResearchProjects(bspUserList, researchProjectDao.findByJiraTicketKey(researchProjectId));
+    public ResearchProjects findResearchProjectById(@PathParam("researchProjectIds") String researchProjectIds) {
+        return new ResearchProjects(bspUserList, researchProjectDao.findByJiraTicketKeys(
+                Arrays.asList(researchProjectIds.split(","))));
     }
 
     @GET
-    @Path("pm/{pm}")
+    @Path("pm/{pms}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public ResearchProjects findResearchProjectByPm(@PathParam("pm") String pmUserName) {
-        // TODO: find all RPs by PM.
+    public ResearchProjects findResearchProjectByPm(@PathParam("pms") String pmUserName) {
+        // TODO: find all RPs by PMs.
         // One approach:
         // - find all ProjectPerson with role == PM and personId == ID
         // - loop over all ProjectPerson to collect ResearchProjects
+        // For now, could just grab all RPs and do a manual scan for user IDs.
 
         return new ResearchProjects();
     }
