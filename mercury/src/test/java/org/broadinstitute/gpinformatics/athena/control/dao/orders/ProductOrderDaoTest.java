@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderTest;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -18,10 +18,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.util.Collection;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,9 +30,9 @@ import java.util.UUID;
 public class ProductOrderDaoTest extends ContainerTest {
 
     public static final String TEST_ORDER_TITLE_PREFIX = "TestProductOrder_";
-    public static final long   TEST_CREATOR_ID         = new Random().nextInt(Integer.MAX_VALUE);
-    public static final String MS_1111                 = "MS-1111";
-    public static final String MS_1112                 = "MS-1112";
+    public static final long TEST_CREATOR_ID = new Random().nextInt(Integer.MAX_VALUE);
+    public static final String MS_1111 = "MS-1111";
+    public static final String MS_1112 = "MS-1112";
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -49,7 +46,7 @@ public class ProductOrderDaoTest extends ContainerTest {
     @Inject
     private UserTransaction utx;
 
-    private final        String testResearchProjectKey    = "TestResearchProject_" + UUID.randomUUID();
+    private final String testResearchProjectKey = "TestResearchProject_" + UUID.randomUUID();
     private static final String testProductOrderKeyPrefix = "DRAFT-";
 
     ProductOrder order;
@@ -176,6 +173,20 @@ public class ProductOrderDaoTest extends ContainerTest {
         Assert.assertFalse(orders.isEmpty());
     }
 
+    public void testFindModifiedAfter() {
+        Date date = new Date();
+        long oneDay = 24 * 60 * 60 * 1000;
+        // Yesterday
+        date.setTime(date.getTime() - oneDay);
+        List<ProductOrder> orders = productOrderDao.findModifiedAfter(date);
+        Assert.assertFalse(orders.isEmpty());
+
+        // Tomorrow
+        date.setTime(new Date().getTime() + oneDay);
+        orders = productOrderDao.findModifiedAfter(date);
+        Assert.assertTrue(orders.isEmpty());
+    }
+
     public void testFindAll() {
         List<ProductOrder> orders = productOrderDao.findAll();
         Assert.assertNotNull(orders);
@@ -183,21 +194,15 @@ public class ProductOrderDaoTest extends ContainerTest {
     }
 
     public void testFindByWorkflow() {
-
         ProductOrder testOrder = createTestExExProductOrder(researchProjectDao, productDao);
-
-        String businessKey = testOrder.getBusinessKey();
 
         productOrderDao.persist(testOrder);
         productOrderDao.flush();
         productOrderDao.clear();
 
         Collection<ProductOrder> orders =
-//                productOrderDao.findByWorkflowName("ScottFlow");
                 productOrderDao.findByWorkflowName(WorkflowName.EXOME_EXPRESS.getWorkflowName());
 
-        Assert.assertTrue(orders.size()>0);
-
+        Assert.assertFalse(orders.isEmpty());
     }
-
 }

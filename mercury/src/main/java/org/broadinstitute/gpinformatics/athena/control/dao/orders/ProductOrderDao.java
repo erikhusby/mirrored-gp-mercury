@@ -45,7 +45,7 @@ public class ProductOrderDao extends GenericDao {
         private Set<FetchSpec> fetchSpecs;
 
         ProductOrderDaoCallback(FetchSpec... fs) {
-            fetchSpecs = new HashSet<FetchSpec>(Arrays.asList(fs));
+            fetchSpecs = EnumSet.copyOf(Arrays.asList(fs));
         }
 
         @Override
