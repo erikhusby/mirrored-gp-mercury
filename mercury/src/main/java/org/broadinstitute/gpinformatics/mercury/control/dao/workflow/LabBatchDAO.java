@@ -59,21 +59,4 @@ public class LabBatchDAO extends GenericDao {
     public LabBatch findByBusinessKey(String businessKey) {
         return findByName(businessKey);
     }
-
-    public Collection<LabBatch> findBatchesInReceiving() {
-        CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
-        CriteriaQuery<LabBatch> criteriaQuery = criteriaBuilder.createQuery(LabBatch.class);
-        Root<LabBatch> root = criteriaQuery.from(LabBatch.class);
-
-        Predicate[] predicates = new Predicate[2];
-        predicates[0] = criteriaBuilder.equal(root.get(LabBatch_.labBatchType), LabBatch.LabBatchType.SAMPLES_RECEIPT);
-        predicates[1] = criteriaBuilder.equal(root.get(LabBatch_.isActive), true);
-        criteriaQuery.where(predicates);
-
-        try {
-            return getEntityManager().createQuery(criteriaQuery).getResultList();
-        } catch (NoResultException ignored) {
-            return Collections.EMPTY_LIST;
-        }
-    }
 }

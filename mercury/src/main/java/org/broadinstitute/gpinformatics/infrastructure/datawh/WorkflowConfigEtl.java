@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
@@ -16,7 +17,7 @@ import java.util.*;
  */
 @Stateless
 public class WorkflowConfigEtl extends GenericEntityEtl {
-    private static Logger logger = Logger.getLogger(WorkflowConfigEtl.class);
+    private Log logger = LogFactory.getLog(getClass());
     private WorkflowLoader workflowLoader;
     static final String WORKFLOW_BASE_FILENAME = "workflow";
     static final String PROCESS_BASE_FILENAME = "workflow_process";

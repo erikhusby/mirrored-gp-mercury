@@ -2,7 +2,8 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
@@ -57,7 +58,7 @@ public class ExtractTransform {
     private static final long SEC_IN_MIN = 60L;
     // Number of digits in the number representing seconds since start of epoch.
     private final int TIMESTAMP_SECONDS_SIZE = 10;
-    private static final Logger logger = Logger.getLogger(ExtractTransform.class);
+    private static final Log logger = LogFactory.getLog(ExtractTransform.class);
     private static final Semaphore mutex = new Semaphore(1);
     private static long incrementalRunStartTime = System.currentTimeMillis();  // only useful for logging
     private static boolean loggedConfigError = false;
