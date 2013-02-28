@@ -61,6 +61,6 @@ public class JiraTicketDaoTest extends ContainerTest{
 
         JiraTicket jiraTicketFetched = jiraTicketDao.fetchByName(ticketName);
         Assert.assertNotNull(jiraTicketFetched, "No ticket");
-        Assert.assertEquals("Wrong name", jiraTicket.getTicketName(),  ticketName);
+        Assert.assertEquals(jiraTicket.getTicketName(),  ticketName, "Wrong name");
     }
 }
