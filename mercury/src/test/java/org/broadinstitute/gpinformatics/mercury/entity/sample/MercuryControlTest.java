@@ -66,7 +66,7 @@ public class MercuryControlTest {
         testCtrl.setState(MercuryControl.ControlState.INACTIVE);
 
         Assert.assertEquals(testCtrl.getState(), MercuryControl.ControlState.INACTIVE);
-        Assert.assertTrue(testCtrl.isActive());
+        Assert.assertFalse(testCtrl.isActive());
     }
 
     @Test(groups = DATABASE_FREE, expectedExceptions = InformaticsServiceException.class)
