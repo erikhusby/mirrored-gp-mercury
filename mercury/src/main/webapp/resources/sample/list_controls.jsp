@@ -14,7 +14,7 @@
                 $j('#positiveControlList').dataTable({
                                                          "oTableTools":ttExportDefines,
                                                          "aaSorting":[
-                                                             [2, 'desc']
+                                                             [1, 'desc']
                                                          ],
                                                          "aoColumns":[
                                                              {"bSortable":true}//Collaborator Sample ID
@@ -24,7 +24,7 @@
                 $j('#negativeControlList').dataTable({
                                                          "oTableTools":ttExportDefines,
                                                          "aaSorting":[
-                                                             [8, 'desc']
+                                                             [1, 'desc']
                                                          ],
                                                          "aoColumns":[
                                                              {"bSortable":true}//Collaborator Sample ID

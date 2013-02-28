@@ -79,7 +79,8 @@
                             Make Control Inactive
                         </stripes:label>
                         <div class="controls">
-                            <stripes:checkbox name="editControlInactiveState" id="controlState" value="${! actionBean.workingControl.inactive}"/>
+                            <stripes:checkbox name="editControlInactiveState" id="controlState"
+                                              value="${actionBean.workingControl.active}"/>
                         </div>
                     </div>
                 </c:if>
@@ -95,7 +96,8 @@
                             </c:when>
                             <c:otherwise>
                                 <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                    <stripes:param name="sampleCollaboratorId" value="${actionBean.workingControl.collaboratorSampleId}"/>
+                                    <stripes:param name="sampleCollaboratorId"
+                                                   value="${actionBean.workingControl.collaboratorSampleId}"/>
                                     Cancel
                                 </stripes:link>
                             </c:otherwise>

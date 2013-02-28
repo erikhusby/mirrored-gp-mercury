@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
-import clover.org.apache.commons.lang.StringUtils;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
@@ -12,6 +11,7 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercuryControlDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercuryControl;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -20,7 +20,6 @@ import javax.inject.Inject;
 import java.util.List;
 
 /**
- *
  * Handles processing all interactions with the presentation tier with regards to Creating, Updating and retrieving
  * Mercury controls.
  *
@@ -32,14 +31,14 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
     @Inject
     private MercuryControlDao mercuryControlDao;
 
-    private static final String VIEW_PAGE               = "/resources/sample/view_controls.jsp";
+    private static final String VIEW_PAGE               = "/resources/sample/view_control.jsp";
     private static final String CREATE_PAGE             = "/resources/sample/create_control.jsp";
     private static final String CONTROL_LIST_PAGE       = "/resources/sample/list_controls.jsp";
-    public final         String mercuryControlParameter = "sampleCollaboratorId";
+    private static final  String mercuryControlParameter = "sampleCollaboratorId";
     public static final  String ACTIONBEAN_URL_BINDING  = "/resources/sample/controls.action";
     private static final String CURRENT_OBJECT          = "Mercury Control";
     public static final  String CREATE_CONTROL          = CoreActionBean.CREATE + CURRENT_OBJECT;
-    public static        String EDIT_CONTROL            = CoreActionBean.EDIT + CURRENT_OBJECT;
+    public static final  String EDIT_CONTROL            = CoreActionBean.EDIT + CURRENT_OBJECT;
 
     private String  createControlType;
     private boolean editControlInactiveState;
@@ -68,23 +67,24 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
     }
 
     /**
-     * This method is responsible for processing a users request to view the Mercury Control List page.  It is
-     * responsible for loading (if available) the list of positive an negative controls stored within Mercury
+     * This method is responsible for processing a user's request to view the Mercury Control List page.  It is
+     * responsible for loading (if available) the list of positive and negative controls stored within Mercury
      *
      * @return an instance of a Stripes resolution that will forward the users request to the control list page
      */
     @DefaultHandler
     @HandlesEvent(LIST_ACTION)
     public Resolution list() {
-        positiveControls = mercuryControlDao.findAllActivePositiveControls();
-        negativeControls = mercuryControlDao.findAllActiveNegativeControls();
+        positiveControls = mercuryControlDao.findAllActiveControlsByType(MercuryControl.ControlType.POSITIVE);
+        negativeControls = mercuryControlDao.findAllActiveControlsByType(MercuryControl.ControlType.NEGATIVE);
 
         return new ForwardResolution(CONTROL_LIST_PAGE);
     }
 
     /**
-     * This method is responsible for processing a users request to view the details of a single Mercury Control.
-     * @return an instance of a Stripes resolution that will forward the users request to the view page
+     * This method is responsible for processing a user's request to view the details of a single Mercury Control.
+     *
+     * @return an instance of a Stripes resolution that will forward the user's request to the view page
      */
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
@@ -93,6 +93,7 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
 
     /**
      * This method is responsible for processing a users request to create a new Mercury Control.
+     *
      * @return an instance of a Stripes resolution that will forward the users request to the create page
      */
     @HandlesEvent(CREATE_ACTION)
@@ -103,6 +104,7 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
 
     /**
      * This method is responsible for processing a users request to edit the details of a single Mercury Control.
+     *
      * @return an instance of a Stripes resolution that will forward the users request to the edit page
      */
     @HandlesEvent(EDIT_ACTION)
@@ -112,7 +114,7 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
     }
 
     @ValidationMethod(on = SAVE_ACTION)
-    public void createBatchValidation(ValidationErrors errors) {
+    public void makeControlInactiveValidation(ValidationErrors errors) {
 
         MercuryControl negativeVersion = mercuryControlDao.findInactiveBySampleId(controlReference);
 
@@ -120,20 +122,19 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
         GPLIM-983:  Editing inactive controls was not a part of this user story.  The following logic can change once a
         user can view and revive inactive controls
          */
-        if(editControlInactiveState && negativeVersion != null) {
+        if (editControlInactiveState && negativeVersion != null) {
             errors.add("controlName", new SimpleError("You cannot deactivate this control at this time.  There is " +
                                                               "already an inactive control that matches this."));
         }
 
     }
 
-
     /**
      * This method is responsible for processing a users request to save details of a single Mercury Control that they
      * have just created/modified
      *
      * @return an instance of a Stripes resolution that will redirect the users request to an appropriate page based on
-     * the users action
+     *         the users action
      */
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
@@ -148,7 +149,8 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
             If we are editing an existing control, the only value that can be updated on the existing control object
             is the state.
              */
-            workingControl.setState(!editControlInactiveState);
+            workingControl.setState(editControlInactiveState ? MercuryControl.ControlState.INACTIVE
+                                                             : MercuryControl.ControlState.ACTIVE);
         }
 
         mercuryControlDao.persist(workingControl);

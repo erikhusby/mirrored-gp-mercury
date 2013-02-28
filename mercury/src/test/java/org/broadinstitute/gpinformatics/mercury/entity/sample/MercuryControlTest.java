@@ -28,35 +28,11 @@ public class MercuryControlTest {
 
         Assert.assertEquals(MercuryControl.ControlState.ACTIVE, testCtrl.getState());
 
-    }
-
-    @Test(groups = DATABASE_FREE)
-    public void testStateSwitch() {
-
-        final String sampleId = "Dummy_Collaborator_1";
-
-        MercuryControl testCtrl = new MercuryControl(sampleId, MercuryControl.ControlType.POSITIVE);
-
-        Assert.assertNotNull(testCtrl);
-
-        Assert.assertEquals(sampleId, testCtrl.getCollaboratorSampleId());
-
-        Assert.assertEquals(MercuryControl.ControlState.ACTIVE, testCtrl.getState());
-
-        testCtrl.toggleState();
-
-        Assert.assertEquals(MercuryControl.ControlState.INACTIVE, testCtrl.getState());
-
-        testCtrl.toggleState();
-
-        Assert.assertEquals(MercuryControl.ControlState.ACTIVE, testCtrl.getState());
-
         final String sampleId2 = "dummy_part_2";
 
         testCtrl.setCollaboratorSampleId(sampleId2);
 
         Assert.assertEquals(testCtrl.getCollaboratorSampleId(), sampleId2);
-
     }
 
     @Test(groups = DATABASE_FREE)
@@ -84,10 +60,10 @@ public class MercuryControlTest {
 
         Assert.assertEquals(testCtrl.getState(), MercuryControl.ControlState.ACTIVE);
 
-        testCtrl.setState(false);
+        testCtrl.setState(MercuryControl.ControlState.INACTIVE);
 
         Assert.assertEquals(testCtrl.getState(), MercuryControl.ControlState.INACTIVE);
-        Assert.assertTrue(testCtrl.isInactive());
+        Assert.assertTrue(testCtrl.isActive());
     }
 
     @Test(groups = DATABASE_FREE, expectedExceptions = InformaticsServiceException.class)
