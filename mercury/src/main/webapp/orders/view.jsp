@@ -249,9 +249,16 @@
                 }
             }
 
-            function showAbandonConfirm(action, actionPrompt) {
+            function showAbandonConfirm(action, actionPrompt, level) {
                 $j("#orderDialogAction").attr("name", action);
                 $j("#confirmDialogMessage").text(actionPrompt);
+
+                if (level) {
+                    $j("#abandonConfirmation").parent().css("border-color:red;");
+                    $j("#abandonConfirmation").text("This Product Order has billed samples. Are you sure you want to abandon it?");
+                    $j("#abandonConfirmation").prev().addClass("ui-state-error");
+                }
+
                 $j("#abandonConfirmation").dialog("open");
             }
         </script>
@@ -260,7 +267,7 @@
     <stripes:layout-component name="content">
 
     <div style="display:none" id="confirmDialog">
-        <p>Are you sure you want to <span id="confirmDialogMessage"></span> the <span id="dialogNumSamples"></span> selected samples</span>?</p>
+        <p>Are you sure you want to <span id="confirmDialogMessage"></span> the <span id="dialogNumSamples"></span> selected samples?</p>
     </div>
 
     <div style="display:none" id="riskDialog" style="width:600px;">
@@ -283,30 +290,37 @@
     </div>
 
     <div style="display:none" id="abandonConfirmation">
-        <p>This will abandon this product order. Are you sure?</p>
+        <p>This will abandon this Product Order. Are you sure?</p>
     </div>
 
     <div style="display:none" id="noneSelectedDialog">
         <p>You must select at least one sample to <span id="noneSelectedDialogMessage"></span>.</p>
     </div>
 
-        <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
-            <stripes:hidden name="productOrder" value="${editOrder.businessKey}"/>
-            <stripes:hidden id="orderDialogAction" name=""/>
+    <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
+        <stripes:hidden name="productOrder" value="${editOrder.businessKey}"/>
+        <stripes:hidden id="orderDialogAction" name=""/>
 
-            <div class="actionButtons">
-                <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name}%>">
-                    <c:choose>
-                        <c:when test="${actionBean.abandonable}">
-                            <stripes:button name="abandonOrders" id="abandonOrders" value="Abandon Order" class="btn" onclick="showAbandonConfirm('abandonOrders', 'abandon')" style="margin-right:30px;" title="Click to abandon ${editOrder.title}"/>
-                            <stripes:hidden name="selectedProductOrderBusinessKeys" value="${editOrder.businessKey}"/>
-                        </c:when>
-                        <c:otherwise>
-                            <stripes:button name="abandonOrders" id="abandonOrders" value="Abandon Order" class="btn" onclick="showAbandonConfirm('abandonOrders', 'abandon')" style="margin-right:30px;" disabled="true" title="This order is not abandonable"/>
-                        </c:otherwise>
-                    </c:choose>
-                </security:authorizeBlock>
-                <c:if test="${editOrder.draft}">
+        <div class="actionButtons">
+            <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name}%>">
+                <c:choose>
+                    <c:when test="${actionBean.abandonable}">
+                        <stripes:button name="abandonOrders" id="abandonOrders" value="Abandon Order"
+                                        class="btn padright"
+                                        onclick="showAbandonConfirm('abandonOrders', 'abandon', ${actionBean.abandonWarning})"
+                                        title="Click to abandon ${editOrder.title}"/>
+                        <stripes:hidden name="selectedProductOrderBusinessKeys" value="${editOrder.businessKey}"/>
+                    </c:when>
+                    <c:otherwise>
+                        <stripes:button name="abandonOrders" id="abandonOrders" value="Abandon Order"
+                                        class="btn padright"
+                                        onclick="showAbandonConfirm('abandonOrders', 'abandon', ${actionBean.abandonWarning})"
+                                        disabled="true"
+                                        title="Cannot abandon this order because ${actionBean.abandonDisabledReason}"/>
+                    </c:otherwise>
+                </c:choose>
+            </security:authorizeBlock>
+            <c:if test="${editOrder.draft}">
                     <%-- MLC PDOs can be placed by PM or PDMs, so I'm making the security tag accept either of those roles for 'Place Order'.
                          I am also putting 'Validate' under that same security tag since I think that may have the power to alter 'On-Riskedness'
                          for PDO samples --%>

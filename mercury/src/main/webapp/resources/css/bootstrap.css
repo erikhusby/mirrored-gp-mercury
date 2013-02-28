@@ -5772,3 +5772,7 @@ a.badge:hover {
 .affix {
   position: fixed;
 }
+
+.padright {
+  margin-right: 30px;
+}
