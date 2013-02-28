@@ -1334,6 +1334,13 @@
             <version>1.4.0.9</version>
             <type>jar</type>
         </dependency>
+
+        <dependency>
+            <groupId>net.java.dev.inflector</groupId>
+            <artifactId>inflector</artifactId>
+            <version>0.7.0</version>
+        </dependency>
+
     </dependencies>
 
     <build>
