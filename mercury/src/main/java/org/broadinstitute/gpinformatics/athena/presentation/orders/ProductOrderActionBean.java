@@ -947,7 +947,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @return true if user can edit the quote
      */
     public boolean getAllowQuoteEdit() {
-        return editOrder.isDraft() || billingLedgerDao.findByOrderList(editOrder).isEmpty();
+        return editOrder.isDraft() || productOrderSampleDao.countSamplesWithBillingLedgerEntries(editOrder) == 0;
     }
 
     public String getQ() {

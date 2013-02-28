@@ -1,17 +1,32 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleSearchServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
+
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
 
 /**
  * @author Scott Matthews
  */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ProductOrderSampleContainerTest extends ContainerTest {
+
+    public static final String PDO_TO_LEDGER_ENTRY_COUNT_PROVIDER = "PDO-To-Ledger-Entry-Count-Provider";
+
+    @Inject
+    private ProductOrderSampleDao dao;
+
+    @Inject
+    private ProductOrderDao pdoDao;
+
 
     public void testOrderSampleConstruction() {
         ProductOrderSample testSample = new ProductOrderSample("SM-1P3XN");
@@ -46,5 +61,38 @@ public class ProductOrderSampleContainerTest extends ContainerTest {
         } catch (IllegalStateException ise) {
             Assert.fail();
         }
+    }
+
+
+    /**
+     * Simple {@link @DataProvider} that maps from PDO business keys to expected counts of PDO samples with billing ledger
+     * entries.
+     *
+     * @return Full mapping of PDO keys to expected counts.
+     */
+    @DataProvider(name = PDO_TO_LEDGER_ENTRY_COUNT_PROVIDER)
+    public Object[][] pdoToLedgerEntryCountProvider() {
+        return new Object[][] {
+                {"PDO-55", 0},
+                {"PDO-50", 2},
+                {"PDO-57", 41}
+        };
+    }
+
+
+    /**
+     * Test of counts of PDO samples with existing billing ledger entries.  It's not great that this is a container test
+     * that uses real data, this should ideally be writing out its own PDOs with PDO samples and billing ledger entries.
+     *
+     * @param pdoBusinessKey The JIRA key for a PDO.
+     *
+     * @param expectedCount The number of PDO samples in the specified PDO that are expected to have billing ledger entries.
+     */
+    @Test(dataProvider = PDO_TO_LEDGER_ENTRY_COUNT_PROVIDER)
+    public void testCountSamplesWithBillingLedgerEntries(@Nonnull String pdoBusinessKey, @Nonnull Integer expectedCount) {
+
+        ProductOrder productOrder = pdoDao.findByBusinessKey(pdoBusinessKey);
+        long actualCount = dao.countSamplesWithBillingLedgerEntries(productOrder);
+        Assert.assertEquals(actualCount, (long) expectedCount);
     }
 }
