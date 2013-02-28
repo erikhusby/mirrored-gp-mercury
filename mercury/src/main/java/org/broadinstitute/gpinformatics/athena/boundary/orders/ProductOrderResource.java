@@ -97,11 +97,12 @@ public class ProductOrderResource {
      *
      * @return The product orders that match
      */
+    // FIXME: need to filter out Draft PDOs.
     @GET
     @Produces(MediaType.APPLICATION_XML)
     public ProductOrders findOrders(@QueryParam("withId") String productOrderIds,
-                                      @QueryParam("modifiedAfter") Date modifiedAfter,
-                                      @DefaultValue("false") @QueryParam("includeSamples") boolean includeSamples) {
+                                    @QueryParam("modifiedAfter") Date modifiedAfter,
+                                    @DefaultValue("false") @QueryParam("includeSamples") boolean includeSamples) {
         if (!StringUtils.isEmpty(productOrderIds)) {
             return new ProductOrders(productOrderDao.findListByBusinessKeyList(
                 Arrays.asList(productOrderIds.split(","))), includeSamples);

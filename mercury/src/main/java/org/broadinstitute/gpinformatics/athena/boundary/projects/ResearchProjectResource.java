@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.projects;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -9,10 +10,7 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -115,26 +113,12 @@ public class ResearchProjectResource {
         }
     }
 
-
     @GET
     @Path("rp/{researchProjectIds}")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
+    @Produces(MediaType.APPLICATION_XML)
     public ResearchProjects findByIds(@PathParam("researchProjectIds") String researchProjectIds) {
         return new ResearchProjects(bspUserList, researchProjectDao.findByJiraTicketKeys(
                 Arrays.asList(researchProjectIds.split(","))));
-    }
-
-    @GET
-    @Path("pm/{pms}")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public ResearchProjects findByPm(@PathParam("pms") String pmUserName) {
-        // TODO: find all RPs by PMs.
-        // One approach:
-        // - find all ProjectPerson with role == PM and personId == ID
-        // - loop over all ProjectPerson to collect ResearchProjects
-        // For now, could just grab all RPs and do a manual scan for user IDs.
-
-        return new ResearchProjects();
     }
 
     /**
@@ -144,8 +128,16 @@ public class ResearchProjectResource {
      * @return The research projects that match
      */
     @GET
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public ResearchProjects findAll() {
+    @Produces(MediaType.APPLICATION_XML)
+    public ResearchProjects findProjects(@QueryParam("withId") String projectIds,
+                                         @QueryParam("withPm") String pmUserName) {
+        if (!StringUtils.isBlank(projectIds)) {
+            return new ResearchProjects(bspUserList, researchProjectDao.findByJiraTicketKeys(
+                Arrays.asList(projectIds.split(","))));
+        }
+        if (!StringUtils.isBlank(pmUserName)) {
+            // Find by pmUserName not yet implemented.
+        }
         return new ResearchProjects(bspUserList, researchProjectDao.findAllResearchProjectsWithOrders());
     }
 }
