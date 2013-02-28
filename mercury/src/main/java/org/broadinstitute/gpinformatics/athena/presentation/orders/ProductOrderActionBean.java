@@ -276,7 +276,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // Since we are only validating from view, we can persist without worry of saving something bad.
         // We are doing on risk calculation only when everything passes, but informing the user no matter what
-        if (getContext().getValidationErrors().isEmpty()) {
+        if (hasNoValidationErrors()) {
             int numSamplesOnRisk = editOrder.calculateRisk();
             productOrderDao.persist(editOrder);
 
@@ -347,7 +347,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         // If there are errors, will reload the page, so need to fetch the list
-        if (hasErrors()) {
+        if (hasAnyValidationErrors()) {
             listInit();
         }
     }
@@ -487,7 +487,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution validate() {
         validatePlacedOrder();
 
-        if (getContext().getValidationErrors().isEmpty()) {
+        if (hasNoValidationErrors()) {
             addMessage("Draft Order is valid and ready to be placed");
         }
 
@@ -531,7 +531,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("downloadBillingTracker")
     public Resolution downloadBillingTracker() {
         Resolution resolution = ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, bspUserList);
-        if (hasErrors()) {
+        if (hasAnyValidationErrors()) {
             // Need to regenerate the list so it's displayed along with the errors.
             listInit();
         }
