@@ -38,17 +38,15 @@ public class MercuryClientServiceImpl implements MercuryClientService {
 
     private BucketBean bucketBean;
     private BucketDao bucketDao;
-    private LabBatchDAO labBatchDao;
     private WorkflowLoader workflowLoader;
     private BSPUserList userList;
     private LabVesselDao labVesselDao;
 
     @Inject
-    public MercuryClientServiceImpl(BucketBean bucketBean, BucketDao bucketDao, LabBatchDAO labBatchDao,
-                                    WorkflowLoader workflowLoader, BSPUserList userList, LabVesselDao lvd) {
+    public MercuryClientServiceImpl(BucketBean bucketBean, BucketDao bucketDao, WorkflowLoader workflowLoader,
+                                    BSPUserList userList, LabVesselDao lvd) {
         this.bucketBean = bucketBean;
         this.bucketDao = bucketDao;
-        this.labBatchDao = labBatchDao;
         this.workflowLoader = workflowLoader;
         this.userList = userList;
         labVesselDao = lvd;
@@ -67,7 +65,8 @@ public class MercuryClientServiceImpl implements MercuryClientService {
         for (ProductOrderSample pdoSample : pdo.getSamples()) {
             nameToSampleMap.put(pdoSample.getSampleName(), pdoSample);
         }
-        List<LabVessel> vessels = labVesselDao.findBySampleKeyList((List<String>)Arrays.asList(nameToSampleMap.keySet().toArray()));
+        List<String> listOfSampleNames = new ArrayList(nameToSampleMap.keySet());
+        List<LabVessel> vessels = labVesselDao.findBySampleKeyList(listOfSampleNames);
 
         // Determines if the vessel is in receiving, by finding its active batch
         // and checking if that batch is a sample receipt batch.
@@ -86,8 +85,8 @@ public class MercuryClientServiceImpl implements MercuryClientService {
                 }
             }
         }
-        // Finds the pico bucket from workflow config for this product.
 
+        // Finds the pico bucket from workflow config for this product.
         Bucket picoBucket = findPicoBucket(pdo.getProduct());
         if (picoBucket == null) {
             return Collections.EMPTY_LIST;
