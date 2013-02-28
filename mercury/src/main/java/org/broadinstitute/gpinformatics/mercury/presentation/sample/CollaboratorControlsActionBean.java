@@ -8,7 +8,6 @@ import net.sourceforge.stripes.action.RedirectResolution;
 import net.sourceforge.stripes.action.Resolution;
 import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
-import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
@@ -34,13 +33,13 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
     private static final String VIEW_PAGE               = "/resources/sample/view_control.jsp";
     private static final String CREATE_PAGE             = "/resources/sample/create_control.jsp";
     private static final String CONTROL_LIST_PAGE       = "/resources/sample/list_controls.jsp";
-    private static final  String mercuryControlParameter = "sampleCollaboratorId";
+    private static final String mercuryControlParameter = "sampleCollaboratorId";
     public static final  String ACTIONBEAN_URL_BINDING  = "/resources/sample/controls.action";
     private static final String CURRENT_OBJECT          = "Mercury Control";
     public static final  String CREATE_CONTROL          = CoreActionBean.CREATE + CURRENT_OBJECT;
     public static final  String EDIT_CONTROL            = CoreActionBean.EDIT + CURRENT_OBJECT;
 
-    private String  createControlType;
+    private MercuryControl.ControlType createControlType;
     private boolean editControlInactiveState;
 
     private MercuryControl workingControl;
@@ -56,7 +55,6 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
      */
     @Before(stages = LifecycleStage.BindingAndValidation, on = {"!" + LIST_ACTION})
     public void init() {
-
         controlReference = getContext().getRequest().getParameter(mercuryControlParameter);
 
         if (StringUtils.isNotBlank(controlReference)) {
@@ -114,16 +112,16 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
     }
 
     @ValidationMethod(on = SAVE_ACTION)
-    public void makeControlInactiveValidation(ValidationErrors errors) {
+    public void makeControlInactiveValidation() {
 
-        MercuryControl negativeVersion = mercuryControlDao.findInactiveBySampleId(controlReference);
+        MercuryControl inactiveVersion = mercuryControlDao.findInactiveBySampleId(controlReference);
 
-        if(isCreating()) {
-            if(StringUtils.isBlank(workingControl.getBusinessKey())) {
+        if (isCreating()) {
+            if (StringUtils.isBlank(workingControl.getBusinessKey())) {
                 addValidationError("controlName", "The Collaborator Sample ID is required for a new control");
             }
 
-            if(StringUtils.isBlank(createControlType)) {
+            if (createControlType == null) {
                 addValidationError("createControlType", "The control type is required for a new control");
             }
 
@@ -133,9 +131,9 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
         GPLIM-983:  Editing inactive controls was not a part of this user story.  The following logic can change once a
         user can view and revive inactive controls
          */
-        if (editControlInactiveState && negativeVersion != null) {
+        if (editControlInactiveState && inactiveVersion != null) {
             addValidationError("controlName", "You cannot deactivate this control at this time.  There is " +
-                                                              "already an inactive control that matches this.");
+                                                      "already an inactive control that matches this.");
         }
 
     }
@@ -232,12 +230,8 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
         return MercuryControl.ControlType.NEGATIVE.getDisplayName();
     }
 
-    public String getCreateControlType() {
-        return createControlType;
-    }
-
     public void setCreateControlType(String createControlType) {
-        this.createControlType = createControlType;
+        this.createControlType = MercuryControl.ControlType.findByDisplayName(createControlType);
     }
 
     public boolean getEditControlInactiveState() {

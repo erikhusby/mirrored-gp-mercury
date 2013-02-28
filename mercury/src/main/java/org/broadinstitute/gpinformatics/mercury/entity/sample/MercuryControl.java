@@ -137,10 +137,6 @@ public class MercuryControl {
         this.type = type;
     }
 
-    public void setType(String type) {
-        this.type = ControlType.findByDisplayName(type);
-    }
-
     public void setState(ControlState state) {
         this.state = state;
     }

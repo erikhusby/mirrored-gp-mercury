@@ -55,7 +55,7 @@ public class MercuryControlTest {
 
         Assert.assertEquals(testCtrl.getType(), MercuryControl.ControlType.NEGATIVE);
 
-        testCtrl.setType(MercuryControl.ControlType.POSITIVE.getDisplayName());
+        testCtrl.setType(MercuryControl.ControlType.POSITIVE);
 
         Assert.assertEquals(testCtrl.getType(), MercuryControl.ControlType.POSITIVE);
 

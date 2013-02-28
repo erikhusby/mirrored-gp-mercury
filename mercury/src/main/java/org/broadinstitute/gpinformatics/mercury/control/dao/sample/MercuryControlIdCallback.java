@@ -22,8 +22,8 @@ import javax.persistence.criteria.Root;
 class MercuryControlIdCallback implements GenericDao.GenericDaoCallback<MercuryControl> {
 
     private final MercuryControl.ControlState state;
-    private final String            id;
-    private       MercuryControlDao mercuryControlDao;
+    private final String                      id;
+    private       MercuryControlDao           mercuryControlDao;
 
     MercuryControlIdCallback(MercuryControlDao mercuryControlDao,
                              @Nonnull MercuryControl.ControlState state,

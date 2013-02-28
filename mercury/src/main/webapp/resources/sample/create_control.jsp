@@ -52,10 +52,16 @@
                                 Control Type *
                             </stripes:label>
                             <div class="controls">
-                                <stripes:radio value="${actionBean.positiveTypeValue}"
-                                               name="createControlType"/> ${actionBean.positiveTypeValue}
-                                <stripes:radio value="${actionBean.negativeTypeValue}"
-                                               name="createControlType"/> ${actionBean.negativeTypeValue}
+                                <stripes:radio value="${actionBean.positiveTypeValue}" id="positiveValue"
+                                               name="createControlType"/>
+                                <%--<stripes:label for="positiveValue">--%>
+                                    ${actionBean.positiveTypeValue}
+                                <%--</stripes:label>--%>
+                                <stripes:radio value="${actionBean.negativeTypeValue}" id="negativeValue"
+                                               name="createControlType"/>
+                                <%--<stripes:label for="negativeValue">--%>
+                                               ${actionBean.negativeTypeValue}
+                                <%--</stripes:label>--%>
                             </div>
                         </div>
 
