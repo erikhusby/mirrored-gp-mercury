@@ -23,6 +23,7 @@ public class MercuryControlTest {
         Assert.assertNotNull(testCtrl);
 
         Assert.assertEquals(na12878, testCtrl.getCollaboratorSampleId());
+        Assert.assertEquals(na12878, testCtrl.getBusinessKey());
 
         Assert.assertEquals(MercuryControl.ControlType.POSITIVE, testCtrl.getType());
 
@@ -33,6 +34,7 @@ public class MercuryControlTest {
         testCtrl.setCollaboratorSampleId(sampleId2);
 
         Assert.assertEquals(testCtrl.getCollaboratorSampleId(), sampleId2);
+        Assert.assertEquals(testCtrl.getBusinessKey(), sampleId2);
     }
 
     @Test(groups = DATABASE_FREE)
@@ -47,6 +49,7 @@ public class MercuryControlTest {
         testCtrl.setCollaboratorSampleId(testId);
 
         Assert.assertEquals(testCtrl.getCollaboratorSampleId(), testId);
+        Assert.assertEquals(testCtrl.getBusinessKey(), testId);
 
         testCtrl.setType(MercuryControl.ControlType.NEGATIVE);
 

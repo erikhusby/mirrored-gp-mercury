@@ -71,6 +71,7 @@ public class MercuryControlDaoTest extends ContainerTest {
         Assert.assertNotNull(newTestCtrl);
 
         Assert.assertEquals(testId, newTestCtrl.getCollaboratorSampleId());
+        Assert.assertEquals(testId, newTestCtrl.getBusinessKey());
 
         Assert.assertEquals(MercuryControl.ControlType.POSITIVE, newTestCtrl.getType());
 

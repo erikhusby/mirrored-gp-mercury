@@ -117,6 +117,10 @@ public class MercuryControl {
         return collaboratorSampleId;
     }
 
+    public String getBusinessKey() {
+        return getCollaboratorSampleId();
+    }
+
     public ControlType getType() {
         return type;
     }

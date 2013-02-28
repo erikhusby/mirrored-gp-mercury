@@ -118,13 +118,24 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
 
         MercuryControl negativeVersion = mercuryControlDao.findInactiveBySampleId(controlReference);
 
+        if(isCreating()) {
+            if(StringUtils.isBlank(workingControl.getBusinessKey())) {
+                addValidationError("controlName", "The Collaborator Sample ID is required for a new control");
+            }
+
+            if(StringUtils.isBlank(createControlType)) {
+                addValidationError("createControlType", "The control type is required for a new control");
+            }
+
+        }
+
         /*
         GPLIM-983:  Editing inactive controls was not a part of this user story.  The following logic can change once a
         user can view and revive inactive controls
          */
         if (editControlInactiveState && negativeVersion != null) {
-            errors.add("controlName", new SimpleError("You cannot deactivate this control at this time.  There is " +
-                                                              "already an inactive control that matches this."));
+            addValidationError("controlName", "You cannot deactivate this control at this time.  There is " +
+                                                              "already an inactive control that matches this.");
         }
 
     }
@@ -158,7 +169,7 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
         StringBuilder confirmMessage = new StringBuilder();
 
         confirmMessage.append(workingControl.getType().getDisplayName());
-        confirmMessage.append(" Control " + workingControl.getCollaboratorSampleId());
+        confirmMessage.append(" Control " + workingControl.getBusinessKey());
 
         // Adjust the confirmation test based on the action the user took.
         if (isCreating()) {
@@ -181,7 +192,7 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
         }
 
         return new RedirectResolution(CollaboratorControlsActionBean.class, destination)
-                       .addParameter(mercuryControlParameter, workingControl.getCollaboratorSampleId());
+                       .addParameter(mercuryControlParameter, workingControl.getBusinessKey());
     }
 
     /* Accessors */
