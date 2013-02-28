@@ -1,11 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.hibernate.envers.RevisionType;
-import org.omg.CORBA.PRIVATE_MEMBER;
 
 import javax.inject.Inject;
 import java.io.BufferedWriter;
@@ -14,14 +14,13 @@ import java.io.IOException;
 import java.util.*;
 
 public abstract class GenericEntityEtl {
-    protected final Logger logger = Logger.getLogger(getClass());
-    public static final String UNDEFINED_VALUE = "undefined";
+    protected final Log logger = LogFactory.getLog(getClass());
 
     private AuditReaderDao auditReaderDao;
 
     @Inject
     public void setAuditReaderDao(AuditReaderDao auditReaderDao) {
-	this.auditReaderDao = auditReaderDao;
+        this.auditReaderDao = auditReaderDao;
     }
 
     /**
@@ -319,12 +318,14 @@ public abstract class GenericEntityEtl {
         return h;
     }
 
-    /** Concatenates each string with a delimiter, then calculates a hash on the whole thing. */
+    /**
+     * Concatenates each string with a delimiter, then calculates a hash on the whole thing.
+     */
     public static long hash(String... strings) {
-	StringBuilder sb = new StringBuilder();
-	for (String s : strings) {
-	    sb.append(ExtractTransform.DELIM).append(s);
-	}
+        StringBuilder sb = new StringBuilder();
+        for (String s : strings) {
+            sb.append(ExtractTransform.DELIM).append(s);
+        }
         return GenericEntityEtl.hash(sb.toString());
     }
 

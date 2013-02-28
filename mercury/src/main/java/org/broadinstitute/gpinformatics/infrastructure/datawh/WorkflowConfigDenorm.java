@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
 
@@ -12,7 +13,7 @@ import java.util.Date;
  * Represents the flattened workflowConfig record, used for ETL of WorkflowConfig.
  */
 public class WorkflowConfigDenorm {
-    private static final Logger logger = Logger.getLogger(WorkflowConfigDenorm.class);
+    private static final Log logger = LogFactory.getLog(WorkflowConfigDenorm.class);
 
     private final long workflowConfigDenormId;
     private final long workflowId;
