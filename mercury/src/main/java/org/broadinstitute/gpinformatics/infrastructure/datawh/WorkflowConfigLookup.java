@@ -7,10 +7,13 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 
+import javax.ejb.Stateful;
 import javax.inject.Inject;
+import java.io.Serializable;
 import java.util.*;
 
-public class WorkflowConfigLookup {
+@Stateful
+public class WorkflowConfigLookup implements Serializable {
     private Log logger = LogFactory.getLog(getClass());
     public WorkflowLoader workflowLoader;
     private Map<String, List<WorkflowConfigDenorm>> mapEventToWorkflows = null;

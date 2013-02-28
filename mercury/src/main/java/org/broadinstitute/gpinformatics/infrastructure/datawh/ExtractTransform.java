@@ -9,7 +9,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfigu
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 
 import javax.ejb.Schedule;
-import javax.ejb.Stateless;
+import javax.ejb.Stateful;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
@@ -35,7 +35,7 @@ import java.util.concurrent.Semaphore;
  * For backfill etl, the entities are obtained from the EntityManager, regardless of their audit history.
  */
 
-@Stateless
+@Stateful
 @Path("etl")
 public class ExtractTransform {
     /** Record delimiter expected in sqlLoader file. */
