@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.project;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;

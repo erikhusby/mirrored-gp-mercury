@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
@@ -25,7 +25,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=true)
 public class BillingTrackerImporterContainerTest  extends Arquillian {
 
-    public static final String BILLING_TRACKER_TEST_FILENAME = new String("BillingTracker-ContainerTest.xlsx");
+    public static final String BILLING_TRACKER_TEST_FILENAME = "BillingTracker-ContainerTest.xlsx";
 
     @Inject
     private ProductOrderDao productOrderDao;

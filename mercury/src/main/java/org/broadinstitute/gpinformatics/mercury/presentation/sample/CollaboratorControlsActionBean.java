@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.sample;
 
+import net.sourceforge.stripes.action.After;
 import net.sourceforge.stripes.action.Before;
 import net.sourceforge.stripes.action.DefaultHandler;
 import net.sourceforge.stripes.action.ForwardResolution;
@@ -115,7 +116,15 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
 
         Control inactiveVersion = controlDao.findInactiveBySampleId(controlReference);
 
+
         if (isCreating()) {
+            Control existingVersion = controlDao.findBySampleId(workingControl.getBusinessKey());
+
+            if(existingVersion != null) {
+                addValidationError("controlName", "An active control with this name already exists.  Please either " +
+                                                          "update the existing control or create one with a " +
+                                                          "different name");
+            }
             if (StringUtils.isBlank(workingControl.getBusinessKey())) {
                 addValidationError("controlName", "The Collaborator Sample ID is required for a new control");
             }

@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.meanbean.test.BeanTester;

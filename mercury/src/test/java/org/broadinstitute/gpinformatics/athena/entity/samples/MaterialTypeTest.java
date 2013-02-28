@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.samples;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.meanbean.test.BeanTester;
 import org.meanbean.test.EqualsMethodTester;

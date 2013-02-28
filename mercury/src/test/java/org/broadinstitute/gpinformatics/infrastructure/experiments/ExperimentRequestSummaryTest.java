@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.experiments;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectId;
 
 import java.util.Date;

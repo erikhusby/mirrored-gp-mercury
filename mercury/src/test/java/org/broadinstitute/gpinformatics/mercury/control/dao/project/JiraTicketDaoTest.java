@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.project;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -60,7 +60,7 @@ public class JiraTicketDaoTest extends ContainerTest{
         jiraTicketDao.clear();
 
         JiraTicket jiraTicketFetched = jiraTicketDao.fetchByName(ticketName);
-        Assert.assertNotNull("No ticket", jiraTicketFetched);
+        Assert.assertNotNull(jiraTicketFetched, "No ticket");
         Assert.assertEquals("Wrong name", jiraTicket.getTicketName(),  ticketName);
     }
 }

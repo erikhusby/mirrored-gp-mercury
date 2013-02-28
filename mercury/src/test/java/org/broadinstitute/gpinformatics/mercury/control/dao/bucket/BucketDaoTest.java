@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.bucket;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
@@ -66,8 +66,7 @@ public class BucketDaoTest extends ContainerTest {
     @Test
     public void testFindPersistedBucket () {
 
-        Assert.assertNotNull ("Bucket not Persisted to the Database",
-                              testBucket.getBucketId());
+        Assert.assertNotNull(testBucket.getBucketId(), "Bucket not Persisted to the Database");
 
         Bucket retrievedBucket = bucketDao.findByName(EXTRACTION_BUCKET_NAME);
 
