@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
@@ -121,9 +121,10 @@ public class BillingTrackerManagerContainerTest extends ContainerTest {
                 Assert.assertEquals(expected.getProductOrderSample().getSampleName(),
                         actual.getProductOrderSample().getSampleName());
                 Assert.assertEquals(expected.getPriceItem().getName(), actual.getPriceItem().getName());
-                Assert.assertEquals("Quantity check for " + actual.getProductOrderSample().getSampleName() + " priceItem "  +
-                        actual.getPriceItem().getName() + " failed",
-                        expected.getQuantity(), actual.getQuantity());
+                Assert.assertEquals(expected.getQuantity(),
+                        actual.getQuantity(),
+                        "Quantity check for " + actual.getProductOrderSample().getSampleName() + " priceItem "  +
+                                        actual.getPriceItem().getName() + " failed");
                 i++;
             }
         } finally {

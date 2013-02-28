@@ -62,7 +62,7 @@
                 <tr>
                     <td>
                         <stripes:link beanclass="${actionBean.class.name}" event="view">
-                            <stripes:param name="${actionBean.mercuryControlParameter}"
+                            <stripes:param name="${actionBean.controlParameter}"
                                            value="${positiveControl.businessKey}"/>
                             ${positiveControl.businessKey}
                         </stripes:link>
@@ -87,7 +87,7 @@
                 <tr>
                     <td>
                         <stripes:link beanclass="${actionBean.class.name}" event="view">
-                            <stripes:param name="${actionBean.mercuryControlParameter}"
+                            <stripes:param name="${actionBean.controlParameter}"
                                            value="${negativeControl.businessKey}"/>
                             ${negativeControl.businessKey}
                         </stripes:link>

@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectCoh
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectCohort_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
-import javax.ejb.Stateless;
+import javax.ejb.Stateful;
 import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -16,7 +16,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-@Stateless
+@Stateful
 public class ResearchProjectCohortEtl  extends GenericEntityEtl {
 
     private ResearchProjectDao dao;

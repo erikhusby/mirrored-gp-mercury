@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity;
 
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
@@ -37,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static junit.framework.Assert.*;
+import static org.testng.Assert.*;
 
 @Test(groups = {TestGroups.EXTERNAL_INTEGRATION})
 public class PlasticToProductOrderTest extends ContainerTest {

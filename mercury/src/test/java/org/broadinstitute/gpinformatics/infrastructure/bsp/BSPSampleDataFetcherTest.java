@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.testng.annotations.Test;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;

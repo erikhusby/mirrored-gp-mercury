@@ -6,11 +6,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
+import java.io.Serializable;
 
 /**
  * Loads a workflow configuration, initially from the file system
  */
-public class WorkflowLoader {
+public class WorkflowLoader implements Serializable {
     private static WorkflowConfig workflowConfig;
 
     public WorkflowConfig load() {

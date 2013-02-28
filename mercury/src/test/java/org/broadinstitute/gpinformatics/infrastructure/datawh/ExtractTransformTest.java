@@ -1,7 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
@@ -34,7 +35,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
 
 @Test(enabled =  true, groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ExtractTransformTest extends Arquillian {
-    private Logger logger = Logger.getLogger(getClass());
+    private Log logger = LogFactory.getLog(getClass());
     private String datafileDir;
     private Map<String, GenericEntityEtl> auditTables = new HashMap<String, GenericEntityEtl>();
     public final long MSEC_IN_SEC = 1000L;

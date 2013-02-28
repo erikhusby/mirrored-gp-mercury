@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
@@ -105,6 +106,32 @@ public class ProductOrderSampleDao extends GenericDao {
             mapSampleNameToProductOrderSampleList.get(productOrderSample.getSampleName()).add(productOrderSample);
         }
         return mapSampleNameToProductOrderSampleList;
+    }
+
+
+    /**
+     * Return a count of the number of samples in this {@link ProductOrder} that have billing ledger entries of any
+     * kind (billed, billing session started, or billing session not started).
+     *
+     * @param productOrder The PDO.
+     *
+     * @return Number of samples in the PDO with billing ledger entries.
+     *
+     */
+    public long countSamplesWithBillingLedgerEntries(@Nonnull ProductOrder productOrder) {
+
+        CriteriaBuilder cb = getCriteriaBuilder();
+        CriteriaQuery<Long> cq = cb.createQuery(Long.class);
+
+        cq.distinct(true);
+
+        Root<ProductOrderSample> root = cq.from(ProductOrderSample.class);
+        root.join(ProductOrderSample_.ledgerItems);
+
+        cq.select(cb.count(root));
+        cq.where(cb.equal(root.get(ProductOrderSample_.productOrder), productOrder));
+
+        return getEntityManager().createQuery(cq).getSingleResult();
     }
 
 }

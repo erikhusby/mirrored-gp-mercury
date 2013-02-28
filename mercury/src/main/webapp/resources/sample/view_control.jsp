@@ -5,7 +5,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.sample.CollaboratorControlsActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="View Mercury Control" sectionTitle="View Mercury Control">
+<stripes:layout-render name="/layout.jsp" pageTitle="View Control" sectionTitle="View Control">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
