@@ -73,6 +73,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String ABANDON_SAMPLES_ACTION = "abandonSamples";
     private static final String DELETE_SAMPLES_ACTION = "deleteSamples";
     private static final String SET_RISK = "setRisk";
+    private static final String PLACE_ORDER = "placeOrder";
 
     @Inject
     private QuoteService quoteService;
@@ -258,7 +259,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
         requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         requireField(editOrder.getResearchProject(), "a research project", action);
-        requireField(editOrder.getQuoteId(), "a quote specified", action);
+        requireField(StringUtils.isNotBlank(editOrder.getQuoteId()), "a quote specified", action);
         requireField(editOrder.getProduct(), "a product", action);
         if (editOrder.getProduct() != null && editOrder.getProduct().getSupportsNumberOfLanes()) {
             requireField(editOrder.getCount() > 0, "a specified number of lanes", action);
@@ -289,9 +290,10 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @ValidationMethod(on = "placeOrder")
+    @ValidationMethod(on = PLACE_ORDER)
     public void validatePlacedOrder() {
         doValidation("place order");
+        entryInit();
     }
 
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
@@ -442,7 +444,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         projectTokenInput.setup(projectKey);
     }
 
-    @HandlesEvent("placeOrder")
+    @HandlesEvent(PLACE_ORDER)
     public Resolution placeOrder() {
         try {
             editOrder.prepareToSave(userBean.getBspUser(), isCreating());

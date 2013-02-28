@@ -21,27 +21,27 @@ import javax.persistence.criteria.Root;
  */
 class MercuryControlTypeCallback implements GenericDao.GenericDaoCallback<MercuryControl> {
 
-    private final MercuryControl.ControlState callbackState;
-    private final MercuryControl.ControlType callbackType;
-    private final MercuryControlDao            mercuryControlDao;
+    private final MercuryControl.ControlState state;
+    private final MercuryControl.ControlType  type;
+    private final MercuryControlDao           mercuryControlDao;
 
     MercuryControlTypeCallback(@Nonnull MercuryControlDao mercuryControlDao,
-                               @Nonnull MercuryControl.ControlState callbackState,
-                               @Nullable MercuryControl.ControlType callbackType) {
+                               @Nonnull MercuryControl.ControlState state,
+                               @Nullable MercuryControl.ControlType type) {
         this.mercuryControlDao = mercuryControlDao;
-        this.callbackState = callbackState;
-        this.callbackType = callbackType;
+        this.state = state;
+        this.type = type;
     }
 
     /**
-     *
      * Main implementation of the callback.  Creates the where statement for the CriteriaQuery.  The statement will
      * either just select the given state if the type is null, or will build the where with the State AND the
      * callback type
      *
      * @param mercuryControlCriteriaQuery CriteriaQuery object created by the GenericDao to which any dynamic query
      *                                    building should be added
-     * @param mercuryControlRoot Root reference to the Mercury Control search to use as a reference for Joins or fetches
+     * @param mercuryControlRoot          Root reference to the Mercury Control search to use as a reference for Joins
+     *                                    or fetches
      */
     @Override
     public void callback(CriteriaQuery<MercuryControl> mercuryControlCriteriaQuery,
@@ -49,11 +49,11 @@ class MercuryControlTypeCallback implements GenericDao.GenericDaoCallback<Mercur
         CriteriaBuilder cbuilder = mercuryControlDao.getEntityManager().getCriteriaBuilder();
 
         Predicate clause;
-        if (callbackType != null) {
-            clause = cbuilder.and(cbuilder.equal(mercuryControlRoot.get(MercuryControl_.state), callbackState),
-                                         cbuilder.equal(mercuryControlRoot.get(MercuryControl_.type), callbackType));
+        if (type != null) {
+            clause = cbuilder.and(cbuilder.equal(mercuryControlRoot.get(MercuryControl_.state), state),
+                                         cbuilder.equal(mercuryControlRoot.get(MercuryControl_.type), type));
         } else {
-            clause = cbuilder.equal(mercuryControlRoot.get(MercuryControl_.state), callbackState);
+            clause = cbuilder.equal(mercuryControlRoot.get(MercuryControl_.state), state);
         }
 
         mercuryControlCriteriaQuery.where(clause);
