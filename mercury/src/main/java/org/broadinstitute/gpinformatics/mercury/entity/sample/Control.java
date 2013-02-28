@@ -23,8 +23,8 @@ import javax.persistence.Table;
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
-public class MercuryControl {
+@Table(schema = "mercury", name = "MERCURY_CONTROL")
+public class Control {
 
     /**
      * Helps define the type of control stored in the system.
@@ -105,10 +105,10 @@ public class MercuryControl {
     @Index(name = "ix_mc_sample_key")
     private ControlState state = ControlState.ACTIVE;
 
-    public MercuryControl() {
+    public Control() {
     }
 
-    public MercuryControl(String collaboratorSampleId, ControlType type) {
+    public Control(String collaboratorSampleId, ControlType type) {
         this.collaboratorSampleId = collaboratorSampleId;
         this.type = type;
     }
