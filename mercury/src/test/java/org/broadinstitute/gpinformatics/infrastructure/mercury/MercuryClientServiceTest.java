@@ -1,9 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.mercury;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -39,22 +42,23 @@ import static org.easymock.EasyMock.*;
 
 @Test(enabled = true, groups = TestGroups.EXTERNAL_INTEGRATION)
 public class MercuryClientServiceTest extends Arquillian {
-    private String workflowName = "Exome Express";
-    private Long userId = 10400L;
-    private String pdoKey = "PDO-999";
-    private List<String> sampleNames = new ArrayList<String>();
+    private Log logger = LogFactory.getLog(getClass());
+    private String workflowName = "Exome Express";  // must be used in WorkflowConfig.xml
+    private Long userId = 10400L; // must be user BSP knows about
+    private String pdoKey = "PDO-8";  // must exist on test jira (receives the comments put by BucketBean)
+    private List<ProductOrderSample> pdoSamples = new ArrayList<ProductOrderSample>();
 
     @Inject
     private MercuryClientService service;
     @Inject
-    private LabBatchDAO labBatchDao;
+    private LabBatchDAO dao;
 
     private ProductOrder pdo = createMock(ProductOrder.class);
-    private List<ProductOrderSample> pdoSamples = new ArrayList<ProductOrderSample>();
     private Product product = createMock(Product.class);
     private BSPUserList bspUserList = createMock(BSPUserList.class);
     private BspUser bspUser = createMock(BspUser.class);
-    private Object[] mocks = new Object[]{pdo, pdoSamples, product, bspUserList, bspUser};
+    private BSPSampleDTO bspSampleDto = createMock(BSPSampleDTO.class);
+    private Object[] mocks = new Object[]{pdo, product, bspUserList, bspUser, bspSampleDto};
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -67,29 +71,50 @@ public class MercuryClientServiceTest extends Arquillian {
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() {
-        CriteriaBuilder cb = labBatchDao.getEntityManager().getCriteriaBuilder();
-        CriteriaQuery<LabBatch> cq = cb.createQuery(LabBatch.class);
-        Root<LabBatch> root = cq.from(LabBatch.class);
-        cq.where(cb.equal(root.get(LabBatch_.labBatchType), LabBatch.LabBatchType.SAMPLES_RECEIPT));
-        LabBatch receiptBatch = labBatchDao.getEntityManager().createQuery(cq).setMaxResults(1).getSingleResult();
-        Collection<LabVessel> receiptVessels = receiptBatch.getStartingLabVessels();
-        for (LabVessel receiptVessel : receiptVessels) {
-            for (MercurySample receiptSample: receiptVessel.getMercurySamples()) {
-                sampleNames.add(receiptSample.getSampleKey());
-                pdoSamples.add(createMock(ProductOrderSample.class));
-            }
-        }
+        pdoSamples.clear();
         reset(mocks);
     }
 
+    private void setUpSamplesFromReceiptBatch() {
+        CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
+        CriteriaQuery<LabBatch> cq = cb.createQuery(LabBatch.class);
+        Root<LabBatch> root = cq.from(LabBatch.class);
+        cq.where(cb.equal(root.get(LabBatch_.labBatchType), LabBatch.LabBatchType.SAMPLES_RECEIPT));
+        List<LabBatch> receiptList = dao.getEntityManager().createQuery(cq).setMaxResults(1).getResultList();
+        if (receiptList.size() > 0) {
+            Collection<LabVessel> receiptVessels = receiptList.get(0).getStartingLabVessels();
+            for (LabVessel receiptVessel : receiptVessels) {
+                for (MercurySample receiptSample: receiptVessel.getMercurySamples()) {
+                    String sampleName = receiptSample.getSampleKey();
+                    ProductOrderSample pdoSample = new ProductOrderSample(sampleName, bspSampleDto);
+                    pdoSamples.add(pdoSample);
+                }
+            }
+        }
+        logger.info("Testing with " + pdoSamples.size() + " receipt samples");
+    }
+
     public void testSampleToPicoBucket() throws Exception {
+        setUpSamplesFromReceiptBatch();
         expect(pdo.getProduct()).andReturn(product);
         expect(product.getWorkflowName()).andReturn(workflowName).anyTimes();
         expect(pdo.getCreatedBy()).andReturn(userId);
         expect(pdo.getSamples()).andReturn(pdoSamples);
-        for (int i = 0; i < sampleNames.size(); ++ i) {
-            expect(pdoSamples.get(i).getSampleName()).andReturn(sampleNames.get(i));
-        }
+        expect(pdo.getBusinessKey()).andReturn(pdoKey);
+
+        replay(mocks);
+
+        Collection<ProductOrderSample> addedSamples = service.addSampleToPicoBucket(pdo);
+        Assert.assertEquals(addedSamples.size(), pdoSamples.size());
+
+        verify(mocks);
+    }
+
+    public void testNoReceiptSamples() throws Exception {
+        expect(pdo.getProduct()).andReturn(product);
+        expect(product.getWorkflowName()).andReturn(workflowName).anyTimes();
+        expect(pdo.getCreatedBy()).andReturn(userId);
+        expect(pdo.getSamples()).andReturn(pdoSamples);
         expect(pdo.getBusinessKey()).andReturn(pdoKey);
 
         replay(mocks);
