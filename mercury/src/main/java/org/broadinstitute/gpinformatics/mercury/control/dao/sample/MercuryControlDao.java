@@ -41,49 +41,6 @@ public class MercuryControlDao extends GenericDao {
                                                                                     sampleId));
     }
 
-    /**
-     * Finds all <u>active</u> controls within the system that are stored as positive
-     *
-     * @return a list of all {@link MercuryControl}s in the system that not only have  a
-     *         {@link org.broadinstitute.gpinformatics.mercury.entity.sample.MercuryControl.ControlState} of ACTIVE but also have a
-     *         {@link org.broadinstitute.gpinformatics.mercury.entity.sample.MercuryControl.ControlType} of POSITIVE
-     */
-    public List<MercuryControl> findAllActivePositiveControls() {
-        return findAllActiveControlsByType(MercuryControl.ControlType.POSITIVE);
-    }
-
-    /**
-     * Finds all <u>active</u> controls within the system that are stored as Negative
-     *
-     * @return a list of all {@link MercuryControl}s in the system that not only have  a
-     *         {@link org.broadinstitute.gpinformatics.mercury.entity.sample.MercuryControl.ControlState} of ACTIVE but also have a
-     *         {@link org.broadinstitute.gpinformatics.mercury.entity.sample.MercuryControl.ControlType} of NEGATIVE
-     */
-    public List<MercuryControl> findAllActiveNegativeControls() {
-        return findAllActiveControlsByType(MercuryControl.ControlType.NEGATIVE);
-    }
-
-    /**
-     * Finds all <u>inactive</u> controls within the system that are stored as positive
-     *
-     * @return a list of all {@link MercuryControl}s in the system that not only have  a
-     *         {@link org.broadinstitute.gpinformatics.mercury.entity.sample.MercuryControl.ControlState} of INACTIVE but also have a
-     *         {@link org.broadinstitute.gpinformatics.mercury.entity.sample.MercuryControl.ControlType} of POSITIVE
-     */
-    public List<MercuryControl> findAllInactivePositiveControls() {
-        return findAllInactiveControlsByType(MercuryControl.ControlType.POSITIVE);
-    }
-
-    /**
-     * Finds all <u>inactive</u> controls within the system that are stored as Negative
-     *
-     * @return a list of all {@link MercuryControl}s in the system that not only have  a
-     *         {@link org.broadinstitute.gpinformatics.mercury.entity.sample.MercuryControl.ControlState} of INACTIVE but also have a
-     *         {@link org.broadinstitute.gpinformatics.mercury.entity.sample.MercuryControl.ControlType} of NEGATIVE
-     */
-    public List<MercuryControl> findAllInactiveNegativeControls() {
-        return findAllInactiveControlsByType(MercuryControl.ControlType.NEGATIVE);
-    }
 
     /**
      * Finds all controls within the system that are currently in an active state
@@ -115,7 +72,7 @@ public class MercuryControlDao extends GenericDao {
      * @return a List of all controls saved in the system that have a {@link org.broadinstitute.gpinformatics.mercury.entity.sample.MercuryControl.ControlState} of
      *         Active and a {@link org.broadinstitute.gpinformatics.mercury.entity.sample.MercuryControl.ControlType} that matches the type given
      */
-    private List<MercuryControl> findAllActiveControlsByType(MercuryControl.ControlType type) {
+    public List<MercuryControl> findAllActiveControlsByType(MercuryControl.ControlType type) {
         return findAll(MercuryControl.class,
                               new MercuryControlTypeCallback(this, MercuryControl.ControlState.ACTIVE, type));
 
@@ -129,7 +86,7 @@ public class MercuryControlDao extends GenericDao {
      * @return a List of all controls saved in the system that have a {@link org.broadinstitute.gpinformatics.mercury.entity.sample.MercuryControl.ControlState} of
      *         Inactive and a {@link org.broadinstitute.gpinformatics.mercury.entity.sample.MercuryControl.ControlType} that matches the type given
      */
-    private List<MercuryControl> findAllInactiveControlsByType(MercuryControl.ControlType type) {
+    public List<MercuryControl> findAllInactiveControlsByType(MercuryControl.ControlType type) {
         return findAll(MercuryControl.class,
                               new MercuryControlTypeCallback(this, MercuryControl.ControlState.INACTIVE, type));
     }
@@ -143,7 +100,7 @@ public class MercuryControlDao extends GenericDao {
      * @return a List of all controls saved in the system that have a {@link org.broadinstitute.gpinformatics.mercury.entity.sample.MercuryControl.ControlType} that matches
      *         the type given.  The state of the controls found are irrelevant to this search.
      */
-    private List<MercuryControl> findAllControlsByType(MercuryControl.ControlType type) {
+    public List<MercuryControl> findAllControlsByType(MercuryControl.ControlType type) {
         List<MercuryControl> results = new LinkedList<MercuryControl>();
 
         results.addAll(findAll(MercuryControl.class,

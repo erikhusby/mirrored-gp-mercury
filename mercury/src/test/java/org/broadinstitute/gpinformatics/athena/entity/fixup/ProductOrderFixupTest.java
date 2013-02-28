@@ -320,7 +320,7 @@ public class ProductOrderFixupTest extends Arquillian {
     public void setPlacedDate() {
 
         Query query = productOrderDao.getEntityManager().createNativeQuery(
-                "SELECT pdo_aud.jira_ticket_key, rev_info.rev_date " +
+                "SELECT pdo.jira_ticket_key, rev_info.rev_date " +
                 "FROM athena.product_order_aud pdo_aud, athena.product_order pdo, mercury.rev_info rev_info " +
                 "WHERE " +
                 "  pdo.product_order_id = pdo_aud.product_order_id AND " +

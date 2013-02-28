@@ -182,7 +182,7 @@ public class CoreActionBean implements ActionBean {
      * @param message The message to put into a SimpleMessage
      */
     protected void addMessage(String message, Object... arguments) {
-        getContext().getMessages().add(new SimpleMessage(message, arguments));
+        flashMessage(new SimpleMessage(message, arguments));
     }
 
     /**
@@ -213,7 +213,7 @@ public class CoreActionBean implements ActionBean {
      * @param arguments optional message parameters
      */
     public void addGlobalValidationError(String errorMessage, Object... arguments) {
-        getContext().getValidationErrors().addGlobalError(new SimpleError(errorMessage, arguments));
+        flashErrorMessage(new SimpleError(errorMessage, arguments));
     }
 
     /**
