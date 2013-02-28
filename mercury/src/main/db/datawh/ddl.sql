@@ -503,7 +503,7 @@ CREATE INDEX research_project_irb_idx1 ON research_project_irb(research_project_
 CREATE INDEX product_order_idx1 ON product_order(research_project_id);
 CREATE INDEX product_order_idx2 ON product_order(product_id);
 CREATE INDEX product_order_status_idx1 ON product_order_status(product_order_id);
-CREATE INDEX product_order_sample_idx1 ON product_order_sample(product_order_id);
+CREATE UNIQUE INDEX product_order_sample_idx1 ON product_order_sample(product_order_id, sample_name, sample_position);
 CREATE INDEX pdo_sample_status_idx1 ON product_order_sample_status(product_order_sample_id);
 CREATE INDEX pdo_add_on_idx1 ON product_order_add_on(product_order_id);
 CREATE INDEX pdo_add_on_idx2 ON product_order_add_on(product_id);

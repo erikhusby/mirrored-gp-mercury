@@ -33,14 +33,14 @@
                             <stripes:text id="designName" readonly="${! actionBean.creating}"
                                           name="editReagentDesign.designName"
                                           class="defaultText"
-                                          title="Enter the name of the reagent design"/>
+                                          title="Enter the name of the reagent design"/>`
 
                 </div>
             </div>
 
             <div class="control-group">
                 <stripes:label for="targetSetName" class="control-label">
-                    Target Set Name
+                    Target Set Name *
                 </stripes:label>
                 <div class="controls">
                     <stripes:text id="targetSetName" name="editReagentDesign.targetSetName" class="defaultText"
