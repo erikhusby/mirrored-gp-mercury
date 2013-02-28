@@ -5,7 +5,6 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
@@ -1059,7 +1058,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @return Boolean eligible for abandoning
      */
     public boolean isAbandonable() {
-        return (editOrder.isSubmitted() && CollectionUtils.isEmpty(billingLedgerDao.findByOrderList(editOrder)));
+        return (editOrder.isSubmitted() && productOrderSampleDao.countSamplesWithBillingLedgerEntries(editOrder) == 0);
     }
 
 
