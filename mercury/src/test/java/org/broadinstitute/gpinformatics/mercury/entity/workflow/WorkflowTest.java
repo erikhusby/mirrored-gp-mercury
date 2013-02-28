@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.testng.annotations.Test;

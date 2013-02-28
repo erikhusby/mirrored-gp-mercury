@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
@@ -83,7 +83,7 @@ public class WorkCompleteMessageBeanTest extends ContainerTest{
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
     public void testOnMessage() throws Exception {
         List<WorkCompleteMessage> messages = workCompleteMessageDao.getNewMessages();
-        Assert.assertTrue("Should be at least one message in new message queue", !messages.isEmpty());
+        Assert.assertTrue(!messages.isEmpty(), "Should be at least one message in new message queue");
         boolean found = false;
         for (WorkCompleteMessage message : messages) {
             if (message.getPdoName().equals(TEST_PDO_NAME)) {
@@ -92,7 +92,7 @@ public class WorkCompleteMessageBeanTest extends ContainerTest{
                 break;
             }
         }
-        Assert.assertTrue("Should find our message in message queue", found);
+        Assert.assertTrue(found, "Should find our message in message queue");
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)

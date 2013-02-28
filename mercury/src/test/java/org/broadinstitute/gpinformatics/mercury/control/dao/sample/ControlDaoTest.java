@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.sample;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;

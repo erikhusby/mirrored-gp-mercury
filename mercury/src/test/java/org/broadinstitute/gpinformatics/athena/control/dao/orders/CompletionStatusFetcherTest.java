@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -82,7 +82,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
         }
 
         Assert.assertEquals(
-            "Fetcher calculated different abandon percentage", fetcherPercentAbandoned, (abandoned * 100)/realTotal);
+            fetcherPercentAbandoned, (abandoned * 100)/realTotal, "Fetcher calculated different abandon percentage");
     }
 
     public void testGetPercentComplete() throws Exception {
@@ -115,7 +115,7 @@ public class CompletionStatusFetcherTest extends ContainerTest {
         }
 
         Assert.assertEquals(
-                "Fetcher calculated different complete percentage", fetcherPercentComplete, (complete * 100)/realTotal);
+                fetcherPercentComplete, (complete * 100)/realTotal, "Fetcher calculated different complete percentage");
     }
 
     public void testGetPercentInProgress() throws Exception {
@@ -150,8 +150,8 @@ public class CompletionStatusFetcherTest extends ContainerTest {
         }
 
         Assert.assertEquals(
-                "Fetcher calculated different in progress percentage",
-                fetcherInProgess, 100 - (completeAndAbandoned * 100)/realTotal);
+                fetcherInProgess, 100 - (completeAndAbandoned * 100)/realTotal,
+                "Fetcher calculated different in progress percentage");
     }
 
     public void testGetNumberOfSamples() throws Exception {
@@ -172,6 +172,6 @@ public class CompletionStatusFetcherTest extends ContainerTest {
 
         ProductOrder order = pdoDao.findByBusinessKey(pdoWithSamplesKey);
         Assert.assertEquals(
-                "Fetcher calculated different number of samples", numSamples, order.getSamples().size());
+                numSamples, order.getSamples().size(), "Fetcher calculated different number of samples");
     }
 }

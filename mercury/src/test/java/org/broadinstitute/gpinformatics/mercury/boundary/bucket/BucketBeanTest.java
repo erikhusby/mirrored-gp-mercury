@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -31,7 +31,7 @@ import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.*;
 
-import static junit.framework.Assert.assertTrue;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Scott Matthews

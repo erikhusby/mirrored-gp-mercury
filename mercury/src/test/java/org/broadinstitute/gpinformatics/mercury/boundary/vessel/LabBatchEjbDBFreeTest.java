@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;

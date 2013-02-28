@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
