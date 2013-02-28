@@ -5,7 +5,6 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
-import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
@@ -265,7 +264,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
         requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         requireField(editOrder.getResearchProject(), "a research project", action);
-        requireField(editOrder.getQuoteId(), "a quote specified", action);
+        requireField(StringUtils.isNotBlank(editOrder.getQuoteId()), "a quote specified", action);
         requireField(editOrder.getProduct(), "a product", action);
         if (editOrder.getProduct() != null && editOrder.getProduct().getSupportsNumberOfLanes()) {
             requireField(editOrder.getCount() > 0, "a specified number of lanes", action);
@@ -953,7 +952,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @return true if user can edit the quote
      */
     public boolean getAllowQuoteEdit() {
-        return editOrder.isDraft() || billingLedgerDao.findByOrderList(editOrder).isEmpty();
+        return editOrder.isDraft() || productOrderSampleDao.countSamplesWithBillingLedgerEntries(editOrder) == 0;
     }
 
     public String getQ() {
@@ -1067,7 +1066,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!editOrder.isSubmitted()) {
             setAbandonDisabledReason("the order status of the PDO is not 'Submitted'.");
             return false;
-        } else if (!CollectionUtils.isEmpty(billingLedgerDao.findByOrderList(editOrder))) {
+        } else if (productOrderSampleDao.countSamplesWithBillingLedgerEntries(editOrder) > 0) {
             setAbandonWarning(true);
         }
         return true;

@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira.customfields;
 
-import clover.org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.codehaus.jackson.map.ObjectMapper;
 
 import java.io.IOException;
