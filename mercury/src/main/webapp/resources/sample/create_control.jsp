@@ -37,7 +37,7 @@
                             <label class="control-label label-form">Collaborator Sample Id</label>
 
                             <div class="controls">
-                                <div class="form-value">${actionBean.workingControl.collaboratorSampleId}</div>
+                                <div class="form-value">${actionBean.workingControl.businessKey}</div>
                             </div>
                         </div>
                     </c:otherwise>
@@ -52,10 +52,16 @@
                                 Control Type *
                             </stripes:label>
                             <div class="controls">
-                                <stripes:radio value="${actionBean.positiveTypeValue}"
-                                               name="createControlType"/> ${actionBean.positiveTypeValue}
-                                <stripes:radio value="${actionBean.negativeTypeValue}"
-                                               name="createControlType"/> ${actionBean.negativeTypeValue}
+                                <stripes:radio value="${actionBean.positiveTypeValue}" id="positiveValue"
+                                               name="createControlType"/>
+                                <%--<stripes:label for="positiveValue">--%>
+                                    ${actionBean.positiveTypeValue}
+                                <%--</stripes:label>--%>
+                                <stripes:radio value="${actionBean.negativeTypeValue}" id="negativeValue"
+                                               name="createControlType"/>
+                                <%--<stripes:label for="negativeValue">--%>
+                                               ${actionBean.negativeTypeValue}
+                                <%--</stripes:label>--%>
                             </div>
                         </div>
 
@@ -79,7 +85,8 @@
                             Make Control Inactive
                         </stripes:label>
                         <div class="controls">
-                            <stripes:checkbox name="editControlInactiveState" id="controlState" value="${! actionBean.workingControl.inactive}"/>
+                            <stripes:checkbox name="editControlInactiveState" id="controlState"
+                                              value="${actionBean.workingControl.active}"/>
                         </div>
                     </div>
                 </c:if>
@@ -95,7 +102,8 @@
                             </c:when>
                             <c:otherwise>
                                 <stripes:link beanclass="${actionBean.class.name}" event="view">
-                                    <stripes:param name="sampleCollaboratorId" value="${actionBean.workingControl.collaboratorSampleId}"/>
+                                    <stripes:param name="sampleCollaboratorId"
+                                                   value="${actionBean.workingControl.businessKey}"/>
                                     Cancel
                                 </stripes:link>
                             </c:otherwise>

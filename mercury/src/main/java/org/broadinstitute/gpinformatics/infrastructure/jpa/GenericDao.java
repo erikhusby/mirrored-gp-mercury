@@ -197,8 +197,7 @@ public class GenericDao {
      * @param <ENTITY_TYPE> the type of the entity to return
      * @return entity that matches the value, or null if not found
      */
-    public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> ENTITY_TYPE findSingle(
-            Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, VALUE_TYPE value) {
+    public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> ENTITY_TYPE findSingle(Class<ENTITY_TYPE> entity, SingularAttribute<METADATA_TYPE, VALUE_TYPE> singularAttribute, VALUE_TYPE value) {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
@@ -221,22 +220,27 @@ public class GenericDao {
 
     /**
      * Returns a single entity that matches a specified value for a specified property.
-     * @param entity the class of entity to return
+     *
+     * @param entity             the class of entity to return
      * @param genericDaoCallback optional callback to add fetches to the specified {@link Root}
-     * @param <VALUE_TYPE> the type of the value in the query, e.g. String
-     * @param <METADATA_TYPE> the type on which the property is defined, this can be different from the ENTITY_TYPE if
-     *                       there is inheritance
-     * @param <ENTITY_TYPE> the type of the entity to return
+     * @param <VALUE_TYPE>       the type of the value in the query, e.g. String
+     * @param <METADATA_TYPE>    the type on which the property is defined, this can be different from the ENTITY_TYPE
+     *                           if
+     *                           there is inheritance
+     * @param <ENTITY_TYPE>      the type of the entity to return
+     *
      * @return entity that matches the value, or null if not found
      */
-    public <VALUE_TYPE, METADATA_TYPE, ENTITY_TYPE extends METADATA_TYPE> ENTITY_TYPE findSingle(
-            Class<ENTITY_TYPE> entity,
-                        @Nullable GenericDaoCallback<ENTITY_TYPE> genericDaoCallback) {
+    public <VALUE_TYPE,
+            METADATA_TYPE,
+            ENTITY_TYPE extends METADATA_TYPE> ENTITY_TYPE findSingle(Class<ENTITY_TYPE> entity,
+                                                                      @Nullable GenericDaoCallback<ENTITY_TYPE> genericDaoCallback)
+    {
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<ENTITY_TYPE> criteriaQuery = criteriaBuilder.createQuery(entity);
         Root<ENTITY_TYPE> root = criteriaQuery.from(entity);
 
-        if(genericDaoCallback != null) {
+        if (genericDaoCallback != null) {
             genericDaoCallback.callback(criteriaQuery, root);
         }
 

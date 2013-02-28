@@ -14,7 +14,7 @@
                 $j('#positiveControlList').dataTable({
                                                          "oTableTools":ttExportDefines,
                                                          "aaSorting":[
-                                                             [2, 'desc']
+                                                             [1, 'desc']
                                                          ],
                                                          "aoColumns":[
                                                              {"bSortable":true}//Collaborator Sample ID
@@ -24,7 +24,7 @@
                 $j('#negativeControlList').dataTable({
                                                          "oTableTools":ttExportDefines,
                                                          "aaSorting":[
-                                                             [8, 'desc']
+                                                             [1, 'desc']
                                                          ],
                                                          "aoColumns":[
                                                              {"bSortable":true}//Collaborator Sample ID
@@ -62,9 +62,9 @@
                 <tr>
                     <td>
                         <stripes:link beanclass="${actionBean.class.name}" event="view">
-                            <stripes:param name="${actionBean.mercuryControlParameter}"
-                                           value="${positiveControl.collaboratorSampleId}"/>
-                            ${positiveControl.collaboratorSampleId}
+                            <stripes:param name="${actionBean.controlParameter}"
+                                           value="${positiveControl.businessKey}"/>
+                            ${positiveControl.businessKey}
                         </stripes:link>
                     </td>
                 </tr>
@@ -87,9 +87,9 @@
                 <tr>
                     <td>
                         <stripes:link beanclass="${actionBean.class.name}" event="view">
-                            <stripes:param name="${actionBean.mercuryControlParameter}"
-                                           value="${negativeControl.collaboratorSampleId}"/>
-                            ${negativeControl.collaboratorSampleId}
+                            <stripes:param name="${actionBean.controlParameter}"
+                                           value="${negativeControl.businessKey}"/>
+                            ${negativeControl.businessKey}
                         </stripes:link>
                     </td>
                 </tr>

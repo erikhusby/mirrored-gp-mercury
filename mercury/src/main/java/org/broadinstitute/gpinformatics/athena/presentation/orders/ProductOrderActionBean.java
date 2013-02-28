@@ -260,7 +260,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
         requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         requireField(editOrder.getResearchProject(), "a research project", action);
-        requireField(editOrder.getQuoteId(), "a quote specified", action);
+        requireField(StringUtils.isNotBlank(editOrder.getQuoteId()), "a quote specified", action);
         requireField(editOrder.getProduct(), "a product", action);
         if (editOrder.getProduct() != null && editOrder.getProduct().getSupportsNumberOfLanes()) {
             requireField(editOrder.getCount() > 0, "a specified number of lanes", action);
@@ -948,7 +948,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @return true if user can edit the quote
      */
     public boolean getAllowQuoteEdit() {
-        return editOrder.isDraft() || billingLedgerDao.findByOrderList(editOrder).isEmpty();
+        return editOrder.isDraft() || productOrderSampleDao.countSamplesWithBillingLedgerEntries(editOrder) == 0;
     }
 
     public String getQ() {
