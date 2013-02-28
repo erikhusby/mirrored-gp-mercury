@@ -118,7 +118,7 @@ public class CoreActionBean implements ActionBean {
     }
 
     /**
-     * Places a single error message into the flash scope to be shown on the next request.
+     * Adds a single error message into the flash scope to be shown on the next request.
      *
      * @param error ValidationError message to be flashed
      */
@@ -151,12 +151,17 @@ public class CoreActionBean implements ActionBean {
         return ! (getContext().getValidationErrors().isEmpty() && (errors == null || errors.isEmpty()));
     }
 
+    /**
+     * Checks to see if there are no validation errors in the flash scope or the validation errors scope
+     *
+     * @return returns true if there are no validation errors and false otherwise
+     */
     protected boolean hasNoValidationErrors() {
         return !hasAnyValidationErrors();
     }
 
     /**
-     * Places a single message into the flash scope to be shown on the next request.
+     * Adds a single message into the flash scope to be shown on the next request.
      *
      * @param message Message  to be flashed
      */
