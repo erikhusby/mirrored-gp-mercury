@@ -92,7 +92,7 @@ public class ResearchProjectResourceTest extends ContainerTest {
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testFindResearchProjectById() throws Exception {
-        ResearchProjectResource.ResearchProjects researchProject = researchProjectResource.findResearchProjectById(testTitle);
+        ResearchProjectResource.ResearchProjects researchProject = researchProjectResource.findByIds(testTitle);
         Assert.assertEquals(researchProject.projects.size(), 1);
         Assert.assertEquals(researchProject.projects.get(0).title, testTitle);
     }

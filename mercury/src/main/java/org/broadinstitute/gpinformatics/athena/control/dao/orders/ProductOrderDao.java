@@ -45,7 +45,6 @@ public class ProductOrderDao extends GenericDao {
         private Set<FetchSpec> fetchSpecs;
 
         ProductOrderDaoCallback(FetchSpec... fs) {
-
             fetchSpecs = new HashSet<FetchSpec>(Arrays.asList(fs));
         }
 
@@ -108,9 +107,8 @@ public class ProductOrderDao extends GenericDao {
      * @return
      */
     public List<ProductOrder> findListByBusinessKeyList(List<String> businessKeyList, FetchSpec... fs) {
-
         return findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, businessKeyList,
-                                     new ProductOrderDaoCallback(fs));
+                new ProductOrderDaoCallback(fs));
     }
 
     /**
@@ -322,4 +320,17 @@ public class ProductOrderDao extends GenericDao {
         return progressCounterMap;
     }
 
+    /**
+     * Find all PDOs modified after a specified date.
+     * @param modifiedAfter date to compare
+     * @return list of PDOs
+     */
+    public List<ProductOrder> findModifiedAfter(final Date modifiedAfter) {
+        return findAll(ProductOrder.class, new GenericDaoCallback<ProductOrder>() {
+            @Override
+            public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> root) {
+                criteriaQuery.where(getCriteriaBuilder().greaterThan(root.get(ProductOrder_.modifiedDate), modifiedAfter));
+            }
+        });
+    }
 }

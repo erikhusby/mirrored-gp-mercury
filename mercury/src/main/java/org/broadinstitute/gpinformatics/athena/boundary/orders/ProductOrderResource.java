@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -7,10 +8,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.PathParam;
-import javax.ws.rs.Produces;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
@@ -50,64 +48,67 @@ public class ProductOrderResource {
             status = null;
         }
 
-        public ProductOrderData(ProductOrder productOrder) {
+        public ProductOrderData(ProductOrder productOrder, boolean includeSamples) {
             title = productOrder.getTitle();
-            id = productOrder.getJiraTicketKey();
+            id = productOrder.getBusinessKey();
             comments = productOrder.getComments();
-            samples = new ArrayList<String>(productOrder.getSamples().size());
-            for (ProductOrderSample sample : productOrder.getSamples()) {
-                samples.add(sample.getSampleName());
-            }
             modifiedDate = productOrder.getModifiedDate();
             status = productOrder.getOrderStatus();
+            if (includeSamples) {
+                samples = new ArrayList<String>(productOrder.getSamples().size());
+                for (ProductOrderSample sample : productOrder.getSamples()) {
+                    samples.add(sample.getSampleName());
+                }
+            } else {
+                samples = null;
+            }
         }
     }
 
     @XmlRootElement
     public static class ProductOrders {
 
-        @XmlElementWrapper
         @XmlElement(name = "order")
         public final List<ProductOrderData> orders;
 
         public ProductOrders() {
-            orders = Collections.emptyList();
+            orders = null;
         }
 
-        public ProductOrders(List<ProductOrder> orders) {
+        public ProductOrders(List<ProductOrder> orders, boolean includeSamples) {
             this.orders = new ArrayList<ProductOrderData>(orders.size());
             for (ProductOrder order : orders) {
-                this.orders.add(new ProductOrderData(order));
+                this.orders.add(new ProductOrderData(order, includeSamples));
             }
         }
     }
 
     @GET
     @Path("pdo/{productOrderIds}")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public ProductOrders findById(@PathParam("productOrderIds") String productOrderIds) {
+    @Produces(MediaType.APPLICATION_XML)
+    public ProductOrders findByIds(@PathParam("productOrderIds") String productOrderIds,
+                                   @DefaultValue("false") @QueryParam("includeSamples") boolean includeSamples) {
         return new ProductOrders(productOrderDao.findListByBusinessKeyList(
-                Arrays.asList(productOrderIds.split(","))));
-    }
-
-    @GET
-    @Path("sample/{sample}")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public ProductOrders findBySample(@PathParam("sample") String sampleName) {
-        // TODO: find all PDOs by sample.
-
-        return new ProductOrders();
+                Arrays.asList(productOrderIds.split(","))), includeSamples);
     }
 
     /**
-     * Method to GET the list of research projects. Optionally filter this by the user who created them if the creator
-     * param is supplied.
+     * Method to GET the list of product orders. Optionally filter by a list of PDOs, or by a modify date.
      *
-     * @return The research projects that match
+     * @return The product orders that match
      */
     @GET
-    @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public ProductOrders findAll() {
-        return new ProductOrders(productOrderDao.findAll());
+    @Produces(MediaType.APPLICATION_XML)
+    public ProductOrders findOrders(@QueryParam("withId") String productOrderIds,
+                                      @QueryParam("modifiedAfter") Date modifiedAfter,
+                                      @DefaultValue("false") @QueryParam("includeSamples") boolean includeSamples) {
+        if (!StringUtils.isEmpty(productOrderIds)) {
+            return new ProductOrders(productOrderDao.findListByBusinessKeyList(
+                Arrays.asList(productOrderIds.split(","))), includeSamples);
+        }
+        if (modifiedAfter != null) {
+            return new ProductOrders(productOrderDao.findModifiedAfter(modifiedAfter), includeSamples);
+        }
+        return new ProductOrders(productOrderDao.findAll(), includeSamples);
     }
 }

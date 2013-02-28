@@ -87,6 +87,9 @@ public class ResearchProjectResource {
             broadPIs = createUsernamesFromIds(bspUserList, researchProject.getBroadPIs());
             orders = new ArrayList<String>(researchProject.getProductOrders().size());
             for (ProductOrder order : researchProject.getProductOrders()) {
+                // Using the JIRA ticket key omits draft orders from the report. At this point there is no
+                // requirement to expose draft orders to client of this web service. Supporting draft will
+                // require adding a DAO API to map from Draft IDs to entities.
                 orders.add(order.getJiraTicketKey());
             }
             modifiedDate = researchProject.getModifiedDate();
@@ -116,7 +119,7 @@ public class ResearchProjectResource {
     @GET
     @Path("rp/{researchProjectIds}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public ResearchProjects findResearchProjectById(@PathParam("researchProjectIds") String researchProjectIds) {
+    public ResearchProjects findByIds(@PathParam("researchProjectIds") String researchProjectIds) {
         return new ResearchProjects(bspUserList, researchProjectDao.findByJiraTicketKeys(
                 Arrays.asList(researchProjectIds.split(","))));
     }
@@ -124,7 +127,7 @@ public class ResearchProjectResource {
     @GET
     @Path("pm/{pms}")
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public ResearchProjects findResearchProjectByPm(@PathParam("pms") String pmUserName) {
+    public ResearchProjects findByPm(@PathParam("pms") String pmUserName) {
         // TODO: find all RPs by PMs.
         // One approach:
         // - find all ProjectPerson with role == PM and personId == ID
@@ -142,7 +145,7 @@ public class ResearchProjectResource {
      */
     @GET
     @Produces({MediaType.APPLICATION_JSON, MediaType.APPLICATION_XML})
-    public ResearchProjects findAllResearchProjects() {
+    public ResearchProjects findAll() {
         return new ResearchProjects(bspUserList, researchProjectDao.findAllResearchProjectsWithOrders());
     }
 }
