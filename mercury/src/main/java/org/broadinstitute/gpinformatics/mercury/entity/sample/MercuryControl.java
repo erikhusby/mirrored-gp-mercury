@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.sample;
 
-import clover.org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
@@ -15,7 +15,6 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 /**
- *
  * Represents a user defined control for Mercury.  Will encapsulate both the collaborator sample ID that is
  * associated
  * with the control and an indicator of what kind of control (positive or negative) this is.
@@ -41,8 +40,8 @@ public class MercuryControl {
 
         public static ControlType findByDisplayName(String displayName) {
 
-            for(ControlType type:values()) {
-                if(StringUtils.equals(displayName, type.displayName)) {
+            for (ControlType type : values()) {
+                if (StringUtils.equals(displayName, type.displayName)) {
                     return type;
                 }
             }
@@ -81,8 +80,8 @@ public class MercuryControl {
         }
 
         public static ControlState findByDisplayName(String displayName) {
-            for(ControlState state:values()) {
-                if(StringUtils.equals(displayName, state.displayName)) {
+            for (ControlState state : values()) {
+                if (StringUtils.equals(displayName, state.displayName)) {
                     return state;
                 }
             }
@@ -118,6 +117,10 @@ public class MercuryControl {
         return collaboratorSampleId;
     }
 
+    public String getBusinessKey() {
+        return getCollaboratorSampleId();
+    }
+
     public ControlType getType() {
         return type;
     }
@@ -134,30 +137,11 @@ public class MercuryControl {
         this.type = type;
     }
 
-    public void setType(String type) {
-        this.type = ControlType.findByDisplayName(type);
-    }
-
     public void setState(ControlState state) {
         this.state = state;
     }
 
-    public void setState(boolean state) {
-        this.state = state?ControlState.ACTIVE:ControlState.INACTIVE;
-    }
-
-    public boolean isInactive() {
-        return this.state == ControlState.INACTIVE;
-    }
-
-    /**
-     * easily flips the current state of a control from Active->Inactive or Vice Versa
-     */
-    public void toggleState() {
-        if (this.state == ControlState.ACTIVE) {
-            this.state = ControlState.INACTIVE;
-        } else {
-            this.state = ControlState.ACTIVE;
-        }
+    public boolean isActive() {
+        return this.state == ControlState.ACTIVE;
     }
 }
