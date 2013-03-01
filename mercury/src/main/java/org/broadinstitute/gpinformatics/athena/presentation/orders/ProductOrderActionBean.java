@@ -175,10 +175,10 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = SET_RISK)
     private String riskComment;
 
-    //used for prompting why the abandon button is disabled
+    //This is used for prompting why the abandon button is disabled
     private String abandonDisabledReason;
 
-    //used to determine whether a special warning message needs to be confirmed before normal abandon;
+    //This is used to determine whether a special warning message needs to be confirmed before normal abandon;
     private boolean abandonWarning = false;
     /**
      * Single {@link ProductOrderListEntry} for the view page, gives us billing session information.
@@ -1136,7 +1136,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     /**
-     * Updated reason why the abandon button is disabled.
+     * Update reason why the abandon button is disabled.
      * @param abandonDisabledReason String of text indicating why the abandon button is disabled
      */
     public void setAbandonDisabledReason(String abandonDisabledReason) {

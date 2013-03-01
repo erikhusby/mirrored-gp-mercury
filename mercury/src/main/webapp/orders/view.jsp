@@ -321,29 +321,30 @@
                 </c:choose>
             </security:authorizeBlock>
             <c:if test="${editOrder.draft}">
-                    <%-- MLC PDOs can be placed by PM or PDMs, so I'm making the security tag accept either of those roles for 'Place Order'.
-                         I am also putting 'Validate' under that same security tag since I think that may have the power to alter 'On-Riskedness'
-                         for PDO samples --%>
-                    <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name, Role.PM.name}%>">
+                <%-- MLC PDOs can be placed by PM or PDMs, so I'm making the security tag accept either of those roles for 'Place Order'.
+                     I am also putting 'Validate' under that same security tag since I think that may have the power to alter 'On-Riskedness'
+                     for PDO samples --%>
+                <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name, Role.PM.name}%>">
 
-                        <stripes:submit name="placeOrder" value="Validate and Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
-                        <stripes:submit name="validate" value="Validate" style="margin-left: 5px;" class="btn"/>
-                    </security:authorizeBlock>
+                    <stripes:submit name="placeOrder" value="Validate and Place Order"
+                                    disabled="${!actionBean.canPlaceOrder}" class="btn"/>
+                    <stripes:submit name="validate" value="Validate" style="margin-left: 5px;" class="btn"/>
+                </security:authorizeBlock>
 
-                    <stripes:link title="Click to edit ${editOrder.title}"
-                                  beanclass="${actionBean.class.name}" event="edit" class="btn"
-                                  style="text-decoration: none !important;">
-                        <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
-                        <stripes:param name="productOrder" value="${editOrder.businessKey}"/>
-                    </stripes:link>
+                <stripes:link title="Click to edit ${editOrder.title}"
+                              beanclass="${actionBean.class.name}" event="edit" class="btn"
+                              style="text-decoration: none !important;">
+                    <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
+                    <stripes:param name="productOrder" value="${editOrder.businessKey}"/>
+                </stripes:link>
 
-                    <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PM.name}%>">
-                        <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
-                                        value="Delete Draft" style="margin-left: 5px;" class="btn"/>
-                    </security:authorizeBlock>
-                </c:if>
-            </div>
-        </stripes:form>
+                <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PM.name}%>">
+                    <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
+                                    value="Delete Draft" style="margin-left: 5px;" class="btn"/>
+                </security:authorizeBlock>
+            </c:if>
+        </div>
+    </stripes:form>
 
         <%-- PDO edit should only be available to PDMs, i.e. not PMs. --%>
         <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name}%>">
