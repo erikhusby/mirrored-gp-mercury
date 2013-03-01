@@ -17,10 +17,10 @@ import java.util.Map;
 @XmlAccessorType(XmlAccessType.FIELD)
 public class WorkflowBucketDef extends WorkflowStepDef {
 
-    // Expression to determine whether a vessel can enter the bucket
+    /** Expression to determine whether a vessel can enter the bucket */
     private String entryExpression;
 
-    // auto-drain rules - time / date based
+    /** auto-drain rules - time / date based */
     private Double autoDrainDays;
 
     /** For JAXB */
