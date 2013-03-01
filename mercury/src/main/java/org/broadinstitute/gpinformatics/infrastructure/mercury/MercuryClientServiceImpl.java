@@ -53,16 +53,24 @@ public class MercuryClientServiceImpl implements MercuryClientService {
     }
 
     /**
-     * @{inheritDoc}
+     * {@inheritDoc}
      */
     @Override
     public Collection<ProductOrderSample> addSampleToPicoBucket(ProductOrder pdo) {
+        return addSampleToPicoBucket(pdo, pdo.getSamples());
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Collection<ProductOrderSample> addSampleToPicoBucket(ProductOrder pdo, Collection<ProductOrderSample> samples) {
         List<ProductOrderSample> samplesAdded = new ArrayList<ProductOrderSample>();
         Collection<LabVessel> vesselsAdded = new ArrayList<LabVessel>();
 
         // Finds the vessels for MercurySamples representing the pdo samples.
         Map<String, ProductOrderSample> nameToSampleMap = new HashMap<String, ProductOrderSample>();
-        for (ProductOrderSample pdoSample : pdo.getSamples()) {
+        for (ProductOrderSample pdoSample : samples) {
             nameToSampleMap.put(pdoSample.getSampleName(), pdoSample);
         }
         List<String> listOfSampleNames = new ArrayList(nameToSampleMap.keySet());
