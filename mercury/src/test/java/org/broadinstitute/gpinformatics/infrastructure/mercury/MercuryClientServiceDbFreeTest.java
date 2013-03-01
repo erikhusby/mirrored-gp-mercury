@@ -69,7 +69,6 @@ public class MercuryClientServiceDbFreeTest {
     @BeforeClass
     public void beforeClass() throws Exception {
         service = new MercuryClientServiceImpl(bucketBean, bucketDao, workflowLoader, bspUserList, labVesselDao);
-        pdoSamples.add(pdoSample1); //
         labVessels.add(labVessel);
         samples.add(mercurySample);
         batches.add(labBatch);
@@ -77,10 +76,13 @@ public class MercuryClientServiceDbFreeTest {
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
+        pdoSamples = new ArrayList<ProductOrderSample>();
+        pdoSamples.add(pdoSample1);
         reset(mocks);
     }
 
     public void testSampleToPicoBucket() throws Exception {
+        // subtle differences from testAddSampleToPicoBucketSubset: pdoSamples contains only pdoSample1, and pdo.getSamples() is expected and returns pdoSamples
         expect(pdo.getSamples()).andReturn(pdoSamples);
         expect(pdoSample1.getSampleName()).andReturn(sampleKey);
         expect(labVesselDao.findBySampleKeyList((List<String>)anyObject())).andReturn(labVessels);
@@ -88,7 +90,7 @@ public class MercuryClientServiceDbFreeTest {
         //if (batches.size() == 0)   batches = vessel.getNearestLabBatches();
         expect(labBatch.getLabBatchType()).andReturn(LabBatch.LabBatchType.SAMPLES_RECEIPT);
         expect(labVessel.getMercurySamples()).andReturn(samples);
-        expect(mercurySample.getSampleKey()).andReturn(sampleKey).times(2);
+        expect(mercurySample.getSampleKey()).andReturn(sampleKey);
 
         expect(pdo.getProduct()).andReturn(product);
         expect(product.getWorkflowName()).andReturn(workflowName).anyTimes();
@@ -110,25 +112,24 @@ public class MercuryClientServiceDbFreeTest {
 
     @Test(enabled = false)
     public void testAddSampleToPicoBucketSubset() {
-        // for setup
-        pdoSamples = new ArrayList<ProductOrderSample>();
-        pdoSamples.add(pdoSample1);
-
-        // subtle differences from testAddSampleToPicoBucketSubset: pdoSamples contains only pdoSample1, and pdo.getSamples() is expected and returns pdoSamples
         // subtle differences from testSampleToPicoBucket: pdoSamples contains pdoSample1 and pdoSample2, and pdo.getSamples() is not expected
         pdoSamples.add(pdoSample2);
-        expect(labBatchDao.findBatchesInReceiving()).andReturn(labBatches);
-        expect(labBatch.getStartingLabVessels()).andReturn(labVessels);
+        expect(pdoSample1.getSampleName()).andReturn(sampleKey);
+        expect(labVesselDao.findBySampleKeyList((List<String>)anyObject())).andReturn(labVessels);
+        expect(labVessel.getLabBatches()).andReturn(batches);
+        expect(labBatch.getLabBatchType()).andReturn(LabBatch.LabBatchType.SAMPLES_RECEIPT);
         expect(labVessel.getMercurySamples()).andReturn(samples);
-        expect(sample.getSampleKey()).andReturn(sampleKey);
+        expect(mercurySample.getSampleKey()).andReturn(sampleKey);
+
         expect(pdo.getProduct()).andReturn(product);
         expect(product.getWorkflowName()).andReturn(workflowName).anyTimes();
         expect(bucketDao.findByName("Pico/Plating Bucket")).andReturn(bucket);
         expect(pdo.getCreatedBy()).andReturn(userId);
         expect(bspUserList.getById(userId)).andReturn(bspUser);
         expect(bspUser.getUsername()).andReturn(userName);
-        expect(pdoSample1.getSampleName()).andReturn(sampleKey);
+
         expect(pdo.getBusinessKey()).andReturn(pdoKey);
+
         Collection<LabVessel> bucketVessels = new ArrayList<LabVessel>();
         bucketVessels.add(labVessel);
         bucketBean.add(bucketVessels, bucket, userName, eventLocation, eventType, pdoKey);

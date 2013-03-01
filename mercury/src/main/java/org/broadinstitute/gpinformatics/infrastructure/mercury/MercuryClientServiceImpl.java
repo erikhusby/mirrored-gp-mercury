@@ -88,8 +88,9 @@ public class MercuryClientServiceImpl implements MercuryClientService {
                 vesselsAdded.add(vessel);
 
                 for (MercurySample mercurySample : vessel.getMercurySamples()) {
-                    assert(nameToSampleMap.containsKey(mercurySample.getSampleKey()));
-                    samplesAdded.add(nameToSampleMap.get(mercurySample.getSampleKey()));
+                    String sampleKey = mercurySample.getSampleKey();
+                    assert(nameToSampleMap.containsKey(sampleKey));
+                    samplesAdded.add(nameToSampleMap.get(sampleKey));
                 }
             }
         }
