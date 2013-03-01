@@ -279,6 +279,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // We are doing on risk calculation only when everything passes, but informing the user no matter what
         if (hasNoValidationErrors()) {
             int numSamplesOnRisk = editOrder.calculateRisk();
+            editOrder.prepareToSave(getUserBean().getBspUser());
             productOrderDao.persist(editOrder);
 
             if (numSamplesOnRisk == 0) {
@@ -453,7 +454,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(PLACE_ORDER)
     public Resolution placeOrder() {
         try {
-            editOrder.prepareToSave(userBean.getBspUser(), isCreating());
+            editOrder.prepareToSave(userBean.getBspUser());
             editOrder.placeOrder();
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
@@ -461,7 +462,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderDao.persist(editOrder);
         } catch (Exception e) {
             // Need to quote the message contents to prevent errors.
-            addLiteralErrorMessage(e.getMessage());
+            addGlobalValidationError("{2}", e.getMessage());
             return getSourcePageResolution();
         }
 
@@ -700,6 +701,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // If removeAll returns false, no samples were removed -- should never happen.
         if (editOrder.getSamples().removeAll(selectedProductOrderSamples)) {
             String nameList = StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ",");
+            editOrder.prepareToSave(getUserBean().getBspUser());
             productOrderDao.persist(editOrder);
             addMessage("Deleted samples: {0}.", nameList);
             JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
@@ -729,6 +731,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
 
+        editOrder.prepareToSave(getUserBean().getBspUser());
         productOrderDao.persist(editOrder);
 
         addMessage("Set manual on risk for {0} samples.", selectedProductOrderSampleIds.size());
@@ -749,7 +752,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
         if (!selectedProductOrderSamples.isEmpty()) {
-            String nameList = StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ",");
             productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples);
         }
         return createViewResolution();
@@ -759,6 +761,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution addSamples() throws Exception {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
         editOrder.addSamples(samplesToAdd);
+        editOrder.prepareToSave(getUserBean().getBspUser());
         productOrderDao.persist(editOrder);
         String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samplesToAdd), ",");
         addMessage("Added samples: {0}.", nameList);
