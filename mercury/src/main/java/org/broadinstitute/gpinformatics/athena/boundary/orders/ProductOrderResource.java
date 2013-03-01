@@ -78,7 +78,10 @@ public class ProductOrderResource {
         public ProductOrders(List<ProductOrder> orders, boolean includeSamples) {
             this.orders = new ArrayList<ProductOrderData>(orders.size());
             for (ProductOrder order : orders) {
-                this.orders.add(new ProductOrderData(order, includeSamples));
+                // Result doesn't include Draft orders.
+                if (!order.isDraft()) {
+                    this.orders.add(new ProductOrderData(order, includeSamples));
+                }
             }
         }
     }
@@ -97,15 +100,18 @@ public class ProductOrderResource {
      *
      * @return The product orders that match
      */
-    // FIXME: need to filter out Draft PDOs.
     @GET
     @Produces(MediaType.APPLICATION_XML)
     public ProductOrders findOrders(@QueryParam("withId") String productOrderIds,
                                     @QueryParam("modifiedAfter") Date modifiedAfter,
+                                    @QueryParam("withSample") String sampleIds,
                                     @DefaultValue("false") @QueryParam("includeSamples") boolean includeSamples) {
         if (!StringUtils.isEmpty(productOrderIds)) {
             return new ProductOrders(productOrderDao.findListByBusinessKeyList(
                 Arrays.asList(productOrderIds.split(","))), includeSamples);
+        }
+        if (sampleIds != null) {
+            return new ProductOrders(productOrderDao.findBySampleBarcodes(sampleIds.split(",")), includeSamples);
         }
         if (modifiedAfter != null) {
             return new ProductOrders(productOrderDao.findModifiedAfter(modifiedAfter), includeSamples);
