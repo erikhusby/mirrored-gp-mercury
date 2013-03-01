@@ -97,7 +97,6 @@ public class ResearchProjectResource {
     @XmlRootElement
     public static class ResearchProjects {
 
-        @XmlElementWrapper
         @XmlElement(name = "project")
         public final List<ResearchProjectData> projects;
 
