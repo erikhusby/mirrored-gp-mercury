@@ -371,10 +371,10 @@ public class ProductOrderEjb {
      * @param samples The samples in question.
      * @throws SampleDeliveryStatusChangeException Thrown if any samples are found to not be in an acceptable starting status.
      */
-    private static void transitionSamples(ProductOrder order,
-                                          Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
-                                          ProductOrderSample.DeliveryStatus targetStatus,
-                                          Collection<ProductOrderSample> samples) throws SampleDeliveryStatusChangeException {
+    private void transitionSamples(ProductOrder order,
+                                   Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
+                                   ProductOrderSample.DeliveryStatus targetStatus,
+                                   Collection<ProductOrderSample> samples) throws SampleDeliveryStatusChangeException {
 
         Set<ProductOrderSample> transitionSamples = new HashSet<ProductOrderSample>(samples);
 
@@ -395,6 +395,9 @@ public class ProductOrderEjb {
         if (!untransitionableSamples.isEmpty()) {
             throw new SampleDeliveryStatusChangeException(targetStatus, untransitionableSamples);
         }
+
+        // Update the PDO as modified.
+        order.prepareToSave(userBean.getBspUser());
     }
 
 

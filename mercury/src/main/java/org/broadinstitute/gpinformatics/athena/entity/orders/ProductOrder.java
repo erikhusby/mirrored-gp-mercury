@@ -130,7 +130,7 @@ public class ProductOrder implements Serializable {
         }
 
         String[] addOnArray = new String[addOns.size()];
-        int i=0;
+        int i = 0;
         for (ProductOrderAddOn poAddOn : addOns) {
             addOnArray[i++] = poAddOn.getAddOn().getProductName();
         }
@@ -150,8 +150,8 @@ public class ProductOrder implements Serializable {
         setAddons(addOnProducts);
         setProduct(product);
         setResearchProject(project);
-        setSamples(samples);
-    }
+            setSamples(samples);
+        }
 
     /**
      * This calculates risk for all samples on the order
@@ -362,6 +362,14 @@ public class ProductOrder implements Serializable {
         this.quoteId = quoteId;
         this.product = product;
         this.researchProject = researchProject;
+    }
+
+    /**
+     * Call this method before saving changes to the database.  It updates the modified date and modified user.
+     * @param user the user doing the save operation.
+     */
+    public void prepareToSave(BspUser user) {
+        prepareToSave(user, false);
     }
 
     /**
