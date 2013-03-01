@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
@@ -26,7 +26,7 @@ public class BSPMaterialTypeListTest extends ContainerTest {
         Assert.assertNotNull(materialTypes);
         Assert.assertTrue(!materialTypes.isEmpty());
         //An arbitrary sanity check, BSP Dev has over 80, Stubby has 5 total
-        Assert.assertTrue("actual number was " + materialTypes.size(), materialTypes.size() > 4);
+        Assert.assertTrue(materialTypes.size() > 4, "actual number was " + materialTypes.size());
 
     }
 
@@ -36,7 +36,7 @@ public class BSPMaterialTypeListTest extends ContainerTest {
         Assert.assertNotNull(materialTypes);
         Assert.assertTrue(!materialTypes.isEmpty());
         // An arbitrary sanity check; BSP Dev has many, Stubby has 3 for DNA
-        Assert.assertTrue("actual number was " + materialTypes.size(), materialTypes.size() > 2 );
+        Assert.assertTrue(materialTypes.size() > 2, "actual number was " + materialTypes.size());
     }
 
     @Test
@@ -57,6 +57,6 @@ public class BSPMaterialTypeListTest extends ContainerTest {
         Assert.assertNotNull(materialTypes);
         Assert.assertTrue(!materialTypes.isEmpty());
         // An arbitrary sanity check; the actual database has at least one Genomic material type
-        Assert.assertTrue("actual number was " + materialTypes.size(), materialTypes.size() > 0);
+        Assert.assertTrue(materialTypes.size() > 0, "actual number was " + materialTypes.size());
     }
 }

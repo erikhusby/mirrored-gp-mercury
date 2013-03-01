@@ -200,6 +200,10 @@ public class BSPSampleDTO {
         return volume;
     }
 
+    public void setVolume(double volume) {
+        this.volume = volume;
+    }
+
     public double getConcentration() {
         return concentration;
     }
@@ -287,6 +291,9 @@ public class BSPSampleDTO {
 
     public double getTotal() {
         return total;
+    }
+    public void setTotal(double total) {
+        this.total = total;
     }
 
     public String getSampleType() {

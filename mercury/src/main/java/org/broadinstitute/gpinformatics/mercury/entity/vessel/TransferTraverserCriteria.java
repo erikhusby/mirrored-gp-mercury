@@ -253,7 +253,10 @@ public interface TransferTraverserCriteria {
                             productOrdersAtHopCount.put(context.getHopCount(), new HashSet<String>());
                         }
 
-                        productOrdersAtHopCount.get(context.getHopCount()).add(mercurySample.getProductOrderKey());
+                        String productOrderKey = mercurySample.getProductOrderKey();
+                        if (productOrderKey != null) {
+                            productOrdersAtHopCount.get(context.getHopCount()).add(productOrderKey);
+                        }
                     }
                 }
             }

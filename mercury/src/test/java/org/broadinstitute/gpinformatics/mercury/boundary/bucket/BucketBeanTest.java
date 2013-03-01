@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.bucket;
 
-import junit.framework.Assert;
+import org.testng.Assert;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -28,10 +30,8 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import java.util.*;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
-import static junit.framework.Assert.assertTrue;
+import static org.testng.Assert.assertTrue;
 
 /**
  * @author Scott Matthews
@@ -53,7 +53,7 @@ public class BucketBeanTest extends ContainerTest {
     @Inject
     TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
 
-    private final static Logger logger = Logger.getLogger(BucketBeanTest.class.getName());
+    private final static Log logger = LogFactory.getLog(BucketBeanTest.class);
 
     @Inject
     private UserTransaction utx;
@@ -451,13 +451,11 @@ public class BucketBeanTest extends ContainerTest {
         Assert.assertFalse(testEntry4.getLabVessel().getInPlaceEvents().isEmpty());
         Assert.assertEquals(1, testEntry4.getLabVessel().getInPlaceEvents().size());
 
-        logger.log(Level.INFO, "Before the start method.  The bucket has " + bucket.getBucketEntries().size() +
-                               " Entries in it");
+        logger.info("Before the start method.  The bucket has " + bucket.getBucketEntries().size() + " Entries in it");
 
         resource.start(howieTest, 3, bucket);
 
-        logger.log(Level.INFO, "After the start method.  The bucket has " + bucket.getBucketEntries().size() +
-                               " Entries in it");
+        logger.info("After the start method.  The bucket has " + bucket.getBucketEntries().size() + " Entries in it");
 
 
         Assert.assertFalse(testEntry1.getLabVessel().getInPlaceEvents().isEmpty());

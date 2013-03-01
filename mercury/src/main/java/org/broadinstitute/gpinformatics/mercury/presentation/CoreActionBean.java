@@ -30,6 +30,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.List;
 
 /*
@@ -101,36 +102,80 @@ public class CoreActionBean implements ActionBean {
     @Before(stages = LifecycleStage.EventHandling)
     public void getErrorAndMessage() {
         if (context != null) {
-            ValidationError error = (ValidationError) context.getRequest().getAttribute(FLASH_ERROR);
-            if (error != null) {
-                context.getValidationErrors().addGlobalError(error);
+            List<ValidationError> errors = (List<ValidationError>) context.getRequest().getAttribute(FLASH_ERROR);
+            if (errors != null) {
+                for (ValidationError error : errors) {
+                    context.getValidationErrors().addGlobalError(error);
+                }
             }
-            Message message = (Message) context.getRequest().getAttribute(FLASH_MESSAGE);
-            if (message != null) {
-                context.getMessages().add(message);
+            List<Message> messages = (List<Message>) context.getRequest().getAttribute(FLASH_MESSAGE);
+            if (messages != null) {
+                for (Message message : messages) {
+                    context.getMessages().add(message);
+                }
             }
         }
     }
 
     /**
-     * Places a single error message into the flash scope to be shown on the next request.
+     * Adds a single error message into the flash scope to be shown on the next request.
      *
      * @param error ValidationError message to be flashed
      */
     protected void flashErrorMessage(ValidationError error) {
         FlashScope scope = FlashScope.getCurrent(context.getRequest(), true);
         hasFlashError = true;
-        scope.put(FLASH_ERROR, error);
+
+        List<ValidationError> errors = (List<ValidationError>) scope.get(FLASH_ERROR);
+
+        if (errors == null) {
+            errors = new ArrayList<ValidationError>();
+        }
+
+        errors.add(error);
+
+        scope.put(FLASH_ERROR, errors);
     }
 
     /**
-     * Places a single message into the flash scope to be shown on the next request.
+     * Checks for any validation errors in the flash scope and in the validation errors scope
+     *
+     * @return returns true if any errors are found in either place.  Returns false otherwise.
+     */
+    protected boolean hasAnyValidationErrors() {
+
+        FlashScope scope = FlashScope.getCurrent(context.getRequest(), true);
+
+        List<ValidationError> errors = (List<ValidationError>) scope.get(FLASH_ERROR);
+
+        return ! (getContext().getValidationErrors().isEmpty() && (errors == null || errors.isEmpty()));
+    }
+
+    /**
+     * Checks to see if there are no validation errors in the flash scope or the validation errors scope
+     *
+     * @return returns true if there are no validation errors and false otherwise
+     */
+    protected boolean hasNoValidationErrors() {
+        return !hasAnyValidationErrors();
+    }
+
+    /**
+     * Adds a single message into the flash scope to be shown on the next request.
      *
      * @param message Message  to be flashed
      */
     protected void flashMessage(Message message) {
         FlashScope scope = FlashScope.getCurrent(context.getRequest(), true);
-        scope.put(FLASH_MESSAGE, message);
+
+        List<Message> messages = (List<Message>) scope.get(FLASH_MESSAGE);
+
+        if (messages == null) {
+            messages = new ArrayList<Message>();
+        }
+
+        messages.add(message);
+        scope.put(FLASH_MESSAGE, messages);
     }
 
     /**
@@ -166,8 +211,7 @@ public class CoreActionBean implements ActionBean {
         try {
             istream = inFile.getInputStream();
         } catch (Exception e) {
-            getContext().getValidationErrors().addGlobalError(
-                    new LocalizableError("Sorry, there was a problem reading the file you supplied"));
+            addGlobalValidationError("Sorry, there was a problem reading the file you supplied");
         } finally {
             if (inFile != null) {
                 inFile.delete();
@@ -231,15 +275,6 @@ public class CoreActionBean implements ActionBean {
         }
 
         return message.toString();
-    }
-
-    /**
-     * If the error list isn't empty then it has errors.
-     *
-     * @return true if there are some errors
-     */
-    public boolean hasErrors() {
-        return !getContext().getValidationErrors().isEmpty();
     }
 
     /**

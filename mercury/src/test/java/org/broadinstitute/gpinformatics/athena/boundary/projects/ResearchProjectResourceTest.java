@@ -14,7 +14,6 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
-import java.util.List;
 import java.util.UUID;
 
 import static org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB.IrbType.BROAD;
@@ -84,34 +83,17 @@ public class ResearchProjectResourceTest extends ContainerTest {
 
     @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void tearDown() throws Exception {
-        // Only do this if the server is calling this and thus, injection worked
-        if (researchProjectResource != null) {
-            ResearchProject researchProject = researchProjectResource.findResearchProjectByTitle(testTitle);
-            researchProjectDao.remove(researchProject);
-        }
-
         // Skip if no injections, meaning we're not running in container
         if (utx == null) {
             return;
         }
-
         utx.rollback();
-
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testFindResearchProjectById() throws Exception {
-        ResearchProject researchProject = researchProjectResource.findResearchProjectById(testTitle);
-        Assert.assertNotNull(researchProject);
-        Assert.assertNotNull(researchProject.getTitle());
-        Assert.assertEquals(researchProject.getTitle(), testTitle);
-    }
-
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void testFindAllResearchProjects() throws Exception {
-        List<ResearchProject> researchProjects =
-                researchProjectResource.findAllResearchProjectsByCreator(TEST_CREATOR);
-        Assert.assertNotNull(researchProjects);
-        Assert.assertFalse(researchProjects.isEmpty());
+        ResearchProjectResource.ResearchProjects researchProject = researchProjectResource.findByIds(testTitle);
+        Assert.assertEquals(researchProject.projects.size(), 1);
+        Assert.assertEquals(researchProject.projects.get(0).title, testTitle);
     }
 }

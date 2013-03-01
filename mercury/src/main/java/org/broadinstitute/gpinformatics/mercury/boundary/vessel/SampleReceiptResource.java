@@ -72,7 +72,7 @@ public class SampleReceiptResource {
      * Accepts a message from BSP.  We unmarshal ourselves, rather than letting JAX-RS
      * do it, because we need to write the text to the file system.
      *
-     * @param message the text of the message
+     * @param sampleReceiptBeanXml the text of the message
      */
     @POST
     @Consumes({MediaType.APPLICATION_XML})
@@ -84,7 +84,7 @@ public class SampleReceiptResource {
                     new StringReader(sampleReceiptBeanXml));
             return notifyOfReceipt(sampleReceiptBean);
         } catch (Exception e) {
-            wsMessageStore.store(WsMessageStore.SAMPLE_RECEIPT_RESOURCE_TYPE, sampleReceiptBeanXml, now);
+            wsMessageStore.recordError(WsMessageStore.SAMPLE_RECEIPT_RESOURCE_TYPE, sampleReceiptBeanXml, now, e);
             LOG.error("Failed to process sample receipt", e);
             throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
         }

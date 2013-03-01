@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 
 import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;

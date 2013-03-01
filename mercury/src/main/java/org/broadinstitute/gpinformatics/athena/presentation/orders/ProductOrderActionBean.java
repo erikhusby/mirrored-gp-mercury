@@ -46,6 +46,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.jvnet.inflector.Noun;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -264,7 +265,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
         requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         requireField(editOrder.getResearchProject(), "a research project", action);
-        requireField(StringUtils.isNotBlank(editOrder.getQuoteId()), "a quote specified", action);
+        requireField(editOrder.getQuoteId() != null, "a quote specified", action);
         requireField(editOrder.getProduct(), "a product", action);
         if (editOrder.getProduct() != null && editOrder.getProduct().getSupportsNumberOfLanes()) {
             requireField(editOrder.getCount() > 0, "a specified number of lanes", action);
@@ -281,24 +282,29 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // Since we are only validating from view, we can persist without worry of saving something bad.
         // We are doing on risk calculation only when everything passes, but informing the user no matter what
-        if (getContext().getValidationErrors().isEmpty()) {
+        if (hasNoValidationErrors()) {
             int numSamplesOnRisk = editOrder.calculateRisk();
             productOrderDao.persist(editOrder);
 
             if (numSamplesOnRisk == 0) {
                 addMessage("None of the samples for this order are on risk");
             } else {
-                addMessage("{0} sample{0,choice,0#s|1#|1<s} for this order are on risk", numSamplesOnRisk);
+                addMessage("{0} {1} for this order {2} on risk",
+                        numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk), numSamplesOnRisk == 1 ? "is" : "are");
             }
         } else {
-            addGlobalValidationError("On risk was not calculated. Fix other errors first");
+            addGlobalValidationError("On risk was not calculated.  Please fix the other errors first.");
         }
     }
 
     @ValidationMethod(on = PLACE_ORDER)
     public void validatePlacedOrder() {
         doValidation("place order");
-        entryInit();
+        // entryInit() must be called explicitly here since it does not run automatically in the event of validation
+        // failures and the ProductOrderListEntry that provides billing data would be null.
+        if (hasAnyValidationErrors()) {
+            entryInit();
+        }
     }
 
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
@@ -352,7 +358,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         // If there are errors, will reload the page, so need to fetch the list
-        if (hasErrors()) {
+        if (hasAnyValidationErrors()) {
             listInit();
         }
     }
@@ -492,7 +498,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution validate() {
         validatePlacedOrder();
 
-        if (getContext().getValidationErrors().isEmpty()) {
+        if (hasNoValidationErrors()) {
             addMessage("Draft Order is valid and ready to be placed");
         }
 
@@ -536,7 +542,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("downloadBillingTracker")
     public Resolution downloadBillingTracker() {
         Resolution resolution = ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, bspUserList);
-        if (hasErrors()) {
+        if (hasAnyValidationErrors()) {
             // Need to regenerate the list so it's displayed along with the errors.
             listInit();
         }

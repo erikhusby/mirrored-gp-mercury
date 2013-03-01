@@ -2,13 +2,13 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
-import javax.ejb.Stateless;
+import javax.ejb.Stateful;
 import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 
-@Stateless
+@Stateful
 public class ResearchProjectStatusEtl extends GenericEntityEtl {
 
     /**

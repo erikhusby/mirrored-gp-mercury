@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.common;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import junit.framework.TestCase;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
