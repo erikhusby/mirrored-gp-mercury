@@ -51,7 +51,7 @@ public class MercuryClientServiceTest extends Arquillian {
     @Inject
     private MercuryClientService service;
     @Inject
-    private LabBatchDAO dao;
+    private LabBatchDAO labBatchDAO;
 
     private ProductOrder pdo = createMock(ProductOrder.class);
     private Product product = createMock(Product.class);
@@ -76,13 +76,10 @@ public class MercuryClientServiceTest extends Arquillian {
     }
 
     private void setUpSamplesFromReceiptBatch() {
-        CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-        CriteriaQuery<LabBatch> cq = cb.createQuery(LabBatch.class);
-        Root<LabBatch> root = cq.from(LabBatch.class);
-        cq.where(cb.equal(root.get(LabBatch_.labBatchType), LabBatch.LabBatchType.SAMPLES_RECEIPT));
-        List<LabBatch> receiptList = dao.getEntityManager().createQuery(cq).setMaxResults(1).getResultList();
-        if (receiptList.size() > 0) {
-            Collection<LabVessel> receiptVessels = receiptList.get(0).getStartingLabVessels();
+        // For the bucket entry criteria to work, the samples have to exist in BSP.
+        // todo jmt How to recreate the test data after a database refresh?
+        LabBatch labBatch = labBatchDAO.findByName("SK-272L");
+        Collection<LabVessel> receiptVessels = labBatch.getStartingLabVessels();
             for (LabVessel receiptVessel : receiptVessels) {
                 for (MercurySample receiptSample: receiptVessel.getMercurySamples()) {
                     String sampleName = receiptSample.getSampleKey();
@@ -90,7 +87,6 @@ public class MercuryClientServiceTest extends Arquillian {
                     pdoSamples.add(pdoSample);
                 }
             }
-        }
         logger.info("Testing with " + pdoSamples.size() + " receipt samples");
     }
 
