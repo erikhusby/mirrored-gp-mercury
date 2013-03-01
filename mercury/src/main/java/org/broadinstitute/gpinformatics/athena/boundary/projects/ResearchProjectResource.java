@@ -130,13 +130,22 @@ public class ResearchProjectResource {
     @GET
     @Produces(MediaType.APPLICATION_XML)
     public ResearchProjects findProjects(@QueryParam("withId") String projectIds,
-                                         @QueryParam("withPm") String pmUserName) {
+                                         @QueryParam("withPm") String pmUserNames) {
         if (!StringUtils.isBlank(projectIds)) {
             return new ResearchProjects(bspUserList, researchProjectDao.findByJiraTicketKeys(
                 Arrays.asList(projectIds.split(","))));
         }
-        if (!StringUtils.isBlank(pmUserName)) {
-            // Find by pmUserName not yet implemented.
+        if (!StringUtils.isBlank(pmUserNames)) {
+            String[] userNames = pmUserNames.split(",");
+            Long[] ids = new Long[userNames.length];
+            for (int i = 0; i < userNames.length; i++) {
+                BspUser bspUser = bspUserList.getByUsername(userNames[i]);
+                if (bspUser == null) {
+                    throw new RuntimeException("No user name found for " + userNames[i]);
+                }
+                ids[i] = bspUser.getUserId();
+            }
+            return new ResearchProjects(bspUserList, researchProjectDao.findByProjectManagerIds(ids));
         }
         return new ResearchProjects(bspUserList, researchProjectDao.findAllResearchProjectsWithOrders());
     }
