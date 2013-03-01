@@ -149,6 +149,17 @@ public class UserBean implements Serializable {
     }
 
     /**
+     * This method logs in as a test user, for automated test support.
+     *
+     * ONLY CALL FROM TESTS.
+     */
+    public void loginTestUser() {
+        loginUserName = "QADudeTest";
+        updateBspStatus();
+        roles.add(DB.Role.Developer);
+    }
+
+    /**
      * Log in the user and cache user login state.  Application roles, BSP account status and JIRA
      * account are cached for the duration of the session, so a user must log out and log back in to see
      * any changes.
