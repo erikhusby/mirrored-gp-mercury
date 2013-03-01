@@ -256,8 +256,13 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void doValidation(String action) {
-        String ownerUsername = bspUserList.getById(editOrder.getCreatedBy()).getUsername();
-        requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
+        requireField(editOrder.getCreatedBy(), "an owner", action);
+
+        if (editOrder.getCreatedBy() != null) {
+            String ownerUsername = bspUserList.getById(editOrder.getCreatedBy()).getUsername();
+            requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
+        }
+
         requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         requireField(editOrder.getResearchProject(), "a research project", action);
         requireField(editOrder.getQuoteId() != null, "a quote specified", action);
@@ -265,7 +270,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (editOrder.getProduct() != null && editOrder.getProduct().getSupportsNumberOfLanes()) {
             requireField(editOrder.getCount() > 0, "a specified number of lanes", action);
         }
-        requireField(editOrder.getCreatedBy(), "an owner", action);
 
         try {
             quoteService.getQuoteByAlphaId(editOrder.getQuoteId());
