@@ -158,7 +158,6 @@ CREATE TABLE product_order (
   title VARCHAR2(255),
   quote_id VARCHAR2(255),
   jira_ticket_key VARCHAR2(255),
-  is_deleted CHAR(1) DEFAULT 'F' NOT NULL ,
   etl_date DATE NOT NULL
 );
 
@@ -176,7 +175,6 @@ CREATE TABLE product_order_sample (
   sample_name VARCHAR2(255),
   delivery_status VARCHAR2(40) NOT NULL,
   sample_position NUMERIC(19) NOT NULL,
-  is_deleted CHAR(1) DEFAULT 'F' NOT NULL,
   etl_date DATE NOT NULL
 );
 
@@ -192,7 +190,6 @@ CREATE TABLE product_order_add_on (
   product_order_add_on_id NUMERIC(19) NOT NULL PRIMARY KEY,
   product_order_id NUMERIC(19) NOT NULL,
   product_id NUMERIC(19) NOT NULL,
-  is_deleted CHAR(1) DEFAULT 'F' NOT NULL,
   etl_date DATE NOT NULL
 );
 

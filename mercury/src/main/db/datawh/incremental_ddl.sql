@@ -5,3 +5,7 @@
 -- GPLIM-993
 DROP INDEX product_order_sample_idx1;
 CREATE UNIQUE INDEX product_order_sample_idx1 ON product_order_sample(product_order_id, sample_name, sample_position);
+-- GPLIM-1007
+ALTER TABLE product_order DROP COLUMN is_deleted;
+ALTER TABLE product_order_sample DROP COLUMN is_deleted;
+ALTER TABLE product_order_add_on DROP COLUMN is_deleted;
