@@ -26,10 +26,13 @@ import java.util.logging.Logger;
 import static org.easymock.EasyMock.*;
 
 /**
- * DbFree test of MercuryClientService
+ * DbFree test of MercuryClientService.
+ *
+ * singleThreaded because EasyMock mocks are not thread-safe during recording.
+ *
  * @author epolk
+ * @author breilly
  */
-
 @Test(enabled = true, groups = TestGroups.DATABASE_FREE, singleThreaded = true)
 public class MercuryClientServiceDbFreeTest {
     private Logger logger = Logger.getLogger(getClass().getName());

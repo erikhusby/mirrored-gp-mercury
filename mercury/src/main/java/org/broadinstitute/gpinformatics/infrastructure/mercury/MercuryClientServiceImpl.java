@@ -47,7 +47,7 @@ public class MercuryClientServiceImpl implements MercuryClientService {
     }
 
     /**
-     * @{inheritDoc}
+     * {@inheritDoc}
      */
     @Override
     public Collection<ProductOrderSample> addSampleToPicoBucket(ProductOrder pdo) {
@@ -55,7 +55,7 @@ public class MercuryClientServiceImpl implements MercuryClientService {
     }
 
     /**
-     * @{inheritDoc}
+     * {@inheritDoc}
      */
     @Override
     public Collection<ProductOrderSample> addSampleToPicoBucket(ProductOrder pdo, Collection<ProductOrderSample> samples) {

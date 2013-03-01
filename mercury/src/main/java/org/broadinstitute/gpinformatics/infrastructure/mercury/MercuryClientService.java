@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.mercury;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 
+import javax.annotation.Nonnull;
 import java.io.Serializable;
 import java.util.Collection;
 
@@ -18,7 +19,7 @@ public interface MercuryClientService extends Serializable {
      * @param pdo with samples to be added
      * @return ProductOrderSamples that were successfully added to pico bucket.
      */
-    public Collection<ProductOrderSample> addSampleToPicoBucket(ProductOrder pdo);
+    public Collection<ProductOrderSample> addSampleToPicoBucket(@Nonnull ProductOrder pdo);
 
     /**
      * Adds the specified product order samples to the pico bucket.
@@ -27,5 +28,5 @@ public interface MercuryClientService extends Serializable {
      * @param samples    the (possibly subset of) PDO samples to process
      * @return the ProductOrderSamples that were successfully added to the pico bucket
      */
-    public Collection<ProductOrderSample> addSampleToPicoBucket(ProductOrder pdo, Collection<ProductOrderSample> samples);
+    public Collection<ProductOrderSample> addSampleToPicoBucket(@Nonnull ProductOrder pdo, @Nonnull Collection<ProductOrderSample> samples);
 }
