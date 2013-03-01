@@ -296,6 +296,7 @@
                     </jms-queue>
                     <jms-queue name="broad.queue.mercury.bettalims.dev">
                         <entry name="queue/broad.queue.mercury.bettalims.dev"/>
+                        <durable>true</durable>
                     </jms-queue>
                     <jms-queue name="broad.queue.mercury.samplereceipt.dev">
                         <entry name="queue/broad.queue.mercury.samplereceipt.dev"/>
@@ -303,6 +304,7 @@
                     </jms-queue>
                     <jms-queue name="broad.queue.athena.workreporting.dev">
                         <entry name="queue/broad.queue.athena.workreporting.dev"/>
+                        <durable>true</durable>
                     </jms-queue>
                     <jms-topic name="testTopic">
                         <entry name="topic/test"/>
