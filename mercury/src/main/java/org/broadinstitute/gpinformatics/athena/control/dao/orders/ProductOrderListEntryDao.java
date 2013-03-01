@@ -195,7 +195,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
 
         List<ProductOrderListEntry> productOrderListEntries = findBaseProductOrderListEntries(jiraTicketKey);
 
-        if (CollectionUtils.isEmpty(productOrderListEntries)) {
+        if (productOrderListEntries.isEmpty()) {
             return null;
         }
 
