@@ -1,9 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.*;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -20,14 +18,6 @@ import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.persistence.criteria.*;
 import java.util.*;
-
-/**
- * Dao for {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder}s.
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 10/5/12
- * Time: 6:17 PM
- */
 
 @Stateful
 @RequestScoped
@@ -336,5 +326,27 @@ public class ProductOrderDao extends GenericDao {
                 criteriaQuery.where(getCriteriaBuilder().greaterThan(root.get(ProductOrder_.modifiedDate), modifiedAfter));
             }
         });
+    }
+
+
+    /**
+     * Find all ProductOrders for the specified varargs array of barcodes.
+     *
+     * @param barcodes One or more sample barcodes.
+     *
+     * @return All Product Orders containing samples with these barcodes.
+     */
+    public List<ProductOrder> findBySampleBarcodes(@Nonnull String... barcodes) {
+
+        CriteriaBuilder cb = getCriteriaBuilder();
+
+        CriteriaQuery<ProductOrder> query = cb.createQuery(ProductOrder.class);
+        query.distinct(true);
+
+        Root<ProductOrder> root = query.from(ProductOrder.class);
+        ListJoin<ProductOrder,ProductOrderSample> sampleListJoin = root.join(ProductOrder_.samples);
+        query.where(sampleListJoin.get(ProductOrderSample_.sampleName).in(barcodes));
+
+        return getEntityManager().createQuery(query).getResultList();
     }
 }
