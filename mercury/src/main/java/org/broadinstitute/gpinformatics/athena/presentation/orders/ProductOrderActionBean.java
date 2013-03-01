@@ -260,7 +260,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
         requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         requireField(editOrder.getResearchProject(), "a research project", action);
-        requireField(StringUtils.isNotBlank(editOrder.getQuoteId()), "a quote specified", action);
+        requireField(editOrder.getQuoteId() != null, "a quote specified", action);
         requireField(editOrder.getProduct(), "a product", action);
         if (editOrder.getProduct() != null && editOrder.getProduct().getSupportsNumberOfLanes()) {
             requireField(editOrder.getCount() > 0, "a specified number of lanes", action);
@@ -295,7 +295,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     @ValidationMethod(on = PLACE_ORDER)
     public void validatePlacedOrder() {
         doValidation("place order");
-        entryInit();
+        // entryInit() must be called explicitly here since it does not run automatically in the event of validation
+        // failures and the ProductOrderListEntry that provides billing data would be null.
+        if (hasAnyValidationErrors()) {
+            entryInit();
+        }
     }
 
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})

@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
+import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
@@ -46,8 +47,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
      *
      * Fetch the count of unbilled ledger entries for the
      * {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder}s referenced by the
-     * {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry} DTOs and set those counts
-     * into the DTOs.
+     * ProductOrderListEntry DTOs and set those counts into the DTOs.
      *
      * @param productOrderListEntries The entries to fill with unbilled ledger entry counts.
      */
@@ -116,9 +116,9 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
 
 
     /**
-     * Call the worker method with a null parameter indicating all {@link ProductOrderListEntry}s should be fetched.
+     * Call the worker method with a null parameter indicating all ProductOrderListEntries should be fetched.
      *
-     * @return {@link List} of all {@link ProductOrderListEntry}s.
+     * @return List of all ProductOrderListEntries.
      */
     private List<ProductOrderListEntry> findBaseProductOrderListEntries() {
         return findBaseProductOrderListEntries(null);
@@ -128,7 +128,11 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
     /**
      * First pass, ledger-unaware querying.
      *
-     * @return The order list
+     * @param jiraTicketKey The nullable JIRA ticket key parameter.  If null, all ProductOrderListEntries are fetched,
+     *                      otherwise only the ProductOrderListEntry corresponding to the specific JIRA ticket key
+     *                      is fetched.
+     *
+     * @return The order list.
      */
     private List<ProductOrderListEntry> findBaseProductOrderListEntries(@Nullable String jiraTicketKey) {
         CriteriaBuilder cb = getCriteriaBuilder();
@@ -136,7 +140,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
 
         Root<ProductOrder> productOrderRoot = cq.from(ProductOrder.class);
 
-        // These joins pick out attributes that are selected into the report object. DRAFTS can have any of these by null
+        // These joins pick out attributes that are selected into the report object. DRAFTS can have any of these be null
         // so left joins are needed.
         Join<ProductOrder, Product> productOrderProductJoin = productOrderRoot.join(ProductOrder_.product, JoinType.LEFT);
         Join<Product, ProductFamily> productProductFamilyJoin = productOrderProductJoin.join(Product_.productFamily, JoinType.LEFT);
@@ -165,7 +169,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
     }
 
     /**
-     * Generates reporting object {@link ProductOrderListEntry}s for efficient Product Order list view.  Merges the
+     * Generates reporting object ProductOrderListEntries for efficient Product Order list view.  Merges the
      * results of the first-pass ledger-unaware query with the second-pass ledger aware query.
      *
      * @return The list of order entries.
@@ -180,7 +184,14 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
     }
 
 
-    public ProductOrderListEntry findSingle(String jiraTicketKey) {
+    /**
+     * Find the single ProductOrderListEntry corresponding to the specified JIRA ticket key.
+     *
+     * @param jiraTicketKey JIRA ticket key of non-DRAFT PDO to be fetched.
+     *
+     * @return corresponding ProductOrderListEntry.
+     */
+    public ProductOrderListEntry findSingle(@Nonnull String jiraTicketKey) {
 
         List<ProductOrderListEntry> productOrderListEntries = findBaseProductOrderListEntries(jiraTicketKey);
 
