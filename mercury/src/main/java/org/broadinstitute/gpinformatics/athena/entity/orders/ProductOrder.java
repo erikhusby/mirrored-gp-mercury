@@ -490,8 +490,8 @@ public class ProductOrder implements Serializable {
         if (samples.isEmpty()) {
             return;
         }
-        // only update samples if there are no ledger items on any samples or the sample list has changed
-        if (!hasLedgerItems() || sampleListHasChanged(samples)) {
+        // Only update samples if the sample list has changed.
+        if (sampleListHasChanged(samples)) {
             this.samples.clear();
 
             addSamplesInternal(samples, 0);
