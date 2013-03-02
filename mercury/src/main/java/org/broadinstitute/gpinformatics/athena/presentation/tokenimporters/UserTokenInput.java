@@ -3,9 +3,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -35,15 +33,25 @@ public class UserTokenInput extends TokenInput<BspUser> {
     }
 
     @Override
-    protected JSONObject createAutocomplete(JSONArray itemList, BspUser bspUser) throws JSONException {
-        String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
-        JSONObject item = getJSONObject(String.valueOf(bspUser.getUserId()), fullName, false);
+    protected boolean isSingleLineMenuEntry() {
+        return false;
+    }
 
-        String list = "<div class=\"ac-dropdown-text\">" + fullName + "</div>" +
-                      "<div class=\"ac-dropdown-subtext\">" + bspUser.getUsername() + " " + bspUser.getEmail() + "</div>";
-        item.put("dropdownItem", list);
-        itemList.put(item);
+    @Override
+    protected String getTokenId(BspUser bspUser) {
+        return String.valueOf(bspUser.getUserId());
+    }
 
-        return item;
+    @Override
+    protected String getTokenName(BspUser bspUser) {
+        return bspUser.getFirstName() + " " + bspUser.getLastName();
+    }
+
+    @Override
+    protected String[] getMenuLines(BspUser bspUser) {
+        String[] lines = new String[2];
+        lines[0] = bspUser.getFirstName() + " " + bspUser.getLastName();
+        lines[1] = bspUser.getUsername() + " " + bspUser.getEmail();
+        return lines;
     }
 }

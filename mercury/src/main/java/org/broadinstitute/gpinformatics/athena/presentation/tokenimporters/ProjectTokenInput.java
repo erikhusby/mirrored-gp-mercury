@@ -3,9 +3,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import javax.inject.Inject;
 import java.util.ArrayList;
@@ -37,13 +35,25 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
     }
 
     @Override
-    protected JSONObject createAutocomplete(JSONArray itemList, ResearchProject project) throws JSONException {
-        JSONObject item = getJSONObject(project.getBusinessKey(), project.getTitle(), false);
-        String list = "<div class=\"ac-dropdown-text\">" + project.getTitle() + "</div>";
-        item.put("dropdownItem", list);
-        itemList.put(item);
+    protected boolean isSingleLineMenuEntry() {
+        return true;
+    }
 
-        return item;
+    @Override
+    protected String getTokenId(ResearchProject project) {
+        return project.getBusinessKey();
+    }
+
+    @Override
+    protected String getTokenName(ResearchProject project) {
+        return project.getTitle();
+    }
+
+    @Override
+    protected String[] getMenuLines(ResearchProject project) {
+        String[] lines = new String[1];
+        lines[0] = project.getTitle();
+        return lines;
     }
 
     public String getTokenObject() {

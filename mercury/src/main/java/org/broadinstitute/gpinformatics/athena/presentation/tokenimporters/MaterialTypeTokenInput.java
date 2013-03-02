@@ -53,18 +53,34 @@ public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
     }
 
     @Override
-    protected JSONObject createAutocomplete(JSONArray itemList, MaterialType materialType) throws JSONException {
-        if (materialType != null) {
-            JSONObject item = getJSONObject(materialType.getFullName(), materialType.getFullName(), false);
+    protected boolean isSingleLineMenuEntry() {
+        return true;
+    }
 
-            String list = "<div class=\"ac-dropdown-text\">" + materialType.getFullName() + "</div>";
-            item.put("dropdownItem", list);
-            itemList.put(item);
+    @Override
+    protected String getTokenId(MaterialType materialType) {
+        return materialType.getFullName();
+    }
 
-            return item;
+    @Override
+    protected String getTokenName(MaterialType materialType) {
+        return materialType.getFullName();
+    }
+
+    @Override
+    protected String[] getMenuLines(MaterialType materialType) {
+        String[] lines = new String[1];
+        lines[0] = materialType.getFullName();
+        return lines;
+    }
+
+    @Override
+    public JSONObject createAutocomplete(JSONArray itemList, MaterialType materialType) throws JSONException {
+        if (materialType == null) {
+            return null;
         }
 
-        return null;
+        return super.createAutocomplete(itemList, materialType);
     }
 
     public Collection<? extends org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType> getMercuryTokenObjects() {

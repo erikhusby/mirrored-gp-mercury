@@ -3,9 +3,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -31,13 +29,25 @@ public class FundingTokenInput extends TokenInput<Funding> {
     }
 
     @Override
-    protected JSONObject createAutocomplete(JSONArray itemList, Funding funding) throws JSONException {
-        JSONObject item = getJSONObject(funding.getDisplayName(), funding.getDisplayName(), false);
-        String list =  "<div class=\"ac-dropdown-text\">" + funding.getDisplayName() + "</div>" +
-                       "<div class=\"ac-dropdown-subtext\">" + funding.getMatchDescription() + "</div>";
-        item.put("dropdownItem", list);
-        itemList.put(item);
+    protected boolean isSingleLineMenuEntry() {
+        return false;
+    }
 
-        return item;
+    @Override
+    protected String getTokenId(Funding funding) {
+        return funding.getDisplayName();
+    }
+
+    @Override
+    protected String getTokenName(Funding funding) {
+        return funding.getDisplayName();
+    }
+
+    @Override
+    protected String[] getMenuLines(Funding funding) {
+        String[] lines = new String[2];
+        lines[0] = funding.getDisplayName();
+        lines[1] = funding.getMatchDescription();
+        return lines;
     }
 }

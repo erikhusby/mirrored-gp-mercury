@@ -3,9 +3,7 @@ package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -34,13 +32,25 @@ public class CohortTokenInput extends TokenInput<Cohort> {
     }
 
     @Override
-    public JSONObject createAutocomplete(JSONArray itemList, Cohort cohort) throws JSONException {
-        JSONObject item = getJSONObject(cohort.getCohortId(), cohort.getDisplayName(), false);
-        String list =  "<div class=\"ac-dropdown-text\">" + cohort.getDisplayName() + "</div>" +
-                       "<div class=\"ac-dropdown-subtext\">" + cohort.getGroup() + " " + cohort.getCategory() + "</div>";
-        item.put("dropdownItem", list);
-        itemList.put(item);
+    protected boolean isSingleLineMenuEntry() {
+        return false;
+    }
 
-        return item;
+    @Override
+    protected String getTokenId(Cohort cohort) {
+        return cohort.getCohortId();
+    }
+
+    @Override
+    protected String getTokenName(Cohort cohort) {
+        return cohort.getDisplayName();
+    }
+
+    @Override
+    protected String[] getMenuLines(Cohort cohort) {
+        String[] lines = new String[2];
+        lines[0] = cohort.getDisplayName();
+        lines[1] = cohort.getGroup() + " " + cohort.getCategory();
+        return lines;
     }
 }

@@ -5,7 +5,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import javax.inject.Inject;
 import java.util.List;
@@ -34,15 +33,25 @@ public class ProductTokenInput extends TokenInput<Product> {
     }
 
     @Override
-    protected JSONObject createAutocomplete(JSONArray itemList, Product product) throws JSONException {
-        JSONObject item = getJSONObject(product.getBusinessKey(), product.getProductName(), false);
+    protected boolean isSingleLineMenuEntry() {
+        return true;
+    }
 
-        String list = "<div class=\"ac-dropdown-text\">" + product.getProductName() +
-                      " [" + product.getBusinessKey() + "]" + "</div>";
-        item.put("dropdownItem", list);
-        itemList.put(item);
+    @Override
+    protected String getTokenId(Product product) {
+        return product.getBusinessKey();
+    }
 
-        return item;
+    @Override
+    protected String getTokenName(Product product) {
+        return product.getProductName();
+    }
+
+    @Override
+    protected String[] getMenuLines(Product product) {
+        String[] lines = new String[1];
+        lines[0] = product.getProductName() + " [" + product.getBusinessKey() + "]";
+        return lines;
     }
 
     public String getAddOnsJsonString(Product editProduct, String query) throws JSONException {

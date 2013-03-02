@@ -41,7 +41,31 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
     }
 
     @Override
-    protected JSONObject createAutocomplete(JSONArray itemList, PriceItem priceItem) throws JSONException {
+    protected boolean isSingleLineMenuEntry() {
+        return false;
+    }
+
+    @Override
+    protected String getTokenId(PriceItem priceItem) {
+        return org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.makeConcatenatedKey(
+                priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
+    }
+
+    @Override
+    protected String getTokenName(PriceItem priceItem) {
+        return priceItem.getName();
+    }
+
+    @Override
+    protected String[] getMenuLines(PriceItem priceItem) {
+        String[] lines = new String[2];
+        lines[0] = priceItem.getName();
+        lines[1] = priceItem.getPlatformName() + " " + priceItem.getCategoryName();
+        return lines;
+    }
+
+    @Override
+    public JSONObject createAutocomplete(JSONArray itemList, PriceItem priceItem) throws JSONException {
         if (priceItem == null) {
             JSONObject item = getJSONObject(getListOfKeys(), "unknown price item id", false);
             item.put("dropdownItem", "");
@@ -49,18 +73,7 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
             return item;
         }
 
-        String key = org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.makeConcatenatedKey(
-                priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
-
-        JSONObject item = getJSONObject(key, priceItem.getName(), false);
-        String list =  "<div class=\"ac-dropdown-text\">" + priceItem.getName() + "</div>" +
-                       "<div class=\"ac-dropdown-subtext\">" +
-                            priceItem.getPlatformName() + " " + priceItem.getCategoryName() +
-                       "</div>";
-        item.put("dropdownItem", list);
-        itemList.put(item);
-
-        return item;
+        return super.createAutocomplete(itemList, priceItem);
     }
 
     public org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getMercuryTokenObject() {
