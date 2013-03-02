@@ -8,15 +8,12 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.*;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.MaterialTypeTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.PriceItemTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPMaterialTypeList;
-import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
@@ -43,15 +40,6 @@ public class ProductActionBean extends CoreActionBean {
 
     @Inject
     private ProductDao productDao;
-
-    @Inject
-    private PriceItemDao priceItemDao;
-
-    @Inject
-    private PriceListCache priceListCache;
-
-    @Inject
-    private BSPMaterialTypeList materialTypeListCache;
 
     @Inject
     private ProductTokenInput addOnTokenInput;
