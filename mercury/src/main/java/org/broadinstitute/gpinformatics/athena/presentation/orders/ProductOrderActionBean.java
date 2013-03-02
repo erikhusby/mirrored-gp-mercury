@@ -22,10 +22,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.*;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -369,6 +366,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         progressFetcher.setupProgress(productOrderDao);
     }
 
+    @After(stages = LifecycleStage.BindingAndValidation, on = EDIT_ACTION)
+    public void createInit() {
+        // Once validation is all set for edit (so that any errors can show the originally Checked Items),
+        // set the add ons to the current
+        addOnKeys.clear();
+        for (ProductOrderAddOn addOnProduct : editOrder.getAddOns()) {
+            addOnKeys.add(addOnProduct.getAddOn().getBusinessKey());
+        }
+    }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = VIEW_ACTION)
     public void entryInit() {
