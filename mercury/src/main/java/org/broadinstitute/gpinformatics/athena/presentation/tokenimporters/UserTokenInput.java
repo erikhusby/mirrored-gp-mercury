@@ -38,9 +38,12 @@ public class UserTokenInput extends TokenInput<BspUser> {
     protected JSONObject createAutocomplete(JSONArray itemList, BspUser bspUser) throws JSONException {
         String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
         JSONObject item = getJSONObject(String.valueOf(bspUser.getUserId()), fullName, false);
-        item.put("email", bspUser.getEmail());
-        item.put("username", bspUser.getUsername());
+
+        String list = "<div class=\"ac-dropdown-text\">" + fullName + "</div>" +
+                      "<div class=\"ac-dropdown-subtext\">" + bspUser.getUsername() + " " + bspUser.getEmail() + "</div>";
+        item.put("dropdownItem", list);
         itemList.put(item);
+
         return item;
     }
 }

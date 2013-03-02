@@ -36,7 +36,12 @@ public class ProductTokenInput extends TokenInput<Product> {
     @Override
     protected JSONObject createAutocomplete(JSONArray itemList, Product product) throws JSONException {
         JSONObject item = getJSONObject(product.getBusinessKey(), product.getProductName(), false);
+
+        String list = "<div class=\"ac-dropdown-text\">" + product.getProductName() +
+                      " [" + product.getBusinessKey() + "]" + "</div>";
+        item.put("dropdownItem", list);
         itemList.put(item);
+
         return item;
     }
 

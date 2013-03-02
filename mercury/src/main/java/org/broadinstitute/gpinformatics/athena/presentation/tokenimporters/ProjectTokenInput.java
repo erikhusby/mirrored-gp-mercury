@@ -39,7 +39,10 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
     @Override
     protected JSONObject createAutocomplete(JSONArray itemList, ResearchProject project) throws JSONException {
         JSONObject item = getJSONObject(project.getBusinessKey(), project.getTitle(), false);
+        String list = "<div class=\"ac-dropdown-text\">" + project.getTitle() + "</div>";
+        item.put("dropdownItem", list);
         itemList.put(item);
+
         return item;
     }
 

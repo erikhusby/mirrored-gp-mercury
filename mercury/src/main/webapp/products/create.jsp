@@ -43,7 +43,7 @@
                         "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type a Price Item name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.priceItemTokenInput.completeData)},
-                            resultsFormatter: formatPriceItem,
+                            resultsFormatter: formatInput,
                             tokenLimit: 1,
                             preventDuplicates: true
                         }
@@ -53,7 +53,7 @@
                         "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type a Price Item name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.optionalPriceItemTokenInput.completeData)},
-                            resultsFormatter: formatPriceItem,
+                            resultsFormatter: formatInput,
                             preventDuplicates: true
                         }
                     );
@@ -62,7 +62,7 @@
                         "${ctxpath}/products/product.action?addOnsAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type a Product name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.addOnTokenInput.completeData)},
-                            resultsFormatter: formatProduct,
+                            resultsFormatter: formatInput,
                             preventDuplicates: true
                         }
                     );
@@ -72,6 +72,7 @@
                             hintText: "Type a Material Type name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.materialTypeTokenInput.completeData)},
                             preventDuplicates: true,
+                            resultsFormatter: formatInput,
                             tokenDelimiter: "|"
                         }
                     );
@@ -87,15 +88,9 @@
                 }
             );
 
-            function formatProduct(item) {
-                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
-                        "<div class=\"ac-dropdown-subtext\">" + item.id + "</div>" + item.extraCount + '</li>'
-            }
-
-            function formatPriceItem(item) {
-                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
-                        "<div class=\"ac-dropdown-subtext\">" + item.platform + " " + item.category + "</div>" +
-                            item.extraCount + '</li>'
+            function formatInput(item) {
+                var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
+                return "<li>" + item.dropdownItem + extraCount + '</li>';
             }
 
             function updateBillingRules() {

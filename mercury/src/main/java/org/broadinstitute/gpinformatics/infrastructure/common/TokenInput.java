@@ -86,11 +86,9 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         }
 
         JSONObject item = null;
-
         JSONArray itemList = new JSONArray();
         for (TOKEN_OBJECT tokenObject : tokenObjectChunk) {
             item = createAutocomplete(itemList, tokenObject);
-            item.put("extraCount", "");
         }
 
         if ((item != null) && (extraCount > 0)) {

@@ -36,8 +36,9 @@ public class CohortTokenInput extends TokenInput<Cohort> {
     @Override
     public JSONObject createAutocomplete(JSONArray itemList, Cohort cohort) throws JSONException {
         JSONObject item = getJSONObject(cohort.getCohortId(), cohort.getDisplayName(), false);
-        item.put("group", cohort.getGroup());
-        item.put("category", cohort.getCategory());
+        String list =  "<div class=\"ac-dropdown-text\">" + cohort.getDisplayName() + "</div>" +
+                       "<div class=\"ac-dropdown-subtext\">" + cohort.getGroup() + " " + cohort.getCategory() + "</div>";
+        item.put("dropdownItem", list);
         itemList.put(item);
 
         return item;

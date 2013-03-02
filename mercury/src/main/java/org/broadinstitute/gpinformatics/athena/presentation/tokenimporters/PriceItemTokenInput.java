@@ -44,6 +44,7 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
     protected JSONObject createAutocomplete(JSONArray itemList, PriceItem priceItem) throws JSONException {
         if (priceItem == null) {
             JSONObject item = getJSONObject(getListOfKeys(), "unknown price item id", false);
+            item.put("dropdownItem", "");
             itemList.put(item);
             return item;
         }
@@ -52,11 +53,11 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
                 priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
 
         JSONObject item = getJSONObject(key, priceItem.getName(), false);
-
-        item.put("platform", priceItem.getPlatformName());
-
-        String priceItemCategory = (priceItem.getCategoryName() == null) ? "" : priceItem.getCategoryName();
-        item.put("category", priceItemCategory);
+        String list =  "<div class=\"ac-dropdown-text\">" + priceItem.getName() + "</div>" +
+                       "<div class=\"ac-dropdown-subtext\">" +
+                            priceItem.getPlatformName() + " " + priceItem.getCategoryName() +
+                       "</div>";
+        item.put("dropdownItem", list);
         itemList.put(item);
 
         return item;

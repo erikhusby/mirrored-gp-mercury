@@ -56,7 +56,11 @@ public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
     protected JSONObject createAutocomplete(JSONArray itemList, MaterialType materialType) throws JSONException {
         if (materialType != null) {
             JSONObject item = getJSONObject(materialType.getFullName(), materialType.getFullName(), false);
+
+            String list = "<div class=\"ac-dropdown-text\">" + materialType.getFullName() + "</div>";
+            item.put("dropdownItem", list);
             itemList.put(item);
+
             return item;
         }
 
