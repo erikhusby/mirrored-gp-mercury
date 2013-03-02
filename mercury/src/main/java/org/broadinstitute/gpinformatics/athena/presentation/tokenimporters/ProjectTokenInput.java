@@ -8,6 +8,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.inject.Inject;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -31,28 +32,12 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
     }
 
     public String getJsonString(String query) throws JSONException {
-
         Collection<ResearchProject> projects = researchProjectDao.searchProjects(query);
-
-        JSONArray itemList = new JSONArray();
-        for (ResearchProject project : projects) {
-            createAutocomplete(itemList, project);
-        }
-
-        return itemList.toString();
+        return createItemListString(new ArrayList<ResearchProject>(projects));
     }
 
     @Override
-    protected String generateCompleteData() throws JSONException {
-        JSONArray itemList = new JSONArray();
-        for (ResearchProject project : getTokenObjects()) {
-            createAutocomplete(itemList, project);
-        }
-
-        return itemList.toString();
-    }
-
-    private static void createAutocomplete(JSONArray itemList, ResearchProject project) throws JSONException {
+    protected void createAutocomplete(JSONArray itemList, ResearchProject project) throws JSONException {
         JSONObject item = getJSONObject(project.getBusinessKey(), project.getTitle(), false);
         itemList.put(item);
     }

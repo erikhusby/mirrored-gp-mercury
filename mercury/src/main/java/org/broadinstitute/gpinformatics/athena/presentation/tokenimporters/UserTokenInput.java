@@ -31,26 +31,11 @@ public class UserTokenInput extends TokenInput<BspUser> {
 
     public String getJsonString(String query) throws JSONException {
         List<BspUser> bspUsers = bspUserList.find(query);
-
-        JSONArray itemList = new JSONArray();
-        for (BspUser bspUser : bspUsers) {
-            createAutocomplete(itemList, bspUser);
-        }
-
-        return itemList.toString();
+        return createItemListString(bspUsers);
     }
 
     @Override
-    protected String generateCompleteData() throws JSONException {
-        JSONArray itemList = new JSONArray();
-        for (BspUser bspUser : getTokenObjects()) {
-            createAutocomplete(itemList, bspUser);
-        }
-
-        return itemList.toString();
-    }
-
-    private static void createAutocomplete(JSONArray itemList, BspUser bspUser) throws JSONException {
+    protected void createAutocomplete(JSONArray itemList, BspUser bspUser) throws JSONException {
         String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
         JSONObject item = getJSONObject(String.valueOf(bspUser.getUserId()), fullName, false);
         item.put("email", bspUser.getEmail());

@@ -30,26 +30,11 @@ public class ProductTokenInput extends TokenInput<Product> {
 
     public String getJsonString(String query) throws JSONException {
         List<Product> products = productDao.searchProducts(query);
-
-        JSONArray itemList = new JSONArray();
-        for (Product product : products) {
-            createAutocomplete(itemList, product);
-        }
-
-        return itemList.toString();
+        return createItemListString(products);
     }
 
     @Override
-    protected String generateCompleteData() throws JSONException {
-        JSONArray itemList = new JSONArray();
-        for (Product product : getTokenObjects()) {
-            createAutocomplete(itemList, product);
-        }
-
-        return itemList.toString();
-    }
-
-    private static void createAutocomplete(JSONArray itemList, Product product) throws JSONException {
+    protected void createAutocomplete(JSONArray itemList, Product product) throws JSONException {
         JSONObject item = getJSONObject(product.getBusinessKey(), product.getProductName(), false);
         itemList.put(item);
     }

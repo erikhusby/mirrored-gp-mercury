@@ -37,26 +37,11 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
     public String getJsonString(String query) throws JSONException {
 
         Collection<PriceItem> priceItems = priceListCache.searchPriceItems(query);
-
-        JSONArray itemList = new JSONArray();
-        for (PriceItem priceItem : priceItems) {
-            createAutocomplete(itemList, priceItem);
-        }
-
-        return itemList.toString();
+        return createItemListString(new ArrayList<PriceItem>(priceItems));
     }
 
     @Override
-    protected String generateCompleteData() throws JSONException {
-        JSONArray itemList = new JSONArray();
-        for (PriceItem  priceItem : getTokenObjects()) {
-            createAutocomplete(itemList, priceItem);
-        }
-
-        return itemList.toString();
-    }
-
-    private void createAutocomplete(JSONArray itemList, PriceItem priceItem) throws JSONException {
+    protected void createAutocomplete(JSONArray itemList, PriceItem priceItem) throws JSONException {
         if (priceItem == null) {
             JSONObject item = getJSONObject(getListOfKeys(), "unknown price item id", false);
             itemList.put(item);

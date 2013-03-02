@@ -49,26 +49,11 @@ public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
         }
 
         Collection<MaterialType> materialTypes = materialTypeListCache.find(query);
-
-        JSONArray itemList = new JSONArray();
-        for (MaterialType materialType : materialTypes) {
-            createAutocomplete(itemList, materialType);
-        }
-
-        return itemList.toString();
+        return createItemListString(new ArrayList<MaterialType>(materialTypes));
     }
 
     @Override
-    protected String generateCompleteData() throws JSONException {
-        JSONArray itemList = new JSONArray();
-        for (MaterialType materialType : getTokenObjects()) {
-            createAutocomplete(itemList, materialType);
-        }
-
-        return itemList.toString();
-    }
-
-    private static void createAutocomplete(JSONArray itemList, MaterialType materialType) throws JSONException {
+    protected void createAutocomplete(JSONArray itemList, MaterialType materialType) throws JSONException {
         if (materialType != null) {
             JSONObject item = getJSONObject(materialType.getFullName(), materialType.getFullName(), false);
             itemList.put(item);

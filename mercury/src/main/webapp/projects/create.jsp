@@ -82,8 +82,14 @@
             }
 
             function formatCohort(item) {
+                var extra = '';
+                if (item.extraCount != undefined) {
+                    extra = '<div class="ac-dropdown-subtext">...and ' + item.extraCount + ' more</div>';
+                }
+
                 return '<li><div class="ac-dropdown-text">' + item.name + '</div>' +
-                        '<div class="ac-dropdown-subtext">' + item.group + ' ' + item.category + '</div></li>';
+                        '<div class="ac-dropdown-subtext">' + item.group + ' ' + item.category + '</div>' +
+                        extra + '</li>';
             }
         </script>
     </stripes:layout-component>

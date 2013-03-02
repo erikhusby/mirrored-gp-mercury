@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
 import org.apache.commons.lang3.StringUtils;
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -15,6 +16,8 @@ import java.util.List;
  * @author hrafal
  */
 public abstract class TokenInput<TOKEN_OBJECT> {
+
+    protected static final short MAX_DISPLAYED = 10;
 
     // The UI will have a comma separated list of keys that needs to be
     // parsed out for turning into real TOKEN_OBJECTs
@@ -63,7 +66,39 @@ public abstract class TokenInput<TOKEN_OBJECT> {
      * * @return the completion data
      * @throws JSONException if an error occurs
      */
-    protected abstract String generateCompleteData() throws JSONException;
+    public String generateCompleteData() throws JSONException {
+
+        JSONArray itemList = new JSONArray();
+        for (TOKEN_OBJECT tokenObject : getTokenObjects()) {
+            createAutocomplete(itemList, tokenObject);
+        }
+
+        return itemList.toString();
+    }
+
+    protected String createItemListString(List<TOKEN_OBJECT> tokenObjects) throws JSONException {
+
+        int count = 0;
+        List<TOKEN_OBJECT> tokenObjectChunk = tokenObjects;
+        if (tokenObjects.size() > MAX_DISPLAYED) {
+            count = tokenObjects.size() - MAX_DISPLAYED;
+            tokenObjectChunk = tokenObjects.subList(0, MAX_DISPLAYED);
+        }
+
+        JSONArray itemList = new JSONArray();
+        for (TOKEN_OBJECT tokenObject : tokenObjectChunk) {
+            createAutocomplete(itemList, tokenObject);
+        }
+
+        if (count > 0) {
+            ((JSONObject) itemList.get(itemList.length() - 1)).put("extraCount", count);
+        }
+
+        return itemList.toString();
+    }
+
+
+    protected abstract void createAutocomplete(JSONArray itemList, TOKEN_OBJECT tokenObject) throws JSONException;
 
     public final String getCompleteData() throws JSONException {
         if (completeDataCache == null) {

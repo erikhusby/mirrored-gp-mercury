@@ -30,25 +30,11 @@ public class CohortTokenInput extends TokenInput<Cohort> {
 
     public String getJsonString(String query) throws JSONException {
         List<Cohort> cohorts = cohortList.findActive(query);
-
-        JSONArray itemList = new JSONArray();
-        for (Cohort cohort : cohorts) {
-            createAutocomplete(itemList, cohort);
-        }
-        return itemList.toString();
+        return createItemListString(cohorts);
     }
 
     @Override
-    public String generateCompleteData() throws JSONException {
-        JSONArray itemList = new JSONArray();
-        for (Cohort cohort : getTokenObjects()) {
-            createAutocomplete(itemList, cohort);
-        }
-
-        return itemList.toString();
-    }
-
-    private void createAutocomplete(JSONArray itemList, Cohort cohort) throws JSONException {
+    public void createAutocomplete(JSONArray itemList, Cohort cohort) throws JSONException {
         JSONObject item = getJSONObject(cohort.getCohortId(), cohort.getDisplayName(), false);
         item.put("group", cohort.getGroup());
         item.put("category", cohort.getCategory());
