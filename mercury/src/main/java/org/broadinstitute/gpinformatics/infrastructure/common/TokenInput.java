@@ -17,7 +17,7 @@ import java.util.List;
  */
 public abstract class TokenInput<TOKEN_OBJECT> {
 
-    protected static final short MAX_DISPLAYED = 10;
+    protected static final short MAX_DISPLAYED = 15;
 
     // The UI will have a comma separated list of keys that needs to be
     // parsed out for turning into real TOKEN_OBJECTs
