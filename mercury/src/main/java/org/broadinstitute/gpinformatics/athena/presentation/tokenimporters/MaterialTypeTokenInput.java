@@ -53,11 +53,14 @@ public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
     }
 
     @Override
-    protected void createAutocomplete(JSONArray itemList, MaterialType materialType) throws JSONException {
+    protected JSONObject createAutocomplete(JSONArray itemList, MaterialType materialType) throws JSONException {
         if (materialType != null) {
             JSONObject item = getJSONObject(materialType.getFullName(), materialType.getFullName(), false);
             itemList.put(item);
+            return item;
         }
+
+        return null;
     }
 
     public Collection<? extends org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType> getMercuryTokenObjects() {

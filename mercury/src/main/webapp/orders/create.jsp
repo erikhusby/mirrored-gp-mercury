@@ -61,7 +61,8 @@
             );
 
             function formatProduct(item) {
-                return '<li><div class="ac-dropdown-text">' + item.name + '[' + item.id + ']' + "</div></li>";
+                return '<li><div class="ac-dropdown-text">' + item.name + '[' + item.id + ']' + "</div>" +
+                                           item.extraCount + '</li>'
             }
 
             var addOn = [];
@@ -152,7 +153,8 @@
 
             function formatUser(item) {
                 return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
-                       "<div class=\"ac-dropdown-subtext\">" + item.username + " " + item.email + "</div></li>";
+                       "<div class=\"ac-dropdown-subtext\">" + item.username + " " + item.email + "</div>" +
+                           item.extraCount + '</li>'
             }
         </script>
     </stripes:layout-component>

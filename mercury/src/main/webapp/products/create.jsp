@@ -89,12 +89,13 @@
 
             function formatProduct(item) {
                 return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
-                        "<div class=\"ac-dropdown-subtext\">" + item.id + "</div></li>";
+                        "<div class=\"ac-dropdown-subtext\">" + item.id + "</div>" + item.extraCount + '</li>'
             }
 
             function formatPriceItem(item) {
                 return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
-                        "<div class=\"ac-dropdown-subtext\">" + item.platform + " " + item.category + "</div></li>";
+                        "<div class=\"ac-dropdown-subtext\">" + item.platform + " " + item.category + "</div>" +
+                            item.extraCount + '</li>'
             }
 
             function updateBillingRules() {

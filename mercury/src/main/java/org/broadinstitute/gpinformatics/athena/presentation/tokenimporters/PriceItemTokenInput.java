@@ -41,11 +41,11 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
     }
 
     @Override
-    protected void createAutocomplete(JSONArray itemList, PriceItem priceItem) throws JSONException {
+    protected JSONObject createAutocomplete(JSONArray itemList, PriceItem priceItem) throws JSONException {
         if (priceItem == null) {
             JSONObject item = getJSONObject(getListOfKeys(), "unknown price item id", false);
             itemList.put(item);
-            return;
+            return item;
         }
 
         String key = org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.makeConcatenatedKey(
@@ -58,6 +58,8 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
         String priceItemCategory = (priceItem.getCategoryName() == null) ? "" : priceItem.getCategoryName();
         item.put("category", priceItemCategory);
         itemList.put(item);
+
+        return item;
     }
 
     public org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getMercuryTokenObject() {

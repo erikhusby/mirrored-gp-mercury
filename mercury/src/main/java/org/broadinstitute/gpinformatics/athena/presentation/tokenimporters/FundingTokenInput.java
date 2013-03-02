@@ -31,9 +31,10 @@ public class FundingTokenInput extends TokenInput<Funding> {
     }
 
     @Override
-    protected void createAutocomplete(JSONArray itemList, Funding funding) throws JSONException {
+    protected JSONObject createAutocomplete(JSONArray itemList, Funding funding) throws JSONException {
         JSONObject item = getJSONObject(funding.getDisplayName(), funding.getDisplayName(), false);
         item.put("matchDescription", funding.getMatchDescription());
         itemList.put(item);
+        return item;
     }
 }

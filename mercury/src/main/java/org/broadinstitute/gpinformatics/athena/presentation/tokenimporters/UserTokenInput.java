@@ -35,11 +35,12 @@ public class UserTokenInput extends TokenInput<BspUser> {
     }
 
     @Override
-    protected void createAutocomplete(JSONArray itemList, BspUser bspUser) throws JSONException {
+    protected JSONObject createAutocomplete(JSONArray itemList, BspUser bspUser) throws JSONException {
         String fullName = bspUser.getFirstName() + " " + bspUser.getLastName();
         JSONObject item = getJSONObject(String.valueOf(bspUser.getUserId()), fullName, false);
         item.put("email", bspUser.getEmail());
         item.put("username", bspUser.getUsername());
         itemList.put(item);
+        return item;
     }
 }

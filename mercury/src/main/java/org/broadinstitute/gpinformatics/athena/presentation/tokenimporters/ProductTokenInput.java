@@ -34,9 +34,10 @@ public class ProductTokenInput extends TokenInput<Product> {
     }
 
     @Override
-    protected void createAutocomplete(JSONArray itemList, Product product) throws JSONException {
+    protected JSONObject createAutocomplete(JSONArray itemList, Product product) throws JSONException {
         JSONObject item = getJSONObject(product.getBusinessKey(), product.getProductName(), false);
         itemList.put(item);
+        return item;
     }
 
     public String getAddOnsJsonString(Product editProduct, String query) throws JSONException {

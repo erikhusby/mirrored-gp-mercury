@@ -78,27 +78,31 @@ public abstract class TokenInput<TOKEN_OBJECT> {
 
     protected String createItemListString(List<TOKEN_OBJECT> tokenObjects) throws JSONException {
 
-        int count = 0;
+        int extraCount = 0;
         List<TOKEN_OBJECT> tokenObjectChunk = tokenObjects;
         if (tokenObjects.size() > MAX_DISPLAYED) {
-            count = tokenObjects.size() - MAX_DISPLAYED;
+            extraCount = tokenObjects.size() - MAX_DISPLAYED;
             tokenObjectChunk = tokenObjects.subList(0, MAX_DISPLAYED);
         }
 
+        JSONObject item = null;
+
         JSONArray itemList = new JSONArray();
         for (TOKEN_OBJECT tokenObject : tokenObjectChunk) {
-            createAutocomplete(itemList, tokenObject);
+            item = createAutocomplete(itemList, tokenObject);
+            item.put("extraCount", "");
         }
 
-        if (count > 0) {
-            ((JSONObject) itemList.get(itemList.length() - 1)).put("extraCount", count);
+        if ((item != null) && (extraCount > 0)) {
+             String extraCountString = "<div class=\"ac-dropdown-subtext\">...and " + extraCount + " more</div>";
+             item.put("extraCount", extraCountString);
         }
 
         return itemList.toString();
     }
 
 
-    protected abstract void createAutocomplete(JSONArray itemList, TOKEN_OBJECT tokenObject) throws JSONException;
+    protected abstract JSONObject createAutocomplete(JSONArray itemList, TOKEN_OBJECT tokenObject) throws JSONException;
 
     public final String getCompleteData() throws JSONException {
         if (completeDataCache == null) {

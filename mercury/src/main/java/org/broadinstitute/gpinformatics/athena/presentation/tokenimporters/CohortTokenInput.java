@@ -34,10 +34,12 @@ public class CohortTokenInput extends TokenInput<Cohort> {
     }
 
     @Override
-    public void createAutocomplete(JSONArray itemList, Cohort cohort) throws JSONException {
+    public JSONObject createAutocomplete(JSONArray itemList, Cohort cohort) throws JSONException {
         JSONObject item = getJSONObject(cohort.getCohortId(), cohort.getDisplayName(), false);
         item.put("group", cohort.getGroup());
         item.put("category", cohort.getCategory());
         itemList.put(item);
+
+        return item;
     }
 }

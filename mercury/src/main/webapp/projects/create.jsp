@@ -73,23 +73,20 @@
 
             function formatUser(item) {
                 return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
-                       "<div class=\"ac-dropdown-subtext\">" + item.username + " " + item.email + "</div></li>";
+                       "<div class=\"ac-dropdown-subtext\">" + item.username + " " + item.email + "</div>" +
+                           item.extraCount + '</li>';
             }
 
             function formatFunding(item) {
                 return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
-                        "<div class=\"ac-dropdown-subtext\">" + item.matchDescription + "</div></li>";
+                        "<div class=\"ac-dropdown-subtext\">" + item.matchDescription + "</div>" +
+                            item.extraCount + '</li>';
             }
 
             function formatCohort(item) {
-                var extra = '';
-                if (item.extraCount != undefined) {
-                    extra = '<div class="ac-dropdown-subtext">...and ' + item.extraCount + ' more</div>';
-                }
-
                 return '<li><div class="ac-dropdown-text">' + item.name + '</div>' +
                         '<div class="ac-dropdown-subtext">' + item.group + ' ' + item.category + '</div>' +
-                        extra + '</li>';
+                            item.extraCount + '</li>';
             }
         </script>
     </stripes:layout-component>
