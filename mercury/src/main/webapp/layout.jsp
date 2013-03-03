@@ -64,7 +64,7 @@
         <script type="text/javascript" src="${ctxpath}/resources/scripts/jquery.sparkline.js"></script>
 
         <script type="text/javascript"
-                src="http://prodinfojira.broadinstitute.org/jira/s/en_US-vrke9z/733/4/1.2.5/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector.js?collectorId=ad2bd4e3"></script>
+                src="https://gpinfojira.broadinstitute.org:8443/jira/s/en_US-vrke9z/733/4/1.2.5/_/download/batch/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector/com.atlassian.jira.collector.plugin.jira-issue-collector-plugin:issuecollector.js?collectorId=ad2bd4e3"></script>
         <script type="text/javascript">window.ATL_JQ_PAGE_PROPS = {
             "triggerFunction":function (showCollectorDialog) {
                 jQuery("#jiraProblem").click(function (e) {

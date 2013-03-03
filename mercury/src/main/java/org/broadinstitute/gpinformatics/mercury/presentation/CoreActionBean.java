@@ -13,7 +13,6 @@ import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.FlashScope;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.exception.SourcePageNotFoundException;
-import net.sourceforge.stripes.validation.LocalizableError;
 import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.ValidationError;
 import net.sourceforge.stripes.validation.ValidationErrors;
@@ -237,16 +236,6 @@ public class CoreActionBean implements ActionBean {
      */
     protected void addValidationError(String field, String errorMessage, Object... arguments) {
         getContext().getValidationErrors().add(field, new SimpleError(errorMessage, arguments));
-    }
-
-    /**
-     * Add an error that must be included literally in the response, without any formatting.  This should
-     * only be used in the case where the message may contain characters that will cause MessageFormat.format
-     * to generate errors.
-     * @param message the message to include.
-     */
-    public void addLiteralErrorMessage(String message) {
-        addGlobalValidationError("{2}", message);
     }
 
     /**

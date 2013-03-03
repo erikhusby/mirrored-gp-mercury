@@ -22,10 +22,7 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.*;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -76,6 +73,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String SET_RISK = "setRisk";
     private static final String PLACE_ORDER = "placeOrder";
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private QuoteService quoteService;
 
@@ -127,6 +125,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private ProjectTokenInput projectTokenInput;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private JiraService jiraService;
 
@@ -256,8 +255,13 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void doValidation(String action) {
-        String ownerUsername = bspUserList.getById(editOrder.getCreatedBy()).getUsername();
-        requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
+        requireField(editOrder.getCreatedBy(), "an owner", action);
+
+        if (editOrder.getCreatedBy() != null) {
+            String ownerUsername = bspUserList.getById(editOrder.getCreatedBy()).getUsername();
+            requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
+        }
+
         requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         requireField(editOrder.getResearchProject(), "a research project", action);
         requireField(editOrder.getQuoteId() != null, "a quote specified", action);
@@ -265,7 +269,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (editOrder.getProduct() != null && editOrder.getProduct().getSupportsNumberOfLanes()) {
             requireField(editOrder.getCount() > 0, "a specified number of lanes", action);
         }
-        requireField(editOrder.getCreatedBy(), "an owner", action);
 
         try {
             quoteService.getQuoteByAlphaId(editOrder.getQuoteId());
@@ -279,6 +282,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // We are doing on risk calculation only when everything passes, but informing the user no matter what
         if (hasNoValidationErrors()) {
             int numSamplesOnRisk = editOrder.calculateRisk();
+            editOrder.prepareToSave(getUserBean().getBspUser());
             productOrderDao.persist(editOrder);
 
             if (numSamplesOnRisk == 0) {
@@ -364,6 +368,15 @@ public class ProductOrderActionBean extends CoreActionBean {
         progressFetcher.setupProgress(productOrderDao);
     }
 
+    @After(stages = LifecycleStage.BindingAndValidation, on = EDIT_ACTION)
+    public void createInit() {
+        // Once validation is all set for edit (so that any errors can show the originally Checked Items),
+        // set the add ons to the current
+        addOnKeys.clear();
+        for (ProductOrderAddOn addOnProduct : editOrder.getAddOns()) {
+            addOnKeys.add(addOnProduct.getAddOn().getBusinessKey());
+        }
+    }
 
     @After(stages = LifecycleStage.BindingAndValidation, on = VIEW_ACTION)
     public void entryInit() {
@@ -453,7 +466,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent(PLACE_ORDER)
     public Resolution placeOrder() {
         try {
-            editOrder.prepareToSave(userBean.getBspUser(), isCreating());
+            editOrder.prepareToSave(userBean.getBspUser());
             editOrder.placeOrder();
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
@@ -461,7 +474,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             productOrderDao.persist(editOrder);
         } catch (Exception e) {
             // Need to quote the message contents to prevent errors.
-            addLiteralErrorMessage(e.getMessage());
+            addGlobalValidationError("{2}", e.getMessage());
             return getSourcePageResolution();
         }
 
@@ -700,6 +713,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // If removeAll returns false, no samples were removed -- should never happen.
         if (editOrder.getSamples().removeAll(selectedProductOrderSamples)) {
             String nameList = StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ",");
+            editOrder.prepareToSave(getUserBean().getBspUser());
             productOrderDao.persist(editOrder);
             addMessage("Deleted samples: {0}.", nameList);
             JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
@@ -729,6 +743,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
 
+        editOrder.prepareToSave(getUserBean().getBspUser());
         productOrderDao.persist(editOrder);
 
         addMessage("Set manual on risk for {0} samples.", selectedProductOrderSampleIds.size());
@@ -749,7 +764,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
         if (!selectedProductOrderSamples.isEmpty()) {
-            String nameList = StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ",");
             productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples);
         }
         return createViewResolution();
@@ -759,6 +773,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution addSamples() throws Exception {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
         editOrder.addSamples(samplesToAdd);
+        editOrder.prepareToSave(getUserBean().getBspUser());
         productOrderDao.persist(editOrder);
         String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samplesToAdd), ",");
         addMessage("Added samples: {0}.", nameList);
