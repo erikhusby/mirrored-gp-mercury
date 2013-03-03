@@ -9,6 +9,7 @@ import javax.ejb.Stateful;
 import javax.inject.Inject;
 import javax.persistence.Query;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.util.*;
 
 @Stateful
@@ -112,12 +113,15 @@ public class RiskItemEtl extends GenericEntityEtl {
             query.setParameter("startId", startId);
             query.setParameter("endId", endId);
             // Deduplicates the ids.
-            Set<Long> pdoSampleIds = new HashSet<Long>(query.getResultList());
+            Set<BigDecimal> pdoSampleIds = new HashSet<BigDecimal>(query.getResultList());
 
             // Writes the records.
-            for (Long pdoSampleId : pdoSampleIds) {
+            for (BigDecimal pdoSampleId : pdoSampleIds) {
                 if (null == pdoSampleId) continue;
-                for (String record : entityRecord(etlDateStr, false, pdoSampleId)) {
+                // ATHENA.PO_SAMPLE_RISK_JOIN_AUD.product_sample_id is a generated numeric field (a BigDecimal)
+                // but we know it will always fit in a Long.
+                Long id = Long.parseLong(String.valueOf(pdoSampleId));
+                for (String record : entityRecord(etlDateStr, false, id)) {
                     dataFile.write(record);
                 }
             }
