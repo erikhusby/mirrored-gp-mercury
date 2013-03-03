@@ -57,6 +57,7 @@
                         }
                     );
 
+                    updateUIForProductChoice();
                     updateFundsRemaining();
                 }
             );
@@ -67,8 +68,8 @@
             }
 
             var addOn = [];
-            <c:forEach items="${actionBean.editOrder.addOns}" var="addOnProduct">
-                addOn['${addOnProduct.addOn.businessKey}'] = true;
+            <c:forEach items="${actionBean.addOnKeys}" var="addOnProduct">
+                addOn['${addOnProduct}'] = true;
             </c:forEach>
 
 
@@ -77,19 +78,19 @@
                 var productKey = $j("#product").val();
                 if ((productKey == null) || (productKey == "")) {
                     $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
+                } else {
+                    $j.ajax({
+                        url: "${ctxpath}/orders/order.action?getAddOns=&product=" + productKey,
+                        dataType: 'json',
+                        success: setupCheckboxes
+                    });
+
+                    $j.ajax({
+                        url: "${ctxpath}/orders/order.action?getSupportsNumberOfLanes=&product=" + productKey,
+                        dataType: 'json',
+                        success: updateNumberOfLanesVisibility
+                    });
                 }
-
-                $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getAddOns=&product=" + productKey,
-                    dataType: 'json',
-                    success: setupCheckboxes
-                });
-
-                $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getSupportsNumberOfLanes=&product=" + productKey,
-                    dataType: 'json',
-                    success: updateNumberOfLanesVisibility
-                });
             }
 
 

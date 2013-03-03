@@ -205,7 +205,7 @@ public class ProductOrderDaoTest extends ContainerTest {
 
 
     /**
-     * Helper method for {#link testFindBySampleBarcodes} test method.
+     * Helper method for {@link #testFindBySampleBarcodes} test method.
      *
      * @param productOrderMap Input map of PDO barcodes to PDOs.
      * @param productOrderKey PDO to search.
