@@ -73,6 +73,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String SET_RISK = "setRisk";
     private static final String PLACE_ORDER = "placeOrder";
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private QuoteService quoteService;
 
@@ -124,6 +125,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private ProjectTokenInput projectTokenInput;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private JiraService jiraService;
 
