@@ -18,14 +18,14 @@ import java.util.List;
  */
 public abstract class TokenInput<TOKEN_OBJECT> {
 
-    protected static final short SINGLE_LINE_MAX_DISPLAYED = 20;
-    protected static final short DOUBLE_LINE_MAX_DISPLAYED = 12;
+    private static final short SINGLE_LINE_MAX_DISPLAYED = 20;
+    private static final short DOUBLE_LINE_MAX_DISPLAYED = 12;
 
     // These are generic menu entry divs that go in between <li> tags in the token input javascript
     // There are two forms (single line and double line) which have different format classes. Subclasses populate
     // just the details.
-    protected static final String MENU_ONE_LINE = "<div class=\"ac-dropdown-text\">{0}</div>";
-    protected static final String MENU_TWO_LINE = MENU_ONE_LINE + "<div class=\"ac-dropdown-subtext\">{1}</div>";
+    private static final String MENU_ONE_LINE = "<div class=\"ac-dropdown-text\">{0}</div>";
+    private static final String MENU_TWO_LINE = MENU_ONE_LINE + "<div class=\"ac-dropdown-subtext\">{1}</div>";
 
     // The UI will have a comma separated list of keys that needs to be
     // parsed out for turning into real TOKEN_OBJECTs
