@@ -26,6 +26,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     // just the details.
     private static final String MENU_ONE_LINE = "<div class=\"ac-dropdown-text\">{0}</div>";
     private static final String MENU_TWO_LINE = MENU_ONE_LINE + "<div class=\"ac-dropdown-subtext\">{1}</div>";
+    private static final String EXTRA_COUNT_LINE = "<div class=\"ac-dropdown-subtext\">...and {0} more</div>";
 
     // The UI will have a comma separated list of keys that needs to be
     // parsed out for turning into real TOKEN_OBJECTs
@@ -118,8 +119,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         // If there are extra items, this inserts a second line into the second line so that the count gets
         // grouped with the last item for selection. The style places a line, so it looks like a footer.
         if ((item != null) && (extraCount > 0)) {
-             String extraCountString = "<div class=\"ac-dropdown-subtext\">...and " + extraCount + " more</div>";
-             item.put("extraCount", extraCountString);
+             item.put("extraCount", MessageFormat.format(EXTRA_COUNT_LINE, extraCount));
         }
 
         return itemList.toString();
@@ -151,14 +151,14 @@ public abstract class TokenInput<TOKEN_OBJECT> {
      * @throws JSONException Any errors
      */
     public JSONObject createAutocomplete(JSONArray itemList, TOKEN_OBJECT tokenObject) throws JSONException {
-        JSONObject item = getJSONObject(getTokenId(tokenObject), getTokenName(tokenObject), false);
+        JSONObject item = getJSONObject(getTokenId(tokenObject), getTokenName(tokenObject));
 
         String[] menuLines = getMenuLines(tokenObject);
-        String list = (menuLines.length == 1) ?
+        String listItem = (menuLines.length == 1) ?
             MessageFormat.format(MENU_ONE_LINE, menuLines[0]) :
             MessageFormat.format(MENU_TWO_LINE, menuLines[0], menuLines[1]);
 
-        item.put("dropdownItem", list);
+        item.put("dropdownItem", listItem);
         itemList.put(item);
 
         return item;
@@ -199,17 +199,17 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     /**
      * Given the arguments, create a JSON object that represents it.  This is used to create the response for a
      * JQeury Tokeninput auto-complete UI.
+     *
      * @param id the ID
      * @param name the name
-     * @param readonly true if readonly
      * @return the JSON object that contains these fields.
      * @throws JSONException
      */
-    public static JSONObject getJSONObject(String id, String name, boolean readonly) throws JSONException {
+    public static JSONObject getJSONObject(String id, String name) throws JSONException {
         JSONObject item = new JSONObject();
         item.put("id", id);
         item.put("name", name);
-        item.put("readonly", readonly);
+        item.put("readonly", false);
         return item;
     }
 }

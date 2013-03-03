@@ -67,7 +67,7 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
     @Override
     public JSONObject createAutocomplete(JSONArray itemList, PriceItem priceItem) throws JSONException {
         if (priceItem == null) {
-            JSONObject item = getJSONObject(getListOfKeys(), "unknown price item id", false);
+            JSONObject item = getJSONObject(getListOfKeys(), "unknown price item id");
             item.put("dropdownItem", "");
             itemList.put(item);
             return item;
