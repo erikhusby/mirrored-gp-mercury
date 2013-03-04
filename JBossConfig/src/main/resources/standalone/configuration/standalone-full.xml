@@ -35,6 +35,8 @@
 
     <system-properties>
         <property name="MERCURY_DEPLOYMENT" value="DEV"/>
+        <!-- This is required to support pages that have more than 512 checkbox inputs in a form. -->
+        <property name="org.apache.tomcat.util.http.Parameters.MAX_COUNT" value="-1"/>
     </system-properties>
 
     <management>
