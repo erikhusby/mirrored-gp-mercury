@@ -345,7 +345,7 @@ public class ProductOrderDao extends GenericDao {
 
         Root<ProductOrder> root = query.from(ProductOrder.class);
         ListJoin<ProductOrder,ProductOrderSample> sampleListJoin = root.join(ProductOrder_.samples);
-        query.where(sampleListJoin.get(ProductOrderSample_.sampleName).in(new Object[]{barcodes}));
+        query.where(sampleListJoin.get(ProductOrderSample_.sampleName).in((Object []) barcodes));
 
         return getEntityManager().createQuery(query).getResultList();
     }

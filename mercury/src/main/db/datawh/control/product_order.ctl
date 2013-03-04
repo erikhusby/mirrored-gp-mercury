@@ -15,5 +15,6 @@ TRAILING NULLCOLS
  modified_date DATE "YYYYMMDDHH24MISS",
  title,
  quote_id,
- jira_ticket_key
+ jira_ticket_key,
+ owner
 )

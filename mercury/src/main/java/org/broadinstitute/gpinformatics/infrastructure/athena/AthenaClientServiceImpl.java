@@ -38,7 +38,7 @@ public class AthenaClientServiceImpl implements AthenaClientService {
      * see interface
      */
     @Override
-    public Map<String, List<ProductOrderSample>> findMapBySamples(List<String> sampleNames) {
+    public Map<String, List<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames) {
         return productOrderSampleDao.findMapBySamples(sampleNames);
     }
 
