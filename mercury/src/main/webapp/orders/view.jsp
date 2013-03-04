@@ -118,6 +118,28 @@
                     ]
                 });
 
+                $j("#abandonConfirmation").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    buttons: [
+                        {
+                            id: "abandonOkButton",
+                            text: "OK",
+                            click: function () {
+                                $j(this).dialog("close");
+                                $j("#abandonOkButton").attr("disabled", "disabled");
+                                $j("#orderForm").submit();
+                            }
+                        },
+                        {
+                            text: "Cancel",
+                            click : function () {
+                                $j(this).dialog("close");
+                            }
+                        }
+                    ]
+                });
+
                 $j("#noneSelectedDialog").dialog({
                     modal: true,
                     autoOpen: false,
@@ -226,6 +248,19 @@
                     $j("#noneSelectedDialog").dialog("open");
                 }
             }
+
+            function showAbandonConfirm(action, actionPrompt, level) {
+                $j("#orderDialogAction").attr("name", action);
+                $j("#confirmDialogMessage").text(actionPrompt);
+
+                if (level) {
+                    $j("#abandonConfirmation").parent().css("border-color:red;");
+                    $j("#abandonConfirmation").text("This Product Order has billed samples. Are you sure you want to abandon it?");
+                    $j("#abandonConfirmation").prev().addClass("ui-state-error");
+                }
+
+                $j("#abandonConfirmation").dialog("open");
+            }
         </script>
     </stripes:layout-component>
 
@@ -254,38 +289,61 @@
         <p>This will permanently remove this draft. Are you sure?</p>
     </div>
 
+    <div style="display:none" id="abandonConfirmation">
+        <p>This will abandon this Product Order. Are you sure?</p>
+    </div>
+
     <div style="display:none" id="noneSelectedDialog">
         <p>You must select at least one sample to <span id="noneSelectedDialogMessage"></span>.</p>
     </div>
 
-        <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
-            <stripes:hidden name="productOrder" value="${editOrder.businessKey}"/>
-            <stripes:hidden id="orderDialogAction" name=""/>
+    <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
+        <stripes:hidden name="productOrder" value="${editOrder.businessKey}"/>
+        <stripes:hidden id="orderDialogAction" name=""/>
 
-            <div class="actionButtons">
-                <c:if test="${editOrder.draft}">
-                    <%-- MLC PDOs can be placed by PM or PDMs, so I'm making the security tag accept either of those roles for 'Place Order'.
-                         I am also putting 'Validate' under that same security tag since I think that may have the power to alter 'On-Riskedness'
-                         for PDO samples --%>
-                    <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name, Role.PM.name}%>">
-                        <stripes:submit name="placeOrder" value="Validate and Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
-                        <stripes:submit name="validate" value="Validate" style="margin-left: 5px;" class="btn"/>
-                    </security:authorizeBlock>
+        <div class="actionButtons">
+            <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name}%>">
+                <c:choose>
+                    <c:when test="${actionBean.abandonable}">
+                        <c:set var="abandonTitle" value="Click to abandon ${editOrder.title}"/>
+                        <c:set var="abandonDisable" value="false"/>
+                        <stripes:hidden name="selectedProductOrderBusinessKeys" value="${editOrder.businessKey}"/>
+                    </c:when>
+                    <c:otherwise>
+                        <c:set var="abandonTitle"
+                               value="Cannot abandon this order because ${actionBean.abandonDisabledReason}"/>
+                        <c:set var="abandonDisable" value="true"/>
+                    </c:otherwise>
+                </c:choose>
+                <stripes:button name="abandonOrders" id="abandonOrders" value="Abandon Order"
+                                onclick="showAbandonConfirm('abandonOrders', 'abandon', ${actionBean.abandonWarning})"
+                                class="btn padright" title="${abandonTitle}" disabled="${abandonDisable}"/>
+            </security:authorizeBlock>
+            <c:if test="${editOrder.draft}">
+                <%-- MLC PDOs can be placed by PM or PDMs, so I'm making the security tag accept either of those roles for 'Place Order'.
+                     I am also putting 'Validate' under that same security tag since I think that may have the power to alter 'On-Riskedness'
+                     for PDO samples --%>
+                <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name, Role.PM.name}%>">
 
-                    <stripes:link title="Click to edit ${editOrder.title}"
-                                  beanclass="${actionBean.class.name}" event="edit" class="btn"
-                                  style="text-decoration: none !important;">
-                        <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
-                        <stripes:param name="productOrder" value="${editOrder.businessKey}"/>
-                    </stripes:link>
+                    <stripes:submit name="placeOrder" value="Validate and Place Order"
+                                    disabled="${!actionBean.canPlaceOrder}" class="btn"/>
+                    <stripes:submit name="validate" value="Validate" style="margin-left: 5px;" class="btn"/>
+                </security:authorizeBlock>
 
-                    <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PM.name}%>">
-                        <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
-                                        value="Delete Draft" style="margin-left: 5px;" class="btn"/>
-                    </security:authorizeBlock>
-                </c:if>
-            </div>
-        </stripes:form>
+                <stripes:link title="Click to edit ${editOrder.title}"
+                              beanclass="${actionBean.class.name}" event="edit" class="btn"
+                              style="text-decoration: none !important;">
+                    <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
+                    <stripes:param name="productOrder" value="${editOrder.businessKey}"/>
+                </stripes:link>
+
+                <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PM.name}%>">
+                    <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
+                                    value="Delete Draft" style="margin-left: 5px;" class="btn"/>
+                </security:authorizeBlock>
+            </c:if>
+        </div>
+    </stripes:form>
 
         <%-- PDO edit should only be available to PDMs, i.e. not PMs. --%>
         <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name}%>">

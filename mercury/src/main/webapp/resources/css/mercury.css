@@ -115,3 +115,4 @@ textarea.controlledText { width: 550px; }
 .barComplete { height: 100%; float:left; background-color: #c4eec0; }
 .barAbandon { height: 100%; float:left; background-color: #eed6e1; }
 
+.padright { margin-right: 30px; }
