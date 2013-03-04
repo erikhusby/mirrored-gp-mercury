@@ -17,6 +17,7 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.persistence.criteria.*;
+import java.text.MessageFormat;
 import java.util.*;
 
 @Stateful
@@ -84,9 +85,9 @@ public class ProductOrderDao extends GenericDao {
     /**
      * Find the order using the unique title
      *
-     * @param title
+     * @param title Title.
      *
-     * @return
+     * @return Corresponding Product Order.
      */
     public ProductOrder findByTitle(String title) {
         return findSingle(ProductOrder.class, ProductOrder_.title, title);
@@ -95,10 +96,10 @@ public class ProductOrderDao extends GenericDao {
     /**
      * Return the {@link ProductOrder}s specified by the {@link List} of business keys, applying optional fetches.
      *
-     * @param businessKeyList
-     * @param fs
+     * @param businessKeyList List of business keys.
+     * @param fs Varargs array of Fetch Specs.
      *
-     * @return
+     * @return List of ProductOrders.
      */
     public List<ProductOrder> findListByBusinessKeyList(List<String> businessKeyList, FetchSpec... fs) {
         return findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, businessKeyList,
@@ -330,13 +331,19 @@ public class ProductOrderDao extends GenericDao {
 
 
     /**
-     * Find all ProductOrders for the specified varargs array of barcodes.
+     * Find all ProductOrders for the specified varargs array of barcodes, will throw {@link IllegalArgumentException}
+     * if given more than 1000 barcodes.
      *
      * @param barcodes One or more sample barcodes.
      *
      * @return All Product Orders containing samples with these barcodes.
      */
-    public List<ProductOrder> findBySampleBarcodes(@Nonnull String... barcodes) {
+    public List<ProductOrder> findBySampleBarcodes(@Nonnull String... barcodes) throws IllegalArgumentException {
+
+        if (barcodes.length > 1000) {
+            throw new IllegalArgumentException(MessageFormat
+                    .format("Received {0} barcodes but Oracle in expression limit is 1000.", barcodes.length));
+        }
 
         CriteriaBuilder cb = getCriteriaBuilder();
 
