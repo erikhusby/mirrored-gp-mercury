@@ -29,12 +29,7 @@
                 var sampleNameFields = $j(".sampleName");
 
                 // If there are no samples, set up the filter, otherwise kick off some javascript
-                if (sampleNameFields.length == 0) {
-                    $j('#sampleData').dataTable( {
-                        "oTableTools": ttExportDefines,
-                        "bSort": false
-                    });
-                } else {
+                if (sampleNameFields.length > 0) {
                     var i,j,tempArray,chunk = 50;
                     for (i=0,j=sampleNameFields.length; i<j; i+=chunk) {
                         tempArray = sampleNameFields.slice(i,i+chunk);
@@ -163,7 +158,28 @@
                 if (bspDataCount < 1) {
                     $j('#sampleData').dataTable( {
                         "oTableTools": ttExportDefines,
-                        "bSort": false
+                        <c:choose>
+                            <c:when test="${editOrder.draft}">
+                                "aaSorting": [[0, 'asc']],
+                            </c:when>
+                            <c:otherwise>
+                                "aaSorting": [[1, 'asc']],
+                            </c:otherwise>
+                        </c:choose>
+                            "aoColumns": [
+                                {"bSortable": false},                       // checkbox
+                                {"bSortable": true, "sType": "numeric"},    // Position
+                                {"bSortable": true},                        // ID
+                                {"bSortable": true},                        // Participant ID
+                                {"bSortable": true, "sType": "numeric"},    // Volume
+                                {"bSortable": true, "sType": "numeric"},    // Concentration
+                                {"bSortable": true, "sType": "numeric"},    // Yield Amount
+                                {"bSortable": true, "sType" : "title-string"}, // FP Status
+                                {"bSortable": true},                        // On Risk
+                                {"bSortable": true, "sType": "title-numeric"},   // Eligible
+                                {"bSortable": true, "sType" : "title-string"},   // Billed
+                                {"bSortable": true},                        // Status
+                                {"bSortable": true}]                        // Comment
                     });
                 }
             }
@@ -515,61 +531,65 @@
                 <img src="${ctxpath}/images/spinner.gif"/>
             </div>
 
-            <table id="sampleData" class="table simple">
-                <thead>
-                    <tr>
-                        <c:if test="${!editOrder.draft}">
-                            <th width="40">
-                                <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
-                            </th>
-                        </c:if>
-                        <th width="90">ID</th>
-                        <th width="90">Participant ID</th>
-                        <th width="40">Volume</th>
-                        <th width="40">Concentration</th>
-                        <th width="40">Yield Amount</th>
-                        <th width="60">FP Status</th>
-                        <th>On Risk</th>
-                        <th width="40">Eligible</th>
-                        <th width="40">Billed</th>
-                        <th width="40">Status</th>
-                        <th width="200">Comment</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <c:forEach items="${editOrder.samples}" var="sample">
+            <c:if test="${not empty actionBean.editOrder.samples}">
+                <table id="sampleData" class="table simple">
+                    <thead>
                         <tr>
                             <c:if test="${!editOrder.draft}">
-                                <td>
-                                    <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${sample.productOrderSampleId}"/>
-                                </td>
+                                <th width="40">
+                                    <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
+                                </th>
                             </c:if>
-                            <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
-                                <c:choose>
-                                    <c:when test="${sample.inBspFormat}">
-                                        <stripes:link class="external" target="BSP_SAMPLE" title="BSP Sample" href="${actionBean.sampleSearchUrlForBspSample(sample)}">
-                                            ${sample.sampleName}
-                                        </stripes:link>
-                                    </c:when>
-                                    <c:otherwise>
-                                        ${sample.sampleName}
-                                    </c:otherwise>
-                                </c:choose>
-                            </td>
-                            <td id="patient-${sample.productOrderSampleId}">&nbsp;</td>
-                            <td id="volume-${sample.productOrderSampleId}">&nbsp;</td>
-                            <td id="concentration-${sample.productOrderSampleId}">&nbsp;</td>
-                            <td id="total-${sample.productOrderSampleId}">&nbsp;</td>
-                            <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center">&nbsp;</td>
-                            <td>${sample.riskString}</td>
-                            <td>&#160;</td>
-                            <td>&#160;</td>
-                            <td>${sample.deliveryStatus.displayName}</td>
-                            <td>${sample.sampleComment}</td>
+                            <th width="20">Pos</th>
+                            <th width="90">ID</th>
+                            <th width="90">Participant ID</th>
+                            <th width="40">Volume</th>
+                            <th width="40">Concentration</th>
+                            <th width="40">Yield Amount</th>
+                            <th width="60">FP Status</th>
+                            <th>On Risk</th>
+                            <th width="40">Eligible</th>
+                            <th width="40">Billed</th>
+                            <th width="40">Status</th>
+                            <th width="200">Comment</th>
                         </tr>
-                    </c:forEach>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <c:forEach items="${editOrder.samples}" var="sample">
+                            <tr>
+                                <c:if test="${!editOrder.draft}">
+                                    <td>
+                                        <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${sample.productOrderSampleId}"/>
+                                    </td>
+                                </c:if>
+                                <td>${sample.samplePosition}</td>
+                                <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
+                                    <c:choose>
+                                        <c:when test="${sample.inBspFormat}">
+                                            <stripes:link class="external" target="BSP_SAMPLE" title="BSP Sample" href="${actionBean.sampleSearchUrlForBspSample(sample)}">
+                                                ${sample.sampleName}
+                                            </stripes:link>
+                                        </c:when>
+                                        <c:otherwise>
+                                            ${sample.sampleName}
+                                        </c:otherwise>
+                                    </c:choose>
+                                </td>
+                                <td id="patient-${sample.productOrderSampleId}">&nbsp;</td>
+                                <td id="volume-${sample.productOrderSampleId}">&nbsp;</td>
+                                <td id="concentration-${sample.productOrderSampleId}">&nbsp;</td>
+                                <td id="total-${sample.productOrderSampleId}">&nbsp;</td>
+                                <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center">&nbsp;</td>
+                                <td>${sample.riskString}</td>
+                                <td>&#160;</td>
+                                <td>&#160;</td>
+                                <td>${sample.deliveryStatus.displayName}</td>
+                                <td>${sample.sampleComment}</td>
+                            </tr>
+                        </c:forEach>
+                    </tbody>
+                </table>
+            </c:if>
         </stripes:form>
     </stripes:layout-component>
 </stripes:layout-render>
