@@ -14,7 +14,7 @@ import java.util.Collection;
 import java.util.List;
 
 /**
- * This class is the user implementation of the token object. The key is the concatenated key of the price item
+ * This class is the user implementation of the token object.  The key is the concatenated key of the price item.
  *
  * @author hrafal
  */
@@ -83,7 +83,7 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
         }
 
         if (priceItems.size() > 1) {
-            throw new IllegalArgumentException("If you want to get more than one price item, use getMercuryTokenObjecs");
+            throw new IllegalArgumentException("If you want to get more than one price item, use #getMercuryTokenObjects.");
         }
 
         return getMercuryPriceItem(priceItems.get(0));
@@ -104,7 +104,7 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
     }
 
     private org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getMercuryPriceItem(PriceItem priceItem) {
-        // Find the existing mercury price item
+        // Find the existing Mercury price item.
         if (priceItem == null) {
             return null;
         }

@@ -24,7 +24,6 @@ public class Product implements Serializable, Comparable<Product> {
     private static final int ONE_DAY_IN_SECONDS = 60 * 60 * 24;
 
     public static final boolean TOP_LEVEL_PRODUCT = true;
-    public static final boolean CHILD_PRODUCT = false;
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT", schema = "athena", sequenceName = "SEQ_PRODUCT")
@@ -122,7 +121,7 @@ public class Product implements Serializable, Comparable<Product> {
     private List<RiskCriteria> riskCriteriaList = new ArrayList<RiskCriteria>();
 
     /**
-     * JPA package visible no arg constructor
+     * Default no-arg constructor, also used when creating a new Product.
      */
     public Product() {}
 
