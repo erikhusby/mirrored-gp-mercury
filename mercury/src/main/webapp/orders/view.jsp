@@ -467,10 +467,10 @@
                 <div class="controls">
                     <div class="form-value">
                         <div class="barFull view" title="${actionBean.percentInProgress}% In Progress">
-                            <span class="barAbandon view"
+                            <span class="barAbandon"
                                 title="${actionBean.percentAbandoned}% Abandoned"
                                 style="width: ${actionBean.percentAbandoned}%"> </span>
-                            <span class="barComplete view"
+                            <span class="barComplete"
                                 title="${actionBean.percentCompleted}% Completed"
                                 style="width: ${actionBean.percentCompleted}%"> </span>
                         </div>

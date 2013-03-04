@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
-import org.apache.commons.collections.CollectionUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger_;
