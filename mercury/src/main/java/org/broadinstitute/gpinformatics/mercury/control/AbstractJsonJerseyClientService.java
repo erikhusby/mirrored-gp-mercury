@@ -22,7 +22,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
 
     private final ObjectMapper objectMapper = new ObjectMapper();
     
-    private static final Log logger = LogFactory.getLog(AbstractJsonJerseyClientService.class);
+    private static final Log log = LogFactory.getLog(AbstractJsonJerseyClientService.class);
 
     /**
      * Write a JSON representation of the bean parameter to a {@link String} and return.
@@ -63,14 +63,15 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
     protected <T> T post(WebResource webResource, Object requestPojo, GenericType<T> responseGenericType) throws IOException {
         String request = writeValue(requestPojo);
 
-        logger.warn("POST request: " + request);
+        log.trace("POST request: " + request);
 
         try {
             T ret = setJsonMimeTypes(webResource).post(responseGenericType, request);
-            logger.debug("POST response: " + ret);
+            log.trace("POST response: " + ret);
             return ret;
         } catch (UniformInterfaceException e) {
             //TODO SGM:  Change to a more defined exception to give the option to set in throws or even catch
+            log.error("POST request: " + request, e);
             throw new RuntimeException(e.getResponse().getEntity(String.class), e);
         }
     }
@@ -87,12 +88,13 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
     protected void post(WebResource webResource, Object requestPojo) throws IOException {
         String request = writeValue(requestPojo);
 
-        logger.warn("POST request: " + request);
+        log.trace("POST request: " + request);
 
         try {
             setJsonMimeTypes(webResource).post(request);
         } catch (UniformInterfaceException e) {
             //TODO SGM:  Change to a more defined exception to give the option to set in throws or even catch
+            log.error("POST request: " + request, e);
             throw new RuntimeException(e.getResponse().getEntity(String.class), e);
         }
     }
@@ -107,11 +109,12 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
      */
     protected void put(WebResource webResource, Object requestPojo) throws IOException {
         String request = writeValue(requestPojo);
-        logger.warn("PUT request: " + request);
+        log.trace("PUT request: " + request);
         try {
             setJsonMimeTypes(webResource).put(request);
         } catch (UniformInterfaceException e) {
             //TODO SGM:  Change to a more defined exception to give the option to set in throws or even catch
+            log.error("PUT request: " + request, e);
             throw new RuntimeException(e.getResponse().getEntity(String.class), e);
         }
     }
@@ -130,6 +133,7 @@ public abstract class AbstractJsonJerseyClientService extends AbstractJerseyClie
             return setJsonMimeTypes(webResource).get(genericType);
         } catch (UniformInterfaceException e) {
             //TODO SGM:  Change to a more defined exception to give the option to set in throws or even catch
+            log.error("GET request" + webResource.getURI(), e);
             throw new RuntimeException(e.getResponse().getEntity(String.class), e);
         }
     }
