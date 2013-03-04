@@ -76,15 +76,6 @@
                 <tr>
                     <td valign="top">
 
-                        <div id="jiraIdDiv">
-                            <div class="control-group">
-                                <stripes:label for="jiraTicketId" name="Jira Ticket Key" class="control-label"/>
-                                <div class="controls">
-                                    <stripes:text name="jiraTicketId" class="defaultText"
-                                                  title="Enter an existing batch ticket" id="jiraTicketId"/>
-                                </div>
-                            </div>
-                        </div>
                         <div id="newTicketDiv">
                             <div class="control-group">
                                 <stripes:label for="summary" name="Summary" class="control-label"/>
