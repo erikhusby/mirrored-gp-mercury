@@ -38,6 +38,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
 
     private static final Long   TEST_CREATOR = 1111L;
     public static final  String rpSynopsis   = "Test synopsis";
+    public static final String otherRpSynopsis = "To Study Stuff";
 
     @Override
     public ProductOrder retrieveProductOrderDetails(String poBusinessKey) {
@@ -159,7 +160,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
                                                        long creatorId) {
 
         return createDummyProductOrder(sampleCount, jiraKey, workflowName, creatorId, "MyResearchProject",
-                                              "To Study Stuff",
+                                              otherRpSynopsis,
                                               ResearchProject.IRB_ENGAGED, "partNumber");
     }
 
