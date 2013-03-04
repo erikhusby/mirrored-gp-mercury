@@ -1,10 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.Before;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
-import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.Validate;
-import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -19,7 +23,12 @@ import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean;
@@ -47,9 +56,27 @@ public class BucketViewActionBean extends CoreActionBean {
     private BucketDao bucketDao;
     @Inject
     private AthenaClientService athenaClientService;
+    @Inject
+    private LabBatchEjb labBatchEjb;
+    @Inject
+    private LabVesselDao labVesselDao;
+    @Inject
+    private LabBatchDAO labBatchDAO;
+    @Inject
+    private UserBean userBean;
+
+    public static final String EXISTING_TICKET = "existingTicket";
+    public static final String NEW_TICKET = "newTicket";
+    public static final String CREATE_BATCH_ACTION = "createBatch";
 
     private List<WorkflowBucketDef> buckets = new ArrayList<WorkflowBucketDef>();
-    @Validate(required = true, on = "viewBucket")
+    private List<String> selectedVesselLabels;
+    private List<LabVessel> selectedBatchVessels;
+
+    @Validate(required = true, on = {CREATE_BATCH_ACTION})
+    private String jiraInputType = EXISTING_TICKET;
+
+    @Validate(required = true, on = {CREATE_BATCH_ACTION,"viewBucket"})
     private String selectedBucket;
 
     private Collection<BucketEntry> bucketEntries;
@@ -57,6 +84,15 @@ public class BucketViewActionBean extends CoreActionBean {
     private Map<String, ProductOrder> pdoByKeyMap = new HashMap<String, ProductOrder>();
 
     private boolean jiraEnabled = false;
+
+
+    private String jiraTicketId;
+
+    private String important;
+    private String description;
+    private String summary;
+    private Date dueDate;
+
 
     @Before(stages = LifecycleStage.BindingAndValidation)
     public void init() {
@@ -108,6 +144,32 @@ public class BucketViewActionBean extends CoreActionBean {
         return new ForwardResolution(VIEW_PAGE);
     }
 
+    @ValidationMethod(on = CREATE_BATCH_ACTION)
+    public void createBatchValidation() {
+
+        if (!getUserBean().isValidJiraUser()) {
+            addValidationError("jiraTicketId","You must be A valid Jira user to create an LCSet");
+            viewBucket();
+        }
+
+        if(selectedVesselLabels == null || selectedVesselLabels.isEmpty()) {
+            addValidationError("selectedVesselLabels", "At least one vessel must be selected to create a batch");
+            viewBucket();
+        }
+
+        if(jiraInputType.equals(EXISTING_TICKET)) {
+            if(StringUtils.isBlank(jiraTicketId)) {
+                addValidationError("jiraTicketId","An existing Jira ticket key is required");
+                viewBucket();
+            }
+        } else {
+            if(StringUtils.isBlank(summary)) {
+                addValidationError("summary", "You must provide at least a summary to create a Jira Ticket");
+                viewBucket();
+            }
+        }
+    }
+
     public Resolution viewBucket() {
         if (selectedBucket != null) {
             Bucket bucket = bucketDao.findByName(selectedBucket);
@@ -132,5 +194,92 @@ public class BucketViewActionBean extends CoreActionBean {
             pdoByKeyMap.put(pdoKey, athenaClientService.retrieveProductOrderDetails(pdoKey));
         }
         return pdoByKeyMap.get(pdoKey);
+    }
+
+    /**
+     * Supports the submission for the page.  Will forward to confirmation page on success
+     *
+     * @return The resolution
+     */
+    @HandlesEvent(CREATE_BATCH_ACTION)
+    public Resolution createBatch() throws Exception {
+        LabBatch batchObject;
+
+        if (isUseExistingTicket()) {
+            /*
+               If the user is associating the batch with an existing ticket, just the ticket ID and the set of vessels
+               are needed to create the batch
+            */
+
+            batchObject = labBatchEjb.createLabBatchAndRemoveFromBucket(selectedVesselLabels,
+                    userBean.getBspUser().getUsername(), jiraTicketId.trim(), selectedBucket,
+                    LabEvent.UI_EVENT_LOCATION);
+        } else {
+
+            Set<LabVessel> vesselSet =
+                    new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
+
+            /*
+               If a new ticket is to be created, pass the description, summary, due date and important info in a batch
+               object acting as a DTO
+            */
+            batchObject = new LabBatch(summary.trim(), vesselSet, LabBatch.LabBatchType.WORKFLOW, description, dueDate,
+                    important);
+
+            labBatchEjb.createLabBatchAndRemoveFromBucket(batchObject, userBean.getBspUser().getUsername(),
+                    selectedBucket, LabEvent.UI_EVENT_LOCATION);
+        }
+
+        addMessage(MessageFormat.format("Lab batch ''{0}'' has been ''{1}''.",
+                                               batchObject.getJiraTicket().getTicketName(),
+                                               isUseExistingTicket() ? "assigned" : "created"));
+
+        //Forward
+        return new RedirectResolution(CreateBatchActionBean.class, CreateBatchActionBean.CONFIRM_ACTION)
+                .addParameter("batchLabel", batchObject.getBatchName());
+    }
+
+    private boolean isUseExistingTicket() {
+        return jiraInputType.equals(EXISTING_TICKET);
+    }
+
+    public Date getDueDate() {
+        return dueDate;
+    }
+
+    public String getJiraTicketId() {
+        return jiraTicketId;
+    }
+
+    public String getImportant() {
+        return important;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public String getSummary() {
+        return summary;
+    }
+
+    public String getJiraInputType() {
+        return jiraInputType;
+    }
+
+    public List<LabVessel> getSelectedBatchVessels() {
+        return selectedBatchVessels;
+    }
+
+    public List<String> getSelectedVesselLabels() {
+        return selectedVesselLabels;
+    }
+
+    public String getExistingJiraTicketValue() {
+        return EXISTING_TICKET;
+    }
+
+    public String getNewJiraTicketValue() {
+        return NEW_TICKET;
     }
 }

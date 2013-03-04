@@ -4,8 +4,8 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"/>
-<stripes:useActionBean var="batchActionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"/>
+<%--<stripes:useActionBean var="batchActionBean"--%>
+                       <%--beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"/>--%>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" sectionTitle="Select Bucket">
 <stripes:layout-component name="extraHead">
@@ -68,7 +68,7 @@
             </div>
         </div>
     </stripes:form>
-    <stripes:form beanclass="${batchActionBean.class.name}"
+    <stripes:form beanclass="${actionBean.class.name}"
                   id="bucketEntryForm">
         <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
         <c:if test="${actionBean.jiraEnabled}">
@@ -77,13 +77,13 @@
                     <td valign="top">
                         <div class="control-group">
                             <div class="controls">
-                                <stripes:radio value="${batchActionBean.existingJiraTicketValue}"
+                                <stripes:radio value="${actionBean.existingJiraTicketValue}"
                                                name="jiraInputType"
                                                onclick="javascript:showResult('jiraId');hideResult('newTicket');"/>
                                 Use Existing Jira Ticket
                             </div>
                             <div class="controls">
-                                <stripes:radio value="${batchActionBean.newJiraTicketValue}"
+                                <stripes:radio value="${actionBean.newJiraTicketValue}"
                                                name="jiraInputType"
                                                onclick="javascript:showResult('newTicket');hideResult('jiraId');"/>
                                 Create a New Jira Ticket
@@ -105,7 +105,7 @@
                                 <div class="controls">
                                     <stripes:text name="summary" class="defaultText"
                                                   title="Enter a summary for a new batch ticket" id="summary"
-                                                  value="${batchActionBean.summary}"/>
+                                                  value="${actionBean.summary}"/>
                                 </div>
                             </div>
 
@@ -114,7 +114,7 @@
                                 <div class="controls">
                                     <stripes:textarea name="description" class="defaultText"
                                                       title="Enter a description for a new batch ticket"
-                                                      id="description" value="${batchActionBean.description}"/>
+                                                      id="description" value="${actionBean.description}"/>
                                 </div>
                             </div>
 
@@ -125,7 +125,7 @@
                                     <stripes:textarea name="important" class="defaultText"
                                                       title="Enter important info for a new batch ticket"
                                                       id="important"
-                                                      value="${batchActionBean.important}"/>
+                                                      value="${actionBean.important}"/>
                                 </div>
                             </div>
 
@@ -134,8 +134,8 @@
                                 <div class="controls">
                                     <stripes:text id="dueDate" name="dueDate" class="defaultText"
                                                   title="enter date (MM/dd/yyyy)"
-                                                  value="${batchActionBean.dueDate}"  formatPattern="MM/dd/yyyy" ><fmt:formatDate
-                                            value="${batchActionBean.dueDate}"
+                                                  value="${actionBean.dueDate}"  formatPattern="MM/dd/yyyy" ><fmt:formatDate
+                                            value="${actionBean.dueDate}"
                                             dateStyle="short"/></stripes:text>
                                 </div>
                             </div>
