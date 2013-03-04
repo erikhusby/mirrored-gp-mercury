@@ -1,9 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
@@ -26,36 +28,43 @@ import static org.testng.Assert.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderEtlDbFreeTest {
-    String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
-    long entityId = 1122334455L;
-    long productId = 332891L;
-    long researchProjectId = 98789798L;
-    String jiraTicketKey = "PD0-9123488";
-    Date createdDate = new Date(1350000000000L);
-    Date modifiedDate = new Date(1354000000000L);
-    String title = "Some title";
-    String quoteId = "QT-134123";
-    ProductOrder.OrderStatus orderStatus = ProductOrder.OrderStatus.Submitted;
+    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private long entityId = 1122334455L;
+    private long productId = 332891L;
+    private long researchProjectId = 98789798L;
+    private String jiraTicketKey = "PD0-9123488";
+    private Date createdDate = new Date(1350000000000L);
+    private Date modifiedDate = new Date(1354000000000L);
+    private String title = "Some title";
+    private String quoteId = "QT-134123";
+    private ProductOrder.OrderStatus orderStatus = ProductOrder.OrderStatus.Submitted;
+    private long createdBy = 678L;
+    private String ownerName = "testname";
+    private ProductOrderEtl tst;
 
-    AuditReaderDao auditReader = createMock(AuditReaderDao.class);
-    ProductOrderDao dao = createMock(ProductOrderDao.class);
-    ProductOrder pdo = createMock(ProductOrder.class);
-    ResearchProject researchProject = createMock(ResearchProject.class);
-    Product product = createMock(Product.class);
-    Object[] mocks = new Object[]{auditReader, dao, pdo, researchProject, product};
+    private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
+    private ProductOrderDao dao = createMock(ProductOrderDao.class);
+    private ProductOrder pdo = createMock(ProductOrder.class);
+    private ResearchProject researchProject = createMock(ResearchProject.class);
+    private Product product = createMock(Product.class);
+    private BSPUserList userList = createMock(BSPUserList.class);
+    private BspUser owner = createMock(BspUser.class);
+
+    private Object[] mocks = new Object[]{auditReader, dao, pdo, researchProject, product, userList, owner};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         reset(mocks);
+
+        tst = new ProductOrderEtl();
+        tst.setProductOrderDao(dao);
+        tst.setAuditReaderDao(auditReader);
+        tst.setBSPUserList(userList);
     }
 
     public void testEtlFlags() throws Exception {
         expect(pdo.getProductOrderId()).andReturn(entityId);
         replay(mocks);
-
-        ProductOrderEtl tst = new ProductOrderEtl();
-        tst.setProductOrderDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.getEntityClass(), ProductOrder.class);
 
@@ -75,10 +84,6 @@ public class ProductOrderEtlDbFreeTest {
 
         replay(mocks);
 
-        ProductOrderEtl tst = new ProductOrderEtl();
-        tst.setProductOrderDao(dao);
-        tst.setAuditReaderDao(auditReader);
-
         assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
@@ -96,15 +101,14 @@ public class ProductOrderEtlDbFreeTest {
         expect(pdo.getTitle()).andReturn(title);
         expect(pdo.getQuoteId()).andReturn(quoteId);
         expect(pdo.getJiraTicketKey()).andReturn(jiraTicketKey);
+        expect(pdo.getCreatedBy()).andReturn(createdBy);
+        expect(userList.getById(createdBy)).andReturn(owner);
+        expect(owner.getUsername()).andReturn(ownerName);
 
         expect(researchProject.getResearchProjectId()).andReturn(researchProjectId);
         expect(product.getProductId()).andReturn(productId);
 
         replay(mocks);
-
-        ProductOrderEtl tst = new ProductOrderEtl();
-        tst.setProductOrderDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
@@ -127,15 +131,14 @@ public class ProductOrderEtlDbFreeTest {
         expect(pdo.getTitle()).andReturn(title);
         expect(pdo.getQuoteId()).andReturn(quoteId);
         expect(pdo.getJiraTicketKey()).andReturn(jiraTicketKey);
+        expect(pdo.getCreatedBy()).andReturn(createdBy);
+        expect(userList.getById(createdBy)).andReturn(owner);
+        expect(owner.getUsername()).andReturn(ownerName);
 
         expect(researchProject.getResearchProjectId()).andReturn(researchProjectId);
         expect(product.getProductId()).andReturn(productId);
 
         replay(mocks);
-
-        ProductOrderEtl tst = new ProductOrderEtl();
-        tst.setProductOrderDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
         assertEquals(records.size(), 1);
@@ -158,6 +161,7 @@ public class ProductOrderEtlDbFreeTest {
         assertEquals(parts[i++], title);
         assertEquals(parts[i++], quoteId);
         assertEquals(parts[i++], jiraTicketKey);
+        assertEquals(parts[i++], ownerName);
         assertEquals(parts.length, i);
     }
 }
