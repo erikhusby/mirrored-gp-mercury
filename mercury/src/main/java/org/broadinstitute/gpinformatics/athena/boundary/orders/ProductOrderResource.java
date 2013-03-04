@@ -33,6 +33,7 @@ public class ProductOrderResource {
         public final String id;
         public final String comments;
         public final Date modifiedDate;
+        public final String product;
         public final ProductOrder.OrderStatus status;
         @XmlElementWrapper
         @XmlElement(name = "sample")
@@ -46,6 +47,7 @@ public class ProductOrderResource {
             modifiedDate = null;
             samples = null;
             status = null;
+            product = null;
         }
 
         public ProductOrderData(ProductOrder productOrder, boolean includeSamples) {
@@ -53,6 +55,7 @@ public class ProductOrderResource {
             id = productOrder.getBusinessKey();
             comments = productOrder.getComments();
             modifiedDate = productOrder.getModifiedDate();
+            product = productOrder.getProduct().getPartNumber();
             status = productOrder.getOrderStatus();
             if (includeSamples) {
                 samples = new ArrayList<String>(productOrder.getSamples().size());
