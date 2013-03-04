@@ -2,9 +2,11 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
@@ -51,9 +53,6 @@ import java.util.Set;
 @RequestScoped
 public class SampleReceiptResource {
 
-    // todo jmt currently set to thompson, which user should this be?
-    private static final long OPERATOR = 1701L;
-
     private static final Log LOG = LogFactory.getLog(SampleReceiptResource.class);
 
     @Inject
@@ -73,6 +72,9 @@ public class SampleReceiptResource {
     @Inject
     private WsMessageStore wsMessageStore;
 
+    @Inject
+    private BSPUserList bspUserList;
+
     @GET
     @Path("{batchName}")
     @Produces({MediaType.APPLICATION_XML})
@@ -91,10 +93,13 @@ public class SampleReceiptResource {
                     null));
         }
         LabVessel firstLabVessel = startingLabVessels.iterator().next();
+        LabEvent labEvent = firstLabVessel.getInPlaceEvents().iterator().next();
+        BspUser bspUser = bspUserList.getById(labEvent.getEventOperator());
         return new SampleReceiptBean(
-                firstLabVessel.getInPlaceEvents().iterator().next().getEventDate(),
+                labEvent.getEventDate(),
                 labBatch.getBatchName(),
-                parentVesselBeans);
+                parentVesselBeans,
+                bspUser.getUsername());
     }
 
     /**
@@ -176,6 +181,8 @@ public class SampleReceiptResource {
 
         long disambiguator = 1L;
         List<LabVessel> labVessels = new ArrayList<LabVessel>();
+        Long operator = bspUserList.getByUsername(sampleReceiptBean.getReceivingUserName()).getUserId();
+
         for (ParentVesselBean parentVesselBean : sampleReceiptBean.getParentVesselBeans()) {
             String sampleId = parentVesselBean.getSampleId();
             String barcode = parentVesselBean.getManufacturerBarcode() == null ? sampleId :
@@ -191,7 +198,7 @@ public class SampleReceiptResource {
                 MercurySample mercurySample = getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples, sampleId);
                 twoDBarcodedTube.addSample(mercurySample);
                 twoDBarcodedTube.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT,
-                        sampleReceiptBean.getReceiptDate(), "BSP", disambiguator, OPERATOR));
+                        sampleReceiptBean.getReceiptDate(), "BSP", disambiguator, operator));
                 disambiguator++;
                 labVessels.add(twoDBarcodedTube);
             } else {
@@ -212,7 +219,7 @@ public class SampleReceiptResource {
                         staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
                     }
                     staticPlate.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT,
-                            sampleReceiptBean.getReceiptDate(), "BSP", disambiguator, OPERATOR));
+                            sampleReceiptBean.getReceiptDate(), "BSP", disambiguator, operator));
                 } /* todo jmt else if(vesselType.contains("rack")) {
 
                 } */else {
@@ -266,5 +273,9 @@ public class SampleReceiptResource {
             }
         }
         return mercurySample;
+    }
+
+    void setBspUserList(BSPUserList bspUserList) {
+        this.bspUserList = bspUserList;
     }
 }
