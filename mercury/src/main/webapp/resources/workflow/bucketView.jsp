@@ -139,7 +139,6 @@
                 <th width="300">PDO Name</th>
                 <th width="200">PDO Owner</th>
                 <th>Batch Name</th>
-                <th width="100">Sample Type</th>
                 <th width="100">Created Date</th>
             </tr>
             </thead>
@@ -194,11 +193,6 @@
                                 <c:otherwise>${batch.businessKey}</c:otherwise></c:choose><c:if
                                 test="${!stat.last}">&nbsp;</c:if></c:forEach>
 
-                    </td>
-                    <td>
-                        <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample">
-                            ${mercurySample.bspSampleDTO.materialType}
-                        </c:forEach>
                     </td>
                     <td>
                         <fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:MM:ss"/>

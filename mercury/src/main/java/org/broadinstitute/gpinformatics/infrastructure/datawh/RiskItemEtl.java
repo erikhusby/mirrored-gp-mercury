@@ -51,8 +51,6 @@ public class RiskItemEtl extends GenericEntityEtl {
         // Further weirdness: When risk items are deleted the only record left in the operational db that
         // shows the the mapping from deleted risk id to pdo sample id is in the join table's audit table.
 
-        // todo  add a non-unique index on athena.PO_SAMPLE_RISK_JOIN_AUD.risk_item_id
-
         try {
             // Collects and deduplicates ids of changed riskItems.
             Set<Long> riskIds = new HashSet<Long>();
