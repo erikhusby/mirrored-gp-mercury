@@ -35,6 +35,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserT
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -128,6 +129,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private JiraService jiraService;
+
+    @Inject
+    private MercuryClientService mercuryClientService;
 
     private List<ProductOrderListEntry> allProductOrderListEntries;
 
@@ -280,7 +284,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // Since we are only validating from view, we can persist without worry of saving something bad.
         // We are doing on risk calculation only when everything passes, but informing the user no matter what
-        if (hasNoValidationErrors()) {
+        if (!hasErrors()) {
             int numSamplesOnRisk = editOrder.calculateRisk();
             editOrder.prepareToSave(getUserBean().getBspUser());
             productOrderDao.persist(editOrder);
@@ -299,11 +303,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @ValidationMethod(on = PLACE_ORDER)
     public void validatePlacedOrder() {
         doValidation("place order");
-        // entryInit() must be called explicitly here since it does not run automatically in the event of validation
-        // failures and the ProductOrderListEntry that provides billing data would be null.
-        if (hasAnyValidationErrors()) {
-            entryInit();
-        }
     }
 
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
@@ -357,7 +356,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         // If there are errors, will reload the page, so need to fetch the list
-        if (hasAnyValidationErrors()) {
+        if (hasErrors()) {
             listInit();
         }
     }
@@ -479,6 +478,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
+
+        Collection<ProductOrderSample> samples = mercuryClientService.addSampleToPicoBucket(editOrder);
+        if (!samples.isEmpty()) {
+            addMessage("{0} samples have been added to the pico bucket: {1}", samples.size(), StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
+        }
+
         return createViewResolution();
     }
 
@@ -506,11 +511,15 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution validate() {
         validatePlacedOrder();
 
-        if (hasNoValidationErrors()) {
-            addMessage("Draft Order is valid and ready to be placed");
+        if (!hasErrors()) {
+            getContext().getMessages().add(new SimpleMessage("Draft Order is valid and ready to be placed"));
         }
 
-        return createViewResolution();
+        // entryInit() must be called explicitly here since it does not run automatically with source page resolution
+        // and the ProductOrderListEntry that provides billing data would otherwise be null.
+        entryInit();
+
+        return getContext().getSourcePageResolution();
     }
 
     @HandlesEvent(SAVE_ACTION)
@@ -550,7 +559,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("downloadBillingTracker")
     public Resolution downloadBillingTracker() {
         Resolution resolution = ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, bspUserList);
-        if (hasAnyValidationErrors()) {
+        if (hasErrors()) {
             // Need to regenerate the list so it's displayed along with the errors.
             listInit();
         }
@@ -782,6 +791,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
                 editOrder.getSampleString(),
                 ProductOrder.TransitionStates.DeveloperEdit.getStateName());
+
+        Collection<ProductOrderSample> samplesInPico = mercuryClientService.addSampleToPicoBucket(editOrder, samplesToAdd);
+        if (!samplesInPico.isEmpty()) {
+            addMessage("{0} samples have been added to the pico bucket: {1}", samplesInPico.size(), nameList);
+        }
+
         return createViewResolution();
     }
 

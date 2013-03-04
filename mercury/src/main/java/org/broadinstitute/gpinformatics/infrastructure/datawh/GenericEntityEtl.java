@@ -109,7 +109,7 @@ public abstract class GenericEntityEtl {
      * @param dataFile
      * @param etlDateStr
      */
-    private void processChanges(List<Object[]> dataChanges, DataFile dataFile, String etlDateStr) {
+    protected void processChanges(List<Object[]> dataChanges, DataFile dataFile, String etlDateStr) {
         Set<Long> changedEntityIds = new HashSet<Long>();
         Set<Long> deletedEntityIds = new HashSet<Long>();
         List<Object> statusEntities = new ArrayList<Object>();
