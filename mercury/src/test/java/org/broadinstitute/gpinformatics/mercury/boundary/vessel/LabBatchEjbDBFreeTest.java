@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
@@ -142,7 +143,10 @@ public class LabBatchEjbDBFreeTest {
         Assert.assertNotNull(testBatch.getBatchName());
         Assert.assertEquals(testLCSetKey, testBatch.getBatchName());
         Assert.assertEquals(6, testBatch.getStartingLabVessels().size());
-        Assert.assertEquals(AthenaClientServiceStub.rpSynopsis, testBatch.getBatchDescription());
+        Assert.assertEquals(testBatch.getBatchDescription(),
+                                   extractDescriptionPrefix(testBatch) +
+                                                                    "\n" +
+                                                                    "\n" + AthenaClientServiceStub.rpSynopsis);
         Assert.assertNull(testBatch.getDueDate());
 
         Assert.assertEquals(testBatch.getBatchName(), testBatch.getJiraTicket().getTicketName());
@@ -162,7 +166,10 @@ public class LabBatchEjbDBFreeTest {
         Assert.assertNotNull(testBatch.getBatchName());
         Assert.assertEquals(testLCSetKey, testBatch.getBatchName());
         Assert.assertEquals(6, testBatch.getStartingLabVessels().size());
-        Assert.assertEquals(AthenaClientServiceStub.rpSynopsis, testBatch.getBatchDescription());
+        Assert.assertEquals(testBatch.getBatchDescription(),
+                                   extractDescriptionPrefix(testBatch) +
+                                                                    "\n" +
+                                                                    "\n" + AthenaClientServiceStub.rpSynopsis);
         Assert.assertNull(testBatch.getDueDate());
         Assert.assertEquals(testBatch.getBatchName(), testBatch.getJiraTicket().getTicketName());
     }
@@ -184,7 +191,7 @@ public class LabBatchEjbDBFreeTest {
 
         Assert.assertNotNull(testBatch.getStartingLabVessels());
         Assert.assertEquals(6, testBatch.getStartingLabVessels().size());
-        Assert.assertEquals("6 samples from MyResearchProject PDO-999\n", testBatch.getBatchDescription());
+        Assert.assertEquals(testBatch.getBatchDescription(),extractDescriptionPrefix(testBatch));
         Assert.assertNull(testBatch.getDueDate());
 
         Assert.assertEquals(testBatch.getBatchName(), testBatch.getJiraTicket().getTicketName());
@@ -213,9 +220,22 @@ public class LabBatchEjbDBFreeTest {
 
         Assert.assertNotNull(testBatch.getStartingLabVessels());
         Assert.assertEquals(6, testBatch.getStartingLabVessels().size());
-        Assert.assertEquals(description, testBatch.getBatchDescription());
+        Assert.assertEquals( testBatch.getBatchDescription(), extractDescriptionPrefix(testBatch) +
+                                         "\n" +
+                                         "\n" + description);
 
         Assert.assertEquals(testBatch.getBatchName(), testBatch.getJiraTicket().getTicketName());
+    }
+
+    private String extractDescriptionPrefix(LabBatch testBatch) {
+
+        ProductOrder testProductOrder = athenaClientService.retrieveProductOrderDetails(STUB_TEST_PDO_KEY);
+
+        final String descriptionPrefix = testBatch.getStartingLabVessels().size() +
+                                 " samples from " +
+                testProductOrder.getResearchProject().getTitle()+ " " +STUB_TEST_PDO_KEY +
+                                 "\n";
+        return descriptionPrefix;
     }
 
     @Test

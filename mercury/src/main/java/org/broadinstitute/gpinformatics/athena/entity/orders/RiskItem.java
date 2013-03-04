@@ -68,6 +68,10 @@ public class RiskItem implements Serializable {
         this.remark = comment;
     }
 
+    public Long getRiskItemId() {
+        return risk_item_id;
+    }
+
     public RiskCriteria getRiskCriteria() {
         return riskCriteria;
     }

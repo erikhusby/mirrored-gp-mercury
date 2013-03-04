@@ -38,6 +38,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
 
     private static final Long   TEST_CREATOR = 1111L;
     public static final  String rpSynopsis   = "Test synopsis";
+    public static final String otherRpSynopsis = "To Study Stuff";
 
     @Override
     public ProductOrder retrieveProductOrderDetails(String poBusinessKey) {
@@ -59,7 +60,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
     }
 
     @Override
-    public Map<String, List<ProductOrderSample>> findMapBySamples(List<String> sampleNames) {
+    public Map<String, List<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames) {
         Map<String, List<ProductOrderSample>> mapSampleIdToPdoSample = new HashMap<String, List<ProductOrderSample>>();
         ProductOrder productOrder = buildExExProductOrder(96);
         List<ProductOrderSample> samples = productOrder.getSamples();
@@ -159,7 +160,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
                                                        long creatorId) {
 
         return createDummyProductOrder(sampleCount, jiraKey, workflowName, creatorId, "MyResearchProject",
-                                              "To Study Stuff",
+                                              otherRpSynopsis,
                                               ResearchProject.IRB_ENGAGED, "partNumber");
     }
 

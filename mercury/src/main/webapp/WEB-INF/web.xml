@@ -46,6 +46,11 @@
         <param-name>resteasy.resources</param-name>
         <!-- comma separated list of jax-rs resource classes -->
         <param-value>
+            org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderResource,
+            org.broadinstitute.gpinformatics.athena.boundary.products.ProductResource,
+            org.broadinstitute.gpinformatics.athena.boundary.projects.ResearchProjectResource,
+            org.broadinstitute.gpinformatics.athena.boundary.util.PingResource,
+            org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform,
             org.broadinstitute.gpinformatics.mercury.boundary.zims.IlluminaRunResource,
             org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryResource,
             org.broadinstitute.gpinformatics.mercury.boundary.lims.LimsQueryTypesResource,
@@ -55,9 +60,7 @@
             org.broadinstitute.gpinformatics.mercury.boundary.vessel.VesselMetricResource,
             org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource,
             org.broadinstitute.gpinformatics.mercury.boundary.labevent.LabEventResource,
-            org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource,
-            org.broadinstitute.gpinformatics.athena.boundary.util.PingResource,
-            org.broadinstitute.gpinformatics.infrastructure.datawh.ExtractTransform
+            org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource
         </param-value>
     </context-param>
     <context-param>

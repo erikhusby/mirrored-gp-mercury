@@ -19,15 +19,19 @@ public class SampleReceiptBean {
     private Date receiptDate;
     private String kitId;
     private List<ParentVesselBean> parentVesselBeans;
+    private String receivingUserName;
 
     /** For JAXB */
+    @SuppressWarnings("UnusedDeclaration")
     public SampleReceiptBean() {
     }
 
-    public SampleReceiptBean(Date receiptDate, String kitId, List<ParentVesselBean> parentVesselBeans) {
+    public SampleReceiptBean(Date receiptDate, String kitId, List<ParentVesselBean> parentVesselBeans,
+            String receivingUserName) {
         this.receiptDate = receiptDate;
         this.kitId = kitId;
         this.parentVesselBeans = parentVesselBeans;
+        this.receivingUserName = receivingUserName;
     }
 
     public Date getReceiptDate() {
@@ -40,5 +44,9 @@ public class SampleReceiptBean {
 
     public List<ParentVesselBean> getParentVesselBeans() {
         return parentVesselBeans;
+    }
+
+    public String getReceivingUserName() {
+        return receivingUserName;
     }
 }

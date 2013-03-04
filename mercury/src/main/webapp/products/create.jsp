@@ -257,6 +257,7 @@
                     <div class="controls">
                         <stripes:text id="availabilityDate" name="editProduct.availabilityDate" class="defaultText"
                             title="Enter date (MM/dd/yyyy)" formatPattern="MM/dd/yyyy" />
+                    </div>
                 </div>
 
                 <div class="control-group">

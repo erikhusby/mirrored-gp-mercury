@@ -158,7 +158,7 @@ CREATE TABLE product_order (
   title VARCHAR2(255),
   quote_id VARCHAR2(255),
   jira_ticket_key VARCHAR2(255),
-  is_deleted CHAR(1) DEFAULT 'F' NOT NULL ,
+  owner VARCHAR2(40),
   etl_date DATE NOT NULL
 );
 
@@ -176,7 +176,7 @@ CREATE TABLE product_order_sample (
   sample_name VARCHAR2(255),
   delivery_status VARCHAR2(40) NOT NULL,
   sample_position NUMERIC(19) NOT NULL,
-  is_deleted CHAR(1) DEFAULT 'F' NOT NULL,
+  on_risk CHAR(1) CHECK (on_risk IN ('T','F')),
   etl_date DATE NOT NULL
 );
 
@@ -192,7 +192,6 @@ CREATE TABLE product_order_add_on (
   product_order_add_on_id NUMERIC(19) NOT NULL PRIMARY KEY,
   product_order_id NUMERIC(19) NOT NULL,
   product_id NUMERIC(19) NOT NULL,
-  is_deleted CHAR(1) DEFAULT 'F' NOT NULL,
   etl_date DATE NOT NULL
 );
 
@@ -346,7 +345,8 @@ CREATE TABLE im_product_order (
   modified_date DATE,
   title VARCHAR2(255),
   quote_id VARCHAR2(255),
-  jira_ticket_key VARCHAR2(255)
+  jira_ticket_key VARCHAR2(255),
+  owner VARCHAR2(40)
 );
 
 CREATE TABLE im_product_order_status (
@@ -440,6 +440,15 @@ CREATE TABLE im_event_fact (
   event_date DATE,
   event_fact_id NUMERIC(28) --this gets populated by merge_import.sql
 );
+
+CREATE TABLE im_product_order_sample_fact (
+  line_number NUMERIC(9) NOT NULL,
+  etl_date DATE NOT NULL,
+  is_delete CHAR(1) NOT NULL,
+  product_order_sample_id NUMERIC(19) NOT NULL,
+  on_risk CHAR(1)
+);
+
 
 CREATE SEQUENCE event_fact_id_seq start with 1;
 

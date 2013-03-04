@@ -1,9 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.*;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -19,15 +17,8 @@ import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.persistence.criteria.*;
+import java.text.MessageFormat;
 import java.util.*;
-
-/**
- * Dao for {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder}s.
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 10/5/12
- * Time: 6:17 PM
- */
 
 @Stateful
 @RequestScoped
@@ -45,8 +36,11 @@ public class ProductOrderDao extends GenericDao {
         private Set<FetchSpec> fetchSpecs;
 
         ProductOrderDaoCallback(FetchSpec... fs) {
-
-            fetchSpecs = new HashSet<FetchSpec>(Arrays.asList(fs));
+            if (fs.length != 0) {
+                fetchSpecs = EnumSet.copyOf(Arrays.asList(fs));
+            } else {
+                fetchSpecs = EnumSet.noneOf(FetchSpec.class);
+            }
         }
 
         @Override
@@ -91,9 +85,9 @@ public class ProductOrderDao extends GenericDao {
     /**
      * Find the order using the unique title
      *
-     * @param title
+     * @param title Title.
      *
-     * @return
+     * @return Corresponding Product Order.
      */
     public ProductOrder findByTitle(String title) {
         return findSingle(ProductOrder.class, ProductOrder_.title, title);
@@ -102,15 +96,14 @@ public class ProductOrderDao extends GenericDao {
     /**
      * Return the {@link ProductOrder}s specified by the {@link List} of business keys, applying optional fetches.
      *
-     * @param businessKeyList
-     * @param fs
+     * @param businessKeyList List of business keys.
+     * @param fs Varargs array of Fetch Specs.
      *
-     * @return
+     * @return List of ProductOrders.
      */
     public List<ProductOrder> findListByBusinessKeyList(List<String> businessKeyList, FetchSpec... fs) {
-
         return findListByList(ProductOrder.class, ProductOrder_.jiraTicketKey, businessKeyList,
-                                     new ProductOrderDaoCallback(fs));
+                new ProductOrderDaoCallback(fs));
     }
 
     /**
@@ -322,4 +315,45 @@ public class ProductOrderDao extends GenericDao {
         return progressCounterMap;
     }
 
+    /**
+     * Find all PDOs modified after a specified date.
+     * @param modifiedAfter date to compare
+     * @return list of PDOs
+     */
+    public List<ProductOrder> findModifiedAfter(final Date modifiedAfter) {
+        return findAll(ProductOrder.class, new GenericDaoCallback<ProductOrder>() {
+            @Override
+            public void callback(CriteriaQuery<ProductOrder> criteriaQuery, Root<ProductOrder> root) {
+                criteriaQuery.where(getCriteriaBuilder().greaterThan(root.get(ProductOrder_.modifiedDate), modifiedAfter));
+            }
+        });
+    }
+
+
+    /**
+     * Find all ProductOrders for the specified varargs array of barcodes, will throw {@link IllegalArgumentException}
+     * if given more than 1000 barcodes.
+     *
+     * @param barcodes One or more sample barcodes.
+     *
+     * @return All Product Orders containing samples with these barcodes.
+     */
+    public List<ProductOrder> findBySampleBarcodes(@Nonnull String... barcodes) throws IllegalArgumentException {
+
+        if (barcodes.length > 1000) {
+            throw new IllegalArgumentException(MessageFormat
+                    .format("Received {0} barcodes but Oracle in expression limit is 1000.", barcodes.length));
+        }
+
+        CriteriaBuilder cb = getCriteriaBuilder();
+
+        CriteriaQuery<ProductOrder> query = cb.createQuery(ProductOrder.class);
+        query.distinct(true);
+
+        Root<ProductOrder> root = query.from(ProductOrder.class);
+        ListJoin<ProductOrder,ProductOrderSample> sampleListJoin = root.join(ProductOrder_.samples);
+        query.where(sampleListJoin.get(ProductOrderSample_.sampleName).in((Object []) barcodes));
+
+        return getEntityManager().createQuery(query).getResultList();
+    }
 }

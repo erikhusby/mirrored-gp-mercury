@@ -70,6 +70,15 @@ public class LabBatchEJBTest extends ContainerTest {
 
         utx.begin();
 
+        bucket = bucketDao.findByName(BUCKET_NAME);
+
+        if(bucket == null) {
+            bucket = new Bucket(new WorkflowBucketDef(BUCKET_NAME));
+            bucketDao.persist(bucket);
+            bucketDao.flush();
+            bucketDao.clear();
+        }
+
         pdoNames = new ArrayList<String>();
         Collections.addAll(pdoNames, STUB_TEST_PDO_KEY);
 

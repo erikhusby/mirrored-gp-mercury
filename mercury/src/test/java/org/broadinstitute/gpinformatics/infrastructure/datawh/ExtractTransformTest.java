@@ -58,7 +58,7 @@ public class ExtractTransformTest extends Arquillian {
         //auditTables.put("MERCURY.LAB_EVENT_AUD", new EventEtl());
         //auditTables.put("MERCURY.LAB_BATCH_AUD", new LabBatchEtl());
         //auditTables.put("MERCURY.LAB_VESSEL_AUD", new LabVesselEtl());
-
+        auditTables.put("ATHENA.RISK_ITEM_AUD", new RiskItemEtl());
         auditTables.put("ATHENA.PRICE_ITEM_AUD", new PriceItemEtl());
         auditTables.put("ATHENA.PRODUCT_AUD", new ProductEtl());
         auditTables.put("ATHENA.PRODUCT_ORDER_AUD", new ProductOrderEtl());
@@ -68,7 +68,6 @@ public class ExtractTransformTest extends Arquillian {
         auditTables.put("ATHENA.RESEARCH_PROJECT_COHORT_AUD", new ResearchProjectCohortEtl());
         auditTables.put("ATHENA.RESEARCH_PROJECT_FUNDING_AUD", new ResearchProjectFundingEtl());
         auditTables.put("ATHENA.RESEARCH_PROJECTIRB_AUD", new ResearchProjectIrbEtl());
-
     }
 
     @BeforeMethod

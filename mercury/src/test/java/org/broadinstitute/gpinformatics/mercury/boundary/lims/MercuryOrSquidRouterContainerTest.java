@@ -12,7 +12,6 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
-import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
@@ -66,6 +65,7 @@ import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabEventTes
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     UserTransaction utx;
 
@@ -83,9 +83,6 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
 
     @Inject
     private BucketDao bucketDao;
-
-    @Inject
-    private MercuryOrSquidRouter mosRouter;
 
     @Inject
     private MolecularIndexingSchemeDao molecularIndexingSchemeDao;
@@ -390,7 +387,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-    public void testNonExomeExpressIndextPlateLigationEvent() throws Exception {
+    public void testNonExomeExpressIndexPlateLigationEvent() throws Exception {
         mockConnector = EasyMock.createNiceMock(BettalimsConnector.class);
 
         EasyMock.expect(mockConnector.sendMessage(EasyMock.anyObject(String.class)))
@@ -958,7 +955,7 @@ public class MercuryOrSquidRouterContainerTest extends Arquillian {
         IlluminaFlowcell flowcell =
                 (IlluminaFlowcell) vesselDao.findByIdentifier(flowcellTransferJaxb.getPlate().getBarcode());
 
-        //Load Flowcell   (Just FLowcell)
+        //Load Flowcell   (Just Flowcell)
         ReceptacleEventType flowcellLoadJaxb =
                 bettaLimsMessageFactory.buildReceptacleEvent(LabEventType.FLOWCELL_LOADED.getName(),
                                                                   flowcellTransferJaxb.getPlate().getBarcode(), LabEventFactory.PHYS_TYPE_FLOWCELL);
