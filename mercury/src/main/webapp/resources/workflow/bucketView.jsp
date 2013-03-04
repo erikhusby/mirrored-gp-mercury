@@ -46,15 +46,6 @@
             $j("#dueDate").datepicker();
         })
 
-
-        function showResult(type) {
-            $j('#' + type + 'Div').show();
-        }
-
-        function hideResult(type) {
-            $j('#' + type + 'Div').hide();
-        }
-
         function showJiraInfo() {
             $j('#jiraTable').show();
         }
@@ -84,20 +75,6 @@
             <table>
                 <tr>
                     <td valign="top">
-                        <div class="control-group">
-                            <div class="controls">
-                                <stripes:radio value="${batchActionBean.existingJiraTicketValue}"
-                                               name="jiraInputType"
-                                               onclick="javascript:showResult('jiraId');hideResult('newTicket');"/>
-                                Use Existing Jira Ticket
-                            </div>
-                            <div class="controls">
-                                <stripes:radio value="${batchActionBean.newJiraTicketValue}"
-                                               name="jiraInputType"
-                                               onclick="javascript:showResult('newTicket');hideResult('jiraId');"/>
-                                Create a New Jira Ticket
-                            </div>
-                        </div>
 
                         <div id="jiraIdDiv">
                             <div class="control-group">
@@ -108,7 +85,7 @@
                                 </div>
                             </div>
                         </div>
-                        <div id="newTicketDiv" style="display: none;">
+                        <div id="newTicketDiv">
                             <div class="control-group">
                                 <stripes:label for="summary" name="Summary" class="control-label"/>
                                 <div class="controls">
