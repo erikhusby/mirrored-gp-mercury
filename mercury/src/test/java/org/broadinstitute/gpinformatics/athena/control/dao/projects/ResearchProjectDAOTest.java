@@ -98,7 +98,10 @@ public class ResearchProjectDAOTest extends ContainerTest {
      */
     public void testPMs() {
 
-        Long[] pms = {11137L, 11144L};
+        long JAMES_BOCHICCHIO_ID = 11144;
+        long LAUREN_AMBROGIO_ID = 11137;
+
+        Long[] pms = {JAMES_BOCHICCHIO_ID, LAUREN_AMBROGIO_ID};
 
         List<ResearchProject> researchProjects = researchProjectDao.findByProjectManagerIds(pms);
 
@@ -108,7 +111,7 @@ public class ResearchProjectDAOTest extends ContainerTest {
         for (ResearchProject rp : researchProjects) {
             boolean contains = false;
             Long[] actualPMs = rp.getProjectManagers();
-            for (Long pm : pms) {
+            for (long pm : pms) {
                 if (ArrayUtils.contains(actualPMs, pm)) {
                     contains = true;
                     break;
