@@ -305,20 +305,19 @@
             <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name}%>">
                 <c:choose>
                     <c:when test="${actionBean.abandonable}">
-                        <stripes:button name="abandonOrders" id="abandonOrders" value="Abandon Order"
-                                        class="btn padright"
-                                        onclick="showAbandonConfirm('abandonOrders', 'abandon', ${actionBean.abandonWarning})"
-                                        title="Click to abandon ${editOrder.title}"/>
+                        <c:set var="abandonTitle" value="Click to abandon ${editOrder.title}"/>
+                        <c:set var="abandonDisable" value="false"/>
                         <stripes:hidden name="selectedProductOrderBusinessKeys" value="${editOrder.businessKey}"/>
                     </c:when>
                     <c:otherwise>
-                        <stripes:button name="abandonOrders" id="abandonOrders" value="Abandon Order"
-                                        class="btn padright"
-                                        onclick="showAbandonConfirm('abandonOrders', 'abandon', ${actionBean.abandonWarning})"
-                                        disabled="true"
-                                        title="Cannot abandon this order because ${actionBean.abandonDisabledReason}"/>
+                        <c:set var="abandonTitle"
+                               value="Cannot abandon this order because ${actionBean.abandonDisabledReason}"/>
+                        <c:set var="abandonDisable" value="true"/>
                     </c:otherwise>
                 </c:choose>
+                <stripes:button name="abandonOrders" id="abandonOrders" value="Abandon Order"
+                                onclick="showAbandonConfirm('abandonOrders', 'abandon', ${actionBean.abandonWarning})"
+                                class="btn padright" title="${abandonTitle}" disabled="${abandonDisable}"/>
             </security:authorizeBlock>
             <c:if test="${editOrder.draft}">
                 <%-- MLC PDOs can be placed by PM or PDMs, so I'm making the security tag accept either of those roles for 'Place Order'.
