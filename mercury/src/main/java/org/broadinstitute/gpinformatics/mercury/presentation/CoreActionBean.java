@@ -238,7 +238,7 @@ public class CoreActionBean implements ActionBean {
      * @param arguments optional message parameters
      */
     public void addGlobalValidationError(String errorMessage, Object... arguments) {
-        flashErrorMessage(new SimpleError(errorMessage, arguments));
+        getContext().getValidationErrors().addGlobalError(new SimpleError(errorMessage, arguments));
     }
 
     /**

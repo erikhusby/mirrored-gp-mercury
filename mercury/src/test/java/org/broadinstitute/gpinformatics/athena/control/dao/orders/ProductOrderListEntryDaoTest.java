@@ -195,7 +195,8 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
     // the db so this isn't currently possible.  We should ideally generate our own rich product / product order test
     // fixture data instead.
 
-
+    // TODO MLC rewrite this to not use real data as the real data changed out from under me as real data is wont to do
+    @Test(enabled = false)
     public void testSingle() {
         ProductOrderListEntry entry = productOrderListEntryDao.findSingle("PDO-41");
         Assert.assertNotNull(entry);
