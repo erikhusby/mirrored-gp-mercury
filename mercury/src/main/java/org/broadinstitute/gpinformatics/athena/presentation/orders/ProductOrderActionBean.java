@@ -520,7 +520,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // and the ProductOrderListEntry that provides billing data would otherwise be null.
         entryInit();
 
-        return getContext().getSourcePageResolution();
+        return getSourcePageResolution();
     }
 
     @HandlesEvent(SAVE_ACTION)
