@@ -35,6 +35,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserT
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -128,6 +129,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private JiraService jiraService;
+
+    @Inject
+    private MercuryClientService mercuryClientService;
 
     private List<ProductOrderListEntry> allProductOrderListEntries;
 
@@ -474,6 +478,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
+
+        Collection<ProductOrderSample> samples = mercuryClientService.addSampleToPicoBucket(editOrder);
+        if (!samples.isEmpty()) {
+            addMessage("{0} samples have been added to the pico bucket: {1}", samples.size(), StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
+        }
+
         return createViewResolution();
     }
 
@@ -781,6 +791,12 @@ public class ProductOrderActionBean extends CoreActionBean {
         issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
                 editOrder.getSampleString(),
                 ProductOrder.TransitionStates.DeveloperEdit.getStateName());
+
+        Collection<ProductOrderSample> samplesInPico = mercuryClientService.addSampleToPicoBucket(editOrder, samplesToAdd);
+        if (!samplesInPico.isEmpty()) {
+            addMessage("{0} samples have been added to the pico bucket: {1}", samplesInPico.size(), nameList);
+        }
+
         return createViewResolution();
     }
 

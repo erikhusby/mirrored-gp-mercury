@@ -158,6 +158,7 @@ CREATE TABLE product_order (
   title VARCHAR2(255),
   quote_id VARCHAR2(255),
   jira_ticket_key VARCHAR2(255),
+  owner VARCHAR2(40),
   etl_date DATE NOT NULL
 );
 
@@ -344,7 +345,8 @@ CREATE TABLE im_product_order (
   modified_date DATE,
   title VARCHAR2(255),
   quote_id VARCHAR2(255),
-  jira_ticket_key VARCHAR2(255)
+  jira_ticket_key VARCHAR2(255),
+  owner VARCHAR2(40)
 );
 
 CREATE TABLE im_product_order_status (
