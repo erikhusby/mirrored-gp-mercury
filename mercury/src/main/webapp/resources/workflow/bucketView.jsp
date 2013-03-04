@@ -33,7 +33,10 @@
                 checkAllClass:'bucket-checkAll',
                 countDisplayClass:'bucket-checkedCount',
                 checkboxClass:'bucket-checkbox'});
+
+            $j("#dueDate").datepicker();
         })
+
 
         function showResult(type) {
             $j('#' + type + 'Div').show();
@@ -131,7 +134,7 @@
                                 <div class="controls">
                                     <stripes:text id="dueDate" name="dueDate" class="defaultText"
                                                   title="enter date (MM/dd/yyyy)"
-                                                  value="${batchActionBean.dueDate}"><fmt:formatDate
+                                                  value="${batchActionBean.dueDate}"  formatPattern="MM/dd/yyyy" ><fmt:formatDate
                                             value="${batchActionBean.dueDate}"
                                             dateStyle="short"/></stripes:text>
                                 </div>
