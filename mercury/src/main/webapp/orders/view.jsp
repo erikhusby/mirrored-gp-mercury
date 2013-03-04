@@ -29,12 +29,7 @@
                 var sampleNameFields = $j(".sampleName");
 
                 // If there are no samples, set up the filter, otherwise kick off some javascript
-                if (sampleNameFields.length == 0) {
-                    $j('#sampleData').dataTable( {
-                        "oTableTools": ttExportDefines,
-                        "bSort": false
-                    });
-                } else {
+                if (sampleNameFields.length > 0) {
                     var i,j,tempArray,chunk = 50;
                     for (i=0,j=sampleNameFields.length; i<j; i+=chunk) {
                         tempArray = sampleNameFields.slice(i,i+chunk);
@@ -118,6 +113,28 @@
                     ]
                 });
 
+                $j("#abandonConfirmation").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    buttons: [
+                        {
+                            id: "abandonOkButton",
+                            text: "OK",
+                            click: function () {
+                                $j(this).dialog("close");
+                                $j("#abandonOkButton").attr("disabled", "disabled");
+                                $j("#orderForm").submit();
+                            }
+                        },
+                        {
+                            text: "Cancel",
+                            click : function () {
+                                $j(this).dialog("close");
+                            }
+                        }
+                    ]
+                });
+
                 $j("#noneSelectedDialog").dialog({
                     modal: true,
                     autoOpen: false,
@@ -163,7 +180,28 @@
                 if (bspDataCount < 1) {
                     $j('#sampleData').dataTable( {
                         "oTableTools": ttExportDefines,
-                        "bSort": false
+                        <c:choose>
+                            <c:when test="${editOrder.draft}">
+                                "aaSorting": [[0, 'asc']],
+                            </c:when>
+                            <c:otherwise>
+                                "aaSorting": [[1, 'asc']],
+                            </c:otherwise>
+                        </c:choose>
+                            "aoColumns": [
+                                {"bSortable": false},                       // checkbox
+                                {"bSortable": true, "sType": "numeric"},    // Position
+                                {"bSortable": true},                        // ID
+                                {"bSortable": true},                        // Participant ID
+                                {"bSortable": true, "sType": "numeric"},    // Volume
+                                {"bSortable": true, "sType": "numeric"},    // Concentration
+                                {"bSortable": true, "sType": "numeric"},    // Yield Amount
+                                {"bSortable": true, "sType" : "title-string"}, // FP Status
+                                {"bSortable": true},                        // On Risk
+                                {"bSortable": true, "sType": "title-numeric"},   // Eligible
+                                {"bSortable": true, "sType" : "title-string"},   // Billed
+                                {"bSortable": true},                        // Status
+                                {"bSortable": true}]                        // Comment
                     });
                 }
             }
@@ -226,6 +264,19 @@
                     $j("#noneSelectedDialog").dialog("open");
                 }
             }
+
+            function showAbandonConfirm(action, actionPrompt, level) {
+                $j("#orderDialogAction").attr("name", action);
+                $j("#confirmDialogMessage").text(actionPrompt);
+
+                if (level) {
+                    $j("#abandonConfirmation").parent().css("border-color:red;");
+                    $j("#abandonConfirmation").text("This Product Order has billed samples. Are you sure you want to abandon it?");
+                    $j("#abandonConfirmation").prev().addClass("ui-state-error");
+                }
+
+                $j("#abandonConfirmation").dialog("open");
+            }
         </script>
     </stripes:layout-component>
 
@@ -254,38 +305,61 @@
         <p>This will permanently remove this draft. Are you sure?</p>
     </div>
 
+    <div style="display:none" id="abandonConfirmation">
+        <p>This will abandon this Product Order. Are you sure?</p>
+    </div>
+
     <div style="display:none" id="noneSelectedDialog">
         <p>You must select at least one sample to <span id="noneSelectedDialogMessage"></span>.</p>
     </div>
 
-        <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
-            <stripes:hidden name="productOrder" value="${editOrder.businessKey}"/>
-            <stripes:hidden id="orderDialogAction" name=""/>
+    <stripes:form action="/orders/order.action" id="orderForm" class="form-horizontal">
+        <stripes:hidden name="productOrder" value="${editOrder.businessKey}"/>
+        <stripes:hidden id="orderDialogAction" name=""/>
 
-            <div class="actionButtons">
-                <c:if test="${editOrder.draft}">
-                    <%-- MLC PDOs can be placed by PM or PDMs, so I'm making the security tag accept either of those roles for 'Place Order'.
-                         I am also putting 'Validate' under that same security tag since I think that may have the power to alter 'On-Riskedness'
-                         for PDO samples --%>
-                    <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name, Role.PM.name}%>">
-                        <stripes:submit name="placeOrder" value="Validate and Place Order" disabled="${!actionBean.canPlaceOrder}" class="btn"/>
-                        <stripes:submit name="validate" value="Validate" style="margin-left: 5px;" class="btn"/>
-                    </security:authorizeBlock>
+        <div class="actionButtons">
+            <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name}%>">
+                <c:choose>
+                    <c:when test="${actionBean.abandonable}">
+                        <c:set var="abandonTitle" value="Click to abandon ${editOrder.title}"/>
+                        <c:set var="abandonDisable" value="false"/>
+                        <stripes:hidden name="selectedProductOrderBusinessKeys" value="${editOrder.businessKey}"/>
+                    </c:when>
+                    <c:otherwise>
+                        <c:set var="abandonTitle"
+                               value="Cannot abandon this order because ${actionBean.abandonDisabledReason}"/>
+                        <c:set var="abandonDisable" value="true"/>
+                    </c:otherwise>
+                </c:choose>
+                <stripes:button name="abandonOrders" id="abandonOrders" value="Abandon Order"
+                                onclick="showAbandonConfirm('abandonOrders', 'abandon', ${actionBean.abandonWarning})"
+                                class="btn padright" title="${abandonTitle}" disabled="${abandonDisable}"/>
+            </security:authorizeBlock>
+            <c:if test="${editOrder.draft}">
+                <%-- MLC PDOs can be placed by PM or PDMs, so I'm making the security tag accept either of those roles for 'Place Order'.
+                     I am also putting 'Validate' under that same security tag since I think that may have the power to alter 'On-Riskedness'
+                     for PDO samples --%>
+                <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name, Role.PM.name}%>">
 
-                    <stripes:link title="Click to edit ${editOrder.title}"
-                                  beanclass="${actionBean.class.name}" event="edit" class="btn"
-                                  style="text-decoration: none !important;">
-                        <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
-                        <stripes:param name="productOrder" value="${editOrder.businessKey}"/>
-                    </stripes:link>
+                    <stripes:submit name="placeOrder" value="Validate and Place Order"
+                                    disabled="${!actionBean.canPlaceOrder}" class="btn"/>
+                    <stripes:submit name="validate" value="Validate" style="margin-left: 5px;" class="btn"/>
+                </security:authorizeBlock>
 
-                    <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PM.name}%>">
-                        <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
-                                        value="Delete Draft" style="margin-left: 5px;" class="btn"/>
-                    </security:authorizeBlock>
-                </c:if>
-            </div>
-        </stripes:form>
+                <stripes:link title="Click to edit ${editOrder.title}"
+                              beanclass="${actionBean.class.name}" event="edit" class="btn"
+                              style="text-decoration: none !important;">
+                    <span class="icon-shopping-cart"></span> <%=ProductOrderActionBean.EDIT_ORDER%>
+                    <stripes:param name="productOrder" value="${editOrder.businessKey}"/>
+                </stripes:link>
+
+                <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PM.name}%>">
+                    <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
+                                    value="Delete Draft" style="margin-left: 5px;" class="btn"/>
+                </security:authorizeBlock>
+            </c:if>
+        </div>
+    </stripes:form>
 
         <%-- PDO edit should only be available to PDMs, i.e. not PMs. --%>
         <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name}%>">
@@ -515,61 +589,65 @@
                 <img src="${ctxpath}/images/spinner.gif"/>
             </div>
 
-            <table id="sampleData" class="table simple">
-                <thead>
-                    <tr>
-                        <c:if test="${!editOrder.draft}">
-                            <th width="40">
-                                <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
-                            </th>
-                        </c:if>
-                        <th width="90">ID</th>
-                        <th width="90">Participant ID</th>
-                        <th width="40">Volume</th>
-                        <th width="40">Concentration</th>
-                        <th width="40">Yield Amount</th>
-                        <th width="60">FP Status</th>
-                        <th>On Risk</th>
-                        <th width="40">Eligible</th>
-                        <th width="40">Billed</th>
-                        <th width="40">Status</th>
-                        <th width="200">Comment</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <c:forEach items="${editOrder.samples}" var="sample">
+            <c:if test="${not empty actionBean.editOrder.samples}">
+                <table id="sampleData" class="table simple">
+                    <thead>
                         <tr>
                             <c:if test="${!editOrder.draft}">
-                                <td>
-                                    <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${sample.productOrderSampleId}"/>
-                                </td>
+                                <th width="40">
+                                    <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
+                                </th>
                             </c:if>
-                            <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
-                                <c:choose>
-                                    <c:when test="${sample.inBspFormat}">
-                                        <stripes:link class="external" target="BSP_SAMPLE" title="BSP Sample" href="${actionBean.sampleSearchUrlForBspSample(sample)}">
-                                            ${sample.sampleName}
-                                        </stripes:link>
-                                    </c:when>
-                                    <c:otherwise>
-                                        ${sample.sampleName}
-                                    </c:otherwise>
-                                </c:choose>
-                            </td>
-                            <td id="patient-${sample.productOrderSampleId}">&nbsp;</td>
-                            <td id="volume-${sample.productOrderSampleId}">&nbsp;</td>
-                            <td id="concentration-${sample.productOrderSampleId}">&nbsp;</td>
-                            <td id="total-${sample.productOrderSampleId}">&nbsp;</td>
-                            <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center">&nbsp;</td>
-                            <td>${sample.riskString}</td>
-                            <td>&#160;</td>
-                            <td>&#160;</td>
-                            <td>${sample.deliveryStatus.displayName}</td>
-                            <td>${sample.sampleComment}</td>
+                            <th width="20">Pos</th>
+                            <th width="90">ID</th>
+                            <th width="90">Participant ID</th>
+                            <th width="40">Volume</th>
+                            <th width="40">Concentration</th>
+                            <th width="40">Yield Amount</th>
+                            <th width="60">FP Status</th>
+                            <th>On Risk</th>
+                            <th width="40">Eligible</th>
+                            <th width="40">Billed</th>
+                            <th width="40">Status</th>
+                            <th width="200">Comment</th>
                         </tr>
-                    </c:forEach>
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        <c:forEach items="${editOrder.samples}" var="sample">
+                            <tr>
+                                <c:if test="${!editOrder.draft}">
+                                    <td>
+                                        <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${sample.productOrderSampleId}"/>
+                                    </td>
+                                </c:if>
+                                <td>${sample.samplePosition}</td>
+                                <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
+                                    <c:choose>
+                                        <c:when test="${sample.inBspFormat}">
+                                            <stripes:link class="external" target="BSP_SAMPLE" title="BSP Sample" href="${actionBean.sampleSearchUrlForBspSample(sample)}">
+                                                ${sample.sampleName}
+                                            </stripes:link>
+                                        </c:when>
+                                        <c:otherwise>
+                                            ${sample.sampleName}
+                                        </c:otherwise>
+                                    </c:choose>
+                                </td>
+                                <td id="patient-${sample.productOrderSampleId}">&nbsp;</td>
+                                <td id="volume-${sample.productOrderSampleId}">&nbsp;</td>
+                                <td id="concentration-${sample.productOrderSampleId}">&nbsp;</td>
+                                <td id="total-${sample.productOrderSampleId}">&nbsp;</td>
+                                <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center">&nbsp;</td>
+                                <td>${sample.riskString}</td>
+                                <td>&#160;</td>
+                                <td>&#160;</td>
+                                <td>${sample.deliveryStatus.displayName}</td>
+                                <td>${sample.sampleComment}</td>
+                            </tr>
+                        </c:forEach>
+                    </tbody>
+                </table>
+            </c:if>
         </stripes:form>
     </stripes:layout-component>
 </stripes:layout-render>

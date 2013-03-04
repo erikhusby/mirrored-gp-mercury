@@ -27,17 +27,13 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
         this.workflowLoader = workflowLoader;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Class getEntityClass() {
         return WorkflowConfig.class;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     String getBaseFilename() {
         return null;

@@ -51,7 +51,12 @@ public class CompletionStatusFetcher {
 
     @DaoFree
     public int getPercentInProgress(String orderKey) {
-        return 100 - (getPercentAbandoned(orderKey) + getPercentCompleted(orderKey));
+        ProductOrderCompletionStatus counter = progressByBusinessKey.get(orderKey);
+        if (counter == null) {
+            return 0;
+        }
+
+        return counter.getPercentInProgress();
     }
 
     @DaoFree

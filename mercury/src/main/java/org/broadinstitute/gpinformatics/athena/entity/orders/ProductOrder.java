@@ -804,6 +804,13 @@ public class ProductOrder implements Serializable {
     }
 
     /**
+     * @return true if order is submitted
+     */
+    public boolean isSubmitted() {
+        return OrderStatus.Submitted == orderStatus;
+    }
+
+    /**
      * This method encapsulates the set of steps necessary to finalize the submission of a product order.
      * This mainly deals with jira ticket creation.  This method will:
      * <ul>

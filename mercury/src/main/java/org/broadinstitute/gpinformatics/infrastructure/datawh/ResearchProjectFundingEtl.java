@@ -22,7 +22,7 @@ public class ResearchProjectFundingEtl  extends GenericEntityEtl {
 
     @Inject
     public void setResearchProjectDao(ResearchProjectDao dao) {
-	this.dao = dao;
+        this.dao = dao;
     }
 
     @Override
@@ -40,24 +40,20 @@ public class ResearchProjectFundingEtl  extends GenericEntityEtl {
         return ((ResearchProjectFunding)entity).getResearchProjectFundingId();
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         Collection<String> recordList = new ArrayList<String>();
         ResearchProjectFunding entity = dao.findById(ResearchProjectFunding.class, entityId);
         if (entity != null) {
-	    recordList.add(entityRecord(etlDateStr, isDelete, entity));
-	} else {
+            recordList.add(entityRecord(etlDateStr, isDelete, entity));
+        } else {
             logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
         }
         return recordList;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();
