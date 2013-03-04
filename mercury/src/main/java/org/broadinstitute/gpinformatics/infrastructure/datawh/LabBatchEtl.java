@@ -22,51 +22,41 @@ public class LabBatchEtl extends GenericEntityEtl {
 
     @Inject
     public void setLabBatchDAO(LabBatchDAO dao) {
-	this.dao = dao;
+        this.dao = dao;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Class getEntityClass() {
         return LabBatch.class;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     String getBaseFilename() {
         return "lab_batch";
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Long entityId(Object entity) {
         return ((LabBatch)entity).getLabBatchId();
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         Collection<String> recordList = new ArrayList<String>();
         LabBatch entity = dao.findById(LabBatch.class, entityId);
         if (entity != null) {
-	    recordList.add(entityRecord(etlDateStr, isDelete, entity));
-	} else {
+            recordList.add(entityRecord(etlDateStr, isDelete, entity));
+        } else {
             logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
         }
         return recordList;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();

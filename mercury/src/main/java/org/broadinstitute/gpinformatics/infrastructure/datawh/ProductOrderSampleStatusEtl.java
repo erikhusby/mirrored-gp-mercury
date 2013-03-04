@@ -10,25 +10,19 @@ import java.util.Date;
 @Stateful
 public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Class getEntityClass() {
         return ProductOrderSample.class;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     String getBaseFilename() {
         return "product_order_sample_status";
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Long entityId(Object entity) {
         return ((ProductOrderSample)entity).getProductOrderSampleId();
@@ -46,9 +40,7 @@ public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
         return Collections.emptyList();
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     String entityStatusRecord(String etlDateStr, Date revDate, Object revObject, boolean isDelete) {
         ProductOrderSample entity = (ProductOrderSample)revObject;

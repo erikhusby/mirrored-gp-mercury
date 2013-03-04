@@ -180,6 +180,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = SET_RISK)
     private String riskComment;
 
+    //This is used for prompting why the abandon button is disabled
+    private String abandonDisabledReason;
+
+    //This is used to determine whether a special warning message needs to be confirmed before normal abandon;
+    private boolean abandonWarning = false;
     /**
      * Single {@link ProductOrderListEntry} for the view page, gives us billing session information.
      */
@@ -1089,6 +1094,20 @@ public class ProductOrderActionBean extends CoreActionBean {
         return getProductOrderListEntry().getBillingSessionBusinessKey();
     }
 
+    /**
+     * Convenience method for verifying whether a PDO is able to be abandoned.
+     *
+     * @return Boolean eligible for abandoning
+     */
+    public boolean isAbandonable() {
+        if (!editOrder.isSubmitted()) {
+            setAbandonDisabledReason("the order status of the PDO is not 'Submitted'.");
+            return false;
+        } else if (productOrderSampleDao.countSamplesWithBillingLedgerEntries(editOrder) > 0) {
+            setAbandonWarning(true);
+        }
+        return true;
+    }
 
     /**
      * Convenience method for PDO view page to show percentage of samples abandoned for the current PDO.
@@ -1146,4 +1165,33 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    /**
+     * @return Reason that abandon button is disabled
+     */
+    public String getAbandonDisabledReason() {
+        return abandonDisabledReason;
+    }
+
+    /**
+     * Update reason why the abandon button is disabled.
+     * @param abandonDisabledReason String of text indicating why the abandon button is disabled
+     */
+    public void setAbandonDisabledReason(String abandonDisabledReason) {
+        this.abandonDisabledReason = abandonDisabledReason;
+    }
+
+    /**
+     * @return Whether there is a need to use the special warning format
+     */
+    public boolean getAbandonWarning() {
+        return abandonWarning;
+    }
+
+    /**
+     * Update whether to use special warning
+     * @param abandonWarning Boolean flag used to determine whether we need to use special message confirmation
+     */
+    public void setAbandonWarning(boolean abandonWarning) {
+        this.abandonWarning = abandonWarning;
+    }
 }

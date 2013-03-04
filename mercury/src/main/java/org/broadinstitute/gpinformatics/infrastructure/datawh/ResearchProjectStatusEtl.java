@@ -11,25 +11,19 @@ import java.util.Date;
 @Stateful
 public class ResearchProjectStatusEtl extends GenericEntityEtl {
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Class getEntityClass() {
         return ResearchProject.class;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     String getBaseFilename() {
         return "research_project_status";
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Long entityId(Object entity) {
         return ((ResearchProject)entity).getResearchProjectId();
@@ -47,9 +41,7 @@ public class ResearchProjectStatusEtl extends GenericEntityEtl {
         return Collections.EMPTY_LIST;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     String entityStatusRecord(String etlDateStr, Date revDate, Object revObject, boolean isDelete) {
         ResearchProject entity = (ResearchProject)revObject;

@@ -48,6 +48,7 @@ public class MercuryClientServiceTest extends Arquillian {
     private String pdoKey = "PDO-8";  // must exist on test jira (receives the comments put by BucketBean)
     private List<ProductOrderSample> pdoSamples = new ArrayList<ProductOrderSample>();
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private MercuryClientService service;
     @Inject
