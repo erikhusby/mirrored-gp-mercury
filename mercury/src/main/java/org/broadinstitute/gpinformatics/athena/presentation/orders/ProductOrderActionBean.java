@@ -299,11 +299,6 @@ public class ProductOrderActionBean extends CoreActionBean {
     @ValidationMethod(on = PLACE_ORDER)
     public void validatePlacedOrder() {
         doValidation("place order");
-        // entryInit() must be called explicitly here since it does not run automatically in the event of validation
-        // failures and the ProductOrderListEntry that provides billing data would be null.
-        if (hasErrors()) {
-            entryInit();
-        }
     }
 
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
@@ -507,10 +502,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         validatePlacedOrder();
 
         if (!hasErrors()) {
-            addMessage("Draft Order is valid and ready to be placed");
+            getContext().getMessages().add(new SimpleMessage("Draft Order is valid and ready to be placed"));
         }
 
-        return createViewResolution();
+        // entryInit() must be called explicitly here since it does not run automatically with source page resolution
+        // and the ProductOrderListEntry that provides billing data would otherwise be null.
+        entryInit();
+
+        return getContext().getSourcePageResolution();
     }
 
     @HandlesEvent(SAVE_ACTION)
