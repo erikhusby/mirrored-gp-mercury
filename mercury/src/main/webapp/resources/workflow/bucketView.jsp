@@ -168,7 +168,8 @@
                         </c:when><c:otherwise>${entry.labVessel.label}</c:otherwise>
                         </c:choose></td>
                     <td>
-                        <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
+                        <c:forEach items="${actionBean.getMercurySamplesForBucketEntry(entry)}" var="mercurySample"
+                                   varStatus="stat">
                             <c:choose><c:when test="${!readOnly}">
                                 <a href="${ctxpath}/search/all.action?search=&searchKey=${mercurySample.sampleKey}">
                                         ${mercurySample.sampleKey}
