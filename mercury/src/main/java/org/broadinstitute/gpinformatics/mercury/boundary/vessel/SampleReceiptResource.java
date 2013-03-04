@@ -30,6 +30,7 @@ import javax.ws.rs.Path;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.StringReader;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -122,8 +123,11 @@ public class SampleReceiptResource {
         List<LabVessel> labVessels = notifyOfReceiptDaoFree(sampleReceiptBean, mapBarcodeToVessel, mapIdToListMercurySample,
                 mapIdToListPdoSamples);
 
-        // todo jmt may need to append a timestamp to make the batch unique
-        labBatchDAO.persist(new LabBatch(sampleReceiptBean.getKitId(), new HashSet<LabVessel>(labVessels),
+        // If the kit has already been partially registered, append a timestamp to make a unique batch name
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSSS");
+        LabBatch labBatch = labBatchDAO.findByName(sampleReceiptBean.getKitId());
+        String batchName = sampleReceiptBean.getKitId() + (labBatch == null ? "" : "-" + simpleDateFormat.format(new Date()));
+        labBatchDAO.persist(new LabBatch(batchName, new HashSet<LabVessel>(labVessels),
                 LabBatch.LabBatchType.SAMPLES_RECEIPT));
         return "Samples received";
     }
@@ -148,14 +152,13 @@ public class SampleReceiptResource {
             String sampleId = parentVesselBean.getSampleId();
             String barcode = parentVesselBean.getManufacturerBarcode() == null ? sampleId :
                     parentVesselBean.getManufacturerBarcode();
+            // LabVessel may already exist if receipts are being backfilled
             LabVessel labVessel = mapBarcodeToVessel.get(barcode);
-            if(labVessel != null) {
-                throw new RuntimeException("Vessel has already been received: " + barcode);
-            }
 
             if(parentVesselBean.getChildVesselBeans() == null || parentVesselBean.getChildVesselBeans().isEmpty()) {
                 // todo jmt differentiate Cryo vial, Conical, Slide, Flip-top etc.
-                TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(barcode);
+                TwoDBarcodedTube twoDBarcodedTube = labVessel == null ? new TwoDBarcodedTube(barcode) :
+                        (TwoDBarcodedTube) labVessel;
 
                 MercurySample mercurySample = getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples, sampleId);
                 twoDBarcodedTube.addSample(mercurySample);
