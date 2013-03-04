@@ -4,11 +4,20 @@
 <%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"/>
-<stripes:useActionBean var="batchActionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"/>
+<%--<stripes:useActionBean var="batchActionBean"--%>
+                       <%--beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"/>--%>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" sectionTitle="Select Bucket">
 <stripes:layout-component name="extraHead">
+    <style>
+        .tdfield {
+            width: 300px;
+            height: 15px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+    </style>
     <script type="text/javascript">
         $(document).ready(function () {
             $j('#bucketEntryView').dataTable({
@@ -37,15 +46,6 @@
             $j("#dueDate").datepicker();
         })
 
-
-        function showResult(type) {
-            $j('#' + type + 'Div').show();
-        }
-
-        function hideResult(type) {
-            $j('#' + type + 'Div').hide();
-        }
-
         function showJiraInfo() {
             $j('#jiraTable').show();
         }
@@ -68,44 +68,21 @@
             </div>
         </div>
     </stripes:form>
-    <stripes:form beanclass="${batchActionBean.class.name}"
+    <stripes:form beanclass="${actionBean.class.name}"
                   id="bucketEntryForm">
         <stripes:hidden name="selectedBucket" value="${actionBean.selectedBucket}"/>
         <c:if test="${actionBean.jiraEnabled}">
             <table>
                 <tr>
                     <td valign="top">
-                        <div class="control-group">
-                            <div class="controls">
-                                <stripes:radio value="${batchActionBean.existingJiraTicketValue}"
-                                               name="jiraInputType"
-                                               onclick="javascript:showResult('jiraId');hideResult('newTicket');"/>
-                                Use Existing Jira Ticket
-                            </div>
-                            <div class="controls">
-                                <stripes:radio value="${batchActionBean.newJiraTicketValue}"
-                                               name="jiraInputType"
-                                               onclick="javascript:showResult('newTicket');hideResult('jiraId');"/>
-                                Create a New Jira Ticket
-                            </div>
-                        </div>
 
-                        <div id="jiraIdDiv">
-                            <div class="control-group">
-                                <stripes:label for="jiraTicketId" name="Jira Ticket Key" class="control-label"/>
-                                <div class="controls">
-                                    <stripes:text name="jiraTicketId" class="defaultText"
-                                                  title="Enter an existing batch ticket" id="jiraTicketId"/>
-                                </div>
-                            </div>
-                        </div>
-                        <div id="newTicketDiv" style="display: none;">
+                        <div id="newTicketDiv">
                             <div class="control-group">
                                 <stripes:label for="summary" name="Summary" class="control-label"/>
                                 <div class="controls">
                                     <stripes:text name="summary" class="defaultText"
                                                   title="Enter a summary for a new batch ticket" id="summary"
-                                                  value="${batchActionBean.summary}"/>
+                                                  value="${actionBean.summary}"/>
                                 </div>
                             </div>
 
@@ -114,7 +91,7 @@
                                 <div class="controls">
                                     <stripes:textarea name="description" class="defaultText"
                                                       title="Enter a description for a new batch ticket"
-                                                      id="description" value="${batchActionBean.description}"/>
+                                                      id="description" value="${actionBean.description}"/>
                                 </div>
                             </div>
 
@@ -125,7 +102,7 @@
                                     <stripes:textarea name="important" class="defaultText"
                                                       title="Enter important info for a new batch ticket"
                                                       id="important"
-                                                      value="${batchActionBean.important}"/>
+                                                      value="${actionBean.important}"/>
                                 </div>
                             </div>
 
@@ -134,8 +111,8 @@
                                 <div class="controls">
                                     <stripes:text id="dueDate" name="dueDate" class="defaultText"
                                                   title="enter date (MM/dd/yyyy)"
-                                                  value="${batchActionBean.dueDate}"  formatPattern="MM/dd/yyyy" ><fmt:formatDate
-                                            value="${batchActionBean.dueDate}"
+                                                  value="${actionBean.dueDate}"  formatPattern="MM/dd/yyyy" ><fmt:formatDate
+                                            value="${actionBean.dueDate}"
                                             dateStyle="short"/></stripes:text>
                                 </div>
                             </div>
@@ -152,17 +129,16 @@
         <table id="bucketEntryView" class="table simple">
             <thead>
             <tr>
-                    <th width="10">
-                        <input type="checkbox" class="bucket-checkAll"/><span id="count"
-                                                                              class="bucket-checkedCount"></span>
-                    </th>
+                <th width="10">
+                    <input type="checkbox" class="bucket-checkAll"/><span id="count"
+                                                                          class="bucket-checkedCount"></span>
+                </th>
                 <th width="60">Vessel Name</th>
                 <th width="50">Sample Name</th>
                 <th width="50">PDO</th>
-                <th>PDO Name</th>
-                <th>PDO Owner</th>
-                <th width="200">Batch Name</th>
-                <th width="100">Sample Type</th>
+                <th width="300">PDO Name</th>
+                <th width="200">PDO Owner</th>
+                <th>Batch Name</th>
                 <th width="100">Created Date</th>
             </tr>
             </thead>
@@ -181,7 +157,8 @@
                         </c:when><c:otherwise>${entry.labVessel.label}</c:otherwise>
                         </c:choose></td>
                     <td>
-                        <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample" varStatus="stat">
+                        <c:forEach items="${actionBean.getMercurySamplesForBucketEntry(entry)}" var="mercurySample"
+                                   varStatus="stat">
                             <c:choose><c:when test="${!readOnly}">
                                 <a href="${ctxpath}/search/all.action?search=&searchKey=${mercurySample.sampleKey}">
                                         ${mercurySample.sampleKey}
@@ -199,9 +176,9 @@
                             </c:when>
                             <c:otherwise>${entry.poBusinessKey}</c:otherwise>
                         </c:choose>
-                            </td>
+                    </td>
                     <td>
-                            ${actionBean.getPDODetails(entry.poBusinessKey).title}
+                        <div class="tdfield">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
                     </td>
                     <td>
                             ${actionBean.getUserFullName(actionBean.getPDODetails(entry.poBusinessKey).createdBy)}
@@ -216,11 +193,6 @@
                                 <c:otherwise>${batch.businessKey}</c:otherwise></c:choose><c:if
                                 test="${!stat.last}">&nbsp;</c:if></c:forEach>
 
-                    </td>
-                    <td>
-                        <c:forEach items="${entry.labVessel.mercurySamples}" var="mercurySample">
-                            ${mercurySample.bspSampleDTO.materialType}
-                        </c:forEach>
                     </td>
                     <td>
                         <fmt:formatDate value="${entry.createdDate}" pattern="MM/dd/yyyy HH:MM:ss"/>
