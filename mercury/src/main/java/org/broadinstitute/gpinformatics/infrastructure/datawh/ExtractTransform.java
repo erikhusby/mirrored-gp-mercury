@@ -280,7 +280,7 @@ public class ExtractTransform {
         recordCount += labBatchEtl.doEtl(revIds, etlDateStr);
         recordCount += labVesselEtl.doEtl(revIds, etlDateStr);
         recordCount += workflowConfigEtl.doEtl(revIds, etlDateStr);
-//xxx        recordCount += eventEtl.doEtl(revIds, etlDateStr);
+        recordCount += eventEtl.doEtl(revIds, etlDateStr);
 
         recordCount += riskItemEtl.doEtl(revIds, etlDateStr);
         recordCount += billingLedgerEtl.doEtl(revIds, etlDateStr);
@@ -355,7 +355,7 @@ public class ExtractTransform {
         recordCount += labBatchEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
         recordCount += labVesselEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
         recordCount += workflowConfigEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-//xxx        recordCount += eventEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += eventEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
 
         recordCount += riskItemEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
         recordCount += billingLedgerEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
