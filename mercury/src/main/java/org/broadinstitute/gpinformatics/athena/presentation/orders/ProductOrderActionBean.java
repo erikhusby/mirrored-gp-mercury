@@ -5,6 +5,7 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
@@ -518,7 +519,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         validatePlacedOrder();
 
         if (!hasErrors()) {
-            getContext().getMessages().add(new SimpleMessage("Draft Order is valid and ready to be placed"));
+            addMessage("Draft Order is valid and ready to be placed");
         }
 
         // entryInit() must be called explicitly here since it does not run automatically with source page resolution
@@ -544,7 +545,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // save it!
         productOrderDao.persist(editOrder);
 
-        addMessage("Product Order \"" + editOrder.getTitle() + "\" has been saved.");
+        addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
         return createViewResolution();
     }
 
@@ -576,7 +577,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution startBilling() {
         Set<BillingLedger> ledgerItems =
                 billingLedgerDao.findWithoutBillingSessionByOrderList(selectedProductOrderBusinessKeys);
-        if ((ledgerItems == null) || (ledgerItems.isEmpty())) {
+        if (CollectionUtils.isEmpty(ledgerItems)) {
             addGlobalValidationError("There are no items to bill on any of the selected orders");
             return new ForwardResolution(ProductOrderActionBean.class, LIST_ACTION);
         }
