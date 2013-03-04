@@ -25,8 +25,11 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.StringReader;
@@ -37,6 +40,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * JAX-RS web service used by BSP to notify Mercury that samples have been received.
@@ -68,6 +72,30 @@ public class SampleReceiptResource {
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private WsMessageStore wsMessageStore;
+
+    @GET
+    @Path("{batchName}")
+    @Produces({MediaType.APPLICATION_XML})
+    public SampleReceiptBean getByBatchName(@PathParam("batchName") String batchName) {
+        LabBatch labBatch = labBatchDAO.findByName(batchName);
+        if(labBatch == null) {
+            return null;
+        }
+        List<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
+        Set<LabVessel> startingLabVessels = labBatch.getStartingLabVessels();
+        for (LabVessel startingLabVessel : startingLabVessels) {
+            parentVesselBeans.add(new ParentVesselBean(
+                    startingLabVessel.getLabel(),
+                    startingLabVessel.getMercurySamples().iterator().next().getSampleKey(),
+                    startingLabVessel.getType().getName(),
+                    null));
+        }
+        LabVessel firstLabVessel = startingLabVessels.iterator().next();
+        return new SampleReceiptBean(
+                firstLabVessel.getInPlaceEvents().iterator().next().getEventDate(),
+                labBatch.getBatchName(),
+                parentVesselBeans);
+    }
 
     /**
      * Accepts a message from BSP.  We unmarshal ourselves, rather than letting JAX-RS
@@ -119,7 +147,7 @@ public class SampleReceiptResource {
 
         Map<String,LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
         Map<String, List<MercurySample>> mapIdToListMercurySample = mercurySampleDao.findMapIdToListMercurySample(sampleIds);
-        Map<String, List<ProductOrderSample>> mapIdToListPdoSamples = athenaClientService.findMapBySamples(sampleIds);
+        Map<String, List<ProductOrderSample>> mapIdToListPdoSamples = athenaClientService.findMapSampleNameToPoSample(sampleIds);
         List<LabVessel> labVessels = notifyOfReceiptDaoFree(sampleReceiptBean, mapBarcodeToVessel, mapIdToListMercurySample,
                 mapIdToListPdoSamples);
 
@@ -129,7 +157,7 @@ public class SampleReceiptResource {
         String batchName = sampleReceiptBean.getKitId() + (labBatch == null ? "" : "-" + simpleDateFormat.format(new Date()));
         labBatchDAO.persist(new LabBatch(batchName, new HashSet<LabVessel>(labVessels),
                 LabBatch.LabBatchType.SAMPLES_RECEIPT));
-        return "Samples received";
+        return "Samples received: " + batchName;
     }
 
     /**

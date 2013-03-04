@@ -60,7 +60,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
     }
 
     @Override
-    public Map<String, List<ProductOrderSample>> findMapBySamples(List<String> sampleNames) {
+    public Map<String, List<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames) {
         Map<String, List<ProductOrderSample>> mapSampleIdToPdoSample = new HashMap<String, List<ProductOrderSample>>();
         ProductOrder productOrder = buildExExProductOrder(96);
         List<ProductOrderSample> samples = productOrder.getSamples();
