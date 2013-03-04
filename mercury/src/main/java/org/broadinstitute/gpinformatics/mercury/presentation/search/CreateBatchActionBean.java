@@ -108,20 +108,23 @@ public class CreateBatchActionBean extends CoreActionBean {
     }
 
     @ValidationMethod(on = CREATE_BATCH_ACTION)
-    public void createBatchValidation(ValidationErrors errors) {
+    public void createBatchValidation() {
 
+        if (!getUserBean().isValidJiraUser()) {
+            addValidationError("jiraTicketId","You must be A valid Jira user to create an LCSet");
+        }
 
         if(selectedVesselLabels == null || selectedVesselLabels.isEmpty()) {
-            errors.add("selectedVesselLabels", new SimpleError("At least one vessel must be selected to create a batch"));
+            addValidationError("selectedVesselLabels", "At least one vessel must be selected to create a batch");
         }
 
         if(jiraInputType.equals(EXISTING_TICKET)) {
             if(StringUtils.isBlank(jiraTicketId)) {
-                errors.add("jiraTicketId",new SimpleError("An existing Jira ticket key is required"));
+                addValidationError("jiraTicketId","An existing Jira ticket key is required");
             }
         } else {
             if(StringUtils.isBlank(summary)) {
-                errors.add("summary", new SimpleError("You must provide at least a summary to create a Jira Ticket"));
+                addValidationError("summary", "You must provide at least a summary to create a Jira Ticket");
             }
         }
     }
