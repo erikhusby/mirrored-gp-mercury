@@ -19,4 +19,6 @@ CREATE TABLE im_product_order_sample_fact (
   product_order_sample_id NUMERIC(19) NOT NULL,
   on_risk CHAR(1)
 );
-
+-- GPLIM-874
+ALTER TABLE im_product_order ADD (owner VARCHAR(40));
+ALTER TABLE product_order ADD (owner VARCHAR(40));
