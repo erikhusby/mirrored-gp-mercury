@@ -130,6 +130,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private JiraService jiraService;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private MercuryClientService mercuryClientService;
 
