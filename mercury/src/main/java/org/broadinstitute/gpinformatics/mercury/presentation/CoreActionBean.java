@@ -16,6 +16,7 @@ import net.sourceforge.stripes.exception.SourcePageNotFoundException;
 import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.ValidationError;
 import net.sourceforge.stripes.validation.ValidationErrors;
+import org.apache.commons.io.FileDeleteStrategy;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -141,22 +142,13 @@ public class CoreActionBean implements ActionBean {
      *
      * @return returns true if any errors are found in either place.  Returns false otherwise.
      */
-    protected boolean hasAnyValidationErrors() {
+    protected boolean hasErrors() {
 
         FlashScope scope = FlashScope.getCurrent(context.getRequest(), true);
 
         List<ValidationError> errors = (List<ValidationError>) scope.get(FLASH_ERROR);
 
         return ! (getContext().getValidationErrors().isEmpty() && (errors == null || errors.isEmpty()));
-    }
-
-    /**
-     * Checks to see if there are no validation errors in the flash scope or the validation errors scope
-     *
-     * @return returns true if there are no validation errors and false otherwise
-     */
-    protected boolean hasNoValidationErrors() {
-        return !hasAnyValidationErrors();
     }
 
     /**
@@ -246,7 +238,7 @@ public class CoreActionBean implements ActionBean {
      * @param arguments optional message parameters
      */
     public void addGlobalValidationError(String errorMessage, Object... arguments) {
-        flashErrorMessage(new SimpleError(errorMessage, arguments));
+        getContext().getValidationErrors().addGlobalError(new SimpleError(errorMessage, arguments));
     }
 
     /**
