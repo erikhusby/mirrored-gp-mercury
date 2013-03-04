@@ -175,6 +175,7 @@ CREATE TABLE product_order_sample (
   sample_name VARCHAR2(255),
   delivery_status VARCHAR2(40) NOT NULL,
   sample_position NUMERIC(19) NOT NULL,
+  on_risk CHAR(1) CHECK (on_risk IN ('T','F')),
   etl_date DATE NOT NULL
 );
 
@@ -437,6 +438,15 @@ CREATE TABLE im_event_fact (
   event_date DATE,
   event_fact_id NUMERIC(28) --this gets populated by merge_import.sql
 );
+
+CREATE TABLE im_product_order_sample_fact (
+  line_number NUMERIC(9) NOT NULL,
+  etl_date DATE NOT NULL,
+  is_delete CHAR(1) NOT NULL,
+  product_order_sample_id NUMERIC(19) NOT NULL,
+  on_risk CHAR(1)
+);
+
 
 CREATE SEQUENCE event_fact_id_seq start with 1;
 
