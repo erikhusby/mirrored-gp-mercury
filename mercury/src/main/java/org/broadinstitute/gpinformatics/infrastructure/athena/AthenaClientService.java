@@ -32,5 +32,5 @@ public interface AthenaClientService extends Serializable {
      * @return map from sample name to List of ProductOrderSample entity.  The list is empty if none were found for
      * the key.
      */
-    Map<String, List<ProductOrderSample>> findMapBySamples(List<String> sampleNames);
+    Map<String, List<ProductOrderSample>> findMapSampleNameToPoSample(List<String> sampleNames);
 }

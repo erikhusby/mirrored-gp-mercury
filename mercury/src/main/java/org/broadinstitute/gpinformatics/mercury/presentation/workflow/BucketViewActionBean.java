@@ -22,27 +22,16 @@ import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDefVersion;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean;
 
 import javax.inject.Inject;
 import java.text.MessageFormat;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @UrlBinding(value = "/view/bucketView.action")
 public class BucketViewActionBean extends CoreActionBean {
@@ -57,13 +46,13 @@ public class BucketViewActionBean extends CoreActionBean {
     @Inject
     private AthenaClientService athenaClientService;
     @Inject
-    private LabBatchEjb         labBatchEjb;
+    private LabBatchEjb labBatchEjb;
     @Inject
-    private LabVesselDao        labVesselDao;
+    private LabVesselDao labVesselDao;
     @Inject
-    private LabBatchDAO         labBatchDAO;
+    private LabBatchDAO labBatchDAO;
     @Inject
-    private UserBean            userBean;
+    private UserBean userBean;
 
     public static final String EXISTING_TICKET     = "existingTicket";
     public static final String NEW_TICKET          = "newTicket";
@@ -170,8 +159,7 @@ public class BucketViewActionBean extends CoreActionBean {
                 jiraEnabled = true;
                 for (BucketEntry bucketEntry : bucketEntries) {
                     pdoByKeyMap.put(bucketEntry.getPoBusinessKey(),
-                                           athenaClientService
-                                                   .retrieveProductOrderDetails(bucketEntry.getPoBusinessKey()));
+                            athenaClientService.retrieveProductOrderDetails(bucketEntry.getPoBusinessKey()));
                 }
             }
         }
@@ -183,6 +171,16 @@ public class BucketViewActionBean extends CoreActionBean {
             pdoByKeyMap.put(pdoKey, athenaClientService.retrieveProductOrderDetails(pdoKey));
         }
         return pdoByKeyMap.get(pdoKey);
+    }
+
+    public List<MercurySample> getMercurySamplesForBucketEntry(BucketEntry entry) {
+        List<MercurySample> mercurySamplesForEntry = new ArrayList<MercurySample>();
+        for (MercurySample sample : entry.getLabVessel().getMercurySamples()) {
+            if (StringUtils.equals(entry.getPoBusinessKey(), sample.getProductOrderKey())) {
+                mercurySamplesForEntry.add(sample);
+            }
+        }
+        return mercurySamplesForEntry;
     }
 
     /**
