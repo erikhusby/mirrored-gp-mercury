@@ -2,21 +2,38 @@ package org.broadinstitute.gpinformatics.mercury.presentation.workflow;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.LifecycleStage;
+import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.Validate;
+import net.sourceforge.stripes.validation.ValidationErrors;
+import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
+import org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean;
 
 import javax.inject.Inject;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 @UrlBinding(value = "/view/bucketView.action")
 public class BucketViewActionBean extends CoreActionBean {
@@ -36,6 +53,8 @@ public class BucketViewActionBean extends CoreActionBean {
     private String selectedBucket;
 
     private Collection<BucketEntry> bucketEntries;
+
+    private Map<String, ProductOrder> pdoByKeyMap = new HashMap<String, ProductOrder>();
 
     private boolean jiraEnabled = false;
 
@@ -99,12 +118,19 @@ public class BucketViewActionBean extends CoreActionBean {
             }
             if (bucketEntries.size() > 0) {
                 jiraEnabled = true;
+                for(BucketEntry bucketEntry:bucketEntries) {
+                    pdoByKeyMap.put(bucketEntry.getPoBusinessKey(),
+                                    athenaClientService.retrieveProductOrderDetails(bucketEntry.getPoBusinessKey()));
+                }
             }
         }
         return view();
     }
 
     public ProductOrder getPDODetails(String pdoKey) {
-        return athenaClientService.retrieveProductOrderDetails(pdoKey);
+        if(!pdoByKeyMap.containsKey(pdoKey)) {
+            pdoByKeyMap.put(pdoKey, athenaClientService.retrieveProductOrderDetails(pdoKey));
+        }
+        return pdoByKeyMap.get(pdoKey);
     }
 }

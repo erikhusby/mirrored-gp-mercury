@@ -22,6 +22,7 @@ CURSOR im_lab_vessel_cur IS SELECT * FROM im_lab_vessel WHERE is_delete = 'F';
 CURSOR im_workflow_cur IS SELECT * FROM im_workflow WHERE is_delete = 'F';
 CURSOR im_workflow_process_cur IS SELECT * FROM im_workflow_process WHERE is_delete = 'F';
 CURSOR im_event_fact_cur IS SELECT * FROM im_event_fact WHERE is_delete = 'F';
+CURSOR im_po_sample_fact_cur IS SELECT * FROM im_product_order_sample_fact WHERE is_delete = 'F';
 
 errmsg VARCHAR2(255);
 dup_sample_id NUMERIC(19);
@@ -37,7 +38,7 @@ BEGIN
 DELETE FROM event_fact
 WHERE lab_event_id IN (SELECT DISTINCT lab_event_id FROM im_event_fact);
 
-UPDATE product_order_sample SET is_deleted = 'T'
+DELETE FROM product_order_sample
 WHERE product_order_sample_id IN (
   SELECT product_order_sample_id FROM im_product_order_sample WHERE is_delete = 'T'
 );
@@ -67,7 +68,7 @@ WHERE research_project_irb_id IN (
   SELECT research_project_irb_id FROM im_research_project_irb WHERE is_delete = 'T'
 );
 
-UPDATE product_order_add_on SET is_deleted = 'T'
+DELETE FROM product_order_add_on
 WHERE product_order_add_on_id IN (
   SELECT product_order_add_on_id FROM im_product_order_add_on WHERE is_delete = 'T'
 );
@@ -77,7 +78,7 @@ WHERE price_item_id IN (
   SELECT price_item_id FROM im_price_item WHERE is_delete = 'T'
 );
 
-UPDATE product_order SET is_deleted = 'T'
+DELETE FROM product_order
 WHERE product_order_id IN (
   SELECT product_order_id FROM im_product_order WHERE is_delete = 'T'
 );
@@ -349,7 +350,6 @@ FOR new IN im_po_cur LOOP
       title = new.title,
       quote_id = new.quote_id,
       jira_ticket_key = new.jira_ticket_key,
-      is_deleted = 'F',
       etl_date = new.etl_date
     WHERE product_order_id = new.product_order_id;
 
@@ -437,7 +437,6 @@ FOR new IN im_po_add_on_cur  LOOP
     UPDATE product_order_add_on SET
       product_order_id = new.product_order_id,
       product_id = new.product_id,
-      is_deleted = 'F',
       etl_date = new.etl_date 
     WHERE product_order_add_on_id = new.product_order_add_on_id;
 
@@ -640,33 +639,11 @@ END LOOP;
 FOR new IN im_po_sample_cur LOOP
   BEGIN
 
-    -- Allow reinstating a pdo sample that had been deleted when new one has
-    -- a different pdo sample id by deleting the old is_deleted record.
-    BEGIN
-
-      SELECT product_order_sample_id INTO dup_sample_id
-      FROM product_order_sample
-      WHERE product_order_id = new.product_order_id
-      AND sample_name = new.sample_name
-      AND sample_position = new.sample_position
-      AND is_deleted = 'T';
-
-      BEGIN
-        DELETE FROM product_order_sample_status WHERE product_order_sample_id = dup_sample_id;
-      EXCEPTION WHEN NO_DATA_FOUND THEN null;
-      END;
-
-      DELETE FROM product_order_sample WHERE product_order_sample_id = dup_sample_id;
-
-    EXCEPTION WHEN NO_DATA_FOUND THEN null;
-    END;
-
     UPDATE product_order_sample SET
       product_order_id = new.product_order_id,
       sample_name = new.sample_name,
       delivery_status = new.delivery_status,
       sample_position = new.sample_position,
-      is_deleted = 'F',
       etl_date = new.etl_date
     WHERE product_order_sample_id = new.product_order_sample_id;
 
@@ -810,6 +787,20 @@ FOR new IN im_po_sample_stat_cur LOOP
 
 END LOOP;
 
+FOR new IN im_po_sample_fact_cur LOOP
+  BEGIN
+
+    UPDATE product_order_sample SET
+      on_risk = new.on_risk
+    WHERE product_order_sample_id = new.product_order_sample_id;
+
+  EXCEPTION WHEN OTHERS THEN 
+    errmsg := SQLERRM;
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_product_order_sample_fact.dat line '||new.line_number||'  '||errmsg);
+    CONTINUE;
+  END;
+
+END LOOP;
 
 COMMIT;
 

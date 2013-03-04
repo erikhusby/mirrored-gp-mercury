@@ -3,6 +3,9 @@ package org.broadinstitute.gpinformatics.athena.control.dao.projects;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
+import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson;
+import org.broadinstitute.gpinformatics.athena.entity.project.ProjectPerson_;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
@@ -32,6 +35,34 @@ public class ResearchProjectDao extends GenericDao {
     public ResearchProject findByBusinessKey(String key) {
         return findByJiraTicketKey(key);
     }
+
+    /**
+     * Find the ResearchProjects having personnel with the specified ids in {@link RoleType} PM.  This method
+     * currently does not do Oracle-safe splits by 1000 ids, though there are not nearly 1000 PMs so this should not
+     * be an issue.
+     *
+     * @param ids BSP ids of PMs.
+     *
+     * @return Associated ResearchProjects.
+     */
+    public List<ResearchProject> findByProjectManagerIds(Long... ids) {
+        CriteriaBuilder cb = getCriteriaBuilder();
+        CriteriaQuery<ResearchProject> cq = cb.createQuery(ResearchProject.class);
+        cq.distinct(true);
+
+        Root<ResearchProject> root = cq.from(ResearchProject.class);
+        SetJoin<ResearchProject,ProjectPerson> projectPersonSetJoin = root.join(ResearchProject_.associatedPeople);
+
+        cq.where(
+            // The role predicate below is written as an in expression for extensibility.  There was a concept of a
+            // "PM in charge" that has a corresponding enum instance but is not currently being used.  If we want to
+            // have this method accept users in additional roles, just add those roles to the in expression.
+            projectPersonSetJoin.get(ProjectPerson_.role).in(RoleType.PM),
+            projectPersonSetJoin.get(ProjectPerson_.personId).in((Object []) ids));
+
+        return getEntityManager().createQuery(cq).getResultList();
+    }
+
 
     public ResearchProject findByTitle(String title) {
         return findSingle(ResearchProject.class, ResearchProject_.title, title);

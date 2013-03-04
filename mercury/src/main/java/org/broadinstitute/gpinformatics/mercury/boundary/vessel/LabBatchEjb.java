@@ -205,6 +205,8 @@ public class LabBatchEjb {
 
             if (StringUtils.isBlank(newBatch.getBatchDescription())) {
                 newBatch.setBatchDescription(fieldBuilder.generateDescription());
+            } else {
+                newBatch.setBatchDescription(fieldBuilder.generateDescription() + "\n\n"+ newBatch.getBatchDescription());
             }
 
             if (jiraTicket == null) {

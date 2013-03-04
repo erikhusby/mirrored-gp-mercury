@@ -13,10 +13,10 @@ import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.FlashScope;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.exception.SourcePageNotFoundException;
-import net.sourceforge.stripes.validation.LocalizableError;
 import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.ValidationError;
 import net.sourceforge.stripes.validation.ValidationErrors;
+import org.apache.commons.io.FileDeleteStrategy;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -142,22 +142,13 @@ public class CoreActionBean implements ActionBean {
      *
      * @return returns true if any errors are found in either place.  Returns false otherwise.
      */
-    protected boolean hasAnyValidationErrors() {
+    protected boolean hasErrors() {
 
         FlashScope scope = FlashScope.getCurrent(context.getRequest(), true);
 
         List<ValidationError> errors = (List<ValidationError>) scope.get(FLASH_ERROR);
 
         return ! (getContext().getValidationErrors().isEmpty() && (errors == null || errors.isEmpty()));
-    }
-
-    /**
-     * Checks to see if there are no validation errors in the flash scope or the validation errors scope
-     *
-     * @return returns true if there are no validation errors and false otherwise
-     */
-    protected boolean hasNoValidationErrors() {
-        return !hasAnyValidationErrors();
     }
 
     /**
@@ -237,16 +228,6 @@ public class CoreActionBean implements ActionBean {
      */
     protected void addValidationError(String field, String errorMessage, Object... arguments) {
         getContext().getValidationErrors().add(field, new SimpleError(errorMessage, arguments));
-    }
-
-    /**
-     * Add an error that must be included literally in the response, without any formatting.  This should
-     * only be used in the case where the message may contain characters that will cause MessageFormat.format
-     * to generate errors.
-     * @param message the message to include.
-     */
-    public void addLiteralErrorMessage(String message) {
-        addGlobalValidationError("{2}", message);
     }
 
     /**

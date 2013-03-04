@@ -130,7 +130,7 @@ public class ProductOrder implements Serializable {
         }
 
         String[] addOnArray = new String[addOns.size()];
-        int i=0;
+        int i = 0;
         for (ProductOrderAddOn poAddOn : addOns) {
             addOnArray[i++] = poAddOn.getAddOn().getProductName();
         }
@@ -150,8 +150,8 @@ public class ProductOrder implements Serializable {
         setAddons(addOnProducts);
         setProduct(product);
         setResearchProject(project);
-        setSamples(samples);
-    }
+            setSamples(samples);
+        }
 
     /**
      * This calculates risk for all samples on the order
@@ -365,6 +365,14 @@ public class ProductOrder implements Serializable {
     }
 
     /**
+     * Call this method before saving changes to the database.  It updates the modified date and modified user.
+     * @param user the user doing the save operation.
+     */
+    public void prepareToSave(BspUser user) {
+        prepareToSave(user, false);
+    }
+
+    /**
      * Call this method before saving changes to the database.  It updates the modified date and modified user,
      * and sets the create date and create user if these haven't been set yet.
      * @param user the user doing the save operation.
@@ -482,8 +490,8 @@ public class ProductOrder implements Serializable {
         if (samples.isEmpty()) {
             return;
         }
-        // only update samples if there are no ledger items on any samples or the sample list has changed
-        if (!hasLedgerItems() || sampleListHasChanged(samples)) {
+        // Only update samples if the sample list has changed.
+        if (sampleListHasChanged(samples)) {
             this.samples.clear();
 
             addSamplesInternal(samples, 0);

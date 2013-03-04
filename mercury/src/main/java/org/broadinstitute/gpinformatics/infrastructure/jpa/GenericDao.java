@@ -223,7 +223,6 @@ public class GenericDao {
      *
      * @param entity             the class of entity to return
      * @param genericDaoCallback optional callback to add fetches to the specified {@link Root}
-     * @param <VALUE_TYPE>       the type of the value in the query, e.g. String
      * @param <METADATA_TYPE>    the type on which the property is defined, this can be different from the ENTITY_TYPE
      *                           if
      *                           there is inheritance
@@ -231,8 +230,7 @@ public class GenericDao {
      *
      * @return entity that matches the value, or null if not found
      */
-    public <VALUE_TYPE,
-            METADATA_TYPE,
+    public <METADATA_TYPE,
             ENTITY_TYPE extends METADATA_TYPE> ENTITY_TYPE findSingle(Class<ENTITY_TYPE> entity,
                                                                       @Nullable GenericDaoCallback<ENTITY_TYPE> genericDaoCallback)
     {
