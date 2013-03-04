@@ -104,6 +104,8 @@ public class ExtractTransform {
     private WorkflowConfigEtl workflowConfigEtl;
     @Inject
     private RiskItemEtl riskItemEtl;
+    @Inject
+    private BillingLedgerEtl billingLedgerEtl;
 
     public ExtractTransform() {
     }
@@ -126,7 +128,8 @@ public class ExtractTransform {
                             ResearchProjectIrbEtl researchProjectIrbEtl,
                             ResearchProjectStatusEtl researchProjectStatusEtl,
                             WorkflowConfigEtl workflowConfigEtl,
-                            RiskItemEtl riskItemEtl) {
+                            RiskItemEtl riskItemEtl,
+                            BillingLedgerEtl billingLedgerEtl) {
         this.auditReaderDao = auditReaderDao;
         this.eventEtl = eventEtl;
         this.labBatchEtl = labBatchEtl;
@@ -146,6 +149,7 @@ public class ExtractTransform {
         this.researchProjectStatusEtl = researchProjectStatusEtl;
         this.workflowConfigEtl = workflowConfigEtl;
         this.riskItemEtl = riskItemEtl;
+        this.billingLedgerEtl = billingLedgerEtl;
     }
 
     /**
@@ -276,9 +280,10 @@ public class ExtractTransform {
         recordCount += labBatchEtl.doEtl(revIds, etlDateStr);
         recordCount += labVesselEtl.doEtl(revIds, etlDateStr);
         recordCount += workflowConfigEtl.doEtl(revIds, etlDateStr);
-        recordCount += eventEtl.doEtl(revIds, etlDateStr);
+//xxx        recordCount += eventEtl.doEtl(revIds, etlDateStr);
 
         recordCount += riskItemEtl.doEtl(revIds, etlDateStr);
+        recordCount += billingLedgerEtl.doEtl(revIds, etlDateStr);
 
         writeLastEtlRun(endTimeSec);
         if (recordCount > 0) {
@@ -350,9 +355,10 @@ public class ExtractTransform {
         recordCount += labBatchEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
         recordCount += labVesselEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
         recordCount += workflowConfigEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += eventEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+//xxx        recordCount += eventEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
 
         recordCount += riskItemEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += billingLedgerEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
 
         if (recordCount > 0) {
             writeIsReadyFile(etlDateStr);
