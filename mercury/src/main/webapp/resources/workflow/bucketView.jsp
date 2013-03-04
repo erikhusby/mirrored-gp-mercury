@@ -9,6 +9,15 @@
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Bucket View" sectionTitle="Select Bucket">
 <stripes:layout-component name="extraHead">
+    <style>
+        .tdfield {
+            width: 300px;
+            height: 15px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+    </style>
     <script type="text/javascript">
         $(document).ready(function () {
             $j('#bucketEntryView').dataTable({
@@ -134,7 +143,8 @@
                                 <div class="controls">
                                     <stripes:text id="dueDate" name="dueDate" class="defaultText"
                                                   title="enter date (MM/dd/yyyy)"
-                                                  value="${batchActionBean.dueDate}"  formatPattern="MM/dd/yyyy" ><fmt:formatDate
+                                                  value="${batchActionBean.dueDate}"
+                                                  formatPattern="MM/dd/yyyy"><fmt:formatDate
                                             value="${batchActionBean.dueDate}"
                                             dateStyle="short"/></stripes:text>
                                 </div>
@@ -152,16 +162,16 @@
         <table id="bucketEntryView" class="table simple">
             <thead>
             <tr>
-                    <th width="10">
-                        <input type="checkbox" class="bucket-checkAll"/><span id="count"
-                                                                              class="bucket-checkedCount"></span>
-                    </th>
+                <th width="10">
+                    <input type="checkbox" class="bucket-checkAll"/><span id="count"
+                                                                          class="bucket-checkedCount"></span>
+                </th>
                 <th width="60">Vessel Name</th>
                 <th width="50">Sample Name</th>
                 <th width="50">PDO</th>
-                <th>PDO Name</th>
-                <th>PDO Owner</th>
-                <th width="200">Batch Name</th>
+                <th width="300">PDO Name</th>
+                <th width="200">PDO Owner</th>
+                <th>Batch Name</th>
                 <th width="100">Sample Type</th>
                 <th width="100">Created Date</th>
             </tr>
@@ -199,9 +209,9 @@
                             </c:when>
                             <c:otherwise>${entry.poBusinessKey}</c:otherwise>
                         </c:choose>
-                            </td>
+                    </td>
                     <td>
-                            ${actionBean.getPDODetails(entry.poBusinessKey).title}
+                        <div class="tdfield">${actionBean.getPDODetails(entry.poBusinessKey).title}</div>
                     </td>
                     <td>
                             ${actionBean.getUserFullName(actionBean.getPDODetails(entry.poBusinessKey).createdBy)}
