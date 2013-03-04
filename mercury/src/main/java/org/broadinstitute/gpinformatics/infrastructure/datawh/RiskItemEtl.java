@@ -51,8 +51,6 @@ public class RiskItemEtl extends GenericEntityEtl {
         // Further weirdness: When risk items are deleted the only record left in the operational db that
         // shows the the mapping from deleted risk id to pdo sample id is in the join table's audit table.
 
-        // todo  add a non-unique index on athena.PO_SAMPLE_RISK_JOIN_AUD.risk_item_id
-
         try {
             // Collects and deduplicates ids of changed riskItems.
             Set<Long> riskIds = new HashSet<Long>();
@@ -60,9 +58,13 @@ public class RiskItemEtl extends GenericEntityEtl {
                 riskIds.add(entityId(dataChange[0]));
             }
             // Collects and deduplicates the relevant pdo sample ids, and writes update records for them.
-            for (Long pdoSampleId : lookupSampleIds(riskIds)) {
+            for (BigDecimal pdoSampleId : lookupSampleIds(riskIds)) {
                 if (null == pdoSampleId) continue;
-                for (String record : entityRecord(etlDateStr, false, pdoSampleId)) {
+
+                // ATHENA.PO_SAMPLE_RISK_JOIN_AUD.product_sample_id is a generated numeric field (a BigDecimal)
+                // but we know it will always fit in a Long.
+                Long id = Long.parseLong(String.valueOf(pdoSampleId));
+                for (String record : entityRecord(etlDateStr, false, id)) {
                     dataFile.write(record);
                 }
             }
@@ -75,8 +77,8 @@ public class RiskItemEtl extends GenericEntityEtl {
     }
     private final int SQL_IN_CLAUSE_LIMIT = 1000;
 
-    private Collection<Long> lookupSampleIds(Collection<Long> riskIds) {
-        Set<Long> pdoSampleIds = new HashSet<Long>();
+    private Collection<BigDecimal> lookupSampleIds(Collection<Long> riskIds) {
+        Set<BigDecimal> pdoSampleIds = new HashSet<BigDecimal>();
         // Chunks as necessary to limit sql "in" clause to 1000 elements.
         Long[] riskIdArray = riskIds.toArray(new Long[riskIds.size()]);
 
@@ -87,10 +89,10 @@ public class RiskItemEtl extends GenericEntityEtl {
             endIdx = startIdx - 1;
 
             String queryString = "select distinct product_order_sample from ATHENA.PO_SAMPLE_RISK_JOIN_AUD " +
-                    " where risk_item_id = in (" + inClause + ")";
+                    " where risk_item_id in (" + inClause + ")";
             Query query = dao.getEntityManager().createNativeQuery(queryString);
             // Overwriting earlier pdoSample ids is intended.
-            pdoSampleIds.addAll((Collection<Long>)query.getResultList());
+            pdoSampleIds.addAll((Collection<BigDecimal>)query.getResultList());
 
         }
         return pdoSampleIds;

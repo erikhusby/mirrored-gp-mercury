@@ -101,7 +101,7 @@
                 <li class="dropdown">
 
                     <a id="adminNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
-                            class="icon-tasks"></span> Admin <b class="caret"></b></a>
+                            class="icon-cog"></span> Admin <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
                         <li><stripes:link
                                 beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"
