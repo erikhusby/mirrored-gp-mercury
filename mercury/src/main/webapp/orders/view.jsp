@@ -180,20 +180,20 @@
                 if (bspDataCount < 1) {
                     $j('#sampleData').dataTable( {
                         "oTableTools": ttExportDefines,
-                                "aaSorting": [[0, 'asc']],
-                            "aoColumns": [
-                                {"bSortable": true, "sType": "title-numeric"},  // Position and checkbox
-                                {"bSortable": true},                        // ID
-                                {"bSortable": true},                        // Participant ID
-                                {"bSortable": true, "sType": "numeric"},    // Volume
-                                {"bSortable": true, "sType": "numeric"},    // Concentration
-                                {"bSortable": true, "sType": "numeric"},    // Yield Amount
-                                {"bSortable": true, "sType" : "title-string"}, // FP Status
-                                {"bSortable": true},                        // On Risk
-                                {"bSortable": true, "sType": "title-numeric"},   // Eligible
-                                {"bSortable": true, "sType" : "title-string"},   // Billed
-                                {"bSortable": true},                        // Status
-                                {"bSortable": true}]                        // Comment
+                        "aaSorting": [[0, 'asc']],
+                        "aoColumns": [
+                            {"bSortable": true, "sType": "title-numeric"},  // Position and checkbox
+                            {"bSortable": true},                        // ID
+                            {"bSortable": true},                        // Participant ID
+                            {"bSortable": true, "sType": "numeric"},    // Volume
+                            {"bSortable": true, "sType": "numeric"},    // Concentration
+                            {"bSortable": true, "sType": "numeric"},    // Yield Amount
+                            {"bSortable": true, "sType" : "title-string"}, // FP Status
+                            {"bSortable": true},                        // On Risk
+                            {"bSortable": true, "sType": "title-numeric"},   // Eligible
+                            {"bSortable": true, "sType" : "title-string"},   // Billed
+                            {"bSortable": true},                        // Status
+                            {"bSortable": true}]                        // Comment
                     });
                 }
             }
