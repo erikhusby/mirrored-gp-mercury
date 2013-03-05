@@ -1,15 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.entity;
 
-import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.authentication.AuthorizedRole;
 import org.broadinstitute.gpinformatics.mercury.entity.authentication.PageAuthorization;
 
 import javax.annotation.Nonnull;
 import javax.enterprise.context.ApplicationScoped;
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 /**
