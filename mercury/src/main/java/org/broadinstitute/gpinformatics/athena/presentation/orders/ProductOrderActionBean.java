@@ -658,7 +658,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                 JSONObject item = new JSONObject();
 
                 item.put("sampleId", sample.getProductOrderSampleId());
+                item.put("collaboratorSampleId", sample.getBspDTO().getCollaboratorsSampleName());
                 item.put("patientId", sample.getBspDTO().getPatientId());
+                item.put("collaboratorParticipantId", sample.getBspDTO().getCollaboratorParticipantId());
                 item.put("volume", sample.getBspDTO().getVolume());
                 item.put("concentration", sample.getBspDTO().getConcentration());
                 item.put("total", sample.getBspDTO().getTotal());
