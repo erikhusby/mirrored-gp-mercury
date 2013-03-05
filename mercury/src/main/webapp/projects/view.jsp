@@ -222,7 +222,7 @@
                                       style="width: ${actionBean.progressFetcher.getPercentCompleted(order.businessKey)}%"> </span>
                             </div>
                         </td>
-                        <td>${order.sampleCount}</td>
+                        <td>${actionBean.progressFetcher.getNumberOfSamples(order.businessKey)}</td>
                     </tr>
                 </c:forEach>
             </tbody>
