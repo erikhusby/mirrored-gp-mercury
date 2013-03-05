@@ -316,23 +316,26 @@
         <stripes:hidden id="orderDialogAction" name=""/>
 
         <div class="actionButtons">
-            <security:authorizeBlock roles="<%= DB.roles(Developer, PDM) %>">
-                <c:choose>
-                    <c:when test="${actionBean.abandonable}">
-                        <c:set var="abandonTitle" value="Click to abandon ${editOrder.title}"/>
-                        <c:set var="abandonDisable" value="false"/>
-                        <stripes:hidden name="selectedProductOrderBusinessKeys" value="${editOrder.businessKey}"/>
-                    </c:when>
-                    <c:otherwise>
-                        <c:set var="abandonTitle"
-                               value="Cannot abandon this order because ${actionBean.abandonDisabledReason}"/>
-                        <c:set var="abandonDisable" value="true"/>
-                    </c:otherwise>
-                </c:choose>
-                <stripes:button name="abandonOrders" id="abandonOrders" value="Abandon Order"
-                                onclick="showAbandonConfirm('abandonOrders', 'abandon', ${actionBean.abandonWarning})"
-                                class="btn padright" title="${abandonTitle}" disabled="${abandonDisable}"/>
-            </security:authorizeBlock>
+            <%-- Do not show abandon button at all for DRAFTs, do show for Submitted *or later states* --%>
+            <c:if test="${not editOrder.draft}">
+                <security:authorizeBlock roles="<%= DB.roles(Developer, PDM) %>">
+                    <c:choose>
+                        <c:when test="${actionBean.abandonable}">
+                            <c:set var="abandonTitle" value="Click to abandon ${editOrder.title}"/>
+                            <c:set var="abandonDisable" value="false"/>
+                            <stripes:hidden name="selectedProductOrderBusinessKeys" value="${editOrder.businessKey}"/>
+                        </c:when>
+                        <c:otherwise>
+                            <c:set var="abandonTitle"
+                                   value="Cannot abandon this order because ${actionBean.abandonDisabledReason}"/>
+                            <c:set var="abandonDisable" value="true"/>
+                        </c:otherwise>
+                    </c:choose>
+                    <stripes:button name="abandonOrders" id="abandonOrders" value="Abandon Order"
+                                    onclick="showAbandonConfirm('abandonOrders', 'abandon', ${actionBean.abandonWarning})"
+                                    class="btn padright" title="${abandonTitle}" disabled="${abandonDisable}"/>
+                </security:authorizeBlock>
+            </c:if>
             <c:if test="${editOrder.draft}">
                 <%-- MLC PDOs can be placed by PM or PDMs, so I'm making the security tag accept either of those roles for 'Place Order'.
                      I am also putting 'Validate' under that same security tag since I think that may have the power to alter 'On-Riskedness'
