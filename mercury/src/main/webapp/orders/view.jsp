@@ -180,17 +180,9 @@
                 if (bspDataCount < 1) {
                     $j('#sampleData').dataTable( {
                         "oTableTools": ttExportDefines,
-                        <c:choose>
-                            <c:when test="${editOrder.draft}">
                                 "aaSorting": [[0, 'asc']],
-                            </c:when>
-                            <c:otherwise>
-                                "aaSorting": [[1, 'asc']],
-                            </c:otherwise>
-                        </c:choose>
                             "aoColumns": [
-                                {"bSortable": false},                       // checkbox
-                                {"bSortable": true, "sType": "numeric"},    // Position
+                                {"bSortable": true, "sType": "title-numeric"},  // Position and checkbox
                                 {"bSortable": true},                        // ID
                                 {"bSortable": true},                        // Participant ID
                                 {"bSortable": true, "sType": "numeric"},    // Volume
@@ -593,12 +585,11 @@
                 <table id="sampleData" class="table simple">
                     <thead>
                         <tr>
+                            <th width="40">
                             <c:if test="${!editOrder.draft}">
-                                <th width="40">
                                     <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
+                                </c:if>
                                 </th>
-                            </c:if>
-                            <th width="20">Pos</th>
                             <th width="90">ID</th>
                             <th width="90">Participant ID</th>
                             <th width="40">Volume</th>
@@ -615,12 +606,12 @@
                     <tbody>
                         <c:forEach items="${editOrder.samples}" var="sample">
                             <tr>
-                                <c:if test="${!editOrder.draft}">
-                                    <td>
-                                        <stripes:checkbox class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${sample.productOrderSampleId}"/>
+                                <td>
+                                    <c:if test="${!editOrder.draft}">
+                                        <stripes:checkbox title="${sample.samplePosition}" class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${sample.productOrderSampleId}"/>
+                                    </c:if>
+                                    ${sample.samplePosition}
                                     </td>
-                                </c:if>
-                                <td>${sample.samplePosition}</td>
                                 <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
                                     <c:choose>
                                         <c:when test="${sample.inBspFormat}">
