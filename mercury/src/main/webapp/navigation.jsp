@@ -2,9 +2,6 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.Developer" %>
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.LabUser" %>
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.PDM" %>
 <%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
 <%--
   ~ The Broad Institute
