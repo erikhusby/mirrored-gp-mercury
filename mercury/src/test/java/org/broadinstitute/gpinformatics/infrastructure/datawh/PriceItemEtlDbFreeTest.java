@@ -24,32 +24,33 @@ import static org.testng.Assert.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class PriceItemEtlDbFreeTest {
-    String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
-    long entityId = 1122334455L;
-    String platform = "Some platform";
-    String category = "Some category";
-    String name = "Some name";
-    String quoteServerId = "QT-9876";
-    String price = "1000.01";
-    String units = "1.5";
+    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private long entityId = 1122334455L;
+    private String platform = "Some platform";
+    private String category = "Some category";
+    private String name = "Some name";
+    private String quoteServerId = "QT-9876";
+    private String price = "1000.01";
+    private String units = "1.5";
+    private PriceItemEtl tst;
 
-    AuditReaderDao auditReader = createMock(AuditReaderDao.class);
-    PriceItem obj = createMock(PriceItem.class);
-    PriceItemDao dao = createMock(PriceItemDao.class);
-    Object[] mocks = new Object[]{auditReader, obj, dao};
+    private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
+    private PriceItem obj = createMock(PriceItem.class);
+    private PriceItemDao dao = createMock(PriceItemDao.class);
+    private Object[] mocks = new Object[]{auditReader, obj, dao};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
         reset(mocks);
+
+        tst = new PriceItemEtl();
+        tst.setPriceItemDao(dao);
+        tst.setAuditReaderDao(auditReader);
     }
 
     public void testEtlFlags() throws Exception {
         expect(obj.getPriceItemId()).andReturn(entityId);
         replay(mocks);
-
-        PriceItemEtl tst = new PriceItemEtl();
-        tst.setPriceItemDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.getEntityClass(), PriceItem.class);
 
@@ -69,10 +70,6 @@ public class PriceItemEtlDbFreeTest {
 
         replay(mocks);
 
-        PriceItemEtl tst = new PriceItemEtl();
-        tst.setPriceItemDao(dao);
-        tst.setAuditReaderDao(auditReader);
-
         assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
@@ -90,10 +87,6 @@ public class PriceItemEtlDbFreeTest {
         expect(obj.getUnits()).andReturn(units);
 
         replay(mocks);
-
-        PriceItemEtl tst = new PriceItemEtl();
-        tst.setPriceItemDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
@@ -117,10 +110,6 @@ public class PriceItemEtlDbFreeTest {
         expect(obj.getUnits()).andReturn(units);
 
         replay(mocks);
-
-        PriceItemEtl tst = new PriceItemEtl();
-        tst.setPriceItemDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
         assertEquals(records.size(), 1);

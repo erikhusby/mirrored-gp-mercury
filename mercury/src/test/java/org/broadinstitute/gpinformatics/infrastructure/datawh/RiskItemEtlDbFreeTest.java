@@ -29,16 +29,17 @@ import static org.testng.Assert.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class RiskItemEtlDbFreeTest {
-    String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
-    long entityId = 1122334455L;
-    long posId = 2233445511L;
-    String datafileDir;
+    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private long entityId = 1122334455L;
+    private long posId = 2233445511L;
+    private String datafileDir;
+    private RiskItemEtl tst;
 
-    AuditReaderDao auditReader = createMock(AuditReaderDao.class);
-    RiskItem obj = createMock(RiskItem.class);
-    RiskItemDao dao = createMock(RiskItemDao.class);
-    ProductOrderSample pos = createMock(ProductOrderSample.class);
-    Object[] mocks = new Object[]{auditReader, obj, dao, pos};
+    private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
+    private RiskItem obj = createMock(RiskItem.class);
+    private RiskItemDao dao = createMock(RiskItemDao.class);
+    private ProductOrderSample pos = createMock(ProductOrderSample.class);
+    private Object[] mocks = new Object[]{auditReader, obj, dao, pos};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
@@ -47,6 +48,10 @@ public class RiskItemEtlDbFreeTest {
         EtlTestUtilities.deleteEtlFiles(datafileDir);
 
         reset(mocks);
+
+        tst = new RiskItemEtl();
+        tst.setRiskItemDao(dao);
+        tst.setAuditReaderDao(auditReader);
     }
 
     @AfterMethod
@@ -57,10 +62,6 @@ public class RiskItemEtlDbFreeTest {
     public void testEtlFlags() throws Exception {
         expect(obj.getRiskItemId()).andReturn(entityId);
         replay(mocks);
-
-        RiskItemEtl tst = new RiskItemEtl();
-        tst.setRiskItemDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.getEntityClass(), RiskItem.class);
 
@@ -78,10 +79,6 @@ public class RiskItemEtlDbFreeTest {
 
         replay(mocks);
 
-        RiskItemEtl tst = new RiskItemEtl();
-        tst.setRiskItemDao(dao);
-        tst.setAuditReaderDao(auditReader);
-
         assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
@@ -92,10 +89,6 @@ public class RiskItemEtlDbFreeTest {
         expect(pos.getProductOrderSampleId()).andReturn(posId);
         expect(pos.isOnRisk()).andReturn(true);
         replay(mocks);
-
-        RiskItemEtl tst = new RiskItemEtl();
-        tst.setRiskItemDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, posId);
         assertEquals(records.size(), 1);

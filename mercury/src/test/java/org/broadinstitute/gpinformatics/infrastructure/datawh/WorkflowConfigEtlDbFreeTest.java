@@ -31,6 +31,7 @@ public class WorkflowConfigEtlDbFreeTest {
     private WorkflowConfig config = WorkflowConfigLookupDbFreeTest.buildWorkflowConfig();
     private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
     private final int EXPECTED_RECORD_COUNT = 15;
+    private WorkflowConfigEtl tst;
 
     private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
     private WorkflowLoader loader = createMock(WorkflowLoader.class);
@@ -38,20 +39,19 @@ public class WorkflowConfigEtlDbFreeTest {
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
-
         ExtractTransform.setDatafileDir(datafileDir);
         EtlTestUtilities.deleteEtlFiles(datafileDir);
 
         reset(mocks);
+
+        tst = new WorkflowConfigEtl();
+        tst.setAuditReaderDao(auditReader);
+        tst.setWorkflowLoader(loader);
     }
 
     public void testEtlFlags() throws Exception {
 
         replay(mocks);
-
-        WorkflowConfigEtl tst = new WorkflowConfigEtl();
-        tst.setAuditReaderDao(auditReader);
-        tst.setWorkflowLoader(loader);
 
         assertEquals(tst.getEntityClass(), WorkflowConfig.class);
 
@@ -67,10 +67,6 @@ public class WorkflowConfigEtlDbFreeTest {
     public void testEntityRecord() throws Exception {
         replay(mocks);
 
-        WorkflowConfigEtl tst = new WorkflowConfigEtl();
-        tst.setWorkflowLoader(loader);
-        tst.setAuditReaderDao(auditReader);
-
         // These always return empty collections.
         assertEquals(tst.entityRecord(etlDateStr, false, 1L).size(), 0);
         assertEquals(tst.entityRecordsInRange(0L, 9999999999999999L, etlDateStr, false).size(), 0);
@@ -81,10 +77,6 @@ public class WorkflowConfigEtlDbFreeTest {
     public void testIncrementalEtl() throws Exception {
         expect(loader.load()).andReturn(config);
         replay(mocks);
-
-        WorkflowConfigEtl tst = new WorkflowConfigEtl();
-        tst.setAuditReaderDao(auditReader);
-        tst.setWorkflowLoader(loader);
 
         File workflowDatafile = new File(datafileDir, etlDateStr + "_" + tst.WORKFLOW_BASE_FILENAME + ".dat");
         File processDatafile = new File(datafileDir, etlDateStr + "_" + tst.PROCESS_BASE_FILENAME + ".dat");
@@ -101,10 +93,6 @@ public class WorkflowConfigEtlDbFreeTest {
     public void testBackfillEtl() throws Exception {
         expect(loader.load()).andReturn(config);
         replay(mocks);
-
-        WorkflowConfigEtl tst = new WorkflowConfigEtl();
-        tst.setWorkflowLoader(loader);
-        tst.setAuditReaderDao(auditReader);
 
         File workflowDatafile = new File(datafileDir, etlDateStr + "_" + tst.WORKFLOW_BASE_FILENAME + ".dat");
         File processDatafile = new File(datafileDir, etlDateStr + "_" + tst.PROCESS_BASE_FILENAME + ".dat");
