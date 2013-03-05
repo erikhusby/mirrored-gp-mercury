@@ -8,17 +8,24 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
-import javax.ws.rs.*;
+import javax.ws.rs.DefaultValue;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlElementWrapper;
 import javax.xml.bind.annotation.XmlRootElement;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Date;
+import java.util.List;
 
 /**
  * Restful webservice to list product orders.
  */
-
 @Path("productOrders")
 @Stateful
 @RequestScoped
@@ -89,6 +96,13 @@ public class ProductOrderResource {
         }
     }
 
+    /**
+     * Return one or more PDOs by ID.
+     *
+     * @param productOrderIds one or more PDO IDs, separated by commas
+     * @param includeSamples if true, include each PDO's sample list in the reulst
+     * @return the products
+     */
     @GET
     @Path("pdo/{productOrderIds}")
     @Produces(MediaType.APPLICATION_XML)
@@ -100,7 +114,14 @@ public class ProductOrderResource {
 
     /**
      * Method to GET the list of product orders. Optionally filter by a list of PDOs, or by a modify date.
+     * <p/>
+     * Only one of productOrderIds, modifiedAfter, or sampleIds can be used at a time. If no filter is provided,
+     * all product orders are returned.
      *
+     * @param productOrderIds one or more PDO IDs, separated by commas
+     * @param modifiedAfter date to search to find PDOs modified after
+     * @param sampleIds one or more sample IDs, separated by commas
+     * @param includeSamples if true, include each PDO's sample list in the result
      * @return The product orders that match
      */
     @GET
@@ -109,16 +130,16 @@ public class ProductOrderResource {
                                     @QueryParam("modifiedAfter") Date modifiedAfter,
                                     @QueryParam("withSample") String sampleIds,
                                     @DefaultValue("false") @QueryParam("includeSamples") boolean includeSamples) {
+        List<ProductOrder> orders;
         if (!StringUtils.isEmpty(productOrderIds)) {
-            return new ProductOrders(productOrderDao.findListByBusinessKeyList(
-                Arrays.asList(productOrderIds.split(","))), includeSamples);
+            orders = productOrderDao.findListByBusinessKeyList(Arrays.asList(productOrderIds.split(",")));
+        } else if (sampleIds != null) {
+            orders = productOrderDao.findBySampleBarcodes(sampleIds.split(","));
+        } else if (modifiedAfter != null) {
+            orders = productOrderDao.findModifiedAfter(modifiedAfter);
+        } else {
+            orders = productOrderDao.findAll();
         }
-        if (sampleIds != null) {
-            return new ProductOrders(productOrderDao.findBySampleBarcodes(sampleIds.split(",")), includeSamples);
-        }
-        if (modifiedAfter != null) {
-            return new ProductOrders(productOrderDao.findModifiedAfter(modifiedAfter), includeSamples);
-        }
-        return new ProductOrders(productOrderDao.findAll(), includeSamples);
+        return new ProductOrders(orders, includeSamples);
     }
 }

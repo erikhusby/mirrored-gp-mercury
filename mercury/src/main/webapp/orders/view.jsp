@@ -1,6 +1,7 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
+<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -315,28 +316,31 @@
         <stripes:hidden id="orderDialogAction" name=""/>
 
         <div class="actionButtons">
-            <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name}%>">
-                <c:choose>
-                    <c:when test="${actionBean.abandonable}">
-                        <c:set var="abandonTitle" value="Click to abandon ${editOrder.title}"/>
-                        <c:set var="abandonDisable" value="false"/>
-                        <stripes:hidden name="selectedProductOrderBusinessKeys" value="${editOrder.businessKey}"/>
-                    </c:when>
-                    <c:otherwise>
-                        <c:set var="abandonTitle"
-                               value="Cannot abandon this order because ${actionBean.abandonDisabledReason}"/>
-                        <c:set var="abandonDisable" value="true"/>
-                    </c:otherwise>
-                </c:choose>
-                <stripes:button name="abandonOrders" id="abandonOrders" value="Abandon Order"
-                                onclick="showAbandonConfirm('abandonOrders', 'abandon', ${actionBean.abandonWarning})"
-                                class="btn padright" title="${abandonTitle}" disabled="${abandonDisable}"/>
-            </security:authorizeBlock>
+            <%-- Do not show abandon button at all for DRAFTs, do show for Submitted *or later states* --%>
+            <c:if test="${not editOrder.draft}">
+                <security:authorizeBlock roles="<%= DB.roles(Developer, PDM) %>">
+                    <c:choose>
+                        <c:when test="${actionBean.abandonable}">
+                            <c:set var="abandonTitle" value="Click to abandon ${editOrder.title}"/>
+                            <c:set var="abandonDisable" value="false"/>
+                            <stripes:hidden name="selectedProductOrderBusinessKeys" value="${editOrder.businessKey}"/>
+                        </c:when>
+                        <c:otherwise>
+                            <c:set var="abandonTitle"
+                                   value="Cannot abandon this order because ${actionBean.abandonDisabledReason}"/>
+                            <c:set var="abandonDisable" value="true"/>
+                        </c:otherwise>
+                    </c:choose>
+                    <stripes:button name="abandonOrders" id="abandonOrders" value="Abandon Order"
+                                    onclick="showAbandonConfirm('abandonOrders', 'abandon', ${actionBean.abandonWarning})"
+                                    class="btn padright" title="${abandonTitle}" disabled="${abandonDisable}"/>
+                </security:authorizeBlock>
+            </c:if>
             <c:if test="${editOrder.draft}">
                 <%-- MLC PDOs can be placed by PM or PDMs, so I'm making the security tag accept either of those roles for 'Place Order'.
                      I am also putting 'Validate' under that same security tag since I think that may have the power to alter 'On-Riskedness'
                      for PDO samples --%>
-                <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name, Role.PM.name}%>">
+                <security:authorizeBlock roles="<%= DB.roles(Developer, PDM, PM) %>">
 
                     <stripes:submit name="placeOrder" value="Validate and Place Order"
                                     disabled="${!actionBean.canPlaceOrder}" class="btn"/>
@@ -350,7 +354,7 @@
                     <stripes:param name="productOrder" value="${editOrder.businessKey}"/>
                 </stripes:link>
 
-                <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PM.name}%>">
+                <security:authorizeBlock roles="<%= DB.roles(Developer, PDM, PM) %>">
                     <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
                                     value="Delete Draft" style="margin-left: 5px;" class="btn"/>
                 </security:authorizeBlock>
@@ -359,7 +363,7 @@
     </stripes:form>
 
         <%-- PDO edit should only be available to PDMs, i.e. not PMs. --%>
-        <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name}%>">
+        <security:authorizeBlock roles="<%= DB.roles(Developer, PDM) %>">
             <c:if test="${!editOrder.draft}">
                 <stripes:link title="Click to edit ${editOrder.title}"
                     beanclass="${actionBean.class.name}" event="edit" class="pull-right">
@@ -562,7 +566,7 @@
                 Samples
 
                 <c:if test="${!editOrder.draft}">
-                    <security:authorizeBlock roles="<%=new String[] {Role.Developer.name, Role.PDM.name}%>">
+                    <security:authorizeBlock roles="<%= DB.roles(Developer, PDM) %>">
                         <span class="actionButtons">
                             <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
                                         style="margin-left:30px;" onclick="showConfirm('deleteSamples', 'delete')"/>
@@ -617,7 +621,7 @@
                                     <c:if test="${!editOrder.draft}">
                                         <stripes:checkbox title="${sample.samplePosition}" class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${sample.productOrderSampleId}"/>
                                     </c:if>
-                                    ${sample.samplePosition}
+                                    ${sample.samplePosition + 1}
                                 </td>
                                 <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
                                     <c:choose>
