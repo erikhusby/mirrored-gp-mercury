@@ -77,26 +77,30 @@ public class MercuryClientEjb {
         // Determines if the vessel is in receiving, by finding its active batch
         // and checking if that batch is a sample receipt batch.
 
+        // Finds the pico bucket from workflow config for this product.
+        WorkflowBucketDef picoBucketDef = findPicoBucketDef(pdo.getProduct());
+        Bucket picoBucket = findPicoBucket(picoBucketDef);
+        if (picoBucket == null) {
+            return Collections.EMPTY_LIST;
+        }
+
         for (LabVessel vessel : vessels) {
             Collection<LabBatch> batches = vessel.getLabBatches();
-            if (batches.size() == 0) {
+            if (batches.isEmpty()) {
                 batches = vessel.getNearestLabBatches();
             }
             if (batches.size() == 1 && batches.iterator().next().getLabBatchType() == LabBatch.LabBatchType.SAMPLES_RECEIPT) {
-                vesselsAdded.add(vessel);
+                // todo jmt should this check be in bucketBean.add?
+                if (picoBucketDef.meetsBucketCriteria(vessel)) {
+                    vesselsAdded.add(vessel);
 
-                for (MercurySample mercurySample : vessel.getMercurySamples()) {
-                    String sampleKey = mercurySample.getSampleKey();
-                    assert(nameToSampleMap.containsKey(sampleKey));
-                    samplesAdded.add(nameToSampleMap.get(sampleKey));
+                    for (MercurySample mercurySample : vessel.getMercurySamples()) {
+                        String sampleKey = mercurySample.getSampleKey();
+                        assert(nameToSampleMap.containsKey(sampleKey));
+                        samplesAdded.add(nameToSampleMap.get(sampleKey));
+                    }
                 }
             }
-        }
-
-        // Finds the pico bucket from workflow config for this product.
-        Bucket picoBucket = findPicoBucket(pdo.getProduct());
-        if (picoBucket == null) {
-            return Collections.EMPTY_LIST;
         }
 
         String username = null;
@@ -108,25 +112,27 @@ public class MercuryClientEjb {
             }
         }
 
-        // todo Validates entry into bucket (must be genomic DNA)
-
         bucketBean.add(vesselsAdded, picoBucket, username, LabEvent.UI_EVENT_LOCATION, LabEventType.PICO_PLATING_BUCKET,
                 pdo.getBusinessKey());
 
         return samplesAdded;
     }
 
-    private Bucket findPicoBucket(Product product) {
+    private WorkflowBucketDef findPicoBucketDef(Product product) {
         if (StringUtils.isBlank(product.getWorkflowName())) {
             return null;
         }
 
         WorkflowConfig workflowConfig = workflowLoader.load();
-        assert(workflowConfig != null && workflowConfig.getProductWorkflowDefs() != null && workflowConfig.getProductWorkflowDefs().size() > 0);
+        assert(workflowConfig != null && workflowConfig.getProductWorkflowDefs() != null &&
+                !workflowConfig.getProductWorkflowDefs().isEmpty());
         ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(product.getWorkflowName());
         ProductWorkflowDefVersion versionResult = productWorkflowDef.getEffectiveVersion();
 
-        WorkflowStepDef bucketStep = versionResult.findStepByEventType(LabEventType.PICO_PLATING_BUCKET.getName()).getStepDef();
+        return (WorkflowBucketDef) versionResult.findStepByEventType(LabEventType.PICO_PLATING_BUCKET.getName()).getStepDef();
+    }
+
+    private Bucket findPicoBucket(WorkflowBucketDef bucketStep) {
         String bucketName = bucketStep.getName();
         Bucket picoBucket = bucketDao.findByName(bucketName);
         if (picoBucket == null) {

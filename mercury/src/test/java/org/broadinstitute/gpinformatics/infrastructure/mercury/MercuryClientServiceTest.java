@@ -79,7 +79,7 @@ public class MercuryClientServiceTest extends Arquillian {
     private void setUpSamplesFromReceiptBatch() {
         // For the bucket entry criteria to work, the samples have to exist in BSP.
         // todo jmt How to recreate the test data after a database refresh?
-        LabBatch labBatch = labBatchDAO.findByName("SK-272L");
+        LabBatch labBatch = labBatchDAO.findByName("SK-27D9");
         Collection<LabVessel> receiptVessels = labBatch.getStartingLabVessels();
             for (LabVessel receiptVessel : receiptVessels) {
                 for (MercurySample receiptSample: receiptVessel.getMercurySamples()) {

@@ -181,7 +181,11 @@ public class SampleReceiptResource {
 
         long disambiguator = 1L;
         List<LabVessel> labVessels = new ArrayList<LabVessel>();
-        Long operator = bspUserList.getByUsername(sampleReceiptBean.getReceivingUserName()).getUserId();
+        BspUser bspUser = bspUserList.getByUsername(sampleReceiptBean.getReceivingUserName());
+        if(bspUser == null) {
+            throw new RuntimeException("Failed to find user " + sampleReceiptBean.getReceivingUserName());
+        }
+        Long operator = bspUser.getUserId();
 
         for (ParentVesselBean parentVesselBean : sampleReceiptBean.getParentVesselBeans()) {
             String sampleId = parentVesselBean.getSampleId();
