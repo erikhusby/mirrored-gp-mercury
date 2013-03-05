@@ -265,7 +265,7 @@ public class ProductOrder implements Serializable {
 
         private void outputCounts(List<String> output, Map<String, Integer> counts, String label, int compareCount) {
             for (Map.Entry<String, Integer> entry : counts.entrySet()) {
-                // preformat the string so it can add the format pattern for the value
+                // Preformat the string so it can add the format pattern for the count value.
                 String message = MessageFormat.format( "{0} ''{1}'': ", label, entry.getKey()) + "{0}";
                 formatSummaryNumber(output, message, entry.getValue(), compareCount);
             }
