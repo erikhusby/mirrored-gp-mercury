@@ -318,7 +318,7 @@ public class LimsQueryResourceUnitTest {
     @BeforeMethod(groups = DATABASE_FREE,enabled = false)
     public void testFetchUserByBadge() throws Exception {
 
-        String testUserBadge = "Test" + String.valueOf(BSPManagerFactoryStub.QA_DUDE_USER_ID);
+        String testUserBadge = "Test" + BSPManagerFactoryStub.QA_DUDE_USER_ID;
         EasyMock.expect(mockThriftService.fetchUserIdForBadgeId(testUserBadge)).andReturn("QADudeTest");
         EasyMock.replay(mockThriftService);
 

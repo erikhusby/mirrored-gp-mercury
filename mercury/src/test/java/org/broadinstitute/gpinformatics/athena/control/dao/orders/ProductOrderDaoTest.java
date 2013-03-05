@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
+import org.apache.commons.lang3.time.DateUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
@@ -172,14 +173,13 @@ public class ProductOrderDaoTest extends ContainerTest {
 
     public void testFindModifiedAfter() {
         Date date = new Date();
-        long oneDay = 24 * 60 * 60 * 1000;
         // Yesterday
-        date.setTime(date.getTime() - oneDay);
+        date.setTime(date.getTime() - DateUtils.MILLIS_PER_DAY);
         List<ProductOrder> orders = productOrderDao.findModifiedAfter(date);
         Assert.assertFalse(orders.isEmpty());
 
         // Tomorrow
-        date.setTime(new Date().getTime() + oneDay);
+        date.setTime(new Date().getTime() + DateUtils.MILLIS_PER_DAY);
         orders = productOrderDao.findModifiedAfter(date);
         Assert.assertTrue(orders.isEmpty());
     }

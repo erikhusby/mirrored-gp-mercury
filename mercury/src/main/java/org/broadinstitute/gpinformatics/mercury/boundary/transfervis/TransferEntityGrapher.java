@@ -45,7 +45,7 @@ import java.util.Set;
 @Remote(TransferVisualizer.class)
 public class TransferEntityGrapher implements TransferVisualizer {
 
-    private static final int MAX_NUM_VESSELS_PER_REQUEST = 1;
+    private int maxNumVesselsPerRequest = 1;
 
     @Inject
     private StaticPlateDAO staticPlateDAO;
@@ -267,10 +267,9 @@ public class TransferEntityGrapher implements TransferVisualizer {
      * Called when the user clicks a tube
      * @param tubeBarcode barcode of the tube the user is searching on
      * @return map from AlternativeId displayName to list of IDs
-     * @throws java.rmi.RemoteException
      */
     @Override
-    public Map<String, List<String>> getIdsForTube(String tubeBarcode) /*throws RemoteException*/ {
+    public Map<String, List<String>> getIdsForTube(String tubeBarcode) {
         try {
             TwoDBarcodedTube receptacle = twoDBarcodedTubeDAO.findByBarcode(tubeBarcode);
             return getAlternativeIds(receptacle, Arrays.asList(AlternativeId.values()));
@@ -757,7 +756,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
 
     void processQueue(Queue<VesselVertex> vesselVertexQueue, Graph graph, List<AlternativeId> alternativeIds) {
         int numVesselsProcessed = 0;
-        while (!vesselVertexQueue.isEmpty() && numVesselsProcessed < MAX_NUM_VESSELS_PER_REQUEST) {
+        while (!vesselVertexQueue.isEmpty() && numVesselsProcessed < maxNumVesselsPerRequest) {
             VesselVertex vesselVertex = vesselVertexQueue.remove();
             vesselVertex.render(graph, alternativeIds);
             numVesselsProcessed += vesselVertex.renderEdges(graph, vesselVertexQueue, alternativeIds);
@@ -863,5 +862,9 @@ public class TransferEntityGrapher implements TransferVisualizer {
 //            }
 //        }
         return alternativeIdValues;
+    }
+
+    public void setMaxNumVesselsPerRequest(int maxNumVesselsPerRequest) {
+        this.maxNumVesselsPerRequest = maxNumVesselsPerRequest;
     }
 }

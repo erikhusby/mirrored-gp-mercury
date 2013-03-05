@@ -263,9 +263,36 @@ public class ProductOrder implements Serializable {
             countsValid = true;
         }
 
-        private void outputCounts(List<String> output, Map<String, Integer> counts, String label) {
+        private void outputCounts(List<String> output, Map<String, Integer> counts, String label, int compareCount) {
             for (Map.Entry<String, Integer> entry : counts.entrySet()) {
-                output.add(MessageFormat.format("{0} ''{1}'': {2}", label, entry.getKey(), entry.getValue()));
+                // Preformat the string so it can add the format pattern for the count value.
+                String message = MessageFormat.format( "{0} ''{1}'': ", label, entry.getKey()) + "{0}";
+                formatSummaryNumber(output, message, entry.getValue(), compareCount);
+            }
+        }
+
+        /**
+         * Format the number to say None if the value is zero.
+         *
+         * @param count The number to format
+         */
+        private void formatSummaryNumber(List<String> output, String message, int count) {
+            output.add(MessageFormat.format(message, (count == 0) ? "None" : count));
+        }
+
+        /**
+         * Format the number to say None if the value is zero, or All if it matches the comparison number.
+         *
+         * @param count The number to format
+         * @param compareCount The number to compare to
+         */
+        private void formatSummaryNumber(List<String> output, String message, int count, int compareCount) {
+            if (count == 0) {
+                output.add(MessageFormat.format(message, "None"));
+            } else if (count == compareCount) {
+                output.add(MessageFormat.format(message, "All"));
+            } else {
+                output.add(MessageFormat.format(message, count));
             }
         }
 
@@ -276,35 +303,34 @@ public class ProductOrder implements Serializable {
             if (totalSampleCount == 0) {
                 output.add("Total: None");
             } else {
-                output.add(MessageFormat.format("Total: {0}", totalSampleCount));
-                if (uniqueSampleCount != totalSampleCount) {
-                    output.add(MessageFormat.format("Unique: {0}", uniqueSampleCount));
-                    output.add(MessageFormat.format("Duplicate: {0}", (totalSampleCount - uniqueSampleCount)));
-                }
+                formatSummaryNumber(output, "Total: {0}", totalSampleCount);
 
-                output.add(MessageFormat.format("On Risk: {0}", onRiskCount));
+                formatSummaryNumber(output, "Unique: {0}", uniqueSampleCount, totalSampleCount);
+                formatSummaryNumber(output, "Duplicate: {0}", totalSampleCount - uniqueSampleCount, totalSampleCount);
+
+                formatSummaryNumber(output, "On Risk: {0}", onRiskCount, totalSampleCount);
 
                 if (bspSampleCount == uniqueSampleCount) {
                     output.add("From BSP: All");
                 } else if (bspSampleCount != 0) {
-                    output.add(MessageFormat.format("Unique BSP: {0}", bspSampleCount));
-                    output.add(MessageFormat.format("Unique Not BSP: {0}", uniqueSampleCount - bspSampleCount));
+                    formatSummaryNumber(output, "Unique BSP: {0}", bspSampleCount);
+                    formatSummaryNumber(output, "Unique Not BSP: {0}", uniqueSampleCount - bspSampleCount);
                 } else {
                     output.add("From BSP: None");
                 }
             }
 
             if (uniqueParticipantCount != 0) {
-                output.add(MessageFormat.format("Unique Participants: {0}", uniqueParticipantCount));
+                formatSummaryNumber(output, "Unique Participants: {0}", uniqueParticipantCount, totalSampleCount);
             }
 
-            outputCounts(output, stockTypeCounts, "Stock Type");
-            outputCounts(output, primaryDiseaseCounts, "Disease");
-            outputCounts(output, genderCounts, "Gender");
-            outputCounts(output, sampleTypeCounts, "Sample Type");
+            outputCounts(output, stockTypeCounts, "Stock Type", totalSampleCount);
+            outputCounts(output, primaryDiseaseCounts, "Disease", totalSampleCount);
+            outputCounts(output, genderCounts, "Gender", totalSampleCount);
+            outputCounts(output, sampleTypeCounts, "Sample Type", totalSampleCount);
 
             if (hasFPCount != 0) {
-                output.add(MessageFormat.format("Fingerprint Data: {0}", hasFPCount));
+                formatSummaryNumber(output, "Fingerprint Data: {0}", hasFPCount, totalSampleCount);
             }
 
             return output;
@@ -801,6 +827,13 @@ public class ProductOrder implements Serializable {
      */
     public boolean isAbandoned() {
         return OrderStatus.Abandoned == orderStatus;
+    }
+
+    /**
+     * @return true if order is submitted
+     */
+    public boolean isSubmitted() {
+        return OrderStatus.Submitted == orderStatus;
     }
 
     /**

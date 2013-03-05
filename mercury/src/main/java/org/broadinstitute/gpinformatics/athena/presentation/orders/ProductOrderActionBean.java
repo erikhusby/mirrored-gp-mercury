@@ -5,6 +5,7 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
@@ -180,6 +181,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = SET_RISK)
     private String riskComment;
 
+    //This is used for prompting why the abandon button is disabled
+    private String abandonDisabledReason;
+
+    //This is used to determine whether a special warning message needs to be confirmed before normal abandon;
+    private boolean abandonWarning = false;
     /**
      * Single {@link ProductOrderListEntry} for the view page, gives us billing session information.
      */
@@ -513,14 +519,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         validatePlacedOrder();
 
         if (!hasErrors()) {
-            getContext().getMessages().add(new SimpleMessage("Draft Order is valid and ready to be placed"));
+            addMessage("Draft Order is valid and ready to be placed");
         }
 
         // entryInit() must be called explicitly here since it does not run automatically with source page resolution
         // and the ProductOrderListEntry that provides billing data would otherwise be null.
         entryInit();
 
-        return getContext().getSourcePageResolution();
+        return getSourcePageResolution();
     }
 
     @HandlesEvent(SAVE_ACTION)
@@ -539,7 +545,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // save it!
         productOrderDao.persist(editOrder);
 
-        addMessage("Product Order \"" + editOrder.getTitle() + "\" has been saved.");
+        addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
         return createViewResolution();
     }
 
@@ -571,7 +577,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution startBilling() {
         Set<BillingLedger> ledgerItems =
                 billingLedgerDao.findWithoutBillingSessionByOrderList(selectedProductOrderBusinessKeys);
-        if ((ledgerItems == null) || (ledgerItems.isEmpty())) {
+        if (CollectionUtils.isEmpty(ledgerItems)) {
             addGlobalValidationError("There are no items to bill on any of the selected orders");
             return new ForwardResolution(ProductOrderActionBean.class, LIST_ACTION);
         }
@@ -652,7 +658,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                 JSONObject item = new JSONObject();
 
                 item.put("sampleId", sample.getProductOrderSampleId());
+                item.put("collaboratorSampleId", sample.getBspDTO().getCollaboratorsSampleName());
                 item.put("patientId", sample.getBspDTO().getPatientId());
+                item.put("collaboratorParticipantId", sample.getBspDTO().getCollaboratorParticipantId());
                 item.put("volume", sample.getBspDTO().getVolume());
                 item.put("concentration", sample.getBspDTO().getConcentration());
                 item.put("total", sample.getBspDTO().getTotal());
@@ -1089,6 +1097,20 @@ public class ProductOrderActionBean extends CoreActionBean {
         return getProductOrderListEntry().getBillingSessionBusinessKey();
     }
 
+    /**
+     * Convenience method for verifying whether a PDO is able to be abandoned.
+     *
+     * @return Boolean eligible for abandoning
+     */
+    public boolean isAbandonable() {
+        if (!editOrder.isSubmitted()) {
+            setAbandonDisabledReason("the order status of the PDO is not 'Submitted'.");
+            return false;
+        } else if (productOrderSampleDao.countSamplesWithBillingLedgerEntries(editOrder) > 0) {
+            setAbandonWarning(true);
+        }
+        return true;
+    }
 
     /**
      * Convenience method for PDO view page to show percentage of samples abandoned for the current PDO.
@@ -1146,4 +1168,33 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    /**
+     * @return Reason that abandon button is disabled
+     */
+    public String getAbandonDisabledReason() {
+        return abandonDisabledReason;
+    }
+
+    /**
+     * Update reason why the abandon button is disabled.
+     * @param abandonDisabledReason String of text indicating why the abandon button is disabled
+     */
+    public void setAbandonDisabledReason(String abandonDisabledReason) {
+        this.abandonDisabledReason = abandonDisabledReason;
+    }
+
+    /**
+     * @return Whether there is a need to use the special warning format
+     */
+    public boolean getAbandonWarning() {
+        return abandonWarning;
+    }
+
+    /**
+     * Update whether to use special warning
+     * @param abandonWarning Boolean flag used to determine whether we need to use special message confirmation
+     */
+    public void setAbandonWarning(boolean abandonWarning) {
+        this.abandonWarning = abandonWarning;
+    }
 }
