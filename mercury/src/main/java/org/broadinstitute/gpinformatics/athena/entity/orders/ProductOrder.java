@@ -189,7 +189,7 @@ public class ProductOrder implements Serializable {
      * @param jiraTicketKey the JIRA ticket, can be null
      * @return the business key for the PDO
      */
-    public static String createBusinessKey(long productOrderId, @Nullable String jiraTicketKey) {
+    public static String createBusinessKey(Long productOrderId, @Nullable String jiraTicketKey) {
         if (jiraTicketKey == null) {
             return DRAFT_PREFIX + productOrderId;
         }
@@ -316,7 +316,7 @@ public class ProductOrder implements Serializable {
         private void outputCounts(List<String> output, Map<String, Integer> counts, String label, int compareCount) {
             for (Map.Entry<String, Integer> entry : counts.entrySet()) {
                 // Preformat the string so it can add the format pattern for the count value.
-                String message = MessageFormat.format( "{0} ''{1}'': ", label, entry.getKey()) + "{0}";
+                String message = label + " ''" + entry.getKey() + "'': {0}";
                 formatSummaryNumber(output, message, entry.getValue(), compareCount);
             }
         }

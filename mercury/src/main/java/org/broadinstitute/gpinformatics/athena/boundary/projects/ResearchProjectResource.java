@@ -85,10 +85,11 @@ public class ResearchProjectResource {
             broadPIs = createUsernamesFromIds(bspUserList, researchProject.getBroadPIs());
             orders = new ArrayList<String>(researchProject.getProductOrders().size());
             for (ProductOrder order : researchProject.getProductOrders()) {
-                // Using the JIRA ticket key omits draft orders from the report. At this point there is no
-                // requirement to expose draft orders to client of this web service. Supporting draft will
-                // require adding a DAO API to map from Draft IDs to entities.
-                orders.add(order.getJiraTicketKey());
+                // We omit draft orders from the report. At this point there is no requirement to expose draft
+                // orders to client of this web service.
+                if (!order.isDraft()) {
+                    orders.add(order.getJiraTicketKey());
+                }
             }
             modifiedDate = researchProject.getModifiedDate();
         }
@@ -101,7 +102,7 @@ public class ResearchProjectResource {
         public final List<ResearchProjectData> projects;
 
         public ResearchProjects() {
-            projects = Collections.emptyList();
+            projects = null;
         }
 
         public ResearchProjects(BSPUserList bspUserList, List<ResearchProject> projects) {
@@ -123,18 +124,21 @@ public class ResearchProjectResource {
     /**
      * Method to GET the list of research projects. Optionally filter this by the user who created them if the creator
      * param is supplied.
+     * <p/>
+     * Only one filter can be applied at a time. If no filters are provided, all research projects are returned.
      *
+     * @param projectIds one or more RP IDs, separated by commas
+     * @param pmUserNames one or more PM user names, separated by commas. Names must match the user name in BSP.
      * @return The research projects that match
      */
     @GET
     @Produces(MediaType.APPLICATION_XML)
     public ResearchProjects findProjects(@QueryParam("withId") String projectIds,
                                          @QueryParam("withPm") String pmUserNames) {
+        List<ResearchProject> projects;
         if (!StringUtils.isBlank(projectIds)) {
-            return new ResearchProjects(bspUserList, researchProjectDao.findByJiraTicketKeys(
-                Arrays.asList(projectIds.split(","))));
-        }
-        if (!StringUtils.isBlank(pmUserNames)) {
+            projects = researchProjectDao.findByJiraTicketKeys(Arrays.asList(projectIds.split(",")));
+        } else if (!StringUtils.isBlank(pmUserNames)) {
             String[] userNames = pmUserNames.split(",");
             Long[] ids = new Long[userNames.length];
             for (int i = 0; i < userNames.length; i++) {
@@ -144,8 +148,10 @@ public class ResearchProjectResource {
                 }
                 ids[i] = bspUser.getUserId();
             }
-            return new ResearchProjects(bspUserList, researchProjectDao.findByProjectManagerIds(ids));
+            projects = researchProjectDao.findByProjectManagerIds(ids);
+        } else {
+            projects = researchProjectDao.findAllResearchProjectsWithOrders();
         }
-        return new ResearchProjects(bspUserList, researchProjectDao.findAllResearchProjectsWithOrders());
+        return new ResearchProjects(bspUserList, projects);
     }
 }
