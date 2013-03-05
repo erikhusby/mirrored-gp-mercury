@@ -72,7 +72,7 @@
             </li>
 
             <security:authorizeBlock
-                    roles="<%=new String[] {DB.Role.LabUser.name,DB.Role.PDM.name, DB.Role.Developer.name}%>">
+                    roles="<%=new String[] {DB.Role.Developer.name}%>">
                 <li class="dropdown">
 
                     <a id="labNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
