@@ -308,6 +308,8 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         } else {
             addGlobalValidationError("On risk was not calculated.  Please fix the other errors first.");
+            // Initialize ProductOrderListEntry if we're implicitly going to redisplay the source page.
+            entryInit();
         }
     }
 
@@ -485,6 +487,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         } catch (Exception e) {
             // Need to quote the message contents to prevent errors.
             addGlobalValidationError("{2}", e.getMessage());
+            // Make sure ProductOrderListEntry is initialized if returning source page resolution.
+            entryInit();
             return getSourcePageResolution();
         }
 
