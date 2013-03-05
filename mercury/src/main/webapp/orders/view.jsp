@@ -617,7 +617,7 @@
                                     <c:if test="${!editOrder.draft}">
                                         <stripes:checkbox title="${sample.samplePosition}" class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${sample.productOrderSampleId}"/>
                                     </c:if>
-                                    ${sample.samplePosition}
+                                    ${sample.samplePosition + 1}
                                 </td>
                                 <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
                                     <c:choose>
