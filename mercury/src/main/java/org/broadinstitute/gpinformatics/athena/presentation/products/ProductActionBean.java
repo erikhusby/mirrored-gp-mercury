@@ -86,8 +86,6 @@ public class ProductActionBean extends CoreActionBean {
     })
     private Product editProduct;
 
-    private final Log logger = LogFactory.getLog(ProductActionBean.class);
-
     // The search query
     private String q;
 
