@@ -34,6 +34,7 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Produ
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
@@ -126,6 +127,9 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private ProjectTokenInput projectTokenInput;
+
+    @Inject
+    private Deployment deployment;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -486,9 +490,11 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
 
-        Collection<ProductOrderSample> samples = mercuryClientService.addSampleToPicoBucket(editOrder);
-        if (!samples.isEmpty()) {
-            addMessage("{0} samples have been added to the pico bucket: {1}", samples.size(), StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
+        if (deployment != null && deployment == Deployment.DEV) {
+            Collection<ProductOrderSample> samples = mercuryClientService.addSampleToPicoBucket(editOrder);
+            if (!samples.isEmpty()) {
+                addMessage("{0} samples have been added to the pico bucket: {1}", samples.size(), StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
+            }
         }
 
         return createViewResolution();
@@ -801,9 +807,11 @@ public class ProductOrderActionBean extends CoreActionBean {
                 editOrder.getSampleString(),
                 ProductOrder.TransitionStates.DeveloperEdit.getStateName());
 
-        Collection<ProductOrderSample> samplesInPico = mercuryClientService.addSampleToPicoBucket(editOrder, samplesToAdd);
-        if (!samplesInPico.isEmpty()) {
-            addMessage("{0} samples have been added to the pico bucket: {1}", samplesInPico.size(), nameList);
+        if (deployment != null && deployment == Deployment.DEV) {
+            Collection<ProductOrderSample> samplesInPico = mercuryClientService.addSampleToPicoBucket(editOrder, samplesToAdd);
+            if (!samplesInPico.isEmpty()) {
+                addMessage("{0} samples have been added to the pico bucket: {1}", samplesInPico.size(), nameList);
+            }
         }
 
         return createViewResolution();
