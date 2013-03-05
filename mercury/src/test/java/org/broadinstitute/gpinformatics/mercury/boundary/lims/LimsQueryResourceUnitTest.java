@@ -315,7 +315,7 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
-    @BeforeMethod(groups = DATABASE_FREE,enabled = false)
+    @BeforeMethod(groups = DATABASE_FREE,enabled = true)
     public void testFetchUserByBadge() throws Exception {
 
         String testUserBadge = "Test" + String.valueOf(BSPManagerFactoryStub.QA_DUDE_USER_ID);
