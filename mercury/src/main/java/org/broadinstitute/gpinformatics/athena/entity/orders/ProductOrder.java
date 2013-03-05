@@ -265,9 +265,9 @@ public class ProductOrder implements Serializable {
 
         private void outputCounts(List<String> output, Map<String, Integer> counts, String label, int compareCount) {
             for (Map.Entry<String, Integer> entry : counts.entrySet()) {
+                // preformat the string so it can add the format pattern for the value
                 String message = MessageFormat.format( "{0} ''{1}'': ", label, entry.getKey()) + "{0}";
                 formatSummaryNumber(output, message, entry.getValue(), compareCount);
-                //output.add(MessageFormat.format("{0} ''{1}'': {2}", label, entry.getKey(), entry.getValue()));
             }
         }
 
@@ -275,14 +275,9 @@ public class ProductOrder implements Serializable {
          * Format the number to say None if the value is zero.
          *
          * @param count The number to format
-         * @return String value of the number or None if it's zero.
          */
         private void formatSummaryNumber(List<String> output, String message, int count) {
-            if (count == 0) {
-                output.add(message.substring(0, message.length() - 3) + "None");
-            } else {
-                output.add(MessageFormat.format(message, count));
-            }
+            output.add(MessageFormat.format(message, (count == 0) ? "None" : count));
         }
 
         /**
@@ -290,13 +285,12 @@ public class ProductOrder implements Serializable {
          *
          * @param count The number to format
          * @param compareCount The number to compare to
-         * @return String value of the number, All or None depending on values
          */
         private void formatSummaryNumber(List<String> output, String message, int count, int compareCount) {
             if (count == 0) {
-                output.add(message.substring(0, message.length() - 3) + "None");
+                output.add(MessageFormat.format(message, "None"));
             } else if (count == compareCount) {
-                output.add(message.substring(0, message.length() - 3) + "All");
+                output.add(MessageFormat.format(message, "All"));
             } else {
                 output.add(MessageFormat.format(message, count));
             }
