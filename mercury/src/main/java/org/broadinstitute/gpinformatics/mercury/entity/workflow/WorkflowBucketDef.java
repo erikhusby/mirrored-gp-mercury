@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.mvel2.MVEL;
-import org.mvel2.optimizers.OptimizerFactory;
+//import org.mvel2.MVEL;
+//import org.mvel2.optimizers.OptimizerFactory;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -41,11 +41,12 @@ public class WorkflowBucketDef extends WorkflowStepDef {
     public boolean meetsBucketCriteria(LabVessel labVessel) {
         // Compile, even though we're using it only once, because MVEL sometimes has
         // problems with Hibernate proxies in eval method
-        OptimizerFactory.setDefaultOptimizer("reflective");
-        Serializable compiled = MVEL.compileExpression(entryExpression);
-        Map<String, Object> context = new HashMap<String, Object>();
-        context.put("labVessel", labVessel);
-        return (Boolean) MVEL.executeExpression(compiled, context);
+//        OptimizerFactory.setDefaultOptimizer("reflective");
+//        Serializable compiled = MVEL.compileExpression(entryExpression);
+//        Map<String, Object> context = new HashMap<String, Object>();
+//        context.put("labVessel", labVessel);
+//        return (Boolean) MVEL.executeExpression(compiled, context);
+        return true;
     }
 
 }
