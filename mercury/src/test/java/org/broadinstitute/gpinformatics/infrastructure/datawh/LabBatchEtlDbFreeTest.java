@@ -24,27 +24,28 @@ import static org.testng.Assert.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class LabBatchEtlDbFreeTest {
-    String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
-    long entityId = 1122334455L;
-    String batchName = "LCSET-1235";
+    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private long entityId = 1122334455L;
+    private String batchName = "LCSET-1235";
+    private LabBatchEtl tst;
 
-    AuditReaderDao auditReader = createMock(AuditReaderDao.class);
-    LabBatch obj = createMock(LabBatch.class);
-    LabBatchDAO dao = createMock(LabBatchDAO.class);
-    Object[] mocks = new Object[]{auditReader, dao, obj};
+    private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
+    private LabBatch obj = createMock(LabBatch.class);
+    private LabBatchDAO dao = createMock(LabBatchDAO.class);
+    private Object[] mocks = new Object[]{auditReader, dao, obj};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
         reset(mocks);
+
+        tst = new LabBatchEtl();
+        tst.setLabBatchDAO(dao);
+        tst.setAuditReaderDao(auditReader);
     }
 
     public void testEtlFlags() throws Exception {
         expect(obj.getLabBatchId()).andReturn(entityId);
         replay(mocks);
-
-        LabBatchEtl tst = new LabBatchEtl();
-        tst.setLabBatchDAO(dao);
-        tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.getEntityClass(), LabBatch.class);
 
@@ -64,10 +65,6 @@ public class LabBatchEtlDbFreeTest {
 
         replay(mocks);
 
-        LabBatchEtl tst = new LabBatchEtl();
-        tst.setLabBatchDAO(dao);
-        tst.setAuditReaderDao(auditReader);
-
         assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
@@ -80,10 +77,6 @@ public class LabBatchEtlDbFreeTest {
         expect(obj.getBatchName()).andReturn(batchName);
 
         replay(mocks);
-
-        LabBatchEtl tst = new LabBatchEtl();
-        tst.setLabBatchDAO(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
@@ -101,10 +94,6 @@ public class LabBatchEtlDbFreeTest {
         expect(obj.getBatchName()).andReturn(batchName);
 
         replay(mocks);
-
-        LabBatchEtl tst = new LabBatchEtl();
-        tst.setLabBatchDAO(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
         assertEquals(records.size(), 1);

@@ -62,7 +62,7 @@ public class GenericEntityEtlDbFreeTest {
         reset(mocks);
     }
 
-    @AfterMethod
+    @AfterMethod(groups = TestGroups.DATABASE_FREE)
     public void afterMethod() throws Exception {
         EtlTestUtilities.deleteEtlFiles(datafileDir);
     }

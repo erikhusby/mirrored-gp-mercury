@@ -33,7 +33,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  * @author epolk
  */
 
-@Test(enabled =  true, groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(enabled = false, groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ExtractTransformTest extends Arquillian {
     private Log logger = LogFactory.getLog(getClass());
     private String datafileDir;
@@ -50,7 +50,7 @@ public class ExtractTransformTest extends Arquillian {
         return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
-    @BeforeClass
+    @BeforeClass(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void beforeClass() throws Exception {
         datafileDir = System.getProperty("java.io.tmpdir");
 
@@ -71,7 +71,7 @@ public class ExtractTransformTest extends Arquillian {
         auditTables.put("ATHENA.RESEARCH_PROJECTIRB_AUD", new ResearchProjectIrbEtl());
     }
 
-    @BeforeMethod
+    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void beforeMethod() throws Exception {
         ExtractTransform.setDatafileDir(datafileDir);
         EtlTestUtilities.deleteEtlFiles(datafileDir);
