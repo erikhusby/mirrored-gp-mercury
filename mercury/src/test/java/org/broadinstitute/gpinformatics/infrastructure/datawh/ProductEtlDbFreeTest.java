@@ -25,38 +25,39 @@ import static org.testng.Assert.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductEtlDbFreeTest {
-    String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
-    long entityId = 1122334455L;
-    long productId = 998877L;
-    String productName = "Test Product";
-    String partNumber = "TestNumber-5544";
-    Date availabilityDate = new Date(1350000000000L);
-    Date discontinuedDate = new Date(1380000000000L);
-    int expectedCycleTimeSeconds = 5400;
-    int guaranteedCycleTimeSeconds = 99999;
-    int samplesPerWeek = 200;
-    boolean isTopLevelProduct = true;
-    String workflowName = "Test Workflow 1";
-    String productFamilyName = "Test ProductFamily";
+    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private long entityId = 1122334455L;
+    private long productId = 998877L;
+    private String productName = "Test Product";
+    private String partNumber = "TestNumber-5544";
+    private Date availabilityDate = new Date(1350000000000L);
+    private Date discontinuedDate = new Date(1380000000000L);
+    private int expectedCycleTimeSeconds = 5400;
+    private int guaranteedCycleTimeSeconds = 99999;
+    private int samplesPerWeek = 200;
+    private boolean isTopLevelProduct = true;
+    private String workflowName = "Test Workflow 1";
+    private String productFamilyName = "Test ProductFamily";
+    private ProductEtl tst;
 
-    AuditReaderDao auditReader = createMock(AuditReaderDao.class);
-    Product obj = createMock(Product.class);
-    ProductDao dao = createMock(ProductDao.class);
-    ProductFamily family = createMock(ProductFamily.class);
-    Object[] mocks = new Object[]{auditReader, dao, obj, family};
+    private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
+    private Product obj = createMock(Product.class);
+    private ProductDao dao = createMock(ProductDao.class);
+    private ProductFamily family = createMock(ProductFamily.class);
+    private Object[] mocks = new Object[]{auditReader, dao, obj, family};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
         reset(mocks);
+
+        tst = new ProductEtl();
+        tst.setProductDao(dao);
+        tst.setAuditReaderDao(auditReader);
     }
 
     public void testEtlFlags() throws Exception {
         expect(obj.getProductId()).andReturn(entityId);
         replay(mocks);
-
-        ProductEtl tst = new ProductEtl();
-        tst.setProductDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.getEntityClass(), Product.class);
 
@@ -75,10 +76,6 @@ public class ProductEtlDbFreeTest {
         expect(dao.findById(Product.class, -1L)).andReturn(null);
 
         replay(mocks);
-
-        ProductEtl tst = new ProductEtl();
-        tst.setProductDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
 
@@ -103,10 +100,6 @@ public class ProductEtlDbFreeTest {
         expect(family.getName()).andReturn(productFamilyName);
 
         replay(mocks);
-
-        ProductEtl tst = new ProductEtl();
-        tst.setProductDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
@@ -136,10 +129,6 @@ public class ProductEtlDbFreeTest {
         expect(family.getName()).andReturn(productFamilyName);
 
         replay(mocks);
-
-        ProductEtl tst = new ProductEtl();
-        tst.setProductDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
         assertEquals(records.size(), 1);

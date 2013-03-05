@@ -19,27 +19,28 @@ import static org.testng.Assert.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderSampleStatusEtlDbFreeTest {
-    String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
-    long entityId = 1122334455L;
-    long pdoId = 332891L;
-    Date revDate = new Date(1350000000000L);
-    ProductOrderSample.DeliveryStatus deliveryStatus = ProductOrderSample.DeliveryStatus.DELIVERED;
+    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private long entityId = 1122334455L;
+    private long pdoId = 332891L;
+    private Date revDate = new Date(1350000000000L);
+    private ProductOrderSample.DeliveryStatus deliveryStatus = ProductOrderSample.DeliveryStatus.DELIVERED;
+    private ProductOrderSampleStatusEtl tst;
 
-    AuditReaderDao auditReader = createMock(AuditReaderDao.class);
-    ProductOrderSample obj = createMock(ProductOrderSample.class);
-    Object[] mocks = new Object[]{auditReader, obj};
+    private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
+    private ProductOrderSample obj = createMock(ProductOrderSample.class);
+    private Object[] mocks = new Object[]{auditReader, obj};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         reset(mocks);
+
+        tst = new ProductOrderSampleStatusEtl();
+        tst.setAuditReaderDao(auditReader);
     }
 
     public void testEtlFlags() throws Exception {
         expect(obj.getProductOrderSampleId()).andReturn(entityId);
         replay(mocks);
-
-        ProductOrderSampleStatusEtl tst = new ProductOrderSampleStatusEtl();
-        tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.getEntityClass(), ProductOrderSample.class);
 
@@ -58,9 +59,6 @@ public class ProductOrderSampleStatusEtlDbFreeTest {
     public void testCantMakeEtlRecord1() throws Exception {
         replay(mocks);
 
-        ProductOrderSampleStatusEtl tst = new ProductOrderSampleStatusEtl();
-        tst.setAuditReaderDao(auditReader);
-
         assertNull(tst.entityStatusRecord(etlDateStr, revDate, null, false));
 
         verify(mocks);
@@ -70,9 +68,6 @@ public class ProductOrderSampleStatusEtlDbFreeTest {
         expect(obj.getDeliveryStatus()).andReturn(null);
 
         replay(mocks);
-
-        ProductOrderSampleStatusEtl tst = new ProductOrderSampleStatusEtl();
-        tst.setAuditReaderDao(auditReader);
 
         assertNull(tst.entityStatusRecord(etlDateStr, revDate, obj, false));
 
@@ -85,9 +80,6 @@ public class ProductOrderSampleStatusEtlDbFreeTest {
         expect(obj.getDeliveryStatus()).andReturn(deliveryStatus);
 
         replay(mocks);
-
-        ProductOrderSampleStatusEtl tst = new ProductOrderSampleStatusEtl();
-        tst.setAuditReaderDao(auditReader);
 
         String record = tst.entityStatusRecord(etlDateStr, revDate, obj, false);
         assertTrue(record != null && record.length() > 0);
