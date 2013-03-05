@@ -16,17 +16,39 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
-import org.hibernate.envers.NotAudited;
 
 import javax.annotation.Nonnull;
-import javax.persistence.*;
+import javax.annotation.Nullable;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.OrderColumn;
+import javax.persistence.PostLoad;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 @Entity
@@ -35,7 +57,7 @@ import java.util.*;
 public class ProductOrder implements Serializable {
     private static final long serialVersionUID = 2712946561792445251L;
 
-    public static final String DRAFT_PREFIX = "Draft-";
+    private static final String DRAFT_PREFIX = "Draft-";
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT_ORDER", schema = "athena", sequenceName = "SEQ_PRODUCT_ORDER")
@@ -87,12 +109,6 @@ public class ProductOrder implements Serializable {
     @AuditJoinTable(name = "product_order_sample_join_aud")
     private List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
 
-    /** Counts the number of rows in the one-to-many table.  Reference this count before fetching the collection, to
-     * avoid an unnecessary database round trip  */
-    @NotAudited
-    @Formula("(select count(*) from athena.product_order_sample pos where pos.product_order = product_order_id)")
-    private Integer sampleCount = 0;
-
     @Transient
     private final SampleCounts counts = new SampleCounts();
 
@@ -113,11 +129,7 @@ public class ProductOrder implements Serializable {
      * internal database id.
      */
     public String getBusinessKey() {
-        if (jiraTicketKey == null) {
-            return DRAFT_PREFIX + productOrderId;
-        }
-
-        return jiraTicketKey;
+        return createBusinessKey(productOrderId, jiraTicketKey);
     }
 
     public boolean isInDB() {
@@ -168,6 +180,44 @@ public class ProductOrder implements Serializable {
         }
 
         return uniqueSampleNamesOnRisk.size();
+    }
+
+    /**
+     * Utility method to create a PDO business key given an order ID and a JIRA ticket.
+     *
+     * @param productOrderId the order ID
+     * @param jiraTicketKey the JIRA ticket, can be null
+     * @return the business key for the PDO
+     */
+    public static String createBusinessKey(long productOrderId, @Nullable String jiraTicketKey) {
+        if (jiraTicketKey == null) {
+            return DRAFT_PREFIX + productOrderId;
+        }
+
+        return jiraTicketKey;
+    }
+
+    public static class JiraOrId {
+        @Nullable
+        public final String jiraTicketKey;
+        public final long productOrderId;
+
+        public JiraOrId(long productOrderId, @Nullable String jiraTicketKey) {
+            this.jiraTicketKey = jiraTicketKey;
+            this.productOrderId = productOrderId;
+        }
+    }
+
+    /**
+     * Use This method to convert from a business key to either a JIRA ID or a product order ID.
+     * @param businessKey the key to convert
+     * @return either a JIRA ID or a product order ID.
+     */
+    public static JiraOrId convertBusinessKeyToJiraOrId(String businessKey) {
+        if (businessKey.startsWith(DRAFT_PREFIX)) {
+            return new JiraOrId(Long.parseLong(businessKey.substring(DRAFT_PREFIX.length())), null);
+        }
+        return new JiraOrId(0, businessKey);
     }
 
     /**
@@ -1024,7 +1074,4 @@ public class ProductOrder implements Serializable {
         return originalTitle;
     }
 
-    public Integer getSampleCount() {
-        return sampleCount;
-    }
 }
