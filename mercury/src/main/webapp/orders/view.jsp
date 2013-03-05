@@ -385,7 +385,7 @@
                     <div class="form-value">
                         <c:choose>
                             <c:when test="${editOrder.draft}">
-                                &nbsp;
+                                &#160;
                             </c:when>
                             <c:otherwise>
                                 <a target="JIRA" href="${actionBean.jiraUrl(editOrder.jiraTicketKey)}" class="external" target="JIRA">${editOrder.jiraTicketKey}</a>
@@ -591,10 +591,10 @@
                     <thead>
                         <tr>
                             <th width="40">
-                            <c:if test="${!editOrder.draft}">
+                                <c:if test="${!editOrder.draft}">
                                     <input for="count" type="checkbox" class="checkAll"/><span id="count" class="checkedCount"></span>
                                 </c:if>
-                                </th>
+                            </th>
                             <th width="90">ID</th>
                             <th width="110">Collaborator Sample ID</th>
                             <th width="60">Participant ID</th>
@@ -618,7 +618,7 @@
                                         <stripes:checkbox title="${sample.samplePosition}" class="shiftCheckbox" name="selectedProductOrderSampleIds" value="${sample.productOrderSampleId}"/>
                                     </c:if>
                                     ${sample.samplePosition}
-                                    </td>
+                                </td>
                                 <td id="sampleId-${sample.productOrderSampleId}" class="sampleName">
                                     <c:choose>
                                         <c:when test="${sample.inBspFormat}">
@@ -631,13 +631,13 @@
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
-                                <td id="collab-sample-${sample.productOrderSampleId}">&nbsp;</td>
-                                <td id="patient-${sample.productOrderSampleId}">&nbsp;</td>
-                                <td id="collab-patient-${sample.productOrderSampleId}">&nbsp;</td>
-                                <td id="volume-${sample.productOrderSampleId}">&nbsp;</td>
-                                <td id="concentration-${sample.productOrderSampleId}">&nbsp;</td>
-                                <td id="total-${sample.productOrderSampleId}">&nbsp;</td>
-                                <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center">&nbsp;</td>
+                                <td id="collab-sample-${sample.productOrderSampleId}">&#160; </td>
+                                <td id="patient-${sample.productOrderSampleId}">&#160;  </td>
+                                <td id="collab-patient-${sample.productOrderSampleId}">&#160; </td>
+                                <td id="volume-${sample.productOrderSampleId}">&#160; </td>
+                                <td id="concentration-${sample.productOrderSampleId}">&#160; </td>
+                                <td id="total-${sample.productOrderSampleId}">&#160; </td>
+                                <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center">&#160; </td>
                                 <td>${sample.riskString}</td>
                                 <td>&#160;</td>
                                 <td>&#160;</td>
