@@ -189,7 +189,7 @@ public class ProductOrder implements Serializable {
      * @param jiraTicketKey the JIRA ticket, can be null
      * @return the business key for the PDO
      */
-    public static String createBusinessKey(long productOrderId, @Nullable String jiraTicketKey) {
+    public static String createBusinessKey(Long productOrderId, @Nullable String jiraTicketKey) {
         if (jiraTicketKey == null) {
             return DRAFT_PREFIX + productOrderId;
         }
