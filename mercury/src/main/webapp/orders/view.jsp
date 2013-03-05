@@ -165,7 +165,9 @@
 
                     var sampleId = sampleData[x].sampleId;
 
+                    $j('#collab-sample-' + sampleId).text(sampleData[x].collaboratorSampleId);
                     $j('#patient-' + sampleId).text(sampleData[x].patientId);
+                    $j('#collab-patient-' + sampleId).text(sampleData[x].collaboratorParticipantId);
                     $j('#volume-' + sampleId).text(sampleData[x].volume);
                     $j('#concentration-' + sampleId).text(sampleData[x].concentration);
                     $j('#total-' + sampleId).text(sampleData[x].total);
@@ -184,7 +186,9 @@
                         "aoColumns": [
                             {"bSortable": true, "sType": "title-numeric"},  // Position and checkbox
                             {"bSortable": true},                            // ID
+                            {"bSortable": true},                            // Collab Sample ID
                             {"bSortable": true},                            // Participant ID
+                            {"bSortable": true},                            // Collab Participant ID
                             {"bSortable": true, "sType": "numeric"},        // Volume
                             {"bSortable": true, "sType": "numeric"},        // Concentration
                             {"bSortable": true, "sType": "numeric"},        // Yield Amount
@@ -592,7 +596,9 @@
                                 </c:if>
                                 </th>
                             <th width="90">ID</th>
-                            <th width="90">Participant ID</th>
+                            <th width="110">Collaborator Sample ID</th>
+                            <th width="60">Participant ID</th>
+                            <th width="110">Collaborator Participant ID</th>
                             <th width="40">Volume</th>
                             <th width="40">Concentration</th>
                             <th width="40">Yield Amount</th>
@@ -625,7 +631,9 @@
                                         </c:otherwise>
                                     </c:choose>
                                 </td>
+                                <td id="collab-sample-${sample.productOrderSampleId}">&nbsp;</td>
                                 <td id="patient-${sample.productOrderSampleId}">&nbsp;</td>
+                                <td id="collab-patient-${sample.productOrderSampleId}">&nbsp;</td>
                                 <td id="volume-${sample.productOrderSampleId}">&nbsp;</td>
                                 <td id="concentration-${sample.productOrderSampleId}">&nbsp;</td>
                                 <td id="total-${sample.productOrderSampleId}">&nbsp;</td>
