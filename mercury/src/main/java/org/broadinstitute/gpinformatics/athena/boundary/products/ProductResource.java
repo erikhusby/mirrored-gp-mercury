@@ -69,7 +69,7 @@ public class ProductResource {
     }
 
     /**
-     * Method to GET the list of product orders. Optionally filter by a list of PDOs, or by a modify date.
+     * Method to GET the list of products. All products are returned.
      *
      * @return The product orders that match
      */
