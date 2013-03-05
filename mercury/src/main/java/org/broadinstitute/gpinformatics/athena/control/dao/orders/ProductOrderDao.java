@@ -308,7 +308,7 @@ public class ProductOrderDao extends GenericDao {
 
         Query query = getThreadEntityManager().getEntityManager().createNativeQuery(sqlString);
         query.unwrap(SQLQuery.class).addScalar("name", StandardBasicTypes.STRING)
-                .addScalar("id", StandardBasicTypes.INTEGER)
+                .addScalar("id", StandardBasicTypes.LONG)
              .addScalar("completed", StandardBasicTypes.INTEGER).addScalar("abandoned", StandardBasicTypes.INTEGER)
              .addScalar("total", StandardBasicTypes.INTEGER);
 
@@ -322,7 +322,7 @@ public class ProductOrderDao extends GenericDao {
                 new HashMap<String, ProductOrderCompletionStatus>(results.size());
         for (Object resultObject : results) {
             Object[] result = (Object[]) resultObject;
-            String businessKey = ProductOrder.createBusinessKey((Integer) result[1], (String) result[0]);
+            String businessKey = ProductOrder.createBusinessKey((Long) result[1], (String) result[0]);
             progressCounterMap.put(businessKey,
                     new ProductOrderCompletionStatus((Integer) result[3], (Integer) result[2], (Integer) result[4]));
         }
