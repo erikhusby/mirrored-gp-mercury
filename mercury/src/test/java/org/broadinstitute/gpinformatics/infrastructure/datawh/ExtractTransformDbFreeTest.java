@@ -81,7 +81,7 @@ public class ExtractTransformDbFreeTest {
             billingLedgerEtl
     };
 
-    @BeforeClass
+    @BeforeClass(groups = TestGroups.DATABASE_FREE)
     public void beforeClass() throws Exception {
         datafileDir = System.getProperty("java.io.tmpdir");
         badDataDir = datafileDir + System.getProperty("file.separator") + nowMsec;
@@ -109,14 +109,14 @@ public class ExtractTransformDbFreeTest {
                 billingLedgerEtl);
     }
 
-    @BeforeMethod
+    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void beforeMethod() throws Exception {
         extractTransform.setDatafileDir(datafileDir);
         EtlTestUtilities.deleteEtlFiles(datafileDir);
         reset(mocks);
     }
 
-    @AfterMethod
+    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void afterMethod() throws Exception {
         EtlTestUtilities.deleteEtlFiles(datafileDir);
     }

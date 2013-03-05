@@ -28,37 +28,38 @@ import static org.testng.Assert.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProjectPersonEtlDbFreeTest {
-    String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
-    long entityId = 1122334455L;
-    long researchProjectId = 2233445511L;
-    long personId = 3344551122L;
-    RoleType role = RoleType.PM;
-    String firstName = "Zinthia";
-    String lastName = "Zither";
-    String userName = "zz";
+    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private long entityId = 1122334455L;
+    private long researchProjectId = 2233445511L;
+    private long personId = 3344551122L;
+    private RoleType role = RoleType.PM;
+    private String firstName = "Zinthia";
+    private String lastName = "Zither";
+    private String userName = "zz";
+    private ProjectPersonEtl tst;
 
-    AuditReaderDao auditReader = createMock(AuditReaderDao.class);
-    ResearchProjectDao dao = createMock(ResearchProjectDao.class);
-    ProjectPerson obj = createMock(ProjectPerson.class);
-    ResearchProject project = createMock(ResearchProject.class);
-    BSPUserList userList = createMock(BSPUserList.class);
-    BspUser user = createMock(BspUser.class);
+    private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
+    private ResearchProjectDao dao = createMock(ResearchProjectDao.class);
+    private ProjectPerson obj = createMock(ProjectPerson.class);
+    private ResearchProject project = createMock(ResearchProject.class);
+    private BSPUserList userList = createMock(BSPUserList.class);
+    private BspUser user = createMock(BspUser.class);
 
-    Object[] mocks = new Object[]{auditReader, dao, obj, project, userList, user};
+    private Object[] mocks = new Object[]{auditReader, dao, obj, project, userList, user};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
         reset(mocks);
+
+        tst = new ProjectPersonEtl();
+        tst.setResearchProjectDao(dao);
+        tst.setAuditReaderDao(auditReader);
+        tst.setBSPUserList(userList);
     }
 
     public void testEtlFlags() throws Exception {
         expect(obj.getProjectPersonId()).andReturn(entityId);
         replay(mocks);
-
-        ProjectPersonEtl tst = new ProjectPersonEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
-        tst.setBSPUserList(userList);
 
         assertEquals(tst.getEntityClass(), ProjectPerson.class);
 
@@ -78,11 +79,6 @@ public class ProjectPersonEtlDbFreeTest {
 
         replay(mocks);
 
-        ProjectPersonEtl tst = new ProjectPersonEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
-        tst.setBSPUserList(userList);
-
         assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
@@ -101,11 +97,6 @@ public class ProjectPersonEtlDbFreeTest {
         expect(user.getUsername()).andReturn(userName);
 
         replay(mocks);
-
-        ProjectPersonEtl tst = new ProjectPersonEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
-        tst.setBSPUserList(userList);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
@@ -127,11 +118,6 @@ public class ProjectPersonEtlDbFreeTest {
         expect(user.getUsername()).andReturn(userName);
 
         replay(mocks);
-
-        ProjectPersonEtl tst = new ProjectPersonEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
-        tst.setBSPUserList(userList);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
@@ -158,11 +144,6 @@ public class ProjectPersonEtlDbFreeTest {
         expect(user.getUsername()).andReturn(userName);
 
         replay(mocks);
-
-        ProjectPersonEtl tst = new ProjectPersonEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
-        tst.setBSPUserList(userList);
 
         Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
         assertEquals(records.size(), 1);

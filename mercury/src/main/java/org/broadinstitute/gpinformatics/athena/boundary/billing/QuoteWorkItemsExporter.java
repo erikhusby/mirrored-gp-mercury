@@ -42,10 +42,13 @@ public class QuoteWorkItemsExporter extends AbstractSpreadsheetExporter {
 
         BspUser user = bspUserList.getById(billingSession.getCreatedBy());
 
+        String username =
+                user == null ? "Unknown user: " + billingSession.getCreatedBy() : user.getFirstName() + " " + user.getLastName();
+
         // Write preamble.
         String preambleText = "Billing Session: " + billingSession.getBusinessKey() +
-                              ", Created By: " + user.getFirstName() + " " + user.getLastName() +
-                              ", Create Date: " + billingSession.getCreatedDate() +
+                              ", Created By: " + username +
+                              ", Created Date: " + billingSession.getCreatedDate() +
                               ", Billed Date: " + billingSession.getBilledDate();
 
         getWriter().writePreamble(preambleText);

@@ -25,28 +25,29 @@ import static org.testng.Assert.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class LabVesselEtlDbFreeTest {
-    String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
-    long entityId = 1122334455L;
-    String vesselLabel = "8917538.0";
-    CONTAINER_TYPE vesselType = CONTAINER_TYPE.TUBE;
+    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private long entityId = 1122334455L;
+    private String vesselLabel = "8917538.0";
+    private CONTAINER_TYPE vesselType = CONTAINER_TYPE.TUBE;
+    private LabVesselEtl tst;
 
-    AuditReaderDao auditReader = createMock(AuditReaderDao.class);
-    LabVessel obj = createMock(LabVessel.class);
-    LabVesselDao dao = createMock(LabVesselDao.class);
-    Object[] mocks = new Object[]{auditReader, dao, obj};
+    private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
+    private LabVessel obj = createMock(LabVessel.class);
+    private LabVesselDao dao = createMock(LabVesselDao.class);
+    private Object[] mocks = new Object[]{auditReader, dao, obj};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
         reset(mocks);
+
+        tst = new LabVesselEtl();
+        tst.setLabVesselDao(dao);
+        tst.setAuditReaderDao(auditReader);
     }
 
     public void testEtlFlags() throws Exception {
         expect(obj.getLabVesselId()).andReturn(entityId);
         replay(mocks);
-
-        LabVesselEtl tst = new LabVesselEtl();
-        tst.setLabVesselDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.getEntityClass(), LabVessel.class);
 
@@ -66,10 +67,6 @@ public class LabVesselEtlDbFreeTest {
 
         replay(mocks);
 
-        LabVesselEtl tst = new LabVesselEtl();
-        tst.setLabVesselDao(dao);
-        tst.setAuditReaderDao(auditReader);
-
         assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
@@ -83,10 +80,6 @@ public class LabVesselEtlDbFreeTest {
         expect(obj.getType()).andReturn(vesselType);
 
         replay(mocks);
-
-        LabVesselEtl tst = new LabVesselEtl();
-        tst.setLabVesselDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
@@ -105,10 +98,6 @@ public class LabVesselEtlDbFreeTest {
         expect(obj.getType()).andReturn(vesselType);
 
         replay(mocks);
-
-        LabVesselEtl tst = new LabVesselEtl();
-        tst.setLabVesselDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
         assertEquals(records.size(), 1);

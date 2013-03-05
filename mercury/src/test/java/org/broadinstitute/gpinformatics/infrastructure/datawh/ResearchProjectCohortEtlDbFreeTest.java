@@ -25,29 +25,30 @@ import static org.testng.Assert.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ResearchProjectCohortEtlDbFreeTest {
-    String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
-    long entityId = 1122334455L;
-    long researchProjectId = 2233445511L;
+    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private long entityId = 1122334455L;
+    private long researchProjectId = 2233445511L;
+    private ResearchProjectCohortEtl tst;
 
-    AuditReaderDao auditReader = createMock(AuditReaderDao.class);
-    ResearchProjectDao dao = createMock(ResearchProjectDao.class);
-    ResearchProjectCohort obj = createMock(ResearchProjectCohort.class);
-    ResearchProject project = createMock(ResearchProject.class);
+    private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
+    private ResearchProjectDao dao = createMock(ResearchProjectDao.class);
+    private ResearchProjectCohort obj = createMock(ResearchProjectCohort.class);
+    private ResearchProject project = createMock(ResearchProject.class);
 
-    Object[] mocks = new Object[]{auditReader, dao, obj, project};
+    private Object[] mocks = new Object[]{auditReader, dao, obj, project};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
         reset(mocks);
+
+        tst = new ResearchProjectCohortEtl();
+        tst.setResearchProjectDao(dao);
+        tst.setAuditReaderDao(auditReader);
     }
 
     public void testEtlFlags() throws Exception {
         expect(obj.getResearchProjectCohortId()).andReturn(entityId);
         replay(mocks);
-
-        ResearchProjectCohortEtl tst = new ResearchProjectCohortEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.getEntityClass(), ResearchProjectCohort.class);
 
@@ -67,10 +68,6 @@ public class ResearchProjectCohortEtlDbFreeTest {
 
         replay(mocks);
 
-        ResearchProjectCohortEtl tst = new ResearchProjectCohortEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
-
         assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
@@ -83,10 +80,6 @@ public class ResearchProjectCohortEtlDbFreeTest {
         expect(project.getResearchProjectId()).andReturn(researchProjectId);
 
         replay(mocks);
-
-        ResearchProjectCohortEtl tst = new ResearchProjectCohortEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
@@ -102,10 +95,6 @@ public class ResearchProjectCohortEtlDbFreeTest {
         expect(obj.getResearchProject()).andReturn(null);
 
         replay(mocks);
-
-        ResearchProjectCohortEtl tst = new ResearchProjectCohortEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
@@ -125,10 +114,6 @@ public class ResearchProjectCohortEtlDbFreeTest {
         expect(project.getResearchProjectId()).andReturn(researchProjectId);
 
         replay(mocks);
-
-        ResearchProjectCohortEtl tst = new ResearchProjectCohortEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
         assertEquals(records.size(), 1);

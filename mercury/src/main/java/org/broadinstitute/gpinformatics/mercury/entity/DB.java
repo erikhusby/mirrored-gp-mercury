@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.entity;
 import org.broadinstitute.gpinformatics.mercury.entity.authentication.AuthorizedRole;
 import org.broadinstitute.gpinformatics.mercury.entity.authentication.PageAuthorization;
 
+import javax.annotation.Nonnull;
 import javax.enterprise.context.ApplicationScoped;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -75,5 +76,22 @@ public class DB implements Serializable {
 
     public Map<String, PageAuthorization> getPageAuthorizationMap() {
         return pageAuthorizationMap;
+    }
+
+    /**
+     * Return an array of the Role names for the supplied roles.
+     *
+     * @param roles whose names are to be extracted.
+     *
+     * @return array of comma delimited role names.
+     */
+    public static String[] roles(@Nonnull Role... roles) {
+        String [] roleNames = new String[roles.length];
+
+        for (int i = 0; i < roles.length; i++) {
+            roleNames[i] = roles[i].name;
+        }
+
+        return roleNames;
     }
 }
