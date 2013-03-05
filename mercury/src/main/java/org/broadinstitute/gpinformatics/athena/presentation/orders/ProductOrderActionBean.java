@@ -856,6 +856,9 @@ public class ProductOrderActionBean extends CoreActionBean {
             String filename =
                     "BillingTracker-" + AbstractSpreadsheetExporter.DATE_FORMAT.format(Calendar.getInstance().getTime());
 
+            // Colon is a metacharacter in Windows separating the drive letter from the rest of the path.
+            filename = filename.replaceAll(":", "_");
+
             final File tempFile = File.createTempFile(filename, ".xls");
             outputStream = new FileOutputStream(tempFile);
 
