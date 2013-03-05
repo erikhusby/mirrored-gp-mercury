@@ -74,7 +74,7 @@
                                 tabindex="=1" event="list">List</stripes:link>
                     </li>
                     <%-- Only PDMs (and Developers) can create Products. --%>
-                    <security:authorizeBlock roles="<%= DB.roles(Developer, PDM, PM) %>">
+                    <security:authorizeBlock roles="<%= DB.roles(Developer, PDM) %>">
                         <li>
                             <stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"
