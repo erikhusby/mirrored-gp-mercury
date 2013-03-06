@@ -6,41 +6,21 @@
     <%--@elvariable id="vessels" type="java.util.Collection"--%>
     <%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"--%>
     <%--@elvariable id="showCheckboxes" type="java.lang.Boolean"--%>
-    <%--@elvariable id="showSampleList" type="java.lang.Boolean"--%>
-    <%--@elvariable id="showVesselView" type="java.lang.Boolean"--%>
-    <%--@elvariable id="showWorkflow" type="java.lang.Boolean"--%>
+    <%--@elvariable id="showSampleList" type="java.lang.Boolean" value="true" --%>
+    <%--@elvariable id="showVesselView" type="java.lang.Boolean" value="true"--%>
+    <%--@elvariable id="showWorkflow" type="java.lang.Boolean" value="true" --%>
 
     <script type="text/javascript">
 
         $(document).ready(function () {
-            <%--if (${showSampleList}){--%>
-                <%--showSampleList=true;--%>
-            <%--}--%>
-            <%--if (${showVesselView}){--%>
-                <%--showVesselView=true;--%>
-            <%--}--%>
-            <%--if (${showWorkflow}){--%>
-                <%--showWorkflow=true;--%>
-            <%--}--%>
             var tableOptions=[];
-            var firstSortColumn=1;
-            if (${showSampleList}){
-                firstSortColumn++;
-                tableOptions.push({"bSortable":false});
-            }
-            if (${showWorkflow}) {
-                firstSortColumn++;
-                tableOptions.push({"bSortable":false});
-            }
-            if (${showVesselView}) {
-                firstSortColumn++;
-                tableOptions.push({"bSortable":false});
-            }
+            var firstSortColumn=4;
             if (${showCheckboxes}) {
                 firstSortColumn++;
                 tableOptions.push({"bSortable":false});
             }
             tableOptions.push [{"bSortable":false},{"bSortable":false},
+            {"bSortable":false},{"bSortable":false},{"bSortable":false},
                                         {"bSortable":false},
                                         {"bSortable":true},
                                         {"bSortable":true, "sType":"numeric"},
