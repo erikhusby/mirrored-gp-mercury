@@ -3,11 +3,10 @@ package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import javax.inject.Inject;
+import java.text.MessageFormat;
 import java.util.List;
 
 /**
@@ -27,29 +26,26 @@ public class FundingTokenInput extends TokenInput<Funding> {
 
     public String getJsonString(String query) throws JSONException {
         List<Funding> fundingList = quoteFundingList.find(query);
-
-        JSONArray itemList = new JSONArray();
-        for (Funding funding : fundingList) {
-            createAutocomplete(itemList, funding);
-        }
-
-        return itemList.toString();
+        return createItemListString(fundingList);
     }
 
     @Override
-    public String generateCompleteData() throws JSONException {
-
-        JSONArray itemList = new JSONArray();
-        for (Funding funding : getTokenObjects()) {
-            createAutocomplete(itemList, funding);
-        }
-
-        return itemList.toString();
+    protected boolean isSingleLineMenuEntry() {
+        return false;
     }
 
-    private static void createAutocomplete(JSONArray itemList, Funding funding) throws JSONException {
-        JSONObject item = getJSONObject(funding.getDisplayName(), funding.getDisplayName(), false);
-        item.put("matchDescription", funding.getMatchDescription());
-        itemList.put(item);
+    @Override
+    protected String getTokenId(Funding funding) {
+        return funding.getDisplayName();
+    }
+
+    @Override
+    protected String formatMessage(String messageString, Funding funding) {
+        return MessageFormat.format(messageString, funding.getDisplayName(), funding.getMatchDescription());
+    }
+
+    @Override
+    protected String getTokenName(Funding funding) {
+        return funding.getDisplayName();
     }
 }

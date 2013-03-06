@@ -26,30 +26,31 @@ import static org.testng.Assert.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderAddOnEtlDbFreeTest {
-    String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
-    long entityId = 1122334455L;
-    long productId = 332891L;
-    long pdoId = 98789798L;
+    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private long entityId = 1122334455L;
+    private long productId = 332891L;
+    private long pdoId = 98789798L;
+    private ProductOrderAddOnEtl tst;
 
-    AuditReaderDao auditReader = createMock(AuditReaderDao.class);
-    ProductOrderDao dao = createMock(ProductOrderDao.class);
-    ProductOrder pdo = createMock(ProductOrder.class);
-    ProductOrderAddOn obj = createMock(ProductOrderAddOn.class);
-    Product product = createMock(Product.class);
-    Object[] mocks = new Object[]{auditReader, dao, pdo, obj, product};
+    private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
+    private ProductOrderDao dao = createMock(ProductOrderDao.class);
+    private ProductOrder pdo = createMock(ProductOrder.class);
+    private ProductOrderAddOn obj = createMock(ProductOrderAddOn.class);
+    private Product product = createMock(Product.class);
+    private Object[] mocks = new Object[]{auditReader, dao, pdo, obj, product};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         reset(mocks);
+
+        tst = new ProductOrderAddOnEtl();
+        tst.setProductOrderDao(dao);
+        tst.setAuditReaderDao(auditReader);
     }
 
     public void testEtlFlags() throws Exception {
         expect(obj.getProductOrderAddOnId()).andReturn(entityId);
         replay(mocks);
-
-        ProductOrderAddOnEtl tst = new ProductOrderAddOnEtl();
-        tst.setProductOrderDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.getEntityClass(), ProductOrderAddOn.class);
 
@@ -69,10 +70,6 @@ public class ProductOrderAddOnEtlDbFreeTest {
 
         replay(mocks);
 
-        ProductOrderAddOnEtl tst = new ProductOrderAddOnEtl();
-        tst.setProductOrderDao(dao);
-        tst.setAuditReaderDao(auditReader);
-
         assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
@@ -87,10 +84,6 @@ public class ProductOrderAddOnEtlDbFreeTest {
         expect(product.getProductId()).andReturn(productId);
 
         replay(mocks);
-
-        ProductOrderAddOnEtl tst = new ProductOrderAddOnEtl();
-        tst.setProductOrderDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
@@ -111,10 +104,6 @@ public class ProductOrderAddOnEtlDbFreeTest {
         expect(product.getProductId()).andReturn(productId);
 
         replay(mocks);
-
-        ProductOrderAddOnEtl tst = new ProductOrderAddOnEtl();
-        tst.setProductOrderDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
         assertEquals(records.size(), 1);

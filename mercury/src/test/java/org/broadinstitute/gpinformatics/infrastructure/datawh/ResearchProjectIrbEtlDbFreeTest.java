@@ -25,31 +25,32 @@ import static org.testng.Assert.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ResearchProjectIrbEtlDbFreeTest {
-    String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
-    long entityId = 1122334455L;
-    long researchProjectId = 2233445511L;
-    String irb = "NHGRI-1234-00-02042012-7";
-    ResearchProjectIRB.IrbType irbType = ResearchProjectIRB.IrbType.FARBER;
+    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private long entityId = 1122334455L;
+    private long researchProjectId = 2233445511L;
+    private String irb = "NHGRI-1234-00-02042012-7";
+    private ResearchProjectIRB.IrbType irbType = ResearchProjectIRB.IrbType.FARBER;
+    private ResearchProjectIrbEtl tst;
 
-    AuditReaderDao auditReader = createMock(AuditReaderDao.class);
-    ResearchProjectDao dao = createMock(ResearchProjectDao.class);
-    ResearchProjectIRB obj = createMock(ResearchProjectIRB.class);
-    ResearchProject project = createMock(ResearchProject.class);
+    private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
+    private ResearchProjectDao dao = createMock(ResearchProjectDao.class);
+    private ResearchProjectIRB obj = createMock(ResearchProjectIRB.class);
+    private ResearchProject project = createMock(ResearchProject.class);
 
-    Object[] mocks = new Object[]{auditReader, dao, obj, project};
+    private Object[] mocks = new Object[]{auditReader, dao, obj, project};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
         reset(mocks);
+
+        tst = new ResearchProjectIrbEtl();
+        tst.setResearchProjectDao(dao);
+        tst.setAuditReaderDao(auditReader);
     }
 
     public void testEtlFlags() throws Exception {
         expect(obj.getResearchProjectIRBId()).andReturn(entityId);
         replay(mocks);
-
-        ResearchProjectIrbEtl tst = new ResearchProjectIrbEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.getEntityClass(), ResearchProjectIRB.class);
 
@@ -69,10 +70,6 @@ public class ResearchProjectIrbEtlDbFreeTest {
 
         replay(mocks);
 
-        ResearchProjectIrbEtl tst = new ResearchProjectIrbEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
-
         assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
@@ -87,10 +84,6 @@ public class ResearchProjectIrbEtlDbFreeTest {
         expect(obj.getIrbType()).andReturn(irbType).times(2);
 
         replay(mocks);
-
-        ResearchProjectIrbEtl tst = new ResearchProjectIrbEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
@@ -108,10 +101,6 @@ public class ResearchProjectIrbEtlDbFreeTest {
         expect(obj.getIrbType()).andReturn(null);
 
         replay(mocks);
-
-        ResearchProjectIrbEtl tst = new ResearchProjectIrbEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
@@ -134,10 +123,6 @@ public class ResearchProjectIrbEtlDbFreeTest {
         expect(obj.getIrbType()).andReturn(irbType).times(2);
 
         replay(mocks);
-
-        ResearchProjectIrbEtl tst = new ResearchProjectIrbEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
         assertEquals(records.size(), 1);

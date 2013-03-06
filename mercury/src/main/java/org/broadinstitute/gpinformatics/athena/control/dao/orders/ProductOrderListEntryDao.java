@@ -155,8 +155,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
                         productProductFamilyJoin.get(ProductFamily_.name),
                         productOrderResearchProjectJoin.get(ResearchProject_.title),
                         productOrderRoot.get(ProductOrder_.createdBy),
-                        productOrderRoot.get(ProductOrder_.placedDate),
-                        productOrderRoot.get(ProductOrder_.sampleCount)));
+                        productOrderRoot.get(ProductOrder_.placedDate)));
 
         // Only taking a single JIRA ticket key as I don't want to worry about Splitter-like issues for
         // a varargs array of keys as there is currently no need for that functionality.

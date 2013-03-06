@@ -29,18 +29,19 @@
                     });
 
                     $j("#owner").tokenInput(
-                            "${ctxpath}/projects/project.action?usersAutocomplete=", {
-                                hintText: "Type a name",
-                                prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
-                                tokenLimit: 1,
-                                resultsFormatter: formatUser
-                            }
+                        "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                            hintText: "Type a name",
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
+                            tokenLimit: 1,
+                            resultsFormatter: formatInput
+                        }
                     );
 
                     $j("#researchProject").tokenInput(
                         "${ctxpath}/orders/order.action?projectAutocomplete=", {
                             hintText: "Type a project name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
+                            resultsFormatter: formatInput,
                             tokenLimit: 1
                         }
                     );
@@ -50,7 +51,7 @@
                             hintText: "Type a Product name or Part Number   ",
                             onAdd: updateUIForProductChoice,
                             onDelete: updateUIForProductChoice,
-                            resultsFormatter: formatProduct,
+                            resultsFormatter: formatInput,
                             prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
                             tokenLimit: 1
                         }
@@ -61,8 +62,9 @@
                 }
             );
 
-            function formatProduct(item) {
-                return '<li><div class="ac-dropdown-text">' + item.name + '[' + item.id + ']' + "</div></li>";
+            function formatInput(item) {
+                var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
+                return "<li>" + item.dropdownItem + extraCount + '</li>';
             }
 
             var addOn = [];
@@ -153,7 +155,8 @@
 
             function formatUser(item) {
                 return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
-                       "<div class=\"ac-dropdown-subtext\">" + item.username + " " + item.email + "</div></li>";
+                       "<div class=\"ac-dropdown-subtext\">" + item.username + " " + item.email + "</div>" +
+                           item.extraCount + '</li>'
             }
         </script>
     </stripes:layout-component>

@@ -25,30 +25,31 @@ import static org.testng.Assert.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ResearchProjectFundingEtlDbFreeTest {
-    String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
-    long entityId = 1122334455L;
-    long researchProjectId = 2233445511L;
-    String fundingId = "NIH-12341234-02132013-V2";
+    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private long entityId = 1122334455L;
+    private long researchProjectId = 2233445511L;
+    private String fundingId = "NIH-12341234-02132013-V2";
+    private ResearchProjectFundingEtl tst;
 
-    AuditReaderDao auditReader = createMock(AuditReaderDao.class);
-    ResearchProjectDao dao = createMock(ResearchProjectDao.class);
-    ResearchProjectFunding obj = createMock(ResearchProjectFunding.class);
-    ResearchProject project = createMock(ResearchProject.class);
+    private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
+    private ResearchProjectDao dao = createMock(ResearchProjectDao.class);
+    private ResearchProjectFunding obj = createMock(ResearchProjectFunding.class);
+    private ResearchProject project = createMock(ResearchProject.class);
 
-    Object[] mocks = new Object[]{auditReader, dao, obj, project};
+    private Object[] mocks = new Object[]{auditReader, dao, obj, project};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void beforeMethod() {
         reset(mocks);
+
+        tst = new ResearchProjectFundingEtl();
+        tst.setResearchProjectDao(dao);
+        tst.setAuditReaderDao(auditReader);
     }
 
     public void testEtlFlags() throws Exception {
         expect(obj.getResearchProjectFundingId()).andReturn(entityId);
         replay(mocks);
-
-        ResearchProjectFundingEtl tst = new ResearchProjectFundingEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.getEntityClass(), ResearchProjectFunding.class);
 
@@ -68,10 +69,6 @@ public class ResearchProjectFundingEtlDbFreeTest {
 
         replay(mocks);
 
-        ResearchProjectFundingEtl tst = new ResearchProjectFundingEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
-
         assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
@@ -85,10 +82,6 @@ public class ResearchProjectFundingEtlDbFreeTest {
         expect(obj.getFundingId()).andReturn(fundingId);
 
         replay(mocks);
-
-        ResearchProjectFundingEtl tst = new ResearchProjectFundingEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
@@ -105,10 +98,6 @@ public class ResearchProjectFundingEtlDbFreeTest {
         expect(obj.getFundingId()).andReturn(fundingId);
 
         replay(mocks);
-
-        ResearchProjectFundingEtl tst = new ResearchProjectFundingEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
@@ -129,10 +118,6 @@ public class ResearchProjectFundingEtlDbFreeTest {
         expect(obj.getFundingId()).andReturn(fundingId);
 
         replay(mocks);
-
-        ResearchProjectFundingEtl tst = new ResearchProjectFundingEtl();
-        tst.setResearchProjectDao(dao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
         assertEquals(records.size(), 1);

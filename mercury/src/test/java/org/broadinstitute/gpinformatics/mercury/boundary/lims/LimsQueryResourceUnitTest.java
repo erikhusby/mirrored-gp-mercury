@@ -315,29 +315,24 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
-    @BeforeMethod(groups = DATABASE_FREE,enabled = true)
+    @Test(groups = DATABASE_FREE)
     public void testFetchUserByBadge() throws Exception {
 
-        String testUserBadge = "Test" + String.valueOf(BSPManagerFactoryStub.QA_DUDE_USER_ID);
-        EasyMock.expect(mockThriftService.fetchUserIdForBadgeId(testUserBadge)).andReturn("QADudeTest");
-        EasyMock.replay(mockThriftService);
+        String testUserBadge = "Test" + BSPManagerFactoryStub.QA_DUDE_USER_ID;
+        replayAll();
 
         String userId = resource.fetchUserIdForBadgeId(testUserBadge);
 
         assertThat(userId, equalTo("QADudeTest"));
 
-        EasyMock.verify(mockThriftService);
+        verifyAll();
     }
 
-    //
-    @BeforeMethod(groups = DATABASE_FREE,enabled = false)
+    @Test(groups = DATABASE_FREE)
     public void testFetchNoUserByBogusBadge() throws Exception {
 
         String testUserBadge = "BOGUSFAKENONEXISTANTBADGE";
-        EasyMock.expect(mockThriftService.fetchUserIdForBadgeId(testUserBadge))
-                .andThrow(new RuntimeException());
-        EasyMock.replay(mockThriftService);
-
+        replayAll();
 
         try {
             String userId = resource.fetchUserIdForBadgeId(testUserBadge);
@@ -346,7 +341,8 @@ public class LimsQueryResourceUnitTest {
         } catch (Exception e) {
 
         }
-        EasyMock.verify(mockThriftService);
+
+        verifyAll();
     }
 
     private void replayAll() {

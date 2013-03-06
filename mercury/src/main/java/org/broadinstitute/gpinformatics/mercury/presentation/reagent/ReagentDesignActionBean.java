@@ -70,6 +70,9 @@ public class ReagentDesignActionBean extends CoreActionBean {
 
     private Collection<ReagentDesign> allReagentDesigns;
 
+    @Inject
+    private ReagentDesignTokenInput reagentDesignTokenInput;
+
     private Map<String, String> barcodeMap;
 
     @Validate(required = true, on = {SAVE_BARCODE_ACTION})
@@ -107,17 +110,9 @@ public class ReagentDesignActionBean extends CoreActionBean {
         return new ForwardResolution(REAGENT_LIST_PAGE);
     }
 
-    public String getReagentDesignCompleteData() throws Exception {
-        if (!StringUtils.isBlank(getReagentDesign())) {
-            return ReagentDesignTokenInput
-                    .getReagentDesignCompleteData(reagentDesignDao, getReagentDesign());
-        }
-        return "";
-    }
-
     @HandlesEvent("reagentListAutocomplete")
     public Resolution reagentListAutocomplete() throws Exception {
-        return createTextResolution(ReagentDesignTokenInput.getJsonString(reagentDesignDao, getQ()));
+        return createTextResolution(reagentDesignTokenInput.getJsonString(getQ()));
     }
 
     @HandlesEvent(EDIT_ACTION)
@@ -241,5 +236,13 @@ public class ReagentDesignActionBean extends CoreActionBean {
 
     public String getBarcode() {
         return barcode;
+    }
+
+    public ReagentDesignTokenInput getReagentDesignTokenInput() {
+        return reagentDesignTokenInput;
+    }
+
+    public void setReagentDesignTokenInput(ReagentDesignTokenInput reagentDesignTokenInput) {
+        this.reagentDesignTokenInput = reagentDesignTokenInput;
     }
 }

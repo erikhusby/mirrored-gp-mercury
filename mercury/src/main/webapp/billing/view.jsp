@@ -1,4 +1,5 @@
 <%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
+<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -29,17 +30,14 @@
         <stripes:form action="/billing/session.action" id="orderForm" class="form-horizontal">
             <stripes:hidden name="sessionKey" value="${actionBean.sessionKey}"/>
 
-            <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.BillingManager.name}%>">
+            <security:authorizeBlock roles="<%= DB.roles(Developer, BillingManager) %>">
                 <c:if test="${actionBean.editSession.billedDate == null}">
                     <stripes:submit name="bill" value="Bill Work in Broad Quotes" class="btn" style="margin-right:30px;"/>
                 </c:if>
-            </security:authorizeBlock>
 
-            <stripes:submit name="downloadTracker" value="Download Tracker" class="btn" style="margin-right:30px;"/>
-            <stripes:submit name="downloadQuoteItems" value="Download Quote Items" class="btn" style="margin-right:30px;"/>
+                <stripes:submit name="downloadTracker" value="Download Tracker" class="btn" style="margin-right:30px;"/>
+                <stripes:submit name="downloadQuoteItems" value="Download Quote Items" class="btn" style="margin-right:30px;"/>
 
-
-            <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.BillingManager.name}%>">
                 <c:if test="${actionBean.editSession.billedDate == null}">
                     <stripes:submit name="endSession" value="End Billing Session" class="btn" style="margin-right:15px;px;"/>
                 </c:if>

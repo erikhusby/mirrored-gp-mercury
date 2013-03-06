@@ -317,7 +317,7 @@ public class ResearchProjectActionBean extends CoreActionBean {
     public static String getAutoCompleteJsonString(Collection<ResearchProject> projects) throws JSONException {
         JSONArray itemList = new JSONArray();
         for (ResearchProject project : projects) {
-            itemList.put(TokenInput.getJSONObject(project.getBusinessKey(), project.getTitle(), false));
+            itemList.put(TokenInput.getJSONObject(project.getBusinessKey(), project.getTitle()));
         }
 
         return itemList.toString();

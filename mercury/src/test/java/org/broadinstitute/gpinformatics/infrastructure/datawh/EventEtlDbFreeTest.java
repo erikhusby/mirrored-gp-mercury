@@ -41,6 +41,7 @@ public class EventEtlDbFreeTest {
     private final String vesselLabel = "03138970";
     private final Date eventDate = new Date(1350000000000L);
     private final LabEventType eventType = LabEventType.PICO_PLATING_BUCKET;
+    private EventEtl tst;
 
     private final AuditReaderDao auditReader = createMock(AuditReaderDao.class);
     private final LabEventDao dao = createMock(LabEventDao.class);
@@ -69,14 +70,13 @@ public class EventEtlDbFreeTest {
         sampleInstList.clear();
         sampleInstList.add(sampleInst);
 
+        tst = new EventEtl(wfLookup, dao, pdoDao);
+        tst.setAuditReaderDao(auditReader);
     }
 
     public void testEtlFlags() throws Exception {
         expect(obj.getLabEventId()).andReturn(entityId);
         replay(mocks);
-
-        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
-        tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.getEntityClass(), LabEvent.class);
 
@@ -96,9 +96,6 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
-        tst.setAuditReaderDao(auditReader);
-
         assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
@@ -110,9 +107,6 @@ public class EventEtlDbFreeTest {
         expect(obj.getLabEventType()).andReturn(null);
 
         replay(mocks);
-
-        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
-        tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.entityRecord(etlDateStr, false, entityId).size(), 0);
 
@@ -129,9 +123,6 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
-        tst.setAuditReaderDao(auditReader);
-
         assertEquals(tst.entityRecord(etlDateStr, false, entityId).size(), 0);
 
         verify(mocks);
@@ -147,9 +138,6 @@ public class EventEtlDbFreeTest {
         expect(vessel.getLabel()).andReturn(vesselLabel);
 
         replay(mocks);
-
-        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 0);
@@ -168,9 +156,6 @@ public class EventEtlDbFreeTest {
 
         replay(mocks);
 
-        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
-        tst.setAuditReaderDao(auditReader);
-
         assertEquals(tst.entityRecord(etlDateStr, false, entityId).size(), 0);
 
         verify(mocks);
@@ -188,9 +173,6 @@ public class EventEtlDbFreeTest {
         expect(sample.getProductOrderKey()).andReturn(null);
 
         replay(mocks);
-
-        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 0);
@@ -211,9 +193,6 @@ public class EventEtlDbFreeTest {
         expect(pdoDao.findByBusinessKey(pdoKey)).andReturn(null);
 
         replay(mocks);
-
-        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 0);
@@ -243,9 +222,6 @@ public class EventEtlDbFreeTest {
         expect(obj.getEventDate()).andReturn(eventDate);
 
         replay(mocks);
-
-        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
@@ -278,9 +254,6 @@ public class EventEtlDbFreeTest {
         expect(obj.getEventDate()).andReturn(eventDate);
 
         replay(mocks);
-
-        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
@@ -315,9 +288,6 @@ public class EventEtlDbFreeTest {
         expect(obj.getEventDate()).andReturn(eventDate);
 
         replay(mocks);
-
-        EventEtl tst = new EventEtl(wfLookup, dao, pdoDao);
-        tst.setAuditReaderDao(auditReader);
 
         Collection<String> records = tst.entityRecordsInRange(entityId, entityId, etlDateStr, false);
         assertEquals(records.size(), 1);
