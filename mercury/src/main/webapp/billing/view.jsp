@@ -1,4 +1,4 @@
-<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
+<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.roles" %>
 <%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
@@ -30,7 +30,7 @@
         <stripes:form action="/billing/session.action" id="orderForm" class="form-horizontal">
             <stripes:hidden name="sessionKey" value="${actionBean.sessionKey}"/>
 
-            <security:authorizeBlock roles="<%= DB.roles(Developer, BillingManager) %>">
+            <security:authorizeBlock roles="<%= roles(Developer, BillingManager) %>">
                 <c:if test="${actionBean.editSession.billedDate == null}">
                     <stripes:submit name="bill" value="Bill Work in Broad Quotes" class="btn" style="margin-right:30px;"/>
                 </c:if>
