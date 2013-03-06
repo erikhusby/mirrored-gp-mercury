@@ -4,6 +4,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
+import javax.annotation.Nonnull;
 import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
@@ -17,18 +18,19 @@ import java.util.List;
 @Stateful
 @RequestScoped
 /**
- * Dao for {@link PriceItem}s
+ * Dao for {@link PriceItem}s.
  */
 public class PriceItemDao extends GenericDao {
 
 
     /**
-     * The Product Details CRUD UI will want to enumerate all {@link PriceItem}s or at least all "eligible" {@link PriceItem}s for
-     * attachment to {@link org.broadinstitute.gpinformatics.athena.entity.products.Product}s, where eligibility may be
-     * determined by platform = 'GP' or some other criteria.  I am currently assuming that we have cached copies of
-     * these {@link PriceItem}s in our DB and this is the source of the {@link PriceItem}s data that feeds the CRUD UI.
+     * TODO This method is probably useless as it only serves up the PriceItems that have been attached to Products in
+     * Mercury, not anything resembling the full list of PriceItems from the Quote Server.  It is only referenced from its
+     * own test and a BillingLedgerDaoTest.
      *
-     * @return
+     * TODO Delete.
+     *
+     * @return List of PriceItems.
      */
     public List<PriceItem> findAll() {
         return findList(PriceItem.class, PriceItem_.platform, PriceItem.PLATFORM_GENOMICS);
@@ -36,14 +38,15 @@ public class PriceItemDao extends GenericDao {
 
 
     /**
-     * Find a {@link PriceItem}s by its unique triplet
+     * Find a {@link PriceItem}s by its unique triplet.
      *
-     * @param platform
-     * @param categoryName
-     * @param priceItemName
-     * @return
+     * @param platform Non-null platform name.
+     * @param categoryName Nullable category name.
+     * @param priceItemName Non-null price item name.
+     *
+     * @return Matching PriceItem.
      */
-    public PriceItem find(String platform, String categoryName, String priceItemName) {
+    public PriceItem find(@Nonnull String platform, String categoryName, @Nonnull String priceItemName) {
 
         if (platform == null) {
             throw new NullPointerException("Null platform!");
@@ -53,7 +56,7 @@ public class PriceItemDao extends GenericDao {
             throw new NullPointerException("Null name!");
         }
 
-        // null category may be okay
+        // Null category is okay.
 
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<PriceItem> cq = cb.createQuery(PriceItem.class);
@@ -78,6 +81,5 @@ public class PriceItemDao extends GenericDao {
         } catch (NoResultException e) {
             return null;
         }
-
     }
 }
