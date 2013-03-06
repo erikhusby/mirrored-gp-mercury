@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONException;
 
 import javax.inject.Inject;
+import java.text.MessageFormat;
 import java.util.List;
 
 /**
@@ -43,15 +44,14 @@ public class UserTokenInput extends TokenInput<BspUser> {
     }
 
     @Override
-    protected String getTokenName(BspUser bspUser) {
-        return bspUser.getFirstName() + " " + bspUser.getLastName();
+    protected String formatMessage(String messageString, BspUser bspUser) {
+        return MessageFormat.format(
+            messageString, bspUser.getFirstName() + " " + bspUser.getLastName(),
+                           bspUser.getUsername() + " " + bspUser.getEmail());
     }
 
     @Override
-    protected String[] getMenuLines(BspUser bspUser) {
-        String[] lines = new String[2];
-        lines[0] = bspUser.getFirstName() + " " + bspUser.getLastName();
-        lines[1] = bspUser.getUsername() + " " + bspUser.getEmail();
-        return lines;
+    protected String getTokenName(BspUser bspUser) {
+        return bspUser.getFirstName() + " " + bspUser.getLastName();
     }
 }

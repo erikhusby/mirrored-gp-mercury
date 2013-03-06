@@ -9,6 +9,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.inject.Inject;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -52,16 +53,14 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
     }
 
     @Override
-    protected String getTokenName(PriceItem priceItem) {
-        return priceItem.getName();
+    protected String formatMessage(String messageString, PriceItem priceItem) {
+        return MessageFormat.format(messageString, priceItem.getName(),
+            priceItem.getPlatformName() + " " + priceItem.getCategoryName());
     }
 
     @Override
-    protected String[] getMenuLines(PriceItem priceItem) {
-        String[] lines = new String[2];
-        lines[0] = priceItem.getName();
-        lines[1] = priceItem.getPlatformName() + " " + priceItem.getCategoryName();
-        return lines;
+    protected String getTokenName(PriceItem priceItem) {
+        return priceItem.getName();
     }
 
     @Override

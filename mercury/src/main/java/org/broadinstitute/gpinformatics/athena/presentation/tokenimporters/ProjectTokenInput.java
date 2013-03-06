@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONException;
 
 import javax.inject.Inject;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -50,10 +51,8 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
     }
 
     @Override
-    protected String[] getMenuLines(ResearchProject project) {
-        String[] lines = new String[1];
-        lines[0] = project.getTitle();
-        return lines;
+    protected String formatMessage(String messageString, ResearchProject project) {
+        return MessageFormat.format(messageString, project.getTitle());
     }
 
     public String getTokenObject() {

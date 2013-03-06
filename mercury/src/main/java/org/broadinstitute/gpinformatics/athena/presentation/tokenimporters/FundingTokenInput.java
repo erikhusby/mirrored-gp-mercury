@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteFundingList;
 import org.json.JSONException;
 
 import javax.inject.Inject;
+import java.text.MessageFormat;
 import java.util.List;
 
 /**
@@ -39,15 +40,12 @@ public class FundingTokenInput extends TokenInput<Funding> {
     }
 
     @Override
-    protected String getTokenName(Funding funding) {
-        return funding.getDisplayName();
+    protected String formatMessage(String messageString, Funding funding) {
+        return MessageFormat.format(messageString, funding.getDisplayName(), funding.getMatchDescription());
     }
 
     @Override
-    protected String[] getMenuLines(Funding funding) {
-        String[] lines = new String[2];
-        lines[0] = funding.getDisplayName();
-        lines[1] = funding.getMatchDescription();
-        return lines;
+    protected String getTokenName(Funding funding) {
+        return funding.getDisplayName();
     }
 }

@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign_;
 import org.json.JSONException;
 
 import javax.inject.Inject;
+import java.text.MessageFormat;
 import java.util.List;
 
 /**
@@ -58,14 +59,13 @@ public class ReagentDesignTokenInput extends TokenInput<ReagentDesign> {
     }
 
     @Override
-    protected String getTokenName(ReagentDesign reagentDesign) {
-        return reagentDesign.getBusinessKey() + " (" + reagentDesign.getTargetSetName() + ")";
+    protected String formatMessage(String messageString, ReagentDesign reagentDesign) {
+        return MessageFormat.format(
+            messageString, reagentDesign.getBusinessKey() + " (" + reagentDesign.getTargetSetName() + ")");
     }
 
     @Override
-    protected String[] getMenuLines(ReagentDesign reagentDesign) {
-        String[] lines = new String[1];
-        lines[0] = reagentDesign.getBusinessKey() + " (" + reagentDesign.getTargetSetName() + ")";
-        return lines;
+    protected String getTokenName(ReagentDesign reagentDesign) {
+        return reagentDesign.getBusinessKey() + " (" + reagentDesign.getTargetSetName() + ")";
     }
 }

@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.json.JSONException;
 
 import javax.inject.Inject;
+import java.text.MessageFormat;
 import java.util.List;
 
 /**
@@ -47,10 +48,8 @@ public class CohortTokenInput extends TokenInput<Cohort> {
     }
 
     @Override
-    protected String[] getMenuLines(Cohort cohort) {
-        String[] lines = new String[2];
-        lines[0] = cohort.getDisplayName();
-        lines[1] = cohort.getGroup() + " " + cohort.getCategory();
-        return lines;
+    protected String formatMessage(String messageString, Cohort cohort) {
+        return MessageFormat.format(
+            messageString, cohort.getDisplayName(), cohort.getGroup() + " " + cohort.getCategory());
     }
 }

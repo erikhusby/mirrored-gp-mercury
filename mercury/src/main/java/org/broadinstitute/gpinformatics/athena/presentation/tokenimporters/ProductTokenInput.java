@@ -7,6 +7,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 
 import javax.inject.Inject;
+import java.text.MessageFormat;
 import java.util.List;
 
 /**
@@ -48,10 +49,8 @@ public class ProductTokenInput extends TokenInput<Product> {
     }
 
     @Override
-    protected String[] getMenuLines(Product product) {
-        String[] lines = new String[1];
-        lines[0] = product.getProductName() + " [" + product.getBusinessKey() + "]";
-        return lines;
+    protected String formatMessage(String messageString, Product product) {
+        return MessageFormat.format(messageString, product.getProductName() + " [" + product.getBusinessKey() + "]");
     }
 
     public String getAddOnsJsonString(Product editProduct, String query) throws JSONException {

@@ -69,7 +69,7 @@ public class RiskItem implements Serializable {
     }
 
     public Long getRiskItemId() {
-        return risk_item_id;
+        return riskItemId;
     }
 
     public RiskCriteria getRiskCriteria() {

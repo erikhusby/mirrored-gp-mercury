@@ -38,6 +38,12 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     /** A cache of the result of calling generateCompleteData. */
     private String completeDataCache;
 
+    private final String formatString;
+
+    public TokenInput() {
+        formatString = isSingleLineMenuEntry() ? MENU_ONE_LINE : MENU_TWO_LINE;
+    }
+
     // The UI needs to get at these so they must be public.
     public void setListOfKeys(String listOfKeys) {
         this.listOfKeys = listOfKeys;
@@ -153,14 +159,10 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     public JSONObject createAutocomplete(JSONArray itemList, TOKEN_OBJECT tokenObject) throws JSONException {
         JSONObject item = getJSONObject(getTokenId(tokenObject), getTokenName(tokenObject));
 
-        String[] menuLines = getMenuLines(tokenObject);
-        String listItem = (menuLines.length == 1) ?
-            MessageFormat.format(MENU_ONE_LINE, menuLines[0]) :
-            MessageFormat.format(MENU_TWO_LINE, menuLines[0], menuLines[1]);
+        item.put("dropdownItem", formatMessage(formatString, tokenObject));
 
-        item.put("dropdownItem", listItem);
+        // add the item to the item list
         itemList.put(item);
-
         return item;
     }
 
@@ -168,8 +170,8 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     protected abstract String getTokenId(TOKEN_OBJECT tokenObject);
     protected abstract String getTokenName(TOKEN_OBJECT tokenObject);
 
-    // This allows the subclass to populate the information for each line of the desired menu (either one or two lines)
-    protected abstract String[] getMenuLines(TOKEN_OBJECT tokenObject);
+    // Format the message into a string
+    protected abstract String formatMessage(String messageString, TOKEN_OBJECT tokenObject);
 
     /**
      * During an action bean session there are a number of places where the token objects may be used, this makes

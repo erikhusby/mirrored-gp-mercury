@@ -8,6 +8,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.inject.Inject;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -63,15 +64,13 @@ public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
     }
 
     @Override
-    protected String getTokenName(MaterialType materialType) {
-        return materialType.getFullName();
+    protected String formatMessage(String messageString, MaterialType materialType) {
+        return MessageFormat.format(messageString, materialType.getFullName());
     }
 
     @Override
-    protected String[] getMenuLines(MaterialType materialType) {
-        String[] lines = new String[1];
-        lines[0] = materialType.getFullName();
-        return lines;
+    protected String getTokenName(MaterialType materialType) {
+        return materialType.getFullName();
     }
 
     @Override
