@@ -17,7 +17,6 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaRunConfiguration;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
@@ -135,7 +134,7 @@ public class ZimsIlluminaRunFactoryTest {
         mapBarcodeToSourceTube.put("testTube", testTube);
         LabEvent stripTubeBTransfer = labEventFactory.buildCherryPickRackToStripTubeDbFree(stripTubeBTransferEvent, new HashMap<String, TubeFormation>(), mapBarcodeToSourceTube, null, new HashMap<String, StripTube>(), new HashMap<String, RackOfTubes>());
 
-        flowcell = new IlluminaFlowcell(EIGHT_LANE, "testFlowcell", new IlluminaRunConfiguration(76, true));
+        flowcell = new IlluminaFlowcell(EIGHT_LANE, "testFlowcell");
         PlateTransferEventType flowcellTransferEvent = bettaLimsMessageFactory.buildStripTubeToFlowcell("FlowcellTransfer", "testStripTube", "testFlowcell");
         StripTube stripTube = (StripTube) getOnly(stripTubeBTransfer.getTargetLabVessels());
         labEventFactory.buildFromBettaLimsPlateToPlateDbFree(flowcellTransferEvent, stripTube, flowcell);

@@ -34,11 +34,6 @@ public class IlluminaRunChamber extends RunChamber {
     }
 
     @Override
-    public RunConfiguration getRunConfiguration() {
-        return this.flowcell.getRunConfiguration();
-    }
-
-    @Override
     public CONTAINER_TYPE getType() {
         return CONTAINER_TYPE.ILLUMINA_RUN_CHAMBER;
     }

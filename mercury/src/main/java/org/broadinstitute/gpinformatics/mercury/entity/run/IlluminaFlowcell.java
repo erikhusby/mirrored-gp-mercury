@@ -14,9 +14,6 @@ import java.util.Set;
 @Audited
 public class IlluminaFlowcell extends AbstractRunCartridge implements VesselContainerEmbedder<RunChamber> {
 
-    // todo jmt fix this
-    @Transient
-    private IlluminaRunConfiguration runConfiguration;
 
     @Enumerated(EnumType.STRING)
     private FLOWCELL_TYPE flowcellType;
@@ -64,10 +61,9 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         EIGHT_LANE,MISEQ
     }
 
-    public IlluminaFlowcell(FLOWCELL_TYPE flowcellType,String flowcellBarcode,IlluminaRunConfiguration runConfig) {
+    public IlluminaFlowcell(FLOWCELL_TYPE flowcellType, String flowcellBarcode) {
         super(flowcellBarcode);
         this.flowcellBarcode = flowcellBarcode;
-        this.runConfiguration = runConfig;
         this.flowcellType = flowcellType;
     }
         
@@ -88,17 +84,6 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         runChambers.add(runChamber);
     }
 */
-
-    /**
-     * In the illumina world, one sets the run configuration
-     * when the flowcell is made.  But other technologies
-     * might have their run configuration set later
-     * in the process.
-     * @return
-     */
-    public IlluminaRunConfiguration getRunConfiguration() {
-        return this.runConfiguration;
-    }
 
     @Override
     public Iterable<RunChamber> getChambers() {
