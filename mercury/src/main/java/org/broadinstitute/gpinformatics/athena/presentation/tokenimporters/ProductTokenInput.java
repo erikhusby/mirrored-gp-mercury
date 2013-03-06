@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
-import org.json.JSONArray;
 import org.json.JSONException;
 
 import javax.inject.Inject;
@@ -55,13 +54,7 @@ public class ProductTokenInput extends TokenInput<Product> {
 
     public String getAddOnsJsonString(Product editProduct, String query) throws JSONException {
         List<Product> addOns = productDao.searchProductsForAddonsInProductEdit(editProduct, query);
-
-        JSONArray itemList = new JSONArray();
-        for (Product addOn : addOns) {
-            createAutocomplete(itemList, addOn);
-        }
-
-        return itemList.toString();
+        return createItemListString(addOns);
     }
 
     public String getTokenObject() {

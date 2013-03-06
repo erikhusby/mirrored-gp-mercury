@@ -85,7 +85,7 @@ public abstract class TokenInput<TOKEN_OBJECT> {
 
         JSONArray itemList = new JSONArray();
         for (TOKEN_OBJECT tokenObject : getTokenObjects()) {
-            createAutocomplete(itemList, tokenObject);
+            itemList.put(createAutocomplete(tokenObject));
         }
 
         return itemList.toString();
@@ -107,9 +107,8 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         // assume chunk is full size
         List<TOKEN_OBJECT> tokenObjectChunk = tokenObjects;
 
-        int maxDisplayed = getMaxDisplayed();
-
         // If there are more items than we want to efficiently display, grab the first chunk of appropriate size
+        int maxDisplayed = isSingleLineMenuEntry() ? SINGLE_LINE_MAX_DISPLAYED : DOUBLE_LINE_MAX_DISPLAYED;
         if (tokenObjects.size() > maxDisplayed) {
             extraCount = tokenObjects.size() - maxDisplayed;
             tokenObjectChunk = tokenObjects.subList(0, maxDisplayed);
@@ -119,7 +118,8 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         JSONArray itemList = new JSONArray();
         JSONObject item = null;
         for (TOKEN_OBJECT tokenObject : tokenObjectChunk) {
-            item = createAutocomplete(itemList, tokenObject);
+            item = createAutocomplete(tokenObject);
+            itemList.put(item);
         }
 
         // If there are extra items, this inserts a second line into the second line so that the count gets
@@ -132,17 +132,6 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     }
 
     /**
-     * @return The max displayed are different when there is just one line vs two lines
-     */
-    private int getMaxDisplayed() {
-        if (isSingleLineMenuEntry()) {
-            return SINGLE_LINE_MAX_DISPLAYED;
-        }
-
-        return DOUBLE_LINE_MAX_DISPLAYED;
-    }
-
-    /**
      * @return The implementing class reports wether the entries are one line or two
      */
     protected abstract boolean isSingleLineMenuEntry();
@@ -150,19 +139,14 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     /**
      * Populate the item list with its appropriate token object. Overrides are for special null handling.
      *
-     * @param itemList The full list of token items
      * @param tokenObject The token object itself
      *
      * @return The created item in case we want to do something with it.
      * @throws JSONException Any errors
      */
-    public JSONObject createAutocomplete(JSONArray itemList, TOKEN_OBJECT tokenObject) throws JSONException {
+    protected JSONObject createAutocomplete(TOKEN_OBJECT tokenObject) throws JSONException {
         JSONObject item = getJSONObject(getTokenId(tokenObject), getTokenName(tokenObject));
-
         item.put("dropdownItem", formatMessage(formatString, tokenObject));
-
-        // add the item to the item list
-        itemList.put(item);
         return item;
     }
 

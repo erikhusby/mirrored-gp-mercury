@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPMaterialTypeList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -74,12 +73,12 @@ public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
     }
 
     @Override
-    public JSONObject createAutocomplete(JSONArray itemList, MaterialType materialType) throws JSONException {
+    public JSONObject createAutocomplete(MaterialType materialType) throws JSONException {
         if (materialType == null) {
             return null;
         }
 
-        return super.createAutocomplete(itemList, materialType);
+        return super.createAutocomplete(materialType);
     }
 
     public Collection<? extends org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType> getMercuryTokenObjects() {

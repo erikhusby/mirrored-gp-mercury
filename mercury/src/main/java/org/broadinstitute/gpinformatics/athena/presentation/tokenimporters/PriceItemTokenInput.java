@@ -4,7 +4,6 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -64,15 +63,14 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
     }
 
     @Override
-    public JSONObject createAutocomplete(JSONArray itemList, PriceItem priceItem) throws JSONException {
+    public JSONObject createAutocomplete(PriceItem priceItem) throws JSONException {
         if (priceItem == null) {
             JSONObject item = getJSONObject(getListOfKeys(), "unknown price item id");
             item.put("dropdownItem", "");
-            itemList.put(item);
             return item;
         }
 
-        return super.createAutocomplete(itemList, priceItem);
+        return super.createAutocomplete(priceItem);
     }
 
     public org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getMercuryTokenObject() {
