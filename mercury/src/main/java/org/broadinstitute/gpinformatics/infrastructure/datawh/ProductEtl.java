@@ -45,7 +45,7 @@ public class ProductEtl  extends GenericEntityEtl {
 
     /** {@inheritDoc} */
     @Override
-    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
         Collection<String> recordList = new ArrayList<String>();
         Product entity = dao.findById(Product.class, entityId);
         if (entity != null) {

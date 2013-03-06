@@ -77,7 +77,7 @@ public class ProductEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.entityRecords(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -101,7 +101,7 @@ public class ProductEtlDbFreeTest {
 
         replay(mocks);
 
-        Collection<String> records = tst.entityRecord(etlDateStr, false, entityId);
+        Collection<String> records = tst.entityRecords(etlDateStr, false, entityId);
         assertEquals(records.size(), 1);
 
         verifyRecord(records.iterator().next());

@@ -47,7 +47,7 @@ public class ResearchProjectStatusEtlDbFreeTest {
 
         assertEquals(tst.entityId(obj), (Long) entityId);
 
-        assertEquals(tst.entityRecord(etlDateStr, false, null).size(), 0);
+        assertEquals(tst.entityRecords(etlDateStr, false, null).size(), 0);
         assertEquals(tst.entityRecordsInRange(0, 1, etlDateStr, false).size(), 0);
 
         assertFalse(tst.isEntityEtl());

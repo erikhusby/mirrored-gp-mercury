@@ -68,7 +68,7 @@ public class WorkflowConfigEtlDbFreeTest {
         replay(mocks);
 
         // These always return empty collections.
-        assertEquals(tst.entityRecord(etlDateStr, false, 1L).size(), 0);
+        assertEquals(tst.entityRecords(etlDateStr, false, 1L).size(), 0);
         assertEquals(tst.entityRecordsInRange(0L, 9999999999999999L, etlDateStr, false).size(), 0);
 
         verify(mocks);

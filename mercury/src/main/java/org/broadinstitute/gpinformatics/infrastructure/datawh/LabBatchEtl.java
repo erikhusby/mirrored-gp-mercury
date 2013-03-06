@@ -45,7 +45,7 @@ public class LabBatchEtl extends GenericEntityEtl {
 
     /** {@inheritDoc} */
     @Override
-    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
         Collection<String> recordList = new ArrayList<String>();
         LabBatch entity = dao.findById(LabBatch.class, entityId);
         if (entity != null) {
