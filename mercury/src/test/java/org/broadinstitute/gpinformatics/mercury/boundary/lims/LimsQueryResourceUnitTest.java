@@ -315,7 +315,7 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
-    @Test(groups = DATABASE_FREE)
+    @Test(groups = DATABASE_FREE, enabled = false)
     public void testFetchUserByBadge() throws Exception {
 
         String testUserBadge = "Test" + BSPManagerFactoryStub.QA_DUDE_USER_ID;
@@ -328,7 +328,7 @@ public class LimsQueryResourceUnitTest {
         verifyAll();
     }
 
-    @Test(groups = DATABASE_FREE)
+    @Test(groups = DATABASE_FREE, enabled = false)
     public void testFetchNoUserByBogusBadge() throws Exception {
 
         String testUserBadge = "BOGUSFAKENONEXISTANTBADGE";
