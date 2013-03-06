@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowc
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.File;
 import java.io.Serializable;
@@ -18,16 +19,13 @@ public class IlluminaSequencingRunFactory implements Serializable {
     private IlluminaFlowcellDao illuminaFlowcellDao;
 
     public IlluminaSequencingRun build(SolexaRunBean solexaRunBean) {
-        // todo jmt how to get operator?
+        // todo jmt how to get operator? -- SGM -- can't, will always be run from a machine.
         IlluminaFlowcell illuminaFlowcell = illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());
         return buildDbFree(solexaRunBean, illuminaFlowcell);
     }
 
     @DaoFree
-    public IlluminaSequencingRun buildDbFree(SolexaRunBean solexaRunBean, IlluminaFlowcell illuminaFlowcell) {
-        if (illuminaFlowcell == null) {
-            throw new RuntimeException("Flowcell with barcode '" + solexaRunBean.getFlowcellBarcode() + "' does not exist");
-        }
+    public IlluminaSequencingRun buildDbFree(@Nonnull SolexaRunBean solexaRunBean, @Nonnull IlluminaFlowcell illuminaFlowcell) {
 
         if (solexaRunBean.getRunDate() == null) {
             throw new RuntimeException("runDate must be specified");
