@@ -2451,4 +2451,28 @@
         </createIndex>
     </changeSet>
 
+
+    <changeSet id="GPLIM-1054" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="billing_ledger" columnName="quote_id" />
+            </not>
+        </preConditions>
+        <addColumn tableName="billing_ledger" schemaName="athena">
+            <column name="quote_id" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+
+
+    <changeSet id="GPLIM-1054.aud" author="mcovarr">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists schemaName="athena" tableName="billing_ledger_aud" columnName="quote_id" />
+            </not>
+        </preConditions>
+        <addColumn tableName="billing_ledger_aud" schemaName="athena">
+            <column name="quote_id" type="varchar2(255)"/>
+        </addColumn>
+    </changeSet>
+
 </databaseChangeLog>
