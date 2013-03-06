@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
@@ -22,43 +21,19 @@ import java.util.Map;
 
 
 /**
- * Dao for {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample}
- * @author mccrory
+ * Dao for {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample}s.
  */
 @Stateful
 @RequestScoped
 public class ProductOrderSampleDao extends GenericDao {
 
     /**
-     * Find ProductOrderSamples by ProductOrder
-     * @return
+     * Find by ProductOrder and sample name.
+     *
+     * @param productOrder ProductOrder.
+     * @param sampleName Name of sample.
+     * @return The matching ProductOrderSample.
      */
-    public List<ProductOrderSample> findByProductOrder(ProductOrder productOrder) {
-        return findList(ProductOrderSample.class, ProductOrderSample_.productOrder, productOrder);
-    }
-
-    public List<ProductOrderSample> findByOrderAndIndex(@Nonnull ProductOrder productOrder, @Nonnull List<Integer> indices) {
-        EntityManager entityManager = getEntityManager();
-        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-
-        CriteriaQuery<ProductOrderSample> criteriaQuery =
-                criteriaBuilder.createQuery(ProductOrderSample.class);
-
-        Root<ProductOrderSample> productOrderSampleRoot = criteriaQuery.from(ProductOrderSample.class);
-        Predicate[] predicates = new Predicate[] {
-                criteriaBuilder.equal(productOrderSampleRoot.get(ProductOrderSample_.productOrder), productOrder),
-                productOrderSampleRoot.get(ProductOrderSample_.samplePosition).in(indices)
-        };
-
-        criteriaQuery.where(predicates);
-
-        try {
-            return entityManager.createQuery(criteriaQuery).getResultList();
-        } catch (NoResultException ignored) {
-            return null;
-        }
-    }
-
     public List<ProductOrderSample> findByOrderAndName(@Nonnull ProductOrder productOrder, @Nonnull String sampleName) {
         if (productOrder == null) {
             throw new NullPointerException("Null Product Order.");
