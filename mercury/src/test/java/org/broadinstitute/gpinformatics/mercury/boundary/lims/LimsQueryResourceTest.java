@@ -167,7 +167,7 @@ public class LimsQueryResourceTest extends RestServiceContainerTest {
 //        assertThat(result, equalTo("QADudeTest"));
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false)
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
     @RunAsClient
     public void validateBadgeIds(@ArquillianResource URL baseUrl) throws IOException {
 
