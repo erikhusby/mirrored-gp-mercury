@@ -52,7 +52,7 @@ public abstract class GenericEntityEtl {
      * @param entityId look up this entity
      * @return delimited SqlLoader record
      */
-    abstract Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId);
+    abstract Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId);
 
     /**
      * Returns sqlLoader data records for entities having id in the given range.
@@ -151,7 +151,7 @@ public abstract class GenericEntityEtl {
                 changedEntityIds.removeAll(deletedEntityIds);
 
                 for (Long entityId : changedEntityIds) {
-                    for (String record : entityRecord(etlDateStr, false, entityId)) {
+                    for (String record : entityRecords(etlDateStr, false, entityId)) {
                         dataFile.write(record);
                     }
                 }
@@ -338,5 +338,4 @@ public abstract class GenericEntityEtl {
         }
         return h;
     }
-
 }

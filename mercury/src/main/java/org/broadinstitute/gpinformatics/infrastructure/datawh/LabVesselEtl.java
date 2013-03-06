@@ -46,7 +46,7 @@ public class LabVesselEtl extends GenericEntityEtl {
 
     /** {@inheritDoc} */
     @Override
-    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
         Collection<String> recordList = new ArrayList<String>();
         LabVessel entity = dao.findById(LabVessel.class, entityId);
         if (entity != null) {
@@ -59,7 +59,7 @@ public class LabVesselEtl extends GenericEntityEtl {
 
     /** {@inheritDoc} */
     @Override
-    Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
+    public Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();
         List<LabVessel> entityList = dao.findAll(getEntityClass(),
                 new GenericDao.GenericDaoCallback<LabVessel>() {

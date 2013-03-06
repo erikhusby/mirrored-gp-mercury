@@ -1,20 +1,14 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.apache.commons.io.IOUtils;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.RiskItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
-import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import java.io.File;
-import java.io.FileReader;
-import java.io.Reader;
 import java.util.Collection;
 import java.util.Date;
 
@@ -79,7 +73,7 @@ public class RiskItemEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.entityRecords(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -90,7 +84,7 @@ public class RiskItemEtlDbFreeTest {
         expect(pos.isOnRisk()).andReturn(true);
         replay(mocks);
 
-        Collection<String> records = tst.entityRecord(etlDateStr, false, posId);
+        Collection<String> records = tst.entityRecords(etlDateStr, false, posId);
         assertEquals(records.size(), 1);
 
         verifyRecord(records.iterator().next());

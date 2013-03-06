@@ -120,7 +120,7 @@ public class WorkflowConfigEtl extends GenericEntityEtl {
      * Unused method since we've overridden the caller.
      */
     @Override
-    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
         return Collections.EMPTY_LIST;
     }
 

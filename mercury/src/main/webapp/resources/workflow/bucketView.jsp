@@ -33,7 +33,6 @@
                     {"bSortable":true},
                     {"bSortable":true},
                     {"bSortable":true},
-                    {"bSortable":true},
                     {"bSortable":true, "sType":"date"}
                 ]
             });
