@@ -1,8 +1,10 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.ejb.Stateful;
@@ -19,39 +21,36 @@ import java.util.List;
 public class ProductOrderEtl extends GenericEntityEtl {
 
     private ProductOrderDao dao;
+    private BSPUserList userList;
 
     @Inject
     public void setProductOrderDao(ProductOrderDao dao) {
-	this.dao = dao;
+        this.dao = dao;
+    }
+    @Inject
+    public void setBSPUserList(BSPUserList userList) {
+        this.userList = userList;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Class getEntityClass() {
         return ProductOrder.class;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     String getBaseFilename() {
         return "product_order";
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Long entityId(Object entity) {
         return ((ProductOrder)entity).getProductOrderId();
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
         Collection<String> recordList = new ArrayList<String>();
@@ -64,9 +63,7 @@ public class ProductOrderEtl extends GenericEntityEtl {
         return recordList;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();
@@ -92,6 +89,9 @@ public class ProductOrderEtl extends GenericEntityEtl {
      * @return delimited SqlLoader record
      */
     String entityRecord(String etlDateStr, boolean isDelete, ProductOrder entity) {
+        Long personId = entity.getCreatedBy();
+        BspUser bspUser = personId != null ? userList.getById(personId) : null;
+
         return genericRecord(etlDateStr, isDelete,
                 entity.getProductOrderId(),
                 format(entity.getResearchProject() != null ? entity.getResearchProject().getResearchProjectId() : null),
@@ -101,7 +101,8 @@ public class ProductOrderEtl extends GenericEntityEtl {
                 format(entity.getModifiedDate()),
                 format(entity.getTitle()),
                 format(entity.getQuoteId()),
-                format(entity.getJiraTicketKey())
+                format(entity.getJiraTicketKey()),
+                format(bspUser != null ? bspUser.getUsername() : null)
         );
     }
 

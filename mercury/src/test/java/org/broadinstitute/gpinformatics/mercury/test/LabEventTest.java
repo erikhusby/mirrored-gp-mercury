@@ -13,7 +13,10 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFac
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferEntityGrapher;
+import org.broadinstitute.gpinformatics.mercury.boundary.transfervis.TransferVisualizer;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
@@ -222,9 +225,9 @@ public class LabEventTest {
             throw new RuntimeException(e);
         }
 
-        Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
-        stringTwoDBarcodedTubeEntry.getValue().evaluateCriteria(transferTraverserCriteria,
+        TwoDBarcodedTube startingTube = mapBarcodeToTube.entrySet().iterator().next().getValue();
+        startingTube.evaluateCriteria(transferTraverserCriteria,
                 TransferTraverserCriteria.TraversalDirection.Descendants);
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
         Assert.assertEquals(labEventNames.size(), 13, "Wrong number of transfers");
@@ -258,6 +261,11 @@ public class LabEventTest {
         Assert.assertNotNull(rework.getRapSheet(), "rework.getRapSheet cannot be null.");
         Assert.assertNotNull(rework.getRapSheet().getSample(), "RapSheet.sample cannot be null.");
 
+        TransferEntityGrapher transferEntityGrapher = new TransferEntityGrapher();
+        transferEntityGrapher.setMaxNumVesselsPerRequest(1000);
+        Graph graph = new Graph();
+        transferEntityGrapher.startWithTube(startingTube, graph, new ArrayList<TransferVisualizer.AlternativeId>());
+        Assert.assertEquals(graph.getMapIdToVertex().size(), 1255, "Wrong number of vertices");
 //        Controller.stopCPURecording();
     }
 

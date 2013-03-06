@@ -2,9 +2,11 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
@@ -25,17 +27,22 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.StringReader;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * JAX-RS web service used by BSP to notify Mercury that samples have been received.
@@ -45,9 +52,6 @@ import java.util.Map;
 @Stateful
 @RequestScoped
 public class SampleReceiptResource {
-
-    // todo jmt currently set to thompson, which user should this be?
-    private static final long OPERATOR = 1701L;
 
     private static final Log LOG = LogFactory.getLog(SampleReceiptResource.class);
 
@@ -67,6 +71,36 @@ public class SampleReceiptResource {
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private WsMessageStore wsMessageStore;
+
+    @Inject
+    private BSPUserList bspUserList;
+
+    @GET
+    @Path("{batchName}")
+    @Produces({MediaType.APPLICATION_XML})
+    public SampleReceiptBean getByBatchName(@PathParam("batchName") String batchName) {
+        LabBatch labBatch = labBatchDAO.findByName(batchName);
+        if(labBatch == null) {
+            return null;
+        }
+        List<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
+        Set<LabVessel> startingLabVessels = labBatch.getStartingLabVessels();
+        for (LabVessel startingLabVessel : startingLabVessels) {
+            parentVesselBeans.add(new ParentVesselBean(
+                    startingLabVessel.getLabel(),
+                    startingLabVessel.getMercurySamples().iterator().next().getSampleKey(),
+                    startingLabVessel.getType().getName(),
+                    null));
+        }
+        LabVessel firstLabVessel = startingLabVessels.iterator().next();
+        LabEvent labEvent = firstLabVessel.getInPlaceEvents().iterator().next();
+        BspUser bspUser = bspUserList.getById(labEvent.getEventOperator());
+        return new SampleReceiptBean(
+                labEvent.getEventDate(),
+                labBatch.getBatchName(),
+                parentVesselBeans,
+                bspUser.getUsername());
+    }
 
     /**
      * Accepts a message from BSP.  We unmarshal ourselves, rather than letting JAX-RS
@@ -118,14 +152,17 @@ public class SampleReceiptResource {
 
         Map<String,LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
         Map<String, List<MercurySample>> mapIdToListMercurySample = mercurySampleDao.findMapIdToListMercurySample(sampleIds);
-        Map<String, List<ProductOrderSample>> mapIdToListPdoSamples = athenaClientService.findMapBySamples(sampleIds);
+        Map<String, List<ProductOrderSample>> mapIdToListPdoSamples = athenaClientService.findMapSampleNameToPoSample(sampleIds);
         List<LabVessel> labVessels = notifyOfReceiptDaoFree(sampleReceiptBean, mapBarcodeToVessel, mapIdToListMercurySample,
                 mapIdToListPdoSamples);
 
-        // todo jmt may need to append a timestamp to make the batch unique
-        labBatchDAO.persist(new LabBatch(sampleReceiptBean.getKitId(), new HashSet<LabVessel>(labVessels),
+        // If the kit has already been partially registered, append a timestamp to make a unique batch name
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSSS");
+        LabBatch labBatch = labBatchDAO.findByName(sampleReceiptBean.getKitId());
+        String batchName = sampleReceiptBean.getKitId() + (labBatch == null ? "" : "-" + simpleDateFormat.format(new Date()));
+        labBatchDAO.persist(new LabBatch(batchName, new HashSet<LabVessel>(labVessels),
                 LabBatch.LabBatchType.SAMPLES_RECEIPT));
-        return "Samples received";
+        return "Samples received: " + batchName;
     }
 
     /**
@@ -144,23 +181,28 @@ public class SampleReceiptResource {
 
         long disambiguator = 1L;
         List<LabVessel> labVessels = new ArrayList<LabVessel>();
+        BspUser bspUser = bspUserList.getByUsername(sampleReceiptBean.getReceivingUserName());
+        if(bspUser == null) {
+            throw new RuntimeException("Failed to find user " + sampleReceiptBean.getReceivingUserName());
+        }
+        Long operator = bspUser.getUserId();
+
         for (ParentVesselBean parentVesselBean : sampleReceiptBean.getParentVesselBeans()) {
             String sampleId = parentVesselBean.getSampleId();
             String barcode = parentVesselBean.getManufacturerBarcode() == null ? sampleId :
                     parentVesselBean.getManufacturerBarcode();
+            // LabVessel may already exist if receipts are being backfilled
             LabVessel labVessel = mapBarcodeToVessel.get(barcode);
-            if(labVessel != null) {
-                throw new RuntimeException("Vessel has already been received: " + barcode);
-            }
 
             if(parentVesselBean.getChildVesselBeans() == null || parentVesselBean.getChildVesselBeans().isEmpty()) {
                 // todo jmt differentiate Cryo vial, Conical, Slide, Flip-top etc.
-                TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(barcode);
+                TwoDBarcodedTube twoDBarcodedTube = labVessel == null ? new TwoDBarcodedTube(barcode) :
+                        (TwoDBarcodedTube) labVessel;
 
                 MercurySample mercurySample = getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples, sampleId);
                 twoDBarcodedTube.addSample(mercurySample);
                 twoDBarcodedTube.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT,
-                        sampleReceiptBean.getReceiptDate(), "BSP", disambiguator, OPERATOR));
+                        sampleReceiptBean.getReceiptDate(), "BSP", disambiguator, operator));
                 disambiguator++;
                 labVessels.add(twoDBarcodedTube);
             } else {
@@ -181,7 +223,7 @@ public class SampleReceiptResource {
                         staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
                     }
                     staticPlate.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT,
-                            sampleReceiptBean.getReceiptDate(), "BSP", disambiguator, OPERATOR));
+                            sampleReceiptBean.getReceiptDate(), "BSP", disambiguator, operator));
                 } /* todo jmt else if(vesselType.contains("rack")) {
 
                 } */else {
@@ -235,5 +277,9 @@ public class SampleReceiptResource {
             }
         }
         return mercurySample;
+    }
+
+    void setBspUserList(BSPUserList bspUserList) {
+        this.bspUserList = bspUserList;
     }
 }

@@ -14,7 +14,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
-import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch_;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -24,9 +23,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.Root;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -48,10 +44,11 @@ public class MercuryClientServiceTest extends Arquillian {
     private String pdoKey = "PDO-8";  // must exist on test jira (receives the comments put by BucketBean)
     private List<ProductOrderSample> pdoSamples = new ArrayList<ProductOrderSample>();
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private MercuryClientService service;
     @Inject
-    private LabBatchDAO dao;
+    private LabBatchDAO labBatchDAO;
 
     private ProductOrder pdo = createMock(ProductOrder.class);
     private Product product = createMock(Product.class);
@@ -76,13 +73,10 @@ public class MercuryClientServiceTest extends Arquillian {
     }
 
     private void setUpSamplesFromReceiptBatch() {
-        CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-        CriteriaQuery<LabBatch> cq = cb.createQuery(LabBatch.class);
-        Root<LabBatch> root = cq.from(LabBatch.class);
-        cq.where(cb.equal(root.get(LabBatch_.labBatchType), LabBatch.LabBatchType.SAMPLES_RECEIPT));
-        List<LabBatch> receiptList = dao.getEntityManager().createQuery(cq).setMaxResults(1).getResultList();
-        if (receiptList.size() > 0) {
-            Collection<LabVessel> receiptVessels = receiptList.get(0).getStartingLabVessels();
+        // For the bucket entry criteria to work, the samples have to exist in BSP.
+        // todo jmt How to recreate the test data after a database refresh?
+        LabBatch labBatch = labBatchDAO.findByName("SK-27D9");
+        Collection<LabVessel> receiptVessels = labBatch.getStartingLabVessels();
             for (LabVessel receiptVessel : receiptVessels) {
                 for (MercurySample receiptSample: receiptVessel.getMercurySamples()) {
                     String sampleName = receiptSample.getSampleKey();
@@ -90,7 +84,6 @@ public class MercuryClientServiceTest extends Arquillian {
                     pdoSamples.add(pdoSample);
                 }
             }
-        }
         logger.info("Testing with " + pdoSamples.size() + " receipt samples");
     }
 

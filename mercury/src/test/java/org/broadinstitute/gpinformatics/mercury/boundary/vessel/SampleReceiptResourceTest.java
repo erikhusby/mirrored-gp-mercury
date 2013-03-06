@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -34,6 +36,7 @@ public class SampleReceiptResourceTest {
     @Test
     public void testReceiveTubesNoPdo() {
         SampleReceiptResource sampleReceiptResource = new SampleReceiptResource();
+        sampleReceiptResource.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
         SampleReceiptBean sampleReceiptBean = buildTubes("");
 
         List<LabVessel> labVessels = sampleReceiptResource.notifyOfReceiptDaoFree(sampleReceiptBean,
@@ -53,6 +56,7 @@ public class SampleReceiptResourceTest {
     @Test
     public void testReceiveTubesPdo() {
         SampleReceiptResource sampleReceiptResource = new SampleReceiptResource();
+        sampleReceiptResource.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
         SampleReceiptBean sampleReceiptBean = buildTubes("");
 
         Map<String, List<ProductOrderSample>> mapIdToListPdoSamples = new HashMap<String, List<ProductOrderSample>>();
@@ -81,19 +85,20 @@ public class SampleReceiptResourceTest {
         ArrayList<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
         parentVesselBeans.add(new ParentVesselBean(BARCODE1 + date, SAMPLE1 + date, "Matrix Tube [0.75mL]", null));
         parentVesselBeans.add(new ParentVesselBean(BARCODE2 + date, SAMPLE2 + date, "Matrix Tube [0.75mL]", null));
-        return new SampleReceiptBean(new Date(), "SK-123-" + date, parentVesselBeans);
+        return new SampleReceiptBean(new Date(), "SK-123-" + date, parentVesselBeans, "jowalsh");
     }
 
     @Test
     public void testReceivePlates() {
         SampleReceiptResource sampleReceiptResource = new SampleReceiptResource();
+        sampleReceiptResource.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
         ArrayList<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
         ArrayList<ChildVesselBean> childVesselBeans = new ArrayList<ChildVesselBean>();
         String sampleId1 = "SM-1234";
         childVesselBeans.add(new ChildVesselBean(null, sampleId1, "Well [200uL]", "A01"));
         childVesselBeans.add(new ChildVesselBean(null, "SM-2345", "Well [200uL]", "A02"));
         parentVesselBeans.add(new ParentVesselBean("P1234", null, "Plate 96 Well PCR [200ul]", childVesselBeans));
-        SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), "SK-123", parentVesselBeans);
+        SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), "SK-123", parentVesselBeans, "jowalsh");
 
         List<LabVessel> labVessels = sampleReceiptResource.notifyOfReceiptDaoFree(sampleReceiptBean,
                 new HashMap<String, LabVessel>(), new HashMap<String, List<MercurySample>>(),

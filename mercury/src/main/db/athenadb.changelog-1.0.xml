@@ -2429,4 +2429,26 @@
         </addColumn>
     </changeSet>
 
+    <changeSet id="GPLIM-896" author="epolk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="po_sample_risk_join_aud" indexName="ix_pos_risk_join_aud_1" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="po_sample_risk_join_aud" indexName="ix_pos_risk_join_aud_1" schemaName="athena">
+            <column name="risk_item_id"/>
+        </createIndex>
+    </changeSet>
+
+    <changeSet id="GPLIM-708" author="epolk">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists tableName="billing_ledger_aud" indexName="ix_billing_ledger_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createIndex tableName="billing_ledger_aud" indexName="ix_billing_ledger_aud" schemaName="athena">
+            <column name="ledger_id"/>
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

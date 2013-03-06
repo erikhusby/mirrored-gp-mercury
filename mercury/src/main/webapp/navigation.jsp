@@ -2,6 +2,7 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
 <%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
+<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
 <%--
   ~ The Broad Institute
   ~ SOFTWARE COPYRIGHT NOTICE AGREEMENT
@@ -25,11 +26,14 @@
                                 beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
                                 tabindex="=1" event="list">List</stripes:link>
                     </li>
-                    <li>
-                        <stripes:link
-                                beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
-                                tabindex="=1" event="create">Create</stripes:link>
-                    </li>
+                    <%-- Only PMs (and Developers) can create Research Projects. --%>
+                    <security:authorizeBlock roles="<%= DB.roles(Developer, PM) %>">
+                        <li>
+                            <stripes:link
+                                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
+                                    tabindex="=1" event="create">Create</stripes:link>
+                        </li>
+                    </security:authorizeBlock>
                 </ul>
             </li>
             <li class="dropdown">
@@ -41,11 +45,14 @@
                                 beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
                                 tabindex="=1" event="list">List</stripes:link>
                     </li>
-                    <li>
-                        <stripes:link
-                                beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
-                                tabindex="=1" event="create">Create</stripes:link>
-                    </li>
+                    <%-- PMs and PDMs (and Developers) can place Product Orders. --%>
+                    <security:authorizeBlock roles="<%= DB.roles(Developer, PDM, PM) %>">
+                        <li>
+                            <stripes:link
+                                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
+                                    tabindex="=1" event="create">Create</stripes:link>
+                        </li>
+                    </security:authorizeBlock>
                     <li class="divider"></li>
                     <li>
                         <stripes:link
@@ -63,23 +70,26 @@
                                 beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"
                                 tabindex="=1" event="list">List</stripes:link>
                     </li>
-                    <li>
-                        <stripes:link
-                                beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"
-                                tabindex="=1" event="create">Create</stripes:link>
-                    </li>
+                    <%-- Only PDMs (and Developers) can create Products. --%>
+                    <security:authorizeBlock roles="<%= DB.roles(Developer, PDM) %>">
+                        <li>
+                            <stripes:link
+                                    beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"
+                                    tabindex="=1" event="create">Create</stripes:link>
+                        </li>
+                    </security:authorizeBlock>
                 </ul>
             </li>
 
             <security:authorizeBlock
-                    roles="<%=new String[] {DB.Role.LabUser.name,DB.Role.PDM.name, DB.Role.Developer.name}%>">
+                    roles="<%= DB.roles(Developer)%>">
                 <li class="dropdown">
 
                     <a id="labNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                             class="icon-tasks"></span> Lab <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
                         <security:authorizeBlock
-                                roles="<%=new String[] {DB.Role.Developer.name,DB.Role.LabUser.name,DB.Role.PDM.name}%>">
+                                roles="<%= DB.roles(Developer, LabUser, PDM) %>">
                             <li><stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
                                     event="view">Buckets</stripes:link></li>
@@ -89,7 +99,7 @@
                                         event="list">Controls</stripes:link>
                             </li>
                         </security:authorizeBlock>
-                        <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+                        <security:authorizeBlock roles="<%= DB.roles(Developer) %>">
                             <li><a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a></li>
                         </security:authorizeBlock>
                     </ul>
@@ -97,11 +107,11 @@
             </security:authorizeBlock>
 
             <security:authorizeBlock
-                    roles="<%=new String[] {DB.Role.Developer.name}%>">
+                    roles="<%= DB.roles(Developer) %>">
                 <li class="dropdown">
 
                     <a id="adminNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
-                            class="icon-tasks"></span> Admin <b class="caret"></b></a>
+                            class="icon-cog"></span> Admin <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
                         <li><stripes:link
                                 beanclass="org.broadinstitute.gpinformatics.mercury.presentation.search.CreateBatchActionBean"
@@ -112,7 +122,7 @@
 
         </ul>
 
-        <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+        <security:authorizeBlock roles="<%= DB.roles(Developer) %>">
             <ul class="nav pull-right global-search navbar-search">
                 <li style="white-space:nowrap;">
                     <stripes:form

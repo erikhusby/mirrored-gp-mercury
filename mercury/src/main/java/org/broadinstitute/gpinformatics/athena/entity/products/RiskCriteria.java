@@ -140,7 +140,7 @@ public class RiskCriteria {
                 return String.valueOf(sample.getBspDTO().getMaterialType().contains("WGA"));
             }
         }),
-        FFPE("FFPE is On Risk", BOOLEAN, DISPLAYED, new ValueProvider() {
+        FFPE("Is FFPE", BOOLEAN, DISPLAYED, new ValueProvider() {
             @Override
             public String getValue(ProductOrderSample sample) {
                 return String.valueOf(sample.getBspDTO().getFfpeStatus());

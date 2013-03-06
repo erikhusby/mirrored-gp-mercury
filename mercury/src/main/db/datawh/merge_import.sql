@@ -22,6 +22,8 @@ CURSOR im_lab_vessel_cur IS SELECT * FROM im_lab_vessel WHERE is_delete = 'F';
 CURSOR im_workflow_cur IS SELECT * FROM im_workflow WHERE is_delete = 'F';
 CURSOR im_workflow_process_cur IS SELECT * FROM im_workflow_process WHERE is_delete = 'F';
 CURSOR im_event_fact_cur IS SELECT * FROM im_event_fact WHERE is_delete = 'F';
+CURSOR im_po_sample_risk_cur IS SELECT * FROM im_product_order_sample_risk WHERE is_delete = 'F';
+CURSOR im_po_sample_bill_cur IS SELECT * FROM im_product_order_sample_bill WHERE is_delete = 'F';
 
 errmsg VARCHAR2(255);
 dup_sample_id NUMERIC(19);
@@ -349,6 +351,7 @@ FOR new IN im_po_cur LOOP
       title = new.title,
       quote_id = new.quote_id,
       jira_ticket_key = new.jira_ticket_key,
+      owner = new.owner,
       etl_date = new.etl_date
     WHERE product_order_id = new.product_order_id;
 
@@ -362,6 +365,7 @@ FOR new IN im_po_cur LOOP
       title,
       quote_id,
       jira_ticket_key,
+      owner,
       etl_date
     )
     SELECT
@@ -374,6 +378,7 @@ FOR new IN im_po_cur LOOP
       new.title,
       new.quote_id,
       new.jira_ticket_key,
+      new.owner,
       new.etl_date
     FROM DUAL WHERE NOT EXISTS (
       SELECT 1 FROM product_order
@@ -786,6 +791,35 @@ FOR new IN im_po_sample_stat_cur LOOP
 
 END LOOP;
 
+FOR new IN im_po_sample_risk_cur LOOP
+  BEGIN
+
+    UPDATE product_order_sample SET
+      on_risk = new.on_risk
+    WHERE product_order_sample_id = new.product_order_sample_id;
+
+  EXCEPTION WHEN OTHERS THEN 
+    errmsg := SQLERRM;
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_product_order_sample_risk.dat line '||new.line_number||'  '||errmsg);
+    CONTINUE;
+  END;
+
+END LOOP;
+
+FOR new IN im_po_sample_bill_cur LOOP
+  BEGIN
+
+    UPDATE product_order_sample SET
+      is_billed = new.is_billed
+    WHERE product_order_sample_id = new.product_order_sample_id;
+
+  EXCEPTION WHEN OTHERS THEN 
+    errmsg := SQLERRM;
+    DBMS_OUTPUT.PUT_LINE(TO_CHAR(new.etl_date, 'YYYYMMDDHH24MISS')||'_product_order_sample_bill.dat line '||new.line_number||'  '||errmsg);
+    CONTINUE;
+  END;
+
+END LOOP;
 
 COMMIT;
 

@@ -1,5 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
@@ -94,7 +99,6 @@ public class WorkflowTest {
         picoProcess.addWorkflowProcessDefVersion(picoProcessVersion);
 
         WorkflowBucketDef picoBucket = new WorkflowBucketDef(LabEventType.PICO_PLATING_BUCKET.getName());
-        picoBucket.setEntryMaterialType(WorkflowBucketDef.MaterialType.GENOMIC_DNA);
         picoBucket.addLabEvent(LabEventType.PICO_PLATING_BUCKET);
 
         picoProcessVersion.addStep(picoBucket);
@@ -116,7 +120,6 @@ public class WorkflowTest {
 //        preLcProcessVersion.addStep ( new WorkflowBucketDef ( "Pre-LC Bucket" ) );
 
         WorkflowBucketDef shearingBucketDef = new WorkflowBucketDef(LabEventType.SHEARING_BUCKET.getName());
-        shearingBucketDef.setEntryMaterialType(WorkflowBucketDef.MaterialType.GENOMIC_DNA);
         shearingBucketDef.addLabEvent(LabEventType.SHEARING_BUCKET);
 
         preLcProcessVersion.addStep(shearingBucketDef);
@@ -182,5 +185,23 @@ public class WorkflowTest {
         } catch (JAXBException e) {
             throw new RuntimeException(e);
         }
+    }
+    
+    @Test
+    public void testEntryExpression() {
+        TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube("00001234");
+        twoDBarcodedTube.addSample(new MercurySample("PDO-123", "SM-1234", new BSPSampleDTO("Cancer", "org.broad:SM-1234",
+                "DNA:DNA Genomic", "4321", "Homo Sapiens", "PT-1234")));
+
+        WorkflowLoader workflowLoader = new WorkflowLoader();
+        WorkflowConfig workflowConfig1 = workflowLoader.load();
+        ProductWorkflowDef exomeExpressWorkflow = workflowConfig1.getWorkflowByName("Exome Express");
+        boolean meetsCriteria = false;
+        for (WorkflowBucketDef workflowBucketDef : exomeExpressWorkflow.getEffectiveVersion().getBuckets()) {
+            if (workflowBucketDef.getName().equals("Pico/Plating Bucket")) {
+                meetsCriteria = workflowBucketDef.meetsBucketCriteria(twoDBarcodedTube);
+            }
+        }
+        Assert.assertTrue(meetsCriteria, "Meets criteria is not true");
     }
 }

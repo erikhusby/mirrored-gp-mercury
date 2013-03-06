@@ -5,6 +5,7 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
@@ -33,8 +34,10 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Produ
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -125,9 +128,16 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Inject
     private ProjectTokenInput projectTokenInput;
 
+    @Inject
+    private Deployment deployment;
+
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private JiraService jiraService;
+
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    @Inject
+    private MercuryClientService mercuryClientService;
 
     private List<ProductOrderListEntry> allProductOrderListEntries;
 
@@ -175,6 +185,11 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = SET_RISK)
     private String riskComment;
 
+    //This is used for prompting why the abandon button is disabled
+    private String abandonDisabledReason;
+
+    //This is used to determine whether a special warning message needs to be confirmed before normal abandon;
+    private boolean abandonWarning = false;
     /**
      * Single {@link ProductOrderListEntry} for the view page, gives us billing session information.
      */
@@ -280,7 +295,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // Since we are only validating from view, we can persist without worry of saving something bad.
         // We are doing on risk calculation only when everything passes, but informing the user no matter what
-        if (hasNoValidationErrors()) {
+        if (!hasErrors()) {
             int numSamplesOnRisk = editOrder.calculateRisk();
             editOrder.prepareToSave(getUserBean().getBspUser());
             productOrderDao.persist(editOrder);
@@ -293,17 +308,14 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         } else {
             addGlobalValidationError("On risk was not calculated.  Please fix the other errors first.");
+            // Initialize ProductOrderListEntry if we're implicitly going to redisplay the source page.
+            entryInit();
         }
     }
 
     @ValidationMethod(on = PLACE_ORDER)
     public void validatePlacedOrder() {
         doValidation("place order");
-        // entryInit() must be called explicitly here since it does not run automatically in the event of validation
-        // failures and the ProductOrderListEntry that provides billing data would be null.
-        if (hasAnyValidationErrors()) {
-            entryInit();
-        }
     }
 
     @ValidationMethod(on = {"startBilling", "downloadBillingTracker"})
@@ -357,7 +369,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
 
         // If there are errors, will reload the page, so need to fetch the list
-        if (hasAnyValidationErrors()) {
+        if (hasErrors()) {
             listInit();
         }
     }
@@ -475,10 +487,20 @@ public class ProductOrderActionBean extends CoreActionBean {
         } catch (Exception e) {
             // Need to quote the message contents to prevent errors.
             addGlobalValidationError("{2}", e.getMessage());
+            // Make sure ProductOrderListEntry is initialized if returning source page resolution.
+            entryInit();
             return getSourcePageResolution();
         }
 
         addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
+
+        if (deployment != null && deployment == Deployment.DEV) {
+            Collection<ProductOrderSample> samples = mercuryClientService.addSampleToPicoBucket(editOrder);
+            if (!samples.isEmpty()) {
+                addMessage("{0} samples have been added to the pico bucket: {1}", samples.size(), StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
+            }
+        }
+
         return createViewResolution();
     }
 
@@ -506,11 +528,15 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution validate() {
         validatePlacedOrder();
 
-        if (hasNoValidationErrors()) {
+        if (!hasErrors()) {
             addMessage("Draft Order is valid and ready to be placed");
         }
 
-        return createViewResolution();
+        // entryInit() must be called explicitly here since it does not run automatically with source page resolution
+        // and the ProductOrderListEntry that provides billing data would otherwise be null.
+        entryInit();
+
+        return getSourcePageResolution();
     }
 
     @HandlesEvent(SAVE_ACTION)
@@ -529,7 +555,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // save it!
         productOrderDao.persist(editOrder);
 
-        addMessage("Product Order \"" + editOrder.getTitle() + "\" has been saved.");
+        addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
         return createViewResolution();
     }
 
@@ -550,7 +576,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     @HandlesEvent("downloadBillingTracker")
     public Resolution downloadBillingTracker() {
         Resolution resolution = ProductOrderActionBean.getTrackerForOrders(this, selectedProductOrders, bspUserList);
-        if (hasAnyValidationErrors()) {
+        if (hasErrors()) {
             // Need to regenerate the list so it's displayed along with the errors.
             listInit();
         }
@@ -561,7 +587,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution startBilling() {
         Set<BillingLedger> ledgerItems =
                 billingLedgerDao.findWithoutBillingSessionByOrderList(selectedProductOrderBusinessKeys);
-        if ((ledgerItems == null) || (ledgerItems.isEmpty())) {
+        if (CollectionUtils.isEmpty(ledgerItems)) {
             addGlobalValidationError("There are no items to bill on any of the selected orders");
             return new ForwardResolution(ProductOrderActionBean.class, LIST_ACTION);
         }
@@ -642,7 +668,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                 JSONObject item = new JSONObject();
 
                 item.put("sampleId", sample.getProductOrderSampleId());
+                item.put("collaboratorSampleId", sample.getBspDTO().getCollaboratorsSampleName());
                 item.put("patientId", sample.getBspDTO().getPatientId());
+                item.put("collaboratorParticipantId", sample.getBspDTO().getCollaboratorParticipantId());
                 item.put("volume", sample.getBspDTO().getVolume());
                 item.put("concentration", sample.getBspDTO().getConcentration());
                 item.put("total", sample.getBspDTO().getTotal());
@@ -782,6 +810,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
                 editOrder.getSampleString(),
                 ProductOrder.TransitionStates.DeveloperEdit.getStateName());
+
+        if (deployment != null && deployment == Deployment.DEV) {
+            Collection<ProductOrderSample> samplesInPico = mercuryClientService.addSampleToPicoBucket(editOrder, samplesToAdd);
+            if (!samplesInPico.isEmpty()) {
+                addMessage("{0} samples have been added to the pico bucket: {1}", samplesInPico.size(), nameList);
+            }
+        }
+
         return createViewResolution();
     }
 
@@ -831,6 +867,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             String filename =
                     "BillingTracker-" + AbstractSpreadsheetExporter.DATE_FORMAT.format(Calendar.getInstance().getTime());
+
+            // Colon is a metacharacter in Windows separating the drive letter from the rest of the path.
+            filename = filename.replaceAll(":", "_");
 
             final File tempFile = File.createTempFile(filename, ".xls");
             outputStream = new FileOutputStream(tempFile);
@@ -1073,6 +1112,20 @@ public class ProductOrderActionBean extends CoreActionBean {
         return getProductOrderListEntry().getBillingSessionBusinessKey();
     }
 
+    /**
+     * Convenience method for verifying whether a PDO is able to be abandoned.
+     *
+     * @return Boolean eligible for abandoning
+     */
+    public boolean isAbandonable() {
+        if (!editOrder.isSubmitted()) {
+            setAbandonDisabledReason("the order status of the PDO is not 'Submitted'.");
+            return false;
+        } else if (productOrderSampleDao.countSamplesWithBillingLedgerEntries(editOrder) > 0) {
+            setAbandonWarning(true);
+        }
+        return true;
+    }
 
     /**
      * Convenience method for PDO view page to show percentage of samples abandoned for the current PDO.
@@ -1130,4 +1183,33 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
+    /**
+     * @return Reason that abandon button is disabled
+     */
+    public String getAbandonDisabledReason() {
+        return abandonDisabledReason;
+    }
+
+    /**
+     * Update reason why the abandon button is disabled.
+     * @param abandonDisabledReason String of text indicating why the abandon button is disabled
+     */
+    public void setAbandonDisabledReason(String abandonDisabledReason) {
+        this.abandonDisabledReason = abandonDisabledReason;
+    }
+
+    /**
+     * @return Whether there is a need to use the special warning format
+     */
+    public boolean getAbandonWarning() {
+        return abandonWarning;
+    }
+
+    /**
+     * Update whether to use special warning
+     * @param abandonWarning Boolean flag used to determine whether we need to use special message confirmation
+     */
+    public void setAbandonWarning(boolean abandonWarning) {
+        this.abandonWarning = abandonWarning;
+    }
 }

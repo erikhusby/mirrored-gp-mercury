@@ -55,6 +55,8 @@ public class ExtractTransformDbFreeTest {
     private final ResearchProjectIrbEtl researchProjectIrbEtl = createMock(ResearchProjectIrbEtl.class);
     private final ResearchProjectStatusEtl researchProjectStatusEtl = createMock(ResearchProjectStatusEtl.class);
     private final WorkflowConfigEtl workflowConfigEtl = createMock(WorkflowConfigEtl.class);
+    private final RiskItemEtl riskItemEtl = createMock(RiskItemEtl.class);
+    private final BillingLedgerEtl billingLedgerEtl = createMock(BillingLedgerEtl.class);
 
     private Object[] mocks = new Object[]{
             auditReaderDao,
@@ -74,9 +76,12 @@ public class ExtractTransformDbFreeTest {
             researchProjectFundingEtl,
             researchProjectIrbEtl,
             researchProjectStatusEtl,
-            workflowConfigEtl};
+            workflowConfigEtl,
+            riskItemEtl,
+            billingLedgerEtl
+    };
 
-    @BeforeClass
+    @BeforeClass(groups = TestGroups.DATABASE_FREE)
     public void beforeClass() throws Exception {
         datafileDir = System.getProperty("java.io.tmpdir");
         badDataDir = datafileDir + System.getProperty("file.separator") + nowMsec;
@@ -99,17 +104,19 @@ public class ExtractTransformDbFreeTest {
                 researchProjectFundingEtl,
                 researchProjectIrbEtl,
                 researchProjectStatusEtl,
-                workflowConfigEtl);
+                workflowConfigEtl,
+                riskItemEtl,
+                billingLedgerEtl);
     }
 
-    @BeforeMethod
+    @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void beforeMethod() throws Exception {
         extractTransform.setDatafileDir(datafileDir);
         EtlTestUtilities.deleteEtlFiles(datafileDir);
         reset(mocks);
     }
 
-    @AfterMethod
+    @AfterMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void afterMethod() throws Exception {
         EtlTestUtilities.deleteEtlFiles(datafileDir);
     }
@@ -257,6 +264,8 @@ public class ExtractTransformDbFreeTest {
         expect(labVesselEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(workflowConfigEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(eventEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(riskItemEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(billingLedgerEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
 
         replay(mocks);
         extractTransform.writeLastEtlRun(0L);
@@ -285,6 +294,8 @@ public class ExtractTransformDbFreeTest {
         expect(labVesselEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(workflowConfigEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
         expect(eventEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(riskItemEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
+        expect(billingLedgerEtl.doBackfillEtl(eq(testClass), anyLong(), anyLong(), (String) anyObject())).andReturn(0);
 
         replay(mocks);
         extractTransform.writeLastEtlRun(0L);
@@ -336,6 +347,8 @@ public class ExtractTransformDbFreeTest {
         expect(labVesselEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(workflowConfigEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
         expect(eventEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
+        expect(riskItemEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
+        expect(billingLedgerEtl.doEtl(eq(revIds), (String) anyObject())).andReturn(0);
 
         replay(mocks);
         extractTransform.writeLastEtlRun(startEtlSec);

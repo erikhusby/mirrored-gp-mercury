@@ -53,6 +53,7 @@ public class BillingSessionActionBean extends CoreActionBean {
     @Inject
     private QuoteLink quoteLink;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private QuoteService quoteService;
 
@@ -133,6 +134,7 @@ public class BillingSessionActionBean extends CoreActionBean {
 
         try {
             String filename = editSession.getBusinessKey() + "_" + new Date();
+            filename = filename.replaceAll(":", "_");
 
             final File tempFile = File.createTempFile(filename, ".xls");
             outputStream = new FileOutputStream(tempFile);

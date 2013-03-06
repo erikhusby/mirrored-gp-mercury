@@ -31,8 +31,14 @@ public class EtlTestUtilities {
      * Returns all files in the given directory, having filename timestamp in the given range.
      */
     public static File[] getDirFiles(String directoryName, long msecStart, long msecEnd) {
-        final long yyyymmddHHMMSSstart = Long.parseLong(ExtractTransform.secTimestampFormat.format(new Date(msecStart)));
-        final long yyyymmddHHMMSSend = Long.parseLong(ExtractTransform.secTimestampFormat.format(new Date(msecEnd)));
+        String etlDateStart = ExtractTransform.secTimestampFormat.format(new Date(msecStart));
+        String etlDateEnd = ExtractTransform.secTimestampFormat.format(new Date(msecEnd));
+        return getDirFiles(directoryName, etlDateStart, etlDateEnd);
+    }
+
+    public static File[] getDirFiles(String directoryName, final String etlDateStringStart, final String etlDateStringEnd) {
+        final long yyyymmddHHMMSSstart = Long.parseLong(etlDateStringStart);
+        final long yyyymmddHHMMSSend = Long.parseLong(etlDateStringEnd);
         File dir = new File(directoryName);
         File[] list = dir.listFiles(new FilenameFilter() {
             @Override

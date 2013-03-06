@@ -19,26 +19,27 @@ import static org.testng.Assert.*;
 
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ResearchProjectStatusEtlDbFreeTest {
-    String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
-    long entityId = 1122334455L;
-    Date revDate = new Date(1350000000000L);
-    ResearchProject.Status status = ResearchProject.Status.Open;
+    private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
+    private long entityId = 1122334455L;
+    private Date revDate = new Date(1350000000000L);
+    private ResearchProject.Status status = ResearchProject.Status.Open;
+    private ResearchProjectStatusEtl tst;
 
-    AuditReaderDao auditReader = createMock(AuditReaderDao.class);
-    ResearchProject obj = createMock(ResearchProject.class);
-    Object[] mocks = new Object[]{auditReader, obj};
+    private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
+    private ResearchProject obj = createMock(ResearchProject.class);
+    private Object[] mocks = new Object[]{auditReader, obj};
 
     @BeforeMethod(groups = TestGroups.DATABASE_FREE)
     public void setUp() {
         reset(mocks);
+
+        tst = new ResearchProjectStatusEtl();
+        tst.setAuditReaderDao(auditReader);
     }
 
     public void testEtlFlags() throws Exception {
         expect(obj.getResearchProjectId()).andReturn(entityId);
         replay(mocks);
-
-        ResearchProjectStatusEtl tst = new ResearchProjectStatusEtl();
-        tst.setAuditReaderDao(auditReader);
 
         assertEquals(tst.getEntityClass(), ResearchProject.class);
 
@@ -57,9 +58,6 @@ public class ResearchProjectStatusEtlDbFreeTest {
     public void testCantMakeEtlRecord1() throws Exception {
         replay(mocks);
 
-        ResearchProjectStatusEtl tst = new ResearchProjectStatusEtl();
-        tst.setAuditReaderDao(auditReader);
-
         assertNull(tst.entityStatusRecord(etlDateStr, revDate, null, false));
 
         verify(mocks);
@@ -69,9 +67,6 @@ public class ResearchProjectStatusEtlDbFreeTest {
         expect(obj.getStatus()).andReturn(null);
 
         replay(mocks);
-
-        ResearchProjectStatusEtl tst = new ResearchProjectStatusEtl();
-        tst.setAuditReaderDao(auditReader);
 
         assertNull(tst.entityStatusRecord(etlDateStr, revDate, obj, false));
 
@@ -83,9 +78,6 @@ public class ResearchProjectStatusEtlDbFreeTest {
         expect(obj.getStatus()).andReturn(status).times(2);
 
         replay(mocks);
-
-        ResearchProjectStatusEtl tst = new ResearchProjectStatusEtl();
-        tst.setAuditReaderDao(auditReader);
 
         String record = tst.entityStatusRecord(etlDateStr, revDate, obj, false);
         assertTrue(record != null && record.length() > 0);

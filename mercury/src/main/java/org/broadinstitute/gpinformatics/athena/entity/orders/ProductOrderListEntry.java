@@ -32,8 +32,6 @@ public class ProductOrderListEntry implements Serializable {
 
     private Long unbilledLedgerEntryCount = 0L;
 
-    private Integer sampleCount;
-
     /**
      * Version of the constructor called by the non-ledger aware first pass query
      *
@@ -48,8 +46,9 @@ public class ProductOrderListEntry implements Serializable {
      * @param placedDate
      */
     public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
-                                 String productName, String productFamilyName, String researchProjectTitle, Long ownerId,
-                                 Date placedDate, Integer sampleCount) {
+                                 String productName, String productFamilyName, String researchProjectTitle,
+                                 Long ownerId,
+                                 Date placedDate) {
         this.orderId = orderId;
         this.title = title;
         this.jiraTicketKey = jiraTicketKey;
@@ -59,7 +58,6 @@ public class ProductOrderListEntry implements Serializable {
         this.researchProjectTitle = researchProjectTitle;
         this.ownerId = ownerId;
         this.placedDate = placedDate;
-        this.sampleCount = sampleCount;
     }
 
     /**
@@ -93,11 +91,7 @@ public class ProductOrderListEntry implements Serializable {
     }
 
     public String getBusinessKey() {
-        if (jiraTicketKey == null) {
-            return ProductOrder.DRAFT_PREFIX + orderId;
-        }
-
-        return getJiraTicketKey();
+        return ProductOrder.createBusinessKey(orderId, jiraTicketKey);
     }
 
     public String getProductName() {
@@ -149,10 +143,6 @@ public class ProductOrderListEntry implements Serializable {
 
     public boolean isEligibleForBilling() {
         return getUnbilledLedgerEntryCount() > 0;
-    }
-
-    public Integer getSampleCount() {
-        return sampleCount;
     }
 
     @Override

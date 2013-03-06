@@ -6,8 +6,6 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.*;
@@ -73,8 +71,6 @@ public class ProductActionBean extends CoreActionBean {
         @Validate(field="availabilityDate", required = true, on={SAVE_ACTION}, label = "Availability Date")
     })
     private Product editProduct;
-
-    private final Log logger = LogFactory.getLog(ProductActionBean.class);
 
     // The search query
     private String q;

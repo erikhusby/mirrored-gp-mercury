@@ -16,17 +16,39 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
-import org.hibernate.envers.NotAudited;
 
 import javax.annotation.Nonnull;
-import javax.persistence.*;
+import javax.annotation.Nullable;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.OrderColumn;
+import javax.persistence.PostLoad;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 @Entity
@@ -35,7 +57,7 @@ import java.util.*;
 public class ProductOrder implements Serializable {
     private static final long serialVersionUID = 2712946561792445251L;
 
-    public static final String DRAFT_PREFIX = "Draft-";
+    private static final String DRAFT_PREFIX = "Draft-";
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT_ORDER", schema = "athena", sequenceName = "SEQ_PRODUCT_ORDER")
@@ -87,12 +109,6 @@ public class ProductOrder implements Serializable {
     @AuditJoinTable(name = "product_order_sample_join_aud")
     private List<ProductOrderSample> samples = new ArrayList<ProductOrderSample>();
 
-    /** Counts the number of rows in the one-to-many table.  Reference this count before fetching the collection, to
-     * avoid an unnecessary database round trip  */
-    @NotAudited
-    @Formula("(select count(*) from athena.product_order_sample pos where pos.product_order = product_order_id)")
-    private Integer sampleCount = 0;
-
     @Transient
     private final SampleCounts counts = new SampleCounts();
 
@@ -113,11 +129,7 @@ public class ProductOrder implements Serializable {
      * internal database id.
      */
     public String getBusinessKey() {
-        if (jiraTicketKey == null) {
-            return DRAFT_PREFIX + productOrderId;
-        }
-
-        return jiraTicketKey;
+        return createBusinessKey(productOrderId, jiraTicketKey);
     }
 
     public boolean isInDB() {
@@ -168,6 +180,44 @@ public class ProductOrder implements Serializable {
         }
 
         return uniqueSampleNamesOnRisk.size();
+    }
+
+    /**
+     * Utility method to create a PDO business key given an order ID and a JIRA ticket.
+     *
+     * @param productOrderId the order ID
+     * @param jiraTicketKey the JIRA ticket, can be null
+     * @return the business key for the PDO
+     */
+    public static String createBusinessKey(Long productOrderId, @Nullable String jiraTicketKey) {
+        if (jiraTicketKey == null) {
+            return DRAFT_PREFIX + productOrderId;
+        }
+
+        return jiraTicketKey;
+    }
+
+    public static class JiraOrId {
+        @Nullable
+        public final String jiraTicketKey;
+        public final long productOrderId;
+
+        public JiraOrId(long productOrderId, @Nullable String jiraTicketKey) {
+            this.jiraTicketKey = jiraTicketKey;
+            this.productOrderId = productOrderId;
+        }
+    }
+
+    /**
+     * Use This method to convert from a business key to either a JIRA ID or a product order ID.
+     * @param businessKey the key to convert
+     * @return either a JIRA ID or a product order ID.
+     */
+    public static JiraOrId convertBusinessKeyToJiraOrId(String businessKey) {
+        if (businessKey.startsWith(DRAFT_PREFIX)) {
+            return new JiraOrId(Long.parseLong(businessKey.substring(DRAFT_PREFIX.length())), null);
+        }
+        return new JiraOrId(0, businessKey);
     }
 
     /**
@@ -263,9 +313,36 @@ public class ProductOrder implements Serializable {
             countsValid = true;
         }
 
-        private void outputCounts(List<String> output, Map<String, Integer> counts, String label) {
+        private void outputCounts(List<String> output, Map<String, Integer> counts, String label, int compareCount) {
             for (Map.Entry<String, Integer> entry : counts.entrySet()) {
-                output.add(MessageFormat.format("{0} ''{1}'': {2}", label, entry.getKey(), entry.getValue()));
+                // Preformat the string so it can add the format pattern for the count value.
+                String message = label + " ''" + entry.getKey() + "'': {0}";
+                formatSummaryNumber(output, message, entry.getValue(), compareCount);
+            }
+        }
+
+        /**
+         * Format the number to say None if the value is zero.
+         *
+         * @param count The number to format
+         */
+        private void formatSummaryNumber(List<String> output, String message, int count) {
+            output.add(MessageFormat.format(message, (count == 0) ? "None" : count));
+        }
+
+        /**
+         * Format the number to say None if the value is zero, or All if it matches the comparison number.
+         *
+         * @param count The number to format
+         * @param compareCount The number to compare to
+         */
+        private void formatSummaryNumber(List<String> output, String message, int count, int compareCount) {
+            if (count == 0) {
+                output.add(MessageFormat.format(message, "None"));
+            } else if (count == compareCount) {
+                output.add(MessageFormat.format(message, "All"));
+            } else {
+                output.add(MessageFormat.format(message, count));
             }
         }
 
@@ -276,35 +353,34 @@ public class ProductOrder implements Serializable {
             if (totalSampleCount == 0) {
                 output.add("Total: None");
             } else {
-                output.add(MessageFormat.format("Total: {0}", totalSampleCount));
-                if (uniqueSampleCount != totalSampleCount) {
-                    output.add(MessageFormat.format("Unique: {0}", uniqueSampleCount));
-                    output.add(MessageFormat.format("Duplicate: {0}", (totalSampleCount - uniqueSampleCount)));
-                }
+                formatSummaryNumber(output, "Total: {0}", totalSampleCount);
 
-                output.add(MessageFormat.format("On Risk: {0}", onRiskCount));
+                formatSummaryNumber(output, "Unique: {0}", uniqueSampleCount, totalSampleCount);
+                formatSummaryNumber(output, "Duplicate: {0}", totalSampleCount - uniqueSampleCount, totalSampleCount);
+
+                formatSummaryNumber(output, "On Risk: {0}", onRiskCount, totalSampleCount);
 
                 if (bspSampleCount == uniqueSampleCount) {
                     output.add("From BSP: All");
                 } else if (bspSampleCount != 0) {
-                    output.add(MessageFormat.format("Unique BSP: {0}", bspSampleCount));
-                    output.add(MessageFormat.format("Unique Not BSP: {0}", uniqueSampleCount - bspSampleCount));
+                    formatSummaryNumber(output, "Unique BSP: {0}", bspSampleCount);
+                    formatSummaryNumber(output, "Unique Not BSP: {0}", uniqueSampleCount - bspSampleCount);
                 } else {
                     output.add("From BSP: None");
                 }
             }
 
             if (uniqueParticipantCount != 0) {
-                output.add(MessageFormat.format("Unique Participants: {0}", uniqueParticipantCount));
+                formatSummaryNumber(output, "Unique Participants: {0}", uniqueParticipantCount, totalSampleCount);
             }
 
-            outputCounts(output, stockTypeCounts, "Stock Type");
-            outputCounts(output, primaryDiseaseCounts, "Disease");
-            outputCounts(output, genderCounts, "Gender");
-            outputCounts(output, sampleTypeCounts, "Sample Type");
+            outputCounts(output, stockTypeCounts, "Stock Type", totalSampleCount);
+            outputCounts(output, primaryDiseaseCounts, "Disease", totalSampleCount);
+            outputCounts(output, genderCounts, "Gender", totalSampleCount);
+            outputCounts(output, sampleTypeCounts, "Sample Type", totalSampleCount);
 
             if (hasFPCount != 0) {
-                output.add(MessageFormat.format("Fingerprint Data: {0}", hasFPCount));
+                formatSummaryNumber(output, "Fingerprint Data: {0}", hasFPCount, totalSampleCount);
             }
 
             return output;
@@ -804,6 +880,13 @@ public class ProductOrder implements Serializable {
     }
 
     /**
+     * @return true if order is submitted
+     */
+    public boolean isSubmitted() {
+        return OrderStatus.Submitted == orderStatus;
+    }
+
+    /**
      * This method encapsulates the set of steps necessary to finalize the submission of a product order.
      * This mainly deals with jira ticket creation.  This method will:
      * <ul>
@@ -991,7 +1074,4 @@ public class ProductOrder implements Serializable {
         return originalTitle;
     }
 
-    public Integer getSampleCount() {
-        return sampleCount;
-    }
 }

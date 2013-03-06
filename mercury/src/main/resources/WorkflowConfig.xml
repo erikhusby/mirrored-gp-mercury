@@ -57,7 +57,15 @@
                 <optional>true</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
-                <entryMaterialType>GENOMIC_DNA</entryMaterialType>
+                <!-- todo jmt what if there's a mix of material types? -->
+                <entryExpression>
+                    foreach (iSampleInstance : labVessel.getSampleInstances()) {
+                        if (iSampleInstance.getStartingSample().getBspSampleDTO().getMaterialType() == "DNA:DNA Genomic") {
+                            return true;
+                        }
+                    }
+                    return false;
+                </entryExpression>
                 <batchJiraProjectType>LCSET</batchJiraProjectType>
             </workflowStepDefs>
             <workflowStepDefs>

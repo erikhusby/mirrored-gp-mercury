@@ -11,6 +11,7 @@ import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
+import org.broadinstitute.gpinformatics.mercury.boundary.sample.ControlEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.sample.ControlDao;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.Control;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -29,6 +30,9 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
 
     @Inject
     private ControlDao controlDao;
+
+    @Inject
+    private ControlEjb controlEjb;
 
     private static final String VIEW_PAGE              = "/resources/sample/view_control.jsp";
     private static final String CREATE_PAGE            = "/resources/sample/create_control.jsp";
@@ -156,26 +160,31 @@ public class CollaboratorControlsActionBean extends CoreActionBean {
     @HandlesEvent(SAVE_ACTION)
     public Resolution save() {
 
+        Control.ControlState state;
+
         if (isCreating()) {
             /*
             If we are creating a new Control, the only value that has to be updated on the existing control object is the type
              */
             workingControl.setType(createControlType);
+            state = workingControl.getState();
         } else {
             /*
             If we are editing an existing control, the only value that can be updated on the existing control object
             is the state.
              */
-            workingControl.setState(editControlInactiveState ? Control.ControlState.INACTIVE
-                                                             : Control.ControlState.ACTIVE);
+            state = editControlInactiveState ? Control.ControlState.INACTIVE
+                                                             : Control.ControlState.ACTIVE;
         }
 
-        controlDao.persist(workingControl);
+//        controlDao.persist(workingControl);
+        controlEjb.saveControl(workingControl, state);
 
         StringBuilder confirmMessage = new StringBuilder();
 
         confirmMessage.append(workingControl.getType().getDisplayName());
-        confirmMessage.append(" Control " + workingControl.getBusinessKey());
+        confirmMessage.append(" Control ");
+        confirmMessage.append(workingControl.getBusinessKey());
 
         // Adjust the confirmation test based on the action the user took.
         if (isCreating()) {
