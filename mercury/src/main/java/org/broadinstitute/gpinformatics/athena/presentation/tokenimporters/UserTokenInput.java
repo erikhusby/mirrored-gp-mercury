@@ -46,12 +46,11 @@ public class UserTokenInput extends TokenInput<BspUser> {
     @Override
     protected String formatMessage(String messageString, BspUser bspUser) {
         return MessageFormat.format(
-            messageString, bspUser.getFirstName() + " " + bspUser.getLastName(),
-                           bspUser.getUsername() + " " + bspUser.getEmail());
+            messageString, bspUser.getFullName(), bspUser.getUsername() + " " + bspUser.getEmail());
     }
 
     @Override
     protected String getTokenName(BspUser bspUser) {
-        return bspUser.getFirstName() + " " + bspUser.getLastName();
+        return bspUser.getFullName();
     }
 }

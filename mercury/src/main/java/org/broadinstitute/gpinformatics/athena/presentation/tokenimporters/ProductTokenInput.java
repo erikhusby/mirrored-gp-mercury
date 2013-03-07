@@ -44,7 +44,7 @@ public class ProductTokenInput extends TokenInput<Product> {
 
     @Override
     protected String getTokenName(Product product) {
-        return product.getProductName();
+        return product.getProductName() + " [" + product.getBusinessKey() + "]";
     }
 
     @Override
