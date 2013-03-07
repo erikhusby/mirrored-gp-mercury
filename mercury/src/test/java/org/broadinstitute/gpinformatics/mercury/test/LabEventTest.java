@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -214,7 +215,8 @@ public class LabEventTest {
                         .getMapBarcodeToNormCatchTubes());
         qtpEntityBuilder.invoke();
 
-        IlluminaSequencingRunFactory illuminaSequencingRunFactory = new IlluminaSequencingRunFactory();
+        IlluminaSequencingRunFactory illuminaSequencingRunFactory =
+                new IlluminaSequencingRunFactory(EasyMock.createMock(IlluminaFlowcellDao.class));
         IlluminaSequencingRun illuminaSequencingRun;
         try {
             illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
@@ -362,7 +364,8 @@ public class LabEventTest {
                         .getMapBarcodeToNormCatchTubes());
         qtpEntityBuilder.invoke();
 
-        IlluminaSequencingRunFactory illuminaSequencingRunFactory = new IlluminaSequencingRunFactory();
+        IlluminaSequencingRunFactory illuminaSequencingRunFactory =
+                new IlluminaSequencingRunFactory(EasyMock.createMock(IlluminaFlowcellDao.class));
         IlluminaSequencingRun illuminaSequencingRun;
         try {
             illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(

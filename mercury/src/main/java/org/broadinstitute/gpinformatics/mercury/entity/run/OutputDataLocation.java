@@ -32,7 +32,7 @@ public class OutputDataLocation {
 
     private String dataLocation;
 
-    private boolean archived;
+    private boolean archived = true;
 
     protected OutputDataLocation() {
     }

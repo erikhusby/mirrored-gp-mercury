@@ -56,6 +56,7 @@ public class SequencingRun {
         this.testRun = testRun;
         this.runDate = runDate;
         this.runCartridge = runCartridge;
+        runLocation = dataLocation;
     }
 
     protected SequencingRun() {

@@ -17,12 +17,17 @@ import java.io.Serializable;
  */
 public class IlluminaSequencingRunFactory implements Serializable {
 
+    private final IlluminaFlowcellDao illuminaFlowcellDao;
+
     @Inject
-    private IlluminaFlowcellDao illuminaFlowcellDao;
+    public IlluminaSequencingRunFactory(IlluminaFlowcellDao illuminaFlowcellDao) {
+        this.illuminaFlowcellDao = illuminaFlowcellDao;
+    }
 
     public IlluminaSequencingRun build(SolexaRunBean solexaRunBean) {
         // todo jmt how to get operator? -- SGM -- can't, will always be run from a machine.
         IlluminaFlowcell illuminaFlowcell = illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());
+
         return buildDbFree(solexaRunBean, illuminaFlowcell);
     }
 
