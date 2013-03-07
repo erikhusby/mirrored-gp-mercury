@@ -232,7 +232,7 @@ public class LabEventTest {
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
         Assert.assertEquals(labEventNames.size(), 13, "Wrong number of transfers");
 
-        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().iterator().next(),
+        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(),
                 qtpEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
 
         // pick a sample and mark it for rework
@@ -380,7 +380,7 @@ public class LabEventTest {
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
         Assert.assertEquals(labEventNames.size(), 13, "Wrong number of transfers");
 
-        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().iterator().next(),
+        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(),
                 qtpEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
 
         EasyMock.verify(mockBucketDao);

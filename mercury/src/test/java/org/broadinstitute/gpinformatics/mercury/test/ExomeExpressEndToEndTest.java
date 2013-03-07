@@ -477,7 +477,7 @@ public class ExomeExpressEndToEndTest {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            Assert.assertNotNull(illuminaSequencingRun.getSampleCartridge().iterator().next(),
+            Assert.assertNotNull(illuminaSequencingRun.getSampleCartridge(),
                                  "No registered flowcell");
 
             // We're container-free, so we have to populate the BSPSampleDTO ourselves

@@ -18,6 +18,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.OutputDataLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
@@ -148,7 +149,11 @@ public class ZimsIlluminaRunFactoryTest {
     @Test(groups = DATABASE_FREE)
     public void testMakeZimsIlluminaRun() throws Exception {
         Date runDate = new Date(1358889107084L);
-        IlluminaSequencingRun sequencingRun = new IlluminaSequencingRun(flowcell, "TestRun", "Run-123", "IlluminaRunServiceImplTest", 101L, true, runDate);
+        final String testRunDirectory = "TestRun";
+        IlluminaSequencingRun sequencingRun =
+                new IlluminaSequencingRun(flowcell, testRunDirectory, "Run-123", "IlluminaRunServiceImplTest", 101L, true,
+                                                 runDate,
+                                                 new OutputDataLocation("/root/path/to/run/"+testRunDirectory));
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(sequencingRun);
 //        LibraryBeanFactory libraryBeanFactory = new LibraryBeanFactory();
 //        ZimsIlluminaRun zimsIlluminaRun = libraryBeanFactory.buildLibraries(sequencingRun);
@@ -159,9 +164,9 @@ public class ZimsIlluminaRunFactoryTest {
         assertThat(zimsIlluminaRun.getSequencer(), equalTo("IlluminaRunServiceImplTest"));
         assertThat(zimsIlluminaRun.getFlowcellBarcode(), equalTo("testFlowcell"));
         assertThat(zimsIlluminaRun.getRunDateString(), equalTo("01/22/2013 16:11"));
-//        assertThat(zimsIlluminaRun.getPairedRun(), is(true)); // TODO
-//        assertThat(zimsIlluminaRun.getSequencerModel(), equalTo("HiSeq")); // TODO
-//        assertThat(zimsIlluminaRun.getLanes().size(), equalTo(8));
+//        assertThat(zimsIlluminaRun.getPairedRun(), is(true)); // TODO SGM will pull from Workflow
+//        assertThat(zimsIlluminaRun.getSequencerModel(), equalTo("HiSeq")); // TODO  SGM Will pull from workflow
+//        assertThat(zimsIlluminaRun.getLanes().size(), equalTo(8)); // TODO SGM WIll pull from workflow
 
         for (ZimsIlluminaChamber lane : zimsIlluminaRun.getLanes()) {
             if (lane.getName().equals("1")) {

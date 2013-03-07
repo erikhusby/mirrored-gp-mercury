@@ -33,7 +33,7 @@ public class LibraryBeanFactory {
 
     public ZimsIlluminaRun buildLibraries(IlluminaSequencingRun illuminaSequencingRun) {
         List<LibraryBean> libraries = new ArrayList<LibraryBean>();
-        RunCartridge runCartridge = illuminaSequencingRun.getSampleCartridge().iterator().next();
+        RunCartridge runCartridge = illuminaSequencingRun.getSampleCartridge();
         StripTube stripTube = (StripTube) runCartridge.getTransfersTo().iterator().next().getSourceLabVessels().iterator().next();
 //        Set<SampleInstance> sampleInstances = stripTube.getContainerRole().getSampleInstancesAtPosition(VesselPosition.TUBE1);
         Map<MercurySample,Collection<LabVessel>> singleSampleLibrariesForInstance = stripTube.getContainerRole().getSingleSampleAncestors(VesselPosition.TUBE1);
