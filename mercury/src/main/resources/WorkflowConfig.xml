@@ -438,6 +438,56 @@
         </workflowProcessDefVersions>
     </workflowProcessDefs>
     <workflowProcessDefs>
+        <name>QTP 2500</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
+            <!--
+                    <workflowStepDefs>
+                        <name>Catch Pico?</name>
+                        <labEventTypes></labEventTypes>
+                        <optional>false</optional>
+                        <entryPoint>false</entryPoint>
+                        <reEntryPoint>false</reEntryPoint>
+                    </workflowStepDefs>
+            -->
+            <workflowStepDefs>
+                <name>Pooling Transfer</name>
+                <labEventTypes>POOLING_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <!--
+                    <workflowStepDefs>
+                        <name>EcoTransfer?</name>
+                        <labEventTypes></labEventTypes>
+                        <optional>false</optional>
+                        <entryPoint>false</entryPoint>
+                        <reEntryPoint>false</reEntryPoint>
+                    </workflowStepDefs>
+            -->
+            <workflowStepDefs>
+                <name>Normalization Transfer</name>
+                <labEventTypes>NORMALIZATION_TRANSFER</labEventTypes>
+                <optional>true</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Denature Transfer</name>
+                <labEventTypes>DENATURE_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>In MiSeq Sequencing</statusTransition>
+                </jiraTransition>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
         <name>HiSEQ</name>
         <workflowProcessDefVersions>
             <version>1.0</version>
@@ -445,6 +495,39 @@
             <workflowStepDefs>
                 <name>Flowcell Transfer</name>
                 <labEventTypes>FLOWCELL_TRANSFER</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>LCSET</project>
+                    <statusTransition>Closed</statusTransition>
+                </jiraTransition>
+                <jiraTransition>
+                    <project>FCT</project>
+                    <statusTransition>Flowcell Registered</statusTransition>
+                </jiraTransition>
+            </workflowStepDefs>
+            <workflowStepDefs>
+                <name>Flowcell Loaded</name>
+                <labEventTypes>FLOWCELL_LOADED</labEventTypes>
+                <optional>false</optional>
+                <entryPoint>false</entryPoint>
+                <reEntryPoint>false</reEntryPoint>
+                <jiraTransition>
+                    <project>FCT</project>
+                    <statusTransition>On Sequencer</statusTransition>
+                </jiraTransition>
+            </workflowStepDefs>
+        </workflowProcessDefVersions>
+    </workflowProcessDefs>
+    <workflowProcessDefs>
+        <name>HiSEQ 2500</name>
+        <workflowProcessDefVersions>
+            <version>1.0</version>
+            <effectiveDate>2012-09-30T21:03:24.085-04:00</effectiveDate>
+            <workflowStepDefs>
+                <name>Denature to Flowcell Transfer</name>
+                <labEventTypes>DENATURE_TO_FLOWCELL_TRANSFER</labEventTypes>
                 <optional>false</optional>
                 <entryPoint>false</entryPoint>
                 <reEntryPoint>false</reEntryPoint>
@@ -509,8 +592,8 @@
             <workflowProcessDefs>Exome Express Shearing</workflowProcessDefs>
             <workflowProcessDefs>Library Construction</workflowProcessDefs>
             <workflowProcessDefs>Hybrid Selection</workflowProcessDefs>
-            <workflowProcessDefs>QTP</workflowProcessDefs>
-            <workflowProcessDefs>HiSEQ</workflowProcessDefs>
+            <workflowProcessDefs>QTP 2500</workflowProcessDefs>
+            <workflowProcessDefs>HiSEQ 2500</workflowProcessDefs>
         </productWorkflowDefVersions>
     </productWorkflowDefs>
     <productWorkflowDefs>

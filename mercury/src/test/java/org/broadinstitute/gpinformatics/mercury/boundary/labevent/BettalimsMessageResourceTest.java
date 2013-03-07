@@ -249,6 +249,13 @@ public class BettalimsMessageResourceTest extends Arquillian {
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage);
         }
+
+        LabEventTest.HiSeqJaxbBuilder hiSeqJaxbBuilder =
+                new LabEventTest.HiSeqJaxbBuilder(bettaLimsMessageFactory, testPrefix,
+                        qtpJaxbBuilder.getStripTubeBarcode()).invoke();
+        for (BettaLIMSMessage bettaLIMSMessage : hiSeqJaxbBuilder.getMessageList()) {
+            sendMessage(bettaLIMSMessage);
+        }
 //        Controller.stopCPURecording();
         TwoDBarcodedTube poolTube = twoDBarcodedTubeDAO.findByBarcode(qtpJaxbBuilder.getPoolTubeBarcode());
         Assert.assertEquals(poolTube.getSampleInstances().size(), LabEventTest.NUM_POSITIONS_IN_RACK,
@@ -256,7 +263,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
         String runName="TestRun" + testPrefix;
         try {
-            solexaRunResource.registerRun(new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(), runName, new Date(), "SL-HAL",
+            solexaRunResource.registerRun(new SolexaRunBean(hiSeqJaxbBuilder.getFlowcellBarcode(), runName, new Date(), "SL-HAL",
                     File.createTempFile("RunDir", ".txt").getAbsolutePath(), null));
         } catch (IOException e) {
             throw new RuntimeException(e);
