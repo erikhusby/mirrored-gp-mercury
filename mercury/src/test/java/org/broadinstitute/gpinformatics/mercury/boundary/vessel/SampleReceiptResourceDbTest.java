@@ -29,12 +29,14 @@ public class SampleReceiptResourceDbTest extends ContainerTest {
     @RunAsClient
     public void testReceiveTubes(@ArquillianResource URL baseUrl) {
         SampleReceiptBean sampleReceiptBean = LabVesselFactoryTest.buildTubes(dateFormat.format(new Date()));
+        // POST to the resource
         WebResource resource = Client.create().resource(baseUrl.toExternalForm() + "rest/samplereceipt");
         String response= resource.type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(sampleReceiptBean)
                 .post(String.class);
 
+        // GET from the resource to verify persistence
         String batchName = response.substring(response.lastIndexOf(": ") + 2);
         SampleReceiptBean sampleReceiptBeanGet = resource.path(batchName).get(SampleReceiptBean.class);
         Assert.assertEquals(sampleReceiptBeanGet.getParentVesselBeans().size(),
