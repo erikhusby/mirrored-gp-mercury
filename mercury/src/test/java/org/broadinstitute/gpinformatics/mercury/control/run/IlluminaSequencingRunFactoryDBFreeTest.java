@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.control;
+package org.broadinstitute.gpinformatics.mercury.control.run;
 
 import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
