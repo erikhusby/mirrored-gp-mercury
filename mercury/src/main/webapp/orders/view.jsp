@@ -608,8 +608,6 @@
                             <th width="40">Yield Amount</th>
                             <th width="60">FP Status</th>
                             <th>On Risk</th>
-                            <th width="40">Eligible</th>
-                            <th width="40">Billed</th>
                             <th width="40">Status</th>
                             <th width="200">Comment</th>
                         </tr>
@@ -643,8 +641,6 @@
                                 <td id="total-${sample.productOrderSampleId}">&#160; </td>
                                 <td id="fingerprint-${sample.productOrderSampleId}" style="text-align: center">&#160; </td>
                                 <td>${sample.riskString}</td>
-                                <td>&#160;</td>
-                                <td>&#160;</td>
                                 <td>${sample.deliveryStatus.displayName}</td>
                                 <td>${sample.sampleComment}</td>
                             </tr>
