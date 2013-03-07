@@ -40,7 +40,7 @@ public class SequencingRun {
 
     @ManyToOne(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
     // have to specify name, generated aud name is too long for Oracle
-    @JoinTable(schema = "mercury", name = "seq_run_run_cartridges")
+    @JoinTable(schema = "mercury", name = "seq_run_run_cartridges",joinColumns = @JoinColumn(name="sequencing_run"))
     private RunCartridge runCartridge;
 
     @ManyToOne(cascade = {CascadeType.ALL})

@@ -848,7 +848,9 @@
         </preConditions>
 
         <createTable tableName="output_data_location_aud" schemaName="mercury">
-            <column name="data_location_id" type="number(19,0)" />
+            <column name="data_location_id" type="number(19,0)" >
+                <constraints nullable="false" />
+            </column>
             <column name="rev" type="number(19,0)">
                 <constraints nullable="false" />
             </column>

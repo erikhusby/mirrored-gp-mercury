@@ -5,9 +5,12 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Something that contains samples and is
@@ -20,10 +23,10 @@ import javax.persistence.OneToMany;
 @Audited
 public abstract class RunCartridge extends LabVessel {
 
-    @ManyToOne(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
+    @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
     // have to specify name, generated aud name is too long for Oracle
-    @JoinTable(schema = "mercury", name = "seq_run_run_cartridges")
-    SequencingRun sequencingRun;
+    @JoinTable(schema = "mercury", name = "seq_run_run_cartridges", joinColumns = @JoinColumn(name = "run_cartridge"))
+    Set<SequencingRun> sequencingRun = new HashSet<SequencingRun>();
 
     public RunCartridge(String label) {
         super(label);
@@ -38,7 +41,7 @@ public abstract class RunCartridge extends LabVessel {
 
     abstract public String getCartridgeBarcode();
 
-    public SequencingRun getSequencingRun() {
+    public Set<SequencingRun> getSequencingRun() {
         return sequencingRun;
     }
 }
