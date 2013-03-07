@@ -46,7 +46,7 @@ public class ResearchProjectEtl  extends GenericEntityEtl {
 
     /** {@inheritDoc} */
     @Override
-    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
         Collection<String> recordList = new ArrayList<String>();
         ResearchProject entity = dao.findById(ResearchProject.class, entityId);
         if (entity != null) {

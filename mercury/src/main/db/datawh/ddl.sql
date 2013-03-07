@@ -176,8 +176,8 @@ CREATE TABLE product_order_sample (
   sample_name VARCHAR2(255),
   delivery_status VARCHAR2(40) NOT NULL,
   sample_position NUMERIC(19) NOT NULL,
-  on_risk CHAR(1) CHECK (on_risk IN ('T','F')),
-  is_billed CHAR(1) CHECK (on_risk IN ('T','F')),
+  on_risk CHAR(1) DEFAULT 'F' NOT NULL CHECK (on_risk IN ('T','F')),
+  is_billed CHAR(1) DEFAULT 'F' NOT NULL CHECK (on_risk IN ('T','F')),
   etl_date DATE NOT NULL
 );
 

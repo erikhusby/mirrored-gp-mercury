@@ -59,7 +59,7 @@ public class BillingLedgerEtl extends GenericEntityEtl {
                 // ATHENA.BILLING_LEDGER_AUD.product_sample_id is a generated numeric field (a BigDecimal)
                 // but we know it will always fit in a Long.
                 Long id = Long.parseLong(String.valueOf(pdoSampleId));
-                for (String record : entityRecord(etlDateStr, false, id)) {
+                for (String record : entityRecords(etlDateStr, false, id)) {
                     dataFile.write(record);
                 }
             }
@@ -115,12 +115,10 @@ public class BillingLedgerEtl extends GenericEntityEtl {
 
             // Writes the records.
             for (BigDecimal pdoSampleId : pdoSampleIds) {
-                if (null == pdoSampleId) continue;
-                // ATHENA.BILLING_LEDGER_AUD.product_sample_id is a generated numeric field (a BigDecimal)
-                // but we know it will always fit in a Long.
-                Long id = Long.parseLong(String.valueOf(pdoSampleId));
-                for (String record : entityRecord(etlDateStr, false, id)) {
-                    dataFile.write(record);
+                if (pdoSampleId != null) {
+                    for (String record : entityRecords(etlDateStr, false, pdoSampleId.longValue())) {
+                        dataFile.write(record);
+                    }
                 }
             }
         } catch (IOException e) {
@@ -133,7 +131,7 @@ public class BillingLedgerEtl extends GenericEntityEtl {
     }
 
 
-    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long pdoSampleId) {
+    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long pdoSampleId) {
         Collection<String> recordList = new ArrayList<String>();
         ProductOrderSample entity = dao.findById(ProductOrderSample.class, pdoSampleId);
         if (entity != null) {
@@ -158,7 +156,7 @@ public class BillingLedgerEtl extends GenericEntityEtl {
 
     @Override
     Collection<String> entityRecordsInRange(long startId, long endId, String etlDateStr, boolean isDelete) {
-        return null;
+        throw new RuntimeException("This method cannot apply to this etl class.");
     }
 
     @Override

@@ -30,7 +30,7 @@ public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
 
     /** This entity does not make entity records. */
     @Override
-    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
         return Collections.emptyList();
     }
 

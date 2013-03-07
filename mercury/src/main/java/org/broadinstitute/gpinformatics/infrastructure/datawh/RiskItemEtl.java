@@ -59,13 +59,10 @@ public class RiskItemEtl extends GenericEntityEtl {
             }
             // Collects and deduplicates the relevant pdo sample ids, and writes update records for them.
             for (BigDecimal pdoSampleId : lookupSampleIds(riskIds)) {
-                if (null == pdoSampleId) continue;
-
-                // ATHENA.PO_SAMPLE_RISK_JOIN_AUD.product_sample_id is a generated numeric field (a BigDecimal)
-                // but we know it will always fit in a Long.
-                Long id = Long.parseLong(String.valueOf(pdoSampleId));
-                for (String record : entityRecord(etlDateStr, false, id)) {
-                    dataFile.write(record);
+                if (pdoSampleId != null) {
+                    for (String record : entityRecords(etlDateStr, false, pdoSampleId.longValue())) {
+                        dataFile.write(record);
+                    }
                 }
             }
 
@@ -119,12 +116,10 @@ public class RiskItemEtl extends GenericEntityEtl {
 
             // Writes the records.
             for (BigDecimal pdoSampleId : pdoSampleIds) {
-                if (null == pdoSampleId) continue;
-                // ATHENA.PO_SAMPLE_RISK_JOIN_AUD.product_sample_id is a generated numeric field (a BigDecimal)
-                // but we know it will always fit in a Long.
-                Long id = Long.parseLong(String.valueOf(pdoSampleId));
-                for (String record : entityRecord(etlDateStr, false, id)) {
-                    dataFile.write(record);
+                if (pdoSampleId != null) {
+                    for (String record : entityRecords(etlDateStr, false, pdoSampleId.longValue())) {
+                        dataFile.write(record);
+                    }
                 }
             }
         } catch (IOException e) {
@@ -136,8 +131,9 @@ public class RiskItemEtl extends GenericEntityEtl {
         return dataFile.getRecordCount();
     }
 
+    /** {@inheritDoc} */
     @Override
-    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long pdoSampleId) {
+    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long pdoSampleId) {
         Collection<String> recordList = new ArrayList<String>();
         ProductOrderSample entity = dao.findById(ProductOrderSample.class, pdoSampleId);
         if (entity != null) {
@@ -162,7 +158,7 @@ public class RiskItemEtl extends GenericEntityEtl {
 
     @Override
     Collection<String> entityRecordsInRange(long startId, long endId, String etlDateStr, boolean isDelete) {
-        return null;
+        throw new RuntimeException("This method cannot apply to this etl class.");
     }
 
     @Override

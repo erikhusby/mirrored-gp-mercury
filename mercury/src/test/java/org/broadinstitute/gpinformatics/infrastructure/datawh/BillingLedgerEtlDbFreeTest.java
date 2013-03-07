@@ -1,10 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.RiskItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.testng.annotations.AfterMethod;
@@ -79,7 +77,7 @@ public class BillingLedgerEtlDbFreeTest {
 
         replay(mocks);
 
-        assertEquals(tst.entityRecord(etlDateStr, false, -1L).size(), 0);
+        assertEquals(tst.entityRecords(etlDateStr, false, -1L).size(), 0);
 
         verify(mocks);
     }
@@ -90,7 +88,7 @@ public class BillingLedgerEtlDbFreeTest {
         expect(pos.getBillableLedgerItems()).andReturn(ledgerItems);
         replay(mocks);
 
-        Collection<String> records = tst.entityRecord(etlDateStr, false, posId);
+        Collection<String> records = tst.entityRecords(etlDateStr, false, posId);
         assertEquals(records.size(), 1);
 
         verifyRecord(records.iterator().next());
