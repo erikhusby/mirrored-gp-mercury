@@ -23,6 +23,7 @@ public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
     private BSPMaterialTypeList materialTypeListCache;
 
     public MaterialTypeTokenInput() {
+        super(SINGLE_LINE_FORMAT);
     }
 
     // There are commas in material types so use the | character for the separator
@@ -50,11 +51,6 @@ public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
 
         Collection<MaterialType> materialTypes = materialTypeListCache.find(query);
         return createItemListString(new ArrayList<MaterialType>(materialTypes));
-    }
-
-    @Override
-    protected boolean isSingleLineMenuEntry() {
-        return true;
     }
 
     @Override

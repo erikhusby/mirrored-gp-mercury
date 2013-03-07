@@ -192,7 +192,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
             return "(Unknown user: " + userId + ")";
         }
 
-        return bspUser.getFirstName() + " " + bspUser.getLastName();
+        return bspUser.getFullName();
     }
 
     public static class QADudeUser extends BspUser {

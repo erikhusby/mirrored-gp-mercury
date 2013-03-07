@@ -16,7 +16,6 @@ import net.sourceforge.stripes.exception.SourcePageNotFoundException;
 import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.ValidationError;
 import net.sourceforge.stripes.validation.ValidationErrors;
-import org.apache.commons.io.FileDeleteStrategy;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -321,7 +320,7 @@ public class CoreActionBean implements ActionBean {
             return "(Unknown user: " + userId + ")";
         }
 
-        return bspUser.getFirstName() + " " + bspUser.getLastName();
+        return bspUser.getFullName();
     }
 
     /**
