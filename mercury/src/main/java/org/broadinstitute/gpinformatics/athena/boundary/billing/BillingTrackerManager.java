@@ -259,7 +259,7 @@ public class BillingTrackerManager {
                                 " of spreadsheet " + product.getPartNumber() +
                                 " has an invalid Date Completed value. Please correct and try again.");
                     } else {
-                        productOrderSample.addLedgerItem(workCompleteDate, priceItem, delta);
+                        productOrderSample.addLedgerItem(workCompleteDate, priceItem, productOrderSample.getProductOrder().getQuoteId(), delta);
                     }
                 } else {
                     logger.debug("Skipping BillingLedger item for sample " + productOrderSample.getSampleName() +
