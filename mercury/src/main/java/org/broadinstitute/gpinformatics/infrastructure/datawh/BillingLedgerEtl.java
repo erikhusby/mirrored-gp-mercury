@@ -75,6 +75,7 @@ public class BillingLedgerEtl extends GenericEntityEtl {
     private Collection<BigDecimal> lookupSampleIds(Collection<Long> billingLedgerIds) {
         Set<BigDecimal> pdoSampleIds = new HashSet<BigDecimal>();
         // Chunks as necessary to limit sql "in" clause to 1000 elements.
+        // TODO Splitterize
         Long[] billingLedgerIdArray = billingLedgerIds.toArray(new Long[billingLedgerIds.size()]);
 
         int endIdx = billingLedgerIdArray.length - 1;

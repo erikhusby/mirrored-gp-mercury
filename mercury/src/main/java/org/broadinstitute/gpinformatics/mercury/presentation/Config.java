@@ -12,6 +12,7 @@ import javax.inject.Inject;
  */
 @Startup
 @Singleton
+// TODO DELETE
 public class Config {
 
     @Inject

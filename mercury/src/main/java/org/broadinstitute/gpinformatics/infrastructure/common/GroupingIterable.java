@@ -14,6 +14,7 @@ import java.util.NoSuchElementException;
  *
  * @param <T> The type of the element in the input List and generated Lists.
  */
+// TODO Splitterize DELETE
 public class GroupingIterable<T>  implements IterableWithSize<List<T>> {
     
     private int maxGroupSize;

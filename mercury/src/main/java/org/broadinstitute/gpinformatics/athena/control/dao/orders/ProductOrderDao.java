@@ -355,6 +355,7 @@ public class ProductOrderDao extends GenericDao {
      */
     public List<ProductOrder> findBySampleBarcodes(@Nonnull String... barcodes) throws IllegalArgumentException {
 
+        // TODO Splitterize
         if (barcodes.length > 1000) {
             throw new IllegalArgumentException(MessageFormat
                     .format("Received {0} barcodes but Oracle in expression limit is 1000.", barcodes.length));
