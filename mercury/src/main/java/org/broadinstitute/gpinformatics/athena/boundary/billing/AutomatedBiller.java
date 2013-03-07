@@ -44,6 +44,12 @@ public class AutomatedBiller {
         this.billingLedgerDao = billingLedgerDao;
     }
 
+    // EJBs require a no arg constructor
+    @SuppressWarnings("unused")
+    public AutomatedBiller() {
+        this(null, null, null, null);
+    }
+
     //@Schedule(minute = "*/15", hour = "*")
     public void processMessages() {
         for (WorkCompleteMessage message : workCompleteMessageDao.getNewMessages()) {
@@ -89,10 +95,12 @@ public class AutomatedBiller {
             }
 
             if (product.isUseAutomatedBilling()) {
-                if (product.getRequirement().canBill(message.getData())) {
-                    List<ProductOrderSample> samples =
-                            productOrderSampleDao.findByOrderAndName(order, message.getSampleName());
-                    ProductOrderSample sample = samples.get(message.getSampleIndex());
+                List<ProductOrderSample> samples =
+                    productOrderSampleDao.findByOrderAndName(order, message.getSampleName());
+                ProductOrderSample sample = samples.get(message.getSampleIndex());
+
+                // Always bill if the sample is on risk, otherwise, check if the requirement is met for billing
+                if (sample.isOnRisk() || product.getRequirement().canBill(message.getData())) {
                     sample.autoBillSample(message.getCompletedDate(), 1);
                 }
             } else {
