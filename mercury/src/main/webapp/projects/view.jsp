@@ -14,6 +14,12 @@
                 })
             });
         </script>
+
+        <style type="text/css">
+            .barFull { height: 10px; width:80px; background-color: white; border-color: #a9a9a9; border-style: solid; border-width: thin; }
+            .barComplete { height: 10px; float:left; background-color: #c4eec0; }
+            .barAbandon { height: 10px; float:left; background-color: #eed6e1; }
+        </style>
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
@@ -42,7 +48,7 @@
                     <div class="form-value">
                         <c:if test="${actionBean.editResearchProject.jiraTicketKey != null}">
                             <stripes:link target="JIRA"
-                                          href="${actionBean.jiraUrl}${actionBean.editResearchProject.jiraTicketKey}"
+                                          href="${actionBean.jiraUrl(actionBean.editResearchProject.jiraTicketKey)}"
                                           class="external">
                                 ${actionBean.editResearchProject.jiraTicketKey}
                             </stripes:link>
@@ -182,7 +188,8 @@
                     <th>Status</th>
                     <th>Owner</th>
                     <th>Updated</th>
-                    <th>Samples</th>
+                    <th width="80">%&nbsp;Complete</th>
+                    <th>Sample Count</th>
                 </tr>
             </thead>
             <tbody>
@@ -195,7 +202,7 @@
                             </stripes:link>
                         </td>
                         <td>
-                            <a class="external" target="JIRA" href="${actionBean.jiraUrl}${order.jiraTicketKey}" class="external" target="JIRA">
+                            <a class="external" target="JIRA" href="${actionBean.jiraUrl(order.jiraTicketKey)}" class="external" target="JIRA">
                                     ${order.jiraTicketKey}
                             </a>
                         </td>
@@ -205,7 +212,17 @@
                         <td>
                             <fmt:formatDate value="${order.modifiedDate}" pattern="MM/dd/yyyy"/>
                         </td>
-                        <td>${order.pdoSampleCount}</td>
+                        <td align="center">
+                            <div class="barFull" title="${actionBean.progressFetcher.getPercentInProgress(order.businessKey)}% In Progress">
+                                <span class="barAbandon"
+                                      title="${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}% Abandoned"
+                                      style="width: ${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}%"> </span>
+                                <span class="barComplete"
+                                      title="${actionBean.progressFetcher.getPercentCompleted(order.businessKey)}% Completed"
+                                      style="width: ${actionBean.progressFetcher.getPercentCompleted(order.businessKey)}%"> </span>
+                            </div>
+                        </td>
+                        <td>${actionBean.progressFetcher.getNumberOfSamples(order.businessKey)}</td>
                     </tr>
                 </c:forEach>
             </tbody>

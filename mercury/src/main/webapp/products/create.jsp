@@ -43,7 +43,7 @@
                         "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type a Price Item name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.priceItemTokenInput.completeData)},
-                            resultsFormatter: formatPriceItem,
+                            resultsFormatter: formatInput,
                             tokenLimit: 1,
                             preventDuplicates: true
                         }
@@ -53,7 +53,7 @@
                         "${ctxpath}/products/product.action?priceItemAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type a Price Item name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.optionalPriceItemTokenInput.completeData)},
-                            resultsFormatter: formatPriceItem,
+                            resultsFormatter: formatInput,
                             preventDuplicates: true
                         }
                     );
@@ -62,7 +62,7 @@
                         "${ctxpath}/products/product.action?addOnsAutocomplete=&product=${actionBean.editProduct.businessKey}", {
                             hintText: "Type a Product name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.addOnTokenInput.completeData)},
-                            resultsFormatter: formatProduct,
+                            resultsFormatter: formatInput,
                             preventDuplicates: true
                         }
                     );
@@ -72,6 +72,7 @@
                             hintText: "Type a Material Type name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.materialTypeTokenInput.completeData)},
                             preventDuplicates: true,
+                            resultsFormatter: formatInput,
                             tokenDelimiter: "|"
                         }
                     );
@@ -87,14 +88,9 @@
                 }
             );
 
-            function formatProduct(item) {
-                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
-                        "<div class=\"ac-dropdown-subtext\">" + item.id + "</div></li>";
-            }
-
-            function formatPriceItem(item) {
-                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
-                        "<div class=\"ac-dropdown-subtext\">" + item.platform + " " + item.category + "</div></li>";
+            function formatInput(item) {
+                var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
+                return "<li>" + item.dropdownItem + extraCount + '</li>';
             }
 
             function updateBillingRules() {
@@ -144,19 +140,18 @@
                 newCriteria += '    </select>\n';
 
                 // the operator for the selected item
-                newCriteria += '    <select id="operatorSelect-' + criteriaCount + '" style="padding-left:4px;padding-right:4px;width:auto;" name="operators">\n';
+                newCriteria += '    <select style="display:none" id="operatorSelect-' + criteriaCount + '" style="padding-left:4px;padding-right:4px;width:auto;" name="operators">\n';
                 newCriteria += operatorOptions(criteriaCount, operatorsLabel, operator);
                 newCriteria += '    </select>\n';
 
-                if (!booleanTypes[criteria]) {
-                    newCriteria += '    <input id="valueText-' + criteriaCount + '" type="text" name="values" value="' + value + '"/>\n';
-                } else {
-                    newCriteria += '    <input id="valueText-' + criteriaCount + '" type="hidden" name="values" value="' + value + '"/>\n';
-                }
+                newCriteria += '    <input style="display:none" id="valueText-' + criteriaCount + '" type="text" name="values" value="' + value + '"/>\n';
 
                 newCriteria += '</div>\n';
 
                 $j('#riskCriteria').append(newCriteria);
+
+                updateValueView(criteria, criteriaCount);
+
                 criteriaCount++;
             }
 
@@ -168,9 +163,15 @@
                 // Set the value text
                 $j('#valueText-' + criteriaCount).attr("value", defaultValues[criteriaLabel]);
 
+                updateValueView(criteriaLabel, criteriaCount);
+            }
+
+            function updateValueView(criteriaLabel, criteriaCount) {
                 if (booleanTypes[criteriaLabel]) {
+                    $j('#operatorSelect-' + criteriaCount).hide();
                     $j('#valueText-' + criteriaCount).hide();
                 } else {
+                    $j('#operatorSelect-' + criteriaCount).show();
                     $j('#valueText-' + criteriaCount).show();
                 }
             }
@@ -252,6 +253,7 @@
                     <div class="controls">
                         <stripes:text id="availabilityDate" name="editProduct.availabilityDate" class="defaultText"
                             title="Enter date (MM/dd/yyyy)" formatPattern="MM/dd/yyyy" />
+                    </div>
                 </div>
 
                 <div class="control-group">

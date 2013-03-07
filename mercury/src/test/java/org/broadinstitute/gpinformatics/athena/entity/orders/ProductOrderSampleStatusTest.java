@@ -1,12 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDaoTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -35,6 +36,9 @@ public class ProductOrderSampleStatusTest extends ContainerTest {
     @Inject
     UserTransaction utx;
 
+    @Inject
+    UserBean userBean;
+
     private String testKey;
 
     private static final int NUM_TEST_SAMPLES = 20;
@@ -45,6 +49,8 @@ public class ProductOrderSampleStatusTest extends ContainerTest {
         if (utx == null) {
             return;
         }
+
+        userBean.loginTestUser();
 
         utx.begin();
 
@@ -68,6 +74,8 @@ public class ProductOrderSampleStatusTest extends ContainerTest {
         }
 
         utx.rollback();
+
+        userBean.logout();
     }
 
     /**

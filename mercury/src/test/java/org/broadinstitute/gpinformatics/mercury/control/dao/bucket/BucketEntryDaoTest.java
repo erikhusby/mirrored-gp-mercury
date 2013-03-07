@@ -1,12 +1,11 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.bucket;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.testng.annotations.AfterMethod;
@@ -14,7 +13,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.persistence.NonUniqueResultException;
 import javax.transaction.UserTransaction;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -94,7 +92,7 @@ public class BucketEntryDaoTest extends ContainerTest {
         BucketEntry retrievedEntry = bucketEntryDao.findByVesselAndPO ( foundVessel, testPoBusinessKey );
 
         Assert.assertNotNull ( retrievedEntry );
-        Assert.assertNotNull ( retrievedEntry.getBucketExistence () );
+        Assert.assertNotNull ( retrievedEntry.getBucket() );
         Assert.assertNotNull ( retrievedEntry.getCreatedDate () );
 
         SimpleDateFormat dateFormatter = new SimpleDateFormat ( "dd/MM/yy" );
@@ -108,7 +106,7 @@ public class BucketEntryDaoTest extends ContainerTest {
         BucketEntry retrievedEntry2 = bucketEntryDao.findByVesselAndBucket(foundVessel, findBucket);
 
         Assert.assertNotNull ( retrievedEntry2 );
-        Assert.assertNotNull ( retrievedEntry2.getBucketExistence () );
+        Assert.assertNotNull ( retrievedEntry2.getBucket() );
         Assert.assertNotNull ( retrievedEntry2.getCreatedDate () );
 
         Assert.assertEquals ( dateFormatter.format ( new Date () ), dateFormatter.format (
@@ -135,7 +133,7 @@ public class BucketEntryDaoTest extends ContainerTest {
         BucketEntry retrievedEntry = bucketEntryDao.findByVesselAndPO ( foundVessel, testPoBusinessKey );
 
         Assert.assertNotNull ( retrievedEntry );
-        Assert.assertNotNull ( retrievedEntry.getBucketExistence () );
+        Assert.assertNotNull ( retrievedEntry.getBucket() );
         Assert.assertNotNull ( retrievedEntry.getCreatedDate () );
 
         SimpleDateFormat dateFormatter = new SimpleDateFormat ( "dd/MM/yy" );

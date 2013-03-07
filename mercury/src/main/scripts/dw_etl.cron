@@ -38,8 +38,12 @@ use Oracle-full-client
 # Reads the required params and assigns derived params
 #
 
-DB_PARAMS_FILE=~/dwdb_params
+DB_PARAMS_FILE="$1"
 
+if [ -z "${DB_PARAMS_FILE}" ]; then
+    echo "Missing db params filename parameter" | tee /dev/stderr
+    exit 1
+fi
 if [ ! -f ${DB_PARAMS_FILE} ]; then
     echo "Cannot find ${DB_PARAMS_FILE}" | tee /dev/stderr
     exit 1

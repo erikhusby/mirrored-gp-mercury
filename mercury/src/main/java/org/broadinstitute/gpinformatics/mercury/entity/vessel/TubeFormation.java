@@ -2,24 +2,11 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.hibernate.envers.Audited;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Embedded;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.ManyToMany;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.io.UnsupportedEncodingException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A set of tubes in a particular combination of positions, typically held in a RackOfTubes.  This entity is different
@@ -27,10 +14,12 @@ import java.util.Set;
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
 public class TubeFormation extends LabVessel implements VesselContainerEmbedder<TwoDBarcodedTube> {
 
     @ManyToMany(cascade = CascadeType.PERSIST)
+    @JoinTable(schema = "mercury", name = "LAB_VESSEL_RACKS_OF_TUBES",
+                      joinColumns = @JoinColumn(name = "LAB_VESSEL"),
+                      inverseJoinColumns = @JoinColumn(name = "RACKS_OF_TUBES"))
     private Set<RackOfTubes> racksOfTubes = new HashSet<RackOfTubes>();
 
     @Enumerated(EnumType.STRING)
@@ -39,7 +28,7 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
     @Embedded
     private VesselContainer<TwoDBarcodedTube> vesselContainer = new VesselContainer<TwoDBarcodedTube>(this);
 
-    TubeFormation() {
+    protected TubeFormation() {
     }
 
     public TubeFormation(Map<VesselPosition, TwoDBarcodedTube> mapPositionToTube, RackOfTubes.RackType rackType) {

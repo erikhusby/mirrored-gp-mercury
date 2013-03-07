@@ -24,7 +24,7 @@ public class ResearchProjectTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        researchProject  = AthenaClientServiceStub.createDummyResearchProject();
+        researchProject  = AthenaClientServiceStub.createDummyResearchProject(10950L, "MyResearchProject", "To Study Stuff", ResearchProject.IRB_ENGAGED);
     }
 
     @Test

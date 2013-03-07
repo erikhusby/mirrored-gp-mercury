@@ -5,7 +5,6 @@ import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.products.RiskItemDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
@@ -14,8 +13,6 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
-import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
-import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -23,7 +20,7 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import java.io.IOException;
+import javax.persistence.Query;
 import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
@@ -41,16 +38,15 @@ public class ProductOrderFixupTest extends Arquillian {
     private ProductDao productDao;
 
     @Inject
-    private RiskItemDao riskItemDao;
-
-    @Inject
     private ProductOrderSampleDao productOrderSampleDao;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
-    JiraService jiraService;
+    private JiraService jiraService;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
-    Log log;
+    private Log log;
 
     @Inject
     private BSPUserList bspUserList;
@@ -72,68 +68,6 @@ public class ProductOrderFixupTest extends Arquillian {
         // change gets flushed.  This is an artifact of the test environment.
         productOrderDao.persist(productOrder);
     }
-
-    /**
-     * Change quote for a PDO, see http://prodinfojira.broadinstitute.org:8080/jira/browse/GPLIM-365
-     * @throws Exception
-     */
-    @Test(enabled = false)
-    public void change_quote_for_pdo_58() throws Exception {
-        String jiraKey = "PDO-58";
-        String newQuote = "STC8F2";
-        changeProductOrderQuoteId(jiraKey, newQuote);
-    }
-
-    /**
-     * Change quote for a PDO, see http://prodinfojira.broadinstitute.org:8080/jira/browse/GPLIM-483
-     * @throws Exception
-     */
-    @Test(enabled = false)
-    public void change_quote_for_pdo_32() throws Exception {
-        String jiraKey = "PDO-32";
-        String newQuote = "GP85N";
-        changeProductOrderQuoteId(jiraKey, newQuote);
-    }
-
-    /**
-     * Change quote for a PDO, see http://prodinfojira.broadinstitute.org:8080/jira/browse/GPLIM-522
-     * @throws Exception
-     */
-    @Test(enabled = false)
-    public void change_quote_for_pdo_55() throws Exception {
-        String jiraKey = "PDO-55";
-        String newQuote = "MMM8GQ";
-        changeProductOrderQuoteId(jiraKey, newQuote);
-    }
-
-    private void changeProductOrderQuoteId(String jiraKey, String newQuoteStr) throws IOException {
-        ProductOrder productOrder = productOrderDao.findByBusinessKey(jiraKey);
-
-        // comment out until we can update a Quote on a Jira ticket, need to extend the JiraService for transitions.
-        if (false) {
-            Map<String, CustomFieldDefinition> jiraFields = jiraService.getCustomFields();
-            Set<CustomField> customFields = new HashSet<CustomField>();
-
-            for (Map.Entry<String, CustomFieldDefinition> stringCustomFieldDefinitionEntry : jiraFields.entrySet()) {
-                log.info(stringCustomFieldDefinitionEntry.getKey());
-                if (stringCustomFieldDefinitionEntry.getKey().equals("Quote ID")) {
-                    CustomField quoteCustomField = new CustomField(stringCustomFieldDefinitionEntry.getValue(), newQuoteStr);
-                    customFields.add(quoteCustomField);
-                }
-            }
-
-            jiraService.updateIssue(jiraKey,customFields);
-        }
-        log.info("Attempting to change Quote ID on product order " + productOrder.getJiraTicketKey() + " from " + productOrder.getQuoteId() + " to " +
-                newQuoteStr);
-        productOrder.setQuoteId(newQuoteStr);
-        // The entity is already persistent, this call to persist is solely to begin and end a transaction, so the
-        // change gets flushed.  This is an artifact of the test environment.
-        productOrderDao.persist(productOrder);
-        log.info("Changed Quote ID on product order " + productOrder.getJiraTicketKey() + " from " + productOrder.getQuoteId() + " to " +
-                newQuoteStr);
-    }
-
 
     /**
      * Clear the External Plating Addon from PDO-10
@@ -268,7 +202,7 @@ public class ProductOrderFixupTest extends Arquillian {
         productOrderDao.persist(productOrder);
     }
 
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void removeSamplesForGPLIM877() {
         List<String> samplesToRemove = Arrays.asList(
                 "SM-1WJOV",
@@ -312,6 +246,47 @@ public class ProductOrderFixupTest extends Arquillian {
                 riskItem.setRemark("Bad Concentration found");
                 sample.setRiskItems(Collections.singletonList(riskItem));
                 productOrderSampleDao.persist(sample);
+            }
+        }
+    }
+
+
+
+    @Test(enabled = false)
+    public void setPlacedDate() {
+
+        Query query = productOrderDao.getEntityManager().createNativeQuery(
+                "SELECT pdo.jira_ticket_key, rev_info.rev_date " +
+                "FROM athena.product_order_aud pdo_aud, athena.product_order pdo, mercury.rev_info rev_info " +
+                "WHERE " +
+                "  pdo.product_order_id = pdo_aud.product_order_id AND " +
+                "  pdo_aud.rev = (" +
+                "    SELECT MIN(pdo_aud2.rev) " +
+                "    FROM athena.product_order_aud pdo_aud2 " +
+                "    WHERE " +
+                "      pdo_aud2.product_order_id = pdo.product_order_id AND " +
+                "      pdo_aud2.jira_ticket_key IS NOT NULL " +
+                "  ) AND " +
+                "rev_info.rev_info_id = pdo_aud.rev " +
+                "ORDER BY pdo.created_date "
+        );
+
+        @SuppressWarnings("unchecked")
+        List<Object[]> resultList = query.getResultList();
+
+        Map<String, Date> keyToDateMap = new HashMap<String, Date>();
+
+        for (Object[] row : resultList) {
+            String key = (String) row[0];
+            Date date = (Date) row[1];
+            keyToDateMap.put(key, date);
+        }
+
+        List<ProductOrder> productOrders = productOrderDao.findAll();
+        for (ProductOrder productOrder : productOrders) {
+            if (keyToDateMap.containsKey(productOrder.getBusinessKey())) {
+                productOrder.setPlacedDate(keyToDateMap.get(productOrder.getBusinessKey()));
+                productOrderDao.persist(productOrder);
             }
         }
     }

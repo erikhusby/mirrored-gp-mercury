@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.issue.transition.Tra
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.enterprise.inject.Alternative;
 import java.io.IOException;
 import java.util.*;
 
@@ -26,7 +27,10 @@ import java.util.*;
  * to a logger.
  */
 @Stub
+@Alternative
 public class JiraServiceStub implements JiraService {
+
+    public static final String CREATED_ISSUE_SUFFIX = "-123";
 
     private Log logger = LogFactory.getLog(JiraServiceStub.class);
 
@@ -34,7 +38,7 @@ public class JiraServiceStub implements JiraService {
     public JiraIssue createIssue(String projectPrefix, String reporter, CreateFields.IssueType issueType,
                                  String summary, String description, Collection<CustomField> customFields) throws
             IOException {
-        return new JiraIssue(projectPrefix + "-123", this);
+        return new JiraIssue(projectPrefix + CREATED_ISSUE_SUFFIX, this);
     }
 
     @Override

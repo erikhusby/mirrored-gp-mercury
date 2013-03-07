@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.projects;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.ArrayUtils;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -12,6 +13,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.Map;
 
@@ -88,5 +90,38 @@ public class ResearchProjectDAOTest extends ContainerTest {
         Map<String, Long> projectOrderCounts = researchProjectDao.getProjectOrderCounts();
         Assert.assertNotNull(projectOrderCounts);
         Assert.assertFalse(projectOrderCounts.isEmpty());
+    }
+
+
+    /**
+     * Ugly positive test for the presence of PMs, this should be creating its own test data.
+     */
+    public void testPMs() {
+
+        long JAMES_BOCHICCHIO_ID = 11144;
+        long LAUREN_AMBROGIO_ID = 11137;
+
+        Long[] pms = {JAMES_BOCHICCHIO_ID, LAUREN_AMBROGIO_ID};
+
+        List<ResearchProject> researchProjects = researchProjectDao.findByProjectManagerIds(pms);
+
+        Assert.assertNotNull(researchProjects);
+        Assert.assertNotEquals(researchProjects.size(), 0);
+
+        for (ResearchProject rp : researchProjects) {
+            boolean contains = false;
+            Long[] actualPMs = rp.getProjectManagers();
+            for (long pm : pms) {
+                if (ArrayUtils.contains(actualPMs, pm)) {
+                    contains = true;
+                    break;
+                }
+            }
+
+            Assert.assertTrue(contains,
+                    MessageFormat.format("{0} did contain any of the expected PMs: {1}", rp.getJiraTicketKey(),
+                            StringUtils.join(pms)));
+        }
+
     }
 }

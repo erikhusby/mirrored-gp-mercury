@@ -121,6 +121,10 @@ public class BillingLedger implements Serializable {
         billingSession = null;
     }
 
+    public Long getLedgerId() {
+        return ledgerId;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {

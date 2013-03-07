@@ -25,7 +25,11 @@ public enum BSPSampleSearchColumn {
     STOCK_SAMPLE("Stock Sample"),
     PARENT_SAMPLES("Parent Sample(s)"),
     CONTAINER_ID("Container"),
-    CONTAINER_NAME("Container Name")
+    CONTAINER_NAME("Container Name")    ,
+    COLLABORATOR_NAME("Site PI") ,
+    // todo arz db free testing of race and ethnicity
+    RACE("Race"),
+    ETHNICITY("Ethnicity")
     ;
     
     private final String columnName;

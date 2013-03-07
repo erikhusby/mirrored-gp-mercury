@@ -39,7 +39,7 @@ import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder
 @Stateful
 @RequestScoped
 /**
- * Transactional manager for {@link ProductOrder}s
+ * Transactional manager for {@link ProductOrder}s.
  */
 public class ProductOrderEjb {
 
@@ -89,15 +89,6 @@ public class ProductOrderEjb {
     }
 
 
-    private static void createJiraIssue(ProductOrder productOrder) {
-        try {
-            productOrder.submitProductOrder();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-
     private void setAddOnProducts(ProductOrder productOrder, List<String> addOnPartNumbers) {
         List<Product> addOns =
                 addOnPartNumbers.isEmpty() ? new ArrayList<Product>() : productDao.findByPartNumbers(addOnPartNumbers);
@@ -112,7 +103,7 @@ public class ProductOrderEjb {
     }
 
     /**
-     * Including {@link QuoteNotFoundException} since this is an expected failure that may occur in application validation
+     * Including {@link QuoteNotFoundException} since this is an expected failure that may occur in application validation.
      *
 
      * @param productOrder product order
@@ -129,17 +120,6 @@ public class ProductOrderEjb {
         setSamples(productOrder, productOrderSampleIds);
         setAddOnProducts(productOrder, addOnPartNumbers);
         setStatus(productOrder);
-    }
-
-    /**
-     * This handles the creation of jira when placing an order.
-     *
-     * @param productOrder The order to place
-     */
-    public void placeOrder(ProductOrder productOrder) {
-        // create JIRA before we attempt to persist since that is more likely to fail
-        createJiraIssue(productOrder);
-        productOrderDao.persist(productOrder);
     }
 
     /**
@@ -218,7 +198,7 @@ public class ProductOrderEjb {
      * Update the JIRA issue, executing the 'Developer Edit' transition to effect edits of fields that are read-only
      * on the UI.  Add a comment to the issue to indicate what was changed and by whom.
      *
-     * @param productOrder product order
+     * @param productOrder Product Order.
      * @throws IOException
      */
     public void updateJiraIssue(ProductOrder productOrder) throws IOException, QuoteNotFoundException {
@@ -362,9 +342,9 @@ public class ProductOrderEjb {
 
 
     /**
-     * Utility method to find PDO by JIRA ticket key and throw exception if it is not found
+     * Utility method to find PDO by JIRA ticket key and throw exception if it is not found.
      *
-     * @param jiraTicketKey JIRA ticket key
+     * @param jiraTicketKey JIRA ticket key.
      *
      * @return {@link ProductOrder}
      *
@@ -384,17 +364,17 @@ public class ProductOrderEjb {
     /**
      * Transition the delivery statuses of the specified samples in the DB.
      *
-     * @param order PDO containing the samples in question
-     * @param acceptableStartingStatuses a Set of {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus}es
-     *                                   in which samples are allowed to be in before undergoing this transition
-     * @param targetStatus the status into which the samples will be transitioned
-     * @param samples the samples in question
-     * @throws SampleDeliveryStatusChangeException thrown if any samples are found to not be in an acceptable starting status
+     * @param order PDO containing the samples in question.
+     * @param acceptableStartingStatuses A Set of {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample.DeliveryStatus}es
+     *                                   in which samples are allowed to be before undergoing this transition.
+     * @param targetStatus The status into which the samples will be transitioned.
+     * @param samples The samples in question.
+     * @throws SampleDeliveryStatusChangeException Thrown if any samples are found to not be in an acceptable starting status.
      */
-    private static void transitionSamples(ProductOrder order,
-                                          Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
-                                          ProductOrderSample.DeliveryStatus targetStatus,
-                                          Collection<ProductOrderSample> samples) throws SampleDeliveryStatusChangeException {
+    private void transitionSamples(ProductOrder order,
+                                   Set<ProductOrderSample.DeliveryStatus> acceptableStartingStatuses,
+                                   ProductOrderSample.DeliveryStatus targetStatus,
+                                   Collection<ProductOrderSample> samples) throws SampleDeliveryStatusChangeException {
 
         Set<ProductOrderSample> transitionSamples = new HashSet<ProductOrderSample>(samples);
 
@@ -405,7 +385,7 @@ public class ProductOrderEjb {
             if (CollectionUtils.isEmpty(transitionSamples) || transitionSamples.contains(sample)) {
                 if (!acceptableStartingStatuses.contains(sample.getDeliveryStatus())) {
                     untransitionableSamples.add(sample);
-                    // keep looping, find all the untransitionable samples and then throw a descriptive exception
+                    // Keep looping, find all the untransitionable samples and then throw a descriptive exception.
                 } else {
                     sample.setDeliveryStatus(targetStatus);
                 }
@@ -415,6 +395,9 @@ public class ProductOrderEjb {
         if (!untransitionableSamples.isEmpty()) {
             throw new SampleDeliveryStatusChangeException(targetStatus, untransitionableSamples);
         }
+
+        // Update the PDO as modified.
+        order.prepareToSave(userBean.getBspUser());
     }
 
 
@@ -424,10 +407,10 @@ public class ProductOrderEjb {
      * methods.  Per GPLIM-655 we need to update per-sample comments too, but not currently doing that.
      *
      *
-     * @param jiraTicketKey JIRA ticket key
-     * @param acceptableStartingStatuses acceptable statuses for samples to be found in
-     * @param targetStatus status to change samples to
-     * @param samples samples to change
+     * @param jiraTicketKey JIRA ticket key.
+     * @param acceptableStartingStatuses Acceptable staring statuses for samples.
+     * @param targetStatus New status for samples.
+     * @param samples Samples to change.
      * @throws NoSuchPDOException
      * @throws SampleDeliveryStatusChangeException
      * @throws IOException
@@ -440,9 +423,6 @@ public class ProductOrderEjb {
 
         ProductOrder order = findProductOrder(jiraTicketKey);
 
-        // GPLIM-655 insert code here to append to sample comment history.  In the absence of this I'll just throw
-        // a comment to JIRA
-
         transitionSamples(order, acceptableStartingStatuses, targetStatus, samples);
 
         JiraIssue issue = jiraService.getIssue(order.getJiraTicketKey());
@@ -453,7 +433,7 @@ public class ProductOrderEjb {
     }
 
     /**
-     * @return the name of the currently logged-in user or 'Mercury' if no logged in user (e.g. in a fixup test context)
+     * @return The name of the currently logged-in user or 'Mercury' if no logged in user (e.g. in a fixup test context).
      */
     private String getUserName() {
         String user = userBean.getLoginUserName();
@@ -463,13 +443,13 @@ public class ProductOrderEjb {
     /**
      * Transition the specified JIRA ticket using the specified transition, adding the specified comment.
      *
-     * @param jiraTicketKey JIRA ticket key
-     * @param alreadyResolvedResolutions if a JIRA ticket is found to already be in any of these states, do not do anything
-     * @param transitionState the transition to use
-     * @param transitionComments comments to include as part of the transition, will be appended to the JIRA ticket
+     * @param jiraTicketKey JIRA ticket key.
+     * @param alreadyResolvedResolutions If a JIRA ticket is found to already be in any of these states, do not do anything.
+     * @param transitionState The transition to use.
+     * @param transitionComments Comments to include as part of the transition, will be appended to the JIRA ticket.
      *
      * @throws IOException
-     * @throws NoTransitionException Thrown if the specified transition is not available on the specified issue
+     * @throws NoTransitionException Thrown if the specified transition is not available on the specified issue.
      */
     private void transitionJiraTicket(String jiraTicketKey, Set<String> alreadyResolvedResolutions,
                                       ProductOrder.TransitionStates transitionState,
@@ -497,10 +477,10 @@ public class ProductOrderEjb {
     }
 
     /**
-     * Abandon the whole PDO with a comment
+     * Abandon the whole PDO with a comment.
      *
-     * @param jiraTicketKey JIRA ticket key
-     * @param abandonComments transition comments
+     * @param jiraTicketKey JIRA ticket key.
+     * @param abandonComments Transition comments.
      * @throws NoTransitionException
      * @throws NoSuchPDOException
      * @throws SampleDeliveryStatusChangeException
@@ -510,22 +490,20 @@ public class ProductOrderEjb {
 
         ProductOrder productOrder = findProductOrder(jiraTicketKey);
 
-        // then mark PDO as abandoned
         productOrder.setOrderStatus(Abandoned);
 
         transitionSamples(productOrder, EnumSet.of(ABANDONED, NOT_STARTED), ABANDONED, productOrder.getSamples());
 
         // Currently not setting abandon comments into PDO comments, that seems too intrusive.  We will record the comments
         // with the JIRA ticket.
-
         transitionJiraTicket(jiraTicketKey, Collections.singleton("Cancelled"), Cancel, abandonComments);
     }
 
     /**
      * Mark the whole PDO as complete, with a comment.
      *
-     * @param jiraTicketKey JIRA ticket key of the PDO in question
-     * @param completionComments comments to include in the JIRA ticket
+     * @param jiraTicketKey JIRA ticket key of the PDO in question.
+     * @param completionComments Comments to include in the JIRA ticket.
      *
      * @throws SampleDeliveryStatusChangeException
      * @throws IOException
@@ -541,14 +519,12 @@ public class ProductOrderEjb {
 
         // Currently not setting abandon comments into PDO comments, that seems too intrusive.  We will record the comments
         // with the JIRA ticket.
-
         transitionJiraTicket(jiraTicketKey, Collections.singleton("Complete"), ProductOrder.TransitionStates.Complete,
                 completionComments);
     }
 
     /**
-     * Sample abandonment method with parameter types guessed as appropriate for use with Stripes
-     *
+     * Sample abandonment method with parameter types guessed as appropriate for use with Stripes.
      *
      * @param jiraTicketKey JIRA ticket key of the PDO in question
      * @param samples the samples to abandon
@@ -563,11 +539,10 @@ public class ProductOrderEjb {
 
 
     /**
-     * Sample completion method with parameter types guessed as appropriate for use with Stripes
+     * Sample completion method with parameter types guessed as appropriate for use with Stripes.
      *
-     *
-     * @param jiraTicketKey JIRA ticket key of the PDO in question
-     * @param samples the samples to complete
+     * @param jiraTicketKey JIRA ticket key of the PDO in question.
+     * @param samples The samples to complete.
      * @throws IOException
      * @throws SampleDeliveryStatusChangeException
      * @throws NoSuchPDOException

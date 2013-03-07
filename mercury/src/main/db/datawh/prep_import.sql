@@ -20,9 +20,11 @@ execute immediate 'TRUNCATE TABLE im_research_project_person';
 execute immediate 'TRUNCATE TABLE im_research_project_status';
 execute immediate 'TRUNCATE TABLE im_lab_batch';
 execute immediate 'TRUNCATE TABLE im_lab_vessel';
-execute immediate 'TRUNCATE TABLE im_workflow_config';
+execute immediate 'TRUNCATE TABLE im_workflow';
+execute immediate 'TRUNCATE TABLE im_workflow_process';
 execute immediate 'TRUNCATE TABLE im_event_fact';
-
+execute immediate 'TRUNCATE TABLE im_product_order_sample_risk';
+execute immediate 'TRUNCATE TABLE im_product_order_sample_bill';
 
 COMMIT;
 END prep_import;

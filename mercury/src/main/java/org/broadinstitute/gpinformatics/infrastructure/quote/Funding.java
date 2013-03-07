@@ -59,6 +59,7 @@ public class Funding implements Displayable {
         this.costObject = costObject;
     }
 
+    @Override
     public String getDisplayName() {
         return FUNDS_RESERVATION.equals(getFundingType()) ? "CO-" + grantNumber : "PO-" + purchaseOrderNumber;
     }

@@ -1,11 +1,9 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 
 import java.io.Serializable;
 import java.util.Date;
-import java.util.regex.Matcher;
 
 /**
  * Non-entity used for optimizing the performance of the PDO list page.
@@ -28,14 +26,11 @@ public class ProductOrderListEntry implements Serializable {
 
     private Long ownerId;
 
-    private Date updatedDate;
-
-    private Integer pdoSampleCount;
+    private Date placedDate;
 
     private Long billingSessionId;
 
     private Long unbilledLedgerEntryCount = 0L;
-
 
     /**
      * Version of the constructor called by the non-ledger aware first pass query
@@ -48,11 +43,12 @@ public class ProductOrderListEntry implements Serializable {
      * @param productFamilyName
      * @param researchProjectTitle
      * @param ownerId
-     * @param updatedDate
+     * @param placedDate
      */
     public ProductOrderListEntry(Long orderId, String title, String jiraTicketKey, ProductOrder.OrderStatus orderStatus,
-                                 String productName, String productFamilyName, String researchProjectTitle, Long ownerId,
-                                 Date updatedDate, Integer pdoSampleCount) {
+                                 String productName, String productFamilyName, String researchProjectTitle,
+                                 Long ownerId,
+                                 Date placedDate) {
         this.orderId = orderId;
         this.title = title;
         this.jiraTicketKey = jiraTicketKey;
@@ -61,10 +57,8 @@ public class ProductOrderListEntry implements Serializable {
         this.productFamilyName = productFamilyName;
         this.researchProjectTitle = researchProjectTitle;
         this.ownerId = ownerId;
-        this.updatedDate = updatedDate;
-        this.pdoSampleCount = pdoSampleCount;
+        this.placedDate = placedDate;
     }
-
 
     /**
      * Version of the constructor called by the ledger-aware second pass query.  These objects are essentially merged
@@ -82,6 +76,11 @@ public class ProductOrderListEntry implements Serializable {
         this.unbilledLedgerEntryCount = unbilledLedgerEntryCount;
     }
 
+    private ProductOrderListEntry() {}
+
+    public static ProductOrderListEntry createDummy() {
+        return new ProductOrderListEntry();
+    }
 
     public String getTitle() {
         return title;
@@ -92,11 +91,7 @@ public class ProductOrderListEntry implements Serializable {
     }
 
     public String getBusinessKey() {
-        if (jiraTicketKey == null) {
-            return ProductOrder.DRAFT_PREFIX + orderId;
-        }
-
-        return getJiraTicketKey();
+        return ProductOrder.createBusinessKey(orderId, jiraTicketKey);
     }
 
     public String getProductName() {
@@ -119,8 +114,8 @@ public class ProductOrderListEntry implements Serializable {
         return ownerId;
     }
 
-    public Date getUpdatedDate() {
-        return updatedDate;
+    public Date getPlacedDate() {
+        return placedDate;
     }
 
     public String getBillingSessionBusinessKey() {
@@ -128,10 +123,6 @@ public class ProductOrderListEntry implements Serializable {
             return null;
         }
         return BillingSession.ID_PREFIX + billingSessionId;
-    }
-
-    public Integer getPdoSampleCount() {
-        return pdoSampleCount;
     }
 
     public Long getBillingSessionId() {
@@ -175,36 +166,5 @@ public class ProductOrderListEntry implements Serializable {
     public boolean isDraft() {
         return ProductOrder.OrderStatus.Draft == orderStatus;
     }
-
-
-    public boolean isValidJiraTicket() {
-        if (jiraTicketKey == null) {
-            return false;
-        }
-
-        return JiraTicket.PATTERN.matcher(jiraTicketKey).matches();
-    }
-
-
-    /**
-     *
-     * @return the numeric portion of the JIRA ticket key if this looks like a real JIRA ticket, otherwise return null.
-     */
-    public Integer getJiraTicketNumber() {
-
-        if (jiraTicketKey == null) {
-            return null;
-        }
-
-        Matcher matcher = JiraTicket.PATTERN.matcher(jiraTicketKey);
-
-        if ( ! matcher.matches() || ! "PDO".equals(matcher.group(JiraTicket.PATTERN_GROUP_PREFIX))) {
-            return null;
-        }
-
-        // pluck out the numeric portion of the JIRA ticket key and convert to Integer
-        return Integer.valueOf(matcher.group(JiraTicket.PATTERN_GROUP_NUMBER));
-    }
-
 
 }

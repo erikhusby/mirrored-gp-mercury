@@ -3,22 +3,20 @@ package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 import org.broadinstitute.bsp.client.sample.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPMaterialTypeList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.inject.Inject;
-import javax.inject.Named;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 /**
- * This class is the user implementation of the token object
+ * Token Input support for Material Type.
  *
  * @author hrafal
  */
-@Named
 public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
 
     @Inject
@@ -51,30 +49,36 @@ public class MaterialTypeTokenInput extends TokenInput<MaterialType> {
         }
 
         Collection<MaterialType> materialTypes = materialTypeListCache.find(query);
-
-        JSONArray itemList = new JSONArray();
-        for (MaterialType materialType : materialTypes) {
-            createAutocomplete(itemList, materialType);
-        }
-
-        return itemList.toString();
+        return createItemListString(new ArrayList<MaterialType>(materialTypes));
     }
 
     @Override
-    protected String generateCompleteData() throws JSONException {
-        JSONArray itemList = new JSONArray();
-        for (MaterialType materialType : getTokenObjects()) {
-            createAutocomplete(itemList, materialType);
-        }
-
-        return itemList.toString();
+    protected boolean isSingleLineMenuEntry() {
+        return true;
     }
 
-    private static void createAutocomplete(JSONArray itemList, MaterialType materialType) throws JSONException {
-        if (materialType != null) {
-            JSONObject item = getJSONObject(materialType.getFullName(), materialType.getFullName(), false);
-            itemList.put(item);
+    @Override
+    protected String getTokenId(MaterialType materialType) {
+        return materialType.getFullName();
+    }
+
+    @Override
+    protected String formatMessage(String messageString, MaterialType materialType) {
+        return MessageFormat.format(messageString, materialType.getFullName());
+    }
+
+    @Override
+    protected String getTokenName(MaterialType materialType) {
+        return materialType.getFullName();
+    }
+
+    @Override
+    public JSONObject createAutocomplete(MaterialType materialType) throws JSONException {
+        if (materialType == null) {
+            return null;
         }
+
+        return super.createAutocomplete(materialType);
     }
 
     public Collection<? extends org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType> getMercuryTokenObjects() {

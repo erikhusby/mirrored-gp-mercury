@@ -61,9 +61,9 @@
                 </c:if>
 
                 <div class="pull-right">
-                    <img alt="show plate view" width="20" height="20" name="" title="show plate view"
-                         src="${ctxpath}/images/plate.png" style="margin-top: -5px;"/> - plate layout
-                    <img alt="show sample view" width="20" height="20" name="" title="show sample view"
+                        <img alt="show plate view" width="20" height="20" name="" title="show plate view"
+                             src="${ctxpath}/images/plate.png" style="margin-top: -5px;"/> - plate layout
+                        <img alt="show sample view" width="20" height="20" name="" title="show sample view"
                          src="${ctxpath}/images/list.png" style="margin-top: -5px; margin-left: 10px;"/> - sample
                     list
                 </div>

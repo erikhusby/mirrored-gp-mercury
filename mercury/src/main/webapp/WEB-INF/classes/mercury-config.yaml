@@ -7,10 +7,10 @@ app:
       url:      http://localhost:8080/Mercury/
 
     TEST:
-      url:      http://seq01.broadinstitute.org:8080/Mercury/
+      url:      http://mercurydev.broadinstitute.org:8080/Mercury/
 
     QA:
-      url:      http://pmbridgedev.broadinstitute.org:8081/Mercury/
+      url:      http://mercuryqa.broadinstitute.org:8081/Mercury/
 
     RC:
       url:      http://mercuryrc.broadinstitute.org:8082/Mercury/
@@ -73,9 +73,9 @@ jira:
 
       login:    squid
       password: squid
-      host:     vsquid00.broadinstitute.org
-      port:     8020
-      urlBase:      http://vsquid00.broadinstitute.org:8020
+      host:     labopsjiratest.broadinstitute.org
+      port:     8443
+      urlBase:      https://labopsjiratest.broadinstitute.org:8443
 
     PROD:
 
@@ -84,21 +84,6 @@ jira:
       host:     labopsjira.broadinstitute.org
 #      port:     8020
       urlBase:      https://labopsjira.broadinstitute.org
-
-
-pmbridge:
-
-    DEV:
-
-      url: http://pmbridgedev.broadinstitute.org/PMBridge
-
-
-    PROD:
-
-      url: http://pmbridge.broadinstitute.org/PMBridge
-
-
-
 
 quote:
 
@@ -240,7 +225,6 @@ mercury:
       bsp:      DEV
       gap:      DEV
       jira:     TEST
-      pmbridge: DEV
       quote:    QA
       squid:    DEV
       thrift:   QA
@@ -256,7 +240,6 @@ mercury:
       bsp:      QA
       gap:      QA
       jira:     TEST
-      pmbridge: DEV
       quote:    QA
       squid:    TEST
       thrift:   TEST
@@ -272,7 +255,6 @@ mercury:
       bsp:      QA
       gap:      QA
       jira:     TEST
-      pmbridge: DEV
       quote:    QA
       squid:    QA
       thrift:   QA
@@ -288,7 +270,6 @@ mercury:
       bsp:      QA
       gap:      QA
       jira:     TEST
-      pmbridge: DEV
       quote:    QA
       squid:    QA
       thrift:   QA
@@ -304,7 +285,6 @@ mercury:
       bsp:      PROD
       gap:      PROD
       jira:     PROD
-      pmbridge: PROD
       quote:    PROD
       squid:    PROD
       thrift:   PROD

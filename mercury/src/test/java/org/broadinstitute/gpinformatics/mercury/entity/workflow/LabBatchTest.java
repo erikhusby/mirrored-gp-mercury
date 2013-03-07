@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.workflow;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
@@ -41,7 +41,7 @@ public class LabBatchTest {
         pdoNames = new ArrayList<String>();
         Collections.addAll(pdoNames, pdoBusinessName);
 
-        workflowName = "Exome Express";
+        workflowName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
         mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
 
         Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
@@ -101,7 +101,7 @@ public class LabBatchTest {
 
 
         LabBatch testBatch = new LabBatch(LabBatch.generateBatchName(workflowName, pdoNames),
-                new HashSet<LabVessel>(mapBarcodeToTube.values()));
+                new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
 
 
         Assert.assertNotNull(testBatch.getBatchName());

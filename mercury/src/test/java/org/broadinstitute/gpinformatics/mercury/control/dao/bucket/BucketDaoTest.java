@@ -1,11 +1,10 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.bucket;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowBucketDef;
 import org.testng.annotations.AfterMethod;
@@ -67,8 +66,7 @@ public class BucketDaoTest extends ContainerTest {
     @Test
     public void testFindPersistedBucket () {
 
-        Assert.assertNotNull ("Bucket not Persisted to the Database",
-                              testBucket.getBucketId());
+        Assert.assertNotNull(testBucket.getBucketId(), "Bucket not Persisted to the Database");
 
         Bucket retrievedBucket = bucketDao.findByName(EXTRACTION_BUCKET_NAME);
 
@@ -97,9 +95,9 @@ public class BucketDaoTest extends ContainerTest {
 
 //        Assert.assertNotNull(entries.get(0).getLabVessel().getLabVesselId());
 
-        Assert.assertNotNull(entries.get ( 0 ).getBucketExistence ());
+        Assert.assertNotNull(entries.get ( 0 ).getBucket());
 
-        Assert.assertEquals(retrievedBucket, entries.get(0).getBucketExistence());
+        Assert.assertEquals(retrievedBucket, entries.get(0).getBucket());
 
         Assert.assertEquals ( 1, entries.get ( 0 ).getLabVessel ().getBucketEntries ().size () );
     }

@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.infrastructure.common;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.testng.annotations.Test;
 

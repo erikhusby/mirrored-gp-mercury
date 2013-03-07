@@ -11,10 +11,17 @@
             $j(document).ready(function () {
                 $j("#reagentDesign").tokenInput(
                         "${ctxpath}/reagent/design.action?reagentListAutocomplete=&reagentDesign=${actionBean.editReagentDesign.businessKey}", {
-                            prePopulate: ${actionBean.ensureStringResult(actionBean.reagentDesignCompleteData)},
-                            tokenLimit: 1, preventDuplicates: true
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.reagentDesignTokenInput.completeData)},
+                            resultsFormatter: formatInput,
+                            tokenLimit: 1,
+                            preventDuplicates: true
                         });
             });
+
+            function formatInput(item) {
+                var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
+                return "<li>" + item.dropdownItem + extraCount + '</li>';
+            }
         </script>
     </stripes:layout-component>
 

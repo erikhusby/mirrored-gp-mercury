@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.billing;
 
-import junit.framework.Assert;
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.testng.Assert;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDaoTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
@@ -121,45 +121,45 @@ public class BillingLedgerDaoTest  extends ContainerTest {
     //
     public void testFindBillingLedgers() {
         List<BillingLedger> ledgerEntries = billingLedgerDao.findAll();
-        Assert.assertTrue("The specified order should find at one test ledger", !ledgerEntries.isEmpty()) ;
+        Assert.assertTrue(!ledgerEntries.isEmpty(), "The specified order should find at one test ledger");
     }
 
     //
     public void testFindLedgerEntriesForPDOs() {
         Set<BillingLedger> ledgerEntries = billingLedgerDao.findByOrderList(orders);
-        Assert.assertEquals("The specified order should find one test ledger", 1, ledgerEntries.size()) ;
+        Assert.assertEquals(1, ledgerEntries.size(), "The specified order should find one test ledger") ;
     }
 
     public void testFindLedgerEntriesForPDOsWithNoBillingSessions() {
         Set<BillingLedger> ledgerEntries = billingLedgerDao.findWithoutBillingSessionByOrderList(orders);
-        Assert.assertEquals("The specified order should find one test ledger", 1, ledgerEntries.size()) ;
+        Assert.assertEquals(1, ledgerEntries.size(), "The specified order should find one test ledger") ;
     }
 
     public void testFindBilledLedgerEntriesForPDOs() {
         Set<BillingLedger> ledgerEntries = billingLedgerDao.findBilledByOrderList(orders);
-        Assert.assertTrue("The specified order should not find any ledger items", ledgerEntries.isEmpty());
+        Assert.assertTrue(ledgerEntries.isEmpty(), "The specified order should not find any ledger items");
     }
 
     public void testFindLockedOutByOrderList() {
         Set<BillingLedger> ledgerEntries = billingLedgerDao.findLockedOutByOrderList(orders);
         // No session started yet so should be none for this order
-        Assert.assertEquals("The specified order should find one test ledger", 0, ledgerEntries.size()) ;
+        Assert.assertEquals(0, ledgerEntries.size(), "The specified order should find one test ledger") ;
     }
 
     public void testRemoveLedgerUpdates() {
         // test an order
         billingLedgerDao.removeLedgerItemsWithoutBillingSession(orders);
         billingLedgerDao.flush();
-        //verify by trying to retieve what is pending but not yet billed should be none left
+        //verify by trying to retrieve what is pending but not yet billed should be none left
         Set<BillingLedger> ledgerEntries = billingLedgerDao.findWithoutBillingSessionByOrderList(orders);
-        Assert.assertEquals("The specified order should find one test ledger", 1, ledgerEntries.size()) ;
+        Assert.assertEquals(1, ledgerEntries.size(), "The specified order should find one test ledger") ;
 
         // test an order with dupes
         billingLedgerDao.removeLedgerItemsWithoutBillingSession(dupeOrders);
         billingLedgerDao.flush();
-        //verify by trying to retieve what is pending but not yet billed should be none left
+        //verify by trying to retrieve what is pending but not yet billed should be none left
         Set<BillingLedger> dupeLedgerEntries = billingLedgerDao.findWithoutBillingSessionByOrderList(dupeOrders);
-        Assert.assertEquals("The specified order should find one test ledger", 2, dupeLedgerEntries.size()) ;
+        Assert.assertEquals(2, dupeLedgerEntries.size(), "The specified order should find one test ledger") ;
     }
 
 }

@@ -1,43 +1,28 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import javax.ejb.Stateful;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 
-@Stateless
+@Stateful
 public class ProductOrderStatusEtl extends GenericEntityEtl {
 
-    private ProductOrderDao dao;
-
-    @Inject
-    public void setProductOrderDao(ProductOrderDao dao) {
-	this.dao = dao;
-    }
-
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Class getEntityClass() {
         return ProductOrder.class;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     String getBaseFilename() {
         return "product_order_status";
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Long entityId(Object entity) {
         return ((ProductOrder)entity).getProductOrderId();
@@ -45,7 +30,7 @@ public class ProductOrderStatusEtl extends GenericEntityEtl {
 
     /** This entity does not make entity records. */
     @Override
-    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
         return Collections.EMPTY_LIST;
     }
 
@@ -55,9 +40,7 @@ public class ProductOrderStatusEtl extends GenericEntityEtl {
         return Collections.EMPTY_LIST;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     String entityStatusRecord(String etlDateStr, Date revDate, Object revObject, boolean isDelete) {
         ProductOrder entity = (ProductOrder)revObject;

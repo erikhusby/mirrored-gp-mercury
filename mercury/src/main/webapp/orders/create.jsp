@@ -29,18 +29,19 @@
                     });
 
                     $j("#owner").tokenInput(
-                            "${ctxpath}/projects/project.action?usersAutocomplete=", {
-                                hintText: "Type a name",
-                                prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
-                                tokenLimit: 1,
-                                resultsFormatter: formatUser
-                            }
+                        "${ctxpath}/projects/project.action?usersAutocomplete=", {
+                            hintText: "Type a name",
+                            prePopulate: ${actionBean.ensureStringResult(actionBean.owner.completeData)},
+                            tokenLimit: 1,
+                            resultsFormatter: formatInput
+                        }
                     );
 
                     $j("#researchProject").tokenInput(
                         "${ctxpath}/orders/order.action?projectAutocomplete=", {
                             hintText: "Type a project name",
                             prePopulate: ${actionBean.ensureStringResult(actionBean.projectTokenInput.completeData)},
+                            resultsFormatter: formatInput,
                             tokenLimit: 1
                         }
                     );
@@ -50,77 +51,55 @@
                             hintText: "Type a Product name or Part Number   ",
                             onAdd: updateUIForProductChoice,
                             onDelete: updateUIForProductChoice,
-                            resultsFormatter: formatProduct,
+                            resultsFormatter: formatInput,
                             prePopulate: ${actionBean.ensureStringResult(actionBean.productTokenInput.completeData)},
                             tokenLimit: 1
                         }
                     );
 
-
-                    initializeUIForProductChoice();
+                    updateUIForProductChoice();
                     updateFundsRemaining();
                 }
             );
 
-            function formatProduct(item) {
-                return '<li><div class="ac-dropdown-text">' + item.name + '[' + item.id + ']' + "</div></li>";
+            function formatInput(item) {
+                var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
+                return "<li>" + item.dropdownItem + extraCount + '</li>';
             }
 
             var addOn = [];
-            <c:forEach items="${actionBean.editOrder.addOns}" var="addOnProduct">
-                addOn['${addOnProduct.addOn.businessKey}'] = true;
+            <c:forEach items="${actionBean.addOnKeys}" var="addOnProduct">
+                addOn['${addOnProduct}'] = true;
             </c:forEach>
 
 
-            function initializeUIForProductChoice() {
-                configureUIForProductChoice({"isUpdate" : false});
-            }
-
-
             function updateUIForProductChoice() {
-                configureUIForProductChoice({"isUpdate" : true});
-            }
-
-
-            function configureUIForProductChoice(options) {
 
                 var productKey = $j("#product").val();
                 if ((productKey == null) || (productKey == "")) {
                     $j("#addOnCheckboxes").text('If you select a product, its Add-ons will show up here');
+                } else {
+                    $j.ajax({
+                        url: "${ctxpath}/orders/order.action?getAddOns=&product=" + productKey,
+                        dataType: 'json',
+                        success: setupCheckboxes
+                    });
+
+                    $j.ajax({
+                        url: "${ctxpath}/orders/order.action?getSupportsNumberOfLanes=&product=" + productKey,
+                        dataType: 'json',
+                        success: updateNumberOfLanesVisibility
+                    });
                 }
-
-                $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getAddOns=&product=" + productKey,
-                    dataType: 'json',
-                    success: setupCheckboxes
-                });
-
-                $j.ajax({
-                    url: "${ctxpath}/orders/order.action?getSupportsNumberOfLanes=&product=" + productKey,
-                    dataType: 'json',
-                    success: options.isUpdate ? updateNumberOfLanesVisibility : initializeNumberOfLanesVisibility
-                });
             }
 
 
             function updateNumberOfLanesVisibility(data) {
-                configureNumberOfLanesVisibility(data, {'isUpdate' : true});
-            }
-
-
-            function initializeNumberOfLanesVisibility(data) {
-                configureNumberOfLanesVisibility(data, {'isUpdate' : false});
-            }
-
-
-            function configureNumberOfLanesVisibility(data, options) {
                 var numberOfLanesDiv = $j("#numberOfLanesDiv");
-                if (data.supportsNumberOfLanes) {
-                    options.isUpdate ? numberOfLanesDiv.fadeIn({'duration' : 1000}) : numberOfLanesDiv.show();
-                }
-                else {
-                    options.isUpdate ? numberOfLanesDiv.fadeOut({'duration' : 1000}) : numberOfLanesDiv.hide();
-                }
+
+                var duration = {'duration' : 800};
+
+                data.supportsNumberOfLanes ? numberOfLanesDiv.fadeIn(duration) : numberOfLanesDiv.fadeOut(duration);
             }
 
 
@@ -145,7 +124,12 @@
                     checkboxText += '  <label style="font-size: x-small;" for="' + addOnId + '">' + val.value +' [' + val.key + ']</label>';
                 });
 
-                $j("#addOnCheckboxes").html(checkboxText);
+                var duration = {'duration' : 800};
+
+                var checkboxes = $j("#addOnCheckboxes");
+                checkboxes.hide();
+                checkboxes.html(checkboxText);
+                checkboxes.fadeIn(duration);
             }
 
             function updateFundsRemaining() {
@@ -171,7 +155,8 @@
 
             function formatUser(item) {
                 return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
-                       "<div class=\"ac-dropdown-subtext\">" + item.username + " " + item.email + "</div></li>";
+                       "<div class=\"ac-dropdown-subtext\">" + item.username + " " + item.email + "</div>" +
+                           item.extraCount + '</li>'
             }
         </script>
     </stripes:layout-component>
@@ -201,7 +186,7 @@
                                     DRAFT
                                 </c:when>
                                 <c:otherwise>
-                                    <a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.jiraTicketKey}" class="external" target="JIRA">
+                                    <a target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.jiraTicketKey)}" class="external" target="JIRA">
                                             ${actionBean.editOrder.jiraTicketKey}
                                     </a>
                                 </c:otherwise>
@@ -247,7 +232,7 @@
                                                    value="${actionBean.editOrder.researchProject.businessKey}"/>
                                     ${actionBean.editOrder.researchProject.title}
                                 </stripes:link>
-                                (<a target="JIRA" href="${actionBean.jiraUrl}${actionBean.editOrder.researchProject.jiraTicketKey}" class="external" target="JIRA">
+                                (<a target="JIRA" href="${actionBean.jiraUrl(actionBean.editOrder.researchProject.jiraTicketKey)}" class="external" target="JIRA">
                                 ${actionBean.editOrder.researchProject.jiraTicketKey}
                                 </a>)
                             </div>
@@ -286,7 +271,7 @@
                     </div>
                 </div>
 
-                <div id="numberOfLanesDiv" class="control-group">
+                <div id="numberOfLanesDiv" class="control-group" style="display: ${actionBean.editOrder.product.supportsNumberOfLanes ? 'block' : 'none'};">
                     <stripes:label for="numberOfLanes" class="control-label">
                         Number of Lanes Per Sample
                     </stripes:label>

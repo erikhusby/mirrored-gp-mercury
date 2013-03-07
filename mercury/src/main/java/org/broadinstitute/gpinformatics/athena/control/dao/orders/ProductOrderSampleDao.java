@@ -14,47 +14,26 @@ import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 /**
- * Dao for {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample}
- * @author mccrory
+ * Dao for {@link org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample}s.
  */
 @Stateful
 @RequestScoped
 public class ProductOrderSampleDao extends GenericDao {
 
     /**
-     * Find ProductOrderSamples by ProductOrder
-     * @return
+     * Find by ProductOrder and sample name.
+     *
+     * @param productOrder ProductOrder.
+     * @param sampleName Name of sample.
+     * @return The matching ProductOrderSample.
      */
-    public List<ProductOrderSample> findByProductOrder(ProductOrder productOrder) {
-        return findList(ProductOrderSample.class, ProductOrderSample_.productOrder, productOrder);
-    }
-
-    public List<ProductOrderSample> findByOrderAndIndex(@Nonnull ProductOrder productOrder, @Nonnull List<Integer> indices) {
-        EntityManager entityManager = getEntityManager();
-        CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-
-        CriteriaQuery<ProductOrderSample> criteriaQuery =
-                criteriaBuilder.createQuery(ProductOrderSample.class);
-
-        Root<ProductOrderSample> productOrderSampleRoot = criteriaQuery.from(ProductOrderSample.class);
-        Predicate[] predicates = new Predicate[] {
-                criteriaBuilder.equal(productOrderSampleRoot.get(ProductOrderSample_.productOrder), productOrder),
-                productOrderSampleRoot.get(ProductOrderSample_.samplePosition).in(indices)
-        };
-
-        criteriaQuery.where(predicates);
-
-        try {
-            return entityManager.createQuery(criteriaQuery).getResultList();
-        } catch (NoResultException ignored) {
-            return null;
-        }
-    }
-
     public List<ProductOrderSample> findByOrderAndName(@Nonnull ProductOrder productOrder, @Nonnull String sampleName) {
         if (productOrder == null) {
             throw new NullPointerException("Null Product Order.");
@@ -83,4 +62,51 @@ public class ProductOrderSampleDao extends GenericDao {
             return null;
         }
     }
+
+    /**
+     * For a list of sample names, return corresponding ProductOrderSamples
+     * @param sampleNames list of sample names
+     * @return map from sample name to List of ProductOrderSample entity.  The list is empty if none were found for
+     * the key.
+     */
+    public Map<String, List<ProductOrderSample>> findMapBySamples(List<String> sampleNames) {
+        Map<String, List<ProductOrderSample>> mapSampleNameToProductOrderSampleList =
+                new HashMap<String, List<ProductOrderSample>>();
+        for (String sampleName : sampleNames) {
+            mapSampleNameToProductOrderSampleList.put(sampleName, new ArrayList<ProductOrderSample>());
+        }
+        List<ProductOrderSample> productOrderSamples = findListByList(ProductOrderSample.class,
+                ProductOrderSample_.sampleName, sampleNames);
+        for (ProductOrderSample productOrderSample : productOrderSamples) {
+            mapSampleNameToProductOrderSampleList.get(productOrderSample.getSampleName()).add(productOrderSample);
+        }
+        return mapSampleNameToProductOrderSampleList;
+    }
+
+
+    /**
+     * Return a count of the number of samples in this {@link ProductOrder} that have billing ledger entries of any
+     * kind (billed, billing session started, or billing session not started).
+     *
+     * @param productOrder The PDO.
+     *
+     * @return Number of samples in the PDO with billing ledger entries.
+     *
+     */
+    public long countSamplesWithBillingLedgerEntries(@Nonnull ProductOrder productOrder) {
+
+        CriteriaBuilder cb = getCriteriaBuilder();
+        CriteriaQuery<Long> cq = cb.createQuery(Long.class);
+
+        cq.distinct(true);
+
+        Root<ProductOrderSample> root = cq.from(ProductOrderSample.class);
+        root.join(ProductOrderSample_.ledgerItems);
+
+        cq.select(cb.count(root));
+        cq.where(cb.equal(root.get(ProductOrderSample_.productOrder), productOrder));
+
+        return getEntityManager().createQuery(cq).getSingleResult();
+    }
+
 }

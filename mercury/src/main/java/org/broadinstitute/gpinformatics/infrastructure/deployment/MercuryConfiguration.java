@@ -8,12 +8,10 @@ import org.broadinstitute.gpinformatics.infrastructure.datawh.EtlConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deckmsgs.DeckMessagesConfig;
 import org.broadinstitute.gpinformatics.infrastructure.gap.GAPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
-import org.broadinstitute.gpinformatics.infrastructure.pmbridge.PMBridgeConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftConfig;
-import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
@@ -40,11 +38,10 @@ public class MercuryConfiguration {
     // Hopefully we can do something with portable extensions and @Observes ProcessAnnotatedType<T> to find these
     // automatically, and maybe something really sneaky to create qualified bean instances of these types to
     // support @TestInstance-style qualifier injection with producer classes.  But not in this version.
-    private static final Class[] CONFIG_CLASSES = new Class[]{
+    private static final Class<? extends AbstractConfig>[] CONFIG_CLASSES = array(
             MercuryConfig.class,
             SquidConfig.class,
             BSPConfig.class,
-            PMBridgeConfig.class,
             JiraConfig.class,
             QuoteConfig.class,
             ThriftConfig.class,
@@ -52,9 +49,8 @@ public class MercuryConfiguration {
             DeckMessagesConfig.class,
             EtlConfig.class,
             BettalimsConfig.class,
-            TableauConfig.class,
-            WsMessageStore.class
-    };
+            TableauConfig.class);
+
 
     private static final String MERCURY_CONFIG = "/mercury-config.yaml";
 
@@ -64,12 +60,24 @@ public class MercuryConfiguration {
 
     private static String MERCURY_BUILD_INFO;
 
+    /**
+     * Workaround for Java language limitations regarding creation of generic arrays, prevents classes not extending
+     * {@link AbstractConfig} from being entered into the array of configuration classes.
+     *
+     * @param classes Varargs list of {@link AbstractConfig} classes.
+     *
+     * @return Arguments are simply passed through this method unmodified.
+     */
+    private static Class<? extends AbstractConfig> [] array(Class<? extends AbstractConfig>... classes) {
+        return classes;
+    }
+
+
     private class ExternalSystems {
         // Map of system key ("bsp", "squid", "thrift") to a Map of external system Deployments (TEST, QA, PROD) to
-        // AbstractConfigs describing those deployments
+        // AbstractConfigs describing those deployments.
         private Map<String, Map<Deployment, AbstractConfig>> map =
                 new HashMap<String, Map<Deployment, AbstractConfig>>();
-
 
         public void set(String systemKey, Deployment deployment, AbstractConfig config) {
             if (!map.containsKey(systemKey)) {
@@ -78,7 +86,6 @@ public class MercuryConfiguration {
 
             map.get(systemKey).put(deployment, config);
         }
-
 
         public AbstractConfig getConfig(String systemKey, Deployment deployment) {
             if (!map.containsKey(systemKey)) {
@@ -93,9 +100,10 @@ public class MercuryConfiguration {
         }
     }
 
+
     private class MercuryConnections {
         // Map of system key ("bsp", "squid", "thrift") to a Map of *Mercury* Deployments to the corresponding external
-        // system Deployment
+        // system Deployment.
         private Map<String, Map<Deployment, Deployment>> map =
                 new HashMap<String, Map<Deployment, Deployment>>();
 
@@ -134,7 +142,7 @@ public class MercuryConfiguration {
 
     private String getConfigKey(Class<? extends AbstractConfig> configClass) {
         ConfigKey annotation = configClass.getAnnotation(ConfigKey.class);
-        if(annotation == null) {
+        if (annotation == null) {
             throw new RuntimeException("Failed to get config key for " + configClass.getName());
         }
         return annotation.value();
@@ -151,7 +159,7 @@ public class MercuryConfiguration {
     }
 
     /**
-     * Private to force access through {@link #getInstance()}
+     * Private to force access through {@link #getInstance()}.
      */
     private MercuryConfiguration() {
     }
@@ -165,7 +173,7 @@ public class MercuryConfiguration {
     }
 
     /**
-     * Load the configuration of external systems only, not the Mercury connections to those systems
+     * Load the configuration of external systems only, not the Mercury connections to those systems.
      *
      * @param doc Top-level YAML document
      */
@@ -259,8 +267,9 @@ public class MercuryConfiguration {
     /**
      * Load the Mercury connections to external system deployments
      *
-     * @param doc
-     * @param globalConfig
+     * @param doc The top level YAML document.
+     * @param globalConfig Whether this invocation represents the parsing of the global configuration file
+     *                     (mercury-config.yaml) or the local overrides file (mercury-config-local.yaml).
      */
     private void loadMercuryConnections(Map<String, Map> doc, boolean globalConfig) {
         final String APP_KEY = "mercury";
@@ -307,21 +316,6 @@ public class MercuryConfiguration {
         }
     }
 
-    /**
-     * Package visible test-friendly version of getConfig that allows the caller to pass in YAML Maps for global and
-     * local configurations
-     *
-     * @param clazz
-     * @param deployment
-     * @param globalConfig
-     * @param localConfig
-     * @return
-     */
-    /* package */ AbstractConfig getConfig(
-            Class<? extends AbstractConfig> clazz, Deployment deployment, Map<String, Map> globalConfig, Map<String, Map> localConfig) {
-
-        return null;
-    }
 
     /**
      * Intended solely for test code to clear out mappings
@@ -392,8 +386,8 @@ public class MercuryConfiguration {
      * Utility method to check for existence of properties on an {@link AbstractConfig}-derived bean and wrap a slew of
      * reflection-related checked exceptions.
      *
-     * @param propertyMap
-     * @param config
+     * @param propertyMap Map of property keys to property values.
+     * @param config The configuration object that will receive the specified configuration property settings.
      */
     private void setPropertiesIntoConfig(Map<String, String> propertyMap, AbstractConfig config) {
         try {
@@ -425,8 +419,8 @@ public class MercuryConfiguration {
     /**
      * Utility method to create a new instance of the specified {@link AbstractConfig}-derived class
      *
-     * @param clazz
-     * @return
+     * @param clazz The class extending {@link AbstractConfig} of which this method should create a new instance.
+     * @return The new instance.
      */
     private AbstractConfig newConfig(Class<? extends AbstractConfig> clazz) {
         try {

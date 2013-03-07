@@ -1,7 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
@@ -286,11 +284,11 @@ public class ProductOrderSample implements Serializable {
         return builder.toString();
     }
 
-    public String getStripBspName() {
+    public String getBspSampleName() {
+        // skip the SM- part of the name.
         if ((sampleName.length() > 3) && isInBspFormat(sampleName)) {
             return sampleName.substring(3);
         }
-
         return sampleName;
     }
 

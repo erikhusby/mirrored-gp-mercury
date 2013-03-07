@@ -37,6 +37,7 @@ public class ImportFromBspTest extends ContainerTest {
     public void testImportExportedTubes() {
         String testSuffix = testPrefixDateFormat.format(new Date());
 
+        // todo jmt incorporate query to fetch these
         List<String> sampleIds = new ArrayList<String>();
         sampleIds.add("3TJ4Y");
         sampleIds.add("3TJ4T");
@@ -117,7 +118,6 @@ public class ImportFromBspTest extends ContainerTest {
         List<String> platingTargetBarcodes = new ArrayList<String>();
         ArrayList<VesselMetricBean> vesselMetricBeans = new ArrayList<VesselMetricBean>();
 
-        String productOrderKey = "PDO-183";
         for (Object o : resultList) {
             Object[] columns = (Object[]) o;
             String rootSample = (String) columns[0];
@@ -127,8 +127,8 @@ public class ImportFromBspTest extends ContainerTest {
             String exportedSample = (String) columns[4];
             String exportedBarcode = (String) columns[5];
             BigDecimal exportConcentration = (BigDecimal) columns[6];
-            rootTubeBeans.add(new TubeBean(rootBarcode, "SM-" + rootSample, productOrderKey));
-            exportTubeBeans.add(new TubeBean(exportedBarcode, "SM-" + exportedSample, productOrderKey));
+            rootTubeBeans.add(new TubeBean(rootBarcode, "SM-" + rootSample));
+            exportTubeBeans.add(new TubeBean(exportedBarcode, "SM-" + exportedSample));
 
             normSourceBarcodes.add(rootBarcode);
             normTargetBarcodes.add(picoBarcode);

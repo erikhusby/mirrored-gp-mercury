@@ -3,17 +3,11 @@ package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
-import javax.persistence.Table;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
 @Entity
 @Audited
-@Table(schema = "mercury")
 /**
  * Represents a tube with a two dimensional barcode on its bottom.  These tubes are usually stored in racks.
  */

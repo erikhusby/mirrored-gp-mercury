@@ -27,7 +27,8 @@ ALTER TABLE product_order_add_on DROP CONSTRAINT fk_po_add_on_prodid;
 ALTER TABLE product_order_add_on DROP CONSTRAINT fk_po_add_on_poid;
 ALTER TABLE event_fact DROP CONSTRAINT fk_event_lab_batch;
 ALTER TABLE event_fact DROP CONSTRAINT fk_event_lab_vessel;
-ALTER TABLE event_fact DROP CONSTRAINT fk_event_workflow_config;
+ALTER TABLE event_fact DROP CONSTRAINT fk_event_workflow;
+ALTER TABLE event_fact DROP CONSTRAINT fk_event_process;
 ALTER TABLE event_fact DROP CONSTRAINT fk_event_pdo;
 
 DROP SEQUENCE event_fact_id_seq;
@@ -157,7 +158,7 @@ CREATE TABLE product_order (
   title VARCHAR2(255),
   quote_id VARCHAR2(255),
   jira_ticket_key VARCHAR2(255),
-  is_deleted CHAR(1) DEFAULT 'F' NOT NULL ,
+  owner VARCHAR2(40),
   etl_date DATE NOT NULL
 );
 
@@ -175,7 +176,8 @@ CREATE TABLE product_order_sample (
   sample_name VARCHAR2(255),
   delivery_status VARCHAR2(40) NOT NULL,
   sample_position NUMERIC(19) NOT NULL,
-  is_deleted CHAR(1) DEFAULT 'F' NOT NULL,
+  on_risk CHAR(1) DEFAULT 'F' NOT NULL CHECK (on_risk IN ('T','F')),
+  is_billed CHAR(1) DEFAULT 'F' NOT NULL CHECK (on_risk IN ('T','F')),
   etl_date DATE NOT NULL
 );
 
@@ -191,7 +193,6 @@ CREATE TABLE product_order_add_on (
   product_order_add_on_id NUMERIC(19) NOT NULL PRIMARY KEY,
   product_order_id NUMERIC(19) NOT NULL,
   product_id NUMERIC(19) NOT NULL,
-  is_deleted CHAR(1) DEFAULT 'F' NOT NULL,
   etl_date DATE NOT NULL
 );
 
@@ -205,17 +206,18 @@ CREATE TABLE lab_vessel (
 CREATE TABLE lab_batch (
   lab_batch_id NUMERIC(19) NOT NULL PRIMARY KEY,
   batch_name VARCHAR2(40) NOT NULL,
-  is_active CHAR(1) DEFAULT 'T' NOT NULL CHECK (is_active IN ('T','F')),
-  created_on DATE NOT NULL,
-  due_date DATE,
   etl_date DATE NOT NULL
 );
 
-CREATE TABLE workflow_config (
-  workflow_config_id NUMERIC(19) NOT NULL PRIMARY KEY,
-  effective_date DATE NOT NULL,
+CREATE TABLE workflow (
+  workflow_id NUMERIC(19) NOT NULL PRIMARY KEY,
   workflow_name VARCHAR2(255) NOT NULL,
   workflow_version VARCHAR2(40) NOT NULL,
+  etl_date DATE NOT NULL
+);
+
+CREATE TABLE workflow_process (
+  process_id NUMERIC(19) NOT NULL PRIMARY KEY,
   process_name VARCHAR2(255) NOT NULL,
   process_version VARCHAR2(40) NOT NULL,
   step_name VARCHAR2(255) NOT NULL,
@@ -226,10 +228,10 @@ CREATE TABLE workflow_config (
 CREATE TABLE event_fact (
   event_fact_id NUMERIC(28) NOT NULL PRIMARY KEY,
   lab_event_id NUMERIC(19) NOT NULL,
-  event_name VARCHAR2(255) NOT NULL,
-  workflow_config_id NUMERIC(19),
+  workflow_id NUMERIC(19),
+  process_id NUMERIC(19),
   product_order_id NUMERIC(19),
-  sample_key  VARCHAR(40),
+  sample_name VARCHAR(40),
   lab_batch_id NUMERIC(19),
   station_name VARCHAR2(255),
   lab_vessel_id NUMERIC(19),
@@ -344,7 +346,8 @@ CREATE TABLE im_product_order (
   modified_date DATE,
   title VARCHAR2(255),
   quote_id VARCHAR2(255),
-  jira_ticket_key VARCHAR2(255)
+  jira_ticket_key VARCHAR2(255),
+  owner VARCHAR2(40)
 );
 
 CREATE TABLE im_product_order_status (
@@ -400,20 +403,23 @@ CREATE TABLE im_lab_batch (
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL,
   lab_batch_id NUMERIC(19) NOT NULL,
-  batch_name VARCHAR2(40),
-  is_active CHAR(1),
-  created_on DATE,
-  due_date DATE
+  batch_name VARCHAR2(40)
 );
 
-CREATE TABLE im_workflow_config (
+CREATE TABLE im_workflow (
   line_number NUMERIC(9) NOT NULL,
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL,
-  workflow_config_id NUMERIC(19) NOT NULL,
-  effective_date DATE,
+  workflow_id NUMERIC(19) NOT NULL,
   workflow_name VARCHAR2(255),
-  workflow_version VARCHAR2(40),
+  workflow_version VARCHAR2(40)
+);
+
+CREATE TABLE im_workflow_process (
+  line_number NUMERIC(9) NOT NULL,
+  etl_date DATE NOT NULL,
+  is_delete CHAR(1) NOT NULL,
+  process_id NUMERIC(19) NOT NULL,
   process_name VARCHAR2(255),
   process_version VARCHAR2(40),
   step_name VARCHAR2(255),
@@ -424,16 +430,32 @@ CREATE TABLE im_event_fact (
   line_number NUMERIC(9) NOT NULL,
   etl_date DATE NOT NULL,
   is_delete CHAR(1) NOT NULL,
-  lab_event_id NUMERIC(19) NOT NULL,
-  event_name VARCHAR2(255),
-  workflow_config_id NUMERIC(19),
+  lab_event_id NUMERIC(19),
+  workflow_id NUMERIC(19),
+  process_id NUMERIC(19),
   product_order_id NUMERIC(19),
-  sample_key  VARCHAR(40),
+  sample_name  VARCHAR(40),
   lab_batch_id NUMERIC(19),
   station_name VARCHAR2(255),
   lab_vessel_id NUMERIC(19),
   event_date DATE,
-  event_fact_id NUMERIC(19) --this gets populated by merge_import.sql
+  event_fact_id NUMERIC(28) --this gets populated by merge_import.sql
+);
+
+CREATE TABLE im_product_order_sample_risk (
+  line_number NUMERIC(9) NOT NULL,
+  etl_date DATE NOT NULL,
+  is_delete CHAR(1) NOT NULL,
+  product_order_sample_id NUMERIC(19) NOT NULL,
+  on_risk CHAR(1)
+);
+
+CREATE TABLE im_product_order_sample_bill (
+  line_number NUMERIC(9) NOT NULL,
+  etl_date DATE NOT NULL,
+  is_delete CHAR(1) NOT NULL,
+  product_order_sample_id NUMERIC(19) NOT NULL,
+  is_billed CHAR(1)
 );
 
 CREATE SEQUENCE event_fact_id_seq start with 1;
@@ -483,8 +505,11 @@ ALTER TABLE event_fact ADD CONSTRAINT fk_event_lab_batch FOREIGN KEY (lab_batch_
 ALTER TABLE event_fact ADD CONSTRAINT fk_event_pdo FOREIGN KEY (product_order_id)
   REFERENCES product_order(product_order_id) ON DELETE CASCADE;
 
-ALTER TABLE event_fact ADD CONSTRAINT fk_event_workflow_config FOREIGN KEY (workflow_config_id)
-  REFERENCES workflow_config(workflow_config_id) ON DELETE CASCADE;
+ALTER TABLE event_fact ADD CONSTRAINT fk_event_workflow FOREIGN KEY (workflow_id)
+  REFERENCES workflow(workflow_id) ON DELETE CASCADE;
+
+ALTER TABLE event_fact ADD CONSTRAINT fk_event_process FOREIGN KEY (process_id)
+  REFERENCES workflow_process(process_id) ON DELETE CASCADE;
 
 
 CREATE INDEX research_project_status_idx1 ON research_project_status(research_project_id);
@@ -495,7 +520,7 @@ CREATE INDEX research_project_irb_idx1 ON research_project_irb(research_project_
 CREATE INDEX product_order_idx1 ON product_order(research_project_id);
 CREATE INDEX product_order_idx2 ON product_order(product_id);
 CREATE INDEX product_order_status_idx1 ON product_order_status(product_order_id);
-CREATE INDEX product_order_sample_idx1 ON product_order_sample(product_order_id);
+CREATE UNIQUE INDEX product_order_sample_idx1 ON product_order_sample(product_order_id, sample_name, sample_position);
 CREATE INDEX pdo_sample_status_idx1 ON product_order_sample_status(product_order_sample_id);
 CREATE INDEX pdo_add_on_idx1 ON product_order_add_on(product_order_id);
 CREATE INDEX pdo_add_on_idx2 ON product_order_add_on(product_id);

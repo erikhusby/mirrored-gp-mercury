@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
@@ -28,7 +29,7 @@ public interface TransferTraverserCriteria {
     /**
      * The context for the current traversal. Contains information about the current query including the lab vessel, the
      * vessel container that the lab vessel is in, the lab event, the traversal depth, and direction of traversal.
-     *
+     * <p/>
      * At least one of labVessel and vesselContainer will be non-null. vesselContainer may be null in the case where
      * labVessel is not in a container (in the context of the current event). labVessel may be null in the case where
      * all positions of a container are being queried and there is no lab vessel at the current position.
@@ -75,12 +76,12 @@ public interface TransferTraverserCriteria {
          * Creates a context for a single lab vessel outside of any vessel container. For example, this could represent
          * a static plate or a single barcoded tube.
          *
-         * @param labVessel             the lab vessel
-         * @param event                 the transfer event traversed to reach this container
-         * @param hopCount              the traversal depth
-         * @param traversalDirection    the direction of traversal
+         * @param labVessel          the lab vessel
+         * @param event              the transfer event traversed to reach this container
+         * @param hopCount           the traversal depth
+         * @param traversalDirection the direction of traversal
          */
-        public Context(@Nonnull LabVessel labVessel, LabEvent event, @Nonnull int hopCount, @Nonnull TraversalDirection traversalDirection) {
+        public Context(@Nonnull LabVessel labVessel, LabEvent event, int hopCount, @Nonnull TraversalDirection traversalDirection) {
             this.labVessel = labVessel;
             this.event = event;
             this.hopCount = hopCount;
@@ -91,12 +92,12 @@ public interface TransferTraverserCriteria {
          * Creates a context for a lab vessel in a vessel container. For example, this could represent an individually
          * barcoded tube inside of a tube rack.
          *
-         * @param labVessel             the lab vessel
-         * @param vesselContainer       the containing vessel
-         * @param vesselPosition        the position of labVessel within vesselContainer
-         * @param event                 the transfer event traversed to reach this container
-         * @param hopCount              the traversal depth
-         * @param traversalDirection    the direction of traversal
+         * @param labVessel          the lab vessel
+         * @param vesselContainer    the containing vessel
+         * @param vesselPosition     the position of labVessel within vesselContainer
+         * @param event              the transfer event traversed to reach this container
+         * @param hopCount           the traversal depth
+         * @param traversalDirection the direction of traversal
          */
         public Context(LabVessel labVessel, @Nonnull VesselContainer vesselContainer, @Nonnull VesselPosition vesselPosition, LabEvent event, int hopCount, @Nonnull TraversalDirection traversalDirection) {
             this.labVessel = labVessel;
@@ -195,7 +196,7 @@ public interface TransferTraverserCriteria {
                     nearest = labBatchesForHopCount.getKey();
                 }
             }
-            if(labBatchesAtHopCount.containsKey(nearest)) {
+            if (labBatchesAtHopCount.containsKey(nearest)) {
                 nearestSet.addAll(labBatchesAtHopCount.get(nearest));
             }
 
@@ -246,18 +247,23 @@ public interface TransferTraverserCriteria {
         @Override
         public TraversalControl evaluateVesselPreOrder(Context context) {
             if (context.getLabVessel() != null) {
-                for (SampleInstance sampleInstance : context.getLabVessel().getSampleInstances()) {
-                    MercurySample startingSample = sampleInstance.getStartingSample();
+                if (context.getLabVessel().getMercurySamples() != null) {
+                    for (MercurySample mercurySample : context.getLabVessel().getMercurySamples()) {
+                        if (StringUtils.isBlank(mercurySample.getProductOrderKey())) {
+                            continue;
+                        }
+                        if (!productOrdersAtHopCount.containsKey(context.getHopCount())) {
+                            productOrdersAtHopCount.put(context.getHopCount(), new HashSet<String>());
+                        }
 
-                    if (!productOrdersAtHopCount.containsKey(context.getHopCount())) {
-                        productOrdersAtHopCount.put(context.getHopCount(), new HashSet<String>());
+                        String productOrderKey = mercurySample.getProductOrderKey();
+                        if (productOrderKey != null) {
+                            productOrdersAtHopCount.get(context.getHopCount()).add(productOrderKey);
+                        }
                     }
-
-                    productOrdersAtHopCount.get(context.getHopCount()).add(startingSample.getProductOrderKey());
                 }
             }
             return TraversalControl.ContinueTraversing;
-
         }
 
         @Override
@@ -277,7 +283,7 @@ public interface TransferTraverserCriteria {
                 }
             }
 
-            if(productOrdersAtHopCount.containsKey(nearest)) {
+            if (productOrdersAtHopCount.containsKey(nearest)) {
                 nearestSet.addAll(productOrdersAtHopCount.get(nearest));
             }
 

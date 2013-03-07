@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.meanbean.test.BeanTester;
@@ -38,8 +38,8 @@ public class BucketEntryDBFreeTest {
         Assert.assertNotNull(entry.getLabVessel());
         Assert.assertEquals ( twoDBarcode, entry.getLabVessel ().getLabel () );
 
-        Assert.assertNotNull(entry.getBucketExistence());
-        Assert.assertEquals(bucketName, entry.getBucketExistence().getBucketDefinitionName());
+        Assert.assertNotNull(entry.getBucket());
+        Assert.assertEquals(bucketName, entry.getBucket().getBucketDefinitionName());
 
         SimpleDateFormat dateFormatter = new SimpleDateFormat("dd/MM/yy");
 

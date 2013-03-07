@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.entity.reagent;
 
 import com.sun.jersey.api.client.Client;
 import org.apache.commons.io.FileUtils;
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
@@ -346,7 +346,7 @@ public class ImportFromSquidTest extends ContainerTest {
 //                productOrderSamples = new ArrayList<ProductOrderSample>();
             }
             assert tubeBeans != null;
-            tubeBeans.add(new TubeBean(tubeBarcode, "SM-" + sampleLsid.substring(sampleLsid.lastIndexOf(':') + 1), productOrder));
+            tubeBeans.add(new TubeBean(tubeBarcode, "SM-" + sampleLsid.substring(sampleLsid.lastIndexOf(':') + 1)));
 //            productOrderSamples.add(new ProductOrderSample(sampleBarcode));
         }
     }

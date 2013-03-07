@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.vessel;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
@@ -26,6 +26,6 @@ public class TwoDBarcodedTubeDAOTest extends ContainerTest {
                 "R100515045784",
                 "R100515045785",
                 "R100515045786"));
-        Assert.assertEquals("Wrong number of tubes", 4, mapBarcodeToTube.size());
+        Assert.assertEquals(4, mapBarcodeToTube.size(), "Wrong number of tubes");
     }
 }

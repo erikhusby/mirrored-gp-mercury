@@ -2,13 +2,14 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import com.sun.jersey.api.client.ClientResponse;
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfiguration;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 
 import javax.ejb.Schedule;
-import javax.ejb.Stateless;
+import javax.ejb.Stateful;
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.Response;
@@ -34,7 +35,7 @@ import java.util.concurrent.Semaphore;
  * For backfill etl, the entities are obtained from the EntityManager, regardless of their audit history.
  */
 
-@Stateless
+@Stateful
 @Path("etl")
 public class ExtractTransform {
     /** Record delimiter expected in sqlLoader file. */
@@ -43,8 +44,11 @@ public class ExtractTransform {
     public static final String READY_FILE_SUFFIX = "_is_ready";
     /** This date format matches what cron job expects in filenames, and in SqlLoader data files. */
     public static final SimpleDateFormat secTimestampFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+    public static final SimpleDateFormat msecTimestampFormat = new SimpleDateFormat("yyyyMMddHHmmssSSS");
     /** Name of file that contains the mSec time of the last etl run. */
     public static final String LAST_ETL_FILE = "last_etl_run";
+    /** Name of the file that contains the hash of the last exported workflow config data. */
+    public static final String LAST_WF_CONFIG_HASH_FILE = "last_wf_config_hash";
     /** Name of subdirectory under configured ETL root dir where new sqlLoader files are put. */
     public static final String DATAFILE_SUBDIR = "/new";
     /** Name of directory where sqlLoader files are put. */
@@ -52,18 +56,30 @@ public class ExtractTransform {
 
     private static final long MSEC_IN_SEC = 1000L;
     private static final long SEC_IN_MIN = 60L;
-    private static final Logger logger = Logger.getLogger(ExtractTransform.class);
+    // Number of digits in the number representing seconds since start of epoch.
+    private final int TIMESTAMP_SECONDS_SIZE = 10;
+    private static final Log logger = LogFactory.getLog(ExtractTransform.class);
     private static final Semaphore mutex = new Semaphore(1);
     private static long incrementalRunStartTime = System.currentTimeMillis();  // only useful for logging
     private static boolean loggedConfigError = false;
     private EtlConfig etlConfig = null;
 
     @Inject
-    private Deployment deployment;
-    @Inject
     private AuditReaderDao auditReaderDao;
     @Inject
+    private Deployment deployment;
+    @Inject
+    private EventEtl eventEtl;
+    @Inject
+    private LabBatchEtl labBatchEtl;
+    @Inject
+    private LabVesselEtl labVesselEtl;
+    @Inject
+    private PriceItemEtl priceItemEtl;
+    @Inject
     private ProductEtl productEtl;
+    @Inject
+    private ProductOrderAddOnEtl productOrderAddOnEtl;
     @Inject
     private ProductOrderEtl productOrderEtl;
     @Inject
@@ -73,36 +89,74 @@ public class ExtractTransform {
     @Inject
     private ProductOrderStatusEtl productOrderStatusEtl;
     @Inject
-    private PriceItemEtl priceItemEtl;
-    @Inject
-    private ResearchProjectEtl researchProjectEtl;
-    @Inject
-    private ResearchProjectStatusEtl researchProjectStatusEtl;
-    @Inject
     private ProjectPersonEtl projectPersonEtl;
-    @Inject
-    private ResearchProjectIrbEtl researchProjectIrbEtl;
-    @Inject
-    private ResearchProjectFundingEtl researchProjectFundingEtl;
     @Inject
     private ResearchProjectCohortEtl researchProjectCohortEtl;
     @Inject
-    private ProductOrderAddOnEtl productOrderAddOnEtl;
+    private ResearchProjectEtl researchProjectEtl;
     @Inject
-    private EventEtl eventEtl;
+    private ResearchProjectFundingEtl researchProjectFundingEtl;
+    @Inject
+    private ResearchProjectIrbEtl researchProjectIrbEtl;
+    @Inject
+    private ResearchProjectStatusEtl researchProjectStatusEtl;
     @Inject
     private WorkflowConfigEtl workflowConfigEtl;
     @Inject
-    private LabBatchEtl labBatchEtl;
+    private RiskItemEtl riskItemEtl;
     @Inject
-    private LabVesselEtl labVesselEtl;
+    private BillingLedgerEtl billingLedgerEtl;
 
+    public ExtractTransform() {
+    }
+
+    public ExtractTransform(AuditReaderDao auditReaderDao,
+                            EventEtl eventEtl,
+                            LabBatchEtl labBatchEtl,
+                            LabVesselEtl labVesselEtl,
+                            PriceItemEtl priceItemEtl,
+                            ProductEtl productEtl,
+                            ProductOrderAddOnEtl productOrderAddOnEtl,
+                            ProductOrderEtl productOrderEtl,
+                            ProductOrderSampleEtl productOrderSampleEtl,
+                            ProductOrderSampleStatusEtl productOrderSampleStatusEtl,
+                            ProductOrderStatusEtl productOrderStatusEtl,
+                            ProjectPersonEtl projectPersonEtl,
+                            ResearchProjectCohortEtl researchProjectCohortEtl,
+                            ResearchProjectEtl researchProjectEtl,
+                            ResearchProjectFundingEtl researchProjectFundingEtl,
+                            ResearchProjectIrbEtl researchProjectIrbEtl,
+                            ResearchProjectStatusEtl researchProjectStatusEtl,
+                            WorkflowConfigEtl workflowConfigEtl,
+                            RiskItemEtl riskItemEtl,
+                            BillingLedgerEtl billingLedgerEtl) {
+        this.auditReaderDao = auditReaderDao;
+        this.eventEtl = eventEtl;
+        this.labBatchEtl = labBatchEtl;
+        this.labVesselEtl = labVesselEtl;
+        this.priceItemEtl = priceItemEtl;
+        this.productEtl = productEtl;
+        this.productOrderAddOnEtl = productOrderAddOnEtl;
+        this.productOrderEtl = productOrderEtl;
+        this.productOrderSampleEtl = productOrderSampleEtl;
+        this.productOrderSampleStatusEtl = productOrderSampleStatusEtl;
+        this.productOrderStatusEtl = productOrderStatusEtl;
+        this.projectPersonEtl = projectPersonEtl;
+        this.researchProjectCohortEtl = researchProjectCohortEtl;
+        this.researchProjectEtl = researchProjectEtl;
+        this.researchProjectFundingEtl = researchProjectFundingEtl;
+        this.researchProjectIrbEtl = researchProjectIrbEtl;
+        this.researchProjectStatusEtl = researchProjectStatusEtl;
+        this.workflowConfigEtl = workflowConfigEtl;
+        this.riskItemEtl = riskItemEtl;
+        this.billingLedgerEtl = billingLedgerEtl;
+    }
 
     /**
      * JEE auto-schedules incremental ETL.
      */
     @Schedule(hour="*", minute="*/15", persistent=false)
-    private void scheduledEtl() {
+    void scheduledEtl() {
         initConfig();
         incrementalEtl();
     }
@@ -148,7 +202,7 @@ public class ExtractTransform {
         // may run at a time.  Does not queue a new job if busy, to avoid snowball effect if system is
         // busy for a long time, for whatever reason.
         if (!mutex.tryAcquire()) {
-            int minutes = (int)Math.ceil((System.currentTimeMillis() - incrementalRunStartTime) / MSEC_IN_SEC / SEC_IN_MIN);
+            int minutes = minutesSince(incrementalRunStartTime);
             if (minutes > 0) {
                 logger.info("Skipping new ETL run since previous run is still busy after " + minutes + " minutes.");
             }
@@ -172,33 +226,38 @@ public class ExtractTransform {
             }
 
             // The same etl_date is used for all DW data processed by one ETL run.
-            final Date etlDate = new Date();
-            final String etlDateStr = secTimestampFormat.format(etlDate);
-            final long currentEtlTimestamp = etlDate.getTime();
-            incrementalRunStartTime = currentEtlTimestamp;
+            final long currentEtlSec = System.currentTimeMillis() / MSEC_IN_SEC;
+            final String etlDateStr = secTimestampFormat.format(new Date(currentEtlSec * MSEC_IN_SEC));
+            incrementalRunStartTime = System.currentTimeMillis();
 
-            final long lastEtlTimestamp = readLastEtlRun();
+            final long lastEtlSec = readLastEtlRun();
             // Allows last timestamp to be in the future thereby shutting off incremental etl.
-            if (lastEtlTimestamp >= currentEtlTimestamp) {
+            if (lastEtlSec >= currentEtlSec) {
                 return 0;
             }
-            return incrementalEtl(lastEtlTimestamp, currentEtlTimestamp, etlDateStr);
+            return incrementalEtl(lastEtlSec, currentEtlSec, etlDateStr);
         } finally {
             mutex.release();
         }
     }
 
-    /** Testable helper method that does the incremental etl work, has no mutex. */
-    public int incrementalEtl(long startTimestamp, long endTimestamp, String etlDateStr) {
-        if (0L == startTimestamp) {
+    /**
+     * Testable helper method that does the incremental etl work, has no mutex.
+     * @param startTimeSec start of ETL interval, in seconds
+     * @param endTimeSec end of ETL interval, in seconds
+     * @param etlDateStr y-m-d formatted etl time, for filenames
+     * @return number of etl records
+     */
+    public int incrementalEtl(long startTimeSec, long endTimeSec, String etlDateStr) {
+        if (0L == startTimeSec) {
             logger.warn("Cannot determine time of last incremental ETL.  ETL will not be run.");
             return 0;
         }
         // Gets the audit revision ids for the given interval.
-        Collection<Long> revIds = auditReaderDao.fetchAuditIds(startTimestamp, endTimestamp);
+        Collection<Long> revIds = auditReaderDao.fetchAuditIds(startTimeSec, endTimeSec);
         logger.debug ("Incremental ETL found " + revIds.size() + " changes.");
         if (revIds.size() == 0) {
-            writeLastEtlRun(endTimestamp);
+            writeLastEtlRun(endTimeSec);
             return 0;
         }
 
@@ -223,11 +282,14 @@ public class ExtractTransform {
         recordCount += workflowConfigEtl.doEtl(revIds, etlDateStr);
         recordCount += eventEtl.doEtl(revIds, etlDateStr);
 
-        writeLastEtlRun(endTimestamp);
+        recordCount += riskItemEtl.doEtl(revIds, etlDateStr);
+        recordCount += billingLedgerEtl.doEtl(revIds, etlDateStr);
+
+        writeLastEtlRun(endTimeSec);
         if (recordCount > 0) {
             writeIsReadyFile(etlDateStr);
             logger.debug("Incremental ETL created " + recordCount + " data records in " +
-                    (int)((System.currentTimeMillis() - incrementalRunStartTime) / MSEC_IN_SEC) + " seconds.");
+                    minutesSince(incrementalRunStartTime) + " seconds.");
         }
         return recordCount;
     }
@@ -253,8 +315,7 @@ public class ExtractTransform {
             return Response.Status.INTERNAL_SERVER_ERROR;
         }
 
-        final Date etlDate = new Date();
-        final String etlDateStr = secTimestampFormat.format(etlDate);
+        final String etlDateStr = secTimestampFormat.format(new Date());
 
         Class entityClass;
         try {
@@ -273,7 +334,7 @@ public class ExtractTransform {
         }
 
         logger.debug("ETL backfill of " + entityClass.getName() + " having ids " + startId + " to " + endId);
-        long backfillStartTime = etlDate.getTime();
+        long backfillStartTime = System.currentTimeMillis();
 
         int recordCount = 0;
         // The one of these that matches the entityClass will make ETL records, others are no-ops.
@@ -296,6 +357,9 @@ public class ExtractTransform {
         recordCount += workflowConfigEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
         recordCount += eventEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
 
+        recordCount += riskItemEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += billingLedgerEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+
         if (recordCount > 0) {
             writeIsReadyFile(etlDateStr);
         }
@@ -305,18 +369,24 @@ public class ExtractTransform {
         return Response.Status.NO_CONTENT;
     }
 
-
     /**
      * Reads the last incremental ETL run file and returns start of this etl interval.
-     * @return the end rev of last incremental ETL, or 0 if missing.
+     * Returns seconds if file contains seconds or milliseconds.
+     * @return the end time in seconds of last incremental ETL, or 0 if missing or unparsable.
      */
     public long readLastEtlRun() {
         try {
-            return Long.parseLong(readEtlFile(LAST_ETL_FILE));
+            // Extracts the first 10 digits.
+            String content = readEtlFile(LAST_ETL_FILE);
+            if (content.length() >= TIMESTAMP_SECONDS_SIZE) {
+                return Long.parseLong(content.substring(0, TIMESTAMP_SECONDS_SIZE));
+            }
         } catch (NumberFormatException e) {
-            logger.warn("Cannot parse " + LAST_ETL_FILE + " : " + e);
-            return 0L;
+            // fall through
         }
+        logger.warn("Invalid timestamp in " + LAST_ETL_FILE);
+        return 0L;
+
     }
 
     /**
@@ -399,9 +469,15 @@ public class ExtractTransform {
     private void initConfig() {
         if (null == etlConfig) {
             etlConfig = (EtlConfig) MercuryConfiguration.getInstance().getConfig(EtlConfig.class, deployment);
+        }
+        if (null == datafileDir) {
             setDatafileDir(etlConfig.getDatawhEtlDirRoot() + DATAFILE_SUBDIR);
         }
     }
 
+    /** Returns the whole number of minutes since the given mSec timestamp, rounded up. */
+    private int minutesSince(long msecTimestamp) {
+        return (int)Math.ceil((System.currentTimeMillis() - msecTimestamp) / MSEC_IN_SEC / SEC_IN_MIN);
+    }
 }
 

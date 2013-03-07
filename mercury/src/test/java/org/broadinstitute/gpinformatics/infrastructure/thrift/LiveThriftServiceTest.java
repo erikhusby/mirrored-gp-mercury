@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
 import edu.mit.broad.prodinfo.thrift.lims.*;
+import org.testng.Assert;
 import org.apache.commons.logging.Log;
 import org.apache.thrift.TException;
 import org.apache.thrift.transport.TTransportException;
@@ -60,20 +61,9 @@ public class LiveThriftServiceTest {
 
     @Test(groups = EXTERNAL_INTEGRATION)
     public void testFetchRunNotFound() throws Exception {
-        String message = "Failed to fetch run: invalid_run";
-        mockLog.error(eq(message), isA(TZIMSException.class));
+        mockLog.info(eq("Run bogus run doesn't appear to have been registered yet.  Please try again later or contact the mercury team if the problem persists."));
         replay(mockLog);
-
-        Exception caught = null;
-        try {
-            thriftService.fetchRun("invalid_run");
-        } catch (Exception e) {
-            caught = e;
-        }
-        assertThat(caught, instanceOf(RuntimeException.class));
-        assertThat(caught.getMessage(), equalTo(message));
-
-        verify(mockLog);
+        Assert.assertNull(thriftService.fetchRun("bogus run"));
     }
 
     @Test(groups = EXTERNAL_INTEGRATION)

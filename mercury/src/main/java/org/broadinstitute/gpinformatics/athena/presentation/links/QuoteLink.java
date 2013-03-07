@@ -3,12 +3,10 @@ package org.broadinstitute.gpinformatics.athena.presentation.links;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteConfig;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
 /**
- * This is a bean to help the UI deal with Jira links
+ * This class is used to generate Quote server links for the UI.
  */
-@Named
 public class QuoteLink {
     private static final String QUOTE_DETAILS = "/quotes/quote/Quote.action?viewQuote=&quote.identifier=";
 

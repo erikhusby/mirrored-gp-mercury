@@ -5,39 +5,39 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
 import net.sourceforge.stripes.validation.ValidationMethod;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.util.IOUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.*;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
-import org.broadinstitute.gpinformatics.athena.presentation.links.BspLink;
-import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
+import org.broadinstitute.gpinformatics.athena.presentation.links.SampleSearchLink;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProductTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
+import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteNotFoundException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteServerException;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
@@ -46,6 +46,7 @@ import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.jvnet.inflector.Noun;
 
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
@@ -73,7 +74,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     private static final String ABANDON_SAMPLES_ACTION = "abandonSamples";
     private static final String DELETE_SAMPLES_ACTION = "deleteSamples";
     private static final String SET_RISK = "setRisk";
+    private static final String PLACE_ORDER = "placeOrder";
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private QuoteService quoteService;
 
@@ -87,16 +90,13 @@ public class ProductOrderActionBean extends CoreActionBean {
     private ProductOrderListEntryDao orderListEntryDao;
 
     @Inject
-    private JiraLink jiraLink;
-
-    @Inject
     private BSPUserList bspUserList;
 
     @Inject
     private QuoteLink quoteLink;
 
     @Inject
-    private BspLink bspLink;
+    private SampleSearchLink sampleSearchLink;
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -129,9 +129,17 @@ public class ProductOrderActionBean extends CoreActionBean {
     private ProjectTokenInput projectTokenInput;
 
     @Inject
+    private Deployment deployment;
+
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    @Inject
     private JiraService jiraService;
 
-    private List<ProductOrderListEntry> allProductOrders;
+    @SuppressWarnings("CdiInjectionPointsInspection")
+    @Inject
+    private MercuryClientService mercuryClientService;
+
+    private List<ProductOrderListEntry> allProductOrderListEntries;
 
     private String sampleList;
 
@@ -139,6 +147,8 @@ public class ProductOrderActionBean extends CoreActionBean {
     private String productOrder;
 
     private List<Long> sampleIdsForGetBspData;
+
+    private CompletionStatusFetcher progressFetcher = new CompletionStatusFetcher();
 
     @ValidateNestedProperties({
         @Validate(field="comments", maxlength=2000, on={SAVE_ACTION}),
@@ -175,6 +185,16 @@ public class ProductOrderActionBean extends CoreActionBean {
     @Validate(required = true, on = SET_RISK)
     private String riskComment;
 
+    //This is used for prompting why the abandon button is disabled
+    private String abandonDisabledReason;
+
+    //This is used to determine whether a special warning message needs to be confirmed before normal abandon;
+    private boolean abandonWarning = false;
+    /**
+     * Single {@link ProductOrderListEntry} for the view page, gives us billing session information.
+     */
+    private ProductOrderListEntry productOrderListEntry;
+
     /*
      * The search query.
      */
@@ -192,6 +212,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         productOrder = getContext().getRequest().getParameter(PRODUCT_ORDER_PARAMETER);
         if (!StringUtils.isBlank(productOrder)) {
             editOrder = productOrderDao.findByBusinessKey(productOrder);
+
+            progressFetcher.setupProgress(productOrderDao, Collections.singletonList(editOrder.getBusinessKey()));
         } else {
             // If this was a create with research project specified, find that.
             // This is only used for save, when creating a new product order.
@@ -248,16 +270,20 @@ public class ProductOrderActionBean extends CoreActionBean {
     }
 
     private void doValidation(String action) {
-        String ownerUsername = bspUserList.getById(editOrder.getCreatedBy()).getUsername();
-        requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
+        requireField(editOrder.getCreatedBy(), "an owner", action);
+
+        if (editOrder.getCreatedBy() != null) {
+            String ownerUsername = bspUserList.getById(editOrder.getCreatedBy()).getUsername();
+            requireField(jiraService.isValidUser(ownerUsername), "an owner with a JIRA account", action);
+        }
+
         requireField(!editOrder.getSamples().isEmpty(), "any samples", action);
         requireField(editOrder.getResearchProject(), "a research project", action);
-        requireField(editOrder.getQuoteId(), "a quote specified", action);
+        requireField(editOrder.getQuoteId() != null, "a quote specified", action);
         requireField(editOrder.getProduct(), "a product", action);
         if (editOrder.getProduct() != null && editOrder.getProduct().getSupportsNumberOfLanes()) {
             requireField(editOrder.getCount() > 0, "a specified number of lanes", action);
         }
-        requireField(editOrder.getCreatedBy(), "an owner", action);
 
         try {
             quoteService.getQuoteByAlphaId(editOrder.getQuoteId());
@@ -269,21 +295,25 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         // Since we are only validating from view, we can persist without worry of saving something bad.
         // We are doing on risk calculation only when everything passes, but informing the user no matter what
-        if (getContext().getValidationErrors().isEmpty()) {
+        if (!hasErrors()) {
             int numSamplesOnRisk = editOrder.calculateRisk();
+            editOrder.prepareToSave(getUserBean().getBspUser());
             productOrderDao.persist(editOrder);
 
             if (numSamplesOnRisk == 0) {
                 addMessage("None of the samples for this order are on risk");
             } else {
-                addMessage("{0} sample{0,choice,0#s|1#|1<s} for this order are on risk", numSamplesOnRisk);
+                addMessage("{0} {1} for this order {2} on risk",
+                        numSamplesOnRisk, Noun.pluralOf("sample", numSamplesOnRisk), numSamplesOnRisk == 1 ? "is" : "are");
             }
         } else {
-            addGlobalValidationError("On risk was not calculated. Fix other errors first");
+            addGlobalValidationError("On risk was not calculated.  Please fix the other errors first.");
+            // Initialize ProductOrderListEntry if we're implicitly going to redisplay the source page.
+            entryInit();
         }
     }
 
-    @ValidationMethod(on = "placeOrder")
+    @ValidationMethod(on = PLACE_ORDER)
     public void validatePlacedOrder() {
         doValidation("place order");
     }
@@ -344,9 +374,26 @@ public class ProductOrderActionBean extends CoreActionBean {
         }
     }
 
-    @After(stages = LifecycleStage.BindingAndValidation, on = {LIST_ACTION})
+    @After(stages = LifecycleStage.BindingAndValidation, on = LIST_ACTION)
     public void listInit() {
-        allProductOrders = orderListEntryDao.findProductOrderListEntries();
+        allProductOrderListEntries = orderListEntryDao.findProductOrderListEntries();
+        progressFetcher.setupProgress(productOrderDao);
+    }
+
+    @After(stages = LifecycleStage.BindingAndValidation, on = EDIT_ACTION)
+    public void createInit() {
+        // Once validation is all set for edit (so that any errors can show the originally Checked Items),
+        // set the add ons to the current
+        addOnKeys.clear();
+        for (ProductOrderAddOn addOnProduct : editOrder.getAddOns()) {
+            addOnKeys.add(addOnProduct.getAddOn().getBusinessKey());
+        }
+    }
+
+    @After(stages = LifecycleStage.BindingAndValidation, on = VIEW_ACTION)
+    public void entryInit() {
+        productOrderListEntry = editOrder.isDraft() ? ProductOrderListEntry.createDummy() :
+                orderListEntryDao.findSingle(editOrder.getJiraTicketKey());
     }
 
     private void validateUser(String validatingFor) {
@@ -428,25 +475,40 @@ public class ProductOrderActionBean extends CoreActionBean {
         projectTokenInput.setup(projectKey);
     }
 
-    @HandlesEvent("placeOrder")
+    @HandlesEvent(PLACE_ORDER)
     public Resolution placeOrder() {
         try {
-            editOrder.prepareToSave(userBean.getBspUser(), isCreating());
-            editOrder.submitProductOrder();
+            editOrder.prepareToSave(userBean.getBspUser());
+            editOrder.placeOrder();
             editOrder.setOrderStatus(ProductOrder.OrderStatus.Submitted);
 
             // save it!
             productOrderDao.persist(editOrder);
         } catch (Exception e) {
             // Need to quote the message contents to prevent errors.
-            addLiteralErrorMessage(e.getMessage());
+            addGlobalValidationError("{2}", e.getMessage());
+            // Make sure ProductOrderListEntry is initialized if returning source page resolution.
+            entryInit();
             return getSourcePageResolution();
         }
 
         addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
+
+        if (deployment != null && deployment == Deployment.DEV) {
+            Collection<ProductOrderSample> samples = mercuryClientService.addSampleToPicoBucket(editOrder);
+            if (!samples.isEmpty()) {
+                addMessage("{0} samples have been added to the pico bucket: {1}", samples.size(), StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
+            }
+        }
+
         return createViewResolution();
     }
 
+    /**
+     * There is a validation for this only being allowed for drafts.
+     *
+     * @return The resolution
+     */
     @HandlesEvent("deleteOrder")
     public Resolution deleteOrder() {
         String title = editOrder.getTitle();
@@ -466,9 +528,13 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution validate() {
         validatePlacedOrder();
 
-        if (getContext().getValidationErrors().isEmpty()) {
+        if (!hasErrors()) {
             addMessage("Draft Order is valid and ready to be placed");
         }
+
+        // entryInit() must be called explicitly here since it does not run automatically with source page resolution
+        // and the ProductOrderListEntry that provides billing data would otherwise be null.
+        entryInit();
 
         return getSourcePageResolution();
     }
@@ -489,7 +555,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // save it!
         productOrderDao.persist(editOrder);
 
-        addMessage("Product Order \"" + editOrder.getTitle() + "\" has been saved.");
+        addMessage("Product Order \"{0}\" has been saved.", editOrder.getTitle());
         return createViewResolution();
     }
 
@@ -521,7 +587,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution startBilling() {
         Set<BillingLedger> ledgerItems =
                 billingLedgerDao.findWithoutBillingSessionByOrderList(selectedProductOrderBusinessKeys);
-        if ((ledgerItems == null) || (ledgerItems.isEmpty())) {
+        if (CollectionUtils.isEmpty(ledgerItems)) {
             addGlobalValidationError("There are no items to bill on any of the selected orders");
             return new ForwardResolution(ProductOrderActionBean.class, LIST_ACTION);
         }
@@ -602,7 +668,9 @@ public class ProductOrderActionBean extends CoreActionBean {
                 JSONObject item = new JSONObject();
 
                 item.put("sampleId", sample.getProductOrderSampleId());
+                item.put("collaboratorSampleId", sample.getBspDTO().getCollaboratorsSampleName());
                 item.put("patientId", sample.getBspDTO().getPatientId());
+                item.put("collaboratorParticipantId", sample.getBspDTO().getCollaboratorParticipantId());
                 item.put("volume", sample.getBspDTO().getVolume());
                 item.put("concentration", sample.getBspDTO().getConcentration());
                 item.put("total", sample.getBspDTO().getTotal());
@@ -617,7 +685,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("getSupportsNumberOfLanes")
     public Resolution getSupportsNumberOfLanes() throws Exception {
-        boolean supportsNumberOfLanes = true;
+        boolean supportsNumberOfLanes = false;
         JSONObject item = new JSONObject();
 
         if (this.product != null) {
@@ -673,6 +741,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         // If removeAll returns false, no samples were removed -- should never happen.
         if (editOrder.getSamples().removeAll(selectedProductOrderSamples)) {
             String nameList = StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ",");
+            editOrder.prepareToSave(getUserBean().getBspUser());
             productOrderDao.persist(editOrder);
             addMessage("Deleted samples: {0}.", nameList);
             JiraIssue issue = jiraService.getIssue(editOrder.getJiraTicketKey());
@@ -702,6 +771,7 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
 
+        editOrder.prepareToSave(getUserBean().getBspUser());
         productOrderDao.persist(editOrder);
 
         addMessage("Set manual on risk for {0} samples.", selectedProductOrderSampleIds.size());
@@ -722,7 +792,6 @@ public class ProductOrderActionBean extends CoreActionBean {
             }
         }
         if (!selectedProductOrderSamples.isEmpty()) {
-            String nameList = StringUtils.join(ProductOrderSample.getSampleNames(selectedProductOrderSamples), ",");
             productOrderEjb.abandonSamples(editOrder.getJiraTicketKey(), selectedProductOrderSamples);
         }
         return createViewResolution();
@@ -732,6 +801,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution addSamples() throws Exception {
         List<ProductOrderSample> samplesToAdd = stringToSampleList(addSamplesText);
         editOrder.addSamples(samplesToAdd);
+        editOrder.prepareToSave(getUserBean().getBspUser());
         productOrderDao.persist(editOrder);
         String nameList = StringUtils.join(ProductOrderSample.getSampleNames(samplesToAdd), ",");
         addMessage("Added samples: {0}.", nameList);
@@ -740,6 +810,14 @@ public class ProductOrderActionBean extends CoreActionBean {
         issue.setCustomFieldUsingTransition(ProductOrder.JiraField.SAMPLE_IDS,
                 editOrder.getSampleString(),
                 ProductOrder.TransitionStates.DeveloperEdit.getStateName());
+
+        if (deployment != null && deployment == Deployment.DEV) {
+            Collection<ProductOrderSample> samplesInPico = mercuryClientService.addSampleToPicoBucket(editOrder, samplesToAdd);
+            if (!samplesInPico.isEmpty()) {
+                addMessage("{0} samples have been added to the pico bucket: {1}", samplesInPico.size(), nameList);
+            }
+        }
+
         return createViewResolution();
     }
 
@@ -759,12 +837,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         this.selectedProductOrderSampleIds = selectedProductOrderSampleIds;
     }
 
-    public List<ProductOrderListEntry> getAllProductOrders() {
-        return allProductOrders;
-    }
-
-    public String getJiraUrl() {
-        return jiraLink.browseUrl();
+    public List<ProductOrderListEntry> getAllProductOrderListEntries() {
+        return allProductOrderListEntries;
     }
 
     public ProductOrder getEditOrder() {
@@ -779,8 +853,8 @@ public class ProductOrderActionBean extends CoreActionBean {
         return quoteLink.quoteUrl(editOrder.getQuoteId());
     }
 
-    public String getEditOrderSampleSearchUrl() {
-        return bspLink.sampleSearchUrl();
+    public String sampleSearchUrlForBspSample(ProductOrderSample sample) {
+        return sampleSearchLink.getUrl(sample);
     }
 
     public static Resolution getTrackerForOrders(
@@ -793,6 +867,9 @@ public class ProductOrderActionBean extends CoreActionBean {
         try {
             String filename =
                     "BillingTracker-" + AbstractSpreadsheetExporter.DATE_FORMAT.format(Calendar.getInstance().getTime());
+
+            // Colon is a metacharacter in Windows separating the drive letter from the rest of the path.
+            filename = filename.replaceAll(":", "_");
 
             final File tempFile = File.createTempFile(filename, ".xls");
             outputStream = new FileOutputStream(tempFile);
@@ -930,7 +1007,7 @@ public class ProductOrderActionBean extends CoreActionBean {
      * @return true if user can edit the quote
      */
     public boolean getAllowQuoteEdit() {
-        return editOrder.isDraft() || billingLedgerDao.findByOrderList(editOrder).isEmpty();
+        return editOrder.isDraft() || productOrderSampleDao.countSamplesWithBillingLedgerEntries(editOrder) == 0;
     }
 
     public String getQ() {
@@ -995,5 +1072,144 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     public void setRiskComment(String riskComment) {
         this.riskComment = riskComment;
+    }
+
+    public CompletionStatusFetcher getProgressFetcher() {
+        return progressFetcher;
+    }
+
+    /**
+     * Getter for the {@link ProductOrderListEntry} for the PDO view page.
+     *
+     * @return {@link ProductOrderListEntry} for the view page's PDO.
+     */
+    public ProductOrderListEntry getProductOrderListEntry() {
+        return productOrderListEntry;
+    }
+
+
+    /**
+     * Convenience method to determine if the current PDO for the view page is eligible for billing.
+     *
+     * @return Boolean eligible for billing.
+     */
+    public boolean isEligibleForBilling() {
+        return editOrder.getBusinessKey() != null && getProductOrderListEntry().isEligibleForBilling();
+    }
+
+
+    /**
+     * Convenience method to return the billing session ID for the current PDO in the view page, if any.  Throws
+     * an exception if the current PDO is not eligible for billing.
+     *
+     * @return Billing session for this PDO if any, null if none.
+     */
+    public String getBillingSessionBusinessKey() {
+        if (!isEligibleForBilling()) {
+            throw new RuntimeException("Product Order is not eligible for billing");
+        }
+
+        return getProductOrderListEntry().getBillingSessionBusinessKey();
+    }
+
+    /**
+     * Convenience method for verifying whether a PDO is able to be abandoned.
+     *
+     * @return Boolean eligible for abandoning
+     */
+    public boolean isAbandonable() {
+        if (!editOrder.isSubmitted()) {
+            setAbandonDisabledReason("the order status of the PDO is not 'Submitted'.");
+            return false;
+        } else if (productOrderSampleDao.countSamplesWithBillingLedgerEntries(editOrder) > 0) {
+            setAbandonWarning(true);
+        }
+        return true;
+    }
+
+    /**
+     * Convenience method for PDO view page to show percentage of samples abandoned for the current PDO.
+     *
+     * @return Percentage of sample abandoned.
+     */
+    public int getPercentAbandoned() {
+        return progressFetcher.getPercentAbandoned(editOrder.getBusinessKey());
+    }
+
+
+    /**
+     * Convenience method for PDO view page to show percentage of samples completed for the current PDO.
+     *
+     * @return Percentage of sample completed.
+     */
+    public int getPercentCompleted() {
+        return progressFetcher.getPercentCompleted(editOrder.getBusinessKey());
+    }
+
+
+    /**
+     * Convenience method for PDO view page to show percentage of samples in progress for the current PDO.
+     *
+     * @return Percentage of sample in progress.
+     */
+    public int getPercentInProgress() {
+        return progressFetcher.getPercentInProgress(editOrder.getBusinessKey());
+    }
+
+    /**
+     * Computes the String to show for sample progress, taking into account Draft status and excluding mention of
+     * zero-valued progress categories.
+     *
+     * @return Progress String suitable for display under progress bar.
+     */
+    public String getProgressString() {
+
+        if (editOrder.isDraft()) {
+            return "Draft order, work has not begun";
+        }
+        else {
+            List<String> progressPieces = new ArrayList<String>();
+            if (getPercentAbandoned() != 0) {
+                progressPieces.add(getPercentAbandoned() + "% Abandoned");
+            }
+            if (getPercentCompleted() != 0) {
+                progressPieces.add(getPercentCompleted() + "% Completed");
+            }
+            if (getPercentInProgress() != 0) {
+                progressPieces.add(getPercentInProgress() + "% In Progress");
+            }
+
+            return StringUtils.join(progressPieces, ", ");
+        }
+    }
+
+    /**
+     * @return Reason that abandon button is disabled
+     */
+    public String getAbandonDisabledReason() {
+        return abandonDisabledReason;
+    }
+
+    /**
+     * Update reason why the abandon button is disabled.
+     * @param abandonDisabledReason String of text indicating why the abandon button is disabled
+     */
+    public void setAbandonDisabledReason(String abandonDisabledReason) {
+        this.abandonDisabledReason = abandonDisabledReason;
+    }
+
+    /**
+     * @return Whether there is a need to use the special warning format
+     */
+    public boolean getAbandonWarning() {
+        return abandonWarning;
+    }
+
+    /**
+     * Update whether to use special warning
+     * @param abandonWarning Boolean flag used to determine whether we need to use special message confirmation
+     */
+    public void setAbandonWarning(boolean abandonWarning) {
+        this.abandonWarning = abandonWarning;
     }
 }

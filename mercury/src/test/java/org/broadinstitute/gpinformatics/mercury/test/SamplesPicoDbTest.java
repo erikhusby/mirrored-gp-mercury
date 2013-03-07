@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.mercury.test;
 
 import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.filter.LoggingFilter;
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
@@ -54,7 +54,7 @@ public class SamplesPicoDbTest extends ContainerTest {
                 .path(batchId)
                 .get(LabEventResponseBean.class);
         List<LabEventBean> labEventBeans = labEventResponseBean.getLabEventBeans();
-        Assert.assertEquals("Wrong number of lab events", 10, labEventBeans.size());
+        Assert.assertEquals(10, labEventBeans.size(), "Wrong number of lab events");
         SamplesPicoEndToEndTest.printLabEvents(labEventBeans);
         // todo jmt more asserts
     }
@@ -71,7 +71,7 @@ public class SamplesPicoDbTest extends ContainerTest {
             List<String> tubeBarcodes) {
         ArrayList<TubeBean> tubeBeans = new ArrayList<TubeBean>();
         for (String tubeBarcode : tubeBarcodes) {
-            tubeBeans.add(new TubeBean(tubeBarcode, null, null));
+            tubeBeans.add(new TubeBean(tubeBarcode, null));
         }
         LabBatchBean labBatchBean = new LabBatchBean(batchId, null, tubeBeans);
 

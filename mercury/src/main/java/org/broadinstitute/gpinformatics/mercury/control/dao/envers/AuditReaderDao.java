@@ -21,36 +21,41 @@ import java.util.*;
  */
 @ApplicationScoped
 public class AuditReaderDao extends GenericDao {
+    private final long MSEC_IN_SEC = 1000L;
 
-    /**
-     * Returns an auditReader, doing one-time init if needed.
-     * @return the auditReader
-     */
     private AuditReader getAuditReader() {
         return AuditReaderFactory.get(getEntityManager());
     }
 
     /**
      * Finds the audit info ids for data changes that happened in the given interval.
-     * Must use REV_INFO timestamp in interval, and not id because in Mercury
-     * the ids were observed to be not always monotonic, which caused ETL to miss
-     * some changes.
      *
-     * @param lastEtlTimestamp     start of interval
-     * @param currentEtlTimestamp  end of interval
+     * @param startTimeSec     start of interval, in seconds
+     * @param endTimeSec  end of interval, in seconds
+     * @throws IllegalArgumentException if params are not whole second values.
      */
-    public Collection<Long> fetchAuditIds(long lastEtlTimestamp, long currentEtlTimestamp) {
-        Date startDate = new Date(lastEtlTimestamp);
-        Date endDate = new Date(currentEtlTimestamp);
+    public Collection<Long> fetchAuditIds(long startTimeSec, long endTimeSec) {
+        Date startDate = new Date(startTimeSec * MSEC_IN_SEC);
+        Date endDate = new Date(endTimeSec * MSEC_IN_SEC);
+
+        // Typical AuditReader usage would use audit rev id to determine where to start
+        // the new etl.  But in Mercury the ids were observed to be not always monotonic,
+        // so the audit timestamp must be used instead.
+
+        // Audit revDate has 10 mSec resolution but JPA on our RevInfo table empirically only
+        // permits comparing revDate with a param that has whole second resolution.  That
+        // means etl must have a time interval defined on whole second boundaries.  This
+        // can possibly leave the very most recent events to be picked up in the next etl.
 
         CriteriaBuilder criteriaBuilder = getEntityManager().getCriteriaBuilder();
         CriteriaQuery<Long> criteriaQuery = criteriaBuilder.createQuery(Long.class);
         Root<RevInfo> root = criteriaQuery.from(RevInfo.class);
         criteriaQuery.select(root.get(RevInfo_.revInfoId));
         Predicate predicate = criteriaBuilder.and(
-                criteriaBuilder.greaterThan(root.get(RevInfo_.revDate), startDate),
-                criteriaBuilder.lessThanOrEqualTo(root.get(RevInfo_.revDate), endDate));
+                criteriaBuilder.greaterThanOrEqualTo(root.get(RevInfo_.revDate), startDate),
+                criteriaBuilder.lessThan(root.get(RevInfo_.revDate), endDate));
         criteriaQuery.where(predicate);
+
         try {
             Collection<Long> revList = getEntityManager().createQuery(criteriaQuery).getResultList();
             return revList;

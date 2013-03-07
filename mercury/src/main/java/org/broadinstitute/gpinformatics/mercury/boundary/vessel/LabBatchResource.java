@@ -21,10 +21,13 @@ import java.util.*;
 /**
  * For importing data from Squid and BSP, creates a batch of tubes
  */
+@SuppressWarnings("FeatureEnvy")
 @Path("/labbatch")
 @Stateful
 @RequestScoped
 public class LabBatchResource {
+
+    static final String BSP_BATCH_PREFIX = "BP";
 
     @Inject
     private TwoDBarcodedTubeDAO twoDBarcodedTubeDAO;
@@ -35,6 +38,7 @@ public class LabBatchResource {
     @Inject
     private LabBatchDAO labBatchDAO;
 
+    @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
     private JiraService jiraService;
 
@@ -44,16 +48,16 @@ public class LabBatchResource {
         List<MercurySample> mercurySampleKeys = new ArrayList<MercurySample>();
         for (TubeBean tubeBean : labBatchBean.getTubeBeans()) {
             tubeBarcodes.add(tubeBean.getBarcode());
-            if(tubeBean.getSampleBarcode() != null && tubeBean.getProductOrderKey() != null) {
-                mercurySampleKeys.add(new MercurySample(tubeBean.getProductOrderKey(), tubeBean.getSampleBarcode()));
+            if(tubeBean.getSampleBarcode() != null) {
+                mercurySampleKeys.add(new MercurySample(tubeBean.getSampleBarcode()));
             }
         }
 
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = twoDBarcodedTubeDAO.findByBarcodes(tubeBarcodes);
         Map<MercurySample, MercurySample> mapSampleToSample = mercurySampleDao.findByMercurySample(mercurySampleKeys);
-        LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample/*, null*/);
+        LabBatch labBatch = buildLabBatch(labBatchBean, mapBarcodeToTube, mapSampleToSample);
 
-        if(!labBatchBean.getBatchId().startsWith("BP")) {
+        if(!labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX)) {
             JiraTicket jiraTicket = new JiraTicket(jiraService, labBatchBean.getBatchId());
             labBatch.setJiraTicket(jiraTicket);
             jiraTicket.setLabBatch(labBatch);
@@ -73,7 +77,7 @@ public class LabBatchResource {
      */
     @DaoFree
     public LabBatch buildLabBatch(LabBatchBean labBatchBean, Map<String, TwoDBarcodedTube> mapBarcodeToTube,
-            Map<MercurySample, MercurySample> mapBarcodeToSample/*, BasicProjectPlan projectPlan*/) {
+            Map<MercurySample, MercurySample> mapBarcodeToSample) {
         Set<LabVessel> starters = new HashSet<LabVessel>();
         for (TubeBean tubeBean : labBatchBean.getTubeBeans()) {
             TwoDBarcodedTube twoDBarcodedTube = mapBarcodeToTube.get(tubeBean.getBarcode());
@@ -82,8 +86,8 @@ public class LabBatchResource {
                 mapBarcodeToTube.put(tubeBean.getBarcode(), twoDBarcodedTube);
             }
 
-            if(tubeBean.getSampleBarcode() != null && tubeBean.getProductOrderKey() != null) {
-                MercurySample mercurySampleKey = new MercurySample(tubeBean.getProductOrderKey(), tubeBean.getSampleBarcode());
+            if(tubeBean.getSampleBarcode() != null ) {
+                MercurySample mercurySampleKey = new MercurySample(tubeBean.getSampleBarcode());
                 MercurySample mercurySample = mapBarcodeToSample.get(mercurySampleKey);
                 if(mercurySample == null) {
                     mercurySample = mercurySampleKey;
@@ -93,7 +97,8 @@ public class LabBatchResource {
             }
             starters.add(twoDBarcodedTube);
         }
-        return new LabBatch(labBatchBean.getBatchId(), starters);
+        return new LabBatch(labBatchBean.getBatchId(), starters, labBatchBean.getBatchId().startsWith(BSP_BATCH_PREFIX) ?
+                LabBatch.LabBatchType.BSP : LabBatch.LabBatchType.WORKFLOW);
     }
 
 }

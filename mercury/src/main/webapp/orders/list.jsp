@@ -1,5 +1,6 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
-<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
+<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.roles" %>
+<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -9,6 +10,7 @@
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(function() {
+
                 $j('#productOrderList').dataTable( {
                     "oTableTools": ttExportDefines,
                     "aaSorting": [[8,'desc']],
@@ -21,49 +23,49 @@
                         {"bSortable": true},                    // Status
                         {"bSortable": true},                    // Research Project
                         {"bSortable": true},                    // Owner
-                        {"bSortable": true, "sType": "date"},   // Updated
+                        {"bSortable": true, "sType": "date"},   // Placed
+                        {"bSortable": true, "sType": "title-numeric"},   // % Complete
                         {"bSortable": true, "sType": "numeric"},   // Count
                         {"bSortable": true},                   // Billing Session ID
                         {"bSortable": true, "sType" : "title-string"}]  // eligible for billing
                 });
 
                 setupDialogs();
+            });
 
-                function setupDialogs() {
-                    $j("#confirmDialog").dialog({
-                        modal: true,
-                        autoOpen: false,
-                        buttons: [
-                            {
-                                id: "confirmOkButton",
-                                text: "OK",
-                                click: function () {
-                                    $j(this).dialog("close");
-                                    $j("#confirmOkButton").attr("disabled", "disabled");
-                                    $j("#createForm").submit();
-                                }
-                            },
-                            {
-                                text: "Cancel",
-                                click : function () {
-                                    $j(this).dialog("close");
-                                }
+            function setupDialogs() {
+                $j("#confirmDialog").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    buttons: [
+                        {
+                            id: "confirmOkButton",
+                            text: "OK",
+                            click: function () {
+                                $j(this).dialog("close");
+                                $j("#confirmOkButton").attr("disabled", "disabled");
+                                $j("#createForm").submit();
                             }
-                        ]
-                    });
-
-                    $j("#noneSelectedDialog").dialog({
-                        modal: true,
-                        autoOpen: false,
-                        buttons: {
-                            OK: function () {
+                        },
+                        {
+                            text: "Cancel",
+                            click : function () {
                                 $j(this).dialog("close");
                             }
                         }
-                    });
-                }
-            });
+                    ]
+                });
 
+                $j("#noneSelectedDialog").dialog({
+                    modal: true,
+                    autoOpen: false,
+                    buttons: {
+                        OK: function () {
+                            $j(this).dialog("close");
+                        }
+                    }
+                });
+            }
 
             function showConfirm(action, actionPrompt) {
                 var numChecked = $("input.shiftCheckbox:checked").size();
@@ -103,17 +105,19 @@
             <stripes:hidden id="dialogAction" name=""/>
             <div class="actionButtons">
 
-                <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name}%>">
+                <security:authorizeBlock roles="<%= roles(Developer) %>">
                     <stripes:button name="abandonOrders" value="Abandon Orders" class="btn" onclick="showConfirm('abandonOrders', 'abandon')" style="margin-right:30px;"/>
                 </security:authorizeBlock>
 
-                <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.BillingManager.name}%>">
+                <security:authorizeBlock roles="<%= roles(Developer, BillingManager) %>">
                     <stripes:submit name="startBilling" value="Start Billing Session" class="btn" style="margin-right:30px;"/>
                 </security:authorizeBlock>
 
-                <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn" style="margin-right:5px;"/>
+                <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
+                    <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn" style="margin-right:5px;"/>
+                </security:authorizeBlock>
 
-                <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
+                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
                     <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean" event="view">
                         Upload Billing Tracker
                     </stripes:link>
@@ -128,19 +132,20 @@
                         </th>
                         <th>Name</th>
                         <th width="100">ID</th>
-                        <th width="200">Product</th>
-                        <th width="220">Product Family</th>
-                        <th>Status</th>
+                        <th>Product</th>
+                        <th>Product Family</th>
+                        <th width="80">Status</th>
                         <th width="150">Research Project</th>
-                        <th>Owner</th>
-                        <th width="70">Updated</th>
+                        <th width="120">Owner</th>
+                        <th width="70">Placed</th>
+                        <th width="80">%&nbsp;Complete</th>
                         <th width="25">Sample Count</th>
                         <th width="35">Billing Session</th>
                         <th width="25">Can Bill</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <c:forEach items="${actionBean.allProductOrders}" var="order">
+                    <c:forEach items="${actionBean.allProductOrderListEntries}" var="order">
                         <tr>
                             <td>
                                 <c:if test="${!order.draft}">
@@ -156,7 +161,7 @@
                             <td>
                                 <%--
                                    Real JIRA tickets IDs for PDOs have a "PDO-" prefix followed by digits.  Draft PDOs don't have a ticket ID,
-                                   Graphene tests have "PDO-" followed by arbitrary text.
+                                   Messaging tests have "PDO-" followed by arbitrary text.
                                  --%>
                                 <c:choose>
                                     <%-- draft PDO --%>
@@ -165,7 +170,7 @@
                                     </c:when>
                                     <c:otherwise>
                                         <a target="JIRA" title="${order.jiraTicketKey}"
-                                           href="${actionBean.jiraUrl}${order.jiraTicketKey}" class="external"
+                                           href="${actionBean.jiraUrl(order.jiraTicketKey)}" class="external"
                                            target="JIRA">
                                                 ${order.jiraTicketKey}
                                         </a>
@@ -178,14 +183,24 @@
                             <td>${order.researchProjectTitle}</td>
                             <td>${actionBean.getUserFullName(order.ownerId)}</td>
                             <td>
-                                <fmt:formatDate value="${order.updatedDate}"/>
+                                <fmt:formatDate value="${order.placedDate}"/>
                             </td>
-                            <td>${order.pdoSampleCount}</td>
+                            <td align="center">
+                                <div class="barFull" title="${actionBean.progressFetcher.getPercentInProgress(order.businessKey)}% In Progress">
+                                    <span class="barAbandon"
+                                          title="${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}% Abandoned"
+                                          style="width: ${actionBean.progressFetcher.getPercentAbandoned(order.businessKey)}%"> </span>
+                                    <span class="barComplete"
+                                          title="${actionBean.progressFetcher.getPercentCompleted(order.businessKey)}% Completed"
+                                          style="width: ${actionBean.progressFetcher.getPercentCompleted(order.businessKey)}%"> </span>
+                                </div>
+                            </td>
+                            <td>${actionBean.progressFetcher.getNumberOfSamples(order.businessKey)}</td>
                             <td>
                                 <c:if test="${order.billingSessionBusinessKey != null}">
                                     <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean"
                                                   event="view">
-                                        <stripes:param name="billingSession" value="${order.billingSessionBusinessKey}"/>
+                                        <stripes:param name="sessionKey" value="${order.billingSessionBusinessKey}"/>
                                         ${order.billingSessionBusinessKey}
                                     </stripes:link>
                                 </c:if>

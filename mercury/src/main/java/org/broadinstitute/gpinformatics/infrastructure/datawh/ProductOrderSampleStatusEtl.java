@@ -2,33 +2,27 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 
-import javax.ejb.Stateless;
+import javax.ejb.Stateful;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 
-@Stateless
+@Stateful
 public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Class getEntityClass() {
         return ProductOrderSample.class;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     String getBaseFilename() {
         return "product_order_sample_status";
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Long entityId(Object entity) {
         return ((ProductOrderSample)entity).getProductOrderSampleId();
@@ -36,7 +30,7 @@ public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
 
     /** This entity does not make entity records. */
     @Override
-    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
         return Collections.emptyList();
     }
 
@@ -46,9 +40,7 @@ public class ProductOrderSampleStatusEtl extends GenericEntityEtl {
         return Collections.emptyList();
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     String entityStatusRecord(String etlDateStr, Date revDate, Object revObject, boolean isDelete) {
         ProductOrderSample entity = (ProductOrderSample)revObject;

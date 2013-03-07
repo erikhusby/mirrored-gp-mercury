@@ -11,7 +11,8 @@ public class ResourceException extends WebApplicationException {
     private String message;
     private Response.Status status;
 
-    public ResourceException(String message, Response.Status status) {
+    public ResourceException(String message, Response.Status status, Exception cause) {
+        super(cause);
         this.message = message;
         this.status = status;
     }

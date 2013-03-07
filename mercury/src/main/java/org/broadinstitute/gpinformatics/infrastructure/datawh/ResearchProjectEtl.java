@@ -1,12 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
-import javax.ejb.Stateless;
+import javax.ejb.Stateful;
 import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -16,58 +16,48 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-@Stateless
+@Stateful
 public class ResearchProjectEtl  extends GenericEntityEtl {
 
     private ResearchProjectDao dao;
 
     @Inject
     public void setResearchProjectDao(ResearchProjectDao dao) {
-	this.dao = dao;
+        this.dao = dao;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Class getEntityClass() {
         return ResearchProject.class;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     String getBaseFilename() {
         return "research_project";
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Long entityId(Object entity) {
         return ((ResearchProject)entity).getResearchProjectId();
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
-    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
         Collection<String> recordList = new ArrayList<String>();
         ResearchProject entity = dao.findById(ResearchProject.class, entityId);
         if (entity != null) {
-	    recordList.add(entityRecord(etlDateStr, isDelete, entity));
-	} else {
+            recordList.add(entityRecord(etlDateStr, isDelete, entity));
+        } else {
             logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
         }
         return recordList;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();
@@ -75,10 +65,8 @@ public class ResearchProjectEtl  extends GenericEntityEtl {
                 new GenericDao.GenericDaoCallback<ResearchProject>() {
                     @Override
                     public void callback(CriteriaQuery<ResearchProject> cq, Root<ResearchProject> root) {
-                        if (startId > 0 || endId < Long.MAX_VALUE) {
-                            CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-                            cq.where(cb.between(root.get(ResearchProject_.researchProjectId), startId, endId));
-                        }
+                        CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
+                        cq.where(cb.between(root.get(ResearchProject_.researchProjectId), startId, endId));
                     }
                 });
         for (ResearchProject entity : entityList) {

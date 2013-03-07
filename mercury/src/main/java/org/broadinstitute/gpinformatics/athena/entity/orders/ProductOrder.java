@@ -16,40 +16,48 @@ import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomF
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomFieldDefinition;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.CreateFields;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
-import org.hibernate.annotations.Formula;
 import org.hibernate.envers.AuditJoinTable;
 import org.hibernate.envers.Audited;
-import org.hibernate.envers.NotAudited;
 
 import javax.annotation.Nonnull;
-import javax.persistence.*;
+import javax.annotation.Nullable;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+import javax.persistence.OneToOne;
+import javax.persistence.OrderColumn;
+import javax.persistence.PostLoad;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
+import javax.persistence.Transient;
 import java.io.IOException;
 import java.io.Serializable;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-/**
- * Class to model the concept of a Product ProductOrder that can be created
- * by the Program PM and subsequently submitted to a lims system.
- * Currently supports the concept associating a product with a set of samples withe a quote.
- * For more detail on the purpose of the ProductOrder, see the user stories listed on
- *
- * @see <a href="https://confluence.broadinstitute.org/x/kwPGAg</a>
- *      <p/>
- *      Created by IntelliJ IDEA.
- *      User: mccrory
- *      Date: 8/28/12
- *      Time: 10:25 AM
- */
+
 @Entity
 @Audited
 @Table(name = "PRODUCT_ORDER", schema = "athena")
 public class ProductOrder implements Serializable {
     private static final long serialVersionUID = 2712946561792445251L;
 
-    private static final String JIRA_SUBJECT_PREFIX = "Product order for ";
-
-    public static final String DRAFT_PREFIX = "Draft-";
+    private static final String DRAFT_PREFIX = "Draft-";
 
     @Id
     @SequenceGenerator(name = "SEQ_PRODUCT_ORDER", schema = "athena", sequenceName = "SEQ_PRODUCT_ORDER")
@@ -59,6 +67,9 @@ public class ProductOrder implements Serializable {
     private Date createdDate;
 
     private Long createdBy;
+
+    @Column(name = "placed_date")
+    private Date placedDate;
 
     private Date modifiedDate;
 
@@ -92,12 +103,6 @@ public class ProductOrder implements Serializable {
     /** counts the number of lanes; the default value is one lane */
     private int count = 1;
 
-    /** Counts the number of rows in the one-to-many table.  Reference this count before fetching the collection, to
-     * avoid an unnecessary database round trip  */
-    @NotAudited
-    @Formula("(select count(*) from athena.product_order_sample pos where pos.product_order = product_order_id)")
-    private Integer pdoSampleCount = 0;
-
     @OneToMany(cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
     @JoinColumn(name = "product_order", nullable = false)
     @OrderColumn(name = "SAMPLE_POSITION", nullable = false)
@@ -124,11 +129,7 @@ public class ProductOrder implements Serializable {
      * internal database id.
      */
     public String getBusinessKey() {
-        if (jiraTicketKey == null) {
-            return DRAFT_PREFIX + productOrderId;
-        }
-
-        return jiraTicketKey;
+        return createBusinessKey(productOrderId, jiraTicketKey);
     }
 
     public boolean isInDB() {
@@ -141,7 +142,7 @@ public class ProductOrder implements Serializable {
         }
 
         String[] addOnArray = new String[addOns.size()];
-        int i=0;
+        int i = 0;
         for (ProductOrderAddOn poAddOn : addOns) {
             addOnArray[i++] = poAddOn.getAddOn().getProductName();
         }
@@ -161,8 +162,8 @@ public class ProductOrder implements Serializable {
         setAddons(addOnProducts);
         setProduct(product);
         setResearchProject(project);
-        setSamples(samples);
-    }
+            setSamples(samples);
+        }
 
     /**
      * This calculates risk for all samples on the order
@@ -179,6 +180,44 @@ public class ProductOrder implements Serializable {
         }
 
         return uniqueSampleNamesOnRisk.size();
+    }
+
+    /**
+     * Utility method to create a PDO business key given an order ID and a JIRA ticket.
+     *
+     * @param productOrderId the order ID
+     * @param jiraTicketKey the JIRA ticket, can be null
+     * @return the business key for the PDO
+     */
+    public static String createBusinessKey(Long productOrderId, @Nullable String jiraTicketKey) {
+        if (jiraTicketKey == null) {
+            return DRAFT_PREFIX + productOrderId;
+        }
+
+        return jiraTicketKey;
+    }
+
+    public static class JiraOrId {
+        @Nullable
+        public final String jiraTicketKey;
+        public final long productOrderId;
+
+        public JiraOrId(long productOrderId, @Nullable String jiraTicketKey) {
+            this.jiraTicketKey = jiraTicketKey;
+            this.productOrderId = productOrderId;
+        }
+    }
+
+    /**
+     * Use This method to convert from a business key to either a JIRA ID or a product order ID.
+     * @param businessKey the key to convert
+     * @return either a JIRA ID or a product order ID.
+     */
+    public static JiraOrId convertBusinessKeyToJiraOrId(String businessKey) {
+        if (businessKey.startsWith(DRAFT_PREFIX)) {
+            return new JiraOrId(Long.parseLong(businessKey.substring(DRAFT_PREFIX.length())), null);
+        }
+        return new JiraOrId(0, businessKey);
     }
 
     /**
@@ -274,9 +313,36 @@ public class ProductOrder implements Serializable {
             countsValid = true;
         }
 
-        private void outputCounts(List<String> output, Map<String, Integer> counts, String label) {
+        private void outputCounts(List<String> output, Map<String, Integer> counts, String label, int compareCount) {
             for (Map.Entry<String, Integer> entry : counts.entrySet()) {
-                output.add(MessageFormat.format("{0} ''{1}'': {2}", label, entry.getKey(), entry.getValue()));
+                // Preformat the string so it can add the format pattern for the count value.
+                String message = label + " ''" + entry.getKey() + "'': {0}";
+                formatSummaryNumber(output, message, entry.getValue(), compareCount);
+            }
+        }
+
+        /**
+         * Format the number to say None if the value is zero.
+         *
+         * @param count The number to format
+         */
+        private void formatSummaryNumber(List<String> output, String message, int count) {
+            output.add(MessageFormat.format(message, (count == 0) ? "None" : count));
+        }
+
+        /**
+         * Format the number to say None if the value is zero, or All if it matches the comparison number.
+         *
+         * @param count The number to format
+         * @param compareCount The number to compare to
+         */
+        private void formatSummaryNumber(List<String> output, String message, int count, int compareCount) {
+            if (count == 0) {
+                output.add(MessageFormat.format(message, "None"));
+            } else if (count == compareCount) {
+                output.add(MessageFormat.format(message, "All"));
+            } else {
+                output.add(MessageFormat.format(message, count));
             }
         }
 
@@ -287,39 +353,34 @@ public class ProductOrder implements Serializable {
             if (totalSampleCount == 0) {
                 output.add("Total: None");
             } else {
-                output.add(MessageFormat.format("Total: {0}", totalSampleCount));
-                if (uniqueSampleCount != totalSampleCount) {
-                    output.add(MessageFormat.format("Unique: {0}", uniqueSampleCount));
-                    output.add(MessageFormat.format("Duplicate: {0}", (totalSampleCount - uniqueSampleCount)));
-                }
+                formatSummaryNumber(output, "Total: {0}", totalSampleCount);
 
-                output.add(MessageFormat.format("On Risk: {0}", onRiskCount));
+                formatSummaryNumber(output, "Unique: {0}", uniqueSampleCount, totalSampleCount);
+                formatSummaryNumber(output, "Duplicate: {0}", totalSampleCount - uniqueSampleCount, totalSampleCount);
+
+                formatSummaryNumber(output, "On Risk: {0}", onRiskCount, totalSampleCount);
 
                 if (bspSampleCount == uniqueSampleCount) {
                     output.add("From BSP: All");
                 } else if (bspSampleCount != 0) {
-                    output.add(MessageFormat.format("Unique BSP: {0}", bspSampleCount));
-                    output.add(MessageFormat.format("Unique Not BSP: {0}", uniqueSampleCount - bspSampleCount));
+                    formatSummaryNumber(output, "Unique BSP: {0}", bspSampleCount);
+                    formatSummaryNumber(output, "Unique Not BSP: {0}", uniqueSampleCount - bspSampleCount);
                 } else {
                     output.add("From BSP: None");
                 }
             }
 
             if (uniqueParticipantCount != 0) {
-                output.add(MessageFormat.format("Unique Participants: {0}", uniqueParticipantCount));
+                formatSummaryNumber(output, "Unique Participants: {0}", uniqueParticipantCount, totalSampleCount);
             }
 
-            if (receivedSampleCount != 0) {
-                output.add(MessageFormat.format("RECEIVED: {0}", receivedSampleCount));
-            }
-
-            outputCounts(output, stockTypeCounts, "Stock Type");
-            outputCounts(output, primaryDiseaseCounts, "Disease");
-            outputCounts(output, genderCounts, "Gender");
-            outputCounts(output, sampleTypeCounts, "Sample Type");
+            outputCounts(output, stockTypeCounts, "Stock Type", totalSampleCount);
+            outputCounts(output, primaryDiseaseCounts, "Disease", totalSampleCount);
+            outputCounts(output, genderCounts, "Gender", totalSampleCount);
+            outputCounts(output, sampleTypeCounts, "Sample Type", totalSampleCount);
 
             if (hasFPCount != 0) {
-                output.add(MessageFormat.format("Fingerprint Data: {0}", hasFPCount));
+                formatSummaryNumber(output, "Fingerprint Data: {0}", hasFPCount, totalSampleCount);
             }
 
             return output;
@@ -377,6 +438,14 @@ public class ProductOrder implements Serializable {
         this.quoteId = quoteId;
         this.product = product;
         this.researchProject = researchProject;
+    }
+
+    /**
+     * Call this method before saving changes to the database.  It updates the modified date and modified user.
+     * @param user the user doing the save operation.
+     */
+    public void prepareToSave(BspUser user) {
+        prepareToSave(user, false);
     }
 
     /**
@@ -497,8 +566,8 @@ public class ProductOrder implements Serializable {
         if (samples.isEmpty()) {
             return;
         }
-        // only update samples if there are no ledger items on any samples or the sample list has changed
-        if (!hasLedgerItems() || sampleListHasChanged(samples)) {
+        // Only update samples if the sample list has changed.
+        if (sampleListHasChanged(samples)) {
             this.samples.clear();
 
             addSamplesInternal(samples, 0);
@@ -515,7 +584,7 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * Determine if the list of samples names is exactly the same as the original list of sample names
+     * Determine if the list of samples names is exactly the same as the original list of sample names.
      *
      * @param newSamples new sample list
      *
@@ -543,10 +612,10 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * getJiraTicketKey allows a user of this class to gain access to the Unique key representing the Jira Ticket for
-     * which this Product ProductOrder is associated
+     * Allows a user of this class to gain access to the Unique key representing the Jira Ticket for
+     * which this Product ProductOrder is associated.
      *
-     * @return a {@link String} that represents the unique Jira Ticket key
+     * @return a {@link String} that represents the unique Jira Ticket key.
      */
     public String getJiraTicketKey() {
         return jiraTicketKey;
@@ -583,6 +652,20 @@ public class ProductOrder implements Serializable {
     public long getModifiedBy() {
         return modifiedBy;
     }
+
+    public Date getPlacedDate() {
+        return placedDate;
+    }
+
+    /**
+     * This should only be called from tests or for database backpopulation.  The placed date is normally set internally
+     * when an order is placed.
+     * @param placedDate the date to set
+     */
+    public void setPlacedDate(Date placedDate) {
+        this.placedDate = placedDate;
+    }
+
     /**
      * Use the BSP Manager to load the bsp data for every sample in this product order.
      */
@@ -797,7 +880,14 @@ public class ProductOrder implements Serializable {
     }
 
     /**
-     * submitProductOrder encapsulates the set of steps necessary to finalize the submission of a product order.
+     * @return true if order is submitted
+     */
+    public boolean isSubmitted() {
+        return OrderStatus.Submitted == orderStatus;
+    }
+
+    /**
+     * This method encapsulates the set of steps necessary to finalize the submission of a product order.
      * This mainly deals with jira ticket creation.  This method will:
      * <ul>
      * <li>Create a new jira ticket and persist the reference to the ticket key</li>
@@ -808,7 +898,8 @@ public class ProductOrder implements Serializable {
      *
      * @throws IOException
      */
-    public void submitProductOrder() throws IOException {
+    public void placeOrder() throws IOException {
+        placedDate = new Date();
         JiraService jiraService = ServiceAccessUtility.getBean(JiraService.class);
         Map<String, CustomFieldDefinition> submissionFields = jiraService.getCustomFields();
 
@@ -979,11 +1070,8 @@ public class ProductOrder implements Serializable {
         return !StringUtils.isBlank(jiraTicketKey);
     }
 
-    public Integer getPdoSampleCount() {
-        return pdoSampleCount;
-    }
-
     public String getOriginalTitle() {
         return originalTitle;
     }
+
 }

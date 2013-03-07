@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
-import javax.ejb.Stateless;
+import javax.ejb.Stateful;
 import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -15,58 +15,48 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-@Stateless
+@Stateful
 public class ProductOrderAddOnEtl extends GenericEntityEtl {
 
     private ProductOrderDao dao;
 
     @Inject
     public void setProductOrderDao(ProductOrderDao dao) {
-	this.dao = dao;
+        this.dao = dao;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Class getEntityClass() {
         return ProductOrderAddOn.class;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     String getBaseFilename() {
         return "product_order_add_on";
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Long entityId(Object entity) {
         return ((ProductOrderAddOn)entity).getProductOrderAddOnId();
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
-    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
         Collection<String> recordList = new ArrayList<String>();
         ProductOrderAddOn entity = dao.findById(ProductOrderAddOn.class, entityId);
         if (entity != null) {
-	    recordList.add(entityRecord(etlDateStr, isDelete, entity));
-	} else {
+            recordList.add(entityRecord(etlDateStr, isDelete, entity));
+        } else {
             logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
         }
         return recordList;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();
@@ -74,10 +64,8 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl {
                 new GenericDao.GenericDaoCallback<ProductOrderAddOn>() {
                     @Override
                     public void callback(CriteriaQuery<ProductOrderAddOn> cq, Root<ProductOrderAddOn> root) {
-                        if (startId > 0 || endId < Long.MAX_VALUE) {
-                            CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-                            cq.where(cb.between(root.get(ProductOrderAddOn_.productOrderAddOnId), startId, endId));
-                        }
+                        CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
+                        cq.where(cb.between(root.get(ProductOrderAddOn_.productOrderAddOnId), startId, endId));
                     }
                 });
         for (ProductOrderAddOn entity : entityList) {

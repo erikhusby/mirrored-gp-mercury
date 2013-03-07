@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.tableau;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 
@@ -7,7 +9,6 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 /**
  * This class represents the properties found in mercury-config.yaml that
@@ -15,7 +16,7 @@ import java.util.logging.Logger;
  */
 @ConfigKey("tableau")
 public class TableauConfig extends AbstractConfig implements Serializable {
-    private static Logger logger = Logger.getLogger(TableauConfig.class.getName());
+    private static Log logger = LogFactory.getLog(TableauConfig.class);
 
     private String tableauServer;
     private List<Map<String, String>> reportUrls;
@@ -40,7 +41,7 @@ public class TableauConfig extends AbstractConfig implements Serializable {
             if (name != null && url != null) {
                 reportUrlMap.put(name, url);
             } else {
-                logger.warning("yaml contains misconfigured tableau reportUrls (name=" + name + ", url=" + url + ")");
+                logger.warn("yaml contains misconfigured tableau reportUrls (name=" + name + ", url=" + url + ")");
             }
         }
     }
@@ -52,7 +53,7 @@ public class TableauConfig extends AbstractConfig implements Serializable {
     /** Gets the named report url. */
     public String getReportUrl(String reportName) {
         if (reportUrlMap == null) {
-            logger.warning("Needs to be initialized from yaml config.");
+            logger.warn("Needs to be initialized from yaml config.");
             return null;
         }
         return reportUrlMap.get(reportName);

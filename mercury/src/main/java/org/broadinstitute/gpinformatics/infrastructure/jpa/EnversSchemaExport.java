@@ -19,6 +19,7 @@ import java.lang.reflect.Field;
  * This code is based on http://doingenterprise.blogspot.com/2012/05/schema-generation-with-hibernate-4-jpa.html
  */
 
+@SuppressWarnings("deprecation")
 public class EnversSchemaExport {
 
     public static final String DELIMITER = "--delimiter=";

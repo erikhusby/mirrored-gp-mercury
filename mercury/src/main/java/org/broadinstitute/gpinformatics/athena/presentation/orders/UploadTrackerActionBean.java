@@ -64,7 +64,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
                     importer.parseFileForSummaryMap(inputStream);
 
             // If there were parsing errors, just return
-            if (!getContext().getValidationErrors().isEmpty()) {
+            if (hasErrors()) {
                 return;
             }
 
@@ -101,8 +101,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
             }
 
             if (previewData.isEmpty()) {
-                addGlobalValidationError("No updated billing data found in tracker file.");
-                return;
+                addMessage("All updated fields match billed amounts. Any previously uploaded, unbilled items will be removed");
             }
 
             if (!automatedPDOs.isEmpty()) {
@@ -114,12 +113,10 @@ public class UploadTrackerActionBean extends CoreActionBean {
             // Close the file that was just read in so we can get ready to copy to our temp directory
             IOUtils.closeQuietly(inputStream);
 
-            // If there is data to upload, then copy the stream to a temp file
-            if (!previewData.isEmpty()) {
-                inputStream = trackerFile.getInputStream();
-                File tempFile = copyFromStreamToTempFile(inputStream);
-                previewFilePath = tempFile.getAbsolutePath();
-            }
+            // Even if there is no preview data, we may want to clear out previously billed items, so do all this work either way.
+            inputStream = trackerFile.getInputStream();
+            File tempFile = copyFromStreamToTempFile(inputStream);
+            previewFilePath = tempFile.getAbsolutePath();
         } catch (Exception e) {
             logger.error(e);
             addGlobalValidationError("Error uploading tracker: " + e.getMessage());
@@ -153,7 +150,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
             Map<String, List<ProductOrder>> billedProductOrdersMapByPartNumber =
                     billingTrackerManager.parseFileForBilling(inputStream);
 
-            if (!getContext().getValidationErrors().isEmpty()) {
+            if (hasErrors()) {
                 return;
             }
 
@@ -221,7 +218,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
         previewUploadedFile();
 
         // If there are no errors, show the preview!
-        if (getContext().getValidationErrors().isEmpty()) {
+        if (!hasErrors()) {
             isPreview = true;
         }
 

@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.entity.person.RoleType;
@@ -20,11 +20,6 @@ import java.util.Collections;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
-/**
- * @author Scott Matthews
- *         Date: 10/11/12
- *         Time: 4:38 PM
- */
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ProductOrderContainerTest extends Arquillian {
 
@@ -41,7 +36,7 @@ public class ProductOrderContainerTest extends Arquillian {
     public ProductOrder createSimpleProductOrder() throws Exception {
         return new ProductOrder(TEST_CREATOR, "containerTest Product Order Test1",
                 ProductOrderTest.createSampleList("SM-1P3X9", "SM-1P3WY", "SM-1P3XN"),
-                "newQuote", AthenaClientServiceStub.createDummyProduct(),
+                "newQuote", AthenaClientServiceStub.createDummyProduct("Exome Express", "partNumber"),
                 createDummyResearchProject(userList, "Test Research Project"));
     }
 
@@ -65,16 +60,10 @@ public class ProductOrderContainerTest extends Arquillian {
         Assert.assertTrue(testOrder.getCountsByStockType().containsKey(ProductOrderSample.ACTIVE_IND));
         Assert.assertEquals(3, testOrder.getCountsByStockType().get(ProductOrderSample.ACTIVE_IND).intValue());
 
-        //test the sample order should be the same as when created.
+        // Test the sample order should be the same as when created.
         Assert.assertEquals("SM-1P3X9", testOrder.getSamples().get(0).getSampleName());
         Assert.assertEquals("SM-1P3WY", testOrder.getSamples().get(1).getSampleName());
         Assert.assertEquals("SM-1P3XN", testOrder.getSamples().get(2).getSampleName());
-
-        //BSP data in BSP QA is different than this.
-//        Assert.assertTrue( testOrder.getPrimaryDiseaseCount().containsKey( BSPSampleSearchServiceStub.SM_12CO4_DISEASE));
-//        Assert.assertEquals( 0 , testOrder.getPrimaryDiseaseCount().get(BSPSampleSearchServiceStub.SM_12CO4_DISEASE).intValue());
-//        Assert.assertTrue( testOrder.getPrimaryDiseaseCount ( ).containsKey( BSPSampleSearchServiceStub.SM_1P3XN_DISEASE));
-//        Assert.assertEquals( 1 , testOrder.getPrimaryDiseaseCount ( ).get(BSPSampleSearchServiceStub.SM_1P3XN_DISEASE).intValue());
 
         Assert.assertEquals(3, testOrder.getReceivedSampleCount());
 
@@ -83,9 +72,7 @@ public class ProductOrderContainerTest extends Arquillian {
         BspUser bspUser = new BspUser();
         bspUser.setUserId(TEST_CREATOR);
         testOrder.prepareToSave(bspUser, true);
-        testOrder.submitProductOrder();
-
-//        testOrder.closeProductOrder();
+        testOrder.placeOrder();
 
         Assert.assertTrue(StringUtils.isNotEmpty(testOrder.getJiraTicketKey()));
     }
@@ -96,7 +83,7 @@ public class ProductOrderContainerTest extends Arquillian {
                 new ProductOrder(TEST_CREATOR, "containerTest Product Order Test2",
                         ProductOrderTest.createSampleList("SM_12CO4", "SM_1P3WY", "SM_1P3XN"),
                         "newQuote",
-                        AthenaClientServiceStub.createDummyProduct(),
+                        AthenaClientServiceStub.createDummyProduct("Exome Express", "partNumber"),
                         createDummyResearchProject(userList, "Test Research Project"));
 
         Assert.assertEquals(testOrder.getUniqueSampleCount(), 3);
@@ -110,7 +97,6 @@ public class ProductOrderContainerTest extends Arquillian {
             BSPUserList userList, String researchProjectTitle) throws IOException {
         ResearchProject dummyProject = new ResearchProject(TEST_CREATOR, researchProjectTitle, "Simple test object for unit tests", true);
 
-        // Could inject, but this is static, so just
         BspUser user = userList.getById(TEST_CREATOR);
         dummyProject.addPeople(RoleType.PM, Collections.singletonList(user));
         dummyProject.submit();

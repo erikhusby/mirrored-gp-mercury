@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.bucket;
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.testng.annotations.Test;
@@ -40,20 +40,20 @@ public class BucketDBFreeTest {
         BucketEntry testEntry2 = new BucketEntry ( new TwoDBarcodedTube ( twoDBarcode2 ), poBusinessKey1, bucket );
 
         bucket.addEntry ( testEntry1 );
-        Assert.assertNotNull ( testEntry1.getBucketExistence () );
-        Assert.assertEquals ( bucket, testEntry1.getBucketExistence () );
+        Assert.assertNotNull ( testEntry1.getBucket() );
+        Assert.assertEquals ( bucket, testEntry1.getBucket() );
 
         bucket.addEntry ( testEntry2 );
-        Assert.assertNotNull ( testEntry2.getBucketExistence () );
-        Assert.assertEquals ( bucket, testEntry2.getBucketExistence () );
+        Assert.assertNotNull ( testEntry2.getBucket() );
+        Assert.assertEquals ( bucket, testEntry2.getBucket() );
 
         BucketEntry testEntry3 = bucket.addEntry ( poBusinessKey2, new TwoDBarcodedTube ( twoDBarcode3 ) );
-        Assert.assertNotNull ( testEntry3.getBucketExistence () );
-        Assert.assertEquals ( bucket, testEntry3.getBucketExistence () );
+        Assert.assertNotNull ( testEntry3.getBucket() );
+        Assert.assertEquals ( bucket, testEntry3.getBucket() );
 
         BucketEntry testEntry4 = bucket.addEntry ( poBusinessKey3, new TwoDBarcodedTube ( twoDBarcode4 ) );
-        Assert.assertNotNull ( testEntry3.getBucketExistence () );
-        Assert.assertEquals ( bucket, testEntry3.getBucketExistence () );
+        Assert.assertNotNull ( testEntry3.getBucket() );
+        Assert.assertEquals ( bucket, testEntry3.getBucket() );
 
         Assert.assertFalse ( bucket.getBucketEntries ().isEmpty () );
 

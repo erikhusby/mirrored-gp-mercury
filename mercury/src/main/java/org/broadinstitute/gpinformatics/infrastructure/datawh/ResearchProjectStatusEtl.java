@@ -1,43 +1,28 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 
-import javax.ejb.Stateless;
-import javax.inject.Inject;
+import javax.ejb.Stateful;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 
-@Stateless
+@Stateful
 public class ResearchProjectStatusEtl extends GenericEntityEtl {
 
-    private ResearchProjectDao dao;
-
-    @Inject
-    public void setResearchProjectDao(ResearchProjectDao dao) {
-	this.dao = dao;
-    }
-
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Class getEntityClass() {
         return ResearchProject.class;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     String getBaseFilename() {
         return "research_project_status";
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Long entityId(Object entity) {
         return ((ResearchProject)entity).getResearchProjectId();
@@ -45,7 +30,7 @@ public class ResearchProjectStatusEtl extends GenericEntityEtl {
 
     /** This class does not make entity records. */
     @Override
-    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
         return Collections.EMPTY_LIST;
     }
 
@@ -55,9 +40,7 @@ public class ResearchProjectStatusEtl extends GenericEntityEtl {
         return Collections.EMPTY_LIST;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     String entityStatusRecord(String etlDateStr, Date revDate, Object revObject, boolean isDelete) {
         ResearchProject entity = (ResearchProject)revObject;

@@ -3,7 +3,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Edit Research Project" sectionTitle="Edit Research Project: ${actionBean.editResearchProject.title}">
+<stripes:layout-render name="/layout.jsp" pageTitle="${actionBean.submitString}" sectionTitle="${actionBean.submitString} ${actionBean.editResearchProject.title}">
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
             $j(document).ready(
@@ -13,7 +13,7 @@
                                     hintText: "Type a Project Manager name",
                                     prePopulate: ${actionBean.ensureStringResult(actionBean.projectManagerList.completeData)},
                                     preventDuplicates: true,
-                                    resultsFormatter: formatUser
+                                    resultsFormatter: formatInput
                                 }
                         );
 
@@ -22,7 +22,7 @@
                                     hintText: "Type a Scientist name",
                                     prePopulate: ${actionBean.ensureStringResult(actionBean.scientistList.completeData)},
                                     preventDuplicates: true,
-                                    resultsFormatter: formatUser
+                                    resultsFormatter: formatInput
                                 }
                         );
 
@@ -31,7 +31,7 @@
                                     hintText: "Type a Collaborator name",
                                     prePopulate: ${actionBean.ensureStringResult(actionBean.externalCollaboratorList.completeData)},
                                     preventDuplicates: true,
-                                    resultsFormatter: formatUser
+                                    resultsFormatter: formatInput
                                 }
                         );
 
@@ -40,7 +40,7 @@
                                     hintText: "Type a Broad PI",
                                     prePopulate: ${actionBean.ensureStringResult(actionBean.broadPiList.completeData)},
                                     preventDuplicates: true,
-                                    resultsFormatter: formatUser
+                                    resultsFormatter: formatInput
                                 }
                         );
 
@@ -48,7 +48,7 @@
                                 "${ctxpath}/projects/project.action?fundingAutocomplete=", {
                                     prePopulate: ${actionBean.ensureStringResult(actionBean.fundingSourceList.completeData)},
                                     preventDuplicates: true,
-                                    resultsFormatter: formatFunding
+                                    resultsFormatter: formatInput
                                 }
                         );
 
@@ -57,7 +57,7 @@
                                     hintText: "Type a Sample Cohort name",
                                     prePopulate: ${actionBean.ensureStringResult(actionBean.cohortsList.completeData)},
                                     preventDuplicates: true,
-                                    resultsFormatter: formatCohort
+                                    resultsFormatter: formatInput
                                 }
                         );
 
@@ -71,19 +71,9 @@
                     }
             );
 
-            function formatUser(item) {
-                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
-                       "<div class=\"ac-dropdown-subtext\">" + item.username + " " + item.email + "</div></li>";
-            }
-
-            function formatFunding(item) {
-                return "<li><div class=\"ac-dropdown-text\">" + item.name + "</div>" +
-                        "<div class=\"ac-dropdown-subtext\">" + item.matchDescription + "</div></li>";
-            }
-
-            function formatCohort(item) {
-                return '<li><div class="ac-dropdown-text">' + item.name + '</div>' +
-                        '<div class="ac-dropdown-subtext">' + item.group + ' ' + item.category + '</div></li>';
+            function formatInput(item) {
+                var extraCount = (item.extraCount == undefined) ? "" : item.extraCount;
+                return "<li>" + item.dropdownItem + extraCount + '</li>';
             }
         </script>
     </stripes:layout-component>

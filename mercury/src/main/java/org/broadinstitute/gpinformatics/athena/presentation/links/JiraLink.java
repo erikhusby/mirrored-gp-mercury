@@ -3,12 +3,10 @@ package org.broadinstitute.gpinformatics.athena.presentation.links;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
 /**
- * This is a bean to help the UI deal with Jira links
+ * This class is used to generate JIRA links for the UI.
  */
-@Named
 public class JiraLink {
     private static final String BROWSE = "/browse/";
 

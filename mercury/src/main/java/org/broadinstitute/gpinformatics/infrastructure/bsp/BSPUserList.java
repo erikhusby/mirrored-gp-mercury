@@ -11,17 +11,14 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jmx.AbstractCache;
 
 import javax.enterprise.context.ApplicationScoped;
-import javax.faces.model.SelectItem;
 import javax.inject.Inject;
-import javax.inject.Named;
+import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.*;
 
 /**
- * Application wide access to BSP's user list. The list is currently cached once at application startup. In the
- * future, we may want to rebuild the list regularly to account for changes to the user database.
+ * Application wide access to BSP's user list. The list is regularly refreshed by ExternalDataCacheControl.
  */
-@Named
 @ApplicationScoped
 public class BSPUserList extends AbstractCache implements Serializable {
     private static final Log logger = LogFactory.getLog(BSPUserList.class);
@@ -67,6 +64,21 @@ public class BSPUserList extends AbstractCache implements Serializable {
     public BspUser getByUsername(String username) {
         for (BspUser user : getUsers().values()) {
             if (user.getUsername().equalsIgnoreCase(username)) {
+                return user;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Returns the BSP user for the given badge ID, or null if no user exists with that badge ID.
+     *
+     * @param badgeId    the user's badge ID
+     * @return the BSP user or null
+     */
+    public BspUser getByBadgeId(@NotNull String badgeId) {
+        for (BspUser user : getUsers().values()) {
+            if (badgeId.equalsIgnoreCase(user.getBadgeNumber())) {
                 return user;
             }
         }
@@ -136,7 +148,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
 
             if (!serverValid) {
                 // BSP is down
-                if (getUsers() != null) {
+                if (users != null) {
                     return;
                 } else {
                     rawUsers = new ArrayList<BspUser>();
@@ -185,15 +197,18 @@ public class BSPUserList extends AbstractCache implements Serializable {
 
     public static class QADudeUser extends BspUser {
         public QADudeUser(String type, long userId) {
-            setFields(userId, "QADude" + type, "QADude", type, "qadude" + type.toLowerCase() + "@broadinstitute.org");
+            setFields(userId, "QADude" + type, "QADude", type, "qadude" + type.toLowerCase() + "@broadinstitute.org",
+                    type + userId);
         }
 
-        private void setFields(long userId, String username, String firstName, String lastName, String email) {
+        private void setFields(long userId, String username, String firstName, String lastName, String email,
+                               String badgeId) {
             setUserId(userId);
             setUsername(username);
             setFirstName(firstName);
             setLastName(lastName);
             setEmail(email);
+            setBadgeNumber(badgeId);
         }
     }
 
@@ -209,30 +224,5 @@ public class BSPUserList extends AbstractCache implements Serializable {
 
     public static boolean isTestUser(BspUser user) {
         return user instanceof QADudeUser;
-    }
-
-    /**
-     * Create a list of SelectItems for use in the JSF UI.  The first element in the list is a dummy value, 'Any'.
-     * @param users the list of bsp users
-     * @return the list of select items for the users.
-     */
-    public static List<SelectItem> createSelectItems(Set<BspUser> users) {
-        // order the users by last name so the SelectItem generator below will create items in a predictable order
-        // per GPLIM-401
-        List<BspUser> bspUserList = new ArrayList<BspUser>(users);
-        Collections.sort(bspUserList, new Comparator<BspUser>() {
-            @Override
-            public int compare(BspUser bspUser, BspUser bspUser1) {
-                return bspUser.getLastName().compareTo(bspUser1.getLastName());
-            }
-        });
-
-        List<SelectItem> items = new ArrayList<SelectItem>(bspUserList.size() + 1);
-        items.add(new SelectItem("", "Any"));
-        for (BspUser user : bspUserList) {
-            items.add(new SelectItem(user.getUserId(), user.getFirstName() + " " + user.getLastName()));
-        }
-
-        return items;
     }
 }

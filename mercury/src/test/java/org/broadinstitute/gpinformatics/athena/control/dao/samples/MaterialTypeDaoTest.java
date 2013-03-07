@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.samples;
 
 
-import junit.framework.Assert;
+import org.testng.Assert;
 import org.apache.commons.logging.Log;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;

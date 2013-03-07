@@ -3,19 +3,21 @@ package org.broadinstitute.gpinformatics.athena.entity.products;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.OperatorType.*;
+
 /**
  * This is a generic comparator used for operations AND for billing
  */
 
 public enum Operator {
-    GREATER_THAN(">", OperatorType.NUMERIC),
-    GREATER_THAN_OR_EQUAL_TO(">=", OperatorType.NUMERIC),
-    LESS_THAN("<", OperatorType.NUMERIC),
-    LESS_THAN_OR_EQUAL_TO("<=", OperatorType.NUMERIC),
-    EQUALS("=", OperatorType.NUMERIC),
-    EXACT_MATCH("=", OperatorType.STRING),
-    IS_IN("is in", OperatorType.STRING),
-    IS("is On Risk", OperatorType.BOOLEAN);
+    GREATER_THAN(">", NUMERIC),
+    GREATER_THAN_OR_EQUAL_TO(">=", NUMERIC),
+    LESS_THAN("<", NUMERIC),
+    LESS_THAN_OR_EQUAL_TO("<=", NUMERIC),
+    EQUALS("=", NUMERIC),
+    EXACT_MATCH("=", STRING),
+    IS_IN("is in", STRING),
+    IS("is On Risk", BOOLEAN);
 
     private final String label;
     private final OperatorType type;
@@ -126,7 +128,6 @@ public enum Operator {
         public String getName() {
             return name();
         }
-
     }
 
     public static List<Operator> findOperatorsByType(OperatorType type) {

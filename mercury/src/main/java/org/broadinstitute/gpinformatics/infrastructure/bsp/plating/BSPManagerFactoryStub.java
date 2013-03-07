@@ -13,6 +13,7 @@ import org.broadinstitute.bsp.client.workrequest.WorkRequestManager;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 
+import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,26 +24,32 @@ import java.util.List;
  *         Time: 3:03 PM
  */
 @Stub
+@Alternative
 public class BSPManagerFactoryStub implements BSPManagerFactory {
     public static final long QA_DUDE_USER_ID = 9382L;
 
     @Override
     public WorkRequestManager createWorkRequestManager() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null;
     }
 
     @Override
     public ContainerManager createContainerManager() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null;
     }
 
     @Override
     public UserManager createUserManager() {
 
-        UserManager mgr = new UserManager() {
+        return new UserManager() {
             @Override
             public BspUser get(String s) {
                 return new BSPUserList.QADudeUser("Test", QA_DUDE_USER_ID);
+            }
+
+            @Override
+            public BspUser getByDomainUserId(Long aLong) {
+                return null;
             }
 
             @Override
@@ -89,13 +96,12 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
                 return testList;
             }
         };
-
-        return mgr;  //To change body of implemented methods use File | Settings | File Templates.
     }
 
+    @Override
     public SampleManager createSampleManager() {
 
-        SampleManager sampleManager = new SampleManager() {
+        return new SampleManager() {
 
             @Override
             public SampleKitResponse getSampleKit(String s) {
@@ -135,7 +141,6 @@ public class BSPManagerFactoryStub implements BSPManagerFactory {
                 throw new IllegalStateException("Not Yet Implemented");
             }
         };
-        return sampleManager;
     }
 
 }

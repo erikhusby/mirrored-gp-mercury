@@ -1,11 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProjectIRB_;
 import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
-import javax.ejb.Stateless;
+import javax.ejb.Stateful;
 import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -15,58 +15,48 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-@Stateless
+@Stateful
 public class ResearchProjectIrbEtl  extends GenericEntityEtl {
 
     private ResearchProjectDao dao;
 
     @Inject
     public void setResearchProjectDao(ResearchProjectDao dao) {
-	this.dao = dao;
+        this.dao = dao;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Class getEntityClass() {
         return ResearchProjectIRB.class;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     String getBaseFilename() {
         return "research_project_irb";
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Long entityId(Object entity) {
         return ((ResearchProjectIRB)entity).getResearchProjectIRBId();
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
-    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
         Collection<String> recordList = new ArrayList<String>();
         ResearchProjectIRB entity = dao.findById(ResearchProjectIRB.class, entityId);
         if (entity != null) {
-	    recordList.add(entityRecord(etlDateStr, isDelete, entity));
-	} else {
+            recordList.add(entityRecord(etlDateStr, isDelete, entity));
+        } else {
             logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
         }
         return recordList;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();
@@ -74,11 +64,9 @@ public class ResearchProjectIrbEtl  extends GenericEntityEtl {
                 new GenericDao.GenericDaoCallback<ResearchProjectIRB>() {
                     @Override
                     public void callback(CriteriaQuery<ResearchProjectIRB> cq, Root<ResearchProjectIRB> root) {
-                        if (startId > 0 || endId < Long.MAX_VALUE) {
-                            CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-                            cq.where(cb.between(root.get(ResearchProjectIRB_.researchProjectIRBId), startId, endId));
+                        CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
+                        cq.where(cb.between(root.get(ResearchProjectIRB_.researchProjectIRBId), startId, endId));
                         }
-                    }
                 });
         for (ResearchProjectIRB entity : entityList) {
             recordList.add(entityRecord(etlDateStr, isDelete, entity));

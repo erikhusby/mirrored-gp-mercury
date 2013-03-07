@@ -1,11 +1,11 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.io.IOUtils;
-import org.apache.log4j.Logger;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
 import org.broadinstitute.gpinformatics.mercury.entity.envers.RevInfo;
 import org.hibernate.envers.RevisionType;
-import org.omg.CORBA.PRIVATE_MEMBER;
 
 import javax.inject.Inject;
 import java.io.BufferedWriter;
@@ -14,14 +14,13 @@ import java.io.IOException;
 import java.util.*;
 
 public abstract class GenericEntityEtl {
-    protected final Logger logger = Logger.getLogger(getClass());
-    public static final String UNDEFINED_VALUE = "undefined";
+    protected final Log logger = LogFactory.getLog(getClass());
 
     private AuditReaderDao auditReaderDao;
 
     @Inject
     public void setAuditReaderDao(AuditReaderDao auditReaderDao) {
-	this.auditReaderDao = auditReaderDao;
+        this.auditReaderDao = auditReaderDao;
     }
 
     /**
@@ -53,7 +52,7 @@ public abstract class GenericEntityEtl {
      * @param entityId look up this entity
      * @return delimited SqlLoader record
      */
-    abstract Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId);
+    abstract Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId);
 
     /**
      * Returns sqlLoader data records for entities having id in the given range.
@@ -110,7 +109,7 @@ public abstract class GenericEntityEtl {
      * @param dataFile
      * @param etlDateStr
      */
-    private void processChanges(List<Object[]> dataChanges, DataFile dataFile, String etlDateStr) {
+    protected void processChanges(List<Object[]> dataChanges, DataFile dataFile, String etlDateStr) {
         Set<Long> changedEntityIds = new HashSet<Long>();
         Set<Long> deletedEntityIds = new HashSet<Long>();
         List<Object> statusEntities = new ArrayList<Object>();
@@ -152,7 +151,7 @@ public abstract class GenericEntityEtl {
                 changedEntityIds.removeAll(deletedEntityIds);
 
                 for (Long entityId : changedEntityIds) {
-                    for (String record : entityRecord(etlDateStr, false, entityId)) {
+                    for (String record : entityRecords(etlDateStr, false, entityId)) {
                         dataFile.write(record);
                     }
                 }
@@ -233,11 +232,11 @@ public abstract class GenericEntityEtl {
     }
 
     /**
-     * Returns formatted date string, or empty string if date is null.
+     * Returns formatted date string, or "" string if date is null.
      * @param date the date to format
      */
     public static String format(Date date) {
-        return (date != null ? ExtractTransform.secTimestampFormat.format(date) : "");
+        return (date != null ? ExtractTransform.secTimestampFormat.format(date) : "\"\"");
     }
 
     /**
@@ -249,12 +248,12 @@ public abstract class GenericEntityEtl {
     }
 
     /**
-     * Returns String, or empty string if null, and quotes string if DELIM occurs.
+     * Returns String, or "" string if null, and quotes string if DELIM occurs.
      * @param string to format
      */
     public static String format(String string) {
         if (string == null) {
-            return "";
+            return "\"\"";
         }
         if (string.contains(ExtractTransform.DELIM)) {
             // Escapes all embedded double quotes by doubling them: " becomes ""
@@ -264,11 +263,11 @@ public abstract class GenericEntityEtl {
     }
 
     /**
-     * Returns String, or empty string if null.
+     * Returns String, or "" string if null.
      * @param num to format
      */
     public static <T extends Number > String format(T num) {
-        return (num != null ? num.toString() : "");
+        return (num != null ? num.toString() : "\"\"");
     }
 
     /** Class to wrap/manage writing to the data file. */
@@ -319,6 +318,17 @@ public abstract class GenericEntityEtl {
         return h;
     }
 
+    /**
+     * Concatenates each string with a delimiter, then calculates a hash on the whole thing.
+     */
+    public static long hash(String... strings) {
+        StringBuilder sb = new StringBuilder();
+        for (String s : strings) {
+            sb.append(ExtractTransform.DELIM).append(s);
+        }
+        return GenericEntityEtl.hash(sb.toString());
+    }
+
     /** Calculates a hash on all workflow config elements. */
     public static long hash(Collection<WorkflowConfigDenorm> denorms) {
         long h = HASH_PRIME;
@@ -328,6 +338,4 @@ public abstract class GenericEntityEtl {
         }
         return h;
     }
-
-
 }

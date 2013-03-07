@@ -1,14 +1,23 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.zims;
 
 
-import edu.mit.broad.prodinfo.thrift.lims.*;
-import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
-import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
-import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniLane;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniLibrary;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniRead;
+import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPLSIDUtil;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftService;
+import org.broadinstitute.gpinformatics.mercury.control.zims.SquidThriftLibraryConverter;
+import org.broadinstitute.gpinformatics.mercury.control.zims.ThriftLibraryConverter;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 
 import javax.ejb.Stateless;
 import javax.inject.Inject;
@@ -23,17 +32,21 @@ import java.util.*;
 
 /**
  * Web service for fetching run data for Zamboni.
- *
  */
 @Path("/IlluminaRun")
 @Stateless
 public class IlluminaRunResource implements Serializable {
+
+    private static final Log LOG = LogFactory.getLog(IlluminaRunResource.class);
 
     @Inject
     BSPSampleDataFetcher bspDataFetcher;
 
     @Inject
     ThriftService thriftService;
+
+    @Inject
+    ProductOrderDao pdoDao;
 
     public IlluminaRunResource() {
     }
@@ -48,13 +61,19 @@ public class IlluminaRunResource implements Serializable {
     @Path("/query")
     @Produces({MediaType.APPLICATION_JSON})
     public ZimsIlluminaRun getRun(
-            @QueryParam("runName") String runName)
-    {
+            @QueryParam("runName") String runName) {
+        ZimsIlluminaRun runBean = new ZimsIlluminaRun();
         if (runName == null) {
-            throw new NullPointerException("runName cannot be null");
+            runBean.setError("runName cannot be null");
+        } else {
+            try {
+                runBean = getRun(thriftService, runName);
+            } catch (Throwable t) {
+                String message = "Failed while running pipeline query for run " + runName;
+                LOG.error(message, t);
+                runBean.setError(message + ": " + t.getMessage());
+            }
         }
-
-       ZimsIlluminaRun runBean = getRun(thriftService,runName);
 
         return runBean;
     }
@@ -67,7 +86,10 @@ public class IlluminaRunResource implements Serializable {
      * @param lsidToBSPSample
      * @return
      */
-    ZimsIlluminaRun getRun(final TZamboniRun tRun,Map<String,BSPSampleDTO> lsidToBSPSample) {
+    ZimsIlluminaRun getRun(final TZamboniRun tRun,
+                           Map<String, BSPSampleDTO> lsidToBSPSample,
+                           ThriftLibraryConverter thriftLibConverter,
+                           ProductOrderDao pdoDao) {
         if (tRun == null) {
             throw new NullPointerException("tRun cannot be null");
         }
@@ -78,12 +100,9 @@ public class IlluminaRunResource implements Serializable {
                 tRun.getSequencer(),
                 tRun.getSequencerModel(),
                 tRun.getRunDate(),
-                tRun.getFirstCycle(),
-                tRun.getFirstCycleReadLength(),
-                tRun.getLastCycle(),
-                tRun.getMolBarcodeCycle(),
-                tRun.getMolBarcodeLength(),
-                tRun.isPairedRun());
+                tRun.isPairedRun(),
+                tRun.getActualReadStructure(),
+                tRun.getImagedAreaPerLaneMM2());
 
         for (TZamboniRead tZamboniRead : tRun.getReads()) {
             runBean.addRead(tZamboniRead);
@@ -91,88 +110,51 @@ public class IlluminaRunResource implements Serializable {
         for (TZamboniLane tZamboniLane : tRun.getLanes()) {
             final List<LibraryBean> libraries = new ArrayList<LibraryBean>(96);
             for (TZamboniLibrary zamboniLibrary : tZamboniLane.getLibraries()) {
-                String organism = null;
                 BSPSampleDTO bspDTO = lsidToBSPSample.get(zamboniLibrary.getLsid());
-
-                if (bspDTO == null) {
-                    organism = zamboniLibrary.getOrganism();
+                ProductOrder pdo = null;
+                if (zamboniLibrary.getPdoKey() != null) {
+                    pdo = pdoDao.findByBusinessKey(zamboniLibrary.getPdoKey());
                 }
-                else {
-                    organism = bspDTO.getOrganism();
-                }
-
-                LibraryBean libBean = new LibraryBean(zamboniLibrary.getLibrary(),
-                        zamboniLibrary.getProject(),
-                        zamboniLibrary.getInitiative(),
-                        zamboniLibrary.getWorkRequestId(),
-                        zamboniLibrary.getMolecularIndexes(),
-                        zamboniLibrary.isHasIndexingRead(),
-                        zamboniLibrary.getExpectedInsertSize(),
-                        zamboniLibrary.getAnalysisType(),
-                        zamboniLibrary.getReferenceSequence(),
-                        zamboniLibrary.getReferenceSequenceVersion(),
-                        zamboniLibrary.getSampleAlias(),
-                        zamboniLibrary.getSampleCollaborator(),
-                        organism,
-                        zamboniLibrary.getSpecies(),
-                        zamboniLibrary.getStrain(),
-                        zamboniLibrary.getLsid(),
-                        zamboniLibrary.getTissueType(),
-                        zamboniLibrary.getExpectedPlasmid(),
-                        zamboniLibrary.getAligner(),
-                        zamboniLibrary.getRrbsSizeRange(),
-                        zamboniLibrary.getRestrictionEnzyme(),
-                        zamboniLibrary.getCellLine(),
-                        zamboniLibrary.getBaitSetName(),
-                        zamboniLibrary.getIndividual(),
-                        zamboniLibrary.getLabMeasuredInsertSize(),
-                        zamboniLibrary.isPositiveControl(),
-                        zamboniLibrary.isNegativeControl(),
-                        zamboniLibrary.getWeirdness(),
-                        zamboniLibrary.getPrecircularizationDnaSize(),
-                        zamboniLibrary.isPartOfDevExperiment(),
-                        zamboniLibrary.getDevExperimentData(),
-                        zamboniLibrary.getGssrBarcode(),
-                        zamboniLibrary.getGssrBarcodes(),
-                        zamboniLibrary.getGssrSampleType(),
-                        zamboniLibrary.getTargetLaneCoverage(),
-                        zamboniLibrary.aggregate,
-                        zamboniLibrary.getCustomAmpliconSetNames(),
-                        zamboniLibrary.isFastTrack());
-                libraries.add(libBean);
+                libraries.add(thriftLibConverter.convertLibrary(zamboniLibrary, bspDTO, pdo));
             }
-            //TODO SGM:  pull lane library name from tZamboniLane
             runBean.addLane(new ZimsIlluminaChamber(tZamboniLane.getLaneNumber(), libraries, tZamboniLane.getPrimer(), tZamboniLane.getSequencedLibraryName()));
         }
         return runBean;
     }
 
+    /**
+     * Always returns a non-null {@link ZimsIlluminaRun).
+     *
+     * @param thriftService
+     * @param runName
+     * @return
+     */
     ZimsIlluminaRun getRun(ThriftService thriftService,
                            String runName) {
-        ZimsIlluminaRun runBean = null;
+        ZimsIlluminaRun runBean = new ZimsIlluminaRun();
         final TZamboniRun tRun = thriftService.fetchRun(runName);
-        if (tRun == null) {
-            throw new RuntimeException("Could not load run " + runName);
+        if (tRun != null) {
+            Map<String, BSPSampleDTO> lsidToBSPSample = fetchAllBSPDataAtOnce(tRun);
+            runBean = getRun(tRun, lsidToBSPSample, new SquidThriftLibraryConverter(), pdoDao);
+        } else {
+            runBean.setError("Run " + runName + " doesn't appear to have been registered yet.  Please try again later or contact the mercury team if the problem persists.");
         }
-        else {
-            final Map<String,BSPSampleDTO> lsidToBSPSample = fetchAllBSPDataAtOnce(tRun);
-            runBean = getRun(tRun,lsidToBSPSample);
-        }
-
         return runBean;
     }
 
     /**
      * Fetches all BSP data for the run in one shot,
-     * returning a Map from the sample LSID to the
+     * returning a Map from the {@link org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO#getSampleLsid()} to the
      * {@link BSPSampleDTO}.
+     *
      * @param run
      * @return
      */
-    private Map<String,BSPSampleDTO> fetchAllBSPDataAtOnce(TZamboniRun run) {
-        final Set<String> sampleLsids = new HashSet<String>();
-        final Set<String> sampleNames = new HashSet<String>();
-        Map<String,BSPSampleDTO> sampleToBspDto = new HashMap<String, BSPSampleDTO>();
+    private Map<String, BSPSampleDTO> fetchAllBSPDataAtOnce(TZamboniRun run) {
+        Set<String> sampleLsids = new HashSet<String>();
+        Set<String> sampleNames = new HashSet<String>();
+        Map<String, BSPSampleDTO> lsidToBspDto = new HashMap<String, BSPSampleDTO>();
+        Map<String, BSPSampleDTO> sampleToBspDto = new HashMap<String, BSPSampleDTO>();
         for (TZamboniLane zamboniLane : run.getLanes()) {
             for (TZamboniLibrary zamboniLibrary : zamboniLane.getLibraries()) {
                 if (isBspSample(zamboniLibrary)) {
@@ -180,23 +162,29 @@ public class IlluminaRunResource implements Serializable {
                 }
             }
         }
-        for (Map.Entry<String,String> lsIdToBareId: BSPLSIDUtil.lsidsToBareIds(sampleLsids).entrySet()) {
+        for (Map.Entry<String, String> lsIdToBareId : BSPLSIDUtil.lsidsToBareIds(sampleLsids).entrySet()) {
             if (lsIdToBareId.getValue() == null) {
                 throw new RuntimeException("Could not map lsid " + lsIdToBareId.getKey() + " to a bsp id.");
-            }
-            else {
+            } else {
                 sampleNames.add(lsIdToBareId.getValue());
             }
         }
         if (!sampleNames.isEmpty()) {
             sampleToBspDto = bspDataFetcher.fetchSamplesFromBSP(sampleNames);
         }
-        return sampleToBspDto;
+        for (BSPSampleDTO bspSampleDTO : sampleToBspDto.values()) {
+            if (bspSampleDTO.getSampleLsid() != null) {
+                lsidToBspDto.put(bspSampleDTO.getSampleLsid(), bspSampleDTO);
+            }
+        }
+
+        return lsidToBspDto;
     }
 
     /**
      * Based on the LSID, is this {@link TZamboniLibrary} derived
      * from a BSP sample?
+     *
      * @param zamboniLibrary
      * @return
      */

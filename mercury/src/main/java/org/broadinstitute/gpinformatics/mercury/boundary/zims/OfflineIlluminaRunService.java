@@ -29,7 +29,7 @@ public class OfflineIlluminaRunService implements IlluminaRunService, Serializab
     }
 
     public static ZimsIlluminaRun makeRun(String runName, int numLanes, int numLibraries) {
-        ZimsIlluminaRun run = new ZimsIlluminaRun(runName, "Run-123", "Flowcell-123", "Sequencer 123", "Test Sequencer", "05/11/2012 17:08", (short) 1, (short) 2, (short) 3, (short) 4, (short) 5, false);
+        ZimsIlluminaRun run = new ZimsIlluminaRun(runName, "Run-123", "Flowcell-123", "Sequencer 123", "Test Sequencer", "05/11/2012 17:08", false, "36T8B", 999.987654 );
         run.addRead(new TZamboniRead((short) 1, (short) 10, TZReadType.INDEX));
         run.addRead(new TZamboniRead((short) 11, (short) 20, TZReadType.TEMPLATE));
         for (int i = 1; i <= numLanes; i++) {
@@ -62,6 +62,6 @@ public class OfflineIlluminaRunService implements IlluminaRunService, Serializab
             gssrBarcodes.add(number + "." + i);
         }
         TZDevExperimentData experimentData = new TZDevExperimentData("Experiment " + number, conditions);
-        return new LibraryBean("Library-" + number, "Project-" + number, "Initiative-" + number, 1L, new MolecularIndexingScheme("IndexingScheme-" + number, new HashMap<IndexPosition, String>()), Boolean.TRUE, number, "Analysis-" + number, "Reference-" + number, "RefVer-" + number, "Sample-" + number, "Collaborator-" + number, "Organism-" + number, "Species-" + number, "Strain-" + number, "LSID-" + number, "Tissue-" + number, "Plasmid-" + number, "Aligner-" + number, "Size Range " + number, "Enzyme-" + number, "CellLine-" + number, "Bait-" + number, "Individual-" + number, 123.4, Boolean.FALSE, Boolean.FALSE, "no weirdness", 123.4, Boolean.FALSE, experimentData, "GSSR-" + number, gssrBarcodes, "GSSR SampleType-" + number, Short.valueOf((short) 1), Boolean.FALSE, new ArrayList<String>(), false);
+        return new LibraryBean("Library-" + number, "Project-" + number, "Initiative-" + number, 1L, new MolecularIndexingScheme("IndexingScheme-" + number, new HashMap<IndexPosition, String>()), Boolean.TRUE, number, "Analysis-" + number, "Reference-" + number, "RefVer-" + number, "Sample-" + number, "Organism-" + number, "Species-" + number, "Strain-" + number, "LSID-" + number, "Aligner-" + number, "Size Range " + number, "Enzyme-" + number, "Bait-" + number, "Individual-" + number, 123.4, Boolean.FALSE, Boolean.FALSE, experimentData, gssrBarcodes, "GSSR SampleType-" + number, Boolean.FALSE, new ArrayList<String>(), null, null, null);
     }
 }

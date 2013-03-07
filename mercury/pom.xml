@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>Mercury</groupId>
     <artifactId>Mercury</artifactId>
-    <version>1.17-SNAPSHOT</version>
+    <version>1.19-SNAPSHOT</version>
     <packaging>war</packaging>
     <inceptionYear>2012</inceptionYear>
 
@@ -179,6 +179,9 @@
         <mercury.password>mercury_local</mercury.password>
         <athena.password>athena_local</athena.password>
         <database.delimiterType>normal</database.delimiterType>
+
+        <!-- Note - For the RC builds, the mercury.rc.ip must contain an @ otherwise the mercury-rc-ds.xml will not be syntactically correct. The @ is a meta character to the maven filtering such that the combination of
+        @${mercury.rc.ip} does not get subsituted at all. Hence mercury-rc-ds.xml only contains ${mercury.rc.ip} -->
 
         <mercury.rc.ip>must be specified.</mercury.rc.ip>
 
@@ -407,6 +410,9 @@
                                         <include>org/broadinstitute/gpinformatics/mercury/boundary/Namespaces.java</include>
                                         <include>org/broadinstitute/gpinformatics/mercury/boundary/vessel/*Bean.java</include>
                                     </includes>
+                                    <excludes>
+                                        <exclude>org/broadinstitute/gpinformatics/mercury/boundary/vessel/SampleReceiptMessageBean.java</exclude>
+                                    </excludes>
                                     <transformSchemas>
                                         <transformSchema>
                                             <uri>http://broadinstitute.org/gpinformatics/mercury/vessel</uri>
@@ -618,51 +624,10 @@
             <build>
                 <testResources>
                     <testResource>
-                        <directory>src/test/resources</directory>
-                    </testResource>
-                    <testResource>
                         <directory>src/test/resources-dev</directory>
-                    </testResource>
-                    <testResource>
-                        <directory>src/main/webapp/WEB-INF/classes</directory>
-                        <includes>
-                            <include>mercury-config.yaml</include>
-                        </includes>
                     </testResource>
                 </testResources>
             </build>
-        </profile>
-
-
-        <profile>
-            <id>CLOUD19</id>
-            <properties>
-                <!--  Oracle Dev database -->
-                <database>oracle</database>
-                <database.delimiterType>row</database.delimiterType>
-
-                <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.19:1521:gpinfprd</database.url>
-                <mercury.password>guest</mercury.password>
-                <athena.password>guest</athena.password>
-            </properties>
-            <build>
-                <testResources>
-                    <testResource>
-                        <directory>src/test/resources</directory>
-                    </testResource>
-                    <testResource>
-                        <directory>src/test/resources-build</directory>
-                        <filtering>true</filtering>
-                    </testResource>
-                    <testResource>
-                        <directory>src/main/webapp/WEB-INF/classes</directory>
-                        <includes>
-                            <include>mercury-config.yaml</include>
-                        </includes>
-                    </testResource>
-                </testResources>
-	        </build>
         </profile>
 
         <profile>
@@ -734,7 +699,7 @@
                 <database.delimiterType>row</database.delimiterType>
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
-                <database.url>jdbc:oracle:thin:@192.168.195.43:1521:gpinfprd</database.url>
+                <database.url>jdbc:oracle:thin:@192.168.195.27:1521:gpinfprd</database.url>
                 <mercury.password>guest</mercury.password>
                 <athena.password>guest</athena.password>
             </properties>
@@ -804,17 +769,8 @@
             <build>
                 <testResources>
                     <testResource>
-                        <directory>src/test/resources</directory>
-                    </testResource>
-                    <testResource>
                         <directory>src/test/resources-build</directory>
                         <filtering>true</filtering>
-                    </testResource>
-                    <testResource>
-                        <directory>src/main/webapp/WEB-INF/classes</directory>
-                        <includes>
-                            <include>mercury-config.yaml</include>
-                        </includes>
                     </testResource>
                 </testResources>
 	        </build>
@@ -828,25 +784,15 @@
 
                 <database.driver>oracle.jdbc.driver.OracleDriver</database.driver>
                 <!--<database.url>jdbc:oracle:thin:@mercuryrc.cloud.broad:1521:gpinfprd</database.url>-->
-                <database.url>jdbc:oracle:thin:@${mercury.rc.ip}:1521:gpinfprd</database.url>
+                <database.url>jdbc:oracle:thin:${mercury.rc.ip}:1521:gpinfprd</database.url>
                 <mercury.password>guest</mercury.password>
                 <athena.password>guest</athena.password>
             </properties>
             <build>
                 <testResources>
                     <testResource>
-                        <directory>src/test/resources</directory>
-                        <filtering>true</filtering>
-                    </testResource>
-                    <testResource>
                         <directory>src/test/resources-rc</directory>
                         <filtering>true</filtering>
-                    </testResource>
-                    <testResource>
-                        <directory>src/main/webapp/WEB-INF/classes</directory>
-                        <includes>
-                            <include>mercury-config.yaml</include>
-                        </includes>
                     </testResource>
                 </testResources>
 	        </build>
@@ -1280,7 +1226,9 @@
         <dependency>
             <groupId>lims</groupId>
             <artifactId>limsThrift</artifactId>
-            <version>1.0-SNAPSHOT</version>
+<!--            <version>1.0-SNAPSHOT</version> -->
+<!-- Temporary while SquidThrift undergoes a release cycle. -->
+                <version>1.0-20130222.020813-36</version>
         </dependency>
         <dependency>
             <groupId>org.apache.poi</groupId>
@@ -1323,7 +1271,7 @@
         <dependency>
             <groupId>org.broadinstitute.bsp</groupId>
             <artifactId>bspclient</artifactId>
-            <version>1.3.3</version>
+            <version>1.3.7</version>
         </dependency>
 
         <dependency>
@@ -1386,6 +1334,20 @@
             <version>1.4.0.9</version>
             <type>jar</type>
         </dependency>
+
+        <dependency>
+            <groupId>net.java.dev.inflector</groupId>
+            <artifactId>inflector</artifactId>
+            <version>0.7.0</version>
+        </dependency>
+
+<!--
+        <dependency>
+            <groupId>org.mvel</groupId>
+            <artifactId>mvel2</artifactId>
+            <version>2.1.4.Final</version>
+        </dependency>
+-->
     </dependencies>
 
     <build>
@@ -1851,6 +1813,7 @@
         <testResources>
             <testResource>
                 <directory>src/test/resources</directory>
+                <filtering>true</filtering>
             </testResource>
             <testResource>
                 <directory>src/main/webapp/WEB-INF/classes</directory>

@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.mercury.boundary.labevent;
 //import com.jprofiler.api.agent.Controller;
 
 import com.sun.jersey.api.client.Client;
-import org.broadinstitute.gpinformatics.athena.control.dao.ResearchProjectDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductFamilyDao;
@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.jboss.arquillian.container.test.api.Deployment;
@@ -167,12 +168,12 @@ public class BettalimsMessageResourceTest extends Arquillian {
             twoDBarcodedTubeDAO.persist(bspAliquot);
             starters.add(bspAliquot);
         }
-        LabBatch labBatch = new LabBatch("LCSET-MsgTest-" + testPrefix, starters);
+        LabBatch labBatch = new LabBatch("LCSET-MsgTest-" + testPrefix, starters, LabBatch.LabBatchType.WORKFLOW);
 
         Product exomeExpressProduct=productDao.findByPartNumber("P-EX-0001");
         if(exomeExpressProduct == null) {
             exomeExpressProduct=new Product("Standard Exome Sequencing", productFamilyDao.find("Exome"), "Standard Exome Sequencing",
-                    "P-EX-0001", new Date(), null, 1814400, 1814400, 184, null, null, null, true, "Hybrid Selection", false);
+                    "P-EX-0001", new Date(), null, 1814400, 1814400, 184, null, null, null, true, WorkflowName.HYBRID_SELECTION.getWorkflowName(), false);
             exomeExpressProduct.setPrimaryPriceItem(new PriceItem("1234", PriceItem.PLATFORM_GENOMICS, "Pony Genomics", "Standard Pony"));
             productDao.persist(exomeExpressProduct);
             productDao.flush();

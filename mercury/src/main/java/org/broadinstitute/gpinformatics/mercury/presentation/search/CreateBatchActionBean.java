@@ -7,10 +7,13 @@ import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidationErrors;
 import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
+import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
+import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -57,9 +60,6 @@ public class CreateBatchActionBean extends CoreActionBean {
     @Inject
     private UserBean userBean;
 
-    @Inject
-    private JiraLink jiraLink;
-
     @Validate(required = true, on = {SEARCH_ACTION})
     private String searchKey;
 
@@ -74,6 +74,9 @@ public class CreateBatchActionBean extends CoreActionBean {
 
     @Validate(required = true, on = {CREATE_BATCH_ACTION})
     private String jiraInputType = EXISTING_TICKET;
+
+    @Validate(required = true, on = CREATE_BATCH_ACTION)
+    private String selectedBucket;
 
     private String jiraTicketId;
 
@@ -105,20 +108,23 @@ public class CreateBatchActionBean extends CoreActionBean {
     }
 
     @ValidationMethod(on = CREATE_BATCH_ACTION)
-    public void createBatchValidation(ValidationErrors errors) {
+    public void createBatchValidation() {
 
+        if (!getUserBean().isValidJiraUser()) {
+            addValidationError("jiraTicketId","You must be A valid Jira user to create an LCSet");
+        }
 
         if(selectedVesselLabels == null || selectedVesselLabels.isEmpty()) {
-            errors.add("selectedVesselLabels", new SimpleError("At least one vessel must be selected to create a batch"));
+            addValidationError("selectedVesselLabels", "At least one vessel must be selected to create a batch");
         }
 
         if(jiraInputType.equals(EXISTING_TICKET)) {
             if(StringUtils.isBlank(jiraTicketId)) {
-                errors.add("jiraTicketId",new SimpleError("An existing Jira ticket key is required"));
+                addValidationError("jiraTicketId","An existing Jira ticket key is required");
             }
         } else {
             if(StringUtils.isBlank(summary)) {
-                errors.add("summary", new SimpleError("You must provide at least a summary to create a Jira Ticket"));
+                addValidationError("summary", "You must provide at least a summary to create a Jira Ticket");
             }
         }
     }
@@ -132,27 +138,33 @@ public class CreateBatchActionBean extends CoreActionBean {
     public Resolution createBatch() throws Exception {
         LabBatch batchObject;
 
-        Set<LabVessel> vesselSet =
-                new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
-
         if (isUseExistingTicket()) {
             /*
                If the user is associating the batch with an existing ticket, just the ticket ID and the set of vessels
                are needed to create the batch
             */
 
-            batchObject =
-                    labBatchEjb.createLabBatch(vesselSet, userBean.getBspUser().getUsername(),
-                            jiraTicketId.trim());
+//            batchObject =
+//                    labBatchEjb.createLabBatch(vesselSet, userBean.getBspUser().getUsername(),
+//                            jiraTicketId.trim());
+            batchObject = labBatchEjb.createLabBatchAndRemoveFromBucket(selectedVesselLabels,
+                    userBean.getBspUser().getUsername(), jiraTicketId.trim(), selectedBucket,
+                    LabEvent.UI_EVENT_LOCATION);
         } else {
+
+            Set<LabVessel> vesselSet =
+                    new HashSet<LabVessel>(labVesselDao.findByListIdentifiers(selectedVesselLabels));
 
             /*
                If a new ticket is to be created, pass the description, summary, due date and important info in a batch
                object acting as a DTO
             */
-            batchObject = new LabBatch(summary.trim(), vesselSet, description, dueDate, important);
+            batchObject = new LabBatch(summary.trim(), vesselSet, LabBatch.LabBatchType.WORKFLOW, description, dueDate,
+                    important);
 
-            labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername());
+//            labBatchEjb.createLabBatch(batchObject, userBean.getBspUser().getUsername());
+            labBatchEjb.createLabBatchAndRemoveFromBucket(batchObject, userBean.getBspUser().getUsername(),
+                    selectedBucket, LabEvent.UI_EVENT_LOCATION);
         }
 
         addMessage(MessageFormat.format("Lab batch ''{0}'' has been ''{1}''.",
@@ -236,6 +248,14 @@ public class CreateBatchActionBean extends CoreActionBean {
         this.jiraInputType = jiraInputType;
     }
 
+    public String getSelectedBucket() {
+        return selectedBucket;
+    }
+
+    public void setSelectedBucket(String selectedBucket) {
+        this.selectedBucket = selectedBucket;
+    }
+
     public String getImportant() {
         return important;
     }
@@ -291,18 +311,4 @@ public class CreateBatchActionBean extends CoreActionBean {
     public void setJiraTicketId(String jiraTicketId) {
         this.jiraTicketId = jiraTicketId;
     }
-
-    /**
-     * Get the fully qualified Jira URL.
-     *
-     * @return URL string
-     */
-    public String getJiraUrl() {
-        if (jiraLink == null) {
-            return "";
-        }
-        return jiraLink.browseUrl();
-    }
-
-
 }

@@ -7,6 +7,7 @@ import org.meanbean.test.BeanTester;
 import org.meanbean.test.EqualsMethodTester;
 import org.meanbean.test.HashCodeMethodTester;
 import org.testng.Assert;
+import org.testng.annotations.DataProvider;
 import org.testng.annotations.Test;
 
 import java.text.DateFormat;
@@ -15,12 +16,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-/**
- * Created by IntelliJ IDEA.
- * User: mccrory
- * Date: 12/7/12
- * Time: 12:51 PM
- */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class BillingLedgerTest {
 
@@ -38,44 +33,52 @@ public class BillingLedgerTest {
         return sample;
     }
 
-    public static BillingLedger createOneBillingLedger(String sampleName, String priceItemName, double quantity ) {
-        return createOneBillingLedger( sampleName, priceItemName, quantity, null );
+    public static BillingLedger createOneBillingLedger(String sampleName, String priceItemName, double quantity) {
+        return createOneBillingLedger(sampleName, priceItemName, quantity, null);
     }
 
-    public static BillingLedger createOneBillingLedger(String sampleName, String priceItemName, double quantity, Date workCompleteDate ) {
-
-        return new BillingLedger( createSample(sampleName),
-                new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, quantity );
+    public static BillingLedger createOneBillingLedger(String sampleName, String priceItemName, double quantity,
+                                                       Date workCompleteDate) {
+        return new BillingLedger(createSample(sampleName),
+                new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, quantity);
     }
 
-    @Test
-    public void testEquals() throws Exception {
+    public static BillingLedger createOneBillingLedger(ProductOrderSample sample, String priceItemName, double quantity,
+                                                       Date workCompleteDate) {
+        return new BillingLedger(sample,
+                new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, quantity);
+    }
 
+    @DataProvider(name = "testEquals")
+    public Object[][] createTestEqualsData() throws Exception {
         Date date1 = formatter.parse("12/5/12");
         Date date2 = formatter.parse("12/6/12");
         String priceItemName1 = "DNA Extract from Blood";
         String priceItemName2 = "DNA Extract from Tissue";
-
-        BillingLedger billingLedger1 = BillingLedgerTest.createOneBillingLedger("SM-3KBZD",
-                priceItemName1, 1, date1);
+        ProductOrderSample sample = createSample("SM-3KBZD");
+        BillingLedger billingLedger1 = BillingLedgerTest.createOneBillingLedger(sample, priceItemName1, 1, date1);
         billingLedger1.setBillingMessage("anything");
 
-        // Create a new ledger Item with different message, different date
-        BillingLedger billingLedger2 = BillingLedgerTest.createOneBillingLedger("SM-3KBZD",
-                priceItemName1, 1, date2);
-        billingLedger2.setBillingMessage( "something else");
-        Assert.assertEquals(billingLedger1, billingLedger2 );
+        BillingLedger billingLedger2 = BillingLedgerTest.createOneBillingLedger(sample, priceItemName1, 1, date2);
+        billingLedger2.setBillingMessage("something else");
 
-        // changing the priceItem
-        billingLedger2 = BillingLedgerTest.createOneBillingLedger("SM-3KBZD",
-                priceItemName2, 1, date1);
-        Assert.assertNotEquals(billingLedger1, billingLedger2);
+        return new Object[][] {
+                // Different message, different date, should be equal.
+                { billingLedger1, billingLedger2, true },
+                // Different priceItem should be not equals.
+                { billingLedger1, BillingLedgerTest.createOneBillingLedger(sample, priceItemName2, 1, date1), false },
+                // Different quantity, should equate since quantity is not used for comparison.
+                { billingLedger1, BillingLedgerTest.createOneBillingLedger(sample, priceItemName1, 2, date1), true },
+        };
+    }
 
-        // change the quantity, should equate since quantity is not used for comparison
-        billingLedger2 = BillingLedgerTest.createOneBillingLedger("SM-3KBZD",
-                priceItemName1, 2, date1);
-        Assert.assertEquals(billingLedger1, billingLedger2);
-
+    @Test(dataProvider = "testEquals")
+    public void testEquals(BillingLedger ledger1, BillingLedger ledger2, boolean isEqual) throws Exception {
+        if (isEqual) {
+            Assert.assertEquals(ledger1, ledger2);
+        } else {
+            Assert.assertNotEquals(ledger1, ledger2);
+        }
     }
 
     @Test

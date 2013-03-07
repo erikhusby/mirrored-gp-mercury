@@ -4,7 +4,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" />
 
-<stripes:layout-render name="/layout.jsp" pageTitle="List research projects" sectionTitle="List research projects">
+<stripes:layout-render name="/layout.jsp" pageTitle="List Research Projects" sectionTitle="List Research Projects">
 
     <stripes:layout-component name="extraHead">
         <script type="text/javascript">
@@ -57,7 +57,7 @@
                     </stripes:link>
                 </td>
                 <td>
-                    <a class="external" target="JIRA" href="${actionBean.jiraUrl}${project.jiraTicketKey}" class="external" target="JIRA" title="${project.jiraTicketKey}">
+                    <a class="external" target="JIRA" href="${actionBean.jiraUrl(project.jiraTicketKey)}" class="external" target="JIRA" title="${project.jiraTicketKey}">
                             ${project.jiraTicketKey}
                     </a>
                 </td>

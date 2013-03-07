@@ -37,26 +37,11 @@ public class ZimsIlluminaRun {
     @JsonIgnore
     private Date runDate;
 
-    @JsonProperty("firstCycle")
-    private Integer firstCycle;
-
-    @JsonProperty("firstCycleReadLength")
-    private Integer firstCycleReadLength;
-
-    @JsonProperty("lastCycle")
-    private Integer lastCycle;
-
     @JsonIgnore
     private final SimpleDateFormat dateFormat =  new SimpleDateFormat(DATE_FORMAT);
 
     @JsonProperty("lanes")
     private List<ZimsIlluminaChamber> chambers = new ArrayList<ZimsIlluminaChamber>();
-
-    @JsonProperty("molecularBarcodeCycle")
-    private Integer molecularBarcodeCycle;
-
-    @JsonProperty("molecularBarcodeLength")
-    private Integer molecularBarcodeLength;
 
     @JsonProperty("pairedRun")
     private Boolean isPaired;
@@ -64,7 +49,20 @@ public class ZimsIlluminaRun {
     @JsonProperty("reads")
     private List<ZamboniRead> reads = new ArrayList<ZamboniRead>();
 
-    public ZimsIlluminaRun() {}
+    // if something blows up, we put the error message here
+    // to keep clients happy
+    @JsonProperty
+    private String error;
+
+    @JsonProperty("actualReadStructure")
+    private String actualReadStructure;
+    
+    @JsonProperty("imagedAreaPerLaneMM2")
+    private Double imagedAreaPerLaneMM2;
+
+
+    public ZimsIlluminaRun() {
+    }
 
     public ZimsIlluminaRun(String runName,
                            String runBarcode,
@@ -72,12 +70,9 @@ public class ZimsIlluminaRun {
                            String sequencer,
                            String sequencerModel,
                            String runDate,
-                           short firstCycle,
-                           short firstCycleReadLength,
-                           short lastCycle,
-                           short molecularBarcodeCycle,
-                           short molecularBarcodeLength,
-                           boolean isPaired) {
+                           Boolean isPaired,
+                           String actualReadStructure,
+                           double  imagedAreaPerLaneMM2) {
         this.runName = runName;
         this.runBarcode = runBarcode;
         this.flowcellBarcode = flowcellBarcode;
@@ -89,12 +84,9 @@ public class ZimsIlluminaRun {
         catch(ParseException e) {
             throw new RuntimeException("Cannot parse run date " + runDate + " for " + runName);
         }
-        this.firstCycle = ThriftConversionUtil.zeroAsNull(firstCycle);
-        this.firstCycleReadLength = ThriftConversionUtil.zeroAsNull(firstCycleReadLength);
-        this.lastCycle = ThriftConversionUtil.zeroAsNull(lastCycle);
-        this.molecularBarcodeCycle = ThriftConversionUtil.zeroAsNull(molecularBarcodeCycle);
-        this.molecularBarcodeLength = ThriftConversionUtil.zeroAsNull(molecularBarcodeLength);
         this.isPaired = isPaired;
+        this.actualReadStructure = actualReadStructure;
+        this.imagedAreaPerLaneMM2 = ThriftConversionUtil.zeroAsNull(imagedAreaPerLaneMM2);
     }
 
     public void addRead(TZamboniRead thriftRead) {
@@ -107,25 +99,10 @@ public class ZimsIlluminaRun {
         return reads;
     }
 
-    public boolean getPairedRun() {
+    public Boolean getPairedRun() {
         return isPaired;
     }
 
-    public Integer getMolecularBarcodeLength() {
-        return molecularBarcodeLength;
-    }
-
-    public Integer getMolecularBarcodeCycle() {
-        return molecularBarcodeCycle;
-    }
-
-    public Integer getFirstCycleReadLength() {
-        return firstCycleReadLength;
-    }
-
-    public Integer getFirstCycle() {
-        return firstCycle;
-    }
 
     /**
      * Format is 01/03/2010 24:19
@@ -161,10 +138,6 @@ public class ZimsIlluminaRun {
         return flowcellBarcode;
     }
 
-    public Integer getLastCycle() {
-        return lastCycle;
-    }
-
     public String getName() {
         return runName;
     }
@@ -181,5 +154,24 @@ public class ZimsIlluminaRun {
         return chambers;
     }
 
+    /**
+     * Should only be used in the REST resource itself.
+     * @param error
+     */
+    public void setError(String error) {
+        this.error = error;
+    }
 
+    public String getError() {
+        return error;
+    }
+
+
+    public String getActualReadStructure() {
+        return actualReadStructure;
+    }
+
+    public Double getImagedAreaPerLaneMM2() {
+        return imagedAreaPerLaneMM2;
+    }
 }

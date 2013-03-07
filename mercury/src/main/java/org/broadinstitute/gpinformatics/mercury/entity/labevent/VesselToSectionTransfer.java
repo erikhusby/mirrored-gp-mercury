@@ -1,27 +1,18 @@
 package org.broadinstitute.gpinformatics.mercury.entity.labevent;
 
-import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainer;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmbedder;
 import org.hibernate.annotations.Index;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.CascadeType;
-import javax.persistence.Entity;
-import javax.persistence.EnumType;
-import javax.persistence.Enumerated;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 /**
  * Represents a transfer from a tube to all positions (wells) in a (plate) section
  */
 @Entity
 @Audited
-@Table(schema = "mercury")
 public class VesselToSectionTransfer extends VesselTransfer {
 
     @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)

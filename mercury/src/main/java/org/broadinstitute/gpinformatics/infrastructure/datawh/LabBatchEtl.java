@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch_;
 
-import javax.ejb.Stateless;
+import javax.ejb.Stateful;
 import javax.inject.Inject;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
@@ -15,58 +15,48 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-@Stateless
+@Stateful
 public class LabBatchEtl extends GenericEntityEtl {
 
     private LabBatchDAO dao;
 
     @Inject
     public void setLabBatchDAO(LabBatchDAO dao) {
-	this.dao = dao;
+        this.dao = dao;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Class getEntityClass() {
         return LabBatch.class;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     String getBaseFilename() {
         return "lab_batch";
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Long entityId(Object entity) {
         return ((LabBatch)entity).getLabBatchId();
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
-    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
         Collection<String> recordList = new ArrayList<String>();
         LabBatch entity = dao.findById(LabBatch.class, entityId);
         if (entity != null) {
-	    recordList.add(entityRecord(etlDateStr, isDelete, entity));
-	} else {
+            recordList.add(entityRecord(etlDateStr, isDelete, entity));
+        } else {
             logger.info("Cannot export. " + getEntityClass().getSimpleName() + " having id " + entityId + " no longer exists.");
         }
         return recordList;
     }
 
-    /**
-     * @{inheritDoc}
-     */
+    /** {@inheritDoc} */
     @Override
     Collection<String> entityRecordsInRange(final long startId, final long endId, String etlDateStr, boolean isDelete) {
         Collection<String> recordList = new ArrayList<String>();
@@ -74,10 +64,8 @@ public class LabBatchEtl extends GenericEntityEtl {
                 new GenericDao.GenericDaoCallback<LabBatch>() {
                     @Override
                     public void callback(CriteriaQuery<LabBatch> cq, Root<LabBatch> root) {
-                        if (startId > 0 || endId < Long.MAX_VALUE) {
-                            CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
-                            cq.where(cb.between(root.get(LabBatch_.labBatchId), startId, endId));
-                        }
+                        CriteriaBuilder cb = dao.getEntityManager().getCriteriaBuilder();
+                        cq.where(cb.between(root.get(LabBatch_.labBatchId), startId, endId));
                     }
                 });
         for (LabBatch entity : entityList) {
@@ -94,10 +82,7 @@ public class LabBatchEtl extends GenericEntityEtl {
     String entityRecord(String etlDateStr, boolean isDelete, LabBatch entity) {
         return genericRecord(etlDateStr, isDelete,
                 entity.getLabBatchId(),
-                format(entity.getBatchName()),
-                format(entity.getActive()),
-                format(entity.getCreatedOn()),
-                format(entity.getDueDate())
+                format(entity.getBatchName())
         );
     }
 

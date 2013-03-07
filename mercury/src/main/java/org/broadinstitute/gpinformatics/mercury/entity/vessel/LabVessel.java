@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.entity.vessel;
 
-import clover.org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.CompareToBuilder;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,7 +43,7 @@ public abstract class LabVessel implements Serializable {
 
     //todo SGM:  create comparator for sorting Containers THEN Create getter that gets sorted containers
 
-    private final static Log logger = LogFactory.getLog(LabVessel.class);
+    private static final Log logger = LogFactory.getLog(LabVessel.class);
 
     @SequenceGenerator(name = "SEQ_LAB_VESSEL", schema = "mercury", sequenceName = "SEQ_LAB_VESSEL")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_LAB_VESSEL")
@@ -104,7 +104,7 @@ public abstract class LabVessel implements Serializable {
     @JoinTable(schema = "mercury")
     private Collection<StatusNote> notes = new HashSet<StatusNote>();
 
-    @OneToMany(mappedBy = "labVessel")
+    @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
     private Set<BucketEntry> bucketEntries = new HashSet<BucketEntry>();
 
     @Embedded
@@ -212,6 +212,7 @@ public abstract class LabVessel implements Serializable {
      * @param metricType
      * @param searchMode
      * @param sampleInstance
+     *
      * @return
      */
     public LabMetric getMetric(LabMetric.MetricType metricType, MetricSearchMode searchMode,
@@ -219,12 +220,12 @@ public abstract class LabVessel implements Serializable {
         throw new RuntimeException("I haven't been written yet.");
     }
 
-    public void addToContainer(VesselContainer vesselContainer) {
-        this.containers.add(vesselContainer.getEmbedder());
-        if (this.containersCount == null) {
-            this.containersCount = 0;
+    public void addToContainer(VesselContainer<?> vesselContainer) {
+        containers.add(vesselContainer.getEmbedder());
+        if (containersCount == null) {
+            containersCount = 0;
         }
-        this.containersCount++;
+        containersCount++;
     }
 
     //Utility method for getting containers as a list so they can be displayed in a display table column
@@ -390,12 +391,12 @@ public abstract class LabVessel implements Serializable {
 
         Map<String, Set<LabVessel>> vesselByPdoMap = new HashMap<String, Set<LabVessel>>();
 
-        for(LabVessel currVessel : labVessels) {
+        for (LabVessel currVessel : labVessels) {
             Collection<String> nearestPdos = currVessel.getNearestProductOrders();
 
-            for(String pdoKey: nearestPdos) {
+            for (String pdoKey : nearestPdos) {
 
-                if(!vesselByPdoMap.containsKey(pdoKey)) {
+                if (!vesselByPdoMap.containsKey(pdoKey)) {
                     vesselByPdoMap.put(pdoKey, new HashSet<LabVessel>());
                 }
                 vesselByPdoMap.get(pdoKey).add(currVessel);
@@ -451,12 +452,13 @@ public abstract class LabVessel implements Serializable {
      * Returned from getAncestors and getDescendants
      */
     public static class VesselEvent {
-        private LabVessel labVessel;
-        private VesselContainer vesselContainer;
-        private VesselPosition position;
-        private LabEvent labEvent;
 
-        public VesselEvent(LabVessel labVessel, VesselContainer vesselContainer, VesselPosition position,
+        private final LabVessel       labVessel;
+        private final VesselContainer<?> vesselContainer;
+        private final VesselPosition  position;
+        private final LabEvent        labEvent;
+
+        public VesselEvent(LabVessel labVessel, VesselContainer<?> vesselContainer, VesselPosition position,
                            LabEvent labEvent) {
             this.labVessel = labVessel;
             this.vesselContainer = vesselContainer;
@@ -476,7 +478,7 @@ public abstract class LabVessel implements Serializable {
             return position;
         }
 
-        public VesselContainer getVesselContainer() {
+        public VesselContainer<?> getVesselContainer() {
             return vesselContainer;
         }
     }
@@ -504,9 +506,10 @@ public abstract class LabVessel implements Serializable {
      * The results of traversing (ancestor) vessels
      */
     static class TraversalResults {
-        private Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
-        private Set<Reagent> reagents = new HashSet<Reagent>();
-        private LabBatch lastEncounteredLabBatch = null;
+
+        private final Set<SampleInstance> sampleInstances         = new HashSet<SampleInstance>();
+        private final Set<Reagent>        reagents                = new HashSet<Reagent>();
+        private LabBatch            lastEncounteredLabBatch = null;
 
         void add(TraversalResults traversalResults) {
             sampleInstances.addAll(traversalResults.getSampleInstances());
@@ -578,21 +581,21 @@ public abstract class LabVessel implements Serializable {
     TraversalResults traverseAncestors() {
         TraversalResults traversalResults = new TraversalResults();
 
+        // stop traversing at first MercurySample, to avoid picking up multiple BSP batches
         if (isSampleAuthority()) {
             for (MercurySample mercurySample : mercurySamples) {
                 traversalResults.add(new SampleInstance(mercurySample, null, null));
             }
-            // stop at first MercurySample, to avoid picking up multiple BSP batches
-            return traversalResults;
-        }
-        List<VesselEvent> vesselEvents = getAncestors();
-        for (VesselEvent vesselEvent : vesselEvents) {
-            LabVessel labVessel = vesselEvent.getLabVessel();
-            // todo jmt put this logic in VesselEvent?
-            if (labVessel == null) {
-                traversalResults.add(vesselEvent.getVesselContainer().traverseAncestors(vesselEvent.getPosition()));
-            } else {
-                traversalResults.add(labVessel.traverseAncestors());
+        } else {
+            List<VesselEvent> vesselEvents = getAncestors();
+            for (VesselEvent vesselEvent : vesselEvents) {
+                LabVessel labVessel = vesselEvent.getLabVessel();
+                // todo jmt put this logic in VesselEvent?
+                if (labVessel == null) {
+                    traversalResults.add(vesselEvent.getVesselContainer().traverseAncestors(vesselEvent.getPosition()));
+                } else {
+                    traversalResults.add(labVessel.traverseAncestors());
+                }
             }
         }
         for (Reagent reagent : getReagentContents()) {
@@ -617,7 +620,7 @@ public abstract class LabVessel implements Serializable {
         List<VesselEvent> vesselEvents = new ArrayList<VesselEvent>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
             vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getSourceVessel(), null, null,
-                    vesselToVesselTransfer.getLabEvent()));
+                                                    vesselToVesselTransfer.getLabEvent()));
         }
         for (LabVessel container : containers) {
             vesselEvents.addAll(container.getContainerRole().getAncestors(this));
@@ -634,7 +637,7 @@ public abstract class LabVessel implements Serializable {
         List<VesselEvent> vesselEvents = new ArrayList<VesselEvent>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
             vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getTargetLabVessel(), null, null,
-                    vesselToVesselTransfer.getLabEvent()));
+                                                    vesselToVesselTransfer.getLabEvent()));
         }
         for (LabVessel container : containers) {
             vesselEvents.addAll(container.getContainerRole().getDescendants(this));
@@ -764,13 +767,12 @@ public abstract class LabVessel implements Serializable {
         return Collections.unmodifiableSet(bucketEntries);
     }
 
-
     /* *
-     * In the context of the given WorkflowDescription, are there any
-     * events for this vessel which are annotated as WorkflowAnnotation#SINGLE_SAMPLE_LIBRARY?
-     * @param workflowDescription
-     * @return
-     */
+    * In the context of the given WorkflowDescription, are there any
+    * events for this vessel which are annotated as WorkflowAnnotation#SINGLE_SAMPLE_LIBRARY?
+    * @param workflowDescription
+    * @return
+    */
     /*
         public boolean isSingleSampleLibrary(WorkflowDescription workflowDescription) {
             if (workflowDescription == null) {
@@ -853,12 +855,13 @@ public abstract class LabVessel implements Serializable {
         // todo the real method should walk transfers...this is just for experimental testing for GPLIM-64
         // in reality, the implementation would walk back to all roots,
         // detecting vessels along the way where hasSampleMetadata is true.
+        //
+        Set<MercurySample> foundSamples = new HashSet<MercurySample>();
         if (!mercurySamples.isEmpty()) {
-            return mercurySamples;
+            foundSamples.addAll(mercurySamples);
         }
-        // else walk transfers
-        throw new RuntimeException("history traversal for empty samples list not implemented");
 
+        return foundSamples;
     }
 
     public List<MercurySample> getMercurySamplesList() {
@@ -887,7 +890,6 @@ public abstract class LabVessel implements Serializable {
     public Long getLabVesselId() {
         return labVesselId;
     }
-
 
     @Override
     public boolean equals(Object o) {
@@ -925,7 +927,7 @@ public abstract class LabVessel implements Serializable {
      *
      * @return object representing this vessel's role as a container of other vessels
      */
-    public VesselContainer getContainerRole() {
+    public VesselContainer<?> getContainerRole() {
         return null;
     }
 
@@ -943,7 +945,8 @@ public abstract class LabVessel implements Serializable {
     void evaluateCriteria(TransferTraverserCriteria transferTraverserCriteria,
                           TransferTraverserCriteria.TraversalDirection traversalDirection, LabEvent labEvent,
                           int hopCount) {
-        TransferTraverserCriteria.Context context = new TransferTraverserCriteria.Context(this, labEvent, hopCount, traversalDirection);
+        TransferTraverserCriteria.Context context =
+                new TransferTraverserCriteria.Context(this, labEvent, hopCount, traversalDirection);
         transferTraverserCriteria.evaluateVesselPreOrder(context);
         if (traversalDirection == TransferTraverserCriteria.TraversalDirection.Ancestors) {
             for (VesselEvent vesselEvent : getAncestors()) {
@@ -959,16 +962,17 @@ public abstract class LabVessel implements Serializable {
         transferTraverserCriteria.evaluateVesselPostOrder(context);
     }
 
-    private void evaluateVesselEvent(TransferTraverserCriteria transferTraverserCriteria,
-                                     TransferTraverserCriteria.TraversalDirection traversalDirection, int hopCount,
-                                     VesselEvent vesselEvent) {
+    private static void evaluateVesselEvent(TransferTraverserCriteria transferTraverserCriteria,
+                                            TransferTraverserCriteria.TraversalDirection traversalDirection, int hopCount,
+                                            VesselEvent vesselEvent) {
         LabVessel labVessel = vesselEvent.getLabVessel();
         if (labVessel == null) {
             vesselEvent.getVesselContainer().evaluateCriteria(vesselEvent.getPosition(),
-                    transferTraverserCriteria, traversalDirection, vesselEvent.getLabEvent(), hopCount);
+                                                                     transferTraverserCriteria, traversalDirection,
+                                                                     vesselEvent.getLabEvent(), hopCount);
         } else {
             labVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection, vesselEvent.getLabEvent(),
-                    hopCount + 1);
+                                              hopCount + 1);
         }
     }
 
@@ -985,19 +989,27 @@ public abstract class LabVessel implements Serializable {
 
     public Collection<String> getNearestProductOrders() {
 
+        if (getContainerRole() != null) {
+            return getContainerRole().getNearestProductOrders();
+        } else {
 
-        TransferTraverserCriteria.NearestProductOrderCriteria nearestProductOrderCriteria =
-                new TransferTraverserCriteria.NearestProductOrderCriteria();
+            TransferTraverserCriteria.NearestProductOrderCriteria nearestProductOrderCriteria =
+                    new TransferTraverserCriteria.NearestProductOrderCriteria();
 
-        evaluateCriteria(nearestProductOrderCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
-        return nearestProductOrderCriteria.getNearestProductOrders();
+            evaluateCriteria(nearestProductOrderCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            return nearestProductOrderCriteria.getNearestProductOrders();
+        }
     }
 
     public Collection<LabBatch> getNearestLabBatches() {
-        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
-                new TransferTraverserCriteria.NearestLabBatchFinder();
-        evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
-        return batchCriteria.getNearestLabBatches();
+        if (getContainerRole() != null) {
+            return getContainerRole().getNearestLabBatches();
+        } else {
+            TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
+                    new TransferTraverserCriteria.NearestLabBatchFinder();
+            evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            return batchCriteria.getNearestLabBatches();
+        }
     }
 
     public List<LabBatch> getNearestLabBatchesList() {
@@ -1010,7 +1022,8 @@ public abstract class LabVessel implements Serializable {
     }
 
     public Collection<LabVessel> getDescendantVessels() {
-        TransferTraverserCriteria.LabVesselDescendantCriteria descendantCriteria = new TransferTraverserCriteria.LabVesselDescendantCriteria();
+        TransferTraverserCriteria.LabVesselDescendantCriteria descendantCriteria =
+                new TransferTraverserCriteria.LabVesselDescendantCriteria();
         evaluateCriteria(descendantCriteria, TransferTraverserCriteria.TraversalDirection.Descendants);
         return descendantCriteria.getLabVesselDescendants();
     }
@@ -1029,7 +1042,8 @@ public abstract class LabVessel implements Serializable {
                     MolecularIndexReagent indexReagent = (MolecularIndexReagent) reagent;
                     indexInfo.append(indexReagent.getMolecularIndexingScheme().getName());
                     indexInfo.append(" - ");
-                    for (MolecularIndexingScheme.IndexPosition hint : indexReagent.getMolecularIndexingScheme().getIndexes().keySet()) {
+                    for (MolecularIndexingScheme.IndexPosition hint : indexReagent.getMolecularIndexingScheme()
+                                                                                  .getIndexes().keySet()) {
                         MolecularIndex index = indexReagent.getMolecularIndexingScheme().getIndexes().get(hint);
                         indexInfo.append(index.getSequence());
                         indexInfo.append("\n");
@@ -1065,7 +1079,10 @@ public abstract class LabVessel implements Serializable {
     public Set<String> getPdoKeys() {
         Set<String> pdoKeys = new HashSet<String>();
         for (SampleInstance sample : getAllSamples()) {
-            pdoKeys.add(sample.getStartingSample().getProductOrderKey());
+            String productOrderKey = sample.getStartingSample().getProductOrderKey();
+            if (productOrderKey != null) {
+                pdoKeys.add(productOrderKey);
+            }
         }
 
         pdoKeys.remove(null);

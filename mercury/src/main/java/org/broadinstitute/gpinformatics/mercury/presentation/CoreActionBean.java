@@ -13,15 +13,16 @@ import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.controller.FlashScope;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.exception.SourcePageNotFoundException;
-import net.sourceforge.stripes.validation.LocalizableError;
 import net.sourceforge.stripes.validation.SimpleError;
 import net.sourceforge.stripes.validation.ValidationError;
 import net.sourceforge.stripes.validation.ValidationErrors;
+import org.apache.commons.io.FileDeleteStrategy;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
 import org.broadinstitute.gpinformatics.athena.boundary.BuildInfoBean;
+import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
 
@@ -29,6 +30,7 @@ import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.util.ArrayList;
 import java.util.List;
 
 /*
@@ -71,6 +73,9 @@ public class CoreActionBean implements ActionBean {
     @Inject
     private BSPUserList bspUserList;
 
+    @Inject
+    private JiraLink jiraLink;
+
     // The date range widget can be used by simply adding a div with a class of dateRangeDiv. If only one date is
     // needed, this will work for any action bean. If more are needed, then ids should be used and configured directly.
     private DateRangeSelector dateRange;
@@ -97,36 +102,71 @@ public class CoreActionBean implements ActionBean {
     @Before(stages = LifecycleStage.EventHandling)
     public void getErrorAndMessage() {
         if (context != null) {
-            ValidationError error = (ValidationError) context.getRequest().getAttribute(FLASH_ERROR);
-            if (error != null) {
-                context.getValidationErrors().addGlobalError(error);
+            List<ValidationError> errors = (List<ValidationError>) context.getRequest().getAttribute(FLASH_ERROR);
+            if (errors != null) {
+                for (ValidationError error : errors) {
+                    context.getValidationErrors().addGlobalError(error);
+                }
             }
-            Message message = (Message) context.getRequest().getAttribute(FLASH_MESSAGE);
-            if (message != null) {
-                context.getMessages().add(message);
+            List<Message> messages = (List<Message>) context.getRequest().getAttribute(FLASH_MESSAGE);
+            if (messages != null) {
+                for (Message message : messages) {
+                    context.getMessages().add(message);
+                }
             }
         }
     }
 
     /**
-     * Places a single error message into the flash scope to be shown on the next request.
+     * Adds a single error message into the flash scope to be shown on the next request.
      *
      * @param error ValidationError message to be flashed
      */
     protected void flashErrorMessage(ValidationError error) {
         FlashScope scope = FlashScope.getCurrent(context.getRequest(), true);
         hasFlashError = true;
-        scope.put(FLASH_ERROR, error);
+
+        List<ValidationError> errors = (List<ValidationError>) scope.get(FLASH_ERROR);
+
+        if (errors == null) {
+            errors = new ArrayList<ValidationError>();
+        }
+
+        errors.add(error);
+
+        scope.put(FLASH_ERROR, errors);
     }
 
     /**
-     * Places a single message into the flash scope to be shown on the next request.
+     * Checks for any validation errors in the flash scope and in the validation errors scope
+     *
+     * @return returns true if any errors are found in either place.  Returns false otherwise.
+     */
+    protected boolean hasErrors() {
+
+        FlashScope scope = FlashScope.getCurrent(context.getRequest(), true);
+
+        List<ValidationError> errors = (List<ValidationError>) scope.get(FLASH_ERROR);
+
+        return ! (getContext().getValidationErrors().isEmpty() && (errors == null || errors.isEmpty()));
+    }
+
+    /**
+     * Adds a single message into the flash scope to be shown on the next request.
      *
      * @param message Message  to be flashed
      */
     protected void flashMessage(Message message) {
         FlashScope scope = FlashScope.getCurrent(context.getRequest(), true);
-        scope.put(FLASH_MESSAGE, message);
+
+        List<Message> messages = (List<Message>) scope.get(FLASH_MESSAGE);
+
+        if (messages == null) {
+            messages = new ArrayList<Message>();
+        }
+
+        messages.add(message);
+        scope.put(FLASH_MESSAGE, messages);
     }
 
     /**
@@ -162,8 +202,7 @@ public class CoreActionBean implements ActionBean {
         try {
             istream = inFile.getInputStream();
         } catch (Exception e) {
-            getContext().getValidationErrors().addGlobalError(
-                    new LocalizableError("Sorry, there was a problem reading the file you supplied"));
+            addGlobalValidationError("Sorry, there was a problem reading the file you supplied");
         } finally {
             if (inFile != null) {
                 inFile.delete();
@@ -192,16 +231,6 @@ public class CoreActionBean implements ActionBean {
     }
 
     /**
-     * Add an error that must be included literally in the response, without any formatting.  This should
-     * only be used in the case where the message may contain characters that will cause MessageFormat.format
-     * to generate errors.
-     * @param message the message to include.
-     */
-    public void addLiteralErrorMessage(String message) {
-        addGlobalValidationError("{2}", message);
-    }
-
-    /**
      * Convenience method for adding an error message to the context.  The message and its arguments, if any, is
      * formatted using MessageFormat.format().
      *
@@ -227,15 +256,6 @@ public class CoreActionBean implements ActionBean {
         }
 
         return message.toString();
-    }
-
-    /**
-     * If the error list isn't empty then it has errors.
-     *
-     * @return true if there are some errors
-     */
-    public boolean hasErrors() {
-        return !getContext().getValidationErrors().isEmpty();
     }
 
     /**
@@ -380,5 +400,14 @@ public class CoreActionBean implements ActionBean {
             return "''";
         }
         return s;
+    }
+
+    /**
+     * Given a JIRA ticket key, create a URL to open the ticket in JIRA.
+     * @param jiraTicketKey the key
+     * @return the JIRA URL
+     */
+    public String jiraUrl(String jiraTicketKey) {
+        return jiraLink.browseUrl(jiraTicketKey);
     }
 }
