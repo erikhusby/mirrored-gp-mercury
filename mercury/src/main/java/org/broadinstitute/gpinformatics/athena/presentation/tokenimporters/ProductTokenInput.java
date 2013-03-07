@@ -20,6 +20,7 @@ public class ProductTokenInput extends TokenInput<Product> {
     private ProductDao productDao;
 
     public ProductTokenInput() {
+        super(SINGLE_LINE_FORMAT);
     }
 
     @Override
@@ -30,11 +31,6 @@ public class ProductTokenInput extends TokenInput<Product> {
     public String getJsonString(String query) throws JSONException {
         List<Product> products = productDao.searchProducts(query);
         return createItemListString(products);
-    }
-
-    @Override
-    protected boolean isSingleLineMenuEntry() {
-        return true;
     }
 
     @Override

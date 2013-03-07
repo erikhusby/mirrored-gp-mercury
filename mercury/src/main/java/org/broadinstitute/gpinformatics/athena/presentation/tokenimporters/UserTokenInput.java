@@ -20,6 +20,7 @@ public class UserTokenInput extends TokenInput<BspUser> {
     private BSPUserList bspUserList;
 
     public UserTokenInput() {
+        super(DOUBLE_LINE_FORMAT);
     }
 
     @Override
@@ -31,11 +32,6 @@ public class UserTokenInput extends TokenInput<BspUser> {
     public String getJsonString(String query) throws JSONException {
         List<BspUser> bspUsers = bspUserList.find(query);
         return createItemListString(bspUsers);
-    }
-
-    @Override
-    protected boolean isSingleLineMenuEntry() {
-        return false;
     }
 
     @Override
