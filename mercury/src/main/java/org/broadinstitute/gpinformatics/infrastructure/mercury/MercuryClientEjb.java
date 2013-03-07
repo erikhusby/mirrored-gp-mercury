@@ -43,9 +43,7 @@ public class MercuryClientEjb {
 
     private BucketDao bucketDao;
 
-    public MercuryClientEjb() {
-        logger.error("Huh?!?");
-    }
+    public MercuryClientEjb() {}
 
     @Inject
     public MercuryClientEjb(BucketBean bucketBean, BucketDao bucketDao,
