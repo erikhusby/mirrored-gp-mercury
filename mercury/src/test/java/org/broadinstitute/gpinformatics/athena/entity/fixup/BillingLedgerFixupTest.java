@@ -78,7 +78,7 @@ public class BillingLedgerFixupTest extends Arquillian {
      *        bs.BILLED_DATE < pdo.rev_date
      *
      */
-    @Test(enabled = true)
+    @Test(enabled = false)
     public void testBackfillLedgerQuotes() {
 
         for (BillingLedger ledger : billingLedgerDao.findWithoutQuoteId()) {
