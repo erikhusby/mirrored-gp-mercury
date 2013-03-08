@@ -213,6 +213,13 @@ tableau:
             - {name: PASS, url: "/views/PMBPASSSampleDashboard/PMBridgeSamplesDashboard?Research%20Project="}
 
 
+hipchat:
+    DEV:
+        baseUrl: https://www.hipchat.com/v1/rooms/message
+
+    PROD:
+        baseUrl: https://www.hipchat.com/v1/rooms/message
+
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 
 
@@ -232,6 +239,7 @@ mercury:
       datawhEtl: DEV
       bettaLimsServer: DEV
       tableau:  PROD
+      hipchat: DEV
 
 
     TEST:
@@ -247,6 +255,7 @@ mercury:
       datawhEtl: DEV
       bettaLimsServer: TEST
       tableau:  PROD
+      hipchat: DEV
 
 
     QA:
@@ -262,6 +271,7 @@ mercury:
       datawhEtl: QA
       bettaLimsServer: QA
       tableau:  PROD
+      hipchat: DEV
 
 
     RC:
@@ -277,6 +287,7 @@ mercury:
       datawhEtl: QA
       bettaLimsServer: QA
       tableau:  PROD
+      hipchat: DEV
 
 
     PROD:
@@ -292,3 +303,4 @@ mercury:
       datawhEtl: PROD
       bettaLimsServer: PROD
       tableau:  PROD
+      hipchat: PROD

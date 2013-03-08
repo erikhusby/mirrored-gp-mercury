@@ -7,12 +7,17 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
 
+import javax.inject.Inject;
+
 /**
  * Class which sends a message to hipchat.
  * See https://www.hipchat.com/docs/api/method/rooms/message
  * to get more details about the hipchat API.
  */
 public class HipChatMessageSender {
+
+    @Inject
+    private HipChatConfig config;
 
     private final static Log log = LogFactory.getLog(HipChatMessageSender.class);
 
@@ -55,7 +60,7 @@ public class HipChatMessageSender {
     /**
      * Simple json client for hipchat message call.
      */
-    private static class JsonClient extends AbstractJsonJerseyClientService {
+    private class JsonClient extends AbstractJsonJerseyClientService {
         @Override
         protected void customizeConfig(ClientConfig clientConfig) {
             supportJson(clientConfig);
@@ -68,7 +73,7 @@ public class HipChatMessageSender {
         }
 
         public void postMessage(String text,String room) {
-            WebResource webResource = getJerseyClient().resource(HIPCHAT_BASE_URL)
+            WebResource webResource = getJerseyClient().resource(config.getBaseUrl())
                 .queryParam(ROOM_KEY,room)
                 .queryParam(MESSAGE_KEY,text)
                 .queryParam(AUTHORIZATION_TOKEN_KEY,AUTHORIZATION_TOKEN)
