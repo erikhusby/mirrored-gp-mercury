@@ -333,6 +333,7 @@ public class IlluminaRunResourceTest extends Arquillian {
                         assertEquals(libBean.getResearchProjectId(),pdo.getResearchProject().getBusinessKey(),PDO_COMPARISON_ERROR_MESSAGE);
                         assertEquals(libBean.getProductOrderKey(),pdo.getBusinessKey(),PDO_COMPARISON_ERROR_MESSAGE);
                         assertEquals(libBean.getResearchProjectName(),pdo.getResearchProject().getTitle(),PDO_COMPARISON_ERROR_MESSAGE);
+                        assertEquals(libBean.getProductPartNumber(), pdo.getProduct().getPartNumber());
                     }
                 }
                 if (zLib.getLcset() != null) {
