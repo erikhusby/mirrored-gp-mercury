@@ -51,14 +51,23 @@ public class BillingLedger implements Serializable {
     @Column(name = "BILLING_MESSAGE")
     private String billingMessage;
 
+    @Column(name ="QUOTE_ID")
+    private String quoteId;
+
+    /**
+     * Package private constructor for JPA use.
+     */
+    @SuppressWarnings("UnusedDeclaration")
     BillingLedger() {}
 
     public BillingLedger(@Nonnull ProductOrderSample productOrderSample,
                          @Nonnull PriceItem priceItem,
+                         @Nonnull String quoteId,
                          @Nonnull Date workCompleteDate,
                          double quantity) {
         this.productOrderSample = productOrderSample;
         this.priceItem = priceItem;
+        this.quoteId = quoteId;
         this.quantity = quantity;
         this.workCompleteDate = workCompleteDate;
     }
@@ -125,6 +134,10 @@ public class BillingLedger implements Serializable {
         return ledgerId;
     }
 
+    public String getQuoteId() {
+        return quoteId;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {
@@ -139,6 +152,7 @@ public class BillingLedger implements Serializable {
         return new EqualsBuilder()
                 .append(productOrderSample, castOther.getProductOrderSample())
                 .append(priceItem, castOther.getPriceItem())
+                .append(quoteId, castOther.getQuoteId())
                 .append(billingSession, castOther.getBillingSession()).isEquals();
     }
 
@@ -147,6 +161,7 @@ public class BillingLedger implements Serializable {
         return new HashCodeBuilder()
                 .append(productOrderSample)
                 .append(priceItem)
+                .append(quoteId)
                 .append(billingSession).toHashCode();
     }
 }

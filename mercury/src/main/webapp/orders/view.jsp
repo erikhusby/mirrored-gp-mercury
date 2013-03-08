@@ -195,8 +195,6 @@
                             {"bSortable": true, "sType": "numeric"},        // Yield Amount
                             {"bSortable": true, "sType" : "title-string"},  // FP Status
                             {"bSortable": true},                            // On Risk
-                            {"bSortable": true, "sType": "title-numeric"},  // Eligible
-                            {"bSortable": true, "sType" : "title-string"},  // Billed
                             {"bSortable": true},                            // Status
                             {"bSortable": true}                             // Comment
                         ]

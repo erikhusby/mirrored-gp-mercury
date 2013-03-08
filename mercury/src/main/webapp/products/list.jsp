@@ -34,31 +34,31 @@
 
         <table id="productList" class="table simple">
             <thead>
-                <tr>
-                    <th>Part Number</th>
-                    <th>Product Name</th>
-                    <th>Product Family</th>
-                    <th>Available</th>
-                </tr>
+            <tr>
+                <th>Part Number</th>
+                <th>Product Name</th>
+                <th>Product Family</th>
+                <th>Available</th>
+            </tr>
             </thead>
             <tbody>
-                <c:forEach items="${actionBean.allProducts}" var="product">
-                    <tr>
-                        <td>
-                            <stripes:link beanclass="${actionBean.class.name}" event="view" title="${product.businessKey}">
-                                <stripes:param name="product" value="${product.businessKey}"/>
-                                ${product.partNumber}
-                            </stripes:link>
-                        </td>
-                        <td>${product.productName}</td>
-                        <td>${product.productFamily.name}</td>
-                        <td>
-                            <c:if test="${product.available}">
-                                <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
-                            </c:if>
-                        </td>
-                    </tr>
-                </c:forEach>
+            <c:forEach items="${actionBean.allProducts}" var="product">
+                <tr>
+                    <td>
+                        <stripes:link beanclass="${actionBean.class.name}" event="view" title="${product.businessKey}">
+                            <stripes:param name="product" value="${product.businessKey}"/>
+                            ${product.partNumber}
+                        </stripes:link>
+                    </td>
+                    <td>${product.productName}</td>
+                    <td>${product.productFamily.name}</td>
+                    <td>
+                        <c:if test="${product.available}">
+                            <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
+                        </c:if>
+                    </td>
+                </tr>
+            </c:forEach>
             </tbody>
         </table>
     </stripes:layout-component>

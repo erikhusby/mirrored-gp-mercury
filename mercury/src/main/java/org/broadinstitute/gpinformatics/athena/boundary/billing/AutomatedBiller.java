@@ -99,7 +99,7 @@ public class AutomatedBiller {
                     productOrderSampleDao.findByOrderAndName(order, message.getSampleName());
                 ProductOrderSample sample = samples.get(message.getSampleIndex());
 
-                // Always bill if the sample is on risk, otherwise, check if the requirement is met for billing
+                // Always bill if the sample is on risk, otherwise, check if the requirement is met for billing.
                 if (sample.isOnRisk() || product.getRequirement().canBill(message.getData())) {
                     sample.autoBillSample(message.getCompletedDate(), 1);
                 }

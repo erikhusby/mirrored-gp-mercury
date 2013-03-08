@@ -19,6 +19,10 @@ public class FundingTokenInput extends TokenInput<Funding> {
     @Inject
     private QuoteFundingList quoteFundingList;
 
+    public FundingTokenInput() {
+        super(DOUBLE_LINE_FORMAT);
+    }
+
     @Override
     protected Funding getById(String fundingId) {
         return quoteFundingList.getById(fundingId);
@@ -27,11 +31,6 @@ public class FundingTokenInput extends TokenInput<Funding> {
     public String getJsonString(String query) throws JSONException {
         List<Funding> fundingList = quoteFundingList.find(query);
         return createItemListString(fundingList);
-    }
-
-    @Override
-    protected boolean isSingleLineMenuEntry() {
-        return false;
     }
 
     @Override

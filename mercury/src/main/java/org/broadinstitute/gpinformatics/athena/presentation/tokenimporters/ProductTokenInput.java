@@ -20,6 +20,7 @@ public class ProductTokenInput extends TokenInput<Product> {
     private ProductDao productDao;
 
     public ProductTokenInput() {
+        super(SINGLE_LINE_FORMAT);
     }
 
     @Override
@@ -33,18 +34,13 @@ public class ProductTokenInput extends TokenInput<Product> {
     }
 
     @Override
-    protected boolean isSingleLineMenuEntry() {
-        return true;
-    }
-
-    @Override
     protected String getTokenId(Product product) {
         return product.getBusinessKey();
     }
 
     @Override
     protected String getTokenName(Product product) {
-        return product.getProductName();
+        return product.getProductName() + " [" + product.getBusinessKey() + "]";
     }
 
     @Override
