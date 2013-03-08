@@ -1,7 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation.tags.security;
 
 import net.sourceforge.stripes.util.Log;
-import org.broadinstitute.gpinformatics.mercury.entity.DB;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspException;
@@ -27,23 +26,25 @@ public class AuthorizeBlockStripesTag extends TagSupport {
 
     private static final long serialVersionUID = 201300107L;
 
-    private String roles;
+    private String[] roles;
 
-    private String exclusionRoles;
+    private String[] exclusionRoles;
 
-    public String getRoles() {
+    public static final String ALLOW_ALL_ROLES = "All";
+
+    public String[] getRoles() {
         return roles;
     }
 
-    public void setRoles(String roles) {
+    public void setRoles(String[] roles) {
         this.roles = roles;
     }
 
-    public String getExclusionRoles() {
+    public String[] getExclusionRoles() {
         return exclusionRoles;
     }
 
-    public void setExclusionRoles(String exclusionRoles) {
+    public void setExclusionRoles(String[] exclusionRoles) {
         this.exclusionRoles = exclusionRoles;
     }
 
@@ -63,10 +64,8 @@ public class AuthorizeBlockStripesTag extends TagSupport {
 
             // Exclusion tag check to skip the jsp code block.
             if (exclusionRoles != null) {
-                String[] splitRoles = exclusionRoles.split(",");
-                for (String role : splitRoles) {
-                    DB.Role dbRole = DB.Role.findRoleByName(role.trim());
-                    if ((dbRole != null) && (request.isUserInRole(dbRole.name) || (dbRole == DB.Role.All))) {
+                for (String role : exclusionRoles) {
+                    if (request.isUserInRole(role) || role.equals(ALLOW_ALL_ROLES)) {
                         // User has a role that should be skipped or "All" roles to be excluded (?).
                         return SKIP_BODY;
                     }
@@ -75,17 +74,15 @@ public class AuthorizeBlockStripesTag extends TagSupport {
 
             // Now check the roles to include the jsp code block.
             if (roles != null) {
-                String[] splitRoles = roles.split(",");
-                for (String role : splitRoles) {
-                    DB.Role dbRole = DB.Role.findRoleByName(role.trim());
-                    if ((dbRole != null) && (request.isUserInRole(dbRole.name) || (dbRole == DB.Role.All))) {
+                for (String role : roles) {
+                    if (request.isUserInRole(role) || role.equals(ALLOW_ALL_ROLES)) {
                         // User in role or all roles allowed.
                         return EVAL_BODY_INCLUDE;
                     }
                 }
             }
         } catch (Exception e) {
-            log.warn("Problem determining if the user was in the role: " + roles, e);
+            log.warn("Problem determining if the user was in the role", e);
         }
 
         return super.doStartTag();
