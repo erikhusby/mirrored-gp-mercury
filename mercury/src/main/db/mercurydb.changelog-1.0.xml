@@ -890,4 +890,20 @@
 
     </changeSet>
 
+    <changeSet id="GPLIM-1048-5" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <columnExists columnName="run_cartridges" schemaName="mercury" tableName="seq_run_run_cartridges" />
+        </preConditions>
+
+        <renameColumn tableName="seq_run_run_cartridges" oldColumnName="run_cartridges" newColumnName="run_cartridge"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1048-6" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <columnExists columnName="run_cartridges" schemaName="mercury" tableName="seq_run_run_cartridges_aud" />
+        </preConditions>
+
+        <renameColumn tableName="seq_run_run_cartridges_aud" oldColumnName="run_cartridges" newColumnName="run_cartridge"/>
+    </changeSet>
+
 </databaseChangeLog>

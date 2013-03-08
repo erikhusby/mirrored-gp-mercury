@@ -42,7 +42,7 @@ public class IlluminaSequencingRunFactoryDBFreeTest {
 
         flowcellTestBarcode = "flowTestBcode123";
         IlluminaFlowcell testFlowcell =
-                new IlluminaFlowcell(IlluminaFlowcell.FLOWCELL_TYPE.EIGHT_LANE, flowcellTestBarcode);
+                new IlluminaFlowcell(IlluminaFlowcell.FLOWCELL_TYPE.TWO_LANE, flowcellTestBarcode);
 
         IlluminaFlowcellDao mockDao = EasyMock.createMock(IlluminaFlowcellDao.class);
         EasyMock.expect(mockDao.findByBarcode(EasyMock.anyObject(String.class))).andReturn(testFlowcell);
@@ -77,6 +77,8 @@ public class IlluminaSequencingRunFactoryDBFreeTest {
                 new SolexaRunBean(flowcellTestBarcode, runBarcode, new Date(), testMachine, runFileDirectory, null);
 
         IlluminaSequencingRun testRun = runFactory.build(testRunBean);
+
+        Assert.assertNotNull(testRun);
 
         Assert.assertEquals(testMachine,testRun.getMachineName());
 

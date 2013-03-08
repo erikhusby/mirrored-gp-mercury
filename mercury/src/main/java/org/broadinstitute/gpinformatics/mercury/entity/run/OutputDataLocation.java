@@ -32,7 +32,7 @@ public class OutputDataLocation {
 
     private String dataLocation;
 
-    private boolean archived = true;
+    private boolean archived = false;
 
     protected OutputDataLocation() {
     }
@@ -46,7 +46,7 @@ public class OutputDataLocation {
     }
 
     public boolean isArchived() {
-        return false;  //To change body of implemented methods use File | Settings | File Templates.
+        return archived;
     }
 
     public void setArchived(boolean archived) {

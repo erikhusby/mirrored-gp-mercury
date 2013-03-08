@@ -58,7 +58,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     }
 
     public enum FLOWCELL_TYPE {
-        EIGHT_LANE,MISEQ
+        EIGHT_LANE,TWO_LANE,MISEQ
     }
 
     public IlluminaFlowcell(FLOWCELL_TYPE flowcellType, String flowcellBarcode) {
