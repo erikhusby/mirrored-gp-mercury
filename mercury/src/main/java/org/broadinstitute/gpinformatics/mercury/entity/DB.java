@@ -28,16 +28,6 @@ public class DB implements Serializable {
         Role(String name) {
             this.name = name;
         }
-
-        public static Role findRoleByName(String name) {
-            for (Role value : values()) {
-                if (name.equals(value.name())) {
-                    return value;
-                }
-            }
-
-            return null;
-        }
     }
 
     private static final long serialVersionUID = 3344014380008589366L;
