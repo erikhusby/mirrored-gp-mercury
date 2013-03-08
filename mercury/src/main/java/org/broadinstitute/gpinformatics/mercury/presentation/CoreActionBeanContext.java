@@ -10,7 +10,6 @@
 package org.broadinstitute.gpinformatics.mercury.presentation;
 
 import net.sourceforge.stripes.action.ActionBeanContext;
-import org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;

@@ -1,11 +1,16 @@
 package org.broadinstitute.gpinformatics.mercury.presentation;
 
 import net.sourceforge.stripes.action.ActionBean;
+import net.sourceforge.stripes.action.Before;
+import net.sourceforge.stripes.controller.DispatcherServlet;
+import net.sourceforge.stripes.controller.StripesFilter;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 
 import javax.servlet.Filter;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * This is used to test action beans.
@@ -40,10 +45,13 @@ public class ActionBeanBaseTest<T extends ActionBean> extends ContainerTest {
 
     @AfterMethod(alwaysRun = true)
     public void tearDownActionBean() {
-        for (Filter f : ctx.getServletContext().getFilters()) {
-            f.destroy();
+        if (ctx != null && ctx.getServletContext().getFilters() != null) {
+            for (Filter f : ctx.getServletContext().getFilters()) {
+                f.destroy();
+            }
         }
-        if (bean.getContext().getRequest() != null) {
+
+        if (bean.getContext() != null && bean.getContext().getRequest() != null) {
             bean.getContext().getRequest().getParameterMap().clear();
         }
     }

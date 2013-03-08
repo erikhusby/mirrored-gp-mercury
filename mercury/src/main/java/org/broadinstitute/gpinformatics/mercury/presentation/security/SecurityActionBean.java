@@ -1,4 +1,4 @@
-package org.broadinstitute.gpinformatics.mercury.presentation.login;
+package org.broadinstitute.gpinformatics.mercury.presentation.security;
 
 import net.sourceforge.stripes.action.*;
 import net.sourceforge.stripes.validation.Validate;
@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchPro
 import org.broadinstitute.gpinformatics.mercury.entity.DB;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 import org.broadinstitute.gpinformatics.mercury.presentation.UserBean;
-import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
 
 import javax.inject.Inject;
 import javax.servlet.ServletException;
