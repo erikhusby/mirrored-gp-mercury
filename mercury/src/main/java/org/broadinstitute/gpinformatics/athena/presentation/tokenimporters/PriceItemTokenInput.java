@@ -4,11 +4,11 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.inject.Inject;
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -27,6 +27,7 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
     private PriceListCache priceListCache;
 
     public PriceItemTokenInput() {
+        super(DOUBLE_LINE_FORMAT);
     }
 
     @Override
@@ -37,42 +38,35 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
     public String getJsonString(String query) throws JSONException {
 
         Collection<PriceItem> priceItems = priceListCache.searchPriceItems(query);
-
-        JSONArray itemList = new JSONArray();
-        for (PriceItem priceItem : priceItems) {
-            createAutocomplete(itemList, priceItem);
-        }
-
-        return itemList.toString();
+        return createItemListString(new ArrayList<PriceItem>(priceItems));
     }
 
     @Override
-    protected String generateCompleteData() throws JSONException {
-        JSONArray itemList = new JSONArray();
-        for (PriceItem  priceItem : getTokenObjects()) {
-            createAutocomplete(itemList, priceItem);
-        }
-
-        return itemList.toString();
+    protected String getTokenId(PriceItem priceItem) {
+        return org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.makeConcatenatedKey(
+                priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
     }
 
-    private void createAutocomplete(JSONArray itemList, PriceItem priceItem) throws JSONException {
+    @Override
+    protected String formatMessage(String messageString, PriceItem priceItem) {
+        return MessageFormat.format(messageString, priceItem.getName(),
+            priceItem.getPlatformName() + " " + priceItem.getCategoryName());
+    }
+
+    @Override
+    protected String getTokenName(PriceItem priceItem) {
+        return priceItem.getName();
+    }
+
+    @Override
+    public JSONObject createAutocomplete(PriceItem priceItem) throws JSONException {
         if (priceItem == null) {
-            JSONObject item = getJSONObject(getListOfKeys(), "unknown price item id", false);
-            itemList.put(item);
-            return;
+            JSONObject item = getJSONObject(getListOfKeys(), "unknown price item id");
+            item.put("dropdownItem", "");
+            return item;
         }
 
-        String key = org.broadinstitute.gpinformatics.athena.entity.products.PriceItem.makeConcatenatedKey(
-                priceItem.getPlatformName(), priceItem.getCategoryName(), priceItem.getName());
-
-        JSONObject item = getJSONObject(key, priceItem.getName(), false);
-
-        item.put("platform", priceItem.getPlatformName());
-
-        String priceItemCategory = (priceItem.getCategoryName() == null) ? "" : priceItem.getCategoryName();
-        item.put("category", priceItemCategory);
-        itemList.put(item);
+        return super.createAutocomplete(priceItem);
     }
 
     public org.broadinstitute.gpinformatics.athena.entity.products.PriceItem getMercuryTokenObject() {

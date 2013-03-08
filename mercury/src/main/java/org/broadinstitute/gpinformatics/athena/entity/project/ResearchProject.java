@@ -469,9 +469,7 @@ public class ResearchProject implements Serializable, Comparable<ResearchProject
                 if (!first) {
                     piList.append("\n");
                 }
-                piList.append(bspUserList.getById(currPI.getPersonId()).getFirstName())
-                      .append(" ")
-                      .append(bspUserList.getById(currPI.getPersonId()).getLastName());
+                piList.append(bspUserList.getById(currPI.getPersonId()).getFullName());
                 first = false;
             }
         }

@@ -123,6 +123,7 @@ public class LimsQueryResourceResponseFactoryTest {
         assertThat(outFlowcellDesignation.getDesignationName(), equalTo(expected.getDesignationName()));
         assertThat(outFlowcellDesignation.getReadLength(), equalTo(Integer.valueOf(expected.getReadLength())));
         assertThat(outFlowcellDesignation.isPairedEndRun(), equalTo(expected.isIsPairedEndRun()));
+        assertThat(outFlowcellDesignation.isIndexedRun(), equalTo(expected.isIsIndexedRun()));
         assertThat(outFlowcellDesignation.getControlLane(), equalTo(Integer.valueOf(expected.getControlLane())));
         assertThat(outFlowcellDesignation.isKeepIntensityFiles(), equalTo(expected.isKeepIntensityFiles()));
     }

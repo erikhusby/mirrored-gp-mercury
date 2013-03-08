@@ -153,6 +153,9 @@ public class LibraryBean {
     @JsonProperty
     private String race;
 
+    @JsonProperty
+    private String productPartNumber;
+
     public LibraryBean() {}
 
     /**
@@ -265,6 +268,7 @@ public class LibraryBean {
                 if (family != null) {
                     productFamily = family.getName();
                 }
+                productPartNumber = product.getPartNumber();
             }
         }
         this.lcSet = lcSet;
@@ -431,6 +435,10 @@ public class LibraryBean {
 
     public String getProductFamily() {
         return productFamily;
+    }
+
+    public String getProductPartNumber() {
+        return productPartNumber;
     }
 
     public String getRootSample() {

@@ -30,7 +30,7 @@ public class RiskCriteria {
     @Id
     @SequenceGenerator(name = "SEQ_RISK_CRITERIA", schema = "ATHENA", sequenceName = "SEQ_RISK_CRITERIA")
     @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_RISK_CRITERIA")
-    private Long risk_criteria_id;
+    private Long riskCriteriaId;
 
     @Column(name = "type", length = 30, nullable = false)
     @Enumerated(EnumType.STRING)
@@ -204,6 +204,8 @@ public class RiskCriteria {
     }
 
     public abstract static class ValueProvider implements Serializable {
+        private static final long serialVersionUID = 746447531515367731L;
+
         public abstract String getValue(ProductOrderSample sample);
     }
 }

@@ -1,5 +1,6 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
-<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
+<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
+<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.roles" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
@@ -22,7 +23,7 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <security:authorizeBlock roles="<%=new String[] {DB.Role.Developer.name, DB.Role.PDM.name}%>">
+        <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
             <p>
                 <stripes:link title="New Product" beanclass="${actionBean.class.name}" event="create" class="pull-right">
                     <span class="icon-tags"></span> New Product
@@ -33,31 +34,31 @@
 
         <table id="productList" class="table simple">
             <thead>
-                <tr>
-                    <th>Part Number</th>
-                    <th>Product Name</th>
-                    <th>Product Family</th>
-                    <th>Available</th>
-                </tr>
+            <tr>
+                <th>Part Number</th>
+                <th>Product Name</th>
+                <th>Product Family</th>
+                <th>Available</th>
+            </tr>
             </thead>
             <tbody>
-                <c:forEach items="${actionBean.allProducts}" var="product">
-                    <tr>
-                        <td>
-                            <stripes:link beanclass="${actionBean.class.name}" event="view" title="${product.businessKey}">
-                                <stripes:param name="product" value="${product.businessKey}"/>
-                                ${product.partNumber}
-                            </stripes:link>
-                        </td>
-                        <td>${product.productName}</td>
-                        <td>${product.productFamily.name}</td>
-                        <td>
-                            <c:if test="${product.available}">
-                                <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
-                            </c:if>
-                        </td>
-                    </tr>
-                </c:forEach>
+            <c:forEach items="${actionBean.allProducts}" var="product">
+                <tr>
+                    <td>
+                        <stripes:link beanclass="${actionBean.class.name}" event="view" title="${product.businessKey}">
+                            <stripes:param name="product" value="${product.businessKey}"/>
+                            ${product.partNumber}
+                        </stripes:link>
+                    </td>
+                    <td>${product.productName}</td>
+                    <td>${product.productFamily.name}</td>
+                    <td>
+                        <c:if test="${product.available}">
+                            <img src="${ctxpath}/images/check.png" alt="yes" title="yes"/>
+                        </c:if>
+                    </td>
+                </tr>
+            </c:forEach>
             </tbody>
         </table>
     </stripes:layout-component>

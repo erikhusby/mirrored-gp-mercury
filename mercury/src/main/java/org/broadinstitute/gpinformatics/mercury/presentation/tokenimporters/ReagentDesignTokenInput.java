@@ -15,9 +15,10 @@ import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign_;
-import org.json.JSONArray;
 import org.json.JSONException;
 
+import javax.inject.Inject;
+import java.text.MessageFormat;
 import java.util.List;
 
 /**
@@ -26,32 +27,41 @@ import java.util.List;
  * @author hrafal
  */
 // FIXME: update this code and its caller to use TokenInput<> instead.
-public class ReagentDesignTokenInput {
+public class ReagentDesignTokenInput extends TokenInput<ReagentDesign> {
 
-    @SuppressWarnings("unchecked")
-    public static String getJsonString(ReagentDesignDao reagentDesignDao, String query) throws JSONException {
-        List<ReagentDesign> reagentDesignList = reagentDesignDao.findListWithWildcard(ReagentDesign.class, query, true,
-                ReagentDesign_.designName, ReagentDesign_.targetSetName);
+    @Inject
+    private ReagentDesignDao reagentDesignDao;
 
-        JSONArray itemList = new JSONArray();
-        for (ReagentDesign reagentDesign : reagentDesignList) {
-            itemList.put(TokenInput.getJSONObject(reagentDesign.getBusinessKey(),
-                    reagentDesign.getBusinessKey() + " (" + reagentDesign.getTargetSetName() + ")", false));
-        }
-
-        return itemList.toString();
+    public ReagentDesignTokenInput() {
+        super(SINGLE_LINE_FORMAT);
     }
 
-    public static String getReagentDesignCompleteData(ReagentDesignDao reagentDesignDao, String reagentDesignId)
-            throws JSONException {
+    @Override
+    protected ReagentDesign getById(String reagentDesignId) {
+        return reagentDesignDao.findByBusinessKey(reagentDesignId);
+    }
 
-        JSONArray itemList = new JSONArray();
+    @SuppressWarnings("unchecked")
+    public String getJsonString(String query) throws JSONException {
+        List<ReagentDesign> reagentDesignList =
+            reagentDesignDao.findListWithWildcard(
+                ReagentDesign.class, query, true, ReagentDesign_.designName, ReagentDesign_.targetSetName);
+        return createItemListString(reagentDesignList);
+    }
 
-        ReagentDesign reagentDesign = reagentDesignDao.findByBusinessKey(reagentDesignId);
-        if (reagentDesign != null) {
-            itemList.put(TokenInput.getJSONObject(reagentDesignId, reagentDesign.getBusinessKey(), false));
-        }
+    @Override
+    protected String getTokenId(ReagentDesign reagentDesign) {
+        return reagentDesign.getBusinessKey();
+    }
 
-        return itemList.toString();
+    @Override
+    protected String formatMessage(String messageString, ReagentDesign reagentDesign) {
+        return MessageFormat.format(
+            messageString, reagentDesign.getBusinessKey() + " (" + reagentDesign.getTargetSetName() + ")");
+    }
+
+    @Override
+    protected String getTokenName(ReagentDesign reagentDesign) {
+        return reagentDesign.getBusinessKey() + " (" + reagentDesign.getTargetSetName() + ")";
     }
 }

@@ -3,11 +3,10 @@ package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 import org.broadinstitute.gpinformatics.athena.entity.project.Cohort;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPCohortList;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import javax.inject.Inject;
+import java.text.MessageFormat;
 import java.util.List;
 
 /**
@@ -21,6 +20,7 @@ public class CohortTokenInput extends TokenInput<Cohort> {
     private BSPCohortList cohortList;
 
     public CohortTokenInput() {
+        super(DOUBLE_LINE_FORMAT);
     }
 
     @Override
@@ -30,28 +30,22 @@ public class CohortTokenInput extends TokenInput<Cohort> {
 
     public String getJsonString(String query) throws JSONException {
         List<Cohort> cohorts = cohortList.findActive(query);
-
-        JSONArray itemList = new JSONArray();
-        for (Cohort cohort : cohorts) {
-            createAutocomplete(itemList, cohort);
-        }
-        return itemList.toString();
+        return createItemListString(cohorts);
     }
 
     @Override
-    public String generateCompleteData() throws JSONException {
-        JSONArray itemList = new JSONArray();
-        for (Cohort cohort : getTokenObjects()) {
-            createAutocomplete(itemList, cohort);
-        }
-
-        return itemList.toString();
+    protected String getTokenId(Cohort cohort) {
+        return cohort.getCohortId();
     }
 
-    private void createAutocomplete(JSONArray itemList, Cohort cohort) throws JSONException {
-        JSONObject item = getJSONObject(cohort.getCohortId(), cohort.getDisplayName(), false);
-        item.put("group", cohort.getGroup());
-        item.put("category", cohort.getCategory());
-        itemList.put(item);
+    @Override
+    protected String getTokenName(Cohort cohort) {
+        return cohort.getDisplayName();
+    }
+
+    @Override
+    protected String formatMessage(String messageString, Cohort cohort) {
+        return MessageFormat.format(
+            messageString, cohort.getDisplayName(), cohort.getGroup() + " " + cohort.getCategory());
     }
 }

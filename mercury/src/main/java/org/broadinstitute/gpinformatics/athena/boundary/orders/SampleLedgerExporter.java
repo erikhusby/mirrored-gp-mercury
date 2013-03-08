@@ -65,7 +65,7 @@ public class SampleLedgerExporter extends AbstractSpreadsheetExporter {
             return "User id " + id;
         }
 
-        return user.getFirstName() + " " + user.getLastName();
+        return user.getFullName();
     }
 
     private static Date getWorkCompleteDate(Set<BillingLedger> billingLedgers, ProductOrderSample productOrderSample) {

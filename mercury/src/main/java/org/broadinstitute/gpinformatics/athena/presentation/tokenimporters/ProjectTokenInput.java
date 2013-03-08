@@ -3,11 +3,11 @@ package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import javax.inject.Inject;
+import java.text.MessageFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -23,6 +23,7 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
     private String tokenObject;
 
     public ProjectTokenInput() {
+        super(SINGLE_LINE_FORMAT);
     }
 
     @Override
@@ -31,30 +32,23 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
     }
 
     public String getJsonString(String query) throws JSONException {
-
         Collection<ResearchProject> projects = researchProjectDao.searchProjects(query);
-
-        JSONArray itemList = new JSONArray();
-        for (ResearchProject project : projects) {
-            createAutocomplete(itemList, project);
-        }
-
-        return itemList.toString();
+        return createItemListString(new ArrayList<ResearchProject>(projects));
     }
 
     @Override
-    protected String generateCompleteData() throws JSONException {
-        JSONArray itemList = new JSONArray();
-        for (ResearchProject project : getTokenObjects()) {
-            createAutocomplete(itemList, project);
-        }
-
-        return itemList.toString();
+    protected String getTokenId(ResearchProject project) {
+        return project.getBusinessKey();
     }
 
-    private static void createAutocomplete(JSONArray itemList, ResearchProject project) throws JSONException {
-        JSONObject item = getJSONObject(project.getBusinessKey(), project.getTitle(), false);
-        itemList.put(item);
+    @Override
+    protected String getTokenName(ResearchProject project) {
+        return project.getTitle();
+    }
+
+    @Override
+    protected String formatMessage(String messageString, ResearchProject project) {
+        return MessageFormat.format(messageString, project.getTitle());
     }
 
     public String getTokenObject() {

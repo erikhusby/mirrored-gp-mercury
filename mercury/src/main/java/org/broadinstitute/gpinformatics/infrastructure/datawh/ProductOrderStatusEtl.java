@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 
 import javax.ejb.Stateful;
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -31,7 +30,7 @@ public class ProductOrderStatusEtl extends GenericEntityEtl {
 
     /** This entity does not make entity records. */
     @Override
-    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
         return Collections.EMPTY_LIST;
     }
 

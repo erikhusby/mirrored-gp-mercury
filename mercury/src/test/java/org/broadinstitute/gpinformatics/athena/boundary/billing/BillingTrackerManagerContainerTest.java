@@ -137,20 +137,27 @@ public class BillingTrackerManagerContainerTest extends ContainerTest {
     private static BillingLedger[] createExpectedBillingLedgerList() {
         return new BillingLedger[] {
                 // SM-3KBZD
-                BillingLedgerTest.createOneBillingLedger("SM-3KBZD", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1),
-                BillingLedgerTest.createOneBillingLedger("SM-3KBZD", "RNA Extract from FFPE", -1.5),
+                BillingLedgerTest.createOneBillingLedger("SM-3KBZD", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva",
+                        "DNA123", 1),
+                BillingLedgerTest.createOneBillingLedger("SM-3KBZD", "RNA Extract from FFPE", "DNA123", -1.5),
                 // SM-3KBZE
-                BillingLedgerTest.createOneBillingLedger("SM-3KBZE", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1),
-                BillingLedgerTest.createOneBillingLedger("SM-3KBZE", "RNA Extract from FFPE", -1.5),
-                BillingLedgerTest.createOneBillingLedger("SM-3KBZE", "Strand Specific RNA-Seq (high coverage-50M paired reads)", 1),
+                BillingLedgerTest.createOneBillingLedger("SM-3KBZE", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva",
+                        "DNA123", 1),
+                BillingLedgerTest.createOneBillingLedger("SM-3KBZE", "RNA Extract from FFPE", "DNA123", -1.5),
+                BillingLedgerTest.createOneBillingLedger("SM-3KBZE", "Strand Specific RNA-Seq (high coverage-50M paired reads)",
+                        "DNA123", 1),
                 // SM-3MPJX
-                BillingLedgerTest.createOneBillingLedger("SM-3MPJX", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1),
-                BillingLedgerTest.createOneBillingLedger("SM-3MPJX", "RNA Extract from FFPE", -1.5),
-                BillingLedgerTest.createOneBillingLedger("SM-3MPJX", "Strand Specific RNA-Seq (high coverage-50M paired reads)", 1),
+                BillingLedgerTest.createOneBillingLedger("SM-3MPJX", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva",
+                        "DNA123", 1),
+                BillingLedgerTest.createOneBillingLedger("SM-3MPJX", "RNA Extract from FFPE", "DNA123", -1.5),
+                BillingLedgerTest.createOneBillingLedger("SM-3MPJX", "Strand Specific RNA-Seq (high coverage-50M paired reads)",
+                        "DNA123", 1),
                 // SM-3MPJY
-                BillingLedgerTest.createOneBillingLedger("SM-3MPJY", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva", 1),
-                BillingLedgerTest.createOneBillingLedger("SM-3MPJY", "RNA Extract from FFPE", -1.5),
-                BillingLedgerTest.createOneBillingLedger("SM-3MPJY", "Strand Specific RNA-Seq (high coverage-50M paired reads)", 1)
+                BillingLedgerTest.createOneBillingLedger("SM-3MPJY", "DNA Extract from Blood, Fresh Frozen Tissue, cell pellet, stool, saliva",
+                        "DNA123", 1),
+                BillingLedgerTest.createOneBillingLedger("SM-3MPJY", "RNA Extract from FFPE", "DNA123", -1.5),
+                BillingLedgerTest.createOneBillingLedger("SM-3MPJY", "Strand Specific RNA-Seq (high coverage-50M paired reads)",
+                        "DNA123", 1)
         };
     }
 }

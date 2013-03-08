@@ -3,11 +3,10 @@ package org.broadinstitute.gpinformatics.athena.presentation.tokenimporters;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.infrastructure.common.TokenInput;
-import org.json.JSONArray;
 import org.json.JSONException;
-import org.json.JSONObject;
 
 import javax.inject.Inject;
+import java.text.MessageFormat;
 import java.util.List;
 
 /**
@@ -21,6 +20,7 @@ public class ProductTokenInput extends TokenInput<Product> {
     private ProductDao productDao;
 
     public ProductTokenInput() {
+        super(SINGLE_LINE_FORMAT);
     }
 
     @Override
@@ -30,39 +30,27 @@ public class ProductTokenInput extends TokenInput<Product> {
 
     public String getJsonString(String query) throws JSONException {
         List<Product> products = productDao.searchProducts(query);
-
-        JSONArray itemList = new JSONArray();
-        for (Product product : products) {
-            createAutocomplete(itemList, product);
-        }
-
-        return itemList.toString();
+        return createItemListString(products);
     }
 
     @Override
-    protected String generateCompleteData() throws JSONException {
-        JSONArray itemList = new JSONArray();
-        for (Product product : getTokenObjects()) {
-            createAutocomplete(itemList, product);
-        }
-
-        return itemList.toString();
+    protected String getTokenId(Product product) {
+        return product.getBusinessKey();
     }
 
-    private static void createAutocomplete(JSONArray itemList, Product product) throws JSONException {
-        JSONObject item = getJSONObject(product.getBusinessKey(), product.getProductName(), false);
-        itemList.put(item);
+    @Override
+    protected String getTokenName(Product product) {
+        return product.getProductName() + " [" + product.getBusinessKey() + "]";
+    }
+
+    @Override
+    protected String formatMessage(String messageString, Product product) {
+        return MessageFormat.format(messageString, product.getProductName() + " [" + product.getBusinessKey() + "]");
     }
 
     public String getAddOnsJsonString(Product editProduct, String query) throws JSONException {
         List<Product> addOns = productDao.searchProductsForAddonsInProductEdit(editProduct, query);
-
-        JSONArray itemList = new JSONArray();
-        for (Product addOn : addOns) {
-            createAutocomplete(itemList, addOn);
-        }
-
-        return itemList.toString();
+        return createItemListString(addOns);
     }
 
     public String getTokenObject() {

@@ -45,7 +45,7 @@ public class ProductOrderAddOnEtl extends GenericEntityEtl {
 
     /** {@inheritDoc} */
     @Override
-    Collection<String> entityRecord(String etlDateStr, boolean isDelete, Long entityId) {
+    Collection<String> entityRecords(String etlDateStr, boolean isDelete, Long entityId) {
         Collection<String> recordList = new ArrayList<String>();
         ProductOrderAddOn entity = dao.findById(ProductOrderAddOn.class, entityId);
         if (entity != null) {

@@ -50,7 +50,7 @@ public class IrbConverter {
         if (!StringUtils.isBlank(trimmedQuery)) {
             for (ResearchProjectIRB.IrbType type : ResearchProjectIRB.IrbType.values()) {
                 Irb irb = createIrb(trimmedQuery, type, IRB_NAME_MAX_LENGTH);
-                itemList.put(TokenInput.getJSONObject(irb.getDisplayName(), irb.getDisplayName(), false));
+                itemList.put(TokenInput.getJSONObject(irb.getDisplayName(), irb.getDisplayName()));
             }
         }
         return itemList.toString();
@@ -94,7 +94,7 @@ public class IrbConverter {
     public static String getIrbCompleteData(String[] irbNumbers) throws JSONException {
         JSONArray itemList = new JSONArray();
         for (String irbNumber : irbNumbers) {
-            itemList.put(TokenInput.getJSONObject(irbNumber, irbNumber, false));
+            itemList.put(TokenInput.getJSONObject(irbNumber, irbNumber));
         }
 
         return itemList.toString();

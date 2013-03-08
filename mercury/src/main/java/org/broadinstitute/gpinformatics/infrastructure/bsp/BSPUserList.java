@@ -136,7 +136,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
     }
 
     @Inject
-    public BSPUserList(BSPManagerFactory bspManagerFactory) {
+    public BSPUserList(@SuppressWarnings("CdiInjectionPointsInspection") BSPManagerFactory bspManagerFactory) {
         this.bspManagerFactory = bspManagerFactory;
     }
 
@@ -192,7 +192,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
             return "(Unknown user: " + userId + ")";
         }
 
-        return bspUser.getFirstName() + " " + bspUser.getLastName();
+        return bspUser.getFullName();
     }
 
     public static class QADudeUser extends BspUser {
