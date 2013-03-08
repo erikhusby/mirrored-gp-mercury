@@ -138,6 +138,10 @@ public class BillingLedger implements Serializable {
         return quoteId;
     }
 
+    public void setQuoteId(String quoteId) {
+        this.quoteId = quoteId;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {

@@ -13,6 +13,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.*;
 import java.util.Collections;
@@ -23,6 +25,8 @@ import java.util.Set;
 /**
  * Database interactions involving Billing Ledger
  */
+@Stateful
+@RequestScoped
 public class BillingLedgerDao extends GenericDao {
 
     private enum BillingSessionInclusion { ALL, NO_SESSION_STARTED, SESSION_STARTED, SESSION_BILLED }
@@ -31,6 +35,20 @@ public class BillingLedgerDao extends GenericDao {
         return findAll(BillingLedger.class);
     }
 
+    /**
+     * Fetch the BillingLedgers with null quote IDs, join fetching their associated {@link ProductOrderSample}s.
+     *
+     * @return List of BillingLedgers with null quote IDs.
+     */
+    public List<BillingLedger> findWithoutQuoteId() {
+        return findAll(BillingLedger.class, new GenericDaoCallback<BillingLedger>() {
+            @Override
+            public void callback(CriteriaQuery<BillingLedger> criteriaQuery, Root<BillingLedger> root) {
+                criteriaQuery.where(getCriteriaBuilder().isNull(root.get(BillingLedger_.quoteId)));
+                root.fetch(BillingLedger_.productOrderSample);
+            }
+        });
+    }
 
     /**
      * Version of the method that should work with either {@link ProductOrder} entities xor String ProductOrder
