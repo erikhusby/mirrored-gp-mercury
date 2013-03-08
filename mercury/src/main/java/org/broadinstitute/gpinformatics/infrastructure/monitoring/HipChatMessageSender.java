@@ -16,6 +16,10 @@ public class HipChatMessageSender {
 
     private final static Log log = LogFactory.getLog(HipChatMessageSender.class);
 
+    // todo arz how to setup configuration parameters in yaml files?
+
+    private static final long HIPCHAT_THREAD_TIMEOUT = 2 * 1000;
+
     private static final String HIPCHAT_BASE_URL = "https://www.hipchat.com/v1/rooms/message";
 
     private static final String ROOM_KEY = "room_id";
@@ -43,6 +47,7 @@ public class HipChatMessageSender {
      * @param text
      * @param room
      */
+    // todo arz how to wrap this thing an injected bean so that only production errors and dev errors go to the right rooms?
     public void postSimpleTextMessage(final String text,final String room) {
         Thread messageSendingThread = new Thread(new Runnable() {
                                                     @Override
@@ -60,7 +65,7 @@ public class HipChatMessageSender {
         });
         messageSendingThread.start();
         try {
-            messageSendingThread.join(5 * 1000);
+            messageSendingThread.join(HIPCHAT_THREAD_TIMEOUT);
         }
         catch(InterruptedException e) {
             log.error("Thread posting message " + text + " to hipchat room " + room + " was interrupted.");
