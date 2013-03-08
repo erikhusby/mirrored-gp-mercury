@@ -33,15 +33,10 @@ import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.*;
-import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FLOWCELL_TYPE.EIGHT_LANE;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author breilly
@@ -135,7 +130,7 @@ public class ZimsIlluminaRunFactoryTest {
         mapBarcodeToSourceTube.put("testTube", testTube);
         LabEvent stripTubeBTransfer = labEventFactory.buildCherryPickRackToStripTubeDbFree(stripTubeBTransferEvent, new HashMap<String, TubeFormation>(), mapBarcodeToSourceTube, null, new HashMap<String, StripTube>(), new HashMap<String, RackOfTubes>());
 
-        flowcell = new IlluminaFlowcell(EIGHT_LANE, "testFlowcell", new IlluminaRunConfiguration(76, true));
+        flowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell, "testFlowcell", new IlluminaRunConfiguration(76, true));
         PlateTransferEventType flowcellTransferEvent = bettaLimsMessageFactory.buildStripTubeToFlowcell("FlowcellTransfer", "testStripTube", "testFlowcell");
         StripTube stripTube = (StripTube) getOnly(stripTubeBTransfer.getTargetLabVessels());
         labEventFactory.buildFromBettaLimsPlateToPlateDbFree(flowcellTransferEvent, stripTube, flowcell);

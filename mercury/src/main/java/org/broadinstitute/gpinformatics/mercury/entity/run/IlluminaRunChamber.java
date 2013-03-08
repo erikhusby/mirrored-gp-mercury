@@ -56,7 +56,7 @@ public class IlluminaRunChamber extends RunChamber {
 
     @Override
     public VesselGeometry getVesselGeometry() {
-        return VesselGeometry.FLOWCELL;
+        return VesselGeometry.RUN_CHAMBER;
     }
 
     /**

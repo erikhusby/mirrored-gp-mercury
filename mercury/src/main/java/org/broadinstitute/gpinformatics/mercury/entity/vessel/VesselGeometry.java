@@ -61,11 +61,28 @@ public enum VesselGeometry {
             new String[]{""},
             new String[]{""}),
 
-    FLOWCELL(
+    FLOWCELL1x8(
             "1x8",
             new String[]{""},
             new String[]{"LANE1", "LANE2", "LANE3", "LANE4", "LANE5", "LANE6", "LANE7", "LANE8"},
-            new VesselPosition[]{VesselPosition.LANE1, VesselPosition.LANE2, VesselPosition.LANE3, VesselPosition.LANE4, VesselPosition.LANE5, VesselPosition.LANE6, VesselPosition.LANE7, VesselPosition.LANE8});
+            new VesselPosition[]{VesselPosition.LANE1, VesselPosition.LANE2, VesselPosition.LANE3, VesselPosition.LANE4, VesselPosition.LANE5, VesselPosition.LANE6, VesselPosition.LANE7, VesselPosition.LANE8}),
+
+    FLOWCELL1x2(
+            "1x2",
+            new String[]{""},
+            new String[]{"LANE1", "LANE2"},
+            new VesselPosition[]{VesselPosition.LANE1, VesselPosition.LANE2}),
+
+    FLOWCELL1x1(
+            "1x1",
+            new String[]{""},
+            new String[]{"LANE1"},
+            new VesselPosition[]{VesselPosition.LANE1}),
+
+    RUN_CHAMBER(
+                "1x1",
+                new String[]{""},
+                new String[]{""});
 
     private final String name;
     private final String[] columnNames;
