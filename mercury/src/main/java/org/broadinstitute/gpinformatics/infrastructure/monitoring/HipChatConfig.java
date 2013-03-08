@@ -8,8 +8,7 @@ public class HipChatConfig extends AbstractConfig {
 
     private String baseUrl;
 
-    public HipChatConfig(String baseUrl) {
-        this.baseUrl = baseUrl;
+    public HipChatConfig() {
     }
 
     public String getBaseUrl() {
