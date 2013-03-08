@@ -18,7 +18,7 @@ public class HipChatMessageSender {
 
     // todo arz how to setup configuration parameters in yaml files?
 
-    private static final long HIPCHAT_THREAD_TIMEOUT = 2 * 1000;
+    private static final Integer CONNECTION_TIMEOUT = 2 * 1000;
 
     private static final String HIPCHAT_BASE_URL = "https://www.hipchat.com/v1/rooms/message";
 
@@ -48,28 +48,8 @@ public class HipChatMessageSender {
      * @param room
      */
     // todo arz how to wrap this thing an injected bean so that only production errors and dev errors go to the right rooms?
-    public void postSimpleTextMessage(final String text,final String room) {
-        Thread messageSendingThread = new Thread(new Runnable() {
-                                                    @Override
-                                                    public void run() {
-                                                        new JsonClient().postMessage(text,room);
-                                                    }
-                                                },
-                                                "HipChat Message Sender");
-        messageSendingThread.setDaemon(true);
-        messageSendingThread.setUncaughtExceptionHandler(new Thread.UncaughtExceptionHandler() {
-            @Override
-            public void uncaughtException(Thread thread, Throwable throwable) {
-                log.error("Error sending hipchat message " + text + " to room " + room + ".",throwable);
-            }
-        });
-        messageSendingThread.start();
-        try {
-            messageSendingThread.join(HIPCHAT_THREAD_TIMEOUT);
-        }
-        catch(InterruptedException e) {
-            log.error("Thread posting message " + text + " to hipchat room " + room + " was interrupted.");
-        }
+    public void postSimpleTextMessage(String text,String room) {
+        new JsonClient().postMessage(text,room);
     }
 
     /**
@@ -83,7 +63,8 @@ public class HipChatMessageSender {
 
         @Override
         protected void customizeClient(Client client) {
-
+            client.setConnectTimeout(CONNECTION_TIMEOUT);
+            client.setReadTimeout(CONNECTION_TIMEOUT);
         }
 
         public void postMessage(String text,String room) {
