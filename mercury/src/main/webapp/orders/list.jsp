@@ -1,6 +1,4 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.roles" %>
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -105,19 +103,19 @@
             <stripes:hidden id="dialogAction" name=""/>
             <div class="actionButtons">
 
-                <security:authorizeBlock roles="<%= roles(Developer) %>">
+                <security:authorizeBlock roles="Developer">
                     <stripes:button name="abandonOrders" value="Abandon Orders" class="btn" onclick="showConfirm('abandonOrders', 'abandon')" style="margin-right:30px;"/>
                 </security:authorizeBlock>
 
-                <security:authorizeBlock roles="<%= roles(Developer, BillingManager) %>">
+                <security:authorizeBlock roles="Developer, BillingManager">
                     <stripes:submit name="startBilling" value="Start Billing Session" class="btn" style="margin-right:30px;"/>
                 </security:authorizeBlock>
 
-                <security:authorizeBlock roles="<%= roles(Developer, PDM, BillingManager) %>">
+                <security:authorizeBlock roles="Developer, PDM, BillingManager">
                     <stripes:submit name="downloadBillingTracker" value="Download Billing Tracker" class="btn" style="margin-right:5px;"/>
                 </security:authorizeBlock>
 
-                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                <security:authorizeBlock roles="Developer, PDM">
                     <stripes:link beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.UploadTrackerActionBean" event="view">
                         Upload Billing Tracker
                     </stripes:link>

@@ -1,6 +1,4 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.roles" %>
 
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"/>
@@ -23,7 +21,7 @@
     </stripes:layout-component>
 
     <stripes:layout-component name="content">
-        <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+        <security:authorizeBlock roles="Developer, PDM">
             <p>
                 <stripes:link title="New Product" beanclass="${actionBean.class.name}" event="create" class="pull-right">
                     <span class="icon-tags"></span> New Product

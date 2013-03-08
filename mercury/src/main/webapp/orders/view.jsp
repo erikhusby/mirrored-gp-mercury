@@ -1,7 +1,5 @@
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean" %>
 <%@ page import="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean" %>
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.roles" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -195,8 +193,6 @@
                             {"bSortable": true, "sType": "numeric"},        // Yield Amount
                             {"bSortable": true, "sType" : "title-string"},  // FP Status
                             {"bSortable": true},                            // On Risk
-                            {"bSortable": true, "sType": "title-numeric"},  // Eligible
-                            {"bSortable": true, "sType" : "title-string"},  // Billed
                             {"bSortable": true},                            // Status
                             {"bSortable": true}                             // Comment
                         ]
@@ -318,7 +314,7 @@
         <div class="actionButtons">
             <%-- Do not show abandon button at all for DRAFTs, do show for Submitted *or later states* --%>
             <c:if test="${not editOrder.draft}">
-                <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                <security:authorizeBlock roles="Developer, PDM">
                     <c:choose>
                         <c:when test="${actionBean.abandonable}">
                             <c:set var="abandonTitle" value="Click to abandon ${editOrder.title}"/>
@@ -340,7 +336,7 @@
                 <%-- MLC PDOs can be placed by PM or PDMs, so I'm making the security tag accept either of those roles for 'Place Order'.
                      I am also putting 'Validate' under that same security tag since I think that may have the power to alter 'On-Riskedness'
                      for PDO samples --%>
-                <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+                <security:authorizeBlock roles="Developer, PDM, PM">
 
                     <stripes:submit name="placeOrder" value="Validate and Place Order"
                                     disabled="${!actionBean.canPlaceOrder}" class="btn"/>
@@ -354,7 +350,7 @@
                     <stripes:param name="productOrder" value="${editOrder.businessKey}"/>
                 </stripes:link>
 
-                <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+                <security:authorizeBlock roles="Developer, PDM, PM">
                     <stripes:button onclick="showDeleteConfirm('deleteOrder')" name="deleteOrder"
                                     value="Delete Draft" style="margin-left: 5px;" class="btn"/>
                 </security:authorizeBlock>
@@ -363,7 +359,7 @@
     </stripes:form>
 
         <%-- PDO edit should only be available to PDMs, i.e. not PMs. --%>
-        <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+        <security:authorizeBlock roles="Developer, PDM">
             <c:if test="${!editOrder.draft}">
                 <stripes:link title="Click to edit ${editOrder.title}"
                     beanclass="${actionBean.class.name}" event="edit" class="pull-right">
@@ -566,7 +562,7 @@
                 Samples
 
                 <c:if test="${!editOrder.draft}">
-                    <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                    <security:authorizeBlock roles="Developer, PDM">
                         <span class="actionButtons">
                             <stripes:button name="deleteSamples" value="Delete Samples" class="btn"
                                         style="margin-left:30px;" onclick="showConfirm('deleteSamples', 'delete')"/>

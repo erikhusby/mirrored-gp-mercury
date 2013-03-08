@@ -1,5 +1,3 @@
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.roles" %>
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 
 <stripes:useActionBean var="actionBean"
@@ -8,7 +6,7 @@
 <stripes:layout-render name="/layout.jsp" pageTitle="Details for #{actionBean.editProduct.partNumber}" sectionTitle="Details for #{actionBean.editProduct.partNumber}">
 
     <stripes:layout-component name="content">
-        <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+        <security:authorizeBlock roles="Developer, PDM">
             <p>
                 <stripes:link title="Click to edit ${actionBean.editProduct.productName}" href="${ctxpath}/products/product.action?edit" class="pull-right">
                     <span class="icon-tags"></span> Edit product

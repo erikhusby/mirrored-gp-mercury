@@ -1,8 +1,5 @@
-<%@ page import="org.broadinstitute.gpinformatics.mercury.entity.DB" %>
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <%@ taglib uri="http://mercury.broadinstitute.org/Mercury/security" prefix="security" %>
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.Role.*" %>
-<%@ page import="static org.broadinstitute.gpinformatics.mercury.entity.DB.roles" %>
 <%--
   ~ The Broad Institute
   ~ SOFTWARE COPYRIGHT NOTICE AGREEMENT
@@ -27,7 +24,7 @@
                                 tabindex="=1" event="list">List</stripes:link>
                     </li>
                     <%-- Only PMs (and Developers) can create Research Projects. --%>
-                    <security:authorizeBlock roles="<%= roles(Developer, PM) %>">
+                    <security:authorizeBlock roles="Developer, PM">
                         <li>
                             <stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.athena.presentation.projects.ResearchProjectActionBean"
@@ -46,7 +43,7 @@
                                 tabindex="=1" event="list">List</stripes:link>
                     </li>
                     <%-- PMs and PDMs (and Developers) can place Product Orders. --%>
-                    <security:authorizeBlock roles="<%= roles(Developer, PDM, PM) %>">
+                    <security:authorizeBlock roles="Developer, PDM, PM">
                         <li>
                             <stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderActionBean"
@@ -71,7 +68,7 @@
                                 tabindex="=1" event="list">List</stripes:link>
                     </li>
                     <%-- Only PDMs (and Developers) can create Products. --%>
-                    <security:authorizeBlock roles="<%= roles(Developer, PDM) %>">
+                    <security:authorizeBlock roles="Developer, PDM">
                         <li>
                             <stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.athena.presentation.products.ProductActionBean"
@@ -82,14 +79,14 @@
             </li>
 
             <security:authorizeBlock
-                    roles="<%= roles(Developer)%>">
+                    roles="Developer)%>">
                 <li class="dropdown">
 
                     <a id="labNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
                             class="icon-tasks"></span> Lab <b class="caret"></b></a>
                     <ul class="dropdown-menu" role="menu">
                         <security:authorizeBlock
-                                roles="<%= roles(Developer, LabUser, PDM) %>">
+                                roles="Developer, LabUser, PDM">
                             <li><stripes:link
                                     beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.BucketViewActionBean"
                                     event="view">Buckets</stripes:link></li>
@@ -99,7 +96,7 @@
                                         event="list">Controls</stripes:link>
                             </li>
                         </security:authorizeBlock>
-                        <security:authorizeBlock roles="<%= roles(Developer) %>">
+                        <security:authorizeBlock roles="Developer">
                             <li><a tabindex="-1" href="${ctxpath}/reagent/design.action?list">Reagent Designs</a></li>
                         </security:authorizeBlock>
                     </ul>
@@ -107,7 +104,7 @@
             </security:authorizeBlock>
 
             <security:authorizeBlock
-                    roles="<%= roles(Developer) %>">
+                    roles="Developer">
                 <li class="dropdown">
 
                     <a id="adminNav" href="#" role="button" class="dropdown-toggle" data-toggle="dropdown"><span
@@ -122,7 +119,7 @@
 
         </ul>
 
-        <security:authorizeBlock roles="<%= roles(Developer) %>">
+        <security:authorizeBlock roles="Developer">
             <ul class="nav pull-right global-search navbar-search">
                 <li style="white-space:nowrap;">
                     <stripes:form
