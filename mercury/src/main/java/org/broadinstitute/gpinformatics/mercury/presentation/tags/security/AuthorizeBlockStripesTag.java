@@ -65,8 +65,8 @@ public class AuthorizeBlockStripesTag extends TagSupport {
             if (exclusionRoles != null) {
                 String[] splitRoles = exclusionRoles.split(",");
                 for (String role : splitRoles) {
-                    DB.Role dbRole = DB.Role.valueOf(role.trim());
-                    if (request.isUserInRole(dbRole.name) || (dbRole == DB.Role.All)) {
+                    DB.Role dbRole = DB.Role.findRoleByName(role.trim());
+                    if ((dbRole != null) && (request.isUserInRole(dbRole.name) || (dbRole == DB.Role.All))) {
                         // User has a role that should be skipped or "All" roles to be excluded (?).
                         return SKIP_BODY;
                     }
@@ -77,15 +77,15 @@ public class AuthorizeBlockStripesTag extends TagSupport {
             if (roles != null) {
                 String[] splitRoles = roles.split(",");
                 for (String role : splitRoles) {
-                    DB.Role dbRole = DB.Role.valueOf(role.trim());
-                    if (request.isUserInRole(dbRole.name) || (dbRole == DB.Role.All)) {
+                    DB.Role dbRole = DB.Role.findRoleByName(role.trim());
+                    if ((dbRole != null) && (request.isUserInRole(dbRole.name) || (dbRole == DB.Role.All))) {
                         // User in role or all roles allowed.
                         return EVAL_BODY_INCLUDE;
                     }
                 }
             }
         } catch (Exception e) {
-            log.warn("Problem determining if the user was in the role", e);
+            log.warn("Problem determining if the user was in the role: " + roles, e);
         }
 
         return super.doStartTag();
