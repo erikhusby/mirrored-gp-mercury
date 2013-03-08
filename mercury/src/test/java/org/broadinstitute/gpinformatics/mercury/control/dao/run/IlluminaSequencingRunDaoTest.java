@@ -23,7 +23,7 @@ import java.util.Date;
  */
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-public class IlluminaSequencingRunFactoryDaoTest extends ContainerTest{
+public class IlluminaSequencingRunDaoTest extends ContainerTest{
 
 
     @Inject
@@ -57,7 +57,11 @@ public class IlluminaSequencingRunFactoryDaoTest extends ContainerTest{
         }
         utx.begin();
 
-        IlluminaFlowcell initialFCell =
+        runDate = new Date();
+        flowcellBarcode = "flowBcode" + runDate.getTime();
+
+
+        IlluminaFlowcell initialFCell  =
                 new IlluminaFlowcell(IlluminaFlowcell.FLOWCELL_TYPE.TWO_LANE,flowcellBarcode);
 
         flowcellDao.persist(initialFCell);
@@ -67,9 +71,6 @@ public class IlluminaSequencingRunFactoryDaoTest extends ContainerTest{
         testFlowcell = flowcellDao.findByBarcode(flowcellBarcode);
         Assert.assertNotNull(testFlowcell);
 
-
-        runDate = new Date();
-        flowcellBarcode = "flowBcode" + runDate.getTime();
         runName = "runTest" + runDate.getTime();
         runBarcode = "runBcode" + runDate.getTime();
         runPath = "/start/of/run/";
