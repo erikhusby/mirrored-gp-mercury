@@ -116,3 +116,5 @@ textarea.controlledText { width: 550px; }
 .barAbandon { height: 100%; float:left; background-color: #eed6e1; }
 
 .padright { margin-right: 30px; }
+
+.clear-helper { margin-left: -12px; color: gray; }
