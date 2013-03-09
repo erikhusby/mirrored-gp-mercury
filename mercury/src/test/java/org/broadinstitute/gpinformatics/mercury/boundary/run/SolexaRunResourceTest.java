@@ -40,6 +40,14 @@ public class SolexaRunResourceTest extends ContainerTest {
         SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
 
         final String flowcellBarcode = "testcaseFlowcell" + runDate.getTime();
+
+        IlluminaFlowcell newFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FLOWCELL_TYPE.TWO_LANE,
+                                                                   flowcellBarcode);
+
+        flowcellDao.persist(newFlowcell);
+        flowcellDao.flush();
+        flowcellDao.clear();
+
         final String runBarcode = "Run" + format.format(runDate);
         final String runName = "testRunName"+runDate.getTime();
         String baseDirectory =System.getProperty("JBOSS_HOME", "./");
