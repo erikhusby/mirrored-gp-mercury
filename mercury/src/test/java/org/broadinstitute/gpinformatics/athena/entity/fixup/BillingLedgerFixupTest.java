@@ -4,6 +4,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger_;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -11,9 +13,12 @@ import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 
 import java.text.MessageFormat;
 import java.util.Collections;
+import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
@@ -86,10 +91,10 @@ public class BillingLedgerFixupTest extends Arquillian {
      *
      */
     @Test(enabled = false)
-    public void testBackfillLedgerQuotes() {
+    public void backfillLedgerQuotes() {
 
         int counter = 0;
-        for (BillingLedger ledger : billingLedgerDao.findWithoutQuoteId()) {
+        for (BillingLedger ledger : billingLedgerDao.findBilledLedgersWithoutQuoteId()) {
             String quoteId = ledger.getProductOrderSample().getProductOrder().getQuoteId();
 
             final int BATCH_SIZE = 1000;
@@ -105,5 +110,44 @@ public class BillingLedgerFixupTest extends Arquillian {
         // entries.  It doesn't matter what we pass this method, it will create the transaction around the
         // extended persistence context that holds the entities we modified above.
         billingLedgerDao.persistAll(Collections.emptyList());
+    }
+
+
+    /**
+     * Largely copy/pasted from #backfillLedgerQuotes above, used to null out ledger quote IDs when we
+     * discover we didn't assign them properly before and need to revise the assignments.
+     */
+    @Test(enabled = false)
+    public void nullOutAllQuotes() {
+
+        int counter = 0;
+
+        List<BillingLedger> billingLedgers =
+                billingLedgerDao.findAll(BillingLedger.class, new GenericDao.GenericDaoCallback<BillingLedger>() {
+                    @Override
+                    public void callback(CriteriaQuery<BillingLedger> criteriaQuery, Root<BillingLedger> root) {
+                        // This runs much more slowly without the fetch as these would otherwise be singleton selected.
+                        root.fetch(BillingLedger_.productOrderSample);
+                    }
+                });
+
+
+        for (BillingLedger ledger : billingLedgers) {
+
+            final int BATCH_SIZE = 2000;
+            ledger.setQuoteId(null);
+
+            if (++counter % BATCH_SIZE == 0) {
+                // Only create a transaction for every BATCH_SIZE ledger entries, otherwise this test runs
+                // excruciatingly slowly.
+                billingLedgerDao.persist(ledger);
+                logger.info(MessageFormat.format("Issued persist at record {0}", counter));
+            }
+        }
+        // We need the transaction that #persistAll gives us to get the last set of modulus BATCH_SIZE ledger
+        // entries.  It doesn't matter what we pass this method, it will create the transaction that persists
+        // the entities modified above.
+        billingLedgerDao.persistAll(Collections.emptyList());
+
     }
 }
