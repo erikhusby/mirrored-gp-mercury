@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -10,9 +12,14 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 
+import java.text.MessageFormat;
+import java.util.Collections;
+
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 public class BillingLedgerFixupTest extends Arquillian {
+
+    private static final Log logger = LogFactory.getLog(BillingLedgerFixupTest.class);
 
     @Inject
     private BillingLedgerDao billingLedgerDao;
@@ -81,11 +88,22 @@ public class BillingLedgerFixupTest extends Arquillian {
     @Test(enabled = false)
     public void testBackfillLedgerQuotes() {
 
+        int counter = 0;
         for (BillingLedger ledger : billingLedgerDao.findWithoutQuoteId()) {
             String quoteId = ledger.getProductOrderSample().getProductOrder().getQuoteId();
 
+            final int BATCH_SIZE = 1000;
             ledger.setQuoteId(quoteId);
-            billingLedgerDao.persist(ledger);
+            if (++counter % BATCH_SIZE == 0) {
+                // Only create a transaction for every BATCH_SIZE ledger entries, otherwise this test runs
+                // excruciatingly slowly.
+                billingLedgerDao.persist(ledger);
+                logger.info(MessageFormat.format("Issued persist at record {0}", counter));
+            }
         }
+        // We need the transaction that #persistAll gives us to get the last set of modulus BATCH_SIZE ledger
+        // entries.  It doesn't matter what we pass this method, it will create the transaction around the
+        // extended persistence context that holds the entities we modified above.
+        billingLedgerDao.persistAll(Collections.emptyList());
     }
 }
