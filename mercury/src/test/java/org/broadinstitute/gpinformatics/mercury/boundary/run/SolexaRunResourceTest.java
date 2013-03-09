@@ -39,26 +39,28 @@ public class SolexaRunResourceTest extends ContainerTest {
 
         SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
 
-        final String flowcellBarcode = "Flowcell" + runDate.getTime();
+        final String flowcellBarcode = "testcaseFlowcell" + runDate.getTime();
         final String runBarcode = "Run" + format.format(runDate);
-        final String runFileDirectory = "testRoot" + File.separator + "finalPath" + File.separator;
-        try {
+        final String runName = "testRunName"+runDate.getTime();
+        String baseDirectory =System.getProperty("JBOSS_HOME", "./");
+        final String runFileDirectory = baseDirectory+File.separator + "bin"  +File.separator +
+                                                "testRoot" + File.separator + "finalPath"+runDate.getTime() +
+                                                File.separator+runName;
+        File runFile = new File(runFileDirectory);
+        boolean result = runFile.mkdirs();
+        Assert.assertTrue(result);
 
-            File runFile = new File(runFileDirectory);
-            boolean result = runFile.mkdirs();
-
-            Assert.assertTrue(result);
+//        try {
 
             String response = Client.create().resource(baseUrl.toExternalForm() + "rest/solexarun")
                                     .type(MediaType.APPLICATION_XML_TYPE)
                                     .accept(MediaType.APPLICATION_XML)
                                     .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
-                                                                     File.createTempFile(runFileDirectory, ".txt")
-                                                                         .getAbsolutePath(), null)).post(String.class);
+                                                                     runFileDirectory, null)).post(String.class);
             System.out.println(response);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+//        } catch (IOException e) {
+//            throw new RuntimeException(e);
+//        }
 
         IlluminaFlowcell createdFlowcell = flowcellDao.findByBarcode(flowcellBarcode);
 
