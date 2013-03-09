@@ -5,16 +5,22 @@ import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.mercury.control.AbstractJsonJerseyClientService;
 
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
+import java.io.Serializable;
 
 /**
  * Class which sends a message to hipchat.
  * See https://www.hipchat.com/docs/api/method/rooms/message
  * to get more details about the hipchat API.
  */
-public class HipChatMessageSender {
+@Stateful
+@RequestScoped
+public class HipChatMessageSender implements Serializable {
 
     @Inject
     private HipChatConfig config;
@@ -44,6 +50,12 @@ public class HipChatMessageSender {
      * for anything other than mercury
      */
     private static final String AUTHORIZATION_TOKEN = "db3e86c451ef8ac0cddb94133e0455";
+
+    public HipChatMessageSender() {}
+
+    public HipChatMessageSender(HipChatConfig config) {
+        this.config = config;
+    }
 
     /**
      * Posts a simple text message to the given room, using the default
@@ -81,14 +93,11 @@ public class HipChatMessageSender {
 
             HipchatResponse response = webResource.post(HipchatResponse.class);
 
-            if (response != null) {
-                if (!SENT_RESPONSE.equals(response.getStatus()))  {
-                    throw new RuntimeException("Got a bad response from hipchat server: " + response.getStatus());
-                }
-                // else it's all good
-            }
-            else {
+            if (response == null) {
                 throw new RuntimeException("Got no response from hipchat server.");
+            }
+            if (!SENT_RESPONSE.equals(response.getStatus())) {
+                throw new RuntimeException("Got a bad response from hipchat server: " + response.getStatus());
             }
         }
     }
