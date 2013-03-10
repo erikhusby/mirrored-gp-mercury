@@ -41,12 +41,6 @@ public class ThriftConfig extends AbstractConfig implements Serializable {
         this.port = port;
     }
 
-    @Produces
-    @Default
-    public ThriftConfig produce() {
-        return produce(ThriftConfig.class);
-    }
-
     public static ThriftConfig produce(Deployment deployment) {
         return produce(ThriftConfig.class, deployment);
     }

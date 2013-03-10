@@ -66,12 +66,6 @@ public class BSPConfig extends AbstractConfig implements LoginAndPassword, Seria
         return String.format("http://%s:%d/ws/bsp/%s", getHost(), getPort(), suffix);
     }
 
-    @Produces
-    @Default
-    public BSPConfig produce() {
-        return produce(BSPConfig.class);
-    }
-
     public static BSPConfig produce(Deployment deployment) {
         return produce(BSPConfig.class, deployment);
     }

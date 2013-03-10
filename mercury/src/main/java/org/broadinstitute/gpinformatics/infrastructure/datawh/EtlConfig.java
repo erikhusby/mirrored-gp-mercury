@@ -2,6 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
@@ -22,9 +23,9 @@ public class EtlConfig extends AbstractConfig implements Serializable {
         this.datawhEtlDirRoot = datawhEtlDirRoot;
     }
 
-    @Produces
-    @Default
-    public EtlConfig produce() {
-        return produce(EtlConfig.class);
+
+    public static EtlConfig produce(Deployment deployment) {
+        return produce(EtlConfig.class, deployment);
     }
+
 }

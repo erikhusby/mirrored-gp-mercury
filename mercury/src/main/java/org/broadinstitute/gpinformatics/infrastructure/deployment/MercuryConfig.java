@@ -21,9 +21,8 @@ public class MercuryConfig extends AbstractConfig implements Serializable {
         this.url = url;
     }
 
-    @Produces
-    @Default
-    public MercuryConfig produce() {
-        return produce(MercuryConfig.class);
+    public static MercuryConfig produce(Deployment deployment) {
+        return produce(MercuryConfig.class, deployment);
     }
+
 }

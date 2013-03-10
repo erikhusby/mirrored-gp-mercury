@@ -3,6 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.gap;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 
 import javax.enterprise.inject.Default;
@@ -45,10 +46,8 @@ public class GAPConfig extends AbstractConfig implements LoginAndPassword, Seria
         this.url = url;
     }
 
-    @Produces
-    @Default
-    public GAPConfig produce() {
-
-        return produce(GAPConfig.class);
+    public static GAPConfig produce(Deployment deployment) {
+        return produce(GAPConfig.class, deployment);
     }
+
 }

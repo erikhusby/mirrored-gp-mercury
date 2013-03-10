@@ -30,11 +30,6 @@ public class SquidConfig extends AbstractConfig implements Serializable {
         this.url = url;
     }
 
-    @Produces
-    @Default
-    public SquidConfig produce() {
-        return super.produce(SquidConfig.class);
-    }
 
     public static SquidConfig produce(Deployment deployment) {
         return produce(SquidConfig.class, deployment);

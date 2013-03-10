@@ -59,12 +59,6 @@ public class BettalimsConfig extends AbstractConfig implements Serializable {
         this.jmsQueue = jmsQueue;
     }
 
-    @Produces
-    @Default
-    public BettalimsConfig produce() {
-        return produce(BettalimsConfig.class);
-    }
-
     public static BettalimsConfig produce(Deployment deployment) {
         return produce(BettalimsConfig.class, deployment);
     }

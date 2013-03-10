@@ -70,13 +70,6 @@ public class JiraConfig extends AbstractConfig implements LoginAndPassword, Seri
         return getUrlBase() + "/browse/" + jiraTicketName;
     }
 
-    @Produces
-    @Default
-    public JiraConfig produce() {
-        return produce(JiraConfig.class);
-    }
-
-
     public static JiraConfig produce(Deployment deployment) {
         return produce(JiraConfig.class, deployment);
     }
