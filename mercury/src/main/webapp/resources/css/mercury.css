@@ -118,5 +118,6 @@ textarea.controlledText { width: 550px; }
 .padright { margin-right: 30px; }
 
 /* The 'x' for clearing the filter */
-.clear-helper { margin-left: -12px; color: gray; }
+.clear-helper { margin-left: -12px; color: #c8c8c8; font-weight: bold; cursor: pointer; }
+.dataTables_filter label { width: 300px; }
 .dataTables_filter label input { padding-right: 15px; }
