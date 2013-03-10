@@ -1,9 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira;
 
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Produces;
 import java.io.Serializable;
 
 @ConfigKey("jira")
@@ -65,5 +68,16 @@ public class JiraConfig extends AbstractConfig implements LoginAndPassword, Seri
 
     public String createTicketUrl(String jiraTicketName) {
         return getUrlBase() + "/browse/" + jiraTicketName;
+    }
+
+    @Produces
+    @Default
+    public JiraConfig produce() {
+        return produce(JiraConfig.class);
+    }
+
+
+    public static JiraConfig produce(Deployment deployment) {
+        return produce(JiraConfig.class, deployment);
     }
 }

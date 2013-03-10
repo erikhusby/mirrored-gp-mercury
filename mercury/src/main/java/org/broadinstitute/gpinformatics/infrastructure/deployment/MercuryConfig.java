@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Produces;
 import java.io.Serializable;
 
 /**
@@ -17,5 +19,11 @@ public class MercuryConfig extends AbstractConfig implements Serializable {
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    @Produces
+    @Default
+    public MercuryConfig produce() {
+        return produce(MercuryConfig.class);
     }
 }

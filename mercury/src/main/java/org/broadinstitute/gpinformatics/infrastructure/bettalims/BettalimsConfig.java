@@ -2,7 +2,10 @@ package org.broadinstitute.gpinformatics.infrastructure.bettalims;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Produces;
 import java.io.Serializable;
 
 /**
@@ -55,4 +58,15 @@ public class BettalimsConfig extends AbstractConfig implements Serializable {
     public void setJmsQueue(String jmsQueue) {
         this.jmsQueue = jmsQueue;
     }
+
+    @Produces
+    @Default
+    public BettalimsConfig produce() {
+        return produce(BettalimsConfig.class);
+    }
+
+    public static BettalimsConfig produce(Deployment deployment) {
+        return produce(BettalimsConfig.class, deployment);
+    }
+
 }

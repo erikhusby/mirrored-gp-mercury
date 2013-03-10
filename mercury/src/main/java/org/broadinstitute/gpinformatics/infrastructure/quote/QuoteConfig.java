@@ -1,9 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.quote;
 
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Produces;
 import java.io.Serializable;
 
 @ConfigKey("quote")
@@ -41,5 +44,15 @@ public class QuoteConfig extends AbstractConfig implements LoginAndPassword, Ser
 
     public void setUrl(String url) {
         this.url = url;
+    }
+
+    @Produces
+    @Default
+    public QuoteConfig produce() {
+        return produce(QuoteConfig.class);
+    }
+
+    public static QuoteConfig produce(Deployment deployment) {
+        return produce(QuoteConfig.class, deployment);
     }
 }

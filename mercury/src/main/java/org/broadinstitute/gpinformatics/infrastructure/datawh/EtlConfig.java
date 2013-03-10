@@ -3,11 +3,15 @@ package org.broadinstitute.gpinformatics.infrastructure.datawh;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Produces;
+import java.io.Serializable;
+
 /**
  * Configuration for the data warehouse ETL service.
  */
 @ConfigKey("datawhEtl")
-public class EtlConfig extends AbstractConfig {
+public class EtlConfig extends AbstractConfig implements Serializable {
     private String datawhEtlDirRoot;
 
     public String getDatawhEtlDirRoot() {
@@ -16,5 +20,11 @@ public class EtlConfig extends AbstractConfig {
 
     public void setDatawhEtlDirRoot(String datawhEtlDirRoot) {
         this.datawhEtlDirRoot = datawhEtlDirRoot;
+    }
+
+    @Produces
+    @Default
+    public EtlConfig produce() {
+        return produce(EtlConfig.class);
     }
 }

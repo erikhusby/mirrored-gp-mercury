@@ -4,7 +4,10 @@ package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Produces;
 import java.io.Serializable;
 
 @ConfigKey("thrift")
@@ -37,4 +40,15 @@ public class ThriftConfig extends AbstractConfig implements Serializable {
     public void setPort(int port) {
         this.port = port;
     }
+
+    @Produces
+    @Default
+    public ThriftConfig produce() {
+        return produce(ThriftConfig.class);
+    }
+
+    public static ThriftConfig produce(Deployment deployment) {
+        return produce(ThriftConfig.class, deployment);
+    }
+
 }

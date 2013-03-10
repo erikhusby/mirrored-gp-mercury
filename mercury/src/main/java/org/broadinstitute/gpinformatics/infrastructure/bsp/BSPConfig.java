@@ -1,9 +1,12 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Produces;
 import java.io.Serializable;
 
 
@@ -60,4 +63,15 @@ public class BSPConfig extends AbstractConfig implements LoginAndPassword, Seria
     public String getWSUrl(String suffix) {
         return String.format("http://%s:%d/ws/bsp/%s", getHost(), getPort(), suffix);
     }
+
+    @Produces
+    @Default
+    public BSPConfig produce() {
+        return produce(BSPConfig.class);
+    }
+
+    public static BSPConfig produce(Deployment deployment) {
+        return produce(BSPConfig.class, deployment);
+    }
+
 }

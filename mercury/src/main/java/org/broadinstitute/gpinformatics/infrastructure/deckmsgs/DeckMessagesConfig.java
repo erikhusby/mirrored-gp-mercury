@@ -3,6 +3,8 @@ package org.broadinstitute.gpinformatics.infrastructure.deckmsgs;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Produces;
 import java.io.Serializable;
 
 /**
@@ -22,5 +24,11 @@ public class DeckMessagesConfig extends AbstractConfig implements Serializable {
 
     public void setMessageStoreDirRoot(String messageStoreDirRoot) {
         this.messageStoreDirRoot = messageStoreDirRoot;
+    }
+
+    @Produces
+    @Default
+    public static DeckMessagesConfig produce() {
+        return produce(DeckMessagesConfig.class);
     }
 }

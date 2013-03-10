@@ -5,6 +5,8 @@ import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 
+import javax.enterprise.inject.Default;
+import javax.enterprise.inject.Produces;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
@@ -57,5 +59,11 @@ public class TableauConfig extends AbstractConfig implements Serializable {
             return null;
         }
         return reportUrlMap.get(reportName);
+    }
+
+    @Produces
+    @Default
+    public TableauConfig produce() {
+        return produce(TableauConfig.class);
     }
 }

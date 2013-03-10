@@ -19,9 +19,9 @@ public class QuoteServiceProducer {
 
     public static QuoteService qaInstance() {
 
-        QuoteConfig quoteConfig = QuoteConfigProducer.getConfig( QA );
+        QuoteConfig quoteConfig = QuoteConfig.produce(QA);
 
-        return new QuoteServiceImpl( quoteConfig );
+        return new QuoteServiceImpl(quoteConfig);
     }
 
 
@@ -35,10 +35,9 @@ public class QuoteServiceProducer {
     @SessionScoped
     public QuoteService produce(@New QuoteServiceStub stub, @New QuoteServiceImpl impl) {
 
-        if ( deployment == Deployment.STUBBY )
+        if (deployment == Deployment.STUBBY) {
             return stub;
-
+        }
         return impl;
-
     }
 }

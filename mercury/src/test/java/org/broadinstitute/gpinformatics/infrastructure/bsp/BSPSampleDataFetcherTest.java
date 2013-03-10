@@ -16,8 +16,8 @@ public class BSPSampleDataFetcherTest {
      */
     @Test(groups = {EXTERNAL_INTEGRATION}, enabled = false)
     public void test_NPE_on_sample_with_multiple_matches_and_some_null_data() {
-        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(new BSPSampleSearchServiceImpl(new BSPConfigProducer().produce(Deployment.QA)));
-       BSPSampleDTO bspSampleDTO = fetcher.fetchSingleSampleFromBSP("SM-2NQU6");
+        BSPSampleDataFetcher fetcher = new BSPSampleDataFetcher(new BSPSampleSearchServiceImpl(BSPConfig.produce(Deployment.QA)));
+        BSPSampleDTO bspSampleDTO = fetcher.fetchSingleSampleFromBSP("SM-2NQU6");
 
         Assert.assertNull(bspSampleDTO.getCollaboratorsSampleName());
         Assert.assertNull(bspSampleDTO.getSampleLsid());

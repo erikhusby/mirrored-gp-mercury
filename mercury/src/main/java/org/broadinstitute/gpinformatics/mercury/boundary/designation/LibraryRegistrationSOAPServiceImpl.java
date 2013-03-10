@@ -1,13 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.designation;
 
-import org.broadinstitute.gpinformatics.mercury.boundary.squid.LibraryRegistrationPortType;
-import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequelLibrary;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.DeploymentProducer;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Impl;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
-import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfigProducer;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidWebServiceClient;
+import org.broadinstitute.gpinformatics.mercury.boundary.squid.LibraryRegistrationPortType;
+import org.broadinstitute.gpinformatics.mercury.boundary.squid.SequelLibrary;
 
 import javax.inject.Inject;
 
@@ -31,19 +30,19 @@ public class LibraryRegistrationSOAPServiceImpl extends SquidWebServiceClient<Li
     private SquidConfig squidConfig;
 
     /**
-     * Managed Bean classes must have no-arg constructor or constructor annotiated @Initializer
+     * Managed Bean classes must have no-arg constructor or constructor annotated @Initializer.
      */
     public LibraryRegistrationSOAPServiceImpl() {
     }
 
     /**
-     * Deployment-specific constructor, not driven by SEQUEL_DEPLOYMENT
+     * Deployment-specific constructor, not driven by MERCURY_DEPLOYMENT.
      *
      * @param deployment
      */
     public LibraryRegistrationSOAPServiceImpl(Deployment deployment) {
 
-        squidConfig = SquidConfigProducer.getConfig(deployment);
+        squidConfig = SquidConfig.produce(deployment);
 
     }
 
@@ -78,7 +77,7 @@ public class LibraryRegistrationSOAPServiceImpl extends SquidWebServiceClient<Li
         if ( squidConfig == null ) {
 
             final Deployment deployment = deploymentProducer.produce();
-            squidConfig = SquidConfigProducer.getConfig(deployment);
+            squidConfig = SquidConfig.produce(deployment);
         }
 
 
