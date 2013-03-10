@@ -92,7 +92,7 @@
                 $j('#dateRangeDiv').dateRangeSelector();
 
                 // add clear box to filter
-                $j(".dataTables_filter>label>input").clearable();
+                $j('.dataTables_filter input').clearable();
             });
 
             $j(function () {
