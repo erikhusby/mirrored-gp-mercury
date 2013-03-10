@@ -48,7 +48,7 @@ public class QuoteConfig extends AbstractConfig implements LoginAndPassword, Ser
 
     @Produces
     @Default
-    public QuoteConfig produce() {
+    public static QuoteConfig produce() {
         return produce(QuoteConfig.class);
     }
 

@@ -71,4 +71,5 @@ public class DeploymentProducer implements Serializable {
     public static Deployment getDeployment() {
         return deployment;
     }
+
 }

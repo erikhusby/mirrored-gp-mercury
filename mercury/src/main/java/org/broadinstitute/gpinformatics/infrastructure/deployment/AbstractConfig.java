@@ -1,12 +1,17 @@
 package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import javax.inject.Inject;
 
 /**
  * Base class of concrete configurations.
  */
 public abstract class AbstractConfig {
+
+    private static final Log log = LogFactory.getLog(AbstractConfig.class);
 
     /**
      * This appears to be unused but has proven useful in past debugging to explicitly identify the external deployment.
@@ -46,7 +51,7 @@ public abstract class AbstractConfig {
      * @return Appropriately configured AbstractConfig-derived instance.
      */
     protected static <C extends AbstractConfig> C produce(Class<C> clazz) {
-
+        log.info("Creating for class " + clazz.getCanonicalName());
         return produce(clazz, DeploymentProducer.getDeployment());
     }
 

@@ -28,7 +28,7 @@ public class DeckMessagesConfig extends AbstractConfig implements Serializable {
 
     @Produces
     @Default
-    public static DeckMessagesConfig produce() {
+    public DeckMessagesConfig produce() {
         return produce(DeckMessagesConfig.class);
     }
 }

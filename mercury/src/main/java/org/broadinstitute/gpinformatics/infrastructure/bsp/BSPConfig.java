@@ -22,7 +22,9 @@ public class BSPConfig extends AbstractConfig implements LoginAndPassword, Seria
 
     private int port;
 
-    public BSPConfig() {}
+    public BSPConfig() {
+
+    }
 
     public String getLogin() {
         return login;
