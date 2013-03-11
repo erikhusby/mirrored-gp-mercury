@@ -4,7 +4,6 @@ import org.hibernate.envers.Audited;
 
 import javax.persistence.Entity;
 import java.util.Date;
-import java.util.HashSet;
 
 @Entity
 @Audited
@@ -16,8 +15,8 @@ public class IlluminaSequencingRun extends SequencingRun {
                                  String machineName,
                                  Long operator,
                                  boolean isTestRun,
-                                 Date runDate) {
-        super(runName, runBarcode, machineName, operator, isTestRun, runDate, new HashSet<RunCartridge>(){{add(flowcell);}});
+                                 Date runDate, OutputDataLocation dataLocation) {
+        super(runName, runBarcode, machineName, operator, isTestRun, runDate, flowcell, dataLocation);
     }
 
     protected IlluminaSequencingRun() {

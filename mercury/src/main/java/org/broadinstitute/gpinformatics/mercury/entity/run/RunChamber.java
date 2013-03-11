@@ -32,8 +32,6 @@ public abstract class RunChamber extends LabVessel {
         super(label);
     }
 
-    public abstract RunConfiguration getRunConfiguration();
-
     /**
      * Does this belong on the chamber or the run
      * configuration?  Not sure it makes much differenct.

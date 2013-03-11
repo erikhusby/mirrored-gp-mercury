@@ -136,7 +136,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
     }
 
     @Inject
-    public BSPUserList(BSPManagerFactory bspManagerFactory) {
+    public BSPUserList(@SuppressWarnings("CdiInjectionPointsInspection") BSPManagerFactory bspManagerFactory) {
         this.bspManagerFactory = bspManagerFactory;
     }
 

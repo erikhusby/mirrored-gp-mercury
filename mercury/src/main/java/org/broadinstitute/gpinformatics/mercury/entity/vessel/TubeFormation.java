@@ -106,8 +106,8 @@ public class TubeFormation extends LabVessel implements VesselContainerEmbedder<
     }
 
     @Override
-    public CONTAINER_TYPE getType() {
-        return CONTAINER_TYPE.TUBE_FORMATION;
+    public ContainerType getType() {
+        return ContainerType.TUBE_FORMATION;
     }
 
     @Override

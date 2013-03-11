@@ -24,7 +24,9 @@ import org.broadinstitute.gpinformatics.athena.boundary.BuildInfoBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.JiraLink;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.widget.daterange.DateRangeSelector;
+import org.broadinstitute.gpinformatics.mercury.entity.DB;
 
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.io.InputStream;
@@ -408,5 +410,9 @@ public class CoreActionBean implements ActionBean {
      */
     public String jiraUrl(String jiraTicketKey) {
         return jiraLink.browseUrl(jiraTicketKey);
+    }
+
+    public String[] getRoles(@Nonnull DB.Role... roles) {
+        return DB.roles(roles);
     }
 }

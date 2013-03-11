@@ -383,10 +383,10 @@ public class VesselContainer<T extends LabVessel> {
 
     public boolean hasAnonymousVessels() {
         boolean anonymousVessels = false;
-        LabVessel.CONTAINER_TYPE type = embedder.getType();
-        if (type == LabVessel.CONTAINER_TYPE.STATIC_PLATE
-                || type == LabVessel.CONTAINER_TYPE.FLOWCELL
-                || type == LabVessel.CONTAINER_TYPE.STRIP_TUBE) {
+        LabVessel.ContainerType type = embedder.getType();
+        if (type == LabVessel.ContainerType.STATIC_PLATE
+                || type == LabVessel.ContainerType.FLOWCELL
+                || type == LabVessel.ContainerType.STRIP_TUBE) {
             anonymousVessels = true;
         }
         return anonymousVessels;

@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -212,7 +213,8 @@ public class LabEventTest {
                         .getMapBarcodeToNormCatchTubes(), WorkflowName.HYBRID_SELECTION);
         qtpEntityBuilder.invoke();
 
-        IlluminaSequencingRunFactory illuminaSequencingRunFactory = new IlluminaSequencingRunFactory();
+        IlluminaSequencingRunFactory illuminaSequencingRunFactory =
+                new IlluminaSequencingRunFactory(EasyMock.createMock(IlluminaFlowcellDao.class));
         IlluminaSequencingRun illuminaSequencingRun;
         try {
             illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
@@ -230,7 +232,7 @@ public class LabEventTest {
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
         Assert.assertEquals(labEventNames.size(), 13, "Wrong number of transfers");
 
-        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().iterator().next(),
+        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(),
                 qtpEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
 
         // pick a sample and mark it for rework
@@ -359,7 +361,8 @@ public class LabEventTest {
                 hybridSelectionEntityBuilder.getMapBarcodeToNormCatchTubes(),WorkflowName.EXOME_EXPRESS);
         qtpEntityBuilder.invoke();
 
-        IlluminaSequencingRunFactory illuminaSequencingRunFactory = new IlluminaSequencingRunFactory();
+        IlluminaSequencingRunFactory illuminaSequencingRunFactory =
+                new IlluminaSequencingRunFactory(EasyMock.createMock(IlluminaFlowcellDao.class));
         IlluminaSequencingRun illuminaSequencingRun;
         try {
             illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
@@ -377,7 +380,7 @@ public class LabEventTest {
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
         Assert.assertEquals(labEventNames.size(), 13, "Wrong number of transfers");
 
-        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge().iterator().next(),
+        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(),
                 qtpEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
 
         EasyMock.verify(mockBucketDao);

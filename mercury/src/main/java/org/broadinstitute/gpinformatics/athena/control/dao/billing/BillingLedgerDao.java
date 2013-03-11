@@ -13,6 +13,8 @@ import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
+import javax.ejb.Stateful;
+import javax.enterprise.context.RequestScoped;
 import javax.persistence.NoResultException;
 import javax.persistence.criteria.*;
 import java.util.Collections;
@@ -23,6 +25,8 @@ import java.util.Set;
 /**
  * Database interactions involving Billing Ledger
  */
+@Stateful
+@RequestScoped
 public class BillingLedgerDao extends GenericDao {
 
     private enum BillingSessionInclusion { ALL, NO_SESSION_STARTED, SESSION_STARTED, SESSION_BILLED }
@@ -31,6 +35,40 @@ public class BillingLedgerDao extends GenericDao {
         return findAll(BillingLedger.class);
     }
 
+    /**
+     * Fetch the billed BillingLedgers with null quote IDs, join fetching their associated {@link ProductOrderSample}s
+     * for performance purposes (i.e. avoiding singleton-selects of what are probably nearly unique
+     * {@link javax.persistence.ManyToOne} ProductOrderSamples).
+     *
+     * @return List of billed BillingLedgers with null quote IDs.
+     */
+    public List<BillingLedger> findSuccessfullyBilledLedgerEntriesWithoutQuoteId() {
+        return findAll(BillingLedger.class, new GenericDaoCallback<BillingLedger>() {
+            @Override
+            public void callback(CriteriaQuery<BillingLedger> criteriaQuery, Root<BillingLedger> root) {
+
+                CriteriaBuilder cb = getCriteriaBuilder();
+
+                Join<BillingLedger, BillingSession> ledgerBillingSessionJoin = root.join(BillingLedger_.billingSession);
+
+                criteriaQuery.where(
+                        // Filter out ledgers that already have a quote assigned.
+                        cb.isNull(root.get(BillingLedger_.quoteId)),
+                        // A predicate for billed ledgers only as we want unbilled ledgers to keep their null quote IDs
+                        // until billing.  The predicate for this purpose is that the ledgers' billing session must
+                        // exist (this is an inner join) and have a non-null billed date.  Note that this is not
+                        // explicitly testing for *successful* billing (see comments in BillingLedgerDao), just a
+                        // billing session with a billed date.
+                        cb.isNotNull(ledgerBillingSessionJoin.get(BillingSession_.billedDate)),
+                        // Only select ledger entries that were successfully billed.
+                        cb.equal(root.get(BillingLedger_.billingMessage), BillingSession.SUCCESS));
+
+                // This test runs very slowly without this fetch as we would singleton select thousands of
+                // ProductOrderSamples.
+                root.fetch(BillingLedger_.productOrderSample);
+            }
+        });
+    }
 
     /**
      * Version of the method that should work with either {@link ProductOrder} entities xor String ProductOrder

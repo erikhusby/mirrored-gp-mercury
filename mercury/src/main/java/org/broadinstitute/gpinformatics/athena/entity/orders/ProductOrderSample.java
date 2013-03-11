@@ -155,6 +155,7 @@ public class ProductOrderSample implements Serializable {
         this.productOrder = productOrder;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     ProductOrderSample() {
     }
 
@@ -238,6 +239,7 @@ public class ProductOrderSample implements Serializable {
     }
 
     public void setBspDTO(@Nonnull BSPSampleDTO bspDTO) {
+        //noinspection ConstantConditions
         if (bspDTO == null) {
             throw new NullPointerException("BSP Sample DTO cannot be null");
         }
@@ -332,8 +334,8 @@ public class ProductOrderSample implements Serializable {
         for (PriceItem priceItem : itemsToBill) {
             LedgerQuantities quantities = ledgerQuantitiesMap.get(priceItem);
             if (quantities == null) {
-                // No ledger item exists for this price item, create it.
-                addLedgerItem(completedDate, priceItem, quantity);
+                // No ledger item exists for this price item, create it using the current order's price item
+                addLedgerItem(completedDate, priceItem, getProductOrder().getQuoteId(), quantity);
             } else {
                 // This price item already has a ledger entry.
                 // - If it's been billed, don't bill it again, but report this as an issue.
@@ -410,8 +412,8 @@ public class ProductOrderSample implements Serializable {
         return sampleStatus;
     }
 
-    public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta) {
-        BillingLedger billingLedger = new BillingLedger(this, priceItem, workCompleteDate, delta);
+    public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, String quoteId, double delta) {
+        BillingLedger billingLedger = new BillingLedger(this, priceItem, quoteId, workCompleteDate, delta);
         ledgerItems.add(billingLedger);
         log.debug(MessageFormat.format(
                 "Added BillingLedger item for sample {0} to PDO {1} for PriceItemName: {2} - Quantity:{3}",
@@ -443,6 +445,7 @@ public class ProductOrderSample implements Serializable {
         return riskStringBuilder.toString();
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public Collection<RiskItem> getRiskItems() {
         return riskItems;
     }

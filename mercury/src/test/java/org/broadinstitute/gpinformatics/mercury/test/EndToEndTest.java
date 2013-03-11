@@ -200,7 +200,7 @@ public class EndToEndTest  {
         boolean foundSample = false;
         boolean foundProject = false;
         boolean wasIndexFound = false;
-        for (RunCartridge cartridge: srun.getSampleCartridge()) {
+        RunCartridge cartridge = srun.getSampleCartridge();
             for (RunChamber chamber: cartridge.getChambers()) {
                 for (SampleInstance sampleInstance : chamber.getSampleInstances()) {
                     if (sam.equals(sampleInstance.getStartingSample())) {
@@ -225,7 +225,6 @@ public class EndToEndTest  {
 //                        }
                     }
                 }
-            }               
 
             if (!foundSample) {
                 Assert.fail("Failed to find sample " + sam);
