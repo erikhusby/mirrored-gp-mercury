@@ -33,6 +33,7 @@ public class ReagentDesignTokenInput extends TokenInput<ReagentDesign> {
     private ReagentDesignDao reagentDesignDao;
 
     public ReagentDesignTokenInput() {
+        super(SINGLE_LINE_FORMAT);
     }
 
     @Override
@@ -46,11 +47,6 @@ public class ReagentDesignTokenInput extends TokenInput<ReagentDesign> {
             reagentDesignDao.findListWithWildcard(
                 ReagentDesign.class, query, true, ReagentDesign_.designName, ReagentDesign_.targetSetName);
         return createItemListString(reagentDesignList);
-    }
-
-    @Override
-    protected boolean isSingleLineMenuEntry() {
-        return true;
     }
 
     @Override

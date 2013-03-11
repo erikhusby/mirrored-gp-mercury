@@ -307,7 +307,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
         if (bspUserList != null) {
             BspUser bspUser = bspUserList.getById(stationEvent.getEventOperator());
             if (bspUser != null) {
-                label.append(bspUser.getFirstName()).append(" ").append(bspUser.getLastName());
+                label.append(bspUser.getFullName());
             }
         }
         label.append("</html>");
@@ -387,7 +387,7 @@ public class TransferEntityGrapher implements TransferVisualizer {
                     }
                     plateVertex.getDetails().add(plateEvent.getLabEventType().getName() + ", " +
                             plateEvent.getEventLocation() + ", " + plateEvent.getEventDate() + ", " +
-                            (bspUser == null ? "" : bspUser.getFirstName() + " " + bspUser.getLastName()));
+                            (bspUser == null ? "" : bspUser.getFullName()));
                 }
                 graph.getMapIdToVertex().put(plateVertex.getId(), plateVertex);
                 plateVertex.setHasMoreEdges(true);

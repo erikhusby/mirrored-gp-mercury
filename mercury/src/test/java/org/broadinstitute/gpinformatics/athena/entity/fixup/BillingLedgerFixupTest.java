@@ -1,71 +1,153 @@
 package org.broadinstitute.gpinformatics.athena.entity.fixup;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger_;
+import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
-import org.testng.Assert;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
-import javax.persistence.Query;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 
+import java.text.MessageFormat;
+import java.util.Collections;
 import java.util.List;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 public class BillingLedgerFixupTest extends Arquillian {
 
+    private static final Log logger = LogFactory.getLog(BillingLedgerFixupTest.class);
+
     @Inject
     private BillingLedgerDao billingLedgerDao;
 
-    // When you run this on prod, change to PROD and prod
+    // Use (RC, "rc"), (PROD, "prod") to push the backfill to RC and production respectively.
     @Deployment
     public static WebArchive buildMercuryWar() {
         return DeploymentBuilder.buildMercuryWar(DEV, "dev");
     }
 
 
-    @Test(enabled = true)
-    public void testBackfillLedgerQuotes() {
+    /**
+     * Per the query below, no billing ledger records were found corresponding to billing sessions with a billed date
+     * older than the date a quote was set into a PDO, including PDO quote updates.  Since PDO quote editing is
+     * presently locked down, we know that all ledger entries should be backfilled with the quote currently set into the
+     * PDO for the ledger entries' PDO samples.
+     *
+     *
+     *  SELECT
+     *    bs.BILLED_DATE,
+     *    pdo.rev_date,
+     *    pdo.JIRA_TICKET_KEY,
+     *    pdo.QUOTE_ID
+     *  FROM athena.BILLING_SESSION bs, athena.billing_ledger bl, athena.product_order_sample pdo_s,
+     *  -- Outer select that enables us to pick out only the rows from the inner query with rank = 1.  This yields the
+     *  -- oldest row for each jira_ticket_key + quote_id combination.
+     *    (SELECT
+     *       *
+     *     FROM (
+     *       -- Select the fields corresponding to the audit record for a PDO, including a dense_rank() of this record
+     *       -- among all records with this combination of jira_ticket_key + quote_id.  The ranking is ordered by
+     *       -- rev_date ASC, which means the oldest record for this jira_ticket_key + quote_id combination would
+     *       -- have rank 1.
+     *       SELECT
+     *         product_order_id,
+     *         jira_ticket_key,
+     *         quote_id,
+     *         rev_date,
+     *         dense_rank()
+     *         OVER (PARTITION BY jira_ticket_key, quote_id
+     *           ORDER BY rev_date ASC) rnk
+     *       FROM
+     *       -- Use the rev date from the Envers rev_info table for this audit record, the PDO modified_dates were not
+     *       -- being properly set for a period in Mercury's history.
+     *         (SELECT
+     *            product_order_id,
+     *            jira_ticket_key,
+     *            quote_id,
+     *            ri.REV_DATE
+     *          FROM athena.product_order_aud pdo2, mercury.rev_info ri
+     *          WHERE pdo2.rev = ri.rev_info_id
+     *                -- Filter drafts PDOs and messaging tests.
+     *                AND pdo2.jira_ticket_key IS NOT null AND pdo2.jira_ticket_key NOT LIKE '%MsgTest%')
+     *     )
+     *     WHERE rnk = 1
+     *     ORDER BY jira_ticket_key, quote_id) pdo
+     *
+     *  -- Look for billing ledger entries belonging to a billing session with a billed date less than any quote
+     *  -- assignment date for the billing ledger's PDO sample's PDO.
+     *  WHERE pdo_s.product_order = pdo.product_order_id AND
+     *        bl.PRODUCT_ORDER_SAMPLE_ID = pdo_s.PRODUCT_ORDER_SAMPLE_ID AND
+     *        bl.BILLING_SESSION = bs.BILLING_SESSION_ID AND
+     *        bs.BILLED_DATE < pdo.rev_date
+     *
+     */
+    @Test(enabled = false)
+    public void backfillLedgerQuotes() {
 
-        Query query = billingLedgerDao.getEntityManager().createNativeQuery(
-                // This outermost select * is needed to grab the rnk alias for picking out only the rows
-                // with the oldest dates for a jira_ticket / quote_id combination.
-                " SELECT" +
-                "   *" +
-                " FROM (" +
-                // Pick out the fields of interest and a ranking of a given row within a jira_ticket_key / quote_id
-                // combination, ordering by rev_date ascending.
-                "   SELECT" +
-                "     jira_ticket_key," +
-                "     quote_id," +
-                "     rev_date," +
-                "     dense_rank()" +
-                "     OVER (PARTITION BY jira_ticket_key, quote_id" +
-                "       ORDER BY rev_date ASC) rnk" +
-                "   FROM" +
-                // It seems that for some period in Mercury's history the modified_date in product_order was not
-                // recording the actual date of modification.  Use the rev_date on the Envers rev_info table instead.
-                "     (SELECT" +
-                "        jira_ticket_key," +
-                "        quote_id," +
-                "        ri.REV_DATE" +
-                "      FROM athena.product_order_aud pdo2, mercury.rev_info ri" +
-                "      WHERE pdo2.rev = ri.rev_info_id" +
-                // Filter null JIRA ticket keys and messaging test debris.
-                "            AND pdo2.jira_ticket_key IS NOT null AND pdo2.jira_ticket_key NOT LIKE '%MsgTest%')" +
-                " )" +
-                // Only take the top-ranked (oldest) rows for a given jira_ticket_key / quote_id combination.
-                " WHERE rnk = 1" +
-                // The ordering here is just for visual inspection of the results and doesn't numerically sort JIRA
-                // ticket keys anyway.
-                " ORDER BY jira_ticket_key, quote_id");
+        int counter = 0;
+        for (BillingLedger ledger : billingLedgerDao.findSuccessfullyBilledLedgerEntriesWithoutQuoteId()) {
+            String quoteId = ledger.getProductOrderSample().getProductOrder().getQuoteId();
+
+            final int BATCH_SIZE = 1000;
+            ledger.setQuoteId(quoteId);
+            if (++counter % BATCH_SIZE == 0) {
+                // Only create a transaction for every BATCH_SIZE ledger entries, otherwise this test runs
+                // excruciatingly slowly.
+                billingLedgerDao.persist(ledger);
+                logger.info(MessageFormat.format("Issued persist at record {0}", counter));
+            }
+        }
+        // We need the transaction that #persistAll gives us to get the last set of modulus BATCH_SIZE ledger
+        // entries.  It doesn't matter what we pass this method, it will create the transaction around the
+        // extended persistence context that holds the entities we modified above.
+        billingLedgerDao.persistAll(Collections.emptyList());
+    }
 
 
-        @SuppressWarnings("unchecked")
-        List<Object[]> resultList = query.getResultList();
-        Assert.assertNotNull(resultList);
+    /**
+     * Largely copy/pasted from #backfillLedgerQuotes above, used to null out ledger quote IDs when we
+     * discover we didn't assign them properly before and need to revise the assignments.
+     */
+    @Test(enabled = false)
+    public void nullOutAllQuotes() {
+
+        int counter = 0;
+
+        List<BillingLedger> billingLedgers =
+                billingLedgerDao.findAll(BillingLedger.class, new GenericDao.GenericDaoCallback<BillingLedger>() {
+                    @Override
+                    public void callback(CriteriaQuery<BillingLedger> criteriaQuery, Root<BillingLedger> root) {
+                        // This runs much more slowly without the fetch as these would otherwise be singleton selected.
+                        root.fetch(BillingLedger_.productOrderSample);
+                    }
+                });
+
+
+        for (BillingLedger ledger : billingLedgers) {
+
+            final int BATCH_SIZE = 2000;
+            ledger.setQuoteId(null);
+
+            if (++counter % BATCH_SIZE == 0) {
+                // Only create a transaction for every BATCH_SIZE ledger entries, otherwise this test runs
+                // excruciatingly slowly.
+                billingLedgerDao.persist(ledger);
+                logger.info(MessageFormat.format("Issued persist at record {0}", counter));
+            }
+        }
+        // We need the transaction that #persistAll gives us to get the last set of modulus BATCH_SIZE ledger
+        // entries.  It doesn't matter what we pass this method, it will create the transaction that persists
+        // the entities modified above.
+        billingLedgerDao.persistAll(Collections.emptyList());
+
     }
 }

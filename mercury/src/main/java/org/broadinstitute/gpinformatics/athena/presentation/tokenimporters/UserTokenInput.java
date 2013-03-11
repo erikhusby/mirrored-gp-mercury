@@ -20,6 +20,7 @@ public class UserTokenInput extends TokenInput<BspUser> {
     private BSPUserList bspUserList;
 
     public UserTokenInput() {
+        super(DOUBLE_LINE_FORMAT);
     }
 
     @Override
@@ -34,11 +35,6 @@ public class UserTokenInput extends TokenInput<BspUser> {
     }
 
     @Override
-    protected boolean isSingleLineMenuEntry() {
-        return false;
-    }
-
-    @Override
     protected String getTokenId(BspUser bspUser) {
         return String.valueOf(bspUser.getUserId());
     }
@@ -46,12 +42,11 @@ public class UserTokenInput extends TokenInput<BspUser> {
     @Override
     protected String formatMessage(String messageString, BspUser bspUser) {
         return MessageFormat.format(
-            messageString, bspUser.getFirstName() + " " + bspUser.getLastName(),
-                           bspUser.getUsername() + " " + bspUser.getEmail());
+            messageString, bspUser.getFullName(), bspUser.getUsername() + " " + bspUser.getEmail());
     }
 
     @Override
     protected String getTokenName(BspUser bspUser) {
-        return bspUser.getFirstName() + " " + bspUser.getLastName();
+        return bspUser.getFullName();
     }
 }

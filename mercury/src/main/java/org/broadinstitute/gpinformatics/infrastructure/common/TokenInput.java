@@ -18,6 +18,9 @@ import java.util.List;
  */
 public abstract class TokenInput<TOKEN_OBJECT> {
 
+    protected static final boolean SINGLE_LINE_FORMAT = true;
+    protected static final boolean DOUBLE_LINE_FORMAT = false;
+
     private static final short SINGLE_LINE_MAX_DISPLAYED = 20;
     private static final short DOUBLE_LINE_MAX_DISPLAYED = 12;
 
@@ -39,9 +42,16 @@ public abstract class TokenInput<TOKEN_OBJECT> {
     private String completeDataCache;
 
     private final String formatString;
+    private final int maxDisplayed;
 
-    public TokenInput() {
-        formatString = isSingleLineMenuEntry() ? MENU_ONE_LINE : MENU_TWO_LINE;
+    public TokenInput(boolean isSingleLine) {
+        if (isSingleLine) {
+            formatString = MENU_ONE_LINE;
+            maxDisplayed = SINGLE_LINE_MAX_DISPLAYED;
+        } else {
+            formatString = MENU_TWO_LINE;
+            maxDisplayed = DOUBLE_LINE_MAX_DISPLAYED;
+        }
     }
 
     // The UI needs to get at these so they must be public.
@@ -108,7 +118,6 @@ public abstract class TokenInput<TOKEN_OBJECT> {
         List<TOKEN_OBJECT> tokenObjectChunk = tokenObjects;
 
         // If there are more items than we want to efficiently display, grab the first chunk of appropriate size
-        int maxDisplayed = isSingleLineMenuEntry() ? SINGLE_LINE_MAX_DISPLAYED : DOUBLE_LINE_MAX_DISPLAYED;
         if (tokenObjects.size() > maxDisplayed) {
             extraCount = tokenObjects.size() - maxDisplayed;
             tokenObjectChunk = tokenObjects.subList(0, maxDisplayed);
@@ -130,11 +139,6 @@ public abstract class TokenInput<TOKEN_OBJECT> {
 
         return itemList.toString();
     }
-
-    /**
-     * @return The implementing class reports wether the entries are one line or two
-     */
-    protected abstract boolean isSingleLineMenuEntry();
 
     /**
      * Populate the item list with its appropriate token object. Overrides are for special null handling.

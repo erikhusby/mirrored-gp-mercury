@@ -132,6 +132,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         assertTrue(rawJson.contains("null")); // KT and others like to see field names present w/ null values instead of missing entirely
         assertFalse(rawJson.contains("\"gssrSample\""));
         assertTrue(rawJson.contains("\"rootSample\""));
+        assertTrue(rawJson.contains("\"productPartNumber\""));
 
         assertNotNull(run);
         assertEquals(run.getName(),RUN_NAME);
@@ -333,6 +334,7 @@ public class IlluminaRunResourceTest extends Arquillian {
                         assertEquals(libBean.getResearchProjectId(),pdo.getResearchProject().getBusinessKey(),PDO_COMPARISON_ERROR_MESSAGE);
                         assertEquals(libBean.getProductOrderKey(),pdo.getBusinessKey(),PDO_COMPARISON_ERROR_MESSAGE);
                         assertEquals(libBean.getResearchProjectName(),pdo.getResearchProject().getTitle(),PDO_COMPARISON_ERROR_MESSAGE);
+                        assertEquals(libBean.getProductPartNumber(), pdo.getProduct().getPartNumber());
                     }
                 }
                 if (zLib.getLcset() != null) {

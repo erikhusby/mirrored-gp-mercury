@@ -27,6 +27,7 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
     private PriceListCache priceListCache;
 
     public PriceItemTokenInput() {
+        super(DOUBLE_LINE_FORMAT);
     }
 
     @Override
@@ -38,11 +39,6 @@ public class PriceItemTokenInput extends TokenInput<PriceItem> {
 
         Collection<PriceItem> priceItems = priceListCache.searchPriceItems(query);
         return createItemListString(new ArrayList<PriceItem>(priceItems));
-    }
-
-    @Override
-    protected boolean isSingleLineMenuEntry() {
-        return false;
     }
 
     @Override

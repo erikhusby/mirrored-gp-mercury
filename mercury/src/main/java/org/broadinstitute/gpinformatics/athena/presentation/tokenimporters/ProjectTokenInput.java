@@ -23,6 +23,7 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
     private String tokenObject;
 
     public ProjectTokenInput() {
+        super(SINGLE_LINE_FORMAT);
     }
 
     @Override
@@ -33,11 +34,6 @@ public class ProjectTokenInput extends TokenInput<ResearchProject> {
     public String getJsonString(String query) throws JSONException {
         Collection<ResearchProject> projects = researchProjectDao.searchProjects(query);
         return createItemListString(new ArrayList<ResearchProject>(projects));
-    }
-
-    @Override
-    protected boolean isSingleLineMenuEntry() {
-        return true;
     }
 
     @Override

@@ -20,6 +20,7 @@ public class CohortTokenInput extends TokenInput<Cohort> {
     private BSPCohortList cohortList;
 
     public CohortTokenInput() {
+        super(DOUBLE_LINE_FORMAT);
     }
 
     @Override
@@ -30,11 +31,6 @@ public class CohortTokenInput extends TokenInput<Cohort> {
     public String getJsonString(String query) throws JSONException {
         List<Cohort> cohorts = cohortList.findActive(query);
         return createItemListString(cohorts);
-    }
-
-    @Override
-    protected boolean isSingleLineMenuEntry() {
-        return false;
     }
 
     @Override
