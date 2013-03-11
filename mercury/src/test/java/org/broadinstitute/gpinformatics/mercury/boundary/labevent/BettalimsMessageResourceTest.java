@@ -246,7 +246,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
         LabEventTest.QtpJaxbBuilder qtpJaxbBuilder=new LabEventTest.QtpJaxbBuilder(bettaLimsMessageFactory, testPrefix,
                 hybridSelectionJaxbBuilder.getNormCatchBarcodes(), hybridSelectionJaxbBuilder.getNormCatchRackBarcode(),
-                LabEventTest.StripTubeBTransfer.TRUE).invoke();
+                WorkflowName.HYBRID_SELECTION).invoke();
         for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
             sendMessage(bettaLIMSMessage);
         }

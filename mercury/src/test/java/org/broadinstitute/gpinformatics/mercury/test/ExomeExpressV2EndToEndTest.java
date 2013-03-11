@@ -274,7 +274,7 @@ public class ExomeExpressV2EndToEndTest {
                 hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                 hybridSelectionEntityBuilder
-                        .getMapBarcodeToNormCatchTubes(), LabEventTest.StripTubeBTransfer.FALSE);
+                        .getMapBarcodeToNormCatchTubes(), WorkflowName.EXOME_EXPRESS);
         qtpEntityBuilder.invoke();
         // MiSeq reagent block transfer message
         // Register run
