@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 import org.hibernate.envers.Audited;
 
 import javax.persistence.CascadeType;
-import javax.persistence.Embedded;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -31,7 +30,6 @@ public class SequencingRun {
 
     private String machineName;
 
-    //    @ManyToOne(fetch = FetchType.LAZY)
     private Long operator;
 
     private Boolean testRun;
@@ -49,7 +47,7 @@ public class SequencingRun {
     private OutputDataLocation runLocation;
 
     public SequencingRun(String runName, String runBarcode, String machineName, Long operator, Boolean testRun,
-                         Date runDate, RunCartridge runCartridge, OutputDataLocation dataLocation) {
+                         Date runDate, RunCartridge runCartridge, OutputDataLocation runLocation) {
         this.runName = runName;
         this.runBarcode = runBarcode;
         this.machineName = machineName;
@@ -57,7 +55,7 @@ public class SequencingRun {
         this.testRun = testRun;
         this.runDate = runDate;
         this.runCartridge = runCartridge;
-        runLocation = dataLocation;
+        this.runLocation = runLocation;
     }
 
     protected SequencingRun() {

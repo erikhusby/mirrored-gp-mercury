@@ -16,7 +16,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
 
 
     @Enumerated(EnumType.STRING)
-    private FLOWCELL_TYPE flowcellType;
+    private FlowcellType flowcellType;
 
     // todo jmt how is this different from label?
     private String flowcellBarcode;
@@ -48,8 +48,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     }
 
     @Override
-    public CONTAINER_TYPE getType() {
-        return CONTAINER_TYPE.FLOWCELL;
+    public ContainerType getType() {
+        return ContainerType.FLOWCELL;
     }
 
     @Override
@@ -57,11 +57,11 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         return this.vesselContainer;
     }
 
-    public enum FLOWCELL_TYPE {
+    public enum FlowcellType {
         EIGHT_LANE,TWO_LANE,MISEQ
     }
 
-    public IlluminaFlowcell(FLOWCELL_TYPE flowcellType, String flowcellBarcode) {
+    public IlluminaFlowcell(FlowcellType flowcellType, String flowcellBarcode) {
         super(flowcellBarcode);
         this.flowcellBarcode = flowcellBarcode;
         this.flowcellType = flowcellType;

@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
-import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.testng.Assert;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 

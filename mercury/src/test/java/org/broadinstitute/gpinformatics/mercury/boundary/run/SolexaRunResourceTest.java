@@ -1,21 +1,21 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import com.sun.jersey.api.client.Client;
-import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
-import org.jboss.arquillian.container.test.api.RunAsClient;
-import org.jboss.arquillian.test.api.ArquillianResource;
 import org.jboss.arquillian.testng.Arquillian;
+import org.testng.Assert;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
+import javax.transaction.UserTransaction;
 import javax.ws.rs.core.MediaType;
 import java.io.File;
-import java.io.IOException;
-import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -24,6 +24,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EX
 /**
  * Test run registration web service
  */
+@Test(groups = EXTERNAL_INTEGRATION)
 public class SolexaRunResourceTest extends ContainerTest {
 
     @Inject
@@ -32,35 +33,73 @@ public class SolexaRunResourceTest extends ContainerTest {
     @Inject
     IlluminaFlowcellDao flowcellDao;
 
-    @Test(enabled = true, groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
-    @RunAsClient
-    public void testCreateRun(@ArquillianResource URL baseUrl) {
-        final Date runDate = new Date();
+    @Inject
+        UserTransaction utx;
+    private Date runDate;
+    private SimpleDateFormat format;
+    private String flowcellBarcode;
+    private IlluminaFlowcell newFlowcell;
+    private boolean result;
+    private String runBarcode;
+    private String runFileDirectory;
 
-        SimpleDateFormat format = new SimpleDateFormat("yyyyMMdd");
+    @BeforeMethod(groups = EXTERNAL_INTEGRATION)
+    public void setUp() throws Exception {
 
-        final String flowcellBarcode = "testcaseFlowcell" + runDate.getTime();
 
-        IlluminaFlowcell newFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FLOWCELL_TYPE.TWO_LANE,
+        if (utx == null) {
+            return;
+        }
+        utx.begin();
+
+        runDate = new Date();
+
+        format = new SimpleDateFormat("yyyyMMdd");
+
+        flowcellBarcode = "testcaseFlowcell" + runDate.getTime();
+
+        newFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.TWO_LANE,
                                                                    flowcellBarcode);
 
         flowcellDao.persist(newFlowcell);
         flowcellDao.flush();
         flowcellDao.clear();
 
-        final String runBarcode = "Run" + format.format(runDate);
+        utx.commit();
+
+        runBarcode = "Run" + format.format(runDate);
         final String runName = "testRunName"+runDate.getTime();
-        String baseDirectory =System.getProperty("JBOSS_HOME", "./");
-        final String runFileDirectory = baseDirectory+File.separator + "bin"  +File.separator +
+        String baseDirectory =System.getProperty("java.io.tmpdir");
+        runFileDirectory = baseDirectory+ File.separator + "bin"  +File.separator +
                                                 "testRoot" + File.separator + "finalPath"+runDate.getTime() +
                                                 File.separator+runName;
         File runFile = new File(runFileDirectory);
-        boolean result = runFile.mkdirs();
+        result = runFile.mkdirs();
+    }
+
+    @AfterMethod(groups = EXTERNAL_INTEGRATION)
+    public void tearDown() throws Exception{
+        if (utx == null) {
+            return;
+        }
+
+        utx.begin();
+
+        newFlowcell = flowcellDao.findByBarcode(flowcellBarcode);
+        flowcellDao.remove(newFlowcell);
+
+        utx.commit();
+    }
+
+    @Test(enabled = true, groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    public void testCreateRun() {
+
+
         Assert.assertTrue(result);
 
 //        try {
 
-            String response = Client.create().resource(baseUrl.toExternalForm() + "rest/solexarun")
+            String response = Client.create().resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/solexarun")
                                     .type(MediaType.APPLICATION_XML_TYPE)
                                     .accept(MediaType.APPLICATION_XML)
                                     .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",

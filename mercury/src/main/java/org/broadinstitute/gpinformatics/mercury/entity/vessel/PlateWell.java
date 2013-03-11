@@ -28,8 +28,8 @@ public class PlateWell extends LabVessel {
     }
 
     @Override
-    public CONTAINER_TYPE getType() {
-        return CONTAINER_TYPE.PLATE_WELL;
+    public ContainerType getType() {
+        return ContainerType.PLATE_WELL;
     }
 
 }

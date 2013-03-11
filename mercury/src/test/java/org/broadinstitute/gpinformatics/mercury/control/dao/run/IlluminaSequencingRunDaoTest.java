@@ -1,13 +1,12 @@
 package org.broadinstitute.gpinformatics.mercury.control.dao.run;
 
-import junit.framework.Assert;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.GenericDao;
 import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.OutputDataLocation;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -62,7 +61,7 @@ public class IlluminaSequencingRunDaoTest extends ContainerTest{
 
 
         IlluminaFlowcell initialFCell  =
-                new IlluminaFlowcell(IlluminaFlowcell.FLOWCELL_TYPE.TWO_LANE,flowcellBarcode);
+                new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.TWO_LANE,flowcellBarcode);
 
         flowcellDao.persist(initialFCell);
         flowcellDao.flush();
@@ -73,7 +72,9 @@ public class IlluminaSequencingRunDaoTest extends ContainerTest{
 
         runName = "runTest" + runDate.getTime();
         runBarcode = "runBcode" + runDate.getTime();
-        runPath = "/start/of/run/";
+        String baseDirectory =System.getProperty("java.io.tmpdir");
+
+        runPath = baseDirectory + "/start/of/run/";
         fullRunPath = runPath + runName;
         dataLocation = new OutputDataLocation(fullRunPath);
         machineName = "Superman";

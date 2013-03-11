@@ -3,8 +3,8 @@ package org.broadinstitute.gpinformatics.mercury.entity.run;
 public class IlluminaSequencingTechnology implements SequencingTechnology{
 
     @Override
-    public TECHNOLOGY_NAME getTechnologyName() {
-        return TECHNOLOGY_NAME.ILLUMINA_HISEQ;
+    public TechnologyName getTechnologyName() {
+        return TechnologyName.ILLUMINA_HISEQ;
     }
 
     @Override

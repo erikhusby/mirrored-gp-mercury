@@ -1,21 +1,18 @@
 package org.broadinstitute.gpinformatics.mercury.control.run;
 
-import junit.framework.Assert;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
-import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.easymock.EasyMock;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
-import javax.inject.Inject;
 import java.io.File;
 import java.util.Date;
-import java.util.Random;
 
 /**
  * @author Scott Matthews
@@ -42,7 +39,7 @@ public class IlluminaSequencingRunFactoryDBFreeTest {
 
         flowcellTestBarcode = "flowTestBcode123";
         IlluminaFlowcell testFlowcell =
-                new IlluminaFlowcell(IlluminaFlowcell.FLOWCELL_TYPE.TWO_LANE, flowcellTestBarcode);
+                new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.TWO_LANE, flowcellTestBarcode);
 
         IlluminaFlowcellDao mockDao = EasyMock.createMock(IlluminaFlowcellDao.class);
         EasyMock.expect(mockDao.findByBarcode(EasyMock.anyObject(String.class))).andReturn(testFlowcell);
@@ -51,7 +48,9 @@ public class IlluminaSequencingRunFactoryDBFreeTest {
         runFactory = new IlluminaSequencingRunFactory(mockDao);
 
         testRunName = "run" + (new Date()).getTime();
-        runFileDirectory = "testRoot" + File.separator + "finalPath" + File.separator + testRunName;
+        String baseDirectory =System.getProperty("java.io.tmpdir");
+
+        runFileDirectory = baseDirectory + File.separator+"testRoot" + File.separator + "finalPath" + File.separator + testRunName;
 
         File runFile = new File(runFileDirectory);
         boolean fileSuccess = true;

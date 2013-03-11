@@ -71,8 +71,8 @@ public class RackOfTubes extends LabVessel {
     }
 
     @Override
-    public CONTAINER_TYPE getType() {
-        return CONTAINER_TYPE.RACK_OF_TUBES;
+    public ContainerType getType() {
+        return ContainerType.RACK_OF_TUBES;
     }
 
     public Set<TubeFormation> getTubeFormations() {
