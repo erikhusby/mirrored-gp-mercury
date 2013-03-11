@@ -1,6 +1,6 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
 <stripes:useActionBean var="actionBean"
-                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean"/>
+                       beanclass="org.broadinstitute.gpinformatics.mercury.presentation.security.SecurityActionBean"/>
 
 <stripes:layout-render name="/layout.jsp" pageTitle="Sign In" sectionTitle="Sign In">
     <stripes:layout-component name="extraHead">
