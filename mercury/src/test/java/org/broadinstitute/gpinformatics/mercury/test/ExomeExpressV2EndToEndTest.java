@@ -175,8 +175,8 @@ public class ExomeExpressV2EndToEndTest {
         Map<String, ProductOrder> keyToPoMap = new HashMap<String, ProductOrder>();
         keyToPoMap.put(productOrder1.getBusinessKey(), productOrder1);
 
-        LabEventTest.PicoPlatingEntityBuider pplatingEntityBuilder =
-                new LabEventTest.PicoPlatingEntityBuider(bettaLimsMessageFactory,
+        LabEventTest.PicoPlatingEntityBuilder pplatingEntityBuilder =
+                new LabEventTest.PicoPlatingEntityBuilder(bettaLimsMessageFactory,
                 labEventFactory, leHandler, mapBarcodeToTube, rackBarcode, keyToPoMap).invoke();
 
         // Lab Event Factory should have put tubes into the Bucket after normalization
@@ -274,7 +274,7 @@ public class ExomeExpressV2EndToEndTest {
                 hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
                 hybridSelectionEntityBuilder.getNormCatchBarcodes(),
                 hybridSelectionEntityBuilder
-                        .getMapBarcodeToNormCatchTubes());
+                        .getMapBarcodeToNormCatchTubes(), LabEventTest.StripTubeBTransfer.FALSE);
         qtpEntityBuilder.invoke();
         // MiSeq reagent block transfer message
         // Register run
