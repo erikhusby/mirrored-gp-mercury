@@ -20,6 +20,7 @@ public class BillingTrackerUtils {
     public static final String ORDER_ID_HEADING = "Product Order ID";
     public static final String SORT_COLUMN_HEADING = "Sort Column";
     public static final String WORK_COMPLETE_DATE_HEADING = "Date Completed";
+    public static final String QUOTE_ID_HEADING = "Quote ID";
 
     public static final String[] FIXED_HEADERS = {
             SAMPLE_ID_HEADING,
@@ -32,7 +33,7 @@ public class BillingTrackerUtils {
             "Product Order Name",
             "Project Manager",
             WORK_COMPLETE_DATE_HEADING,
-            "Quote ID",
+            QUOTE_ID_HEADING,
             SORT_COLUMN_HEADING
     };
 
@@ -42,6 +43,7 @@ public class BillingTrackerUtils {
             SORT_COLUMN_HEADING);
     public static final int WORK_COMPLETE_DATE_COL_POS = ArrayUtils.indexOf(FIXED_HEADERS,
             WORK_COMPLETE_DATE_HEADING);
+    public static final int QUOTE_ID_COL_POS = ArrayUtils.indexOf(FIXED_HEADERS, QUOTE_ID_HEADING);
     public static final int NUMBER_OF_HEADER_ROWS = 2;
 
     public static boolean isNonNullNumericCell(Cell cell) {
