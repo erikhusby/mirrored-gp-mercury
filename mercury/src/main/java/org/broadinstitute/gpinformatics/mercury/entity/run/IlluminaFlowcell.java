@@ -68,6 +68,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     protected IlluminaFlowcell(String label, FlowcellType flowcellType) {
         super(label);
         this.flowcellBarcode = label;
+        this.flowcellType = flowcellType;
     }
 
     public IlluminaFlowcell() {

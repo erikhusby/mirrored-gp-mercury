@@ -34,7 +34,7 @@ public class SolexaRunResourceTest extends ContainerTest {
     IlluminaFlowcellDao flowcellDao;
 
     @Inject
-        UserTransaction utx;
+    UserTransaction utx;
     private Date runDate;
     private SimpleDateFormat format;
     private String flowcellBarcode;
@@ -58,8 +58,8 @@ public class SolexaRunResourceTest extends ContainerTest {
 
         flowcellBarcode = "testcaseFlowcell" + runDate.getTime();
 
-        newFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.TWO_LANE,
-                                                                   flowcellBarcode);
+        newFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
+                flowcellBarcode);
 
         flowcellDao.persist(newFlowcell);
         flowcellDao.flush();
@@ -68,17 +68,17 @@ public class SolexaRunResourceTest extends ContainerTest {
         utx.commit();
 
         runBarcode = "Run" + format.format(runDate);
-        final String runName = "testRunName"+runDate.getTime();
-        String baseDirectory =System.getProperty("java.io.tmpdir");
-        runFileDirectory = baseDirectory+ File.separator + "bin"  +File.separator +
-                                                "testRoot" + File.separator + "finalPath"+runDate.getTime() +
-                                                File.separator+runName;
+        final String runName = "testRunName" + runDate.getTime();
+        String baseDirectory = System.getProperty("java.io.tmpdir");
+        runFileDirectory = baseDirectory + File.separator + "bin" + File.separator +
+                "testRoot" + File.separator + "finalPath" + runDate.getTime() +
+                File.separator + runName;
         File runFile = new File(runFileDirectory);
         result = runFile.mkdirs();
     }
 
     @AfterMethod(groups = EXTERNAL_INTEGRATION)
-    public void tearDown() throws Exception{
+    public void tearDown() throws Exception {
         if (utx == null) {
             return;
         }
@@ -99,12 +99,12 @@ public class SolexaRunResourceTest extends ContainerTest {
 
 //        try {
 
-            String response = Client.create().resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/solexarun")
-                                    .type(MediaType.APPLICATION_XML_TYPE)
-                                    .accept(MediaType.APPLICATION_XML)
-                                    .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
-                                                                     runFileDirectory, null)).post(String.class);
-            System.out.println(response);
+        String response = Client.create().resource(ImportFromSquidTest.TEST_MERCURY_URL + "/rest/solexarun")
+                .type(MediaType.APPLICATION_XML_TYPE)
+                .accept(MediaType.APPLICATION_XML)
+                .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
+                        runFileDirectory, null)).post(String.class);
+        System.out.println(response);
 //        } catch (IOException e) {
 //            throw new RuntimeException(e);
 //        }
