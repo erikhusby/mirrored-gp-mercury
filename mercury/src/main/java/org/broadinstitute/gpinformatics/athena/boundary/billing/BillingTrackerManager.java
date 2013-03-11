@@ -98,7 +98,7 @@ public class BillingTrackerManager {
         return result;
     }
 
-    private static List<String> extractOrderIdsFromSheet(Sheet sheet) {
+    private List<String> extractOrderIdsFromSheet(Sheet sheet) {
         List<String> result = new ArrayList<String>();
 
         for (Iterator<Row> rit = sheet.rowIterator(); rit.hasNext(); ) {
@@ -117,6 +117,7 @@ public class BillingTrackerManager {
                 result.add(rowPdoIdStr);
             }
         }
+
         return result;
     }
 
@@ -207,7 +208,6 @@ public class BillingTrackerManager {
             parseSampleRowForBilling(row, productOrderSample, product, trackerColumnInfos, priceItemMap);
 
             sampleIndexInOrder++;
-
         }
 
         //Persist any BillingLedger Items captured for the last productOrder (if not blank) before finishing the sheet
@@ -259,7 +259,7 @@ public class BillingTrackerManager {
                                 " of spreadsheet " + product.getPartNumber() +
                                 " has an invalid Date Completed value. Please correct and try again.");
                     } else {
-                        productOrderSample.addLedgerItem(workCompleteDate, priceItem, productOrderSample.getProductOrder().getQuoteId(), delta);
+                        productOrderSample.addLedgerItem(workCompleteDate, priceItem, delta);
                     }
                 } else {
                     logger.debug("Skipping BillingLedger item for sample " + productOrderSample.getSampleName() +
@@ -268,10 +268,10 @@ public class BillingTrackerManager {
                             billableRef.getProductPartNumber() + "] - quantity:" + newQuantity + " same as Billed amount.");
                 }
             }
-        } // end of for each productIndex loop
+        }
     }
 
-    private static Double getCellValueAsNonNullDouble(Row row, ProductOrderSample productOrderSample, Product product,
+    private Double getCellValueAsNonNullDouble(Row row, ProductOrderSample productOrderSample, Product product,
                                                       Cell cell) {
         Double quantity = null;
         if (BillingTrackerUtils.isNonNullNumericCell(cell)) {
@@ -311,7 +311,7 @@ public class BillingTrackerManager {
         }
     }
 
-    private static boolean isNonNullDateCell(Cell cell) {
+    private boolean isNonNullDateCell(Cell cell) {
         return ((cell != null) && (HSSFDateUtil.isCellDateFormatted(cell)));
     }
 
