@@ -2428,23 +2428,22 @@ public class LabEventTest {
                                 stripTube, null);
             }
 
-                labEventHandler.processEvent(flowcellTransferEntity);
-                //asserts
-                illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();
-                Set<SampleInstance> lane1SampleInstances =
-                        illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
-                                VesselPosition.LANE1);
-                Assert.assertEquals(lane1SampleInstances.size(), normCatchRack.getSampleInstances().size(),
-                        "Wrong number of samples in flowcell lane");
-                Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 1,
-                        "Wrong number of reagents");
+            labEventHandler.processEvent(flowcellTransferEntity);
+            //asserts
+            illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();
+            Set<SampleInstance> lane1SampleInstances =
+                    illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
+                            VesselPosition.LANE1);
+            Assert.assertEquals(lane1SampleInstances.size(), normCatchRack.getSampleInstances().size(),
+                    "Wrong number of samples in flowcell lane");
+            Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 1,
+                    "Wrong number of reagents");
 
-                //FlowcellLoaded
-                validateWorkflow(LabEventType.FLOWCELL_LOADED.getName(), illuminaFlowcell);
-                LabEvent flowcellLoadEntity = labEventFactory
-                        .buildReceptacleEventDbFree(flowcellLoadJaxb, illuminaFlowcell);
-                labEventHandler.processEvent(flowcellLoadEntity);
-
+            //FlowcellLoaded
+            validateWorkflow(LabEventType.FLOWCELL_LOADED.getName(), illuminaFlowcell);
+            LabEvent flowcellLoadEntity = labEventFactory
+                    .buildReceptacleEventDbFree(flowcellLoadJaxb, illuminaFlowcell);
+            labEventHandler.processEvent(flowcellLoadEntity);
         }
 
         public TubeFormation getDenatureRack() {
