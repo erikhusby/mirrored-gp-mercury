@@ -7,13 +7,12 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
-import javax.persistence.OneToMany;
+import javax.persistence.ManyToOne;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import java.util.Date;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity
 @Audited
@@ -31,27 +30,32 @@ public class SequencingRun {
 
     private String machineName;
 
-    //    @ManyToOne(fetch = FetchType.LAZY)
     private Long operator;
 
     private Boolean testRun;
 
     private Date runDate;
 
-    @OneToMany(cascade = CascadeType.PERSIST) // todo jmt should this have mappedBy?
+    @ManyToOne(cascade = CascadeType.PERSIST)
     // have to specify name, generated aud name is too long for Oracle
-    @JoinTable(schema = "mercury", name = "seq_run_run_cartridges")
-    private Set<RunCartridge> runCartridges = new HashSet<RunCartridge>();
+    @JoinTable(schema = "mercury", name = "seq_run_run_cartridges",joinColumns = @JoinColumn(name="sequencing_run"),
+                      inverseJoinColumns = @JoinColumn(name="run_cartridge"))
+    private RunCartridge runCartridge;
+
+    @ManyToOne(cascade = {CascadeType.ALL})
+    @JoinColumn(name = "run_location_id")
+    private OutputDataLocation runLocation;
 
     public SequencingRun(String runName, String runBarcode, String machineName, Long operator, Boolean testRun,
-                         Date runDate, Set<RunCartridge> runCartridges) {
+                         Date runDate, RunCartridge runCartridge, OutputDataLocation runLocation) {
         this.runName = runName;
         this.runBarcode = runBarcode;
         this.machineName = machineName;
         this.operator = operator;
         this.testRun = testRun;
         this.runDate = runDate;
-        this.runCartridges = runCartridges;
+        this.runCartridge = runCartridge;
+        this.runLocation = runLocation;
     }
 
     protected SequencingRun() {
@@ -106,8 +110,8 @@ public class SequencingRun {
      *
      * @return
      */
-    public Iterable<RunCartridge> getSampleCartridge() {
-        return runCartridges;
+    public RunCartridge getSampleCartridge() {
+        return runCartridge;
     }
 
     public Date getRunDate() {
@@ -116,5 +120,13 @@ public class SequencingRun {
 
     public void setRunDate(Date runDate) {
         this.runDate = runDate;
+    }
+
+    public OutputDataLocation getRunLocation() {
+        return runLocation;
+    }
+
+    public void setRunLocation(OutputDataLocation runLocation) {
+        this.runLocation = runLocation;
     }
 }

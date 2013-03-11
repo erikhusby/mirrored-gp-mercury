@@ -38,6 +38,7 @@ public class MercuryConfiguration {
     // Hopefully we can do something with portable extensions and @Observes ProcessAnnotatedType<T> to find these
     // automatically, and maybe something really sneaky to create qualified bean instances of these types to
     // support @TestInstance-style qualifier injection with producer classes.  But not in this version.
+    @SuppressWarnings("unchecked")
     private static final Class<? extends AbstractConfig>[] CONFIG_CLASSES = array(
             MercuryConfig.class,
             SquidConfig.class,
@@ -193,6 +194,7 @@ public class MercuryConfiguration {
             }
 
             // iterate the deployments for this external system
+            //noinspection unchecked
             for (Map.Entry<String, Map> deploymentEntry : ((Map<String, Map>) section.getValue()).entrySet()) {
                 String deploymentString = deploymentEntry.getKey();
 
@@ -211,6 +213,7 @@ public class MercuryConfiguration {
 
                 config.setExternalDeployment(deployment);
 
+                //noinspection unchecked
                 setPropertiesIntoConfig(deploymentEntry.getValue(), config);
 
                 externalSystems.set(systemKey, deployment, config);
@@ -282,6 +285,7 @@ public class MercuryConfiguration {
             return;
         }
 
+        //noinspection unchecked
         Map<String, Map> deploymentsMap = doc.get(APP_KEY);
 
         for (Map.Entry<String, Map> deployments : deploymentsMap.entrySet()) {
@@ -291,6 +295,7 @@ public class MercuryConfiguration {
             }
 
             Deployment mercuryDeployment = Deployment.valueOf(mercuryDeploymentString);
+            //noinspection unchecked
             Map<String, String> systemsMappings = (Map<String, String>) deployments.getValue();
 
             for (Map.Entry<String, String> systemsMapping : systemsMappings.entrySet()) {
@@ -357,6 +362,7 @@ public class MercuryConfiguration {
                     }
 
                     Yaml yaml = new Yaml();
+                    //noinspection unchecked
                     final Map<String, Map> globalConfigDoc = (Map<String, Map>) yaml.load(is);
 
                     // take local overrides if any
@@ -364,6 +370,7 @@ public class MercuryConfiguration {
                     is = getClass().getResourceAsStream(MERCURY_CONFIG_LOCAL);
 
                     if (is != null) {
+                        //noinspection unchecked
                         localConfigDoc = (Map<String, Map>) yaml.load(is);
                     }
 
@@ -393,6 +400,7 @@ public class MercuryConfiguration {
         try {
             // Find the list of gettable properties on the bean to sanity check whether the specified property exists
             // I would really like to validate settable properties too since this system doesn't work without setters
+            //noinspection unchecked
             final Set<String> properties = BeanUtils.describe(config).keySet();
 
 

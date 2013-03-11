@@ -16,13 +16,7 @@ import org.testng.annotations.Test;
 
 import java.util.*;
 
-import static org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO.*;
 
-/**
- * A test.
- *
- * @author mccory
- */
 @Test(groups = TestGroups.DATABASE_FREE)
 public class ProductOrderSampleTest {
 
@@ -117,10 +111,10 @@ public class ProductOrderSampleTest {
         TestPDOData data = new TestPDOData();
         Date completedDate = new Date();
         Set<BillingLedger> ledgers = new HashSet<BillingLedger>();
-        ledgers.add(new BillingLedger(data.sample1, data.product.getPrimaryPriceItem(),  completedDate, 1));
-        ledgers.add(new BillingLedger(data.sample1, data.addOn.getPrimaryPriceItem(),  completedDate, 1));
+        ledgers.add(new BillingLedger(data.sample1, data.product.getPrimaryPriceItem(), "GSP-123", completedDate, 1));
+        ledgers.add(new BillingLedger(data.sample1, data.addOn.getPrimaryPriceItem(), "GSP-123", completedDate, 1));
 
-        data.sample2.addLedgerItem(completedDate, data.product.getPrimaryPriceItem(), 1);
+        data.sample2.addLedgerItem(completedDate, data.product.getPrimaryPriceItem(), "GSP-123", 1);
         BillingLedger ledger = data.sample2.getLedgerItems().iterator().next();
         ledger.setBillingMessage(BillingSession.SUCCESS);
         ledger.setBillingSession(new BillingSession(0L, Collections.singleton(ledger)));

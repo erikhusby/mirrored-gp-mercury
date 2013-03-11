@@ -380,7 +380,7 @@ public abstract class LabVessel implements Serializable {
         labEvent.setInPlaceLabVessel(this);
     }
 
-    public abstract CONTAINER_TYPE getType();
+    public abstract ContainerType getType();
 
     public static Collection<String> extractPdoKeyList(Collection<LabVessel> labVessels) {
 
@@ -425,7 +425,7 @@ public abstract class LabVessel implements Serializable {
         return nearest.size();
     }
 
-    public enum CONTAINER_TYPE {
+    public enum ContainerType {
         STATIC_PLATE("Plate"),
         PLATE_WELL("Plate Well"),
         RACK_OF_TUBES("Tube Rack"),
@@ -439,7 +439,7 @@ public abstract class LabVessel implements Serializable {
 
         private String name;
 
-        CONTAINER_TYPE(String name) {
+        ContainerType(String name) {
             this.name = name;
         }
 
