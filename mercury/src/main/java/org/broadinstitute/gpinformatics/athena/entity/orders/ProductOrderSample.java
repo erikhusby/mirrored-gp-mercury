@@ -334,7 +334,7 @@ public class ProductOrderSample implements Serializable {
         for (PriceItem priceItem : itemsToBill) {
             LedgerQuantities quantities = ledgerQuantitiesMap.get(priceItem);
             if (quantities == null) {
-                // No ledger item exists for this price item, create it.
+                // No ledger item exists for this price item, create it using the current order's price item
                 addLedgerItem(completedDate, priceItem, getProductOrder().getQuoteId(), quantity);
             } else {
                 // This price item already has a ledger entry.
