@@ -94,7 +94,7 @@ public class BillingLedgerFixupTest extends Arquillian {
     public void backfillLedgerQuotes() {
 
         int counter = 0;
-        for (BillingLedger ledger : billingLedgerDao.findBilledLedgersWithoutQuoteId()) {
+        for (BillingLedger ledger : billingLedgerDao.findSuccessfullyBilledLedgerEntriesWithoutQuoteId()) {
             String quoteId = ledger.getProductOrderSample().getProductOrder().getQuoteId();
 
             final int BATCH_SIZE = 1000;

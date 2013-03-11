@@ -12,7 +12,7 @@ import javax.persistence.Enumerated;
 import java.io.Serializable;
 import java.util.*;
 
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.CONTAINER_TYPE.STATIC_PLATE;
+import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.ContainerType.STATIC_PLATE;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalControl.ContinueTraversing;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalControl.StopTraversing;
 import static org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria.TraversalDirection.Ancestors;
@@ -260,8 +260,8 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
     }
 
     @Override
-    public CONTAINER_TYPE getType() {
-        return CONTAINER_TYPE.STATIC_PLATE;
+    public ContainerType getType() {
+        return ContainerType.STATIC_PLATE;
     }
 
     public VesselContainer<PlateWell> getContainerRole() {
