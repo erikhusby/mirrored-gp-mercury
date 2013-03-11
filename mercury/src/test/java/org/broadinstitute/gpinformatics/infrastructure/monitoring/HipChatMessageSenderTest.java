@@ -25,7 +25,6 @@ public class HipChatMessageSenderTest extends Arquillian {
 
     @Test(groups = EXTERNAL_INTEGRATION)
     public void test_send_message() {
-        //hipChatConfig = HipChatConfigProducer.getConfig(Deployment.DEV);
-        messageSender.postSimpleTextMessage("Testing hipchat message sender!","GPLIMS Testing");
+        messageSender.postMessageToGpLims("test message from " + getClass().getCanonicalName());
     }
 }

@@ -100,12 +100,13 @@ thrift:
       host: seqlims
       port: 9090
 
-hipchat:
-    DEV:
+DEV:
         baseUrl: https://www.hipchat.com/v1/rooms/message
+        gpLimsRoom: GPLIMS Testing
 
     PROD:
         baseUrl: https://www.hipchat.com/v1/rooms/message
+        gpLimsRoom: GPLims
 
 
 

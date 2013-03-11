@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.monitoring;
 
 import com.sun.jersey.api.client.Client;
+import com.sun.jersey.api.client.UniformInterfaceException;
 import com.sun.jersey.api.client.WebResource;
 import com.sun.jersey.api.client.config.ClientConfig;
 import org.apache.commons.logging.Log;
@@ -12,6 +13,8 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.Serializable;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 /**
  * Class which sends a message to hipchat.
@@ -61,12 +64,10 @@ public class HipChatMessageSender implements Serializable {
      * Posts a simple text message to the given room, using the default
      * color.  See https://www.hipchat.com/docs/api/method/rooms/message for
      * hipchat API details.
-     * @param text
-     * @param room
+     * @param message a plain text message
      */
-    // todo arz how to wrap this thing an injected bean so that only production errors and dev errors go to the right rooms?
-    public void postSimpleTextMessage(String text,String room) {
-        new JsonClient().postMessage(text,room);
+    public void postMessageToGpLims(String message) {
+        new JsonClient().postMessage(message, config.getGpLimsRoom());
     }
 
     /**
@@ -84,10 +85,36 @@ public class HipChatMessageSender implements Serializable {
             client.setReadTimeout(CONNECTION_TIMEOUT);
         }
 
-        public void postMessage(String text,String room) {
+        /**
+         * Get the local ip address, or return a string
+         * that says something like "can't find an ip address"
+         * @return
+         */
+        private String getIPAddress() {
+            String ipAddress = "no ip address";
+            InetAddress inetAddress = null;
+            try {
+                inetAddress = InetAddress.getLocalHost();
+            }
+            catch(UnknownHostException e) {
+                log.error("Failed to find ip address during hipchat message post.",e);
+            }
+            if (inetAddress != null) {
+                ipAddress = inetAddress.getHostAddress();
+            }
+            return ipAddress;
+        }
+
+        /**
+         * Post a message to the given room.
+         * @param text
+         * @param room
+         */
+        private void postMessage(String text,String room) {
+            String message = text + "\nfrom " + getIPAddress();
             WebResource webResource = getJerseyClient().resource(config.getBaseUrl())
                 .queryParam(ROOM_KEY,room)
-                .queryParam(MESSAGE_KEY,text)
+                .queryParam(MESSAGE_KEY,message)
                 .queryParam(AUTHORIZATION_TOKEN_KEY,AUTHORIZATION_TOKEN)
                 .queryParam(FROM_KEY,FROM);
 
