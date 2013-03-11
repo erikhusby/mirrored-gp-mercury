@@ -17,8 +17,8 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.project.JiraTicket;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaRunConfiguration;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.run.OutputDataLocation;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.*;
@@ -33,15 +33,10 @@ import java.util.*;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType.*;
-import static org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell.FLOWCELL_TYPE.EIGHT_LANE;
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 /**
  * @author breilly
@@ -126,7 +121,7 @@ public class ZimsIlluminaRunFactoryTest {
         // Record some events for the sample
         BettaLimsMessageFactory bettaLimsMessageFactory = new BettaLimsMessageFactory();
         List<BettaLimsMessageFactory.CherryPick> cherryPicks = new ArrayList<BettaLimsMessageFactory.CherryPick>();
-        String stripTubeWells[] = new String[]{ "A01", "B01", "C01", "D01", "E01", "F01", "G01", "H01" };
+        String stripTubeWells[] = new String[]{"A01", "B01", "C01", "D01", "E01", "F01", "G01", "H01"};
         for (int i = 0; i < 8; i++) {
             cherryPicks.add(new BettaLimsMessageFactory.CherryPick("testRack", "A01", "testStripTubeHolder", stripTubeWells[i]));
         }
@@ -135,7 +130,7 @@ public class ZimsIlluminaRunFactoryTest {
         mapBarcodeToSourceTube.put("testTube", testTube);
         LabEvent stripTubeBTransfer = labEventFactory.buildCherryPickRackToStripTubeDbFree(stripTubeBTransferEvent, new HashMap<String, TubeFormation>(), mapBarcodeToSourceTube, null, new HashMap<String, StripTube>(), new HashMap<String, RackOfTubes>());
 
-        flowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell, "testFlowcell", new IlluminaRunConfiguration(76, true));
+        flowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell, "testFlowcell");
         PlateTransferEventType flowcellTransferEvent = bettaLimsMessageFactory.buildStripTubeToFlowcell("FlowcellTransfer", "testStripTube", "testFlowcell");
         StripTube stripTube = (StripTube) getOnly(stripTubeBTransfer.getTargetLabVessels());
         labEventFactory.buildFromBettaLimsPlateToPlateDbFree(flowcellTransferEvent, stripTube, flowcell);
@@ -149,7 +144,11 @@ public class ZimsIlluminaRunFactoryTest {
     @Test(groups = DATABASE_FREE)
     public void testMakeZimsIlluminaRun() throws Exception {
         Date runDate = new Date(1358889107084L);
-        IlluminaSequencingRun sequencingRun = new IlluminaSequencingRun(flowcell, "TestRun", "Run-123", "IlluminaRunServiceImplTest", 101L, true, runDate);
+        final String testRunDirectory = "TestRun";
+        IlluminaSequencingRun sequencingRun =
+                new IlluminaSequencingRun(flowcell, testRunDirectory, "Run-123", "IlluminaRunServiceImplTest", 101L, true,
+                        runDate,
+                        new OutputDataLocation("/root/path/to/run/" + testRunDirectory));
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(sequencingRun);
 //        LibraryBeanFactory libraryBeanFactory = new LibraryBeanFactory();
 //        ZimsIlluminaRun zimsIlluminaRun = libraryBeanFactory.buildLibraries(sequencingRun);
@@ -160,9 +159,9 @@ public class ZimsIlluminaRunFactoryTest {
         assertThat(zimsIlluminaRun.getSequencer(), equalTo("IlluminaRunServiceImplTest"));
         assertThat(zimsIlluminaRun.getFlowcellBarcode(), equalTo("testFlowcell"));
         assertThat(zimsIlluminaRun.getRunDateString(), equalTo("01/22/2013 16:11"));
-//        assertThat(zimsIlluminaRun.getPairedRun(), is(true)); // TODO
-//        assertThat(zimsIlluminaRun.getSequencerModel(), equalTo("HiSeq")); // TODO
-//        assertThat(zimsIlluminaRun.getLanes().size(), equalTo(8));
+//        assertThat(zimsIlluminaRun.getPairedRun(), is(true)); // TODO SGM will pull from Workflow
+//        assertThat(zimsIlluminaRun.getSequencerModel(), equalTo("HiSeq")); // TODO  SGM Will pull from workflow
+//        assertThat(zimsIlluminaRun.getLanes().size(), equalTo(8)); // TODO SGM WIll pull from workflow
 
         for (ZimsIlluminaChamber lane : zimsIlluminaRun.getLanes()) {
             if (lane.getName().equals("1")) {

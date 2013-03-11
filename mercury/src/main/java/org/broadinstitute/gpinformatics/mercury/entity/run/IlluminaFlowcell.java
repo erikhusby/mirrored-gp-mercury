@@ -7,7 +7,10 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselContainerEmb
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselGeometry;
 import org.hibernate.envers.Audited;
 
-import javax.persistence.*;
+import javax.persistence.Embedded;
+import javax.persistence.Entity;
+import javax.persistence.EnumType;
+import javax.persistence.Enumerated;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -33,6 +36,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         }
 
         private static Map<String, FlowcellType> mapDisplayNameToType = new HashMap<String, FlowcellType>();
+
         static {
             for (FlowcellType plateType : FlowcellType.values()) {
                 mapDisplayNameToType.put(plateType.getDisplayName(), plateType);
@@ -41,7 +45,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
 
         public static FlowcellType getByDisplayName(String displayName) {
             FlowcellType plateTypeLocal = mapDisplayNameToType.get(displayName);
-            if(plateTypeLocal == null) {
+            if (plateTypeLocal == null) {
                 throw new RuntimeException("Failed to find plate type " + displayName);
             }
             return plateTypeLocal;
@@ -51,9 +55,6 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
             return vesselGeometry;
         }
     }
-    // todo jmt fix this
-    @Transient
-    private IlluminaRunConfiguration runConfiguration;
 
     @Enumerated(EnumType.STRING)
     private FlowcellType flowcellType;
@@ -88,8 +89,8 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     }
 
     @Override
-    public CONTAINER_TYPE getType() {
-        return CONTAINER_TYPE.FLOWCELL;
+    public ContainerType getType() {
+        return ContainerType.FLOWCELL;
     }
 
     @Override
@@ -97,13 +98,12 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         return this.vesselContainer;
     }
 
-    public IlluminaFlowcell(FlowcellType flowcellType,String flowcellBarcode,IlluminaRunConfiguration runConfig) {
+    public IlluminaFlowcell(FlowcellType flowcellType, String flowcellBarcode) {
         super(flowcellBarcode);
         this.flowcellBarcode = flowcellBarcode;
-        this.runConfiguration = runConfig;
         this.flowcellType = flowcellType;
     }
-        
+
 /*
     todo jmt need something similar in VesselContainer
     public void addChamber(LabVessel library,int laneNumber) {
@@ -122,17 +122,6 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
     }
 */
 
-    /**
-     * In the illumina world, one sets the run configuration
-     * when the flowcell is made.  But other technologies
-     * might have their run configuration set later
-     * in the process.
-     * @return
-     */
-    public IlluminaRunConfiguration getRunConfiguration() {
-        return this.runConfiguration;
-    }
-
     @Override
     public Iterable<RunChamber> getChambers() {
         return this.vesselContainer.getContainedVessels();
@@ -148,7 +137,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         return this.flowcellBarcode;
     }
 
-    public FlowcellType getFlowcellType(){
+    public FlowcellType getFlowcellType() {
         return flowcellType;
     }
 
