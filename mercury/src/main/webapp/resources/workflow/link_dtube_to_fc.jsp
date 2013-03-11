@@ -4,7 +4,7 @@
 <stripes:useActionBean var="actionBean"
                        beanclass="org.broadinstitute.gpinformatics.mercury.presentation.workflow.LinkDenatureTubeToFlowcellActionBean"/>
 
-<stripes:layout-render name="/layout.jsp" pageTitle="Link Denature Tube to Flowcell">
+<stripes:layout-render name="/layout.jsp" pageTitle="Link Denature Tube to Flowcell" sectionTitle="Scan Barcodes">
     <stripes:layout-component name="content">
         <stripes:form beanclass="${actionBean.class.name}" id="scanForm">
             <div class="control-group">
