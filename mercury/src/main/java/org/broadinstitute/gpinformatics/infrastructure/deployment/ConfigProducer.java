@@ -24,77 +24,77 @@ public class ConfigProducer {
     @Produces
     @Default
     public QuoteConfig produceQuoteConfig() {
-        return QuoteConfig.produce(deployment);
+        return AbstractConfig.produce(QuoteConfig.class, deployment);
     }
 
 
     @Produces
     @Default
     public BSPConfig produceBSPConfig() {
-        return BSPConfig.produce(deployment);
+        return AbstractConfig.produce(BSPConfig.class, deployment);
     }
 
 
     @Produces
     @Default
     public DeckMessagesConfig produceDeskMessagesConfig() {
-        return DeckMessagesConfig.produce(deployment);
+        return AbstractConfig.produce(DeckMessagesConfig.class, deployment);
     }
 
 
     @Produces
     @Default
     public GAPConfig produceGAPConfig() {
-        return GAPConfig.produce(deployment);
+        return AbstractConfig.produce(GAPConfig.class, deployment);
     }
 
 
     @Produces
     @Default
     public BettalimsConfig produceBettalimsConfig() {
-        return BettalimsConfig.produce(deployment);
+        return AbstractConfig.produce(BettalimsConfig.class, deployment);
     }
 
 
     @Produces
     @Default
     public EtlConfig produceEtlConfig() {
-        return EtlConfig.produce(deployment);
+        return AbstractConfig.produce(EtlConfig.class, deployment);
     }
 
 
     @Produces
     @Default
     public MercuryConfig produceMercuryConfig() {
-        return MercuryConfig.produce(deployment);
+        return AbstractConfig.produce(MercuryConfig.class, deployment);
     }
 
 
     @Produces
     @Default
     public TableauConfig produceTableauConfig() {
-        return TableauConfig.produce(deployment);
+        return AbstractConfig.produce(TableauConfig.class, deployment);
     }
 
 
     @Produces
     @Default
     public SquidConfig produceSquidConfig() {
-        return SquidConfig.produce(deployment);
+        return AbstractConfig.produce(SquidConfig.class, deployment);
     }
 
 
     @Produces
     @Default
     public JiraConfig produceJiraConfig() {
-        return JiraConfig.produce(deployment);
+        return AbstractConfig.produce(JiraConfig.class, deployment);
     }
 
 
     @Produces
     @Default
     public ThriftConfig produceThriftConfig() {
-        return ThriftConfig.produce(deployment);
+        return AbstractConfig.produce(ThriftConfig.class, deployment);
     }
 
 }

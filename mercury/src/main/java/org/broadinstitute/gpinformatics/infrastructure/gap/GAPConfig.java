@@ -46,8 +46,4 @@ public class GAPConfig extends AbstractConfig implements LoginAndPassword, Seria
         this.url = url;
     }
 
-    public static GAPConfig produce(Deployment deployment) {
-        return produce(GAPConfig.class, deployment);
-    }
-
 }

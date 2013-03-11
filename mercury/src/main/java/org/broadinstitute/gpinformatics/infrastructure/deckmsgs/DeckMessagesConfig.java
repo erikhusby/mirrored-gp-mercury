@@ -27,8 +27,4 @@ public class DeckMessagesConfig extends AbstractConfig implements Serializable {
         this.messageStoreDirRoot = messageStoreDirRoot;
     }
 
-
-    public static DeckMessagesConfig produce(Deployment deployment) {
-        return produce(DeckMessagesConfig.class, deployment);
-    }
 }

@@ -20,9 +20,4 @@ public class MercuryConfig extends AbstractConfig implements Serializable {
     public void setUrl(String url) {
         this.url = url;
     }
-
-    public static MercuryConfig produce(Deployment deployment) {
-        return produce(MercuryConfig.class, deployment);
-    }
-
 }

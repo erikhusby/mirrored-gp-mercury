@@ -42,17 +42,4 @@ public abstract class AbstractConfig {
         return (C) MercuryConfiguration.getInstance().getConfig(clazz, deployment);
     }
 
-
-    /**
-     * Return the AbstractConfig appropriate for the Mercury deployment consistent with the JNDI-configured
-     * MERCURY_DEPLOYMENT.
-     *
-     * @param <C> The type of the AbstractConfig-derived configuration class.
-     * @return Appropriately configured AbstractConfig-derived instance.
-     */
-    protected static <C extends AbstractConfig> C produce(Class<C> clazz) {
-        log.info("Creating for class " + clazz.getCanonicalName());
-        return produce(clazz, DeploymentProducer.getDeployment());
-    }
-
 }

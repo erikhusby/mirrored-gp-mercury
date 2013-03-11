@@ -62,7 +62,4 @@ public class TableauConfig extends AbstractConfig implements Serializable {
         return reportUrlMap.get(reportName);
     }
 
-    public static TableauConfig produce(Deployment deployment) {
-        return produce(TableauConfig.class, deployment);
-    }
 }

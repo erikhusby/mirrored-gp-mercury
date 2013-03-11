@@ -23,9 +23,4 @@ public class EtlConfig extends AbstractConfig implements Serializable {
         this.datawhEtlDirRoot = datawhEtlDirRoot;
     }
 
-
-    public static EtlConfig produce(Deployment deployment) {
-        return produce(EtlConfig.class, deployment);
-    }
-
 }
