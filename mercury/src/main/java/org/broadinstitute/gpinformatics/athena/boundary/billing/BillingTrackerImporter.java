@@ -14,6 +14,7 @@ import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.MessageFormat;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -265,7 +266,7 @@ public class BillingTrackerImporter {
 
             // Get the newQuantity cell value
             Cell newQuantityCell = row.getCell(currentBilledPosition + 1);
-            if ( BillingTrackerUtils.isNonNullNumericCell(newQuantityCell)) {
+            if (BillingTrackerUtils.isNonNullNumericCell(newQuantityCell)) {
                 newQuantity = newQuantityCell.getNumericCellValue();
                 if (newQuantity < 0) {
                     return String.format("Found negative new quantity '%f' for sample %s in %s, price item '%s', in Product sheet %s",
@@ -275,9 +276,28 @@ public class BillingTrackerImporter {
 
                 double delta = newQuantity - previouslyBilledQuantity;
 
-                if ( delta != 0 ) {
+                if (delta != 0) {
 
-                    Cell cell = row.getCell(BillingTrackerUtils.WORK_COMPLETE_DATE_COL_POS);
+                    Cell cell = row.getCell(BillingTrackerUtils.QUOTE_ID_COL_POS);
+                    if (cell == null || cell.getStringCellValue() == null) {
+                        return String.format("Found empty %s value for updated sample %s in %s, price item '%s', in Product sheet %s",
+                                BillingTrackerUtils.QUOTE_ID_HEADING, row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
+                                billableRef.getPriceItemName(), product.getPartNumber());
+                    }
+
+                    String uploadedQuoteId = cell.getStringCellValue().trim();
+                    if (!productOrderSample.getProductOrder().getQuoteId().equals(uploadedQuoteId)) {
+                        return MessageFormat
+                                .format("Found quote ID ''{0}'' for updated sample ''{1}'' in ''{2}'' in Product sheet ''{3}'', this differs from quote ''{4}'' currently associated with ''{2}''.",
+                                        uploadedQuoteId,
+                                        row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS),
+                                        row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
+                                        product.getPartNumber(),
+                                        productOrderSample.getProductOrder().getQuoteId());
+                    }
+
+
+                    cell = row.getCell(BillingTrackerUtils.WORK_COMPLETE_DATE_COL_POS);
                     if (cell == null || cell.getDateCellValue() == null) {
                         return String.format("Found empty %s value for updated sample %s in %s, price item '%s', in Product sheet %s",
                                 BillingTrackerUtils.WORK_COMPLETE_DATE_HEADING, row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
