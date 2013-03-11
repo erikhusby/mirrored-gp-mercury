@@ -217,10 +217,12 @@ hipchat:
     DEV:
         baseUrl: https://www.hipchat.com/v1/rooms/message
         gpLimsRoom: GPLIMS Testing
+        authorizationToken: db3e86c451ef8ac0cddb94133e0455
 
     PROD:
         baseUrl: https://www.hipchat.com/v1/rooms/message
         gpLimsRoom: GPLims
+        authorizationToken: db3e86c451ef8ac0cddb94133e0455
 
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 

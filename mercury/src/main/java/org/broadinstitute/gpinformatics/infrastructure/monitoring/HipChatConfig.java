@@ -8,8 +8,7 @@ import java.io.Serializable;
 @ConfigKey("hipchat")
 public class HipChatConfig extends AbstractConfig implements Serializable {
 
-    // todo arz add other fields to config, in particular the room,
-    // authorization key, and from value
+    private String authorizationToken;
 
     private String gpLimsRoom;
 
@@ -32,5 +31,13 @@ public class HipChatConfig extends AbstractConfig implements Serializable {
 
     public void setGpLimsRoom(String gpLimsRoom) {
         this.gpLimsRoom = gpLimsRoom;
+    }
+
+    public String getAuthorizationToken() {
+        return authorizationToken;
+    }
+
+    public void setAuthorizationToken(String authorizationToken) {
+        this.authorizationToken = authorizationToken;
     }
 }

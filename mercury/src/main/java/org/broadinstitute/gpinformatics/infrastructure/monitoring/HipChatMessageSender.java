@@ -30,11 +30,7 @@ public class HipChatMessageSender implements Serializable {
 
     private final static Log log = LogFactory.getLog(HipChatMessageSender.class);
 
-    // todo arz how to setup configuration parameters in yaml files?
-
     private static final Integer CONNECTION_TIMEOUT = 2 * 1000;
-
-    private static final String HIPCHAT_BASE_URL = "https://www.hipchat.com/v1/rooms/message";
 
     private static final String ROOM_KEY = "room_id";
 
@@ -115,7 +111,7 @@ public class HipChatMessageSender implements Serializable {
             WebResource webResource = getJerseyClient().resource(config.getBaseUrl())
                 .queryParam(ROOM_KEY,room)
                 .queryParam(MESSAGE_KEY,message)
-                .queryParam(AUTHORIZATION_TOKEN_KEY,AUTHORIZATION_TOKEN)
+                .queryParam(AUTHORIZATION_TOKEN_KEY,config.getAuthorizationToken())
                 .queryParam(FROM_KEY,FROM);
 
             HipchatResponse response = webResource.post(HipchatResponse.class);
