@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.datawh.EtlConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deckmsgs.DeckMessagesConfig;
 import org.broadinstitute.gpinformatics.infrastructure.gap.GAPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
+import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
@@ -50,7 +51,8 @@ public class MercuryConfiguration {
             DeckMessagesConfig.class,
             EtlConfig.class,
             BettalimsConfig.class,
-            TableauConfig.class);
+            TableauConfig.class,
+            HipChatConfig.class);
 
 
     private static final String MERCURY_CONFIG = "/mercury-config.yaml";
