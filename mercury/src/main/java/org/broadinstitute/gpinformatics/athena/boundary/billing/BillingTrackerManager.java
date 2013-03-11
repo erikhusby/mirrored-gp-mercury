@@ -280,7 +280,9 @@ public class BillingTrackerManager {
                                 " of spreadsheet " + product.getPartNumber() +
                                 " has an invalid Date Completed value. Please correct and try again.");
                     } else {
-                        productOrderSample.addLedgerItem(workCompleteDate, priceItem, productOrderSample.getProductOrder().getQuoteId(), delta);
+                        // Put null in for the quote ID at tracker upload time.  This will be overwritten with the
+                        // current quote on the PDO at billing time.
+                        productOrderSample.addLedgerItem(workCompleteDate, priceItem, null, delta);
                     }
                 } else {
                     logger.debug("Skipping BillingLedger item for sample " + productOrderSample.getSampleName() +
