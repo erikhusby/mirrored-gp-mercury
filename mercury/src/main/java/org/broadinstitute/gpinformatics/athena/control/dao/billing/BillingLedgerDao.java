@@ -42,7 +42,7 @@ public class BillingLedgerDao extends GenericDao {
      *
      * @return List of billed BillingLedgers with null quote IDs.
      */
-    public List<BillingLedger> findBilledLedgersWithoutQuoteId() {
+    public List<BillingLedger> findSuccessfullyBilledLedgerEntriesWithoutQuoteId() {
         return findAll(BillingLedger.class, new GenericDaoCallback<BillingLedger>() {
             @Override
             public void callback(CriteriaQuery<BillingLedger> criteriaQuery, Root<BillingLedger> root) {
@@ -59,7 +59,9 @@ public class BillingLedgerDao extends GenericDao {
                         // exist (this is an inner join) and have a non-null billed date.  Note that this is not
                         // explicitly testing for *successful* billing (see comments in BillingLedgerDao), just a
                         // billing session with a billed date.
-                        cb.isNotNull(ledgerBillingSessionJoin.get(BillingSession_.billedDate)));
+                        cb.isNotNull(ledgerBillingSessionJoin.get(BillingSession_.billedDate)),
+                        // Only select ledger entries that were successfully billed.
+                        cb.equal(root.get(BillingLedger_.billingMessage), BillingSession.SUCCESS));
 
                 // This test runs very slowly without this fetch as we would singleton select thousands of
                 // ProductOrderSamples.
