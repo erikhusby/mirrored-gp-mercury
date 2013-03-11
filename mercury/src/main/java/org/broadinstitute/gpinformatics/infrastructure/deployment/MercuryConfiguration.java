@@ -2,21 +2,14 @@ package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
-import org.broadinstitute.gpinformatics.infrastructure.bettalims.BettalimsConfig;
-import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.datawh.EtlConfig;
-import org.broadinstitute.gpinformatics.infrastructure.deckmsgs.DeckMessagesConfig;
-import org.broadinstitute.gpinformatics.infrastructure.gap.GAPConfig;
-import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
-import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteConfig;
-import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
-import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
-import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftConfig;
 import org.yaml.snakeyaml.Yaml;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -35,23 +28,8 @@ import java.util.*;
  * </ol>
  */
 public class MercuryConfiguration {
-    // Hopefully we can do something with portable extensions and @Observes ProcessAnnotatedType<T> to find these
-    // automatically, and maybe something really sneaky to create qualified bean instances of these types to
-    // support @TestInstance-style qualifier injection with producer classes.  But not in this version.
-    @SuppressWarnings("unchecked")
-    private static final Class<? extends AbstractConfig>[] CONFIG_CLASSES = array(
-            MercuryConfig.class,
-            SquidConfig.class,
-            BSPConfig.class,
-            JiraConfig.class,
-            QuoteConfig.class,
-            ThriftConfig.class,
-            GAPConfig.class,
-            DeckMessagesConfig.class,
-            EtlConfig.class,
-            BettalimsConfig.class,
-            TableauConfig.class);
 
+    private static Set<Class<? extends AbstractConfig>> CONFIG_CLASSES;
 
     private static final String MERCURY_CONFIG = "/mercury-config.yaml";
 
@@ -61,17 +39,63 @@ public class MercuryConfiguration {
 
     private static String MERCURY_BUILD_INFO;
 
+
     /**
-     * Workaround for Java language limitations regarding creation of generic arrays, prevents classes not extending
-     * {@link AbstractConfig} from being entered into the array of configuration classes.
+     * Scans all classes accessible from the context class loader which belong to the given package and subpackages.
      *
-     * @param classes Varargs list of {@link AbstractConfig} classes.
+     * Copied from http://dzone.com/snippets/get-all-classes-within-package.
      *
-     * @return Arguments are simply passed through this method unmodified.
+     * @param packageName The base package
+     *
+     * @return The classes
+     *
+     * @throws ClassNotFoundException
+     * @throws IOException
      */
-    private static Class<? extends AbstractConfig> [] array(Class<? extends AbstractConfig>... classes) {
+    private static Class[] getClasses(String packageName) throws ClassNotFoundException, IOException {
+        ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+        assert classLoader != null;
+        String path = packageName.replace('.', '/');
+        Enumeration<URL> resources = classLoader.getResources(path);
+        List<File> dirs = new ArrayList<File>();
+        while (resources.hasMoreElements()) {
+            URL resource = resources.nextElement();
+            dirs.add(new File(resource.getFile()));
+        }
+        ArrayList<Class> classes = new ArrayList<Class>();
+        for (File directory : dirs) {
+            classes.addAll(findClasses(directory, packageName));
+        }
+        return classes.toArray(new Class[classes.size()]);
+    }
+
+    /**
+     * Recursive method used to find all classes in a given directory and subdirs.
+     *
+     * Copied from http://dzone.com/snippets/get-all-classes-within-package.
+     *
+     * @param directory   The base directory
+     * @param packageName The package name for classes found inside the base directory
+     * @return The classes
+     * @throws ClassNotFoundException
+     */
+    private static List<Class> findClasses(File directory, String packageName) throws ClassNotFoundException {
+        List<Class> classes = new ArrayList<Class>();
+        if (!directory.exists()) {
+            return classes;
+        }
+        File[] files = directory.listFiles();
+        for (File file : files) {
+            if (file.isDirectory()) {
+                assert !file.getName().contains(".");
+                classes.addAll(findClasses(file, packageName + "." + file.getName()));
+            } else if (file.getName().endsWith(".class")) {
+                classes.add(Class.forName(packageName + '.' + file.getName().substring(0, file.getName().length() - 6)));
+            }
+        }
         return classes;
     }
+
 
 
     private class ExternalSystems {
@@ -149,7 +173,31 @@ public class MercuryConfiguration {
         return annotation.value();
     }
 
-    private Class<? extends AbstractConfig> getConfigClass(String configKey) {
+    private synchronized Class<? extends AbstractConfig> getConfigClass(String configKey) {
+        if (CONFIG_CLASSES == null) {
+
+            Set<Class<? extends AbstractConfig>> localConfigClasses = new HashSet<Class<? extends AbstractConfig>>();
+            try {
+
+                for (Class clazz : getClasses("org.broadinstitute.gpinformatics")) {
+                    if (AbstractConfig.class.isAssignableFrom(clazz) && !(AbstractConfig.class == clazz)) {
+                        for (Annotation annotation : clazz.getDeclaredAnnotations()) {
+                            if (annotation.annotationType().equals(ConfigKey.class)) {
+                                //noinspection unchecked
+                                localConfigClasses.add(clazz);
+                            }
+                        }
+                    }
+                }
+                CONFIG_CLASSES = localConfigClasses;
+
+            } catch (ClassNotFoundException e) {
+                throw new RuntimeException(e);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
         for (Class<? extends AbstractConfig> clazz : CONFIG_CLASSES) {
             if (getConfigKey(clazz).equals(configKey)) {
                 return clazz;
