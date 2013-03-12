@@ -1,6 +1,5 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
@@ -14,14 +13,17 @@ import org.hornetq.api.jms.JMSFactoryType;
 import org.hornetq.core.remoting.impl.netty.NettyConnectorFactory;
 import org.hornetq.core.remoting.impl.netty.TransportConstants;
 import org.hornetq.jms.client.HornetQConnectionFactory;
+import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.jms.Connection;
+import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
+import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.transaction.UserTransaction;
 import java.util.Date;
@@ -58,8 +60,9 @@ public class WorkCompleteMessageBeanTest extends ContainerTest {
         utx.begin();
 
         try {
-            WorkCompleteMessageBean workCompleteMessageBean = new WorkCompleteMessageBean(workCompleteMessageDao);
-            workCompleteMessageBean.onMessage(createMessage());
+    //        WorkCompleteMessageBean workCompleteMessageBean = new WorkCompleteMessageBean(workCompleteMessageDao);
+    //        workCompleteMessageBean.onMessage(createMessage(createSession()));
+            sendMessage();
 
             workCompleteMessageDao.flush();
             workCompleteMessageDao.clear();
@@ -110,7 +113,16 @@ public class WorkCompleteMessageBeanTest extends ContainerTest {
         }
     }
 
-    public static Message createMessage() throws JMSException {
+    /*
+     * FIXME: need to close session:
+     *         try {
+     *            connection.close();
+     *        } catch (Exception e) {
+     *            // Ignore exceptions on close. We're just using it to create a dummy message.
+     *        }
+     */
+
+    public static Session createSession() throws JMSException {
         // This test doesn't (yet) actually connect to the JMS queue.  The test hands the message directly
         // to the MDB handler method.  So the values used here are not important and may not be correct.
         HornetQConnectionFactory cf = HornetQJMSClient.createConnectionFactoryWithoutHA(JMSFactoryType.CF,
@@ -121,18 +133,25 @@ public class WorkCompleteMessageBeanTest extends ContainerTest {
                         }}
                 ));
         Connection connection = cf.createConnection();
-        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-        Message testMessage = session.createMapMessage();
-        testMessage.clearBody();
-        testMessage.setStringProperty(WorkCompleteMessage.REQUIRED_NAMES.PDO_NAME.name(), TEST_PDO_NAME);
-        testMessage.setStringProperty(WorkCompleteMessage.REQUIRED_NAMES.SAMPLE_NAME.name(), TEST_SAMPLE_NAME);
-        testMessage.setIntProperty(WorkCompleteMessage.REQUIRED_NAMES.SAMPLE_INDEX.name(), 1);
-        testMessage.setLongProperty(WorkCompleteMessage.REQUIRED_NAMES.COMPLETED_TIME.name(), new Date().getTime());
-        try {
-            connection.close();
-        } catch (Exception e) {
-            // Ignore exceptions on close. We're just using it to create a dummy message.
-        }
-        return testMessage;
+        return connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+    }
+
+    public static void sendMessage() throws JMSException {
+        Session session = createSession();
+        Destination destination = session.createQueue("broad.queue.athena.workreporting.dev");
+        MessageProducer producer = session.createProducer(destination);
+        Message message = createMessage(session);
+        //producer.setDeliveryMode(DeliveryMode.PERSISTENT);
+        producer.send(destination, message);
+    }
+
+    public static Message createMessage(Session session) throws JMSException {
+        Message message = session.createMapMessage();
+        message.clearBody();
+        message.setStringProperty(WorkCompleteMessage.REQUIRED_NAMES.PDO_NAME.name(), TEST_PDO_NAME);
+        message.setStringProperty(WorkCompleteMessage.REQUIRED_NAMES.SAMPLE_NAME.name(), TEST_SAMPLE_NAME);
+        message.setIntProperty(WorkCompleteMessage.REQUIRED_NAMES.SAMPLE_INDEX.name(), 1);
+        message.setLongProperty(WorkCompleteMessage.REQUIRED_NAMES.COMPLETED_TIME.name(), new Date().getTime());
+        return message;
     }
 }
