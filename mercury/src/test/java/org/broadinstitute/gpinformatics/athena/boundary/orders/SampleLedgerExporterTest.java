@@ -18,12 +18,12 @@ public class SampleLedgerExporterTest {
     void testExport() throws IOException {
 
         SampleLedgerExporter exporter =
-                new SampleLedgerExporter(null, Collections.singletonList(AthenaClientServiceStub.createDummyProductOrder()));
+                new SampleLedgerExporter(null,
+                        Collections.singletonList(AthenaClientServiceStub.createDummyProductOrder()));
 
         File test = File.createTempFile("SampleLedgerExporterTest", ".xls");
-        OutputStream outputStream = null;
+        OutputStream outputStream = new FileOutputStream(test);
         try {
-            outputStream = new FileOutputStream(test);
             exporter.writeToStream(outputStream);
 
             // TODO: ensure that output file is correct!
