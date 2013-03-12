@@ -33,13 +33,12 @@ public class IlluminaSequencingRunFactoryDBFreeTest {
     public void setUp() {
 
 
-
         testMachine = "Superman";
         runBarcode = "123_TestFlow";
 
         flowcellTestBarcode = "flowTestBcode123";
         IlluminaFlowcell testFlowcell =
-                new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.TWO_LANE, flowcellTestBarcode);
+                new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, flowcellTestBarcode);
 
         IlluminaFlowcellDao mockDao = EasyMock.createMock(IlluminaFlowcellDao.class);
         EasyMock.expect(mockDao.findByBarcode(EasyMock.anyObject(String.class))).andReturn(testFlowcell);
@@ -48,9 +47,9 @@ public class IlluminaSequencingRunFactoryDBFreeTest {
         runFactory = new IlluminaSequencingRunFactory(mockDao);
 
         testRunName = "run" + (new Date()).getTime();
-        String baseDirectory =System.getProperty("java.io.tmpdir");
+        String baseDirectory = System.getProperty("java.io.tmpdir");
 
-        runFileDirectory = baseDirectory + File.separator+"testRoot" + File.separator + "finalPath" + File.separator + testRunName;
+        runFileDirectory = baseDirectory + File.separator + "testRoot" + File.separator + "finalPath" + File.separator + testRunName;
 
         File runFile = new File(runFileDirectory);
         boolean fileSuccess = true;
@@ -79,7 +78,7 @@ public class IlluminaSequencingRunFactoryDBFreeTest {
 
         Assert.assertNotNull(testRun);
 
-        Assert.assertEquals(testMachine,testRun.getMachineName());
+        Assert.assertEquals(testMachine, testRun.getMachineName());
 
         Assert.assertNotNull(testRun.getSampleCartridge());
 

@@ -22,7 +22,7 @@ import java.util.Date;
  */
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
-public class IlluminaSequencingRunDaoTest extends ContainerTest{
+public class IlluminaSequencingRunDaoTest extends ContainerTest {
 
 
     @Inject
@@ -60,8 +60,8 @@ public class IlluminaSequencingRunDaoTest extends ContainerTest{
         flowcellBarcode = "flowBcode" + runDate.getTime();
 
 
-        IlluminaFlowcell initialFCell  =
-                new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.TWO_LANE,flowcellBarcode);
+        IlluminaFlowcell initialFCell =
+                new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, flowcellBarcode);
 
         flowcellDao.persist(initialFCell);
         flowcellDao.flush();
@@ -72,14 +72,14 @@ public class IlluminaSequencingRunDaoTest extends ContainerTest{
 
         runName = "runTest" + runDate.getTime();
         runBarcode = "runBcode" + runDate.getTime();
-        String baseDirectory =System.getProperty("java.io.tmpdir");
+        String baseDirectory = System.getProperty("java.io.tmpdir");
 
         runPath = baseDirectory + "/start/of/run/";
         fullRunPath = runPath + runName;
         dataLocation = new OutputDataLocation(fullRunPath);
         machineName = "Superman";
         IlluminaSequencingRun initialRun = new IlluminaSequencingRun(testFlowcell, runName, runBarcode, machineName, null, false, runDate,
-                                         dataLocation);
+                dataLocation);
 
         runDao.persist(initialRun);
         runDao.flush();
@@ -92,7 +92,7 @@ public class IlluminaSequencingRunDaoTest extends ContainerTest{
     }
 
     @AfterMethod
-    public void tearDown() throws Exception{
+    public void tearDown() throws Exception {
         if (utx == null) {
             return;
         }

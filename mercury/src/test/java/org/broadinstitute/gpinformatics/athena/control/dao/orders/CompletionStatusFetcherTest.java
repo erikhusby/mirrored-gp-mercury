@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderCompletionStatus;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusFetcher;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
@@ -12,6 +13,7 @@ import org.testng.annotations.Test;
 
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
+import java.util.List;
 
 /**
  * Test the progress object
@@ -70,19 +72,11 @@ public class CompletionStatusFetcherTest extends ContainerTest {
         }
 
         ProductOrder order = pdoDao.findByBusinessKey(firstAbandonedPDOKey);
-
-        int realTotal = 0;
-        int abandoned = 0;
-        for (ProductOrderSample sample : order.getSamples()) {
-            if (ProductOrderSample.DeliveryStatus.ABANDONED == sample.getDeliveryStatus()) {
-                abandoned++;
-            }
-
-            realTotal++;
-        }
+        ProductOrderCompletionStatus realStatus = calculateStatus(order.getSamples());
 
         Assert.assertEquals(
-            fetcherPercentAbandoned, (abandoned * 100)/realTotal, "Fetcher calculated different abandon percentage");
+            fetcherPercentAbandoned, realStatus.getPercentAbandoned(),
+            "Fetcher calculated different abandon percentage");
     }
 
     public void testGetPercentComplete() throws Exception {
@@ -103,19 +97,28 @@ public class CompletionStatusFetcherTest extends ContainerTest {
         }
 
         ProductOrder order = pdoDao.findByBusinessKey(firstCompletePDOKey);
-
-        int realTotal = 0;
-        int complete = 0;
-        for (ProductOrderSample sample : order.getSamples()) {
-            if (!sample.getLedgerItems().isEmpty()) {
-                complete++;
-            }
-
-            realTotal++;
-        }
+        ProductOrderCompletionStatus realStatus = calculateStatus(order.getSamples());
 
         Assert.assertEquals(
-                fetcherPercentComplete, (complete * 100)/realTotal, "Fetcher calculated different complete percentage");
+                fetcherPercentComplete, realStatus.getPercentCompleted(),
+                "Fetcher calculated different complete percentage");
+    }
+
+    private ProductOrderCompletionStatus calculateStatus(List<ProductOrderSample> samples) {
+        int total = 0;
+        int completed = 0;
+        int abandoned = 0;
+        for (ProductOrderSample sample : samples) {
+            if (sample.getDeliveryStatus() == ProductOrderSample.DeliveryStatus.ABANDONED) {
+                abandoned++;
+            } else if (!sample.getLedgerItems().isEmpty()) {
+                completed++;
+            }
+
+            total++;
+        }
+
+        return new ProductOrderCompletionStatus(abandoned, completed, total);
     }
 
     public void testGetPercentInProgress() throws Exception {
@@ -136,21 +139,10 @@ public class CompletionStatusFetcherTest extends ContainerTest {
         }
 
         ProductOrder order = pdoDao.findByBusinessKey(firstCompleteAndAbandonedKey);
-
-        int realTotal = 0;
-        int completeAndAbandoned = 0;
-        for (ProductOrderSample sample : order.getSamples()) {
-            if (!sample.getLedgerItems().isEmpty()) {
-                completeAndAbandoned++;
-            } else if (ProductOrderSample.DeliveryStatus.ABANDONED == sample.getDeliveryStatus()) {
-                completeAndAbandoned++;
-            }
-
-            realTotal++;
-        }
+        ProductOrderCompletionStatus realStatus = calculateStatus(order.getSamples());
 
         Assert.assertEquals(
-                fetcherInProgess, 100 - (completeAndAbandoned * 100)/realTotal,
+                fetcherInProgess, realStatus.getPercentInProgress(),
                 "Fetcher calculated different in progress percentage");
     }
 
