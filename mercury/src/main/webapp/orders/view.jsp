@@ -180,7 +180,7 @@
                 }
 
                 if (bspDataCount < 1) {
-                    $j('#sampleData').dataTable( {
+                    var oTable = $j('#sampleData').dataTable( {
                         "oTableTools": ttExportDefines,
                         "aaSorting": [[0, 'asc']],
                         "aoColumns": [
@@ -198,11 +198,38 @@
                             {"bSortable": true}                             // Comment
                         ]
                     });
+
+                    $j("#sampleData_filter").append(filterDropdownHtml);
+
+                    $j("#sampleData_filter").find(".filterDropdown").change(function() {
+                        if ($j("#sampleData_filter").find(".filterDropdown").val() == "any") {
+                            filterSampleData(oTable);
+                            defineOrfilter(oTable);
+                        } else {
+                            var filterInput = $j(".dataTables_filter input").val();
+                            oTable.fnFilter($j(filterInput, null, false, true));
+                            $j(".dataTables_filter input").val(filterInput);
+                        }
+                    });
                 }
             }
 
+            function filterSampleData(oTable) {
+                $j(".dataTables_filter input").keyup(function() {
+                    defineOrfilter(oTable);
+                });
+            }
+
+            function defineOrfilter(oTable) {
+                var filterInput = $j(".dataTables_filter input").val();
+                var searchRegex = "(" + filterInput.split(" ").join("+)|(") + "+)";
+
+                oTable.fnFilter( searchRegex, null, true, false );
+                $j(".dataTables_filter input").val(filterInput);
+            }
+
             function updateFundsRemaining() {
-                var quoteIdentifier = $j("#quote").val();
+                var quoteIdentifier = $j("#quote").value;
                 if ($j.trim(quoteIdentifier)) {
                     $j.ajax({
                         url: "${ctxpath}/orders/order.action?getQuoteFunding=&quoteIdentifier=${editOrder.quoteId}",

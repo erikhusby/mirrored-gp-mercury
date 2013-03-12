@@ -24,6 +24,7 @@ $j.extend( $j.fn.dataTableExt.oStdClasses, {
     "sWrapper": "dataTables_wrapper form-inline"
 } );
 
+var filterDropdownHtml = "<div class='filterOptions'>using <select class='filterDropdown'><option value='all'>All of the words</option><option value='any'>Any of the words</option></select></div>";
 
 /* API method to get paging information */
 $j.fn.dataTableExt.oApi.fnPagingInfo = function ( oSettings )

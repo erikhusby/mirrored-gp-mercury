@@ -116,3 +116,8 @@ textarea.controlledText { width: 550px; }
 .barAbandon { height: 100%; float:left; background-color: #eed6e1; }
 
 .padright { margin-right: 30px; }
+
+.dataTables_filter input { background: white url("/Mercury/images/search.png") 3px no-repeat; padding-left: 20px; width: 500px; }
+.filterOptions { position: absolute; margin-left: 10px; display: inline; }
+.filterDropdown { height: 25px; }
+
