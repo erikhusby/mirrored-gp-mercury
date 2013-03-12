@@ -16,6 +16,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.Stub;
 import org.broadinstitute.gpinformatics.infrastructure.quote.Funding;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 
+import javax.annotation.Nonnull;
 import javax.enterprise.inject.Alternative;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,8 +48,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
 
         ProductOrder testOrder1 = productOrderByBusinessKeyMap.get(poBusinessKey);
         if (testOrder1 == null) {
-            testOrder1 = createDummyProductOrder();
-            testOrder1.setJiraTicketKey(poBusinessKey);
+            testOrder1 = createDummyProductOrder(poBusinessKey);
         }
         productOrderByBusinessKeyMap.put(poBusinessKey, testOrder1);
 
@@ -71,13 +71,10 @@ public class AthenaClientServiceStub implements AthenaClientService {
         return mapSampleIdToPdoSample;
     }
 
-    private Map<String, ProductOrder> buildTestProductOrderMap() {
+    private static Map<String, ProductOrder> buildTestProductOrderMap() {
 
         Map<String, ProductOrder> productOrderByBusinessKeyMap = new HashMap<String, ProductOrder>();
-        ProductOrder tempPO = createDummyProductOrder();
-        Random random = new Random();
-
-        tempPO.setJiraTicketKey("PDO-" + (random.nextInt() * 11));
+        ProductOrder tempPO = createDummyProductOrder("PDO-" + (new Random().nextInt() * 11));
 
         productOrderByBusinessKeyMap.put(tempPO.getBusinessKey(), tempPO);
 
@@ -94,46 +91,33 @@ public class AthenaClientServiceStub implements AthenaClientService {
     }
 
     public static ProductOrder buildExExProductOrder(int maxSamples) {
-
-        String workflowName = WorkflowName.EXOME_EXPRESS.getWorkflowName();
-        String pdoBusinessName = "PD0-1EE";
-
-        return createDummyProductOrder(maxSamples, pdoBusinessName, workflowName, 101L, "Test RP", rpSynopsis,
-                                              ResearchProject.IRB_ENGAGED, "P-EXEXTest-1232");
-
+        return createDummyProductOrder(maxSamples, "PD0-1EE", WorkflowName.EXOME_EXPRESS, 101, "Test RP", rpSynopsis,
+                ResearchProject.IRB_ENGAGED, "P-EXEXTest-1232");
     }
 
     public static ProductOrder buildHybridSelectionProductOrder(int maxSamples) {
-
-        String jiraKey = "PD0-1HS";
-
-        return createDummyProductOrder(maxSamples, jiraKey,
-                                              WorkflowName.HYBRID_SELECTION.getWorkflowName(), 101L,
-                                              "Test RP", rpSynopsis,
-                                              ResearchProject.IRB_ENGAGED, "P-HSEL-9293");
+        return createDummyProductOrder(maxSamples, "PD0-1HS",
+                WorkflowName.HYBRID_SELECTION, 101,
+                "Test RP", rpSynopsis,
+                ResearchProject.IRB_ENGAGED, "P-HSEL-9293");
     }
 
     public static ProductOrder buildWholeGenomeProductOrder(int maxSamples) {
-
-        String jiraKey = "PD0-2WGS";
-
-        return createDummyProductOrder(maxSamples, jiraKey, WorkflowName.WHOLE_GENOME.getWorkflowName(),
-                                              301L, "Test RP", rpSynopsis,
-                                              ResearchProject.IRB_ENGAGED, "P-WGS-9294");
-
+        return createDummyProductOrder(maxSamples, "PD0-2WGS", WorkflowName.WHOLE_GENOME,
+                301, "Test RP", rpSynopsis,
+                ResearchProject.IRB_ENGAGED, "P-WGS-9294");
     }
 
-    public static ProductOrder createDummyProductOrder(int sampleCount, String jiraKey, String workflowName,
+    public static ProductOrder createDummyProductOrder(int sampleCount, @Nonnull String jiraKey, WorkflowName workflowName,
                                                        long creatorId, String rpTitle, String rpSynopsis,
                                                        boolean irbNotEngaged, String productPartNumber) {
 
         PriceItem priceItem = new PriceItem(PriceItem.PLATFORM_GENOMICS, PriceItem.CATEGORY_EXOME_SEQUENCING_ANALYSIS,
                                                    PriceItem.NAME_EXOME_EXPRESS, "testQuoteId");
-        Product dummyProduct = createDummyProduct(workflowName, productPartNumber);
+        Product dummyProduct = createDummyProduct(workflowName.getWorkflowName(), productPartNumber);
         dummyProduct.setPrimaryPriceItem(priceItem);
 
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>(sampleCount);
-        // starting rack
         for (int sampleIndex = 1; sampleIndex <= sampleCount; sampleIndex++) {
             String bspStock = "SM-" + String.valueOf(sampleIndex) + String.valueOf(sampleIndex + 1) +
                                       String.valueOf(sampleIndex + 3) + String.valueOf(sampleIndex + 2);
@@ -156,19 +140,16 @@ public class AthenaClientServiceStub implements AthenaClientService {
 
     }
 
-    public static ProductOrder createDummyProductOrder(int sampleCount, String jiraKey, String workflowName,
-                                                       long creatorId) {
-
-        return createDummyProductOrder(sampleCount, jiraKey, workflowName, creatorId, "MyResearchProject",
-                                              otherRpSynopsis,
-                                              ResearchProject.IRB_ENGAGED, "partNumber");
+    /*
+     *  Helper methods to create test data.  Moved from Test cases to aid stub implementation.
+     */
+    public static ProductOrder createDummyProductOrder() {
+        return createDummyProductOrder("PDO-0");
     }
 
-    /*
-       helper Methods to create test data.  Moved from Test cases to aid stub implementation
-    */
-    public static ProductOrder createDummyProductOrder() {
-        return createDummyProductOrder(1, null, WorkflowName.EXOME_EXPRESS.getWorkflowName(), 10950L);
+    public static ProductOrder createDummyProductOrder(@Nonnull String jiraTicketKey) {
+        return createDummyProductOrder(1, jiraTicketKey, WorkflowName.EXOME_EXPRESS, 10950, "MyResearchProject",
+                otherRpSynopsis, ResearchProject.IRB_ENGAGED, "partNumber");
     }
 
     public static Product createDummyProduct(String workflowName, String partNumber) {
@@ -177,7 +158,7 @@ public class AthenaClientServiceStub implements AthenaClientService {
                                   "deliverables", true, workflowName, false);
     }
 
-    public static ResearchProject createDummyResearchProject(Long createdBy, String title, String synopsis,
+    public static ResearchProject createDummyResearchProject(long createdBy, String title, String synopsis,
                                                              boolean irbNotEngaged) {
         ResearchProject researchProject = new ResearchProject(createdBy, title, synopsis, irbNotEngaged);
 
@@ -194,11 +175,10 @@ public class AthenaClientServiceStub implements AthenaClientService {
         researchProject
                 .addIrbNumber(new ResearchProjectIRB(researchProject, ResearchProjectIRB.IrbType.OTHER, "irb456"));
 
-        researchProject.addPerson(RoleType.SCIENTIST, 111L);
-        researchProject.addPerson(RoleType.SCIENTIST, 222L);
-        researchProject.addPerson(RoleType.BROAD_PI, 10950L);
-        researchProject.addPerson(RoleType.BROAD_PI, 10951L);
+        researchProject.addPerson(RoleType.SCIENTIST, 111);
+        researchProject.addPerson(RoleType.SCIENTIST, 222);
+        researchProject.addPerson(RoleType.BROAD_PI, 10950);
+        researchProject.addPerson(RoleType.BROAD_PI, 10951);
         return researchProject;
     }
-
 }

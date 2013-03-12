@@ -20,7 +20,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-@UrlBinding(value = "/view/workflowView.action")
+@UrlBinding("/view/workflowView.action")
 public class WorkflowViewActionBean extends CoreActionBean {
 
     private static final String VIEW_PAGE = "/resources/workflow/workflowView.jsp";
@@ -89,7 +89,7 @@ public class WorkflowViewActionBean extends CoreActionBean {
 
     public LabEvent getVesselEventByType(LabEventType type) {
         for (LabEvent event : vessel.getEvents()) {
-            if (event.getLabEventType().equals(type)) {
+            if (event.getLabEventType() == type) {
                 return event;
             }
         }
@@ -115,7 +115,7 @@ public class WorkflowViewActionBean extends CoreActionBean {
     }
 
     public LabEvent getLastEventForStep(WorkflowStepDef step) {
-        if (step.getLabEventTypes().size() > 0) {
+        if (!step.getLabEventTypes().isEmpty()) {
             return getVesselEventByType(step.getLabEventTypes().get(step.getLabEventTypes().size() - 1));
         }
         return null;

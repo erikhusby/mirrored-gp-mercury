@@ -158,7 +158,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
     public void testOneLedgerEntryNoBillingSession() {
 
         BillingLedger billingLedger =
-                new BillingLedger(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(), order.getQuoteId(),
+                new BillingLedger(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(),
                         new Date(), 2);
 
         billingLedgerDao.persist(billingLedger);
@@ -175,7 +175,7 @@ public class ProductOrderListEntryDaoTest extends ContainerTest {
 
     public void testOneLedgerEntryWithBillingSession() {
         BillingLedger billingLedger =
-                new BillingLedger(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(), order.getQuoteId(),
+                new BillingLedger(order.getSamples().iterator().next(), order.getProduct().getPrimaryPriceItem(),
                         new Date(), 2);
 
         BillingSession billingSession = new BillingSession(1L, Collections.singleton(billingLedger));

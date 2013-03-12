@@ -62,12 +62,10 @@ public class BillingLedger implements Serializable {
 
     public BillingLedger(@Nonnull ProductOrderSample productOrderSample,
                          @Nonnull PriceItem priceItem,
-                         @Nonnull String quoteId,
                          @Nonnull Date workCompleteDate,
                          double quantity) {
         this.productOrderSample = productOrderSample;
         this.priceItem = priceItem;
-        this.quoteId = quoteId;
         this.quantity = quantity;
         this.workCompleteDate = workCompleteDate;
     }

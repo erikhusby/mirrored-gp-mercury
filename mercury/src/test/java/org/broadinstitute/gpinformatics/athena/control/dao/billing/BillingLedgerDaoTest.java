@@ -69,7 +69,7 @@ public class BillingLedgerDaoTest  extends ContainerTest {
 
         //Create first ledger item
         Date date1 = formatter.parse("12/5/12");
-        BillingLedger unBilledLedger1 = new BillingLedger(productOrderSample1, priceItem, order.getQuoteId(), date1, 1);
+        BillingLedger unBilledLedger1 = new BillingLedger(productOrderSample1, priceItem, date1, 1);
 
         //Add one ledger item to sample 1
         productOrderSample1.getLedgerItems().add(unBilledLedger1);
@@ -87,8 +87,8 @@ public class BillingLedgerDaoTest  extends ContainerTest {
 
         //Create two ledger items for the new order one for each productOrderSample different quantities
         Date date2 = formatter.parse("12/6/12");
-        BillingLedger unBilledLedger1ForDupes = new BillingLedger(productOrderSample1ForDupes, priceItem, order.getQuoteId(), date2, 8);
-        BillingLedger unBilledLedger2ForDupes = new BillingLedger(productOrderSample2ForDupes, priceItem, order.getQuoteId(), date2, 16);
+        BillingLedger unBilledLedger1ForDupes = new BillingLedger(productOrderSample1ForDupes, priceItem, date2, 8);
+        BillingLedger unBilledLedger2ForDupes = new BillingLedger(productOrderSample2ForDupes, priceItem, date2, 16);
 
         //Add the ledger items one to each of the dupes samples
         productOrderSample1ForDupes.getLedgerItems().add(unBilledLedger1ForDupes);

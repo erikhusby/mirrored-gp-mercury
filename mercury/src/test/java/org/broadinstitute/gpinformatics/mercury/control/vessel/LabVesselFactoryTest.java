@@ -1,10 +1,15 @@
-package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
+package org.broadinstitute.gpinformatics.mercury.control.vessel;
 
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ChildVesselBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean;
+import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptBean;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
@@ -23,10 +28,10 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- * Dao Free test of receiving samples from BSP
+ * Dao Free test of creating lab vessels from web service DTOs
  */
 @Test(groups = TestGroups.DATABASE_FREE)
-public class SampleReceiptResourceTest {
+public class LabVesselFactoryTest {
 
     public static final String BARCODE1 = "1234_";
     public static final String BARCODE2 = "2345_";
@@ -35,13 +40,14 @@ public class SampleReceiptResourceTest {
 
     @Test
     public void testReceiveTubesNoPdo() {
-        SampleReceiptResource sampleReceiptResource = new SampleReceiptResource();
-        sampleReceiptResource.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
+        LabVesselFactory labVesselFactory = new LabVesselFactory();
+        labVesselFactory.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
         SampleReceiptBean sampleReceiptBean = buildTubes("");
 
-        List<LabVessel> labVessels = sampleReceiptResource.notifyOfReceiptDaoFree(sampleReceiptBean,
+        List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
                 new HashMap<String, LabVessel>(), new HashMap<String, List<MercurySample>>(),
-                new HashMap<String, List<ProductOrderSample>>());
+                new HashMap<String, List<ProductOrderSample>>(), sampleReceiptBean.getReceivingUserName(),
+                sampleReceiptBean.getReceiptDate(), sampleReceiptBean.getParentVesselBeans(), LabEventType.SAMPLE_RECEIPT);
 
         Assert.assertEquals(labVessels.size(), 2, "Wrong number of vessels");
         LabVessel labVessel = labVessels.get(0);
@@ -55,8 +61,8 @@ public class SampleReceiptResourceTest {
 
     @Test
     public void testReceiveTubesPdo() {
-        SampleReceiptResource sampleReceiptResource = new SampleReceiptResource();
-        sampleReceiptResource.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
+        LabVesselFactory labVesselFactory = new LabVesselFactory();
+        labVesselFactory.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
         SampleReceiptBean sampleReceiptBean = buildTubes("");
 
         Map<String, List<ProductOrderSample>> mapIdToListPdoSamples = new HashMap<String, List<ProductOrderSample>>();
@@ -67,9 +73,10 @@ public class SampleReceiptResourceTest {
         productOrder.addSamples(Collections.singletonList(productOrderSample));
         mapIdToListPdoSamples.put(SAMPLE1, Collections.singletonList(productOrderSample));
 
-        List<LabVessel> labVessels = sampleReceiptResource.notifyOfReceiptDaoFree(sampleReceiptBean,
+        List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
                 new HashMap<String, LabVessel>(), new HashMap<String, List<MercurySample>>(),
-                mapIdToListPdoSamples);
+                mapIdToListPdoSamples, sampleReceiptBean.getReceivingUserName(), sampleReceiptBean.getReceiptDate(),
+                sampleReceiptBean.getParentVesselBeans(), LabEventType.SAMPLE_RECEIPT);
 
         Assert.assertEquals(labVessels.size(), 2, "Wrong number of vessels");
         LabVessel labVessel = labVessels.get(0);
@@ -90,8 +97,8 @@ public class SampleReceiptResourceTest {
 
     @Test
     public void testReceivePlates() {
-        SampleReceiptResource sampleReceiptResource = new SampleReceiptResource();
-        sampleReceiptResource.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
+        LabVesselFactory labVesselFactory = new LabVesselFactory();
+        labVesselFactory.setBspUserList(new BSPUserList(BSPManagerFactoryProducer.stubInstance()));
         ArrayList<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
         ArrayList<ChildVesselBean> childVesselBeans = new ArrayList<ChildVesselBean>();
         String sampleId1 = "SM-1234";
@@ -100,9 +107,10 @@ public class SampleReceiptResourceTest {
         parentVesselBeans.add(new ParentVesselBean("P1234", null, "Plate 96 Well PCR [200ul]", childVesselBeans));
         SampleReceiptBean sampleReceiptBean = new SampleReceiptBean(new Date(), "SK-123", parentVesselBeans, "jowalsh");
 
-        List<LabVessel> labVessels = sampleReceiptResource.notifyOfReceiptDaoFree(sampleReceiptBean,
+        List<LabVessel> labVessels = labVesselFactory.buildLabVesselDaoFree(
                 new HashMap<String, LabVessel>(), new HashMap<String, List<MercurySample>>(),
-                new HashMap<String, List<ProductOrderSample>>());
+                new HashMap<String, List<ProductOrderSample>>(), sampleReceiptBean.getReceivingUserName(),
+                sampleReceiptBean.getReceiptDate(), sampleReceiptBean.getParentVesselBeans(), LabEventType.SAMPLE_RECEIPT);
         Assert.assertEquals(labVessels.size(), 1, "Wrong number of vessels");
         StaticPlate staticPlate = (StaticPlate) labVessels.get(0);
         Assert.assertEquals(staticPlate.getContainerRole().getMapPositionToVessel().size(), 2, "Wrong number of child vessels");
