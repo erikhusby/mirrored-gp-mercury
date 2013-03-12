@@ -260,7 +260,7 @@ public class ProductOrderSample implements Serializable {
         Set<BillingLedger> billableLedgerItems = new HashSet<BillingLedger>();
 
         if (getLedgerItems() != null) {
-            for ( BillingLedger billingLedger : getLedgerItems() ) {
+            for (BillingLedger billingLedger : getLedgerItems()) {
                 // Only count the null-Billing Session ledgerItems.
                 if (billingLedger.getBillingSession() == null) {
                     billableLedgerItems.add(billingLedger);
@@ -413,9 +413,8 @@ public class ProductOrderSample implements Serializable {
     }
 
     public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta) {
-        String quoteId = productOrder.getQuoteId();
 
-        BillingLedger billingLedger = new BillingLedger(this, priceItem, quoteId, workCompleteDate, delta);
+        BillingLedger billingLedger = new BillingLedger(this, priceItem, workCompleteDate, delta);
         ledgerItems.add(billingLedger);
         log.debug(MessageFormat.format(
                 "Added BillingLedger item for sample {0} to PDO {1} for PriceItemName: {2} - Quantity:{3}",

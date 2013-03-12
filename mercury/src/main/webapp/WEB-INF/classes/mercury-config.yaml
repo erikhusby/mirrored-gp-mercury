@@ -4,19 +4,33 @@
 app:
 
     DEV:
-      url:      http://localhost:8080/Mercury/
+      host:     localhost
+      port:     8080
+      jmsPort:  5445
+
+    BAMBOO:
+      host:     mercurydev.broadinstitute.org
+      port:     8081
+      jmsPort:  5446
 
     TEST:
-      url:      http://mercurydev.broadinstitute.org:8080/Mercury/
+      host:     mercurydev.broadinstitute.org
+      port:     8080
+      jmsPort:  5445
 
     QA:
-      url:      http://mercuryqa.broadinstitute.org:8081/Mercury/
+      host:     mercuryqa.broadinstitute.org
+      port:     8081
+      jmsPort:  5445
 
     RC:
-      url:      http://mercuryrc.broadinstitute.org:8082/Mercury/
+      host:     mercuryrc.broadinstitute.org
+      port:     8082
+      jmsPort:  5447
 
     PROD:
-      url:      http://mercury.broadinstitute.org/Mercury/
+      host:     mercury.broadinstitute.org
+      jmsPort:  5445
 
 bsp:
 
@@ -233,6 +247,22 @@ mercury:
     DEV:
 
       app:      DEV
+      bsp:      DEV
+      gap:      DEV
+      jira:     TEST
+      quote:    QA
+      squid:    DEV
+      thrift:   QA
+      deckMsgs: DEV
+      datawhEtl: DEV
+      bettaLimsServer: DEV
+      tableau:  PROD
+      hipchat: DEV
+
+
+    BAMBOO:
+
+      app:      BAMBOO
       bsp:      DEV
       gap:      DEV
       jira:     TEST

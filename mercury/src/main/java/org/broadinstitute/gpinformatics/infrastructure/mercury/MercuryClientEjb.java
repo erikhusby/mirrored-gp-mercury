@@ -43,9 +43,7 @@ public class MercuryClientEjb {
 
     private BucketDao bucketDao;
 
-    public MercuryClientEjb() {
-        logger.error("Huh?!?");
-    }
+    public MercuryClientEjb() {}
 
     @Inject
     public MercuryClientEjb(BucketBean bucketBean, BucketDao bucketDao,
@@ -79,7 +77,10 @@ public class MercuryClientEjb {
 
         // Finds the pico bucket from workflow config for this product.
         WorkflowBucketDef picoBucketDef = findPicoBucketDef(pdo.getProduct());
-        Bucket picoBucket = findPicoBucket(picoBucketDef);
+        Bucket picoBucket = null;
+        if (picoBucketDef != null) {
+            picoBucket = findPicoBucket(picoBucketDef);
+        }
         if (picoBucket == null) {
             return Collections.EMPTY_LIST;
         }
@@ -129,7 +130,13 @@ public class MercuryClientEjb {
         ProductWorkflowDef productWorkflowDef = workflowConfig.getWorkflowByName(product.getWorkflowName());
         ProductWorkflowDefVersion versionResult = productWorkflowDef.getEffectiveVersion();
 
-        return (WorkflowBucketDef) versionResult.findStepByEventType(LabEventType.PICO_PLATING_BUCKET.getName()).getStepDef();
+        ProductWorkflowDefVersion.LabEventNode labEventNode =
+                versionResult.findStepByEventType(LabEventType.PICO_PLATING_BUCKET.getName());
+        if (labEventNode == null) {
+            return null;
+        } else {
+            return (WorkflowBucketDef) labEventNode.getStepDef();
+        }
     }
 
     private Bucket findPicoBucket(WorkflowBucketDef bucketStep) {

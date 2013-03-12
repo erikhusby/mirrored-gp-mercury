@@ -54,15 +54,14 @@ public class SolexaRunResource {
 
     public IlluminaSequencingRun registerRun(SolexaRunBean solexaRunBean) {
         IlluminaSequencingRun illuminaSequencingRun;
-//        if(solexaRunBean.getReagentBlockBarcode() != null && !solexaRunBean.getReagentBlockBarcode().trim().isEmpty()) {
-//            // todo jmt how does Mercury do Designations?
-//            throw new RuntimeException("MiSeq registration not implemented yet");
-////                solexaRun = solexaRunRegistrationService.createFlowcellAndRegisterRun(solexaRunBean.flowcellBarcode,
-////                        solexaRunBean.reagentBlockBarcode, solexaRunBean.machineName, solexaRunBean.runBarcode,
-////                        solexaRunBean.runDate, solexaRunBean.runDirectory);
-//        } else {
-            illuminaSequencingRun = illuminaSequencingRunFactory.build(solexaRunBean);
-//        }
+
+        /*
+         * Need logic to register MiSeq run based off of the ReagentBlockBarcode in SolexaRunBean.
+         * Will be another story.
+         */
+
+        illuminaSequencingRun = illuminaSequencingRunFactory.build(solexaRunBean);
+
         illuminaSequencingRunDao.persist(illuminaSequencingRun);
         illuminaSequencingRunDao.flush();
         return illuminaSequencingRun;

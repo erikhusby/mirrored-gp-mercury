@@ -40,12 +40,12 @@ public class ProductTokenInput extends TokenInput<Product> {
 
     @Override
     protected String getTokenName(Product product) {
-        return product.getProductName() + " [" + product.getBusinessKey() + "]";
+        return product.getDisplayName();
     }
 
     @Override
     protected String formatMessage(String messageString, Product product) {
-        return MessageFormat.format(messageString, product.getProductName() + " [" + product.getBusinessKey() + "]");
+        return MessageFormat.format(messageString, product.getDisplayName());
     }
 
     public String getAddOnsJsonString(Product editProduct, String query) throws JSONException {

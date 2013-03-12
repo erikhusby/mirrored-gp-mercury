@@ -1,6 +1,8 @@
 package org.broadinstitute.gpinformatics.mercury.control.run;
 
 import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
+import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnector;
+import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -17,15 +19,21 @@ import java.io.Serializable;
  */
 public class IlluminaSequencingRunFactory implements Serializable {
 
-    private final IlluminaFlowcellDao illuminaFlowcellDao;
+    private  IlluminaFlowcellDao illuminaFlowcellDao;
+
+//    private  MercuryOrSquidRouter router;
+//
+//    private SquidConnector connector;
 
     @Inject
     public IlluminaSequencingRunFactory(IlluminaFlowcellDao illuminaFlowcellDao) {
+
         this.illuminaFlowcellDao = illuminaFlowcellDao;
+//        this.router = router;
+//        this.connector = connector;
     }
 
     public IlluminaSequencingRun build(SolexaRunBean solexaRunBean) {
-        // todo jmt how to get operator? -- SGM -- can't, will always be run from a machine.
         IlluminaFlowcell illuminaFlowcell = illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());
 
         return buildDbFree(solexaRunBean, illuminaFlowcell);
@@ -40,15 +48,12 @@ public class IlluminaSequencingRunFactory implements Serializable {
         }
 
         File runDirectory = new File(solexaRunBean.getRunDirectory());
-        if (!runDirectory.exists()) {
-            throw new RuntimeException("runDirectory '" + solexaRunBean.getRunDirectory() + "' does not exist");
-        }
         OutputDataLocation dataLocation = new OutputDataLocation(solexaRunBean.getRunDirectory());
 
-        // todo what about directory path?
         return new IlluminaSequencingRun(illuminaFlowcell, runDirectory.getName(), solexaRunBean.getRunBarcode(),
                                                 solexaRunBean.getMachineName(),
-                                                null /* TODO SGM -- Operator information is always missing.  may revisit later*/,
+                                                null
+                                                /* TODO SGM -- Operator information is always missing.  may revisit later*/,
                                                 false, solexaRunBean.getRunDate(), dataLocation);
     }
 }
