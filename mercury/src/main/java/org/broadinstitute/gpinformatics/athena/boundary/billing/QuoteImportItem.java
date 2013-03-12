@@ -89,4 +89,14 @@ public class QuoteImportItem {
     public String getNumSamples() {
         return MessageFormat.format("{0} Sample{0, choice, 0#s|1#|1<s}", ledgerItems.size());
     }
+
+    /**
+     * This method should be invoked upon successful billing to update ledger entries with the quote to which they were
+     * billed.
+     */
+    public void updateQuoteIntoLedgerEntries() {
+        for (BillingLedger billingLedger : ledgerItems) {
+            billingLedger.setQuoteId(quoteId);
+        }
+    }
 }
