@@ -57,6 +57,7 @@ public class SquidConnectorTest extends ContainerTest {
 
     }
 
+    @Test(enabled = false,groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testRunCreationConnection() {
 
         SolexaRunBean connectorData =

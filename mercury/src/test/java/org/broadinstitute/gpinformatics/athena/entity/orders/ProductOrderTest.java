@@ -84,28 +84,9 @@ public class ProductOrderTest {
 
     @Test
     public void testOrder() throws Exception {
-
-        //TODO hmc To be completed commented out now for change of priority.
-        /**
-        List<OrderSample> orderSamples = orderTest.createSampleList(
-                "SM-2ACGC,SM-2ABDD,SM-2ACKV,SM-2AB1B,SM-2ACJC,SM-2AD5D", billableItems ) ;
-
-        ProductOrder productOrder = new ProductOrder("title", orderSamples, "quoteId", product, "researchProjectName" );
-
-        //TODO hmc Under construction
-        Assert.assertEquals(productOrder.getSamples().size(), 6);
-        Assert.assertTrue(productOrder.getSamples().get(0).getLedgerItems().size() == 1);
-
-         **/
-
-        Assert.assertNull(productOrder.getJiraTicketKey());
-
         Assert.assertEquals(productOrder.fetchJiraIssueType(), CreateFields.IssueType.PRODUCT_ORDER);
-
         Assert.assertEquals(productOrder.fetchJiraProject(), CreateFields.ProjectType.Product_Ordering);
-
         Assert.assertNotNull(productOrder.getJiraTicketKey());
-
         Assert.assertEquals(productOrder.getJiraTicketKey(), PDO_JIRA_KEY);
     }
 
