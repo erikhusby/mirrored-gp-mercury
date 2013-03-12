@@ -13,7 +13,6 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel.CONTAINER_TYPE;
 import static org.easymock.EasyMock.*;
 import static org.testng.Assert.*;
 
@@ -28,7 +27,7 @@ public class LabVesselEtlDbFreeTest {
     private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
     private long entityId = 1122334455L;
     private String vesselLabel = "8917538.0";
-    private CONTAINER_TYPE vesselType = CONTAINER_TYPE.TUBE;
+    private LabVessel.ContainerType vesselType = LabVessel.ContainerType.TUBE;
     private LabVesselEtl tst;
 
     private AuditReaderDao auditReader = createMock(AuditReaderDao.class);

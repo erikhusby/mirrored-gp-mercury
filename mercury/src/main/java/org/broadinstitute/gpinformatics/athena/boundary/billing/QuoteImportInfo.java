@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 
@@ -29,7 +30,11 @@ public class QuoteImportInfo {
      * @param ledger The single, ledger item
      */
     public void addQuantity(BillingLedger ledger) {
-        String quoteId = ledger.getProductOrderSample().getProductOrder().getQuoteId();
+
+        // Get the appropriate quote id (the one we will bill or the one we did bill depending on state).
+        String quoteId = getLedgerQuoteId(ledger);
+
+        // The price item on the ledger entry
         PriceItem priceItem = ledger.getPriceItem();
 
         // If we have not seen the quote yet, create the map entry for it
@@ -50,6 +55,22 @@ public class QuoteImportInfo {
 
         // Add this ledger item
         quantitiesByQuotePriceItem.get(quoteId).get(priceItem).get(bucketDate).add(ledger);
+    }
+
+    /**
+     * If the quote is already on the ledger, then use it, otherwise, use the product order's quote because that will be
+     * billed if the session was billed right now.
+     *
+     * @param ledger The ledger entry being looked at.
+     *
+     * @return The quote identifier.
+     */
+    private String getLedgerQuoteId(BillingLedger ledger) {
+        if (!StringUtils.isBlank(ledger.getQuoteId())) {
+            return ledger.getQuoteId();
+        }
+
+        return ledger.getProductOrderSample().getProductOrder().getQuoteId();
     }
 
     private static Date getBucketDate(Date billedDate) {

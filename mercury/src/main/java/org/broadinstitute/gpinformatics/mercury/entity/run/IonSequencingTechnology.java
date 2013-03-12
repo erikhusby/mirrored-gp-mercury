@@ -35,8 +35,8 @@ public class IonSequencingTechnology implements SequencingTechnology {
     }
 
     @Override
-    public TECHNOLOGY_NAME getTechnologyName() {
-        return TECHNOLOGY_NAME.ION_TORRENT;
+    public TechnologyName getTechnologyName() {
+        return TechnologyName.ION_TORRENT;
     }
 
     @Override

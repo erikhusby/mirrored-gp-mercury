@@ -79,15 +79,15 @@ public class SolexaRunBean {
     }
 
     public SolexaRunBean(IlluminaSequencingRun illuminaSequencingRun) {
-        flowcellBarcode = illuminaSequencingRun.getSampleCartridge().iterator().next().getCartridgeBarcode();
+        flowcellBarcode = illuminaSequencingRun.getSampleCartridge().getCartridgeBarcode();
         runBarcode = illuminaSequencingRun.getRunBarcode();
-        // todo jmt why no runDate in IlluminaSequencingRun?
-//        runDate = illuminaSequencingRun.getRunDate();
+        runDate = illuminaSequencingRun.getRunDate();
         if (illuminaSequencingRun.getMachineName() != null) {
             machineName = illuminaSequencingRun.getMachineName();
         }
-        // todo jmt fix this
-//        runDirectory = illuminaSequencingRun.getDirectoryPath();
+        runDirectory = illuminaSequencingRun.getRunLocation().getDataLocation();
+
+        //TODO SGM  Revisit the following when we add MiSeq
 //        reagentBlockBarcode = illuminaSequencingRun.getNewFlowcell().getBarcode();
     }
 }
