@@ -114,7 +114,7 @@ public class SolexaRunResourceTest extends Arquillian {
         utx.commit();
     }
 
-    @Test(enabled = true, groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
+    @Test(enabled = false, groups = EXTERNAL_INTEGRATION, dataProvider = Arquillian.ARQUILLIAN_DATA_PROVIDER)
     public void testCreateRun() {
 
         Assert.assertTrue(result);
