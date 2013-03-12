@@ -19,11 +19,11 @@ import java.io.Serializable;
  */
 public class IlluminaSequencingRunFactory implements Serializable {
 
-    private final IlluminaFlowcellDao illuminaFlowcellDao;
+    private  IlluminaFlowcellDao illuminaFlowcellDao;
 
-//    private final MercuryOrSquidRouter router;
+//    private  MercuryOrSquidRouter router;
 //
-//    private final SquidConnector connector;
+//    private SquidConnector connector;
 
     @Inject
     public IlluminaSequencingRunFactory(IlluminaFlowcellDao illuminaFlowcellDao) {
