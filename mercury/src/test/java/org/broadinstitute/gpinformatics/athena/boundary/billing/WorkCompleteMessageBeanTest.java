@@ -5,7 +5,8 @@ import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDa
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfig;
+import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.hornetq.api.core.TransportConfiguration;
 import org.hornetq.api.jms.HornetQJMSClient;
@@ -13,6 +14,9 @@ import org.hornetq.api.jms.JMSFactoryType;
 import org.hornetq.core.remoting.impl.netty.NettyConnectorFactory;
 import org.hornetq.core.remoting.impl.netty.TransportConstants;
 import org.hornetq.jms.client.HornetQConnectionFactory;
+import org.jboss.arquillian.container.test.api.Deployment;
+import org.jboss.arquillian.testng.Arquillian;
+import org.jboss.shrinkwrap.api.spec.WebArchive;
 import org.testng.Assert;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -30,10 +34,15 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-public class WorkCompleteMessageBeanTest extends ContainerTest {
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.BAMBOO;
+
+public class WorkCompleteMessageBeanTest extends Arquillian {
 
     public static final String TEST_PDO_NAME = "PDO-xxx";
     public static final String TEST_SAMPLE_NAME = "SM-xxx";
+
+    @Inject
+    MercuryConfig mercuryConfig;
 
     @Inject
     WorkCompleteMessageDao workCompleteMessageDao;
@@ -49,6 +58,15 @@ public class WorkCompleteMessageBeanTest extends ContainerTest {
 
     @Inject
     UserTransaction utx;
+
+    // Required to get the correct configuration for running JMS queue tests on the bamboo server.  In that case,
+    // we can't use localhost.
+    //
+    // NOTE: To run locally, you must change this to DEV.  Make sure you change it back before checking in!
+    @Deployment
+    public static WebArchive buildMercuryWar() {
+        return DeploymentBuilder.buildMercuryWar(BAMBOO);
+    }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void setUp() throws Exception {
@@ -122,21 +140,21 @@ public class WorkCompleteMessageBeanTest extends ContainerTest {
      *        }
      */
 
-    public static Session createSession() throws JMSException {
+    public Session createSession() throws JMSException {
         // This test doesn't (yet) actually connect to the JMS queue.  The test hands the message directly
         // to the MDB handler method.  So the values used here are not important and may not be correct.
         HornetQConnectionFactory cf = HornetQJMSClient.createConnectionFactoryWithoutHA(JMSFactoryType.CF,
                 new TransportConfiguration(NettyConnectorFactory.class.getName(),
                         new HashMap<String, Object>() {{
-                            put(TransportConstants.PORT_PROP_NAME, 5445);
-                            put(TransportConstants.HOST_PROP_NAME, "localhost");
+                            put(TransportConstants.PORT_PROP_NAME, mercuryConfig.getJmsPort());
+                            put(TransportConstants.HOST_PROP_NAME, mercuryConfig.getHost());
                         }}
                 ));
         Connection connection = cf.createConnection();
         return connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
     }
 
-    public static void sendMessage() throws JMSException {
+    public void sendMessage() throws JMSException {
         Session session = createSession();
         Destination destination = session.createQueue("broad.queue.athena.workreporting.dev");
         MessageProducer producer = session.createProducer(destination);

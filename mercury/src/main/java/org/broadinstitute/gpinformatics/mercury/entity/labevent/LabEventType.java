@@ -254,6 +254,8 @@ public enum LabEventType {
     SAMPLES_PLATING_TO_COVARIS("SamplesPlatingToCovaris", false, true, SystemOfRecord.MERCURY, false,
             PlasticToValidate.SOURCE),
     SAMPLES_DAUGHTER_PLATE_CREATION("SamplesDaughterPlateCreation", false, false, SystemOfRecord.MERCURY, true, PlasticToValidate.BOTH),
+    SAMPLE_IMPORT("SampleImport", false, true, SystemOfRecord.MERCURY, false,
+            PlasticToValidate.SOURCE),
 
     // mRRBS
     MRRBS_GENOMIC_TRANSFER("mRRBSGenomicTransfer", false, true, SystemOfRecord.SQUID, false, PlasticToValidate.SOURCE),
