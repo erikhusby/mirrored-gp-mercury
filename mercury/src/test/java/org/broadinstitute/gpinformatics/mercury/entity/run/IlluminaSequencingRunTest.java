@@ -49,16 +49,17 @@ public class IlluminaSequencingRunTest {
     }
 
     @BeforeMethod
-    public void setUp() throws Exception {runDate = new Date();
+    public void setUp() throws Exception {
+        runDate = new Date();
         flowcellBarcode = "flowBcode" + runDate.getTime();
         runName = "runTest" + runDate.getTime();
         runBarcode = "runBcode" + runDate.getTime();
-        testFlowcell = new IlluminaFlowcell(flowcellBarcode);
+        testFlowcell = new IlluminaFlowcell(flowcellBarcode, IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell);
         runPath = "/start/of/run/";
         fullRunPath = runPath + runName;
         dataLocation = new OutputDataLocation(fullRunPath);
         machineName = "Superman";
         testRun = new IlluminaSequencingRun(testFlowcell, runName, runBarcode, machineName, null, false, runDate,
-                                         dataLocation);
+                dataLocation);
     }
 }

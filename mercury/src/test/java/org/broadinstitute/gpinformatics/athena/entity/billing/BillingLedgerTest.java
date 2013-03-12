@@ -33,21 +33,21 @@ public class BillingLedgerTest {
         return sample;
     }
 
-    public static BillingLedger createOneBillingLedger(String sampleName, String priceItemName, String quoteId,
+    public static BillingLedger createOneBillingLedger(String sampleName, String priceItemName,
                                                        double quantity) {
-        return createOneBillingLedger(sampleName, priceItemName, quantity, null, quoteId);
+        return createOneBillingLedger(sampleName, priceItemName, quantity, null);
     }
 
     public static BillingLedger createOneBillingLedger(String sampleName, String priceItemName, double quantity,
-                                                       Date workCompleteDate, String quoteId) {
+                                                       Date workCompleteDate) {
         return new BillingLedger(createSample(sampleName),
-                new PriceItem("quoteServerId", "platform", "category", priceItemName), quoteId, workCompleteDate, quantity);
+                new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, quantity);
     }
 
     public static BillingLedger createOneBillingLedger(ProductOrderSample sample, String priceItemName, double quantity,
-                                                       Date workCompleteDate, String quoteId) {
+                                                       Date workCompleteDate) {
         return new BillingLedger(sample,
-                new PriceItem("quoteServerId", "platform", "category", priceItemName), quoteId, workCompleteDate, quantity);
+                new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, quantity);
     }
 
     @DataProvider(name = "testEquals")
@@ -57,21 +57,21 @@ public class BillingLedgerTest {
         String priceItemName1 = "DNA Extract from Blood";
         String priceItemName2 = "DNA Extract from Tissue";
         ProductOrderSample sample = createSample("SM-3KBZD");
-        BillingLedger billingLedger1 = BillingLedgerTest.createOneBillingLedger(sample, priceItemName1, 1, date1,
-                "DNA123");
+        BillingLedger billingLedger1 = BillingLedgerTest.createOneBillingLedger(sample, priceItemName1, 1, date1
+        );
         billingLedger1.setBillingMessage("anything");
 
-        BillingLedger billingLedger2 = BillingLedgerTest.createOneBillingLedger(sample, priceItemName1, 1, date2,
-                "DNA123");
+        BillingLedger billingLedger2 = BillingLedgerTest.createOneBillingLedger(sample, priceItemName1, 1, date2
+        );
         billingLedger2.setBillingMessage("something else");
 
         return new Object[][] {
                 // Different message, different date, should be equal.
                 { billingLedger1, billingLedger2, true },
                 // Different priceItem should be not equals.
-                { billingLedger1, BillingLedgerTest.createOneBillingLedger(sample, priceItemName2, 1, date1, "DNA123"), false },
+                { billingLedger1, BillingLedgerTest.createOneBillingLedger(sample, priceItemName2, 1, date1), false },
                 // Different quantity, should equate since quantity is not used for comparison.
-                { billingLedger1, BillingLedgerTest.createOneBillingLedger(sample, priceItemName1, 2, date1, "DNA123"), true },
+                { billingLedger1, BillingLedgerTest.createOneBillingLedger(sample, priceItemName1, 2, date1), true },
         };
     }
 

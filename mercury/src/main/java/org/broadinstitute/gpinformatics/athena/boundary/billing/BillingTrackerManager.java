@@ -17,6 +17,7 @@ import javax.ejb.Stateful;
 import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.InputStream;
+import java.text.MessageFormat;
 import java.util.*;
 
 /**
@@ -98,7 +99,7 @@ public class BillingTrackerManager {
         return result;
     }
 
-    private static List<String> extractOrderIdsFromSheet(Sheet sheet) {
+    private List<String> extractOrderIdsFromSheet(Sheet sheet) {
         List<String> result = new ArrayList<String>();
 
         for (Iterator<Row> rit = sheet.rowIterator(); rit.hasNext(); ) {
@@ -117,6 +118,7 @@ public class BillingTrackerManager {
                 result.add(rowPdoIdStr);
             }
         }
+
         return result;
     }
 
@@ -207,7 +209,6 @@ public class BillingTrackerManager {
             parseSampleRowForBilling(row, productOrderSample, product, trackerColumnInfos, priceItemMap);
 
             sampleIndexInOrder++;
-
         }
 
         //Persist any BillingLedger Items captured for the last productOrder (if not blank) before finishing the sheet
@@ -223,7 +224,7 @@ public class BillingTrackerManager {
                                           List<TrackerColumnInfo> trackerColumnInfos,
                                           Map<TrackerColumnInfo, PriceItem> priceItemMap) {
 
-        // Get the date complete cell for changes
+        // Get the date complete cell for changes.
         Cell workCompleteDateCell = row.getCell(BillingTrackerUtils.WORK_COMPLETE_DATE_COL_POS);
         Date workCompleteDate = null;
         if (isNonNullDateCell(workCompleteDateCell)) {
@@ -237,29 +238,49 @@ public class BillingTrackerManager {
             // There are two cells per product header cell, so we need to account for this.
             int currentBilledPosition = BillingTrackerUtils.FIXED_HEADERS.length + (billingRefIndex * 2);
 
-            //Get the AlreadyBilled cell and amount
+            // Get the AlreadyBilled cell and amount.
             Cell billedCell = row.getCell(currentBilledPosition);
             Double billedQuantity = getCellValueAsNonNullDouble(row, productOrderSample, product, billedCell);
 
-            //Get the newQuantity cell and amount
+            // Get the newQuantity cell and amount.
             Cell newQuantityCell = row.getCell(currentBilledPosition + 1);
             Double newQuantity = getCellValueAsNonNullDouble(row, productOrderSample, product, newQuantityCell);
 
-            if ( (billedQuantity != null ) && (newQuantity != null) ) {
+            if ((billedQuantity != null) && (newQuantity != null)) {
 
-                //Calculate the delta, quantities are non-null here
+                // Calculate the delta, quantities are non-null here.
                 double delta = newQuantity - billedQuantity;
 
                 if (delta != 0) {
                     PriceItem priceItem = priceItemMap.get(trackerColumnInfo);
 
-                    // Only need to check date existence when newQuantity is different than Billed Quantity
+                    // This is exactly the same validation as in the preview, a refactoring is in order.
+                    Cell cell = row.getCell(BillingTrackerUtils.QUOTE_ID_COL_POS);
+                    if (cell == null || cell.getStringCellValue() == null) {
+                        throw BillingTrackerUtils.getRuntimeException(String.format(
+                                "Found empty %s value for updated sample %s in %s, price item '%s', in Product sheet %s",
+                                BillingTrackerUtils.QUOTE_ID_HEADING, row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS), row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
+                                billableRef.getPriceItemName(), product.getPartNumber()));
+                    }
+
+                    String uploadedQuoteId = cell.getStringCellValue().trim();
+                    if (!productOrderSample.getProductOrder().getQuoteId().equals(uploadedQuoteId)) {
+                        throw BillingTrackerUtils.getRuntimeException(MessageFormat
+                                .format("Found quote ID ''{0}'' for updated sample ''{1}'' in ''{2}'' in Product sheet ''{3}'', this differs from quote ''{4}'' currently associated with ''{2}''.",
+                                        uploadedQuoteId,
+                                        row.getCell(BillingTrackerUtils.SAMPLE_ID_COL_POS),
+                                        row.getCell(BillingTrackerUtils.PDO_ID_COL_POS),
+                                        product.getPartNumber(),
+                                        productOrderSample.getProductOrder().getQuoteId()));
+                    }
+
+                    // Only need to check date existence when newQuantity is different than Billed Quantity.
                     if (workCompleteDate == null) {
                         throw BillingTrackerUtils.getRuntimeException("Sample " + productOrderSample.getSampleName() + " on row " + (row.getRowNum() + 1) +
                                 " of spreadsheet " + product.getPartNumber() +
                                 " has an invalid Date Completed value. Please correct and try again.");
                     } else {
-                        productOrderSample.addLedgerItem(workCompleteDate, priceItem, productOrderSample.getProductOrder().getQuoteId(), delta);
+                        productOrderSample.addLedgerItem(workCompleteDate, priceItem, delta);
                     }
                 } else {
                     logger.debug("Skipping BillingLedger item for sample " + productOrderSample.getSampleName() +
@@ -268,10 +289,10 @@ public class BillingTrackerManager {
                             billableRef.getProductPartNumber() + "] - quantity:" + newQuantity + " same as Billed amount.");
                 }
             }
-        } // end of for each productIndex loop
+        }
     }
 
-    private static Double getCellValueAsNonNullDouble(Row row, ProductOrderSample productOrderSample, Product product,
+    private Double getCellValueAsNonNullDouble(Row row, ProductOrderSample productOrderSample, Product product,
                                                       Cell cell) {
         Double quantity = null;
         if (BillingTrackerUtils.isNonNullNumericCell(cell)) {
@@ -311,7 +332,7 @@ public class BillingTrackerManager {
         }
     }
 
-    private static boolean isNonNullDateCell(Cell cell) {
+    private boolean isNonNullDateCell(Cell cell) {
         return ((cell != null) && (HSSFDateUtil.isCellDateFormatted(cell)));
     }
 
