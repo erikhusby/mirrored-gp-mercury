@@ -101,6 +101,16 @@ thrift:
       port: 9090
 
 
+hipchat:
+    DEV:
+        baseUrl: https://www.hipchat.com/v1/rooms/message
+        gpLimsRoom: GPLIMS Testing
+        authorizationToken: db3e86c451ef8ac0cddb94133e0455
+
+    PROD:
+        baseUrl: https://www.hipchat.com/v1/rooms/message
+        gpLimsRoom: GPLims
+        authorizationToken: db3e86c451ef8ac0cddb94133e0455
 
 
 
@@ -117,6 +127,7 @@ mercury:
       quote:    QA
       squid:    DEV
       thrift:   QA
+      hipchat:  DEV
 
 
     TEST:
@@ -126,6 +137,7 @@ mercury:
       quote:    QA
       squid:    TEST
       thrift:   QA
+      hipchat:  DEV
 
 
     QA:
@@ -135,6 +147,7 @@ mercury:
       quote:    QA
       squid:    QA
       thrift:   QA
+      hipchat:  DEV
 
 
     PROD:
@@ -146,4 +159,5 @@ mercury:
       #quote:    PROD
       squid:    PROD
       thrift:   PROD
+      hipchat:  PROD
 

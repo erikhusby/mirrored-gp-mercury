@@ -1000,16 +1000,6 @@ public class ProductOrderActionBean extends CoreActionBean {
         return editOrder.isDraft();
     }
 
-    /**
-     * Quote edit is allowed if the PDO is DRAFT, or if no billing has occurred for any samples yet. This may change
-     * if we snapshot quotes into ledger entries.
-     *
-     * @return true if user can edit the quote
-     */
-    public boolean getAllowQuoteEdit() {
-        return editOrder.isDraft() || productOrderSampleDao.countSamplesWithBillingLedgerEntries(editOrder) == 0;
-    }
-
     public String getQ() {
         return q;
     }

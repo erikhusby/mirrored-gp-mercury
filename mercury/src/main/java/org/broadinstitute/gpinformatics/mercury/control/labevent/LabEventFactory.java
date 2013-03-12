@@ -815,8 +815,8 @@ public class LabEventFactory implements Serializable {
     public LabEvent buildFromBettaLimsPlateEventDbFree(PlateEventType plateEvent, IlluminaFlowcell flowcell) {
         LabEvent labEvent = constructReferenceData(plateEvent, labEventRefDataFetcher);
         if (flowcell == null) {
-            flowcell = new IlluminaFlowcell(IlluminaFlowcell.FLOWCELL_TYPE.EIGHT_LANE,
-                    plateEvent.getPlate().getBarcode(), null);
+            flowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell,
+                    plateEvent.getPlate().getBarcode());
         }
 
         flowcell.addInPlaceEvent(labEvent);
@@ -891,8 +891,8 @@ public class LabEventFactory implements Serializable {
         if (targetFlowcell == null) {
             // todo jmt what about MiSeq?
             // todo jmt how to populate run configuration?
-            targetFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FLOWCELL_TYPE.EIGHT_LANE,
-                    plateTransferEvent.getPlate().getBarcode(), null);
+            targetFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell,
+                    plateTransferEvent.getPlate().getBarcode());
         }
 
         labEvent.getSectionTransfers().add(new SectionTransfer(

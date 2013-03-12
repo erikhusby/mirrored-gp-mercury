@@ -44,7 +44,7 @@ public class ZimsIlluminaRunFactory {
             throw new RuntimeException("Run, " + sequencingRun.getRunName() + ", is not an Illumina run.");
         }
         IlluminaSequencingRun illuminaRun = OrmUtil.proxySafeCast(sequencingRun, IlluminaSequencingRun.class);
-        RunCartridge flowcell = illuminaRun.getSampleCartridge().iterator().next();
+        RunCartridge flowcell = illuminaRun.getSampleCartridge();
 
         DateFormat dateFormat = new SimpleDateFormat(ZimsIlluminaRun.DATE_FORMAT);
         // TODO: fill in sequencerModel and isPaired

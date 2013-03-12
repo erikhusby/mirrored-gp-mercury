@@ -24,8 +24,8 @@ public class StripTubeWell extends LabVessel {
     }
 
     @Override
-    public CONTAINER_TYPE getType() {
-        return CONTAINER_TYPE.STRIP_TUBE_WELL;
+    public ContainerType getType() {
+        return ContainerType.STRIP_TUBE_WELL;
     }
 
 }
