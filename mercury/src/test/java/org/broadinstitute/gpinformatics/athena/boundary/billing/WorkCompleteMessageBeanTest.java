@@ -160,7 +160,6 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
         Destination destination = session.createQueue("broad.queue.athena.workreporting.dev");
         MessageProducer producer = session.createProducer(destination);
         Message message = createMessage(session);
-        //producer.setDeliveryMode(DeliveryMode.PERSISTENT);
         producer.send(destination, message);
     }
 
