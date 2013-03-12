@@ -2,6 +2,8 @@ package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 import org.apache.commons.lang3.StringUtils;
 
+import javax.annotation.Nullable;
+import javax.inject.Inject;
 import java.io.Serializable;
 
 /**
@@ -10,6 +12,11 @@ import java.io.Serializable;
 // called "app" because "mercury" has a special meaning in the YAML file
 @ConfigKey("app")
 public class MercuryConfig extends AbstractConfig implements Serializable {
+
+    @Inject
+    public MercuryConfig(@Nullable Deployment mercuryDeployment) {
+        super(mercuryDeployment);
+    }
 
     private String host;
 
