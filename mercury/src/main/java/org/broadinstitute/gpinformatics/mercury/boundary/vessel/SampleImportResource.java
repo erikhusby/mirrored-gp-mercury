@@ -95,7 +95,7 @@ public class SampleImportResource {
         List<ParentVesselBean> parentVesselBeans = sampleImportBean.getParentVesselBeans();
 
         List<LabVessel> labVessels = labVesselFactory.buildLabVessels(parentVesselBeans, sampleImportBean.getUserName(),
-                sampleImportBean.getExportDate(), LabEventType.SAMPLE_RECEIPT);
+                sampleImportBean.getExportDate(), LabEventType.SAMPLE_IMPORT);
 
         LabBatch labBatch = labBatchDAO.findByName(sampleImportBean.getSourceSystemExportId());
         if (labBatch != null) {
@@ -103,7 +103,7 @@ public class SampleImportResource {
         }
         String batchName = sampleImportBean.getSourceSystemExportId();
         labBatchDAO.persist(new LabBatch(batchName, new HashSet<LabVessel>(labVessels),
-                LabBatch.LabBatchType.SAMPLES_RECEIPT));
+                LabBatch.LabBatchType.SAMPLES_IMPORT));
         return "Samples imported: " + batchName;
     }
 

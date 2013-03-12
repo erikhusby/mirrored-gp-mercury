@@ -31,7 +31,8 @@ public class SampleImportResourceDbTest extends ContainerTest {
         String suffix = dateFormat.format(now);
 
         List<ChildVesselBean> childVesselBeans = new ArrayList<ChildVesselBean>();
-        childVesselBeans.add(new ChildVesselBean(suffix, "SM-" + suffix, "Matrix Tube Screw cap [0.5mL]", "A01"));
+        childVesselBeans.add(new ChildVesselBean(suffix + "1", "SM-" + suffix + "1", "Matrix Tube Screw cap [0.5mL]", "A01"));
+        childVesselBeans.add(new ChildVesselBean(suffix + "2", "SM-" + suffix + "2", "Matrix Tube Screw cap [0.5mL]", "A02"));
 
         List<ParentVesselBean> parentVesselBeans = new ArrayList<ParentVesselBean>();
         parentVesselBeans.add(new ParentVesselBean("CO-" + suffix, null, "2D Matrix 96 Slot Rack [0.5ml SC]", childVesselBeans));

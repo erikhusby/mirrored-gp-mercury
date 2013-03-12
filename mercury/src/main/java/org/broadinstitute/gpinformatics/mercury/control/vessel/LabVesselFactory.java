@@ -131,8 +131,7 @@ public class LabVesselFactory implements Serializable {
 
                 MercurySample mercurySample = getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples, sampleId);
                 twoDBarcodedTube.addSample(mercurySample);
-                twoDBarcodedTube.addInPlaceEvent(new LabEvent(labEventType,
-                        eventDate, "BSP", disambiguator, operator));
+                twoDBarcodedTube.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator));
                 disambiguator++;
                 labVessels.add(twoDBarcodedTube);
             } else {
@@ -152,8 +151,8 @@ public class LabVesselFactory implements Serializable {
                                 childVesselBean.getSampleId()));
                         staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
                     }
-                    staticPlate.addInPlaceEvent(new LabEvent(labEventType,
-                            eventDate, "BSP", disambiguator, operator));
+                    staticPlate.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator, operator));
+                    disambiguator++;
                 } else if (vesselType.contains("rack")) {
                     RackOfTubes rackOfTubes = new RackOfTubes(parentVesselBean.getManufacturerBarcode(),
                             RackOfTubes.RackType.Matrix96);
@@ -166,8 +165,9 @@ public class LabVesselFactory implements Serializable {
                         TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(childVesselBean.getManufacturerBarcode());
                         twoDBarcodedTube.addSample(getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples,
                                 childVesselBean.getSampleId()));
-                        twoDBarcodedTube.addInPlaceEvent(new LabEvent(labEventType,
-                                eventDate, "BSP", disambiguator, operator));
+                        twoDBarcodedTube.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator,
+                                operator));
+                        disambiguator++;
                         mapPositionToTube.put(vesselPosition, twoDBarcodedTube);
                         labVessels.add(twoDBarcodedTube);
                     }
