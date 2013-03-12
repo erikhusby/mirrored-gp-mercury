@@ -45,10 +45,8 @@ public class SquidConnectorTest extends ContainerTest {
 
         runBarcode = "Run" + format.format(runDate);
         final String runName = "testRunName" + runDate.getTime();
-        String baseDirectory = System.getProperty("java.io.tmpdir");
-        runFileDirectory = baseDirectory + File.separator + "bin" + File.separator +
-                                   "testRoot" + File.separator + "finalPath" + runDate.getTime() +
-                                   File.separator + runName;
+        String baseDirectory = System.getProperty("java.io.tmpdir","/tmp");
+        runFileDirectory = baseDirectory;// + File.separator + "bin" + File.separator + "testRoot" + File.separator + "finalPath" + runDate.getTime() + File.separator + runName;
         File runFile = new File(runFileDirectory);
         result = runFile.mkdirs();
 
