@@ -58,14 +58,14 @@ public class QuoteImportInfo {
     }
 
     /**
-     * If the quote is already on the ledger, then use it, otherwise, use the product order's quote because that will be
-     * billed if the session was billed right now.
+     *  Return the quote on the ledger. If the ledger is not yet billed it won't be set, so return the quote on the
+     *  the product order since this is the one that will be billed.
      *
      * @param ledger The ledger entry being looked at.
      *
      * @return The quote identifier.
      */
-    private String getLedgerQuoteId(BillingLedger ledger) {
+    private static String getLedgerQuoteId(BillingLedger ledger) {
         if (!StringUtils.isBlank(ledger.getQuoteId())) {
             return ledger.getQuoteId();
         }
