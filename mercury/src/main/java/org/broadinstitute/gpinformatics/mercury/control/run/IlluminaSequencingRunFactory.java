@@ -48,12 +48,8 @@ public class IlluminaSequencingRunFactory implements Serializable {
         }
 
         File runDirectory = new File(solexaRunBean.getRunDirectory());
-        if (!runDirectory.exists()) {
-            throw new RuntimeException("runDirectory '" + solexaRunBean.getRunDirectory() + "' does not exist");
-        }
         OutputDataLocation dataLocation = new OutputDataLocation(solexaRunBean.getRunDirectory());
 
-        // todo what about directory path?
         return new IlluminaSequencingRun(illuminaFlowcell, runDirectory.getName(), solexaRunBean.getRunBarcode(),
                                                 solexaRunBean.getMachineName(),
                                                 null
