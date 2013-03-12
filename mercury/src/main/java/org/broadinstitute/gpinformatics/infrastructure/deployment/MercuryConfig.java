@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
+import org.apache.commons.lang3.StringUtils;
+
 import java.io.Serializable;
 
 /**
@@ -12,12 +14,15 @@ public class MercuryConfig extends AbstractConfig implements Serializable {
     private String host;
 
     // Use empty string since port can be missing.
-    private String port = "";
+    private String port;
 
     private int jmsPort;
 
     public String getUrl() {
-        return "http://" + host + port + "/Mercury/";
+        if (!StringUtils.isBlank(port)) {
+            return "http://" + host + ":" + port + "/Mercury/";
+        }
+        return "http://" + host + "/Mercury/";
     }
 
     public void setHost(String host) {
