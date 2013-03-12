@@ -31,7 +31,7 @@ public class ProductOrderTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        productOrder = AthenaClientServiceStub.createDummyProductOrder ();
+        productOrder = AthenaClientServiceStub.createDummyProductOrder(PDO_JIRA_KEY);
     }
 
     @AfterMethod
@@ -103,8 +103,6 @@ public class ProductOrderTest {
         Assert.assertEquals(productOrder.fetchJiraIssueType(), CreateFields.IssueType.PRODUCT_ORDER);
 
         Assert.assertEquals(productOrder.fetchJiraProject(), CreateFields.ProjectType.Product_Ordering);
-
-        productOrder.setJiraTicketKey(PDO_JIRA_KEY);
 
         Assert.assertNotNull(productOrder.getJiraTicketKey());
 

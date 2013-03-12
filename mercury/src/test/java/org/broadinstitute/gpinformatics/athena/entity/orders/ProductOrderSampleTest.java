@@ -123,9 +123,12 @@ public class ProductOrderSampleTest {
         ledger.setBillingSession(new BillingSession(0L, Collections.singleton(ledger)));
 
         return new Object[][] {
-                new Object[] { data.sample1, completedDate, ledgers, BillingStatus.EligibleForBilling },
-                new Object[] { data.sample1, completedDate, ledgers, BillingStatus.EligibleForBilling },
-                new Object[] { data.sample2, completedDate, Collections.emptySet(), BillingStatus.EligibleForBilling }
+                // Create ledger items from a single sample.
+                new Object[] { data.sample1, completedDate, ledgers },
+                // Update existing ledger items with "new" bill count.
+                new Object[] { data.sample1, completedDate, ledgers },
+                // If sample is already billed, don't create any ledger items.
+                new Object[] { data.sample2, completedDate, Collections.emptySet() }
         };
     }
 
@@ -146,7 +149,7 @@ public class ProductOrderSampleTest {
     }
 
     @Test(dataProvider = "autoBillSample")
-    public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<BillingLedger> billingLedgers, BillingStatus billingStatus) {
+    public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<BillingLedger> billingLedgers) {
         sample.autoBillSample(completedDate, 1);
         Assert.assertEquals(sample.getBillableLedgerItems(), billingLedgers);
     }

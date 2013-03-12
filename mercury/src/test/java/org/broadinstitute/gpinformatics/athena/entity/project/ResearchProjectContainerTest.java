@@ -19,7 +19,7 @@ import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deploym
  *         Date: 10/12/12
  *         Time: 7:50 AM
  */
-@Test (groups = TestGroups.EXTERNAL_INTEGRATION)
+@Test(groups = TestGroups.EXTERNAL_INTEGRATION)
 public class ResearchProjectContainerTest extends Arquillian {
 
     @Deployment
@@ -30,11 +30,12 @@ public class ResearchProjectContainerTest extends Arquillian {
 
     public void testJiraSubmission() throws IOException {
 
-        ResearchProject dummy = AthenaClientServiceStub.createDummyResearchProject (10950L, "MyResearchProject", "To Study Stuff", ResearchProject.IRB_ENGAGED);
+        ResearchProject dummy = AthenaClientServiceStub
+                .createDummyResearchProject(10950, "MyResearchProject", "To Study Stuff", ResearchProject.IRB_ENGAGED);
 
         dummy.submit();
 
-        Assert.assertTrue ( StringUtils.isNotEmpty(dummy.getJiraTicketKey()) );
+        Assert.assertTrue(StringUtils.isNotEmpty(dummy.getJiraTicketKey()));
     }
 
 }
