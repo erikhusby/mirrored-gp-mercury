@@ -362,6 +362,16 @@ public class LabEventTest {
 
         String flowcellBarcode = "flowcell"+ new Date().getTime();
 
+        HiSeq2500FlowcellEntityBuilder  hiSeq2500FlowcellEntityBuilder =
+            new HiSeq2500FlowcellEntityBuilder(bettaLimsMessageFactory, labEventFactory,
+                    labEventHandler,
+                            hybridSelectionEntityBuilder.getNormCatchRack(),
+                            hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
+                            hybridSelectionEntityBuilder.getNormCatchBarcodes(),qtpEntityBuilder.getDenatureRack(),
+                            flowcellBarcode).invoke();
+
+
+
         IlluminaSequencingRunFactory illuminaSequencingRunFactory =
                 new IlluminaSequencingRunFactory(EasyMock.createMock(IlluminaFlowcellDao.class));
         IlluminaSequencingRun illuminaSequencingRun;
@@ -369,7 +379,7 @@ public class LabEventTest {
             illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
                     flowcellBarcode, "Run1", new Date(), "SL-HAL",
                     File.createTempFile("RunDir", ".txt").getAbsolutePath(), null),
-                    qtpEntityBuilder.getIlluminaFlowcell());
+                    hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
