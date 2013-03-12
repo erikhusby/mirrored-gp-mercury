@@ -260,6 +260,22 @@ mercury:
       hipchat: DEV
 
 
+    BAMBOO:
+
+      app:      BAMBOO
+      bsp:      DEV
+      gap:      DEV
+      jira:     TEST
+      quote:    QA
+      squid:    DEV
+      thrift:   QA
+      deckMsgs: DEV
+      datawhEtl: DEV
+      bettaLimsServer: DEV
+      tableau:  PROD
+      hipchat: DEV
+
+
     TEST:
 
       app:      TEST
