@@ -21,6 +21,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDA
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
@@ -106,6 +107,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
     private UserTransaction utx;
 
     private final SimpleDateFormat testPrefixDateFormat=new SimpleDateFormat("MMddHHmmss");
+    private Date runDate;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -254,10 +256,20 @@ public class BettalimsMessageResourceTest extends Arquillian {
         Assert.assertEquals(poolTube.getSampleInstances().size(), LabEventTest.NUM_POSITIONS_IN_RACK,
                 "Wrong number of sample instances");
 
-        String runName="TestRun" + testPrefix;
+        runDate = new Date();
+        SimpleDateFormat format = new SimpleDateFormat("yyMMdd");
+        String runName="TestRun" + testPrefix + runDate.getTime();
         try {
-            solexaRunResource.registerRun(new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(), runName, new Date(), "SL-HAL",
-                    File.createTempFile("RunDir", ".txt").getAbsolutePath(), null));
+            solexaRunResource.registerRun(new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(),
+                                                                   qtpJaxbBuilder.getFlowcellBarcode()
+                                                                           + format.format(runDate),
+                                                                   runDate, "SL-HAL",
+                                                                   File.createTempFile("RunDir" + File.separator
+                                                                                               + runName,
+                                                                                              ".txt").getAbsolutePath(),
+                                                                   null),
+                                                 new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell,
+                                                                             qtpJaxbBuilder.getFlowcellBarcode()));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

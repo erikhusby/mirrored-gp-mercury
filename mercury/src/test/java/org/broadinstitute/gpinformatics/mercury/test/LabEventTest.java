@@ -216,7 +216,7 @@ public class LabEventTest {
         qtpEntityBuilder.invoke();
 
         IlluminaSequencingRunFactory illuminaSequencingRunFactory =
-                new IlluminaSequencingRunFactory(EasyMock.createMock(IlluminaFlowcellDao.class));
+                new IlluminaSequencingRunFactory();
         IlluminaSequencingRun illuminaSequencingRun;
         try {
             illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
@@ -365,7 +365,7 @@ public class LabEventTest {
         qtpEntityBuilder.invoke();
 
         IlluminaSequencingRunFactory illuminaSequencingRunFactory =
-                new IlluminaSequencingRunFactory(EasyMock.createMock(IlluminaFlowcellDao.class));
+                new IlluminaSequencingRunFactory();
         IlluminaSequencingRun illuminaSequencingRun;
         try {
             illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
