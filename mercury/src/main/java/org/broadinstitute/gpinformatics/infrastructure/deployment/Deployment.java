@@ -11,5 +11,7 @@ public enum Deployment {
     QA,
     RC,
     PROD,
-    STUBBY
+    STUBBY,
+    /** Used to run tests on the bamboo server. */
+    BAMBOO
 }
