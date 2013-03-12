@@ -28,7 +28,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-public class WorkCompleteMessageBeanTest {
+public class WorkCompleteMessageBeanTest extends ContainerTest {
 
     public static final String TEST_PDO_NAME = "PDO-xxx";
     public static final String TEST_SAMPLE_NAME = "SM-xxx";
