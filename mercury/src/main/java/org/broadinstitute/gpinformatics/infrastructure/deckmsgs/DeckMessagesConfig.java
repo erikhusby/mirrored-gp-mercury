@@ -4,8 +4,10 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
+import javax.annotation.Nullable;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
 import java.io.Serializable;
 
 /**
@@ -16,7 +18,9 @@ public class DeckMessagesConfig extends AbstractConfig implements Serializable {
 
     private String messageStoreDirRoot;
 
-    public DeckMessagesConfig() {
+    @Inject
+    public DeckMessagesConfig(@Nullable Deployment deployment) {
+        super(deployment);
     }
 
     public String getMessageStoreDirRoot() {

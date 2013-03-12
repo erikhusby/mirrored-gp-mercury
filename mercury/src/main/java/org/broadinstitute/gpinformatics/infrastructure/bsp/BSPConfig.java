@@ -5,8 +5,10 @@ import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 
+import javax.annotation.Nullable;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
 import java.io.Serializable;
 
 
@@ -22,8 +24,9 @@ public class BSPConfig extends AbstractConfig implements LoginAndPassword, Seria
 
     private int port;
 
-    public BSPConfig() {
-
+    @Inject
+    public BSPConfig(@Nullable Deployment deployment) {
+        super(deployment);
     }
 
     public String getLogin() {

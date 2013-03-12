@@ -1,17 +1,33 @@
 package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import javax.annotation.Nullable;
 import javax.inject.Inject;
+import java.lang.reflect.InvocationTargetException;
 
 /**
  * Base class of concrete configurations.
  */
 public abstract class AbstractConfig {
 
-    private static final Log log = LogFactory.getLog(AbstractConfig.class);
+    protected AbstractConfig(@Nullable Deployment mercuryDeployment) {
+        this.mercuryDeployment = mercuryDeployment;
+        if (mercuryDeployment != null) {
+            AbstractConfig source = produce(getClass(), mercuryDeployment);
+            try {
+                BeanUtils.copyProperties(this, source);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            } catch (InvocationTargetException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
 
     /**
      * This appears to be unused but has proven useful in past debugging to explicitly identify the external deployment.
@@ -19,8 +35,10 @@ public abstract class AbstractConfig {
     @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
     private Deployment externalDeployment;
 
-
-    @Inject
+    /**
+     * Useful for debugging.
+     */
+    @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
     private Deployment mercuryDeployment;
 
 

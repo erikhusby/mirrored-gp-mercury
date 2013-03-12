@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.net.URL;
 import java.text.ParseException;
@@ -473,17 +474,24 @@ public class MercuryConfiguration {
     }
 
     /**
-     * Utility method to create a new instance of the specified {@link AbstractConfig}-derived class
+     * Utility method to create a new instance of the specified {@link AbstractConfig}-derived class.
      *
      * @param clazz The class extending {@link AbstractConfig} of which this method should create a new instance.
      * @return The new instance.
      */
     private AbstractConfig newConfig(Class<? extends AbstractConfig> clazz) {
         try {
-            return clazz.newInstance();
+            // This will throw NoSuchMethodException if the constructor does not exist, so no need to null check.
+            Constructor<? extends AbstractConfig> constructor = clazz.getConstructor(Deployment.class);
+            return constructor.newInstance((Object) null);
+
         } catch (InstantiationException e) {
             throw new RuntimeException(e);
         } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }

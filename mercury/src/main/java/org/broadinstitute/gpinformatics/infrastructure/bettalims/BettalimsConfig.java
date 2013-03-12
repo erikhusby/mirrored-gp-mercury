@@ -4,8 +4,10 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
+import javax.annotation.Nullable;
 import javax.enterprise.inject.Default;
 import javax.enterprise.inject.Produces;
+import javax.inject.Inject;
 import java.io.Serializable;
 
 /**
@@ -18,6 +20,11 @@ public class BettalimsConfig extends AbstractConfig implements Serializable {
     private String jmsHost;
     private int jmsPort;
     private String jmsQueue;
+
+    @Inject
+    public BettalimsConfig(@Nullable Deployment deployment) {
+        super(deployment);
+    }
 
     public String getWsHost() {
         return wsHost;
