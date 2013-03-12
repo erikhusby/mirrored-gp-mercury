@@ -1948,7 +1948,7 @@ public class LabEventTest {
 
         public HybridSelectionEntityBuilder invoke() {
             HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder = new HybridSelectionJaxbBuilder(
-                    bettaLimsMessageFactory, "", pondRegRackBarcode, pondRegTubeBarcodes).invoke();
+                    bettaLimsMessageFactory, "", pondRegRackBarcode, pondRegTubeBarcodes, "Bait").invoke();
             normCatchRackBarcode = hybridSelectionJaxbBuilder.getNormCatchRackBarcode();
             normCatchBarcodes = hybridSelectionJaxbBuilder.getNormCatchBarcodes();
 
@@ -2136,11 +2136,12 @@ public class LabEventTest {
         private PlateTransferEventType normCatchJaxb;
 
         public HybridSelectionJaxbBuilder(BettaLimsMessageFactory bettaLimsMessageFactory, String testPrefix,
-                String pondRegRackBarcode, List<String> pondRegTubeBarcodes) {
+                String pondRegRackBarcode, List<String> pondRegTubeBarcodes, String baitTubeBarcode) {
             this.bettaLimsMessageFactory = bettaLimsMessageFactory;
             this.testPrefix = testPrefix;
             this.pondRegRackBarcode = pondRegRackBarcode;
             this.pondRegTubeBarcodes = pondRegTubeBarcodes;
+            this.baitTubeBarcode = baitTubeBarcode;
         }
 
         public PlateTransferEventType getPreSelPoolJaxb() {
@@ -2247,7 +2248,6 @@ public class LabEventTest {
                     preSelPoolBarcodes, hybridizationPlateBarcode);
             addMessage(messageList, bettaLimsMessageFactory, hybridizationJaxb);
 
-            baitTubeBarcode = "Bait" + testPrefix;
             String baitSetupBarcode = "BaitSetup" + testPrefix;
             baitSetupJaxb = bettaLimsMessageFactory.buildTubeToPlate("BaitSetup", baitTubeBarcode, baitSetupBarcode,
                     LabEventFactory.PHYS_TYPE_EPPENDORF_96,
