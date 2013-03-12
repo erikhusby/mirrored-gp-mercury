@@ -2,11 +2,9 @@ package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import com.sun.jersey.api.client.Client;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfig;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.ImportFromSquidTest;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -23,7 +21,6 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
@@ -45,13 +42,13 @@ public class SolexaRunResourceTest extends Arquillian {
     @Inject
     MercuryConfig mercuryConfig;
 
-    private Date             runDate;
+    private Date runDate;
     private SimpleDateFormat format;
-    private String           flowcellBarcode;
+    private String flowcellBarcode;
     private IlluminaFlowcell newFlowcell;
-    private boolean          result;
-    private String           runBarcode;
-    private String           runFileDirectory;
+    private boolean result;
+    private String runBarcode;
+    private String runFileDirectory;
 
     @Deployment
     public static WebArchive buildMercuryWar() {
@@ -81,8 +78,8 @@ public class SolexaRunResourceTest extends Arquillian {
 
         flowcellBarcode = "testcaseFlowcell" + runDate.getTime();
 
-        newFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.TWO_LANE,
-                                                  flowcellBarcode);
+        newFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
+                flowcellBarcode);
 
         flowcellDao.persist(newFlowcell);
         flowcellDao.flush();
@@ -94,8 +91,8 @@ public class SolexaRunResourceTest extends Arquillian {
         final String runName = "testRunName" + runDate.getTime();
         String baseDirectory = System.getProperty("java.io.tmpdir");
         runFileDirectory = baseDirectory + File.separator + "bin" + File.separator +
-                                   "testRoot" + File.separator + "finalPath" + runDate.getTime() +
-                                   File.separator + runName;
+                "testRoot" + File.separator + "finalPath" + runDate.getTime() +
+                File.separator + runName;
         File runFile = new File(runFileDirectory);
         result = runFile.mkdirs();
     }
@@ -122,10 +119,10 @@ public class SolexaRunResourceTest extends Arquillian {
         //        try {
 
         String response = Client.create().resource(mercuryConfig.getUrl() + "rest/solexarun")
-                                .type(MediaType.APPLICATION_XML_TYPE)
-                                .accept(MediaType.APPLICATION_XML)
-                                .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
-                                                                 runFileDirectory, null)).post(String.class);
+                .type(MediaType.APPLICATION_XML_TYPE)
+                .accept(MediaType.APPLICATION_XML)
+                .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
+                        runFileDirectory, null)).post(String.class);
         System.out.println(response);
         //        } catch (IOException e) {
         //            throw new RuntimeException(e);
