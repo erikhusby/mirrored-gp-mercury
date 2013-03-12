@@ -28,7 +28,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-public class WorkCompleteMessageBeanTest extends ContainerTest{
+public class WorkCompleteMessageBeanTest {
 
     public static final String TEST_PDO_NAME = "PDO-xxx";
     public static final String TEST_SAMPLE_NAME = "SM-xxx";
@@ -80,7 +80,7 @@ public class WorkCompleteMessageBeanTest extends ContainerTest{
         utx.rollback();
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testOnMessage() throws Exception {
         List<WorkCompleteMessage> messages = workCompleteMessageDao.getNewMessages();
         Assert.assertTrue(!messages.isEmpty(), "Should be at least one message in new message queue");
@@ -95,7 +95,8 @@ public class WorkCompleteMessageBeanTest extends ContainerTest{
         Assert.assertTrue(found, "Should find our message in message queue");
     }
 
-    @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled = false)
+    // FIXME: expand to test creating ledger entries from message
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testOnMessageReadBack() throws Exception {
         AutomatedBiller automatedBiller = new AutomatedBiller(workCompleteMessageDao, productOrderSampleDao, productOrderDao, billingLedgerDao);
         automatedBiller.processMessages();
