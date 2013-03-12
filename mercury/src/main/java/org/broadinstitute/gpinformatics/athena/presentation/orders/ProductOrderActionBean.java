@@ -494,7 +494,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
 
-        if (deployment != null && deployment == Deployment.DEV) {
+        if (deployment != null && deployment != Deployment.PROD) {
             Collection<ProductOrderSample> samples = mercuryClientService.addSampleToPicoBucket(editOrder);
             if (!samples.isEmpty()) {
                 addMessage("{0} samples have been added to the pico bucket: {1}", samples.size(), StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
@@ -811,7 +811,7 @@ public class ProductOrderActionBean extends CoreActionBean {
                 editOrder.getSampleString(),
                 ProductOrder.TransitionStates.DeveloperEdit.getStateName());
 
-        if (deployment != null && deployment == Deployment.DEV) {
+        if (deployment != null && deployment != Deployment.PROD) {
             Collection<ProductOrderSample> samplesInPico = mercuryClientService.addSampleToPicoBucket(editOrder, samplesToAdd);
             if (!samplesInPico.isEmpty()) {
                 addMessage("{0} samples have been added to the pico bucket: {1}", samplesInPico.size(), nameList);
