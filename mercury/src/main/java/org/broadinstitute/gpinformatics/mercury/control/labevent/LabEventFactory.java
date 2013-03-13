@@ -36,6 +36,10 @@ public class LabEventFactory implements Serializable {
      */
     public static final String SECTION_ALL_96 = "ALL96";
     /**
+     * Section for both lanes of a 2-lane flowcell
+     */
+    public static final String SECTION_ALL_2 = "ALL2";
+    /**
      * Physical type for rack of tubes
      */
     public static final String PHYS_TYPE_TUBE_RACK = "TubeRack";
@@ -52,9 +56,13 @@ public class LabEventFactory implements Serializable {
      */
     public static final String PHYS_TYPE_STRIP_TUBE = "StripTube";
     /**
-     * Physical type for a flowcell
+     * Physical type for an 8-lane flowcell
      */
     public static final String PHYS_TYPE_FLOWCELL = "Flowcell";
+    /**
+     * Physical type for a 2-lane flowcell
+     */
+    public static final String PHYS_TYPE_FLOWCELL_2_LANE = "Flowcell2Lane";
     /**
      * Pattern that groups non-zero trailing digits
      */

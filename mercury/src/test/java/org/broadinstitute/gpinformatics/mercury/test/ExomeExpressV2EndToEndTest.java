@@ -1,8 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
-import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
-import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -285,9 +283,7 @@ public class ExomeExpressV2EndToEndTest {
         LabEventTest.HiSeq2500FlowcellEntityBuilder  hiSeq2500FlowcellEntityBuilder =
             new LabEventTest.HiSeq2500FlowcellEntityBuilder(bettaLimsMessageFactory, labEventFactory,
                             leHandler,
-                            hybridSelectionEntityBuilder.getNormCatchRack(),
-                            hybridSelectionEntityBuilder.getNormCatchRackBarcode(),
-                            hybridSelectionEntityBuilder.getNormCatchBarcodes(),qtpEntityBuilder.getDenatureRack(),
+                    qtpEntityBuilder.getDenatureRack(),
                             flowcellBarcode).invoke();
         // MiSeq reagent block transfer message
         // Register run
