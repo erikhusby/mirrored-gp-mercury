@@ -34,7 +34,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.BAMBOO;
 
 public class WorkCompleteMessageBeanTest extends Arquillian {
 
@@ -62,10 +62,10 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     // Required to get the correct configuration for running JMS queue tests on the bamboo server.  In that case,
     // we can't use localhost.
     //
-    // NOTE: To run locally, you must change this to DEV.  Make sure you change it back before checking in!
+    // NOTE: To run locally, you must change this to DEV.  Make sure you change it to BAMBOO before checking in!
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(DEV);
+        return DeploymentBuilder.buildMercuryWar(BAMBOO);
     }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
