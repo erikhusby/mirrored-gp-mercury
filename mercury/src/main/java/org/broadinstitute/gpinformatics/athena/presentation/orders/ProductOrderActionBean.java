@@ -1,6 +1,13 @@
 package org.broadinstitute.gpinformatics.athena.presentation.orders;
 
-import net.sourceforge.stripes.action.*;
+import net.sourceforge.stripes.action.After;
+import net.sourceforge.stripes.action.Before;
+import net.sourceforge.stripes.action.DefaultHandler;
+import net.sourceforge.stripes.action.ForwardResolution;
+import net.sourceforge.stripes.action.HandlesEvent;
+import net.sourceforge.stripes.action.RedirectResolution;
+import net.sourceforge.stripes.action.Resolution;
+import net.sourceforge.stripes.action.UrlBinding;
 import net.sourceforge.stripes.controller.LifecycleStage;
 import net.sourceforge.stripes.validation.Validate;
 import net.sourceforge.stripes.validation.ValidateNestedProperties;
@@ -23,7 +30,11 @@ import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
-import org.broadinstitute.gpinformatics.athena.entity.orders.*;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
@@ -34,7 +45,6 @@ import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.Produ
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.ProjectTokenInput;
 import org.broadinstitute.gpinformatics.athena.presentation.tokenimporters.UserTokenInput;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.issue.JiraIssue;
 import org.broadinstitute.gpinformatics.infrastructure.mercury.MercuryClientService;
@@ -51,9 +61,21 @@ import org.jvnet.inflector.Noun;
 import javax.inject.Inject;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.io.*;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 
 /**
  * This handles all the needed interface processing elements
@@ -127,9 +149,6 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @Inject
     private ProjectTokenInput projectTokenInput;
-
-    @Inject
-    private Deployment deployment;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -494,12 +513,7 @@ public class ProductOrderActionBean extends CoreActionBean {
 
         addMessage("Product Order \"{0}\" has been placed", editOrder.getTitle());
 
-        if (deployment != null && deployment != Deployment.PROD) {
-            Collection<ProductOrderSample> samples = mercuryClientService.addSampleToPicoBucket(editOrder);
-            if (!samples.isEmpty()) {
-                addMessage("{0} samples have been added to the pico bucket: {1}", samples.size(), StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
-            }
-        }
+        handleSamplesAdded(editOrder.getSamples());
 
         return createViewResolution();
     }
@@ -811,14 +825,17 @@ public class ProductOrderActionBean extends CoreActionBean {
                 editOrder.getSampleString(),
                 ProductOrder.TransitionStates.DeveloperEdit.getStateName());
 
-        if (deployment != null && deployment != Deployment.PROD) {
-            Collection<ProductOrderSample> samplesInPico = mercuryClientService.addSampleToPicoBucket(editOrder, samplesToAdd);
-            if (!samplesInPico.isEmpty()) {
-                addMessage("{0} samples have been added to the pico bucket: {1}", samplesInPico.size(), nameList);
-            }
-        }
+        handleSamplesAdded(samplesToAdd);
 
         return createViewResolution();
+    }
+
+    private void handleSamplesAdded(List<ProductOrderSample> newSamples) {
+        Collection<ProductOrderSample> samples = mercuryClientService.addSampleToPicoBucket(editOrder, newSamples);
+        if (!samples.isEmpty()) {
+            addMessage("{0} samples have been added to the pico bucket: {1}", samples.size(),
+                    StringUtils.join(ProductOrderSample.getSampleNames(samples), ", "));
+        }
     }
 
     public List<String> getSelectedProductOrderBusinessKeys() {

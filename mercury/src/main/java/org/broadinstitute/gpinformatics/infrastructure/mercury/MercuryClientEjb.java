@@ -116,7 +116,7 @@ public class MercuryClientEjb {
         bucketBean.add(vesselsAdded, picoBucket, username, LabEvent.UI_EVENT_LOCATION, LabEventType.PICO_PLATING_BUCKET,
                 pdo.getBusinessKey());
 
-        if(picoBucket.getBucketId() == null) {
+        if (picoBucket.getBucketId() == null) {
             bucketDao.persist(bucketBean);
         }
         return samplesAdded;
