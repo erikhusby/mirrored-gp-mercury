@@ -230,7 +230,7 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
         LabEventTest.HybridSelectionJaxbBuilder hybridSelectionJaxbBuilder=new LabEventTest.HybridSelectionJaxbBuilder(bettaLimsMessageFactory,
                 testPrefix, libraryConstructionJaxbBuilder.getPondRegRackBarcode(),
-                libraryConstructionJaxbBuilder.getPondRegTubeBarcodes()).invoke();
+                libraryConstructionJaxbBuilder.getPondRegTubeBarcodes(), "Bait" + testPrefix).invoke();
         final List<ReagentDesign> reagentDesigns=reagentDesignDao.findAll(ReagentDesign.class, 0, 1);
         ReagentDesign baitDesign=null;
         if(reagentDesigns != null && !reagentDesigns.isEmpty()) {
