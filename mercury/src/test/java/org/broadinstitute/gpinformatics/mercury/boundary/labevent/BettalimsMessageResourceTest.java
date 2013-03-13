@@ -260,13 +260,15 @@ public class BettalimsMessageResourceTest extends Arquillian {
         SimpleDateFormat format = new SimpleDateFormat("yyMMdd");
         String runName="TestRun" + testPrefix + runDate.getTime();
         try {
+            final File tempRunFile = File.createTempFile("RunDir" + File.separator
+                                                              + runName,
+                                                             ".txt");
+            tempRunFile.mkdirs();
             solexaRunResource.registerRun(new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(),
                                                                    qtpJaxbBuilder.getFlowcellBarcode()
                                                                            + format.format(runDate),
                                                                    runDate, "SL-HAL",
-                                                                   File.createTempFile("RunDir" + File.separator
-                                                                                               + runName,
-                                                                                              ".txt").getAbsolutePath(),
+                                                                   tempRunFile.getAbsolutePath(),
                                                                    null),
                                                  new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell,
                                                                              qtpJaxbBuilder.getFlowcellBarcode()));
