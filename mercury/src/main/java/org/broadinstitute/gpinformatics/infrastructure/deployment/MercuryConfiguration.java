@@ -437,7 +437,7 @@ public class MercuryConfiguration {
         try {
             // This will throw NoSuchMethodException if the constructor does not exist, so no need to null check.
             Constructor<? extends AbstractConfig> constructor = clazz.getConstructor(Deployment.class);
-            return constructor.newInstance((Object) null);
+            return constructor.newInstance(Deployment.STUBBY);
 
         } catch (InstantiationException e) {
             throw new RuntimeException(e);

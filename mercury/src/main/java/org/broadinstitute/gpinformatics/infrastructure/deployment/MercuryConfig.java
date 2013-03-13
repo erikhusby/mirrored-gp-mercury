@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 import org.apache.commons.lang3.StringUtils;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.Serializable;
 
@@ -15,7 +15,7 @@ import java.io.Serializable;
 public class MercuryConfig extends AbstractConfig implements Serializable {
 
     @Inject
-    public MercuryConfig(@Nullable Deployment mercuryDeployment) {
+    public MercuryConfig(@Nonnull Deployment mercuryDeployment) {
         super(mercuryDeployment);
     }
 

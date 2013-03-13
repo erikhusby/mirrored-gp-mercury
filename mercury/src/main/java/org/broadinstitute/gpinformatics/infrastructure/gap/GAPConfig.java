@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.Serializable;
 
@@ -21,7 +21,7 @@ public class GAPConfig extends AbstractConfig implements LoginAndPassword, Seria
     private String url;
 
     @Inject
-    public GAPConfig(@Nullable Deployment deployment) {
+    public GAPConfig(@Nonnull Deployment deployment) {
         super(deployment);
     }
 

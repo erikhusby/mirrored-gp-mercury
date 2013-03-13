@@ -319,7 +319,7 @@ public class LiveThriftServiceTest {
 
     private IExpectationSetters<Object> expectThriftCall() {
         IExpectationSetters<Object> expect;
-        expect = expect(mockThriftConnection.call(isA(ThriftConnection.Call.class))).andDelegateTo(new ThriftConnection(new ThriftConfig("none", 0)) {
+        expect = expect(mockThriftConnection.call(isA(ThriftConnection.Call.class))).andDelegateTo(new ThriftConnection(ThriftConfig.produce(Deployment.DEV)) {
             @Override
             public <T> T call(Call<T> call) {
                 return call.call(mockClient);

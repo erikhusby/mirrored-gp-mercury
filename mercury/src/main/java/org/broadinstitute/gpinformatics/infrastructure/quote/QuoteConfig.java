@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.Serializable;
 
@@ -18,7 +18,7 @@ public class QuoteConfig extends AbstractConfig implements LoginAndPassword, Ser
     private String url;
 
     @Inject
-    public QuoteConfig(@Nullable Deployment deployment) {
+    public QuoteConfig(@Nonnull Deployment deployment) {
         super(deployment);
     }
 

@@ -3,7 +3,7 @@ package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 import org.apache.commons.beanutils.BeanUtils;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import java.lang.reflect.InvocationTargetException;
 
 /**
@@ -11,11 +11,9 @@ import java.lang.reflect.InvocationTargetException;
  */
 public abstract class AbstractConfig {
 
-    protected AbstractConfig(@Nullable Deployment mercuryDeployment) {
+    protected AbstractConfig(@Nonnull Deployment mercuryDeployment) {
 
-        this.mercuryDeployment = mercuryDeployment;
-
-        if (mercuryDeployment != null && mercuryDeployment != Deployment.STUBBY) {
+        if (mercuryDeployment != Deployment.STUBBY) {
             AbstractConfig source = produce(getClass(), mercuryDeployment);
             try {
                 BeanUtils.copyProperties(this, source);
@@ -25,6 +23,8 @@ public abstract class AbstractConfig {
                 throw new RuntimeException(e);
             }
         }
+
+        this.mercuryDeployment = mercuryDeployment;
     }
 
 

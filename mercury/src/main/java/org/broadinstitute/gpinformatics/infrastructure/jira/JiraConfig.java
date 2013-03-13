@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.Serializable;
 
@@ -24,7 +24,7 @@ public class JiraConfig extends AbstractConfig implements LoginAndPassword, Seri
     private String urlBase;
 
     @Inject
-    public JiraConfig(@Nullable Deployment deployment) {
+    public JiraConfig(@Nonnull Deployment deployment) {
         super(deployment);
     }
 
