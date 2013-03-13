@@ -32,7 +32,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.BAMBOO;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 
 public class WorkCompleteMessageBeanTest extends Arquillian {
 
@@ -63,7 +63,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     // NOTE: To run locally, you must change this to DEV.  Make sure you change it back before checking in!
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(BAMBOO);
+        return DeploymentBuilder.buildMercuryWar(DEV);
     }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
