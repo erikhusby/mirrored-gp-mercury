@@ -3,12 +3,17 @@ package org.broadinstitute.gpinformatics.athena.boundary.orders;
 
 import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
+import org.broadinstitute.gpinformatics.athena.entity.work.MessageDataValue;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.jira.customfields.CustomField;
@@ -29,7 +34,15 @@ import javax.enterprise.context.RequestScoped;
 import javax.inject.Inject;
 import java.io.IOException;
 import java.text.MessageFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Date;
+import java.util.EnumSet;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus.Abandoned;
 import static org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder.OrderStatus.Complete;
@@ -60,6 +73,14 @@ public class ProductOrderEjb {
 
     @Inject
     private BSPUserList userList;
+
+    @Inject
+    private BillingLedgerDao billingLedgerDao;
+
+    @Inject
+    private ProductOrderSampleDao productOrderSampleDao;
+
+    private final Log log = LogFactory.getLog(ProductOrderEjb.class);
 
     private void validateUniqueProjectTitle(ProductOrder productOrder) throws DuplicateTitleException {
         if (productOrderDao.findByTitle(productOrder.getTitle()) != null) {
@@ -120,6 +141,52 @@ public class ProductOrderEjb {
         setSamples(productOrder, productOrderSampleIds);
         setAddOnProducts(productOrder, addOnPartNumbers);
         setStatus(productOrder);
+    }
+
+    /**
+     * Check and see if a given order is locked out, e.g. currently in a billing session.
+     * @param order the order to check
+     * @return true if the order is locked out.
+     */
+    private boolean isLockedOut(ProductOrder order) {
+        return !billingLedgerDao.findLockedOutByOrderList(new ProductOrder[]{ order }).isEmpty();
+    }
+
+    /**
+     * If the order's product supports automated billing, and it's not currently locked out,
+     * generate a list of billing ledger items for the sample and add them to the billing ledger.
+     *
+     * @param order order to bill for
+     * @param sampleName the sample aliquot name
+     * @param completedDate the date completed to use when billing
+     * @param data used to check and see if billing can occur
+     */
+    public void autoBillSample(ProductOrder order, String sampleName, Date completedDate, Map<String, MessageDataValue> data) {
+
+        Product product = order.getProduct();
+
+        if (isLockedOut(order)) {
+            log.error(MessageFormat.format("Can''t auto-bill order {0} because it''s currently locked out.",
+                    order.getJiraTicketKey()));
+            // Return early to avoid marking the message as processed.
+            // TODO: This code should be wrapped in a beginLockout()/endLockout() block to avoid collisions with
+            // a mercury user starting a billing session during this process.
+            return;
+        }
+
+        if (product.isUseAutomatedBilling()) {
+            // FIXME: compute correct sample from aliquot ID.
+            List<ProductOrderSample> samples =
+                productOrderSampleDao.findByOrderAndName(order, sampleName);
+            ProductOrderSample sample = samples.get(1);
+
+            // Always bill if the sample is on risk, otherwise, check if the requirement is met for billing.
+            if (sample.isOnRisk() || product.getRequirement().canBill(data)) {
+                sample.autoBillSample(completedDate, 1);
+            }
+        } else {
+            log.debug(MessageFormat.format("Product {0} doesn''t support automated billing.", product.getProductName()));
+        }
     }
 
     /**
