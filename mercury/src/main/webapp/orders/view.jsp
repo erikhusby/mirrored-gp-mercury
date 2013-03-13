@@ -197,35 +197,10 @@
                             {"bSortable": true},                            // Status
                             {"bSortable": true}                             // Comment
                         ]
-                    });
+                    }) ;
 
-                    $j("#sampleData_filter").append(filterDropdownHtml);
-
-                    $j("#sampleData_filter").find(".filterDropdown").change(function() {
-                        if ($j("#sampleData_filter").find(".filterDropdown").val() == "any") {
-                            filterSampleData(oTable);
-                            defineOrfilter(oTable);
-                        } else {
-                            var filterInput = $j(".dataTables_filter input").val();
-                            oTable.fnFilter($j(filterInput, null, false, true));
-                            $j(".dataTables_filter input").val(filterInput);
-                        }
-                    });
+                    includeAdvancedFilter(oTable, "#sampleData");
                 }
-            }
-
-            function filterSampleData(oTable) {
-                $j(".dataTables_filter input").keyup(function() {
-                    defineOrfilter(oTable);
-                });
-            }
-
-            function defineOrfilter(oTable) {
-                var filterInput = $j(".dataTables_filter input").val();
-                var searchRegex = "(" + filterInput.split(" ").join("+)|(") + "+)";
-
-                oTable.fnFilter( searchRegex, null, true, false );
-                $j(".dataTables_filter input").val(filterInput);
             }
 
             function updateFundsRemaining() {
