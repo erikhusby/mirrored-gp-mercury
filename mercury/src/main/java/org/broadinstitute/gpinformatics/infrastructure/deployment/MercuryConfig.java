@@ -32,14 +32,17 @@ public class MercuryConfig extends AbstractConfig implements Serializable {
         return "http://" + host + "/Mercury/";
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public void setHost(String host) {
         this.host = host;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public void setPort(String port) {
         this.port = port;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public void setJmsPort(int jmsPort) {
         this.jmsPort = jmsPort;
     }

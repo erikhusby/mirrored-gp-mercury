@@ -24,6 +24,8 @@ public class AuthorizationFilter implements Filter {
 
     private FilterConfig filterConfig;
 
+    private static AuthorizationFilter instance;
+
     @Inject
     AuthorizationManager authManager;
 
@@ -38,6 +40,7 @@ public class AuthorizationFilter implements Filter {
      */
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
+        instance = this;
         this.filterConfig = filterConfig;
     }
 
@@ -130,6 +133,10 @@ public class AuthorizationFilter implements Filter {
 
     @Override
     public void destroy() {
+    }
+
+    public static ServletContext getServletContext() {
+        return instance.filterConfig.getServletContext();
     }
 
     public enum UserRole {

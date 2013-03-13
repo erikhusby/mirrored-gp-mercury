@@ -1,16 +1,17 @@
 package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
-import com.impetus.annovention.ClasspathDiscoverer;
-import com.impetus.annovention.Discoverer;
-import com.impetus.annovention.listener.ClassAnnotationDiscoveryListener;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.io.IOUtils;
+import org.broadinstitute.gpinformatics.mercury.presentation.security.AuthorizationFilter;
+import org.scannotation.AnnotationDB;
+import org.scannotation.WarUrlFinder;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -116,34 +117,31 @@ public class MercuryConfiguration {
         return annotation.value();
     }
 
+
     private synchronized Class<? extends AbstractConfig> getConfigClass(String configKey) {
+
         if (CONFIG_CLASSES == null) {
 
-            final Set<Class<? extends AbstractConfig>> localConfigClasses =
-                    new HashSet<Class<? extends AbstractConfig>>();
+            URL classesPath = WarUrlFinder.findWebInfClassesPath(AuthorizationFilter.getServletContext());
 
-            Discoverer discoverer = new ClasspathDiscoverer();
-            discoverer.addAnnotationListener(new ClassAnnotationDiscoveryListener() {
-                @Override
-                public void discovered(String clazzName, String annotation) {
-                    try {
-                        Class clazz = Class.forName(clazzName);
-                        if (AbstractConfig.class.isAssignableFrom(clazz) && !(AbstractConfig.class == clazz)) {
-                            //noinspection unchecked
-                            localConfigClasses.add((Class<? extends AbstractConfig>) clazz);
-                        }
-                    } catch (ClassNotFoundException e) {
-                        throw new RuntimeException(e);
-                    }
+            AnnotationDB db = new AnnotationDB();
+            try {
+                db.scanArchives(classesPath);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+            Set<String> configClassNames = db.getAnnotationIndex().get(ConfigKey.class.getName());
+
+            CONFIG_CLASSES = new HashSet<Class<? extends AbstractConfig>>();
+
+            for (String configClassName : configClassNames) {
+                try {
+                    //noinspection unchecked
+                    CONFIG_CLASSES.add((Class<? extends AbstractConfig>) Class.forName(configClassName));
+                } catch (ClassNotFoundException e) {
+                    throw new RuntimeException(e);
                 }
-
-                @Override
-                public String[] supportedAnnotations() {
-                    return new String[]{ConfigKey.class.getName()};
-                }
-            });
-
-            CONFIG_CLASSES = localConfigClasses;
+            }
         }
 
         for (Class<? extends AbstractConfig> clazz : CONFIG_CLASSES) {
@@ -251,7 +249,7 @@ public class MercuryConfiguration {
                 MERCURY_BUILD_INFO = "Unknown build - problematic " + versionFilename;
                 throw new RuntimeException("Problem reading version file " + versionFilename, ioe);
             } catch (ParseException e) {
-                // problem parsing the maven build date, use it's default one
+                // Problem parsing the maven build date, use its default one.
                 if ((buildDate != null) && !buildDate.isEmpty()) {
                    MERCURY_BUILD_INFO += " built on " + buildDate;    
                 }        
@@ -319,7 +317,7 @@ public class MercuryConfiguration {
 
 
     /**
-     * Intended solely for test code to clear out mappings
+     * Intended solely for test code to clear out mappings.
      */
     /* package */
     void clear() {
