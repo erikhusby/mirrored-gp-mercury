@@ -1,12 +1,16 @@
 package org.broadinstitute.gpinformatics.infrastructure.bsp;
 
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 
+import javax.annotation.Nullable;
+import javax.inject.Inject;
 import java.io.Serializable;
 
 
+@SuppressWarnings("UnusedDeclaration")
 @ConfigKey("bsp")
 public class BSPConfig extends AbstractConfig implements LoginAndPassword, Serializable {
 
@@ -19,7 +23,10 @@ public class BSPConfig extends AbstractConfig implements LoginAndPassword, Seria
 
     private int port;
 
-    public BSPConfig() {}
+    @Inject
+    public BSPConfig(@Nullable Deployment deployment) {
+        super(deployment);
+    }
 
     public String getLogin() {
         return login;
@@ -60,4 +67,9 @@ public class BSPConfig extends AbstractConfig implements LoginAndPassword, Seria
     public String getWSUrl(String suffix) {
         return String.format("http://%s:%d/ws/bsp/%s", getHost(), getPort(), suffix);
     }
+
+    public static BSPConfig produce(Deployment deployment) {
+        return produce(BSPConfig.class, deployment);
+    }
+
 }

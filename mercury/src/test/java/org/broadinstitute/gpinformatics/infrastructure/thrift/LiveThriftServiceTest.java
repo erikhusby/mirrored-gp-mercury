@@ -47,7 +47,7 @@ public class LiveThriftServiceTest {
     @BeforeMethod(groups = {DATABASE_FREE, EXTERNAL_INTEGRATION})
     public void setUp() throws Exception {
         mockLog = createMock(Log.class);
-        thriftService = new LiveThriftService(new ThriftConnection(ThriftConfigProducer.getConfig(Deployment.DEV)), mockLog);
+        thriftService = new LiveThriftService(new ThriftConnection(ThriftConfig.produce(Deployment.DEV)), mockLog);
         mockThriftConnection = createMock(ThriftConnection.class);
         mockClient = createMock(LIMQueries.Client.class);
     }

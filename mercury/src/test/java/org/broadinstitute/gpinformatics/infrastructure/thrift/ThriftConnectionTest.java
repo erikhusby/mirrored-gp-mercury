@@ -19,7 +19,7 @@ public class ThriftConnectionTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        connection = new ThriftConnection(ThriftConfigProducer.getConfig(Deployment.TEST));
+        connection = new ThriftConnection(ThriftConfig.produce(Deployment.TEST));
     }
 
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)

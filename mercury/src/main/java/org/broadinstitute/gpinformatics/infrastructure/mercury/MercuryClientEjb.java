@@ -47,12 +47,12 @@ public class MercuryClientEjb {
 
     @Inject
     public MercuryClientEjb(BucketBean bucketBean, BucketDao bucketDao,
-                            WorkflowLoader workflowLoader, BSPUserList bspUserList,
+                            WorkflowLoader workflowLoader, BSPUserList userList,
                             LabVesselDao labVesselDao) {
         this.bucketBean = bucketBean;
         this.bucketDao = bucketDao;
         this.workflowLoader = workflowLoader;
-        this.userList = bspUserList;
+        this.userList = userList;
         this.labVesselDao = labVesselDao;
     }
 
@@ -69,7 +69,7 @@ public class MercuryClientEjb {
         for (ProductOrderSample pdoSample : samples) {
             nameToSampleMap.put(pdoSample.getSampleName(), pdoSample);
         }
-        List<String> listOfSampleNames = new ArrayList(nameToSampleMap.keySet());
+        List<String> listOfSampleNames = new ArrayList<String>(nameToSampleMap.keySet());
         List<LabVessel> vessels = labVesselDao.findBySampleKeyList(listOfSampleNames);
 
         // Determines if the vessel is in receiving, by finding its active batch
@@ -82,7 +82,7 @@ public class MercuryClientEjb {
             picoBucket = findPicoBucket(picoBucketDef);
         }
         if (picoBucket == null) {
-            return Collections.EMPTY_LIST;
+            return Collections.emptyList();
         }
 
         for (LabVessel vessel : vessels) {
@@ -116,6 +116,9 @@ public class MercuryClientEjb {
         bucketBean.add(vesselsAdded, picoBucket, username, LabEvent.UI_EVENT_LOCATION, LabEventType.PICO_PLATING_BUCKET,
                 pdo.getBusinessKey());
 
+        if (picoBucket.getBucketId() == null) {
+            bucketDao.persist(bucketBean);
+        }
         return samplesAdded;
     }
 

@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.JNDIResolver;
 
 import javax.annotation.PostConstruct;
@@ -10,6 +11,7 @@ import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import javax.naming.NamingException;
 import java.io.Serializable;
+import java.text.MessageFormat;
 
 /**
  * This class is responsible for looking up the value of <pre>MERCURY_DEPLOYMENT</pre> from JNDI or the JNDI environment.
@@ -26,39 +28,36 @@ import java.io.Serializable;
 public class DeploymentProducer implements Serializable {
     public static final String MERCURY_DEPLOYMENT = "MERCURY_DEPLOYMENT";
 
-    @Inject
-    private Log log;
+    private Log log = LogFactory.getLog(DeploymentProducer.class);
 
     @Inject
     private JNDIResolver jndiResolver;
 
-    private Deployment deployment;
+    private static Deployment deployment;
 
     @PostConstruct
     public void init() {
         String deploymentString = null;
 
         try {
-            // NamingException lookup failures checked below if MERCURY_DEPLOYMENT is not found
+            // NamingException lookup failures checked below if MERCURY_DEPLOYMENT is not found.
             deploymentString = jndiResolver.lookupProperty(MERCURY_DEPLOYMENT);
 
             // NullPointerException or IllegalArgumentException from Enum#valueOf() checked below, exceptions propagated
-            // to abort deployment if we don't like the value of MERCURY_DEPLOYMENT
+            // to abort deployment if we don't like the value of MERCURY_DEPLOYMENT.
             deployment = Deployment.valueOf(deploymentString);
 
-            log.info("Mercury deployment specified in JNDI, set to " + deploymentString);
+            log.info(MessageFormat.format("Mercury deployment specified in JNDI, set to {0}.", deploymentString));
         } catch (NamingException e) {
             // This represents a failure to find the property in JNDI at all.  Per 2012-06-13 Exome Express meeting
             // we are treating this as a Big Deal and aborting the deployment by throwing a RuntimeException.
-            log.error("JNDI lookup of " + MERCURY_DEPLOYMENT + " property failed! " + e);
-            // throw new RuntimeException(e);
+            log.error(MessageFormat.format("JNDI lookup of {0} property failed!", MERCURY_DEPLOYMENT), e);
+            throw new RuntimeException(e);
         } catch (NullPointerException e) {
-            log.error("JNDI lookup of " + MERCURY_DEPLOYMENT + " failed, found " + MERCURY_DEPLOYMENT + "=" + deploymentString);
-            log.error(e);
+            log.error(MessageFormat.format("JNDI lookup of {0} failed, found {0}={1}.", MERCURY_DEPLOYMENT, deploymentString), e);
             throw e;
         } catch (IllegalArgumentException e) {
-            log.error("JNDI lookup of " + MERCURY_DEPLOYMENT + " failed, found " + MERCURY_DEPLOYMENT + "=" + deploymentString);
-            log.error(e);
+            log.error(MessageFormat.format("JNDI lookup of {0} failed, found {0}={1}.", MERCURY_DEPLOYMENT, deploymentString), e);
             throw e;
         }
     }
@@ -67,4 +66,10 @@ public class DeploymentProducer implements Serializable {
     public Deployment produce() {
         return deployment;
     }
+
+
+    public static Deployment getDeployment() {
+        return deployment;
+    }
+
 }

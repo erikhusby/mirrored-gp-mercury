@@ -162,7 +162,11 @@ public class LabVesselFactory implements Serializable {
                         if (vesselPosition == null) {
                             throw new RuntimeException("Unknown vessel position " + childVesselBean.getPosition());
                         }
-                        TwoDBarcodedTube twoDBarcodedTube = new TwoDBarcodedTube(childVesselBean.getManufacturerBarcode());
+                        TwoDBarcodedTube twoDBarcodedTube = (TwoDBarcodedTube) mapBarcodeToVessel.get(
+                                childVesselBean.getManufacturerBarcode());
+                        if(twoDBarcodedTube == null) {
+                            twoDBarcodedTube =new TwoDBarcodedTube(childVesselBean.getManufacturerBarcode());
+                        }
                         twoDBarcodedTube.addSample(getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples,
                                 childVesselBean.getSampleId()));
                         twoDBarcodedTube.addInPlaceEvent(new LabEvent(labEventType, eventDate, "BSP", disambiguator,

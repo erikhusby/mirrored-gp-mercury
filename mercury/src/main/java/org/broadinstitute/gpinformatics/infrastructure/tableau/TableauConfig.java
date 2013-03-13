@@ -4,7 +4,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
+import javax.annotation.Nullable;
+import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.List;
@@ -21,6 +24,18 @@ public class TableauConfig extends AbstractConfig implements Serializable {
     private String tableauServer;
     private List<Map<String, String>> reportUrls;
     private Map<String, String> reportUrlMap;
+
+    /**
+     * Used by DB Free tests.
+     */
+    public TableauConfig() {
+        super(null);
+    }
+
+    @Inject
+    public TableauConfig(@Nullable Deployment deployment) {
+        super(deployment);
+    }
 
     public String getTableauServer() {
         return tableauServer;
@@ -58,4 +73,5 @@ public class TableauConfig extends AbstractConfig implements Serializable {
         }
         return reportUrlMap.get(reportName);
     }
+
 }

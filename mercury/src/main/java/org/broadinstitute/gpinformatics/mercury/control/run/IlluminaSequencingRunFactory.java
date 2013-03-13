@@ -19,23 +19,8 @@ import java.io.Serializable;
  */
 public class IlluminaSequencingRunFactory implements Serializable {
 
-    private  IlluminaFlowcellDao illuminaFlowcellDao;
 
-//    private  MercuryOrSquidRouter router;
-//
-//    private SquidConnector connector;
-
-    @Inject
-    public IlluminaSequencingRunFactory(IlluminaFlowcellDao illuminaFlowcellDao) {
-
-        this.illuminaFlowcellDao = illuminaFlowcellDao;
-//        this.router = router;
-//        this.connector = connector;
-    }
-
-    public IlluminaSequencingRun build(SolexaRunBean solexaRunBean) {
-        IlluminaFlowcell illuminaFlowcell = illuminaFlowcellDao.findByBarcode(solexaRunBean.getFlowcellBarcode());
-
+    public IlluminaSequencingRun build(SolexaRunBean solexaRunBean, IlluminaFlowcell illuminaFlowcell) {
         return buildDbFree(solexaRunBean, illuminaFlowcell);
     }
 

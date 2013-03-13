@@ -280,7 +280,7 @@ public class ExomeExpressV2EndToEndTest {
         // MiSeq reagent block transfer message
         // Register run
         IlluminaSequencingRunFactory illuminaSequencingRunFactory =
-                new IlluminaSequencingRunFactory(EasyMock.createMock(IlluminaFlowcellDao.class));
+                new IlluminaSequencingRunFactory();
         IlluminaSequencingRun illuminaSequencingRun;
         try {
             illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(

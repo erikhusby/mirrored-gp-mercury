@@ -102,6 +102,7 @@ public class MercuryClientEjbDbFreeTest {
         expect(pdo.getBusinessKey()).andReturn(pdoKey);
 
         bucketBean.add(labVessels, bucket, userName, eventLocation, eventType, pdoKey);
+        expect(bucket.getBucketId()).andReturn(10L);
         replay(mocks);
 
         Collection<ProductOrderSample> addedSamples = service.addFromProductOrder(pdo);
@@ -132,6 +133,7 @@ public class MercuryClientEjbDbFreeTest {
         Collection<LabVessel> bucketVessels = new ArrayList<LabVessel>();
         bucketVessels.add(labVessel);
         bucketBean.add(bucketVessels, bucket, userName, eventLocation, eventType, pdoKey);
+        expect(bucket.getBucketId()).andReturn(10L);
         replay(mocks);
 
         Collection<ProductOrderSample> addedSamples = service.addFromProductOrder(pdo, Collections.singleton(pdoSample1));
