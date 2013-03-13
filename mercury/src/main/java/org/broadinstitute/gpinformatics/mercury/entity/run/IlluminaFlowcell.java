@@ -33,6 +33,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         }
 
         private static Map<String, FlowcellType> mapDisplayNameToType = new HashMap<String, FlowcellType>();
+
         static {
             for (FlowcellType plateType : FlowcellType.values()) {
                 mapDisplayNameToType.put(plateType.getDisplayName(), plateType);
@@ -41,7 +42,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
 
         public static FlowcellType getByDisplayName(String displayName) {
             FlowcellType plateTypeLocal = mapDisplayNameToType.get(displayName);
-            if(plateTypeLocal == null) {
+            if (plateTypeLocal == null) {
                 throw new RuntimeException("Failed to find plate type " + displayName);
             }
             return plateTypeLocal;
@@ -51,6 +52,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
             return vesselGeometry;
         }
     }
+
     // todo jmt fix this
     @Transient
     private IlluminaRunConfiguration runConfiguration;
@@ -97,13 +99,13 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         return this.vesselContainer;
     }
 
-    public IlluminaFlowcell(FlowcellType flowcellType,String flowcellBarcode,IlluminaRunConfiguration runConfig) {
+    public IlluminaFlowcell(FlowcellType flowcellType, String flowcellBarcode, IlluminaRunConfiguration runConfig) {
         super(flowcellBarcode);
         this.flowcellBarcode = flowcellBarcode;
         this.runConfiguration = runConfig;
         this.flowcellType = flowcellType;
     }
-        
+
 /*
     todo jmt need something similar in VesselContainer
     public void addChamber(LabVessel library,int laneNumber) {
@@ -127,6 +129,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
      * when the flowcell is made.  But other technologies
      * might have their run configuration set later
      * in the process.
+     *
      * @return
      */
     public IlluminaRunConfiguration getRunConfiguration() {
@@ -148,7 +151,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         return this.flowcellBarcode;
     }
 
-    public FlowcellType getFlowcellType(){
+    public FlowcellType getFlowcellType() {
         return flowcellType;
     }
 
