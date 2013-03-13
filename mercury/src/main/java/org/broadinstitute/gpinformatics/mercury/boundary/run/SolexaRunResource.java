@@ -83,15 +83,14 @@ public class SolexaRunResource {
         Response callerResponse;
 
         SquidConnector.SquidResponse connectorRun = connector.createRun(solexaRunBean);
-        if (connectorRun.getCode() != 201) {
+        if (connectorRun.getCode() != Response.Status.CREATED.getStatusCode()) {
             throw new ResourceException(connectorRun.getMessage(),
                                                Response.Status.fromStatusCode(connectorRun.getCode()));
         }
         callerResponse = Response.created(uriInfo.getAbsolutePathBuilder().path(runDirectory.getName()).build())
                                  .entity(connectorRun).build();
 
-        if (flowcell != null &&
-                    router.routeForVessel(flowcell) == MercuryOrSquidRouter.MercuryOrSquid.MERCURY) {
+        if (router.routeForVessel(flowcell) == MercuryOrSquidRouter.MercuryOrSquid.MERCURY) {
             try {
                 run = registerRun(solexaRunBean, flowcell);
             } catch (Exception e) {

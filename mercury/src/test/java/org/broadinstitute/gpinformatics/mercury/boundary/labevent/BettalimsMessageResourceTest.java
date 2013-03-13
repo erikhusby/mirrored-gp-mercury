@@ -260,7 +260,8 @@ public class BettalimsMessageResourceTest extends Arquillian {
         SimpleDateFormat format = new SimpleDateFormat("yyMMdd");
         String runName="TestRun" + testPrefix + runDate.getTime();
         try {
-            final File tempRunFile = File.createTempFile("RunDir" + File.separator
+            String baseDirectory = System.getProperty("java.io.tmpdir");
+            final File tempRunFile = File.createTempFile(baseDirectory + File.separator +"RunDir" + File.separator
                                                               + runName,
                                                              ".txt");
             tempRunFile.mkdirs();
