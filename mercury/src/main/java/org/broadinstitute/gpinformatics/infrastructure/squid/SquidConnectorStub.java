@@ -15,7 +15,7 @@ public class SquidConnectorStub implements SquidConnector{
 
     @Override
     public SquidResponse createRun(SolexaRunBean runInformation) {
-        return new SquidConnector.SquidResponse(500, "");
+        return new SquidConnector.SquidResponse(201, "");
     }
 
 }
