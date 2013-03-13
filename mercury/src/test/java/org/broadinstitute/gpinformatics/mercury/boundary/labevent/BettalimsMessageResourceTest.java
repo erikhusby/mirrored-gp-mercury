@@ -17,6 +17,7 @@ import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMes
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.ReagentDesignDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.StaticPlateDAO;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.TwoDBarcodedTubeDAO;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.IndexedPlateFactory;
@@ -101,6 +102,9 @@ public class BettalimsMessageResourceTest extends Arquillian {
 
     @Inject
     private ReagentDesignDao reagentDesignDao;
+
+    @Inject
+    IlluminaFlowcellDao flowcellDao;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -260,19 +264,17 @@ public class BettalimsMessageResourceTest extends Arquillian {
         SimpleDateFormat format = new SimpleDateFormat("yyMMdd");
         String runName="TestRun" + testPrefix + runDate.getTime();
         try {
-            String baseDirectory = System.getProperty("java.io.tmpdir");
-            final File tempRunFile = File.createTempFile(baseDirectory + File.separator +"RunDir" + File.separator
-                                                              + runName,
-                                                             ".txt");
-            tempRunFile.mkdirs();
+            final File tempRunFile = File.createTempFile(runName, ".txt");
+
+            IlluminaFlowcell flowcell = flowcellDao.findByBarcode(qtpJaxbBuilder.getFlowcellBarcode());
+
             solexaRunResource.registerRun(new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(),
                                                                    qtpJaxbBuilder.getFlowcellBarcode()
                                                                            + format.format(runDate),
                                                                    runDate, "SL-HAL",
                                                                    tempRunFile.getAbsolutePath(),
                                                                    null),
-                                                 new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeqFlowcell,
-                                                                             qtpJaxbBuilder.getFlowcellBarcode()));
+                                                 flowcell);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
