@@ -1,17 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
 
-
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.annotation.Nullable;
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import java.io.Serializable;
 
+@SuppressWarnings("UnusedDeclaration")
 @ConfigKey("thrift")
 public class ThriftConfig extends AbstractConfig implements Serializable {
 

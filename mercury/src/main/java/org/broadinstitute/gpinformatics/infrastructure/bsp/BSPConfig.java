@@ -6,12 +6,11 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 
 import javax.annotation.Nullable;
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import java.io.Serializable;
 
 
+@SuppressWarnings("UnusedDeclaration")
 @ConfigKey("bsp")
 public class BSPConfig extends AbstractConfig implements LoginAndPassword, Serializable {
 

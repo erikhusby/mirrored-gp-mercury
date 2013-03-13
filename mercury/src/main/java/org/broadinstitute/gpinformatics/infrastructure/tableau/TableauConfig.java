@@ -7,8 +7,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.annotation.Nullable;
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.HashMap;

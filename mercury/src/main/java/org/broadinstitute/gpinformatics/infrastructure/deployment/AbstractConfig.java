@@ -2,11 +2,8 @@ package org.broadinstitute.gpinformatics.infrastructure.deployment;
 
 
 import org.apache.commons.beanutils.BeanUtils;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 
 import javax.annotation.Nullable;
-import javax.inject.Inject;
 import java.lang.reflect.InvocationTargetException;
 
 /**

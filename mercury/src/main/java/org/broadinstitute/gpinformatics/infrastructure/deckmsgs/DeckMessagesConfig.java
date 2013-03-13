@@ -5,8 +5,6 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.annotation.Nullable;
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import java.io.Serializable;
 
@@ -27,6 +25,7 @@ public class DeckMessagesConfig extends AbstractConfig implements Serializable {
         return messageStoreDirRoot;
     }
 
+    @SuppressWarnings("UnusedDeclaration")
     public void setMessageStoreDirRoot(String messageStoreDirRoot) {
         this.messageStoreDirRoot = messageStoreDirRoot;
     }

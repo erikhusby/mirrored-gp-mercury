@@ -5,14 +5,13 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
 import javax.annotation.Nullable;
-import javax.enterprise.inject.Default;
-import javax.enterprise.inject.Produces;
 import javax.inject.Inject;
 import java.io.Serializable;
 
 /**
  * Configuration for the BettaLIMS server, part of the Squid suite of applications.
  */
+@SuppressWarnings("UnusedDeclaration")
 @ConfigKey("bettaLimsServer")
 public class BettalimsConfig extends AbstractConfig implements Serializable {
     private String wsHost;
