@@ -56,4 +56,8 @@ public class MercuryConfig extends AbstractConfig implements Serializable {
     public String getPort() {
         return port;
     }
+
+    public static MercuryConfig produce(Deployment deployment) {
+        return produce(MercuryConfig.class, deployment);
+    }
 }
