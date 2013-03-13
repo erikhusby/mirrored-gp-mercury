@@ -74,7 +74,7 @@ public class SolexaRunResourceTest extends Arquillian {
 
         runDate = new Date();
 
-        format = new SimpleDateFormat("yyyyMMdd");
+        format = new SimpleDateFormat("yyMMdd");
 
         flowcellBarcode = "testcaseFlowcell" + runDate.getTime();
 
@@ -87,7 +87,7 @@ public class SolexaRunResourceTest extends Arquillian {
 
         utx.commit();
 
-        runBarcode = "Run" + format.format(runDate);
+        runBarcode = flowcellBarcode + format.format(runDate);
         final String runName = "testRunName" + runDate.getTime();
         String baseDirectory = System.getProperty("java.io.tmpdir");
         runFileDirectory = baseDirectory + File.separator + "bin" + File.separator +
