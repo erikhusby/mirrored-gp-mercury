@@ -51,7 +51,7 @@ public class DeploymentProducer implements Serializable {
         } catch (NamingException e) {
             // This represents a failure to find the property in JNDI at all.  Per 2012-06-13 Exome Express meeting
             // we are treating this as a Big Deal and aborting the deployment by throwing a RuntimeException.
-            log.error(MessageFormat.format("JNDI lookup of {0} property failed!", MERCURY_DEPLOYMENT, e));
+            log.error(MessageFormat.format("JNDI lookup of {0} property failed!", MERCURY_DEPLOYMENT), e);
             throw new RuntimeException(e);
         } catch (NullPointerException e) {
             log.error(MessageFormat.format("JNDI lookup of {0} failed, found {0}={1}.", MERCURY_DEPLOYMENT, deploymentString), e);
