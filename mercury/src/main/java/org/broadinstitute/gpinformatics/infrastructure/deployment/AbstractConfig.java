@@ -55,8 +55,9 @@ public abstract class AbstractConfig {
      */
     protected static <C extends AbstractConfig> C produce(Class<C> clazz, Deployment deployment) {
 
-        //noinspection unchecked
-        return (C) MercuryConfiguration.getInstance().getConfig(clazz, deployment);
+        @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"})
+        C config = (C) MercuryConfiguration.getInstance().getConfig(clazz, deployment);
+        return config;
     }
 
 }
