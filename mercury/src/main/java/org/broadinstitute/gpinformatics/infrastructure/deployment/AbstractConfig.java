@@ -15,8 +15,10 @@ import java.lang.reflect.InvocationTargetException;
 public abstract class AbstractConfig {
 
     protected AbstractConfig(@Nullable Deployment mercuryDeployment) {
+
         this.mercuryDeployment = mercuryDeployment;
-        if (mercuryDeployment != null) {
+
+        if (mercuryDeployment != null && mercuryDeployment != Deployment.STUBBY) {
             AbstractConfig source = produce(getClass(), mercuryDeployment);
             try {
                 BeanUtils.copyProperties(this, source);
