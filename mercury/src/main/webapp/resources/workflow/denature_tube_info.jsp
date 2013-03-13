@@ -13,21 +13,24 @@
         </div>
 
         <div class="fourcolumn" style="margin-bottom:5px;">
-            Nearest Lab Batches
             <ul>
                 <c:forEach items="${actionBean.denatureTube.nearestLabBatches}" var="batch">
                     <li>
-                            ${batch.batchName}
+                        Batch: ${batch.batchName}
                     </li>
                 </c:forEach>
             </ul>
-            Index Count
             <ul>
-                <li> ${actionBean.denatureTube.indexesCount}</li>
+                <li>
+                    Workflow Name: ${actionBean.workflowName}
+                </li>
             </ul>
             <ul>
-                Last Event
-                <li>${actionBean.denatureTube.latestEvent.labEventType.name}</li>
+
+                <li> Index Count: ${actionBean.denatureTube.indexesCount}</li>
+            </ul>
+            <ul>
+                <li>Last Event: ${actionBean.denatureTube.latestEvent.labEventType.name}</li>
             </ul>
         </div>
 
