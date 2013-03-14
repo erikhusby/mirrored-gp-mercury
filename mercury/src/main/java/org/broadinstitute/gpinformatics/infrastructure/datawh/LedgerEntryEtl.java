@@ -1,8 +1,8 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 
 import javax.ejb.Stateful;
@@ -13,19 +13,19 @@ import java.math.BigDecimal;
 import java.util.*;
 
 @Stateful
-public class BillingLedgerEtl extends GenericEntityEtl {
+public class LedgerEntryEtl extends GenericEntityEtl {
 
-    private BillingLedgerDao dao;
+    private LedgerEntryDao dao;
 
     @Inject
-    public void setBillingLedgerDao(BillingLedgerDao dao) {
+    public void setLedgerEntryDao(LedgerEntryDao dao) {
         this.dao = dao;
     }
 
     /** {@inheritDoc} */
     @Override
     Class getEntityClass() {
-        return BillingLedger.class;
+        return LedgerEntry.class;
     }
 
     /** {@inheritDoc} */
@@ -37,7 +37,7 @@ public class BillingLedgerEtl extends GenericEntityEtl {
     /** {@inheritDoc} */
     @Override
     Long entityId(Object entity) {
-        return ((BillingLedger)entity).getLedgerId();
+        return ((LedgerEntry)entity).getLedgerId();
     }
 
     /** {@inheritDoc} */
@@ -45,16 +45,16 @@ public class BillingLedgerEtl extends GenericEntityEtl {
     protected void processChanges(List<Object[]> dataChanges, DataFile dataFile, String etlDateStr) {
 
         // The warehouse only cares about the overall pdoSample's boolean billed status, so this code
-        // exports only that pdoSample boolean, and not the BillingLedger items.
+        // exports only that pdoSample boolean, and not the LedgerEntry items.
 
         try {
-            // Collects and deduplicates ids of changed billingLedgers.
-            Set<Long> billingLedgerIds = new HashSet<Long>();
+            // Collects and deduplicates ids of changed ledger entries.
+            Set<Long> ledgerEntryIds = new HashSet<Long>();
             for (Object[] dataChange : dataChanges) {
-                billingLedgerIds.add(entityId(dataChange[0]));
+                ledgerEntryIds.add(entityId(dataChange[0]));
             }
             // Collects and deduplicates the relevant pdo sample ids, and writes update records for them.
-            for (BigDecimal pdoSampleId : lookupSampleIds(billingLedgerIds)) {
+            for (BigDecimal pdoSampleId : lookupSampleIds(ledgerEntryIds)) {
                 if (null == pdoSampleId) continue;
                 // ATHENA.BILLING_LEDGER_AUD.product_sample_id is a generated numeric field (a BigDecimal)
                 // but we know it will always fit in a Long.
@@ -72,15 +72,15 @@ public class BillingLedgerEtl extends GenericEntityEtl {
     }
     private final int SQL_IN_CLAUSE_LIMIT = 1000;
 
-    private Collection<BigDecimal> lookupSampleIds(Collection<Long> billingLedgerIds) {
+    private Collection<BigDecimal> lookupSampleIds(Collection<Long> ledgerEntryIds) {
         Set<BigDecimal> pdoSampleIds = new HashSet<BigDecimal>();
         // Chunks as necessary to limit sql "in" clause to 1000 elements.
-        Long[] billingLedgerIdArray = billingLedgerIds.toArray(new Long[billingLedgerIds.size()]);
+        Long[] ledgerEntryIdArray = ledgerEntryIds.toArray(new Long[ledgerEntryIds.size()]);
 
-        int endIdx = billingLedgerIdArray.length - 1;
+        int endIdx = ledgerEntryIdArray.length - 1;
         while (endIdx >= 0) {
             int startIdx = Math.max(0, endIdx - SQL_IN_CLAUSE_LIMIT + 1);
-            String inClause = StringUtils.join(billingLedgerIdArray, ",", startIdx, endIdx);
+            String inClause = StringUtils.join(ledgerEntryIdArray, ",", startIdx, endIdx);
             endIdx = startIdx - 1;
 
             String queryString = "select distinct product_order_sample_id from ATHENA.BILLING_LEDGER_AUD " +

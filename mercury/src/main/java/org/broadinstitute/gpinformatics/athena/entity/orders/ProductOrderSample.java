@@ -2,11 +2,11 @@ package org.broadinstitute.gpinformatics.athena.entity.orders;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.common.StatusType;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
@@ -62,7 +62,7 @@ public class ProductOrderSample implements Serializable {
     private ProductOrder productOrder;
 
     @OneToMany(mappedBy = "productOrderSample", cascade = {CascadeType.PERSIST, CascadeType.REMOVE}, orphanRemoval = true)
-    private Set<BillingLedger> ledgerItems = new HashSet<BillingLedger>();
+    private Set<LedgerEntry> ledgerItems = new HashSet<LedgerEntry>();
 
     @Column(name="SAMPLE_POSITION", updatable = false, insertable = false, nullable=false)
     private Integer samplePosition;
@@ -91,7 +91,7 @@ public class ProductOrderSample implements Serializable {
         boolean isOnRisk = false;
 
         // Go through each risk check on the product
-        for (RiskCriteria criterion : productOrder.getProduct().getRiskCriteriaList()) {
+        for (RiskCriterion criterion : productOrder.getProduct().getRiskCriteria()) {
             // If this is on risk, then create a risk item for it and add it in
             if (criterion.onRisk(this)) {
                 riskItems.add(new RiskItem(criterion, criterion.getValueProvider().getValue(this)));
@@ -108,7 +108,7 @@ public class ProductOrderSample implements Serializable {
         return isOnRisk;
     }
 
-    public void setManualOnRisk(RiskCriteria criterion, String comment) {
+    public void setManualOnRisk(RiskCriterion criterion, String comment) {
         riskItems.clear();
         riskItems.add(new RiskItem(criterion, Boolean.toString(true), comment));
     }
@@ -222,7 +222,7 @@ public class ProductOrderSample implements Serializable {
         return bspDTO;
     }
 
-    public Set<BillingLedger> getLedgerItems() {
+    public Set<LedgerEntry> getLedgerItems() {
         return ledgerItems;
     }
 
@@ -256,14 +256,14 @@ public class ProductOrderSample implements Serializable {
         return BSP_SAMPLE_NAME_PATTERN.matcher(sampleName).matches();
     }
 
-    public Set<BillingLedger> getBillableLedgerItems() {
-        Set<BillingLedger> billableLedgerItems = new HashSet<BillingLedger>();
+    public Set<LedgerEntry> getBillableLedgerItems() {
+        Set<LedgerEntry> billableLedgerItems = new HashSet<LedgerEntry>();
 
         if (getLedgerItems() != null) {
-            for (BillingLedger billingLedger : getLedgerItems()) {
+            for (LedgerEntry ledgerEntry : getLedgerItems()) {
                 // Only count the null-Billing Session ledgerItems.
-                if (billingLedger.getBillingSession() == null) {
-                    billableLedgerItems.add(billingLedger);
+                if (ledgerEntry.getBillingSession() == null) {
+                    billableLedgerItems.add(ledgerEntry);
                 }
             }
         }
@@ -275,10 +275,10 @@ public class ProductOrderSample implements Serializable {
         StringBuilder builder = new StringBuilder();
 
         if (getLedgerItems() != null) {
-            for (BillingLedger billingLedger : getLedgerItems() ) {
+            for (LedgerEntry ledgerEntry : getLedgerItems() ) {
                 // If there is a message that is not success, add the message to the end
-                if ((billingLedger.getBillingMessage() != null) && billingLedger.isBilled()) {
-                    builder.append(billingLedger.getBillingMessage()).append("\n");
+                if ((ledgerEntry.getBillingMessage() != null) && ledgerEntry.isBilled()) {
+                    builder.append(ledgerEntry.getBillingMessage()).append("\n");
                 }
             }
         }
@@ -350,7 +350,7 @@ public class ProductOrderSample implements Serializable {
                             "Sample already has the same quantity to bill, PDO: {0}, sample: {1}, price item: {2}, quantity {3}",
                             productOrder.getJiraTicketKey(), sampleName, priceItem.getName(), quantity));
                 } else {
-                    for (BillingLedger item : getLedgerItems()) {
+                    for (LedgerEntry item : getLedgerItems()) {
                         if (item.getPriceItem().equals(priceItem)) {
                             item.setQuantity(quantity);
                             break;
@@ -395,7 +395,7 @@ public class ProductOrderSample implements Serializable {
         }
 
         Map<PriceItem, LedgerQuantities> sampleStatus = new HashMap<PriceItem, LedgerQuantities>();
-        for (BillingLedger item : ledgerItems) {
+        for (LedgerEntry item : ledgerItems) {
             if (!sampleStatus.containsKey(item.getPriceItem())) {
                 sampleStatus.put(item.getPriceItem(), new LedgerQuantities());
             }
@@ -414,10 +414,10 @@ public class ProductOrderSample implements Serializable {
 
     public void addLedgerItem(Date workCompleteDate, PriceItem priceItem, double delta) {
 
-        BillingLedger billingLedger = new BillingLedger(this, priceItem, workCompleteDate, delta);
-        ledgerItems.add(billingLedger);
+        LedgerEntry ledgerEntry = new LedgerEntry(this, priceItem, workCompleteDate, delta);
+        ledgerItems.add(ledgerEntry);
         log.debug(MessageFormat.format(
-                "Added BillingLedger item for sample {0} to PDO {1} for PriceItemName: {2} - Quantity:{3}",
+                "Added LedgerEntry item for sample {0} to PDO {1} for PriceItemName: {2} - Quantity:{3}",
                 sampleName, productOrder.getBusinessKey(), priceItem.getName(), delta));
     }
 
@@ -426,7 +426,7 @@ public class ProductOrderSample implements Serializable {
      */
     public boolean isOnRisk() {
         for (RiskItem item : riskItems) {
-            if (item.getRiskCriteria() != null) {
+            if (item.getRiskCriterion() != null) {
                 return true;
             }
         }

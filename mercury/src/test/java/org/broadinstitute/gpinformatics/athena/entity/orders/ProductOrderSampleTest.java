@@ -1,11 +1,11 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.samples.MaterialType;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
@@ -31,7 +31,7 @@ public class ProductOrderSampleTest {
     }
 
     public static List<ProductOrderSample> createSampleList(String[] sampleArray,
-                                                            Collection<BillingLedger> billableItems,
+                                                            Collection<LedgerEntry> billableItems,
                                                             boolean dbFree) {
         List<ProductOrderSample> productOrderSamples = new ArrayList<ProductOrderSample>(sampleArray.length);
         for (String sampleName : sampleArray) {
@@ -113,12 +113,12 @@ public class ProductOrderSampleTest {
     public static Object[][] makeAutoBillSampleData() {
         TestPDOData data = new TestPDOData("GSP-123");
         Date completedDate = new Date();
-        Set<BillingLedger> ledgers = new HashSet<BillingLedger>();
-        ledgers.add(new BillingLedger(data.sample1, data.product.getPrimaryPriceItem(), completedDate, 1));
-        ledgers.add(new BillingLedger(data.sample1, data.addOn.getPrimaryPriceItem(), completedDate, 1));
+        Set<LedgerEntry> ledgers = new HashSet<LedgerEntry>();
+        ledgers.add(new LedgerEntry(data.sample1, data.product.getPrimaryPriceItem(), completedDate, 1));
+        ledgers.add(new LedgerEntry(data.sample1, data.addOn.getPrimaryPriceItem(), completedDate, 1));
 
         data.sample2.addLedgerItem(completedDate, data.product.getPrimaryPriceItem(), 1);
-        BillingLedger ledger = data.sample2.getLedgerItems().iterator().next();
+        LedgerEntry ledger = data.sample2.getLedgerItems().iterator().next();
         ledger.setBillingMessage(BillingSession.SUCCESS);
         ledger.setBillingSession(new BillingSession(0L, Collections.singleton(ledger)));
 
@@ -137,8 +137,8 @@ public class ProductOrderSampleTest {
         TestPDOData data = new TestPDOData("GSP-123");
 
         // sample 1 has risk items and sample 2 does not
-        RiskCriteria riskCriteria = new RiskCriteria(RiskCriteria.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
-        RiskItem riskItem = new RiskItem(riskCriteria, "240.0");
+        RiskCriterion riskCriterion = new RiskCriterion(RiskCriterion.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
+        RiskItem riskItem = new RiskItem(riskCriterion, "240.0");
         riskItem.setRemark("Bad Concentration found");
 
         data.sample1.setRiskItems(Collections.singletonList(riskItem));
@@ -149,9 +149,9 @@ public class ProductOrderSampleTest {
     }
 
     @Test(dataProvider = "autoBillSample")
-    public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<BillingLedger> billingLedgers) {
+    public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<LedgerEntry> ledgerEntries) {
         sample.autoBillSample(completedDate, 1);
-        Assert.assertEquals(sample.getBillableLedgerItems(), billingLedgers);
+        Assert.assertEquals(sample.getBillableLedgerItems(), ledgerEntries);
     }
 
     @Test(dataProvider = "riskSample")

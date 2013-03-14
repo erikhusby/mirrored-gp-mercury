@@ -89,10 +89,10 @@ public class ProductOrderSampleContainerTest extends ContainerTest {
      * @param expectedCount The number of PDO samples in the specified PDO that are expected to have billing ledger entries.
      */
     @Test(dataProvider = PDO_TO_LEDGER_ENTRY_COUNT_PROVIDER)
-    public void testCountSamplesWithBillingLedgerEntries(@Nonnull String pdoBusinessKey, @Nonnull Integer expectedCount) {
+    public void testCountSamplesWithLedgerEntries(@Nonnull String pdoBusinessKey, @Nonnull Integer expectedCount) {
 
         ProductOrder productOrder = pdoDao.findByBusinessKey(pdoBusinessKey);
-        long actualCount = dao.countSamplesWithBillingLedgerEntries(productOrder);
+        long actualCount = dao.countSamplesWithLedgerEntries(productOrder);
         Assert.assertEquals(actualCount, (long) expectedCount);
     }
 }

@@ -128,12 +128,12 @@
                 <div class="controls">
                     <div class="form-value">
                         <c:choose>
-                            <c:when test="${empty actionBean.editProduct.riskCriteriaList}">
+                            <c:when test="${empty actionBean.editProduct.riskCriteria}">
                                 No risk criteria
                             </c:when>
                             <c:otherwise>
                                 A sample is on risk if:<br/>
-                                <c:forEach items="${actionBean.editProduct.riskCriteriaList}" var="criterion">
+                                <c:forEach items="${actionBean.editProduct.riskCriteria}" var="criterion">
                                     ${criterion.calculationString}<br/>
                                 </c:forEach>
                             </c:otherwise>

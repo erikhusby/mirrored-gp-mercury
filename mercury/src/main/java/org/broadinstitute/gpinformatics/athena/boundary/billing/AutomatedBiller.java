@@ -2,7 +2,7 @@ package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
@@ -18,7 +18,7 @@ import java.text.MessageFormat;
 import java.util.List;
 
 /**
- * This is a scheduled class that can generate billing ledgers for product orders based on messages in the message
+ * This is a scheduled class that can generate ledger entries for product orders based on messages in the message
  * queue.  Messages are collected and stored as WorkCompleteMessage objects in the database.  Each message is used
  * to generate billing data for a sample in a product order, if possible.
  */
@@ -29,7 +29,7 @@ public class AutomatedBiller {
     private final WorkCompleteMessageDao workCompleteMessageDao;
     private final ProductOrderSampleDao productOrderSampleDao;
     private final ProductOrderDao productOrderDao;
-    private final BillingLedgerDao billingLedgerDao;
+    private final LedgerEntryDao ledgerEntryDao;
 
     private final Log log = LogFactory.getLog(AutomatedBiller.class);
 
@@ -37,11 +37,11 @@ public class AutomatedBiller {
     AutomatedBiller(WorkCompleteMessageDao workCompleteMessageDao,
                     ProductOrderSampleDao productOrderSampleDao,
                     ProductOrderDao productOrderDao,
-                    BillingLedgerDao billingLedgerDao) {
+                    LedgerEntryDao ledgerEntryDao) {
         this.workCompleteMessageDao = workCompleteMessageDao;
         this.productOrderSampleDao = productOrderSampleDao;
         this.productOrderDao = productOrderDao;
-        this.billingLedgerDao = billingLedgerDao;
+        this.ledgerEntryDao = ledgerEntryDao;
     }
 
     // EJBs require a no arg constructor
@@ -70,7 +70,7 @@ public class AutomatedBiller {
      * @return true if the order is locked out.
      */
     private boolean isLockedOut(ProductOrder order) {
-        return !billingLedgerDao.findLockedOutByOrderList(new ProductOrder[]{ order }).isEmpty();
+        return !ledgerEntryDao.findLockedOutByOrderList(new ProductOrder[]{ order }).isEmpty();
     }
 
     /**

@@ -118,7 +118,7 @@ public class Product implements Serializable, Comparable<Product> {
     @OneToMany(fetch = FetchType.LAZY, cascade = {CascadeType.PERSIST, CascadeType.REMOVE})
     @JoinColumn(name = "product", nullable = true)
     @AuditJoinTable(name = "product_risk_criteria_join_aud")
-    private List<RiskCriteria> riskCriteriaList = new ArrayList<RiskCriteria>();
+    private List<RiskCriterion> riskCriteria = new ArrayList<RiskCriterion>();
 
     /**
      * Default no-arg constructor, also used when creating a new Product.
@@ -504,8 +504,8 @@ public class Product implements Serializable, Comparable<Product> {
         return getProductFamily().isSupportsNumberOfLanes();
     }
 
-    public List<RiskCriteria> getRiskCriteriaList() {
-        return riskCriteriaList;
+    public List<RiskCriterion> getRiskCriteria() {
+        return riskCriteria;
     }
 
     public String[] getAllowableMaterialTypeNames() {
@@ -543,12 +543,12 @@ public class Product implements Serializable, Comparable<Product> {
         assert (criteria.length == operators.length) && (criteria.length == values.length);
 
         // The new list
-        List<RiskCriteria> newList = new ArrayList<RiskCriteria>();
+        List<RiskCriterion> newList = new ArrayList<RiskCriterion>();
         // Assume that the new list is no different than the original.
         boolean isDifferent = false;
 
         // If the lengths are not the same, then these ARE different.
-        if (criteria.length !=  riskCriteriaList.size()) {
+        if (criteria.length !=  riskCriteria.size()) {
             isDifferent = true;
         }
 
@@ -557,10 +557,10 @@ public class Product implements Serializable, Comparable<Product> {
             String value = values[i];
 
             boolean sameAsCurrent;
-            RiskCriteria currentCriteria = null;
+            RiskCriterion currentCriteria = null;
 
-            if (riskCriteriaList.size() > i) {
-                currentCriteria = riskCriteriaList.get(i);
+            if (riskCriteria.size() > i) {
+                currentCriteria = riskCriteria.get(i);
                 sameAsCurrent = currentCriteria.isSame(criteria[i], operators[i], value);
             } else {
                 sameAsCurrent = false;
@@ -571,7 +571,7 @@ public class Product implements Serializable, Comparable<Product> {
                 isDifferent = true;
                 currentCriteria = findMatching(criteria[i], operators[i], value);
                 if (currentCriteria == null) {
-                    currentCriteria = new RiskCriteria(RiskCriteria.RiskCriteriaType.findByLabel(criteria[i]), Operator.findByLabel(operators[i]), value);
+                    currentCriteria = new RiskCriterion(RiskCriterion.RiskCriteriaType.findByLabel(criteria[i]), Operator.findByLabel(operators[i]), value);
                 }
             }
 
@@ -579,13 +579,13 @@ public class Product implements Serializable, Comparable<Product> {
         }
 
         if (isDifferent) {
-            riskCriteriaList.clear();
-            riskCriteriaList.addAll(newList);
+            riskCriteria.clear();
+            riskCriteria.addAll(newList);
         }
     }
 
-    private RiskCriteria findMatching(String criteriaName, String operator, String value) {
-        for (RiskCriteria criterion : riskCriteriaList) {
+    private RiskCriterion findMatching(String criteriaName, String operator, String value) {
+        for (RiskCriterion criterion : riskCriteria) {
             if (criterion.isSame(criteriaName, operator, value)) {
                 return criterion;
             }

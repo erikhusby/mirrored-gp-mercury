@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.athena.boundary.billing.BillableRef;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerImporter;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingTrackerManager;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.OrderBillSummaryStat;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
@@ -34,7 +34,7 @@ public class UploadTrackerActionBean extends CoreActionBean {
     private ProductOrderDao productOrderDao;
 
     @Inject
-    private BillingLedgerDao billingLedgerDao;
+    private LedgerEntryDao ledgerEntryDao;
 
     @Validate(required = true, on = "preview")
     private FileBean trackerFile;

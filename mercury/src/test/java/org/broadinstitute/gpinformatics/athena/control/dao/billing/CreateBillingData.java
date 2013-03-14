@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.billing;
 
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
@@ -32,20 +32,20 @@ public class CreateBillingData extends ContainerTest {
             String pdoBusinessKey = "PDO-72";
             ProductOrder productOrder = productOrderDao.findByBusinessKey(pdoBusinessKey);
 
-            Set<BillingLedger> billingLedgers = new HashSet<BillingLedger>();
+            Set<LedgerEntry> ledgerEntries = new HashSet<LedgerEntry>();
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
                 if (productOrderSample.getSampleName().contains("A")) {
-                    billingLedgers.add(new BillingLedger(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(),
+                    ledgerEntries.add(new LedgerEntry(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(),
                             new Date(), 0.5));
                 }
             }
 
-            BillingSession billingSession = new BillingSession(11144L, billingLedgers);
+            BillingSession billingSession = new BillingSession(11144L, ledgerEntries);
             productOrderDao.persist(billingSession);
 
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
                 if (productOrderSample.getSampleName().contains("B")) {
-                    productOrderDao.persist(new BillingLedger(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(),
+                    productOrderDao.persist(new LedgerEntry(productOrderSample, productOrder.getProduct().getPrimaryPriceItem(),
                             new Date(), 1.1));
                 }
             }

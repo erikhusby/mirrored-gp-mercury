@@ -5,9 +5,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
 import org.apache.poi.ss.usermodel.*;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -30,7 +30,7 @@ public class BillingTrackerManager {
     private static final Log logger = LogFactory.getLog(BillingTrackerManager.class);
 
     @Inject
-    BillingLedgerDao billingLedgerDao;
+    LedgerEntryDao ledgerEntryDao;
 
     @Inject
     private ProductOrderDao productOrderDao;
@@ -85,11 +85,11 @@ public class BillingTrackerManager {
 
             for (String pdoIdStr : sheetOrderIdMap) {
                 // Check if this PDO has any locked Ledger rows
-                Set<BillingLedger> lockedBillingLedgerSet = billingLedgerDao.findLockedOutByOrderList(
+                Set<LedgerEntry> lockedLedgerEntrySet = ledgerEntryDao.findLockedOutByOrderList(
                         Collections.singletonList(pdoIdStr));
-                if (!lockedBillingLedgerSet.isEmpty()) {
+                if (!lockedLedgerEntrySet.isEmpty()) {
                     throw BillingTrackerUtils.getRuntimeException("Product Order " + pdoIdStr + " of sheet " + productPartNumberStr +
-                            " is locked out and has " + lockedBillingLedgerSet.size() + " rows that are locked in the DB.");
+                            " is locked out and has " + lockedLedgerEntrySet.size() + " rows that are locked in the DB.");
                 }
             }
             result.put(productPartNumberStr, sheetOrderIdMap);
@@ -155,7 +155,7 @@ public class BillingTrackerManager {
             // For a newly found PdoId create a new map for it and add it to the sheet summary map
             if (!currentPdoId.equalsIgnoreCase(rowPdoIdStr)) {
 
-                //Persist any BillingLedger Items captured for the previous productOrder (if not blank) before changing to the next PDO
+                //Persist any LedgerEntry Items captured for the previous productOrder (if not blank) before changing to the next PDO
                 if (StringUtils.isNotBlank(currentPdoId)) {
                     persistProductOrder(productOrder);
                     sheetBillingMap.add(productOrder);
@@ -184,8 +184,8 @@ public class BillingTrackerManager {
 
                 //Remove any pending billable Items from the ledger for all samples in this PDO
                 ProductOrder[] productOrderArray = new ProductOrder[]{productOrder};
-                billingLedgerDao.removeLedgerItemsWithoutBillingSession(productOrderArray);
-                billingLedgerDao.flush();
+                ledgerEntryDao.removeLedgerItemsWithoutBillingSession(productOrderArray);
+                ledgerEntryDao.flush();
 
             }
 
@@ -205,13 +205,13 @@ public class BillingTrackerManager {
                         " is in different position than expected. Expected value from Order is " + productOrderSample.getSampleName());
             }
 
-            // Create a list of BillingLedger objs for this ProductOrderSample that is part of the current PDO.
+            // Create a list of LedgerEntry objs for this ProductOrderSample that is part of the current PDO.
             parseSampleRowForBilling(row, productOrderSample, product, trackerColumnInfos, priceItemMap);
 
             sampleIndexInOrder++;
         }
 
-        //Persist any BillingLedger Items captured for the last productOrder (if not blank) before finishing the sheet
+        //Persist any LedgerEntry Items captured for the last productOrder (if not blank) before finishing the sheet
         if (StringUtils.isNotBlank(currentPdoId)) {
             persistProductOrder(productOrder);
             sheetBillingMap.add(productOrder);
@@ -283,7 +283,7 @@ public class BillingTrackerManager {
                         productOrderSample.addLedgerItem(workCompleteDate, priceItem, delta);
                     }
                 } else {
-                    logger.debug("Skipping BillingLedger item for sample " + productOrderSample.getSampleName() +
+                    logger.debug("Skipping LedgerEntry item for sample " + productOrderSample.getSampleName() +
                             " to PDO " + productOrderSample.getProductOrder().getBusinessKey() +
                             " for PriceItemName[PPN]: " + billableRef.getPriceItemName() + "[" +
                             billableRef.getProductPartNumber() + "] - quantity:" + newQuantity + " same as Billed amount.");
@@ -309,7 +309,7 @@ public class BillingTrackerManager {
 
     private void persistProductOrder(ProductOrder productOrder) {
 
-        Set<BillingLedger> billableLedgerItems = new HashSet<BillingLedger>();
+        Set<LedgerEntry> billableLedgerItems = new HashSet<LedgerEntry>();
 
         try {
             for (ProductOrderSample productOrderSample : productOrder.getSamples()) {
@@ -321,12 +321,12 @@ public class BillingTrackerManager {
                 productOrderDao.persist(productOrder);
                 productOrderDao.flush();
 
-                logger.info("Persisted " + billableLedgerItems.size() + " BillingLedger records for Product Order <" +
+                logger.info("Persisted " + billableLedgerItems.size() + " LedgerEntry records for Product Order <" +
                         productOrder.getTitle() + "> with PDO Id: " + productOrder.getBusinessKey());
             }
         } catch (RuntimeException e) {
             logger.error("Exception when persisting " + billableLedgerItems.size() +
-                    " BillingLedger items for Product Order <" + productOrder.getTitle() +
+                    " LedgerEntry items for Product Order <" + productOrder.getTitle() +
                     "> with PDO Id: " + productOrder.getBusinessKey(), e);
             throw e;
         }

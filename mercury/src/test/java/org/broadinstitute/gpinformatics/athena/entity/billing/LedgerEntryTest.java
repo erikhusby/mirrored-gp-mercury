@@ -17,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class BillingLedgerTest {
+public class LedgerEntryTest {
 
     private static final DateFormat formatter = new SimpleDateFormat("MM/dd/yy");
 
@@ -33,20 +33,20 @@ public class BillingLedgerTest {
         return sample;
     }
 
-    public static BillingLedger createOneBillingLedger(String sampleName, String priceItemName,
-                                                       double quantity) {
-        return createOneBillingLedger(sampleName, priceItemName, quantity, null);
+    public static LedgerEntry createOneLedgerEntry(String sampleName, String priceItemName,
+                                                   double quantity) {
+        return createOneLedgerEntry(sampleName, priceItemName, quantity, null);
     }
 
-    public static BillingLedger createOneBillingLedger(String sampleName, String priceItemName, double quantity,
-                                                       Date workCompleteDate) {
-        return new BillingLedger(createSample(sampleName),
+    public static LedgerEntry createOneLedgerEntry(String sampleName, String priceItemName, double quantity,
+                                                   Date workCompleteDate) {
+        return new LedgerEntry(createSample(sampleName),
                 new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, quantity);
     }
 
-    public static BillingLedger createOneBillingLedger(ProductOrderSample sample, String priceItemName, double quantity,
-                                                       Date workCompleteDate) {
-        return new BillingLedger(sample,
+    public static LedgerEntry createOneLedgerEntry(ProductOrderSample sample, String priceItemName, double quantity,
+                                                   Date workCompleteDate) {
+        return new LedgerEntry(sample,
                 new PriceItem("quoteServerId", "platform", "category", priceItemName), workCompleteDate, quantity);
     }
 
@@ -57,26 +57,26 @@ public class BillingLedgerTest {
         String priceItemName1 = "DNA Extract from Blood";
         String priceItemName2 = "DNA Extract from Tissue";
         ProductOrderSample sample = createSample("SM-3KBZD");
-        BillingLedger billingLedger1 = BillingLedgerTest.createOneBillingLedger(sample, priceItemName1, 1, date1
+        LedgerEntry ledgerEntry1 = LedgerEntryTest.createOneLedgerEntry(sample, priceItemName1, 1, date1
         );
-        billingLedger1.setBillingMessage("anything");
+        ledgerEntry1.setBillingMessage("anything");
 
-        BillingLedger billingLedger2 = BillingLedgerTest.createOneBillingLedger(sample, priceItemName1, 1, date2
+        LedgerEntry ledgerEntry2 = LedgerEntryTest.createOneLedgerEntry(sample, priceItemName1, 1, date2
         );
-        billingLedger2.setBillingMessage("something else");
+        ledgerEntry2.setBillingMessage("something else");
 
         return new Object[][] {
                 // Different message, different date, should be equal.
-                { billingLedger1, billingLedger2, true },
+                {ledgerEntry1, ledgerEntry2, true },
                 // Different priceItem should be not equals.
-                { billingLedger1, BillingLedgerTest.createOneBillingLedger(sample, priceItemName2, 1, date1), false },
+                {ledgerEntry1, LedgerEntryTest.createOneLedgerEntry(sample, priceItemName2, 1, date1), false },
                 // Different quantity, should equate since quantity is not used for comparison.
-                { billingLedger1, BillingLedgerTest.createOneBillingLedger(sample, priceItemName1, 2, date1), true },
+                {ledgerEntry1, LedgerEntryTest.createOneLedgerEntry(sample, priceItemName1, 2, date1), true },
         };
     }
 
     @Test(dataProvider = "testEquals")
-    public void testEquals(BillingLedger ledger1, BillingLedger ledger2, boolean isEqual) throws Exception {
+    public void testEquals(LedgerEntry ledger1, LedgerEntry ledger2, boolean isEqual) throws Exception {
         if (isEqual) {
             Assert.assertEquals(ledger1, ledger2);
         } else {
@@ -86,8 +86,8 @@ public class BillingLedgerTest {
 
     @Test
     public void testBean() {
-        new BeanTester().testBean(BillingLedger.class);
-        new EqualsMethodTester().testEqualsMethod(BillingLedger.class, "billingMessage", "quantity");
-        new HashCodeMethodTester().testHashCodeMethod(BillingLedger.class);
+        new BeanTester().testBean(LedgerEntry.class);
+        new EqualsMethodTester().testEqualsMethod(LedgerEntry.class, "billingMessage", "quantity");
+        new HashCodeMethodTester().testHashCodeMethod(LedgerEntry.class);
     }
 }

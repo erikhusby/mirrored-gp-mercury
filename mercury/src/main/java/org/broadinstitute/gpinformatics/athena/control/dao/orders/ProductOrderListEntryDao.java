@@ -1,14 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.orders;
 
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEntry;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger_;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession_;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder_;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry_;
+import org.broadinstitute.gpinformatics.athena.entity.orders.*;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily;
 import org.broadinstitute.gpinformatics.athena.entity.products.ProductFamily_;
@@ -73,22 +69,22 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         ListJoin<ProductOrder, ProductOrderSample> productOrderProductOrderSampleListJoin =
                 productOrderRoot.join(ProductOrder_.samples, JoinType.LEFT);
 
-        SetJoin<ProductOrderSample, BillingLedger> productOrderSampleBillingLedgerSetJoin =
+        SetJoin<ProductOrderSample, LedgerEntry> productOrderSampleLedgerEntrySetJoin =
                 productOrderProductOrderSampleListJoin.join(ProductOrderSample_.ledgerItems);
 
         // Even if there are ledger entries there may not be a billing session so left join.
-        Join<BillingLedger, BillingSession> billingLedgerBillingSessionJoin =
-                productOrderSampleBillingLedgerSetJoin.join(BillingLedger_.billingSession, JoinType.LEFT);
+        Join<LedgerEntry, BillingSession> ledgerEntryBillingSessionJoin =
+                productOrderSampleLedgerEntrySetJoin.join(LedgerEntry_.billingSession, JoinType.LEFT);
 
         cq.select(
                 cb.construct(ProductOrderListEntry.class,
                         productOrderRoot.get(ProductOrder_.productOrderId),
                         productOrderRoot.get(ProductOrder_.jiraTicketKey),
-                        billingLedgerBillingSessionJoin.get(BillingSession_.billingSessionId),
+                        ledgerEntryBillingSessionJoin.get(BillingSession_.billingSessionId),
                         cb.count(productOrderRoot)));
 
         List<Predicate> predicates = new ArrayList<Predicate>();
-        predicates.add(cb.isNull(billingLedgerBillingSessionJoin.get(BillingSession_.billedDate)));
+        predicates.add(cb.isNull(ledgerEntryBillingSessionJoin.get(BillingSession_.billedDate)));
 
         if (jiraTicketKey != null) {
             predicates.add(cb.equal(productOrderRoot.get(ProductOrder_.jiraTicketKey), jiraTicketKey));
@@ -100,7 +96,7 @@ public class ProductOrderListEntryDao extends GenericDao implements Serializable
         cq.groupBy(
                 productOrderRoot.get(ProductOrder_.productOrderId),
                 productOrderRoot.get(ProductOrder_.jiraTicketKey),
-                billingLedgerBillingSessionJoin.get(BillingSession_.billingSessionId));
+                ledgerEntryBillingSessionJoin.get(BillingSession_.billingSessionId));
 
         List<ProductOrderListEntry> resultList = getEntityManager().createQuery(cq).getResultList();
 

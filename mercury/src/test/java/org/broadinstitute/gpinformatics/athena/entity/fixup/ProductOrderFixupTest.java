@@ -10,7 +10,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.RiskItem;
 import org.broadinstitute.gpinformatics.athena.entity.products.Operator;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraService;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
@@ -234,15 +234,15 @@ public class ProductOrderFixupTest extends Arquillian {
         String pdo="PDO-49";
         ProductOrder productOrder = productOrderDao.findByBusinessKey(pdo);
 
-        RiskCriteria riskCriteria = new RiskCriteria(RiskCriteria.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
-        productOrder.getProduct().getRiskCriteriaList().add(riskCriteria);
+        RiskCriterion riskCriterion = new RiskCriterion(RiskCriterion.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
+        productOrder.getProduct().getRiskCriteria().add(riskCriterion);
         productDao.persist(productOrder.getProduct());
 
         // Populate on risk for every other sample
         int count = 0;
         for (ProductOrderSample sample : productOrder.getSamples()) {
             if ((count++ % 2) == 0) {
-                RiskItem riskItem = new RiskItem(riskCriteria, "240.0");
+                RiskItem riskItem = new RiskItem(riskCriterion, "240.0");
                 riskItem.setRemark("Bad Concentration found");
                 sample.setRiskItems(Collections.singletonList(riskItem));
                 productOrderSampleDao.persist(sample);

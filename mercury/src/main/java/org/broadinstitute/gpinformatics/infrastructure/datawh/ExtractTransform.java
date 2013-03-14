@@ -105,7 +105,7 @@ public class ExtractTransform {
     @Inject
     private RiskItemEtl riskItemEtl;
     @Inject
-    private BillingLedgerEtl billingLedgerEtl;
+    private LedgerEntryEtl ledgerEntryEtl;
 
     public ExtractTransform() {
     }
@@ -129,7 +129,7 @@ public class ExtractTransform {
                             ResearchProjectStatusEtl researchProjectStatusEtl,
                             WorkflowConfigEtl workflowConfigEtl,
                             RiskItemEtl riskItemEtl,
-                            BillingLedgerEtl billingLedgerEtl) {
+                            LedgerEntryEtl ledgerEntryEtl) {
         this.auditReaderDao = auditReaderDao;
         this.eventEtl = eventEtl;
         this.labBatchEtl = labBatchEtl;
@@ -149,7 +149,7 @@ public class ExtractTransform {
         this.researchProjectStatusEtl = researchProjectStatusEtl;
         this.workflowConfigEtl = workflowConfigEtl;
         this.riskItemEtl = riskItemEtl;
-        this.billingLedgerEtl = billingLedgerEtl;
+        this.ledgerEntryEtl = ledgerEntryEtl;
     }
 
     /**
@@ -283,7 +283,7 @@ public class ExtractTransform {
         recordCount += eventEtl.doEtl(revIds, etlDateStr);
 
         recordCount += riskItemEtl.doEtl(revIds, etlDateStr);
-        recordCount += billingLedgerEtl.doEtl(revIds, etlDateStr);
+        recordCount += ledgerEntryEtl.doEtl(revIds, etlDateStr);
 
         writeLastEtlRun(endTimeSec);
         if (recordCount > 0) {
@@ -358,7 +358,7 @@ public class ExtractTransform {
         recordCount += eventEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
 
         recordCount += riskItemEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
-        recordCount += billingLedgerEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
+        recordCount += ledgerEntryEtl.doBackfillEtl(entityClass, startId, endId, etlDateStr);
 
         if (recordCount > 0) {
             writeIsReadyFile(etlDateStr);

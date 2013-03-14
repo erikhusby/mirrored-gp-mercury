@@ -82,7 +82,7 @@
 
                     updateBillingRules();
 
-                    <c:forEach items="${actionBean.editProduct.riskCriteriaList}" var="criterion">
+                    <c:forEach items="${actionBean.editProduct.riskCriteria}" var="criterion">
                         addCriterion('${criterion.type.label}', '${criterion.operator.label}', '${criterion.value}');
                     </c:forEach>
                 }
@@ -148,7 +148,7 @@
 
                 newCriteria += '</div>\n';
 
-                $j('#riskCriteria').append(newCriteria);
+                $j('#riskCriterion').append(newCriteria);
 
                 updateValueView(criteria, criteriaCount);
 
@@ -373,8 +373,8 @@
                 </div>
 
                 <div class="control-group">
-                    <stripes:label for="riskCriteria" name="RiskCriteria" class="control-label"/>
-                    <div id="riskCriteria" class="controls" style="margin-top: 5px;">
+                    <stripes:label for="riskCriterion" name="RiskCriteria" class="control-label"/>
+                    <div id="riskCriterion" class="controls" style="margin-top: 5px;">
                         A sample is on risk if:
                         <a class="btn btn-mini" style="margin-bottom: 3px;text-decoration: none;" onclick="addCriterion()">+</a>
                     </div>
