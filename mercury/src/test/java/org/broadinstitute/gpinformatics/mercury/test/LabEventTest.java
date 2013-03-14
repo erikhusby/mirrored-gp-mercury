@@ -769,6 +769,13 @@ public class LabEventTest {
             this.labEventHandler = labEventHandler;
             this.mapBarcodeToTube = mapBarcodeToTube;
         }
+        public PreFlightEntityBuilder(BettaLimsMessageFactory bettaLimsMessageFactory, LabEventFactory labEventFactory,
+                LabEventHandler labEventHandler, Map<String, TwoDBarcodedTube> mapBarcodeToTube,Map<String, ProductOrder> mapKeyToProductOrderIn) {
+
+            this(bettaLimsMessageFactory,labEventFactory, labEventHandler, mapBarcodeToTube);
+
+            mapKeyToProductOrder = mapKeyToProductOrderIn;
+        }
 
         public PreFlightEntityBuilder invoke() {
             PreFlightJaxbBuilder preFlightJaxbBuilder = new PreFlightJaxbBuilder(bettaLimsMessageFactory, "",
