@@ -1,5 +1,14 @@
 package org.broadinstitute.gpinformatics.mercury.entity.run;
 
+import org.hibernate.envers.Audited;
+
+import javax.persistence.Embeddable;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 import java.net.URL;
 
 /**
@@ -11,12 +20,37 @@ import java.net.URL;
  * with "where the heck is the data for this run"
  * is what we're trying to abstract here.
  */
-public interface OutputDataLocation {
+@Entity
+@Audited
+@Table(schema = "mercury")
+public class OutputDataLocation {
 
-    /**
-     * Maybe even this isn't generic enough, but URl
-     * seems to be a good place to start the conversation.
-     * @return
-     */
-    public URL getDataLocation();
+    @SequenceGenerator(name = "SEQ_DATA_LOCATION", schema = "mercury", sequenceName = "SEQ_DATA_LOCATION")
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = "SEQ_DATA_LOCATION")
+    @Id
+    private Long dataLocationId;
+
+    private String dataLocation;
+
+    private boolean archived = false;
+
+    protected OutputDataLocation() {
+    }
+
+    public OutputDataLocation(String dataLocation) {
+        this.dataLocation = dataLocation;
+    }
+
+    public String getDataLocation() {
+        return dataLocation;
+    }
+
+    public boolean isArchived() {
+        return archived;
+    }
+
+    public void setArchived(boolean archived) {
+        this.archived = archived;
+    }
+
 }

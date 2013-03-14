@@ -26,6 +26,7 @@ import org.broadinstitute.gpinformatics.mercury.bsp.EverythingYouAskForYouGetAnd
 import org.broadinstitute.gpinformatics.mercury.control.dao.bsp.BSPSampleFactory;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
+import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -467,7 +468,8 @@ public class ExomeExpressEndToEndTest {
             // Designation in Squid (7 lanes Squid + 1 lane Mercury)
             // Call Squid web service to add to queue (lanes, read length)
             // Register run
-            IlluminaSequencingRunFactory illuminaSequencingRunFactory = new IlluminaSequencingRunFactory();
+            IlluminaSequencingRunFactory illuminaSequencingRunFactory =
+                    new IlluminaSequencingRunFactory();
             IlluminaSequencingRun illuminaSequencingRun;
             try {
                 illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
@@ -477,7 +479,7 @@ public class ExomeExpressEndToEndTest {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            Assert.assertNotNull(illuminaSequencingRun.getSampleCartridge().iterator().next(),
+            Assert.assertNotNull(illuminaSequencingRun.getSampleCartridge(),
                                  "No registered flowcell");
 
             // We're container-free, so we have to populate the BSPSampleDTO ourselves

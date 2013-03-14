@@ -3,24 +3,15 @@ package org.broadinstitute.gpinformatics.mercury.boundary.vessel;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.bsp.client.users.BspUser;
-import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.ObjectMarshaller;
-import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.jpa.DaoFree;
 import org.broadinstitute.gpinformatics.infrastructure.ws.WsMessageStore;
 import org.broadinstitute.gpinformatics.mercury.boundary.ResourceException;
-import org.broadinstitute.gpinformatics.mercury.control.dao.sample.MercurySampleDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.LabVesselFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.ejb.Stateful;
@@ -37,11 +28,9 @@ import javax.ws.rs.core.Response;
 import java.io.StringReader;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -56,17 +45,7 @@ public class SampleReceiptResource {
     private static final Log LOG = LogFactory.getLog(SampleReceiptResource.class);
 
     @Inject
-    private LabVesselDao labVesselDao;
-
-    @Inject
     private LabBatchDAO labBatchDAO;
-
-    @Inject
-    private MercurySampleDao mercurySampleDao;
-
-    @SuppressWarnings("CdiInjectionPointsInspection")
-    @Inject
-    private AthenaClientService athenaClientService;
 
     @SuppressWarnings("CdiInjectionPointsInspection")
     @Inject
@@ -74,6 +53,9 @@ public class SampleReceiptResource {
 
     @Inject
     private BSPUserList bspUserList;
+
+    @Inject
+    private LabVesselFactory labVesselFactory;
 
     @GET
     @Path("{batchName}")
@@ -130,31 +112,10 @@ public class SampleReceiptResource {
      * @return string indicating success
      */
     public String notifyOfReceipt(SampleReceiptBean sampleReceiptBean) {
-        List<String> barcodes = new ArrayList<String>();
-        List<String> sampleIds = new ArrayList<String>();
-        for (ParentVesselBean parentVesselBean : sampleReceiptBean.getParentVesselBeans()) {
-            barcodes.add(parentVesselBean.getManufacturerBarcode() == null ? parentVesselBean.getSampleId() :
-                    parentVesselBean.getManufacturerBarcode());
-            if(parentVesselBean.getSampleId() != null) {
-                sampleIds.add(parentVesselBean.getSampleId());
-            }
-            // todo jmt recurse to support 3-level containers?
-            if(parentVesselBean.getChildVesselBeans() != null) {
-                for (ChildVesselBean childVesselBean : parentVesselBean.getChildVesselBeans()) {
-                    barcodes.add(childVesselBean.getManufacturerBarcode() == null ? childVesselBean.getSampleId() :
-                            childVesselBean.getManufacturerBarcode());
-                    if(childVesselBean.getSampleId() != null) {
-                        sampleIds.add(childVesselBean.getSampleId());
-                    }
-                }
-            }
-        }
+        List<ParentVesselBean> parentVesselBeans = sampleReceiptBean.getParentVesselBeans();
 
-        Map<String,LabVessel> mapBarcodeToVessel = labVesselDao.findByBarcodes(barcodes);
-        Map<String, List<MercurySample>> mapIdToListMercurySample = mercurySampleDao.findMapIdToListMercurySample(sampleIds);
-        Map<String, List<ProductOrderSample>> mapIdToListPdoSamples = athenaClientService.findMapSampleNameToPoSample(sampleIds);
-        List<LabVessel> labVessels = notifyOfReceiptDaoFree(sampleReceiptBean, mapBarcodeToVessel, mapIdToListMercurySample,
-                mapIdToListPdoSamples);
+        List<LabVessel> labVessels = labVesselFactory.buildLabVessels(parentVesselBeans, sampleReceiptBean.getReceivingUserName(),
+                sampleReceiptBean.getReceiptDate(), LabEventType.SAMPLE_RECEIPT);
 
         // If the kit has already been partially registered, append a timestamp to make a unique batch name
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyyMMddHHmmssSSSS");
@@ -165,119 +126,6 @@ public class SampleReceiptResource {
         return "Samples received: " + batchName;
     }
 
-    /**
-     * For each piece of plastic being received: find or create plastic; find or create a corresponding Mercury sample
-     * @param sampleReceiptBean DTO
-     * @param mapBarcodeToVessel plastic entities
-     * @param mapIdToListMercurySample Mercury samples
-     * @param mapIdToListPdoSamples from Athena
-     * @return vessels, associated with samples
-     */
-    @DaoFree
-    List<LabVessel> notifyOfReceiptDaoFree(SampleReceiptBean sampleReceiptBean,
-            Map<String, LabVessel> mapBarcodeToVessel,
-            Map<String, List<MercurySample>> mapIdToListMercurySample,
-            Map<String, List<ProductOrderSample>> mapIdToListPdoSamples) {
-
-        long disambiguator = 1L;
-        List<LabVessel> labVessels = new ArrayList<LabVessel>();
-        BspUser bspUser = bspUserList.getByUsername(sampleReceiptBean.getReceivingUserName());
-        if(bspUser == null) {
-            throw new RuntimeException("Failed to find user " + sampleReceiptBean.getReceivingUserName());
-        }
-        Long operator = bspUser.getUserId();
-
-        for (ParentVesselBean parentVesselBean : sampleReceiptBean.getParentVesselBeans()) {
-            String sampleId = parentVesselBean.getSampleId();
-            String barcode = parentVesselBean.getManufacturerBarcode() == null ? sampleId :
-                    parentVesselBean.getManufacturerBarcode();
-            // LabVessel may already exist if receipts are being backfilled
-            LabVessel labVessel = mapBarcodeToVessel.get(barcode);
-
-            if(parentVesselBean.getChildVesselBeans() == null || parentVesselBean.getChildVesselBeans().isEmpty()) {
-                // todo jmt differentiate Cryo vial, Conical, Slide, Flip-top etc.
-                TwoDBarcodedTube twoDBarcodedTube = labVessel == null ? new TwoDBarcodedTube(barcode) :
-                        (TwoDBarcodedTube) labVessel;
-
-                MercurySample mercurySample = getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples, sampleId);
-                twoDBarcodedTube.addSample(mercurySample);
-                twoDBarcodedTube.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT,
-                        sampleReceiptBean.getReceiptDate(), "BSP", disambiguator, operator));
-                disambiguator++;
-                labVessels.add(twoDBarcodedTube);
-            } else {
-                String vesselType = parentVesselBean.getVesselType().toLowerCase();
-                if (vesselType.contains("plate")) {
-                    // todo jmt map other geometries
-                    StaticPlate staticPlate = new StaticPlate(parentVesselBean.getManufacturerBarcode(),
-                            StaticPlate.PlateType.Eppendorf96);
-                    labVessels.add(staticPlate);
-                    for (ChildVesselBean childVesselBean : parentVesselBean.getChildVesselBeans()) {
-                        VesselPosition vesselPosition = VesselPosition.getByName(childVesselBean.getPosition());
-                        if(vesselPosition == null) {
-                            throw new RuntimeException("Unknown vessel position " + childVesselBean.getPosition());
-                        }
-                        PlateWell plateWell = new PlateWell(staticPlate, vesselPosition);
-                        plateWell.addSample(getMercurySample(mapIdToListMercurySample, mapIdToListPdoSamples,
-                                childVesselBean.getSampleId()));
-                        staticPlate.getContainerRole().addContainedVessel(plateWell, vesselPosition);
-                    }
-                    staticPlate.addInPlaceEvent(new LabEvent(LabEventType.SAMPLE_RECEIPT,
-                            sampleReceiptBean.getReceiptDate(), "BSP", disambiguator, operator));
-                } /* todo jmt else if(vesselType.contains("rack")) {
-
-                } */else {
-                    throw new RuntimeException("Unexpected vessel type with child vessels " +
-                            parentVesselBean.getVesselType());
-                }
-            }
-        }
-
-        return labVessels;
-    }
-
-    /**
-     * Find or create a Mercury Sample for a given sampleId.  If MercurySample exists, use it; else if
-     * ProductOrderSample exists, use its ProductOrder; else create MercurySample without ProductOrder key.
-     * @param mapIdToListMercurySample Mercury samples
-     * @param mapIdToListPdoSamples Athena samples
-     * @param sampleId ID for which to create the Mercury Sample
-     * @return MercurySample with mandatory sampleId and optional Product Order
-     */
-    @DaoFree
-    private MercurySample getMercurySample(Map<String, List<MercurySample>> mapIdToListMercurySample,
-            Map<String, List<ProductOrderSample>> mapIdToListPdoSamples, String sampleId) {
-        List<MercurySample> mercurySamples = mapIdToListMercurySample.get(sampleId);
-        if(mercurySamples == null) {
-            mercurySamples = Collections.emptyList();
-        }
-        List<ProductOrderSample> productOrderSamples = mapIdToListPdoSamples.get(sampleId);
-        if(productOrderSamples == null) {
-            productOrderSamples = Collections.emptyList();
-        }
-        if(productOrderSamples.size() > 1) {
-            throw new RuntimeException("More than one ProductOrderSample for " + sampleId);
-        }
-
-        MercurySample mercurySample;
-        if(mercurySamples.isEmpty()) {
-            if(productOrderSamples.isEmpty()) {
-                mercurySample = new MercurySample(sampleId);
-            } else {
-                ProductOrderSample productOrderSample = productOrderSamples.get(0);
-                mercurySample = new MercurySample(productOrderSample.getProductOrder().getBusinessKey(),
-                        productOrderSample.getSampleName());
-            }
-        } else if(mercurySamples.size() > 1) {
-            throw new RuntimeException("More than one MercurySample for " + sampleId);
-        } else {
-            mercurySample = mercurySamples.get(0);
-            if(mercurySample.getProductOrderKey() == null && !productOrderSamples.isEmpty()) {
-                mercurySample.setProductOrderKey(productOrderSamples.get(0).getProductOrder().getBusinessKey());
-            }
-        }
-        return mercurySample;
-    }
 
     void setBspUserList(BSPUserList bspUserList) {
         this.bspUserList = bspUserList;

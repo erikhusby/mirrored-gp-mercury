@@ -90,6 +90,9 @@
 
                 // Default date range selector (if there is a dateRangeDiv, the action bean will HAVE to have this
                 $j('#dateRangeDiv').dateRangeSelector();
+
+                // add clear box to filter
+                $j('.dataTables_filter input').clearable();
             });
 
             $j(function () {

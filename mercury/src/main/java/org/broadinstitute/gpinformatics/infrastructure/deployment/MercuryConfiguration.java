@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.datawh.EtlConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deckmsgs.DeckMessagesConfig;
 import org.broadinstitute.gpinformatics.infrastructure.gap.GAPConfig;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraConfig;
+import org.broadinstitute.gpinformatics.infrastructure.monitoring.HipChatConfig;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteConfig;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConfig;
 import org.broadinstitute.gpinformatics.infrastructure.tableau.TableauConfig;
@@ -16,6 +17,7 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -50,7 +52,8 @@ public class MercuryConfiguration {
             DeckMessagesConfig.class,
             EtlConfig.class,
             BettalimsConfig.class,
-            TableauConfig.class);
+            TableauConfig.class,
+            HipChatConfig.class);
 
 
     private static final String MERCURY_CONFIG = "/mercury-config.yaml";
@@ -255,7 +258,7 @@ public class MercuryConfiguration {
                 MERCURY_BUILD_INFO = "Unknown build - problematic " + versionFilename;
                 throw new RuntimeException("Problem reading version file " + versionFilename, ioe);
             } catch (ParseException e) {
-                // problem parsing the maven build date, use it's default one
+                // Problem parsing the maven build date, use its default one.
                 if ((buildDate != null) && !buildDate.isEmpty()) {
                    MERCURY_BUILD_INFO += " built on " + buildDate;    
                 }        
@@ -323,7 +326,7 @@ public class MercuryConfiguration {
 
 
     /**
-     * Intended solely for test code to clear out mappings
+     * Intended solely for test code to clear out mappings.
      */
     /* package */
     void clear() {
@@ -425,17 +428,24 @@ public class MercuryConfiguration {
     }
 
     /**
-     * Utility method to create a new instance of the specified {@link AbstractConfig}-derived class
+     * Utility method to create a new instance of the specified {@link AbstractConfig}-derived class.
      *
      * @param clazz The class extending {@link AbstractConfig} of which this method should create a new instance.
      * @return The new instance.
      */
     private AbstractConfig newConfig(Class<? extends AbstractConfig> clazz) {
         try {
-            return clazz.newInstance();
+            // This will throw NoSuchMethodException if the constructor does not exist, so no need to null check.
+            Constructor<? extends AbstractConfig> constructor = clazz.getConstructor(Deployment.class);
+            return constructor.newInstance(Deployment.STUBBY);
+
         } catch (InstantiationException e) {
             throw new RuntimeException(e);
         } catch (IllegalAccessException e) {
+            throw new RuntimeException(e);
+        } catch (NoSuchMethodException e) {
+            throw new RuntimeException(e);
+        } catch (InvocationTargetException e) {
             throw new RuntimeException(e);
         }
     }

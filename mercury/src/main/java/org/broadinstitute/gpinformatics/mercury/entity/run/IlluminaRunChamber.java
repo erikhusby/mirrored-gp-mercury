@@ -34,13 +34,8 @@ public class IlluminaRunChamber extends RunChamber {
     }
 
     @Override
-    public RunConfiguration getRunConfiguration() {
-        return this.flowcell.getRunConfiguration();
-    }
-
-    @Override
-    public CONTAINER_TYPE getType() {
-        return CONTAINER_TYPE.ILLUMINA_RUN_CHAMBER;
+    public ContainerType getType() {
+        return ContainerType.ILLUMINA_RUN_CHAMBER;
     }
 
     /**
@@ -56,7 +51,7 @@ public class IlluminaRunChamber extends RunChamber {
 
     @Override
     public VesselGeometry getVesselGeometry() {
-        return VesselGeometry.FLOWCELL;
+        return VesselGeometry.RUN_CHAMBER;
     }
 
     /**

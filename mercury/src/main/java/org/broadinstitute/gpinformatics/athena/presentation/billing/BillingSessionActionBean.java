@@ -5,7 +5,7 @@ import net.sourceforge.stripes.controller.LifecycleStage;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteImportItem;
+import org.broadinstitute.gpinformatics.athena.boundary.billing.BillingEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.billing.QuoteWorkItemsExporter;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
@@ -17,7 +17,6 @@ import org.broadinstitute.gpinformatics.athena.presentation.orders.ProductOrderA
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceItem;
 import org.broadinstitute.gpinformatics.infrastructure.quote.PriceListCache;
-import org.broadinstitute.gpinformatics.infrastructure.quote.Quote;
 import org.broadinstitute.gpinformatics.infrastructure.quote.QuoteService;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
@@ -59,6 +58,9 @@ public class BillingSessionActionBean extends CoreActionBean {
 
     @Inject
     private PriceListCache priceListCache;
+
+    @Inject
+    private BillingEjb billingEjb;
 
     private List<BillingSession> billingSessions;
 
@@ -169,68 +171,48 @@ public class BillingSessionActionBean extends CoreActionBean {
         }
     }
 
+
     @HandlesEvent("bill")
     public Resolution bill() {
 
+        String pageUrl = getContext().getRequest().getRequestURL().toString();
+        List<BillingEjb.BillingResult> billingResults = billingEjb.bill(editSession, pageUrl, sessionKey);
+
         boolean errorsInBilling = false;
 
-        for (QuoteImportItem item : editSession.getUnBilledQuoteImportItems()) {
+        for (BillingEjb.BillingResult billingResult : billingResults) {
 
-            Quote quote = new Quote();
-            quote.setAlphanumericId(item.getQuoteId());
+            if (billingResult.isError()) {
+                errorsInBilling = true;
+                addGlobalValidationError(billingResult.getErrorMessage());
 
-            PriceItem quotePriceItem = new PriceItem();
-            quotePriceItem.setName(item.getPriceItem().getName());
-            quotePriceItem.setCategoryName(item.getPriceItem().getCategory());
-            quotePriceItem.setPlatformName(item.getPriceItem().getPlatform());
-
-            String pageUrl = getContext().getRequest().getRequestURL().toString();
-
-            try {
-                String message = quoteService.registerNewWork(
-                    quote, quotePriceItem, item.getWorkCompleteDate(), item.getQuantity(), pageUrl, "billingSession",
-                    sessionKey);
-
-                item.setBillingMessages(BillingSession.SUCCESS);
-
-                String workUrl = quoteLink.workUrl(quote.getAlphanumericId(), message);
+            } else {
+                String workUrl =
+                        quoteLink.workUrl(billingResult.getQuoteImportItem().getQuoteId(), billingResult.getWorkId());
 
                 String link = "<a href=\"" + workUrl + "\" target=\"QUOTE\">click here</a>";
                 addMessage("Sent to quote server: " + link + " to see the value");
-            } catch (Exception ex) {
-                // Any exceptions in sending to the quote server will just be reported and will continue on to the next one
-                item.setBillingMessages(ex.getMessage());
-                addGlobalValidationError(ex.getMessage());
-                errorsInBilling = true;
             }
         }
 
-        // If there were no errors in billing, then end the session, which will add the billed date and remove all sessions from the ledger
-        if (!errorsInBilling) {
-            return endSession();
+        if (errorsInBilling) {
+            return getSourcePageResolution();
+        } else {
+            return new RedirectResolution(BillingSessionActionBean.class, VIEW_ACTION)
+                    .addParameter("sessionKey", editSession.getBusinessKey());
         }
-
-        // If there are any errors (and there may be multiple, then need to save and go to the source page
-        billingSessionDao.persist(editSession);
-        return new ForwardResolution(BillingSessionActionBean.class, VIEW_ACTION).addParameter("sessionKey", editSession.getBusinessKey());
     }
+
 
     @HandlesEvent("endSession")
     public Resolution endSession() {
-        // Remove all the sessions from the non-billed items.
-        boolean allFailed = editSession.cancelSession();
 
-        if (allFailed) {
-            // If all removed then remove the session, totally.
-            billingSessionDao.remove(editSession);
-        } else {
-            // If some or all are billed, then just persist the updates.
-            billingSessionDao.persist(editSession);
-        }
+        billingEjb.endSession(editSession);
 
         // Default is list
         return new RedirectResolution(BillingSessionActionBean.class);
     }
+
 
     public List<BillingSession> getBillingSessions() {
         return billingSessions;

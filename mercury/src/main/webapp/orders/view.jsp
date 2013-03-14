@@ -199,6 +199,8 @@
                             {"bSortable": true}                             // Comment
                         ]
                     });
+
+                    $j('.dataTables_filter input').clearable();
                 }
             }
 

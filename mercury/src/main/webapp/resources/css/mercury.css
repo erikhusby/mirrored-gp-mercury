@@ -47,9 +47,6 @@ table.table thead .sorting_desc { background: url('/Mercury/images/arrow_up.gif'
 table.table thead .sorting_asc_disabled { background: url('/Mercury/images/sort_asc_disabled.png') no-repeat center right; }
 table.table thead .sorting_desc_disabled { background: url('/Mercury/images/sort_desc_disabled.png') no-repeat center right; }
 
-.dataTables_filter input { font-size: small; height: 14px;}
-.dataTables_filter { float: left !important; text-align: left !important; }
-
 /* highlight error */
 input.error, select.error, textarea.error { background-color: #F2DEDE; border: 1px #8b0000 solid; }
 
@@ -116,3 +113,13 @@ textarea.controlledText { width: 550px; }
 .barAbandon { height: 100%; float:left; background-color: #eed6e1; }
 
 .padright { margin-right: 30px; }
+
+.dataTables_filter { float: left !important; text-align: left !important; }
+.dataTables_filter input { font-size: small; height: 14px; padding-right: 17px; }
+.dataTables_filter label { width: 300px; }   /* So that the filter label can have adornment without the input moving to another line */
+
+/* The 'x' for clearing input */
+.clear-helper {
+    margin-left: -13px; font-size:xx-small; cursor: pointer; padding-left: 3px; padding-right: 3px; padding-bottom: 1px; margin-top: 8px;
+    background-color: #a4a4a4; color: #ffffff; border-radius: 10px;-moz-border-radius: 10px; -webkit-border-radius: 10px; -khtml-border-radius: 10px;
+}

@@ -57,8 +57,11 @@ public class ProductOrderSampleTest {
         final ProductOrderSample sample1;
         final ProductOrderSample sample2;
 
-        public TestPDOData() {
+        public TestPDOData(String quoteId) {
             ProductOrder order = AthenaClientServiceStub.createDummyProductOrder();
+
+            order.setQuoteId(quoteId);
+
             product = order.getProduct();
             MaterialType materialType = new MaterialType(BSP_MATERIAL_TYPE.getCategory(), BSP_MATERIAL_TYPE.getName());
             addOn = AthenaClientServiceStub.createDummyProduct("Exome Express", "partNumber");
@@ -84,7 +87,7 @@ public class ProductOrderSampleTest {
 
     @DataProvider(name = "getBillablePriceItems")
     public static Object[][] makeGetBillablePriceItemsData() {
-        TestPDOData data = new TestPDOData();
+        TestPDOData data = new TestPDOData("GSP-123");
         Product product = data.product;
         Product addOn = data.addOn;
 
@@ -108,27 +111,30 @@ public class ProductOrderSampleTest {
 
     @DataProvider(name = "autoBillSample")
     public static Object[][] makeAutoBillSampleData() {
-        TestPDOData data = new TestPDOData();
+        TestPDOData data = new TestPDOData("GSP-123");
         Date completedDate = new Date();
         Set<BillingLedger> ledgers = new HashSet<BillingLedger>();
-        ledgers.add(new BillingLedger(data.sample1, data.product.getPrimaryPriceItem(), "GSP-123", completedDate, 1));
-        ledgers.add(new BillingLedger(data.sample1, data.addOn.getPrimaryPriceItem(), "GSP-123", completedDate, 1));
+        ledgers.add(new BillingLedger(data.sample1, data.product.getPrimaryPriceItem(), completedDate, 1));
+        ledgers.add(new BillingLedger(data.sample1, data.addOn.getPrimaryPriceItem(), completedDate, 1));
 
-        data.sample2.addLedgerItem(completedDate, data.product.getPrimaryPriceItem(), "GSP-123", 1);
+        data.sample2.addLedgerItem(completedDate, data.product.getPrimaryPriceItem(), 1);
         BillingLedger ledger = data.sample2.getLedgerItems().iterator().next();
         ledger.setBillingMessage(BillingSession.SUCCESS);
         ledger.setBillingSession(new BillingSession(0L, Collections.singleton(ledger)));
 
         return new Object[][] {
-                new Object[] { data.sample1, completedDate, ledgers, BillingStatus.EligibleForBilling },
-                new Object[] { data.sample1, completedDate, ledgers, BillingStatus.EligibleForBilling },
-                new Object[] { data.sample2, completedDate, Collections.emptySet(), BillingStatus.EligibleForBilling }
+                // Create ledger items from a single sample.
+                new Object[] { data.sample1, completedDate, ledgers },
+                // Update existing ledger items with "new" bill count.
+                new Object[] { data.sample1, completedDate, ledgers },
+                // If sample is already billed, don't create any ledger items.
+                new Object[] { data.sample2, completedDate, Collections.emptySet() }
         };
     }
 
     @DataProvider(name = "riskSample")
     public static Object[][] makeRiskSample() {
-        TestPDOData data = new TestPDOData();
+        TestPDOData data = new TestPDOData("GSP-123");
 
         // sample 1 has risk items and sample 2 does not
         RiskCriteria riskCriteria = new RiskCriteria(RiskCriteria.RiskCriteriaType.CONCENTRATION, Operator.LESS_THAN, "250.0");
@@ -143,7 +149,7 @@ public class ProductOrderSampleTest {
     }
 
     @Test(dataProvider = "autoBillSample")
-    public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<BillingLedger> billingLedgers, BillingStatus billingStatus) {
+    public void testAutoBillSample(ProductOrderSample sample, Date completedDate, Set<BillingLedger> billingLedgers) {
         sample.autoBillSample(completedDate, 1);
         Assert.assertEquals(sample.getBillableLedgerItems(), billingLedgers);
     }

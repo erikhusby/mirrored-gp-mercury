@@ -1,12 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.thrift;
 
 
-
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
 import java.io.Serializable;
 
+@SuppressWarnings("UnusedDeclaration")
 @ConfigKey("thrift")
 public class ThriftConfig extends AbstractConfig implements Serializable {
 
@@ -14,12 +17,9 @@ public class ThriftConfig extends AbstractConfig implements Serializable {
 
     private int port;
 
-    public ThriftConfig() {
-    }
-
-    public ThriftConfig(String host, int port) {
-        this.host = host;
-        this.port = port;
+    @Inject
+    public ThriftConfig(@Nonnull Deployment deployment) {
+        super(deployment);
     }
 
     public String getHost() {
@@ -37,4 +37,9 @@ public class ThriftConfig extends AbstractConfig implements Serializable {
     public void setPort(int port) {
         this.port = port;
     }
+
+    public static ThriftConfig produce(Deployment deployment) {
+        return produce(ThriftConfig.class, deployment);
+    }
+
 }

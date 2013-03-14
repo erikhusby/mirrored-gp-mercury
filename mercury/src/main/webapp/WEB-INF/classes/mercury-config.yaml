@@ -4,19 +4,33 @@
 app:
 
     DEV:
-      url:      http://localhost:8080/Mercury/
+      host:     localhost
+      port:     8080
+      jmsPort:  5445
+
+    BAMBOO:
+      host:     mercurydev.broadinstitute.org
+      port:     8081
+      jmsPort:  5446
 
     TEST:
-      url:      http://mercurydev.broadinstitute.org:8080/Mercury/
+      host:     mercurydev.broadinstitute.org
+      port:     8080
+      jmsPort:  5445
 
     QA:
-      url:      http://mercuryqa.broadinstitute.org:8081/Mercury/
+      host:     mercuryqa.broadinstitute.org
+      port:     8081
+      jmsPort:  5445
 
     RC:
-      url:      http://mercuryrc.broadinstitute.org:8082/Mercury/
+      host:     mercuryrc.broadinstitute.org
+      port:     8082
+      jmsPort:  5447
 
     PROD:
-      url:      http://mercury.broadinstitute.org/Mercury/
+      host:     mercury.broadinstitute.org
+      jmsPort:  5445
 
 bsp:
 
@@ -32,7 +46,7 @@ bsp:
 
       login:    seqsystem
       password: bspbsp
-      host:     gapqa.broadinstitute.org
+      host:     gapdev.broadinstitute.org
       port:     8080
 
 
@@ -213,6 +227,17 @@ tableau:
             - {name: PASS, url: "/views/PMBPASSSampleDashboard/PMBridgeSamplesDashboard?Research%20Project="}
 
 
+hipchat:
+    DEV:
+        baseUrl: https://www.hipchat.com/v1/rooms/message
+        gpLimsRoom: GPLIMS Testing
+        authorizationToken: db3e86c451ef8ac0cddb94133e0455
+
+    PROD:
+        baseUrl: https://www.hipchat.com/v1/rooms/message
+        gpLimsRoom: GPLims
+        authorizationToken: db3e86c451ef8ac0cddb94133e0455
+
 # Mercury configuration, this describes how Mercury deployments are connected to external system deployments.
 
 
@@ -232,6 +257,23 @@ mercury:
       datawhEtl: DEV
       bettaLimsServer: DEV
       tableau:  PROD
+      hipchat: DEV
+
+
+    BAMBOO:
+
+      app:      BAMBOO
+      bsp:      DEV
+      gap:      DEV
+      jira:     TEST
+      quote:    QA
+      squid:    DEV
+      thrift:   QA
+      deckMsgs: DEV
+      datawhEtl: DEV
+      bettaLimsServer: DEV
+      tableau:  PROD
+      hipchat: DEV
 
 
     TEST:
@@ -247,6 +289,7 @@ mercury:
       datawhEtl: DEV
       bettaLimsServer: TEST
       tableau:  PROD
+      hipchat: DEV
 
 
     QA:
@@ -262,6 +305,7 @@ mercury:
       datawhEtl: QA
       bettaLimsServer: QA
       tableau:  PROD
+      hipchat: DEV
 
 
     RC:
@@ -277,6 +321,7 @@ mercury:
       datawhEtl: QA
       bettaLimsServer: QA
       tableau:  PROD
+      hipchat: DEV
 
 
     PROD:
@@ -292,3 +337,4 @@ mercury:
       datawhEtl: PROD
       bettaLimsServer: PROD
       tableau:  PROD
+      hipchat: PROD

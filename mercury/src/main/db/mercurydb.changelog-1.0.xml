@@ -750,7 +750,7 @@
             <column name="rap_sheet" type="number(19,0)"/>
         </addColumn>
     </changeSet>
-    
+
     <changeSet id="GPLIM-914-1" author="thompson">
         <addColumn tableName="lab_batch">
             <column name="lab_batch_type" type="varchar2(255)"/>
@@ -816,6 +816,106 @@
         <addPrimaryKey tableName="mercury_control_aud" schemaName="mercury" columnNames="mercury_control_id, rev"/>
     </changeSet>
 
+    <changeSet id="GPLIM-1048-1" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="mercury" tableName="output_data_location" />
+            </not>
+        </preConditions>
 
+        <createTable tableName="output_data_location" schemaName="mercury">
+            <column name="data_location_id" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="data_location" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="archived" type="number(1,0)" />
+        </createTable>
+
+        <addPrimaryKey tableName="output_data_location" schemaName="mercury" columnNames="data_location_id" />
+        <createIndex tableName="output_data_location" indexName="ix_output_data_key">
+            <column name="data_location" />
+        </createIndex>
+        <createSequence sequenceName="SEQ_DATA_LOCATION" schemaName="mercury" startValue="1" incrementBy="50" />
+
+    </changeSet>
+    <changeSet id="GPLIM-1048-2" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists schemaName="mercury" tableName="output_data_location_aud" />
+            </not>
+        </preConditions>
+
+        <createTable tableName="output_data_location_aud" schemaName="mercury">
+            <column name="data_location_id" type="number(19,0)" >
+                <constraints nullable="false" />
+            </column>
+            <column name="rev" type="number(19,0)">
+                <constraints nullable="false" />
+            </column>
+            <column name="revtype" type="number(3,0)"/>
+            <column name="data_location" type="varchar(255)" />
+            <column name="archived" type="number(1,0)" />
+        </createTable>
+        <addPrimaryKey tableName="output_data_location_aud" schemaName="mercury" columnNames="data_location_id, rev"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1048-3" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="run_location_id" schemaName="mercury" tableName="sequencing_run" />
+            </not>
+        </preConditions>
+
+        <addColumn schemaName="mercury" tableName="sequencing_run">
+            <column name="run_location_id" type="number(19,0)" />
+        </addColumn>
+
+        <addForeignKeyConstraint baseColumnNames="run_location_id" baseTableName="sequencing_run"
+                                 baseTableSchemaName="mercury" referencedTableName="output_data_location"
+                                 referencedColumnNames="data_location_id" referencedTableSchemaName="mercury"
+                                 constraintName="fk_run_to_data_location" />
+    </changeSet>
+    <changeSet id="GPLIM-1048-4" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists columnName="run_location_id" schemaName="mercury" tableName="sequencing_run_aud" />
+            </not>
+        </preConditions>
+
+        <addColumn schemaName="mercury" tableName="sequencing_run_aud">
+            <column name="run_location_id" type="number(19,0)" />
+        </addColumn>
+
+    </changeSet>
+
+    <changeSet id="GPLIM-1048-5" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <columnExists columnName="run_cartridges" schemaName="mercury" tableName="seq_run_run_cartridges" />
+        </preConditions>
+
+        <renameColumn tableName="seq_run_run_cartridges" oldColumnName="run_cartridges" newColumnName="run_cartridge"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1048-6" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <columnExists columnName="run_cartridges" schemaName="mercury" tableName="seq_run_run_cartridges_aud" />
+        </preConditions>
+
+        <renameColumn tableName="seq_run_run_cartridges_aud" oldColumnName="run_cartridges" newColumnName="run_cartridge"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1089-1" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists indexName="idx_sequence_run_name" schemaName="mercury" />
+            </not>
+        </preConditions>
+
+        <createIndex indexName="idx_sequence_run_name" tableName="sequencing_run" unique="true">
+            <column name="run_name" />
+        </createIndex>
+    </changeSet>
 
 </databaseChangeLog>

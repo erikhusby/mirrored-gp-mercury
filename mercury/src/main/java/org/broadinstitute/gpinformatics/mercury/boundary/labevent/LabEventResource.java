@@ -156,15 +156,15 @@ public class LabEventResource {
     private LabVesselBean buildLabVesselBean(LabVessel labVesselEntity) {
         // todo jmt need to hide on-the-fly creation of plate wells
         String type = labVesselEntity.getType().name();
-        if(labVesselEntity.getType() == LabVessel.CONTAINER_TYPE.STATIC_PLATE) {
+        if(labVesselEntity.getType() == LabVessel.ContainerType.STATIC_PLATE) {
             type = OrmUtil.proxySafeCast(labVesselEntity, StaticPlate.class).getPlateType().getDisplayName();
-        } else if(labVesselEntity.getType() == LabVessel.CONTAINER_TYPE.RACK_OF_TUBES) {
+        } else if(labVesselEntity.getType() == LabVessel.ContainerType.RACK_OF_TUBES) {
             type = OrmUtil.proxySafeCast(labVesselEntity, RackOfTubes.class).getRackType().getDisplayName();
-        } else if(labVesselEntity.getType() == LabVessel.CONTAINER_TYPE.TUBE_FORMATION) {
+        } else if(labVesselEntity.getType() == LabVessel.ContainerType.TUBE_FORMATION) {
             type = OrmUtil.proxySafeCast(labVesselEntity, TubeFormation.class).getRackType().getDisplayName();
         }
         String label;
-        if(labVesselEntity.getType() == LabVessel.CONTAINER_TYPE.TUBE_FORMATION) {
+        if(labVesselEntity.getType() == LabVessel.ContainerType.TUBE_FORMATION) {
             label = OrmUtil.proxySafeCast(labVesselEntity, TubeFormation.class).getRacksOfTubes().iterator().next().getLabel();
         } else {
             label = labVesselEntity.getLabel();
@@ -178,7 +178,7 @@ public class LabEventResource {
                 while (positionNames.hasNext()) {
                     String positionName  =  positionNames.next();
                     labVesselBean.getLabVesselPositionBeans().add(new LabVesselPositionBean(
-                            positionName, new LabVesselBean(null, LabVessel.CONTAINER_TYPE.PLATE_WELL.name())));
+                            positionName, new LabVesselBean(null, LabVessel.ContainerType.PLATE_WELL.name())));
                 }
             } else if(OrmUtil.proxySafeIsInstance(labVesselEntity, TubeFormation.class)) {
                 TubeFormation tubeFormation = OrmUtil.proxySafeCast(labVesselEntity, TubeFormation.class);

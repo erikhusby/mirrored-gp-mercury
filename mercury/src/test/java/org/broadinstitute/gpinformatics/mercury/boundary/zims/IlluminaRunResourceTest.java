@@ -132,6 +132,7 @@ public class IlluminaRunResourceTest extends Arquillian {
         assertTrue(rawJson.contains("null")); // KT and others like to see field names present w/ null values instead of missing entirely
         assertFalse(rawJson.contains("\"gssrSample\""));
         assertTrue(rawJson.contains("\"rootSample\""));
+        assertTrue(rawJson.contains("\"productPartNumber\""));
 
         assertNotNull(run);
         assertEquals(run.getName(),RUN_NAME);

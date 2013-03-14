@@ -22,8 +22,9 @@ public class BSPCohortSearchServiceProducer {
     @ApplicationScoped
     public BSPCohortSearchService produce(@New BSPCohortSearchServiceStub stub, @New BSPCohortSearchServiceImpl impl) {
 
-        if ( deployment == STUBBY )
+        if (deployment == STUBBY) {
             return stub;
+        }
 
         return impl;
     }
@@ -41,9 +42,8 @@ public class BSPCohortSearchServiceProducer {
      */
     public static BSPCohortSearchService qaInstance() {
 
-        BSPConfig bspConfig = BSPConfigProducer.getConfig(QA);
+        BSPConfig bspConfig = BSPConfig.produce(QA);
 
-        return new BSPCohortSearchServiceImpl( bspConfig );
-
+        return new BSPCohortSearchServiceImpl(bspConfig);
     }
 }

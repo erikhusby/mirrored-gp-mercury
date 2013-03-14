@@ -132,6 +132,17 @@
     });
 })(jQuery);
 
+(function ($, undefined) {
+   $.fn.clearable = function () {
+       var $this = this;
+       $this.wrap('<span class="clear-holder" />');
+       var helper = $('<span class="clear-helper">x</span>');
+       $this.parent().append(helper);
+       helper.click(function() {
+           $this.val("").keyup();
+       });
+   };
+})(jQuery);
 
 // Compares strings of the form PDO-25 or RP-100, considering first the project name first lexically and second the
 // issue number numerically.
@@ -212,7 +223,6 @@ function fn_title_pre(a) {
 
     return matchingArray[2];
 }
-
 
 // Extend sorting for datatables to allow for title sorting.
 jQuery.extend( jQuery.fn.dataTableExt.oSort, {
