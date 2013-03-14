@@ -93,6 +93,8 @@ public class SolexaRunResource {
         if (router.routeForVessel(flowcell) == MercuryOrSquidRouter.MercuryOrSquid.MERCURY) {
             try {
                 run = registerRun(solexaRunBean, flowcell);
+                URI createdUri = uriInfo.getAbsolutePathBuilder().path(run.getRunName()).build();
+                callerResponse = Response.created(createdUri).entity(new SolexaRunBean(run)).build();
             } catch (Exception e) {
                 LOG.error("Failed to process run" + Response.Status.INTERNAL_SERVER_ERROR, e);
                 /*
@@ -102,8 +104,6 @@ public class SolexaRunResource {
                  * throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
                  */
             }
-            URI createdUri = uriInfo.getAbsolutePathBuilder().path(run.getRunName()).build();
-            callerResponse = Response.created(createdUri).entity(new SolexaRunBean(run)).build();
         }
         return callerResponse;
     }
