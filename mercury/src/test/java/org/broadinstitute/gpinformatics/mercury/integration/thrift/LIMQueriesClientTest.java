@@ -1,10 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.integration.thrift;
 
-import edu.mit.broad.prodinfo.thrift.lims.FlowcellDesignation;
-import edu.mit.broad.prodinfo.thrift.lims.LIMQueries;
-import edu.mit.broad.prodinfo.thrift.lims.LibraryData;
-import edu.mit.broad.prodinfo.thrift.lims.TZIMSException;
-import edu.mit.broad.prodinfo.thrift.lims.TZamboniRun;
+import edu.mit.broad.prodinfo.thrift.lims.*;
 import org.apache.thrift.TApplicationException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.transport.TSocket;
@@ -12,7 +8,6 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.thrift.transport.TTransportException;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftConfig;
-import org.broadinstitute.gpinformatics.infrastructure.thrift.ThriftConfigProducer;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -48,7 +43,7 @@ public class LIMQueriesClientTest {
 
     @BeforeMethod
     public void setUp() throws Exception {
-        ThriftConfig config = ThriftConfigProducer.getConfig(Deployment.TEST);
+        ThriftConfig config = ThriftConfig.produce(Deployment.TEST);
         transport = new TSocket(config.getHost(), config.getPort());
         transport.open();
         client = new LIMQueries.Client(new TBinaryProtocol(transport));
