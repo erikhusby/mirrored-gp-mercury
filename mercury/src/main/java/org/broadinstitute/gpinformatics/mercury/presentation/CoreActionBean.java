@@ -325,6 +325,11 @@ public class CoreActionBean implements ActionBean {
         return bspUser.getFullName();
     }
 
+    public String getUserFullNameOrBlank(long userId) {
+        BspUser bspUser = bspUserList.getById(userId);
+        return (bspUser != null) ? bspUser.getFullName() : "";
+    }
+
     /**
      * Given a list of user IDs, return a comma separated list of full user names.
      *
