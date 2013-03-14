@@ -1,5 +1,7 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
 
@@ -15,7 +17,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * A Message Driven Bean to receive JMS messages from liquid handling decks
+ * A Message Driven Bean to receive JMS messages from data analysis pipelines.
  */
 @SuppressWarnings("UnusedDeclaration")
 @MessageDriven(name = "WorkCompleteMessageBean", activationConfig = {
@@ -23,6 +25,8 @@ import java.util.Map;
 public class WorkCompleteMessageBean implements MessageListener {
 
     private WorkCompleteMessageDao workCompleteMessageDao;
+
+    private static final Log log = LogFactory.getLog(WorkCompleteMessageBean.class);
 
     @Inject
     public WorkCompleteMessageBean(WorkCompleteMessageDao workCompleteMessageDao) {
@@ -36,7 +40,7 @@ public class WorkCompleteMessageBean implements MessageListener {
     public void onMessage(Message message) {
         try {
             // This pulls all the values out of the message.
-            Map<String, Object> values = new HashMap<String, Object> ();
+            Map<String, Object> values = new HashMap<String, Object>();
 
             Enumeration<?> mapNames = message.getPropertyNames();
             while (mapNames.hasMoreElements()) {
@@ -55,6 +59,8 @@ public class WorkCompleteMessageBean implements MessageListener {
             workCompleteMessageDao.persist(workComplete);
         } catch (JMSException jmse) {
             throw new RuntimeException("Got a jms exception processing work complete message", jmse);
+        } catch (Exception e) {
+            log.error("Unexpected exception handling message: " + message, e);
         }
     }
 }
