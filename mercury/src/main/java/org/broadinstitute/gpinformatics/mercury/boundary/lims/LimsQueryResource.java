@@ -183,7 +183,6 @@ public class LimsQueryResource {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/fetchUserIdForBadgeId")
     public String fetchUserIdForBadgeId(@QueryParam("badgeId") String badgeId) {
-//        return thriftService.fetchUserIdForBadgeId(badgeId);
 
         BspUser foundUser = bspUserList.getByBadgeId(badgeId);
         if (foundUser != null) {

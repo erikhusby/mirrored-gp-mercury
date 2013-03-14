@@ -1,7 +1,7 @@
 'USER_NAME','BADGE_ID','TerminationIndicator'
 'Thoul','a00e0201f7ff12e0',terminated
 'ZChen','caabf000f7ff12e0',' '
-'aallen','50ddf000f7ff12e0',disabled
+'aallen','50ddf000f7ff12e0',terminated
 'abass','de1c0301f7ff12e0',' '
 'abrown','16ac8800f9ff12e0',' '
 'acheney','d0567700f6ff12e0',' '
@@ -17,7 +17,7 @@
 'akoutou','be597700f6ff12e0',' '
 'alecw','d1ccf000f7ff12e0',' '
 'alexall','0fdaf000f7ff12e0',' '
-'alui','88daf000f7ff12e0',disabled
+'alui','88daf000f7ff12e0',terminated
 'alvintam','41ae0301f7ff12e0',' '
 'alyssar','c1a98800f9ff12e0',' '
 'amacalal','4ed8f000f7ff12e0',' '
@@ -26,7 +26,7 @@
 'anavidi','f417f000f7ff12e0',terminated
 'andrew','01a4f000f7ff12e0',' '
 'andyvo','0837f000f7ff12e0',' '
-'annamont','1304ef00f7ff12e0',' '
+'annamont','1304ef00f7ff12e0',terminated
 'apresser','f60df000f7ff12e0',terminated
 'aravind','e536f000f7ff12e0',' '
 'aray','b3ad8800f9ff12e0',' '
@@ -65,7 +65,7 @@
 'casey','cc30f000f7ff12e0',terminated
 'cashton','1e828800f9ff12e0',' '
 'caubin','d322f000f7ff12e0',' '
-'cbock','dc8a0301f7ff12e0',temp_disable_test
+'cbock','dc8a0301f7ff12e0',terminated
 'cbonnet','31e4ee00f7ff12e0',' '
 'cchiang','a5519400f7ff12e0',disabled
 'ccraw','7f390301f7ff12e0',' '
@@ -77,7 +77,7 @@
 'connolly','54a4f000f7ff12e0',' '
 'costello','64050301f7ff12e0',' '
 'cotsapas','e9acf000f7ff12e0',' '
-'crenshaw','fca7f000f7ff12e0',' '
+'crenshaw','fca7f000f7ff12e0',terminated
 'crwalls','a41ef000f7ff12e0',terminated
 'cseidman','706f0301f7ff12e0',' '
 'cuomo','1a9ff000f7ff12e0',' '
@@ -86,7 +86,7 @@
 'cwivagg','7536f000f7ff12e0',' '
 'daird','64d9f000f7ff12e0',terminated
 'dauber','9ff2f100f7ff12e0',' '
-'dbmirel','28a1f000f7ff12e0',' '
+'dbmirel','28a1f000f7ff12e0',terminated
 'dciulla','aacff000f7ff12e0',' '
 'delorey','959df000f7ff12e0',' '
 'desiree','6d4ef000f7ff12e0',' '
@@ -113,8 +113,8 @@
 'laurena','56daf000f7ff12e0',disabled
 'lawrence','e0cff000f7ff12e0',' '
 'lchin','3ea4f000f7ff12e0',' '
-'lding','99d0f000f7ff12e0',' '
-'leighja','1cdbf000f7ff12e0',' '
+'lding','99d0f000f7ff12e0',terminated
+'leighja','1cdbf000f7ff12e0',terminated
 'leonm','ccbcf000f7ff12e0',terminated
 'letendre','b0b1f000f7ff12e0',' '
 'lfan','609ff000f7ff12e0',terminated
@@ -124,10 +124,10 @@
 'lindquist_admin','431cf000f7ff12e0',terminated
 'lintner','a7b6f000f7ff12e0',' '
 'lisaz','2620f000f7ff12e0',' '
-'liuda','b1a3f000f7ff12e0',' '
+'liuda','b1a3f000f7ff12e0',terminated
 'livny','5f9b9c00f7ff12e0',' '
 'llarson','69cff000f7ff12e0',terminated
-'louis','b7ddf000f7ff12e0',' '
+'louis','b7ddf000f7ff12e0',terminated
 'lushi','44a8f000f7ff12e0',terminated
 'lynda_chin','3ea4f000f7ff12e0',terminated
 'lyoung','0c390301f7ff12e0',' '
@@ -135,22 +135,22 @@
 'mariela','9222f000f7ff12e0',' '
 'matthew','7138f000f7ff12e0',' '
 'mattlee','f4c08700f9ff12e0',' '
-'mborkan','68f1ee00f7ff12e0',' '
+'mborkan','68f1ee00f7ff12e0',terminated
 'mchevret','b27f8700f9ff12e0',' '
 'mcoole','2da7f000f7ff12e0',' '
 'mcortes','aca4f000f7ff12e0',' '
 'mcovarr','cf7b0301f7ff12e0',' '
-'mcoyne','97010301f7ff12e0',temp_disable_test
+'mcoyne','97010301f7ff12e0',terminated
 'meldrim','12e1f000f7ff12e0',' '
 'melnikov','091ff000f7ff12e0',' '
 'mesirov','801bf000f7ff12e0',' '
 'mfarnum','4d000301f7ff12e0',terminated
 'mhanna','3138f000f7ff12e0',' '
-'mhenn','24ac8800f9ff12e0',' '
+'mhenn','24ac8800f9ff12e0',terminated
 'mihova','3820f000f7ff12e0',terminated
 'mjdaly','e7bcf000f7ff12e0',disabled
 'mlanzoni','14360301f7ff12e0',terminated
-'mlara','abd4f000f7ff12e0',' '
+'mlara','abd4f000f7ff12e0',terminated
 'mlewin','ec577700f6ff12e0',' '
 'monia','f2c8f000f7ff12e0',terminated
 'moran','d61df000f7ff12e0',' '
@@ -172,19 +172,19 @@
 'onofrio','0cccf000f7ff12e0',' '
 'pan','bacff000f7ff12e0',terminated
 'pardis','3cbeef00f7ff12e0',disabled
-'patrickc','ecacf000f7ff12e0',' '
+'patrickc','ecacf000f7ff12e0',terminated
 'pauli','b8110401f7ff12e0',' '
-'pemap','53adf000f7ff12e0',' '
+'pemap','53adf000f7ff12e0',terminated
 'perloski','81bef000f7ff12e0',' '
 'peterk','87acf000f7ff12e0',' '
 'pfontani','61fe0201f7ff12e0',' '
-'pmaness','e1810301f7ff12e0',' '
+'pmaness','e1810301f7ff12e0',terminated
 'pmclaren','4a1ff000f7ff12e0',' '
 'progov','28bcf000f7ff12e0',' '
 'prussell','0f35f000f7ff12e0',' '
 'psheehan','7c2df000f7ff12e0',' '
 'psisk','1535f000f7ff12e0',' '
-'ptrang','51e5ee00f7ff12e0',' '
+'ptrang','51e5ee00f7ff12e0',terminated
 'qyu','4fe3f000f7ff12e0',' '
 'qzeng','2ec2f000f7ff12e0',' '
 'rattigan','03c5f000f7ff12e0',terminated
@@ -227,7 +227,7 @@
 'gage','5bac0301f7ff12e0',terminated
 'galinsky','c2950301f7ff12e0',' '
 'garraway','a6e3f000f7ff12e0',' '
-'gcowley','70a5f000f7ff12e0',temp_disable_test
+'gcowley','70a5f000f7ff12e0',Double_BSP_Accounts
 'gearin','efd4f000f7ff12e0',terminated
 'gerst','ba0c0301f7ff12e0',' '
 'ggiannou','6c280301f7ff12e0',' '
@@ -271,7 +271,7 @@
 'jlchang','9bd3f000f7ff12e0',disabled
 'jlevin','e0bcf000f7ff12e0',' '
 'jlmoran','78c1f000f7ff12e0',disabled
-'jmaguire','60a4f000f7ff12e0',' '
+'jmaguire','60a4f000f7ff12e0',terminated
 'jmgold','9ca1f000f7ff12e0',' '
 'jmorin','60200401f7ff12e0',terminated
 'jnaylor','d11ef000f7ff12e0',' '
@@ -288,13 +288,13 @@
 'kao','a4220401f7ff12e0',terminated
 'kardlie','f71ef000f7ff12e0',' '
 'katie','ab547700f6ff12e0',' '
-'keenan','3a1af000f7ff12e0',' '
-'kejebe','9b6aef00f7ff12e0',temp_disable_test
+'keenan','3a1af000f7ff12e0',terminated
+'kejebe','9b6aef00f7ff12e0',terminated
 'kelliher','d15b0301f7ff12e0',' '
 'kersli','aae9f000f7ff12e0',disabled
 'kga1978','7124f000f7ff12e0',terminated
 'khonin','c32e0401f7ff12e0',terminated
-'kiran','e5d1f000f7ff12e0',' '
+'kiran','e5d1f000f7ff12e0',terminated
 'kirby','01f7ee00f7ff12e0',disabled
 'kjoseph','794c6d00f6ff12e0',' '
 'kmusun','a0bef000f7ff12e0',' '
@@ -312,7 +312,7 @@
 'rshammas','44270401f7ff12e0',terminated
 'rsmith','fc9df000f7ff12e0',terminated
 'ruderfer','b7d1ef00f7ff12e0',' '
-'rui','92590301f7ff12e0',' '
+'rui','92590301f7ff12e0',terminated
 'sadelman','b734f000f7ff12e0',terminated
 'sahal','f50ef000f7ff12e0',' '
 'sakina','bf2ff000f7ff12e0',' '
@@ -355,16 +355,16 @@
 'steelman','c3cf8700f9ff12e0',' '
 'sthomann','65679c00f7ff12e0',terminated
 'stitziel','ac220301f7ff12e0',' '
-'stransky','b830f100f7ff12e0',' '
+'stransky','b830f100f7ff12e0',terminated
 'suhamil','ea170301f7ff12e0',' '
 'swofford','24e2ee00f7ff12e0',' '
 'tamason','f9fc7000f6ff12e0',' '
 'tarjei','68820301f7ff12e0',' '
-'tbiagi','02f70201f7ff12e0',' '
+'tbiagi','02f70201f7ff12e0',terminated
 'tdurham','cf7d0301f7ff12e0',' '
 'tenim','69527700f6ff12e0',' '
 'tenzind','7323f000f7ff12e0',terminated
-'tesfaye','2034f000f7ff12e0',' '
+'tesfaye','2034f000f7ff12e0',terminated
 'tgreen','76b8f000f7ff12e0',' '
 'thepburn','20b6f000f7ff12e0',terminated
 'thu','c43b0301f7ff12e0',' '
