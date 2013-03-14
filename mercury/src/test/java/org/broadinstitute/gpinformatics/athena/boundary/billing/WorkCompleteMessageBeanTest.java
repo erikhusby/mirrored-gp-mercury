@@ -38,7 +38,7 @@ import java.util.List;
 public class WorkCompleteMessageBeanTest extends Arquillian {
 
     public static final String TEST_PDO_NAME = "PDO-xxx";
-    public static final String TEST_SAMPLE_NAME = "SM-xxx";
+    public static final String TEST_ALIQUOT_NAME = "SM-xxx";
 
     @Inject
     MercuryConfig mercuryConfig;
@@ -125,7 +125,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
         for (WorkCompleteMessage message : messages) {
             if (message.getPdoName().equals(TEST_PDO_NAME)) {
                 found = true;
-                Assert.assertEquals(message.getSampleName(), TEST_SAMPLE_NAME);
+                Assert.assertEquals(message.getAliquotId(), TEST_ALIQUOT_NAME);
                 break;
             }
         }
@@ -173,10 +173,9 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     public static Message createMessage(Session session) throws JMSException {
         Message message = session.createMapMessage();
         message.clearBody();
-        message.setStringProperty(WorkCompleteMessage.REQUIRED_NAMES.PDO_NAME.name(), TEST_PDO_NAME);
-        message.setStringProperty(WorkCompleteMessage.REQUIRED_NAMES.SAMPLE_NAME.name(), TEST_SAMPLE_NAME);
-        message.setIntProperty(WorkCompleteMessage.REQUIRED_NAMES.SAMPLE_INDEX.name(), 1);
-        message.setLongProperty(WorkCompleteMessage.REQUIRED_NAMES.COMPLETED_TIME.name(), new Date().getTime());
+        message.setStringProperty(WorkCompleteMessage.Properties.PDO_NAME.name(), TEST_PDO_NAME);
+        message.setStringProperty(WorkCompleteMessage.Properties.ALIQUOT_ID.name(), TEST_ALIQUOT_NAME);
+        message.setLongProperty(WorkCompleteMessage.Properties.COMPLETED_TIME.name(), new Date().getTime());
         return message;
     }
 }

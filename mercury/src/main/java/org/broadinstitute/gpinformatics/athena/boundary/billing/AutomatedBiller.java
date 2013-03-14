@@ -51,7 +51,7 @@ public class AutomatedBiller {
                 // For each message, find its product order and request auto billing of the provided sample.
                 ProductOrder order = productOrderDao.findByBusinessKey(message.getPdoName());
                 if (order != null) {
-                    productOrderEjb.autoBillSample(order, message.getSampleName(),  message.getCompletedDate(),
+                    productOrderEjb.autoBillSample(order, message.getAliquotId(),  message.getCompletedDate(),
                             message.getData());
                 } else {
                     log.error(MessageFormat.format("Invalid PDO key ''{0}'', no billing will occur.",
@@ -62,8 +62,8 @@ public class AutomatedBiller {
             } catch (Exception e) {
                 // FIXME: need to mark messages as processed even when an error occurs; enable this once code is debugged.
 //                workCompleteMessageDao.markMessageProcessed(message);
-                log.error(MessageFormat.format("Error while processing work complete message. PDO: {0}, Sample: {1}, Index: {2}",
-                        message.getPdoName(), message.getSampleName(), message.getSampleIndex()), e);
+                log.error(MessageFormat.format("Error while processing work complete message. PDO: {0}, Sample: {1}",
+                        message.getPdoName(), message.getAliquotId()), e);
             }
         }
     }

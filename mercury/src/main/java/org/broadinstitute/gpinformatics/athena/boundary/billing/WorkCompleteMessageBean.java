@@ -44,17 +44,13 @@ public class WorkCompleteMessageBean implements MessageListener {
                 values.put(name, message.getObjectProperty(name));
             }
 
-            String pdoName = message.getStringProperty(WorkCompleteMessage.REQUIRED_NAMES.PDO_NAME.name());
-            String sampleName = message.getStringProperty(WorkCompleteMessage.REQUIRED_NAMES.SAMPLE_NAME.name());
-            int sampleIndex = 1;
-            if (message.propertyExists(WorkCompleteMessage.REQUIRED_NAMES.SAMPLE_INDEX.name())) {
-                sampleIndex = message.getIntProperty(WorkCompleteMessage.REQUIRED_NAMES.SAMPLE_INDEX.name());
-            }
-            long completedTime = message.getLongProperty(WorkCompleteMessage.REQUIRED_NAMES.COMPLETED_TIME.name());
+            String pdoName = message.getStringProperty(WorkCompleteMessage.Properties.PDO_NAME.name());
+            String aliquotId = message.getStringProperty(WorkCompleteMessage.Properties.ALIQUOT_ID.name());
+            long completedTime = message.getLongProperty(WorkCompleteMessage.Properties.COMPLETED_TIME.name());
             Date completedDate = new Date(completedTime);
 
             WorkCompleteMessage workComplete =
-                    new WorkCompleteMessage(pdoName, sampleName, sampleIndex, completedDate, values);
+                    new WorkCompleteMessage(pdoName, aliquotId, completedDate, values);
 
             workCompleteMessageDao.persist(workComplete);
         } catch (JMSException jmse) {
