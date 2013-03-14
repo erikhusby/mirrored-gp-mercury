@@ -119,7 +119,4 @@ textarea.controlledText { width: 550px; }
 .dataTables_filter label { width: 300px; }   /* So that the filter label can have adornment without the input moving to another line */
 
 /* The 'x' for clearing input */
-.clear-helper {
-    margin-left: -13px; font-size:xx-small; cursor: pointer; padding-left: 3px; padding-right: 3px; padding-bottom: 1px; margin-top: 8px;
-    background-color: #a4a4a4; color: #ffffff; border-radius: 10px;-moz-border-radius: 10px; -webkit-border-radius: 10px; -khtml-border-radius: 10px;
-}
+.clear-helper { background-color: #A4A4A4; border-radius: 10px 10px 10px 10px; color: #FFFFFF; cursor: pointer; font-size: xx-small; margin: 8px 2px 0 -16px; padding: 1px 4px; }
