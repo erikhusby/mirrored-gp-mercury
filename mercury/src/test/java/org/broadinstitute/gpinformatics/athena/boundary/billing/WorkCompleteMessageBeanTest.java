@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
@@ -52,7 +52,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     ProductOrderDao productOrderDao;
 
     @Inject
-    BillingLedgerDao billingLedgerDao;
+    LedgerEntryDao ledgerEntryDao;
 
     @Inject
     UserTransaction utx;
@@ -116,7 +116,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     // FIXME: expand to test creating ledger entries from message
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testOnMessageReadBack() throws Exception {
-        AutomatedBiller automatedBiller = new AutomatedBiller(workCompleteMessageDao, productOrderSampleDao, productOrderDao, billingLedgerDao);
+        AutomatedBiller automatedBiller = new AutomatedBiller(workCompleteMessageDao, productOrderSampleDao, productOrderDao, ledgerEntryDao);
         automatedBiller.processMessages();
         workCompleteMessageDao.flush();
         workCompleteMessageDao.clear();

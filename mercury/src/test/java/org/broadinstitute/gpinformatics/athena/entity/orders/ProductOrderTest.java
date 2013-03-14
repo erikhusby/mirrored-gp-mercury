@@ -1,6 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.entity.orders;
 
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
@@ -142,11 +142,11 @@ public class ProductOrderTest {
     }
 
     public static List<ProductOrderSample> createSampleList(String... sampleList) {
-        return ProductOrderSampleTest.createSampleList(sampleList, new HashSet<BillingLedger>(), false);
+        return ProductOrderSampleTest.createSampleList(sampleList, new HashSet<LedgerEntry>(), false);
     }
 
     public static List<ProductOrderSample> createDBFreeSampleList(String... sampleList) {
-        return ProductOrderSampleTest.createSampleList(sampleList, new HashSet<BillingLedger>(), true);
+        return ProductOrderSampleTest.createSampleList(sampleList, new HashSet<LedgerEntry>(), true);
     }
 
 }

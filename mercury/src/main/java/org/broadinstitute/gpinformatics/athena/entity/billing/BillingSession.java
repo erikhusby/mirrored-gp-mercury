@@ -44,18 +44,18 @@ public class BillingSession implements Serializable {
 
     // Do NOT cascade removes because we want the ledger items to stay, but just have their billing session removed.
     @OneToMany(mappedBy = "billingSession", cascade = {CascadeType.PERSIST})
-    private List<BillingLedger> billingLedgerItems;
+    private List<LedgerEntry> ledgerEntryItems;
 
     BillingSession() {}
 
-    public BillingSession(@Nonnull Long createdBy, Set<BillingLedger> ledgerItems) {
+    public BillingSession(@Nonnull Long createdBy, Set<LedgerEntry> ledgerItems) {
         this.createdBy = createdBy;
         createdDate = new Date();
-        for (BillingLedger ledgerItem : ledgerItems) {
+        for (LedgerEntry ledgerItem : ledgerItems) {
             ledgerItem.setBillingSession(this);
         }
 
-        billingLedgerItems = new ArrayList<BillingLedger>(ledgerItems);
+        ledgerEntryItems = new ArrayList<LedgerEntry>(ledgerItems);
     }
 
     public Date getCreatedDate() {
@@ -103,7 +103,7 @@ public class BillingSession implements Serializable {
     private List<QuoteImportItem> getQuoteImportItems(boolean includeAll) {
         QuoteImportInfo quoteImportInfo = new QuoteImportInfo();
 
-        for (BillingLedger ledger : billingLedgerItems) {
+        for (LedgerEntry ledger : ledgerEntryItems) {
             // If we are including all, or if the item isn't billed, then add quantity.
             if (includeAll || !ledger.isBilled()) {
                 quoteImportInfo.addQuantity(ledger);
@@ -114,9 +114,9 @@ public class BillingSession implements Serializable {
     }
 
     public boolean cancelSession() {
-        List<BillingLedger> toRemove = new ArrayList<BillingLedger>();
+        List<LedgerEntry> toRemove = new ArrayList<LedgerEntry>();
 
-        for (BillingLedger ledgerItem : billingLedgerItems) {
+        for (LedgerEntry ledgerItem : ledgerEntryItems) {
             if (!ledgerItem.isBilled()) {
                 // Remove the billing session from the ledger item and hold onto the ledger item
                 // to remove from the full list of ledger items.
@@ -126,9 +126,9 @@ public class BillingSession implements Serializable {
         }
 
         // Remove all items that do not have billing dates.
-        billingLedgerItems.removeAll(toRemove);
+        ledgerEntryItems.removeAll(toRemove);
 
-        boolean allRemoved = billingLedgerItems.isEmpty();
+        boolean allRemoved = ledgerEntryItems.isEmpty();
 
         if (!allRemoved) {
             // Anything that has been billed will be attached to this session and those are now ALL billed.
@@ -160,8 +160,8 @@ public class BillingSession implements Serializable {
     public List<String> getProductOrderBusinessKeys() {
         // Get all unique product Orders across all ledger items
         Set<ProductOrder> productOrders = new HashSet<ProductOrder>();
-        for (BillingLedger billingLedger : billingLedgerItems) {
-            productOrders.add(billingLedger.getProductOrderSample().getProductOrder());
+        for (LedgerEntry ledgerEntry : ledgerEntryItems) {
+            productOrders.add(ledgerEntry.getProductOrderSample().getProductOrder());
         }
 
         List<String> ret = new ArrayList<String>(productOrders.size());

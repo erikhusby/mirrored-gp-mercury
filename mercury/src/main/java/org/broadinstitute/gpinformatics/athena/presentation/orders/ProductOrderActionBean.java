@@ -21,14 +21,14 @@ import org.broadinstitute.gpinformatics.athena.boundary.orders.CompletionStatusF
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.SampleLedgerExporter;
 import org.broadinstitute.gpinformatics.athena.boundary.util.AbstractSpreadsheetExporter;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingSessionDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderListEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.billing.BillingSession;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderAddOn;
@@ -36,7 +36,7 @@ import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderListEnt
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample_;
 import org.broadinstitute.gpinformatics.athena.entity.products.Product;
-import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriteria;
+import org.broadinstitute.gpinformatics.athena.entity.products.RiskCriterion;
 import org.broadinstitute.gpinformatics.athena.entity.project.ResearchProject;
 import org.broadinstitute.gpinformatics.athena.presentation.billing.BillingSessionActionBean;
 import org.broadinstitute.gpinformatics.athena.presentation.links.QuoteLink;
@@ -133,7 +133,7 @@ public class ProductOrderActionBean extends CoreActionBean {
     private BillingSessionDao billingSessionDao;
 
     @Inject
-    private BillingLedgerDao billingLedgerDao;
+    private LedgerEntryDao ledgerEntryDao;
 
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
@@ -373,10 +373,10 @@ public class ProductOrderActionBean extends CoreActionBean {
 
             // If there are locked out orders, then do not allow the session to start. Using a DAO to do this is a quick
             // way to do this without having to go through all the objects.
-            Set<BillingLedger> lockedOutOrders = billingLedgerDao.findLockedOutByOrderList(selectedProductOrderBusinessKeys);
+            Set<LedgerEntry> lockedOutOrders = ledgerEntryDao.findLockedOutByOrderList(selectedProductOrderBusinessKeys);
             if (!lockedOutOrders.isEmpty()) {
                 Set<String> lockedOutOrderStrings = new HashSet<String>(lockedOutOrders.size());
-                for (BillingLedger ledger : lockedOutOrders) {
+                for (LedgerEntry ledger : lockedOutOrders) {
                     lockedOutOrderStrings.add(ledger.getProductOrderSample().getProductOrder().getTitle());
                 }
 
@@ -599,8 +599,8 @@ public class ProductOrderActionBean extends CoreActionBean {
 
     @HandlesEvent("startBilling")
     public Resolution startBilling() {
-        Set<BillingLedger> ledgerItems =
-                billingLedgerDao.findWithoutBillingSessionByOrderList(selectedProductOrderBusinessKeys);
+        Set<LedgerEntry> ledgerItems =
+                ledgerEntryDao.findWithoutBillingSessionByOrderList(selectedProductOrderBusinessKeys);
         if (CollectionUtils.isEmpty(ledgerItems)) {
             addGlobalValidationError("There are no items to bill on any of the selected orders");
             return new ForwardResolution(ProductOrderActionBean.class, LIST_ACTION);
@@ -771,9 +771,9 @@ public class ProductOrderActionBean extends CoreActionBean {
     public Resolution setRisk() throws Exception {
 
         // If we are creating a manual on risk, then need to set it up and persist it for reuse
-        RiskCriteria criterion = null;
+        RiskCriterion criterion = null;
         if (riskStatus) {
-            criterion = RiskCriteria.createManual();
+            criterion = RiskCriterion.createManual();
             productOrderDao.persist(criterion);
         }
 
@@ -1128,7 +1128,7 @@ public class ProductOrderActionBean extends CoreActionBean {
         if (!editOrder.isSubmitted()) {
             setAbandonDisabledReason("the order status of the PDO is not 'Submitted'.");
             return false;
-        } else if (productOrderSampleDao.countSamplesWithBillingLedgerEntries(editOrder) > 0) {
+        } else if (productOrderSampleDao.countSamplesWithLedgerEntries(editOrder) > 0) {
             setAbandonWarning(true);
         }
         return true;

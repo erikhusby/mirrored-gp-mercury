@@ -1,7 +1,7 @@
 package org.broadinstitute.gpinformatics.infrastructure.datawh;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.control.dao.envers.AuditReaderDao;
@@ -25,17 +25,17 @@ import static org.testng.Assert.assertNull;
  */
 
 @Test(groups = TestGroups.DATABASE_FREE)
-public class BillingLedgerEtlDbFreeTest {
+public class LedgerEntryEtlDbFreeTest {
     private String etlDateStr = ExtractTransform.secTimestampFormat.format(new Date());
     private long entityId = 1122334455L;
     private long posId = 2233445511L;
     private String datafileDir;
-    private Set<BillingLedger> ledgerItems = new HashSet<BillingLedger>();
-    private BillingLedgerEtl tst;
+    private Set<LedgerEntry> ledgerItems = new HashSet<LedgerEntry>();
+    private LedgerEntryEtl tst;
 
     private AuditReaderDao auditReader = createMock(AuditReaderDao.class);
-    private BillingLedger obj = createMock(BillingLedger.class);
-    private BillingLedgerDao dao = createMock(BillingLedgerDao.class);
+    private LedgerEntry obj = createMock(LedgerEntry.class);
+    private LedgerEntryDao dao = createMock(LedgerEntryDao.class);
     private ProductOrderSample pos = createMock(ProductOrderSample.class);
     private Object[] mocks = new Object[]{auditReader, obj, dao, pos};
 
@@ -45,8 +45,8 @@ public class BillingLedgerEtlDbFreeTest {
         ExtractTransform.setDatafileDir(datafileDir);
         EtlTestUtilities.deleteEtlFiles(datafileDir);
 
-        tst = new BillingLedgerEtl();
-        tst.setBillingLedgerDao(dao);
+        tst = new LedgerEntryEtl();
+        tst.setLedgerEntryDao(dao);
         tst.setAuditReaderDao(auditReader);
 
         reset(mocks);
@@ -61,7 +61,7 @@ public class BillingLedgerEtlDbFreeTest {
         expect(obj.getLedgerId()).andReturn(entityId);
         replay(mocks);
 
-        assertEquals(tst.getEntityClass(), BillingLedger.class);
+        assertEquals(tst.getEntityClass(), LedgerEntry.class);
 
         assertEquals(tst.getBaseFilename(), "product_order_sample_bill");
 

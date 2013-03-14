@@ -22,7 +22,7 @@ import static org.broadinstitute.gpinformatics.athena.entity.products.Operator.O
 @Entity
 @Audited
 @Table(schema = "ATHENA", name = "RISK_CRITERIA")
-public class RiskCriteria {
+public class RiskCriterion {
 
     private static final boolean DISPLAYED = true;
     private static final boolean NOT_DISPLAYED = false;
@@ -43,10 +43,10 @@ public class RiskCriteria {
     @Column(name = "value")
     private String value;
 
-    protected RiskCriteria() {
+    protected RiskCriterion() {
     }
 
-    public RiskCriteria(@Nonnull RiskCriteriaType type, @Nonnull Operator operator, @Nullable String value) {
+    public RiskCriterion(@Nonnull RiskCriteriaType type, @Nonnull Operator operator, @Nullable String value) {
         if (!type.getOperators().contains(operator)) {
             throw new RuntimeException("operator: " + operator.getLabel() + " is not allowed on type: " + type.getLabel());
         }
@@ -104,9 +104,9 @@ public class RiskCriteria {
         return type.valueProvider;
     }
 
-    public static RiskCriteria createManual() {
+    public static RiskCriterion createManual() {
         // Boolean does not use the value, so just set to true so that the answer is always that the operation is true
-        return new RiskCriteria(RiskCriteria.RiskCriteriaType.MANUAL, Operator.IS, "true");
+        return new RiskCriterion(RiskCriterion.RiskCriteriaType.MANUAL, Operator.IS, "true");
     }
 
     public String getCalculationString() {

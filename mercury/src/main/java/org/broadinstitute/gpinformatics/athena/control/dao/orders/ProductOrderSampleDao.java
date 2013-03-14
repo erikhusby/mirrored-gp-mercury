@@ -93,7 +93,7 @@ public class ProductOrderSampleDao extends GenericDao {
      * @return Number of samples in the PDO with billing ledger entries.
      *
      */
-    public long countSamplesWithBillingLedgerEntries(@Nonnull ProductOrder productOrder) {
+    public long countSamplesWithLedgerEntries(@Nonnull ProductOrder productOrder) {
 
         CriteriaBuilder cb = getCriteriaBuilder();
         CriteriaQuery<Long> cq = cb.createQuery(Long.class);

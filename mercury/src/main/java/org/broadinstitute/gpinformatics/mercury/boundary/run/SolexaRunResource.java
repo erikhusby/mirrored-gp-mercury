@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRout
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 
@@ -23,6 +24,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.net.URI;
+import java.text.MessageFormat;
 
 /**
  * A JAX-RS resource for Solexa sequencing runs
@@ -43,8 +45,6 @@ public class SolexaRunResource {
     private MercuryOrSquidRouter router;
 
     private SquidConnector connector;
-
-
 
     @Inject
     public SolexaRunResource(IlluminaSequencingRunDao illuminaSequencingRunDao,
@@ -93,6 +93,8 @@ public class SolexaRunResource {
         if (router.routeForVessel(flowcell) == MercuryOrSquidRouter.MercuryOrSquid.MERCURY) {
             try {
                 run = registerRun(solexaRunBean, flowcell);
+                URI createdUri = uriInfo.getAbsolutePathBuilder().path(run.getRunName()).build();
+                callerResponse = Response.created(createdUri).entity(new SolexaRunBean(run)).build();
             } catch (Exception e) {
                 LOG.error("Failed to process run" + Response.Status.INTERNAL_SERVER_ERROR, e);
                 /*
@@ -102,8 +104,6 @@ public class SolexaRunResource {
                  * throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
                  */
             }
-            URI createdUri = uriInfo.getAbsolutePathBuilder().path(run.getRunName()).build();
-            callerResponse = Response.created(createdUri).entity(new SolexaRunBean(run)).build();
         }
         return callerResponse;
     }

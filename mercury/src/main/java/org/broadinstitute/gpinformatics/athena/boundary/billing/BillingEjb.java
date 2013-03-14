@@ -136,7 +136,7 @@ public class BillingEjb {
                 result.setWorkId(workId);
 
                 item.setBillingMessages(BillingSession.SUCCESS);
-                // Now that we have successfully billed, update the BillingLedgers associated with this QuoteImportItem
+                // Now that we have successfully billed, update the Ledger Entries associated with this QuoteImportItem
                 // with the quote for the QuoteImportItem.
                 item.updateQuoteIntoLedgerEntries();
 

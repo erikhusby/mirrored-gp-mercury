@@ -1,12 +1,12 @@
 package org.broadinstitute.gpinformatics.athena.control.dao.billing;
 
+import org.broadinstitute.gpinformatics.athena.entity.billing.LedgerEntry;
 import org.testng.Assert;
 import org.broadinstitute.gpinformatics.athena.control.dao.projects.ResearchProjectDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDaoTest;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.PriceItemDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
-import org.broadinstitute.gpinformatics.athena.entity.billing.BillingLedger;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.athena.entity.products.PriceItem;
@@ -26,10 +26,10 @@ import java.util.Set;
 
 
 @Test(groups = TestGroups.EXTERNAL_INTEGRATION, enabled=true)
-public class BillingLedgerDaoTest  extends ContainerTest {
+public class LedgerEntryDaoTest extends ContainerTest {
 
     @Inject
-    private BillingLedgerDao billingLedgerDao;
+    private LedgerEntryDao ledgerEntryDao;
 
     @Inject
     private ProductDao productDao;
@@ -69,7 +69,7 @@ public class BillingLedgerDaoTest  extends ContainerTest {
 
         //Create first ledger item
         Date date1 = formatter.parse("12/5/12");
-        BillingLedger unBilledLedger1 = new BillingLedger(productOrderSample1, priceItem, date1, 1);
+        LedgerEntry unBilledLedger1 = new LedgerEntry(productOrderSample1, priceItem, date1, 1);
 
         //Add one ledger item to sample 1
         productOrderSample1.getLedgerItems().add(unBilledLedger1);
@@ -87,8 +87,8 @@ public class BillingLedgerDaoTest  extends ContainerTest {
 
         //Create two ledger items for the new order one for each productOrderSample different quantities
         Date date2 = formatter.parse("12/6/12");
-        BillingLedger unBilledLedger1ForDupes = new BillingLedger(productOrderSample1ForDupes, priceItem, date2, 8);
-        BillingLedger unBilledLedger2ForDupes = new BillingLedger(productOrderSample2ForDupes, priceItem, date2, 16);
+        LedgerEntry unBilledLedger1ForDupes = new LedgerEntry(productOrderSample1ForDupes, priceItem, date2, 8);
+        LedgerEntry unBilledLedger2ForDupes = new LedgerEntry(productOrderSample2ForDupes, priceItem, date2, 16);
 
         //Add the ledger items one to each of the dupes samples
         productOrderSample1ForDupes.getLedgerItems().add(unBilledLedger1ForDupes);
@@ -114,46 +114,46 @@ public class BillingLedgerDaoTest  extends ContainerTest {
     }
 
     //
-    public void testFindBillingLedgers() {
-        List<BillingLedger> ledgerEntries = billingLedgerDao.findAll();
+    public void testFindLedgerEntries() {
+        List<LedgerEntry> ledgerEntries = ledgerEntryDao.findAll();
         Assert.assertTrue(!ledgerEntries.isEmpty(), "The specified order should find at one test ledger");
     }
 
     //
     public void testFindLedgerEntriesForPDOs() {
-        Set<BillingLedger> ledgerEntries = billingLedgerDao.findByOrderList(orders);
+        Set<LedgerEntry> ledgerEntries = ledgerEntryDao.findByOrderList(orders);
         Assert.assertEquals(1, ledgerEntries.size(), "The specified order should find one test ledger") ;
     }
 
     public void testFindLedgerEntriesForPDOsWithNoBillingSessions() {
-        Set<BillingLedger> ledgerEntries = billingLedgerDao.findWithoutBillingSessionByOrderList(orders);
+        Set<LedgerEntry> ledgerEntries = ledgerEntryDao.findWithoutBillingSessionByOrderList(orders);
         Assert.assertEquals(1, ledgerEntries.size(), "The specified order should find one test ledger") ;
     }
 
     public void testFindBilledLedgerEntriesForPDOs() {
-        Set<BillingLedger> ledgerEntries = billingLedgerDao.findBilledByOrderList(orders);
+        Set<LedgerEntry> ledgerEntries = ledgerEntryDao.findBilledByOrderList(orders);
         Assert.assertTrue(ledgerEntries.isEmpty(), "The specified order should not find any ledger items");
     }
 
     public void testFindLockedOutByOrderList() {
-        Set<BillingLedger> ledgerEntries = billingLedgerDao.findLockedOutByOrderList(orders);
+        Set<LedgerEntry> ledgerEntries = ledgerEntryDao.findLockedOutByOrderList(orders);
         // No session started yet so should be none for this order
         Assert.assertEquals(0, ledgerEntries.size(), "The specified order should find one test ledger") ;
     }
 
     public void testRemoveLedgerUpdates() {
         // test an order
-        billingLedgerDao.removeLedgerItemsWithoutBillingSession(orders);
-        billingLedgerDao.flush();
+        ledgerEntryDao.removeLedgerItemsWithoutBillingSession(orders);
+        ledgerEntryDao.flush();
         //verify by trying to retrieve what is pending but not yet billed should be none left
-        Set<BillingLedger> ledgerEntries = billingLedgerDao.findWithoutBillingSessionByOrderList(orders);
+        Set<LedgerEntry> ledgerEntries = ledgerEntryDao.findWithoutBillingSessionByOrderList(orders);
         Assert.assertEquals(1, ledgerEntries.size(), "The specified order should find one test ledger") ;
 
         // test an order with dupes
-        billingLedgerDao.removeLedgerItemsWithoutBillingSession(dupeOrders);
-        billingLedgerDao.flush();
+        ledgerEntryDao.removeLedgerItemsWithoutBillingSession(dupeOrders);
+        ledgerEntryDao.flush();
         //verify by trying to retrieve what is pending but not yet billed should be none left
-        Set<BillingLedger> dupeLedgerEntries = billingLedgerDao.findWithoutBillingSessionByOrderList(dupeOrders);
+        Set<LedgerEntry> dupeLedgerEntries = ledgerEntryDao.findWithoutBillingSessionByOrderList(dupeOrders);
         Assert.assertEquals(2, dupeLedgerEntries.size(), "The specified order should find one test ledger") ;
     }
 
