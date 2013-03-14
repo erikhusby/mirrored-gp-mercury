@@ -21,6 +21,7 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.BAMBOO;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
@@ -61,7 +62,7 @@ public class SolexaRunResourceTest extends Arquillian {
          *
          *
          */
-        return DeploymentBuilder.buildMercuryWar(TEST);
+        return DeploymentBuilder.buildMercuryWar(BAMBOO);
     }
 
     @BeforeMethod(groups = EXTERNAL_INTEGRATION)
