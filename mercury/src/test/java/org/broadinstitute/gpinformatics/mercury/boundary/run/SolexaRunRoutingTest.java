@@ -9,10 +9,8 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
 import org.broadinstitute.gpinformatics.infrastructure.squid.SquidConnectorProducer;
-import org.broadinstitute.gpinformatics.infrastructure.test.ContainerTest;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
-import org.broadinstitute.gpinformatics.mercury.boundary.InformaticsServiceException;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRouter;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
@@ -25,7 +23,6 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
@@ -49,10 +46,8 @@ import org.testng.annotations.Test;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.PathSegment;
 import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriBuilderException;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
-import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
@@ -74,11 +69,11 @@ public class SolexaRunRoutingTest {
     private static final int NUM_POSITIONS_IN_RACK = 96;
 
     private static Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
-    private BucketBean bucketBeanEJB;
-    private BucketDao mockBucketDao;
-    private BettaLimsMessageFactory bettaLimsMessageFactory;
-    private LabEventFactory labEventFactory;
-    private Map<String,TwoDBarcodedTube> mapBarcodeToTube;
+    private BucketBean                    bucketBeanEJB;
+    private BucketDao                     mockBucketDao;
+    private BettaLimsMessageFactory       bettaLimsMessageFactory;
+    private LabEventFactory               labEventFactory;
+    private Map<String, TwoDBarcodedTube> mapBarcodeToTube;
 
     @BeforeMethod
     public void setUp() {
@@ -156,7 +151,6 @@ public class SolexaRunRoutingTest {
     }
 
     /**
-     *
      * For a Whole Genome Shotgun flowcell, Squid will be the only system that should receive run registration.
      * This method will take tubes through the entire Whole Genome Shotgun workflow and attempt to register it through
      * Mercury.  If at anytime the service attempts to register within Mercury, a failure ensues.
@@ -164,7 +158,6 @@ public class SolexaRunRoutingTest {
      * @throws Exception
      */
     public void testWholeGenomeFlowcell() throws Exception {
-
 
         LabEventHandler labEventHandler =
                 new LabEventHandler(new WorkflowLoader(), AthenaClientProducer
@@ -282,9 +275,6 @@ public class SolexaRunRoutingTest {
         IlluminaFlowcell flowcell = qtpEntityBuilder.getIlluminaFlowcell();
         Date runDate = new Date();
 
-
-
-
         SolexaRunBean runBean =
                 new SolexaRunBean(flowcell.getCartridgeBarcode(),
                                          flowcell.getCartridgeBarcode() + IlluminaSequencingRun.RUNFORMAT
@@ -298,29 +288,24 @@ public class SolexaRunRoutingTest {
 
         EasyMock.expect(runDao.findByRunName(EasyMock.anyObject(String.class))).andReturn(null);
 
-        JiraCommentUtil commentUtil = new JiraCommentUtil(JiraServiceProducer.stubInstance());
-
         IlluminaSequencingRunFactory runFactory = EasyMock.createMock(IlluminaSequencingRunFactory.class);
-//        EasyMock.expect(runFactory.build(EasyMock.anyObject(SolexaRunBean.class),
-//                                                EasyMock.anyObject(IlluminaFlowcell.class)))
-////                .andReturn(new IlluminaSequencingRun(null, null, null, null,null, false, null,null))
-//                .andThrow(new InformaticsServiceException("This is a Whole Genome Shotgun workflow.  " +
-//                                                                  "We should NOT have called Mercury"))
+        //        EasyMock.expect(runFactory.build(EasyMock.anyObject(SolexaRunBean.class),
+        //                                                EasyMock.anyObject(IlluminaFlowcell.class)))
+        ////                .andReturn(new IlluminaSequencingRun(null, null, null, null,null, false, null,null))
+        //                .andThrow(new InformaticsServiceException("This is a Whole Genome Shotgun workflow.  " +
+        //                                                                  "We should NOT have called Mercury"))
         ;
 
         IlluminaFlowcellDao flowcellDao = EasyMock.createNiceMock(IlluminaFlowcellDao.class);
         EasyMock.expect(flowcellDao.findByBarcode(EasyMock.anyObject(String.class))).andReturn(flowcell);
 
         LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
-        //        EasyMock.expect(vesselDao.findByIdentifier(EasyMock.anyObject(String.class))).andReturn(flowcell);
 
         MercuryOrSquidRouter router = new MercuryOrSquidRouter(vesselDao, AthenaClientProducer.stubInstance());
 
         SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, router,
                                                                      SquidConnectorProducer.stubInstance());
         EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao);
-
-
 
         runResource.createRun(runBean, new UriInfo() {
             @Override
@@ -409,10 +394,134 @@ public class SolexaRunRoutingTest {
             }
         });
 
-
-
-        EasyMock.verify(runDao, flowcellDao, vesselDao,runFactory);
+        EasyMock.verify(runDao, flowcellDao, vesselDao, runFactory);
 
     }
 
+    public void testNoChainOfCustodyRegistration() throws Exception {
+
+        Date runDate = new Date();
+
+        final String flowcellBarcode = "FlowCellBarcode" + runDate.getTime();
+        SolexaRunBean runBean =
+                new SolexaRunBean(flowcellBarcode,
+                                         flowcellBarcode + IlluminaSequencingRun.RUNFORMAT.format(runDate),
+                                         runDate, "Superman",
+                                         File.createTempFile("tempRun" + IlluminaSequencingRun.RUNFORMAT
+                                                                                              .format(runDate), ".txt")
+                                             .getAbsolutePath(), null);
+
+        IlluminaSequencingRunDao runDao = EasyMock.createMock(IlluminaSequencingRunDao.class);
+
+        EasyMock.expect(runDao.findByRunName(EasyMock.anyObject(String.class))).andReturn(null);
+
+
+        IlluminaSequencingRunFactory runFactory = EasyMock.createMock(IlluminaSequencingRunFactory.class);
+        //        EasyMock.expect(runFactory.build(EasyMock.anyObject(SolexaRunBean.class),
+        //                                                EasyMock.anyObject(IlluminaFlowcell.class)))
+        ////                .andReturn(new IlluminaSequencingRun(null, null, null, null,null, false, null,null))
+        //                .andThrow(new InformaticsServiceException("This is a Whole Genome Shotgun workflow.  " +
+        //                                                                  "We should NOT have called Mercury"))
+        ;
+
+        IlluminaFlowcellDao flowcellDao = EasyMock.createNiceMock(IlluminaFlowcellDao.class);
+        EasyMock.expect(flowcellDao.findByBarcode(EasyMock.anyObject(String.class))).andReturn(null);
+
+        LabVesselDao vesselDao = EasyMock.createNiceMock(LabVesselDao.class);
+
+        MercuryOrSquidRouter router = new MercuryOrSquidRouter(vesselDao, AthenaClientProducer.stubInstance());
+
+        SolexaRunResource runResource = new SolexaRunResource(runDao, runFactory, flowcellDao, router,
+                                                                     SquidConnectorProducer.stubInstance());
+        EasyMock.replay(runDao, runFactory, flowcellDao, vesselDao);
+
+        runResource.createRun(runBean, new UriInfo() {
+            @Override
+            public String getPath() {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public String getPath(boolean decode) {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public List<PathSegment> getPathSegments() {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public List<PathSegment> getPathSegments(boolean decode) {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public URI getRequestUri() {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public UriBuilder getRequestUriBuilder() {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public URI getAbsolutePath() {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public UriBuilder getAbsolutePathBuilder() {
+                return UriBuilder.fromPath("");
+            }
+
+            @Override
+            public URI getBaseUri() {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public UriBuilder getBaseUriBuilder() {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public MultivaluedMap<String, String> getPathParameters() {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public MultivaluedMap<String, String> getPathParameters(boolean decode) {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public MultivaluedMap<String, String> getQueryParameters() {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public MultivaluedMap<String, String> getQueryParameters(boolean decode) {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public List<String> getMatchedURIs() {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public List<String> getMatchedURIs(boolean decode) {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+
+            @Override
+            public List<Object> getMatchedResources() {
+                return null;  //To change body of implemented methods use File | Settings | File Templates.
+            }
+        });
+
+        EasyMock.verify(runDao, flowcellDao, vesselDao, runFactory);
+    }
 }
