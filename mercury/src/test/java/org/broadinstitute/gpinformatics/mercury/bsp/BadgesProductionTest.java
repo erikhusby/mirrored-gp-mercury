@@ -72,7 +72,7 @@ public class BadgesProductionTest extends Arquillian {
 
     }
 
-    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = true)
+    @Test(groups = EXTERNAL_INTEGRATION, dataProvider = ARQUILLIAN_DATA_PROVIDER, enabled = false)
     public void validateBadgeIds() throws Exception {
 
         FileInputStream badgesList = (FileInputStream)Thread.currentThread()
