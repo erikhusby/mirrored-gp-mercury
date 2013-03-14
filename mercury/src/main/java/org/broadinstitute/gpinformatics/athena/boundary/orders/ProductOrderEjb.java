@@ -5,7 +5,7 @@ import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
+import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.products.ProductDao;
@@ -75,7 +75,7 @@ public class ProductOrderEjb {
     private BSPUserList userList;
 
     @Inject
-    private BillingLedgerDao billingLedgerDao;
+    private LedgerEntryDao ledgerEntryDao;
 
     @Inject
     private ProductOrderSampleDao productOrderSampleDao;
@@ -149,7 +149,7 @@ public class ProductOrderEjb {
      * @return true if the order is locked out.
      */
     private boolean isLockedOut(ProductOrder order) {
-        return !billingLedgerDao.findLockedOutByOrderList(new ProductOrder[]{ order }).isEmpty();
+        return !ledgerEntryDao.findLockedOutByOrderList(new ProductOrder[]{ order }).isEmpty();
     }
 
     /**
