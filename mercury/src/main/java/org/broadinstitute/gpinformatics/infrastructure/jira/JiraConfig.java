@@ -1,11 +1,15 @@
 package org.broadinstitute.gpinformatics.infrastructure.jira;
 
+import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 import org.broadinstitute.gpinformatics.mercury.control.LoginAndPassword;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 
+import javax.annotation.Nonnull;
+import javax.inject.Inject;
 import java.io.Serializable;
 
+@SuppressWarnings("UnusedDeclaration")
 @ConfigKey("jira")
 public class JiraConfig extends AbstractConfig implements LoginAndPassword, Serializable {
 
@@ -19,8 +23,10 @@ public class JiraConfig extends AbstractConfig implements LoginAndPassword, Seri
 
     private String urlBase;
 
-
-    public JiraConfig() {}
+    @Inject
+    public JiraConfig(@Nonnull Deployment deployment) {
+        super(deployment);
+    }
 
 
     public String getHost() {
@@ -65,5 +71,9 @@ public class JiraConfig extends AbstractConfig implements LoginAndPassword, Seri
 
     public String createTicketUrl(String jiraTicketName) {
         return getUrlBase() + "/browse/" + jiraTicketName;
+    }
+
+    public static JiraConfig produce(Deployment deployment) {
+        return produce(JiraConfig.class, deployment);
     }
 }

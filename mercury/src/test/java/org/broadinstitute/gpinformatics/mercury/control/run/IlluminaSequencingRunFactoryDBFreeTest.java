@@ -12,6 +12,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 
 /**
@@ -28,23 +29,23 @@ public class IlluminaSequencingRunFactoryDBFreeTest {
     private String runFileDirectory;
     private String testMachine;
     private String runBarcode;
+    private IlluminaFlowcell testFlowcell;
+    private Date runDate;
 
     @BeforeMethod
     public void setUp() {
 
 
         testMachine = "Superman";
-        runBarcode = "123_TestFlow";
 
         flowcellTestBarcode = "flowTestBcode123";
-        IlluminaFlowcell testFlowcell =
-                new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, flowcellTestBarcode);
+        runDate = new Date();
+        SimpleDateFormat format = new SimpleDateFormat("yyMMdd");
 
-        IlluminaFlowcellDao mockDao = EasyMock.createMock(IlluminaFlowcellDao.class);
-        EasyMock.expect(mockDao.findByBarcode(EasyMock.anyObject(String.class))).andReturn(testFlowcell);
-        EasyMock.replay(mockDao);
+        runBarcode = flowcellTestBarcode + format.format(runDate);
+        testFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, flowcellTestBarcode);
 
-        runFactory = new IlluminaSequencingRunFactory(mockDao);
+        runFactory = new IlluminaSequencingRunFactory();
 
         testRunName = "run" + (new Date()).getTime();
         String baseDirectory = System.getProperty("java.io.tmpdir");
@@ -72,9 +73,9 @@ public class IlluminaSequencingRunFactoryDBFreeTest {
     public void testIlluminaFactoryBuild() {
 
         SolexaRunBean testRunBean =
-                new SolexaRunBean(flowcellTestBarcode, runBarcode, new Date(), testMachine, runFileDirectory, null);
+                new SolexaRunBean(flowcellTestBarcode, runBarcode, runDate, testMachine, runFileDirectory, null);
 
-        IlluminaSequencingRun testRun = runFactory.build(testRunBean);
+        IlluminaSequencingRun testRun = runFactory.build(testRunBean, testFlowcell);
 
         Assert.assertNotNull(testRun);
 

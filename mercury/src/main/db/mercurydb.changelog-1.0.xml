@@ -906,4 +906,16 @@
         <renameColumn tableName="seq_run_run_cartridges_aud" oldColumnName="run_cartridges" newColumnName="run_cartridge"/>
     </changeSet>
 
+    <changeSet id="GPLIM-1089-1" author="scottmat">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <indexExists indexName="idx_sequence_run_name" schemaName="mercury" />
+            </not>
+        </preConditions>
+
+        <createIndex indexName="idx_sequence_run_name" tableName="sequencing_run" unique="true">
+            <column name="run_name" />
+        </createIndex>
+    </changeSet>
+
 </databaseChangeLog>

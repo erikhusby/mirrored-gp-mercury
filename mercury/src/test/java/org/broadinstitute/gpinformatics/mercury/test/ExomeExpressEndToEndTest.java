@@ -469,7 +469,7 @@ public class ExomeExpressEndToEndTest {
             // Call Squid web service to add to queue (lanes, read length)
             // Register run
             IlluminaSequencingRunFactory illuminaSequencingRunFactory =
-                    new IlluminaSequencingRunFactory(EasyMock.createMock(IlluminaFlowcellDao.class));
+                    new IlluminaSequencingRunFactory();
             IlluminaSequencingRun illuminaSequencingRun;
             try {
                 illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
