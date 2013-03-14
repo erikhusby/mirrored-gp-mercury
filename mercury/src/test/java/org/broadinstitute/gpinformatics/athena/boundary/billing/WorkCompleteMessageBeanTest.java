@@ -67,7 +67,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     // NOTE: To run locally, you must change this to DEV.  Make sure you change it to BAMBOO before checking in!
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV);
+        return DeploymentBuilder.buildMercuryWar(org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.BAMBOO);
     }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
