@@ -46,19 +46,16 @@ public class SolexaRunResource {
 
     private SquidConnector connector;
 
-    private JiraCommentUtil jiraCommentUtil;
-
     @Inject
     public SolexaRunResource(IlluminaSequencingRunDao illuminaSequencingRunDao,
                              IlluminaSequencingRunFactory illuminaSequencingRunFactory,
                              IlluminaFlowcellDao illuminaFlowcellDao, MercuryOrSquidRouter router,
-                             SquidConnector connector, JiraCommentUtil jiraCommentUtil) {
+                             SquidConnector connector) {
         this.illuminaSequencingRunDao = illuminaSequencingRunDao;
         this.illuminaSequencingRunFactory = illuminaSequencingRunFactory;
         this.illuminaFlowcellDao = illuminaFlowcellDao;
         this.router = router;
         this.connector = connector;
-        this.jiraCommentUtil = jiraCommentUtil;
     }
 
     public SolexaRunResource() {
@@ -120,12 +117,6 @@ public class SolexaRunResource {
          */
 
         illuminaSequencingRun = illuminaSequencingRunFactory.build(solexaRunBean, illuminaFlowcell);
-
-        jiraCommentUtil.postUpdate(MessageFormat.format("Registered new Solexa run {0} located at {1}",
-                                                               illuminaSequencingRun.getRunName(),
-                                                               illuminaSequencingRun.getRunLocation()
-                                                                                    .getDataLocation()),
-                                          illuminaFlowcell);
 
         illuminaSequencingRunDao.persist(illuminaSequencingRun);
         illuminaSequencingRunDao.flush();
