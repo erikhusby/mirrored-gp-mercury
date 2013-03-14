@@ -148,7 +148,6 @@
             }
 
             function updateBspInformation(chunkOfSamples) {
-
                 var sampleIdString = "";
                 $j(chunkOfSamples).each(function(index, sampleIdCell) {
                     sampleIdString += "&sampleIdsForGetBspData=" + $j(sampleIdCell).attr('id').split("-")[1];
@@ -181,7 +180,7 @@
                 }
 
                 if (bspDataCount < 1) {
-                    $j('#sampleData').dataTable( {
+                    var oTable = $j('#sampleData').dataTable( {
                         "oTableTools": ttExportDefines,
                         "aaSorting": [[0, 'asc']],
                         "aoColumns": [
@@ -198,8 +197,9 @@
                             {"bSortable": true},                            // Status
                             {"bSortable": true}                             // Comment
                         ]
-                    });
+                    }) ;
 
+                    includeAdvancedFilter(oTable, "#sampleData");
                     $j('.dataTables_filter input').clearable();
                 }
             }

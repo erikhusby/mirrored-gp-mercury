@@ -3,7 +3,6 @@ package org.broadinstitute.gpinformatics.mercury.presentation.security;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.DB;
-import org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean;
 
 import javax.inject.Inject;
 import javax.servlet.*;

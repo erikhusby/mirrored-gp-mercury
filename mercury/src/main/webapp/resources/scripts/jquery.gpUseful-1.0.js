@@ -136,7 +136,7 @@
    $.fn.clearable = function () {
        var $this = this;
        $this.wrap('<span class="clear-holder" />');
-       var helper = $('<span class="clear-helper">x</span>');
+       var helper = $('<span class="clear-helper" title="Click to clear">&#215;</span>');
        $this.parent().append(helper);
        helper.click(function() {
            $this.val("").keyup();
