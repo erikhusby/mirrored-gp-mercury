@@ -36,23 +36,63 @@ public class StaticPlate extends LabVessel implements VesselContainerEmbedder<Pl
         NinetySixDeepWell("96DeepWell", VesselGeometry.G12x8);
         // todo jmt Eco48
 
+        /**
+         * The name that will be supplied by automation scripts.
+         */
+        private String automationName;
+
+        /**
+         * The name to be displayed in UI.
+         */
         private String displayName;
+
         private VesselGeometry vesselGeometry;
 
-        PlateType(String displayName, VesselGeometry vesselGeometry) {
-            this.displayName = displayName;
+        /**
+         * Creates a PlateType with a display name the same as the automation name.
+         *
+         * @param automationName    the name that will be supplied by automation scripts
+         * @param vesselGeometry    the vessel geometry
+         */
+        PlateType(String automationName, VesselGeometry vesselGeometry) {
+            this.automationName = automationName;
+            // We can add a constructor parameter if we ever decide to have different automation and display names.
+            this.displayName = automationName;
             this.vesselGeometry = vesselGeometry;
         }
 
+        /**
+         * Returns the name that will be supplied by automation scripts.
+         */
+        private String getAutomationName() {
+            return automationName;
+        }
+
+        /**
+         * Returns the name to be displayed in UI.
+         */
         public String getDisplayName() {
             return displayName;
         }
 
+        private static Map<String, PlateType> mapAutomationNameToType = new HashMap<String, PlateType>();
         private static Map<String, PlateType> mapDisplayNameToType = new HashMap<String, PlateType>();
+
         static {
             for (PlateType plateType : PlateType.values()) {
+                mapAutomationNameToType.put(plateType.getAutomationName(), plateType);
                 mapDisplayNameToType.put(plateType.getDisplayName(), plateType);
             }
+        }
+
+        /**
+         * Returns the PlateType for the given automation name or null if none is found.
+         *
+         * @param automationName    the name supplied by automation scripts
+         * @return the PlateType or null
+         */
+        public static PlateType getByAutomationName(String automationName) {
+            return mapAutomationNameToType.get(automationName);
         }
 
         public static PlateType getByDisplayName(String displayName) {

@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.infrastructure.SampleMetadata;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToSectionTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.VesselToVesselTransfer;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.StatusNote;
 import org.broadinstitute.gpinformatics.mercury.entity.notice.UserRemarks;
@@ -125,6 +126,9 @@ public abstract class LabVessel implements Serializable {
     @OneToMany(mappedBy = "targetLabVessel", cascade = CascadeType.PERSIST)
     private Set<VesselToVesselTransfer> vesselToVesselTransfersThisAsTarget = new HashSet<VesselToVesselTransfer>();
 
+    @OneToMany(mappedBy = "targetVessel", cascade = CascadeType.PERSIST)
+    private Set<VesselToSectionTransfer> vesselToSectionTransfersThisAsSource = new HashSet<VesselToSectionTransfer>();
+
     @OneToMany(mappedBy = "labVessel", cascade = CascadeType.PERSIST)
     private Set<LabMetric> labMetrics = new HashSet<LabMetric>();
 
@@ -159,6 +163,10 @@ public abstract class LabVessel implements Serializable {
      */
     public String getLabel() {
         return label;
+    }
+
+    public Set<VesselToSectionTransfer> getVesselToSectionTransfersThisAsSource() {
+        return vesselToSectionTransfersThisAsSource;
     }
 
     public void addMetric(LabMetric labMetric) {
@@ -638,6 +646,11 @@ public abstract class LabVessel implements Serializable {
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
             vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getTargetLabVessel(), null, null,
                                                     vesselToVesselTransfer.getLabEvent()));
+        }
+        for (VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfersThisAsSource) {
+            vesselEvents
+                    .add(new VesselEvent(vesselToSectionTransfer.getTargetVesselContainer().getEmbedder(), null, null,
+                            vesselToSectionTransfer.getLabEvent()));
         }
         for (LabVessel container : containers) {
             vesselEvents.addAll(container.getContainerRole().getDescendants(this));

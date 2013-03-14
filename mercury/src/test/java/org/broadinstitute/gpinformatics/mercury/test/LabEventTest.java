@@ -64,6 +64,16 @@ import static org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDes
 public class LabEventTest {
     public static final int NUM_POSITIONS_IN_RACK = 96;
 
+    /**
+     * Physical type for a 2-lane flowcell
+     */
+    public static final String PHYS_TYPE_FLOWCELL_2_LANE = "Flowcell2Lane";
+
+    /**
+     * Section for both lanes of a 2-lane flowcell
+     */
+    public static final String SECTION_ALL_2 = "FLOWCELL2";
+
     public static final String POND_REGISTRATION_TUBE_PREFIX = "PondReg";
     private static Map<String, ProductOrder> mapKeyToProductOrder = new HashMap<String, ProductOrder>();
 
@@ -211,6 +221,12 @@ public class LabEventTest {
                 hybridSelectionEntityBuilder
                         .getMapBarcodeToNormCatchTubes(), WorkflowName.HYBRID_SELECTION);
         qtpEntityBuilder.invoke();
+
+        IlluminaFlowcell illuminaFlowcell = qtpEntityBuilder.getIlluminaFlowcell();
+        Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
+                VesselPosition.LANE1);
+        Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 2,
+                "Wrong number of reagents");
 
         IlluminaSequencingRunFactory illuminaSequencingRunFactory =
                 new IlluminaSequencingRunFactory(EasyMock.createMock(IlluminaFlowcellDao.class));
@@ -368,7 +384,15 @@ public class LabEventTest {
                     qtpEntityBuilder.getDenatureRack(),
                             flowcellBarcode).invoke();
 
-
+        IlluminaFlowcell illuminaFlowcell = hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell();
+        Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
+                VesselPosition.LANE1);
+        Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 2,
+                "Wrong number of reagents");
+        Set<SampleInstance> lane2SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
+                VesselPosition.LANE2);
+        Assert.assertEquals(lane2SampleInstances.iterator().next().getReagents().size(), 2,
+                "Wrong number of reagents");
 
         IlluminaSequencingRunFactory illuminaSequencingRunFactory =
                 new IlluminaSequencingRunFactory(EasyMock.createMock(IlluminaFlowcellDao.class));
@@ -527,8 +551,17 @@ public class LabEventTest {
         TubeFormation sageCleanupRack = (TubeFormation) sageCleanupEntity.getTargetLabVessels().iterator().next();
         Assert.assertEquals(sageCleanupRack.getSampleInstances().size(), NUM_POSITIONS_IN_RACK, "Wrong number of sage cleanup samples");
 
-        new QtpEntityBuilder(bettaLimsMessageFactory, labEventFactory, labEventHandler, sageCleanupRack,
-                sageCleanupBarcode, sageCleanupTubeBarcodes, mapBarcodeToSageUnloadTubes, WorkflowName.WHOLE_GENOME).invoke();
+        QtpEntityBuilder qtpEntityBuilder =
+                new QtpEntityBuilder(bettaLimsMessageFactory, labEventFactory, labEventHandler, sageCleanupRack,
+                        sageCleanupBarcode, sageCleanupTubeBarcodes, mapBarcodeToSageUnloadTubes,
+                        WorkflowName.WHOLE_GENOME);
+        qtpEntityBuilder.invoke();
+
+        IlluminaFlowcell illuminaFlowcell = qtpEntityBuilder.getIlluminaFlowcell();
+        Set<SampleInstance> lane1SampleInstances = illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
+                VesselPosition.LANE1);
+        Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 1,
+                "Wrong number of reagents");
 
         Map.Entry<String, TwoDBarcodedTube> stringTwoDBarcodedTubeEntry = mapBarcodeToTube.entrySet().iterator().next();
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
@@ -2437,8 +2470,6 @@ public class LabEventTest {
                         VesselPosition.LANE1);
                 Assert.assertEquals(lane1SampleInstances.size(), normCatchRack.getSampleInstances().size(),
                         "Wrong number of samples in flowcell lane");
-                Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 1,
-                        "Wrong number of reagents");
                 //FlowcellLoaded
                 validateWorkflow(LabEventType.FLOWCELL_LOADED.getName(), illuminaFlowcell);
                 LabEvent flowcellLoadEntity = labEventFactory
@@ -2502,24 +2533,33 @@ public class LabEventTest {
         }
 
         public HiSeq2500FlowcellEntityBuilder invoke() {
-            validateWorkflow("DenatureToFlowcellTransfer", denatureRack);
-
             HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
                     new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, labEventFactory, labEventHandler,
                             denatureRack,
                             flowcellBarcode).invoke();
+            ReceptaclePlateTransferEvent flowcellTransferJaxb = hiSeq2500JaxbBuilder.getFlowcellTransferJaxb();
 
-            illuminaFlowcell = hiSeq2500JaxbBuilder.getIlluminaFlowcell();
-            flowcellTransferEntity = hiSeq2500JaxbBuilder.getFlowcellTransferEntity();
+            // DenatureToFlowcellTransfer
+            validateWorkflow("DenatureToFlowcellTransfer", denatureRack);
+            LabEvent flowcellTransferEntity = labEventFactory.buildVesselToSectionDbFree(flowcellTransferJaxb,
+                    denatureRack.getContainerRole().getContainedVessels().iterator().next(), null,
+                    SBSSection.FLOWCELL2.getSectionName());
             labEventHandler.processEvent(flowcellTransferEntity);
             //asserts
-            illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getInPlaceLabVessel();
+            illuminaFlowcell = (IlluminaFlowcell) flowcellTransferEntity.getTargetLabVessels().iterator().next();
             Set<SampleInstance> lane1SampleInstances =
                     illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
                             VesselPosition.LANE1);
             Assert.assertEquals(lane1SampleInstances.size(), denatureRack.getSampleInstances().size(),
                     "Wrong number of samples in flowcell lane");
-            Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 1,
+            Assert.assertEquals(lane1SampleInstances.iterator().next().getReagents().size(), 2,
+                    "Wrong number of reagents");
+            Set<SampleInstance> lane2SampleInstances =
+                    illuminaFlowcell.getContainerRole().getSampleInstancesAtPosition(
+                            VesselPosition.LANE2);
+            Assert.assertEquals(lane2SampleInstances.size(), denatureRack.getSampleInstances().size(),
+                    "Wrong number of samples in flowcell lane");
+            Assert.assertEquals(lane2SampleInstances.iterator().next().getReagents().size(), 2,
                     "Wrong number of reagents");
 
             validateWorkflow(LabEventType.FLOWCELL_LOADED.getName(), illuminaFlowcell);
@@ -2551,8 +2591,7 @@ public class LabEventTest {
         private final TubeFormation denatureRack;
         private final String flowcellBarcode;
 
-        private IlluminaFlowcell illuminaFlowcell;
-        private LabEvent flowcellTransferEntity;
+        private ReceptaclePlateTransferEvent flowcellTransferJaxb;
 
         public HiSeq2500JaxbBuilder(BettaLimsMessageFactory bettaLimsMessageFactory,
                                     LabEventFactory labEventFactory, LabEventHandler labEventHandler,
@@ -2567,34 +2606,16 @@ public class LabEventTest {
         }
 
         public HiSeq2500JaxbBuilder invoke() {
-            ReceptaclePlateTransferEvent denatureToFlowcellTransferEvent =
+            flowcellTransferJaxb =
                     bettaLimsMessageFactory.buildTubeToPlate("DenatureToFlowcellTransfer",
                             denatureRack.getContainerRole().getContainedVessels().iterator().next().getLabel(),
-                            flowcellBarcode,
-                            LabEventFactory.PHYS_TYPE_FLOWCELL_2_LANE, LabEventFactory.SECTION_ALL_2, "tube");
-//            illuminaFlowcell =
-/*
-            QtpJaxbBuilder qtpJaxbBuilder = new QtpJaxbBuilder(bettaLimsMessageFactory, "", normCatchBarcodes,
-                    normCatchRackBarcode, WorkflowName.EXOME_EXPRESS).invoke();
-            illuminaFlowcell =
-                    new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell, flowcellBarcode);
-            PlateTransferEventType flowcellTransferJaxb =
-                    bettaLimsMessageFactory.buildStripTubeToFlowcell("FlowcellTransfer",
-                            qtpJaxbBuilder.getStripTubeBarcode(), flowcellBarcode);
-            flowcellTransferEntity =
-                    labEventFactory.buildFromBettaLimsPlateEventDbFree(flowcellTransferJaxb, illuminaFlowcell);
-            labEventHandler.processEvent(flowcellTransferEntity);
-*/
+                            flowcellBarcode, PHYS_TYPE_FLOWCELL_2_LANE, SECTION_ALL_2, "tube");
 
             return this;
         }
 
-        public IlluminaFlowcell getIlluminaFlowcell() {
-            return illuminaFlowcell;
-        }
-
-        public LabEvent getFlowcellTransferEntity() {
-            return flowcellTransferEntity;
+        public ReceptaclePlateTransferEvent getFlowcellTransferJaxb() {
+            return flowcellTransferJaxb;
         }
     }
 
