@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
+import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.billing.BillingLedgerDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
@@ -34,8 +35,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.BAMBOO;
-
 public class WorkCompleteMessageBeanTest extends Arquillian {
 
     public static final String TEST_PDO_NAME = "PDO-xxx";
@@ -57,6 +56,9 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     BillingLedgerDao billingLedgerDao;
 
     @Inject
+    ProductOrderEjb productOrderEjb;
+
+    @Inject
     UserTransaction utx;
 
     // Required to get the correct configuration for running JMS queue tests on the bamboo server.  In that case,
@@ -65,7 +67,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     // NOTE: To run locally, you must change this to DEV.  Make sure you change it to BAMBOO before checking in!
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(BAMBOO);
+        return DeploymentBuilder.buildMercuryWar(org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV);
     }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -78,12 +80,11 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
         utx.begin();
 
         try {
-//            WorkCompleteMessageBean workCompleteMessageBean = new WorkCompleteMessageBean(workCompleteMessageDao);
-//            workCompleteMessageBean.onMessage(createMessage(createSession()));
-//            workCompleteMessageDao.flush();
-//            workCompleteMessageDao.clear();
-
-            sendMessage();
+            // We send the JMS message object directly to our message handler for the purposes of this test.
+            WorkCompleteMessageBean workCompleteMessageBean = new WorkCompleteMessageBean(workCompleteMessageDao);
+            workCompleteMessageBean.onMessage(createMessage(createSession()));
+            workCompleteMessageDao.flush();
+            workCompleteMessageDao.clear();
 
         } catch (Exception e) {
             // Make sure we rollback if this code fails, otherwise we can cause other tests to fail.
@@ -102,6 +103,20 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
         utx.rollback();
     }
 
+
+    /**
+     * Test sending a message to the JMS queue. We currently don't try to test to see if the message was
+     * received. This is tricky to test since JMS messages are received and processed in a different thread,
+     * so we don't know when it's OK to check and see if the messages are in the queue.
+     */
+    @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
+    public void testSendMessage() throws Exception {
+        sendMessage();
+    }
+
+    /**
+     * Test to make sure that messages are stored as DB objects.
+     */
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testOnMessage() throws Exception {
         List<WorkCompleteMessage> messages = workCompleteMessageDao.getNewMessages();
@@ -120,7 +135,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     // FIXME: expand to test creating ledger entries from message
     @Test(groups = TestGroups.EXTERNAL_INTEGRATION)
     public void testOnMessageReadBack() throws Exception {
-        AutomatedBiller automatedBiller = new AutomatedBiller(workCompleteMessageDao, productOrderSampleDao, productOrderDao, billingLedgerDao);
+        AutomatedBiller automatedBiller = new AutomatedBiller(workCompleteMessageDao, productOrderDao, productOrderEjb);
         automatedBiller.processMessages();
         workCompleteMessageDao.flush();
         workCompleteMessageDao.clear();
@@ -132,15 +147,6 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
         }
     }
 
-    /*
-     * FIXME: need to close session:
-     *         try {
-     *            connection.close();
-     *        } catch (Exception e) {
-     *            // Ignore exceptions on close. We're just using it to create a dummy message.
-     *        }
-     */
-
     public Session createSession() throws JMSException {
         // This test doesn't (yet) actually connect to the JMS queue.  The test hands the message directly
         // to the MDB handler method.  So the values used here are not important and may not be correct.
@@ -151,6 +157,7 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
                             put(TransportConstants.HOST_PROP_NAME, mercuryConfig.getHost());
                         }}
                 ));
+        // This connection is never closed, which may be Bad but it doesn't seem to break anything.
         Connection connection = cf.createConnection();
         return connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
     }
