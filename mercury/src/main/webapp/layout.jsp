@@ -132,7 +132,7 @@
         <div class="row-fluid">
             <div class="brand" style="display:inline;">
                 <img src="${ctxpath}/images/broad_logo.png" alt="Broad Institute"/>
-                <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean"
+                <stripes:link beanclass="org.broadinstitute.gpinformatics.mercury.presentation.security.SecurityActionBean"
                               style="padding-left: 30px;text-decoration: none; font-family: 'Carrois Gothic SC', sans-serif; font-size: 2.2em;">
                     <img src="${ctxpath}/images/mercury_helmet_${bean.buildInfoBean.deployment}.png"
                          alt="Mercury Helmet" width="40" height="30"/> Mercury</stripes:link>
@@ -149,7 +149,7 @@
 
                     &#160;
                     <stripes:link
-                            beanclass="org.broadinstitute.gpinformatics.mercury.presentation.login.SecurityActionBean"
+                            beanclass="org.broadinstitute.gpinformatics.mercury.presentation.security.SecurityActionBean"
                             event="signOut" title="Sign out" class="btn btn-mini"
                             style="text-decoration: none !important">
                         Sign out

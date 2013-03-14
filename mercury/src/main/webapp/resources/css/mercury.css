@@ -115,8 +115,9 @@ textarea.controlledText { width: 550px; }
 .padright { margin-right: 30px; }
 
 .dataTables_filter { float: left !important; text-align: left !important; }
-.dataTables_filter input { font-size: small; height: 14px; padding-right: 17px; }
-.dataTables_filter label { width: 300px; }   /* So that the filter label can have adornment without the input moving to another line */
+.dataTables_filter input { width: 500px; font-size: 12px; height: 14px; }
+.filterOptions { position: absolute; margin-left: 10px; display: inline; }
+.filterDropdown { height: 25px; }
 
 /* The 'x' for clearing input */
-.clear-helper { background-color: #A4A4A4; border-radius: 10px 10px 10px 10px; color: #FFFFFF; cursor: pointer; font-size: xx-small; margin: 8px 2px 0 -16px; padding: 1px 4px; }
+.clear-helper { color: #0000cd; cursor: pointer; font-size: 20px; font-weight: bold; margin: 8px 2px 0 -19px; padding: 1px 4px; }
