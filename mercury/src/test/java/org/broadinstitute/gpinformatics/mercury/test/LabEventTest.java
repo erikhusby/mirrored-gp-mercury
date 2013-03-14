@@ -413,10 +413,10 @@ public class LabEventTest {
         List<String> labEventNames = transferTraverserCriteria.getLabEventNames();
 
         //todo: these need to be made to assert something useful, andn pass.
-//        Assert.assertEquals(labEventNames.size(), 13, "Wrong number of transfers");
-//
-//        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(),
-//                qtpEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
+        Assert.assertEquals(labEventNames.size(), 11, "Wrong number of transfers");
+
+        Assert.assertEquals(illuminaSequencingRun.getSampleCartridge(),
+                hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell(), "Wrong flowcell");
 
         EasyMock.verify(mockBucketDao);
 //        Controller.stopCPURecording();
@@ -2520,7 +2520,6 @@ public class LabEventTest {
         private LabEvent flowcellTransferEntity;
         private final TubeFormation denatureRack;
 
-
         public HiSeq2500FlowcellEntityBuilder(BettaLimsMessageFactory bettaLimsMessageFactory,
                                               LabEventFactory labEventFactory, LabEventHandler labEventHandler,
                                               TubeFormation denatureRack, String flowcellBarcode){
@@ -2562,11 +2561,14 @@ public class LabEventTest {
             Assert.assertEquals(lane2SampleInstances.iterator().next().getReagents().size(), 2,
                     "Wrong number of reagents");
 
-            validateWorkflow(LabEventType.FLOWCELL_LOADED.getName(), illuminaFlowcell);
-//            LabEvent flowcellLoadEntity = labEventFactory
-//                    .buildReceptacleEventDbFree(hiSeq2500JaxbBuilder.getIlluminaFlowcell()., illuminaFlowcell);
-//            labEventHandler.processEvent(flowcellLoadEntity);
+            validateWorkflow("FlowcellLoaded", illuminaFlowcell);
 
+            ReceptacleEventType flowcellLoadJaxb =
+                    bettaLimsMessageFactory.buildReceptacleEvent("FlowcellLoaded", flowcellBarcode, "Flowcell2Lane");
+
+            LabEvent flowcellLoadEntity = labEventFactory
+                    .buildReceptacleEventDbFree(flowcellLoadJaxb, illuminaFlowcell);
+            labEventHandler.processEvent(flowcellLoadEntity);
 
             return this;
         }

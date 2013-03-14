@@ -214,7 +214,11 @@ public class VesselContainer<T extends LabVessel> {
             }
         }
         for (VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfersTo) {
-            // TODO
+            if (vesselToSectionTransfer.getTargetVesselContainer().equals(this)) {
+                vesselToSectionTransfer.getSourceVessel()
+                        .evaluateCriteria(transferTraverserCriteria, traversalDirection,
+                                vesselToSectionTransfer.getLabEvent(), hopCount + 1);
+            }
         }
     }
 
