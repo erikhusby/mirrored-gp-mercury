@@ -6,7 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.Serializable;
 import java.util.HashMap;
@@ -29,11 +29,11 @@ public class TableauConfig extends AbstractConfig implements Serializable {
      * Used by DB Free tests.
      */
     public TableauConfig() {
-        super(null);
+        super(Deployment.STUBBY);
     }
 
     @Inject
-    public TableauConfig(@Nullable Deployment deployment) {
+    public TableauConfig(@Nonnull Deployment deployment) {
         super(deployment);
     }
 

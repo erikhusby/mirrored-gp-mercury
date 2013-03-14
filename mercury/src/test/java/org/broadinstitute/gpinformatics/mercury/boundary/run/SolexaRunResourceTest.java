@@ -6,6 +6,7 @@ import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -21,6 +22,7 @@ import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.BAMBOO;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
@@ -43,7 +45,6 @@ public class SolexaRunResourceTest extends Arquillian {
     MercuryConfig mercuryConfig;
 
     private Date runDate;
-    private SimpleDateFormat format;
     private String flowcellBarcode;
     private IlluminaFlowcell newFlowcell;
     private boolean result;
@@ -61,7 +62,7 @@ public class SolexaRunResourceTest extends Arquillian {
          *
          *
          */
-        return DeploymentBuilder.buildMercuryWar(TEST);
+        return DeploymentBuilder.buildMercuryWar(BAMBOO);
     }
 
     @BeforeMethod(groups = EXTERNAL_INTEGRATION)
@@ -74,7 +75,7 @@ public class SolexaRunResourceTest extends Arquillian {
 
         runDate = new Date();
 
-        format = new SimpleDateFormat("yyMMdd");
+
 
         flowcellBarcode = "testcaseFlowcell" + runDate.getTime();
 
@@ -87,7 +88,7 @@ public class SolexaRunResourceTest extends Arquillian {
 
         utx.commit();
 
-        runBarcode = flowcellBarcode + format.format(runDate);
+        runBarcode = flowcellBarcode + IlluminaSequencingRun.RUNFORMAT.format(runDate);
         final String runName = "testRunName" + runDate.getTime();
         String baseDirectory = System.getProperty("java.io.tmpdir");
         runFileDirectory = baseDirectory + File.separator + "bin" + File.separator +

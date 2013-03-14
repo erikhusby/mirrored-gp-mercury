@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.Serializable;
 
@@ -18,7 +18,7 @@ public class HipChatConfig extends AbstractConfig implements Serializable {
     private String baseUrl;
 
     @Inject
-    public HipChatConfig(@Nullable Deployment deployment) {
+    public HipChatConfig(@Nonnull Deployment deployment) {
         super(deployment);
     }
 

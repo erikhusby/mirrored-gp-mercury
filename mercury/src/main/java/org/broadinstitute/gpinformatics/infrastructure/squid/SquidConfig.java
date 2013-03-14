@@ -5,7 +5,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.Serializable;
 
@@ -19,7 +19,7 @@ public class SquidConfig extends AbstractConfig implements Serializable {
     private String url;
 
     @Inject
-    public SquidConfig(@Nullable Deployment deployment) {
+    public SquidConfig(@Nonnull Deployment deployment) {
         super(deployment);
     }
 

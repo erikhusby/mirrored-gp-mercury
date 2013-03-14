@@ -28,8 +28,12 @@ import java.util.Set;
  */
 public class JiraCommentUtil {
 
-    @Inject
     private JiraService jiraService;
+
+    @Inject
+    public JiraCommentUtil(JiraService jiraService) {
+        this.jiraService = jiraService;
+    }
 
     /**
      * Sends an alert with the message text to every project

@@ -32,6 +32,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.control.zims.LibraryBeanFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
@@ -469,7 +470,7 @@ public class ExomeExpressEndToEndTest {
             // Call Squid web service to add to queue (lanes, read length)
             // Register run
             IlluminaSequencingRunFactory illuminaSequencingRunFactory =
-                    new IlluminaSequencingRunFactory();
+                    new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
             IlluminaSequencingRun illuminaSequencingRun;
             try {
                 illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(

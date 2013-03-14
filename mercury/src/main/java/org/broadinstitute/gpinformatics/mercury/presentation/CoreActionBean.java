@@ -104,12 +104,15 @@ public class CoreActionBean implements ActionBean {
     public void getErrorAndMessage() {
         if (context != null) {
             List<ValidationError> errors = (List<ValidationError>) context.getRequest().getAttribute(FLASH_ERROR);
+
             if (errors != null) {
                 for (ValidationError error : errors) {
                     context.getValidationErrors().addGlobalError(error);
                 }
             }
+
             List<Message> messages = (List<Message>) context.getRequest().getAttribute(FLASH_MESSAGE);
+
             if (messages != null) {
                 for (Message message : messages) {
                     context.getMessages().add(message);
@@ -143,10 +146,8 @@ public class CoreActionBean implements ActionBean {
      *
      * @return returns true if any errors are found in either place.  Returns false otherwise.
      */
-    protected boolean hasErrors() {
-
+    public boolean hasErrors() {
         FlashScope scope = FlashScope.getCurrent(context.getRequest(), true);
-
         List<ValidationError> errors = (List<ValidationError>) scope.get(FLASH_ERROR);
 
         return ! (getContext().getValidationErrors().isEmpty() && (errors == null || errors.isEmpty()));
@@ -175,6 +176,7 @@ public class CoreActionBean implements ActionBean {
      */
     public Resolution getSourcePageResolution() {
         Resolution res;
+
         try {
             res = getContext().getSourcePageResolution();
         } catch (SourcePageNotFoundException spnfe) {
@@ -323,6 +325,11 @@ public class CoreActionBean implements ActionBean {
         }
 
         return bspUser.getFullName();
+    }
+
+    public String getUserFullNameOrBlank(long userId) {
+        BspUser bspUser = bspUserList.getById(userId);
+        return (bspUser != null) ? bspUser.getFullName() : "";
     }
 
     /**

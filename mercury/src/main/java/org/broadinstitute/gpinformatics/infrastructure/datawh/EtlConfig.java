@@ -4,7 +4,7 @@ import org.broadinstitute.gpinformatics.infrastructure.deployment.AbstractConfig
 import org.broadinstitute.gpinformatics.infrastructure.deployment.ConfigKey;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment;
 
-import javax.annotation.Nullable;
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import java.io.Serializable;
 
@@ -16,7 +16,7 @@ public class EtlConfig extends AbstractConfig implements Serializable {
     private String datawhEtlDirRoot;
 
     @Inject
-    public EtlConfig(@Nullable Deployment deployment) {
+    public EtlConfig(@Nonnull Deployment deployment) {
         super(deployment);
     }
 

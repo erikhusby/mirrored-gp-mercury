@@ -14,33 +14,32 @@
 
         $(document).ready(function () {
             var tableOptions=[];
-            var firstSortColumn=4;
+            var initialSortColumn=9;
             if (${showCheckboxes}) {
-                firstSortColumn++;
-                tableOptions.push({"bSortable":false});
+                initialSortColumn++;
+                tableOptions.push({"bSortable":false});  //checkboxes
             }
-            tableOptions.push [{"bSortable":false},{"bSortable":false},
-            {"bSortable":false},{"bSortable":false},{"bSortable":false},
-                                        {"bSortable":false},
-                                        {"bSortable":true},
-                                        {"bSortable":true, "sType":"numeric"},
-                                        {"bSortable":true},
-                                        {"bSortable":true, "sType":"numeric"},
-                                        {"bSortable":true, "sType":"numeric"},
-                                        {"bSortable":true, "sType":"numeric"},
-                                        {"bSortable":true},
-                                        {"bSortable":true},
-                                        {"bSortable":true},
-                                        {"bSortable":true, "sType":"date"},
-                                        {"bSortable":true, "sType":"date"}];
+            tableOptions.push(
+                    {"bSortable":true}, //label
+                    {"bSortable":true, "sType":"numeric"}, //Sample count
+                    {"bSortable":true}, //Type
+                    {"bSortable":true, "sType":"numeric"}, //Pdo count
+                    {"bSortable":true, "sType":"numeric"}, //Index count
+                    {"bSortable":true, "sType":"numeric"}, //Lab batch count
+                    {"bSortable":true}, //Latest event
+                    {"bSortable":true}, //Event location
+                    {"bSortable":true}, //Event user
+                    {"bSortable":true, "sType":"date"}, //Event date
+                    {"bSortable":true, "sType":"date"}  //Creation date
+            );
 
-                $j('#vesselList').dataTable({
-                    "oTableTools":ttExportDefines,
-                    "aaSorting":[
-                        [tableOptions.length, 'asc']
-                    ],
-                    "aoColumns":tableOptions
-                });
+            $j('#vesselList').dataTable({
+                "oTableTools":ttExportDefines,
+                "aaSorting":[
+                    [initialSortColumn, 'asc']
+                ],
+                "aoColumns":tableOptions
+            });
 
             $j('.vessel-checkbox').enableCheckboxRangeSelection({
                 checkAllClass:'vessel-checkAll',

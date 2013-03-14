@@ -27,6 +27,7 @@ import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
+import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
@@ -216,7 +217,7 @@ public class LabEventTest {
         qtpEntityBuilder.invoke();
 
         IlluminaSequencingRunFactory illuminaSequencingRunFactory =
-                new IlluminaSequencingRunFactory();
+                new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
         IlluminaSequencingRun illuminaSequencingRun;
         try {
             illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
@@ -365,7 +366,7 @@ public class LabEventTest {
         qtpEntityBuilder.invoke();
 
         IlluminaSequencingRunFactory illuminaSequencingRunFactory =
-                new IlluminaSequencingRunFactory();
+                new IlluminaSequencingRunFactory(EasyMock.createNiceMock(JiraCommentUtil.class));
         IlluminaSequencingRun illuminaSequencingRun;
         try {
             illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
@@ -767,6 +768,13 @@ public class LabEventTest {
             this.labEventFactory = labEventFactory;
             this.labEventHandler = labEventHandler;
             this.mapBarcodeToTube = mapBarcodeToTube;
+        }
+        public PreFlightEntityBuilder(BettaLimsMessageFactory bettaLimsMessageFactory, LabEventFactory labEventFactory,
+                LabEventHandler labEventHandler, Map<String, TwoDBarcodedTube> mapBarcodeToTube,Map<String, ProductOrder> mapKeyToProductOrderIn) {
+
+            this(bettaLimsMessageFactory,labEventFactory, labEventHandler, mapBarcodeToTube);
+
+            mapKeyToProductOrder = mapKeyToProductOrderIn;
         }
 
         public PreFlightEntityBuilder invoke() {

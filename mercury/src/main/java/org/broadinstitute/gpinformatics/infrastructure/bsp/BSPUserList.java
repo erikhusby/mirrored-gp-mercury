@@ -39,7 +39,7 @@ public class BSPUserList extends AbstractCache implements Serializable {
     /**
      * @return list of bsp users, sorted by lastname, firstname, username, email.
      */
-    public Map<Long, BspUser> getUsers() {
+    public synchronized Map<Long, BspUser> getUsers() {
         if (users == null) {
             refreshCache();
         }
