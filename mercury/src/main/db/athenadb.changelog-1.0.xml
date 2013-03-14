@@ -2474,5 +2474,57 @@
             <column name="quote_id" type="varchar2(255)"/>
         </addColumn>
     </changeSet>
+    
+    <changeSet id="GPLIM-1059" author="pshapiro">
+        <preConditions>
+            <columnExists tableName="WORK_COMPLETE_MESSAGE" columnName="SAMPLE_INDEX" schemaName="athena"/>
+        </preConditions>
+        <dropColumn tableName="WORK_COMPLETE_MESSAGE" columnName="SAMPLE_INDEX" schemaName="athena"/>
+        <dropColumn tableName="WORK_COMPLETE_MESSAGE_AUD" columnName="SAMPLE_INDEX" schemaName="athena"/>
+        <dropColumn tableName="WORK_COMPLETE_MESSAGE" columnName="SAMPLE_NAME" schemaName="athena"/>
+        <dropColumn tableName="WORK_COMPLETE_MESSAGE_AUD" columnName="SAMPLE_NAME" schemaName="athena"/>
+        <addColumn tableName="WORK_COMPLETE_MESSAGE" schemaName="athena">
+            <column name="ALIQUOT_ID" type="varchar2(255)">
+                <constraints nullable="false"/>
+            </column>
+        </addColumn>
+        <addColumn tableName="WORK_COMPLETE_MESSAGE_AUD" schemaName="athena">
+            <column name="ALIQUOT_ID" type="varchar2(255)"/>
+        </addColumn>
+        <dropColumn tableName="MESSAGE_DATA_VALUE_AUD" columnName="PDO_NAME" schemaName="athena"/>
+        <dropColumn tableName="MESSAGE_DATA_VALUE_AUD" columnName="COLLABORATOR_SAMPLE_ID" schemaName="athena"/>
+        <dropColumn tableName="MESSAGE_DATA_VALUE_AUD" columnName="SAMPLE_INDEX" schemaName="athena"/>
+        <dropColumn tableName="MESSAGE_DATA_VALUE_AUD" columnName="ALIQUOT_LSID" schemaName="athena"/>
+        <dropColumn tableName="MESSAGE_DATA_VALUE_AUD" columnName="COMPLETED_DATE" schemaName="athena"/>
+        <dropColumn tableName="MESSAGE_DATA_VALUE_AUD" columnName="WORK_COMPLETE_MESSAGE_ID" schemaName="athena"/>
+        <addColumn tableName="MESSAGE_DATA_VALUE_AUD" schemaName="athena">
+            <column name="MESSAGE_DATA_VALUE_ID" type="int"/>
+            <column name="WORK_COMPLETE_MESSAGE" type="int"/>
+            <column name="KEY" type="varchar2(100)"/>
+            <column name="VALUE" type="varchar2(2000)"/>
+        </addColumn>
+        <dropPrimaryKey tableName="MESSAGE_DATA_VALUE_AUD" schemaName="athena"/>
+        <addPrimaryKey schemaName="athena" tableName="MESSAGE_DATA_VALUE_AUD" columnNames="rev, KEY"/>
+    </changeSet>
+
+    <changeSet id="GPLIM-1059-1" author="pshapiro">
+        <preConditions>
+            <not>
+                <tableExists tableName="work_complete_message_join_aud" schemaName="athena"/>
+            </not>
+        </preConditions>
+        <createTable tableName="work_complete_message_join_aud" schemaName="athena">
+            <column name="rev" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="revtype" type="int">
+                <constraints nullable="false"/>
+            </column>
+            <column name="WORK_COMPLETE_MESSAGE" type="int"/>
+            <column name="MESSAGE_DATA_VALUE_ID" type="int"/>
+            <column name="KEY" type="varchar2(100)"/>
+        </createTable>
+        <addPrimaryKey schemaName="athena" tableName="work_complete_message_join_aud" columnNames="rev, WORK_COMPLETE_MESSAGE, MESSAGE_DATA_VALUE_ID"/>
+    </changeSet>
 
 </databaseChangeLog>
