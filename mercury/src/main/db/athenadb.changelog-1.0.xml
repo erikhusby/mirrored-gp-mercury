@@ -2503,6 +2503,8 @@
             <column name="KEY" type="varchar2(100)"/>
             <column name="VALUE" type="varchar2(2000)"/>
         </addColumn>
+        <dropPrimaryKey tableName="MESSAGE_DATA_VALUE_AUD" schemaName="athena"/>
+        <addPrimaryKey schemaName="athena" tableName="MESSAGE_DATA_VALUE_AUD" columnNames="rev, KEY"/>
     </changeSet>
 
     <changeSet id="GPLIM-1059-1" author="pshapiro">
