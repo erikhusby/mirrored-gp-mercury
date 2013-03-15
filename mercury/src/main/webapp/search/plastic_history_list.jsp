@@ -17,18 +17,30 @@
                 "aaSorting":[
                     [eventDateIdx, 'asc']
                 ],
-                "aoColumns": [ {"bSortable":true}, //label
-                    {"bSortable":true, "sType":"numeric"}, //Sample count
-                    {"bSortable":true}, //Type
-                    {"bSortable":true, "sType":"numeric"}, //Pdo count
-                    {"bSortable":true, "sType":"numeric"}, //Index count
-                    {"bSortable":true, "sType":"numeric"}, //Lab batch count
-                    {"bSortable":true}, //Latest event
-                    {"bSortable":true}, //Event location
-                    {"bSortable":true}, //Event user
-                    {"bSortable":true, "sType":"date"}, //Event date
+                "aoColumns":[
+                    {"bSortable":true},
+                    //label
+                    {"bSortable":true, "sType":"numeric"},
+                    //Sample count
+                    {"bSortable":true},
+                    //Type
+                    {"bSortable":true, "sType":"numeric"},
+                    //Pdo count
+                    {"bSortable":true, "sType":"numeric"},
+                    //Index count
+                    {"bSortable":true, "sType":"numeric"},
+                    //Lab batch count
+                    {"bSortable":true},
+                    //Latest event
+                    {"bSortable":true},
+                    //Event location
+                    {"bSortable":true},
+                    //Event user
+                    {"bSortable":true, "sType":"date"},
+                    //Event date
                     {"bSortable":true, "sType":"date"  //Creation date
-                    } ]
+                    }
+                ]
             });
         }
 
@@ -82,7 +94,7 @@
                         ${bean.getUserFullNameOrBlank(listItem.eventOperator)}
                 </td>
                 <td>
-                    <fmt:formatDate value="${listItem.eventDate}" pattern="MM/dd/yyyy HH:MM:ss"/>
+                    <fmt:formatDate value="${listItem.eventDate}" pattern="MM/dd/yyyy HH:MM:ss.SSS"/>
                 </td>
                 <td>
                     <fmt:formatDate value="${listItem.creationDate}" pattern="MM/dd/yyyy"/>
