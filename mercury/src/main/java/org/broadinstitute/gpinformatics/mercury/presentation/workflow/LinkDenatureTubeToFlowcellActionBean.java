@@ -9,16 +9,31 @@ import net.sourceforge.stripes.validation.ValidationMethod;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientService;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.boundary.labevent.BettalimsMessageResource;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
+import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.presentation.CoreActionBean;
 
 import javax.inject.Inject;
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
+import java.util.GregorianCalendar;
 
 @UrlBinding("/workflow/LinkDenatureTubeToFlowcell.action")
 public class LinkDenatureTubeToFlowcellActionBean extends CoreActionBean {
     private static String VIEW_PAGE = "/resources/workflow/link_dtube_to_fc.jsp";
+
+    @Inject
+    BettalimsMessageResource bettalimsMessageResource;
 
     @Inject
     private LabVesselDao labVesselDao;
@@ -32,7 +47,7 @@ public class LinkDenatureTubeToFlowcellActionBean extends CoreActionBean {
     @Validate(required = true, on = SAVE_ACTION)
     private String flowcellBarcode;
 
-    private LabVessel denatureTube;
+    private TwoDBarcodedTube denatureTube;
 
     private String workflowName;
 
@@ -56,7 +71,7 @@ public class LinkDenatureTubeToFlowcellActionBean extends CoreActionBean {
         return denatureTube;
     }
 
-    public void setDenatureTube(LabVessel denatureTube) {
+    public void setDenatureTube(TwoDBarcodedTube denatureTube) {
         this.denatureTube = denatureTube;
     }
 
@@ -75,13 +90,23 @@ public class LinkDenatureTubeToFlowcellActionBean extends CoreActionBean {
 
     @HandlesEvent(SAVE_ACTION)
     public ForwardResolution save() {
-        //send event
+        BettaLIMSMessage bettaLIMSMessage = new BettaLIMSMessage();
+
+        ReceptaclePlateTransferEvent transferEventType = buildDenatureTubeToFlowcell(
+                LabEventType.DENATURE_TO_FLOWCELL_TRANSFER.getName(), denatureTubeBarcode, flowcellBarcode);
+
+        bettaLIMSMessage.getReceptaclePlateTransferEvent().add(transferEventType);
+        bettalimsMessageResource.processMessage(bettaLIMSMessage);
+
+        addMessage("Denature Tube {0} associated with Flowcell {1}", denatureTubeBarcode, flowcellBarcode);
+        denatureTubeBarcode = null;
+        flowcellBarcode = null;
         return new ForwardResolution(VIEW_PAGE);
     }
 
     @ValidationMethod(on = SAVE_ACTION)
     public void validateData() {
-        denatureTube = labVesselDao.findByIdentifier(denatureTubeBarcode);
+        denatureTube = (TwoDBarcodedTube) labVesselDao.findByIdentifier(denatureTubeBarcode);
         if (denatureTube == null) {
             addValidationError("denatureTubeBarcode", "Could not find denature tube {0}", denatureTubeBarcode);
         }
@@ -89,7 +114,7 @@ public class LinkDenatureTubeToFlowcellActionBean extends CoreActionBean {
 
     @HandlesEvent("denatureInfo")
     public ForwardResolution denatureTubeInfo() {
-        denatureTube = labVesselDao.findByIdentifier(denatureTubeBarcode);
+        denatureTube = (TwoDBarcodedTube) labVesselDao.findByIdentifier(denatureTubeBarcode);
         if (denatureTube != null) {
             for (SampleInstance sample : denatureTube.getAllSamples()) {
                 String productOrderKey = sample.getStartingSample().getProductOrderKey();
@@ -101,5 +126,32 @@ public class LinkDenatureTubeToFlowcellActionBean extends CoreActionBean {
             }
         }
         return new ForwardResolution("/resources/workflow/denature_tube_info.jsp");
+    }
+
+    public ReceptaclePlateTransferEvent buildDenatureTubeToFlowcell(String eventType, String denatureTubeBarcode, String flowcellBarcode) {
+        ReceptaclePlateTransferEvent event = new ReceptaclePlateTransferEvent();
+        event.setEventType(eventType);
+        GregorianCalendar gregorianCalendar = new GregorianCalendar();
+        try {
+            event.setStart(DatatypeFactory.newInstance().newXMLGregorianCalendar(gregorianCalendar));
+        } catch (DatatypeConfigurationException e) {
+            throw new RuntimeException(e);
+        }
+        event.setDisambiguator(1L);
+        event.setOperator(getContext().getUsername());
+        event.setStation("UI");
+
+        ReceptacleType denatureTube = new ReceptacleType();
+        denatureTube.setBarcode(denatureTubeBarcode);
+        denatureTube.setReceptacleType("tube");
+        event.setSourceReceptacle(denatureTube);
+
+        PlateType flowcell = new PlateType();
+        flowcell.setBarcode(flowcellBarcode);
+        flowcell.setPhysType(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell.getAutomationName());
+        flowcell.setSection(SBSSection.FLOWCELL2.getSectionName());
+        event.setDestinationPlate(flowcell);
+
+        return event;
     }
 }
