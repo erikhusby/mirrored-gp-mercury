@@ -126,13 +126,9 @@
                 </td>
 
                 <td>
-                    <c:forEach items="${listItem.labBatches}" var="batch">
-                        <stripes:link target="JIRA"
-                                      href="${batch.jiraTicket.browserUrl}"
-                                      class="external">
-                            ${batch.businessKey}
-                        </stripes:link>
-                    </c:forEach>
+                    <a href="${ctxpath}/search/all.action?search=&searchKey=${vessel.label}">
+                            ${vessel.label}
+                    </a>
                 </td>
                 <td>
                         ${vessel.sampleInstanceCount}
@@ -147,8 +143,12 @@
                         ${vessel.indexesCount}
                 </td>
                 <td>
-                    <c:forEach items="${listItem.labBatches}" var="batch">
-                        ${batch.businessKey}
+                    <c:forEach items="${vessel.nearestWorkflowLabBatches}" var="batch">
+                        <stripes:link target="JIRA"
+                                      href="${batch.jiraTicket.browserUrl}"
+                                      class="external">
+                            ${batch.businessKey}
+                        </stripes:link>
                     </c:forEach>
                 </td>
                 <td>
