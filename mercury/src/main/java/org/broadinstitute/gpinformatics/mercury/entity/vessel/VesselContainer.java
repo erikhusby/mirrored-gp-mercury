@@ -272,6 +272,8 @@ public class VesselContainer<T extends LabVessel> {
                         sampleInstances.addAll(vesselContainer.getSampleInstances());
                         // todo arz fix this, probably by using LabBatch properly
 //                        applyProjectPlanOverrideIfPresent(labEvent,sampleInstances);
+                    } else {
+                        sampleInstances.addAll(sourceLabVessel.getSampleInstances());
                     }
                 }
             }
