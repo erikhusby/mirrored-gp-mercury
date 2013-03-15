@@ -19,36 +19,67 @@ import java.util.Set;
 @Audited
 public class IlluminaFlowcell extends AbstractRunCartridge implements VesselContainerEmbedder<RunChamber> {
     public enum FlowcellType {
-        MiSeqFlowcell("MiSeq Flowcell", VesselGeometry.FLOWCELL1x1),
-        HiSeqFlowcell("HiSeq 2000 Flowcell", VesselGeometry.FLOWCELL1x8),
-        HiSeq2500Flowcell("HiSeq 2500 Flowcell", VesselGeometry.FLOWCELL1x2);
+        MiSeqFlowcell("Flowcell1Lane", "MiSeq Flowcell", VesselGeometry.FLOWCELL1x1),
+        HiSeqFlowcell("Flowcell8Lane", "HiSeq 2000 Flowcell", VesselGeometry.FLOWCELL1x8),
+        HiSeq2500Flowcell("Flowcell2Lane", "HiSeq 2500 Flowcell", VesselGeometry.FLOWCELL1x2);
 
+        /**
+         * The name that will be supplied by automation scripts.
+         */
+        private String automationName;
+
+        /**
+         * The name to be displayed in UI.
+         */
         private String displayName;
+
         private VesselGeometry vesselGeometry;
 
-        FlowcellType(String displayName, VesselGeometry vesselGeometry) {
+        /**
+         * Creates a FlowcellType with an automation name, display name, and geometry.
+         *
+         * @param automationName    the name that will be supplied by automation scripts
+         * @param displayName       the name that will be supplied by automation scripts
+         * @param vesselGeometry    the vessel geometry
+         */
+        FlowcellType(String automationName, String displayName, VesselGeometry vesselGeometry) {
+            this.automationName = automationName;
             this.displayName = displayName;
             this.vesselGeometry = vesselGeometry;
         }
 
+        /**
+         * Returns the name that will be supplied by automation scripts.
+         */
+        public String getAutomationName() {
+            return automationName;
+        }
+
+        /**
+         * Returns the name to be displayed in UI.
+         */
         public String getDisplayName() {
             return displayName;
         }
 
+        private static Map<String, FlowcellType> mapAutomationNameToType = new HashMap<String, FlowcellType>();
         private static Map<String, FlowcellType> mapDisplayNameToType = new HashMap<String, FlowcellType>();
 
         static {
             for (FlowcellType plateType : FlowcellType.values()) {
+                mapAutomationNameToType.put(plateType.getAutomationName(), plateType);
                 mapDisplayNameToType.put(plateType.getDisplayName(), plateType);
             }
         }
 
-        public static FlowcellType getByDisplayName(String displayName) {
-            FlowcellType plateTypeLocal = mapDisplayNameToType.get(displayName);
-            if (plateTypeLocal == null) {
-                throw new RuntimeException("Failed to find plate type " + displayName);
-            }
-            return plateTypeLocal;
+        /**
+         * Returns the FlowcellType for the given automation name or null if none is found.
+         *
+         * @param automationName    the name supplied by automation scripts
+         * @return the FlowcellType or null
+         */
+        public static FlowcellType getByAutomationName(String automationName) {
+            return mapAutomationNameToType.get(automationName);
         }
 
         public VesselGeometry getVesselGeometry() {

@@ -49,6 +49,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.LibraryBean;
 import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
@@ -379,16 +380,17 @@ public class ExomeExpressEndToEndTest {
             //            }
 
             LabEventTest.QtpEntityBuilder qtpEntityBuilder = new LabEventTest.QtpEntityBuilder(bettaLimsMessageFactory,
-                                                                                               labEventFactory,
-                                                                                               labEventHandler,
-                                                                                               hybridSelectionEntityBuilder
-                                                                                                       .getNormCatchRack(),
-                                                                                               hybridSelectionEntityBuilder
-                                                                                                       .getNormCatchRackBarcode(),
-                                                                                               hybridSelectionEntityBuilder
-                                                                                                       .getNormCatchBarcodes(),
-                                                                                               hybridSelectionEntityBuilder
-                                                                                                       .getMapBarcodeToNormCatchTubes());
+                    labEventFactory,
+                    labEventHandler,
+                    hybridSelectionEntityBuilder
+                            .getNormCatchRack(),
+                    hybridSelectionEntityBuilder
+                            .getNormCatchRackBarcode(),
+                    hybridSelectionEntityBuilder
+                            .getNormCatchBarcodes(),
+                    hybridSelectionEntityBuilder
+                            .getMapBarcodeToNormCatchTubes(),
+                    WorkflowName.HYBRID_SELECTION);
             qtpEntityBuilder.invoke();
 
             TubeFormation poolingResult = qtpEntityBuilder.getDenatureRack();

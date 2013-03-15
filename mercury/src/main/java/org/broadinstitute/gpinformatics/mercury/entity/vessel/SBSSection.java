@@ -413,6 +413,10 @@ public enum SBSSection {
             VesselPosition.LANE7,
             VesselPosition.LANE8
     )),
+    FLOWCELL2("FLOWCELL2", Arrays.asList(
+            VesselPosition.LANE1,
+            VesselPosition.LANE2
+    )),
     // Quadrant containing the odd rows and odd columns on a 384-well plate.
     P384_96TIP_1INTERVAL_A1("P384_96TIP_1INTERVAL_A1", Arrays.asList(
             VesselPosition.A01,
