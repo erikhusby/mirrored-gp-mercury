@@ -4,7 +4,7 @@ import com.sun.jersey.api.client.Client;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
@@ -24,12 +24,9 @@ import javax.transaction.UserTransaction;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
-import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.BAMBOO;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
-import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
 /**
@@ -48,7 +45,7 @@ public class SolexaRunResourceTest extends Arquillian {
     UserTransaction utx;
 
     @Inject
-    MercuryConfig mercuryConfig;
+    AppConfig appConfig;
 
     private Date runDate;
     private String flowcellBarcode;
@@ -129,7 +126,7 @@ public class SolexaRunResourceTest extends Arquillian {
 
         //        try {
 
-        Response response = Client.create().resource(mercuryConfig.getUrl() + "rest/solexarun")
+        Response response = Client.create().resource(appConfig.getUrl() + "rest/solexarun")
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",

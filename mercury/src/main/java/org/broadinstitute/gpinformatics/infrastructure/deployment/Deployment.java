@@ -12,6 +12,6 @@ public enum Deployment {
     RC,
     PROD,
     STUBBY,
-    /** Used to run tests on the bamboo server. */
-    BAMBOO
+    /** Used when running tests on the automated build server. */
+    AUTO_BUILD
 }
