@@ -1,5 +1,6 @@
 <%@ include file="/resources/layout/taglibs.jsp" %>
-
+<%--@elvariable id="samples" type="java.util.Collection"--%>
+<%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"--%>
 <stripes:layout-definition>
     <script type="text/javascript">
 
@@ -14,17 +15,22 @@
                     {"bSortable":true},
                     {"bSortable":true}
                 ]
-            })
+            });
+
+            if (${fn:length(samples) == 1}) {
+                showPlasticHistoryVisualizer('${samples[0].sampleKey}');
+            }
         });
 
         function showPlasticHistoryVisualizer(sampleKey) {
             $j('#plasticViewDiv').html("<img src=\"${ctxpath}/images/spinner.gif\"/>");
+            $j('#plasticViewDiv').show();
 
             // Dynamically created table needs ajax load to allow calling into script in plasic_history_list.jsp
             $j.ajax({
-                url: "${ctxpath}/view/plasticHistoryView.action?sampleKey=" + sampleKey,
-                dataType: 'html',
-                success: function(plasticViewHtml) {
+                url:"${ctxpath}/view/plasticHistoryView.action?sampleKey=" + sampleKey,
+                dataType:'html',
+                success:function (plasticViewHtml) {
                     $j('#plasticViewDiv').html(plasticViewHtml);
                     $j('#plasticViewDiv').show();
                     plasticHistoryListRedraw();
@@ -33,8 +39,7 @@
         }
 
     </script>
-    <%--@elvariable id="samples" type="java.util.Collection"--%>
-    <%--@elvariable id="bean" type="org.broadinstitute.gpinformatics.mercury.presentation.search.SearchActionBean"--%>
+
 
     <table id="sampleListView" class="table simple">
         <thead>

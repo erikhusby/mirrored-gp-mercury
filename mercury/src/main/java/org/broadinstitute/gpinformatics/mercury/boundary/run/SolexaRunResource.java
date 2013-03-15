@@ -8,7 +8,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.lims.MercuryOrSquidRout
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
-import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 
@@ -24,7 +23,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 import java.io.File;
 import java.net.URI;
-import java.text.MessageFormat;
 
 /**
  * A JAX-RS resource for Solexa sequencing runs
@@ -84,25 +82,28 @@ public class SolexaRunResource {
 
         SquidConnector.SquidResponse connectorRun = connector.createRun(solexaRunBean);
         if (connectorRun.getCode() != Response.Status.CREATED.getStatusCode()) {
-            throw new ResourceException(connectorRun.getMessage(),
-                                               Response.Status.fromStatusCode(connectorRun.getCode()));
+            callerResponse = Response.status(connectorRun.getCode()).entity(solexaRunBean).build();
+        } else {
+
+            callerResponse = Response.created(uriInfo.getAbsolutePathBuilder().path(runDirectory.getName()).build())
+                                     .entity(solexaRunBean).build();
         }
-        callerResponse = Response.created(uriInfo.getAbsolutePathBuilder().path(runDirectory.getName()).build())
-                                 .entity(connectorRun).build();
 
         if (router.routeForVessel(flowcell) == MercuryOrSquidRouter.MercuryOrSquid.MERCURY) {
             try {
                 run = registerRun(solexaRunBean, flowcell);
                 URI createdUri = uriInfo.getAbsolutePathBuilder().path(run.getRunName()).build();
-                callerResponse = Response.created(createdUri).entity(new SolexaRunBean(run)).build();
+                if (callerResponse.getStatus() == Response.Status.CREATED.getStatusCode()) {
+                    callerResponse = Response.created(createdUri).entity(new SolexaRunBean(run)).build();
+                }
             } catch (Exception e) {
                 LOG.error("Failed to process run" + Response.Status.INTERNAL_SERVER_ERROR, e);
                 /*
-                 * TODO SGM  Until ExExV2 is totally live, errors thrown from the Mercury side with Registration should
-                 * not be thrown (except if registering a run multiple times
-                 *
-                 * throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
-                 */
+                * TODO SGM  Until ExExV2 is totally live, errors thrown from the Mercury side with Registration should
+                * not be thrown (except if registering a run multiple times
+                *
+                * throw new ResourceException(e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR, e);
+                */
             }
         }
         return callerResponse;

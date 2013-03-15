@@ -1,12 +1,16 @@
 package org.broadinstitute.gpinformatics.mercury.boundary.run;
 
 import com.sun.jersey.api.client.Client;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
+import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
+import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
 import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.mercury.control.dao.run.IlluminaSequencingRunDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
+import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
 import org.jboss.shrinkwrap.api.spec.WebArchive;
@@ -18,11 +22,13 @@ import org.testng.annotations.Test;
 import javax.inject.Inject;
 import javax.transaction.UserTransaction;
 import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.Response;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.BAMBOO;
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.DEV;
 import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.TEST;
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.EXTERNAL_INTEGRATION;
 
@@ -62,7 +68,7 @@ public class SolexaRunResourceTest extends Arquillian {
          *
          *
          */
-        return DeploymentBuilder.buildMercuryWar(BAMBOO);
+        return DeploymentBuilder.buildMercuryWarWithAlternatives(DEV, AthenaClientServiceStub.class);
     }
 
     @BeforeMethod(groups = EXTERNAL_INTEGRATION)
@@ -75,12 +81,16 @@ public class SolexaRunResourceTest extends Arquillian {
 
         runDate = new Date();
 
-
+        ProductOrder exexOrder = AthenaClientServiceStub.buildExExProductOrder(96);
 
         flowcellBarcode = "testcaseFlowcell" + runDate.getTime();
 
         newFlowcell = new IlluminaFlowcell(IlluminaFlowcell.FlowcellType.HiSeq2500Flowcell,
                 flowcellBarcode);
+
+        for(ProductOrderSample currSample:exexOrder.getSamples()) {
+            newFlowcell.addSample(new MercurySample(exexOrder.getBusinessKey(),currSample.getBspSampleName()));
+        }
 
         flowcellDao.persist(newFlowcell);
         flowcellDao.flush();
@@ -119,12 +129,14 @@ public class SolexaRunResourceTest extends Arquillian {
 
         //        try {
 
-        String response = Client.create().resource(mercuryConfig.getUrl() + "rest/solexarun")
+        Response response = Client.create().resource(mercuryConfig.getUrl() + "rest/solexarun")
                 .type(MediaType.APPLICATION_XML_TYPE)
                 .accept(MediaType.APPLICATION_XML)
                 .entity(new SolexaRunBean(flowcellBarcode, runBarcode, runDate, "SL-HAL",
-                        runFileDirectory, null)).post(String.class);
-        System.out.println(response);
+                        runFileDirectory, null)).post(Response.class);
+
+        Assert.assertEquals(response.getStatus(), Response.Status.CREATED);
+        System.out.println(response.getStatus());
         //        } catch (IOException e) {
         //            throw new RuntimeException(e);
         //        }

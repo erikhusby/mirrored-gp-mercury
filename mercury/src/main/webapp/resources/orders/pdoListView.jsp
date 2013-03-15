@@ -20,7 +20,12 @@
                     {"bSortable":true},
                     {"bSortable":true, "sType":"date"}
                 ]
-            })
+            });
+
+            if (${fn:length(pdos) == 1}) {
+                showPDOSampleHistory('${pdos[0].businessKey}');
+            }
+
         });
 
         function showPDOSampleHistory(label) {

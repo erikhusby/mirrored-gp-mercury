@@ -83,7 +83,7 @@
                         ${bean.getUserFullNameOrBlank(listItem.eventOperator)}
                 </td>
                 <td>
-                    <fmt:formatDate value="${listItem.eventDate}" pattern="MM/dd/yyyy HH:MM:ss"/>
+                    <fmt:formatDate value="${listItem.eventDate}" pattern="MM/dd/yyyy HH:MM:ss.SSS"/>
                 </td>
                 <td>
                     <fmt:formatDate value="${listItem.creationDate}" pattern="MM/dd/yyyy"/>

@@ -12,16 +12,16 @@
                 [4, 'asc']
             ],
             "aoColumns":[
+                {"bSortable":true},
                 {"bSortable":true, "sType":"date"},
                 {"bSortable":false},
                 {"bSortable":true, "sType":"date"},
                 {"bSortable":true},
                 {"bSortable":true},
                 {"bSortable":true},
-                {"bSortable":true},
                 {"bSortable":true}
             ]
-        })
+        });
     });
 
     $j('.sparkline').each(function (index) {
@@ -40,11 +40,11 @@
 <table id="pdoSampleListView" class="table simple">
     <thead>
     <tr>
+        <th>Sample Name</th>
         <th width="120">First Event Date</th>
         <th width="300">History</th>
         <th width="120">Last Event Date</th>
         <th>Process Duration</th>
-        <th>Sample Name</th>
         <th>Latest Step</th>
         <th>Latest Process</th>
         <th>Event User</th>
@@ -53,6 +53,11 @@
     <tbody>
     <c:forEach items="${actionBean.mercurySamples}" var="sample">
         <tr>
+            <td>
+                <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.sampleKey}">
+                        ${sample.sampleKey}
+                </a>
+            </td>
             <td>
                 <fmt:formatDate value="${actionBean.getFirstLabEvent(sample).eventDate}"
                                 pattern="MM/dd/yyyy HH:MM:ss"/>
@@ -66,11 +71,6 @@
             </td>
             <td>
                     ${actionBean.getDuration(sample)}
-            </td>
-            <td>
-                <a href="${ctxpath}/search/all.action?search=&searchKey=${sample.sampleKey}">
-                        ${sample.sampleKey}
-                </a>
             </td>
             <td>
                     ${actionBean.getLatestLabEvent(sample).labEventType.name}
