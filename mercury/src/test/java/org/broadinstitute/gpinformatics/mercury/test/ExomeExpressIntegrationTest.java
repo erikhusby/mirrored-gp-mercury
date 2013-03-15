@@ -10,6 +10,7 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.ParentVesselBean
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleImportBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.vessel.SampleReceiptBean;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 
 import javax.ws.rs.core.MediaType;
 import java.io.BufferedReader;
@@ -165,8 +166,14 @@ public class ExomeExpressIntegrationTest {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }
             LabEventTest.QtpJaxbBuilder qtpJaxbBuilder = new LabEventTest.QtpJaxbBuilder(bettaLimsMessageFactory, testSuffix,
-                    hybridSelectionJaxbBuilder.getNormCatchBarcodes(), hybridSelectionJaxbBuilder.getNormCatchRackBarcode()).invoke();
+                    hybridSelectionJaxbBuilder.getNormCatchBarcodes(), hybridSelectionJaxbBuilder.getNormCatchRackBarcode(), WorkflowName.EXOME_EXPRESS).invoke();
             for (BettaLIMSMessage bettaLIMSMessage : qtpJaxbBuilder.getMessageList()) {
+                sendMessage(baseUrl, bettaLIMSMessage);
+            }
+
+            LabEventTest.HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder = new LabEventTest.HiSeq2500JaxbBuilder(bettaLimsMessageFactory, testSuffix,
+                    qtpJaxbBuilder.getDenatureTubeBarcode());
+            for (BettaLIMSMessage bettaLIMSMessage : hiSeq2500JaxbBuilder.getMessageList()) {
                 sendMessage(baseUrl, bettaLIMSMessage);
             }
 
@@ -177,8 +184,9 @@ public class ExomeExpressIntegrationTest {
             System.out.println("Press enter to register run");
             scanner.nextLine();
             // Run registration web service call.
-            SolexaRunBean solexaRunBean = new SolexaRunBean(qtpJaxbBuilder.getFlowcellBarcode(), "Run" + testSuffix,
-                    new Date(), "SL-HAL", File.createTempFile("RunDir", ".txt").getAbsolutePath(), null);
+            SolexaRunBean solexaRunBean = new SolexaRunBean(hiSeq2500JaxbBuilder.getFlowcellBarcode(),
+                    "Run" + testSuffix, new Date(), "SL-HAL", File.createTempFile("RunDir", ".txt").getAbsolutePath(),
+                    null);
             Client.create().resource(baseUrl.toExternalForm() + "/rest/solexarun")
                     .type(MediaType.APPLICATION_XML_TYPE)
                     .accept(MediaType.APPLICATION_XML)

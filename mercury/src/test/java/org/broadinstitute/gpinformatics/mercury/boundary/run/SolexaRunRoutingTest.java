@@ -36,6 +36,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
 import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
+import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowName;
 import org.broadinstitute.gpinformatics.mercury.test.BettaLimsMessageFactory;
 import org.broadinstitute.gpinformatics.mercury.test.LabEventTest;
 import org.easymock.EasyMock;
@@ -261,7 +262,7 @@ public class SolexaRunRoutingTest {
                 new LabEventTest.QtpEntityBuilder(bettaLimsMessageFactory, labEventFactory, labEventHandler,
                                                          sageCleanupRack,
                                                          sageCleanupBarcode, sageCleanupTubeBarcodes,
-                                                         mapBarcodeToSageUnloadTubes);
+                                                         mapBarcodeToSageUnloadTubes, WorkflowName.WHOLE_GENOME);
 
         qtpEntityBuilder.invoke();
 

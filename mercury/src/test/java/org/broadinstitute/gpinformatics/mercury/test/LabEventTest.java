@@ -21,7 +21,6 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
@@ -2541,9 +2540,9 @@ public class LabEventTest {
 
         public HiSeq2500FlowcellEntityBuilder invoke() {
             HiSeq2500JaxbBuilder hiSeq2500JaxbBuilder =
-                    new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, labEventFactory, labEventHandler,
-                            denatureRack,
-                            flowcellBarcode).invoke();
+                    new HiSeq2500JaxbBuilder(bettaLimsMessageFactory, "",
+                            denatureRack.getContainerRole().getContainedVessels().iterator().next().getLabel())
+                            .invoke();
             ReceptaclePlateTransferEvent flowcellTransferJaxb = hiSeq2500JaxbBuilder.getFlowcellTransferJaxb();
 
             // DenatureToFlowcellTransfer
@@ -2596,36 +2595,40 @@ public class LabEventTest {
 
     public static class HiSeq2500JaxbBuilder {
         private final BettaLimsMessageFactory bettaLimsMessageFactory;
-        private final LabEventFactory labEventFactory;
-        private final LabEventHandler labEventHandler;
-        private final TubeFormation denatureRack;
-        private final String flowcellBarcode;
+        private String testPrefix;
+        private final String denatureTubeBarcode;
+        private String flowcellBarcode;
 
+        private final List<BettaLIMSMessage> messageList = new ArrayList<BettaLIMSMessage>();
         private ReceptaclePlateTransferEvent flowcellTransferJaxb;
 
         public HiSeq2500JaxbBuilder(BettaLimsMessageFactory bettaLimsMessageFactory,
-                                    LabEventFactory labEventFactory, LabEventHandler labEventHandler,
-                                    TubeFormation denatureRack,
-                                    String flowcellBarcode) {
-
+                                    String testPrefix, String denatureTubeBarcode) {
             this.bettaLimsMessageFactory = bettaLimsMessageFactory;
-            this.labEventFactory = labEventFactory;
-            this.labEventHandler = labEventHandler;
-            this.denatureRack = denatureRack;
-            this.flowcellBarcode = flowcellBarcode;
+            this.testPrefix = testPrefix;
+            this.denatureTubeBarcode = denatureTubeBarcode;
         }
 
         public HiSeq2500JaxbBuilder invoke() {
+            flowcellBarcode = "Flowcell" + testPrefix;
             flowcellTransferJaxb =
                     bettaLimsMessageFactory.buildTubeToPlate("DenatureToFlowcellTransfer",
-                            denatureRack.getContainerRole().getContainedVessels().iterator().next().getLabel(),
-                            flowcellBarcode, PHYS_TYPE_FLOWCELL_2_LANE, SECTION_ALL_2, "tube");
+                            denatureTubeBarcode, flowcellBarcode, PHYS_TYPE_FLOWCELL_2_LANE, SECTION_ALL_2, "tube");
+            addMessage(messageList, bettaLimsMessageFactory, flowcellTransferJaxb);
 
             return this;
         }
 
         public ReceptaclePlateTransferEvent getFlowcellTransferJaxb() {
             return flowcellTransferJaxb;
+        }
+
+        public List<BettaLIMSMessage> getMessageList() {
+            return messageList;
+        }
+
+        public String getFlowcellBarcode() {
+            return flowcellBarcode;
         }
     }
 
@@ -2652,6 +2655,7 @@ public class LabEventTest {
         private String flowcellBarcode;
         private String stripTubeBarcode;
         private final WorkflowName workflowName;
+        private String denatureTubeBarcode;
 
         public QtpJaxbBuilder(BettaLimsMessageFactory bettaLimsMessageFactory, String testPrefix,
                 List<String> normCatchBarcodes, String normCatchRackBarcode, WorkflowName workflowName) {
@@ -2710,6 +2714,10 @@ public class LabEventTest {
             return stripTubeBarcode;
         }
 
+        public String getDenatureTubeBarcode() {
+            return denatureTubeBarcode;
+        }
+
         public QtpJaxbBuilder invoke() {
             // PoolingTransfer
             poolRackBarcode = "PoolRack" + testPrefix;
@@ -2735,7 +2743,8 @@ public class LabEventTest {
             List<String> denatureTubeBarcodes = new ArrayList<String>();
             denatureCherryPicks.add(new BettaLimsMessageFactory.CherryPick(poolRackBarcode, "A01", denatureRackBarcode,
                     "A01"));
-            denatureTubeBarcodes.add("DenatureTube" + testPrefix + "1");
+            denatureTubeBarcode = "DenatureTube" + testPrefix + "1";
+            denatureTubeBarcodes.add(denatureTubeBarcode);
             denatureJaxb = bettaLimsMessageFactory.buildCherryPick("DenatureTransfer", Arrays.asList(poolRackBarcode),
                     Arrays.asList(poolTubeBarcodes), denatureRackBarcode,
                     denatureTubeBarcodes, denatureCherryPicks);
