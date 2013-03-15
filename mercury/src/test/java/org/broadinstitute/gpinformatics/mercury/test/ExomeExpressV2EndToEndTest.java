@@ -43,6 +43,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
+
 /**
  * Test Exome Express in Mercury
  */
@@ -52,7 +54,7 @@ public class ExomeExpressV2EndToEndTest {
             "12");
     public static List<String> RACK_ROWS = Arrays.asList("A", "B", "C", "D", "E", "F", "G", "H");
 
-    @Test
+    @Test(groups = DATABASE_FREE)
     public void test() {
 
 
@@ -293,8 +295,8 @@ public class ExomeExpressV2EndToEndTest {
         IlluminaSequencingRun illuminaSequencingRun;
         try {
             illuminaSequencingRun = illuminaSequencingRunFactory.buildDbFree(new SolexaRunBean(
-                    qtpEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode(), "Run1", new Date(), "SL-HAL",
-                    File.createTempFile("RunDir", ".txt").getAbsolutePath(), null),
+                    hiSeq2500FlowcellEntityBuilder.getIlluminaFlowcell().getCartridgeBarcode(), "Run1", new Date(),
+                    "SL-HAL", File.createTempFile("RunDir", ".txt").getAbsolutePath(), null),
                     qtpEntityBuilder.getIlluminaFlowcell());
         } catch (IOException e) {
             throw new RuntimeException(e);
