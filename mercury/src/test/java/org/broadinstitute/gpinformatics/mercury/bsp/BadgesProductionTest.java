@@ -4,7 +4,7 @@ import com.sun.jersey.api.client.Client;
 import com.sun.jersey.api.client.WebResource;
 import org.apache.commons.lang3.StringUtils;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.jboss.arquillian.container.test.api.Deployment;
 import org.jboss.arquillian.testng.Arquillian;
@@ -37,7 +37,7 @@ public class BadgesProductionTest extends Arquillian {
 
     private static final String PROD_BADGES_SOURCE = "User_badges_prod.csv";
 
-    MercuryConfig mercuryConfig;
+    AppConfig appConfig;
 
     @Inject
     UserTransaction utx;
@@ -60,7 +60,7 @@ public class BadgesProductionTest extends Arquillian {
         }
         utx.begin();
 
-        mercuryConfig = MercuryConfig.produce(DEV);
+        appConfig = AppConfig.produce(DEV);
     }
 
     @AfterMethod
@@ -82,7 +82,7 @@ public class BadgesProductionTest extends Arquillian {
         BufferedReader badgesReader = new BufferedReader(new InputStreamReader(badgesList));
 
         final WebResource badgeResource =
-                Client.create().resource(mercuryConfig.getUrl() + "rest/limsQuery/fetchUserIdForBadgeId");
+                Client.create().resource(appConfig.getUrl() + "rest/limsQuery/fetchUserIdForBadgeId");
 
         while (badgesReader.ready()) {
             String[] columns = badgesReader.readLine().split(",");

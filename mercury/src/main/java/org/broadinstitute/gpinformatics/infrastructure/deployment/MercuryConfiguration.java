@@ -42,7 +42,7 @@ public class MercuryConfiguration {
     // support @TestInstance-style qualifier injection with producer classes.  But not in this version.
     @SuppressWarnings("unchecked")
     private static final Class<? extends AbstractConfig>[] CONFIG_CLASSES = array(
-            MercuryConfig.class,
+            AppConfig.class,
             SquidConfig.class,
             BSPConfig.class,
             JiraConfig.class,
