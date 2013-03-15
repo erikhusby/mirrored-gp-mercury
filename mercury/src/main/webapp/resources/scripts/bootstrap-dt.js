@@ -1,9 +1,21 @@
+/**
+ * Various Bootstrap and DataTables interaction fixes and improvements.  It also includes specific DataTables
+ * extended functionality.
+ *
+ * @author <a href="mailto:dinsmore@broadinstitute.org">Michael Dinsmore</a>
+ */
+
+/*
+ * Define the TableTools export resources and types.
+ */
 var ttExportDefines = {
     "sSwfPath": "/Mercury/resources/scripts/DataTables-1.9.4/extras/TableTools/media/swf/copy_csv_xls.swf",
     "aButtons": [ "copy", "csv", "print" ]
 };
 
-/* Set the defaults for DataTables initialization */
+/**
+ *  Set the defaults for DataTables initialization
+ */
 $j.extend( true, $j.fn.dataTable.defaults, {
     "sDom": "<'row-fluid'<'span6'f><'span6'T>r>t<'row-fluid'<'span6'i><'span6'p>>",
     "bAutoWidth": false,
