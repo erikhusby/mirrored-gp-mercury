@@ -367,6 +367,7 @@ public class MercuryConfiguration {
                     Yaml yaml = new Yaml();
                     //noinspection unchecked
                     final Map<String, Map> globalConfigDoc = (Map<String, Map>) yaml.load(is);
+                    IOUtils.closeQuietly(is);
 
                     // take local overrides if any
                     Map<String, Map> localConfigDoc = null;
@@ -378,6 +379,8 @@ public class MercuryConfiguration {
                     }
 
                     load(globalConfigDoc, localConfigDoc);
+
+                    IOUtils.closeQuietly(is);
                 }
             }
         }

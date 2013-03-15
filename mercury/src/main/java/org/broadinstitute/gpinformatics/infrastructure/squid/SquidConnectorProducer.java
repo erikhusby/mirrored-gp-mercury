@@ -33,4 +33,13 @@ public class SquidConnectorProducer {
         }
         return impl;
     }
+
+    /**
+     * Producer to allow users to specify a deployment other than one injected
+     * @param deployment
+     * @return
+     */
+    public static SquidConnector deploymentSpecific(Deployment deployment) {
+        return new SquidConnectorImpl(SquidConfig.produce(deployment));
+    }
 }
