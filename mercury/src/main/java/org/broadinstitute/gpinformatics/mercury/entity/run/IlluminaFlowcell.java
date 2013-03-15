@@ -51,7 +51,7 @@ public class IlluminaFlowcell extends AbstractRunCartridge implements VesselCont
         /**
          * Returns the name that will be supplied by automation scripts.
          */
-        private String getAutomationName() {
+        public String getAutomationName() {
             return automationName;
         }
 

@@ -294,24 +294,24 @@ public class BettaLimsMessageFactory {
         return plateTransferEvent;
     }
 
-    // TODO: what kind of plate type???
-    public PlateTransferEventType buildDenatureTubeToFlowcell(String eventType, String denatureTubeBarcode, String flowcellBarcode) {
-        PlateTransferEventType plateTransferEvent = new PlateTransferEventType();
-        setStationEventData(eventType, plateTransferEvent);
+    public ReceptaclePlateTransferEvent buildDenatureTubeToFlowcell(String eventType, String denatureTubeBarcode,
+                                                                    String flowcellBarcode, String flowcellType,
+                                                                    String flowcellSection) {
+        ReceptaclePlateTransferEvent event = new ReceptaclePlateTransferEvent();
+        setStationEventData(eventType, event);
 
-        PlateType stripTube = new PlateType();
-        stripTube.setBarcode(denatureTubeBarcode);
-        stripTube.setPhysType(LabEventFactory.PHYS_TYPE_STRIP_TUBE);
-        stripTube.setSection(LabEventFactory.SECTION_ALL_96);
-        plateTransferEvent.setSourcePlate(stripTube);
+        ReceptacleType denatureTube = new ReceptacleType();
+        denatureTube.setBarcode(denatureTubeBarcode);
+        denatureTube.setReceptacleType("tube");
+        event.setSourceReceptacle(denatureTube);
 
         PlateType flowcell = new PlateType();
         flowcell.setBarcode(flowcellBarcode);
-        flowcell.setPhysType(LabEventFactory.PHYS_TYPE_FLOWCELL);
-        flowcell.setSection(LabEventFactory.SECTION_ALL_96);
-        plateTransferEvent.setPlate(flowcell);
+        flowcell.setPhysType(flowcellType);
+        flowcell.setSection(flowcellSection);
+        event.setDestinationPlate(flowcell);
 
-        return plateTransferEvent;
+        return event;
     }
 
     public PlateEventType buildFlowcellEvent(String eventType, String flowcellBarcode) {
