@@ -914,7 +914,7 @@ public abstract class LabVessel implements Serializable {
 
         LabVessel labVessel = OrmUtil.proxySafeCast(o, LabVessel.class);
 
-        if (label != null ? !label.equals(labVessel.label) : labVessel.label != null) {
+        if (label != null ? !label.equals(labVessel.getLabel()) : labVessel.getLabel() != null) {
             return false;
         }
 
