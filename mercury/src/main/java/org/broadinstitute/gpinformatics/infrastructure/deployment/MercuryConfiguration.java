@@ -352,46 +352,49 @@ public class MercuryConfiguration {
         }
     }
 
-    public AbstractConfig getConfig(Class<? extends AbstractConfig> clazz, Deployment deployment) {
-        if (!mercuryConnections.isInitialized()) {
-            synchronized (this) {
-                if (!mercuryConnections.isInitialized()) {
-                    InputStream is;
+     public AbstractConfig getConfig(Class<? extends AbstractConfig> clazz, Deployment deployment) {
+        InputStream is = null;
+        try {
+            if (!mercuryConnections.isInitialized()) {
+                synchronized (this) {
+                    if (!mercuryConnections.isInitialized()) {
 
-                    is = getClass().getResourceAsStream(MERCURY_CONFIG);
+                        is = getClass().getResourceAsStream(MERCURY_CONFIG);
 
-                    if (is == null) {
-                        throw new RuntimeException("Cannot find global config file '" + MERCURY_CONFIG + "'");
+                        if (is == null) {
+                            throw new RuntimeException("Cannot find global config file '" + MERCURY_CONFIG + "'");
+                        }
+
+                        Yaml yaml = new Yaml();
+
+                        @SuppressWarnings("unchecked")
+                        final Map<String, Map> globalConfigDoc = (Map<String, Map>) yaml.load(is);
+
+                        // take local overrides if any
+                        Map<String, Map> localConfigDoc = null;
+                        is = getClass().getResourceAsStream(MERCURY_CONFIG_LOCAL);
+
+                        if (is != null) {
+                            //noinspection unchecked
+                            localConfigDoc = (Map<String, Map>) yaml.load(is);
+                        }
+
+                        load(globalConfigDoc, localConfigDoc);
                     }
-
-                    Yaml yaml = new Yaml();
-                    //noinspection unchecked
-                    final Map<String, Map> globalConfigDoc = (Map<String, Map>) yaml.load(is);
-                    IOUtils.closeQuietly(is);
-
-                    // take local overrides if any
-                    Map<String, Map> localConfigDoc = null;
-                    is = getClass().getResourceAsStream(MERCURY_CONFIG_LOCAL);
-
-                    if (is != null) {
-                        //noinspection unchecked
-                        localConfigDoc = (Map<String, Map>) yaml.load(is);
-                    }
-
-                    load(globalConfigDoc, localConfigDoc);
-
-                    IOUtils.closeQuietly(is);
                 }
             }
+
+            String systemKey = getConfigKey(clazz);
+
+            // Find the external deployment for this system key and Mercury deployment
+            Deployment externalDeployment = mercuryConnections.getExternalDeployment(systemKey, deployment);
+
+            // Look up the config for this system
+            return externalSystems.getConfig(systemKey, externalDeployment);
+        } finally {
+            IOUtils.closeQuietly(is);
         }
 
-        String systemKey = getConfigKey(clazz);
-
-        // Find the external deployment for this system key and Mercury deployment
-        Deployment externalDeployment = mercuryConnections.getExternalDeployment(systemKey, deployment);
-
-        // Look up the config for this system
-        return externalSystems.getConfig(systemKey, externalDeployment);
     }
 
 
