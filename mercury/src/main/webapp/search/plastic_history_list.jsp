@@ -11,37 +11,26 @@
         function plasticHistoryListRedraw() {
             var eventDateIdx = 9;
 
-            $j('#plasticHistoryList').dataTable({
-                "bDestroy":"true",
+            var table = $j('#plasticHistoryList').dataTable({"bDestroy":"true",
                 "oTableTools":ttExportDefines,
                 "aaSorting":[
                     [eventDateIdx, 'asc']
                 ],
                 "aoColumns":[
-                    {"bSortable":true},
-                    //label
-                    {"bSortable":true, "sType":"numeric"},
-                    //Sample count
-                    {"bSortable":true},
-                    //Type
-                    {"bSortable":true, "sType":"numeric"},
-                    //Pdo count
-                    {"bSortable":true, "sType":"numeric"},
-                    //Index count
-                    {"bSortable":true, "sType":"numeric"},
-                    //Lab batch count
-                    {"bSortable":true},
-                    //Latest event
-                    {"bSortable":true},
-                    //Event location
-                    {"bSortable":true},
-                    //Event user
-                    {"bSortable":true, "sType":"date"},
-                    //Event date
-                    {"bSortable":true, "sType":"date"  //Creation date
-                    }
+                    {"bSortable":true},                    //Label
+                    {"bSortable":true, "sType":"numeric"}, //Sample count
+                    {"bSortable":true},                    //Type
+                    {"bSortable":true, "sType":"numeric"}, //Pdo count
+                    {"bSortable":true, "sType":"numeric"}, //Index count
+                    {"bSortable":true, "sType":"numeric"}, //Lab batch count
+                    {"bSortable":true},                    //Latest event
+                    {"bSortable":true},                    //Event location
+                    {"bSortable":true},                    //Event user
+                    {"bSortable":true, "sType":"date"},    //Event date
+                    {"bSortable":true, "sType":"date"}     //Creation date
                 ]
             });
+            includeAdvancedFilter(table, '#plasticHistoryList');
         }
 
     </script>

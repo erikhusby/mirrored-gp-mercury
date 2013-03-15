@@ -14,7 +14,7 @@ import java.text.MessageFormat;
 @Table(name= "MESSAGE_DATA_VALUE", schema = "athena")
 public class MessageDataValue {
 
-    MessageDataValue() {
+    protected MessageDataValue() {
     }
 
     public MessageDataValue(@Nonnull String key, @Nonnull String value) {

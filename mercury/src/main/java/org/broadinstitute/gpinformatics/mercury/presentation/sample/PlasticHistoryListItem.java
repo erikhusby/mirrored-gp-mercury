@@ -38,17 +38,12 @@ public class PlasticHistoryListItem {
     }
 
     public PlasticHistoryListItem(SequencingRun seqRun, LabVessel seqVessel) {
+        this(seqVessel);
         label = seqRun.getRunBarcode();
-        sampleInstanceCount = seqVessel.getSampleInstanceCount();
-        type = seqVessel.getType().getName();
-        pdoKeyCount = seqVessel.getPdoKeysCount();
-        indexCount = seqVessel.getIndexesCount();
-        labBatchCount = seqVessel.getNearestLabBatchesCount();
         eventType = SEQUENCER_RUN_EVENT;
         eventLocation = seqRun.getMachineName();
         eventOperator = seqRun.getOperator();
         eventDate = seqRun.getRunDate();
-        creationDate = seqVessel.getCreatedOn();
     }
 
     public String getLabel() {
