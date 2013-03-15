@@ -10,34 +10,34 @@
     <script type="text/javascript">
 
         $(document).ready(function () {
-            var tableOptions=[];
-            var firstSortColumn=4;
+            var tableOptions = [];
+            var firstSortColumn = 4;
             if (${showCheckboxes}) {
                 firstSortColumn++;
                 tableOptions.push({"bSortable":false});
             }
-            tableOptions.push [{"bSortable":false},{"bSortable":false},
-            {"bSortable":false},{"bSortable":false},{"bSortable":false},
-                                        {"bSortable":false},
-                                        {"bSortable":true},
-                                        {"bSortable":true, "sType":"numeric"},
-                                        {"bSortable":true},
-                                        {"bSortable":true, "sType":"numeric"},
-                                        {"bSortable":true, "sType":"numeric"},
-                                        {"bSortable":true, "sType":"numeric"},
-                                        {"bSortable":true},
-                                        {"bSortable":true},
-                                        {"bSortable":true},
-                                        {"bSortable":true, "sType":"date"},
-                                        {"bSortable":true, "sType":"date"}];
+            tableOptions.push [{"bSortable":false}, {"bSortable":false},
+            {"bSortable":false}, {"bSortable":false}, {"bSortable":false},
+            {"bSortable":false},
+            {"bSortable":true},
+            {"bSortable":true, "sType":"numeric"},
+            {"bSortable":true},
+            {"bSortable":true, "sType":"numeric"},
+            {"bSortable":true, "sType":"numeric"},
+            {"bSortable":true},
+            {"bSortable":true},
+            {"bSortable":true},
+            {"bSortable":true},
+            {"bSortable":true, "sType":"date"},
+            {"bSortable":true, "sType":"date"}];
 
-                $j('#vesselList').dataTable({
-                    "oTableTools":ttExportDefines,
-                    "aaSorting":[
-                        [tableOptions.length, 'asc']
-                    ],
-                    "aoColumns":tableOptions
-                });
+            $j('#vesselList').dataTable({
+                "oTableTools":ttExportDefines,
+                "aaSorting":[
+                    [tableOptions.length, 'asc']
+                ],
+                "aoColumns":tableOptions
+            });
 
             $j('.vessel-checkbox').enableCheckboxRangeSelection({
                 checkAllClass:'vessel-checkAll',
@@ -81,7 +81,7 @@
             <th>Type</th>
             <th width="30">PDO Count</th>
             <th width="30">Index Count</th>
-            <th width="30">Lab Batch Count</th>
+            <th width="60">Lab Batch</th>
             <th width="100">Latest Event</th>
             <th width="120">Event Location</th>
             <th>Event User</th>
@@ -126,9 +126,13 @@
                 </td>
 
                 <td>
-                    <a href="${ctxpath}/search/all.action?search=&searchKey=${vessel.label}">
-                            ${vessel.label}
-                    </a>
+                    <c:forEach items="${listItem.labBatches}" var="batch">
+                        <stripes:link target="JIRA"
+                                      href="${batch.jiraTicket.browserUrl}"
+                                      class="external">
+                            ${batch.businessKey}
+                        </stripes:link>
+                    </c:forEach>
                 </td>
                 <td>
                         ${vessel.sampleInstanceCount}
@@ -143,7 +147,9 @@
                         ${vessel.indexesCount}
                 </td>
                 <td>
-                        ${vessel.nearestLabBatchesCount}
+                    <c:forEach items="${listItem.labBatches}" var="batch">
+                        ${batch.businessKey}
+                    </c:forEach>
                 </td>
                 <td>
                         ${vessel.latestEvent.labEventType.name}

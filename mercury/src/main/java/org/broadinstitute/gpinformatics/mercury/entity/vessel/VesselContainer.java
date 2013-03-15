@@ -8,6 +8,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.hibernate.annotations.Parent;
+import org.jetbrains.annotations.Nullable;
 
 import javax.persistence.*;
 import java.util.*;
@@ -89,8 +90,8 @@ public class VesselContainer<T extends LabVessel> {
         return transfersTo;
     }
 
-    public Collection<LabBatch> getNearestLabBatches(VesselPosition position) {
-        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria = new TransferTraverserCriteria.NearestLabBatchFinder();
+    public Collection<LabBatch> getNearestLabBatches(VesselPosition position, @Nullable LabBatch.LabBatchType type) {
+        TransferTraverserCriteria.NearestLabBatchFinder batchCriteria = new TransferTraverserCriteria.NearestLabBatchFinder(type);
         evaluateCriteria(position, batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors, null, 0);
         return batchCriteria.getNearestLabBatches();
     }
@@ -403,8 +404,12 @@ public class VesselContainer<T extends LabVessel> {
     }
 
     public Collection<LabBatch> getNearestLabBatches() {
+        return getNearestLabBatches(null);
+    }
+
+    public Collection<LabBatch> getNearestLabBatches(@Nullable LabBatch.LabBatchType type) {
         TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
-                new TransferTraverserCriteria.NearestLabBatchFinder();
+                new TransferTraverserCriteria.NearestLabBatchFinder(type);
         applyCriteriaToAllPositions(batchCriteria);
         return batchCriteria.getNearestLabBatches();
     }
