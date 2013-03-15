@@ -129,8 +129,8 @@ public class JiraTicket {
 
         JiraTicket that = (JiraTicket) o;
 
-        if (ticketId != null ? !ticketId.equals(that.ticketId) : that.ticketId != null) return false;
-        if (ticketName != null ? !ticketName.equals(that.ticketName) : that.ticketName != null) return false;
+        if (ticketId != null ? !ticketId.equals(that.getTicketId()) : that.getTicketId() != null) return false;
+        if (ticketName != null ? !ticketName.equals(that.getTicketName()) : that.getTicketName() != null) return false;
 
         return true;
     }
