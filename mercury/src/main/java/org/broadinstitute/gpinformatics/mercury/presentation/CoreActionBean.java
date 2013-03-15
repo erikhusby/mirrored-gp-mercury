@@ -215,12 +215,44 @@ public class CoreActionBean implements ActionBean {
     }
 
     /**
+     * Create a 'safe' message for stripes message reporting. If no arguments are supplied, we format the entire
+     * string as an argument to MessageFormat, to avoid issues with strings that inadvertently include format
+     * patterns, such as {, }, or '.
+     *
+     * @param message the message to format safely
+     * @param arguments the arguments to the message format string
+     * @return the stripes message object
+     */
+    protected static Message createSafeMessage(String message, Object... arguments) {
+        if (arguments.length == 0) {
+            return new SimpleMessage("{0}", message);
+        }
+        return new SimpleMessage(message, arguments);
+    }
+
+    /**
+     * Create a 'safe' message for stripes message reporting. If no arguments are supplied, we format the entire
+     * string as an argument to MessageFormat, to avoid issues with strings that inadvertently include format
+     * patterns, such as {, }, or '.
+     *
+     * @param message the message to format safely
+     * @param arguments the arguments to the message format string
+     * @return the stripes message object
+     */
+    protected static SimpleError createSafeErrorMessage(String message, Object... arguments) {
+        if (arguments.length == 0) {
+            return new SimpleError("{2}", message);
+        }
+        return new SimpleError(message, arguments);
+    }
+
+    /**
      * Convenience method for adding a SimpleMessage to the context.
      *
      * @param message The message to put into a SimpleMessage
      */
     protected void addMessage(String message, Object... arguments) {
-        getContext().getMessages().add(new SimpleMessage(message, arguments));
+        getContext().getMessages().add(createSafeMessage(message, arguments));
     }
 
     /**
@@ -230,7 +262,7 @@ public class CoreActionBean implements ActionBean {
      * @param errorMessage The message to put into a SimpleError
      */
     protected void addValidationError(String field, String errorMessage, Object... arguments) {
-        getContext().getValidationErrors().add(field, new SimpleError(errorMessage, arguments));
+        getContext().getValidationErrors().add(field, createSafeErrorMessage(errorMessage, arguments));
     }
 
     /**
@@ -241,7 +273,7 @@ public class CoreActionBean implements ActionBean {
      * @param arguments optional message parameters
      */
     public void addGlobalValidationError(String errorMessage, Object... arguments) {
-        getContext().getValidationErrors().addGlobalError(new SimpleError(errorMessage, arguments));
+        getContext().getValidationErrors().addGlobalError(createSafeErrorMessage(errorMessage, arguments));
     }
 
     /**
