@@ -1,5 +1,6 @@
 package org.broadinstitute.gpinformatics.mercury.control.zims;
 
+import edu.mit.broad.prodinfo.thrift.lims.IndexPosition;
 import org.apache.commons.collections15.Factory;
 import org.apache.commons.collections15.map.LazyMap;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
@@ -9,6 +10,10 @@ import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.mercury.entity.OrmUtil;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.Reagent;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.run.RunCartridge;
 import org.broadinstitute.gpinformatics.mercury.entity.run.SequencingRun;
@@ -89,8 +94,29 @@ public class ZimsIlluminaRunFactory {
             } else {
                 throw new RuntimeException("Could not find LCSET for vessel: " + labVessel.getLabel());
             }
-            libraryBeans.add(new LibraryBean(labVessel.getLabel(), productOrder.getResearchProject().getBusinessKey(),
-                    null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
+            MolecularIndexingScheme indexingSchemeEntity = null;
+            for (Reagent reagent : sampleInstance.getReagents()) {
+                if(reagent instanceof MolecularIndexReagent) {
+                    indexingSchemeEntity = ((MolecularIndexReagent) reagent).getMolecularIndexingScheme();
+                }
+            }
+
+            edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme indexingSchemeDto = null;
+            if(indexingSchemeEntity != null) {
+                Map<IndexPosition, String> positionSequenceMap = new HashMap<IndexPosition, String>();
+                for (Map.Entry<MolecularIndexingScheme.IndexPosition, MolecularIndex> indexEntry : indexingSchemeEntity.getIndexes().entrySet()) {
+                    String indexName = indexEntry.getKey().toString();
+                    positionSequenceMap.put(
+                            IndexPosition.valueOf(indexName.substring(indexName.lastIndexOf('_') + 1)),
+                            indexEntry.getValue().getSequence());
+                }
+                indexingSchemeDto = new edu.mit.broad.prodinfo.thrift.lims.MolecularIndexingScheme(
+                        indexingSchemeEntity.getName(), positionSequenceMap);
+            }
+            libraryBeans.add(new LibraryBean(
+                    labVessel.getLabel() + (indexingSchemeEntity == null ? "" : "_" + indexingSchemeEntity.getName()),
+                    productOrder.getResearchProject().getBusinessKey(),
+                    null, null, indexingSchemeDto, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
                     null, 0.0, null, null, null, null, null, null, null, productOrder, lcSet, bspSampleDTO));
         }
         return libraryBeans;

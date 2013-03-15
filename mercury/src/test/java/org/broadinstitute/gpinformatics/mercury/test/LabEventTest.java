@@ -3,15 +3,26 @@ package org.broadinstitute.gpinformatics.mercury.test;
 //import com.jprofiler.api.agent.Controller;
 
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrder;
 import org.broadinstitute.gpinformatics.athena.entity.orders.ProductOrderSample;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientServiceStub;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDTO;
+import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.plating.BSPManagerFactoryStub;
 import org.broadinstitute.gpinformatics.infrastructure.jira.JiraServiceProducer;
-import org.broadinstitute.gpinformatics.mercury.bettalims.generated.*;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.BettaLIMSMessage;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateCherryPickEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PlateTransferEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.PositionMapType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleEventType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptaclePlateTransferEvent;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.ReceptacleType;
+import org.broadinstitute.gpinformatics.mercury.bettalims.generated.StationEventType;
 import org.broadinstitute.gpinformatics.mercury.boundary.bucket.BucketBean;
 import org.broadinstitute.gpinformatics.mercury.boundary.graph.Graph;
 import org.broadinstitute.gpinformatics.mercury.boundary.run.SolexaRunBean;
@@ -21,18 +32,22 @@ import org.broadinstitute.gpinformatics.mercury.boundary.vessel.LabBatchEjb;
 import org.broadinstitute.gpinformatics.mercury.control.dao.bucket.BucketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.project.JiraTicketDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.reagent.MolecularIndexingSchemeDao;
-import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.IlluminaFlowcellDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.vessel.LabVesselDao;
 import org.broadinstitute.gpinformatics.mercury.control.dao.workflow.LabBatchDAO;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventFactory;
 import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler;
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
+import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.Bucket;
 import org.broadinstitute.gpinformatics.mercury.entity.bucket.BucketEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEvent;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventType;
-import org.broadinstitute.gpinformatics.mercury.entity.reagent.*;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.DesignedReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndex;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexReagent;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.MolecularIndexingScheme;
+import org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign;
 import org.broadinstitute.gpinformatics.mercury.entity.rework.LabVesselComment;
 import org.broadinstitute.gpinformatics.mercury.entity.rework.ReworkEntry;
 import org.broadinstitute.gpinformatics.mercury.entity.rework.ReworkLevel;
@@ -41,11 +56,22 @@ import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaFlowcell;
 import org.broadinstitute.gpinformatics.mercury.entity.run.IlluminaSequencingRun;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.MercurySample;
 import org.broadinstitute.gpinformatics.mercury.entity.sample.SampleInstance;
-import org.broadinstitute.gpinformatics.mercury.entity.vessel.*;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.LabVessel;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.PlateWell;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.RackOfTubes;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.SBSSection;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StaticPlate;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.StripTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TransferTraverserCriteria;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TubeFormation;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.TwoDBarcodedTube;
+import org.broadinstitute.gpinformatics.mercury.entity.vessel.VesselPosition;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.ProductWorkflowDef;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowConfig;
 import org.broadinstitute.gpinformatics.mercury.entity.workflow.WorkflowStepDef;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaChamber;
+import org.broadinstitute.gpinformatics.mercury.entity.zims.ZimsIlluminaRun;
 import org.easymock.EasyMock;
 import org.testng.Assert;
 import org.testng.annotations.Test;
@@ -55,7 +81,16 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import static org.broadinstitute.gpinformatics.infrastructure.test.TestGroups.DATABASE_FREE;
 import static org.broadinstitute.gpinformatics.mercury.entity.reagent.ReagentDesign.ReagentType;
@@ -149,12 +184,10 @@ public class LabEventTest {
         LabBatchDAO labBatchDAO = EasyMock.createNiceMock(LabBatchDAO.class);
         labBatchEJB.setLabBatchDao(labBatchDAO);
 
-
-
-//        // starting rack
+        // starting rack
         Map<String, TwoDBarcodedTube> mapBarcodeToTube = new LinkedHashMap<String, TwoDBarcodedTube>();
 
-        ProductOrder productOrder =
+        final ProductOrder productOrder =
                 AthenaClientServiceStub.buildHybridSelectionProductOrder(NUM_POSITIONS_IN_RACK);
         int rackPosition=1;
 
@@ -167,7 +200,7 @@ public class LabEventTest {
             rackPosition++;
         }
 
-        final LabBatch workflowBatch = new LabBatch("Hybrid Selection Batch",
+        LabBatch workflowBatch = new LabBatch("Hybrid Selection Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         labBatchEJB.createLabBatch(workflowBatch, "scottmat");
 
@@ -226,6 +259,24 @@ public class LabEventTest {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+        ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(
+                new ProductOrderDao() {
+                    @Override
+                    public ProductOrder findByBusinessKey(String key) {
+                        return productOrder;
+                    }
+                },
+                new BSPSampleDataFetcher() {
+                    @Override
+                    public BSPSampleDTO fetchSingleSampleFromBSP(String sampleName) {
+                        return new BSPSampleDTO("HIV", "lsid", "DNA", "samplealias", "Homo Sapiens", "PT-123");
+                    }
+                }
+        );
+        ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
+        Assert.assertEquals(zimsIlluminaRun.getLanes().size(), 8, "Wrong number of lanes");
+        ZimsIlluminaChamber zimsIlluminaChamber = zimsIlluminaRun.getLanes().iterator().next();
+        Assert.assertEquals(zimsIlluminaChamber.getLibraries().size(), NUM_POSITIONS_IN_RACK, "Wrong number of libraries");
 
         ListTransfersFromStart transferTraverserCriteria = new ListTransfersFromStart();
         TwoDBarcodedTube startingTube = mapBarcodeToTube.entrySet().iterator().next().getValue();
@@ -239,7 +290,7 @@ public class LabEventTest {
 
         // pick a sample and mark it for rework
         Map.Entry<String, TwoDBarcodedTube> twoDBarcodedTubeForRework = mapBarcodeToTube.entrySet().iterator().next();
-        final int lastEventIndex = transferTraverserCriteria.visitedLabEvents.size();
+        int lastEventIndex = transferTraverserCriteria.visitedLabEvents.size();
         LabEvent catchEvent =
                 transferTraverserCriteria.visitedLabEvents.toArray(new LabEvent[lastEventIndex])[lastEventIndex - 1];
         MercurySample startingSample =
@@ -256,7 +307,7 @@ public class LabEventTest {
         Assert.assertNotNull(reworkComment.getRapSheetEntries(),"Rap Sheet Entries should not be null.");
         Assert.assertFalse(reworkComment.getRapSheetEntries().isEmpty(), "Should have some Rap Sheet Entries.");
         Assert.assertTrue(reworkComment.getRapSheetEntries().get(0) instanceof ReworkEntry, "Entry should be ReworkEntry.");
-        final ReworkEntry rework = (ReworkEntry)reworkComment.getRapSheetEntries().get(0);
+        ReworkEntry rework = (ReworkEntry)reworkComment.getRapSheetEntries().get(0);
         Assert.assertNotNull(rework.getReworkLevel(), "ReworkLevel cannot be null.");
         Assert.assertNotNull(rework.getReworkReason(), "ReworkReason cannot be null.");
         Assert.assertNotNull(rework.getReworkStep(), "getReworkStep cannot be null.");
@@ -310,7 +361,7 @@ public class LabEventTest {
             rackPosition++;
         }
 
-        final LabBatch workflowBatch = new LabBatch("Exome Express Batch",
+        LabBatch workflowBatch = new LabBatch("Exome Express Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         labBatchEJB.createLabBatch(workflowBatch, "scottmat");
 
@@ -426,7 +477,7 @@ public class LabEventTest {
             mapBarcodeToTube.put(barcode, bspAliquot);
             rackPosition++;
         }
-        final LabBatch workflowBatch = new LabBatch("whole Genome Batch",
+        LabBatch workflowBatch = new LabBatch("whole Genome Batch",
                 new HashSet<LabVessel>(mapBarcodeToTube.values()), LabBatch.LabBatchType.WORKFLOW);
         labBatchEJB.createLabBatch(workflowBatch, "scottmat");
 
@@ -617,7 +668,7 @@ public class LabEventTest {
             ArrayList<String> tubeBarcodes = new ArrayList<String>(mapBarcodeToTube.keySet());
             chipBarcode = "Fluidigm" + testPrefix;
             rackBarcode = "InputRack" + testPrefix;
-            fluidigmSampleInputJaxb = this.bettaLimsMessageFactory.buildRackToPlate("FluidigmSampleInput", rackBarcode,
+            fluidigmSampleInputJaxb = bettaLimsMessageFactory.buildRackToPlate("FluidigmSampleInput", rackBarcode,
                     tubeBarcodes, chipBarcode);
             fluidigmSampleInputJaxb.getSourcePlate().setSection(SBSSection.P96COLS1_6BYROW.getSectionName());
             PositionMapType sourcePositionMap = buildFluidigmPositionMap(tubeBarcodes,
@@ -630,7 +681,7 @@ public class LabEventTest {
             addMessage(messageList, bettaLimsMessageFactory, fluidigmSampleInputJaxb);
 
             // FluidigmIndexedAdapterInput plate P96COLS1-6BYROW to chip P384COLS4-6BYROW
-            fluidigmIndexedAdapterInputJaxb = this.bettaLimsMessageFactory.buildPlateToPlate(
+            fluidigmIndexedAdapterInputJaxb = bettaLimsMessageFactory.buildPlateToPlate(
                     "FluidigmIndexedAdapterInput", indexPlate.getLabel(), chipBarcode);
             fluidigmIndexedAdapterInputJaxb.getSourcePlate().setPhysType(
                     StaticPlate.PlateType.IndexedAdapterPlate96.getDisplayName());
@@ -646,7 +697,7 @@ public class LabEventTest {
             for (int rackPosition = 1; rackPosition <= mapBarcodeToTube.size(); rackPosition++) {
                 harvestTubeBarcodes.add("Harvest" + testPrefix + rackPosition);
             }
-            fluidigmHarvestingToRackJaxb = this.bettaLimsMessageFactory.buildPlateToRack("FluidigmHarvestingToRack",
+            fluidigmHarvestingToRackJaxb = bettaLimsMessageFactory.buildPlateToRack("FluidigmHarvestingToRack",
                     chipBarcode,
                     harvestRackBarcode,
                     harvestTubeBarcodes);
@@ -895,26 +946,26 @@ public class LabEventTest {
 
         public PreFlightJaxbBuilder invoke() {
             rackBarcode = "PreflightRack" + testPrefix;
-            preflightPicoSetup1 = this.bettaLimsMessageFactory.buildRackToPlate("PreflightPicoSetup", rackBarcode,
+            preflightPicoSetup1 = bettaLimsMessageFactory.buildRackToPlate("PreflightPicoSetup", rackBarcode,
                     tubeBarcodes,
                     "PreflightPicoPlate1" + testPrefix);
             addMessage(messageList, bettaLimsMessageFactory, preflightPicoSetup1);
 
-            preflightPicoSetup2 = this.bettaLimsMessageFactory.buildRackToPlate("PreflightPicoSetup", rackBarcode,
+            preflightPicoSetup2 = bettaLimsMessageFactory.buildRackToPlate("PreflightPicoSetup", rackBarcode,
                     tubeBarcodes,
                     "PreflightPicoPlate2" + testPrefix);
             addMessage(messageList, bettaLimsMessageFactory, preflightPicoSetup2);
 
-            preflightNormalization = this.bettaLimsMessageFactory.buildRackEvent("PreflightNormalization", rackBarcode,
+            preflightNormalization = bettaLimsMessageFactory.buildRackEvent("PreflightNormalization", rackBarcode,
                     tubeBarcodes);
             addMessage(messageList, bettaLimsMessageFactory, preflightNormalization);
 
-            preflightPostNormPicoSetup1 = this.bettaLimsMessageFactory.buildRackToPlate("PreflightPostNormPicoSetup",
+            preflightPostNormPicoSetup1 = bettaLimsMessageFactory.buildRackToPlate("PreflightPostNormPicoSetup",
                     rackBarcode, tubeBarcodes,
                     "PreflightPostNormPicoPlate1" + testPrefix);
             addMessage(messageList, bettaLimsMessageFactory, preflightPostNormPicoSetup1);
 
-            preflightPostNormPicoSetup2 = this.bettaLimsMessageFactory.buildRackToPlate("PreflightPostNormPicoSetup",
+            preflightPostNormPicoSetup2 = bettaLimsMessageFactory.buildRackToPlate("PreflightPostNormPicoSetup",
                     rackBarcode, tubeBarcodes,
                     "PreflightPostNormPicoPlate2" + testPrefix);
             addMessage(messageList, bettaLimsMessageFactory, preflightPostNormPicoSetup2);
@@ -1185,33 +1236,33 @@ public class LabEventTest {
 
         public PicoPlatingJaxbBuilder invoke() {
 
-            picoPlatingBucket = this.bettaLimsMessageFactory
+            picoPlatingBucket = bettaLimsMessageFactory
                     .buildRackEvent(LabEventType.PICO_PLATING_BUCKET.getName(), rackBarcode, tubeBarcodes);
             addMessage(messageList, bettaLimsMessageFactory, picoPlatingBucket);
 
             picoPlatingQcBarcode = LabEventType.PICO_PLATING_QC.getName() + testPrefix;
-            picoPlatingQc = this.bettaLimsMessageFactory.buildRackToPlate(LabEventType.PICO_PLATING_QC.getName(),
+            picoPlatingQc = bettaLimsMessageFactory.buildRackToPlate(LabEventType.PICO_PLATING_QC.getName(),
                     rackBarcode, tubeBarcodes, picoPlatingQcBarcode);
             addMessage(messageList, bettaLimsMessageFactory, picoPlatingQc);
 
 
             picoPlatingSetup1Barcode = LabEventType.PICO_DILUTION_TRANSFER.getName() + testPrefix;
-            picoPlatingSetup1 = this.bettaLimsMessageFactory.buildPlateToPlate(LabEventType.PICO_DILUTION_TRANSFER
+            picoPlatingSetup1 = bettaLimsMessageFactory.buildPlateToPlate(LabEventType.PICO_DILUTION_TRANSFER
                     .getName(), picoPlatingQcBarcode, picoPlatingSetup1Barcode);
             addMessage(messageList, bettaLimsMessageFactory, picoPlatingSetup1);
 
             picoPlatingSetup2Barcode = LabEventType.PICO_BUFFER_ADDITION.getName() + testPrefix;
-            picoPlatingSetup2 = this.bettaLimsMessageFactory.buildPlateToPlate(LabEventType.PICO_BUFFER_ADDITION
+            picoPlatingSetup2 = bettaLimsMessageFactory.buildPlateToPlate(LabEventType.PICO_BUFFER_ADDITION
                     .getName(), picoPlatingSetup1Barcode, picoPlatingSetup2Barcode);
             addMessage(messageList, bettaLimsMessageFactory, picoPlatingSetup2);
 
             picoPlatingSetup3Barcode = LabEventType.PICO_MICROFLUOR_TRANSFER.getName() + testPrefix;
-            picoPlatingSetup3 = this.bettaLimsMessageFactory.buildPlateToPlate(LabEventType.PICO_MICROFLUOR_TRANSFER
+            picoPlatingSetup3 = bettaLimsMessageFactory.buildPlateToPlate(LabEventType.PICO_MICROFLUOR_TRANSFER
                     .getName(), picoPlatingSetup2Barcode, picoPlatingSetup3Barcode);
             addMessage(messageList, bettaLimsMessageFactory, picoPlatingSetup3);
 
             picoPlatingSetup4Barcode = LabEventType.PICO_STANDARDS_TRANSFER.getName() + testPrefix;
-            picoPlatingSetup4 = this.bettaLimsMessageFactory.buildPlateToPlate(LabEventType.PICO_STANDARDS_TRANSFER
+            picoPlatingSetup4 = bettaLimsMessageFactory.buildPlateToPlate(LabEventType.PICO_STANDARDS_TRANSFER
                     .getName(), picoPlatingSetup3Barcode, picoPlatingSetup4Barcode);
             addMessage(messageList, bettaLimsMessageFactory, picoPlatingSetup4);
 
@@ -1220,13 +1271,13 @@ public class LabEventTest {
                 picoPlateNormBarcodes.add("PicoPlateNorm" + testPrefix + rackPosition);
             }
             picoPlatingNormalizaionBarcode = LabEventType.SAMPLES_NORMALIZATION_TRANSFER.getName() + testPrefix;
-            picoPlatingNormalizaion = this.bettaLimsMessageFactory.buildRackToRack(LabEventType
+            picoPlatingNormalizaion = bettaLimsMessageFactory.buildRackToRack(LabEventType
                     .SAMPLES_NORMALIZATION_TRANSFER
                     .getName(), rackBarcode, tubeBarcodes, picoPlatingNormalizaionBarcode, picoPlateNormBarcodes);
             addMessage(messageList, bettaLimsMessageFactory, picoPlatingNormalizaion);
 
             picoPlatingPostNormSetupBarcode = LabEventType.PICO_PLATING_POST_NORM_PICO.getName() + testPrefix;
-            picoPlatingPostNormSetup = this.bettaLimsMessageFactory
+            picoPlatingPostNormSetup = bettaLimsMessageFactory
                     .buildRackToPlate(LabEventType.PICO_PLATING_POST_NORM_PICO
                             .getName(), picoPlatingNormalizaionBarcode, picoPlateNormBarcodes, picoPlatingPostNormSetupBarcode);
             addMessage(messageList, bettaLimsMessageFactory, picoPlatingPostNormSetup);
@@ -1278,8 +1329,8 @@ public class LabEventTest {
                     new ArrayList<String>(
                             mapBarcodeToTube.keySet()), "",
                     rackBarcode).invoke();
-            this.shearPlateBarcode = shearingJaxbBuilder.getShearPlateBarcode();
-            this.shearCleanPlateBarcode = shearingJaxbBuilder.getShearCleanPlateBarcode();
+            shearPlateBarcode = shearingJaxbBuilder.getShearPlateBarcode();
+            shearCleanPlateBarcode = shearingJaxbBuilder.getShearCleanPlateBarcode();
 
             // ShearingTransfer
             validateWorkflow("ShearingTransfer", mapBarcodeToTube.values());
@@ -1436,8 +1487,8 @@ public class LabEventTest {
                     .invoke();
 
 
-            this.shearPlateBarcode = exomeExpressShearingJaxbBuilder.getShearPlateBarcode();
-            this.shearCleanPlateBarcode = exomeExpressShearingJaxbBuilder.getShearCleanPlateBarcode();
+            shearPlateBarcode = exomeExpressShearingJaxbBuilder.getShearPlateBarcode();
+            shearCleanPlateBarcode = exomeExpressShearingJaxbBuilder.getShearCleanPlateBarcode();
 
 //            validateWorkflow(LabEventType.SHEARING_BUCKET.getName(), mapBarcodeToTube.values());
 //            LabEvent shearingBucketEntity =
