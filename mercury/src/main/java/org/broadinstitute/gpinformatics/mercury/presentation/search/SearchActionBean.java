@@ -86,7 +86,6 @@ public class SearchActionBean extends CoreActionBean {
 
     private boolean resultsAvailable = false;
     private boolean multipleResultTypes = false;
-    private boolean plasticOnly = false;
     private Map<String, String> getPDOKeyMap = null;
     private Map<String, String> getIndexesMap = null;
 
@@ -120,18 +119,6 @@ public class SearchActionBean extends CoreActionBean {
     @HandlesEvent(VIEW_ACTION)
     public Resolution view() {
         return new ForwardResolution(SESSION_LIST_PAGE);
-    }
-
-    @HandlesEvent(SEARCH_PLASTIC_ACTION)
-    public Resolution searchPlastic() {
-        doSearch(SearchType.VESSELS_BY_SAMPLE_KEY, SearchType.VESSELS_BY_PDO, SearchType.VESSELS_BY_BARCODE);
-        return viewPlastic();
-    }
-
-    @HandlesEvent(VIEW_PLASTIC_ACTION)
-    public Resolution viewPlastic() {
-        plasticOnly = true;
-        return new ForwardResolution(SESSION_LIST_PAGE).addParameter(SEARCH_PLASTIC_ACTION, plasticOnly);
     }
 
     private void doSearch(SearchType... searchForItems) {
@@ -187,9 +174,6 @@ public class SearchActionBean extends CoreActionBean {
 
     @HandlesEvent(SEARCH_ACTION)
     public Resolution search() throws Exception {
-        if (plasticOnly){
-            return searchPlastic();
-        }
         doSearch();
         return new ForwardResolution(SESSION_LIST_PAGE);
     }
@@ -489,11 +473,4 @@ public class SearchActionBean extends CoreActionBean {
         this.jiraTicketId = jiraTicketId;
     }
 
-    public boolean isPlasticOnly() {
-        return plasticOnly;
-    }
-
-    public void setPlasticOnly(boolean plasticOnly) {
-        this.plasticOnly = plasticOnly;
-    }
 }
