@@ -17,16 +17,26 @@
                     [eventDateIdx, 'asc']
                 ],
                 "aoColumns":[
-                    {"bSortable":true},                    //Label
-                    {"bSortable":true, "sType":"numeric"}, //Sample count
-                    {"bSortable":true},                    //Type
-                    {"bSortable":true, "sType":"numeric"}, //Pdo count
-                    {"bSortable":true, "sType":"numeric"}, //Index count
-                    {"bSortable":true, "sType":"numeric"}, //Lab batch count
-                    {"bSortable":true},                    //Latest event
-                    {"bSortable":true},                    //Event location
-                    {"bSortable":true},                    //Event user
-                    {"bSortable":true, "sType":"date"},    //Event date
+                    {"bSortable":true},
+                    //Label
+                    {"bSortable":true, "sType":"numeric"},
+                    //Sample count
+                    {"bSortable":true},
+                    //Type
+                    {"bSortable":true, "sType":"numeric"},
+                    //Pdo count
+                    {"bSortable":true, "sType":"numeric"},
+                    //Index count
+                    {"bSortable":true},
+                    //Lab batch count
+                    {"bSortable":true},
+                    //Latest event
+                    {"bSortable":true},
+                    //Event location
+                    {"bSortable":true},
+                    //Event user
+                    {"bSortable":true, "sType":"date"},
+                    //Event date
                     {"bSortable":true, "sType":"date"}     //Creation date
                 ]
             });
@@ -42,7 +52,7 @@
             <th>Type</th>
             <th width="30">PDO Count</th>
             <th width="30">Index Count</th>
-            <th width="30">Lab Batch Count</th>
+            <th width="70">Lab Batch</th>
             <th width="100">Latest Event</th>
             <th width="120">Event Location</th>
             <th>Event User</th>
@@ -71,7 +81,13 @@
                         ${listItem.indexCount}
                 </td>
                 <td>
-                        ${listItem.labBatchCount}
+                    <c:forEach items="${listItem.labBatches}" var="batch">
+                        <stripes:link target="JIRA"
+                                      href="${batch.jiraTicket.browserUrl}"
+                                      class="external">
+                            ${batch.businessKey}
+                        </stripes:link>
+                    </c:forEach>
                 </td>
                 <td>
                         ${listItem.eventType}

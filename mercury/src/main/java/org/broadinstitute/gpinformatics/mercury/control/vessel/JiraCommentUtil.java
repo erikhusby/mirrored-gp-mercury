@@ -16,11 +16,7 @@ import org.broadinstitute.gpinformatics.mercury.entity.workflow.LabBatch;
 
 import javax.inject.Inject;
 import java.io.IOException;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Utility methods for sending human readable updates
@@ -40,18 +36,19 @@ public class JiraCommentUtil {
      * in the sample sheet.  The message text is appended with
      * the complete list of samples per project so that the
      * final message looks something like this:
-     *
+     * <p/>
      * "Applied adaptor ligation event to the following samples:
      * SM_2010
      * SM-515"
-     *
+     * <p/>
      * Basically you'll want to do this fairly often to get
      * information rolled up and sent to the right project managers.
-     * @param  message the text of the message
+     *
+     * @param message the text of the message
      * @param vessels the containers used in the operation
      */
     public void postUpdate(String message,
-                Collection<LabVessel> vessels) {
+                           Collection<LabVessel> vessels) {
         // keep a list of sample names for each project because we're going
         // to make a single message that references each sample in a project
 
@@ -59,9 +56,9 @@ public class JiraCommentUtil {
         for (LabVessel vessel : vessels) {
             VesselContainer vesselContainer = vessel.getContainerRole();
             if (vesselContainer != null) {
-                for (Object o: vesselContainer.getPositions()) {
+                for (Object o : vesselContainer.getPositions()) {
                     VesselPosition position = (VesselPosition) o;
-                    Collection<LabBatch> batches = vesselContainer.getNearestLabBatches(position);
+                    Collection<LabBatch> batches = vesselContainer.getNearestLabBatches(position, null);
                     if (batches != null) {
                         for (LabBatch batch : batches) {
                             if (batch.getJiraTicket() != null) {
@@ -70,11 +67,10 @@ public class JiraCommentUtil {
                         }
                     }
                 }
-            }
-            else {
+            } else {
                 for (LabBatch labBatch : vessel.getLabBatches()) {
                     JiraTicket jiraTicket = labBatch.getJiraTicket();
-                    if(jiraTicket != null) {
+                    if (jiraTicket != null) {
                         tickets.add(jiraTicket);
                     }
                 }
@@ -106,32 +102,33 @@ public class JiraCommentUtil {
      * in the sample sheet.  The message text is appended with
      * the complete list of samples per project so that the
      * final message looks something like this:
-     *
+     * <p/>
      * "Applied adaptor ligation event to the following samples:
      * SM_2010
      * SM-515"
-     *
+     * <p/>
      * Basically you'll want to do this fairly often to get
      * information rolled up and sent to the right project managers.
-     * @param  message the text of the message
-     * @param vessel the container used in the operation
+     *
+     * @param message the text of the message
+     * @param vessel  the container used in the operation
      */
     public void postUpdate(String message,
-                LabVessel vessel) {
+                           LabVessel vessel) {
         Collection<LabVessel> vessels = new HashSet<LabVessel>();
         vessels.add(vessel);
         postUpdate(message, vessels);
-        
+
     }
 
     public static void postProjectOwnershipTableToTicket(Collection<LabVessel> labVessels,
-                                                   JiraTicket ticket) {
+                                                         JiraTicket ticket) {
         // keep a list of sample names for each project because we're going
         // to make a single message that references each sample in a project
         Collection<MercurySample> allStarters = new HashSet<MercurySample>();
 
         for (LabVessel vessel : labVessels) {
-            for (SampleInstance samInstance: vessel.getSampleInstances()) {
+            for (SampleInstance samInstance : vessel.getSampleInstances()) {
                 allStarters.add(samInstance.getStartingSample());
             }
         }

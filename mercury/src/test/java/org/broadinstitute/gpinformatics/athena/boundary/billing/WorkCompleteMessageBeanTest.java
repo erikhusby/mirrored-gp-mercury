@@ -1,12 +1,10 @@
 package org.broadinstitute.gpinformatics.athena.boundary.billing;
 
-import org.broadinstitute.gpinformatics.athena.control.dao.billing.LedgerEntryDao;
 import org.broadinstitute.gpinformatics.athena.boundary.orders.ProductOrderEjb;
 import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
-import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderSampleDao;
 import org.broadinstitute.gpinformatics.athena.control.dao.work.WorkCompleteMessageDao;
 import org.broadinstitute.gpinformatics.athena.entity.work.WorkCompleteMessage;
-import org.broadinstitute.gpinformatics.infrastructure.deployment.MercuryConfig;
+import org.broadinstitute.gpinformatics.infrastructure.deployment.AppConfig;
 import org.broadinstitute.gpinformatics.infrastructure.test.DeploymentBuilder;
 import org.broadinstitute.gpinformatics.infrastructure.test.TestGroups;
 import org.hornetq.api.core.TransportConfiguration;
@@ -35,25 +33,21 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import static org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.AUTO_BUILD;
+
 public class WorkCompleteMessageBeanTest extends Arquillian {
 
     public static final String TEST_PDO_NAME = "PDO-xxx";
     public static final String TEST_ALIQUOT_ID = "SM-xxx";
 
     @Inject
-    MercuryConfig mercuryConfig;
+    AppConfig appConfig;
 
     @Inject
     WorkCompleteMessageDao workCompleteMessageDao;
 
     @Inject
-    ProductOrderSampleDao productOrderSampleDao;
-
-    @Inject
     ProductOrderDao productOrderDao;
-
-    @Inject
-    LedgerEntryDao ledgerEntryDao;
 
     @Inject
     ProductOrderEjb productOrderEjb;
@@ -64,10 +58,10 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
     // Required to get the correct configuration for running JMS queue tests on the bamboo server.  In that case,
     // we can't use localhost.
     //
-    // NOTE: To run locally, you must change this to DEV.  Make sure you change it to BAMBOO before checking in!
+    // NOTE: To run locally, you must change this to DEV.  Make sure you change it back before checking in!
     @Deployment
     public static WebArchive buildMercuryWar() {
-        return DeploymentBuilder.buildMercuryWar(org.broadinstitute.gpinformatics.infrastructure.deployment.Deployment.BAMBOO);
+        return DeploymentBuilder.buildMercuryWar(AUTO_BUILD);
     }
 
     @BeforeMethod(groups = TestGroups.EXTERNAL_INTEGRATION)
@@ -153,8 +147,8 @@ public class WorkCompleteMessageBeanTest extends Arquillian {
         HornetQConnectionFactory cf = HornetQJMSClient.createConnectionFactoryWithoutHA(JMSFactoryType.CF,
                 new TransportConfiguration(NettyConnectorFactory.class.getName(),
                         new HashMap<String, Object>() {{
-                            put(TransportConstants.PORT_PROP_NAME, mercuryConfig.getJmsPort());
-                            put(TransportConstants.HOST_PROP_NAME, mercuryConfig.getHost());
+                            put(TransportConstants.PORT_PROP_NAME, appConfig.getJmsPort());
+                            put(TransportConstants.HOST_PROP_NAME, appConfig.getHost());
                         }}
                 ));
         // This connection is never closed, which may be Bad but it doesn't seem to break anything.

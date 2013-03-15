@@ -220,7 +220,6 @@ public abstract class LabVessel implements Serializable {
      * @param metricType
      * @param searchMode
      * @param sampleInstance
-     *
      * @return
      */
     public LabMetric getMetric(LabMetric.MetricType metricType, MetricSearchMode searchMode,
@@ -461,10 +460,10 @@ public abstract class LabVessel implements Serializable {
      */
     public static class VesselEvent {
 
-        private final LabVessel       labVessel;
+        private final LabVessel labVessel;
         private final VesselContainer<?> vesselContainer;
-        private final VesselPosition  position;
-        private final LabEvent        labEvent;
+        private final VesselPosition position;
+        private final LabEvent labEvent;
 
         public VesselEvent(LabVessel labVessel, VesselContainer<?> vesselContainer, VesselPosition position,
                            LabEvent labEvent) {
@@ -515,9 +514,9 @@ public abstract class LabVessel implements Serializable {
      */
     static class TraversalResults {
 
-        private final Set<SampleInstance> sampleInstances         = new HashSet<SampleInstance>();
-        private final Set<Reagent>        reagents                = new HashSet<Reagent>();
-        private LabBatch            lastEncounteredLabBatch = null;
+        private final Set<SampleInstance> sampleInstances = new HashSet<SampleInstance>();
+        private final Set<Reagent> reagents = new HashSet<Reagent>();
+        private LabBatch lastEncounteredLabBatch = null;
 
         void add(TraversalResults traversalResults) {
             sampleInstances.addAll(traversalResults.getSampleInstances());
@@ -628,7 +627,7 @@ public abstract class LabVessel implements Serializable {
         List<VesselEvent> vesselEvents = new ArrayList<VesselEvent>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsTarget) {
             vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getSourceVessel(), null, null,
-                                                    vesselToVesselTransfer.getLabEvent()));
+                    vesselToVesselTransfer.getLabEvent()));
         }
         for (LabVessel container : containers) {
             vesselEvents.addAll(container.getContainerRole().getAncestors(this));
@@ -645,7 +644,7 @@ public abstract class LabVessel implements Serializable {
         List<VesselEvent> vesselEvents = new ArrayList<VesselEvent>();
         for (VesselToVesselTransfer vesselToVesselTransfer : vesselToVesselTransfersThisAsSource) {
             vesselEvents.add(new VesselEvent(vesselToVesselTransfer.getTargetLabVessel(), null, null,
-                                                    vesselToVesselTransfer.getLabEvent()));
+                    vesselToVesselTransfer.getLabEvent()));
         }
         for (VesselToSectionTransfer vesselToSectionTransfer : vesselToSectionTransfersThisAsSource) {
             vesselEvents
@@ -981,11 +980,11 @@ public abstract class LabVessel implements Serializable {
         LabVessel labVessel = vesselEvent.getLabVessel();
         if (labVessel == null) {
             vesselEvent.getVesselContainer().evaluateCriteria(vesselEvent.getPosition(),
-                                                                     transferTraverserCriteria, traversalDirection,
-                                                                     vesselEvent.getLabEvent(), hopCount);
+                    transferTraverserCriteria, traversalDirection,
+                    vesselEvent.getLabEvent(), hopCount);
         } else {
             labVessel.evaluateCriteria(transferTraverserCriteria, traversalDirection, vesselEvent.getLabEvent(),
-                                              hopCount + 1);
+                    hopCount + 1);
         }
     }
 
@@ -1019,7 +1018,18 @@ public abstract class LabVessel implements Serializable {
             return getContainerRole().getNearestLabBatches();
         } else {
             TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
-                    new TransferTraverserCriteria.NearestLabBatchFinder();
+                    new TransferTraverserCriteria.NearestLabBatchFinder(null);
+            evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
+            return batchCriteria.getNearestLabBatches();
+        }
+    }
+
+    public Collection<LabBatch> getNearestWorkflowLabBatches() {
+        if (getContainerRole() != null) {
+            return getContainerRole().getNearestLabBatches(LabBatch.LabBatchType.WORKFLOW);
+        } else {
+            TransferTraverserCriteria.NearestLabBatchFinder batchCriteria =
+                    new TransferTraverserCriteria.NearestLabBatchFinder(LabBatch.LabBatchType.WORKFLOW);
             evaluateCriteria(batchCriteria, TransferTraverserCriteria.TraversalDirection.Ancestors);
             return batchCriteria.getNearestLabBatches();
         }
@@ -1056,7 +1066,7 @@ public abstract class LabVessel implements Serializable {
                     indexInfo.append(indexReagent.getMolecularIndexingScheme().getName());
                     indexInfo.append(" - ");
                     for (MolecularIndexingScheme.IndexPosition hint : indexReagent.getMolecularIndexingScheme()
-                                                                                  .getIndexes().keySet()) {
+                            .getIndexes().keySet()) {
                         MolecularIndex index = indexReagent.getMolecularIndexingScheme().getIndexes().get(hint);
                         indexInfo.append(index.getSequence());
                         indexInfo.append("\n");
