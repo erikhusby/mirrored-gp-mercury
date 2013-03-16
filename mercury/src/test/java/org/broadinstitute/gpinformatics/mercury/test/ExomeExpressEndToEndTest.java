@@ -1,6 +1,7 @@
 package org.broadinstitute.gpinformatics.mercury.test;
 
 import org.broadinstitute.bsp.client.users.BspUser;
+import org.broadinstitute.gpinformatics.athena.control.dao.orders.ProductOrderDao;
 import org.broadinstitute.gpinformatics.infrastructure.athena.AthenaClientProducer;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPSampleDataFetcher;
 import org.broadinstitute.gpinformatics.infrastructure.bsp.BSPUserList;
@@ -33,7 +34,7 @@ import org.broadinstitute.gpinformatics.mercury.control.labevent.LabEventHandler
 import org.broadinstitute.gpinformatics.mercury.control.run.IlluminaSequencingRunFactory;
 import org.broadinstitute.gpinformatics.mercury.control.vessel.JiraCommentUtil;
 import org.broadinstitute.gpinformatics.mercury.control.workflow.WorkflowLoader;
-import org.broadinstitute.gpinformatics.mercury.control.zims.LibraryBeanFactory;
+import org.broadinstitute.gpinformatics.mercury.control.zims.ZimsIlluminaRunFactory;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingReceipt;
 import org.broadinstitute.gpinformatics.mercury.entity.bsp.BSPPlatingRequest;
 import org.broadinstitute.gpinformatics.mercury.entity.labevent.LabEventName;
@@ -493,8 +494,8 @@ public class ExomeExpressEndToEndTest {
             //            }
 
             // ZIMS
-            LibraryBeanFactory libraryBeanFactory = new LibraryBeanFactory();
-            ZimsIlluminaRun zimsRun = libraryBeanFactory.buildLibraries(illuminaSequencingRun);
+            ZimsIlluminaRunFactory zimsIlluminaRunFactory = new ZimsIlluminaRunFactory(new ProductOrderDao(), new BSPSampleDataFetcher());
+            ZimsIlluminaRun zimsRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(illuminaSequencingRun);
 
             // how to populate BSPSampleDTO?  Ease of use from EL suggests an entity that can load itself, but this
             // would require injecting a service, or using a singleton

@@ -157,8 +157,6 @@ public class ZimsIlluminaRunFactoryTest {
                         runDate,
                         new OutputDataLocation("/root/path/to/run/" + testRunDirectory));
         ZimsIlluminaRun zimsIlluminaRun = zimsIlluminaRunFactory.makeZimsIlluminaRun(sequencingRun);
-//        LibraryBeanFactory libraryBeanFactory = new LibraryBeanFactory();
-//        ZimsIlluminaRun zimsIlluminaRun = libraryBeanFactory.buildLibraries(sequencingRun);
 
         assertThat(zimsIlluminaRun.getError(), nullValue());
         assertThat(zimsIlluminaRun.getName(), equalTo("TestRun"));
